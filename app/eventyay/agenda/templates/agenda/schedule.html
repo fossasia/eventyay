@@ -1,6 +1,7 @@
 {% extends "agenda/base.html" %}
 
 {% load compress %}
+{% load html_signal %}
 {% load i18n %}
 {% load static %}
 {% load phrases %}
@@ -12,68 +13,20 @@
 {% endblock agenda_custom_header %}
 
 {% block header_right %}
-<details class="dropdown mr-2" aria-haspopup="menu" role="menu">
-    <summary>
-        <span>{{ phrases.schedule.version }} {{ schedule.version|default:'-' }}</span>
-        <i class="fa fa-caret-down ml-1"></i>
-    </summary>
-    <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-        <a class="dropdown-item" href="{{ request.event.urls.changelog }}" role="menuitem" tabindex="-1">
-            <i class="fa fa-book"></i>
-            {% translate "Changelog" %}
-        </a>
-        <hr>
-        {% if schedule.version and schedule != schedule.event.current_schedule %}
-        <div class="dropdown-item text-muted" role="note" aria-disabled="true" tabindex="-1" style="pointer-events: none; cursor: default;">
-            <small>
-                {% blocktranslate trimmed with version=schedule.version %}
-                Exports and subscriptions below are for version {{ version }}.
-                {% endblocktranslate %}
-            </small>
-        </div>
-        {% endif %}
-        {% for exporter in exporters %}
-        <a class="dropdown-item" href="{{ exporter.export_url|default:exporter.urls.base }}" role="menuitem" tabindex="-1" target="_blank">
-            {% if exporter.icon|slice:":3" == "fa-" %}
-            <span class="fa {{ exporter.icon }} export-icon"></span>
-            {% else %}
-            <span class="export-icon">{{ exporter.icon }}</span>
-            {% endif %}
-            {{ exporter.verbose_name }}
-            {% if exporter.show_qrcode %}
-            <span class="export-qrcode">
-                <i class="fa fa-qrcode"></i>
-                <div class="export-qrcode-image">{{ exporter.get_qrcode }}</div>
-            </span>
-            {% endif %}
-        </a>
-        {% endfor %}
-    </div>
-</details>
 {% include "common/fragment_header_user.html" with current_event=request.event nav_context="agenda" %}
 {% endblock header_right %}
 
 {% block agenda_content %}
+{% html_signal "eventyay.agenda.signals.html_above_schedule_pages" sender=request.event request=request %}
 <div id="fahrplan" class="{% if show_talk_list %}list{% else %}grid{% endif %}">
-    {% if schedule != schedule.event.current_schedule %}
-    <div class="alert alert-warning m-3">
-        <span>
-            {% if not schedule.version %}
-            {{ phrases.schedule.wip_version }}
-            {% else %}
-            {{ phrases.schedule.old_version }}
-            {% endif %}
-            {% if request.event.current_schedule %}
-            {% phrase "phrases.schedule.current_version" current_url=schedule.event.urls.schedule %}
-            {% endif %}
-        </span>
-    </div>
-    {% endif %}
-
+    <script>
+    window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};
+    window.__SCHEDULE_META__ = {{ schedule_meta_json|safe }};
+    </script>
     <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
-    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" {% if show_talk_list %}format="list"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
+    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" {% if is_sessions_page %}view="sessions"{% elif show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
     {% endwith %}
     <noscript class="d-block">
         <div class="alert alert-info m-4">
@@ -86,4 +39,5 @@
         </div>
     </noscript>
 </div>
+{% html_signal "eventyay.agenda.signals.html_below_schedule_pages" sender=request.event request=request %}
 {% endblock agenda_content %}

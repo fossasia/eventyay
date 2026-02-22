@@ -1,6 +1,11 @@
 from collections import defaultdict, namedtuple
 from contextlib import suppress
+from functools import lru_cache
 from urllib.parse import quote
+from xml.etree.ElementTree import tostring as xml_tostring
+
+import qrcode as qr_lib
+from qrcode.image.svg import SvgPathFillImage
 
 from django.conf import settings
 from django.db import models, transaction
@@ -13,8 +18,7 @@ from django.utils.translation import pgettext_lazy
 from i18nfield.fields import I18nTextField
 
 from eventyay.agenda.tasks import export_schedule_html
-from eventyay.base.models import PretalxModel
-from eventyay.base.models.submission import SubmissionFavourite
+from eventyay.agenda.signals import register_recording_provider
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.schedule.notifications import render_notifications
@@ -26,6 +30,17 @@ from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from .mixins import PretalxModel
 from .submission import SubmissionFavourite
+
+
+@lru_cache(maxsize=512)
+def make_qr_svg(url: str) -> str:
+    """Generate an SVG QR code string for the given URL.
+
+    Results are cached because the same export URLs are generated on every
+    schedule page load and QR encoding is CPU-intensive.
+    """
+    image = qr_lib.make(url, image_factory=SvgPathFillImage)
+    return xml_tostring(image.get_image()).decode()
 
 
 class Schedule(PretalxModel):
@@ -587,7 +602,7 @@ class Schedule(PretalxModel):
 
         return self != self.event.current_schedule
 
-    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False):
+    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False):
         talks = self.talks.all()
         if not all_talks:
             talks = self.talks.filter(is_visible=True)
@@ -600,6 +615,13 @@ class Schedule(PretalxModel):
             'submission__event',
             'submission__submission_type',
         ).prefetch_related('submission__speakers')
+        if enrich:
+            talks = talks.prefetch_related(
+                'submission__resources',
+                'submission__answers',
+                'submission__answers__question',
+                'submission__answers__options',
+            )
         talks = talks.order_by('start')
         rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks = set()
@@ -612,6 +634,8 @@ class Schedule(PretalxModel):
             'event_end': self.event.date_to.isoformat(),
         }
         show_do_not_record = self.event.cfp.request_do_not_record
+        base_url = str(self.event.urls.base)
+        full_base_url = str(self.event.urls.base.full())
         for talk in talks:
             # Only add room if it's not deleted
             if talk.room and not talk.room.deleted:
@@ -619,29 +643,82 @@ class Schedule(PretalxModel):
             if talk.submission:
                 tracks.add(talk.submission.track)
                 speakers |= set(talk.submission.speakers.all())
-                result['talks'].append(
-                    {
-                        'code': talk.submission.code if talk.submission else None,
-                        'id': talk.id,
-                        'title': (talk.submission.title if talk.submission else talk.description),
-                        'abstract': (talk.submission.abstract if talk.submission else None),
-                        'description': (talk.submission.description if talk.submission else None),
-                        'speakers': (
-                            [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
-                        ),
-                        'track': talk.submission.track_id if talk.submission else None,
-                        'start': talk.local_start,
-                        'end': talk.local_end,
-                        'room': talk.room_id,
-                        'duration': talk.submission.get_duration(),
-                        'updated': talk.updated.isoformat(),
-                        'state': talk.submission.state if all_talks else None,
-                        'fav_count': (count_fav_talk(talk.submission.code) if talk.submission else 0),
-                        'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
-                        'tags': talk.submission.get_tag(),
-                        'session_type': talk.submission.submission_type.name,
+                talk_data = {
+                    'code': talk.submission.code if talk.submission else None,
+                    'id': talk.id,
+                    'title': (talk.submission.title if talk.submission else talk.description),
+                    'abstract': (talk.submission.abstract if talk.submission else None),
+                    'description': (talk.submission.description if talk.submission else None),
+                    'speakers': (
+                        [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
+                    ),
+                    'track': talk.submission.track_id if talk.submission else None,
+                    'start': talk.local_start,
+                    'end': talk.local_end,
+                    'room': talk.room_id,
+                    'duration': talk.submission.get_duration(),
+                    'updated': talk.updated.isoformat(),
+                    'state': talk.submission.state if all_talks else None,
+                    'fav_count': (count_fav_talk(talk.submission.code) if talk.submission else 0),
+                    'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
+                    'tags': talk.submission.get_tag(),
+                    'session_type': talk.submission.submission_type.name,
+                }
+                if enrich:
+                    talk_data['resources'] = [
+                        {
+                            'resource': resource.resource.url if resource.resource else resource.link,
+                            'description': str(resource.description),
+                            'link': resource.link,
+                        }
+                        for resource in talk.submission.resources.all()
+                        if resource.resource or resource.link
+                    ]
+                    talk_data['answers'] = [
+                        {
+                            'question': str(answer.question.question),
+                            'answer': str(answer.answer),
+                            'question_id': answer.question_id,
+                            'options': list(answer.options.values_list('answer', flat=True)),
+                        }
+                        for answer in talk.submission.answers.all()
+                        if answer.question and answer.question.is_public
+                    ]
+                    # Per-talk export URLs
+                    code = talk.submission.code
+                    ics_url = f'{base_url}talk/{code}.ics'
+                    google_url = f'{base_url}talk/{code}/export/google-calendar'
+                    webcal_url = f'{base_url}talk/{code}/export/webcal'
+                    talk_data['exporters'] = {
+                        'ics': ics_url,
+                        'json': f'{base_url}talk/{code}.json',
+                        'xml': f'{base_url}talk/{code}.xml',
+                        'xcal': f'{base_url}talk/{code}.xcal',
+                        'google_calendar': google_url,
+                        'webcal': webcal_url,
+                        'qrcodes': {
+                            'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
+                            'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
+                            'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
+                            'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
+                            'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
+                            'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
+                        },
                     }
-                )
+                    # Recording iframe from provider plugins
+                    recording_iframe = ''
+                    for __, response in register_recording_provider.send_robust(self.event):
+                        if (
+                            response
+                            and not isinstance(response, Exception)
+                            and getattr(response, 'get_recording', None)
+                        ):
+                            rec = response.get_recording(talk.submission)
+                            if rec and rec.get('iframe'):
+                                recording_iframe = rec['iframe']
+                                break
+                    talk_data['recording_iframe'] = recording_iframe
+                result['talks'].append(talk_data)
             else:
                 result['talks'].append(
                     {
@@ -668,13 +745,15 @@ class Schedule(PretalxModel):
                 'id': room.id,
                 'name': room.name,
                 'description': room.description,
+                'video_url': getattr(room, 'video_url', ''),
             }
             for room in self.event.rooms.all()
             if room in rooms
         ]
         include_avatar = self.event.cfp.request_avatar
-        result['speakers'] = [
-            {
+        speaker_list = []
+        for user in speakers:
+            speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(user.event_profile(self.event), 'biography', ''),
@@ -686,8 +765,30 @@ class Schedule(PretalxModel):
                     user.get_avatar_url(event=self.event, thumbnail='tiny') if include_avatar else None
                 ),
             }
-            for user in speakers
-        ]
+            if enrich:
+                spk_base = f'{base_url}speakers/{user.code}'
+                spk_full_base = f'{full_base_url}speakers/{user.code}'
+                spk_ics = f'{spk_base}/talks.ics'
+                spk_google = f'{spk_base}/talks/export/google-calendar'
+                spk_webcal = f'{spk_base}/talks/export/webcal'
+                speaker_data['exporters'] = {
+                    'ics': spk_ics,
+                    'json': f'{spk_base}/talks.json',
+                    'xml': f'{spk_base}/talks.xml',
+                    'xcal': f'{spk_base}/talks.xcal',
+                    'google_calendar': spk_google,
+                    'webcal': spk_webcal,
+                    'qrcodes': {
+                        'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
+                        'json': make_qr_svg(f'{spk_full_base}/talks.json'),
+                        'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
+                        'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
+                        'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
+                        'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
+                    },
+                }
+            speaker_list.append(speaker_data)
+        result['speakers'] = speaker_list
         return result
 
     def __str__(self) -> str:

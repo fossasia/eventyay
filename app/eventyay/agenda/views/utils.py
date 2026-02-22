@@ -13,6 +13,15 @@ from django.utils import timezone
 
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
+
+
+# Same escaping Django applies inside json_script to prevent XSS in <script> tags.
+JSON_SCRIPT_ESCAPES = {ord(">"): "\\u003E", ord("<"): "\\u003C", ord("&"): "\\u0026"}
+
+
+def escape_json_for_script(json_str: str) -> str:
+    """Escape a JSON string for safe embedding in an HTML ``<script>`` tag."""
+    return json_str.translate(JSON_SCRIPT_ESCAPES)
 from eventyay.common.text.path import safe_filename
 from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.schedule.exporters import FavedICalExporter
@@ -110,6 +119,61 @@ def get_schedule_exporters(request, public=False):
         for exporter in all_exporters
         if (not isinstance(exporter, Exception) and is_visible(exporter, request, public=public))
     ]
+
+
+def build_public_schedule_exporters(event, version=None):
+    """Build serialized exporter metadata for public schedule pages.
+
+    Returns a list of dicts suitable for JSON serialization, each with
+    identifier, verbose_name, icon, export_url, and qrcode_svg.
+    Used by both the agenda view and the video SPA to ensure identical
+    exporter lists in both UIs.
+    """
+    from django.urls import reverse, NoReverseMatch
+    from django.utils.encoding import force_str
+
+    all_exporters = []
+    for signal in (register_data_exporters, register_my_data_exporters):
+        for _, exporter_cls in signal.send_robust(event):
+            if isinstance(exporter_cls, Exception):
+                continue
+            exporter = exporter_cls(event)
+            try:
+                is_public = exporter.show_public
+            except NotImplementedError:
+                is_public = False
+            if is_public:
+                all_exporters.append(exporter)
+
+    order = {
+        'google-calendar': 0, 'webcal': 1,
+        'schedule.ics': 10, 'schedule.json': 11, 'schedule.xml': 12, 'schedule.xcal': 13,
+        'faved.ics': 14,
+        'my-google-calendar': 100, 'my-webcal': 101,
+        'schedule-my.ics': 110, 'schedule-my.json': 111, 'schedule-my.xml': 112, 'schedule-my.xcal': 113,
+    }
+    all_exporters.sort(key=lambda e: (order.get(e.identifier, 50), force_str(e.verbose_name), e.identifier))
+
+    export_kwargs = {'organizer': event.organizer.slug, 'event': event.slug}
+    view_name = 'agenda:export'
+    if version:
+        view_name = 'agenda:versioned-export'
+        export_kwargs['version'] = version
+
+    result = []
+    for exporter in all_exporters:
+        try:
+            url = reverse(view_name, kwargs={**export_kwargs, 'name': exporter.identifier})
+        except NoReverseMatch:
+            continue
+        result.append({
+            'identifier': exporter.identifier,
+            'verbose_name': force_str(exporter.verbose_name),
+            'icon': getattr(exporter, 'icon', ''),
+            'export_url': url,
+            'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
+        })
+    return result
 
 
 def find_schedule_exporter(request, name, public=False):

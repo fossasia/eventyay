@@ -1,12 +1,10 @@
 {% extends "agenda/base.html" %}
 
 {% load compress %}
+{% load html_signal %}
 {% load i18n %}
-{% load rich_text %}
-{% load thumbnail %}
 {% load static %}
 
-{% load presale_locale %}
 {% block title %}{{ profile.user.get_display_name }} ::{% endblock title %}
 {% block meta_title %}{{ profile.user.get_display_name }}{% endblock meta_title %}
 {% block social_title %}{{ profile.user.get_display_name }}{% endblock social_title %}
@@ -20,59 +18,24 @@
     <link rel="alternate" type="application/json" title="{{ request.event.name|event_localize }} API" href="{{ request.event.api_urls.speakers.full }}{{ profile.code }}" />
 {% endblock alternate_link %}
 
+{% block agenda_custom_header %}
+<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+{% endblock agenda_custom_header %}
+
 {% block agenda_content %}
-    <article>
-        <div class="d-flex mb-2">
-            <h3 class="heading-with-buttons">
-                {{ profile.user.get_display_name }}
-                {% if request.event.current_schedule %}
-                    <div class="buttons ml-auto flip">
-                        <a class="btn btn-outline-primary" href="{{ profile.urls.talks_ical }}">
-                            <i class="fa fa-calendar"></i> .ical
-                        </a>
-                    </div>
-                {% endif %}
-            </h3>
-        </div>
-        <div class="speaker-container">
-            <section class="speaker-info">
-                <div class="speaker-bio">{{ profile.biography|event_localize|rich_text }}</div>
-                {% if profile.user.avatar_url and request.event.cfp.request_avatar %}
-                    <div class="speaker-avatar">
-                        <a href="{{ profile.user.avatar.url }}" data-lightbox>
-                            <img loading="lazy" width="100%" src="{{ profile.user.avatar|thumbnail:"default" }}" alt="{% translate "The speaker’s profile picture" %}">
-                        </a>
-                    </div>
-                {% endif %}
-            </section>
-            {% if answers %}
-                <hr />
-                <section class="answers">
-                    {% for answer in answers %}
-                        <span class="question"><strong>{{ answer.question.question|event_localize }}</strong></span>
-                        <span class="answer">– {% include "common/question_answer.html" with answer=answer %}</span>
-                    {% endfor %}
-                </section>
-            {% endif %}
-            <hr />
-            {% if talks %}
-                <section class="speaker-talks">
-                    <h4>
-                        {% blocktranslate trimmed count count=talks.count %}
-                            Session
-                        {% plural %}
-                            Sessions
-                        {% endblocktranslate %}
-                    </h4>
-                    {% for session in talks %}
-                        <a href="{{ session.submission.urls.public }}">
-
-                            {% include "agenda/session_block.html" with show_date=True %}
-
-                        </a>
-                    {% endfor %}
-                </section>
-            {% endif %}
-        </div>
-    </article>
+{% html_signal "eventyay.agenda.signals.html_above_speaker_pages" sender=request.event request=request profile=profile %}
+<div>
+    <script>
+    window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};
+    </script>
+    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+    {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
+    <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speaker" speaker-code="{{ profile.user.code }}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
+    {% endwith %}
+    <noscript>
+        <h1>{{ profile.user.get_display_name }}</h1>
+        {% if profile.biography %}<p>{{ profile.biography }}</p>{% endif %}
+    </noscript>
+</div>
+{% html_signal "eventyay.agenda.signals.html_below_speaker_pages" sender=request.event request=request profile=profile %}
 {% endblock agenda_content %}

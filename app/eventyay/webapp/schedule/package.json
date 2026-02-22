@@ -26,8 +26,8 @@
   },
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.34",
-    "luxon": "^3.5.0",
     "markdown-it": "^14.1.0",
+    "moment-timezone": "^0.5.45",
     "vue": "^3.5.0-rc.1"
   },
   "devDependencies": {

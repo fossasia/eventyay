@@ -42,7 +42,7 @@ export default defineConfig({
 			fileName: 'pretalx-schedule'
 		},
 		rollupOptions: {
-			external: ['vue', 'buntpapier', 'markdown-it'],
+			external: ['vue', 'buntpapier', 'markdown-it', 'qrcode'],
 			// output: {
 			// 	globals: {
 			// 		vue: 'Vue'

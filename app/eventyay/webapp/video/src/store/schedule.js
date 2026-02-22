@@ -1,91 +1,110 @@
 import moment from 'lib/timetravelMoment'
-import api from 'lib/api'
+import config from '../../config'
+
+// Thin adapter: loads schedule data and provides enriched sessions.
+// Filtering/export/timezone are handled by the shared ScheduleView/ScheduleToolbar.
+// Favs use localStorage with event-scoped key to stay in sync with the agenda side.
+
+function getFavStorageKey () {
+	const slug = window.eventyay?.eventSlug
+	if (slug) return `${slug}_favs`
+	// Fallback: extract event slug from basePath (e.g. /org/event/video)
+	const basePath = window.eventyay?.basePath || ''
+	const segments = basePath.split('/').filter(s => s.length > 0 && s !== 'video')
+	const eventSlug = segments[segments.length - 1] || ''
+	return eventSlug ? `${eventSlug}_favs` : 'schedule_favs'
+}
+
+function loadFavsFromStorage () {
+	try {
+		return JSON.parse(localStorage.getItem(getFavStorageKey())) || []
+	} catch {
+		return []
+	}
+}
+
+function saveFavsToStorage (favs) {
+	localStorage.setItem(getFavStorageKey(), JSON.stringify(favs))
+}
+
+function getCsrfToken () {
+	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
+	return match ? match[1] : null
+}
+
+function getApiBase () {
+	return config?.api?.base || ''
+}
 
 export default {
 	namespaced: true,
 	state: {
 		schedule: null,
+		scheduleMeta: null,
 		errorLoading: null,
-		filter: {},
 		now: moment(),
-		currentLanguage: localStorage.getItem('userLanguage') || 'en'
+		currentLanguage: localStorage.getItem('userLanguage') || 'en',
+		favs: loadFavsFromStorage()
 	},
 	getters: {
-		favs(state, getters, rootState) {
-			return rootState.user?.client_state?.schedule?.favs || []
+		favs (state) {
+			return state.favs
 		},
-		pretalxScheduleUrl(state, getters, rootState) {
-			if (!rootState.world.pretalx) {
-				return ''
-			}
-			return rootState.world.pretalx.url || ''
-		},
-		pretalxApiBaseUrl(state, getters, rootState) {
-			// Legacy eventyay-talk integration exposed domain/event here. We now only support a direct schedule URL.
-			return
-		},
-		rooms(state, getters, rootState) {
+		rooms (state, getters, rootState) {
 			if (!state.schedule) return
 			return state.schedule.rooms.map(room => rootState.rooms.find(r => r.pretalx_id === room.id) || room)
 		},
-		roomsLookup(state, getters) {
+		roomsLookup (state, getters) {
 			if (!state.schedule) return {}
 			return getters.rooms.reduce((acc, room) => {
 				acc[room.pretalx_id || room.id] = room
 				return acc
 			}, {})
 		},
-		tracksLookup(state) {
+		tracksLookup (state) {
 			if (!state.schedule) return {}
 			return state.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
-		speakersLookup(state) {
+		speakersLookup (state) {
 			if (!state.schedule) return {}
 			return state.schedule.speakers.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
 		},
-		sessionTypeLookup(state) {
-			if (!state.schedule) return {}
-			return state.schedule.session_type.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
-		},
-		sessions(state, getters, rootState) {
+		sessions (state, getters, rootState) {
 			if (!state.schedule) return
 			const sessions = []
-			const favArr = getters.favs || []
 			for (const session of state.schedule.talks) {
-				if (state.filter?.type === 'fav' && !favArr?.includes(session.code?.toString())) {
-					continue
-				} else if (state.filter?.type === 'track') {
-					const { tracks } = state.filter
-					if (tracks?.length && !tracks.includes(String(session.track))) {
-						continue
-					}
-				}
 				sessions.push({
 					id: session.code ? session.code.toString() : null,
 					title: session.title,
 					abstract: session.abstract,
+					description: session.description,
+					do_not_record: session.do_not_record,
 					url: session.url,
 					start: moment.tz(session.start, rootState.userTimezone),
 					end: moment.tz(session.end, rootState.userTimezone),
 					speakers: session.speakers?.map(s => getters.speakersLookup[s]),
 					track: getters.tracksLookup[session.track],
 					room: getters.roomsLookup[session.room],
+					fav_count: session.fav_count,
 					tags: session.tags,
-					session_type: session.session_type
+					session_type: session.session_type,
+					resources: session.resources,
+					answers: session.answers,
+					exporters: session.exporters,
+					recording_iframe: session.recording_iframe
 				})
 			}
 			sessions.sort((a, b) => (
-				// First sort by date, then by order of rooms
 				a.start.diff(b.start) ||
-				(state.schedule.rooms.findIndex((r) => r.id === a.room.id) - state.schedule.rooms.findIndex((r) => r.id === b.room.id))
+				(state.schedule.rooms.findIndex((r) => r.id === a.room?.id) - state.schedule.rooms.findIndex((r) => r.id === b.room?.id))
 			))
 			return sessions
 		},
-		sessionsLookup(state, getters) {
+		sessionsLookup (state, getters) {
 			if (!state.schedule) return {}
 			return getters.sessions.reduce((acc, s) => { acc[s.id] = s; return acc }, {})
 		},
-		days(state, getters) {
+		days (state, getters) {
 			if (!getters.sessions) return
 			const days = []
 			for (const session of getters.sessions) {
@@ -94,7 +113,7 @@ export default {
 			}
 			return days
 		},
-		sessionsScheduledNow(state, getters, rootState) {
+		sessionsScheduledNow (state, getters, rootState) {
 			if (!getters.sessions) return
 			const sessions = []
 			for (const session of getters.sessions) {
@@ -103,7 +122,7 @@ export default {
 			}
 			return sessions
 		},
-		currentSessionPerRoom(state, getters, rootState) {
+		currentSessionPerRoom (state, getters, rootState) {
 			if (!getters.sessions) return
 			const rooms = {}
 			for (const room of rootState.rooms) {
@@ -113,174 +132,133 @@ export default {
 					}
 				} else if (room.schedule_data?.session) {
 					rooms[room.id] = {
-						session: state.sessions?.find(session => session.id === room.schedule_data.session)
+						session: getters.sessions?.find(session => session.id === room.schedule_data.session)
 					}
 				}
 			}
 			return rooms
 		},
-		schedule(state) {
+		schedule (state) {
 			return state.schedule
 		},
-		getSessionType: (state, getters) => (item) => {
+		exporters (state) {
+			return state.scheduleMeta?.exporters || []
+		},
+		scheduleMetaData (state) {
+			return state.scheduleMeta || {}
+		},
+		getSessionType: (state) => (item) => {
 			if (typeof item?.session_type === 'string') {
 				return item.session_type
 			} else if (typeof item?.session_type === 'object') {
-				const sessionTypeKeys = Object.keys(item.session_type)
-				const keyLanguage = sessionTypeKeys.find(key => key === state.currentLanguage) ||
-					sessionTypeKeys.find(key => key === 'en') ||
-					sessionTypeKeys[0]
-
+				const keys = Object.keys(item.session_type)
+				const keyLanguage = keys.find(k => k === state.currentLanguage) ||
+					keys.find(k => k === 'en') ||
+					keys[0]
 				return item.session_type[keyLanguage]
 			}
 			return null
 		},
-		getSelectedName: (state, getters) => (item) => {
+		getSelectedName: (state) => (item) => {
 			if (typeof item?.name === 'string') {
 				return item.name
 			} else if (typeof item?.name === 'object') {
 				const keys = Object.keys(item.name)
-				const keyLanguage = keys.find(key => key === state.currentLanguage) ||
-					keys.find(key => key === 'en') ||
+				const keyLanguage = keys.find(k => k === state.currentLanguage) ||
+					keys.find(k => k === 'en') ||
 					keys[0]
-
 				return item.name[keyLanguage]
 			}
 			return null
-		},
-		filterSessionTypesByLanguage: (state, getters) => (data) => {
-			const uniqueSessionTypes = new Set()
-
-			data.forEach(item => {
-				const sessionType = getters.getSessionType(item)
-				if (sessionType) {
-					uniqueSessionTypes.add(sessionType)
-				}
-			})
-
-			return Array.from(uniqueSessionTypes).map(sessionType => ({
-				value: sessionType,
-				label: sessionType
-			}))
-		},
-		filterItemsByLanguage: (state, getters) => (data) => {
-			const languageMap = new Map()
-
-			data.forEach(item => {
-				const selectedName = getters.getSelectedName(item)
-				if (selectedName) {
-					languageMap.set(item.id, selectedName)
-				}
-			})
-
-			return Array.from(languageMap).map(([id, name]) => ({ value: id, label: name }))
-		},
-		matchesSessionTypeFilter: (state) => (talk, selectedIds) => {
-			if (typeof talk?.session_type === 'string') {
-				return selectedIds.includes(talk.session_type)
-			} else if (typeof talk?.session_type === 'object') {
-				return Object.keys(talk.session_type).some(key => selectedIds.includes(talk.session_type[key]))
-			}
-			return false
-		},
-		filterTalk: (state, getter) => (refKey, selectedIds, previousResults) => {
-			const talks = state.schedule.talks
-
-			return talks
-				.filter(talk => {
-					const matchesSessionType = refKey === 'session_type' && getter.matchesSessionTypeFilter(talk, selectedIds)
-					const matchesRefKey = selectedIds.includes(talk[refKey])
-
-					return (matchesSessionType || matchesRefKey) && (!previousResults || previousResults.includes(talk.id))
-				})
-				.map(talk => talk.id) || []
-		},
-		filteredSessions: (state, getters) => (filter) => {
-			let filteredResults = null
-
-			Object.keys(filter).forEach(key => {
-				const refKey = filter[key].refKey
-				const selectedIds = filter[key].data
-					.filter(item => item.selected)
-					.map(item => item.value) || []
-
-				if (selectedIds.length) {
-					filteredResults = getters.filterTalk(refKey, selectedIds, filteredResults)
-				}
-			})
-
-			return filteredResults
 		}
 	},
 	actions: {
-		async fetch({state, getters, rootState}) {
+		async fetch ({ state }) {
 			try {
 				state.errorLoading = null
-
 				if (window.eventyay?.schedule) {
 					state.schedule = window.eventyay.schedule
-				} else if (rootState.world?.schedule) {
-					state.schedule = rootState.world.schedule
-				} else if (getters.pretalxScheduleUrl) {
-					state.schedule = await (await fetch(getters.pretalxScheduleUrl)).json()
-				} else {
-					return
 				}
-
-				if (state.schedule?.talks) {
-					state.schedule.session_type = state.schedule.talks.reduce((acc, current) => {
-						const sessionType = current.session_type
-						if (!sessionType) {
-							return acc
-						}
-						const isDuplicate = acc.some(item => item.session_type && item.session_type === sessionType)
-						if (!isDuplicate) {
-							acc.push(current)
-						}
-						return acc
-					}, [])
+				if (window.eventyay?.scheduleMeta) {
+					state.scheduleMeta = window.eventyay.scheduleMeta
 				}
 			} catch (error) {
 				state.errorLoading = error
 			}
 		},
-		async fav({state, dispatch, rootState}, id) {
-			let favs = rootState.user.client_state.schedule?.favs
-			if (!favs) {
-				favs = []
-				rootState.user.client_state.schedule = {favs}
+		async fav ({ state, rootState }, id) {
+			if (!state.favs.includes(id)) {
+				state.favs.push(id)
+				saveFavsToStorage(state.favs)
 			}
-			if (!favs.includes(id)) {
-				favs.push(id)
-				await dispatch('saveFavs', favs)
-			}
-		},
-		async unfav({state, dispatch, rootState}, id) {
-			let favs = rootState.user.client_state.schedule?.favs
-			if (!favs) return
-			rootState.user.client_state.schedule.favs = favs = favs.filter(fav => fav !== id)
-			await dispatch('saveFavs', favs)
-		},
-		async saveFavs({rootState}, favs) {
-			await api.call('user.update', {
-				client_state: {
-					...rootState.user.client_state,
-					schedule: {
-						favs: favs
-					}
+			const apiBase = getApiBase()
+			if (apiBase && rootState.user) {
+				try {
+					const headers = { 'Content-Type': 'application/json' }
+					const csrf = getCsrfToken()
+					if (csrf) headers['X-CSRFToken'] = csrf
+					await fetch(`${apiBase}submissions/${id}/favourite/`, {
+						method: 'POST',
+						headers,
+						credentials: 'same-origin'
+					})
+				} catch (error) {
+					console.error('Failed to save favourite: %s', error)
 				}
-			})
-			// TODO error handling
+			}
 		},
-		setCurrentLanguage({commit}, language) {
+		async unfav ({ state, rootState }, id) {
+			state.favs = state.favs.filter(fav => fav !== id)
+			saveFavsToStorage(state.favs)
+			const apiBase = getApiBase()
+			if (apiBase && rootState.user) {
+				try {
+					const headers = { 'Content-Type': 'application/json' }
+					const csrf = getCsrfToken()
+					if (csrf) headers['X-CSRFToken'] = csrf
+					await fetch(`${apiBase}submissions/${id}/favourite/`, {
+						method: 'DELETE',
+						headers,
+						credentials: 'same-origin'
+					})
+				} catch (error) {
+					console.error('Failed to remove favourite: %s', error)
+				}
+			}
+		},
+		async loadFavs ({ state, rootState }) {
+			const localFavs = loadFavsFromStorage()
+			state.favs = localFavs
+			const apiBase = getApiBase()
+			if (apiBase && rootState.user) {
+				try {
+					const headers = { 'Content-Type': 'application/json' }
+					const csrf = getCsrfToken()
+					if (csrf) headers['X-CSRFToken'] = csrf
+					const response = await fetch(`${apiBase}submissions/favourites/merge/`, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify(localFavs),
+						credentials: 'same-origin'
+					})
+					if (response.ok) {
+						const merged = await response.json()
+						if (Array.isArray(merged)) {
+							state.favs = merged
+							saveFavsToStorage(merged)
+						}
+					}
+				} catch (error) {
+					console.error('Failed to merge favourites: %s', error)
+				}
+			}
+		},
+		setCurrentLanguage ({ commit }, language) {
 			commit('setCurrentLanguage', language)
-		},
-		filter({ state }, filter) {
-			state.filter = filter
-		},
+		}
 	},
 	mutations: {
-		setCurrentLanguage(state, language) {
+		setCurrentLanguage (state, language) {
 			state.currentLanguage = language
 		}
 	}

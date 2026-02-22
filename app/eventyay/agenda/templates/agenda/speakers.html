@@ -1,39 +1,23 @@
 {% extends "agenda/base.html" %}
 {% load compress %}
+{% load html_signal %}
 {% load i18n %}
-{% load rich_text %}
 {% load static %}
-{% load thumbnail %}
 
-{% load presale_locale %}
+{% block agenda_custom_header %}
+<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+{% endblock agenda_custom_header %}
+
 {% block agenda_content %}
-    <p></p>
-    <article>
-        <section style="--track-color: {{ request.event.visible_primary_color }}" class="pretalx-list-day">
-            {% for speaker in speakers %}
-                <a href="{{ speaker.urls.public }}">
-                    <div class="pretalx-session">
-                        <div class="pretalx-session-time-box avatar">
-                            <div class="avatar-wrapper">
-                                {% if speaker.user.avatar_url and request.event.cfp.request_avatar %}
-                                    <img loading="lazy" src="{{ speaker.user.avatar|thumbnail:"default" }}" alt="{% translate "The speaker’s profile picture" %}">
-                                {% else %}
-                                    <img loading="lazy" src="{{ request.event.urls.speakers }}avatar.svg" alt="{% translate "The speaker’s profile picture" %}">
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="pretalx-session-info">
-                            <div class="title">{{ speaker.user.get_display_name }}</div>
-                            <div class="abstract">{{ speaker.biography|default:""|event_localize|rich_text_without_links }}</div>
-                            <ul>
-                                {% for talk in speaker.talks %}
-                                    <li>{{ talk.title|event_localize }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </a>
-            {% endfor %}
-        </section>
-    </article>
+{% html_signal "eventyay.agenda.signals.html_above_speakers_list" sender=request.event request=request %}
+<div>
+    <script>
+    window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};
+    </script>
+    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+    {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
+    <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
+    {% endwith %}
+</div>
+{% html_signal "eventyay.agenda.signals.html_below_speakers_list" sender=request.event request=request %}
 {% endblock agenda_content %}

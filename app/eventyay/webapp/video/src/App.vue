@@ -44,6 +44,8 @@
 </template>
 <script>
 import { mapState } from 'vuex'
+import { computed, reactive } from 'vue'
+import moment from 'lib/timetravelMoment'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -56,6 +58,44 @@ const chatbarModules = ['chat.native', 'question', 'poll']
 
 export default {
 	components: { AppBar, RoomsSidebar, MediaSource, GreetingPrompt, Notifications },
+	provide() {
+		return {
+			eventUrl: window.eventyay?.eventUrl || '',
+			scheduleData: reactive({
+				schedule: computed(() => this.$store.state.schedule?.schedule),
+				sessions: computed(() => this.$store.getters['schedule/sessions']),
+				rooms: computed(() => this.$store.getters['schedule/rooms']),
+				days: computed(() => this.$store.getters['schedule/days']),
+				favs: computed(() => this.$store.getters['schedule/favs'] || []),
+				now: computed(() => this.$store.state.now),
+				timezone: localStorage.getItem('userTimezone') || moment.tz.guess(),
+				hasAmPm: new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12,
+				errorLoading: computed(() => this.$store.state.schedule?.errorLoading),
+			}),
+			scheduleFav: (id) => this.$store.dispatch('schedule/fav', id),
+			scheduleUnfav: (id) => this.$store.dispatch('schedule/unfav', id),
+			scheduleExporters: computed(() => this.$store.getters['schedule/exporters'] || []),
+			scheduleMetaData: computed(() => this.$store.getters['schedule/scheduleMetaData'] || {}),
+			linkTarget: '_blank',
+			generateSessionLinkUrl: ({session}) => {
+				if (session.url) return session.url
+				return this.$router.resolve(this.getSessionRoute(session)).href
+			},
+			onSessionLinkClick: async (event, session) => {
+				if (!session.url) {
+					event.preventDefault()
+					await this.$router.push(this.getSessionRoute(session))
+				}
+			},
+			generateSpeakerLinkUrl: ({speaker}) => {
+				return this.$router.resolve({name: 'schedule:speaker', params: {speakerId: speaker.code}}).href
+			},
+			onSpeakerLinkClick: async (event, speaker) => {
+				event.preventDefault()
+				await this.$router.push({name: 'schedule:speaker', params: {speakerId: speaker.code}})
+			}
+		}
+	},
 	data() {
 		return {
 			backgroundRoom: null,
@@ -187,6 +227,12 @@ export default {
 		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		getSessionRoute(session) {
+			if (session.room?.modules) {
+				return {name: 'room', params: {roomId: session.room.id}}
+			}
+			return {name: 'schedule:talk', params: {talkId: session.id}}
+		},
 		hasFatalError(room) {
 			return !!(room && this.roomFatalErrors?.[room.id])
 		},
@@ -396,4 +442,83 @@ export default {
 		position: absolute
 		width: 0
 		height: 0
+
+@media print
+	@page
+		size: A4 landscape
+		margin: 5mm
+	.v-app
+		display: block !important
+		overflow: visible !important
+		height: auto !important
+		.c-app-bar
+			display: none !important
+		.c-rooms-sidebar
+			display: none !important
+		.sidebar-backdrop
+			display: none !important
+		.disconnected-warning
+			display: none !important
+		.native-permission-blocker
+			display: none !important
+		.app-content
+			padding-top: 0 !important
+			height: auto !important
+			overflow: visible !important
+			display: block !important
+		.pretalx-schedule
+			height: auto !important
+			overflow: visible !important
+			&:fullscreen
+				padding: 0
+			.days
+				position: static !important
+			.error-messages
+				display: none
+		.pretalx-modal
+			display: none !important
+		.c-linear-schedule-session, .break
+			break-inside: avoid
+			page-break-inside: avoid
+			box-shadow: none !important
+			border: 1px solid #ccc !important
+			-webkit-print-color-adjust: exact
+			print-color-adjust: exact
+			color-adjust: exact
+			.time-box
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+			.info
+				border: 1px solid #ccc !important
+				border-left: none !important
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+			.session-icons
+				display: none
+		.c-linear-schedule-session
+			.info
+				background: #fff !important
+		.break
+			.info
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+		.c-grid-schedule
+			overflow: visible !important
+			.timeslice
+				position: static !important
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+				&.gap::before
+					display: none
+			.c-linear-schedule-session .time-box,
+			.break .time-box
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+		.powered-by
+			display: none
 </style>

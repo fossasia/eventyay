@@ -20,8 +20,11 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
 from django_context_decorator import context
+from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.views.utils import (
+    build_public_schedule_exporters,
+    escape_json_for_script,
     get_schedule_exporter_content,
     get_schedule_exporters,
     is_public_schedule_empty,
@@ -296,8 +299,50 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return list(exporter(self.request.event) for _, exporter in register_my_data_exporters.send(self.request.event))
 
     @context
+    def is_sessions_page(self):
+        return self.request.path.endswith('/sessions/')
+
+    @context
     def show_talk_list(self):
-        return self.request.path.endswith('/sessions/') or self.request.event.display_settings['schedule'] == 'list'
+        return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
+
+    @context
+    def schedule_json(self):
+        """Build enriched schedule data for inline embedding, avoiding extra API calls."""
+        if not self.schedule:
+            return '{}'
+        data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True)
+        return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        schedule = ctx.get('schedule')
+        version = schedule.version if schedule else None
+        released = list(
+            self.request.event.schedules.filter(version__isnull=False)
+            .order_by('-published')
+            .values_list('version', flat=True)
+        )
+        base_schedule_url = str(self.request.event.urls.schedule)
+        current_version = (
+            self.request.event.current_schedule.version
+            if self.request.event.current_schedule
+            else None
+        )
+        versions = [
+            {'version': v, 'url': f'{base_schedule_url}v/{v}/', 'isCurrent': v == current_version}
+            for v in released
+        ]
+        meta = {
+            'version': version or '',
+            'is_current': schedule == self.request.event.current_schedule if schedule else False,
+            'changelog_url': str(self.request.event.urls.changelog),
+            'current_schedule_url': base_schedule_url if self.request.event.current_schedule else '',
+            'versions': versions,
+            'exporters': build_public_schedule_exporters(self.request.event, version=version),
+        }
+        ctx['schedule_meta_json'] = escape_json_for_script(json.dumps(meta))
+        return ctx
 
 
 @cache_page(60 * 60 * 24)
@@ -308,10 +353,47 @@ def schedule_messages(request, **kwargs):
             "You're currently not logged in, so your favourited talks will only be stored locally in your browser."
         ),
         'favs_not_saved': _('Your favourites could only be saved locally in your browser.'),
+        'no_matching_options': _('Sorry, no matching options.'),
+        'view_changelog': _('View Changelog'),
+        'go_to_current_version': _('Go to current version'),
+        'reset_all_filters': _('Reset all filters'),
+        'print': _('Print'),
+        'fullscreen': _('Fullscreen'),
+        'exit_fullscreen': _('Exit Fullscreen'),
+        'latest': _('Latest'),
+        'version_warning_editable': _(
+            'You are currently viewing the editable schedule version.'
+            ' It may not match the released version.'
+        ),
+        'version_warning_old': _(
+            'You are currently viewing an older schedule version.'
+        ),
+        'join_room': _('Join room'),
+        'speaker_fallback': _('Speaker'),
+        'speaker_name_not_provided': _('Speaker name not provided'),
+        'add_to_calendar': _('Add to Calendar'),
+        'ical': _('iCal'),
+        'json': _('JSON'),
+        'xml': _('XML'),
+        'xcal': _('XCal'),
+        'google_calendar': _('Google Calendar'),
+        'webcal': _('Webcal'),
+        'yes': _('Yes'),
+        'no': _('No'),
+        'no_speakers_found': _('No speakers found.'),
+        'sessions': _('Sessions'),
+        'tracks': _('Tracks'),
+        'speakers': _('Speakers'),
+        'downloads': _('Downloads'),
+        'export': _('Export'),
+        'no_file_provided': _('No file provided'),
+        'no_response': _('No response'),
+        'other_timezones': _('Other Timezones'),
+        'current': _('current'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
-        f'const EVENTYAY_MESSAGES = {json.dumps(strings)};',
+        f'const PRETALX_MESSAGES = {json.dumps(strings)};',
         content_type='application/javascript',
     )
 
