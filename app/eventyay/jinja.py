@@ -3,12 +3,15 @@ from django.conf import settings
 from django.template.defaultfilters import date
 from jinja2 import Environment
 
-from .helpers.jinja import url_for
 from eventyay.helpers.templatetags.thumb import thumb
+
+from .helpers.jinja import static_url, url_for
 
 jj_globals = {
     'url_for': url_for,
+    'settings': settings,
     'site_url': settings.SITE_URL,
+    'static_url': static_url,
 }
 
 jj_filters = {

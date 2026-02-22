@@ -36,6 +36,7 @@ from eventyay.base.settings import (
 )
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDateTimeInput
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
     MultipleLanguagesWidget,
@@ -91,6 +92,9 @@ class EventWizardFoundationForm(forms.Form):
         self.user = kwargs.pop('user')
         self.session = kwargs.pop('session')
         super().__init__(*args, **kwargs)
+        localized_language_choices = get_language_choices_native_with_ui_name()
+        self.fields['locales'].choices = localized_language_choices
+        self.fields['content_locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
             qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
@@ -216,6 +220,8 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
+        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
+        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['email'].required = True
         self.fields['email'].label = _('Organizer email address')
@@ -651,9 +657,10 @@ class EventSettingsForm(SettingsForm):
                 data[required_key] = True
             # Explicitly check for 'do_not_ask'.
             # Do not overwrite as default-behaviour when no value for virtual field is transmitted!
+            # Note: Only set asked to False, preserve the existing required value
             elif data[virtual_key] == 'do_not_ask':
                 data[asked_key] = False
-                data[required_key] = False
+                # Don't touch required_key - preserve existing required state
 
             # hierarkey.forms cannot handle non-existent keys in cleaned_data => do not delete, but set to None
             data[virtual_key] = None
@@ -698,7 +705,7 @@ class EventSettingsForm(SettingsForm):
             self.fields[virtual_key] = forms.ChoiceField(
                 label=asked_field.label,
                 help_text=asked_field.help_text,
-                required=True,
+                required=False,
                 widget=forms.RadioSelect,
                 choices=[
                     # default key needs a value other than '' because with '' it would also overwrite

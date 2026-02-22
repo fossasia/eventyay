@@ -8,7 +8,7 @@
 {% load tz %}
 {% load static %}
 
-{% with current_event=request.event|default:event %}
+{% with current_event=request.event|default:None %}
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
@@ -70,7 +70,8 @@
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
             <script src="{% static 'agenda/js/join-online-event.js' %}"></script>
-            <script defer src="{% static 'common/js/dropdown.js' %}"></script>
+            <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
+            <script defer src="{% static 'common/js/nav-tabs.js' %}"></script>
         {% endcompress %}
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
@@ -86,13 +87,36 @@
             {% block header_background %}{% endblock header_background %}
         </div>
         {% block site_notice %}
-            {% if current_event and not current_event.is_public and not is_html_export %}
+            {% if current_event and not current_event.live and not is_html_export %}
                 <div id="event-nonpublic" class="d-print-none">
                     <i class="fa fa-user-secret"></i>
                     {% blocktranslate trimmed %}
-                        This event is currently non-public. Only organisers can see it.
+                        This event is currently offline. Only event team members and system administrators can see it.
                     {% endblocktranslate %}
                 </div>
+            {% endif %}
+            {% private_testmode_tickets_enabled as tickets_private_testmode %}
+            {% private_testmode_talks_enabled as talks_private_testmode %}
+            {% is_event_team_member as show_testmode_warning %}
+            {% if show_testmode_warning and not is_html_export %}
+                {% if tickets_private_testmode or talks_private_testmode %}
+                    <div id="event-testmode" class="d-print-none">
+                        <i class="fa fa-flask"></i>
+                        {% if tickets_private_testmode and talks_private_testmode %}
+                            {% blocktranslate trimmed %}
+                                Tickets and talk pages are in private test mode. Only event team members and system administrators can see them.
+                            {% endblocktranslate %}
+                        {% elif tickets_private_testmode %}
+                            {% blocktranslate trimmed %}
+                                Tickets are in private test mode. Only event team members and system administrators can see them.
+                            {% endblocktranslate %}
+                        {% else %}
+                            {% blocktranslate trimmed %}
+                                Talk pages are in private test mode. Only event team members and system administrators can see them.
+                            {% endblocktranslate %}
+                        {% endif %}
+                    </div>
+                {% endif %}
             {% endif %}
         {% endblock site_notice %}
         <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">

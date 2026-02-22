@@ -61,7 +61,7 @@
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
             <script src="{% static 'jquery/js/jquery-3.7.1.min.js' %}"></script>
             <script src="{% static 'agenda/js/join-online-event.js' %}"></script>
-            <script defer src="{% static 'common/js/dropdown.js' %}"></script>
+            <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
         {% endcompress %}
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
@@ -171,7 +171,7 @@
                             {% if request.event %}
                                 <a href="{{ request.event.urls.login }}?next={{ request.path|urlencode }}">login</a>
                             {% else %}
-                                <a href="{% url "orga:login" %}">login</a>
+                                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">login</a>
                             {% endif %}
                         {% endif %}
                     </div>

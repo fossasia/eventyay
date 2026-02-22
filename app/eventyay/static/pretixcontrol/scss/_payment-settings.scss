@@ -1,0 +1,61 @@
+// Payment gateway settings styles
+.payment-gateway-section {
+  margin-bottom: 30px;
+  
+  legend {
+    margin-top: 10px;
+    margin-bottom: 15px;
+  }
+  
+  > .help-block {
+    margin-bottom: 20px;
+  }
+}
+
+.payment-subsection {
+  margin-bottom: 20px;
+  padding-left: 20px;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #555;
+  }
+  
+  .form-group:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Secret key visibility toggle
+.secret-key-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+
+  input {
+    padding-right: 35px;
+  }
+
+  .secret-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 0 5px;
+
+    &:hover {
+      color: #333;
+    }
+    
+    &:focus {
+      outline: 2px solid #5b9dd9;
+      outline-offset: 1px;
+    }
+  }
+}

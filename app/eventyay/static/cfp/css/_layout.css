@@ -80,6 +80,7 @@ header {
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
+    gap: 10px;
 
     .header-nav {
       color: var(--color-primary);
@@ -237,6 +238,19 @@ header {
     font-weight: bold;
   }
 }
+
+#event-testmode {
+  background: var(--color-warning);
+  padding: 5px 20px;
+  color: var(--color-warning-text-dark);
+  text-align: center;
+
+  a {
+    color: var(--color-warning-text-dark);
+    font-weight: bold;
+  }
+}
+
 
 footer {
   padding: 20px 0;

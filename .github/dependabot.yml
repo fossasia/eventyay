@@ -5,24 +5,37 @@ updates:
     directory: "/app"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     versioning-strategy: increase
+    ignore:
+      - dependency-name: "django"
+        versions: [">=6.0.0"]
+      - dependency-name: "stripe"
+        versions: [">=11.4.0"]
+      # Ignore all setuptools updates; issue is not version-specific.
+      # Can be removed once Dependabot handles no-op uv updates.
+      - dependency-name: "setuptools"
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/webapp"
+    directory: "/app/eventyay/webapp/video"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/frontend/schedule"
+    directory: "/app/eventyay/webapp/schedule"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/frontend/schedule-editor"
+    directory: "/app/eventyay/webapp/schedule-editor"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/frontend/webcheckin-bundler"
+    directory: "/app/eventyay/webapp/webcheckin"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
