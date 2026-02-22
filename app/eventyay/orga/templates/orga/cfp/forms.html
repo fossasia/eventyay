@@ -29,12 +29,13 @@
          data-speaker-field-order='{{ speaker_field_order|safe }}'
          data-reviewer-field-order='{{ reviewer_field_order|safe }}'
          style="display:none;"></div>
-    <h2 class="d-flex">
+    <div class="cfp-forms-page">
+    <h2 class="d-flex cfp-forms-header">
         {{ generic_title }}
         <span data-dialog-target="#info-dialog" data-toggle="dialog">
             <i class="fa fa-question-circle-o text-info ml-2"></i>
         </span>
-        <div class="ml-auto mb-3">
+        <div class="cfp-forms-actions mb-3">
             {% if question_list %}
                 <a href="{{ request.event.cfp.urls.remind_questions }}" class="btn btn-info">{% translate "Send out reminders for custom fields without responses" %}</a>
             {% endif %}
@@ -476,8 +477,8 @@
                     </tbody>
                     </table>
                 </div>
-                <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                <div class="row cfp-new-field-row">
+                    <div class="col-md-9 d-flex justify-content-end cfp-new-field-col">
                         <a href="{{ create_url }}?target=submission" class="btn btn-success btn-sm">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
@@ -828,8 +829,8 @@
                     </tbody>
                     </table>
                 </div>
-                <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                <div class="row cfp-new-field-row">
+                    <div class="col-md-9 d-flex justify-content-end cfp-new-field-col">
                         <a href="{{ create_url }}?target=speaker" class="btn btn-success btn-sm">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
@@ -918,8 +919,8 @@
                     </table>
                 </div>
                 {% endif %}
-                <div class="row mb-3">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                <div class="row mb-3 cfp-new-field-row">
+                    <div class="col-md-9 d-flex justify-content-end cfp-new-field-col">
                         <a href="{{ create_url }}?target=reviewer" class="btn btn-success btn-sm">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
@@ -928,4 +929,5 @@
             </fieldset>
         {% include "orga/includes/submit_row.html" %}
     </form>
+    </div>
 {% endblock %}
