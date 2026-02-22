@@ -207,13 +207,13 @@ urlpatterns = [
                         [
                             path(
                                 '',
-                                submission.SubmissionContentView.as_view(),  # Read-only view
-                                name="submissions.content",
+                                submission.SubmissionContentReadView.as_view(),
+                                name='submissions.content',
                             ),
                             path(
                                 'edit',
-                                submission.SubmissionContent.as_view(),  # Edit view
-                                name="submissions.content.edit",
+                                submission.SubmissionContent.as_view(),
+                                name='submissions.content.edit',
                             ),
                             path(
                                 'submit',

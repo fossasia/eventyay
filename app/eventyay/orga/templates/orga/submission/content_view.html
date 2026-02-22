@@ -1,0 +1,140 @@
+{% extends "orga/submission/base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load rules %}
+{% load rich_text %}
+{% load staff_session %}
+{% load thumbnail %}
+
+{% block scripts %}
+    {{ block.super }}
+{% endblock scripts %}
+
+{% block submission_content %}
+    {% has_event_perm "base.list_all_review" request.user request request.event as can_view_all_reviews %}
+    {% if submission.access_code %}
+        <div class="alert alert-info"><span></span><span>
+            {% blocktranslate trimmed %}
+                This proposal was created using an access code:
+            {% endblocktranslate %} <a href="{{ submission.access_code.urls.edit }}">{{ submission.access_code.code }}</a>
+        </span></div>
+    {% endif %}
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="card-title text-info">{{ submission.title }}</h3>
+            <p class="card-text">
+                <strong>{% translate "Session type" %}:</strong> {{ submission.submission_type.name }}
+            </p>
+            {% if submission.track %}
+            <p class="card-text">
+                <strong>{% translate "Track" %}:</strong> {{ submission.track.name }}
+            </p>
+            {% endif %}
+            <p class="card-text">
+                <strong>{% translate "State" %}:</strong> 
+                {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
+            </p>
+            
+            {% if submission.abstract %}
+            <div class="card-text">
+                <strong>{% translate "Abstract" %}:</strong>
+                {{ submission.abstract|rich_text }}
+            </div>
+            {% endif %}
+            
+            {% if submission.description %}
+            <div class="card-text mt-3">
+                <strong>{% translate "Description" %}:</strong>
+                {{ submission.description|rich_text }}
+            </div>
+            {% endif %}
+            
+            {% if submission.notes %}
+            <div class="card-text mt-3">
+                <strong>{% translate "Notes" %}:</strong>
+                {{ submission.notes|rich_text }}
+            </div>
+            {% endif %}
+            
+            {% if submission.internal_notes %}
+            <div class="card-text mt-3">
+                <strong>{% translate "Internal notes" %}:</strong>
+                {{ submission.internal_notes|rich_text }}
+            </div>
+            {% endif %}
+            
+            <p class="card-text">
+                <strong>{% translate "Duration" %}:</strong> {{ submission.get_duration }} min
+            </p>
+            {% if submission.slot_count > 1 %}
+            <p class="card-text">
+                <strong>{% translate "Slot Count" %}:</strong> {{ submission.slot_count }}
+            </p>
+            {% endif %}
+            <p class="card-text">
+                <strong>{% translate "Language" %}:</strong> {{ submission.get_content_locale_display }}
+            </p>
+            <p class="card-text">
+                <strong>{% translate "Do not record" %}:</strong> {{ submission.do_not_record|yesno }}
+            </p>
+            <p class="card-text">
+                <strong>{% translate "Featured" %}:</strong> {{ submission.is_featured|yesno }}
+            </p>
+
+            {% if submission.image %}
+            <p class="card-text">
+                <strong>{% translate "Session image" %}:</strong><br>
+                <a href="{{ submission.image.url }}" data-lightbox>
+                    <img loading="lazy" width="200px" src="{{ submission.image|thumbnail:"medium" }}" alt="{% translate "Session image" %}">
+                </a>
+            </p>
+            {% endif %}
+            
+            {% if submission.resources.exists %}
+                <div class="card-text">
+                    <strong>{% translate "Resources" %}:</strong>
+                    <ul>
+                        {% for resource in submission.resources.all %}
+                            <li>
+                                <a href="{{ resource.url }}">{{ resource.description|default:resource.filename }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if questions %}
+                <div class="card-text">
+                    {% for answer in questions %}
+                        <div class="mb-1">
+                            <strong>{{ answer.question.question }}:</strong>
+                            {% include "common/question_answer.html" with answer=answer %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if can_edit_submission %}
+            <div class="d-flex justify-content-start mb-2">
+                <a href="{{ submission.orga_urls.edit }}" class="btn btn-info">
+                    <i class="fa fa-pencil"></i> {% translate "Edit Form" %}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if submission.median_score != None and can_view_all_reviews %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h3 class="card-title">{% translate "Reviews" %}</h3>
+            <p class="card-text">
+                {{ submission.reviews.count }} {% translate "reviews" %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <span id="vars" remoteUrl="{{ request.event.organiser.orga_urls.user_search }}"></span>
+{% endblock submission_content %}
