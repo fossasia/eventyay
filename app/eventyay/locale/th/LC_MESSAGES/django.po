@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-17 16:20+0000\n"
+"PO-Revision-Date: 2026-02-20 21:30+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Thai <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "th/>\n"
@@ -21,41 +21,44 @@ msgstr ""
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
-msgstr ""
+msgstr "ขอบคุณสำหรับความคิดเห็นของคุณ!"
 
 #: agenda/phrases.py:9
 msgid "Thanks, we (and our speakers) appreciate your feedback!"
-msgstr ""
+msgstr "ขอบคุณ เรา (และวิทยากรของเรา) ซาบซึ้งกับความคิดเห็นของคุณ!"
 
 #: agenda/phrases.py:11
 msgid "This session will not be recorded."
-msgstr ""
+msgstr "เซสชันนี้จะไม่มีการบันทึก"
 
 #: agenda/phrases.py:13
 msgid "View conference schedule"
-msgstr ""
+msgstr "ดูตารางกำหนดการประชุม"
 
 #: agenda/phrases.py:14
 msgid "View schedule preview"
-msgstr ""
+msgstr "ดูตัวอย่างตารางกำหนดการ"
 
 #: agenda/phrases.py:15
 msgid "Edit or view your proposals"
-msgstr ""
+msgstr "แก้ไขหรือดูข้อเสนอของคุณ"
 
 #: agenda/templates/agenda/base.html:36 cfp/templates/cfp/event/base.html:19
 msgid ""
 "Talk pages are currently in test mode. Please do not treat schedules or "
 "submissions as final, as they may change or be removed without notice."
 msgstr ""
+"หน้าการบรรยายกำลังอยู่ในโหมดทดสอบ โปรดอย่าถือว่าตารางกำหนดการหรือการส่งข้อเสนอเป็นฉบับสุดท้"
+"าย เนื่องจากอาจมีการเปลี่ยนแปลงหรือนำออกได้โดยไม่แจ้งให้ทราบล่วงหน้า"
 
 #: agenda/templates/agenda/base.html:46
 msgid "This schedule-related page is non-public. Only organisers can see it."
 msgstr ""
+"หน้านี้ที่เกี่ยวกับตารางกำหนดการไม่เปิดสาธารณะ มีเพียงผู้จัดงานเท่านั้นที่มองเห็นได้"
 
 #: agenda/templates/agenda/changelog_block.html:15
 msgid "We have new sessions!"
-msgstr ""
+msgstr "เรามีเซสชันใหม่!"
 
 #: agenda/templates/agenda/changelog_block.html:22
 #: agenda/templates/agenda/changelog_block.html:40
@@ -65,25 +68,27 @@ msgstr ""
 #: agenda/templates/agenda/changelog_block.html:125
 #, python-format
 msgid "%(quote_open)s%(title)s%(quote_close)s by %(speakers)s"
-msgstr ""
+msgstr "%(quote_open)s%(title)s%(quote_close)s โดย %(speakers)s"
 
 #: agenda/templates/agenda/changelog_block.html:35
 msgid "We have a new session: "
-msgstr ""
+msgstr "เรามีเซสชันใหม่: "
 
 #: agenda/templates/agenda/changelog_block.html:55
 msgid "Sadly, we had to cancel sessions:"
-msgstr ""
+msgstr "น่าเสียดายที่เราต้องยกเลิกเซสชัน:"
 
 #: agenda/templates/agenda/changelog_block.html:73
 msgid "We sadly had to cancel a session: "
-msgstr ""
+msgstr "น่าเสียดายที่เราต้องยกเลิกเซสชัน: "
 
 #: agenda/templates/agenda/changelog_block.html:92
 msgid ""
 "We had to move some sessions, so if you were planning on seeing them, check "
 "their new dates or locations:"
 msgstr ""
+"เราต้องย้ายบางเซสชัน ดังนั้นหากคุณวางแผนจะเข้าชม โปรดตรวจสอบวันหรือสถานที่ใหม่ของเซสชันเหล่า"
+"นั้น:"
 
 #: agenda/templates/agenda/changelog_block.html:120
 msgid "We have moved a session around: "
@@ -208,46 +213,48 @@ msgstr "นำเซสชันนี้ออกจากรายการโ
 
 #: agenda/templates/agenda/talk.html:96
 msgid "This session’s header image"
-msgstr ""
+msgstr "รูปภาพส่วนหัวของเซสชันนี้"
 
 #: agenda/templates/agenda/talk.html:135
 msgid "See also:"
-msgstr ""
+msgstr "ดูเพิ่มเติม:"
 
 #: agenda/templates/agenda/talk.html:177
 msgid "This speaker also appears in:"
-msgstr ""
+msgstr "วิทยากรคนนี้ยังปรากฏใน:"
 
 #: agenda/views/schedule.py:200
 msgid "No published sessions."
-msgstr ""
+msgstr "ไม่มีเซสชันที่เผยแพร่"
 
 #: agenda/views/schedule.py:201
 msgid "No published schedule."
-msgstr ""
+msgstr "ไม่มีกำหนดการที่เผยแพร่"
 
 #: agenda/views/schedule.py:206
 msgid "Our schedule is not live yet."
-msgstr ""
+msgstr "กำหนดการของเรายังไม่เปิดใช้งาน"
 
 #: agenda/views/schedule.py:308
 msgid ""
 "You're currently not logged in, so your favourited talks will only be stored "
 "locally in your browser."
 msgstr ""
+"ขณะนี้คุณยังไม่ได้เข้าสู่ระบบ ดังนั้นทอล์กที่คุณทำเครื่องหมายเป็นรายการโปรดจะถูกจัดเก็บไว้ในเบราว์เซอ"
+"ร์ของคุณเท่านั้น"
 
 #: agenda/views/schedule.py:310
 msgid "Your favourites could only be saved locally in your browser."
-msgstr ""
+msgstr "รายการโปรดของคุณสามารถบันทึกได้เฉพาะในเบราว์เซอร์ของคุณเท่านั้น"
 
 #: agenda/views/speaker.py:37 agenda/views/speaker.py:65
 msgid "No published speakers."
-msgstr ""
+msgstr "ไม่มีวิทยากรที่เผยแพร่"
 
 #: agenda/views/talk.py:152
 #, python-brace-format
 msgid "The session “{title}” at {event}"
-msgstr ""
+msgstr "เซสชัน “{title}” ที่ {event}"
 
 #: api/auth/devicesecurity.py:7
 msgid ""
@@ -258,11 +265,11 @@ msgstr ""
 
 #: api/auth/devicesecurity.py:27
 msgid "eventyay_checkin"
-msgstr ""
+msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
 msgid "eventyay_checkin (kiosk mode, online only)"
-msgstr ""
+msgstr "eventyay_checkin (โหมดคีออสก์, ออนไลน์เท่านั้น)"
 
 #: api/models.py:23
 msgid "Application name"
@@ -328,7 +335,7 @@ msgstr "ที่นั่งที่เลือก \"{seat}\" ไม่พร
 #: api/serializers/checkin.py:56 base/models/event.py:2943
 #: base/models/product.py:1406 base/models/product.py:1635
 msgid "One or more products do not belong to this event."
-msgstr ""
+msgstr "มีผลิตภัณฑ์อย่างน้อยหนึ่งรายการที่ไม่ได้อยู่ในอีเวนต์นี้"
 
 #: api/serializers/checkin.py:60 api/serializers/checkin.py:63
 #: base/models/product.py:1648 base/models/product.py:1651
@@ -366,7 +373,7 @@ msgstr "ไม่พบปลั๊กอิน: '{name}'."
 #: api/serializers/order.py:1331 api/serializers/order.py:1341
 #, python-brace-format
 msgid "The product \"{}\" is not available on this date."
-msgstr ""
+msgstr "สินค้า \"{}\" ไม่มีให้ใช้ในวันที่นี้"
 
 #: api/serializers/organizer.py:65
 #: control/forms/organizer_forms/gift_card_create_form.py:33
@@ -374,73 +381,79 @@ msgid ""
 "A gift card with the same secret already exists in your or an affiliated "
 "organizer account."
 msgstr ""
+"มี Gift card ที่มีรหัสลับเดียวกันอยู่แล้วในบัญชีของคุณหรือบัญชีผู้จัดที่เกี่ยวข้อง"
 
 #: api/serializers/organizer.py:189 base/services/teams.py:34
 #: eventyay_common/views/organizer.py:640 eventyay_common/views/team.py:96
 msgid "eventyay account invitation"
-msgstr ""
+msgstr "คำเชิญบัญชี eventyay"
 
 #: api/serializers/organizer.py:209 eventyay_common/views/organizer.py:538
 #: eventyay_common/views/team.py:200
 msgid "This user already has been invited for this team."
-msgstr ""
+msgstr "ผู้ใช้รายนี้ถูกเชิญเข้าทีมนี้แล้ว"
 
 #: api/serializers/organizer.py:223 eventyay_common/views/organizer.py:503
 #: eventyay_common/views/team.py:223
 msgid "This user already has permissions for this team."
-msgstr ""
+msgstr "ผู้ใช้รายนี้มีสิทธิ์สำหรับทีมนี้อยู่แล้ว"
 
 #: api/serializers/product.py:101 control/forms/product.py:913
 msgid "The bundled product must not be the same product as the bundling one."
-msgstr ""
+msgstr "ผลิตภัณฑ์ที่ถูกรวมต้องไม่เป็นผลิตภัณฑ์เดียวกับผลิตภัณฑ์ที่ใช้รวม"
 
 #: api/serializers/product.py:104 control/forms/product.py:915
 msgid "The bundled product must not have bundles on its own."
-msgstr ""
+msgstr "ผลิตภัณฑ์ที่ถูกรวมต้องไม่มีชุดรวมของตัวเอง"
 
 #: api/serializers/product.py:209
 msgid ""
 "Updating add-ons, bundles, or variations via PATCH/PUT is not supported. "
 "Please use the dedicated nested endpoint."
 msgstr ""
+"ไม่รองรับการอัปเดตส่วนเสริม แพ็กเกจ หรือรูปแบบสินค้าผ่าน PATCH/PUT โปรดใช้เอ็นด์พอยต์ย่อยที่กำห"
+"นดไว้โดยเฉพาะ"
 
 #: api/serializers/product.py:221 control/forms/product.py:588
 msgid ""
 "Gift card products should not be associated with non-zero tax rates since "
 "sales tax will be applied when the gift card is redeemed."
 msgstr ""
+"สินค้า Gift card ไม่ควรถูกผูกกับอัตราภาษีที่ไม่เป็นศูนย์ เนื่องจากจะมีการคิดภาษีขายเมื่อมีการใช้ "
+"Gift card"
 
 #: api/serializers/product.py:226 control/forms/product.py:594
 msgid "Gift card products should not be admission products at the same time."
-msgstr ""
+msgstr "สินค้า Gift card ไม่ควรเป็นสินค้าเข้าชมในเวลาเดียวกัน"
 
 #: api/serializers/product.py:269
 #, python-brace-format
 msgid "Product meta data property '{name}' does not exist."
-msgstr ""
+msgstr "ไม่มีพร็อพเพอร์ตีเมตาดาต้าของผลิตภัณฑ์ '{name}'"
 
 #: api/serializers/product.py:402
 msgid ""
 "Updating options via PATCH/PUT is not supported. Please use the dedicated "
 "nested endpoint."
 msgstr ""
+"ไม่รองรับการอัปเดตตัวเลือกผ่าน PATCH/PUT โปรดใช้เอ็นด์พอยต์ย่อยที่กำหนดไว้โดยเฉพาะ"
 
 #: api/serializers/product.py:416 control/forms/product.py:92
 msgid "Question cannot depend on a question asked during check-in."
-msgstr ""
+msgstr "คำถามไม่สามารถขึ้นอยู่กับคำถามที่ถามระหว่างเช็คอินได้"
 
 #: api/serializers/product.py:421 control/forms/product.py:97
 msgid "Circular dependency between questions detected."
-msgstr ""
+msgstr "ตรวจพบการพึ่งพากันแบบวนซ้ำระหว่างคำถาม"
 
 #: api/serializers/product.py:426 control/forms/product.py:106
 msgid "This type of question cannot be asked during check-in."
-msgstr ""
+msgstr "คำถามประเภทนี้ไม่สามารถถามระหว่างเช็คอินได้"
 
 #: api/templates/rest_framework/api.html:18
 #: orga/templates/orga/auth/base.html:29
 msgid "The eventyay logo"
-msgstr ""
+msgstr "โลโก้ eventyay"
 
 #: api/views/oauth.py:91 control/logdisplay.py:593
 #, python-brace-format
@@ -448,38 +461,39 @@ msgid ""
 "The application \"{application_name}\" has been authorized to access your "
 "account."
 msgstr ""
+"แอปพลิเคชัน \"{application_name}\" ได้รับอนุญาตให้เข้าถึงบัญชีของคุณแล้ว"
 
 #: api/views/order.py:527 control/views/orders.py:1498
 #: presale/views/order.py:869 presale/views/order.py:943
 msgid "You cannot generate an invoice for this order."
-msgstr ""
+msgstr "คุณไม่สามารถสร้างใบแจ้งหนี้สำหรับคำสั่งซื้อนี้ได้"
 
 #: api/views/order.py:532 control/views/orders.py:1500
 #: presale/views/order.py:871 presale/views/order.py:945
 msgid "An invoice for this order already exists."
-msgstr ""
+msgstr "มีใบแจ้งหนี้สำหรับคำสั่งซื้อนี้อยู่แล้ว"
 
 #: api/views/order.py:557 common/text/phrases.py:69
 #: control/views/orders.py:1641 control/views/users.py:125
 msgid "There was an error sending the mail. Please try again later."
-msgstr ""
+msgstr "เกิดข้อผิดพลาดในการส่งอีเมล โปรดลองอีกครั้งในภายหลัง"
 
 #: api/views/order.py:623 base/services/cart.py:138 base/services/orders.py:146
 #: presale/views/order.py:918
 msgid "One of the selected products is not available in the selected country."
-msgstr ""
+msgstr "หนึ่งในสินค้าที่เลือกไม่มีให้ใช้ในประเทศที่เลือก"
 
 #: api/webhooks.py:181 base/notifications.py:239
 msgid "New order placed"
-msgstr ""
+msgstr "มีคำสั่งซื้อใหม่"
 
 #: api/webhooks.py:185 base/notifications.py:245
 msgid "New order requires approval"
-msgstr ""
+msgstr "คำสั่งซื้อใหม่ต้องได้รับการอนุมัติ"
 
 #: api/webhooks.py:189 base/notifications.py:251
 msgid "Order marked as paid"
-msgstr ""
+msgstr "ทำเครื่องหมายคำสั่งซื้อว่า ชำระเงินแล้ว"
 
 #: api/webhooks.py:193 base/notifications.py:257 control/views/orders.py:1449
 #: plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:43
@@ -581,45 +595,46 @@ msgstr "ร้านค้าออนไลน์"
 #: base/configurations/default_setting.py:51 base/models/orders.py:1331
 #: base/models/orders.py:2496
 msgid "Select country"
-msgstr ""
+msgstr "เลือกประเทศ"
 
 #: base/configurations/default_setting.py:73
 msgid "Maximum number of items per order"
-msgstr ""
+msgstr "จำนวนรายการสูงสุดต่อคำสั่งซื้อ"
 
 #: base/configurations/default_setting.py:74
 msgid "Add-on products will be excluded from the count."
-msgstr ""
+msgstr "สินค้าส่วนเสริมจะไม่ถูกรวมในการนับ"
 
 #: base/configurations/default_setting.py:83
 msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
-msgstr ""
+msgstr "แสดงราคาสุทธิในรายการสินค้าแทนราคาขายรวม (ไม่แนะนำ)"
 
 #: base/configurations/default_setting.py:85
 msgid ""
 "Regardless of your selection, the cart will display gross prices as this is "
 "the final amount to be paid."
 msgstr ""
+"ไม่ว่าคุณจะเลือกแบบใด ตะกร้าสินค้าจะแสดงราคาขายรวมเนื่องจากเป็นยอดชำระสุดท้าย"
 
 #: base/configurations/default_setting.py:100
 #: base/configurations/default_setting.py:110
 msgid "Require attendee names"
-msgstr ""
+msgstr "บังคับกรอกชื่อผู้เข้าร่วม"
 
 #: base/configurations/default_setting.py:101
 msgid ""
 "Require attendee names for all tickets which include admission to the event."
-msgstr ""
+msgstr "บังคับกรอกชื่อผู้เข้าร่วมสำหรับบัตรทุกใบที่รวมสิทธิ์เข้างาน"
 
 #: base/configurations/default_setting.py:111
 msgid "Require attendees to fill in their names for all admission tickets."
-msgstr ""
+msgstr "บังคับให้ผู้เข้าร่วมกรอกชื่อสำหรับบัตรเข้างานทั้งหมด"
 
 #: base/configurations/default_setting.py:121
 msgid "Ask for email addresses per ticket"
-msgstr ""
+msgstr "ถามอีเมลแยกตามบัตร"
 
 #: base/configurations/default_setting.py:123
 #: control/templates/pretixcontrol/items/orderforms.html:207
@@ -633,10 +648,15 @@ msgid ""
 "primary email address, not to the per-attendee addresses. You can however "
 "enable this in the E-mail settings."
 msgstr ""
+"โดยปกติ eventyay จะขออีเมล 1 รายการต่อคำสั่งซื้อ และจะส่งการยืนยันคำสั่งซื้อไปที่อีเมลนั้นเท่านั้น "
+"หากคุณเปิดใช้งานตัวเลือกนี้ ระบบจะขออีเมลแยกสำหรับบัตรเข้างานแต่ละใบเพิ่มเติม ซึ่งอาจมีประโยชน์ห"
+"ากคุณต้องการเก็บอีเมลของผู้เข้าร่วมแต่ละคนแม้เป็นคำสั่งซื้อแบบกลุ่ม อย่างไรก็ตาม โดยค่าเริ่มต้น "
+"eventyay จะส่งการยืนยันคำสั่งซื้อไปที่อีเมลหลักเท่านั้น ไม่ส่งไปที่อีเมลรายผู้เข้าร่วม คุณสามารถเปิดใช้"
+"งานสิ่งนี้ได้ในการตั้งค่าอีเมล"
 
 #: base/configurations/default_setting.py:138
 msgid "Require email addresses per ticket"
-msgstr ""
+msgstr "บังคับกรอกอีเมลแยกตามบัตร"
 
 #: base/configurations/default_setting.py:140
 msgid ""
@@ -644,53 +664,56 @@ msgid ""
 "tickets. See the above option for more details. One email address for the "
 "order confirmation will always be required regardless of this setting."
 msgstr ""
+"บังคับให้ผู้เข้าร่วมกรอกอีเมลแยกสำหรับบัตรเข้างานทั้งหมด ดูรายละเอียดเพิ่มเติมที่ตัวเลือกด้านบน จะต้อ"
+"งมีอีเมลหนึ่งรายการสำหรับการยืนยันคำสั่งซื้อเสมอไม่ว่าการตั้งค่านี้จะเป็นอย่างไร"
 
 #: base/configurations/default_setting.py:153
 msgid "Ask for company per ticket"
-msgstr ""
+msgstr "ถามชื่อบริษัทแยกตามบัตร"
 
 #: base/configurations/default_setting.py:162
 msgid "Require company per ticket"
-msgstr ""
+msgstr "บังคับกรอกชื่อบริษัทแยกตามบัตร"
 
 #: base/configurations/default_setting.py:172
 msgid "Ask for postal addresses per ticket"
-msgstr ""
+msgstr "ถามที่อยู่ไปรษณีย์แยกตามบัตร"
 
 #: base/configurations/default_setting.py:181
 msgid "Require postal addresses per ticket"
-msgstr ""
+msgstr "บังคับกรอกที่อยู่ไปรษณีย์แยกตามบัตร"
 
 #: base/configurations/default_setting.py:182
 msgid ""
 "Require attendees to fill in postal addresses for all admission tickets."
-msgstr ""
+msgstr "บังคับให้ผู้เข้าร่วมกรอกที่อยู่ไปรษณีย์สำหรับบัตรเข้างานทั้งหมด"
 
 #: base/configurations/default_setting.py:193
 msgid ""
 "Ask for an email address per order. The order confirmation will be sent to "
 "this email address."
 msgstr ""
+"ขอที่อยู่อีเมลต่อคำสั่งซื้อ การยืนยันคำสั่งซื้อจะถูกส่งไปยังที่อยู่อีเมลนี้"
 
 #: base/configurations/default_setting.py:202
 msgid "Require email address per order"
-msgstr ""
+msgstr "ต้องระบุที่อยู่อีเมลต่อคำสั่งซื้อ"
 
 #: base/configurations/default_setting.py:203
 msgid "Require attendees to fill in an email address for the order."
-msgstr ""
+msgstr "กำหนดให้ผู้เข้าร่วมกรอกที่อยู่อีเมลสำหรับคำสั่งซื้อ"
 
 #: base/configurations/default_setting.py:213
 #: control/templates/pretixcontrol/items/orderforms.html:77
 #: control/templates/pretixcontrol/items/orderforms.html:78
 msgid "Ask for the order email address twice"
-msgstr ""
+msgstr "ถามอีเมลสำหรับคำสั่งซื้อ 2 ครั้ง"
 
 #: base/configurations/default_setting.py:214
 msgid ""
 "Require attendees to enter their primary email address twice to help prevent "
 "errors."
-msgstr ""
+msgstr "บังคับให้ผู้เข้าร่วมกรอกอีเมลหลัก 2 ครั้งเพื่อช่วยป้องกันข้อผิดพลาด"
 
 #: base/configurations/default_setting.py:223
 msgid "Add the Wikimedia ID for users authenticated via Wikimedia"
@@ -698,7 +721,7 @@ msgstr "เพิ่ม Wikimedia ID สำหรับผู้ใช้ที�
 
 #: base/configurations/default_setting.py:232
 msgid "Ask for a phone number per order"
-msgstr ""
+msgstr "ถามหมายเลขโทรศัพท์ต่อคำสั่งซื้อ"
 
 #: base/configurations/default_setting.py:241
 msgid "Require a phone number per order"
@@ -3003,7 +3026,7 @@ msgstr "รายการใบแจ้งหนี้"
 
 #: base/exporters/invoices.py:180 base/exporters/invoices.py:313
 msgid "Invoice number"
-msgstr ""
+msgstr "หมายเลขใบแจ้งหนี้"
 
 #: base/exporters/invoices.py:181 base/exporters/invoices.py:322
 #: base/exporters/orderlist.py:1063 base/exporters/waitinglist.py:84
@@ -3015,7 +3038,7 @@ msgstr ""
 #: plugins/checkinlists/exporters.py:685
 #: presale/templates/pretixpresale/organizers/index.html:64
 msgid "Date"
-msgstr ""
+msgstr "วันที่"
 
 #: base/exporters/invoices.py:182 base/exporters/invoices.py:323
 #: base/exporters/orderlist.py:313 base/exporters/orderlist.py:539
@@ -3036,7 +3059,7 @@ msgstr ""
 #: plugins/checkinlists/exporters.py:689 plugins/reports/exporters.py:512
 #: plugins/reports/exporters.py:908 plugins/ticketoutputpdf/exporters.py:63
 msgid "Order code"
-msgstr ""
+msgstr "รหัสคำสั่งซื้อ"
 
 #: base/exporters/invoices.py:183 base/exporters/invoices.py:324
 #: base/models/waitinglist.py:49 base/orderimport.py:136
@@ -3044,15 +3067,15 @@ msgstr ""
 #: control/templates/pretixcontrol/admin/users/index.html:32
 #: control/views/waitinglist.py:239
 msgid "E-mail address"
-msgstr ""
+msgstr "ที่อยู่อีเมล"
 
 #: base/exporters/invoices.py:184 base/exporters/invoices.py:325
 msgid "Invoice type"
-msgstr ""
+msgstr "ประเภทใบแจ้งหนี้"
 
 #: base/exporters/invoices.py:185 base/exporters/invoices.py:326
 msgid "Cancellation of"
-msgstr ""
+msgstr "การยกเลิกของ"
 
 #. Translators: Used both for language selection for users, and for the language
 #. attribute of events and sessions.
@@ -3065,7 +3088,7 @@ msgstr ""
 #: control/views/waitinglist.py:245
 #: orga/templates/orga/submission/content.html:108
 msgid "Language"
-msgstr ""
+msgstr "ภาษา"
 
 #: base/exporters/invoices.py:187 base/exporters/invoices.py:188
 #: base/exporters/invoices.py:189 base/exporters/invoices.py:190
@@ -3075,7 +3098,7 @@ msgstr ""
 #: base/exporters/invoices.py:330 base/exporters/invoices.py:331
 #: base/exporters/invoices.py:332 base/exporters/invoices.py:333
 msgid "Invoice sender:"
-msgstr ""
+msgstr "ผู้ออกใบแจ้งหนี้:"
 
 #: base/exporters/invoices.py:188 base/exporters/invoices.py:328
 #: base/exporters/orderlist.py:336 base/exporters/orderlist.py:559
@@ -3088,12 +3111,12 @@ msgstr ""
 #: presale/templates/pretixpresale/event/checkout_confirm.html:100
 #: presale/templates/pretixpresale/event/order.html:314
 msgid "Address"
-msgstr ""
+msgstr "ที่อยู่"
 
 #: base/exporters/invoices.py:192 base/exporters/invoices.py:332
 #: base/models/organizer.py:727
 msgid "Tax ID"
-msgstr ""
+msgstr "เลขประจำตัวผู้เสียภาษี"
 
 #: base/exporters/invoices.py:193 base/exporters/invoices.py:201
 #: base/exporters/invoices.py:333 base/exporters/invoices.py:341
@@ -3104,7 +3127,7 @@ msgstr ""
 #: presale/templates/pretixpresale/event/checkout_confirm.html:111
 #: presale/templates/pretixpresale/event/order.html:325
 msgid "VAT ID"
-msgstr ""
+msgstr "เลข VAT"
 
 #: base/exporters/invoices.py:194 base/exporters/invoices.py:195
 #: base/exporters/invoices.py:196 base/exporters/invoices.py:197
@@ -3117,7 +3140,7 @@ msgstr ""
 #: base/exporters/invoices.py:340 base/exporters/invoices.py:341
 #: base/exporters/invoices.py:342 base/exporters/invoices.py:343
 msgid "Invoice recipient:"
-msgstr ""
+msgstr "ผู้รับใบแจ้งหนี้:"
 
 #: base/exporters/invoices.py:194 base/exporters/invoices.py:334
 #: base/exporters/orderlist.py:327 base/exporters/orderlist.py:551
@@ -3131,11 +3154,11 @@ msgstr ""
 #: presale/templates/pretixpresale/event/checkout_confirm.html:95
 #: presale/templates/pretixpresale/event/order.html:306
 msgid "Company"
-msgstr ""
+msgstr "บริษัท"
 
 #: base/exporters/invoices.py:196 base/exporters/invoices.py:336
 msgid "Street address"
-msgstr ""
+msgstr "ที่อยู่ถนน"
 
 #: base/exporters/invoices.py:200 base/exporters/invoices.py:340
 #: base/exporters/orderlist.py:340 base/exporters/orderlist.py:563
@@ -3148,32 +3171,32 @@ msgstr ""
 #: presale/templates/pretixpresale/event/order.html:321
 msgctxt "address"
 msgid "State"
-msgstr ""
+msgstr "รัฐ"
 
 #: base/exporters/invoices.py:202 base/exporters/invoices.py:342
 #: base/models/orders.py:2513
 #: presale/templates/pretixpresale/event/checkout_confirm.html:115
 msgid "Beneficiary"
-msgstr ""
+msgstr "ผู้รับผลประโยชน์"
 
 #: base/exporters/invoices.py:203 base/exporters/invoices.py:343
 #: base/models/orders.py:2509 base/orderimport.py:381
 #: control/templates/pretixcontrol/order/index.html:861
 #: presale/templates/pretixpresale/event/checkout_confirm.html:122
 msgid "Internal reference"
-msgstr ""
+msgstr "ข้อมูลอ้างอิงภายใน"
 
 #: base/exporters/invoices.py:204 control/forms/event.py:1340
 msgid "Reverse charge"
-msgstr ""
+msgstr "Reverse charge"
 
 #: base/exporters/invoices.py:205
 msgid "Shown foreign currency"
-msgstr ""
+msgstr "แสดงสกุลเงินต่างประเทศ"
 
 #: base/exporters/invoices.py:206
 msgid "Foreign currency rate"
-msgstr ""
+msgstr "อัตราแลกเปลี่ยนสกุลเงินต่างประเทศ"
 
 #: base/exporters/invoices.py:207
 msgid "Total value (with taxes)"
@@ -3312,45 +3335,47 @@ msgstr "คำสั่งซื้อ"
 #: base/exporters/orderlist.py:65 base/models/orders.py:2183
 #: base/notifications.py:211
 msgid "Order positions"
-msgstr ""
+msgstr "ตำแหน่งในคำสั่งซื้อ"
 
 #: base/exporters/orderlist.py:66
 msgid "Order fees"
-msgstr ""
+msgstr "ค่าธรรมเนียมคำสั่งซื้อ"
 
 #: base/exporters/orderlist.py:74
 msgid "Only paid orders"
-msgstr ""
+msgstr "เฉพาะคำสั่งซื้อที่ชำระเงินแล้ว"
 
 #: base/exporters/orderlist.py:78
 msgid "Include payment amounts"
-msgstr ""
+msgstr "รวมยอดชำระเงิน"
 
 #: base/exporters/orderlist.py:83
 msgid "Show multiple choice answers grouped in one column"
-msgstr ""
+msgstr "แสดงคำตอบแบบหลายตัวเลือกโดยจัดกลุ่มในคอลัมน์เดียว"
 
 #: base/exporters/orderlist.py:94
 msgid "Only include orders created on or after this date."
-msgstr ""
+msgstr "รวมเฉพาะคำสั่งซื้อที่สร้างในหรือหลังวันที่นี้เท่านั้น"
 
 #: base/exporters/orderlist.py:103
 msgid "Only include orders created on or before this date."
-msgstr ""
+msgstr "รวมเฉพาะคำสั่งซื้อที่สร้างในหรือก่อนวันที่นี้เท่านั้น"
 
 #: base/exporters/orderlist.py:109
 msgid "Start event date"
-msgstr ""
+msgstr "วันที่เริ่มอีเวนต์"
 
 #: base/exporters/orderlist.py:113 base/exporters/orderlist.py:125
 msgid ""
 "Only include orders including at least one ticket for a date on or after "
 "this date. Will also include other dates in case of mixed orders!"
 msgstr ""
+"รวมเฉพาะคำสั่งซื้อที่มีอย่างน้อยหนึ่งบัตรสำหรับวันที่ในหรือหลังวันที่นี้เท่านั้น จะรวมวันที่อื่นด้วยในกรณีที่เป็น"
+"คำสั่งซื้อแบบผสม!"
 
 #: base/exporters/orderlist.py:121
 msgid "End event date"
-msgstr ""
+msgstr "วันที่สิ้นสุดอีเวนต์"
 
 #: base/exporters/orderlist.py:312 base/exporters/orderlist.py:538
 #: base/exporters/orderlist.py:663 base/exporters/orderlist.py:936
@@ -3358,7 +3383,7 @@ msgstr ""
 #: control/forms/event.py:1427
 #: control/forms/organizer_forms/organizer_delete_form.py:11
 msgid "Event slug"
-msgstr ""
+msgstr "สลักอีเวนต์"
 
 #: base/exporters/orderlist.py:314 base/notifications.py:198
 #: control/templates/pretixcontrol/search/orders.html:51
@@ -3366,7 +3391,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/orders/orders.html:28
 #: plugins/reports/exporters.py:516 plugins/reports/exporters.py:916
 msgid "Order total"
-msgstr ""
+msgstr "ยอดรวมคำสั่งซื้อ"
 
 #: base/exporters/orderlist.py:315 base/exporters/orderlist.py:540
 #: base/exporters/orderlist.py:666 base/exporters/orderlist.py:941
@@ -3393,7 +3418,7 @@ msgstr ""
 #: plugins/reports/exporters.py:514 plugins/reports/exporters.py:914
 #: presale/templates/pretixpresale/organizers/index.html:67
 msgid "Status"
-msgstr ""
+msgstr "สถานะ"
 
 #: base/exporters/orderlist.py:316 base/exporters/orderlist.py:541
 #: base/exporters/orderlist.py:667 base/exporters/waitinglist.py:86
@@ -3408,7 +3433,7 @@ msgstr ""
 #: orga/templates/orga/organizer/speaker_list.html:30
 #: presale/templates/pretixpresale/fragment_modals.html:86
 msgid "Email"
-msgstr ""
+msgstr "อีเมล"
 
 #: base/exporters/orderlist.py:321
 msgid "Wikimedia username"
@@ -3426,7 +3451,7 @@ msgstr "ชื่อผู้ใช้ Wikimedia"
 #: presale/forms/waitinglist.py:50
 #: presale/templates/pretixpresale/event/order.html:302
 msgid "Phone number"
-msgstr ""
+msgstr "หมายเลขโทรศัพท์"
 
 #: base/exporters/orderlist.py:325 base/exporters/orderlist.py:543
 #: base/exporters/orderlist.py:669 base/notifications.py:204
@@ -3439,26 +3464,26 @@ msgstr ""
 #: plugins/reports/exporters.py:513 plugins/reports/exporters.py:657
 #: plugins/reports/exporters.py:670 plugins/reports/exporters.py:909
 msgid "Order date"
-msgstr ""
+msgstr "วันที่สั่งซื้อ"
 
 #: base/exporters/orderlist.py:326 base/exporters/orderlist.py:544
 #: base/exporters/orderlist.py:670 plugins/checkinlists/exporters.py:529
 msgid "Order time"
-msgstr ""
+msgstr "เวลาสั่งซื้อ"
 
 #: base/exporters/orderlist.py:343
 msgid "Date of last payment"
-msgstr ""
+msgstr "วันที่ชำระเงินล่าสุด"
 
 #: base/exporters/orderlist.py:344 base/services/stats.py:242
 msgid "Fees"
-msgstr ""
+msgstr "ค่าธรรมเนียม"
 
 #: base/exporters/orderlist.py:345 base/exporters/orderlist.py:739
 #: base/orderimport.py:587 control/templates/pretixcontrol/order/index.html:175
 #: control/templates/pretixcontrol/pdf/index.html:212
 msgid "Order locale"
-msgstr ""
+msgstr "ภาษาท้องถิ่นของคำสั่งซื้อ"
 
 #: base/exporters/orderlist.py:350
 #, python-brace-format
@@ -3861,25 +3886,25 @@ msgstr "หมดอายุ"
 
 #: base/exporters/orderlist.py:1176 base/models/giftcards.py:64
 msgid "Test mode card"
-msgstr ""
+msgstr "บัตรโหมดทดสอบ"
 
 #: base/exporters/orderlist.py:1178 base/models/auth_token.py:67
 #: base/models/giftcards.py:65
 #: control/templates/pretixcontrol/order/index.html:183
 #: control/templates/pretixcontrol/organizers/giftcards.html:52
 msgid "Expiry date"
-msgstr ""
+msgstr "วันหมดอายุ"
 
 #: base/exporters/orderlist.py:1179 control/forms/orders.py:648
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "ข้อกำหนดและเงื่อนไขพิเศษ"
 
 #: base/exporters/orderlist.py:1180
 #: control/templates/pretixcontrol/boxoffice/payment.html:37
 #: control/templates/pretixcontrol/organizers/giftcard.html:34
 #: plugins/banktransfer/refund_export.py:29
 msgid "Currency"
-msgstr ""
+msgstr "สกุลเงิน"
 
 #: base/exporters/orderlist.py:1181
 #: control/templates/pretixcontrol/order/change.html:94
@@ -3887,60 +3912,60 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/giftcard.html:32
 #: control/templates/pretixcontrol/organizers/giftcards.html:55
 msgid "Current value"
-msgstr ""
+msgstr "มูลค่าปัจจุบัน"
 
 #: base/exporters/orderlist.py:1182
 msgid "Created in order"
-msgstr ""
+msgstr "สร้างในคำสั่งซื้อ"
 
 #: base/exporters/orderlist.py:1183
 msgid "Last invoice number of order"
-msgstr ""
+msgstr "เลขที่ใบแจ้งหนี้ล่าสุดของคำสั่งซื้อ"
 
 #: base/exporters/orderlist.py:1184
 msgid "Last invoice date of order"
-msgstr ""
+msgstr "วันที่ใบแจ้งหนี้ล่าสุดของคำสั่งซื้อ"
 
 #: base/exporters/waitinglist.py:26
 #: control/templates/pretixcontrol/waitinglist/index.html:94
 msgid "All entries"
-msgstr ""
+msgstr "รายการทั้งหมด"
 
 #: base/exporters/waitinglist.py:29
 #: control/templates/pretixcontrol/waitinglist/index.html:97
 msgid "Waiting for a voucher"
-msgstr ""
+msgstr "กำลังรอรับบัตรกำนัล"
 
 #: base/exporters/waitinglist.py:34
 #: control/templates/pretixcontrol/waitinglist/index.html:99
 #: control/templates/pretixcontrol/waitinglist/index.html:194
 #: control/views/waitinglist.py:264
 msgid "Voucher assigned"
-msgstr ""
+msgstr "กำหนดบัตรกำนัลแล้ว"
 
 #: base/exporters/waitinglist.py:39
 #: control/templates/pretixcontrol/waitinglist/index.html:102
 msgid "Waiting for redemption"
-msgstr ""
+msgstr "กำลังรอการแลกใช้"
 
 #: base/exporters/waitinglist.py:47
 #: control/templates/pretixcontrol/waitinglist/index.html:190
 #: control/views/waitinglist.py:260
 msgid "Voucher redeemed"
-msgstr ""
+msgstr "แลกใช้บัตรกำนัลแล้ว"
 
 #: base/exporters/waitinglist.py:55
 #: control/templates/pretixcontrol/waitinglist/index.html:108
 #: control/templates/pretixcontrol/waitinglist/index.html:192
 #: control/views/waitinglist.py:262
 msgid "Voucher expired"
-msgstr ""
+msgstr "บัตรกำนัลหมดอายุ"
 
 #: base/exporters/waitinglist.py:88 base/models/product.py:282 base/pdf.py:81
 #: control/forms/event.py:1533
 #: control/templates/pretixcontrol/items/index.html:40
 msgid "Product name"
-msgstr ""
+msgstr "ชื่อสินค้า"
 
 #: base/exporters/waitinglist.py:91 base/models/event.py:571 base/pdf.py:241
 #: control/forms/filter.py:803 control/forms/filter.py:804
@@ -3951,17 +3976,17 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/detail.html:49
 #: eventyay_common/templates/eventyay_common/events/index.html:55
 msgid "Event name"
-msgstr ""
+msgstr "ชื่องานอีเวนต์"
 
 #: base/exporters/waitinglist.py:92 base/orderimport.py:149
 #: control/templates/pretixcontrol/checkin/index.html:72
 msgctxt "subevents"
 msgid "Date"
-msgstr ""
+msgstr "วันที่"
 
 #: base/exporters/waitinglist.py:96 control/views/waitinglist.py:246
 msgid "Priority"
-msgstr ""
+msgstr "ลำดับความสำคัญ"
 
 #: base/exporters/waitinglist.py:98 base/models/vouchers.py:101
 #: base/models/vouchers.py:539
@@ -3975,7 +4000,7 @@ msgstr ""
 #: presale/templates/pretixpresale/event/index.html:336
 #: presale/templates/pretixpresale/event/index.html:340
 msgid "Voucher code"
-msgstr ""
+msgstr "รหัสบัตรกำนัล"
 
 #: base/forms/__init__.py:156
 msgid "Show secret key"
@@ -3995,7 +4020,7 @@ msgstr ""
 #: base/forms/auth.py:43 base/forms/auth.py:153
 #: presale/templates/pretixpresale/fragment_modals.html:97
 msgid "Keep me logged in"
-msgstr ""
+msgstr "ให้ฉันเข้าสู่ระบบไว้ต่อไป"
 
 #: base/forms/auth.py:46 base/forms/auth.py:242
 msgid "This combination of credentials is not known to our system."
@@ -5627,69 +5652,70 @@ msgstr "เหตุผลการคืนเงิน"
 msgid ""
 "May be shown to the end user or used e.g. as part of a payment reference."
 msgstr ""
+"อาจแสดงให้ผู้ใช้ปลายทางเห็น หรือใช้เป็นส่วนหนึ่งของข้อมูลอ้างอิงการชำระเงิน เป็นต้น"
 
 #: base/models/orders.py:2058
 msgid "Payment fee"
-msgstr ""
+msgstr "ค่าธรรมเนียมการชำระเงิน"
 
 #: base/models/orders.py:2059
 msgid "Shipping fee"
-msgstr ""
+msgstr "ค่าธรรมเนียมการจัดส่ง"
 
 #: base/models/orders.py:2060
 msgid "Service fee"
-msgstr ""
+msgstr "ค่าธรรมเนียมการให้บริการ"
 
 #: base/models/orders.py:2061
 #: control/templates/pretixcontrol/order/index.html:139
 msgid "Cancellation fee"
-msgstr ""
+msgstr "ค่าธรรมเนียมการยกเลิก"
 
 #: base/models/orders.py:2062
 msgid "Other fees"
-msgstr ""
+msgstr "ค่าธรรมเนียมอื่นๆ"
 
 #: base/models/orders.py:2063 base/payment.py:1173
 #: control/templates/pretixcontrol/items/index.html:91
 #: control/templates/pretixcontrol/order/index.html:134
 msgid "Gift card"
-msgstr ""
+msgstr "บัตรของขวัญ"
 
 #: base/models/orders.py:2066
 #: control/templates/pretixcontrol/organizers/giftcard.html:65
 #: control/templates/pretixcontrol/organizers/giftcard.html:103
 #: control/views/vouchers.py:121
 msgid "Value"
-msgstr ""
+msgstr "มูลค่า"
 
 #: base/models/orders.py:2182
 msgid "Order position"
-msgstr ""
+msgstr "รายการคำสั่งซื้อ"
 
 #: base/models/orders.py:2401 base/services/orders.py:1082
 #, python-format
 msgid "Your event registration: %(code)s"
-msgstr ""
+msgstr "การลงทะเบียนอีเวนต์ของคุณ: %(code)s"
 
 #: base/models/orders.py:2434
 msgid "Cart ID (e.g. session key)"
-msgstr ""
+msgstr "ID รถเข็น (เช่น คีย์เซสชัน)"
 
 #: base/models/orders.py:2445
 msgid "Cart position"
-msgstr ""
+msgstr "รายการในรถเข็น"
 
 #: base/models/orders.py:2446
 msgid "Cart positions"
-msgstr ""
+msgstr "รายการในรถเข็น"
 
 #: base/models/orders.py:2504
 msgid "Only for business customers within the EU."
-msgstr ""
+msgstr "สำหรับลูกค้าธุรกิจภายในสหภาพยุโรปเท่านั้น"
 
 #: base/models/orders.py:2510
 msgid "This reference will be printed on your invoice for your convenience."
-msgstr ""
+msgstr "ข้อมูลอ้างอิงนี้จะพิมพ์บนใบแจ้งหนี้ของคุณเพื่อความสะดวก"
 
 #: base/models/organizer.py:50
 msgid ""
@@ -5729,6 +5755,8 @@ msgid ""
 "Every slug can only be used once. This is being used in URLs to refer to "
 "your organizer accounts and your events."
 msgstr ""
+"ควรสั้น และมีได้เฉพาะตัวอักษรพิมพ์เล็ก ตัวเลข จุด และขีดกลางเท่านั้น แต่ละสลักใช้ได้เพียงครั้งเดียว "
+"ใช้ใน URL เพื่ออ้างอิงบัญชีผู้จัดและอีเวนต์ของคุณ"
 
 #: base/models/organizer.py:133 control/forms/event.py:102
 #: control/forms/event.py:108 control/forms/event.py:413
@@ -5741,7 +5769,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/organizers/base.html:4
 #: orga/templates/orga/organizer/detail.html:5 orga/views/organizer.py:80
 msgid "Organizer"
-msgstr ""
+msgstr "ผู้จัด"
 
 #: base/models/organizer.py:134
 #: common/templates/common/fragment_profile_dropdown.html:37
@@ -5756,18 +5784,18 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/organizers/index.html:7
 #: orga/templates/orga/base.html:462
 msgid "Organizers"
-msgstr ""
+msgstr "ผู้จัด"
 
 #: base/models/organizer.py:343
 msgid "Team name"
-msgstr ""
+msgstr "ชื่อทีม"
 
 #: base/models/organizer.py:344
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:14
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:30
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:12
 msgid "Team members"
-msgstr ""
+msgstr "สมาชิกทีม"
 
 #: base/models/organizer.py:350
 msgid "Can create events"
@@ -7630,31 +7658,33 @@ msgid ""
 "If activated, a holder of this voucher code can buy tickets, even if there "
 "are none left."
 msgstr ""
+"หากเปิดใช้งาน ผู้ถือรหัสบัตรกำนัลนี้สามารถซื้อตั๋วได้ แม้ว่าตั๋วจะหมดแล้ว"
 
 #: base/models/vouchers.py:139 base/models/vouchers.py:564
 msgid "Price mode"
-msgstr ""
+msgstr "โหมดราคา"
 
 #: base/models/vouchers.py:145 base/models/vouchers.py:570
 msgid "Voucher value"
-msgstr ""
+msgstr "มูลค่าบัตรกำนัล"
 
 #: base/models/vouchers.py:158 control/forms/vouchers.py:31
 msgid "This product is added to the user's cart if the voucher is redeemed."
-msgstr ""
+msgstr "สินค้านี้จะถูกเพิ่มไปยังตะกร้าของผู้ใช้เมื่อมีการแลกรับบัตรกำนัล"
 
 #: base/models/vouchers.py:169
 msgid "This variation of the product select above is being used."
-msgstr ""
+msgstr "มีการใช้รูปแบบสินค้าที่เลือกไว้ด้านบนนี้อยู่"
 
 #: base/models/vouchers.py:178
 msgid ""
 "If enabled, the voucher is valid for any product affected by this quota."
 msgstr ""
+"หากเปิดใช้งาน บัตรกำนัลจะใช้ได้กับสินค้าทุกรายการที่ได้รับผลกระทบจากโควตานี้"
 
 #: base/models/vouchers.py:186
 msgid "Specific seat"
-msgstr ""
+msgstr "ที่นั่งเฉพาะ"
 
 #: base/models/vouchers.py:190
 #: control/templates/control/systemlog_detail.html:23
@@ -7663,7 +7693,7 @@ msgstr ""
 #: control/views/vouchers.py:122
 #: orga/templates/orga/submission/tag/list.html:12 orga/views/submission.py:950
 msgid "Tag"
-msgstr ""
+msgstr "แท็ก"
 
 #: base/models/vouchers.py:194
 msgid ""
@@ -7671,10 +7701,12 @@ msgid ""
 "same value for multiple vouchers, you can get statistics on how many of them "
 "have been redeemed etc."
 msgstr ""
+"คุณสามารถใช้ฟิลด์นี้เพื่อจัดกลุ่มบัตรกำนัลหลายใบเข้าด้วยกัน หากคุณใส่ค่าเดียวกันให้กับบัตรกำนัลหลายใบ "
+"คุณจะดูสถิติได้ว่ามีการแลกไปแล้วกี่ใบ เป็นต้น"
 
 #: base/models/vouchers.py:206
 msgid "Shows hidden products that match this voucher"
-msgstr ""
+msgstr "แสดงสินค้าที่ซ่อนไว้ที่ตรงกับบัตรกำนัลนี้"
 
 #: base/models/vouchers.py:213 control/navigation.py:201
 #: control/navigation.py:507
@@ -7683,15 +7715,15 @@ msgstr ""
 #: control/templates/pretixcontrol/vouchers/index.html:6
 #: control/templates/pretixcontrol/vouchers/index.html:11
 msgid "Vouchers"
-msgstr ""
+msgstr "บัตรกำนัล"
 
 #: base/models/vouchers.py:239
 msgid "You cannot select a quota that belongs to a different event."
-msgstr ""
+msgstr "คุณไม่สามารถเลือกโควตาที่เป็นของอีเวนต์อื่นได้"
 
 #: base/models/vouchers.py:241
 msgid "You cannot select a quota and a specific product at the same time."
-msgstr ""
+msgstr "คุณไม่สามารถเลือกทั้งโควตาและสินค้าเฉพาะพร้อมกันได้"
 
 #: base/models/vouchers.py:244
 msgid "You cannot select an product that belongs to a different event."
@@ -7701,27 +7733,29 @@ msgstr "คุณไม่สามารถเลือกผลิตภัณ
 msgid ""
 "You cannot select a variation without having selected a product that "
 "provides variations."
-msgstr ""
+msgstr "คุณไม่สามารถเลือกตัวเลือกย่อยได้โดยไม่เลือกสินค้าที่มีตัวเลือกย่อยก่อน"
 
 #: base/models/vouchers.py:250
 msgid "This variation does not belong to this product."
-msgstr ""
+msgstr "ตัวเลือกย่อยนี้ไม่ได้เป็นของสินค้านี้"
 
 #: base/models/vouchers.py:254 base/models/vouchers.py:349
 msgid ""
 "You can only block quota if you specify a specific product variation. "
 "Otherwise it might be unclear which quotas to block."
 msgstr ""
+"คุณสามารถบล็อกโควตาได้ก็ต่อเมื่อระบุตัวเลือกย่อยของสินค้าแบบเฉพาะ มิฉะนั้นอาจไม่ชัดเจนว่าจะต้องบล็"
+"อกโควตาใด"
 
 #: base/models/vouchers.py:259
 msgid "It is currently not possible to create vouchers for add-on products."
-msgstr ""
+msgstr "ขณะนี้ไม่สามารถสร้างบัตรกำนัลสำหรับสินค้าเสริมได้"
 
 #: base/models/vouchers.py:262 base/models/vouchers.py:359
 msgid ""
 "You need to select a specific product or quota if this voucher should "
 "reserve tickets."
-msgstr ""
+msgstr "คุณต้องเลือกสินค้าเฉพาะหรือโควตา หากบัตรกำนัลนี้ควรสงวนตั๋ว"
 
 #: base/models/vouchers.py:274
 #, python-format
@@ -7729,34 +7763,38 @@ msgid ""
 "This voucher has already been redeemed %(redeemed)s times. You cannot reduce "
 "the maximum number of usages below this number."
 msgstr ""
+"บัตรกำนัลนี้ถูกแลกแล้ว %(redeemed)s ครั้ง คุณไม่สามารถลดจำนวนการใช้งานสูงสุดให้ต่ำกว่าจำนวนนี้ไ"
+"ด้"
 
 #: base/models/vouchers.py:283 base/models/vouchers.py:339
 msgid ""
 "If you want this voucher to block quota, you need to select a specific date."
-msgstr ""
+msgstr "หากคุณต้องการให้บัตรกำนัลนี้บล็อกโควตา คุณต้องเลือกวันที่เฉพาะเจาะจง"
 
 #: base/models/vouchers.py:285
 msgid "You can not select a subevent if your event is not an event series."
-msgstr ""
+msgstr "คุณไม่สามารถเลือกกิจกรรมย่อยได้ หากกิจกรรมของคุณไม่ใช่ซีรีส์กิจกรรม"
 
 #: base/models/vouchers.py:365
 msgid ""
 "You cannot create a voucher that blocks quota as the selected product or "
 "quota is currently sold out or completely reserved."
 msgstr ""
+"คุณไม่สามารถสร้างบัตรกำนัลที่บล็อกโควตาได้ เนื่องจากสินค้าหรือโควตาที่เลือกขายหมดแล้วหรือถูกจองเต็"
+"มแล้ว"
 
 #: base/models/vouchers.py:376
 msgid "A voucher with this code already exists."
-msgstr ""
+msgstr "มีบัตรกำนัลที่มีรหัสนี้อยู่แล้ว"
 
 #: base/models/vouchers.py:383
 msgid "You need to choose a date if you select a seat."
-msgstr ""
+msgstr "คุณต้องเลือกวันที่หากคุณเลือกที่นั่ง"
 
 #: base/models/vouchers.py:391
 #, python-brace-format
 msgid "The specified seat ID \"{id}\" does not exist for this event."
-msgstr ""
+msgstr "ไม่พบ ID ที่นั่ง \"{id}\" ที่ระบุสำหรับกิจกรรมนี้"
 
 #: base/models/vouchers.py:396
 #, python-brace-format
@@ -7764,67 +7802,68 @@ msgid ""
 "The seat \"{id}\" is currently unavailable (blocked, already sold or a "
 "different voucher)."
 msgstr ""
+"ที่นั่ง \"{id}\" ไม่พร้อมใช้งานในขณะนี้ (ถูกบล็อก ขายไปแล้ว หรือเป็นของบัตรกำนัลอื่น)"
 
 #: base/models/vouchers.py:402
 msgid "You need to choose a specific product if you select a seat."
-msgstr ""
+msgstr "คุณต้องเลือกสินค้าแบบเฉพาะเจาะจงหากคุณเลือกที่นั่ง"
 
 #: base/models/vouchers.py:405
 msgid "Seat-specific vouchers can only be used once."
-msgstr ""
+msgstr "บัตรกำนัลสำหรับที่นั่งเฉพาะสามารถใช้ได้เพียงครั้งเดียวเท่านั้น"
 
 #: base/models/vouchers.py:408
 #, python-brace-format
 msgid "You need to choose the product \"{prod}\" for this seat."
-msgstr ""
+msgstr "คุณต้องเลือกสินค้า \"{prod}\" สำหรับที่นั่งนี้"
 
 #: base/models/vouchers.py:411
 #, python-brace-format
 msgid "The seat \"{id}\" is already sold or currently blocked."
-msgstr ""
+msgstr "ที่นั่ง \"{id}\" ถูกขายแล้วหรือถูกบล็อกอยู่ในขณะนี้"
 
 #: base/models/vouchers.py:555
 msgid ""
 "This is the maximum monetary amount that will be discounted using this "
 "voucher across all usages."
-msgstr ""
+msgstr "นี่คือจำนวนเงินสูงสุดที่จะถูกลดด้วยบัตรกำนัลนี้รวมทุกครั้งที่ใช้งาน"
 
 #: base/models/vouchers.py:586
 msgid "Limit to Organizer"
-msgstr ""
+msgstr "จำกัดเฉพาะผู้จัดงาน"
 
 #: base/models/vouchers.py:597
 #: control/forms/organizer_forms/organizer_form.py:139
 msgid "Invoice Voucher"
-msgstr ""
+msgstr "บัตรกำนัลใบแจ้งหนี้"
 
 #: base/models/vouchers.py:598
 msgid "Invoice Vouchers"
-msgstr ""
+msgstr "บัตรกำนัลใบแจ้งหนี้"
 
 #: base/models/waitinglist.py:41
 msgid "On waiting list since"
-msgstr ""
+msgstr "อยู่ในรายการรอตั้งแต่"
 
 #: base/models/waitinglist.py:53
 msgid "Assigned voucher"
-msgstr ""
+msgstr "บัตรกำนัลที่กำหนดให้"
 
 #: base/models/waitinglist.py:64
 msgid "The product the user waits for."
-msgstr ""
+msgstr "สินค้าที่ผู้ใช้กำลังรอ"
 
 #: base/models/waitinglist.py:73
 msgid "The variation of the product selected above."
-msgstr ""
+msgstr "ตัวแปรของสินค้าที่เลือกด้านบน"
 
 #: base/models/waitinglist.py:81
 msgid "Waiting list entry"
-msgstr ""
+msgstr "รายการรายการรอ"
 
 #: base/models/waitinglist.py:82
 msgid "Waiting list entries"
-msgstr ""
+msgstr "รายการรายการรอทั้งหมด"
 
 #: base/models/waitinglist.py:121
 msgid "This product is currently not available."
@@ -9552,7 +9591,7 @@ msgstr "เวิร์กช็อปตัวอย่าง"
 
 #: base/services/update_check.py:82
 msgid "eventyay update available"
-msgstr ""
+msgstr "มีอัปเดต eventyay พร้อมใช้งาน"
 
 #: base/services/update_check.py:85
 msgid ""
@@ -10571,7 +10610,7 @@ msgstr ""
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:117
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:145
 msgid "Discard"
-msgstr ""
+msgstr "ยกเลิก"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:143
 msgid "Cancel proposal"
@@ -11330,7 +11369,7 @@ msgstr ""
 #: control/templates/pretixcontrol/subevents/bulk.html:489
 #: control/templates/pretixcontrol/subevents/detail.html:131
 msgid "Optional"
-msgstr ""
+msgstr "ไม่บังคับ"
 
 #: common/templates/common/fragment_header_user.html:15
 msgid "Enforce UI language"
@@ -11439,7 +11478,7 @@ msgstr "แดชบอร์ด"
 #: common/templates/common/fragment_profile_dropdown.html:16
 #: eventyay_common/templates/eventyay_common/base.html:215
 msgid "Main dashboard"
-msgstr ""
+msgstr "แดชบอร์ดหลัก"
 
 #: common/templates/common/fragment_profile_dropdown.html:22
 #: eventyay_common/templates/eventyay_common/event/settings.html:29
@@ -11447,7 +11486,7 @@ msgstr ""
 #: eventyay_common/views/dashboards.py:386
 #: orga/templates/orga/event/live.html:15
 msgid "Talks"
-msgstr ""
+msgstr "ทอล์ก"
 
 #: common/templates/common/fragment_profile_dropdown.html:31
 msgid "My sessions"
@@ -11456,7 +11495,7 @@ msgstr "เซสชันของฉัน"
 #: common/templates/common/fragment_profile_dropdown.html:34
 #: control/forms/filter.py:1171 eventyay_common/navigation.py:42
 msgid "My Events"
-msgstr ""
+msgstr "อีเวนต์ของฉัน"
 
 #: common/templates/common/fragment_profile_dropdown.html:47
 msgid "Admin"
@@ -11954,7 +11993,7 @@ msgstr "อังกฤษ (แคนาดา)"
 
 #: config/settings.py:642
 msgid "German"
-msgstr ""
+msgstr "เยอรมัน"
 
 #: config/settings.py:650
 msgid "German (formal)"
@@ -11962,7 +12001,7 @@ msgstr "เยอรมัน (ทางการ)"
 
 #: config/settings.py:659
 msgid "Arabic"
-msgstr ""
+msgstr "อาหรับ"
 
 #: config/settings.py:667
 msgid "Bulgarian"
@@ -11978,15 +12017,15 @@ msgstr "เช็ก"
 
 #: config/settings.py:691
 msgid "Danish"
-msgstr ""
+msgstr "เดนมาร์ก"
 
 #: config/settings.py:699
 msgid "Greek"
-msgstr ""
+msgstr "กรีก"
 
 #: config/settings.py:707
 msgid "Spanish"
-msgstr ""
+msgstr "สเปน"
 
 #: config/settings.py:715
 msgid "Persian"
@@ -11994,11 +12033,11 @@ msgstr "เปอร์เซีย"
 
 #: config/settings.py:724
 msgid "Finnish"
-msgstr ""
+msgstr "ฟินแลนด์"
 
 #: config/settings.py:732
 msgid "French"
-msgstr ""
+msgstr "ฝรั่งเศส"
 
 #: config/settings.py:740
 msgid "Hungarian"
@@ -12006,115 +12045,115 @@ msgstr "ฮังการี"
 
 #: config/settings.py:748
 msgid "Indonesian"
-msgstr ""
+msgstr "อินโดนีเซีย"
 
 #: config/settings.py:756
 msgid "Italian"
-msgstr ""
+msgstr "อิตาลี"
 
 #: config/settings.py:764
 msgid "Japanese"
-msgstr ""
+msgstr "ญี่ปุ่น"
 
 #: config/settings.py:773
 msgid "Korean"
-msgstr ""
+msgstr "เกาหลี"
 
 #: config/settings.py:781
 msgid "Latvian"
-msgstr ""
+msgstr "ลัตเวีย"
 
 #: config/settings.py:789
 msgid "Malay"
-msgstr ""
+msgstr "มาเลย์"
 
 #: config/settings.py:797
 msgid "Norwegian Bokmål"
-msgstr ""
+msgstr "นอร์เวย์ (Bokmål)"
 
 #: config/settings.py:805
 msgid "Dutch"
-msgstr ""
+msgstr "ดัตช์"
 
 #: config/settings.py:813
 msgid "Dutch (informal)"
-msgstr ""
+msgstr "ดัตช์ (ไม่เป็นทางการ)"
 
 #: config/settings.py:822
 msgid "Polish"
-msgstr ""
+msgstr "โปแลนด์"
 
 #: config/settings.py:830
 msgid "Polish (informal)"
-msgstr ""
+msgstr "โปแลนด์ (ไม่เป็นทางการ)"
 
 #: config/settings.py:839
 msgid "Brazilian Portuguese"
-msgstr ""
+msgstr "โปรตุเกส (บราซิล)"
 
 #: config/settings.py:848
 msgid "Portuguese"
-msgstr ""
+msgstr "โปรตุเกส"
 
 #: config/settings.py:857
 msgid "Romanian"
-msgstr ""
+msgstr "โรมาเนีย"
 
 #: config/settings.py:865
 msgid "Russian"
-msgstr ""
+msgstr "รัสเซีย"
 
 #: config/settings.py:873
 msgid "Sinhala"
-msgstr ""
+msgstr "สิงหล"
 
 #: config/settings.py:881
 msgid "Slovenian"
-msgstr ""
+msgstr "สโลวีเนีย"
 
 #: config/settings.py:889
 msgid "Swedish"
-msgstr ""
+msgstr "สวีเดน"
 
 #: config/settings.py:897
 msgid "Swahili"
-msgstr ""
+msgstr "สวาฮีลี"
 
 #: config/settings.py:905
 msgid "Thai"
-msgstr ""
+msgstr "ไทย"
 
 #: config/settings.py:913
 msgid "Turkish"
-msgstr ""
+msgstr "ตุรกี"
 
 #: config/settings.py:921
 msgid "Ukrainian"
-msgstr ""
+msgstr "ยูเครน"
 
 #: config/settings.py:929
 msgid "Vietnamese"
-msgstr ""
+msgstr "เวียดนาม"
 
 #: config/settings.py:937
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "จีนตัวย่อ"
 
 #: config/settings.py:946
 msgid "Traditional Chinese (Taiwan)"
-msgstr ""
+msgstr "จีนตัวเต็ม (ไต้หวัน)"
 
 #: config/settings.py:1241
 msgid "User profile only"
-msgstr ""
+msgstr "เฉพาะโปรไฟล์ผู้ใช้"
 
 #: config/settings.py:1242
 msgid "Read access"
-msgstr ""
+msgstr "สิทธิ์อ่าน"
 
 #: config/settings.py:1243
 msgid "Write access"
-msgstr ""
+msgstr "สิทธิ์เขียน"
 
 #: control/forms/admin/admin.py:17 control/forms/global_settings.py:451
 msgid "Perform update checks"
@@ -12129,10 +12168,15 @@ msgid ""
 "never any IP addresses and we will not know who you are or where to find "
 "your instance. You can disable this behavior here at any time."
 msgstr ""
+"ระหว่างการตรวจสอบอัปเดต eventyay จะรายงานรหัสติดตั้งแบบไม่ระบุตัวตนและไม่ซ้ำกัน เวอร์ชันปัจจุ"
+"บันของ eventyay และปลั๊กอินที่คุณติดตั้ง รวมถึงจำนวนอีเวนต์ที่ใช้งานและไม่ใช้งานในการติดตั้งของคุณ "
+"ไปยังเซิร์ฟเวอร์ที่ดำเนินการโดยนักพัฒนา eventyay เราจะจัดเก็บเฉพาะข้อมูลแบบไม่ระบุตัวตนเท่านั้น "
+"ไม่จัดเก็บที่อยู่ IP ใดๆ และเราจะไม่ทราบว่าคุณเป็นใครหรือจะพบอินสแตนซ์ของคุณได้ที่ไหน คุณสามารถปิ"
+"ดใช้งานพฤติกรรมนี้ได้ที่นี่ทุกเมื่อ"
 
 #: control/forms/admin/admin.py:28
 msgid "Email notifications"
-msgstr ""
+msgstr "การแจ้งเตือนทางอีเมล"
 
 #: control/forms/admin/admin.py:30
 msgid ""
@@ -12140,6 +12184,8 @@ msgid ""
 "available. This address will not be transmitted to eventyay.com, the emails "
 "will be sent by your server locally."
 msgstr ""
+"เราจะแจ้งคุณที่ที่อยู่นี้หากตรวจพบว่ามีอัปเดตใหม่ ที่อยู่นี้จะไม่ถูกส่งไปยัง eventyay.com อีเมลจะถูกส่งจ"
+"ากเซิร์ฟเวอร์ของคุณในเครื่อง"
 
 #: control/forms/admin/vouchers.py:17
 msgid "Event effect"
@@ -12192,6 +12238,7 @@ msgid ""
 "This short name is already taken by another event. Please choose a different "
 "one or use the \"Set to random\" button for an automatic suggestion."
 msgstr ""
+"ชื่อนี้ถูกใช้โดยอีเวนต์อื่นแล้ว โปรดเลือกชื่ออื่น หรือใช้ปุ่ม \"ตั้งเป็นแบบสุ่ม\" เพื่อรับคำแนะนำอัตโนมัติ"
 
 #: control/forms/event.py:143 eventyay_common/forms/event.py:24
 msgid "Event timezone"
@@ -12299,6 +12346,8 @@ msgid ""
 "already received orders might lead to unexpected behavior when sorting or "
 "changing names."
 msgstr ""
+"นี่เป็นการกำหนดว่า eventyay จะขอชื่อบุคคลอย่างไร การเปลี่ยนแปลงหลังจากที่คุณได้รับคำสั่งซื้อแล้วอา"
+"จทำให้เกิดพฤติกรรมที่ไม่คาดคิดเมื่อทำการจัดเรียงหรือเปลี่ยนชื่อ"
 
 #: control/forms/event.py:558
 msgid "Allowed titles"
@@ -12327,12 +12376,12 @@ msgstr "ไม่ถาม"
 
 #: control/forms/event.py:710 orga/forms/cfp.py:162 orga/forms/cfp.py:185
 msgid "Ask, but do not require input"
-msgstr ""
+msgstr "ถาม แต่ไม่บังคับให้กรอก"
 
 #: control/forms/event.py:711 orga/forms/cfp.py:152 orga/forms/cfp.py:163
 #: orga/forms/cfp.py:186
 msgid "Ask and require input"
-msgstr ""
+msgstr "ถามและต้องกรอก"
 
 #: control/forms/event.py:747
 #, python-brace-format
@@ -12340,10 +12389,11 @@ msgid ""
 "You have configured gift cards to be valid {} years plus the year the gift "
 "card is issued in."
 msgstr ""
+"คุณได้ตั้งค่าบัตรของขวัญให้มีอายุใช้งาน {} ปี นับรวมปีที่ออกบัตรของขวัญด้วย"
 
 #: control/forms/event.py:765
 msgid "Tax rule for payment fees"
-msgstr ""
+msgstr "กฎภาษีสำหรับค่าธรรมเนียมการชำระเงิน"
 
 #: control/forms/event.py:768
 msgid ""
@@ -12351,73 +12401,80 @@ msgid ""
 "payment methods. This will set the tax rate and reverse charge rules, other "
 "settings of the tax rule are ignored."
 msgstr ""
+"กฎภาษีที่ใช้กับค่าธรรมเนียมเพิ่มเติมที่คุณตั้งค่าสำหรับวิธีการชำระเงินแต่ละรายการ ซึ่งจะกำหนดอัตราภาษี"
+"และกฎ reverse charge โดยจะไม่สนใจการตั้งค่าอื่นๆ ของกฎภาษี"
 
 #: control/forms/event.py:876
 msgid "Generate invoices for Sales channels"
-msgstr ""
+msgstr "สร้างใบแจ้งหนี้สำหรับช่องทางการขาย"
 
 #: control/forms/event.py:880
 msgid ""
 "If you have enabled invoice generation in the previous setting, you can "
 "limit it here to specific sales channels."
 msgstr ""
+"หากคุณเปิดใช้งานการสร้างใบแจ้งหนี้ในการตั้งค่าก่อนหน้า คุณสามารถจำกัดได้ที่นี่ให้เฉพาะช่องทางการขา"
+"ยที่ต้องการ"
 
 #: control/forms/event.py:884
 msgid "Invoice style"
-msgstr ""
+msgstr "สไตล์ใบแจ้งหนี้"
 
 #: control/forms/event.py:888
 msgid "Invoice language"
-msgstr ""
+msgstr "ภาษาใบแจ้งหนี้"
 
 #: control/forms/event.py:889 control/forms/event.py:906
 msgid "The user's language"
-msgstr ""
+msgstr "ภาษาของผู้ใช้"
 
 #: control/forms/event.py:930
 msgid "The online shop must be selected to receive these emails."
-msgstr ""
+msgstr "ต้องเลือกร้านค้าออนไลน์เพื่อรับอีเมลเหล่านี้"
 
 #: control/forms/event.py:944
 msgid "Sales channels for checkout emails"
-msgstr ""
+msgstr "ช่องทางการขายสำหรับอีเมลชำระเงิน"
 
 #: control/forms/event.py:946
 msgid ""
 "The order placed and paid emails will only be send to orders from these "
 "sales channels. The online shop must be enabled."
 msgstr ""
+"อีเมลยืนยันการสั่งซื้อและชำระเงินแล้วจะส่งเฉพาะคำสั่งซื้อจากช่องทางการขายเหล่านี้ ต้องเปิดใช้งานร้า"
+"นค้าออนไลน์"
 
 #: control/forms/event.py:957 plugins/sendmail/forms.py:357
 msgid ""
 "This email will only be send to orders from these sales channels. The online "
 "shop must be enabled."
 msgstr ""
+"อีเมลนี้จะส่งเฉพาะคำสั่งซื้อจากช่องทางการขายเหล่านี้ ต้องเปิดใช้งานร้านค้าออนไลน์"
 
 #: control/forms/event.py:964
 msgid "Bcc address"
-msgstr ""
+msgstr "ที่อยู่ Bcc"
 
 #: control/forms/event.py:965
 msgid "All emails will be sent to this address as a Bcc copy"
-msgstr ""
+msgstr "อีเมลทั้งหมดจะถูกส่งไปยังที่อยู่นี้เป็นสำเนา Bcc"
 
 #: control/forms/event.py:971
 msgid "Signature"
-msgstr ""
+msgstr "ลายเซ็น"
 
 #: control/forms/event.py:974
 #, python-brace-format
 msgid "This will be attached to every email. Available placeholders: {event}"
-msgstr ""
+msgstr "จะแนบไปกับอีเมลทุกฉบับ ตัวยึดตำแหน่งที่ใช้ได้: {event}"
 
 #: control/forms/event.py:976
 msgid "e.g. your contact details"
-msgstr ""
+msgstr "เช่น รายละเอียดการติดต่อของคุณ"
 
 #: control/forms/event.py:978
 msgid "HTML mail renderer"
-msgstr ""
+msgstr "ตัวเรนเดอร์อีเมล HTML"
 
 #: control/forms/event.py:980 control/forms/event.py:999
 #: control/forms/event.py:1018 control/forms/event.py:1081
@@ -12722,6 +12779,8 @@ msgid ""
 "then import your bank statements to process the payments within eventyay, or "
 "mark them as paid manually."
 msgstr ""
+"ลูกค้าของคุณจะได้รับคำแนะนำให้โอนเงินเข้าบัญชีของคุณ จากนั้นคุณสามารถนำเข้ารายการเดินบัญชีธนาคา"
+"รเพื่อประมวลผลการชำระเงินภายใน eventyay หรือทำเครื่องหมายว่าชำระเงินแล้วด้วยตนเอง"
 
 #: control/forms/event.py:1537
 #: control/templates/pretixcontrol/event/quick_setup.html:45
@@ -13522,30 +13581,32 @@ msgstr "สร้างคำสั่งซื้อแบบชำระเต
 
 #: control/forms/orderimport.py:19
 msgid "Create orders as pending and still require payment"
-msgstr ""
+msgstr "สร้างคำสั่งซื้อเป็นรอดำเนินการและยังคงต้องชำระเงิน"
 
 #: control/forms/orderimport.py:22
 msgid "Create orders as test mode orders"
-msgstr ""
+msgstr "สร้างคำสั่งซื้อเป็นคำสั่งซื้อโหมดทดสอบ"
 
 #: control/forms/orderimport.py:32
 #, python-brace-format
 msgid "CSV column: \"{name}\""
-msgstr ""
+msgstr "คอลัมน์ CSV: \"{name}\""
 
 #: control/forms/orders.py:45
 msgid "Overbook quota"
-msgstr ""
+msgstr "โควตาเกินจำนวน"
 
 #: control/forms/orders.py:47
 msgid ""
 "If you check this box, this operation will be performed even if it leads to "
 "an overbooked quota and you having sold more tickets than you planned!"
 msgstr ""
+"หากคุณทำเครื่องหมายในช่องนี้ การดำเนินการนี้จะทำแม้ว่าจะทำให้โควตาเกินจำนวนและคุณขายบัตรมากก"
+"ว่าที่วางแผนไว้!"
 
 #: control/forms/orders.py:90
 msgid "Overbook quota and ignore late payment"
-msgstr ""
+msgstr "โควตาเกินจำนวนและไม่สนใจการชำระเงินล่าช้า"
 
 #: control/forms/orders.py:92
 msgid ""
@@ -13554,14 +13615,16 @@ msgid ""
 "operation will also be performed regardless of the settings for late "
 "payments."
 msgstr ""
+"หากคุณทำเครื่องหมายในช่องนี้ การดำเนินการนี้จะทำแม้ว่าจะทำให้โควตาเกินจำนวนและคุณขายบัตรมากก"
+"ว่าที่วางแผนไว้! การดำเนินการนี้จะทำโดยไม่คำนึงถึงการตั้งค่าสำหรับการชำระเงินล่าช้า"
 
 #: control/forms/orders.py:123 control/forms/orders.py:162
 msgid "Notify customer by email"
-msgstr ""
+msgstr "แจ้งลูกค้าทางอีเมล"
 
 #: control/forms/orders.py:129
 msgid "Keep a cancellation fee of"
-msgstr ""
+msgstr "เก็บค่าธรรมเนียมการยกเลิกไว้จำนวน"
 
 #: control/forms/orders.py:131
 msgid ""
@@ -13571,55 +13634,61 @@ msgid ""
 "want to keep them. Please always enter a gross value, tax will be calculated "
 "automatically."
 msgstr ""
+"หากคุณเก็บค่าธรรมเนียม ตำแหน่งทั้งหมดภายในคำสั่งซื้อนี้จะถูกยกเลิก และคำสั่งซื้อจะถูกปรับให้เหลือเป็น"
+"ค่าธรรมเนียมการยกเลิกที่ชำระแล้ว ค่าธรรมเนียมการชำระเงินและการจัดส่งจะถูกยกเลิกด้วย ดังนั้นหาก"
+"คุณต้องการเก็บไว้ ให้รวมไว้ในค่าธรรมเนียมการยกเลิกของคุณ โปรดป้อนเป็นมูลค่ารวมเสมอ ระบบจะคำ"
+"นวณภาษีโดยอัตโนมัติ"
 
 #: control/forms/orders.py:137
 msgid "Generate cancellation for invoice"
-msgstr ""
+msgstr "สร้างการยกเลิกสำหรับใบแจ้งหนี้"
 
 #: control/forms/orders.py:168
 msgid "Payment amount"
-msgstr ""
+msgstr "จำนวนเงินที่ชำระ"
 
 #: control/forms/orders.py:170
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/control.html:18
 #: plugins/reports/exporters.py:444 plugins/reports/exporters.py:515
 #: plugins/reports/exporters.py:658 plugins/reports/exporters.py:915
 msgid "Payment date"
-msgstr ""
+msgstr "วันที่ชำระเงิน"
 
 #: control/forms/orders.py:207
 msgid "Re-calculate taxes"
-msgstr ""
+msgstr "คำนวณภาษีใหม่"
 
 #: control/forms/orders.py:210
 msgid "Do not re-calculate taxes"
-msgstr ""
+msgstr "ไม่ต้องคำนวณภาษีใหม่"
 
 #: control/forms/orders.py:213
 msgid ""
 "Re-calculate taxes based on address and product settings, keep gross amount "
 "the same."
-msgstr ""
+msgstr "คำนวณภาษีใหม่ตามที่อยู่และการตั้งค่าสินค้า โดยคงจำนวนเงินรวมเท่าเดิม"
 
 #: control/forms/orders.py:217
 msgid ""
 "Re-calculate taxes based on address and product settings, keep net amount "
 "the same."
-msgstr ""
+msgstr "คำนวณภาษีใหม่ตามที่อยู่และการตั้งค่าสินค้า โดยคงจำนวนเงินสุทธิเท่าเดิม"
 
 #: control/forms/orders.py:223
 msgid "Issue a new invoice if required"
-msgstr ""
+msgstr "ออกใบแจ้งหนี้ใหม่หากจำเป็น"
 
 #: control/forms/orders.py:227
 msgid ""
 "If an invoice exists for this order and this operation would change its "
 "contents, the old invoice will be canceled and a new invoice will be issued."
 msgstr ""
+"หากมีใบแจ้งหนี้สำหรับคำสั่งซื้อนี้อยู่แล้ว และการดำเนินการนี้จะเปลี่ยนเนื้อหาใบแจ้งหนี้ ใบแจ้งหนี้เดิมจะถู"
+"กยกเลิกและจะออกใบแจ้งหนี้ใหม่"
 
 #: control/forms/orders.py:232
 msgid "Notify user"
-msgstr ""
+msgstr "แจ้งผู้ใช้"
 
 #: control/forms/orders.py:235
 msgid ""
@@ -14289,40 +14358,42 @@ msgstr "วันหยุดสุดสัปดาห์"
 
 #: control/forms/users.py:102 eventyay_common/views/account/basic.py:90
 msgid "Your changes could not be saved. See below for details."
-msgstr ""
+msgstr "ไม่สามารถบันทึกการเปลี่ยนแปลงของคุณได้ ดูรายละเอียดด้านล่าง"
 
 #: control/forms/vouchers.py:141
 msgid "Specific seat ID"
-msgstr ""
+msgstr "รหัสที่นั่งเฉพาะ"
 
 #: control/forms/vouchers.py:182
 msgid "Invalid product selected."
-msgstr ""
+msgstr "เลือกสินค้าที่ไม่ถูกต้อง"
 
 #: control/forms/vouchers.py:207
 msgid ""
 "The voucher only matches hidden products but you have not selected that it "
 "should show them."
 msgstr ""
+"บัตรกำนัลนี้ใช้ได้เฉพาะกับสินค้าที่ซ่อนไว้ แต่คุณไม่ได้เลือกให้แสดงสินค้าเหล่านั้น"
 
 #: control/forms/vouchers.py:253
 msgid "Codes"
-msgstr ""
+msgstr "โค้ด"
 
 #: control/forms/vouchers.py:254
 msgid ""
 "Add one voucher code per line. We suggest that you copy this list and save "
 "it into a file."
 msgstr ""
+"เพิ่มโค้ดบัตรกำนัลหนึ่งรายการต่อบรรทัด เราแนะนำให้คุณคัดลอกรายการนี้และบันทึกลงในไฟล์"
 
 #: control/forms/vouchers.py:257
 msgid "Send vouchers via email"
-msgstr ""
+msgstr "ส่งบัตรกำนัลทางอีเมล"
 
 #: control/forms/vouchers.py:262
 #, python-brace-format
 msgid "Your voucher for {event}"
-msgstr ""
+msgstr "บัตรกำนัลของคุณสำหรับ {event}"
 
 #: control/forms/vouchers.py:269
 #, python-brace-format
@@ -14341,18 +14412,31 @@ msgid ""
 "\n"
 "Your {event} team"
 msgstr ""
+"สวัสดี\n"
+"\n"
+"ในอีเมลนี้ เราส่งบัตรกำนัลหนึ่งรายการหรือมากกว่าสำหรับ {event} ให้คุณ:\n"
+"\n"
+"{voucher_list}\n"
+"\n"
+"คุณสามารถใช้ได้ที่นี่ในร้านขายบัตรของเรา:\n"
+"\n"
+"{url}\n"
+"\n"
+"ขอแสดงความนับถือ\n"
+"\n"
+"ทีมงาน {event}"
 
 #: control/forms/vouchers.py:276 orga/forms/cfp.py:595
 #: orga/templates/orga/mails/_mail_editor.html:28 plugins/sendmail/forms.py:439
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:23
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:25
 msgid "Recipients"
-msgstr ""
+msgstr "ผู้รับ"
 
 #: control/forms/vouchers.py:281
 #: presale/templates/pretixpresale/fragment_modals.html:109
 msgid "or"
-msgstr ""
+msgstr "หรือ"
 
 #: control/forms/vouchers.py:287
 msgid ""
@@ -14360,10 +14444,12 @@ msgid ""
 "line, or a CSV file with a title column and one or more of the columns "
 "\"email\", \"number\", \"name\", or \"tag\"."
 msgstr ""
+"คุณสามารถระบุรายการที่อยู่อีเมล โดยหนึ่งอีเมลต่อหนึ่งบรรทัด หรืออัปโหลดไฟล์ CSV ที่มีคอลัมน์ชื่อเรื่อง "
+"และมีหนึ่งหรือหลายคอลัมน์ดังนี้: \"email\", \"number\", \"name\" หรือ \"tag\""
 
 #: control/forms/vouchers.py:325
 msgid "Maximum usages per voucher"
-msgstr ""
+msgstr "จำนวนการใช้งานสูงสุดต่อบัตรกำนัล"
 
 #: control/forms/vouchers.py:326
 msgid "Number of times EACH of these vouchers can be redeemed."
@@ -14371,35 +14457,35 @@ msgstr "จำนวนครั้งที่บัตรกำนัลแต
 
 #: control/forms/vouchers.py:334
 msgid "Specific seat IDs"
-msgstr ""
+msgstr "รหัสที่นั่งเฉพาะ"
 
 #: control/forms/vouchers.py:348
 msgid "CSV input needs to contain a header row in the first line."
-msgstr ""
+msgstr "ข้อมูลนำเข้า CSV ต้องมีแถวส่วนหัวในบรรทัดแรก"
 
 #: control/forms/vouchers.py:353
 #, python-brace-format
 msgid "CSV input needs to contain a field with the header \"{header}\"."
-msgstr ""
+msgstr "ข้อมูลนำเข้า CSV ต้องมีฟิลด์ที่มีส่วนหัวเป็น \"{header}\""
 
 #: control/forms/vouchers.py:358
 #, python-brace-format
 msgid "CSV input contains an unknown field with the header \"{header}\"."
-msgstr ""
+msgstr "ข้อมูลนำเข้า CSV มีฟิลด์ที่ไม่รู้จัก โดยมีส่วนหัวเป็น \"{header}\""
 
 #: control/forms/vouchers.py:367 control/forms/vouchers.py:385
 #, python-brace-format
 msgid "{value} is not a valid email address."
-msgstr ""
+msgstr "{value} ไม่ใช่ที่อยู่อีเมลที่ถูกต้อง"
 
 #: control/forms/vouchers.py:379
 #, python-brace-format
 msgid "Invalid value in row {number}."
-msgstr ""
+msgstr "ค่าไม่ถูกต้องในแถว {number}"
 
 #: control/forms/vouchers.py:397
 msgid "A voucher with one of these codes already exists."
-msgstr ""
+msgstr "มีบัตรกำนัลที่ใช้โค้ดหนึ่งในนี้อยู่แล้ว"
 
 #: control/forms/vouchers.py:407
 msgid ""
@@ -14748,102 +14834,104 @@ msgstr "หมายเหตุภายในของคำสั่งซื
 
 #: control/logdisplay.py:515
 msgid "The order's flag to require attention at check-in has been toggled."
-msgstr ""
+msgstr "สลับสถานะธงของคำสั่งซื้อให้ต้องให้ความสนใจตอนเช็คอินแล้ว"
 
 #: control/logdisplay.py:518
 #, python-brace-format
 msgid "A new payment {local_id} has been started instead of the previous one."
-msgstr ""
+msgstr "เริ่มการชำระเงินใหม่ {local_id} แทนรายการก่อนหน้าแล้ว"
 
 #: control/logdisplay.py:520
 msgid "An unidentified type email has been sent."
-msgstr ""
+msgstr "ส่งอีเมลประเภทที่ไม่ระบุแล้ว"
 
 #: control/logdisplay.py:521
 msgid "Sending of an email has failed."
-msgstr ""
+msgstr "การส่งอีเมลล้มเหลว"
 
 #: control/logdisplay.py:523
 msgid ""
 "The email has been sent without attachments since they would have been too "
 "large to be likely to arrive."
 msgstr ""
+"ส่งอีเมลโดยไม่มีไฟล์แนบแล้ว เนื่องจากไฟล์แนบมีขนาดใหญ่เกินไปและอาจส่งไม่ถึง"
 
 #: control/logdisplay.py:525
 msgid "A custom email has been sent."
-msgstr ""
+msgstr "ส่งอีเมลแบบกำหนดเองแล้ว"
 
 #: control/logdisplay.py:526
 msgid "A custom email has been sent to an attendee."
-msgstr ""
+msgstr "ส่งอีเมลแบบกำหนดเองให้ผู้เข้าร่วมแล้ว"
 
 #: control/logdisplay.py:528
 msgid ""
 "An email has been sent with a reminder that the ticket is available for "
 "download."
-msgstr ""
+msgstr "ส่งอีเมลเตือนแล้วว่าตั๋วพร้อมให้ดาวน์โหลด"
 
 #: control/logdisplay.py:531
 msgid ""
 "An email has been sent with a warning that the order is about to expire."
-msgstr ""
+msgstr "ส่งอีเมลเตือนแล้วว่าคำสั่งซื้อกำลังจะหมดอายุ"
 
 #: control/logdisplay.py:534
 msgid ""
 "An email has been sent to notify the user that the order has been canceled."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าคำสั่งซื้อถูกยกเลิก"
 
 #: control/logdisplay.py:537
 msgid ""
 "An email has been sent to notify the user that the event has been canceled."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่างานอีเวนต์ถูกยกเลิก"
 
 #: control/logdisplay.py:540
 msgid ""
 "An email has been sent to notify the user that the order has been changed."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าคำสั่งซื้อถูกเปลี่ยนแปลง"
 
 #: control/logdisplay.py:543
 msgid ""
 "An email has been sent to notify the user that the order has been received."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าได้รับคำสั่งซื้อแล้ว"
 
 #: control/logdisplay.py:546
 msgid ""
 "An email has been sent to notify the user that payment has been received."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าได้รับการชำระเงินแล้ว"
 
 #: control/logdisplay.py:549
 msgid ""
 "An email has been sent to notify the user that the order has been denied."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าคำสั่งซื้อถูกปฏิเสธ"
 
 #: control/logdisplay.py:552
 msgid ""
 "An email has been sent to notify the user that the order has been approved."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าคำสั่งซื้อได้รับการอนุมัติ"
 
 #: control/logdisplay.py:555
 msgid ""
 "An email has been sent to notify the user that the order has been received "
 "and requires payment."
-msgstr ""
+msgstr "ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าได้รับคำสั่งซื้อแล้วและต้องชำระเงิน"
 
 #: control/logdisplay.py:558
 msgid ""
 "An email has been sent to notify the user that the order has been received "
 "and requires approval."
 msgstr ""
+"ส่งอีเมลเพื่อแจ้งผู้ใช้แล้วว่าได้รับคำสั่งซื้อแล้วและต้องได้รับการอนุมัติ"
 
 #: control/logdisplay.py:561
 msgid ""
 "An email with a link to the order detail page has been resent to the user."
-msgstr ""
+msgstr "ส่งอีเมลพร้อมลิงก์ไปยังหน้ารายละเอียดคำสั่งซื้อให้ผู้ใช้อีกครั้งแล้ว"
 
 #: control/logdisplay.py:563
 #, python-brace-format
 msgid "Payment {local_id} has been confirmed."
-msgstr ""
+msgstr "ยืนยันการชำระเงิน {local_id} แล้ว"
 
 #: control/logdisplay.py:564
 #, python-brace-format
@@ -15645,31 +15733,31 @@ msgstr "ย้ายห้อง BBB"
 
 #: control/navigation.py:578 control/templates/control/janus_list.html:5
 msgid "Janus servers"
-msgstr ""
+msgstr "เซิร์ฟเวอร์ Janus"
 
 #: control/navigation.py:583 control/templates/control/turn_list.html:5
 msgid "TURN servers"
-msgstr ""
+msgstr "เซิร์ฟเวอร์ TURN"
 
 #: control/navigation.py:588 control/templates/control/streaming_list.html:5
 msgid "Streaming servers"
-msgstr ""
+msgstr "เซิร์ฟเวอร์สตรีมมิง"
 
 #: control/navigation.py:593
 msgid "Streamkey generator"
-msgstr ""
+msgstr "ตัวสร้างคีย์สตรีม"
 
 #: control/navigation.py:598 control/templates/control/systemlog_list.html:5
 msgid "System log"
-msgstr ""
+msgstr "บันทึกระบบ"
 
 #: control/navigation.py:603
 msgid "Conftool posters"
-msgstr ""
+msgstr "โปสเตอร์ Conftool"
 
 #: control/navigation.py:617
 msgid "Video Admin"
-msgstr ""
+msgstr "ผู้ดูแลวิดีโอ"
 
 #: control/permissions.py:40 control/permissions.py:80
 #: control/permissions.py:115 control/permissions.py:135
@@ -15679,7 +15767,7 @@ msgstr "คุณไม่มีสิทธิ์เข้าถึงเนื
 
 #: control/templates/control/bbb_delete.html:5
 msgid "Delete BBB server"
-msgstr ""
+msgstr "ลบเซิร์ฟเวอร์ BBB"
 
 #: control/templates/control/bbb_delete.html:8
 #: control/templates/control/janus_delete.html:8
@@ -15687,22 +15775,22 @@ msgstr ""
 #: control/templates/control/turn_delete.html:8
 #, python-format
 msgid "Are you sure you want to delete %(id)s?"
-msgstr ""
+msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบ %(id)s?"
 
 #: control/templates/control/bbb_form.html:6
 msgid "Create or update BBB server"
-msgstr ""
+msgstr "สร้างหรืออัปเดตเซิร์ฟเวอร์ BBB"
 
 #: control/templates/control/bbb_list.html:8
 msgid "Add new BBB server"
-msgstr ""
+msgstr "เพิ่มเซิร์ฟเวอร์ BBB ใหม่"
 
 #: control/templates/control/bbb_list.html:9
 #: control/templates/control/janus_list.html:8
 #: control/templates/control/streaming_list.html:8
 #: control/templates/control/turn_list.html:8
 msgid "Add new server"
-msgstr ""
+msgstr "เพิ่มเซิร์ฟเวอร์ใหม่"
 
 #: control/templates/control/bbb_list.html:19
 #: control/templates/control/event_list.html:13
@@ -15715,7 +15803,7 @@ msgstr "รหัส"
 
 #: control/templates/control/bbb_list.html:22
 msgid "Current cost"
-msgstr ""
+msgstr "ค่าใช้จ่ายปัจจุบัน"
 
 #: control/templates/control/bbb_list.html:23
 #: control/templates/control/event_list.html:17
@@ -15739,11 +15827,11 @@ msgstr "การดำเนินการ"
 #: control/templates/control/streaming_list.html:35
 #: control/templates/control/turn_list.html:43
 msgid "No servers configured yet."
-msgstr ""
+msgstr "ยังไม่ได้กำหนดค่าเซิร์ฟเวอร์"
 
 #: control/templates/control/bbb_moveroom.html:6
 msgid "Move a BBB room to a new server"
-msgstr ""
+msgstr "ย้ายห้อง BBB ไปยังเซิร์ฟเวอร์ใหม่"
 
 #: control/templates/control/bbb_moveroom.html:11
 msgid ""
@@ -15755,22 +15843,27 @@ msgid ""
 "recommended to join the room yourself to be able to react to this. Use with "
 "caution."
 msgstr ""
+"การย้ายห้องจะพยายามเตะทุกคนออกจากห้อง ผู้ใช้ต้องเข้าร่วมใหม่โดยรีโหลดหน้า หากเตะผู้ใช้ไม่สำเร็"
+"จ (เช่น เซิร์ฟเวอร์ล่ม) ระบบจะดำเนินการต่อ แต่อาจเกิดห้องแบบ \"แยก\" คือมีกลุ่มคนสองกลุ่มที่คิดว่"
+"าอยู่ห้องเดียวกันแต่จริง ๆ ไม่ได้อยู่ด้วยกัน การบันทึกของห้องจะไม่สามารถเข้าถึงผ่านอินเทอร์เฟซได้อีกใ"
+"นภายหลัง แนะนำให้คุณเข้าร่วมห้องด้วยตนเองเพื่อให้สามารถรับมือกับสถานการณ์นี้ได้ ใช้ด้วยความระมัดร"
+"ะวัง"
 
 #: control/templates/control/bbb_moveroom.html:14
 msgid "Move"
-msgstr ""
+msgstr "ย้าย"
 
 #: control/templates/control/conftool_syncposters.html:6
 msgid "Sync conftool posters"
-msgstr ""
+msgstr "ซิงก์โปสเตอร์ Conftool"
 
 #: control/templates/control/conftool_syncposters.html:11
 msgid "Completed."
-msgstr ""
+msgstr "เสร็จสิ้น"
 
 #: control/templates/control/conftool_syncposters.html:13
 msgid "Failed."
-msgstr ""
+msgstr "ล้มเหลว"
 
 #: control/templates/control/conftool_syncposters.html:15
 msgid "Task is running."
@@ -17342,50 +17435,53 @@ msgid ""
 "You can instead take your shop offline. This will hide it from everyone "
 "except from the organizer teams you configured to have access to the event."
 msgstr ""
+"คุณสามารถทำให้ร้านค้าของคุณออฟไลน์ได้ วิธีนี้จะซ่อนร้านค้าจากทุกคน ยกเว้นทีมผู้จัดงานที่คุณตั้งค่าให้มีสิท"
+"ธิ์เข้าถึงอีเวนต์"
 
 #: control/templates/pretixcontrol/event/delete.html:65
 msgid ""
 "However, since your shop is offline, it is only visible to the organizing "
 "team according to the permissions you configured."
 msgstr ""
+"อย่างไรก็ตาม เนื่องจากร้านค้าของคุณออฟไลน์อยู่ จึงจะแสดงเฉพาะให้ทีมผู้จัดตามสิทธิ์ที่คุณตั้งค่าไว้เท่านั้น"
 
 #: control/templates/pretixcontrol/event/fragment_geodata.html:13
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:42
 msgid "Geo coordinates"
-msgstr ""
+msgstr "พิกัดภูมิศาสตร์"
 
 #: control/templates/pretixcontrol/event/fragment_geodata.html:21
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:57
 msgid "Geocoding data © OpenStreetMap"
-msgstr ""
+msgstr "ข้อมูลระบุตำแหน่ง © OpenStreetMap"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:4
 msgid "Failed to retrieve geo coordinates"
-msgstr ""
+msgstr "ดึงพิกัดภูมิศาสตร์ไม่สำเร็จ"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:5
 msgid "Retrieving geo coordinates …"
-msgstr ""
+msgstr "กำลังดึงพิกัดภูมิศาสตร์ …"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:6
 msgid "Geo coordinates updated"
-msgstr ""
+msgstr "อัปเดตพิกัดภูมิศาสตร์แล้ว"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:7
 msgid "Update map?"
-msgstr ""
+msgstr "อัปเดตแผนที่หรือไม่?"
 
 #: control/templates/pretixcontrol/event/fragment_info_box.html:5
 msgid "Event organizer"
-msgstr ""
+msgstr "ผู้จัดอีเวนต์"
 
 #: control/templates/pretixcontrol/event/fragment_info_box.html:10
 msgid "This event is organized by"
-msgstr ""
+msgstr "อีเวนต์นี้จัดโดย"
 
 #: control/templates/pretixcontrol/event/fragment_info_box.html:13
 msgid "Teams of the organizer are"
-msgstr ""
+msgstr "ทีมของผู้จัดคือ"
 
 #: control/templates/pretixcontrol/event/fragment_timeline.html:5
 #: control/templates/pretixcontrol/event/settings.html:144
@@ -17401,40 +17497,42 @@ msgid ""
 "duplicate payment attempts. You should review the cases and consider "
 "refunding the overpaid amount to the user."
 msgstr ""
+"อีเวนต์นี้มีคำสั่งซื้อที่ชำระเงินเกิน <strong></strong> เช่น จากความพยายามชำระเงินซ้ำ คุณควรตร"
+"วจสอบกรณีต่างๆ และพิจารณาคืนเงินส่วนที่ชำระเกินให้ผู้ใช้"
 
 #: control/templates/pretixcontrol/event/index.html:34
 msgid "Show overpaid orders"
-msgstr ""
+msgstr "แสดงคำสั่งซื้อที่ชำระเงินเกิน"
 
 #: control/templates/pretixcontrol/event/index.html:39
 msgid ""
 "This event contains <strong>pending refunds</strong> that you should take "
 "care of."
-msgstr ""
+msgstr "อีเวนต์นี้มีการคืนเงินที่รอดำเนินการ <strong></strong> ที่คุณควรจัดการ"
 
 #: control/templates/pretixcontrol/event/index.html:43
 msgid "Show pending refunds"
-msgstr ""
+msgstr "แสดงการคืนเงินที่รอดำเนินการ"
 
 #: control/templates/pretixcontrol/event/index.html:48
 msgid ""
 "This event contains <strong>requested cancellations</strong> that you should "
 "take care of."
-msgstr ""
+msgstr "อีเวนต์นี้มีคำขอยกเลิก <strong></strong> ที่คุณควรจัดการ"
 
 #: control/templates/pretixcontrol/event/index.html:52
 msgid "Show orders requesting cancellation"
-msgstr ""
+msgstr "แสดงคำสั่งซื้อที่ขอยกเลิก"
 
 #: control/templates/pretixcontrol/event/index.html:57
 msgid ""
 "This event contains <strong>pending approvals</strong> that you should take "
 "care of."
-msgstr ""
+msgstr "อีเวนต์นี้มีการอนุมัติที่รอดำเนินการ <strong></strong> ที่คุณควรจัดการ"
 
 #: control/templates/pretixcontrol/event/index.html:61
 msgid "Show orders pending approval"
-msgstr ""
+msgstr "แสดงคำสั่งซื้อที่รออนุมัติ"
 
 #: control/templates/pretixcontrol/event/index.html:66
 msgid ""
@@ -18596,15 +18694,15 @@ msgstr "มีให้เฉพาะเป็นสินค้าเสริ
 
 #: control/templates/pretixcontrol/items/index.html:105
 msgid "Only available as part of a bundle"
-msgstr ""
+msgstr "มีให้ใช้งานเฉพาะเป็นส่วนหนึ่งของแพ็กเกจ"
 
 #: control/templates/pretixcontrol/items/index.html:108
 msgid "Only visible with a voucher"
-msgstr ""
+msgstr "มองเห็นได้เฉพาะเมื่อมีบัตรกำนัล"
 
 #: control/templates/pretixcontrol/items/index.html:111
 msgid "Can only be bought using a voucher"
-msgstr ""
+msgstr "ซื้อได้ด้วยบัตรกำนัลเท่านั้น"
 
 #: control/templates/pretixcontrol/items/orderforms.html:33
 msgid "Customer data (once per order)"
@@ -18712,12 +18810,12 @@ msgstr "การตั้งค่าแบบฟอร์ม"
 #: control/templates/pretixcontrol/items/question.html:9
 #, python-format
 msgid "Question: %(name)s"
-msgstr ""
+msgstr "คำถาม: %(name)s"
 
 #: control/templates/pretixcontrol/items/question.html:13
 #: control/templates/pretixcontrol/items/question.html:55
 msgid "Edit question"
-msgstr ""
+msgstr "แก้ไขคำถาม"
 
 #: control/templates/pretixcontrol/items/question.html:21
 #: control/templates/pretixcontrol/orders/fragment_order_status.html:25
@@ -18726,7 +18824,7 @@ msgstr ""
 #: plugins/checkinlists/exporters.py:510 plugins/reports/exporters.py:334
 #: presale/templates/pretixpresale/event/fragment_order_status.html:19
 msgid "Paid"
-msgstr ""
+msgstr "ชำระเงินแล้ว"
 
 #: control/templates/pretixcontrol/items/question.html:27
 #: control/templates/pretixcontrol/orders/fragment_order_status.html:35
@@ -18735,45 +18833,46 @@ msgstr ""
 #: plugins/reports/exporters.py:311
 #: presale/templates/pretixpresale/event/fragment_order_status.html:24
 msgid "Canceled"
-msgstr ""
+msgstr "ยกเลิกแล้ว"
 
 #: control/templates/pretixcontrol/items/question.html:45
 msgid "No matching answers found."
-msgstr ""
+msgstr "ไม่พบคำตอบที่ตรงกัน"
 
 #: control/templates/pretixcontrol/items/question.html:51
 msgid "You need to assign the question to a product to collect answers."
-msgstr ""
+msgstr "คุณต้องกำหนดคำถามให้กับสินค้าเพื่อเก็บรวบรวมคำตอบ"
 
 #: control/templates/pretixcontrol/items/question.html:70
 #: orga/templates/orga/cfp/talkquestion/detail.html:77
 msgid "Count"
-msgstr ""
+msgstr "จำนวน"
 
 #: control/templates/pretixcontrol/items/question.html:71
 msgid "Percentage"
-msgstr ""
+msgstr "เปอร์เซ็นต์"
 
 #: control/templates/pretixcontrol/items/question.html:94
 msgid "Question history"
-msgstr ""
+msgstr "ประวัติคำถาม"
 
 #: control/templates/pretixcontrol/items/question_delete.html:4
 #: control/templates/pretixcontrol/items/question_delete.html:6
 msgid "Delete question"
-msgstr ""
+msgstr "ลบคำถาม"
 
 #: control/templates/pretixcontrol/items/question_delete.html:9
 #, python-format
 msgid ""
 "Are you sure you want to delete the question <strong>%(question)s</strong>?"
-msgstr ""
+msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบคำถาม <strong>%(question)s</strong>?"
 
 #: control/templates/pretixcontrol/items/question_delete.html:11
 msgid ""
 "All answers to the question given by the buyers of the following products "
 "will be <strong>lost</strong>."
 msgstr ""
+"คำตอบทั้งหมดสำหรับคำถามนี้ที่ให้โดยผู้ซื้อของสินค้าต่อไปนี้จะ <strong>สูญหาย</strong>"
 
 #: control/templates/pretixcontrol/items/question_edit.html:8
 #: control/templates/pretixcontrol/items/question_edit.html:18
@@ -18787,23 +18886,25 @@ msgid ""
 "proceed. To allow the user to leave it unchecked, do not set the field as "
 "required."
 msgstr ""
+"หากตั้งค่า Confirm Checkbox เป็นฟิลด์บังคับ ผู้ใช้ต้องทำเครื่องหมายเพื่อดำเนินการต่อ หากต้องการใ"
+"ห้ผู้ใช้ปล่อยว่างได้ อย่าตั้งค่าฟิลด์เป็นฟิลด์บังคับ"
 
 #: control/templates/pretixcontrol/items/question_edit.html:53
 msgid "Answer options"
-msgstr ""
+msgstr "ตัวเลือกคำตอบ"
 
 #: control/templates/pretixcontrol/items/question_edit.html:55
 msgid "Only applicable if you choose 'Choose one/multiple from a list' above."
-msgstr ""
+msgstr "ใช้ได้เฉพาะเมื่อคุณเลือก 'เลือกหนึ่ง/หลายรายการจากรายการ' ด้านบน"
 
 #: control/templates/pretixcontrol/items/question_edit.html:71
 #, python-format
 msgid "Answer option %(id)s"
-msgstr ""
+msgstr "ตัวเลือกคำตอบ %(id)s"
 
 #: control/templates/pretixcontrol/items/question_edit.html:102
 msgid "New answer option"
-msgstr ""
+msgstr "เพิ่มตัวเลือกคำตอบใหม่"
 
 #: control/templates/pretixcontrol/items/question_edit.html:121
 #: orga/templates/orga/cfp/question/_form.html:153
@@ -20438,27 +20539,30 @@ msgid ""
 "can later set for your events and re-use in places like ticket layouts. This "
 "is an useful timesaver if you create lots and lots of events."
 msgstr ""
+"ที่นี่คุณสามารถกำหนดชุดคุณสมบัติเมทาดาทา (เช่น ตัวแปร) ซึ่งคุณสามารถตั้งค่าสำหรับอีเวนต์ของคุณภายห"
+"ลัง และนำไปใช้ซ้ำในที่ต่างๆ เช่น เลย์เอาต์ตั๋ว วิธีนี้ช่วยประหยัดเวลาได้มากหากคุณสร้างอีเวนต์จำนวนม"
+"าก"
 
 #: control/templates/pretixcontrol/organizers/properties.html:15
 #: control/templates/pretixcontrol/organizers/property_edit.html:8
 msgid "Create a new property"
-msgstr ""
+msgstr "สร้างคุณสมบัติใหม่"
 
 #: control/templates/pretixcontrol/organizers/properties.html:20
 msgid "Property"
-msgstr ""
+msgstr "คุณสมบัติ"
 
 #: control/templates/pretixcontrol/organizers/property_delete.html:5
 msgid "Delete property:"
-msgstr ""
+msgstr "ลบคุณสมบัติ:"
 
 #: control/templates/pretixcontrol/organizers/property_delete.html:8
 msgid "Are you sure you want to delete the property?"
-msgstr ""
+msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบคุณสมบัตินี้?"
 
 #: control/templates/pretixcontrol/organizers/property_edit.html:6
 msgid "Property:"
-msgstr ""
+msgstr "คุณสมบัติ:"
 
 #: control/templates/pretixcontrol/organizers/webhook_edit.html:6
 msgid "Modify webhook"
@@ -20640,30 +20744,30 @@ msgstr "เริ่มแก้ไข"
 
 #: control/templates/pretixcontrol/pdf/index.html:157
 msgid "Cut"
-msgstr ""
+msgstr "ตัด"
 
 #: control/templates/pretixcontrol/pdf/index.html:177
 #: control/templates/pretixcontrol/pdf/index.html:233
 #: control/templates/pretixcontrol/pdf/index.html:328
 msgid "Width (mm)"
-msgstr ""
+msgstr "ความกว้าง (มม.)"
 
 #: control/templates/pretixcontrol/pdf/index.html:181
 #: control/templates/pretixcontrol/pdf/index.html:238
 msgid "Height (mm)"
-msgstr ""
+msgstr "ความสูง (มม.)"
 
 #: control/templates/pretixcontrol/pdf/index.html:187
 msgid "Background PDF"
-msgstr ""
+msgstr "PDF พื้นหลัง"
 
 #: control/templates/pretixcontrol/pdf/index.html:190
 msgid "Create empty background"
-msgstr ""
+msgstr "สร้างพื้นหลังเปล่า"
 
 #: control/templates/pretixcontrol/pdf/index.html:195
 msgid "Upload custom background PDF"
-msgstr ""
+msgstr "อัปโหลด PDF พื้นหลังที่กำหนดเอง"
 
 #: control/templates/pretixcontrol/pdf/index.html:201
 msgid ""
@@ -20671,60 +20775,63 @@ msgid ""
 "If you want to use a custom background, it already needs to have the correct "
 "size."
 msgstr ""
+"หลังจากที่คุณเปลี่ยนขนาดหน้า คุณต้องสร้างพื้นหลังเปล่าใหม่ หากคุณต้องการใช้พื้นหลังแบบกำหนดเอง พื้นห"
+"ลังนั้นต้องมีขนาดที่ถูกต้องอยู่แล้ว"
 
 #: control/templates/pretixcontrol/pdf/index.html:210
 msgid "Preferred language"
-msgstr ""
+msgstr "ภาษาที่ต้องการ"
 
 #: control/templates/pretixcontrol/pdf/index.html:221
 msgid "x (mm)"
-msgstr ""
+msgstr "x (มม.)"
 
 #: control/templates/pretixcontrol/pdf/index.html:226
 msgid "y (mm)"
-msgstr ""
+msgstr "y (มม.)"
 
 #: control/templates/pretixcontrol/pdf/index.html:245
 msgid "Size (mm)"
-msgstr ""
+msgstr "ขนาด (มม.)"
 
 #: control/templates/pretixcontrol/pdf/index.html:253
 msgid ""
 "The final QR code will be slightly smaller because some whitespace is "
 "required for proper scanning."
 msgstr ""
+"คิวอาร์โค้ดสุดท้ายจะเล็กลงเล็กน้อย เนื่องจากต้องมีพื้นที่ว่างบางส่วนเพื่อให้สแกนได้อย่างถูกต้อง"
 
 #: control/templates/pretixcontrol/pdf/index.html:262
 msgid "Font size (pt)"
-msgstr ""
+msgstr "ขนาดตัวอักษร (pt)"
 
 #: control/templates/pretixcontrol/pdf/index.html:281
 msgid "Flow multiple lines downward from specified position"
-msgstr ""
+msgstr "จัดหลายบรรทัดลงด้านล่างจากตำแหน่งที่ระบุ"
 
 #: control/templates/pretixcontrol/pdf/index.html:290
 msgid "Text color"
-msgstr ""
+msgstr "สีข้อความ"
 
 #: control/templates/pretixcontrol/pdf/index.html:333
 msgid "Rotation (°)"
-msgstr ""
+msgstr "การหมุน (°)"
 
 #: control/templates/pretixcontrol/pdf/index.html:340
 msgid "Style"
-msgstr ""
+msgstr "สไตล์"
 
 #: control/templates/pretixcontrol/pdf/index.html:342
 msgid "Dark"
-msgstr ""
+msgstr "เข้ม"
 
 #: control/templates/pretixcontrol/pdf/index.html:343
 msgid "Light"
-msgstr ""
+msgstr "สว่าง"
 
 #: control/templates/pretixcontrol/pdf/index.html:349
 msgid "Image content"
-msgstr ""
+msgstr "เนื้อหารูปภาพ"
 
 #: control/templates/pretixcontrol/pdf/index.html:360
 msgid "Text content"
@@ -22652,19 +22759,19 @@ msgstr "รายการในรายชื่อรอถูกย้าย
 
 #: control/views/waitinglist.py:242
 msgid "On list since"
-msgstr ""
+msgstr "อยู่ในรายการตั้งแต่"
 
 #: control/views/waitinglist.py:266
 msgid "Waiting"
-msgstr ""
+msgstr "รอ"
 
 #: control/views/waitinglist.py:301
 msgid "The requested entry does not exist."
-msgstr ""
+msgstr "ไม่มีรายการที่ร้องขออยู่"
 
 #: control/views/waitinglist.py:309
 msgid "The selected entry has been deleted."
-msgstr ""
+msgstr "รายการที่เลือกถูกลบแล้ว"
 
 #: event/forms.py:104
 msgid "Email addresses"
@@ -22787,21 +22894,21 @@ msgstr "ติดตามข้อเสนอแนะที่เข้าม
 
 #: event/stages.py:110
 msgid "Embed session recordings if available"
-msgstr ""
+msgstr "ฝังการบันทึกเซสชันหากมี"
 
 #: event/stages.py:111
 msgid "Release next event date?"
-msgstr ""
+msgstr "ปล่อยวันที่อีเวนต์ถัดไป?"
 
 #: eventyay_common/forms/filters.py:38
 msgid "Search by session name"
-msgstr ""
+msgstr "ค้นหาตามชื่อเซสชัน"
 
 #: eventyay_common/navigation.py:36
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:6
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:9
 msgid "My Sessions"
-msgstr ""
+msgstr "เซสชันของฉัน"
 
 #: eventyay_common/navigation.py:198 eventyay_common/navigation.py:206
 msgid "Devices"
@@ -22821,13 +22928,13 @@ msgstr "การยืนยันตัวตนสองปัจจัย"
 
 #: eventyay_common/navigation.py:282
 msgid "OAuth applications"
-msgstr ""
+msgstr "แอปพลิเคชัน OAuth"
 
 #: eventyay_common/navigation.py:288
 #: orga/templates/orga/event/dashboard.html:119
 #: orga/templates/orga/submission/base.html:89
 msgid "History"
-msgstr ""
+msgstr "ประวัติ"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-add.html:4
 #: eventyay_common/templates/eventyay_common/account/2fa-add.html:19
@@ -22876,7 +22983,7 @@ msgstr "ใช้ตัวเลือก \"provide a key\" ในแอปต�
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:65
 msgid "In \"Account name\", type your login name for pretix."
-msgstr ""
+msgstr "ใน \"ชื่อบัญชี\" ให้พิมพ์ชื่อเข้าสู่ระบบของคุณสำหรับ pretix"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:68
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
@@ -22925,7 +23032,7 @@ msgstr "คุณแน่ใจหรือว่าต้องการลบ
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 msgid "You will no longer be able to use this device to log in to pretix."
-msgstr ""
+msgstr "คุณจะไม่สามารถใช้อุปกรณ์นี้เพื่อเข้าสู่ระบบ pretix ได้อีกต่อไป"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:27
 msgid ""
@@ -23059,6 +23166,7 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
+"คุณแน่ใจหรือไม่ว่าต้องการเพิกถอนสิทธิ์การเข้าถึงบัญชีของคุณสำหรับแอปพลิเคชัน %(application)s?"
 
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -23082,31 +23190,31 @@ msgstr "ยังไม่มีแอปพลิเคชันใดเข้
 #: eventyay_common/templates/eventyay_common/account/email-management.html:4
 #: eventyay_common/templates/eventyay_common/account/email-management.html:7
 msgid "Email Addresses"
-msgstr ""
+msgstr "ที่อยู่อีเมล"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:10
 msgid "The following email addresses are associated with your account:"
-msgstr ""
+msgstr "ที่อยู่อีเมลต่อไปนี้เชื่อมโยงกับบัญชีของคุณ:"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:23
 msgid "Verified"
-msgstr ""
+msgstr "ยืนยันแล้ว"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:25
 msgid "Unverified"
-msgstr ""
+msgstr "ยังไม่ได้ยืนยัน"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:27
 msgid "Primary"
-msgstr ""
+msgstr "หลัก"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:34
 msgid "Make Primary"
-msgstr ""
+msgstr "ตั้งเป็นหลัก"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:35
 msgid "Re-send Verification"
-msgstr ""
+msgstr "ส่งการยืนยันอีกครั้ง"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:36
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:176
@@ -23117,20 +23225,20 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:111
 #: orga/templates/orga/submission/speakers.html:111
 msgid "Remove"
-msgstr ""
+msgstr "ลบ"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:41
 msgid ""
 "You currently do not have any email addresses associated with your account."
-msgstr ""
+msgstr "ขณะนี้คุณไม่มีที่อยู่อีเมลที่เชื่อมโยงกับบัญชีของคุณ"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:44
 msgid "Add Email Address"
-msgstr ""
+msgstr "เพิ่มที่อยู่อีเมล"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:51
 msgid "Add Email"
-msgstr ""
+msgstr "เพิ่มอีเมล"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:4
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:20
@@ -23160,7 +23268,7 @@ msgstr "การตั้งค่าการเข้าสู่ระบบ
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:55
 msgid "Email Address"
-msgstr ""
+msgstr "ที่อยู่อีเมล"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:60
 msgid "Manage email addresses"
@@ -23358,17 +23466,17 @@ msgstr "คุณยังไม่มีกิจกรรมที่กำล
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:123
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:85
 msgid "Component not enabled!"
-msgstr ""
+msgstr "ยังไม่ได้เปิดใช้งานคอมโพเนนต์!"
 
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:124
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:86
 msgid "You need to enable this component first"
-msgstr ""
+msgstr "คุณต้องเปิดใช้งานคอมโพเนนต์นี้ก่อน"
 
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:125
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:87
 msgid "Ok"
-msgstr ""
+msgstr "ตกลง"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
 msgid "Event Dashboard"
@@ -23403,15 +23511,15 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:54
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:70
 msgid "Go to"
-msgstr ""
+msgstr "ไปที่"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:34
 msgid "Tickets Dashboard"
-msgstr ""
+msgstr "แดชบอร์ดตั๋ว"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:41
 msgid "Talks and Speakers"
-msgstr ""
+msgstr "ทอล์กและวิทยากร"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:46
 msgid ""
@@ -23425,13 +23533,13 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:50
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:54
 msgid "Talks Dashboard"
-msgstr ""
+msgstr "แดชบอร์ดทอล์ก"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:62
 #: eventyay_common/templates/eventyay_common/event/live.html:334
 #: eventyay_common/views/dashboards.py:374
 msgid "Video"
-msgstr ""
+msgstr "วิดีโอ"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:67
 msgid ""
@@ -23444,7 +23552,7 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:71
 msgid "Video Configuration"
-msgstr ""
+msgstr "การกำหนดค่าวิดีโอ"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:13
 msgid ""
@@ -23787,7 +23895,7 @@ msgstr "โมดูลวิดีโอยังไม่ได้เปิด
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:17
 msgid "- Settings"
-msgstr ""
+msgstr "- การตั้งค่า"
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:62
 msgid "Header links"
@@ -23905,7 +24013,7 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/events/index.html:5
 msgid "Events management"
-msgstr ""
+msgstr "จัดการอีเวนต์"
 
 #: eventyay_common/templates/eventyay_common/events/index.html:80
 msgid "Shop"
@@ -23913,7 +24021,7 @@ msgstr "ร้านค้า"
 
 #: eventyay_common/templates/eventyay_common/events/index.html:143
 msgid "Enable video access"
-msgstr ""
+msgstr "เปิดใช้งานการเข้าถึงวิดีโอ"
 
 #: eventyay_common/templates/eventyay_common/filter_actions.html:8
 #: eventyay_common/templates/eventyay_common/filter_actions.html:10
@@ -23942,7 +24050,7 @@ msgstr "แก้ไขสิทธิ์สำหรับทีมที่ม
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:9
 #: eventyay_common/templates/eventyay_common/organizers/teams/teams.html:8
 msgid "Create a new team"
-msgstr ""
+msgstr "สร้างทีมใหม่"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:33
 msgid "Create team"
@@ -23989,17 +24097,17 @@ msgstr "สมาชิก & คำเชิญ"
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:156
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:22
 msgid "Member"
-msgstr ""
+msgstr "สมาชิก"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:167
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:33
 msgid "Two-factor authentication enabled"
-msgstr ""
+msgstr "เปิดใช้งานการยืนยันตัวตนแบบสองปัจจัยแล้ว"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:170
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:37
 msgid "Two-factor authentication disabled"
-msgstr ""
+msgstr "ปิดใช้งานการยืนยันตัวตนแบบสองปัจจัยแล้ว"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:183
 msgid "No members yet."
@@ -24008,7 +24116,7 @@ msgstr "ยังไม่มีสมาชิก"
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:192
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:55
 msgid "invited, pending response"
-msgstr ""
+msgstr "เชิญแล้ว, รอการตอบรับ"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:194
 msgid "Resend invite"
@@ -24047,11 +24155,11 @@ msgstr "จัดการทีมและสิทธิ์"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:10
 msgid "Organizer permissions"
-msgstr ""
+msgstr "สิทธิ์ของผู้จัดงาน"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:18
 msgid "Event permissions"
-msgstr ""
+msgstr "สิทธิ์ของอีเวนต์"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:25
 msgid "Ticket permissions"
@@ -24067,25 +24175,26 @@ msgstr "สิทธิ์วิดีโอ"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:5
 msgid "Delete team:"
-msgstr ""
+msgstr "ลบทีม:"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:7
 msgid ""
 "You cannot delete the team because there would be no one left who could "
 "change team permissions afterwards."
 msgstr ""
+"คุณไม่สามารถลบทีมนี้ได้ เนื่องจากจะไม่เหลือใครที่สามารถเปลี่ยนสิทธิ์ของทีมได้อีกหลังจากนั้น"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:17
 msgid "Are you sure you want to delete the team?"
-msgstr ""
+msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบทีมนี้?"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:11
 msgid "You will be able to add team members in the next step."
-msgstr ""
+msgstr "คุณจะสามารถเพิ่มสมาชิกทีมได้ในขั้นตอนถัดไป"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:7
 msgid "Team:"
-msgstr ""
+msgstr "ทีม:"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:44
 msgid "Are you sure you want to remove this member?"
@@ -24093,7 +24202,7 @@ msgstr "คุณแน่ใจหรือว่าต้องการลบ
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:57
 msgid "resend invite"
-msgstr ""
+msgstr "ส่งคำเชิญอีกครั้ง"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:75
 msgid ""
@@ -24268,7 +24377,7 @@ msgstr "ตอนนี้คุณเป็นสมาชิกของที
 #: eventyay_common/views/auth.py:298
 #, python-brace-format
 msgid "Welcome to eventyay! You are now part of the team \"{}\"."
-msgstr ""
+msgstr "ยินดีต้อนรับสู่ eventyay! ตอนนี้คุณเป็นส่วนหนึ่งของทีม \"{}\""
 
 #: eventyay_common/views/auth.py:343
 msgid ""
@@ -24348,7 +24457,7 @@ msgstr "ลิงก์วิดีโอถูกซ่อนจากหน้
 
 #: eventyay_common/views/dashboards.py:324
 msgid "No dates"
-msgstr ""
+msgstr "ไม่มีวันที่"
 
 #: eventyay_common/views/event.py:574
 msgid "CFP"
@@ -24482,7 +24591,7 @@ msgstr "สมาชิกใหม่ถูกเพิ่มเข้าที
 
 #: eventyay_common/views/organizer.py:545 eventyay_common/views/team.py:206
 msgid "Users need to have a eventyay account before they can be invited."
-msgstr ""
+msgstr "ผู้ใช้ต้องมีบัญชี eventyay ก่อนจึงจะสามารถเชิญได้"
 
 #: eventyay_common/views/organizer.py:556 eventyay_common/views/team.py:217
 msgid "The new member has been invited to the team."
@@ -24656,55 +24765,55 @@ msgstr "วันปิดรับข้อเสนอ (CfP) ทั่วไ�
 
 #: mail/context.py:159
 msgid "The proposal’s unique ID"
-msgstr ""
+msgstr "รหัสเฉพาะของข้อเสนอ"
 
 #: mail/context.py:166
 msgid "The proposal’s public URL"
-msgstr ""
+msgstr "URL สาธารณะของข้อเสนอ"
 
 #: mail/context.py:173
 msgid "The speaker’s edit page for the proposal"
-msgstr ""
+msgstr "หน้าการแก้ไขข้อเสนอของผู้บรรยาย"
 
 #: mail/context.py:180
 msgid "Link to confirm a proposal after it has been accepted."
-msgstr ""
+msgstr "ลิงก์เพื่อยืนยันข้อเสนอหลังจากได้รับการอนุมัติแล้ว"
 
 #: mail/context.py:187
 msgid "Link to withdraw the proposal"
-msgstr ""
+msgstr "ลิงก์เพื่อถอนข้อเสนอ"
 
 #: mail/context.py:193
 msgid "This Is a Proposal Title"
-msgstr ""
+msgstr "นี่คือชื่อข้อเสนอ"
 
 #: mail/context.py:194
 msgid "The proposal’s title"
-msgstr ""
+msgstr "ชื่อของข้อเสนอ"
 
 #: mail/context.py:201
 msgid "The name(s) of all speakers in this proposal."
-msgstr ""
+msgstr "ชื่อของผู้บรรยายทั้งหมดในข้อเสนอนี้"
 
 #: mail/context.py:207
 msgid "Session Type A"
-msgstr ""
+msgstr "ประเภทเซสชัน A"
 
 #: mail/context.py:208
 msgid "The proposal’s session type"
-msgstr ""
+msgstr "ประเภทเซสชันของข้อเสนอ"
 
 #: mail/context.py:214
 msgid "Track A"
-msgstr ""
+msgstr "แทร็ก A"
 
 #: mail/context.py:215
 msgid "The track the proposal belongs to"
-msgstr ""
+msgstr "แทร็กที่ข้อเสนอนี้สังกัด"
 
 #: mail/context.py:222
 msgid "The session’s duration in minutes"
-msgstr ""
+msgstr "ระยะเวลาของเซสชันเป็นนาที"
 
 #: mail/context.py:228
 msgid ""
@@ -24714,30 +24823,35 @@ msgid ""
 "\n"
 "Second review, containing heavy criticism!"
 msgstr ""
+"รีวิวแรก เห็นด้วยกับข้อเสนอ\n"
+"\n"
+"--------- \n"
+"\n"
+"รีวิวที่สอง มีคำวิจารณ์อย่างหนัก!"
 
 #: mail/context.py:229
 msgid "All review texts for this proposal"
-msgstr ""
+msgstr "ข้อความรีวิวทั้งหมดสำหรับข้อเสนอนี้"
 
 #: mail/context.py:236
 msgid "The session’s start date"
-msgstr ""
+msgstr "วันที่เริ่มต้นของเซสชัน"
 
 #: mail/context.py:243
 msgid "The session’s start time"
-msgstr ""
+msgstr "เวลาเริ่มต้นของเซสชัน"
 
 #: mail/context.py:250
 msgid "The session’s end date"
-msgstr ""
+msgstr "วันที่สิ้นสุดของเซสชัน"
 
 #: mail/context.py:257
 msgid "The session’s end time"
-msgstr ""
+msgstr "เวลาสิ้นสุดของเซสชัน"
 
 #: mail/context.py:263
 msgid "Room 101"
-msgstr ""
+msgstr "ห้อง 101"
 
 #: mail/context.py:264
 msgid "The session’s room"
@@ -25628,85 +25742,85 @@ msgstr "แจ้งผู้บรรยายเกี่ยวกับกา
 #: orga/templates/orga/schedule/release.html:51 orga/views/mails.py:500
 #: orga/views/mails.py:502
 msgid "Email template"
-msgstr ""
+msgstr "เทมเพลตอีเมล"
 
 #: orga/forms/schedule.py:35 schedule/phrases.py:20
 msgid "We released our first schedule!"
-msgstr ""
+msgstr "เราเผยแพร่กำหนดการครั้งแรกแล้ว!"
 
 #: orga/forms/schedule.py:37
 msgid "We released a new schedule version!"
-msgstr ""
+msgstr "เราเผยแพร่กำหนดการเวอร์ชันใหม่แล้ว!"
 
 #: orga/forms/schedule.py:44
 msgid "This schedule version was used already, please choose a different one."
-msgstr ""
+msgstr "กำหนดการเวอร์ชันนี้ถูกใช้งานแล้ว โปรดเลือกเวอร์ชันอื่น"
 
 #: orga/forms/schedule.py:58 orga/forms/speaker.py:14
 #: orga/templates/orga/speaker/information_list.html:50
 #: orga/templates/orga/speaker/speakerinformation/list.html:18
 msgid "Target group"
-msgstr ""
+msgstr "กลุ่มเป้าหมาย"
 
 #: orga/forms/schedule.py:95
 msgid "Speaker IDs"
-msgstr ""
+msgstr "ID วิทยากร"
 
 #: orga/forms/schedule.py:96
 msgid "The unique ID of a speaker is used in the speaker URL and in exports"
-msgstr ""
+msgstr "ID เฉพาะของวิทยากรถูกใช้ใน URL ของวิทยากรและในการส่งออกข้อมูล"
 
 #: orga/forms/schedule.py:100
 msgid "Speaker names"
-msgstr ""
+msgstr "ชื่อวิทยากร"
 
 #: orga/forms/schedule.py:114 orga/forms/schedule.py:129
 msgid "date"
-msgstr ""
+msgstr "วันที่"
 
 #: orga/forms/schedule.py:119 orga/forms/schedule.py:134
 msgid "time"
-msgstr ""
+msgstr "เวลา"
 
 #: orga/forms/schedule.py:139
 msgid "Median score"
-msgstr ""
+msgstr "คะแนนมัธยฐาน"
 
 #: orga/forms/schedule.py:140
 msgid "Median review score, if there have been reviews yet"
-msgstr ""
+msgstr "คะแนนรีวิวแบบมัธยฐาน หากมีรีวิวแล้ว"
 
 #: orga/forms/schedule.py:144
 msgid "Average (mean) score"
-msgstr ""
+msgstr "คะแนนเฉลี่ย (ค่าเฉลี่ย)"
 
 #: orga/forms/schedule.py:145
 msgid "Average review score, if there have been reviews yet"
-msgstr ""
+msgstr "คะแนนรีวิวเฉลี่ย หากมีรีวิวแล้ว"
 
 #: orga/forms/schedule.py:150
 msgid "Resources provided by the speaker, either as links or as uploaded files"
-msgstr ""
+msgstr "ทรัพยากรที่วิทยากรจัดเตรียมให้ ทั้งแบบลิงก์หรือไฟล์ที่อัปโหลด"
 
 #: orga/forms/speaker.py:17
 msgid "Just speakers with accepted and confirmed proposals"
-msgstr ""
+msgstr "เฉพาะวิทยากรที่มีข้อเสนอได้รับการยอมรับและยืนยันแล้ว"
 
 #: orga/forms/speaker.py:31
 msgid "Proposal IDs"
-msgstr ""
+msgstr "ID ข้อเสนอ"
 
 #: orga/forms/speaker.py:36
 msgid "Proposal titles"
-msgstr ""
+msgstr "ชื่อข้อเสนอ"
 
 #: orga/forms/speaker.py:44
 msgid "Picture"
-msgstr ""
+msgstr "รูปภาพ"
 
 #: orga/forms/speaker.py:45
 msgid "The link to the speaker’s profile picture"
-msgstr ""
+msgstr "ลิงก์ไปยังรูปโปรไฟล์ของวิทยากร"
 
 #: orga/forms/speaker.py:49
 msgid "Picture Source"
@@ -26861,63 +26975,63 @@ msgstr "คะแนนของคุณ"
 #: orga/templates/orga/review/dashboard.html:121 orga/views/review.py:614
 #: orga/views/review.py:615
 msgid "Regenerate decision emails"
-msgstr ""
+msgstr "สร้างอีเมลแจ้งผลการตัดสินใจใหม่"
 
 #: orga/templates/orga/review/dashboard.html:124
 #: orga/templates/orga/submission/apply_pending.html:5
 #: orga/templates/orga/submission/base.html:41
 #: orga/templates/orga/submission/list.html:48
 msgid "Apply pending changes"
-msgstr ""
+msgstr "นำการเปลี่ยนแปลงที่รอดำเนินการไปใช้"
 
 #: orga/templates/orga/review/dashboard.html:167
 msgid "Average"
-msgstr ""
+msgstr "เฉลี่ย"
 
 #: orga/templates/orga/review/dashboard.html:207
 msgid "Accept all"
-msgstr ""
+msgstr "ยอมรับทั้งหมด"
 
 #: orga/templates/orga/review/dashboard.html:211
 msgid "Reject all"
-msgstr ""
+msgstr "ปฏิเสธทั้งหมด"
 
 #: orga/templates/orga/review/dashboard.html:213
 msgid "Unset accept/reject vote for all"
-msgstr ""
+msgstr "ยกเลิกการโหวตยอมรับ/ปฏิเสธทั้งหมด"
 
 #: orga/templates/orga/review/dashboard.html:243
 msgid "You have reviewed this proposal"
-msgstr ""
+msgstr "คุณได้ตรวจทานข้อเสนอนี้แล้ว"
 
 #: orga/templates/orga/review/dashboard.html:245
 msgid "You cannot review this proposal"
-msgstr ""
+msgstr "คุณไม่สามารถตรวจทานข้อเสนอนี้ได้"
 
 #: orga/templates/orga/review/dashboard.html:248
 msgid "You have been assigned to this proposal"
-msgstr ""
+msgstr "คุณได้รับมอบหมายให้ดูแลข้อเสนอนี้"
 
 #. Translators: This is a button to mark a proposal as accepted
 #: orga/templates/orga/review/dashboard.html:287
 #: orga/templates/orga/review/dashboard.html:313
 msgid "Accept"
-msgstr ""
+msgstr "ยอมรับ"
 
 #. Translators: This is a button to mark a proposal as rejected
 #: orga/templates/orga/review/dashboard.html:292
 #: orga/templates/orga/review/dashboard.html:314
 msgid "Reject"
-msgstr ""
+msgstr "ปฏิเสธ"
 
 #: orga/templates/orga/review/dashboard.html:294
 msgid "Unset accept/reject vote"
-msgstr ""
+msgstr "ยกเลิกการโหวตยอมรับ/ปฏิเสธ"
 
 #: orga/templates/orga/review/export.html:5
 #: orga/templates/orga/review/export.html:9
 msgid "Export review data"
-msgstr ""
+msgstr "ส่งออกข้อมูลการตรวจทาน"
 
 #: orga/templates/orga/review/export.html:17
 #: orga/templates/orga/speaker/export.html:18
@@ -26927,36 +27041,39 @@ msgid ""
 "applications, while JSON exports are often used for integration with other "
 "tools."
 msgstr ""
+"สร้างการส่งออกแบบกำหนดเองได้ที่นี่ โดยเลือกข้อมูลทั้งหมดที่ต้องการและรูปแบบการส่งออก การส่งออกแ"
+"บบ CSV สามารถเปิดได้ด้วย Excel และแอปที่คล้ายกัน ส่วนการส่งออกแบบ JSON มักใช้สำหรับการเชื่อ"
+"มต่อกับเครื่องมืออื่น"
 
 #: orga/templates/orga/review/export.html:27
 #: orga/templates/orga/schedule/export.html:65
 #: orga/templates/orga/speaker/export.html:28
 msgid "Dataset"
-msgstr ""
+msgstr "ชุดข้อมูล"
 
 #: orga/templates/orga/review/export.html:46
 #: orga/templates/orga/schedule/export.html:77
 #: orga/templates/orga/speaker/export.html:47
 msgid "Data fields"
-msgstr ""
+msgstr "ฟิลด์ข้อมูล"
 
 #: orga/templates/orga/review/export.html:50
 #: orga/templates/orga/schedule/export.html:81
 #: orga/templates/orga/speaker/export.html:51
 msgid "Select all"
-msgstr ""
+msgstr "เลือกทั้งหมด"
 
 #: orga/templates/orga/review/export.html:58
 #: orga/templates/orga/schedule/export.html:22
 #: orga/templates/orga/speaker/export.html:59
 msgid "Export settings"
-msgstr ""
+msgstr "การตั้งค่าการส่งออก"
 
 #: orga/templates/orga/review/export.html:87
 #: orga/templates/orga/schedule/export.html:171
 #: orga/templates/orga/speaker/export.html:150
 msgid "You can also use the API to export or use data."
-msgstr ""
+msgstr "คุณยังสามารถใช้ API เพื่อส่งออกหรือใช้งานข้อมูลได้"
 
 #: orga/templates/orga/review/export.html:91
 #: orga/templates/orga/schedule/export.html:174
@@ -26967,6 +27084,9 @@ msgid ""
 "access the organiser version in automatic integrations, you’ll have to "
 "provide your authentication token just like in the API, like this:"
 msgstr ""
+"การส่งออกทั่วไปบางรายการเข้าถึงได้เฉพาะผู้จัดงาน หรือจะแสดงข้อมูลเพิ่มเติมเมื่อเข้าถึงด้วยบัญชีผู้จัดง"
+"านของคุณ หากต้องการเข้าถึงเวอร์ชันสำหรับผู้จัดงานในการเชื่อมต่ออัตโนมัติ คุณจะต้องระบุโทเค็นการยืน"
+"ยันตัวตนของคุณเหมือนกับใน API ดังนี้:"
 
 #: orga/templates/orga/review/export.html:104
 #: orga/templates/orga/schedule/export.html:188
@@ -28535,16 +28655,16 @@ msgstr "เค้าโครงบัตร: {}"
 #: plugins/banktransfer/apps.py:10 plugins/banktransfer/apps.py:13
 #: plugins/banktransfer/payment.py:24 plugins/banktransfer/signals.py:24
 msgid "Bank transfer"
-msgstr ""
+msgstr "การโอนเงินผ่านธนาคาร"
 
 #: plugins/banktransfer/apps.py:17
 msgid "This plugin allows you to receive payments via bank transfer."
-msgstr ""
+msgstr "ปลั๊กอินนี้ช่วยให้คุณรับชำระเงินผ่านการโอนเงินผ่านธนาคารได้"
 
 #: plugins/banktransfer/apps.py:31
 msgid ""
 "Install the python package 'chardet' for better CSV import capabilities."
-msgstr ""
+msgstr "ติดตั้งแพ็กเกจ Python 'chardet' เพื่อเพิ่มความสามารถในการนำเข้า CSV"
 
 #: plugins/banktransfer/payment.py:35
 msgid ""
@@ -28554,22 +28674,25 @@ msgid ""
 "import a digital bank statement in order to give eventyay the required "
 "information."
 msgstr ""
+"ฉันเข้าใจแล้วว่าผู้คนจะชำระค่าบัตรโดยตรงเข้าบัญชีธนาคารของฉัน และ eventyay ไม่สามารถทราบได้"
+"โดยอัตโนมัติว่ามีการชำระเงินเข้ามาแล้ว ดังนั้นฉันจะทำเครื่องหมายการชำระเงินว่าเสร็จสมบูรณ์ด้วยตนเ"
+"อง หรือจะนำเข้ารายการเดินบัญชีธนาคารแบบดิจิทัลเป็นประจำเพื่อให้ eventyay ได้รับข้อมูลที่จำเป็น"
 
 #: plugins/banktransfer/payment.py:46
 msgid "Bank account type"
-msgstr ""
+msgstr "ประเภทบัญชีธนาคาร"
 
 #: plugins/banktransfer/payment.py:49
 msgid "SEPA bank account"
-msgstr ""
+msgstr "บัญชีธนาคาร SEPA"
 
 #: plugins/banktransfer/payment.py:50
 msgid "Other bank account"
-msgstr ""
+msgstr "บัญชีธนาคารอื่นๆ"
 
 #: plugins/banktransfer/payment.py:58
 msgid "Name of account holder"
-msgstr ""
+msgstr "ชื่อเจ้าของบัญชี"
 
 #: plugins/banktransfer/payment.py:71 plugins/banktransfer/payment.py:277
 #: plugins/banktransfer/payment.py:421
@@ -28577,22 +28700,22 @@ msgstr ""
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:50
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:22
 msgid "IBAN"
-msgstr ""
+msgstr "IBAN"
 
 #: plugins/banktransfer/payment.py:84 plugins/banktransfer/payment.py:281
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/checkout_payment_form.html:13
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:66
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:23
 msgid "BIC"
-msgstr ""
+msgstr "BIC"
 
 #: plugins/banktransfer/payment.py:97
 msgid "Name of bank"
-msgstr ""
+msgstr "ชื่อธนาคาร"
 
 #: plugins/banktransfer/payment.py:110
 msgid "Bank account details"
-msgstr ""
+msgstr "รายละเอียดบัญชีธนาคาร"
 
 #: plugins/banktransfer/payment.py:113
 msgid ""
@@ -28600,6 +28723,8 @@ msgid ""
 "transfer payment. If you have lots of international customers, they might "
 "need your full address and your bank's full address."
 msgstr ""
+"ใส่ข้อมูลอื่นๆ ที่ลูกค้าอาจต้องใช้ในการโอนเงินผ่านธนาคารให้คุณ หากคุณมีลูกค้าต่างประเทศจำนวนมาก อ"
+"าจต้องใช้ที่อยู่เต็มของคุณและที่อยู่เต็มของธนาคารของคุณ"
 
 #: plugins/banktransfer/payment.py:121
 msgid ""
@@ -28607,38 +28732,43 @@ msgid ""
 "everything that your customers need to transfer the money, e.g. account "
 "numbers, routing numbers, addresses, etc."
 msgstr ""
+"สำหรับบัญชี SEPA คุณสามารถเว้นว่างไว้ได้ มิฉะนั้น โปรดเพิ่มทุกอย่างที่ลูกค้าต้องใช้เพื่อโอนเงิน เช่น ห"
+"มายเลขบัญชี รหัสธนาคาร ที่อยู่ เป็นต้น"
 
 #: plugins/banktransfer/payment.py:134
 msgid ""
 "Create an invoice for orders using bank transfer immediately if the event is "
 "otherwise configured to create invoices after payment is completed."
 msgstr ""
+"สร้างใบแจ้งหนี้สำหรับคำสั่งซื้อที่ใช้การโอนเงินผ่านธนาคารทันที หากอีเวนต์ถูกตั้งค่าให้สร้างใบแจ้งหนี้หลัง"
+"จากชำระเงินเสร็จสิ้น"
 
 #: plugins/banktransfer/payment.py:151
 msgid "Do not include hyphens in the payment reference."
-msgstr ""
+msgstr "ไม่ต้องใส่ขีดกลางในหมายเลขอ้างอิงการชำระเงิน"
 
 #: plugins/banktransfer/payment.py:152
 msgid "This is required in some countries."
-msgstr ""
+msgstr "จำเป็นในบางประเทศ"
 
 #: plugins/banktransfer/payment.py:159
 msgid "Include invoice number in the payment reference."
-msgstr ""
+msgstr "ใส่หมายเลขใบแจ้งหนี้ในหมายเลขอ้างอิงการชำระเงิน"
 
 #: plugins/banktransfer/payment.py:166
 msgid "Prefix for the payment reference"
-msgstr ""
+msgstr "คำนำหน้าหมายเลขอ้างอิงการชำระเงิน"
 
 #: plugins/banktransfer/payment.py:173
 msgid "Additional text to show on pending orders"
-msgstr ""
+msgstr "ข้อความเพิ่มเติมที่แสดงสำหรับคำสั่งซื้อที่รอดำเนินการ"
 
 #: plugins/banktransfer/payment.py:175
 msgid ""
 "This text will be shown on the order confirmation page for pending orders in "
 "addition to the standard text."
 msgstr ""
+"ข้อความนี้จะแสดงบนหน้ายืนยันคำสั่งซื้อสำหรับคำสั่งซื้อที่รอดำเนินการเพิ่มเติมจากข้อความมาตรฐาน"
 
 #: plugins/banktransfer/payment.py:185
 msgid "IBAN blocklist for refunds"
@@ -29075,87 +29205,91 @@ msgstr "ความคิดเห็น:"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:92
 msgid "No order code detected"
-msgstr ""
+msgstr "ไม่พบรหัสคำสั่งซื้อ"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:94
 msgid "Invalid for this order"
-msgstr ""
+msgstr "ใช้ไม่ได้กับคำสั่งซื้อนี้"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:96
 msgid "Error while processing"
-msgstr ""
+msgstr "เกิดข้อผิดพลาดขณะประมวลผล"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:98
 msgid "The order is already marked as paid"
-msgstr ""
+msgstr "คำสั่งซื้อถูกทำเครื่องหมายว่าชำระเงินแล้ว"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:100
 msgid "Order already paid"
-msgstr ""
+msgstr "คำสั่งซื้อชำระเงินแล้ว"
 
 #: plugins/banktransfer/views.py:115
 msgid ""
 "Negative amount but refund can't be logged, please create manual refund "
 "first."
 msgstr ""
+"จำนวนเงินติดลบ แต่ไม่สามารถบันทึกการคืนเงินได้ โปรดสร้างการคืนเงินด้วยตนเองก่อน"
 
 #: plugins/banktransfer/views.py:143
 msgid "Problem sending email."
-msgstr ""
+msgstr "เกิดปัญหาในการส่งอีเมล"
 
 #: plugins/banktransfer/views.py:169
 msgid "Unknown order code"
-msgstr ""
+msgstr "ไม่รู้จักรหัสคำสั่งซื้อ"
 
 #: plugins/banktransfer/views.py:333
 msgid "Search text"
-msgstr ""
+msgstr "ค้นหาข้อความ"
 
 #: plugins/banktransfer/views.py:338
 msgid "min"
-msgstr ""
+msgstr "ต่ำสุด"
 
 #: plugins/banktransfer/views.py:343
 msgid "max"
-msgstr ""
+msgstr "สูงสุด"
 
 #: plugins/banktransfer/views.py:353
 msgid "Filter form is not valid."
-msgstr ""
+msgstr "แบบฟอร์มตัวกรองไม่ถูกต้อง"
 
 #: plugins/banktransfer/views.py:402
 msgid "All unresolved transactions have been discarded."
-msgstr ""
+msgstr "ยกเลิกธุรกรรมที่ยังไม่ถูกแก้ไขทั้งหมดแล้ว"
 
 #: plugins/banktransfer/views.py:423
 msgid "You must choose a file to import."
-msgstr ""
+msgstr "คุณต้องเลือกไฟล์ที่จะนำเข้า"
 
 #: plugins/banktransfer/views.py:429
 msgid ""
 "We were unable to detect the file type of this import. Please contact "
 "support for help."
 msgstr ""
+"เราไม่สามารถตรวจพบประเภทไฟล์ของการนำเข้านี้ได้ โปรดติดต่อฝ่ายสนับสนุนเพื่อขอความช่วยเหลือ"
 
 #: plugins/banktransfer/views.py:446 plugins/banktransfer/views.py:497
 msgid "We were unable to process your input."
-msgstr ""
+msgstr "เราไม่สามารถประมวลผลข้อมูลที่คุณป้อนได้"
 
 #: plugins/banktransfer/views.py:457
 msgid ""
 "I'm sorry, but we were unable to import this CSV file. Please contact "
 "support for help."
 msgstr ""
+"ขออภัย เราไม่สามารถนำเข้าไฟล์ CSV นี้ได้ โปรดติดต่อฝ่ายสนับสนุนเพื่อขอความช่วยเหลือ"
 
 #: plugins/banktransfer/views.py:464
 msgid ""
 "I'm sorry, but we detected this file as empty. Please contact support for "
 "help."
 msgstr ""
+"ขออภัย เราตรวจพบว่าไฟล์นี้ว่างเปล่า โปรดติดต่อฝ่ายสนับสนุนเพื่อขอความช่วยเหลือ"
 
 #: plugins/banktransfer/views.py:484
 msgid "Invalid input data."
-msgstr ""
+msgstr "ข้อมูลนำเข้าไม่ถูกต้อง"
 
 #: plugins/banktransfer/views.py:490
 msgid "You need to select the column containing the payment reference."
@@ -29732,7 +29866,7 @@ msgstr[0] "{count} อีเมลถูกทิ้ง."
 
 #: plugins/sendmail/views.py:582
 msgid "There are no valid recipients for the selected teams."
-msgstr ""
+msgstr "ไม่มีผู้รับที่ถูกต้องสำหรับทีมที่เลือก"
 
 #: plugins/socialauth/apps.py:9 plugins/socialauth/apps.py:12
 msgid "SocialAuth"
@@ -29740,7 +29874,7 @@ msgstr "SocialAuth"
 
 #: plugins/socialauth/apps.py:13
 msgid "the eventyay team"
-msgstr ""
+msgstr "ทีม eventyay"
 
 #: plugins/socialauth/apps.py:16
 msgid "This plugin allows you to login via social networks"
@@ -30269,7 +30403,7 @@ msgstr "กรุณาตอบคำถามที่จำเป็นทั
 
 #: presale/forms/checkout.py:32
 msgid "Wikimedia Username"
-msgstr ""
+msgstr "ชื่อผู้ใช้ Wikimedia"
 
 #: presale/forms/checkout.py:68
 msgid "E-mail address (repeated)"
@@ -30336,21 +30470,22 @@ msgstr "ผู้จัดงาน: {organizer}"
 #: presale/templates/pretix_venueless/order_info.html:8
 #: presale/templates/pretix_venueless/order_info.html:41
 msgid "Join online event stream"
-msgstr ""
+msgstr "เข้าร่วมสตรีมกิจกรรมออนไลน์"
 
 #: presale/templates/pretix_venueless/order_info.html:30
 msgid "You can now join the event using the following button:"
-msgstr ""
+msgstr "ตอนนี้คุณสามารถเข้าร่วมกิจกรรมได้ด้วยปุ่มต่อไปนี้:"
 
 #: presale/templates/pretix_venueless/order_info.html:51
 msgid "View schedule"
-msgstr ""
+msgstr "ดูตารางเวลา"
 
 #: presale/templates/pretix_venueless/order_info.html:61
 msgid ""
 "You will be able to join this event with your browser right here when it "
 "starts."
 msgstr ""
+"เมื่อกิจกรรมเริ่ม คุณจะสามารถเข้าร่วมกิจกรรมนี้ได้ด้วยเบราว์เซอร์ของคุณที่นี่"
 
 #: presale/templates/pretixpresale/event/base.html:48
 #, python-format
@@ -30520,12 +30655,12 @@ msgstr "ตะกร้าสินค้าหมดอายุ"
 #: presale/templates/pretixpresale/event/checkout_confirm.html:44
 #, python-format
 msgid "The products in your cart are reserved for you for %(minutes)s minutes."
-msgstr ""
+msgstr "สินค้าที่อยู่ในรถเข็นของคุณถูกจองไว้ให้คุณเป็นเวลา %(minutes)s นาที"
 
 #: presale/templates/pretixpresale/event/checkout_base.html:44
 #: presale/templates/pretixpresale/event/checkout_confirm.html:48
 msgid "The products in your cart are no longer reserved for you."
-msgstr ""
+msgstr "สินค้าที่อยู่ในรถเข็นของคุณไม่ได้ถูกจองไว้ให้คุณอีกต่อไป"
 
 #: presale/templates/pretixpresale/event/checkout_base.html:53
 #: presale/templates/pretixpresale/event/index.html:128
@@ -30711,7 +30846,7 @@ msgstr "ยังไม่ได้ระบุชื่อผู้เข้า
 #: presale/templates/pretixpresale/event/fragment_cart.html:144
 #: presale/templates/pretixpresale/event/fragment_cart.html:195
 msgid "price per product"
-msgstr ""
+msgstr "ราคาต่อสินค้า"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:155
 msgid "Okay, we're removing that…"
@@ -30735,6 +30870,7 @@ msgid ""
 "Once the products are in your cart, you will have %(time)s minutes to "
 "complete your purchase."
 msgstr ""
+"เมื่อสินค้าอยู่ในรถเข็นของคุณแล้ว คุณจะมีเวลา %(time)s นาทีเพื่อดำเนินการสั่งซื้อให้เสร็จสิ้น"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:188
 msgid "Add one more"
@@ -30860,14 +30996,14 @@ msgstr "สินค้ายังไม่จัดหมวด"
 #: presale/templates/pretixpresale/event/fragment_product_list.html:197
 #, python-format
 msgid "Show full-size image of %(product)s"
-msgstr ""
+msgstr "แสดงภาพขนาดเต็มของ %(product)s"
 
 #: presale/templates/pretixpresale/event/fragment_product_list.html:59
 #: presale/templates/pretixpresale/event/fragment_product_list.html:226
 #: presale/templates/pretixpresale/event/voucher.html:123
 #: presale/templates/pretixpresale/event/voucher.html:267
 msgid "Limit: 1 per user"
-msgstr ""
+msgstr "จำกัด: 1 ต่อผู้ใช้"
 
 #: presale/templates/pretixpresale/event/fragment_product_list.html:73
 #: presale/templates/pretixpresale/event/fragment_product_list.html:130
@@ -30885,7 +31021,7 @@ msgstr "ฟรี"
 #: presale/templates/pretixpresale/event/fragment_product_list.html:250
 #, python-format
 msgid "Modify price for %(product)s"
-msgstr ""
+msgstr "แก้ไขราคาสำหรับ %(product)s"
 
 #: presale/templates/pretixpresale/event/fragment_product_list.html:158
 #: presale/templates/pretixpresale/event/fragment_product_list.html:283
@@ -30895,12 +31031,12 @@ msgstr "กรอกโค้ดบัตรกำนัลด้านล่า
 #: presale/templates/pretixpresale/event/fragment_product_list.html:169
 #, python-format
 msgid "Amount of %(product)s – %(var)s to order"
-msgstr ""
+msgstr "จำนวน %(product)s – %(var)s ที่ต้องการสั่งซื้อ"
 
 #: presale/templates/pretixpresale/event/fragment_product_list.html:301
 #, python-format
 msgid "Amount of %(product)s to order"
-msgstr ""
+msgstr "จำนวน %(product)s ที่ต้องการสั่งซื้อ"
 
 #: presale/templates/pretixpresale/event/fragment_quota_left.html:4
 #, python-format
@@ -30974,7 +31110,7 @@ msgstr "ตะกร้าว่าง"
 
 #: presale/templates/pretixpresale/event/index.html:84
 msgid "Checkout (login required, opens login dialog)"
-msgstr ""
+msgstr "ชำระเงิน (ต้องเข้าสู่ระบบ, เปิดกล่องโต้ตอบเข้าสู่ระบบ)"
 
 #: presale/templates/pretixpresale/event/index.html:119
 msgid "Please select a date to redeem your voucher."
@@ -31661,19 +31797,19 @@ msgstr "หากกระบวนการดำเนินต่อไปเ
 
 #: presale/templates/pretixpresale/fragment_modals.html:78
 msgid "Please log in to continue."
-msgstr ""
+msgstr "โปรดเข้าสู่ระบบเพื่อดำเนินการต่อ"
 
 #: presale/templates/pretixpresale/fragment_modals.html:87
 msgid "Enter your email"
-msgstr ""
+msgstr "กรอกอีเมลของคุณ"
 
 #: presale/templates/pretixpresale/fragment_modals.html:92
 msgid "Enter your password"
-msgstr ""
+msgstr "กรอกรหัสผ่านของคุณ"
 
 #: presale/templates/pretixpresale/fragment_modals.html:115
 msgid "Login with MediaWiki"
-msgstr ""
+msgstr "เข้าสู่ระบบด้วย MediaWiki"
 
 #: presale/templates/pretixpresale/fragment_modals.html:118
 msgid "Login with Google"
