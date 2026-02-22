@@ -31,6 +31,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
+from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 
 class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nFormMixin, forms.Form):
@@ -458,6 +459,29 @@ class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
+        # Set initial color for new tracks (when creating, not editing)
+        instance = kwargs.get('instance')
+        if not instance or not instance.pk:
+            initial = dict(kwargs.get('initial') or {})
+            if 'color' not in initial or not initial.get('color'):
+                # Prefer an existing color on the instance (if provided) before generating a new one
+                instance_color = getattr(instance, 'color', None) if instance is not None else None
+                if instance_color:
+                    initial['color'] = instance_color
+                elif event:
+                    existing_colors = {
+                        color.lower()
+                        for color in event.tracks.values_list('color', flat=True)
+                        if color
+                    }
+                    try:
+                        initial['color'] = generate_random_high_contrast_color(
+                            exclude_colors=existing_colors
+                        )
+                    except ValueError:
+                        # If we cannot generate a color, fall back to no initial color
+                        pass
+            kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             url = f'{event.cfp.urls.new_access_code}?track={self.instance.pk}'
