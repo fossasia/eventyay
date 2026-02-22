@@ -3,8 +3,14 @@
 <li class="nav-item">
     <details class="dropdown fix-height" id="profile-dropdown">
         <summary class="header-nav">
-            <i class="fa fa-user"></i> {{ request.user.get_full_name }}
-            <i class="fa fa-caret-down"></i>
+            <i class="fa fa-user user-icon"></i>
+            <span class="user-name-desktop">{{ request.user.get_full_name }}</span>
+            <span class="user-name-mobile">
+                {% with given_name=request.user.get_full_name.split|first %}
+                    {{ given_name|slice:":10" }}{% if given_name|length > 12 %}..{% endif %}
+                {% endwith %}
+            </span>
+            <i class="fa fa-caret-down user-caret"></i>
         </summary>
         <div class="dropdown-content dropdown-content-sw">
             <details class="dropdown">
