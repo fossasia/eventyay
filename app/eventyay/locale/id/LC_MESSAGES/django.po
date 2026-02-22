@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-21 07:53+0000\n"
+"PO-Revision-Date: 2026-02-22 18:58+0000\n"
 "Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
@@ -183,23 +183,26 @@ msgid ""
 "personal scheduling, please enable JavaScript and go <a "
 "href=\"%(href)s\">here</a>."
 msgstr ""
+"Untuk melihat jadwal dengan fitur lengkap kami, seperti konversi zona waktu "
+"dan penjadwalan pribadi, silakan aktifkan JavaScript dan buka <a href=\"%"
+"(href)s\">di sini</a>."
 
 #: agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
 msgid "No sessions on %(weekday)s, %(current_day)s."
-msgstr ""
+msgstr "Tidak ada sesi pada %(weekday)s, %(current_day)s."
 
 #: agenda/templates/agenda/session_block.html:13
 #, python-format
 msgid "%(minutes)smin"
-msgstr ""
+msgstr "%(minutes)s menit"
 
 #: agenda/templates/agenda/speaker.html:43
 #: agenda/templates/agenda/speakers.html:19
 #: agenda/templates/agenda/speakers.html:21
 #: agenda/templates/agenda/talk.html:164
 msgid "The speaker’s profile picture"
-msgstr ""
+msgstr "Foto profil pembicara"
 
 #: agenda/templates/agenda/speaker.html:61
 #: features/analytics/graphs/report.py:401
@@ -3816,7 +3819,7 @@ msgstr "Email peserta"
 #: control/templates/pretixcontrol/vouchers/detail.html:11
 #: control/templates/pretixcontrol/waitinglist/index.html:155
 msgid "Voucher"
-msgstr "Voucher"
+msgstr "Voucer"
 
 #: base/exporters/orderlist.py:698
 msgid "Pseudonymization ID"
@@ -4446,7 +4449,9 @@ msgctxt "invoice"
 msgid ""
 "{from_date}\n"
 "until {to_date}"
-msgstr "{from_date} sampai {to_date}"
+msgstr ""
+"{from_date} \n"
+"sampai {to_date}"
 
 #: base/invoice.py:473
 #: control/templates/pretixcontrol/admin/attendees/index.html:129
@@ -4615,19 +4620,23 @@ msgid ""
 "You can restrict the access code to a single track, or leave it open for all "
 "tracks."
 msgstr ""
+"Anda bisa membatasi kode akses pada satu track, atau membiarkannya terbuka "
+"untuk semua track."
 
 #: base/models/access_code.py:39 control/forms/filter.py:1028
 #: control/forms/filter.py:1030
 #: control/templates/pretixcontrol/admin/submissions/index.html:83
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:34
 msgid "Session Type"
-msgstr ""
+msgstr "Jenis sesi"
 
 #: base/models/access_code.py:41
 msgid ""
 "You can restrict the access code to a single session type, or leave it open "
 "for all session types."
 msgstr ""
+"Anda bisa membatasi kode akses untuk satu jenis sesi, atau membiarkannya "
+"terbuka untuk semua jenis sesi."
 
 #: base/models/access_code.py:48 base/models/vouchers.py:124
 #: base/models/vouchers.py:562 control/views/vouchers.py:116
@@ -4638,10 +4647,12 @@ msgstr "Berlaku sampai"
 #: base/models/access_code.py:49
 msgid "You can set or change this date later to invalidate the access code."
 msgstr ""
+"Anda bisa mengatur atau mengganti tanggal ini nanti untuk membatalkan "
+"validitas kode akses."
 
 #: base/models/access_code.py:54
 msgid "Maximum uses"
-msgstr ""
+msgstr "Batas penggunaan maksimal"
 
 #: base/models/access_code.py:55
 msgid ""
@@ -5524,7 +5535,7 @@ msgstr "Pesanan {val}"
 #: base/models/log.py:176
 #, python-brace-format
 msgid "Voucher {val}…"
-msgstr "Voucher {val}…"
+msgstr "Voucer {val}…"
 
 #: base/models/log.py:189
 #, python-brace-format
@@ -5722,10 +5733,9 @@ msgid "This order is not yet approved by the event organizer."
 msgstr "Pesanan ini belum disetujui oleh penyelenggara acara."
 
 #: base/models/orders.py:920
-#, fuzzy, python-brace-format
-#| msgid "The product \"{}\" is not available on this date."
+#, python-brace-format
 msgid "The ordered product \"{product}\" is no longer available."
-msgstr "Produk \"{}\" tidak tersedia pada tanggal ini."
+msgstr "Produk yang dipesan \"{product}\" tidak tersedia lagi."
 
 #: base/models/orders.py:921
 #, python-brace-format
