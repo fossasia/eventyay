@@ -12,7 +12,11 @@ class CfPFormMixin:
     """
 
     def __init__(self, *args, field_configuration=None, **kwargs):
+        self.not_strict = kwargs.pop('not_strict', False)
         super().__init__(*args, **kwargs)
+        if self.not_strict:
+            for field in self.fields.values():
+                field.required = False
         self.field_configuration = field_configuration
         if self.field_configuration:
             self.field_configuration = {field_data['key']: field_data for field_data in field_configuration}

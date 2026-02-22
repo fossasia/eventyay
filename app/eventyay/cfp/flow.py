@@ -107,7 +107,7 @@ class BaseCfPStep:
     def is_applicable(self, request):
         return True
 
-    def is_completed(self, request):
+    def is_completed(self, request, not_strict=False):
         raise NotImplementedError()
 
     @cached_property
@@ -219,9 +219,14 @@ class FormFlowStep(TemplateFlowStep):
         previous_data = self.cfp_session.get('data', {}).get(self.identifier, {})
         return copy.deepcopy({**initial_data, **previous_data})
 
-    def get_form(self, from_storage=False):
+    def get_form(self, from_storage=False, not_strict=None):
         # Cache form initial data to avoid repeated work
         form_initial = self.get_form_initial()
+        if not_strict is None:
+            not_strict = (
+                self.request.POST.get('action') == 'draft'
+                or self.request.GET.get('draft') == '1'
+            )
 
         if self.request.method == 'GET':
             # For initial GET requests, use an unbound form populated from session data
@@ -230,6 +235,7 @@ class FormFlowStep(TemplateFlowStep):
                 data=None,
                 initial=form_initial,
                 files=None,
+                not_strict=not_strict,
                 **self.get_form_kwargs(),
             )
         if from_storage:
@@ -245,6 +251,7 @@ class FormFlowStep(TemplateFlowStep):
                 data=form_data,
                 initial=form_initial,
                 files=self.get_files(),
+                not_strict=not_strict,
                 **self.get_form_kwargs(),
             )
         # For POST requests, merge new uploads with existing session files
@@ -260,11 +267,18 @@ class FormFlowStep(TemplateFlowStep):
         for field, file_list in self.request.FILES.lists():
             files.setlist(field, file_list)
 
-        return self.form_class(data=self.request.POST, files=files, **self.get_form_kwargs())
+        return self.form_class(
+            data=self.request.POST,
+            files=files,
+            not_strict=not_strict,
+            **self.get_form_kwargs(),
+        )
 
-    def is_completed(self, request):
+    def is_completed(self, request, not_strict=None):
         self.request = request
-        return self.get_form(from_storage=True).is_valid()
+        if not_strict is None:
+            not_strict = request.GET.get('draft') == '1'
+        return self.get_form(from_storage=True, not_strict=not_strict).is_valid()
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
@@ -304,6 +318,18 @@ class FormFlowStep(TemplateFlowStep):
                 for key, values in form.errors.items()
             )
             if error_message:
+                if action == 'draft':
+                    messages.error(
+                        self.request,
+                        _(
+                            'Your draft could not be saved because there are errors in your submission. '
+                            'Your current inputs on this step have been kept; please review and fix the errors below.'
+                        ),
+                    )
+                    self.set_data(form.cleaned_data)  # Keep valid input in the session even if the form is invalid
+                    if form.files:
+                        self.set_files(form.files)
+                    return self.get(request)
                 messages.error(self.request, error_message)
             return self.get(request)
         self.set_data(form.cleaned_data)
@@ -398,13 +424,46 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                         result[field] = obj
         return result
 
+    def get_form(self, from_storage=False, not_strict=None):
+        form = super().get_form(from_storage=from_storage, not_strict=not_strict)
+        if from_storage and not_strict and not form.data.get('title'):
+            # Inject a default title for drafts before the form is validated,
+            # because Submission.title is a non-blank field and without this,
+            # is_valid() would always fail for title-less drafts.
+            data = dict(form.data)
+            data['title'] = str(_('Draft Proposal'))
+            return self.form_class(
+                data=data,
+                initial=form.initial,
+                files=form.files,
+                not_strict=not_strict,
+                **self.get_form_kwargs(),
+            )
+        return form
+
     def done(self, request, draft=False):
         self.request = request
-        form = self.get_form(from_storage=True)
+        form = self.get_form(from_storage=True, not_strict=draft)
+        # Ensure the instance is updated with data from session
+        is_valid = form.is_valid()
+        if not is_valid:
+            if draft:
+                logger.warning('Invalid data when trying to save draft submission: %s', form.errors)
+                messages.error(
+                    self.request,
+                    _(
+                        'We could not save your draft because some fields contain invalid data. '
+                        'Please review your proposal and try again.'
+                    ),
+                )
+                return
+            raise ValidationError(form.errors.as_json())
+
         form.instance.event = self.event
         form.save()
         submission = form.instance
-        submission.speakers.add(request.user)
+        if request.user.is_authenticated:
+            submission.speakers.add(request.user)
         if draft:
             submission.state = SubmissionStates.DRAFT
             submission.save()
@@ -475,8 +534,9 @@ class UserStep(GenericFlowStep, FormFlowStep):
 
     def done(self, request, draft=False):
         if not getattr(request.user, 'is_authenticated', False):
-            form = self.get_form(from_storage=True)
-            form.is_valid()
+            form = self.get_form(from_storage=True, not_strict=draft)
+            if not form.is_valid():
+                return
             uid = form.save()
             request.user = User.objects.filter(pk=uid).first()
         # This should never happen
@@ -533,8 +593,23 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         return result
 
     def done(self, request, draft=False):
-        form = self.get_form(from_storage=True)
-        form.is_valid()
+        form = self.get_form(from_storage=True, not_strict=draft)
+        if not form.is_valid():
+            if draft:
+                messages.error(
+                    request,
+                    gettext(
+                        'Your profile draft could not be saved because some information is incomplete or invalid. Please review the errors below.'
+                    ),
+                )
+            else:
+                messages.error(
+                    request,
+                    gettext(
+                        'Your profile could not be saved because some information is incomplete or invalid. Please review the errors below.'
+                    ),
+                )
+            return
         form.user = request.user
         form.save()
 

@@ -8,6 +8,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
+      - ./app/tests:/usr/src/app/tests
       - /usr/src/app/eventyay/static.dist
       - /usr/src/app/eventyay/static/video
       - /usr/src/app/eventyay/static/schedule-editor

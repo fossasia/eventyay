@@ -66,7 +66,8 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
         if not instance or not instance.content_locale:
             initial['content_locale'] = self.event.locale
 
-        super().__init__(initial=initial, **kwargs)
+        self.not_strict = kwargs.pop('not_strict', False)
+        super().__init__(initial=initial, not_strict=self.not_strict, **kwargs)
         self.submission = self.instance
 
         if remove_additional_speaker and 'additional_speaker' in self.fields:
@@ -86,6 +87,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
             track=initial.get('track'),
             submission_type=initial.get('submission_type'),
             readonly=self.readonly,
+            not_strict=self.not_strict,
         )
 
         self.order_fields_by_config('session')
