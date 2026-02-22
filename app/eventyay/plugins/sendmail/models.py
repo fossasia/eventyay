@@ -83,6 +83,12 @@ class EmailQueue(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     sent_at = models.DateTimeField(null=True, blank=True)
+    scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='If set, the email will be sent at this time instead of immediately.',
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -111,6 +117,10 @@ class EmailQueue(models.Model):
         """
         if self.sent_at:
             return False  # Already sent
+
+        if self.scheduled_at and self.scheduled_at > now():
+            return False  # Scheduled for future, don't send yet
+
         recipients = self.recipients.all()
         if not recipients.exists():
             return False  # Nothing to send

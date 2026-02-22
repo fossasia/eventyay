@@ -7,7 +7,11 @@ import django.dispatch
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
+from django.dispatch import receiver
 from django.dispatch.dispatcher import NO_RECEIVERS
+from django.utils.timezone import now
+from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event
 from eventyay.base.signals import resolve_app_for_module, check_plugin_active
@@ -234,3 +238,80 @@ make your locale available to the makemessages command. Otherwise, check that yo
 plugin is enabled in the current event context if your locale should be scoped to
 events with your plugin activated.
 """
+
+
+@receiver(periodic_task, dispatch_uid="process_scheduled_emails")
+@scopes_disabled()
+@minimum_interval(minutes_after_success=1, minutes_running_timeout=5)
+def process_scheduled_emails(sender, **kwargs):
+    """
+    Periodic task to process scheduled emails for both Talk and Tickets components.
+    
+    Uses select_for_update(skip_locked=True) to prevent duplicate processing
+    when multiple workers process the same emails concurrently.
+    
+    Processes emails in batches to reduce lock contention and limit
+    transaction size for better performance and reliability.
+    """
+    from eventyay.plugins.sendmail.models import EmailQueue
+    from eventyay.base.models.mail import QueuedMail
+
+    MAIL_SEND_BATCH_SIZE = 100  # limit emails processed per transaction batch
+
+    # Process QueuedMail (Talk/CfP component)
+    while True:
+        with transaction.atomic():
+            due_queued_mails = list(
+                QueuedMail.objects.filter(
+                    scheduled_at__isnull=False,
+                    scheduled_at__lte=now(),
+                    sent__isnull=True,
+                )
+                .select_for_update(skip_locked=True)
+                .order_by('pk')[:MAIL_SEND_BATCH_SIZE]
+            )
+
+            if not due_queued_mails:
+                break
+
+            for mail in due_queued_mails:
+                try:
+                    mail.send()
+                    logger.info(
+                        "[ScheduledMail] QueuedMail ID %s sent successfully.",
+                        mail.pk
+                    )
+                except Exception:
+                    logger.exception(
+                        "[ScheduledMail] Failed to send QueuedMail ID %s",
+                        mail.pk
+                    )
+
+    # Process EmailQueue (Tickets component)
+    while True:
+        with transaction.atomic():
+            due_email_queues = list(
+                EmailQueue.objects.filter(
+                    scheduled_at__isnull=False,
+                    scheduled_at__lte=now(),
+                    sent_at__isnull=True,
+                )
+                .select_for_update(skip_locked=True)
+                .order_by('pk')[:MAIL_SEND_BATCH_SIZE]
+            )
+
+            if not due_email_queues:
+                break
+
+            for mail in due_email_queues:
+                try:
+                    mail.send()
+                    logger.info(
+                        "[ScheduledMail] EmailQueue ID %s sent successfully.",
+                        mail.pk
+                    )
+                except Exception:
+                    logger.exception(
+                        "[ScheduledMail] Failed to send EmailQueue ID %s",
+                        mail.pk
+                    )

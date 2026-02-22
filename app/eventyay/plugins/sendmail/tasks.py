@@ -1,5 +1,7 @@
 import logging
 
+from django.utils.timezone import now
+
 from eventyay.base.models import Event
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
@@ -22,6 +24,11 @@ def send_queued_mail(self, event_id: int, queued_mail_id: int):
 
     try:
         qm = EmailQueue.objects.get(pk=queued_mail_id, event=event)
+
+        if qm.scheduled_at and qm.scheduled_at > now():
+            logger.info("[SendMail] EmailQueue ID %s: scheduled for %s, skipping.", queued_mail_id, qm.scheduled_at)
+            return
+
         result = qm.send(async_send=True)
 
         if not result:

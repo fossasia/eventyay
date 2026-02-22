@@ -122,6 +122,11 @@
                 {% bootstrap_field form.subject layout='horizontal' %}
                 {% bootstrap_field form.message layout='horizontal' %}
 
+                <!-- Scheduling -->
+                {% if form.scheduled_at %}
+                    {% bootstrap_field form.scheduled_at layout='horizontal' %}
+                {% endif %}
+
             </fieldset>
 
             {% if request.method == "POST" %}
