@@ -3,6 +3,13 @@
 
 let eventyayToastuiIdSeq = 0
 
+const translate = (msgid) => {
+    if (typeof django !== 'undefined' && typeof django.gettext === 'function') {
+        return django.gettext(msgid)
+    }
+    return msgid
+}
+
 const createEventyayUnderlinePlugin = () => {
     const convertUnderlineSyntax = (src) => {
         const input = String(src || "")
@@ -156,14 +163,14 @@ const initToastUiMarkdownTextarea = (textarea) => {
 
     const undoToolbarItem = makeSimpleIconButton({
         name: 'eventyayUndo',
-        tooltip: 'Undo',
+        tooltip: translate('Undo'),
         command: 'undo',
         extraClassName: 'eventyay-undo',
     })
 
     const redoToolbarItem = makeSimpleIconButton({
         name: 'eventyayRedo',
-        tooltip: 'Redo',
+        tooltip: translate('Redo'),
         command: 'redo',
         extraClassName: 'eventyay-redo',
     })
@@ -172,13 +179,13 @@ const initToastUiMarkdownTextarea = (textarea) => {
         const button = document.createElement('button')
         button.type = 'button'
         button.className = 'toastui-editor-toolbar-icons eventyay-underline'
-        button.setAttribute('aria-label', 'Underline')
-        button.title = 'Underline'
+        button.setAttribute('aria-label', 'U')
+        button.title = 'U'
         button.addEventListener('mousedown', (event) => event.preventDefault())
 
         return {
             name: 'underline',
-            tooltip: 'Underline',
+            tooltip: 'U',
             el: button,
             onMounted(execCommand) {
                 button.addEventListener('click', () => execCommand('underline'))
@@ -254,12 +261,12 @@ const initToastUiMarkdownTextarea = (textarea) => {
             const helpText = document.createElement('div')
             helpText.className = 'eventyay-toastui-link-help'
             helpText.id = helpId
-            helpText.textContent = 'Use an absolute URL starting with https:// or http://'
+            helpText.textContent = translate('Use an absolute URL starting with https:// or http://')
 
             const errorText = document.createElement('div')
             errorText.className = 'eventyay-toastui-link-error'
             errorText.id = errorId
-            errorText.textContent = 'Please enter a valid absolute URL.'
+            errorText.textContent = translate('Please enter a valid absolute URL.')
             errorText.hidden = true
 
             let showError = false
@@ -370,7 +377,7 @@ const initToastUiMarkdownTextarea = (textarea) => {
     const updateModeToggleUi = (toggleButton) => {
         if (!(toggleButton instanceof HTMLButtonElement)) return
         const label = isMarkdownMode ? 'RTF' : 'MD'
-        const title = isMarkdownMode ? 'View as Rich Text' : 'View as Markdown'
+        const title = label
         toggleButton.textContent = label
         toggleButton.title = title
         toggleButton.setAttribute('aria-label', title)
@@ -490,6 +497,52 @@ const initFileSizeCheck = (element) => {
         }
     }
     element.addEventListener("change", checkFileSize, false)
+}
+
+const initCustomFileInput = (element) => {
+    if (!element || element.dataset.eventyayFileEnhanced === "true") return
+    if (!element.parentElement) return
+
+    const wrapper = document.createElement("div")
+    wrapper.className = "eventyay-fileinput"
+
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "btn btn-secondary eventyay-fileinput-btn"
+    button.textContent = translate("File")
+    button.disabled = !!element.disabled
+
+    const filename = document.createElement("span")
+    filename.className = "eventyay-fileinput-name"
+    filename.textContent = ""
+
+    element.parentElement.insertBefore(wrapper, element.nextSibling)
+    wrapper.appendChild(button)
+    wrapper.appendChild(filename)
+
+    element.classList.add("eventyay-fileinput-native")
+    element.setAttribute("tabindex", "-1")
+    element.setAttribute("aria-hidden", "true")
+    element.dataset.eventyayFileEnhanced = "true"
+
+    const syncFilename = () => {
+        const files = element.files
+        if (!files || !files.length) {
+            filename.textContent = ""
+            return
+        }
+        if (files.length === 1) {
+            filename.textContent = files[0].name
+            return
+        }
+        filename.textContent = String(files.length)
+    }
+
+    button.addEventListener("click", () => {
+        if (!element.disabled) element.click()
+    })
+    element.addEventListener("change", syncFilename)
+    syncFilename()
 }
 
 const isVisible = (element) => {
@@ -719,6 +772,9 @@ onReady(() => {
     document
         .querySelectorAll("input[data-maxsize][type=file]")
         .forEach((element) => initFileSizeCheck(element))
+    document
+        .querySelectorAll("input[type=file]")
+        .forEach((element) => initCustomFileInput(element))
     document
         .querySelectorAll("select.enhanced")
         .forEach((element) => initSelect(element))

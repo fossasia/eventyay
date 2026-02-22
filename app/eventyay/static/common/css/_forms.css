@@ -186,6 +186,32 @@ input[type="file"] {
     cursor: pointer;
   }
 }
+
+input[type="file"].eventyay-fileinput-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+}
+
+.eventyay-fileinput {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.eventyay-fileinput-name {
+  color: var(--color-grey);
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
 ::file-selector-button {
   margin-left: -6px;
   color: white;

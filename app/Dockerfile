@@ -78,6 +78,7 @@ RUN chmod +x /usr/src/app/entrypoint.sh
 
 # Copy application code from builder (includes .venv)
 COPY --from=builder /usr/src/app /usr/src/app
+RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh && chmod +x /usr/src/app/entrypoint.sh
 
 # Expose virtual env
 ENV VIRTUAL_ENV=/usr/src/app/.venv
@@ -88,3 +89,4 @@ RUN mkdir -p /usr/src/app/.secrets
 
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
+

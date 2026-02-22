@@ -7,6 +7,7 @@
 {% load presale_locale %}
 {% load tz %}
 {% load static %}
+{% load statici18n %}
 
 {% with current_event=request.event|default:None %}
 <!DOCTYPE html>
@@ -66,6 +67,7 @@
         {% block public_stylesheets %}{% endblock public_stylesheets %}
         {% if current_event and current_event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}" />{% endif %}
         {% if current_event and current_event.custom_css %}<link rel="stylesheet" type="text/css" href="{{ current_event.custom_css.url }}"/>{% endif %}
+        <script src="{% statici18n request.LANGUAGE_CODE %}"></script>
         {% compress js %}
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
