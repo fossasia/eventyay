@@ -25,7 +25,6 @@ except ImportError:
 
     TLD_SET = sorted(tld_set, key=len, reverse=True)
 
-from i18nfield.strings import LazyI18nString
 
 from eventyay.common.views.redirect import safelink as sl
 
@@ -230,9 +229,4 @@ def html_to_markdown_filter(html_text: str) -> str:
     return html_text if not html_text else html_to_markdown(html_text)
 
 
-@register.filter
-def append_colon(text: LazyI18nString) -> str:
-    text = str(text).strip()
-    if not text:
-        return ''
-    return text if text[-1] in ['.', '!', '?', ':', ';'] else f'{text}:'
+

@@ -3,6 +3,8 @@
 {% load compress %}
 {% load staff_session %}
 {% load i18n %}
+{% load i18n %}
+{% load i18n_utils %}
 {% load rich_text %}
 {% load rules %}
 {% load static %}
@@ -33,7 +35,7 @@
             {% if request.event.settings.review_help_text %}
                 <div class="alert alert-info">
                     <div>
-                        <p>{{ request.event.settings.review_help_text|rich_text }}</p>
+                        <p>{{ request.event.settings.review_help_text|localize|rich_text }}</p>
                     </div>
                 </div>
             {% elif not form.instance.pk and not can_view_other_reviews and request.event.active_review_phase and request.event.active_review_phase.can_see_other_reviews == "after_review" %}
@@ -75,9 +77,9 @@
                     <label class="col-md-3 col-form-label">{% translate "Abstract" %}</label>
                     <div class="col-md-9 mt-2 markdown-mt-0">
                         {% if no_anonymisation %}
-                            {{ submission.abstract|rich_text|default:"-" }}
+                            {{ submission.abstract|localize|rich_text|default:"-" }}
                         {% else %}
-                            {{ submission.anonymised.abstract|default:submission.abstract|rich_text|default:"-" }}
+                            {{ submission.anonymised.abstract|default:submission.abstract|localize|rich_text|default:"-" }}
                         {% endif %}
                     </div>
                 </div>
@@ -87,9 +89,9 @@
                     <label class="col-md-3 col-form-label">{% translate "Description" %}</label>
                     <div class="col-md-9 mt-2 markdown-mt-0">
                         {% if no_anonymisation %}
-                            {{ submission.description|rich_text|default:"-" }}
+                            {{ submission.description|localize|rich_text|default:"-" }}
                         {% else %}
-                            {{ submission.anonymised.description|default:submission.description|rich_text|default:"-" }}
+                            {{ submission.anonymised.description|default:submission.description|localize|rich_text|default:"-" }}
                         {% endif %}
                     </div>
                 </div>
@@ -99,9 +101,9 @@
                     <label class="col-md-3 col-form-label">{% translate "Notes" %}</label>
                     <div class="col-md-9 mt-2 markdown-mt-0">
                         {% if no_anonymisation %}
-                            {{ submission.notes|rich_text|default:"-" }}
+                            {{ submission.notes|localize|rich_text|default:"-" }}
                         {% else %}
-                            {{ submission.anonymised.notes|default:submission.notes|rich_text|default:"-" }}
+                            {{ submission.anonymised.notes|default:submission.notes|localize|rich_text|default:"-" }}
                         {% endif %}
                     </div>
                 </div>
@@ -139,7 +141,7 @@
                         </label>
                         <div class="col-md-9 mt-2 markdown-mt-0">
                             {% if request.event.cfp.request_biography %}
-                                {{ speaker.biography|default:"-"|rich_text }}
+                                {{ speaker.biography|default:"-"|localize|rich_text }}
                             {% endif %}
                             {% if speaker.submissions.count > 1 %}<br><strong>{% translate "Other proposals" %}:</strong>
                                 <ul class="mt-0 mb-0">

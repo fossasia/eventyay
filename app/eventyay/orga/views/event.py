@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from csp.decorators import csp_update
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
@@ -533,7 +532,6 @@ class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
         self.get_object().shred(person=self.request.user)
         return redirect(reverse('orga:event.list'))
 
-@method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):
     form_class = WidgetSettingsForm
     template_name = 'orga/settings/widget.html'

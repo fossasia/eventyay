@@ -276,6 +276,8 @@ var editor = {
         var url = editor.pdf_url;
         // TODO: Handle cross-origin issues if static files are on a different origin
         PDFJS.workerSrc = editor.$pdfcv.attr("data-worker-url");
+        PDFJS.disableFontFace = true;
+        PDFJS.isEvalSupported = false;
 
         // Asynchronous download of PDF
         var loadingTask = PDFJS.getDocument(url);
