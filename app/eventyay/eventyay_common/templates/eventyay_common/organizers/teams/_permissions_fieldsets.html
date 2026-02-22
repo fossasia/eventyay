@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 
 <fieldset>
     <legend>{% translate "General information" %}</legend>
@@ -36,10 +37,69 @@
     {% bootstrap_field form.can_change_submissions layout="control" %}
     {% bootstrap_field form.is_reviewer layout="control" %}
     {% with toggle_id=form.is_reviewer.auto_id %}
-        <div class="team-review-settings" data-review-toggle="{{ toggle_id }}">
-            {% bootstrap_field form.force_hide_speaker_names layout="control" %}
-            {% bootstrap_field form.limit_tracks layout="control" %}
+    <div class="team-review-settings" data-review-toggle="{{ toggle_id }}">
+        {% bootstrap_field form.force_hide_speaker_names layout="control" %}
+
+        <div class="form-group">
+            <label class="control-label col-md-3">
+                {% translate "Limit to tracks" %}
+                <br><small class="text-muted">{% translate "Optional" %}</small>
+            </label>
+            <div class="col-md-9">
+                {% if form.events_with_tracks %}
+                <div class="event-track-selector" id="event-track-selector-{{ form.prefix }}">
+                    <div style="margin-bottom: 10px;">
+                        <label class="text-muted" style="font-weight: normal; margin-bottom: 5px;">
+                            <i class="fa fa-calendar"></i> {% translate "Select event to configure tracks:" %}
+                        </label>
+                        <select class="form-control event-track-filter" data-target-prefix="{{ form.prefix }}"
+                            style="max-width: 400px;">
+                            <option value="">{% translate "— Select an event —" %}</option>
+                            {% for event_data in form.events_with_tracks %}
+                            <option value="{{ event_data.id }}">{{ event_data.name }} ({{ event_data.slug }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="event-tracks-wrapper"
+                        style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #fafafa;">
+                        <div class="event-tracks-placeholder text-muted" style="padding: 10px; text-align: center;">
+                            <i class="fa fa-info-circle"></i> {% translate "Select an event above to configure its tracks." %}
+                        </div>
+
+                        {% for event_data in form.events_with_tracks %}
+                        <div class="event-track-group" data-event-group-id="{{ event_data.id }}" style="display: none;">
+                            <div
+                                style="font-weight: bold; margin-bottom: 8px; padding: 5px 0; border-bottom: 1px solid #eee; color: #337ab7;">
+                                <i class="fa fa-calendar-o"></i> {{ event_data.name }}
+                            </div>
+                            <div class="scrolling-multiple-choice" style="max-height: 200px; overflow-y: auto;">
+                                {% for track in event_data.tracks %}
+                                <div style="padding: 3px 0;">
+                                    <label style="font-weight: normal;">
+                                        <input type="checkbox" name="{{ form.limit_tracks.html_name }}"
+                                            value="{{ track.id }}" {% if track.id in form.selected_track_ids %}
+                                            checked{% endif %}>
+                                        {{ track.name }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div style="margin-top: 5px;">
+                                <a href="#" class="track-select-all" data-event-id="{{ event_data.id }}">{% translate "All" %}</a> / <a href="#" class="track-select-none" data-event-id="{{ event_data.id }}">{% translate "None" %}</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted" style="padding-top: 7px;">
+                    <i class="fa fa-info-circle"></i> {% translate "No tracks are configured for any events." %}
+                </p>
+                {% endif %}
+            </div>
         </div>
+    </div>
     {% endwith %}
 </fieldset>
 
@@ -56,3 +116,4 @@
     {% bootstrap_field form.can_video_manage_configuration layout="control" %}
 </fieldset>
 
+<script src="{% static 'common/js/eventTrackSelector.js' %}"></script>

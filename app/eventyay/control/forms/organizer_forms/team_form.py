@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -16,9 +18,67 @@ class TeamForm(forms.ModelForm):
         self.organizer = organizer
         super().__init__(*args, **kwargs)
         self.fields['limit_events'].queryset = organizer.events.all().order_by('-has_subevents', '-date_from')
-        self.fields["limit_tracks"].queryset = Track.objects.filter(
-                event__organizer=organizer
-            ).order_by("-event__date_from", "name")
+        tracks_qs = Track.objects.filter(
+            event__organizer=organizer
+        ).select_related('event').order_by("-event__date_from", "name")
+        self.fields["limit_tracks"].queryset = tracks_qs
+
+        # Build events with tracks for template context (single source of truth)
+        self._events_with_tracks = self._build_events_with_tracks(tracks_qs)
+
+        # Cache selected track IDs now (inside scopes_disabled context)
+        # so the template can use them without scope issues
+        if self.instance and self.instance.pk:
+            self._selected_track_ids = set(
+                self.instance.limit_tracks.values_list('pk', flat=True)
+            )
+        else:
+            self._selected_track_ids = set()
+
+    @staticmethod
+    def _build_events_with_tracks(tracks_qs):
+        """Group tracks by event using a single pass over the already-fetched queryset.
+
+        The queryset uses select_related('event'), so accessing track.event
+        does not trigger additional queries. We build the grouping in Python
+        rather than issuing a separate aggregation query because the queryset
+        is typically small (tens of tracks at most).
+        """
+        events = OrderedDict()
+        for track in tracks_qs:
+            evt_pk = track.event_id
+            if evt_pk not in events:
+                event = track.event
+                events[evt_pk] = {
+                    'id': evt_pk,
+                    'name': str(event.name),
+                    'slug': event.slug,
+                    'tracks': [],
+                }
+            events[evt_pk]['tracks'].append({
+                'id': track.pk,
+                'name': str(track.name),
+            })
+        return list(events.values())
+
+    @property
+    def events_with_tracks(self):
+        """Return events with their tracks for use in templates."""
+        return self._events_with_tracks
+
+    @property
+    def selected_track_ids(self):
+        """Return a set of currently selected track PKs for pre-checking checkboxes."""
+        if self.is_bound:
+            # Form was submitted — get from POST data (uses prefixed field name)
+            field_name = self.add_prefix('limit_tracks')
+            values = self.data.getlist(field_name)
+            try:
+                return {int(v) for v in values}
+            except (ValueError, TypeError):
+                return set()
+        # On GET (page load) — return cached DB values
+        return self._selected_track_ids
 
     class Meta:
         model = Team
@@ -60,7 +120,6 @@ class TeamForm(forms.ModelForm):
             ),
             'limit_tracks': forms.CheckboxSelectMultiple(
                 attrs={
-                    'data-inverse-dependency': '#id_all_tracks',
                     'class': 'scrolling-multiple-choice scrolling-multiple-choice-large',
                 }
             ),
