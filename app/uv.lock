@@ -1795,15 +1795,16 @@ wheels = [
 
 [[package]]
 name = "icalendar"
-version = "7.0.0"
+version = "7.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
+    { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/69/0a221caa659c447a4a1f54be60d90a84119a20313f9e07d432cbb7d0d9ae/icalendar-7.0.0.tar.gz", hash = "sha256:5c69cf317177668748793bdecbe93d0850ceca8d450bbf27c8fa1a14e2e71223", size = 436350, upload-time = "2026-02-11T11:19:15.457Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/14/ca82c5f5600518bbfcdceafbdaa2ba1acf9abe657ec5ed285075b12651ff/icalendar-7.0.1.tar.gz", hash = "sha256:68a6295f31ed907885ae79f10336b53ba067e0a66075b6a956abbe5e89ac7b39", size = 439216, upload-time = "2026-02-17T21:43:26.437Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/05/e23517fbce2b9d2359b8cd64c04b9e8e3db4e5bfd6de6ba71fee738e75cd/icalendar-7.0.0-py3-none-any.whl", hash = "sha256:ed874334e620a73b2cbf408706574f3e83210ae79f3960678c453131e465c1c7", size = 436889, upload-time = "2026-02-11T11:19:14.025Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/c6/2342252c007d004e8532271ed146139e4bc7d95724e7f1ea582bb7355f95/icalendar-7.0.1-py3-none-any.whl", hash = "sha256:1f577af3e4d022a701aa98f9366dd524f0f1134b90c73c28493f06d5371901d5", size = 436952, upload-time = "2026-02-17T21:43:25.238Z" },
 ]
 
 [[package]]
