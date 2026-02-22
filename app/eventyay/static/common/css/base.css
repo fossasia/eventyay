@@ -28,7 +28,7 @@ table {
       background-color: var(--color-grey-ultralight);
     }
   }
-  a:hover {
+  a:not(.btn):hover {
     text-decoration: none;
     color: var(--color-primary-text-dark);
   }
