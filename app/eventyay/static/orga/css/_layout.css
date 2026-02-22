@@ -20,6 +20,14 @@ body {
   display: flex;
   flex-direction: row;
   max-width: 100%;
+  margin-left: 45px;
+  transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 767px) {
+  #page-wrapper {
+    margin-left: 0;
+  }
 }
 
 #page-content {
@@ -28,8 +36,8 @@ body {
   max-width: 100%;
   padding: 18px 44px;
   margin: 0;
-  margin-top: 50px;
-  height: calc(100vh - 50px);
+  height: auto;
+  min-height: calc(100vh - 50px);
   overflow-x: hidden;
   overflow-y: auto;
   scroll-padding-top: 50px;
@@ -44,13 +52,10 @@ body {
 }
 
 .global-top-warning {
-  position: absolute;
   background: var(--color-danger);
   padding: 8px 20px;
   color: white;
   text-align: center;
-  margin-top: 50px;
-  position: absolute;
   z-index: 1000;
 
   a {
@@ -182,17 +187,21 @@ aside.sidebar {
   background-color: var(--color-grey-ultralight);
   box-shadow: var(--shadow-lighter);
   width: 45px;
-  height: 100vh;
+  position: absolute;
+  top: 51px; /* Below the first row of navbar */
+  left: 0;
+  min-height: calc(100vh - 51px);
   display: flex;
   font-size: 14px;
   flex-grow: 0;
   flex-shrink: 0;
   flex-wrap: nowrap;
-  z-index: 150;
+  z-index: 1500;
   padding-left: 0;
-  margin-top: 50px;
+  margin-top: 0;
   margin-bottom: 0;
   overflow-y: auto;
+  transition: width 0.3s ease;
 
   &.sidebar-uncollapsed,
   &:hover {
