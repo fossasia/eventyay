@@ -473,6 +473,39 @@ class Product(LoggedModel):
         ),
         default=False,
     )
+
+    VALIDITY_MODE_UNSET = ''
+    VALIDITY_MODE_FIXED = 'fixed'
+    VALIDITY_MODE_CHOICES = (
+        (VALIDITY_MODE_UNSET, _('Use event start/end (default)')),
+        (VALIDITY_MODE_FIXED, _('Fixed date/time range')),
+    )
+    validity_mode = models.CharField(
+        max_length=10,
+        choices=VALIDITY_MODE_CHOICES,
+        default=VALIDITY_MODE_UNSET,
+        blank=True,
+        verbose_name=_('Ticket validity'),
+        help_text=_(
+            'Determines when the purchased ticket is valid for entry. '
+            'By default, the ticket is valid for the entire event duration. '
+            'Use a fixed range to restrict validity to specific dates, e.g. '
+            'for day tickets in multi-day events.'
+        ),
+    )
+    validity_fixed_from = models.DateTimeField(
+        verbose_name=_('Valid from'),
+        null=True,
+        blank=True,
+        help_text=_('The ticket is valid for entry starting at this date and time. Times are interpreted in the event timezone.'),
+    )
+    validity_fixed_until = models.DateTimeField(
+        verbose_name=_('Valid until'),
+        null=True,
+        blank=True,
+        help_text=_('The ticket is valid for entry until this date and time. Times are interpreted in the event timezone.'),
+    )
+
     # !!! Attention: If you add new fields here, also add them to the copying code in
     # eventyay/control/forms/product.py if applicable.
 
@@ -693,6 +726,33 @@ class Product(LoggedModel):
         if from_date is not None and until_date is not None:
             if from_date > until_date:
                 raise ValidationError(_("The product's availability cannot end before it starts."))
+
+    @staticmethod
+    def clean_validity(validity_mode, validity_fixed_from, validity_fixed_until, event=None):
+        """Validate ticket validity fields.
+
+        Returns a dict mapping field names to error messages.
+        An empty dict means no errors.
+        """
+        errors = {}
+        if validity_mode == Product.VALIDITY_MODE_FIXED:
+            if validity_fixed_from is not None and validity_fixed_until is not None:
+                if validity_fixed_from > validity_fixed_until:
+                    errors['validity_fixed_until'] = _(
+                        "The ticket validity end must not be before its start."
+                    )
+            if event is not None:
+                event_start = event.date_from
+                event_end = getattr(event, 'date_to', None) or event_start
+                if validity_fixed_from is not None and event_start and validity_fixed_from < event_start:
+                    errors['validity_fixed_from'] = _(
+                        "The ticket validity start must not be before the event start (%(start)s)."
+                    ) % {'start': formats.date_format(event_start, 'SHORT_DATETIME_FORMAT')}
+                if validity_fixed_until is not None and event_end and validity_fixed_until > event_end:
+                    errors['validity_fixed_until'] = _(
+                        "The ticket validity end must not be after the event end (%(end)s)."
+                    ) % {'end': formats.date_format(event_end, 'SHORT_DATETIME_FORMAT')}
+        return errors
 
     @property
     def meta_data(self):

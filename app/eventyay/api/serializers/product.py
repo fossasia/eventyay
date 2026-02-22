@@ -198,6 +198,9 @@ class ProductSerializer(I18nAwareModelSerializer):
             'allow_waitinglist',
             'issue_giftcard',
             'meta_data',
+            'validity_mode',
+            'validity_fixed_from',
+            'validity_fixed_until',
         )
         read_only_fields = ('has_variations',)
 
@@ -213,6 +216,14 @@ class ProductSerializer(I18nAwareModelSerializer):
 
         Product.clean_per_order(data.get('min_per_order'), data.get('max_per_order'))
         Product.clean_available(data.get('available_from'), data.get('available_until'))
+        validity_errors = Product.clean_validity(
+            data.get('validity_mode', ''),
+            data.get('validity_fixed_from'),
+            data.get('validity_fixed_until'),
+            event=self.context['event'],
+        )
+        if validity_errors:
+            raise ValidationError(validity_errors)
 
         if data.get('issue_giftcard'):
             if data.get('tax_rule') and data.get('tax_rule').rate > 0:

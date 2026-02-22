@@ -2,6 +2,11 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load formset_tags %}
+{% load static %}
+{% block custom_header %}
+    {{ block.super }}
+    <script defer src="{% static 'pretixcontrol/js/ui/validity.js' %}"></script>
+{% endblock %}
 {% block inside %}
     <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
         {% csrf_token %}
@@ -117,6 +122,33 @@
                         <legend>{% trans "Tickets & check-in" %}</legend>
                         {% bootstrap_field form.generate_tickets layout="control" %}
                         {% bootstrap_field form.checkin_attention layout="control" %}
+                        <hr>
+                        <p class="help-block">
+                            {% blocktrans trimmed %}
+                                Configure when this ticket is valid for entry.
+                                This is useful for multi-day events where you sell day tickets.
+                                By default, tickets are valid for the full event duration.
+                                The validity period must fall within the event dates.
+                            {% endblocktrans %}
+                        </p>
+                        {% bootstrap_field form.validity_mode layout="control" %}
+                        <div id="validity-fixed-fields"
+                            {% if form.validity_mode.value != 'fixed' %}style="display: none;"{% endif %}>
+                            {% bootstrap_field form.validity_fixed_from layout="control" %}
+                            {% bootstrap_field form.validity_fixed_until layout="control" %}
+                        </div>
+                        <div id="validity-status" class="alert alert-info"
+                            {% if form.validity_mode.value != 'fixed' %}style="display: none;"{% endif %}>
+                            <span class="fa fa-info-circle"></span>
+                            {% trans "Check-in will enforce the validity dates configured above. Tickets scanned outside this window will be rejected unless forced." %}
+                        </div>
+                        <div id="validity-status-default"
+                            {% if form.validity_mode.value == 'fixed' %}style="display: none;"{% endif %}>
+                            <p class="text-muted">
+                                <span class="fa fa-check-circle"></span>
+                                {% trans "Tickets are valid for the full event duration. No additional restriction is applied at check-in." %}
+                            </p>
+                        </div>
                     </fieldset>
                     <fieldset id="tab-item-additional-settings">
                         <legend>{% trans "Additional settings" %}</legend>
