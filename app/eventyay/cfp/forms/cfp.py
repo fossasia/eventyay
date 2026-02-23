@@ -32,5 +32,19 @@ class CfPFormMixin:
             field.help_text = rich_text(
                 str(field.original_help_text) + ' ' + str(getattr(field, 'added_help_text', ''))
             )
-        if field_data.get('label'):
-            field.label = field_data['label']
+        stored_label = field_data.get('label')
+        if stored_label:
+            # Only apply the stored label if it contains at least one translation
+            # that genuinely differs from the English string. A label where every
+            # locale maps to the same English text is a cached gettext fallback —
+            # the field's own gettext_lazy verbose_name is more reliable.
+            label_data = getattr(stored_label, 'data', None)
+            if label_data:
+                english = label_data.get('en', '')
+                has_real_translation = any(
+                    v and v != english for k, v in label_data.items() if k != 'en'
+                )
+            else:
+                has_real_translation = False
+            if has_real_translation:
+                field.label = stored_label
