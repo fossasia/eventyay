@@ -973,3 +973,8 @@ input.password_strength {
   padding: 12px;
   padding-top: 0;
 }
+
+.form-check-inline {
+  display: inline-block;
+  margin-right: 1rem;
+}
