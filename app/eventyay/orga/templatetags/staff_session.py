@@ -15,6 +15,22 @@ def has_event_perm(perm, user, request, obj=None):
     return is_admin_mode_active(request) or User.has_perm(user, perm, obj)
 
 
+@register.simple_tag()
+def is_event_organiser(user, request, event=None):
+    """Check if a user is an organiser for the given event.
+
+    Returns True only if the user is a platform admin, has an active
+    staff session, or is a member of a team assigned to this event.
+    """
+    if not user.is_authenticated or not event:
+        return False
+    if is_admin_mode_active(request):
+        return True
+    if user.is_administrator:
+        return True
+    return event.teams.filter(members__in=[user]).exists()
+
+
 @register.filter
 def has_active_staff_session(user, session_key):
     return user.has_active_staff_session(session_key)
