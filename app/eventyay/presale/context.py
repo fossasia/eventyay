@@ -10,7 +10,7 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.common.permissions import is_admin_mode_active
+from eventyay.common.permissions import is_event_organiser
 from eventyay.helpers.i18n import (
     get_javascript_format_without_seconds,
     get_moment_locale,
@@ -173,10 +173,8 @@ def _default_context(request):
         and hasattr(request, 'event')
         and request.event
     ):
-        ctx['show_organizer_area'] = (
-            is_admin_mode_active(request)
-            or request.user.is_administrator
-            or request.event.teams.filter(members__in=[request.user]).exists()
+        ctx['show_organizer_area'] = is_event_organiser(
+            request.user, request, request.event
         )
 
     ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
