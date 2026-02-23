@@ -15,3 +15,19 @@ def is_admin_mode_active(request: HttpRequest) -> bool:
         return True
 
     return False
+
+
+def is_event_organiser(user, request, event=None) -> bool:
+    """Check if a user is an organiser for the given event.
+
+    Returns True only if the user is a platform admin, has an active
+    staff session, or is a member of a team assigned to this event
+    (including teams with ``all_events=True``).
+    """
+    if not user.is_authenticated or not event:
+        return False
+    if user.is_administrator:
+        return True
+    return user.has_event_permission(
+        event.organizer, event, request=request
+    )
