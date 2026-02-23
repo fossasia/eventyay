@@ -71,7 +71,6 @@ header {
     }
   }
   .header-row-right {
-    padding-bottom: 4px;
     color: var(--color-primary);
     margin-left: auto;
 	margin-right: 10px;
@@ -221,7 +220,6 @@ header {
   box-shadow: 0 5px 10px rgb(0 0 0 / 0.2);
   padding: 0;
   border: none;
-
   main {
     padding: var(--size-spacer);
   }
