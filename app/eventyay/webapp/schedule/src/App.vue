@@ -418,8 +418,11 @@ export default {
 		}
 
 		// Use inline data if available (on-site), otherwise fetch (external embed)
-		if (window.__SCHEDULE_DATA__) {
-			this.schedule = window.__SCHEDULE_DATA__
+		const dataEl = document.getElementById('pretalx-schedule-data')
+		if (dataEl) {
+			try { this.schedule = JSON.parse(dataEl.textContent) } catch (e) { /* ignore parse error, fall through to fetch */ }
+		}
+		if (this.schedule) {
 			this.onHomeServer = true
 		} else {
 			let version = ''
@@ -440,8 +443,9 @@ export default {
 			}
 		}
 		// Read toolbar metadata (version, exporters) injected by Django
-		if (window.__SCHEDULE_META__) {
-			this.scheduleMeta = window.__SCHEDULE_META__
+		const metaEl = document.getElementById('pretalx-schedule-meta')
+		if (metaEl) {
+			try { this.scheduleMeta = JSON.parse(metaEl.textContent) } catch (e) { /* ignore */ }
 		}
 
 		// For speaker and talk views, we only need schedule data + favs (no day tabs, filters, etc.)

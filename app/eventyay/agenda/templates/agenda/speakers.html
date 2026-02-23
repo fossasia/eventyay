@@ -11,9 +11,7 @@
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_speakers_list" sender=request.event request=request %}
 <div>
-    <script>
-    window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};
-    </script>
+    <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
     <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>

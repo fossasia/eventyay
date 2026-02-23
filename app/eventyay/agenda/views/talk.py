@@ -5,7 +5,6 @@ import datetime as dt
 from http import HTTPStatus
 from urllib.parse import unquote, urlparse, urljoin, quote
 from typing import TypeVar
-from xml.etree import ElementTree
 
 import jwt
 import requests

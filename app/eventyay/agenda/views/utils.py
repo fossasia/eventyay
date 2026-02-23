@@ -7,13 +7,17 @@ from datetime import datetime, timezone as dt_timezone
 from django.contrib import messages
 from django.core import signing
 from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
+from django.urls import reverse, NoReverseMatch
+from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import activate
 from django.utils import timezone
 
+from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
-
+from eventyay.common.text.path import safe_filename
+from eventyay.schedule.exporters import FavedICalExporter
 
 # Same escaping Django applies inside json_script to prevent XSS in <script> tags.
 JSON_SCRIPT_ESCAPES = {ord(">"): "\\u003E", ord("<"): "\\u003C", ord("&"): "\\u0026"}
@@ -22,9 +26,7 @@ JSON_SCRIPT_ESCAPES = {ord(">"): "\\u003E", ord("<"): "\\u003C", ord("&"): "\\u0
 def escape_json_for_script(json_str: str) -> str:
     """Escape a JSON string for safe embedding in an HTML ``<script>`` tag."""
     return json_str.translate(JSON_SCRIPT_ESCAPES)
-from eventyay.common.text.path import safe_filename
-from eventyay.base.models.submission import SubmissionFavourite
-from eventyay.schedule.exporters import FavedICalExporter
+
 
 logger = logging.getLogger(__name__)
 
@@ -129,9 +131,6 @@ def build_public_schedule_exporters(event, version=None):
     Used by both the agenda view and the video SPA to ensure identical
     exporter lists in both UIs.
     """
-    from django.urls import reverse, NoReverseMatch
-    from django.utils.encoding import force_str
-
     all_exporters = []
     for signal in (register_data_exporters, register_my_data_exporters):
         for _, exporter_cls in signal.send_robust(event):

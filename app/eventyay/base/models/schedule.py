@@ -679,7 +679,7 @@ class Schedule(PretalxModel):
                             'question': str(answer.question.question),
                             'answer': str(answer.answer),
                             'question_id': answer.question_id,
-                            'options': list(answer.options.values_list('answer', flat=True)),
+                            'options': [str(opt.answer) for opt in answer.options.all()],
                         }
                         for answer in talk.submission.answers.all()
                         if answer.question and answer.question.is_public
