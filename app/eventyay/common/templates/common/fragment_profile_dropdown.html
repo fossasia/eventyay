@@ -6,8 +6,8 @@
             <i class="fa fa-user user-icon"></i>
             <span class="user-name-desktop">{{ request.user.get_full_name }}</span>
             <span class="user-name-mobile">
-                {% with given_name=request.user.get_full_name.split|first %}
-                    {{ given_name|slice:":10" }}{% if given_name|length > 12 %}..{% endif %}
+                {% with given_name=request.user.first_name|default:request.user.get_full_name %}
+                    {{ given_name|slice:":10" }}{% if given_name|length > 10 %}..{% endif %}
                 {% endwith %}
             </span>
             <i class="fa fa-caret-down user-caret"></i>

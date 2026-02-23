@@ -80,9 +80,31 @@
                 <i class="fa fa-bars fa-lg"></i>
             </button>
             <div class="navbar-header">
+                {% if request.event %}
+                    {% if request.event.custom_domain and not request.event.is_public %}
+                        <form action="{{ request.event.urls.auth.full }}"
+                              method="post"
+                              target="_blank"
+                              class="mobile-navbar-view-form">
+                            {% csrf_token %}
+                            <input type="hidden" value="{{ new_session }}" name="session">
+                            <button type="submit" class="btn btn-link navbar-toggle">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </form>
+                    {% else %}
+                        <a target="_blank"
+                           rel="noopener"
+                           href="{{ request.event.urls.base }}"
+                           title="{% translate "View event" %}"
+                           class="navbar-toggle mobile-navbar-view-link">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    {% endif %}
+                {% endif %}
                 <a class="navbar-brand" href="{% url 'presale:index' %}">
                     <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
-                    {{ site_name }}
+                    <span class="brand-text">{{ site_name }}</span>
                 </a>
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
@@ -111,6 +133,7 @@
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                {% include "common/fragment_language_switch.html" %}
                 {% if show_link_in_header_for_all_pages %}
                     {% for page in show_link_in_header_for_all_pages %}
                         <li>
@@ -136,7 +159,6 @@
                         </a>
                     </li>
                 {% endif %}
-                {% include "common/fragment_language_switch.html" %}
                 {{ staff_session|json_script:"is_admin_mode" }}
                 {% if warning_update_available %}
                     <li>

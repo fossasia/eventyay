@@ -1132,6 +1132,7 @@ h1 .label {
 .language-switch .language-summary {
     .language-icon {
         display: none;
+        font-size: 16px;
     }
     .language-text {
         display: inline-block;
@@ -1159,18 +1160,27 @@ h1 .label {
     #wrapper nav.navbar.navbar-inverse .navbar-brand img {
         margin-right: 0;
     }
+    #wrapper nav.navbar.navbar-inverse .language-switch .language-summary {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 5px;
+        background-color: transparent;
+    }
     #wrapper nav.navbar.navbar-inverse .language-switch .language-summary .language-text {
         display: none;
     }
     #wrapper nav.navbar.navbar-inverse .language-switch .language-summary .language-icon {
         display: inline-block;
+        margin-right: 2px;
     }
     #wrapper nav.navbar.navbar-inverse .language-switch .language-summary .language-caret {
-        margin-left: 2px;
+        margin-left: 0;
     }
     #wrapper nav.navbar.navbar-inverse .header-nav {
         display: inline-flex;
         align-items: center;
+        padding: 10px 5px;
+        background-color: transparent;
     }
     #wrapper nav.navbar.navbar-inverse .header-nav .user-name-desktop {
         display: none;
@@ -1178,13 +1188,13 @@ h1 .label {
     #wrapper nav.navbar.navbar-inverse .header-nav .user-name-mobile {
         display: inline-block;
         margin-left: 4px;
-        margin-right: 4px;
+        margin-right: 2px;
     }
     #wrapper nav.navbar.navbar-inverse .header-nav .user-caret {
-        margin-left: 2px;
+        margin-left: 0;
     }
     #wrapper nav.navbar.navbar-inverse .header-nav .user-icon {
-        display: none;
+        margin-right: 2px;
     }
     #wrapper nav.navbar.navbar-inverse {
         position: relative;
@@ -1192,7 +1202,7 @@ h1 .label {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-        flex-wrap: nowrap; 
+        flex-wrap: nowrap;
         height: 50px;
         padding-right: 45px; 
     }
@@ -1228,36 +1238,34 @@ h1 .label {
     #wrapper nav.navbar.navbar-inverse .navbar-header .mobile-navbar-view-form,
     #wrapper nav.navbar.navbar-inverse .navbar-header a.mobile-navbar-view-link {
         position: absolute;
-        right: 10px;
-        top: 50%; 
-        transform: translateY(-50%);
+        right: 8px;
+        top: 0;
+        bottom: 0;
+        height: 50px;
         margin: 0;
-        padding: 0;
-        height: auto;
+        padding: 0 10px;
         z-index: 10;
         display: flex;
         align-items: center;
         justify-content: center;
+        transform: none;
     }
     #wrapper nav.navbar.navbar-inverse .navbar-header .mobile-navbar-view-form button {
         margin: 0;
-        padding: 6px 10px;
-        height: auto;
-    }
-    #wrapper nav.navbar.navbar-inverse .navbar-header a.mobile-navbar-view-link {
-        padding: 6px 10px;
+        padding: 0;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     #wrapper nav.navbar.navbar-inverse .navbar-brand {
         padding: 10px 5px;
     }
     #wrapper nav.navbar.navbar-inverse .navbar-top-links #button-sudo {
-        padding: 10px 8px;
-        white-space: nowrap;
-    }
-    #wrapper nav.navbar.navbar-inverse .language-switch .language-summary {
         padding: 10px 5px;
-    }
-    #wrapper nav.navbar.navbar-inverse #profile-dropdown .header-nav {
-        padding: 10px 5px; 
+        white-space: nowrap;
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
     }
 }
