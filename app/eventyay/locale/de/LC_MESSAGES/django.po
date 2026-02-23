@@ -37740,3 +37740,11 @@ msgstr "abgelehnt"
 
 #~ msgid "Already have a %(event_name)s account?"
 #~ msgstr "Haben Sie bereits ein %(event_name)s Konto?"
+
+#: cfp/templates/cfp/includes/forms_header.html:6
+msgid "Choose file"
+msgstr "Datei auswählen"
+
+#: cfp/templates/cfp/includes/forms_header.html:7
+msgid "No file chosen"
+msgstr "Keine Datei ausgewählt"

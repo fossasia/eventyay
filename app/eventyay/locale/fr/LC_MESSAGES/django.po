@@ -36954,3 +36954,11 @@ msgstr "rejeté"
 
 #~ msgid "Already have a %(event_name)s account?"
 #~ msgstr "Avez-vous déjà un compte %(event_name)s?"
+
+#: cfp/templates/cfp/includes/forms_header.html:6
+msgid "Choose file"
+msgstr "Choisir un fichier"
+
+#: cfp/templates/cfp/includes/forms_header.html:7
+msgid "No file chosen"
+msgstr "Aucun fichier sélectionné"
