@@ -39,7 +39,6 @@ header .header-wrapper {
 }
 
 header .header-row-right {
-    padding-bottom: 4px;
 	color: var(--color-primary);
     margin-left: auto;
     display: flex;
