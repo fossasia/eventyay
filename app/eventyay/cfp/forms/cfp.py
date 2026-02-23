@@ -1,5 +1,7 @@
 import logging
 
+from eventyay.common.language import language
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,17 +36,19 @@ class CfPFormMixin:
             )
         stored_label = field_data.get('label')
         if stored_label:
-            # Only apply the stored label if it contains at least one translation
-            # that genuinely differs from the English string. A label where every
-            # locale maps to the same English text is a cached gettext fallback —
-            # the field's own gettext_lazy verbose_name is more reliable.
+            # Preserve explicit organizer customizations, but avoid pinning cached
+            # gettext fallbacks that can block future PO/MO updates.
             label_data = getattr(stored_label, 'data', None)
             if label_data:
                 english = label_data.get('en', '')
                 has_real_translation = any(
                     v and v != english for k, v in label_data.items() if k != 'en'
                 )
+                with language('en'):
+                    default_english_label = str(field.label or '')
+                has_custom_english = bool(english) and english != default_english_label
             else:
-                has_real_translation = False
-            if has_real_translation:
+                has_real_translation = True
+                has_custom_english = False
+            if has_real_translation or has_custom_english:
                 field.label = stored_label
