@@ -299,12 +299,12 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return list(exporter(self.request.event) for _, exporter in register_my_data_exporters.send(self.request.event))
 
     @context
-    def is_sessions_page(self):
-        return self.request.path.endswith('/sessions/')
-
-    @context
     def show_talk_list(self):
-        return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
+        # Check query parameter first for user preference, then fall back to event settings
+        view_param = self.request.GET.get('view', '').lower()
+        if view_param in ('list', 'calendar'):
+            return view_param == 'list'
+        return self.request.event.display_settings['schedule'] == 'list'
 
     @context
     def schedule_json(self):

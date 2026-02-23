@@ -1916,7 +1916,8 @@ class Event(
 
     @property
     def talk_session_url(self):
-        return self.urls.talks.full
+        # Redirect to schedule page for backward compatibility (Sessions merged into Schedule)
+        return self.urls.schedule.full
 
     @property
     def talk_speaker_url(self):
