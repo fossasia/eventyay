@@ -85,6 +85,7 @@ def mail(
     user=None,
     attach_ical=False,
     attach_cached_files: Sequence = None,
+    sync_send: bool = False,
 ):
     """
     Sends out an email to a user. The mail will be sent synchronously or asynchronously depending on the installation.
@@ -302,7 +303,10 @@ def mail(
 
         task_chain.append(send_task)
 
-        if 'locmem' in settings.EMAIL_BACKEND:
+        if sync_send:
+            # Run synchronously in the current process when callers need an immediate and reliable send result.
+            chain(*task_chain).apply(throw=True)
+        elif 'locmem' in settings.EMAIL_BACKEND:
             # This clause is triggered during unit tests, because transaction.on_commit never fires due to the nature
             # Django's unit tests work
             chain(*task_chain).apply_async()
