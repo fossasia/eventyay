@@ -112,7 +112,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         if 'new_pw' in form.changed_data:
             msgs.append(_('Your password has been changed.'))
 
-        email_addr = form.cleaned_data['email']
+        email_addr = self.request.user.email or ''
         if 'email' in form.changed_data:
             msgs.append(_('Your email address has been changed to {email}.').format(email=email_addr))
 
