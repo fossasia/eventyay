@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-22 18:58+0000\n"
+"PO-Revision-Date: 2026-02-23 12:20+0000\n"
 "Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
@@ -4683,11 +4683,11 @@ msgstr "Autentikasi dua faktor diperlukan untuk masuk"
 
 #: base/models/auth.py:192
 msgid "Receive notifications according to my settings below"
-msgstr ""
+msgstr "Terima notifikasi berdasarkan pengaturan di bawah"
 
 #: base/models/auth.py:193
 msgid "If turned off, you will not get any notifications."
-msgstr ""
+msgstr "Jika dimatikan, anda tidak akan menerima notifikasi."
 
 #: base/models/auth.py:243 common/templates/common/avatar.html:7
 #: orga/templates/orga/cfp/forms.html:589
@@ -4748,7 +4748,7 @@ msgstr "Masukkan nama lisensi foto dan tautannya jika ada."
 #: orga/templates/orga/mails/_placeholder_group.html:12
 #: orga/views/typeahead.py:64
 msgid "User"
-msgstr ""
+msgstr "Pengguna"
 
 #: base/models/auth.py:298 control/navigation.py:489
 #: control/templates/control/event_list.html:16
@@ -4756,16 +4756,16 @@ msgstr ""
 #: control/templates/pretixcontrol/admin/users/index.html:5
 #: control/templates/pretixcontrol/admin/users/index.html:7
 msgid "Users"
-msgstr ""
+msgstr "Pengguna"
 
 #: base/models/auth.py:388
 msgid "Account information changed"
-msgstr ""
+msgstr "Informasi akun diperbarui"
 
 #: base/models/auth.py:401 base/models/auth.py:735
 #: eventyay_common/templates/eventyay_common/auth/forgot.html:7
 msgid "Password recovery"
-msgstr ""
+msgstr "Pemulihan kata sandi"
 
 #: base/models/auth.py:720
 #, python-brace-format
@@ -4844,28 +4844,28 @@ msgstr "Jenis acara"
 #: orga/templates/orga/review/dashboard.html:279
 #: orga/templates/orga/speaker/form.html:60
 msgid "pending"
-msgstr ""
+msgstr "menunggu"
 
 #: base/models/billing.py:21 base/models/orders.py:167
 msgid "paid"
-msgstr ""
+msgstr "Sudah dibayar"
 
 #: base/models/billing.py:22 base/models/orders.py:168
 msgid "expired"
-msgstr ""
+msgstr "kedaluwarsa"
 
 #: base/models/billing.py:23 base/models/orders.py:169
 #: base/models/submission.py:80 cfp/templates/cfp/event/fragment_state.html:15
 msgid "canceled"
-msgstr ""
+msgstr "dibatalkan"
 
 #: base/models/cfp.py:98
 msgid "headline"
-msgstr ""
+msgstr "tajuk"
 
 #: base/models/cfp.py:102
 msgid "text"
-msgstr ""
+msgstr "teks"
 
 #: base/models/cfp.py:109
 msgid "Default session type"
