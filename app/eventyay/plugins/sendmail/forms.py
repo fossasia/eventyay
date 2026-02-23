@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -120,7 +122,6 @@ class MailForm(forms.Form):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from datetime import timedelta
             buffer = timedelta(minutes=1)
             if scheduled_at < timezone.now() - buffer:
                 raise ValidationError(
@@ -541,7 +542,6 @@ class EmailQueueEditForm(forms.ModelForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from datetime import timedelta
             buffer = timedelta(minutes=1)
             if scheduled_at < timezone.now() - buffer:
                 raise ValidationError(
@@ -649,7 +649,6 @@ class TeamMailForm(forms.Form):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from datetime import timedelta
             buffer = timedelta(minutes=1)
             if scheduled_at < timezone.now() - buffer:
                 raise ValidationError(

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from contextlib import suppress
+from datetime import timedelta
 
 from bs4 import BeautifulSoup
 from django import forms
@@ -214,7 +215,6 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from datetime import timedelta
             buffer = timedelta(minutes=1)
             if scheduled_at < timezone.now() - buffer:
                 raise forms.ValidationError(
@@ -244,7 +244,6 @@ class WriteMailBaseForm(MailTemplateForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from datetime import timedelta
             buffer = timedelta(minutes=1)
             if scheduled_at < timezone.now() - buffer:
                 raise forms.ValidationError(

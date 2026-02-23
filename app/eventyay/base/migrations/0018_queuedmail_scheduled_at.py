@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0013_alter_talkquestion_question'),
+        ('base', '0017_submissiontype_position_cfp_default_type'),
     ]
 
     operations = [

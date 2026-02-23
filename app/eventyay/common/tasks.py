@@ -5,9 +5,9 @@ from django.core.files.storage import default_storage
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Submission, User
+from eventyay.common.signals import periodic_task
 from eventyay.celery_app import app
 from eventyay.common.image import process_image
-from eventyay.common.signals import periodic_task
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +82,6 @@ def send_periodic_signal():
       manually through the Django admin) with the desired interval (such as
       every 60 seconds).
     """
-    logger.info('Sending periodic_task signal')
+    logger.debug('Sending periodic_task signal')
     periodic_task.send(sender=None)
-    logger.info('Periodic_task signal sent successfully')
+    logger.debug('Periodic_task signal sent successfully')

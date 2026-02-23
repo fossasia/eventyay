@@ -18,6 +18,9 @@ from eventyay.base.signals import resolve_app_for_module, check_plugin_active
 
 logger = logging.getLogger(__name__)
 
+# Batch size for processing scheduled emails to limit transaction size
+MAIL_SEND_BATCH_SIZE = 100
+
 
 class EventPluginSignal(django.dispatch.Signal):
     """An extension to Django's built-in signals.
@@ -255,8 +258,6 @@ def process_scheduled_emails(sender, **kwargs):
     """
     from eventyay.plugins.sendmail.models import EmailQueue
     from eventyay.base.models.mail import QueuedMail
-
-    MAIL_SEND_BATCH_SIZE = 100  # limit emails processed per transaction batch
 
     # Process QueuedMail (Talk/CfP component)
     while True:

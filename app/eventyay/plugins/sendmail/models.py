@@ -115,11 +115,13 @@ class EmailQueue(models.Model):
         Sends queued email to each recipients.
         Uses their stored metadata and updates send status individually.
         """
+        from eventyay.common.exceptions import SendMailException
+        
         if self.sent_at:
             return False  # Already sent
 
         if self.scheduled_at and self.scheduled_at > now():
-            return False  # Scheduled for future, don't send yet
+            raise SendMailException(_('This email is scheduled for the future and cannot be sent yet.'))
 
         recipients = self.recipients.all()
         if not recipients.exists():
