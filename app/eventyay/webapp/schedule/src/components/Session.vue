@@ -168,18 +168,18 @@ export default {
 .c-linear-schedule-session, .break
 	z-index: 10
 	display: flex
-	min-width: 375px
-	min-height: 100px
-	margin: 10px
+	min-width: 300px
+	min-height: 96px
+	margin: 8px 6px
 	overflow: hidden
 	color: rgb(13 15 16)
 	position: relative
 	font-size: 14px
 	.time-box
-		width: 69px
+		width: 62px
 		box-sizing: border-box
 		background-color: var(--track-color)
-		padding: 12px 16px 8px 12px
+		padding: 10px 8px 6px 8px
 		border-radius: 6px 0 0 6px
 		display: flex
 		flex-direction: column
@@ -192,9 +192,14 @@ export default {
 			.date
 				margin-bottom: 4px
 				white-space: nowrap
+				font-size: 13px
+				font-weight: 500
+				text-transform: uppercase
+				letter-spacing: 0.3px
 			display: flex
 			flex-direction: column
-			align-items: flex-end
+			align-items: center
+			text-align: center
 			&.has-ampm
 				align-self: stretch
 			.ampm
@@ -220,7 +225,7 @@ export default {
 			text-transform: uppercase
 	&.has-date
 		.time-box
-			width: 100px
+			width: 88px
 	.info
 		flex: auto
 		display: flex
@@ -322,4 +327,26 @@ export default {
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container
 		display: inline-flex
+
+@media (max-width: 600px)
+	.c-linear-schedule-session, .break
+		min-width: 0
+		margin: 6px 4px
+		min-height: 80px
+		.time-box
+			width: 56px
+			padding: 8px 6px
+			.start
+				font-size: 14px
+		.info
+			padding: 6px
+			.title
+				font-size: 14px
+			.abstract
+				-webkit-line-clamp: 2
+			.bottom-info
+				font-size: 12px
+	.c-linear-schedule-session.has-date
+		.time-box
+			width: 76px
 </style>

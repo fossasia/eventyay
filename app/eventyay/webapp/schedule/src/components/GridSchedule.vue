@@ -5,7 +5,7 @@
 			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
 				.room
 				.room(v-for="(room, index) of rooms") {{ getLocalizedString(room.name) }}
-					bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="bottom-end") ?
+					bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="top-end") ?
 				.room(v-if="hasSessionsWithoutRoom") no location
 		.custom-scrollbar(ref="customScrollbar", v-show="scrollThumbWidth > 0 && scrollThumbWidth < 100")
 			.scroll-track(ref="scrollTrack", @mousedown="onTrackClick")
@@ -301,7 +301,11 @@ export default {
 	},
 	watch: {
 		currentDay (day) {
-			// Always scroll to the start of the selected day
+			// Only scroll when triggered by toolbar click, not by scroll-based observer
+			if (this._scrollDayUpdate) {
+				this._scrollDayUpdate = false
+				return
+			}
 			this.scrollToDayStart(day)
 		},
 		forceScrollDay () {
@@ -517,11 +521,13 @@ export default {
 			document.addEventListener('mouseup', onMouseUp)
 		},
 		onIntersect (entries) {
-			// TODO still gets stuck when scrolling fast above threshold and back
 			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
 			if (!entry) return
 			const day = moment(entry.target.dataset.slice).startOf('day')
 			if (day.format('YYYY-MM-DD') !== this.currentDay) {
+				// Only update the active day indicator — don't trigger a scroll jump.
+				// scrollToDayStart is only called from toolbar clicks (selectDay / forceScrollDay).
+				this._scrollDayUpdate = true
 				this.$emit('changeDay', day)
 			}
 		}
@@ -534,7 +540,7 @@ export default {
 	background-color: $clr-grey-50
 	.sticky-header
 		position: sticky
-		top: calc(var(--pretalx-sticky-top-offset, 0px) + 40px)
+		top: calc(var(--pretalx-sticky-top-offset, 0px) + 30px)
 		z-index: 25
 		background-color: $clr-white
 	.rooms-bar

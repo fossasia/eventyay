@@ -257,6 +257,7 @@ export default {
 			allTracks: [],
 			allRooms: [],
 			allTypes: [],
+			allLanguages: [],
 			onlyFavs: false,
 			scheduleError: false,
 			onHomeServer: false,
@@ -271,7 +272,7 @@ export default {
 	},
 	computed: {
 		scheduleMaxWidth () {
-			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 650) : this.scrollParentWidth
+			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 365) : this.scrollParentWidth
 		},
 		showGrid () {
 			// Changes to the 710px cutoff must also be reflected in the static/agenda/_agenda.css file in pretalx-core
@@ -294,15 +295,22 @@ export default {
 		filteredTypes () {
 			return this.allTypes.filter(t => t.selected)
 		},
+		filteredLanguages () {
+			return this.allLanguages.filter(l => l.selected)
+		},
 		hasActiveFilterSelections () {
-			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0
+			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0
 		},
 		filterGroups () {
-			return [
+			const groups = [
 				{ refKey: 'track', title: 'Tracks', data: this.allTracks },
 				{ refKey: 'room', title: 'Rooms', data: this.allRooms },
 				{ refKey: 'type', title: 'Types', data: this.allTypes }
 			]
+			if (this.allLanguages.length >= 1) {
+				groups.push({ refKey: 'language', title: 'Language', data: this.allLanguages })
+			}
+			return groups
 		},
 		speakersLookup () {
 			if (!this.schedule) return {}
@@ -316,6 +324,7 @@ export default {
 				if (this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
 				if (this.filteredRooms.length && !this.filteredRooms.find(r => r.id === session.room)) continue
 				if (this.filteredTypes.length && !this.filteredTypes.find(t => t.value === session.session_type)) continue
+				if (this.filteredLanguages.length && !this.filteredLanguages.find(l => l.value === session.content_locale)) continue
 				const start = moment.tz(session.start, this.currentTimezone)
 				if (this.displayDates.length && !this.displayDates.includes(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
@@ -332,6 +341,7 @@ export default {
 					fav_count: session.fav_count,
 					tags: session.tags,
 					session_type: session.session_type,
+					content_locale: session.content_locale,
 					resources: session.resources,
 					answers: session.answers,
 					exporters: session.exporters,
@@ -483,6 +493,16 @@ export default {
 			if (s.session_type && !typeSet.has(s.session_type)) {
 				typeSet.add(s.session_type)
 				this.allTypes.push({ value: s.session_type, label: s.session_type, selected: false })
+			}
+		})
+		const langSet = new Set()
+		this.schedule.talks.forEach(s => {
+			if (s.content_locale && !langSet.has(s.content_locale)) {
+				langSet.add(s.content_locale)
+				const displayName = (() => {
+					try { return new Intl.DisplayNames([this.locale], { type: 'language' }).of(s.content_locale) } catch { return s.content_locale }
+				})()
+				this.allLanguages.push({ value: s.content_locale, label: displayName, selected: false })
 			}
 		})
 
@@ -772,6 +792,7 @@ export default {
 			this.allTracks.forEach(t => t.selected = false)
 			this.allRooms.forEach(r => r.selected = false)
 			this.allTypes.forEach(t => t.selected = false)
+			this.allLanguages.forEach(l => l.selected = false)
 		}
 	}
 }
@@ -798,16 +819,11 @@ export default {
 	&:fullscreen
 		background: #fff
 		padding: 0
+		margin: 0
 		overflow: auto
 		--pretalx-sticky-top-offset: 0px
-		.c-schedule-toolbar
-			background: #fff
-			width: 100%
+		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
-			box-shadow: 0 1px 3px rgba(0,0,0,0.08)
-		.c-grid-schedule .sticky-header
-			border-bottom: 1px solid $clr-dividers-light
-			box-shadow: 0 1px 3px rgba(0,0,0,0.06)
 	&.grid-schedule
 		margin: 0 auto
 	&.list-schedule

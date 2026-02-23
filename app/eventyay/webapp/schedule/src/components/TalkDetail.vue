@@ -288,4 +288,15 @@ export default {
 			margin: 0 16px 16px
 		.talk
 			max-width: 100%
+	@media (max-width: 480px)
+		.talk
+			margin: 10px
+			h1
+				font-size: 20px
+			.info
+				font-size: 15px
+			.abstract
+				font-size: 14px
+		.speakers
+			margin: 0 10px 12px
 </style>

@@ -663,6 +663,7 @@ class Schedule(PretalxModel):
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                     'tags': talk.submission.get_tag(),
                     'session_type': talk.submission.submission_type.name,
+                    'content_locale': talk.submission.content_locale,
                 }
                 if enrich:
                     talk_data['resources'] = [
