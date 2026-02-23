@@ -927,7 +927,7 @@ _LANGUAGES_CONFIG = {
         'incubating': False,
     },
     'zh-hans': {
-        'name': _('Simplified Chinese'),
+        'name': _('Chinese Simplified'),
         'natural_name': '简体中文',
         'bidi': False,
         'official': False,
@@ -936,7 +936,7 @@ _LANGUAGES_CONFIG = {
         'incubating': False,
     },
     'zh-hant': {
-        'name': _('Traditional Chinese (Taiwan)'),
+        'name': _('Chinese Traditional'),
         'natural_name': '繁體中文',
         'bidi': False,
         'official': False,

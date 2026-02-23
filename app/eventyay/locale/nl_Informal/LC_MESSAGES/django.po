@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-12-29 09:23+0000\n"
-"Last-Translator: Feike Donia <feikedonia@proton.me>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 14:39+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "nl_INFORMAL/>\n"
 "Language: nl_Informal\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -1147,8 +1147,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Hide \"payment pending\" state on customer-facing pages"
 msgid "Hide \"payment pending\" state on attendee-facing pages"
-msgstr ""
-"Verberg \"wacht op betaling\"-status op pagina's zichtbaar voor klanten"
+msgstr "Verberg \"wacht op betaling\"-status op pagina's zichtbaar voor klanten"
 
 #: base/configurations/default_setting.py:632
 #, fuzzy
@@ -10459,31 +10458,31 @@ msgstr "Plug-in: %s"
 msgid "The voucher has been sent to {recipient}."
 msgstr "De voucher is verstuurd naar {recipient}."
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
-"Je standaardtaal moet ook zijn ingeschakeld voor je evenement (zie "
-"hierboven)."
+"Je standaardtaal moet ook zijn ingeschakeld voor je evenement (zie hierboven)"
+"."
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 msgid "Content languages must be a subset of the active languages."
 msgstr ""
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 "Je het invullen van namen van aanwezigen niet verplichten als je er niet om "
 "vraagt."
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 "Je moet om de e-mailadressen van deelnemers vragen als je de vraag verplicht "
 "wilt maken."
 
-#: base/settings.py:154
+#: base/settings.py:163
 #, fuzzy
 #| msgid ""
 #| "You have to ask for attendee emails if you want to make them required."
@@ -10492,19 +10491,19 @@ msgstr ""
 "Je moet om de e-mailadressen van deelnemers vragen als je de vraag verplicht "
 "wilt maken."
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 "Je moet om factuuradressen vragen als je factuuradressen verplicht wilt "
 "maken."
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 "Je moet om factuuradressen vragen als je bedrijfsnamen verplicht wilt maken."
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 "De laatste datum van betalingen kan niet voor het eind van de verkoopperiode "
@@ -14489,8 +14488,7 @@ msgstr "Extra footertekst"
 
 #: control/forms/global_settings.py:67
 msgid "Will be included as additional text in the footer, site-wide."
-msgstr ""
-"Zal over de hele website als extra tekst in de footer worden opgenomen."
+msgstr "Zal over de hele website als extra tekst in de footer worden opgenomen."
 
 #: control/forms/global_settings.py:75
 msgid "Additional footer link"
@@ -14521,7 +14519,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr "URL-patroon voor Leaflet-tegels"
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "bijv. {sample}"
@@ -14766,19 +14764,60 @@ msgstr ""
 "nieuwe update beschikbaar is. Dit adres zal niet worden verzonden naar "
 "eventyay.com, de e-mails zullen door deze server lokaal worden verstuurd."
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable test mode"
+msgid "Enable telemetry"
+msgstr "Testmodus inschakelen"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+msgid "Telemetry endpoint"
+msgstr ""
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+#, fuzzy
+#| msgid "Bancontact"
+msgid "Maintainer contact"
+msgstr "Bancontact"
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "Doorverwijzings-URI's"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 #, fuzzy
 #| msgid "The selected team cannot be deleted."
 msgid "The Stripe key cannot be empty."
 msgstr "Het gekozen team kan niet worden verwijderd."
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -14789,7 +14828,7 @@ msgstr ""
 "De opgegeven key \"%(value)s\" ziet er niet geldig uit. Hij moet beginnen "
 "met \"%(prefix)s\"."
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -15833,8 +15872,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Plaats #{posid}: {old_item} ({old_price}) veranderd in {new_item} "
-"({new_price})."
+"Plaats #{posid}: {old_item} ({old_price}) veranderd in {new_item} ("
+"{new_price})."
 
 #: control/logdisplay.py:70
 #, python-brace-format
@@ -15897,8 +15936,8 @@ msgid ""
 "Position #{posid} created: {product} ({price}) as an add-on to position "
 "#{addon_to}."
 msgstr ""
-"Plaats #{posid} aangemaakt: {item} ({price}) als add-on bij plaats "
-"#{addon_to}."
+"Plaats #{posid} aangemaakt: {item} ({price}) als add-on bij plaats #"
+"{addon_to}."
 
 #: control/logdisplay.py:175
 #, fuzzy, python-brace-format
@@ -15950,8 +15989,8 @@ msgid ""
 "Scan scan of revoked code \"{barcode}…\" at {datetime} for list \"{list}\", "
 "type \"{type}\", was uploaded."
 msgstr ""
-"Een scan van ingetrokken code \"{barcode}…\" om {datetime} voor lijst "
-"\"{list}\", type \"{type}\" is geüpload."
+"Een scan van ingetrokken code \"{barcode}…\" om {datetime} voor lijst \""
+"{list}\", type \"{type}\" is geüpload."
 
 #: control/logdisplay.py:258
 #, python-brace-format
@@ -15977,8 +16016,8 @@ msgid ""
 "Denied scan of position #{posid} for list \"{list}\", type \"{type}\", error "
 "code \"{errorcode}\"."
 msgstr ""
-"Een scan voor plaats #{posid} is geweigerd voor de lijst \"{list}\", type "
-"\"{type}\". Foutcode: \"{errorcode}\"."
+"Een scan voor plaats #{posid} is geweigerd voor de lijst \"{list}\", type \""
+"{type}\". Foutcode: \"{errorcode}\"."
 
 #: control/logdisplay.py:289
 #, python-brace-format
@@ -16017,8 +16056,8 @@ msgid ""
 "Position #{posid} has been scanned and rejected because it has already been "
 "scanned before on list \"{list}\"."
 msgstr ""
-"Plaats #{posid} is gescand en geweigerd omdat het al is gescand op lijst "
-"\"{list}\"."
+"Plaats #{posid} is gescand en geweigerd omdat het al is gescand op lijst \""
+"{list}\"."
 
 #: control/logdisplay.py:472
 msgid "This object has been created by cloning."
@@ -19524,9 +19563,9 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Er zijn geen betalingsaanbieders beschikbaar. Ga naar de <a "
-"%(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of "
-"meerdere betalingsplug-ins."
+"Er zijn geen betalingsaanbieders beschikbaar. Ga naar de <a %"
+"(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of meerdere "
+"betalingsplug-ins."
 
 #: control/templates/pretixcontrol/event/payment.html:67
 msgid "Deadlines"
@@ -19865,11 +19904,11 @@ msgid ""
 "not responsible for the correct handling of taxes in your ticket shop. If in "
 "doubt, please contact a lawyer or tax consultant."
 msgstr ""
-"Deze instellingen zijn bedoeld voor gevorderde gebruikers. Zie de <a "
-"href=\"%(docs)s\">handleiding</a> voor meer informatie. Houd er rekening mee "
-"dat wij niet verantwoordelijk zijn voor de juiste behandeling van belasting "
-"bij de kaartverkoop. Neem in geval van twijfel contact op met een advocaat "
-"of belastingadviseur."
+"Deze instellingen zijn bedoeld voor gevorderde gebruikers. Zie de <a href=\"%"
+"(docs)s\">handleiding</a> voor meer informatie. Houd er rekening mee dat wij "
+"niet verantwoordelijk zijn voor de juiste behandeling van belasting bij de "
+"kaartverkoop. Neem in geval van twijfel contact op met een advocaat of "
+"belastingadviseur."
 
 #: control/templates/pretixcontrol/event/tax_edit.html:49
 msgid "Custom taxation rules"
@@ -19948,9 +19987,9 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Er zijn geen uitvoerformaten voor kaartjes beschikbaar. Ga naar de <a "
-"%(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of "
-"meerdere uitvoerplug-ins."
+"Er zijn geen uitvoerformaten voor kaartjes beschikbaar. Ga naar de <a %"
+"(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of meerdere "
+"uitvoerplug-ins."
 
 #: control/templates/pretixcontrol/event/tickets.html:71
 msgid "Download time"
@@ -20762,8 +20801,7 @@ msgstr "Geen overeenkomende antwoorden gevonden."
 
 #: control/templates/pretixcontrol/items/question.html:51
 msgid "You need to assign the question to a product to collect answers."
-msgstr ""
-"Je moet de vraag aan een product toewijzen om antwoorden te verzamelen."
+msgstr "Je moet de vraag aan een product toewijzen om antwoorden te verzamelen."
 
 #: control/templates/pretixcontrol/items/question.html:70
 #: orga/templates/orga/cfp/talkquestion/detail.html:77
@@ -21880,8 +21918,8 @@ msgid ""
 msgstr ""
 "We hebben een bericht ontvangen dat <strong>%(amount)s</strong> is "
 "terugbetaald via <strong>%(method)s</strong>. Als deze terugbetaling wordt "
-"verwerkt zal de bestelling onderbetaald zijn met <strong>%(pending)s</"
-"strong>. Het totaalbedrag is <strong>%(total)s</strong>."
+"verwerkt zal de bestelling onderbetaald zijn met <strong>%(pending)s</strong>"
+". Het totaalbedrag is <strong>%(total)s</strong>."
 
 #: control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -22288,8 +22326,8 @@ msgid ""
 "Download an app that is compatible with eventyay. For example, our check-in "
 "app <strong>eventyay Check-in</strong> is available on all major platforms."
 msgstr ""
-"Download een app die compatibel is met eventyay. Onze incheckapp "
-"<strong>eventyay</strong> is beschikbaar op alle veelvoorkomende platforms."
+"Download een app die compatibel is met eventyay. Onze incheckapp <strong>"
+"eventyay</strong> is beschikbaar op alle veelvoorkomende platforms."
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:14
 #, fuzzy
@@ -23008,8 +23046,8 @@ msgid ""
 msgstr ""
 "Controleer opnieuw of je zeker weet dat je de gekozen soorten gegevens wilt "
 "verwijderen uit het evenement <strong>%(event)s</strong>. Voer om te "
-"bevestigen dat je dit echt wilt de korte naam van het evenement "
-"(\"%(slug)s\") hier in:"
+"bevestigen dat je dit echt wilt de korte naam van het evenement (\"%(slug)"
+"s\") hier in:"
 
 #: control/templates/pretixcontrol/shredder/download.html:41
 msgid "Event short name"
@@ -23359,8 +23397,8 @@ msgid ""
 "We just want to make sure it's really you. Please re-authenticate with "
 "'%(login_provider)s'."
 msgstr ""
-"We willen zeker zijn dat jij het bent. Meld je opnieuw aan met "
-"'%(login_provider)s'."
+"We willen zeker zijn dat jij het bent. Meld je opnieuw aan met '%"
+"(login_provider)s'."
 
 #: control/templates/pretixcontrol/user/reauth.html:14
 msgid ""
@@ -23536,8 +23574,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Weet je zeker dat je het volgende wachtlijstitem wilt verwijderen: "
-"<strong>%(entry)s</strong>?"
+"Weet je zeker dat je het volgende wachtlijstitem wilt verwijderen: <strong>%"
+"(entry)s</strong>?"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -24218,8 +24256,7 @@ msgstr "We konden het geüploade bestand niet openen als een CSV-bestand."
 #: presale/views/order.py:1037 presale/views/order.py:1148
 #: presale/views/order.py:1285 presale/views/order.py:1329
 msgid "Unknown order code or not authorized to access this order."
-msgstr ""
-"Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
+msgstr "Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
 
 #: control/views/orders.py:484 presale/views/order.py:1152
 msgid "Ticket download is not enabled for this product."
@@ -24486,8 +24523,7 @@ msgstr "De betalingstermijn is veranderd."
 msgid ""
 "We were not able to process the request completely as the server was too "
 "busy."
-msgstr ""
-"We konden je verzoek niet verwerken, omdat de server het te druk heeft."
+msgstr "We konden je verzoek niet verwerken, omdat de server het te druk heeft."
 
 #: control/views/orders.py:1728
 msgid "This action is only allowed for pending orders."
@@ -25470,8 +25506,8 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
-"Weet je zeker dat je de toegang tot je account voor de applicatie "
-"<strong>%(application)s</strong> wilt intrekken?"
+"Weet je zeker dat je de toegang tot je account voor de applicatie <strong>%"
+"(application)s</strong> wilt intrekken?"
 
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -25730,8 +25766,8 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"Als je al een account op deze site hebt met een ander e-mailadres kan je <a "
-"%(login_href)s>inloggen</a> en dan opnieuw op deze link klikken om de "
+"Als je al een account op deze site hebt met een ander e-mailadres kan je <a %"
+"(login_href)s>inloggen</a> en dan opnieuw op deze link klikken om de "
 "uitnodiging met je bestaande account te accepteren."
 
 #: eventyay_common/templates/eventyay_common/auth/invite.html:30
@@ -32160,8 +32196,8 @@ msgstr[0] ""
 "aangemaakt op %(date)s, met één bestelling en een totaalbedrag van %(sum)s."
 msgstr[1] ""
 "Je probeert een exportbestand met terugbetalingen te downloaden dat is "
-"aangemaakt op %(date)s, met %(cnt)s bestellingen en een totaalbedrag van "
-"%(sum)s."
+"aangemaakt op %(date)s, met %(cnt)s bestellingen en een totaalbedrag van %"
+"(sum)s."
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
@@ -36612,9 +36648,6 @@ msgstr "niet beantwoord"
 
 #~ msgid "Alipay"
 #~ msgstr "Alipay"
-
-#~ msgid "Bancontact"
-#~ msgstr "Bancontact"
 
 #~ msgid "SOFORT"
 #~ msgstr "SOFORT"

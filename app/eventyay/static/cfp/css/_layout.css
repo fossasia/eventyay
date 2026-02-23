@@ -80,6 +80,7 @@ header {
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
+    gap: 10px;
 
     .header-nav {
       color: var(--color-primary);

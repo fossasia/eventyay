@@ -25,6 +25,7 @@
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
 {% endblock %}
+{% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
 
     {% autoescape off %}
@@ -275,6 +276,7 @@
     {% endif %}
 
     {% if subevent or not event.has_subevents %}
+        {% include "pretixpresale/event/fragment_testmode_alert.html" %}
         <div id="tickets"></div>
         {% if can_view_tickets %}
             {% if request.event.live or is_organiser %}

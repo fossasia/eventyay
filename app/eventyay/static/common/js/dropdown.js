@@ -113,4 +113,3 @@ if (document.readyState === 'loading') {
     initDropdowns();
 }
 
-export { initDropdowns };
