@@ -35,7 +35,7 @@
 
     <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
     <script id="pretalx-schedule-meta" type="application/json">{{ schedule_meta_json|safe }}</script>
-    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}"></script>
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" {% if show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
