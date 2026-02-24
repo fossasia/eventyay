@@ -1614,6 +1614,12 @@ h2 .user-name-display img {
   }
 }
 
+#widget-generation .form-group.row > .col-form-label {
+  max-width: fit-content;
+  margin-left: auto;
+  pointer-events: none;
+}
+
 @media print {
 
   body,
