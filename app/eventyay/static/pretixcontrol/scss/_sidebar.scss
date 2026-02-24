@@ -155,11 +155,14 @@ body:not(.sidebar-minimized) #page-wrapper {
     bottom: 0;
     left: 0;
     width: 250px;
-    background-color: #f8f8f8;
-    z-index: 12;
+    /* Solid white so page content cannot bleed through */
+    background-color: #ffffff;
+    /* Raised above Bootstrap dropdowns (z=1000) and modals (z=1050 for backdrop)
+       but below the navbar itself which uses z=1100 in main.scss */
+    z-index: 1040;
     transform: translateX(-100%);
     overflow-y: auto;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.25);
     height: calc(100vh - var(--navbar-height, 50px));
 
     .nav>li {
@@ -216,6 +219,20 @@ body:not(.sidebar-minimized) #page-wrapper {
     .context-selector .context-indicator {
       display: flex;
     }
+  }
+
+  /* Dim the page behind the open sidebar so items cannot visually bleed through */
+  body:not(.sidebar-minimized) #wrapper::before {
+    content: "";
+    position: fixed;
+    top: var(--navbar-height, 50px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.40);
+    z-index: 1039;
+    /* one below the sidebar */
+    pointer-events: none;
   }
 
   body.sidebar-minimized .sidebar {

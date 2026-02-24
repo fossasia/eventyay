@@ -200,6 +200,7 @@ aside.sidebar {
     }
 
     #nav-search {
+
       #search-context-icon .fa-stack-1x,
       #search-context-icon .fa-stack-2x {
         margin-left: 0;
@@ -457,7 +458,7 @@ aside.sidebar {
   line-height: 1;
 }
 
-.navbar #global-nav-menu button > div {
+.navbar #global-nav-menu button>div {
   width: 0.70rem;
   height: 0.70rem;
   margin-left: 6px;
@@ -558,6 +559,7 @@ nav.navbar,
     font-weight: normal;
   }
 }
+
 .navbar .nav-item form button.nav-link.active {
   margin: 0 4px;
 }
@@ -655,6 +657,7 @@ footer {
 }
 
 .submit-group form {
+
   .form-group,
   button {
     margin-bottom: 0;
@@ -1697,28 +1700,109 @@ h2 .user-name-display img {
 }
 
 @media (max-width: 768px) {
+
+  /* ── Navbar mobile layout ────────────────────────────────────── */
+  nav.navbar,
   .navbar {
-    padding: 0.1rem 1rem;
+    padding: 0 0.5rem;
+    height: 50px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+
+    /* Ensure all direct flex children don't grow past available space */
+    >* {
+      flex-shrink: 1;
+      min-width: 0;
+    }
+
+    .navbar-brand {
+      /* Truncate long org/event names gracefully */
+      max-width: 45vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 16px;
+      margin-right: 0.5rem;
+    }
+
+    /* Keep the collapse section from pushing other items off screen */
+    .navbar-collapse {
+      flex-basis: 0;
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    /* The right-side nav: only show the admin-mode button and globe icon,
+       hide the full username + global-nav-menu on very small screens */
+    ul.navbar-nav {
+      flex-shrink: 0;
+    }
+
+    /* Hide the user-name text on mobile – the "d-none d-md-block" li
+       already contains it, but ensure the wrapping li is really hidden */
+    .nav-item.d-none.d-md-block {
+      display: none !important;
+    }
+
+    /* Compact the admin-mode button so it doesn't overflow */
+    button.admin-mode,
+    a.end-admin-mode {
+      font-size: 12px;
+      padding: 0.3rem 0.4rem;
+      white-space: nowrap;
+    }
 
     ul {
       flex-direction: row;
     }
   }
 
+  /* Flex basis reset for the collapse section */
   .navbar-collapse {
     flex-basis: auto;
   }
 
+  /* ── Sidebar overlay backdrop on mobile ─────────────────────── */
+  /* The sidebar slides in; add a translucent backdrop behind it  */
   aside.sidebar {
-    position: absolute;
+    position: fixed;
+    top: 50px;
+    left: 0;
+    height: calc(100vh - 50px);
     display: none;
+    z-index: 600;
+    width: 250px;
+    overflow-y: auto;
+    background: var(--color-grey-ultralight, #f8f8f8);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.25);
   }
 
   aside.sidebar-uncollapsed {
-    display: inherit;
+    display: flex;
+    flex-direction: column;
     z-index: 600;
+    /* Create a local stacking context so the ::before backdrop
+       stays inside the sidebar's paint order */
+    isolation: isolate;
   }
 
+  /* Backdrop that dims the page content when the sidebar is open.
+     We attach it to body instead to ensure it covers the full viewport. */
+  body:has(aside.sidebar-uncollapsed)::before {
+    content: "";
+    position: fixed;
+    top: 50px;
+    left: 250px;
+    /* start after the open sidebar */
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.35);
+    /* Must be below the sidebar (600) but above normal page content */
+    z-index: 590;
+    pointer-events: none;
+  }
+
+  /* ── Page content on mobile ─────────────────────────────────── */
   fieldset .alert.col-md-9.offset-md-3 {
     margin: 0;
   }
@@ -1728,8 +1812,12 @@ h2 .user-name-display img {
     flex-grow: 0;
     width: 100%;
     margin-left: 0;
+    /* Ensure content starts below the fixed 50 px navbar */
+    margin-top: 50px;
+    height: calc(100vh - 50px);
   }
 
+  /* ── Form labels ─────────────────────────────────────────────── */
   .col-form-label {
     text-align: left;
     display: flex;
@@ -1739,6 +1827,7 @@ h2 .user-name-display img {
     }
   }
 
+  /* ── Dashboard history log ───────────────────────────────────── */
   .dashboard-history .list-group .logentry {
     flex-direction: column;
     border-bottom: 1px solid var(--color-grey-light);
