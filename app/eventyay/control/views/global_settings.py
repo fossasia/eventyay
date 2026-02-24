@@ -15,11 +15,11 @@ from eventyay.api.models import OAuthApplication
 from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.common.enums import ValidStates
 from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     SSOConfigForm,
     UpdateSettingsForm,
+    StartPageSettingsForm,
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
@@ -44,6 +44,23 @@ class GlobalSettingsView(AdministratorPermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse('eventyay_admin:admin.global.settings')
+
+
+class StartPageSettingsView(AdministratorPermissionRequiredMixin, FormView):
+    template_name = 'pretixcontrol/admin/startpage.html'
+    form_class = StartPageSettingsForm
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('Your changes have not been saved, see below for errors.'))
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.startpage')
 
 
 class SSOView(AdministratorPermissionRequiredMixin, FormView):
@@ -156,36 +173,3 @@ class RefundDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         p = get_object_or_404(OrderRefund, pk=request.GET.get('pk'))
         return JsonResponse({'data': p.info_data})
-
-
-class ToggleBillingValidationView(AdministratorPermissionRequiredMixin, TemplateView):
-    template_name = 'pretixcontrol/toggle_billing_validation.html'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.gs = GlobalSettingsObject()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.gs.settings.get('billing_validation') is None:
-            self.gs.settings.set('billing_validation', True)
-        context['billing_validation'] = self.gs.settings.get('billing_validation')
-        return context
-
-    def post(self, request, *args, **kwargs):
-        value = request.POST.get('billing_validation', '').lower()
-
-        if value == ValidStates.DISABLED:
-            billing_validation = False
-        elif value == ValidStates.ENABLED:
-            billing_validation = True
-        else:
-            logger.error('Invalid value for billing validation: %s', value)
-            messages.error(request, _('Invalid value for billing validation!'))
-            return redirect(self.get_success_url())
-
-        self.gs.settings.set('billing_validation', billing_validation)
-        return redirect(self.get_success_url())
-
-    def get_success_url(self) -> str:
-        return reverse('eventyay_admin:admin.toggle.billing.validation')

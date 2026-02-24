@@ -92,6 +92,7 @@ you have received a new proposal for your event {event_name}:
 "{submission_title}" by {speakers}.
 You can see details at
 
+
 {orga_url}
 
 All the best,
@@ -111,6 +112,9 @@ the proposal "{submission_title}" for your event {event_name} has been modified.
 You can see details at
 
 {orga_url}
+
+{event_url}
+
 
 All the best,
 your {event_name} CfP system.

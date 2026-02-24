@@ -196,6 +196,11 @@ event_patterns = [
         name='event.order.position',
     ),
     re_path(
+        r'^ticket/(?P<order>[^/]+)/(?P<position>\d+)/(?P<secret>[A-Za-z0-9]+)/(?P<view_schedule>True|False)/venueless/$',
+        eventyay.presale.views.order.OrderPositionJoin.as_view(),
+        name='event.venueless.join',
+    ),
+    re_path(
         r'^ticket/(?P<order>[^/]+)/(?P<position>\d+)/(?P<secret>[A-Za-z0-9]+)/download/(?P<pid>[0-9]+)/(?P<output>[^/]+)$',
         eventyay.presale.views.order.OrderPositionDownload.as_view(),
         name='event.order.position.download',
@@ -256,6 +261,11 @@ locale_patterns = [
         'locale/set',
         eventyay.presale.views.locale.LocaleSet.as_view(),
         name='locale.set',
+    ),
+    path(
+        'locale/event',
+        eventyay.presale.views.locale.EventLocaleSet.as_view(),
+        name='locale.event',
     ),
     path('robots.txt', eventyay.presale.views.robots.robots_txt, name='robots.txt'),
     path(

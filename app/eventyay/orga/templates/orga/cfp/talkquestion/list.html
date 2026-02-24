@@ -8,14 +8,16 @@
 
 {% block stylesheets %}
     {% compress css %}
-        <link rel="stylesheet" href="{% static "orga/css/dragsort.css" %}">
+        <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
+        <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
     {% endcompress %}
 {% endblock stylesheets %}
 
 {% block scripts %}
     {% compress js %}
-        <script defer src="{% static "common/js/modalDialog.js" %}"></script>
-        <script defer src="{% static "orga/js/dragsort.js" %}"></script>
+        <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
+        <script defer src="{% static 'orga/js/dragsort.js' %}"></script>
+        <script defer src="{% static 'orga/js/questionToggles.js' %}"></script>
     {% endcompress %}
 {% endblock scripts %}
 
@@ -50,47 +52,80 @@
                 <tr>
                     <th>{% translate "Custom field" %}</th>
                     <th>{% translate "Target" %}</th>
-                    <th class="text-center">{% translate "required" %}</th>
-                    <th class="text-center">{% translate "active" %}</th>
-                    <th class="numeric">{% translate "Responses" %}</th>
+                    <th class="text-center">{% translate "Required" %}</th>
+                    <th class="text-center">{% translate "Active" %}</th>
+                    <th class="text-center">{% translate "Public" %}</th>
+                    <th class="numeric">{% translate "Answers" %}</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody dragsort-url="{{ request.event.cfp.urls.questions }}">
                 {% for question in question_list %}
-                    <tr dragsort-id="{{ question.id }}">
-                        <td>
-                            <a href="{{ question.urls.base }}">{{ question.question }}</a>
-                        </td>
-                        <td>{{ question.get_target_display }}</td>
-                        <td class="text-center">
-                            <i class="fa fa-{{ question.required|yesno:"check-circle text-success,times-circle text-danger" }}">
-                            </i>
-                            {% if question.question_required == "require after" or question.freeze_after %}
-                                <i class="fa fa-clock-o" title="{% translate "This field's availability depends on a deadline." %}"> </i>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <i class="fa fa-{{ question.active|yesno:"check-circle text-success,times-circle text-danger" }}">
-                            </i>
-                        </td>
-                        <td class="numeric">{{ question.answer_count }}</td>
-                        <td class="text-right">
-                            <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button" title="{% translate "Move item" %}">
-                                <i class="fa fa-arrows"></i>
-                            </button>
-                            <a href="{{ question.urls.edit }}" class="btn btn-sm btn-info mr-1" title="{{ phrases.base.edit }}">
-                                <i class="fa fa-edit"></i>
-                            </a>
-                            <a href="{{ question.urls.delete }}" class="btn btn-sm btn-danger" title="{{ phrases.base.delete_button }}">
-                                <i class="fa fa-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
+                <tr dragsort-id="{{ question.id }}">
+                    <td>
+                        <a href="{{ question.urls.base }}">{{ question.question }}</a>
+                    </td>
+                    <td>{{ question.get_target_display }}</td>
+                    <td class="text-center">
+                        <div class="required-status-wrapper" data-current="{{ question.question_required }}">
+                            <select class="required-status-dropdown" 
+                                    data-question-id="{{ question.id }}"
+                                    data-current="{{ question.question_required }}"
+                                    aria-label="Required status for {{ question.question }}">
+                                <option value="optional" 
+                                        {% if question.question_required == 'optional' %}selected{% endif %}
+                                        data-color="optional">Optional</option>
+                                <option value="required" 
+                                        {% if question.question_required == 'required' %}selected{% endif %}
+                                        data-color="required">Required</option>
+                                <option value="after_deadline" 
+                                        {% if question.question_required == 'after_deadline' %}selected{% endif %}
+                                        data-color="after_deadline">Deadline</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <label class="toggle-switch" 
+                               data-question-id="{{ question.id }}" 
+                               data-field="active"
+                               aria-label="Toggle active state for {{ question.question }}">
+                            <input type="checkbox" 
+                                   {% if question.active %}checked{% endif %}
+                                   aria-label="Active toggle for {{ question.question }}">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </td>
+                    <td class="text-center">
+                        <label class="toggle-switch" 
+                               data-question-id="{{ question.id }}" 
+                               data-field="is_public"
+                               aria-label="Toggle public visibility for {{ question.question }}">
+                            <input type="checkbox" 
+                                   {% if question.is_public %}checked{% endif %}
+                                   aria-label="Public toggle for {{ question.question }}">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </td>
+                    <td class="numeric">{{ question.answer_count }}</td>
+                    <td class="text-right">
+                        <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button"
+                            title="{% translate 'Move item' %}">
+                            <i class="fa fa-arrows"></i>
+                        </button>
+                        <a href="{{ question.urls.edit }}" class="btn btn-sm btn-info mr-1" title="{{ phrases.base.edit }}">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <a href="{{ question.urls.delete }}" class="btn btn-sm btn-danger"
+                            title="{{ phrases.base.delete_button }}">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
                 {% empty %}
-                    <tr>
-                        <td colspan=4 class="w-75">{% translate "You have configured no custom fields yet." %}</td>
-                    </tr>
+                <tr>
+                    {# 7 columns: Question, Target, Required, Active, Public, Answers, Actions #}
+                    <td colspan="7" class="w-75">{% translate "You have configured no custom fields yet." %}</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>

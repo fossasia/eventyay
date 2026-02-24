@@ -77,37 +77,47 @@
   -moz-border-radius: 4px;
   border-radius: 4px;
   z-index: 2500;
+  overflow: hidden; /* clearfix for floated children */
 }
 .colorpicker:before,
 .colorpicker:after {
-  display: table;
-  content: "";
-  line-height: 0;
-}
-.colorpicker:after {
-  clear: both;
-}
-.colorpicker:before {
   content: '';
   display: inline-block;
+  position: absolute;
+}
+
+/* Arrow pointing up - for dropdown opening below (default) */
+.colorpicker.colorpicker-bottom:before {
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-bottom: 7px solid #ccc;
-  border-bottom-color: rgba(0, 0, 0, 0.2);
-  position: absolute;
+  border-bottom: 7px solid rgba(0, 0, 0, 0.2);
   top: -7px;
   left: 6px;
 }
-.colorpicker:after {
-  content: '';
-  display: inline-block;
+.colorpicker.colorpicker-bottom:after {
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-bottom: 6px solid #ffffff;
-  position: absolute;
   top: -6px;
   left: 7px;
 }
+
+/* Arrow pointing down - for dropdown opening above */
+.colorpicker.colorpicker-top:before {
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid rgba(0, 0, 0, 0.2);
+  bottom: -7px;
+  left: 6px;
+}
+.colorpicker.colorpicker-top:after {
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #ffffff;
+  bottom: -6px;
+  left: 7px;
+}
+
 .colorpicker div {
   position: relative;
 }
@@ -226,4 +236,8 @@
 }
 .colorpicker-inline.colorpicker-visible {
   display: inline-block;
+}
+
+.colorpicker-element {
+  position: relative;
 }

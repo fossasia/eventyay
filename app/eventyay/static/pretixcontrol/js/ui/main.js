@@ -208,7 +208,82 @@ var form_handlers = function (el) {
         if (l2 > l1) {ratio = 1/ratio}
         return ratio.toFixed(1)
     }
-    el.find(".colorpickerfield").colorpicker({
+
+    function getColorFieldHost($input) {
+        var $formGroup = $input.closest('.form-group'),
+            $host = $formGroup.find('.col-md-9, .col-sm-9, .col-lg-9, .col-xs-12').first();
+        if ($host.length) {
+            return $host;
+        }
+        return $formGroup.length ? $formGroup : $input.parent();
+    }
+
+    function ensureColorPreview($input) {
+        var $host = getColorFieldHost($input),
+            $wrapper = $input.closest('.colorpicker-preview-group');
+        if (!$wrapper.length) {
+            $wrapper = $('<div class="colorpicker-preview-group"></div>');
+            $input.before($wrapper);
+            $wrapper.append($input);
+        } else if ($wrapper.parent()[0] !== $host[0]) {
+            $wrapper.appendTo($host);
+        }
+        var $preview = $wrapper.find('.colorpicker-preview');
+        if (!$preview.length) {
+            $preview = $('<span class="colorpicker-preview" aria-hidden="true"></span>');
+            $wrapper.prepend($preview);
+        }
+        return {preview: $preview, host: $host};
+    }
+
+    function updateColorPreview($input, color) {
+        var parts = ensureColorPreview($input),
+            $preview = parts.preview,
+            value = color || $input.val();
+        if (value) {
+            $preview.removeClass('is-empty');
+            $preview.css('background-color', value);
+        } else {
+            $preview.addClass('is-empty');
+            $preview.css('background-color', '');
+        }
+        return parts.host;
+    }
+
+    function updateContrastState($input, rgb) {
+        var $host = getColorFieldHost($input),
+            $note = $host.find(".contrast-state");
+        if (!$input.val() || !rgb || $input.is(".no-contrast")) {
+            $note.remove();
+            return;
+        }
+        if (!$note.length) {
+            $note = $("<div class='help-block contrast-state'></div>");
+            $host.append($note);
+        }
+        var c = contrast([255,255,255], [rgb.r, rgb.g, rgb.b]);
+        if (c > 7) {
+            $note.html("<span class='fa fa-fw fa-check-circle'></span>")
+                .append(gettext('Your color has great contrast and is very easy to read!'));
+            $note.addClass("text-success").removeClass("text-warning").removeClass("text-danger");
+        } else if (c > 2.5) {
+            $note.html("<span class='fa fa-fw fa-info-circle'></span>")
+                .append(gettext('Your color has decent contrast and is probably good-enough to read!'));
+            $note.removeClass("text-success").removeClass("text-warning").removeClass("text-danger");
+        } else {
+            $note.html("<span class='fa fa-fw fa-warning'></span>")
+                .append(gettext('Your color has bad contrast for text on white background, please choose a darker ' +
+                    'shade.'));
+            $note.addClass("text-danger").removeClass("text-success").removeClass("text-warning");
+        }
+    }
+
+    var $colorInputs = el.find(".colorpickerfield");
+    $colorInputs.each(function () {
+        updateColorPreview($(this));
+    });
+
+    $colorInputs.colorpicker({
         format: 'hex',
         align: 'left',
         customClass: 'colorpicker-2x',
@@ -225,32 +300,16 @@ var form_handlers = function (el) {
             }
         }
     }).on('changeColor create', function (e) {
-        var rgb = $(this).colorpicker('color').toRGB();
-        var c = contrast([255,255,255], [rgb.r, rgb.g, rgb.b]);
-        var mark = 'times';
-        if ($(this).parent().find(".contrast-state").length === 0) {
-            $(this).parent().append("<div class='help-block contrast-state'></div>");
-        }
-        var $note = $(this).parent().find(".contrast-state");
-        if ($(this).val() === "") {
-            $note.remove();
-        }
-        if (!$(this).is(".no-contrast")) {
-            if (c > 7) {
-                $note.html("<span class='fa fa-fw fa-check-circle'></span>")
-                    .append(gettext('Your color has great contrast and is very easy to read!'));
-                $note.addClass("text-success").removeClass("text-warning").removeClass("text-danger");
-            } else if (c > 2.5) {
-                $note.html("<span class='fa fa-fw fa-info-circle'></span>")
-                    .append(gettext('Your color has decent contrast and is probably good-enough to read!'));
-                $note.removeClass("text-success").removeClass("text-warning").removeClass("text-danger");
-            } else {
-                $note.html("<span class='fa fa-fw fa-warning'></span>")
-                    .append(gettext('Your color has bad contrast for text on white background, please choose a darker ' +
-                        'shade.'));
-                $note.addClass("text-danger").removeClass("text-success").removeClass("text-warning");
-            }
-        }
+        var $input = $(this),
+            pickerColor = e.color || ($input.colorpicker ? $input.colorpicker('color') : null),
+            rgb = pickerColor && pickerColor.toRGB ? pickerColor.toRGB() : null,
+            colorString = pickerColor && pickerColor.toString ? pickerColor.toString() : null;
+        updateColorPreview($input, colorString);
+        updateContrastState($input, rgb);
+    });
+
+    $colorInputs.on('input', function () {
+        updateColorPreview($(this));
     });
 
     el.find("input[data-checkbox-dependency]").each(function () {

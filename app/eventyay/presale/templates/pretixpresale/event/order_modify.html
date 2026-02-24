@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load rich_text %}
+{% load presale_locale %}
 {% block title %}{% trans "Modify order" %}{% endblock %}
 {% block content %}
     <h2>
@@ -40,7 +41,7 @@
                         <div class="panel-body">
                             {% if event.settings.invoice_address_explanation_text %}
                                 <div>
-                                    {{ event.settings.invoice_address_explanation_text|rich_text }}
+                                    {{ event.settings.invoice_address_explanation_text|event_localize|rich_text }}
                                 </div>
                             {% endif %}
                             {% bootstrap_form invoice_form layout="horizontal" %}
@@ -52,8 +53,8 @@
                 <details class="panel panel-default" open>
                     <summary class="panel-heading">
                         <h4 class="panel-title">
-                            <strong>{{ pos.product.name }}{% if pos.variation %}
-                                – {{ pos.variation }}
+                            <strong>{{ pos.product.name|event_localize }}{% if pos.variation %}
+                                – {{ pos.variation.value|event_localize }}
                             {% endif %}</strong>
                             <i class="fa fa-angle-down collapse-indicator" aria-hidden="true"></i>
                         </h4>
@@ -63,7 +64,7 @@
                             {% for form in forms %}
                                 {% if form.pos.product != pos.product %}
                                     {# Add-Ons #}
-                                    <legend>+ {{ form.pos.product }}</legend>
+                                    <legend>+ {{ form.pos.product.name|event_localize }}</legend>
                                 {% endif %}
                                 {% bootstrap_form form layout="checkout" %}
                             {% endfor %}

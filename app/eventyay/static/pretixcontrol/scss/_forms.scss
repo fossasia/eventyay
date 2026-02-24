@@ -110,7 +110,7 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
 .tab-content {
     border: 1px solid #ddd;
     border-radius: 0px 5px 5px 5px;
-    padding: 5px 5px 0px 5px;
+    padding: 20px;
 }
 
 .mail-preview-group {
@@ -147,6 +147,36 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   &:last-child {
     @include border-bottom-radius($input-border-radius);
   }
+}
+
+.colorpicker-preview-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.colorpicker-preview {
+  display: inline-block;
+  width: $input-height-base;
+  height: $input-height-base;
+  border: 1px solid #d4d4d5;
+  border-right: 0;
+  border-radius: $input-border-radius 0 0 $input-border-radius;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.colorpicker-preview.is-empty {
+  background-image: repeating-linear-gradient(45deg, #f5f5f5, #f5f5f5 8px, #ffffff 8px, #ffffff 16px);
+}
+
+.colorpicker-preview-group .form-control.colorpickerfield {
+  flex: 1 1 auto;
+  width: auto;
+  border-radius: 0 $input-border-radius $input-border-radius 0;
+  border-left: 0;
 }
 
 @media (min-width: $screen-sm-min) {
@@ -604,10 +634,12 @@ table td > .checkbox input[type="checkbox"] {
   color: lighten($text-color, 25%); // lighten the text some for contrast
 }
 
-.panel .filter-form {
-  .form-group {
-    margin-bottom: 10px;
-  }
+// Filter actions container - works for both panel and non-panel layouts
+.filter-form .filter-actions {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 0;
 }
 
 #rules-editor {
@@ -679,5 +711,13 @@ table td > .checkbox input[type="checkbox"] {
         opacity: 1;
       }
     }
+  }
+}
+
+// Responsive styles for filter actions
+@media (max-width: $screen-sm-max) {
+  .filter-form .filter-actions {
+    flex-direction: column;
+    gap: 10px;
   }
 }

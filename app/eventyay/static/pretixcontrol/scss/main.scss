@@ -7,6 +7,7 @@
 @import "../../datetimepicker/_bootstrap-datetimepicker.scss";
 @import "_sb-admin-2.scss";
 @import "_forms.scss";
+@import "_payment-settings.scss";
 @import "_flags.scss";
 @import "_orders.scss";
 @import "_dashboard.scss";
@@ -96,7 +97,6 @@ nav.navbar.navbar-inverse .navbar-brand,
 .navbar-inverse .navbar-brand {
     padding-top: 0.3125rem;
     padding-bottom: 0.3125rem;
-    margin-right: 1rem;
     margin-top: 0;
     font-size: 20px;
     line-height: inherit;
@@ -133,6 +133,7 @@ nav.navbar .danger:active {
     font-size: 14px;
 }
 
+
 nav.navbar.navbar-inverse .header-nav,
 .navbar-inverse .header-nav {
     font-size: 14px;
@@ -156,6 +157,8 @@ nav.navbar.navbar-inverse .header-nav,
         }
     }
 }
+
+
 
 .navbar-header .navbar-events {
     color: white;
@@ -1281,5 +1284,46 @@ h1 .label {
         height: auto;
         overflow-y: visible;
         box-sizing: border-box;
+        padding: 0 10px;
+    }
+
+    #page-wrapper > .container-fluid {
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+}
+}
+
+/* eventyay common organizer settings: align panel/submit greys with sidebar */
+.organizer-management {
+    .panel-default > .panel-heading {
+        background-color: $gray-lightest;
+    }
+
+    .submit-group {
+        background: $gray-lightest;
     }
 }
+
+/* Event name in main content - max width and wrap */
+#event-nav .navigation,
+.header-nav .navigation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#event-nav .navigation-title,
+.header-nav .navigation-title {
+    text-align: left;
+    flex: 0 1 75%;
+    min-width: 0;
+
+    h2 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}
+

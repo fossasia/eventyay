@@ -537,7 +537,9 @@ const StepComponent = {
         headerStyle() {
             // logo_image, header_image, header_pattern
             return {
-                "background-color": this.eventConfiguration.primary_color,
+                "background-color": this.eventConfiguration.primary_color
+                    || this.eventConfiguration.visible_primary_color
+                    || "#2185d0",
             }
         },
         editable() {
@@ -644,7 +646,11 @@ const app = Vue.createApp({
             ]) : null;
         return h('div', {
             class: currentModal.data ? 'defocused' : 'focused',
-            style: { '--color': this.eventConfiguration.primary_color || '#2185d0' }
+            style: {
+                '--color': this.eventConfiguration.primary_color
+                    || this.eventConfiguration.visible_primary_color
+                    || '#2185d0'
+            }
         }, [
             modalContent,
             h('div', { id: 'flow' }, loadingContent),

@@ -5,6 +5,7 @@ from django import forms
 from django.core.validators import URLValidator
 from django.forms.models import ModelFormMetaclass
 from django.utils.crypto import get_random_string
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from formtools.wizard.views import SessionWizardView
 from hierarkey.forms import HierarkeyForm
@@ -75,6 +76,10 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             if isinstance(field, i18nfield.forms.I18nFormField):
                 field.widget.enabled_locales = self.locales
             self.fields[fname] = field
+            if fname not in self.initial or self.initial[fname] is None:
+                default_value = DEFAULTS[fname].get('default')
+                if default_value:
+                    self.initial[fname] = default_value
         for k, f in self.fields.items():
             if isinstance(f, (RelativeDateTimeField, RelativeDateField)):
                 f.set_event(self.obj)
@@ -133,7 +138,9 @@ class SecretKeySettingsWidget(forms.TextInput):
             attrs = {}
         attrs.update(
             {
-                'autocomplete': 'new-password'  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
+                'autocomplete': 'new-password',  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
+                'type': 'password',
+                'class': (attrs.get('class', '') + ' secret-key-input').strip()
             }
         )
         super().__init__(attrs)
@@ -141,7 +148,26 @@ class SecretKeySettingsWidget(forms.TextInput):
     def get_context(self, name, value, attrs):
         if value:
             value = SECRET_REDACTED
-        return super().get_context(name, value, attrs)
+        context = super().get_context(name, value, attrs)
+        return context
+
+    def render(self, name, value, attrs=None, renderer=None):
+        output = super().render(name, value, attrs, renderer)
+        show_label = str(_('Show secret key'))
+        hide_label = str(_('Hide secret key'))
+        toggle_html = (
+            '<div class="secret-key-wrapper">'
+            f'{output}'
+            '<button type="button" class="secret-toggle" '
+            f'aria-label="{show_label}" '
+            f'data-label-show="{show_label}" '
+            f'data-label-hide="{hide_label}" '
+            'aria-pressed="false">'
+            '<i class="fa fa-eye"></i>'
+            '</button>'
+            '</div>'
+        )
+        return mark_safe(toggle_html)
 
 
 class SecretKeySettingsField(forms.CharField):
@@ -159,12 +185,10 @@ class SecretKeySettingsField(forms.CharField):
 
 
 class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
-    def format_output(self, rendered_widgets, id_) -> str:
-        markdown_note = _('You can use {name} in this field.').format(
-            name='<a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>'
-        )
-        rendered_widgets.append(f'<div class="i18n-field-markdown-note">{markdown_note}</div>')
-        return super().format_output(rendered_widgets, id_)
+    def __init__(self, attrs=None, **kwargs):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-markdown-field', 'true')
+        super().__init__(attrs=attrs, **kwargs)
 
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):

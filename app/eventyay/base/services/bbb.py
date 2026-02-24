@@ -269,6 +269,7 @@ class BBBService:
         scheme = (
             "http://" if settings.DEBUG else "https://"
         )  # TODO: better determinator?
+        domain = self.event.domain or settings.SITE_NETLOC
         return get_url(
             "join",
             {
@@ -288,7 +289,7 @@ class BBBService:
                     else "false"
                 ),
                 "userdata-bbb_custom_style_url": scheme
-                + self.event.domain
+                + domain
                 + reverse("live:css.bbb"),
                 "userdata-bbb_show_public_chat_on_login": "false",
                 # "userdata-bbb_mirror_own_webcam": "true",  unfortunately mirrors for everyone, which breaks things
@@ -329,6 +330,7 @@ class BBBService:
         scheme = (
             "http://" if settings.DEBUG else "https://"
         )  # TODO: better determinator?
+        domain = self.event.domain or settings.SITE_NETLOC
         return get_url(
             "join",
             {
@@ -339,7 +341,7 @@ class BBBService:
                 "password": create_params["moderatorPW"],
                 "joinViaHtml5": "true",
                 "userdata-bbb_custom_style_url": scheme
-                + self.event.domain
+                + domain
                 + reverse("live:css.bbb"),
                 "userdata-bbb_show_public_chat_on_login": "false",
                 # "userdata-bbb_mirror_own_webcam": "true",  unfortunately mirrors for everyone, which breaks things

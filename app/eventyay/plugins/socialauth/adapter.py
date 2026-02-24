@@ -2,6 +2,7 @@ import functools
 import logging
 from typing import cast
 
+import requests
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount import app_settings
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
@@ -24,8 +25,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         except (AttributeError, IndexError):
             contact = 'webmaster@eventyay.com'
         user_agent = f'eventyay/1.0 ({site_url}; {contact})'
-
-        import requests
 
         session = requests.Session()
         session.headers.update({'User-Agent': user_agent})

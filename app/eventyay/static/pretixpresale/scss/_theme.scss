@@ -107,3 +107,40 @@ h2.content-header {
 .header-content {
   display: flex;
 }
+
+.locale-switch {
+  .locale-switch-toggle {
+    color: choose-contrast-color($body-bg, white, $link-color);
+    font-weight: 600;
+    padding: 0 4px;
+
+    &:hover,
+    &:focus {
+      text-decoration: none;
+      color: choose-contrast-color($body-bg, white, $link-color);
+    }
+  }
+
+  .dropdown-menu {
+    min-width: 160px;
+    background: white;
+    border: 1px solid $gray-lighter;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .dropdown-item {
+    color: $text-color;
+
+    &:hover {
+      background: lighten($gray-lighter, 6%);
+      color: $text-color;
+      text-decoration: none;
+    }
+
+    &.active {
+      font-weight: 700;
+      background: lighten($brand-primary, 42%);
+      color: $text-color;
+    }
+  }
+}

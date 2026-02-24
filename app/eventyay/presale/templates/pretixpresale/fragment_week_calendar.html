@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load presale_locale %}
 <div class="week-calendar">
     {% for day in days %}
         <details class="weekday {% if day.events %}has-events{% else %}no-events{% endif %} {% if day.today %}today{% endif %}"
@@ -32,7 +33,7 @@
                             href="{{ event.url }}">
                         {% if show_names|default_if_none:True %}
                             <span class="event-name">
-                                {{ event.event.name }}
+                                {{ event.event.name|event_localize }}
                             </span>
                         {% endif %}
                         {% if not event.continued %}

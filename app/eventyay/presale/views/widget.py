@@ -243,6 +243,7 @@ class WidgetAPIProductList(EventListMixin, View):
                             'require_voucher': product.require_voucher,
                             'order_min': product.min_per_order,
                             'order_max': product.order_max if not product.has_variations else None,
+                            'limit_one_per_user': product.limit_one_per_user,
                             'price': price_dict(product, product.display_price) if not product.has_variations else None,
                             'min_price': product.min_price if product.has_variations else None,
                             'max_price': product.max_price if product.has_variations else None,
@@ -319,7 +320,7 @@ class WidgetAPIProductList(EventListMixin, View):
         if not hasattr(request, 'event'):
             return self._get_event_list(request, **kwargs)
 
-        if not request.event.live:
+        if not request.event.live or not request.event.user_can_view_tickets(request.user, request=request):
             return self.response({'error': gettext('This ticket shop is currently disabled.')})
 
         if request.sales_channel.identifier not in request.event.sales_channels:

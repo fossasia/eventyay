@@ -1,4 +1,4 @@
-import bleach
+import nh3
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -390,7 +390,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                             content=escape(value.render_sample(self.request.event)),
                         )
 
-                    subject = bleach.clean(form.cleaned_data['subject'].localize(locale), tags={})
+                    subject = nh3.clean(form.cleaned_data['subject'].localize(locale), tags=set())
                     preview_subject = get_prefixed_subject(self.request.event, subject.format_map(context_dict))
                     message = form.cleaned_data['text'].localize(locale)
                     preview_text = render_markdown_abslinks(message.format_map(context_dict))
