@@ -57,6 +57,8 @@ label {
   &.col-form-label.col-md-3 {
     padding-top: 8px;
     padding-right: 0;
+    width: fit-content;
+    margin-left: auto;
   }
   &.inline-form-label {
     flex-direction: row;
