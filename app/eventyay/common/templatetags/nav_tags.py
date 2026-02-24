@@ -9,11 +9,11 @@ def get_menu_label(event, label_setting):
     Get the custom menu label from event settings.
     
     Returns the custom label if set in event.settings, otherwise returns an empty string.
-    Templates should use the default filter to provide a fallback default label.
-    
+    Templates should localize I18nString values and use a fallback default label.
+
     Usage in templates:
         {% get_menu_label event 'menu_label_tickets' as label %}
-        {{ label|default:_('Tickets') }}
+        {{ label|event_localize|default:_('Tickets') }}
     
     Args:
         event: Event object with settings attribute
