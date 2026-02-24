@@ -61,5 +61,5 @@ def generate_random_high_contrast_color(min_contrast=3.0, max_attempts=100, excl
 
     raise ValueError(
         f"Unable to generate a color with min_contrast={min_contrast} "
-        f"after {max_attempts} attempts and checking fallbacks. "
+        f"after {max_attempts} attempts and checking fallbacks."
     )
