@@ -15,6 +15,23 @@
 							span.track-color-dot(v-if="item.color", :style="{backgroundColor: item.color}")
 							span.filter-dropdown-label(:style="item.color ? {'--track-color': item.color} : {}") {{ item.label }}
 					.filter-dropdown-empty(v-else) No {{ group.title.toLowerCase() }} available
+		button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view")
+			template(v-if="sessionsMode")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+					line(x1="16", y1="2", x2="16", y2="6")
+					line(x1="8", y1="2", x2="8", y2="6")
+					line(x1="3", y1="10", x2="21", y2="10")
+				|  {{ t.calendar_view }}
+			template(v-else)
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					line(x1="8", y1="6", x2="21", y2="6")
+					line(x1="8", y1="12", x2="21", y2="12")
+					line(x1="8", y1="18", x2="21", y2="18")
+					line(x1="3", y1="6", x2="3.01", y2="6")
+					line(x1="3", y1="12", x2="3.01", y2="12")
+					line(x1="3", y1="18", x2="3.01", y2="18")
+				|  {{ t.list_view }}
 		button.toolbar-btn.fav-toggle(v-if="favsCount", :class="{active: onlyFavs}", @click="$emit('toggleFavs')")
 			svg.star-icon(viewBox="0 0 24 24")
 				polygon(
@@ -86,7 +103,7 @@
 						:href="v.url",
 						:class="{active: v.version === version}"
 					)
-						span {{ 'v' + v.version }}
+						span {{ v.version.startsWith('v') ? v.version : 'v' + v.version }}
 						span.version-current-badge(v-if="v.isCurrent") {{ t.current }}
 					.version-menu-divider(v-if="changelogUrl && versionOptions.length")
 					a.version-item.changelog-link(v-if="changelogUrl", :href="changelogUrl")
@@ -120,6 +137,16 @@
 						span.exporter-name {{ exp.verbose_name }}
 						transition(name="fade")
 							.qr-hover(v-if="hoveredExporter === exp && exp.qrcode_svg", v-html="exp.qrcode_svg")
+		.search-area(ref="searchArea")
+			.search-compact(:class="{expanded: searchExpanded}")
+				button.toolbar-btn.search-toggle(@click="toggleSearch", :title="t.search")
+					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+						circle(cx="11", cy="11", r="8")
+						line(x1="21", y1="21", x2="16.65", y2="16.65")
+				input.search-input(v-if="searchExpanded", ref="searchInput", :value="searchQuery", @input="$emit('update:searchQuery', $event.target.value)", :placeholder="t.search_placeholder", @keydown.esc="closeSearch")
+				button.search-clear(v-if="searchExpanded && searchQuery", @click="$emit('update:searchQuery', ''); $refs.searchInput.focus()")
+					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+						path(d="M18 6L6 18M6 6l12 12")
 		button.toolbar-btn(v-if="showPrint", @click="printSchedule", :title="t.print")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				polyline(points="6 9 6 2 18 2 18 9")
@@ -165,6 +192,8 @@ export default {
 		showFullscreen: { type: Boolean, default: true },
 		showPrint: { type: Boolean, default: true },
 		fullscreenTarget: { type: Object, default: null },
+		sessionsMode: { type: Boolean, default: false },
+		searchQuery: { type: String, default: '' },
 		favsCount: { type: Number, default: 0 },
 		onlyFavs: { type: Boolean, default: false },
 		hasActiveFilters: { type: Boolean, default: false },
@@ -175,12 +204,13 @@ export default {
 		days: { type: Array, default: () => [] },
 		currentDay: { type: String, default: '' }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'filterToggle', 'selectDay'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
 	data() {
 		return {
 			exportOpen: false,
 			versionOpen: false,
 			tzOpen: false,
+			searchExpanded: false,
 			tzSearch: '',
 			hoveredExporter: null,
 			isFullscreen: false,
@@ -205,13 +235,17 @@ export default {
 				version_warning_old: m.version_warning_old || 'You are currently viewing an older schedule version.',
 				export: m.export || 'Export',
 				current: m.current || 'current',
+				list_view: m.list_view || 'List View',
+				calendar_view: m.calendar_view || 'Calendar View',
+				search: m.search || 'Search',
+				search_placeholder: m.search_placeholder || 'Search sessions…',
 			}
 		},
 		resolvedExporters() {
 			return this.exporters || []
 		},
 		currentVersionLabel() {
-			if (this.version) return 'v' + this.version
+			if (this.version) return this.version.startsWith('v') ? this.version : 'v' + this.version
 			return this.t.latest
 		},
 		versionOptions() {
@@ -335,6 +369,9 @@ export default {
 					this.openFilterDropdowns[key] = false
 				}
 			}
+			if (this.searchExpanded && this.$refs.searchArea && !path.includes(this.$refs.searchArea)) {
+				this.closeSearch()
+			}
 		},
 		toggleFilterDropdown(refKey) {
 			this.openFilterDropdowns = {
@@ -387,6 +424,18 @@ export default {
 		shiftDays(delta) {
 			const max = Math.max(0, this.days.length - 3)
 			this.dayWindowStart = Math.max(0, Math.min(max, this.dayWindowStart + delta))
+		},
+		toggleSearch() {
+			this.searchExpanded = !this.searchExpanded
+			if (this.searchExpanded) {
+				this.$nextTick(() => this.$refs.searchInput?.focus())
+			} else {
+				this.$emit('update:searchQuery', '')
+			}
+		},
+		closeSearch() {
+			this.searchExpanded = false
+			this.$emit('update:searchQuery', '')
 		}
 	}
 }
@@ -475,6 +524,8 @@ export default {
 			color: #999
 			font-size: 13px
 			font-style: italic
+		.sessions-toggle
+			white-space: nowrap
 	.toolbar-center
 		display: flex
 		align-items: center
@@ -521,6 +572,44 @@ export default {
 		flex-shrink: 0
 		flex: 1
 		justify-content: flex-end
+		.search-area
+			position: relative
+			display: flex
+			align-items: center
+			.search-compact
+				display: flex
+				align-items: center
+				gap: 0
+				border-radius: 4px
+				transition: all 0.2s ease
+				&.expanded
+					background: #f5f5f5
+					border: 1px solid #ddd
+				.search-toggle
+					flex-shrink: 0
+				.search-input
+					border: none
+					background: transparent
+					outline: none
+					font-size: 13px
+					padding: 4px 4px 4px 0
+					width: 140px
+					max-width: 180px
+					&::placeholder
+						color: #999
+				.search-clear
+					border: none
+					background: transparent
+					cursor: pointer
+					padding: 2px 4px
+					display: flex
+					align-items: center
+					color: #999
+					&:hover
+						color: #333
+					.tb-icon
+						width: 14px
+						height: 14px
 		.timezone-area
 			position: relative
 			margin-right: 4px
@@ -706,6 +795,10 @@ export default {
 		gap: 4px
 		&:hover
 			background-color: rgba(0, 0, 0, 0.05)
+		&.sessions-toggle.active
+			background-color: var(--pretalx-clr-primary, #3aa57c)
+			color: #fff
+			border-radius: 4px
 	.fade-enter-active, .fade-leave-active
 		transition: opacity 0.3s
 	.fade-enter-from, .fade-leave-to

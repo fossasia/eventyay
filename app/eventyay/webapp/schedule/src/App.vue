@@ -1,5 +1,5 @@
 <template lang="pug">
-.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : isTalkView ? ['talk-view'] : isSessionsView ? ['sessions-view', 'list-schedule'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
+.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : isTalkView ? ['talk-view'] : sessionsMode ? ['sessions-view', 'list-schedule'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
 	template(v-if="scheduleError")
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
@@ -8,7 +8,7 @@
 	template(v-else-if="isSpeakerView && schedule")
 		speakers-list(v-if="view === 'speakers'")
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
-	template(v-else-if="isSessionsView && schedule && properSessions.length")
+	template(v-else-if="schedule && schedule.talks.length")
 		schedule-toolbar(v-if="scheduleMeta || schedule",
 			:version="scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
@@ -27,52 +27,15 @@
 			:userTimezone="userTimezone",
 			:days="days",
 			:currentDay="currentDay",
+			:sessionsMode="sessionsMode",
+			v-model:searchQuery="searchQuery",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
 			@resetFilters="onlyFavs = false; resetAllFilters()",
-			@saveTimezone="saveTimezone")
-		linear-schedule(
-			:sessions="properSessions",
-			:rooms="rooms",
-			:currentDay="currentDay",
-			:now="now",
-			:hasAmPm="hasAmPm",
-			:timezone="currentTimezone",
-			:locale="locale",
-			:scrollParent="scrollParent",
-			:favs="favs",
-			:onHomeServer="onHomeServer",
-			:disableAutoScroll="disableAutoScroll",
-			:showBreaks="false",
-			@changeDay="setCurrentDay($event)",
-			@fav="fav($event)",
-			@unfav="unfav($event)")
-	template(v-else-if="schedule && sessions.length")
-		schedule-toolbar(v-if="scheduleMeta || schedule",
-			:version="scheduleMeta?.version || ''",
-			:isCurrent="scheduleMeta?.is_current !== false",
-			:changelogUrl="scheduleMeta?.changelog_url || ''",
-			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
-			:exporters="scheduleMeta?.exporters || []",
-			:versions="scheduleMeta?.versions || []",
-			:fullscreenTarget="$el",
-			:filterGroups="filterGroups",
-			:favsCount="favs.length",
-			:onlyFavs="onlyFavs",
-			:hasActiveFilters="onlyFavs || hasActiveFilterSelections",
-			:inEventTimezone="inEventTimezone",
-			v-model:currentTimezone="currentTimezone",
-			:scheduleTimezone="schedule.timezone",
-			:userTimezone="userTimezone",
-			:days="days",
-			:currentDay="currentDay",
-			@selectDay="selectDay($event)",
-			@filterToggle="onlyFavs = false",
-			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
-			@resetFilters="onlyFavs = false; resetAllFilters()",
-			@saveTimezone="saveTimezone")
-		grid-schedule-wrapper(v-if="showGrid",
+			@saveTimezone="saveTimezone",
+			@toggleSessionsMode="sessionsMode = !sessionsMode")
+		grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 			:sessions="sessions",
 			:rooms="rooms",
 			:days="days",
@@ -90,7 +53,7 @@
 			@fav="fav($event)",
 			@unfav="unfav($event)")
 		linear-schedule(v-else,
-			:sessions="sessions",
+			:sessions="sessionsMode ? properSessions : sessions",
 			:rooms="rooms",
 			:currentDay="currentDay",
 			:now="now",
@@ -101,9 +64,12 @@
 			:favs="favs",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
+			:showBreaks="!sessionsMode",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
+		.no-results(v-if="sessions && !sessions.length && searchQuery")
+			.no-results-text No sessions match your search.
 	bunt-progress-circular(v-else, size="huge", :page="true")
 	.error-messages(v-if="errorMessages.length")
 		.error-message(v-for="message in errorMessages", :key="message")
@@ -224,9 +190,10 @@ export default {
 			})),
 			showJoinRoom: computed(() => this.showJoinRoom),
 			getJoinRoomLink: (session) => {
-				if (!this.joinRoomBaseUrl || !session?.room) return ''
+				const base = this.joinRoomBaseUrl || (this.eventUrl ? `${this.eventUrl.replace(/\/$/, '')}/video/rooms/` : '')
+				if (!base || !session?.room) return ''
 				const roomId = typeof session.room === 'object' ? session.room.id : session.room
-				return roomId ? `${this.joinRoomBaseUrl}${roomId}/` : ''
+				return roomId ? `${base}${roomId}/` : ''
 			},
 			generateSpeakerLinkUrl: ({speaker}) => {
 				if (this.onHomeServer) return `${this.eventUrl}speakers/${speaker.code}/`
@@ -268,6 +235,8 @@ export default {
 			displayDates: this.dateFilter?.split(',').filter(d => d.length === 10) || [],
 			modalContent: null,
 			scheduleMeta: null,
+			sessionsMode: false,
+			searchQuery: '',
 		}
 	},
 	computed: {
@@ -307,7 +276,7 @@ export default {
 				{ refKey: 'room', title: 'Rooms', data: this.allRooms },
 				{ refKey: 'type', title: 'Types', data: this.allTypes }
 			]
-			if (this.allLanguages.length >= 1) {
+			if (this.allLanguages.length > 1) {
 				groups.push({ refKey: 'language', title: 'Language', data: this.allLanguages })
 			}
 			return groups
@@ -316,7 +285,9 @@ export default {
 			if (!this.schedule) return {}
 			return this.schedule.speakers.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
 		},
-		sessions () {
+		// baseSessions: filtered by favs/tracks/rooms/types/languages/dates but NOT search.
+		// Used for structural data (days, rooms) so the UI scaffold stays stable during search.
+		baseSessions () {
 			if (!this.schedule || !this.currentTimezone) return
 			const sessions = []
 			for (const session of this.schedule.talks.filter(s => s.start)) {
@@ -346,18 +317,39 @@ export default {
 					answers: session.answers,
 					exporters: session.exporters,
 					recording_iframe: session.recording_iframe,
+					stream_url: session.stream_url || null,
+					stream_type: session.stream_type || null,
 				})
 			}
 			sessions.sort((a, b) => a.start.diff(b.start))
 			return sessions
 		},
+		// sessions: baseSessions + search filter. Used for display.
+		sessions () {
+			if (!this.baseSessions) return
+			if (!this.searchQuery) return this.baseSessions
+			const q = this.searchQuery.toLowerCase()
+			return this.baseSessions.filter(s => {
+				const speakerNames = (s.speakers || []).map(sp => (sp?.name || '').toLowerCase()).join(' ')
+				const trackName = (s.track ? (getLocalizedString(s.track.name) || '') : '').toLowerCase()
+				const roomName = (s.room ? (getLocalizedString(s.room.name) || '') : '').toLowerCase()
+				const fields = [
+					(getLocalizedString(s.title) || '').toLowerCase(),
+					(getLocalizedString(s.abstract) || '').toLowerCase(),
+					speakerNames,
+					trackName,
+					roomName
+				]
+				return fields.some(f => f.includes(q))
+			})
+		},
 		rooms () {
-			return this.schedule.rooms.filter(r => this.sessions.some(s => s.room === r))
+			return this.schedule.rooms.filter(r => this.baseSessions.some(s => s.room === r))
 		},
 		days () {
-			if (!this.sessions) return
+			if (!this.baseSessions) return
 			let days = []
-			for (const session of this.sessions) {
+			for (const session of this.baseSessions) {
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
@@ -376,9 +368,6 @@ export default {
 		},
 		isTalkView () {
 			return this.view === 'talk'
-		},
-		isSessionsView () {
-			return this.view === 'sessions'
 		},
 		properSessions () {
 			if (!this.sessions) return []
@@ -410,6 +399,10 @@ export default {
 		const fragment = window.location.hash.slice(1)
 		moment.locale(this.locale)
 		this.userTimezone = moment.tz.guess()
+		// If opened via old /sessions/ URL, activate sessions mode
+		if (this.view === 'sessions') {
+			this.sessionsMode = true
+		}
 
 		// Detect login state from the DOM element (always rendered by Django),
 		// independent of whether the PRETALX_MESSAGES JS global loaded
@@ -495,7 +488,20 @@ export default {
 				this.allTypes.push({ value: s.session_type, label: s.session_type, selected: false })
 			}
 		})
+		// Build language filter from event content_locales (configured by organiser),
+		// falling back to per-talk content_locale for older data.
 		const langSet = new Set()
+		const eventLocales = this.schedule.content_locales || []
+		eventLocales.forEach(code => {
+			if (code && !langSet.has(code)) {
+				langSet.add(code)
+				const displayName = (() => {
+					try { return new Intl.DisplayNames([this.locale], { type: 'language' }).of(code) } catch { return code }
+				})()
+				this.allLanguages.push({ value: code, label: displayName, selected: false })
+			}
+		})
+		// Also include any per-talk locales not already covered by event locales
 		this.schedule.talks.forEach(s => {
 			if (s.content_locale && !langSet.has(s.content_locale)) {
 				langSet.add(s.content_locale)
@@ -883,6 +889,11 @@ export default {
 			cursor: pointer
 		.message
 			margin-right: 22px
+.no-results
+	text-align: center
+	padding: 48px 16px
+	color: #888
+	font-size: 16px
 .powered-by
 	text-align: center
 	color: $clr-grey-600

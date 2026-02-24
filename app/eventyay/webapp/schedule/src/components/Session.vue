@@ -31,6 +31,9 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
 		.fav-count(v-if="showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
+	.stream-indicator(v-if="isLive && session.stream_url", @click.prevent.stop="openStream")
+		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
+			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
 	.session-icons
 		fav-button(@toggleFav="toggleFav")
 
@@ -101,7 +104,8 @@ export default {
 			default () {
 				return () => {}
 			}
-		}
+		},
+		getJoinRoomLink: { default: () => () => '' }
 	},
 	components: {
 		FavButton
@@ -159,6 +163,12 @@ export default {
 				this.$emit('unfav', this.session.id)
 			} else {
 				this.$emit('fav', this.session.id)
+			}
+		},
+		openStream () {
+			const roomLink = this.getJoinRoomLink(this.session)
+			if (roomLink) {
+				window.location.href = roomLink
 			}
 		}
 	}
@@ -304,6 +314,27 @@ export default {
 				padding: 3px
 				border-radius: 3px
 				font-size: 12px
+	.stream-indicator
+		position: absolute
+		right: 6px
+		top: 50%
+		transform: translateY(-50%)
+		width: 32px
+		height: 32px
+		display: flex
+		align-items: center
+		justify-content: center
+		border-radius: 50%
+		background-color: $clr-danger
+		color: $clr-primary-text-dark
+		cursor: pointer
+		z-index: 20
+		box-shadow: 0 2px 6px rgba(0,0,0,0.25)
+		transition: transform 0.15s ease
+		&:hover
+			transform: translateY(-50%) scale(1.15)
+	svg
+			pointer-events: none
 	.session-icons
 		position: absolute
 		top: 2px

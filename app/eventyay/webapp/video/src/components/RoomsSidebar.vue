@@ -5,7 +5,6 @@ transition(name="sidebar")
 			.global-links(role="group", aria-label="pages")
 				router-link.room(v-if="roomsByType.page.includes(rooms[0])", :to="{name: 'home'}", v-html="$emojify(rooms[0].name)")
 				router-link.room(:to="{name: 'schedule'}") {{ $t('RoomsSidebar:schedule:label') }}
-				router-link.room(:to="{name: 'schedule:sessions'}") {{ $t('RoomsSidebar:session:label') }}
 				router-link.room(:to="{name: 'schedule:speakers'}") {{ $t('RoomsSidebar:speaker:label') }}
 				template(v-for="page of roomsByType.page", :key="page.id")
 					router-link.room(v-if="page !== rooms[0]", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)")

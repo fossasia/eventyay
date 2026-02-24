@@ -5,8 +5,9 @@
 			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
 				.room
 				.room(v-for="(room, index) of rooms") {{ getLocalizedString(room.name) }}
-					bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="top-end") ?
+					span.room-description(v-if="getLocalizedString(room.description)", @mouseenter="showRoomTooltip($event, room)", @mouseleave="hideRoomTooltip") ?
 				.room(v-if="hasSessionsWithoutRoom") no location
+		.room-tooltip(v-if="roomTooltip.visible", :style="roomTooltipStyle") {{ roomTooltip.text }}
 		.custom-scrollbar(ref="customScrollbar", v-show="scrollThumbWidth > 0 && scrollThumbWidth < 100")
 			.scroll-track(ref="scrollTrack", @mousedown="onTrackClick")
 				.scroll-thumb(ref="scrollThumb", :style="{'width': scrollThumbWidth + '%', 'left': scrollThumbLeft + '%'}", @mousedown.stop="onThumbMousedown")
@@ -122,7 +123,8 @@ export default {
 			scrollThumbWidth: 100,
 			scrollThumbLeft: 0,
 			_scrollSource: null,
-			_thumbDrag: null
+			_thumbDrag: null,
+			roomTooltip: { visible: false, text: '', x: 0, y: 0 }
 		}
 	},
 	computed: {
@@ -297,6 +299,12 @@ export default {
 				}
 			}
 			return null
+		},
+		roomTooltipStyle () {
+			return {
+				left: this.roomTooltip.x + 'px',
+				top: this.roomTooltip.y + 'px'
+			}
 		}
 	},
 	watch: {
@@ -530,6 +538,18 @@ export default {
 				this._scrollDayUpdate = true
 				this.$emit('changeDay', day)
 			}
+		},
+		showRoomTooltip (event, room) {
+			const rect = event.target.getBoundingClientRect()
+			this.roomTooltip = {
+				visible: true,
+				text: getLocalizedString(room.description),
+				x: rect.left + rect.width / 2,
+				y: rect.bottom + 6
+			}
+		},
+		hideRoomTooltip () {
+			this.roomTooltip = { visible: false, text: '', x: 0, y: 0 }
 		}
 	}
 }
@@ -557,19 +577,34 @@ export default {
 				background-color: $clr-white
 				padding: 8px 4px
 				.room-description
+					display: inline-flex
+					justify-content: center
+					align-items: center
 					border: 2px solid $clr-grey-400
 					border-radius: 100%
 					height: 20px
 					width: 20px
-					padding: 0
 					font-weight: bold
-					min-width: 0
-					button-style(color: $clr-white, text-color: $clr-grey-500)
+					font-size: 12px
+					color: $clr-grey-500
+					background: $clr-white
 					margin-left: 8px
-					.bunt-tooltip
-						height: auto
-						width: 200px
-						white-space: normal
+					cursor: pointer
+					user-select: none
+					flex-shrink: 0
+	.room-tooltip
+		position: fixed
+		transform: translateX(-50%)
+		background-color: rgba(0, 0, 0, 0.87)
+		color: #fff
+		padding: 6px 10px
+		border-radius: 4px
+		font-size: 13px
+		line-height: 1.4
+		max-width: 220px
+		white-space: normal
+		z-index: 1000
+		pointer-events: none
 	.custom-scrollbar
 		padding: 0
 		.scroll-track

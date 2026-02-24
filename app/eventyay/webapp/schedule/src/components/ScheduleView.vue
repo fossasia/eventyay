@@ -19,13 +19,16 @@
 			:fullscreenTarget="$refs.scheduleRoot",
 			:days="computedDays",
 			:currentDay="currentDay",
+			:sessionsMode="sessionsMode",
+			v-model:searchQuery="searchQuery",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
 			@resetFilters="resetAllFilters",
-			@saveTimezone="saveTimezone")
+			@saveTimezone="saveTimezone",
+			@toggleSessionsMode="sessionsMode = !sessionsMode")
 		.schedule-content(ref="scrollParent")
-			grid-schedule-wrapper(v-if="showGrid",
+			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 				:sessions="filteredSessions",
 				:rooms="computedRooms",
 				:days="computedDays",
@@ -50,7 +53,7 @@
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
 				:sortBy="sortBy",
-				:showBreaks="!linearOnly",
+				:showBreaks="!linearOnly && !sessionsMode",
 				@changeDay="dayScrolled",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -110,10 +113,13 @@ export default {
 			scrollParentWidth: Infinity,
 			currentTimezone: null,
 			userTimezone: null,
+			sessionsMode: this.linearOnly,
+			searchQuery: '',
 			filterState: {
 				tracks: [],
 				rooms: [],
-				types: []
+				types: [],
+				languages: []
 			}
 		}
 	},
@@ -186,14 +192,17 @@ export default {
 					resources: session.resources,
 					answers: session.answers,
 					exporters: session.exporters,
-					recording_iframe: session.recording_iframe
+					recording_iframe: session.recording_iframe,
+					content_locale: session.content_locale || null,
+					stream_url: session.stream_url || null,
+					stream_type: session.stream_type || null,
 				}))
 				.sort((a, b) => a.start.diff(b.start))
 		},
 		filteredSessions() {
 			let sessions = this.enrichedSessions
 			// In linear-only (sessions) mode, filter out breaks
-			if (this.linearOnly) {
+			if (this.linearOnly || this.sessionsMode) {
 				sessions = sessions.filter(s => isProperSession(s))
 			}
 			if (this.onlyFavs) {
@@ -202,6 +211,7 @@ export default {
 			const selectedTracks = this.filterState.tracks.filter(t => t.selected).map(t => t.value)
 			const selectedRooms = this.filterState.rooms.filter(r => r.selected).map(r => r.value)
 			const selectedTypes = this.filterState.types.filter(t => t.selected).map(t => t.value)
+			const selectedLanguages = this.filterState.languages.filter(l => l.selected).map(l => l.value)
 			if (selectedTracks.length) {
 				sessions = sessions.filter(s => s.track && selectedTracks.includes(s.track.id))
 			}
@@ -214,6 +224,20 @@ export default {
 					if (typeof st === 'string') return selectedTypes.includes(st)
 					if (typeof st === 'object' && st) return Object.values(st).some(v => selectedTypes.includes(v))
 					return false
+				})
+			}
+			if (selectedLanguages.length) {
+				sessions = sessions.filter(s => s.content_locale && selectedLanguages.includes(s.content_locale))
+			}
+			if (this.searchQuery) {
+				const q = this.searchQuery.toLowerCase()
+				sessions = sessions.filter(s => {
+					const title = (getLocalizedString(s.title) || '').toLowerCase()
+					const abstract = (getLocalizedString(s.abstract) || '').toLowerCase()
+					const speakers = (s.speakers || []).map(sp => (sp?.name || '').toLowerCase()).join(' ')
+					const track = (s.track?.name || '').toLowerCase()
+					const room = (s.room?.name || '').toLowerCase()
+					return [title, abstract, speakers, track, room].some(f => f.includes(q))
 				})
 			}
 			return sessions
@@ -235,11 +259,15 @@ export default {
 			return days.sort((a, b) => a.diff(b))
 		},
 		filterGroups() {
-			return [
+			const groups = [
 				{ refKey: 'track', title: 'Tracks', data: this.filterState.tracks },
 				{ refKey: 'room', title: 'Rooms', data: this.filterState.rooms },
 				{ refKey: 'session_type', title: 'Types', data: this.filterState.types }
 			]
+			if (this.filterState.languages.length > 1) {
+				groups.push({ refKey: 'language', title: 'Language', data: this.filterState.languages })
+			}
+			return groups
 		},
 		inEventTimezone() {
 			if (!this.resolvedSchedule?.talks?.length) return false
@@ -305,6 +333,28 @@ export default {
 				}
 			}
 			this.filterState.types = types
+			// Build language filter from event content_locales (configured by organiser),
+			// falling back to per-talk content_locale for older data.
+			const langSet = new Set()
+			const languages = []
+			const eventLocales = schedule.content_locales || []
+			for (const code of eventLocales) {
+				if (!code || langSet.has(code)) continue
+				langSet.add(code)
+				let displayName = code
+				try { displayName = new Intl.DisplayNames([lang], { type: 'language' }).of(code) } catch { /* fallback */ }
+				languages.push({ value: code, label: displayName, selected: false })
+			}
+			// Also include any per-talk locales not already covered by event locales
+			for (const talk of (schedule.talks || [])) {
+				const locale = talk.content_locale
+				if (!locale || langSet.has(locale)) continue
+				langSet.add(locale)
+				let displayName = locale
+				try { displayName = new Intl.DisplayNames([lang], { type: 'language' }).of(locale) } catch { /* fallback to raw locale */ }
+				languages.push({ value: locale, label: displayName, selected: false })
+			}
+			this.filterState.languages = languages
 		},
 		getI18nName(name, lang) {
 			if (typeof name === 'string') return name

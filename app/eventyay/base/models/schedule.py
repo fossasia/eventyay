@@ -29,6 +29,7 @@ from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from .mixins import PretalxModel
+from .stream_schedule import StreamSchedule
 from .submission import SubmissionFavourite
 
 
@@ -623,6 +624,12 @@ class Schedule(PretalxModel):
                 'submission__answers__options',
             )
         talks = talks.order_by('start')
+        # Pre-fetch all stream schedules for this event's rooms
+        stream_schedules = list(
+            StreamSchedule.objects.filter(
+                room__event=self.event,
+            ).select_related('room').order_by('start_time')
+        )
         rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks = set()
         speakers = set()
@@ -632,6 +639,7 @@ class Schedule(PretalxModel):
             'timezone': self.event.timezone,
             'event_start': self.event.date_from.isoformat(),
             'event_end': self.event.date_to.isoformat(),
+            'content_locales': self.event.content_locales,
         }
         show_do_not_record = self.event.cfp.request_do_not_record
         base_url = str(self.event.urls.base)
@@ -665,6 +673,18 @@ class Schedule(PretalxModel):
                     'session_type': talk.submission.submission_type.name,
                     'content_locale': talk.submission.content_locale,
                 }
+                # Attach stream URL if a stream schedule overlaps this talk's time and room
+                for ss in stream_schedules:
+                    if (
+                        ss.room_id == talk.room_id
+                        and talk.start
+                        and talk.end
+                        and ss.start_time <= talk.start
+                        and ss.end_time >= talk.end
+                    ):
+                        talk_data['stream_url'] = ss.url
+                        talk_data['stream_type'] = ss.stream_type
+                        break
                 if enrich:
                     talk_data['resources'] = [
                         {

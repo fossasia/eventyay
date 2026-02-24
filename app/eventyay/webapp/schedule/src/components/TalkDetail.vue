@@ -17,6 +17,11 @@
 					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
 					.filename {{ description }}
 
+			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink")
+				a.view-video-btn(:href="computedJoinRoomLink")
+					svg(viewBox="0 0 24 24", width="18", height="18", fill="currentColor")
+						path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
+					span {{ t.view_video }}
 			slot(name="actions")
 				a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="onJoinRoomClick") {{ t.join_room }}
 		.speakers(v-if="resolvedTalk.speakers && resolvedTalk.speakers.length > 0")
@@ -92,6 +97,7 @@ export default {
 				speaker_name_not_provided: m.speaker_name_not_provided || 'Speaker name not provided',
 				downloads: m.downloads || 'Downloads',
 				speakers: m.speakers || 'Speakers',
+				view_video: m.view_video || 'View Video',
 			}
 		},
 		resolvedTalk() {
@@ -229,6 +235,22 @@ export default {
 				font-size: 36px
 				margin: 0 4px
 
+	.video-stream
+		margin-top: 16px
+		.view-video-btn
+			display: inline-flex
+			align-items: center
+			gap: 8px
+			padding: 8px 20px
+			border-radius: 4px
+			font-weight: 600
+			text-decoration: none
+			color: $clr-white
+			background-color: $clr-danger
+			&:hover
+				opacity: 0.9
+			svg
+				flex-shrink: 0
 	.join-room-btn
 		display: inline-block
 		margin-top: 16px
