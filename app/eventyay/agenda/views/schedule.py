@@ -345,6 +345,18 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return ctx
 
 
+class SessionsRedirectView(PermissionRequired, ScheduleMixin, TemplateView):
+    permission_required = 'base.view_schedule'
+
+    def get(self, request, **kwargs):
+        query = request.GET.copy()
+        query['view'] = 'list'
+        target_url = str(request.event.urls.schedule)
+        if query:
+            target_url = f'{target_url}?{query.urlencode()}'
+        return HttpResponseRedirect(target_url)
+
+
 @cache_page(60 * 60 * 24)
 def schedule_messages(request, **kwargs):
     """This view is cached for a day, as it is small and non-critical, but loaded synchronously."""

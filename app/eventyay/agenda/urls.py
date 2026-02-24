@@ -97,6 +97,7 @@ urlpatterns = [
         speaker.SpeakerRedirect.as_view(),
         name='speaker.redirect',
     ),
+    path('sessions/', schedule.SessionsRedirectView.as_view(), name='talks'),
 
     path('talk/<slug>/', talk.TalkView.as_view(), name='talk.detail'),
     path(
