@@ -99,10 +99,11 @@ your {event_name} CfP system.
 """
     )
 )
-UPDATE_SUBJECT = LazyI18nString.from_gettext(
+# This template notifies organisers when a speaker modifies their proposal.
+MODIFIED_SUBJECT = LazyI18nString.from_gettext(
     _("[{event_name}] A talk has been modified: {submission_title}")
 )
-UPDATE_TEXT = LazyI18nString.from_gettext(
+MODIFIED_TEXT = LazyI18nString.from_gettext(
     _(
         """Hi,
 
