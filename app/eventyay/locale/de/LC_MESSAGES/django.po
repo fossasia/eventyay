@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 15:55+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-02-24 21:09+0000\n"
+"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.16.1-dev\n"
 "X-Poedit-Bookmarks: -1,-1,904,-1,-1,-1,-1,-1,-1,-1\n"
 
 #: agenda/phrases.py:8
@@ -4627,7 +4627,7 @@ msgstr "Zugangscode"
 #: orga/templates/orga/submission/content.html:53
 #: orga/templates/orga/submission/review.html:69 orga/views/cfp.py:723
 msgid "Track"
-msgstr "Track"
+msgstr "Titel"
 
 #: base/models/access_code.py:31
 msgid ""
@@ -5169,7 +5169,9 @@ msgstr "Auf bestimmte Verkaufskanäle einschränken"
 
 #: base/models/event.py:668
 msgid "Only sell tickets for this event on the following sales channels."
-msgstr "Tickets für diese Veranstaltung nur über die folgenden Kanäle verkaufen"
+msgstr ""
+"Verkaufen Sie Tickets für diese Veranstaltung ausschließlich über die "
+"folgenden Vertriebskanäle."
 
 #: base/models/event.py:672
 msgid "Add video call"
@@ -5354,7 +5356,7 @@ msgstr "Das Ende des Vorverkaufs muss nach dem Beginn des Vorverkaufs liegen."
 #: orga/templates/orga/base.html:356 orga/templates/orga/base.html:369
 #: orga/templates/orga/submission/review.html:196
 msgid "Review"
-msgstr "Review"
+msgstr "Überprüfung"
 
 #: base/models/event.py:2690
 msgid "Selection"
@@ -5443,9 +5445,10 @@ msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
 msgstr ""
-"Wenn diese Option aktiv ist, kann eine Veranstaltung nur veröffentlicht "
-"werden, wenn ein Wert eingetragen ist. In einer Veranstaltungsreihe ist das "
-"Eintragen eines Wertes immer optional."
+"Wenn diese Option aktiviert ist, kann eine Veranstaltung nur dann in "
+"Echtzeit übertragen werden, wenn ein Wert für diese Eigenschaft festgelegt "
+"ist. Bei Veranstaltungsreihen ist es immer optional, einen Wert für einzelne "
+"Termine festzulegen."
 
 #: base/models/event.py:3060
 msgid "Valid values"
@@ -5636,7 +5639,7 @@ msgstr "Neues Programm veröffentlicht"
 #: base/models/mail.py:91 base/models/mail.py:311 plugins/sendmail/forms.py:452
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:36
 msgid "Reply-To"
-msgstr "Reply-To"
+msgstr "Antwort an"
 
 #: base/models/mail.py:92
 msgid ""
@@ -6921,8 +6924,8 @@ msgstr "Hilfetext"
 #: base/models/product.py:1182
 msgid "If the question needs to be explained or clarified, do it here!"
 msgstr ""
-"Wenn diese Frage noch weitere Erklärung braucht, können Sie sie hier "
-"eintragen."
+"Wenn diese Frage noch weitere Erklärungen benötigt, können Sie diese hier "
+"eintragen!"
 
 #: base/models/product.py:1186 control/forms/product.py:81
 #: control/templates/pretixcontrol/boxoffice/payment.html:41
@@ -7237,7 +7240,7 @@ msgstr ""
 #: orga/templates/orga/speaker/speakerinformation/list.html:20
 #: orga/views/cfp.py:726 submission/forms/submission.py:257
 msgid "Tracks"
-msgstr "Tracks"
+msgstr "Titel"
 
 #: base/models/question.py:164
 msgid ""
@@ -9235,7 +9238,7 @@ msgstr "Ticket"
 #: base/plugins.py:61 common/plugins.py:9
 msgctxt "Type of plugin"
 msgid "Features"
-msgstr "Features"
+msgstr "Funktionen"
 
 #: base/plugins.py:62 common/plugins.py:10
 msgctxt "Type of plugin"
@@ -10282,7 +10285,7 @@ msgstr ""
 
 #: base/templates/400.html:4 base/templates/400.html:8
 msgid "Bad Request"
-msgstr "Bad Request"
+msgstr "Ungültige Anfrage"
 
 #: base/templates/400.html:9
 msgid "We were unable to parse your request."
@@ -10384,7 +10387,7 @@ msgstr ""
 #: presale/templates/pretixpresale/base_footer.html:13
 #, python-format
 msgid "powered by <a %(a_attr)s>eventyay</a>"
-msgstr "powered by <a %(a_attr)s>eventyay</a>"
+msgstr "unterstützt durch <a %(a_attr)s>eventyay</a>"
 
 #: base/templates/pretixbase/email/notification.html:55
 #: base/templates/pretixbase/email/notification.txt:14
@@ -11133,13 +11136,13 @@ msgstr ""
 #: orga/templates/orga/submission/content_edit.html:50
 msgid "Speaker"
 msgid_plural "Speakers"
-msgstr[0] "Vortragende"
-msgstr[1] "Vortragende"
+msgstr[0] "Referent"
+msgstr[1] "Referenten"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:51
 msgid "Submitter"
 msgid_plural "Submitters"
-msgstr[0] "Einreichende"
+msgstr[0] "Einreichende(r)"
 msgstr[1] "Einreichende"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:82
@@ -13755,7 +13758,7 @@ msgstr "Suchbegriff"
 
 #: control/forms/filter.py:1172
 msgid "Shop live"
-msgstr "Shop live"
+msgstr "Tickets können gekauft werden"
 
 #: control/forms/filter.py:1174
 msgid "Shop not live"
@@ -16391,7 +16394,7 @@ msgstr "Export"
 #: control/navigation.py:325
 msgctxt "navigation"
 msgid "Check-in"
-msgstr "Check-in"
+msgstr "Einchecken"
 
 #: control/navigation.py:337
 #: control/templates/pretixcontrol/checkin/lists.html:3
@@ -16800,8 +16803,9 @@ msgid "User Agent"
 msgstr "User-Agent"
 
 #: control/templates/control/systemlog_detail.html:18
+#, fuzzy
 msgid "Trace"
-msgstr "Trace"
+msgstr "Nachverfolgen"
 
 #: control/templates/control/systemlog_detail.html:24
 #: control/templates/control/systemlog_list.html:10
@@ -17155,8 +17159,9 @@ msgid "No celery workers have been configured."
 msgstr "Keine Celery-Worker konfiguriert."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:140
+#, fuzzy
 msgid "Broker"
-msgstr "Broker"
+msgstr "Vermittlungsdienst"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:143
 msgid "Backend"
@@ -26048,8 +26053,9 @@ msgid "The proposal’s session type"
 msgstr "Einreichungstyp der Einreichung"
 
 #: mail/context.py:214
+#, fuzzy
 msgid "Track A"
-msgstr "Track A"
+msgstr "Titel A"
 
 #: mail/context.py:215
 msgid "The track the proposal belongs to"
@@ -28162,8 +28168,8 @@ msgstr "Es gibt keine Organisatoren, die Sie bearbeiten können."
 #: orga/views/dashboard.py:329
 msgid "speaker"
 msgid_plural "speakers"
-msgstr[0] "Vortragende"
-msgstr[1] "Vortragende"
+msgstr[0] "Referent"
+msgstr[1] "Referenten"
 
 #: orga/templates/orga/organizer/speaker_list.html:35
 #: orga/templates/orga/speaker/list.html:43
@@ -28289,7 +28295,7 @@ msgstr "Zuweisungen importieren"
 #: orga/templates/orga/submission/content_edit.html:66
 #: orga/templates/orga/submission/review.html:10 orga/views/dashboard.py:179
 msgid "Reviews"
-msgstr "Reviews"
+msgstr "Bewertungen"
 
 #: orga/templates/orga/review/bulk.html:22
 #, python-format
@@ -28944,7 +28950,7 @@ msgstr "Neue Information hinzufügen"
 #: orga/templates/orga/speaker/list.html:13 orga/views/dashboard.py:348
 msgid "submitter"
 msgid_plural "submitters"
-msgstr[0] "Einreichende"
+msgstr[0] "Einreichende(r)"
 msgstr[1] "Einreichende"
 
 #: orga/templates/orga/speaker/list.html:70
@@ -29963,7 +29969,7 @@ msgstr ""
 #: plugins/badges/templates/pretixplugins/badges/index.html:4
 #: plugins/badges/templates/pretixplugins/badges/index.html:9
 msgid "Badges"
-msgstr "Badges"
+msgstr "Namensschilder"
 
 #: plugins/badges/apps.py:35
 msgid ""
@@ -30893,7 +30899,7 @@ msgstr "Automatisch eingecheckt"
 #: plugins/checkinlists/exporters.py:513 plugins/checkinlists/exporters.py:691
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:68
 msgid "Secret"
-msgstr "Secret"
+msgstr "Vertraulicher Schlüssel"
 
 #: plugins/checkinlists/exporters.py:677
 msgid "Check-in log (all successful scans)"
@@ -31430,7 +31436,6 @@ msgid "SocialAuth"
 msgstr "Mit sozialem Netzwerk authentifizieren"
 
 #: plugins/socialauth/apps.py:13
-#, fuzzy
 msgid "the eventyay team"
 msgstr "Das eventyay-Team"
 
@@ -31489,10 +31494,8 @@ msgstr "Erstelle eine OAuth-Anwendung auf"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:21
 #: plugins/socialauth/templates/socialauth/social_setup.html:40
-#, fuzzy
-#| msgid "Integrations"
 msgid "Instructions:"
-msgstr "Integrationen"
+msgstr "Anweisungen:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:23
 msgid "Follow the setup guide:"
@@ -31527,10 +31530,8 @@ msgstr ""
 "müssen Sie eine OAuth-Anwendung bei MediaWiki registrieren."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:57
-#, fuzzy
-#| msgid "Import attendees"
 msgid "Important Notes"
-msgstr "Teilnehmer importieren"
+msgstr "Wichtige Hinweise"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
@@ -31543,16 +31544,12 @@ msgstr ""
 "Bis zur Genehmigung kann sich nur der Eigentümer der Anwendung anmelden."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:63
-#, fuzzy
-#| msgid "Registration details"
 msgid "Registration Steps"
-msgstr "Anmeldedetails"
+msgstr "Anmeldeschritte"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:65
-#, fuzzy
-#| msgid "Register a new application"
 msgid "Register your OAuth application at:"
-msgstr "Neue App registrieren"
+msgstr "Registrieren Sie Ihre OAuth-Anwendung unter:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:68
 msgid "Click \"Propose new OAuth 2.0 client\""
@@ -31563,14 +31560,10 @@ msgid "On the form enter"
 msgstr "Geben Sie im Formular ein"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:72
-#, fuzzy
-#| msgid "Application name"
 msgid "an application name"
-msgstr "Name der Applikation"
+msgstr "Name der Anwendung"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:73
-#, fuzzy
-#| msgid "Product description"
 msgid "an description description"
 msgstr "Produktbeschreibung"
 
@@ -31579,20 +31572,16 @@ msgid "Set Oauth \"callback\" URL to:"
 msgstr "Setzen Sie die OAuth \"callback\"-URL auf:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:80
-#, fuzzy
-#| msgid "Contact address"
 msgid "Contact Email address"
-msgstr "Kontakt-E-Mail"
+msgstr "Kontakt-E-Mail-Adresse"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
 msgstr "„Kunde ist vertraulich“ ankreuzen"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:82
-#, fuzzy
-#| msgid "Authorization Code"
 msgid "Tick \"Authorization code\""
-msgstr "Authorisierungscode"
+msgstr "„Autorisierungscode“ auswählen"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:83
 msgid "Tick \"Refresh token\""
@@ -31625,16 +31614,12 @@ msgstr ""
 "zurückgegebenen OAuth-Zugangsinformationen:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:91
-#, fuzzy
-#| msgid "Disable application"
 msgid "Client application key"
-msgstr "App deaktivieren"
+msgstr "App-Schlüssel des Nutzers"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:92
-#, fuzzy
-#| msgid "Generate new application secret"
 msgid "Client application secret"
-msgstr "Neuen geheimen Schlüssel erstellen"
+msgstr "Geheimer Schlüssel der Hauptanwendung"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:95
 msgid ""
@@ -32338,10 +32323,8 @@ msgstr ""
 "wir Ihnen einen Link, über den Sie die Bestellung bezahlen können."
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:199
-#, fuzzy
-#| msgid "Placed order"
 msgid "Place order"
-msgstr "Getätigte Bestellung"
+msgstr "Bestellung aufgeben"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:201
 msgid "Submit registration"
@@ -33418,10 +33401,8 @@ msgstr "Ticket nicht gefunden?"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:18
 #: presale/templates/pretixpresale/fragment_modals.html:33
-#, fuzzy
-#| msgid "Send out emails"
 msgid "Resend the email"
-msgstr "E-Mails verschicken"
+msgstr "Die E-Mail erneut senden"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:20
 #: presale/templates/pretixpresale/fragment_modals.html:35
@@ -33430,67 +33411,49 @@ msgstr "um es zu erhalten."
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:23
 #: presale/templates/pretixpresale/fragment_modals.html:38
-#, fuzzy
-#| msgid "If you already ordered a ticket"
 msgid "Want to order a ticket?"
-msgstr "Wenn Sie bereits ein Ticket bestellt haben"
+msgstr "Möchten Sie ein Ticket bestellen?"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:25
 #: presale/templates/pretixpresale/fragment_modals.html:40
-#, fuzzy
-#| msgid "Go to the ticket shop"
 msgid "Get a ticket here"
-msgstr "Zum Ticket-Shop"
+msgstr "Ticket hier kaufen"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:31
 #: presale/templates/pretixpresale/fragment_modals.html:46
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Waiting, product %(num)sx available\n"
-#| "                                "
+#, python-format
 msgid ""
 "\n"
 "                            Want to create a %(event_name)s account?\n"
 "                        "
 msgstr ""
 "\n"
-"                                    Wartet, Produkt %(num)sx verfügbar\n"
-"                                "
+"                            Möchten Sie ein %(event_name)-Konto erstellen?\n"
+"                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:35
 #: presale/templates/pretixpresale/fragment_modals.html:50
-#, fuzzy
-#| msgid "Signature"
 msgid "Sign up here"
-msgstr "Signatur"
+msgstr "Hier anmelden"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:39
 #: presale/templates/pretixpresale/fragment_modals.html:54
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                        from %(start_date)s\n"
-#| "                                    "
+#, python-format
 msgid ""
 "\n"
 "                            Already have a %(event_name)s account?\n"
 "                        "
 msgstr ""
 "\n"
-"                                        ab %(start_date)s\n"
-"                                    "
+"                            Sie haben bereits ein %(event_name)-Konto?\n"
+"                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:43
 #: presale/templates/pretixpresale/fragment_modals.html:58
-#, fuzzy
-#| msgid "Login"
 msgid "Login here"
-msgstr "Login"
+msgstr "Hier anmelden"
 
 #: presale/templates/pretixpresale/fragment_login_status.html:7
-#, fuzzy
-#| msgid "Account"
 msgid "account"
 msgstr "Konto"
 
