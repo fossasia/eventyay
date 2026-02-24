@@ -18,7 +18,7 @@ class UserSettingsForm(forms.ModelForm):
         'duplicate_identifier': _(
             'There already is an account associated with this e-mail address. Please choose a different one.'
         ),
-        'pw_current': _('Please enter your current password if you want to change your e-mail address or password.'),
+        'pw_current': _('Please enter your current password if you want to change your password.'),
         'pw_current_wrong': _('The current password you entered was not correct.'),
         'pw_mismatch': _('Please enter the same password twice'),
         'rate_limit': _('For security reasons, please wait 5 minutes before you try again.'),
@@ -53,14 +53,13 @@ class UserSettingsForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['fullname', 'wikimedia_username', 'locale', 'timezone', 'email']
+        fields = ['fullname', 'wikimedia_username', 'locale', 'timezone']
         widgets = {'locale': SingleLanguageWidget}
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         self.requires_password_reset = kwargs.pop('require_password_reset', False)
         super().__init__(*args, **kwargs)
-        self.fields['email'].disabled = True
         self.fields['wikimedia_username'].disabled = True
         if self.user.auth_backend != 'native':
             del self.fields['old_pw']
@@ -92,15 +91,6 @@ class UserSettingsForm(forms.ModelForm):
             )
 
         return old_pw
-
-    def clean_email(self):
-        email = self.cleaned_data['email']
-        if User.objects.filter(Q(email__iexact=email) & ~Q(pk=self.instance.pk)).exists():
-            raise forms.ValidationError(
-                self.error_messages['duplicate_identifier'],
-                code='duplicate_identifier',
-            )
-        return email
 
     def clean_new_pw(self):
         password1 = self.cleaned_data.get('new_pw', '')
