@@ -1021,6 +1021,10 @@ CELERY_TASK_QUEUES = (
 )
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_TASK_TRACK_STARTED = True
+# Keep Django/eventyay logging configuration in workers and avoid redirecting stdout/stderr.
+# This ensures logger output remains visible as configured and is not swallowed by Celery.
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_REDIRECT_STDOUTS = False
 CELERY_TASK_ROUTES = {
     'eventyay.base.services.notifications.*': {'queue': 'notifications'},
     'eventyay.api.webhooks.*': {'queue': 'notifications'},
