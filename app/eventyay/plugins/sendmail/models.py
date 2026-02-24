@@ -116,7 +116,6 @@ class EmailQueue(models.Model):
         Uses their stored metadata and updates send status individually.
         """
         from eventyay.common.exceptions import SendMailException
-        
         if self.sent_at:
             return False  # Already sent
 
