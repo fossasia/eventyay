@@ -783,6 +783,8 @@ details.submission-state-dropdown {
 
 .cfp-option-table {
   display: table;
+  width: 100%;
+  table-layout: fixed;
 
   input:not([type="checkbox"]):not([type="radio"]),
   select {
@@ -795,10 +797,36 @@ details.submission-state-dropdown {
     text-align: center;
   }
 
+  thead th:first-child,
+  tbody th {
+    width: auto;
+  }
+
+  thead th:nth-child(2),
+  thead th:nth-child(3),
+  thead th:nth-child(6) {
+    width: 90px;
+  }
+
+  thead th:nth-child(4),
+  thead th:nth-child(5) {
+    width: 130px;
+  }
+
+  thead th:nth-child(7) {
+    width: 80px;
+  }
+
+  thead th:last-child {
+    width: 110px;
+  }
+
   tbody th {
     text-align: right;
     padding-right: 8px;
     padding-top: 16px;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   input[type="number"] {
