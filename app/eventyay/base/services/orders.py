@@ -3,7 +3,6 @@ import logging
 from collections import Counter, namedtuple
 from datetime import datetime, time, timedelta
 from decimal import Decimal
-from typing import List, Optional
 
 from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
@@ -28,6 +27,7 @@ from django.utils.timezone import make_aware, now
 from django.utils.translation import gettext as _
 from django_scopes import scopes_disabled
 
+from eventyay import consts
 from eventyay.api.models import OAuthApplication
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_email_context
@@ -41,11 +41,11 @@ from eventyay.base.models import (
     Device,
     Event,
     GiftCard,
-    Product,
-    ProductVariation,
     Order,
     OrderPayment,
     OrderPosition,
+    Product,
+    ProductVariation,
     Quota,
     Seat,
     SeatCategoryMapping,
@@ -53,7 +53,6 @@ from eventyay.base.models import (
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
-from eventyay.base.models.product import ProductBundle, ProductMetaValue
 from eventyay.base.models.orders import (
     InvoiceAddress,
     OrderFee,
@@ -61,6 +60,7 @@ from eventyay.base.models.orders import (
     generate_secret,
 )
 from eventyay.base.models.organizer import TeamAPIToken
+from eventyay.base.models.product import ProductBundle, ProductMetaValue
 from eventyay.base.models.tax import TaxRule
 from eventyay.base.payment import BasePaymentProvider, PaymentException
 from eventyay.base.reldate import RelativeDateWrapper
@@ -71,7 +71,7 @@ from eventyay.base.services.invoices import (
     generate_invoice,
     invoice_qualified,
 )
-from eventyay.base.services.locking import LockTimeoutException, NoLockManager
+from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.mail import SendMailException
 from eventyay.base.services.pricing import get_price
 from eventyay.base.services.quotas import QuotaAvailability
@@ -93,6 +93,7 @@ from eventyay.base.signals import (
 from eventyay.celery_app import app
 from eventyay.helpers.models import modelcopy
 from eventyay.helpers.periodic import minimum_interval
+
 
 error_messages = {
     'unavailable': _('Some of the products you selected were no longer available. Please see below for details.'),
@@ -601,7 +602,7 @@ def _check_date(event: Event, now_dt: datetime):
 def _check_positions(
     event: Event,
     now_dt: datetime,
-    positions: List[CartPosition],
+    positions: list[CartPosition],
     address: InvoiceAddress = None,
     sales_channel='web',
 ):
@@ -889,12 +890,12 @@ def _check_positions(
 
 
 def _get_fees(
-    positions: List[CartPosition],
+    positions: list[CartPosition],
     payment_provider: BasePaymentProvider,
     address: InvoiceAddress,
     meta_info: dict,
     event: Event,
-    gift_cards: List[GiftCard],
+    gift_cards: list[GiftCard],
 ):
     fees = []
     total = sum([c.price for c in positions])
@@ -938,7 +939,7 @@ def _get_fees(
 def _create_order(
     event: Event,
     email: str,
-    positions: List[CartPosition],
+    positions: list[CartPosition],
     now_dt: datetime,
     payment_provider: BasePaymentProvider,
     locale: str = None,
@@ -1099,7 +1100,7 @@ def _order_placed_email_attendee(event: Event, order: Order, position: OrderPosi
 def _perform_order(
     event: Event,
     payment_provider: str,
-    position_ids: List[str],
+    position_ids: list[str],
     email: str,
     locale: str,
     address: int,
@@ -1115,7 +1116,7 @@ def _perform_order(
     else:
         pprov = None
 
-    if email == settings.EVENTYAY_EMAIL_NONE_VALUE:
+    if email == consts.EVENTYAY_EMAIL_NONE_VALUE:
         email = None
 
     addr = None
@@ -1149,7 +1150,7 @@ def _perform_order(
                     property__name='limit_one_per_user',
                 ).values_list('product_id', flat=True)
             )
-            
+
             # Only check existing orders for flagged products
             if flagged_product_ids:
                 existing = (
@@ -1508,7 +1509,7 @@ class OrderChangeManager:
         self._invoice_dirty = False
         self._invoices = []
 
-    def change_product(self, position: OrderPosition, product: Product, variation: Optional[ProductVariation]):
+    def change_product(self, position: OrderPosition, product: Product, variation: ProductVariation | None):
         if (not variation and product.has_variations) or (variation and variation.product_id != product.pk):
             raise OrderError(self.error_messages['product_without_variation'])
 
@@ -1574,7 +1575,7 @@ class OrderChangeManager:
         self,
         position: OrderPosition,
         product: Product,
-        variation: Optional[ProductVariation],
+        variation: ProductVariation | None,
         subevent: SubEvent,
     ):
         if (not variation and product.has_variations) or (variation and variation.product_id != product.pk):
@@ -2504,7 +2505,7 @@ def perform_order(
     self,
     event: Event,
     payment_provider: str,
-    positions: List[str],
+    positions: list[str],
     email: str = None,
     locale: str = None,
     address: int = None,
