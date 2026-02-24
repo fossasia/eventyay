@@ -159,7 +159,17 @@ class FileCleanupMixin:
             old_value = getattr(pre_save_instance, field)
             if old_value:
                 new_value = getattr(self, field)
-                if new_value and old_value.path != new_value.path:
+                try:
+                    old_path = old_value.path
+                    new_path = new_value.path if new_value else None
+                except (OSError, NotImplementedError):
+                    # On Windows, accessing .path can raise OSError (Errno 22)
+                    # if the stored filename contains characters invalid on
+                    # that OS (e.g. colons). NotImplementedError is raised by
+                    # some storage backends that do not support absolute paths.
+                    # In either case we skip the cleanup for this field.
+                    continue
+                if new_value and old_path != new_path:
                     # We don't want to delete the file immediately, as the save action
                     # that triggered this task might still fail, so we schedule the
                     # deletion for 10 seconds in the future, and pass the file field
@@ -171,7 +181,7 @@ class FileCleanupMixin:
                             'model': str(self._meta.model_name.capitalize()),
                             'pk': self.pk,
                             'field': field,
-                            'path': old_value.path,
+                            'path': old_path,
                         },
                         countdown=10,
                     )
