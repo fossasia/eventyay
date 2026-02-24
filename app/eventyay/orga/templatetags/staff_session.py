@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from eventyay.common.permissions import is_admin_mode_active
+from eventyay.common.permissions import is_event_organiser as _is_event_organiser
 from eventyay.base.models.auth import StaffSession, User
 
 register = template.Library()
@@ -13,6 +14,12 @@ def has_event_perm(perm, user, request, obj=None):
     if not user.is_authenticated:
         return False
     return is_admin_mode_active(request) or User.has_perm(user, perm, obj)
+
+
+@register.simple_tag()
+def is_event_organiser(user, request, event=None):
+    """Template tag wrapper around the shared organiser check."""
+    return _is_event_organiser(user, request, event)
 
 
 @register.filter
