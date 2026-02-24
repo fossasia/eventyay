@@ -1,0 +1,125 @@
+{% load i18n %}
+{% load rules %}
+{% load event_tags %}
+{% load staff_session %}
+
+{% with nav_context=nav_context|default:"agenda" %}
+    {% if current_event and current_event.locales and not is_html_export %}
+        <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
+            <summary>
+				{% translate "Language" %}
+				<i class="fa fa-caret-down ml-1"></i>
+            </summary>
+            <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
+                <div class="language-enforce-bar">
+                    <span id="language-enforce-label" class="language-enforce-label">{% translate "Link languages" %}</span>
+                    <form method="get" action="{% url 'presale:locale.event' %}" class="language-enforce-form">
+                        <input type="hidden" name="enforce_ui_language" value="{{ request.event_language_enforce_ui|yesno:'0,1' }}">
+                        <input type="hidden" name="event" value="{{ current_event.slug }}">
+                        <input type="hidden" name="organizer" value="{{ current_event.organizer.slug }}">
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="language-enforce-toggle {% if request.event_language_enforce_ui %}active{% endif %}"
+                                role="switch"
+                                aria-checked="{% if request.event_language_enforce_ui %}true{% else %}false{% endif %}"
+                                aria-labelledby="language-enforce-label">
+                            <span class="language-enforce-toggle-knob" aria-hidden="true"></span>
+                        </button>
+                    </form>
+                    <span class="language-enforce-help"
+                          tabindex="0"
+                          aria-label="{% translate 'Help: Link languages' %}"
+                          aria-describedby="language-enforce-tooltip">
+                        <i class="fa fa-info-circle" aria-hidden="true"></i>
+                        <span id="language-enforce-tooltip" class="language-enforce-tooltip" role="tooltip">
+                            {% translate "When enabled, event and UI languages are linked. Selecting one updates the other whenever that language is available for this event." %}
+                        </span>
+                    </span>
+                </div>
+                <div class="language-columns">
+                    <div class="language-column">
+                        <p class="dropdown-heading">{% translate "Event Language" %}</p>
+                        <div class="language-column-scroll">
+                        {% with active_event_lang=request.event_language|default_if_none:current_event.locale|default_if_none:request.LANGUAGE_CODE %}
+                        {% for l, name in current_event.named_locales %}
+                            <a href="{% url 'presale:locale.event' %}?locale={{ l }}&event={{ current_event.slug }}&organizer={{ current_event.organizer.slug }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}"
+                               class="dropdown-item {% if l|lower == active_event_lang|lower %}active{% endif %}"
+                               role="menuitem"
+                               tabindex="-1">{{ name }}</a>
+                        {% endfor %}
+                        {% endwith %}
+                        </div>
+                    </div>
+                    <div class="language-column">
+                        <p class="dropdown-heading">{% translate "UI Language" %}</p>
+                        <div class="language-column-scroll">
+                            <form method="post" action="{% url 'eventyay_common:account.locale' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <input type="hidden" name="event" value="{{ current_event.slug }}">
+                                <input type="hidden" name="organizer" value="{{ current_event.organizer.slug }}">
+                                {% for option in language_options %}
+                                    <button type="submit"
+                                            name="locale"
+                                            value="{{ option.code }}"
+                                            class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+                                            role="menuitem"
+                                            tabindex="-1">{{ option.label }}</button>
+                                {% endfor %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </details>
+    {% endif %}
+
+    {% if current_event and request.user.is_authenticated and not is_html_export %}
+        <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
+            {% is_event_organiser request.user request current_event as can_see_orga_area %}
+            <summary>
+                {{ request.user|short_user_label }} <i class="fa fa-caret-down ml-1"></i>
+            </summary>
+            <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
+                <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-shopping-cart"></i>
+                    {% translate "My orders" %}
+                </a>
+                <a href="{% url "cfp:event.user.submissions"  organizer=current_event.organizer.slug event=current_event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-sticky-note-o"></i>
+                    {% translate "My proposals" %}
+                </a>
+                <a href="{{ current_event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-address-card-o"></i>
+                    {% translate "Speaker profile" %}
+                </a>
+                <a href="{{ current_event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-envelope"></i>
+                    {% translate "Event emails" %}
+                </a>
+                <hr>
+                <a href="{% url "eventyay_common:account.general"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-user"></i>
+                    {% translate "Account" %}
+                </a>
+                {% if can_see_orga_area %}
+                    <hr>
+                    <a href="{% url 'eventyay_common:event.index' organizer=current_event.organizer.slug event=current_event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                        <i class="fa fa-gears"></i>
+                        {% translate "Organizer area" %}
+                    </a>
+                {% endif %}
+                <hr>
+                <form action="{% url 'common:auth.logout' %}" method="post">
+                    {% csrf_token %}
+                    <button class="dropdown-item" role="menuitem" type="submit" tabindex="-1">
+                        <i class="fa fa-sign-out"></i>
+                        {% translate "Logout" %}
+                    </button>
+                </form>
+            </div>
+        </details>
+    {% elif not subheader_login_link_disabled and not is_html_export %}
+        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">{% translate "Login" %}</a>
+    {% endif %}
+{% endwith %}

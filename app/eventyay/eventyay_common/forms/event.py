@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from eventyay.base.forms import SettingsForm
 from eventyay.base.settings import validate_event_settings
 from eventyay.base.models import Event
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.control.forms import (
      SplitDateTimeField,
@@ -29,8 +30,7 @@ class EventCommonSettingsForm(SettingsForm):
         'content_locales',
         'locale',
         'region',
-        "contact_mail",
-        "imprint_url",
+        'imprint_url',
         'logo_image',
         'logo_image_large',
         'event_logo_image',
@@ -43,9 +43,6 @@ class EventCommonSettingsForm(SettingsForm):
         'hover_button_color',
         'theme_round_borders',
         'primary_font',
-        'contact_mail',
-        'imprint_url',
-        'region',
         'frontpage_text',
     ]
 
@@ -59,6 +56,10 @@ class EventCommonSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
+        localized_language_choices = get_language_choices_native_with_ui_name()
+        for fname in ('locales', 'content_locales'):
+            if fname in self.fields:
+                self.fields[fname].choices = localized_language_choices
         # Ensure the language selectors use the custom dropdown widget even if defaults are not picked up elsewhere,
         # while preserving any existing widget attributes (ids, data-*, classes).
         for fname in ('locales', 'content_locales'):
@@ -92,6 +93,11 @@ class EventUpdateForm(I18nModelForm):
             self.fields['slug'].widget.attrs['readonly'] = 'readonly'
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
+        
+        # Configure email field with canonical label and help text
+        self.fields['email'].required = True
+        self.fields['email'].label = _('Organizer email address')
+        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
 
         if self.domain_field_enabled:
             self.fields['domain'] = forms.CharField(
@@ -145,7 +151,7 @@ class EventUpdateForm(I18nModelForm):
         model = Event
         fields = [
             'name', 'slug', 'date_from', 'date_to', 'date_admission',
-            'is_public', 'location', 'geo_lat', 'geo_lon',
+            'is_public', 'location', 'geo_lat', 'geo_lon', 'email',
         ]
         field_classes = {
             'date_from': SplitDateTimeField, 'date_to': SplitDateTimeField, 'date_admission': SplitDateTimeField,

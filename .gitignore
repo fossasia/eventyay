@@ -37,7 +37,9 @@ local/
 .vscode/tasks.json
 .vscode/extensions.json
 .zed
+*.aider.*
 app/.vscode
+mise.toml
 
 .gnupg
 .ssh
@@ -60,6 +62,10 @@ deployment/.env.dev
 deployment/.env.prod
 deployment/.env
 deployment/data
+*.local.cfg
+*.local.toml
+.secrets
+app/.env
 
 # Emails which are not sent out to Internet are saved here.
 dev-sent-emails
@@ -70,3 +76,6 @@ dist
 dist-ssr
 
 app/eventyay/data
+
+# AI history
+*.aider.*

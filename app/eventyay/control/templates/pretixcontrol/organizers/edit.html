@@ -11,7 +11,7 @@
     <h1>
         {% blocktrans with name=organizer.name %}Organizer settings{% endblocktrans %}
         {% if request.user.is_staff and staff_session %}
-            <a href="{% url "control:organizer.delete" organizer=organizer.slug %}"
+            <a href="{% url "eventyay_common:organizer.delete" organizer=organizer.slug %}"
                     class="btn btn-delete btn-danger hidden-print">
                 <span class="fa fa-trash"></span>
             </a>
@@ -29,9 +29,11 @@
                         <legend>{% trans "General" %}</legend>
                         {% bootstrap_field form.name layout="control" %}
                         {% bootstrap_field form.slug layout="control" %}
+                        {% comment 'Custom domain feature is temporarily disabled. Uncomment when ready for re-enablement.' %}
                         {% if form.domain %}
                             {% bootstrap_field form.domain layout="control" %}
                         {% endif %}
+                        {% endcomment %}
                         {% bootstrap_field sform.imprint_url layout="control" %}
                         {% bootstrap_field sform.contact_mail layout="control" %}
                         {% bootstrap_field sform.organizer_info_text layout="control" %}

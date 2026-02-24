@@ -10,7 +10,7 @@ $(function () {
         var i = 0;
         var preselect = null;
         var validity_error = false;
-        $form.find("fieldset").each(function () {
+        $form.children("fieldset").each(function () {
             var $fieldset = $(this);
             var tid = $fieldset.attr("id");
             if (!tid) tid = "tab-" + j + "-" + i;

@@ -4,6 +4,49 @@ import eventyay.base.models.event
 from django.db import migrations, models
 
 
+LANGUAGE_CHOICES = [
+    ('en', 'English'),
+    ('de', 'German'),
+    ('de-formal', 'German (formal)'),
+    ('ar', 'Arabic'),
+    ('bg', 'Bulgarian'),
+    ('ca', 'Catalan'),
+    ('cs', 'Czech'),
+    ('da', 'Danish'),
+    ('el', 'Greek'),
+    ('es', 'Spanish'),
+    ('fa-ir', 'Persian'),
+    ('fi', 'Finnish'),
+    ('fr', 'French'),
+    ('hu', 'Hungarian'),
+    ('id', 'Indonesian'),
+    ('it', 'Italian'),
+    ('ja-jp', 'Japanese'),
+    ('ko', 'Korean'),
+    ('lv', 'Latvian'),
+    ('ms', 'Malay'),
+    ('nb-no', 'Norwegian Bokmål'),
+    ('nl', 'Dutch'),
+    ('nl-informal', 'Dutch (informal)'),
+    ('pl', 'Polish'),
+    ('pl-informal', 'Polish (informal)'),
+    ('pt-br', 'Brazilian Portuguese'),
+    ('pt-pt', 'Portuguese (Portugal)'),
+    ('ro', 'Romanian'),
+    ('ru', 'Russian'),
+    ('si', 'Sinhala'),
+    ('sl', 'Slovenian'),
+    ('sv', 'Swedish'),
+    ('sw', 'Swahili'),
+    ('th', 'Thai'),
+    ('tr', 'Turkish'),
+    ('uk', 'Ukrainian'),
+    ('vi', 'Vietnamese'),
+    ('zh-hans', 'Chinese (Simplified)'),
+    ('zh-hant', 'Chinese (Traditional)'),
+]
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -19,7 +62,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='event',
             name='locale',
-            field=models.CharField(choices=[('en', 'English'), ('de', 'German'), ('de-formal', 'German (formal)'), ('ar', 'Arabic'), ('bg', 'Bulgarian'), ('ca', 'Catalan'), ('cs', 'Czech'), ('da', 'Danish'), ('el', 'Greek'), ('es', 'Spanish'), ('fa-ir', 'Persian'), ('fi', 'Finnish'), ('fr', 'French'), ('hu', 'Hungarian'), ('it', 'Italian'), ('id', 'Indonesian'), ('ja-jp', 'Japanese'), ('ko', 'Korean'), ('lv', 'Latvian'), ('ms', 'Malay'), ('nb-no', 'Norwegian Bokmål'), ('nl', 'Dutch'), ('pl', 'Polish'), ('pl-informal', 'Polish (informal)'), ('pt-br', 'Brazilian Portuguese'), ('pt-pt', 'Portuguese'), ('ro', 'Romanian'), ('ru', 'Russian'), ('si', 'Sinhala'), ('sl', 'Slovenian'), ('sv', 'Swedish'), ('sw', 'Swahili'), ('th', 'Thai'), ('tr', 'Turkish'), ('uk', 'Ukrainian'), ('vi', 'Vietnamese'), ('zh-hant', 'Chinese (Traditional)'), ('zh-hans', 'Chinese (Simplified)')], default='en', max_length=32, verbose_name='Default language'),
+            field=models.CharField(choices=LANGUAGE_CHOICES, default='en', max_length=32, verbose_name='Default language'),
         ),
         migrations.AlterField(
             model_name='event',
@@ -34,6 +77,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='user',
             name='locale',
-            field=models.CharField(choices=[('en', 'English'), ('de', 'German'), ('de-formal', 'German (formal)'), ('ar', 'Arabic'), ('bg', 'Bulgarian'), ('ca', 'Catalan'), ('cs', 'Czech'), ('da', 'Danish'), ('el', 'Greek'), ('es', 'Spanish'), ('fa-ir', 'Persian'), ('fi', 'Finnish'), ('fr', 'French'), ('hu', 'Hungarian'), ('it', 'Italian'), ('id', 'Indonesian'), ('ja-jp', 'Japanese'), ('ko', 'Korean'), ('lv', 'Latvian'), ('ms', 'Malay'), ('nb-no', 'Norwegian Bokmål'), ('nl', 'Dutch'), ('pl', 'Polish'), ('pl-informal', 'Polish (informal)'), ('pt-br', 'Brazilian Portuguese'), ('pt-pt', 'Portuguese'), ('ro', 'Romanian'), ('ru', 'Russian'), ('si', 'Sinhala'), ('sl', 'Slovenian'), ('sv', 'Swedish'), ('sw', 'Swahili'), ('th', 'Thai'), ('tr', 'Turkish'), ('uk', 'Ukrainian'), ('vi', 'Vietnamese'), ('zh-hant', 'Chinese (Traditional)'), ('zh-hans', 'Chinese (Simplified)')], default='en', max_length=50, verbose_name='Language'),
+            field=models.CharField(choices=LANGUAGE_CHOICES, default='en', max_length=50, verbose_name='Language'),
         ),
     ]

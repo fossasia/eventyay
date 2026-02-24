@@ -1,0 +1,402 @@
+/**
+ * Shared Navbar Styles for Orga
+ * Matches Bootstrap 3 navbar + pretixcontrol/main.scss exactly
+ * This provides the same navbar styling as control/common areas
+ */
+
+/* ============================================
+   Base navbar (Bootstrap 3 defaults)
+   $navbar-height: 50px
+   $navbar-padding-horizontal: 15px
+   $navbar-padding-vertical: 10px
+   ============================================ */
+
+.navbar {
+  position: relative;
+  min-height: 50px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+}
+
+.navbar::before,
+.navbar::after {
+  display: table;
+  content: " ";
+}
+
+.navbar::after {
+  clear: both;
+}
+
+.navbar-header::before,
+.navbar-header::after {
+  display: table;
+  content: " ";
+}
+
+.navbar-header::after {
+  clear: both;
+}
+
+.navbar-static-top {
+  z-index: 1000;
+  border-width: 0 0 1px;
+  border-radius: 0;
+}
+
+/* ============================================
+   main.scss overrides - nav.navbar
+   ============================================ */
+
+nav.navbar {
+  margin: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  font-weight: 500;
+  min-height: 50px;
+  height: 50px;
+}
+
+/* ============================================
+   Inverse navbar colors
+   $navbar-inverse-bg: #2185d0
+   $navbar-link-color: #f8f9fa
+   $navbar-link-hover-color: #fff
+   ============================================ */
+
+nav.navbar.navbar-inverse {
+  background-color: #2185d0;
+  border-color: transparent;
+}
+
+nav.navbar.navbar-inverse .navbar-top-links a,
+nav.navbar.navbar-inverse .btn-link {
+  color: #f8f9fa;
+  font-weight: 500;
+}
+
+nav.navbar.navbar-inverse .navbar-top-links a i,
+nav.navbar.navbar-inverse .btn-link i {
+  color: #f8f9fa;
+}
+
+nav.navbar.navbar-inverse .navbar-top-links a:hover,
+nav.navbar.navbar-inverse .navbar-top-links a:focus,
+nav.navbar.navbar-inverse .btn-link:hover,
+nav.navbar.navbar-inverse .btn-link:focus {
+  color: #fff;
+}
+
+nav.navbar.navbar-inverse .navbar-top-links a:hover i,
+nav.navbar.navbar-inverse .navbar-top-links a:focus i,
+nav.navbar.navbar-inverse .btn-link:hover i,
+nav.navbar.navbar-inverse .btn-link:focus i {
+  color: #fff;
+}
+
+/* ============================================
+   Navbar header - main.scss
+   ============================================ */
+
+.navbar-header {
+  float: left;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* ============================================
+   Bootstrap navbar-toggle base styles
+   ============================================ */
+
+.navbar-toggle {
+  position: relative;
+  float: right;
+  padding: 9px 10px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  margin-right: 15px;
+  background-color: transparent;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.navbar-toggle:focus {
+  outline: 0;
+}
+
+/* ============================================
+   Sidebar toggle button - _sidebar.scss
+   Overrides .navbar-toggle for sidebar
+   ============================================ */
+
+.navbar-toggle-sidebar,
+.navbar-toggle-sidebar.navbar-toggle,
+nav.navbar.navbar-inverse #sidebar-toggle,
+.navbar-inverse #sidebar-toggle {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  float: left;
+  font-size: 14px;
+  margin-top: 12px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+  margin-left: 10px;
+  background-color: transparent !important;
+  border: none;
+  padding-top: 5px;
+  padding-right: 5px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  color: #fff;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.navbar-toggle-sidebar:hover,
+.navbar-toggle-sidebar:focus,
+nav.navbar.navbar-inverse #sidebar-toggle:hover,
+nav.navbar.navbar-inverse #sidebar-toggle:focus,
+.navbar-inverse #sidebar-toggle:hover,
+.navbar-inverse #sidebar-toggle:focus {
+  background-color: transparent !important;
+  color: rgba(255, 255, 255, 0.8);
+  outline: none;
+}
+
+.navbar-toggle-sidebar .fa-bars,
+nav.navbar.navbar-inverse #sidebar-toggle .fa-bars,
+nav.navbar.navbar-inverse #sidebar-toggle i.fa-bars,
+.navbar-inverse #sidebar-toggle .fa-bars,
+.navbar-inverse #sidebar-toggle i.fa-bars {
+  color: #fff;
+  margin-top: 3px;
+}
+
+/* ============================================
+   Navbar brand - main.scss
+   padding-top: 0.3125rem (5px)
+   padding-bottom: 0.3125rem (5px)
+   margin-right: 1rem (16px)
+   ============================================ */
+
+nav.navbar.navbar-inverse .navbar-brand,
+.navbar-inverse .navbar-brand {
+  float: left;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-right: 16px;
+  margin-top: 0;
+  font-size: 20px;
+  line-height: inherit;
+  white-space: nowrap;
+  font-family: inherit;
+  color: #f8f9fa;
+  text-decoration: none;
+}
+
+nav.navbar.navbar-inverse .navbar-brand img,
+.navbar-inverse .navbar-brand img {
+  display: inline-block;
+  vertical-align: middle;
+  height: 30px;
+  width: auto;
+  margin-top: 2px;
+  margin-right: 4px;
+}
+
+nav.navbar.navbar-inverse .navbar-brand:hover,
+nav.navbar.navbar-inverse .navbar-brand:focus,
+.navbar-inverse .navbar-brand:hover,
+.navbar-inverse .navbar-brand:focus {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* ============================================
+   Navbar top links - _sb-admin-2.scss
+   ============================================ */
+
+.navbar-top-links {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  height: 50px;
+}
+
+.navbar-top-links.navbar-right {
+  float: right !important;
+}
+
+.navbar-top-links.navbar-left {
+  float: left !important;
+}
+
+.navbar-top-links li {
+  display: inline-block;
+  float: left;
+  height: 50px;
+}
+
+.navbar-top-links li:last-child {
+  margin-right: 15px;
+}
+
+.navbar-top-links li a {
+  display: block;
+  padding: 15px;
+  min-height: 50px;
+  height: 50px;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 20px;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.navbar-top-links li form {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-top-links li form button.btn-link {
+  display: block;
+  padding: 15px;
+  min-height: 50px;
+  height: 50px;
+  border: none;
+  font-size: 14px;
+  background: transparent;
+  cursor: pointer;
+  line-height: 20px;
+  box-sizing: border-box;
+}
+
+.navbar-top-links li form button.btn-link:hover,
+.navbar-top-links li form button.btn-link:focus {
+  text-decoration: none;
+}
+
+/* ============================================
+   Danger link - main.scss
+   $brand-danger: #db2828
+   ============================================ */
+
+nav.navbar .danger,
+nav.navbar .danger:hover,
+nav.navbar .danger:active {
+  background: #db2828 !important;
+  color: #fff !important;
+  font-size: 14px;
+}
+
+/* ============================================
+   Admin/sudo buttons - main.scss
+   ============================================ */
+
+nav.navbar.navbar-inverse #button-shop,
+nav.navbar.navbar-inverse #button-sudo,
+.navbar-inverse #button-shop,
+.navbar-inverse #button-sudo {
+  padding: 15px;
+  min-height: 50px;
+  height: 50px;
+  border: none;
+  font-size: 14px;
+  color: #f8f9fa;
+  background: transparent;
+  line-height: 20px;
+  margin-left: 2px;
+}
+
+nav.navbar.navbar-inverse #button-shop i,
+nav.navbar.navbar-inverse #button-sudo i,
+.navbar-inverse #button-shop i,
+.navbar-inverse #button-sudo i {
+  color: #f8f9fa;
+}
+
+nav.navbar.navbar-inverse #button-shop:hover,
+nav.navbar.navbar-inverse #button-shop:focus,
+nav.navbar.navbar-inverse #button-shop:active,
+nav.navbar.navbar-inverse #button-sudo:hover,
+nav.navbar.navbar-inverse #button-sudo:focus,
+nav.navbar.navbar-inverse #button-sudo:active,
+.navbar-inverse #button-shop:hover,
+.navbar-inverse #button-shop:focus,
+.navbar-inverse #button-shop:active,
+.navbar-inverse #button-sudo:hover,
+.navbar-inverse #button-sudo:focus,
+.navbar-inverse #button-sudo:active {
+  text-decoration: none;
+  color: #fff;
+}
+
+nav.navbar.navbar-inverse #button-shop:hover i,
+nav.navbar.navbar-inverse #button-shop:focus i,
+nav.navbar.navbar-inverse #button-sudo:hover i,
+nav.navbar.navbar-inverse #button-sudo:focus i,
+.navbar-inverse #button-shop:hover i,
+.navbar-inverse #button-shop:focus i,
+.navbar-inverse #button-sudo:hover i,
+.navbar-inverse #button-sudo:focus i {
+  color: #fff;
+}
+
+/* ============================================
+   Navbar nav (Bootstrap)
+   ============================================ */
+
+.navbar-nav {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navbar-nav > li {
+  float: left;
+}
+
+.navbar-nav > li > a {
+  padding: 15px;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+/* ============================================
+   Utility classes
+   ============================================ */
+
+.mobile-navbar-view-form {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .hidden-xs {
+    display: none !important;
+  }
+}

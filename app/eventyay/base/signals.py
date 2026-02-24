@@ -1,5 +1,7 @@
+import functools
 import warnings
-from typing import Any, Callable, List, Tuple
+from collections.abc import Callable
+from typing import Any
 
 import django.dispatch
 from django.apps import apps
@@ -7,6 +9,7 @@ from django.conf import settings
 from django.dispatch.dispatcher import NO_RECEIVERS
 
 from .models import Event
+
 
 app_cache = {}
 
@@ -16,6 +19,98 @@ def _populate_app_cache():
     apps.check_apps_ready()
     for ac in apps.app_configs.values():
         app_cache[ac.name] = ac
+
+
+@functools.lru_cache(maxsize=1000)
+def resolve_app_for_module(module_path: str):
+    """
+    Thread-safe cached resolution of Django app for a given module path.
+
+    Args:
+        module_path: The module path to resolve (e.g., 'eventyay.plugins.badges')
+
+    Returns:
+        The Django AppConfig or None if not found
+    """
+    if not app_cache:
+        _populate_app_cache()
+
+    searchpath = module_path
+    while True:
+        app = app_cache.get(searchpath)
+        if '.' not in searchpath or app:
+            return app
+        searchpath, _ = searchpath.rsplit('.', 1)
+
+
+def check_plugin_active(sender, app, is_core_module, excluded_plugins, get_plugin_list_callable):
+    """
+    Shared helper to determine if a plugin/core module should be active.
+
+    This centralizes the enable/disable logic:
+    - If app.name is in sender.available_plugins → it's a plugin, must be enabled
+    - If app.name is NOT in sender.available_plugins → it's a pure core module, always active
+    - All are subject to exclusion list and compatibility checks
+
+    Args:
+        sender: Event instance or None
+        app: Django AppConfig or None
+        is_core_module: Boolean indicating if this is a core module by path
+        excluded_plugins: List of excluded plugin names
+        get_plugin_list_callable: Callable that accepts sender and returns plugin list
+                                  (e.g., lambda s: s.get_plugins() or lambda s: s.plugin_list)
+
+    Returns:
+        Boolean indicating if the receiver should be active
+    """
+    # If no sender (no event context) and it's a core module, allow it
+    # This handles core modules that work outside of event context
+    if sender is None and is_core_module:
+        return True
+
+    # Track plugin metadata when we have a sender and resolved app
+    if sender and app:
+        # Performance optimization: fast-path for events with no plugins
+        plugin_list = get_plugin_list_callable(sender)
+        if not plugin_list:
+            # No plugins enabled at all - only core modules can be active
+            if is_core_module:
+                return True
+            return False
+
+        # Get the list of all available plugins (enabled + disabled)
+        available_plugins = getattr(sender, 'available_plugins', {})
+
+        # Check if this receiver's app is actually a plugin
+        is_plugin = app.name in available_plugins
+
+        if is_plugin:
+            # This is a plugin - check if it's enabled in the event's plugin list
+            enabled_plugins = get_plugin_list_callable(sender)
+            if app.name in enabled_plugins:
+                # Plugin is enabled - check exclusions and compatibility
+                if app.name not in excluded_plugins:
+                    if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                        return True
+                # Plugin is enabled but excluded or has compatibility errors
+                return False
+            else:
+                # Plugin exists but is NOT enabled - must not be activated
+                return False
+        else:
+            # NOT a plugin at all - it's a pure core module
+            # Core modules that are not plugins should always be active
+            if app.name not in excluded_plugins:
+                if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                    return True
+            return False
+
+    # Handle core modules where app resolution failed (app is None)
+    # These should still be active as they match CORE_MODULES by path
+    if is_core_module and not app:
+        return True
+
+    return False
 
 
 class EventPluginSignal(django.dispatch.Signal):
@@ -37,24 +132,17 @@ class EventPluginSignal(django.dispatch.Signal):
             return True
 
         # Find the Django application this belongs to
-        searchpath = receiver.__module__
-        core_module = any([searchpath.startswith(cm) for cm in settings.CORE_MODULES])
-        app = None
-        if not core_module:
-            while True:
-                app = app_cache.get(searchpath)
-                if '.' not in searchpath or app:
-                    break
-                searchpath, _ = searchpath.rsplit('.', 1)
+        module_path = receiver.__module__
+        is_core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
 
-        # Only fire receivers from active plugins and core modules
-        excluded = settings.PRETIX_PLUGINS_EXCLUDE
-        if core_module or (sender and app and app.name in sender.get_plugins() and app.name not in excluded):
-            if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
-                return True
-        return False
+        # Resolve the app using thread-safe cached function
+        app = resolve_app_for_module(module_path)
 
-    def send(self, sender: Event, **named) -> List[Tuple[Callable, Any]]:
+        # Use shared helper to check if receiver should be active
+        # EVENTYAY_PLUGINS_EXCLUDE is always a tuple, guaranteed by Pydantic
+        return check_plugin_active(sender, app, is_core_module, settings.EVENTYAY_PLUGINS_EXCLUDE, lambda s: s.get_plugins())
+
+    def send(self, sender: Event, **named) -> list[tuple[Callable, Any]]:
         """
         Send signal from sender to all connected receivers that belong to
         plugins enabled for the given Event.
@@ -77,7 +165,7 @@ class EventPluginSignal(django.dispatch.Signal):
                 responses.append((receiver, response))
         return responses
 
-    def send_chained(self, sender: Event, chain_kwarg_name, **named) -> List[Tuple[Callable, Any]]:
+    def send_chained(self, sender: Event, chain_kwarg_name, **named) -> list[tuple[Callable, Any]]:
         """
         Send signal from sender to all connected receivers. The return value of the first receiver
         will be used as the keyword argument specified by ``chain_kwarg_name`` in the input to the
@@ -101,7 +189,7 @@ class EventPluginSignal(django.dispatch.Signal):
                 response = receiver(signal=self, sender=sender, **named)
         return response
 
-    def send_robust(self, sender: Event, **named) -> List[Tuple[Callable, Any]]:
+    def send_robust(self, sender: Event, **named) -> list[tuple[Callable, Any]]:
         """
         Send signal from sender to all connected receivers. If a receiver raises an exception
         instead of returning a value, the exception is included as the result instead of
@@ -131,7 +219,7 @@ class EventPluginSignal(django.dispatch.Signal):
 
 
 class GlobalSignal(django.dispatch.Signal):
-    def send_chained(self, sender: Event, chain_kwarg_name, **named) -> List[Tuple[Callable, Any]]:
+    def send_chained(self, sender: Event, chain_kwarg_name, **named) -> list[tuple[Callable, Any]]:
         """
         Send signal from sender to all connected receivers. The return value of the first receiver
         will be used as the keyword argument specified by ``chain_kwarg_name`` in the input to the

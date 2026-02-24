@@ -1,9 +1,9 @@
 {% extends "pretixcontrol/items/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% block title %}{% trans "Delete description" %}{% endblock %}
+{% block title %}{% translate "Delete description" %}{% endblock %}
 {% block inside %}
-	<h1>{% trans "Delete description" %}</h1>
+	<h1>{% translate "Delete description" %}</h1>
 	<form action="" method="post" class="form-horizontal">
 		{% csrf_token %}
 		<p>{% blocktrans %}Are you sure you want to delete the description <strong>{{ question }}</strong>?{% endblocktrans %}</p>
@@ -14,11 +14,11 @@
 			{% endfor %}
 		{% endif %}
 		<div class="form-group submit-group">
-            <a href="{% url "control:event.products.questions" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel">
-                {% trans "Cancel" %}
+            <a href="{% url "control:event.products.orderforms" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel">
+                {% translate "Cancel" %}
             </a>
             <button type="submit" class="btn btn-delete btn-danger btn-save">
-                {% trans "Delete" %}
+                {% translate "Delete" %}
             </button>
 		</div>
 	</form>

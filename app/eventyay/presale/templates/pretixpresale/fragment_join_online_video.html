@@ -1,0 +1,53 @@
+{% load i18n %}
+{% load eventurl %}
+
+<div id="join-video-popupmodal" hidden aria-live="polite">
+    <div class="modal-card join-online-video">
+        <div class="modal-card-content-join">
+            <div>
+                <h3>
+                    {% translate "This is a ticketed event. If you ordered a ticket as a guest user, you don't have an account but can still access the ticket using the secret link in your ticket confirmation email. On the tickets page there is also a link to join online sessions." %}
+                </h3>
+                <h3>
+                    {% translate 'As a ticket holder please also check your email for the unique link to join online sessions.' %}
+                </h3>
+                {% if request.event %}
+                    <p class="text">
+                        {% translate "Can't find your ticket?" %}
+                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.resend_link' %}">
+                            {% translate 'Resend the email' %}
+                        </a>
+                        {% translate 'to receive it.' %}
+                    </p>
+                    <p class="text">
+                        {% translate 'Want to order a ticket?' %}
+                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.index' %}">
+                            {% translate 'Get a ticket here' %}
+                        </a>
+                    </p>
+                {% endif %}
+                {% if not request.user.is_authenticated %}
+                    <p class="text">
+                        {% blocktrans with event_name=event_name %}
+                            Want to create a {{ event_name }} account?
+                        {% endblocktrans %}
+                        <a class="btn btn-link" href="{% url 'eventyay_common:auth.register' %}?next={{ request.get_full_path|urlencode }}">
+                            {% translate 'Sign up here' %}
+                        </a>
+                    </p>
+                    <p class="text">
+                        {% blocktrans with event_name=event_name %}
+                            Already have a {{ event_name }} account?
+                        {% endblocktrans %}
+                        <a class="btn btn-link" href="{% url 'eventyay_common:auth.login' %}?next={{ request.get_full_path|urlencode }}">
+                            {% translate 'Login here' %}
+                        </a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="join-online-close">
+            <button id="join-online-close-button" class="btn btn-default join-online-close-button" style="color: black;">Close</button>
+        </div>
+    </div>
+</div>

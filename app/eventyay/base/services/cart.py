@@ -1000,7 +1000,9 @@ class CartManager:
         vouchers_ok = {}
         self._voucher_depend_on_cart = set()
         for voucher, count in self._voucher_use_diff.items():
-            voucher.refresh_from_db()
+            # Use pessimistic locking to prevent race conditions
+            # This ensures only one thread can check and modify voucher availability at a time
+            voucher = Voucher.objects.select_for_update().get(pk=voucher.pk)
 
             if voucher.valid_until is not None and voucher.valid_until < self.now_dt:
                 raise CartError(error_messages['voucher_expired'])
@@ -1010,6 +1012,11 @@ class CartManager:
             ).exclude(pk__in=[op.position.id for op in self._operations if isinstance(op, self.ExtendOperation)])
             cart_count = redeemed_in_carts.count()
             v_avail = voucher.max_usages - voucher.redeemed - cart_count
+            
+            # Validate availability after acquiring lock to prevent over-redemption
+            if v_avail < count:
+                raise CartError(error_messages['voucher_redeemed'])
+            
             if cart_count > 0:
                 self._voucher_depend_on_cart.add(voucher)
             vouchers_ok[voucher] = v_avail

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% block form %}
+    {% comment %} TODO: Reintroduce component selection when unified component initialization is stable.
     <div class="form-group">
         <label class="col-md-3 control-label">{% trans "Create this event for" %}</label>
         <div class="col-md-9">
@@ -42,6 +43,7 @@
         </div>
     </div>
     {% bootstrap_field form.is_video_creation layout="horizontal" %}
+    {% endcomment %}
     {% bootstrap_field form.organizer layout="horizontal" %}
     <div class="form-group">
         <label class="col-md-3 control-label">{% trans "Event type" %}</label>
@@ -87,5 +89,9 @@
                 </div>
             </div>
         </div>
-    {% bootstrap_field form.locales layout="horizontal" %}
+    <fieldset>
+        <legend>{% trans "Localization" %}</legend>
+        {% bootstrap_field form.locales layout="horizontal" %}
+        {% bootstrap_field form.content_locales layout="horizontal" %}
+    </fieldset>
 {% endblock %}

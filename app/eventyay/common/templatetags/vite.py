@@ -1,93 +1,90 @@
-import json
 import logging
+from functools import lru_cache
+from pathlib import Path
+from typing import cast
 from urllib.parse import urljoin
 
+import msgspec
 from django import template
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.safestring import mark_safe
 
 register = template.Library()
-LOGGER = logging.getLogger(__name__)
-_MANIFEST = {}
+logger = logging.getLogger(__name__)
 
-# Try to load manifests from both global-nav-menu and schedule-editor directories
-MANIFEST_PATHS = [
-    settings.BASE_DIR / 'static' / 'schedule-editor' / 'pretalx-manifest.json',
-    settings.BASE_DIR / 'static' / 'global-nav-menu' / 'pretalx-manifest.json',
-    settings.STATIC_ROOT / 'pretalx-manifest.json'
-]
-
-# We're building the manifest if we don't have a dev server running AND if we're
-# not currently running `rebuild` (which creates the manifest in the first place).
-if not settings.VITE_DEV_MODE and not settings.VITE_IGNORE:
-    for manifest_path in MANIFEST_PATHS:
-        try:
-            with open(manifest_path) as fp:
-                _MANIFEST = json.load(fp)
-                LOGGER.info(f'Loaded vite manifest from {manifest_path}')
-                break
-        except Exception as e:
-            LOGGER.warning(f'Error reading vite manifest at {manifest_path}: {str(e)}')
-            continue
+# The vite_asset tag is only used for schedule-editor app, we only need find manifest.json file
+# for this app.
+MANIFEST_PATH = cast(Path, settings.STATIC_ROOT) / 'schedule-editor' / 'schedule-editor-manifest.json'
 
 
-def _get_manifest_subdir():
-    """Determine which subdirectory the current manifest belongs to."""
-    for manifest_path in MANIFEST_PATHS:
-        if manifest_path.exists():
-            if 'schedule-editor' in str(manifest_path):
-                return 'schedule-editor'
-            elif 'global-nav-menu' in str(manifest_path):
-                return 'global-nav-menu'
-    return ''
+class ViteManifestEntry(msgspec.Struct, forbid_unknown_fields=False):
+    """Typed Vite manifest entry (following Vite's manifest.json).
 
-def generate_script_tag(path, attrs):
+    Defining an expected structure will help decoding JSON faster and safer.
+    """
+
+    file: str
+    css: list[str] = msgspec.field(default_factory=list)
+    imports: list[str] = msgspec.field(default_factory=list)
+    # There are other fields, but we don't need them.
+
+
+ManifestMapping = dict[str, ViteManifestEntry]
+
+
+@lru_cache(maxsize=1)
+def load_mapping() -> ManifestMapping:
+    """Loads the Vite manifest file mapping using msgspec for fast decoding."""
+    try:
+        return msgspec.json.decode(MANIFEST_PATH.read_text(), type=ManifestMapping)
+    except FileNotFoundError as e:
+        raise ImproperlyConfigured(f'Vite manifest not found at {MANIFEST_PATH}.') from e
+    except OSError as e:
+        raise ImproperlyConfigured(f'Error reading Vite manifest at {MANIFEST_PATH}: {e}') from e
+    except (msgspec.DecodeError, msgspec.ValidationError) as e:
+        raise ImproperlyConfigured(f'Vite manifest at {MANIFEST_PATH} has an unexpected format.') from e
+
+
+def generate_script_tag(path: str, attrs: dict[str, str]) -> str:
     all_attrs = ' '.join(f'{key}="{value}"' for key, value in attrs.items())
     if settings.VITE_DEV_MODE:
         src = urljoin(settings.VITE_DEV_SERVER, path)
     else:
-        subdir = _get_manifest_subdir()
-        if subdir:
-            src = urljoin(settings.STATIC_URL, f'{subdir}/{path}')
-        else:
-            src = urljoin(settings.STATIC_URL, path)
+        src = urljoin(settings.STATIC_URL, f'schedule-editor/{path}')
     return f'<script {all_attrs} src="{src}"></script>'
 
 
-def generate_css_tags(asset, already_processed=None):
+def generate_css_tags(asset: str, already_processed: list[str], static_files_mapping: ManifestMapping) -> list[str]:
     """Recursively builds all CSS tags used in a given asset.
 
     Ignore the side effects."""
     tags = []
-    manifest_entry = _MANIFEST[asset]
-    if already_processed is None:
-        already_processed = []
+    manifest_entry = static_files_mapping[asset]
 
     # Put our own CSS file first for specificity
-    if 'css' in manifest_entry:
-        for css_path in manifest_entry['css']:
+    if manifest_entry.css:
+        for css_path in manifest_entry.css:
             if css_path not in already_processed:
-                subdir = _get_manifest_subdir()
-                if subdir:
-                    full_path = urljoin(settings.STATIC_URL, f'{subdir}/{css_path}')
-                else:
-                    full_path = urljoin(settings.STATIC_URL, css_path)
+                full_path = urljoin(settings.STATIC_URL, f'schedule-editor/{css_path}')
                 tags.append(f'<link rel="stylesheet" href="{full_path}" />')
             already_processed.append(css_path)
 
     # Import each file only one by way of side effects in already_processed
-    if 'imports' in manifest_entry:
-        for import_path in manifest_entry['imports']:
-            tags += generate_css_tags(import_path, already_processed)
+    if manifest_entry.imports:
+        for import_path in manifest_entry.imports:
+            tags += generate_css_tags(import_path, already_processed, static_files_mapping)
 
     return tags
 
 
 @register.simple_tag
 @mark_safe
-def vite_asset(path):
+def vite_asset(path: str) -> str:
     """
     Generates one <script> tag and <link> tags for each of the CSS dependencies.
+
+    Only applied for schedule-editor related assets.
     """
 
     if not path:
@@ -96,18 +93,24 @@ def vite_asset(path):
     if settings.VITE_DEV_MODE:
         return generate_script_tag(path, {'type': 'module'})
 
-    manifest_entry = _MANIFEST.get(path)
-    if not manifest_entry:
-        raise RuntimeError(f'Cannot find {path} in Vite manifest at {MANIFEST_PATH}')
+    static_files_mapping = load_mapping()
+    manifest_entry = static_files_mapping.get(path)
+    if manifest_entry is None:
+        msg = (
+            f'Cannot find {path} in Vite manifest at {MANIFEST_PATH}.'
+            if MANIFEST_PATH.exists()
+            else f'Vite manifest {MANIFEST_PATH} not found.'
+        )
+        raise ImproperlyConfigured(msg)
 
-    tags = generate_css_tags(path)
-    tags.append(generate_script_tag(manifest_entry['file'], {'type': 'module', 'crossorigin': ''}))
+    tags = generate_css_tags(path, [], static_files_mapping)
+    tags.append(generate_script_tag(manifest_entry.file, {'type': 'module', 'crossorigin': ''}))
     return ''.join(tags)
 
 
 @register.simple_tag
 @mark_safe
-def vite_hmr():
+def vite_hmr() -> str:
     if not settings.VITE_DEV_MODE:
         return ''
     return generate_script_tag('@vite/client', {'type': 'module'})

@@ -26,12 +26,14 @@
         </div>
     {% endif %}
     <div id="main-title" class="d-md-flex justify-content-between">
-        <h2>
-            <span>
+        <div class="navigation-title">
+            <h2>
                 {{ request.event.name }}
-                <small class="text-muted small">{{ request.event.get_date_range_display }}</small>
-            </span>
-        </h2>
+                <small class="event-date text-muted">
+                    {{ request.event.get_date_range_display }}
+                </small>
+            </h2>
+        </div>
         {% include "orga/event/component_link.html" %}
     </div>
     <div id="timeline-steps" class="stages">
@@ -64,7 +66,7 @@
         {% if can_change_settings %}
             <a href="{{ request.event.orga_urls.live }}" class="dashboard-block">
                 <div class="dashboard-live-text">
-                    {% translate "Your event is currently" %}
+                    {% translate "Your talk component is currently" %}
                 </div>
                 {% if request.event.is_public %}
                     <div class="dashboard-live text-success">

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load rich_text %}
 
+{% load presale_locale %}
 <div class="pretalx-session{% if request.user in session.submission.speakers.all %} session-highlight{% endif %}{% if session.is_active %} active{% endif %}{% if session.submission.state == "accepted" %} accepted{% endif %}{% if not session.submission %} break{% endif %}"
      id="{{ session.submission.code|default:"break" }}"
      style="--track-color:{% if not session.submission %}#ccc{% elif request.event|get_feature_flag:"use_tracks" and session.submission.track and session.submission.track.color %}{{ session.submission.track.color }}{% else %}{{ request.event.visible_primary_color }}{% endif %}">
@@ -17,7 +18,7 @@
     <div class="pretalx-session-info">
         <div class="title">
             {% if not session.submission %}
-                {{ session.description }}
+                {{ session.description|event_localize }}
             {% elif session.submission.is_deleted %}
                 <span class="pretalx-session-title">[{{ phrases.submission.deleted }}]</span>
             {% else %}
@@ -27,21 +28,21 @@
                         <i class="fa fa-ban do-not-record fa-stack-2x" aria-hidden="true" title="{{ phrases.agenda.schedule_do_not_record }}"></i>
                     </span>
                 {% endif %}
-                {{ session.submission.title }}
+                {{ session.submission.title|event_localize }}
             {% endif %}
         </div>
         {% if session.submission and session.submission.speakers %}
             <div class="speakers">{{ session.submission.display_speaker_names }}</div>
         {% endif %}
         {% if session.submission and session.submission.abstract %}
-            <div class="abstract">{{ session.submission.abstract|rich_text_without_links }}</div>
+            <div class="abstract">{{ session.submission.abstract|event_localize|rich_text_without_links }}</div>
         {% endif %}
         <div class="bottom-info">
             <div class="track">
-                {% if session.submission and session.submission.track %}{{ session.submission.track.name|default:"" }}{% endif %}
+                {% if session.submission and session.submission.track %}{{ session.submission.track.name|event_localize|default:"" }}{% endif %}
             </div>
             <div class="room">
-                {% if session.room %}{{ session.room.name|default:"" }}{% endif %}
+                {% if session.room %}{{ session.room.name|event_localize|default:"" }}{% endif %}
             </div>
         </div>
     </div>

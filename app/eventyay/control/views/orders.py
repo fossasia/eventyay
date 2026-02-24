@@ -251,15 +251,16 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
         for o in ctx['orders']:
             if o.pk not in annotated:
                 continue
-            o.pcnt = annotated.get(o.pk)['pcnt']
-            o.is_overpaid = annotated.get(o.pk)['is_overpaid']
-            o.is_underpaid = annotated.get(o.pk)['is_underpaid']
-            o.is_pending_with_full_payment = annotated.get(o.pk)['is_pending_with_full_payment']
-            o.has_external_refund = annotated.get(o.pk)['has_external_refund']
-            o.has_pending_refund = annotated.get(o.pk)['has_pending_refund']
-            o.has_cancellation_request = annotated.get(o.pk)['has_cancellation_request']
-            o.computed_payment_refund_sum = annotated.get(o.pk)['computed_payment_refund_sum']
-            o.icnt = annotated.get(o.pk)['icnt']
+            data = annotated[o.pk]
+            o.pcnt = data['pcnt']
+            o.is_overpaid = data['is_overpaid']
+            o.is_underpaid = data['is_underpaid']
+            o.is_pending_with_full_payment = data['is_pending_with_full_payment']
+            o.has_external_refund = data['has_external_refund']
+            o.has_pending_refund = data['has_pending_refund']
+            o.has_cancellation_request = data['has_cancellation_request']
+            o.computed_payment_refund_sum = data['computed_payment_refund_sum']
+            o.icnt = data['icnt']
             o.sales_channel_obj = scs[o.sales_channel]
 
         if ctx['page_obj'].paginator.count < 1000:

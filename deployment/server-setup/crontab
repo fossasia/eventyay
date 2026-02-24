@@ -1,0 +1,14 @@
+# crontab for user running our docker process (usually "fossasia") on eventyay servers
+# Things to do and change before installing this:
+# * make sure that $LOGDIR exists and writable to the user
+# * change the DEPLOYMENT_DIRECTORY to point to the directory of the deployment with the .env file
+# * change the UUID-* values to proper ones from https://healthchecks.io/
+SHELL=/usr/bin/bash
+LOGDIR=/var/log/eventyay
+BINDIR=/usr/local/bin
+MONITOR=/usr/local/bin/healthchecks-monitor.sh
+DEPLOYMENT_DIRECTORY=_CHANGE_THAT_FULL_PATH_TO_DIRECTORY_CONTAINING_DOT_ENV_
+0 2 * * * ($MONITOR 'UUID-DB-BACKUP' $BINDIR/db_backup.sh $DEPLOYMENT_DIRECTORY/.env) >> $LOGDIR/db-bak.log 2>&1
+0 */12 * * * ($MONITOR 'UUID-MEDIA-BACKUP' $BINDIR/media_backup.sh $DEPLOYMENT_DIRECTORY/.env) >> $LOGDIR/media-bak.log 2>&1
+0 3 * * 7 ($MONITOR 'UUID-DOCKER-PRUNE' '/usr/bin/docker system prune -f') >> $LOGDIR/docker-prune.log 2>&1
+0 11 * * * /usr/local/bin/check_disk_space.sh -d $DEPLOYMENT_DIRECTORY -d /

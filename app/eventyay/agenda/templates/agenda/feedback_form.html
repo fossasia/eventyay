@@ -2,6 +2,7 @@
 
 {% load i18n %}
 
+{% load presale_locale %}
 {% block agenda_custom_header %}
     {% include "cfp/includes/forms_header.html" %}
 {% endblock %}
@@ -9,7 +10,7 @@
 {% block content %}
 
     <h3 class="talk-title">
-        <a href="{{ talk.urls.public }}">{{ quotation_open }}{{ talk.title }}{{ quotation_close }}</a>
+        <a href="{{ talk.urls.public }}">{{ quotation_open }}{{ talk.title|event_localize }}{{ quotation_close }}</a>
     </h3>
     <div class="talk row">
         <div class="talk-content">

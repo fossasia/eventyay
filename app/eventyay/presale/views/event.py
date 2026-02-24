@@ -47,6 +47,7 @@ from eventyay.base.models import (
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import (
     ProductBundle,
+    ProductMetaValue,
     SubEventProduct,
     SubEventProductVariation,
 )
@@ -72,13 +73,6 @@ from . import (
     get_cart,
     iframe_entry_view_wrapper,
 )
-
-package_name = 'pretix_venueless'
-
-if importlib.util.find_spec(package_name) is not None:
-    pretix_venueless = import_module(package_name)
-else:
-    pretix_venueless = None
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -250,6 +244,15 @@ def get_grouped_products(
         qa.compute()
         quota_cache.update({q.pk: r for q, r in qa.results.items()})
 
+    product_ids = [p.pk for p in products]
+    limit_one_per_user_product_ids = set(
+        ProductMetaValue.objects.filter(
+            product_id__in=product_ids,
+            property__event=event,
+            property__name='limit_one_per_user',
+        ).values_list('product_id', flat=True)
+    )
+
     for product in products:
         if voucher and voucher.product_id and voucher.variation_id:
             # Restrict variations if the voucher only allows one
@@ -291,10 +294,17 @@ def get_grouped_products(
                 product._remove = True
                 continue
 
+            product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+
             product.order_max = min(
                 product.cached_availability[1] if product.cached_availability[1] is not None else sys.maxsize,
                 max_per_order,
             )
+
+            if product.limit_one_per_user:
+                product.order_max = min(product.order_max, 1)
+                if product.min_per_order and product.min_per_order > 1:
+                    product.min_per_order = 1
 
             original_price = product_price_override.get(product.pk, product.default_price)
             if voucher:
@@ -320,6 +330,11 @@ def get_grouped_products(
 
             display_add_to_cart = display_add_to_cart or product.order_max > 0
         else:
+            product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+
+            if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
+                product.min_per_order = 1
+
             for var in product.available_variations:
                 var.description = str(var.description)
                 for recv, resp in product_description.send(sender=event, product=product, variation=var):
@@ -340,6 +355,11 @@ def get_grouped_products(
                     var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
                     max_per_order,
                 )
+
+                if product.limit_one_per_user:
+                    var.order_max = min(var.order_max, 1)
+                    if hasattr(var, 'min_per_order') and var.min_per_order and var.min_per_order > 1:
+                        var.min_per_order = 1
 
                 original_price = var_price_override.get(var.pk, var.price)
                 if voucher:
@@ -530,15 +550,21 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['cart'] = self.get_cart()
         context['has_addon_choices'] = any(cp.has_addon_choices for cp in get_cart(self.request))
         if self.subevent:
-            context['frontpage_text'] = str(self.subevent.frontpage_text)
+            context['frontpage_text'] = self.subevent.frontpage_text
         else:
-            context['frontpage_text'] = str(self.request.event.settings.frontpage_text)
+            context['frontpage_text'] = self.request.event.settings.frontpage_text
 
         if self.request.event.has_subevents:
             context.update(self._subevent_list_context())
 
-        context['show_cart'] = context['cart']['positions'] and (
-            self.request.event.has_subevents or self.request.event.presale_is_running
+        context['can_view_tickets'] = self.request.event.user_can_view_tickets(
+            self.request.user,
+            request=self.request,
+        )
+        context['show_cart'] = (
+            context['can_view_tickets']
+            and context['cart']['positions']
+            and (self.request.event.has_subevents or self.request.event.presale_is_running)
         )
         if self.request.event.settings.redirect_to_checkout_directly:
             context['cart_redirect'] = eventreverse(
@@ -570,26 +596,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             event_name = event_name_data
 
         context['event_name'] = event_name
-
-        context['is_video_plugin_enabled'] = False
-
-        if (
-            getattr(
-                getattr(getattr(pretix_venueless, 'apps', None), 'PluginApp', None),
-                'name',
-                None,
-            )
-            in self.request.event.get_plugins()
-        ):
-            context['is_video_plugin_enabled'] = True
-
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
-
-        if not context['guest_checkout_allowed'] and not self.request.user.is_authenticated:
-            messages.error(
-                self.request,
-                _('This event only available for registered users. Please login to continue.'),
-            )
 
         return context
 
@@ -844,10 +851,9 @@ class EventAuth(View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class JoinOnlineVideoView(EventViewMixin, View):
     def get(self, request, *args, **kwargs):
-        # First check if video plugin is installed and values is set
+        # First check if video is configured
         if (
-            'pretix_venueless' not in self.request.event.get_plugins()
-            or not self.request.event.settings.venueless_url
+            not self.request.event.settings.venueless_url
             or not self.request.event.settings.venueless_issuer
             or not self.request.event.settings.venueless_audience
             or not self.request.event.settings.venueless_secret

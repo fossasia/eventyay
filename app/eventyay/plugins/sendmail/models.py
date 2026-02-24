@@ -60,13 +60,13 @@ class EmailQueue(models.Model):
     :type attachments: list[str]
 
     :param created: Timestamp of when the queued mail was created.
-    :type created: datetime
+    :type created: datetime.datetime
 
     :param updated: Timestamp of the last update.
-    :type updated: datetime
+    :type updated: datetime.datetime
 
     :param sent_at: When the email was sent (fully completed).
-    :type sent_at: datetime or None
+    :type sent_at: datetime.datetime or None
     """
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="email_queue")
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
@@ -121,7 +121,7 @@ class EmailQueue(models.Model):
         for recipient in recipients:
             if recipient.sent:
                 continue
-            self._send_to_recipient(recipient, subject, message)
+            self._send_to_recipient(recipient, subject, message, async_send=async_send)
 
         self._finalize_send_status()
         return True
@@ -147,7 +147,7 @@ class EmailQueue(models.Model):
         self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
         self.save(update_fields=["sent_at"])
 
-    def _send_to_recipient(self, recipient, subject, message):
+    def _send_to_recipient(self, recipient, subject, message, async_send=True):
         from eventyay.base.services.mail import SendMailException
         email = recipient.email
         if not email:
@@ -185,6 +185,7 @@ class EmailQueue(models.Model):
                 attach_cached_files=self.attachments,
                 user=self.user,
                 auto_email=False,
+                sync_send=not async_send,
             )
             recipient.sent = True
             recipient.error = None
@@ -359,16 +360,16 @@ class EmailQueueFilter(models.Model):
     :type subevent: int or None
     
     :param subevents_from: Filter subevents from this date/time onward.
-    :type subevents_from: datetime or None
+    :type subevents_from: datetime.datetime or None
     
     :param subevents_to: Filter subevents up to this date/time.
-    :type subevents_to: datetime or None
+    :type subevents_to: datetime.datetime or None
     
     :param order_created_from: Include orders created after this date/time.
-    :type order_created_from: datetime or None
+    :type order_created_from: datetime.datetime or None
     
     :param order_created_to: Include orders created before this date/time.
-    :type order_created_to: datetime or None
+    :type order_created_to: datetime.datetime or None
     
     :param orders: Explicit order IDs to include.
     :type orders: list[int]

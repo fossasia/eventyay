@@ -2,7 +2,8 @@
 
 {% load i18n %}
 
-{% block title %}{{ proposal.title }} :: {% endblock title %}
+{% load presale_locale %}
+{% block title %}{{ proposal.title|event_localize }} :: {% endblock title %}
 
 {% block content %}
 

@@ -11,7 +11,7 @@ $(function () {
     // TODO: The URL hardcode here is ugly, but we will implement a new dropdown menu in the future.
 
     const ticketsPath = `/control/`;
-    const talksPath = `/orga/event/`
+    const talksPath = `/orga/event/`;
     const mainDashboardPath = `/common/`;
     const orderPath = `/common/orders/`;
     const sessionPath = `/common/sessions/`;

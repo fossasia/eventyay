@@ -16,7 +16,10 @@
 		{% bootstrap_form_errors form type='all' layout='inline' %}
 		{% csrf_token %}
 		{% bootstrap_field form.email %}
-		{% bootstrap_field form.password %}
+        {% bootstrap_field form.password %}
+        {% if show_password_requirement_help %}
+        <p class="help-block">{{ password_requirement }}</p>
+        {% endif %}
         {% bootstrap_field form.password_repeat %}
 		<div class="form-group buttons">
             <a href="{% url "eventyay_common:auth.login" %}" class="btn btn-link">

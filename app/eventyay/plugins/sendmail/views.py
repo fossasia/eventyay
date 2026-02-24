@@ -1,5 +1,5 @@
-import bleach
 import logging
+import nh3
 import uuid
 from django.contrib import messages
 from django.db import transaction
@@ -127,7 +127,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
                             v.render_sample(self.request.event),
                         )
 
-                    subject = bleach.clean(form.cleaned_data['subject'].localize(l), tags=[])
+                    subject = nh3.clean(form.cleaned_data['subject'].localize(l), tags=set())
                     preview_subject = subject.format_map(context_dict)
                     message = form.cleaned_data['message'].localize(l)
                     preview_text = markdown_compile_email(message.format_map(context_dict))

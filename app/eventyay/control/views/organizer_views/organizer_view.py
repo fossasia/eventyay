@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Max, Min, Prefetch, ProtectedError
@@ -33,6 +33,7 @@ from eventyay.control.forms.organizer_forms import (
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
+    OrganizerCreationPermissionMixin,
     OrganizerPermissionRequiredMixin,
 )
 from eventyay.control.signals import nav_organizer
@@ -52,13 +53,16 @@ from .organizer_detail_view_mixin import OrganizerDetailViewMixin
 logger = logging.getLogger(__name__)
 
 
-class OrganizerCreate(CreateView):
+class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     model = Organizer
     form_class = OrganizerForm
     template_name = 'pretixcontrol/organizers/create.html'
     context_object_name = 'organizer'
 
     def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to create organizers
+        if not self._can_create_organizer(request.user):
+            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
@@ -67,7 +71,7 @@ class OrganizerCreate(CreateView):
         ret = super().form_valid(form)
         t = Team.objects.create(
             organizer=form.instance,
-            name=_('Administrators'),
+            name=_('Core Organizing Team'),
             all_events=True,
             can_create_events=True,
             can_change_teams=True,
@@ -77,8 +81,20 @@ class OrganizerCreate(CreateView):
             can_change_items=True,
             can_view_orders=True,
             can_change_orders=True,
+            can_checkin_orders=True,
             can_view_vouchers=True,
             can_change_vouchers=True,
+            can_change_submissions=True,
+            is_reviewer=True,
+            can_video_create_stages=True,
+            can_video_create_channels=True,
+            can_video_direct_message=True,
+            can_video_manage_announcements=True,
+            can_video_view_users=True,
+            can_video_manage_users=True,
+            can_video_manage_rooms=True,
+            can_video_manage_kiosks=True,
+            can_video_manage_configuration=True,
         )
         t.members.add(self.request.user)
         return ret
@@ -147,7 +163,7 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
             )
 
         if change_css:
-            regenerate_organizer_css.apply_async(args=(self.request.organizer.pk,))
+            transaction.on_commit(lambda: regenerate_organizer_css.apply_async(args=(self.request.organizer.pk,)))
             messages.success(
                 self.request,
                 _(
@@ -163,13 +179,15 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         if self.request.user.has_active_staff_session(self.request.session.session_key):
-            kwargs['domain'] = True
+            # Custom domain feature is temporarily disabled.
+            # Uncomment when the feature is ready for re-enablement.
+            # kwargs['domain'] = True
             kwargs['change_slug'] = True
         return kwargs
 
     def get_success_url(self) -> str:
         return reverse(
-            'control:organizer.edit',
+            'eventyay_common:organizer.edit',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },
@@ -237,7 +255,7 @@ class OrganizerDisplaySettings(OrganizerDetailViewMixin, OrganizerPermissionRequ
     def get(self, request, *wargs, **kwargs):
         return redirect(
             reverse(
-                'control:organizer.edit',
+                'eventyay_common:organizer.edit',
                 kwargs={
                     'organizer': self.request.organizer.slug,
                 },
@@ -281,13 +299,6 @@ class OrganizerSettingsFormView(OrganizerDetailViewMixin, OrganizerPermissionReq
                 _('We could not save your changes. See below for details.'),
             )
             return self.get(request)
-
-
-class OrganizerTeamView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DetailView):
-    model = Organizer
-    template_name = 'pretixcontrol/organizers/teams.html'
-    permission = 'can_change_permissions'
-    context_object_name = 'organizer'
 
 
 class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
@@ -362,7 +373,7 @@ class OrganizerDetailViewMixin:
         return self.request.organizer
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'pretixcontrol/organizers/index.html'
@@ -379,6 +390,7 @@ class OrganizerList(PaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
         return ctx
 
     @cached_property
@@ -394,7 +406,7 @@ class BillingSettings(FormView, OrganizerPermissionRequiredMixin):
 
     def get_success_url(self):
         return reverse(
-            'control:organizer.settings.billing',
+            'eventyay_common:organizer.billing',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },
