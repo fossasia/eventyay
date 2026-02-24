@@ -208,6 +208,19 @@ input[type="file"] {
   }
 }
 
+.form-check {
+  display: block;
+  min-height: 1.5rem;
+  padding-left: 1.25rem;
+  margin-bottom: 0.125rem;
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    float: left;
+    margin-left: -1.25rem;
+  }
+}
+
 input[type="checkbox"],
 input[type="radio"] {
   -moz-appearance: none;
@@ -233,12 +246,15 @@ input[type="radio"] {
     pointer-events: none;
   }
 
-  & + label {
+  & + label,
+  & ~ .form-check-label {
     cursor: pointer;
     font-weight: normal;
     padding-left: 8px;
-    vertical-align: super;
+    vertical-align: middle;
     font-size: 1rem;
+    display: inline-block;
+    flex-direction: row;
     & ~ a .badge,
     & ~ .badge {
       /* This is primarily for the multi_languages_widget.html badges */
