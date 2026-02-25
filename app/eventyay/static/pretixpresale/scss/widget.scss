@@ -6,6 +6,7 @@
   display: none;
 }
 .pretix-widget, .pretix-widget-alert-box {
+  font-family: $font-family-sans-serif;
   a {
     color: $link-color;
     text-decoration: none;

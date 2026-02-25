@@ -675,7 +675,7 @@ export default {
 		cursor: pointer
 		height: 32px
 		padding: 0 10px
-		border-radius: 2px
+		border-radius: 3px
 		font-size: 14px
 		display: flex
 		align-items: center
