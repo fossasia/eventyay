@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Event
 from eventyay.control.navigation import merge_in
-from eventyay.control.signals import nav_global
+from eventyay.control.signals import nav_global, nav_organizer
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     )
     if not has_settings_perm:
         return []
-    nav = [
+    return [
         {
             'label': _('Settings'),
             'url': reverse(
@@ -108,6 +108,147 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
         },
     ]
 
+
+def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
+    url = request.resolver_match
+    if not url:
+        return []
+    nav = [
+        {
+            'label': _('Events'),
+            'url': reverse('eventyay_common:organizer.events', kwargs={'organizer': request.organizer.slug}),
+            'active': url.url_name == 'organizer.events',
+            'icon': 'calendar',
+        },
+    ]
+    orgapermset = getattr(request, 'orgapermset', None)
+    if orgapermset is None:
+        return get_global_navigation(request)
+    if 'can_change_organizer_settings' in orgapermset:
+        nav.append(
+            {
+                'label': _('Settings'),
+                'url': reverse(
+                    'eventyay_common:organizer.edit',
+                    kwargs={'organizer': request.organizer.slug},
+                ),
+                'icon': 'wrench',
+                'children': [
+                    {
+                        'label': _('General'),
+                        'url': reverse(
+                            'eventyay_common:organizer.edit',
+                            kwargs={'organizer': request.organizer.slug},
+                        ),
+                        'active': url.url_name == 'organizer.edit',
+                    },
+                    # Temporary disabled
+                    # {
+                    #     'label': _('Event metadata'),
+                    #     'url': reverse('control:organizer.properties', kwargs={
+                    #         'organizer': request.organizer.slug
+                    #     }),
+                    #     'active': url.url_name.startswith('organizer.propert'),
+                    # },
+                    # {
+                    #     'label': _('Webhooks'),
+                    #     'url': reverse('control:organizer.webhooks', kwargs={
+                    #         'organizer': request.organizer.slug
+                    #     }),
+                    #     'active': 'organizer.webhook' in url.url_name,
+                    #     'icon': 'bolt',
+                    # },
+                    {
+                        'label': _('Billing settings'),
+                        'url': reverse(
+                            'eventyay_common:organizer.billing',
+                            kwargs={'organizer': request.organizer.slug},
+                        ),
+                        'active': url.url_name == 'organizer.billing',
+                    },
+                ],
+            }
+        )
+    if 'can_change_teams' in request.orgapermset:
+        nav.append(
+            {
+                'label': _('Teams'),
+                'url': reverse(
+                    'eventyay_common:organizer.teams',
+                    kwargs={'organizer': request.organizer.slug},
+                )
+                + '?section=permissions',
+                'active': url.url_name == 'organizer.teams',
+                'icon': 'group',
+            }
+        )
+
+    # if 'can_manage_gift_cards' in request.orgapermset:
+    #     nav.append({
+    #         'label': _('Gift cards'),
+    #         'url': reverse('control:organizer.giftcards', kwargs={
+    #             'organizer': request.organizer.slug
+    #         }),
+    #         'active': 'organizer.giftcard' in url.url_name,
+    #         'icon': 'credit-card',
+    #     })
+    if 'can_change_organizer_settings' in request.orgapermset:
+        nav.append(
+            {
+                'label': _('Devices'),
+                'url': reverse(
+                    'eventyay_common:organizer.devices',
+                    kwargs={'organizer': request.organizer.slug},
+                ),
+                'icon': 'tablet',
+                'children': [
+                    {
+                        'label': _('Devices'),
+                        'url': reverse(
+                            'eventyay_common:organizer.devices',
+                            kwargs={'organizer': request.organizer.slug},
+                        ),
+                        'active': 'organizer.device' in url.url_name,
+                    },
+                    {
+                        'label': _('Gates'),
+                        'url': reverse(
+                            'eventyay_common:organizer.gates',
+                            kwargs={'organizer': request.organizer.slug},
+                        ),
+                        'active': 'organizer.gate' in url.url_name,
+                    },
+                ],
+            }
+        )
+
+    nav.append(
+        {
+            'label': _('Export'),
+            'url': reverse(
+                'eventyay_common:organizer.export',
+                kwargs={
+                    'organizer': request.organizer.slug,
+                },
+            ),
+            'active': 'organizer.export' in url.url_name,
+            'icon': 'download',
+        }
+    )
+
+    merge_in(
+        nav,
+        sorted(
+            sum(
+                (
+                    list(a[1])
+                    for a in nav_organizer.send(request.organizer, request=request, organizer=request.organizer)
+                ),
+                [],
+            ),
+            key=lambda r: (1 if r.get('parent') else 0, r['label']),
+        ),
+    )
     return nav
 
 

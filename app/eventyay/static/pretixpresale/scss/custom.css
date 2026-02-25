@@ -39,7 +39,6 @@ header .header-wrapper {
 }
 
 header .header-row-right {
-    padding-bottom: 4px;
 	color: var(--color-primary);
     margin-left: auto;
     display: flex;
@@ -62,10 +61,6 @@ header .header-row-right {
 
 #main-card {
     margin: 0 auto;
-}
-
-.alert {
-    margin: 16px;
 }
 
 .btn-primary {

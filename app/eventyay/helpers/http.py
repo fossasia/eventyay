@@ -1,3 +1,5 @@
+import socket
+
 from django.conf import settings
 from django.http import (
     HttpResponsePermanentRedirect,
@@ -28,3 +30,14 @@ def get_client_ip(request):
 def redirect_to_url(to, permanent=False):
     redirect_class = HttpResponsePermanentRedirect if permanent else HttpResponseRedirect
     return redirect_class(to)
+
+
+def smtp_reachable(host: str | None, port: int | None, timeout: int | float | None = None) -> bool:
+    if not host or not port:
+        return False
+    connect_timeout = timeout if timeout is not None else 5
+    try:
+        with socket.create_connection((host, int(port)), connect_timeout):
+            return True
+    except (OSError, TypeError, ValueError):
+        return False

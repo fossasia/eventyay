@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8' ?>
+{% load xmlescape %}
+{% load presale_locale %}
+<schedule>
+  {% for slot in talk_slots %}
+  <event guid='{{ slot.uuid }}' id='{{ slot.submission.id }}'>
+    <code>{{ slot.submission.code }}</code>
+    <room>{% if slot.room %}{{ slot.room.name|event_localize|xmlescape }}{% endif %}</room>
+    <title>{{ slot.submission.title|event_localize|xmlescape }}</title>
+    <type>{{ slot.submission.submission_type.name|event_localize|xmlescape }}</type>
+    <date>{{ slot.start|date:"c" }}</date>
+    <start>{{ slot.start|date:"H:i" }}</start>
+    <duration>{{ slot.export_duration }}</duration>
+    <abstract>{{ slot.submission.abstract|event_localize|xmlescape }}</abstract>
+    <slug>{{ slot.frab_slug }}</slug>
+    <track>{% if slot.submission.track %}{{ slot.submission.track.name|event_localize }}{% endif %}</track>
+    {% if slot.submission.urls.image %}<logo>{{ slot.submission.urls.image }}</logo>{% endif %}
+    <persons>
+      {% for person in slot.submission.speakers.all %}<person id='{{ person.id }}'>{{ person.get_display_name|xmlescape }}</person>{% endfor %}
+    </persons>
+    {% if slot.submission.content_locale %}<language>{{ slot.submission.content_locale }}</language>{% endif %}
+    {% if slot.submission.description %}<description>{{ slot.submission.description|event_localize|xmlescape }}</description>{% endif %}
+    <recording>
+      <license>{{ slot.submission.license|xmlescape }}</license>
+      <optout>{{ slot.submission.do_not_record|yesno:"true,false" }}</optout>
+    </recording>
+    <links>{% for resource in slot.submission.resources.all %}{% if resource.link %}
+      <link href="{{ resource.link }}">{{ resource.description|event_localize }}</link>
+    {% endif %}{% endfor %}</links>
+    <attachments>{% for resource in slot.submission.resources.all %}{% if resource.resource %}
+      <attachment href="{{ base_url }}{{ resource.resource.url }}">{{ resource.description|event_localize }}</attachment>
+    {% endif %}{% endfor %}</attachments>
+    <url>{{ slot.submission.urls.public.full }}</url>
+  </event>
+  {% endfor %}
+</schedule>

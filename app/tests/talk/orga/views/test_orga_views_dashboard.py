@@ -52,7 +52,7 @@ def test_event_dashboard(
         event=event,
         person=speaker,
         content_object=slot.submission,
-        action_type="pretalx.submission.create",
+        action_type="eventyay.submission.create",
     )
     if test_user == "speaker":
         orga_client.force_login(speaker)
@@ -75,16 +75,16 @@ def test_event_dashboard(
     elif test_user == "orga":
         assert response.status_code == 200
         assert event.slug in response.text
-        assert speaker.name in response.text
+        assert speaker.fullname in response.text
     elif test_user == "superuser":
         assert response.status_code == 200
         assert event.slug in response.text, response.text
-        assert speaker.name in response.text
+        assert speaker.fullname in response.text
     elif test_user == "reviewer":
         assert not review_user.has_perm("person.orga_list_speakerprofile", event)
         assert response.status_code == 200
         assert event.slug in response.text, response.text
-        assert speaker.name not in response.text
+        assert speaker.fullname not in response.text
     else:
         current_url = response.redirect_chain[-1][0]
         assert "login" in current_url

@@ -291,29 +291,41 @@ def quota_widgets(sender, subevent=None, lazy=False, **kwargs):
 
 @receiver(signal=event_dashboard_widgets)
 def shop_state_widget(sender, **kwargs):
+    request = kwargs.get('request')
+    is_common = bool(request and request.path.startswith('/common/'))
+    label = _('Event is') if is_common else _('Ticket shop is')
+    url_name = 'eventyay_common:event.live' if is_common else 'control:event.live'
     return [
         {
             'display_size': 'small',
             'priority': 1000,
             'content': '<div class="shopstate">{t1}<br><span class="{cls}"><span class="fa {icon}"></span> {state}</span>{t2}</div>'.format(
-                t1=_('Ticket shop is'),
+                t1=label,
                 t2=_('Click here to change'),
-                state=_('live')
-                if sender.live and not sender.testmode
-                else (
-                    _('live and in test mode')
-                    if sender.live
-                    else (_('not yet public') if not sender.testmode else (_('in private test mode')))
+                state=(
+                    _('live (private test mode)')
+                    if sender.live and sender.private_testmode
+                    else (
+                        _('live and in test mode')
+                        if sender.live and sender.testmode
+                        else (
+                            _('live')
+                            if sender.live
+                            else (
+                                _('in private test mode')
+                                if sender.private_testmode
+                                else (_('in test mode') if sender.testmode else _('not yet public'))
+                            )
+                        )
+                    )
                 ),
                 icon='fa-check-circle'
-                if sender.live and not sender.testmode
-                else (
-                    'fa-warning' if sender.live else ('fa-times-circle' if not sender.testmode else ('fa-times-circle'))
-                ),
+                if sender.live and not sender.testmode and not sender.private_testmode
+                else ('fa-warning' if sender.live else 'fa-times-circle'),
                 cls='live' if sender.live else 'off',
             ),
             'url': reverse(
-                'control:event.live',
+                url_name,
                 kwargs={'event': sender.slug, 'organizer': sender.organizer.slug},
             ),
         }
@@ -395,7 +407,12 @@ def event_index(request, organizer, event):
     )
     widgets = []
     if can_view_orders:
-        for r, result in event_dashboard_widgets.send(sender=request.event, subevent=subevent, lazy=True):
+        for r, result in event_dashboard_widgets.send(
+            sender=request.event,
+            subevent=subevent,
+            lazy=True,
+            request=request,
+        ):
             widgets.extend(result)
 
     qs = (
@@ -500,7 +517,12 @@ def event_index_widgets_lazy(request, organizer, event):
             pass
 
     widgets = []
-    for r, result in event_dashboard_widgets.send(sender=request.event, subevent=subevent, lazy=False):
+    for r, result in event_dashboard_widgets.send(
+        sender=request.event,
+        subevent=subevent,
+        lazy=False,
+        request=request,
+    ):
         widgets.extend(result)
 
     return JsonResponse({'widgets': widgets})

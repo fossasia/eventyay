@@ -321,8 +321,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
 class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm
-    template_name = 'orga/submission/content.html'
-    permission_required = 'base.orga_list_submission'
+    template_name = 'orga/submission/content_edit.html'
 
     def get_object(self):
         try:
@@ -444,7 +443,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
     def get_permission_required(self):
         if 'code' in self.kwargs:
-            return ['base.orga_list_submission']
+            return ['base.orga_update_submission']
         return ['base.create_submission']
 
     @property
@@ -509,6 +508,17 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @cached_property
     def can_edit(self):
         return self.object and self.request.user.has_perm('base.orga_update_submission', self.request.event)
+
+
+class SubmissionContentView(SubmissionContent):
+    template_name = "orga/submission/content.html"
+    http_method_names = ['get', 'head', 'options']
+
+    def get_permission_required(self):
+        if "code" in self.kwargs:
+            return ["base.orga_list_submission"]  # View permission for reviewers
+        return ["base.create_submission"]
+  
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
@@ -655,7 +665,7 @@ class Anonymise(SubmissionViewMixin, UpdateView):
 
 class SubmissionHistory(SubmissionViewMixin, ListView):
     template_name = 'orga/submission/history.html'
-    permission_required = 'base.administrator_user'
+    permission_required = 'base.orga_update_submission'
     paginate_by = 200
     context_object_name = 'log_entries'
 
