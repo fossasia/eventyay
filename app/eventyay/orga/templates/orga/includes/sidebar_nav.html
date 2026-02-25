@@ -14,7 +14,7 @@
                 <i class="fa fa-angle-down"></i>
             </a>
         </span>
-        <div class="collapse in{% if nav_element.active %} show{% endif %}" aria-expand="true" id="collapseSidebar{{ forloop.counter }}">
+        <div class="collapse{% if nav_element.active %} show{% endif %}" aria-expanded="{% if nav_element.active %}true{% else %}false{% endif %}" id="collapseSidebar{{ forloop.counter }}">
             {% for child in nav_element.children %}
                 <a href="{{ child.url }}" class="nav-link nav-link-second-level{% if child.active %} active{% endif %}">
                     <span>{{ child.label }}</span>
