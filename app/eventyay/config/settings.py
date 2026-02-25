@@ -4,7 +4,7 @@ import sys
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 from urllib.parse import urlparse
 
 import django.conf.locale
@@ -21,7 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.consts import DEFAULT_PLUGINS, EVENTYAY_EMAIL_NONE_VALUE, SizeKey
+from eventyay.consts import DEFAULT_PLUGINS, SizeKey
 
 
 # To avoid loading unnecessary environment variables
@@ -190,46 +190,17 @@ class BaseSettings(_BaseSettings):
             toml_settings,
         )
 
-    size_limit_mb: dict[str, int] = Field(
-        default_factory=lambda: {
-            "upload_size_csv": 1,
-            "upload_size_image": 10,
-            "upload_size_pdf": 10,
-            "upload_size_xlsx": 2,
-            "upload_size_favicon": 1,
-            "upload_size_attachment": 10,
-            "upload_size_mail": 4,
-            "upload_size_question": 20,
-            "upload_size_other": 10,
-
-            "response_size_webhook": 1,
-        }
-    )
-
-    # Optional single-line override fields.
-    # These allow simple top-level config entries (e.g. `question = 300` in TOML)
-    # to override corresponding entries in `size_limit_mb`.
-    # The dictionary remains the canonical source of truth.
-    upload_size_csv: int | None = None
-    upload_size_image: int | None = None
-    upload_size_pdf: int | None = None
-    upload_size_xlsx: int | None = None
-    upload_size_favicon: int | None = None
-    upload_size_attachment: int | None = None
-    upload_size_mail: int | None = None
-    upload_size_question: int | None = None
-    upload_size_other: int | None = None
-
-    response_size_webhook: int | None = None
-
-    #   Apply top-level single-line size limit overrides to `size_limit_mb`.
-    #   Any override field that is set (not None) will replace the corresponding
-    #   entry in the size_limit_mb dictionary.
-    def apply_size_limit_overrides(self) -> None:
-        for key in self.size_limit_mb:
-            override = getattr(self, key, None)
-            if override is not None:
-                self.size_limit_mb[key] = override
+    # Upload size limit in MB, needs to to in accordance with SizeKey
+    upload_size_csv: int = 1
+    upload_size_image: int = 10
+    upload_size_pdf: int = 10
+    upload_size_xlsx: int = 2
+    upload_size_favicon: int = 1
+    upload_size_attachment: int = 10
+    upload_size_mail: int = 4
+    upload_size_question: int = 20
+    upload_size_other: int = 10
+    response_size_webhook: int = 1
 
 
 def discover_toml_files() -> list[Path]:
@@ -272,9 +243,6 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
-
-# Merge single-line TOML overrides into size_limit_mb
-conf.apply_size_limit_overrides()
 
 # --- Now, provide values to Django's settings. ---
 
@@ -1302,10 +1270,7 @@ FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 BYTES_IN_MB = 1024 * 1024
 
 # Config for max size limits
-MAX_SIZE_CONFIG = {
-    key.value: BYTES_IN_MB * conf.size_limit_mb[key.value]
-    for key in SizeKey
-}
+MAX_SIZE_CONFIG = {key: BYTES_IN_MB * cast(int, getattr(conf, key)) for key in SizeKey}
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
 
