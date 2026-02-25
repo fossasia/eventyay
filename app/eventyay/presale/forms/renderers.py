@@ -171,12 +171,6 @@ class CheckoutFieldRenderer(FieldRenderer):
         Fixes: https://github.com/fossasia/eventyay/issues/1780
         """
         if isinstance(self.field.field.widget, RadioSelect):
-            # Render the RadioSelect widget (produces a <ul> with <li> items)
-            rendered = self.field.field.widget.render(
-                self.field.html_name,
-                self.field.value(),
-                attrs=self.widget.attrs,
-            )
             # Replace each <li>…</li> block with Bootstrap 4 form-check markup.
             # The rendered output looks like:
             #   <ul id="…"><li><label><input … /> Label text</label></li>…</ul>
