@@ -306,11 +306,19 @@ def process_scheduled_emails(sender, **kwargs):
 
             for mail in due_email_queues:
                 try:
-                    mail.send()
-                    logger.info(
-                        "[ScheduledMail] EmailQueue ID %s sent successfully.",
-                        mail.pk
-                    )
+                    sent = mail.send()
+                    if sent:
+                        logger.info(
+                            "[ScheduledMail] EmailQueue ID %s sent successfully.",
+                            mail.pk
+                        )
+                    else:
+                        logger.warning(
+                            "[ScheduledMail] EmailQueue ID %s not sent (send() returned False; no recipients or already sent). Marking as sent to avoid reprocessing.",
+                            mail.pk
+                        )
+                        mail.sent_at = now()
+                        mail.save(update_fields=['sent_at'])
                 except Exception:
                     logger.exception(
                         "[ScheduledMail] Failed to send EmailQueue ID %s",

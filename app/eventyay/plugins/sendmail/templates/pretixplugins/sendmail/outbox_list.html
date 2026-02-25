@@ -148,7 +148,7 @@
 
         {% if mail.recipient_errors_preview %}
         <tr>
-            <td colspan="4">
+            <td colspan="5">
                 <div class="alert alert-warning mb-0">
                     <strong>{% translate "Some emails failed to send:" %}</strong>
                     <ul class="mb-0">
@@ -166,7 +166,7 @@
 
         {% empty %}
         <tr>
-            <td colspan="4">{% translate "No queued mails." %}</td>
+            <td colspan="5">{% translate "No queued mails." %}</td>
         </tr>
         {% endfor %}
     </tbody>
