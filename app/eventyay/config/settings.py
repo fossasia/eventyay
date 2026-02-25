@@ -758,14 +758,6 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
-    'km': {
-        'name': _('Khmer'),
-        'natural_name': 'ខ្មែរ',
-        'bidi': False,
-        'official': False,
-        'percentage': 0,
-        'incubating': False,
-    },
     'id': {
         'name': _('Indonesian'),
         'natural_name': 'Bahasa Indonesia',
@@ -797,6 +789,14 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 88,
+        'incubating': False,
+    },
+    'km': {
+        'name': _('Khmer'),
+        'natural_name': 'ខ្មែរ',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
         'incubating': False,
     },
     'lv': {
