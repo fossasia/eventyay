@@ -12,15 +12,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='orderposition',
             name='pseudonymization_id',
-            field=models.CharField(max_length=16),
+            field=models.CharField(max_length=16, db_index=True),
         ),
         migrations.AlterField(
             model_name='orderposition',
             name='secret',
-            field=models.CharField(max_length=255),
-        ),
-        migrations.AlterUniqueTogether(
-            name='orderposition',
-            unique_together={('secret', 'order__event'), ('pseudonymization_id', 'order__event')},
+            field=models.CharField(max_length=255, db_index=True),
         ),
     ]

@@ -2176,9 +2176,9 @@ class OrderPosition(AbstractPosition):
     tax_rate = models.DecimalField(max_digits=7, decimal_places=2, verbose_name=_('Tax rate'))
     tax_rule = models.ForeignKey('TaxRule', on_delete=models.PROTECT, null=True, blank=True)
     tax_value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Tax value'))
-    secret = models.CharField(max_length=255, null=False, blank=False)
+    secret = models.CharField(max_length=255, null=False, blank=False, db_index=True)
     web_secret = models.CharField(max_length=32, default=generate_secret, db_index=True)
-    pseudonymization_id = models.CharField(max_length=16)
+    pseudonymization_id = models.CharField(max_length=16, db_index=True)
     canceled = models.BooleanField(default=False)
 
     all = ScopedManager(organizer='order__event__organizer')
@@ -2188,7 +2188,6 @@ class OrderPosition(AbstractPosition):
         verbose_name = _('Order position')
         verbose_name_plural = _('Order positions')
         ordering = ('positionid', 'id')
-        unique_together = (('secret', 'order__event'), ('pseudonymization_id', 'order__event'))
 
     @cached_property
     def sort_key(self):
