@@ -209,15 +209,18 @@ input[type="file"] {
 }
 
 .form-check {
-  display: block;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
   min-height: 1.5rem;
-  padding-left: 1.25rem;
-  margin-bottom: 0.125rem;
+  padding-left: 0;
+  margin-bottom: 0.5rem;
+  width: 100%; /* Ensure they take full width to stack vertically */
 
   input[type="checkbox"],
   input[type="radio"] {
-    float: left;
-    margin-left: -1.25rem;
+    margin-right: 8px;
+    flex-shrink: 0;
   }
 }
 
@@ -246,21 +249,41 @@ input[type="radio"] {
     pointer-events: none;
   }
 
+  /* Target labels that wrap inputs (standard Django/Bootstrap structure) */
+  &:has(+ label),
+  /* Target labels that are siblings (alternative structure) */
   & + label,
   & ~ .form-check-label {
     cursor: pointer;
-    font-weight: normal;
-    padding-left: 8px;
+    font-weight: normal !important;
+    padding-left: 0;
     vertical-align: middle;
     font-size: 1rem;
-    display: inline-block;
-    flex-direction: row;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 4px;
     & ~ a .badge,
     & ~ .badge {
       /* This is primarily for the multi_languages_widget.html badges */
       vertical-align: super;
     }
   }
+}
+
+/* Specific fix for labels that wrap inputs where the input is the first child */
+label:has(> input[type="radio"]),
+label:has(> input[type="checkbox"]),
+label.form-check-label {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    font-weight: normal !important;
+    align-items: center;
+    gap: 8px;
+    padding-top: 0;
+    padding-bottom: 0;
+    text-align: left;
+    margin-bottom: 0;
 }
 
 input[type="checkbox"] {
