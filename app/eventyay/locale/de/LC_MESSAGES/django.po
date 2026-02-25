@@ -33427,7 +33427,7 @@ msgid ""
 "                        "
 msgstr ""
 "\n"
-"                            Möchten Sie ein %(event_name)-Konto erstellen?\n"
+"                            Möchten Sie ein %(event_name)s-Konto erstellen?\n"
 "                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:35
@@ -33444,7 +33444,7 @@ msgid ""
 "                        "
 msgstr ""
 "\n"
-"                            Sie haben bereits ein %(event_name)-Konto?\n"
+"                            Sie haben bereits ein %(event_name)s-Konto?\n"
 "                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:43
