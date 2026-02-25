@@ -186,7 +186,12 @@ class CheckoutFieldRenderer(FieldRenderer):
             )
             parts = []
             for subwidget in choices:
-               
+                if subwidget.attrs is None:
+                    subwidget.attrs = {}
+                existing_class = subwidget.attrs.get('class', '')
+                subwidget.attrs['class'] = add_css_class(existing_class, 'form-check-input')
+                input_html = subwidget.tag()
+                
                 label_html = (
                     '<label class="form-check-label" for="{for_id}">{label}</label>'.format(
                         for_id=subwidget.id_for_label,
