@@ -19,7 +19,8 @@
   body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse {
     display: none;
   }
-  body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse.in {
+  body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse.in,
+  body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse.show {
     display: block;
   }
   body:not(.sidebar-minimized) .sidebar .nav > li > a.has-children {

@@ -395,6 +395,10 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 }
 
 @media (max-width: 767px) {
+  :root {
+    --navbar-height: 60px;
+  }
+
   .hidden-xs {
     display: none !important;
   }
@@ -408,14 +412,15 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   }
 
   .navbar-top-links li {
-    height: 50px;
+    min-height: var(--navbar-height);
+    display: flex;
+    align-items: center;
   }
 
   .navbar-top-links li a,
   .navbar-top-links li form button.btn-link {
     padding: 15px;
-    min-height: 50px;
-    height: 50px;
+    min-height: var(--navbar-height);
     font-size: 14px;
     white-space: nowrap;
   }
@@ -429,14 +434,14 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   nav.navbar.navbar-inverse #button-sudo,
   .navbar-inverse #button-sudo {
     padding: 15px;
-    min-height: 50px;
-    height: 50px;
+    min-height: var(--navbar-height);
     font-size: 14px;
     line-height: 20px;
     display: block;
     white-space: nowrap;
   }
+
   #main-title {
-    margin-top: 70px;
+    margin-top: calc(var(--navbar-height) + 10px);
   }
 }
