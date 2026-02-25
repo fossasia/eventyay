@@ -3,6 +3,7 @@
 	.stage(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
 		media-source-placeholder
 		reactions-overlay(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
+		upcoming-stream-countdown(:room="room")
 		.stage-tool-blocker(v-if="activeStageTool !== null", @click="activeStageTool = null")
 		.stage-tools(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
 			// Added dropdown menu for audio translations near the reactions bar
@@ -46,6 +47,7 @@ import PosterHall from 'components/PosterHall'
 import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
+import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
 
 export default {
 	name: 'Room',
@@ -64,7 +66,8 @@ export default {
 		PosterHall,
 		Questions,
 		MediaSourcePlaceholder,
-		AudioTranslationDropdown
+		AudioTranslationDropdown,
+		UpcomingStreamCountdown,
 	},
 	props: {
 		room: Object,
@@ -92,9 +95,18 @@ export default {
 		activeSidebarTab(tab) {
 			this.unreadTabs[tab] = false
 		},
-		room: 'initializeLanguages'
+		room: {
+			handler: 'initializeLanguages',
+			immediate: true
+		},
+		'room.id'(roomId) {
+			this.$store.dispatch('stopStreamPolling')
+			if (roomId) {
+				this.$store.dispatch('startStreamPolling', roomId)
+			}
+		},
 	},
-	created() {
+	async created() {
 		if (this.modules['chat.native']) {
 			this.activeSidebarTab = 'chat'
 		} else if (this.modules.question) {
@@ -102,10 +114,13 @@ export default {
 		} else if (this.modules.poll) {
 			this.activeSidebarTab = 'polls'
 		}
-		this.initializeLanguages()
+		if (this.room) {
+			await this.$nextTick()
+			this.$store.dispatch('startStreamPolling', this.room.id)
+		}
 	},
 	beforeUnmount() {
-		// Reset previousRoomId to avoid leaking stale room IDs if component is reused
+		this.$store.dispatch('stopStreamPolling')
 		this.previousRoomId = null
 	},
 	methods: {

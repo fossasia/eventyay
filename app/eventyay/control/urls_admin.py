@@ -57,6 +57,7 @@ urlpatterns = [
     ),
     url(r'^pages/$', pages.PageList.as_view(), name='admin.pages'),
     url(r'^pages/add$', pages.PageCreate.as_view(), name='admin.pages.add'),
+    path('pages/<int:id>/toggle/<str:scope>/', pages.PageVisibilityToggle.as_view(), name='admin.pages.toggle'),
     url(r'^pages/(?P<id>\d+)/edit$', pages.PageUpdate.as_view(), name='admin.pages.edit'),
     url(r'^pages/(?P<id>\d+)/delete$', pages.PageDelete.as_view(), name='admin.pages.delete'),
     path('config/', admin.SystemConfigView.as_view(), name='admin.config'),

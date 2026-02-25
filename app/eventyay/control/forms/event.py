@@ -36,6 +36,7 @@ from eventyay.base.settings import (
 )
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDateTimeInput
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
     MultipleLanguagesWidget,
@@ -91,6 +92,9 @@ class EventWizardFoundationForm(forms.Form):
         self.user = kwargs.pop('user')
         self.session = kwargs.pop('session')
         super().__init__(*args, **kwargs)
+        localized_language_choices = get_language_choices_native_with_ui_name()
+        self.fields['locales'].choices = localized_language_choices
+        self.fields['content_locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
             qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))

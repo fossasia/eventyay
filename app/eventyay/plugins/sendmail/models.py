@@ -121,7 +121,7 @@ class EmailQueue(models.Model):
         for recipient in recipients:
             if recipient.sent:
                 continue
-            self._send_to_recipient(recipient, subject, message)
+            self._send_to_recipient(recipient, subject, message, async_send=async_send)
 
         self._finalize_send_status()
         return True
@@ -147,7 +147,7 @@ class EmailQueue(models.Model):
         self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
         self.save(update_fields=["sent_at"])
 
-    def _send_to_recipient(self, recipient, subject, message):
+    def _send_to_recipient(self, recipient, subject, message, async_send=True):
         from eventyay.base.services.mail import SendMailException
         email = recipient.email
         if not email:
@@ -185,6 +185,7 @@ class EmailQueue(models.Model):
                 attach_cached_files=self.attachments,
                 user=self.user,
                 auto_email=False,
+                sync_send=not async_send,
             )
             recipient.sent = True
             recipient.error = None

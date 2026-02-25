@@ -1,11 +1,14 @@
 import nh3
-from copy import deepcopy
+import json
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import FormView, ListView, TemplateView, UpdateView
 
 from eventyay.base.models.page import Page
@@ -105,6 +108,57 @@ class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateVi
         return super().form_invalid(form)
 
 
+class PageVisibilityToggle(AdministratorPermissionRequiredMixin, PageDetailMixin, View):
+    _field_by_scope = {
+        'startpage': 'link_on_website_start_page',
+        'system': 'link_in_system',
+    }
+
+    def post(self, request, *args, **kwargs):
+        is_json_request = (request.content_type or '').startswith('application/json')
+        data = request.POST
+        if not data:
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except (ValueError, AttributeError):
+                data = {}
+
+        scope = self.kwargs.get('scope')
+        field_name = self._field_by_scope.get(scope)
+        if not field_name:
+            if is_json_request:
+                return JsonResponse({'ok': False, 'error': _('Invalid field.')}, status=400)
+            raise Http404(_('The requested page does not exist.'))
+
+        page = self.get_object()
+        value = data.get('value')
+        if value is None:
+            new_value = not getattr(page, field_name)
+        else:
+            new_value = str(value).lower() in {'true', '1', 'yes', 'on'}
+
+        setattr(page, field_name, new_value)
+        page.save(update_fields=[field_name])
+
+        if is_json_request:
+            return JsonResponse(
+                {
+                    'ok': True,
+                    'startpage': page.link_on_website_start_page,
+                    'system': page.link_in_system,
+                }
+            )
+
+        next_url = request.POST.get('next', '')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(next_url)
+        return redirect('eventyay_admin:admin.pages')
+
+
 class PageDelete(AdministratorPermissionRequiredMixin, PageDetailMixin, CompatDeleteView):
     model = Page
     template_name = 'pretixcontrol/admin/pages/delete.html'
@@ -130,8 +184,8 @@ class ShowPageView(TemplateView):
         ctx = super().get_context_data()
         page = self.get_page()
         ctx['page'] = page
-        ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
-        ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
+        ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
+        ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
 
         attributes = {
             **nh3.ALLOWED_ATTRIBUTES,
