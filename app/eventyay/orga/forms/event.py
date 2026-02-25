@@ -8,6 +8,7 @@ from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
 from django.utils.functional import lazy
 from django.utils.html import format_html
+from django.utils.safestring import SafeString
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -33,7 +34,7 @@ from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
 
 ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
-format_html_lazy = lazy(format_html, str)
+format_html_lazy = lazy(format_html, SafeString)
 
 SCHEDULE_DISPLAY_CHOICES = (
     ('grid', _('Grid')),

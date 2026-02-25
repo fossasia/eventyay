@@ -2679,17 +2679,22 @@ class Event(
         from eventyay.mail.default_templates import get_default_template
 
         default_subject, default_text = get_default_template(role)
+        localized_defaults = {
+            "subject": self._localize_default_mail_template_value(default_subject),
+            "text": self._localize_default_mail_template_value(default_text),
+        }
         changed = False
-        for field_name, default_value in (('subject', default_subject), ('text', default_text)):
+        for field_name, default_value in localized_defaults.items():
             current_value = getattr(template, field_name)
-            if not hasattr(current_value, 'data') or not hasattr(default_value, 'localize'):
+            if not hasattr(current_value, 'data') or not hasattr(default_value, 'data'):
                 continue
-            for locale in self.locales:
-                if locale and not current_value.data.get(locale):
-                    current_value.data[locale] = str(default_value.localize(locale))
+            for locale, localized_value in default_value.data.items():
+                if locale and locale not in current_value.data:
+                    current_value.data[locale] = localized_value
                     changed = True
         if changed:
-            template.save(update_fields=['subject', 'text'])
+            with scope(event=self):
+                template.save(update_fields=['subject', 'text'])
 
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule
