@@ -19,10 +19,10 @@
 				.schedule(v-if="activeSidebarTab === 'schedule'")
 					template(v-if="session")
 						h3 {{ $t('standalone/Anonymous:schedule:current-session') }}
-						Session(:session="session")
+						Session(:session="session", :now="now")
 					template(v-if="nextSessions.length")
 						h3 {{ $t('standalone/Anonymous:schedule:next-sessions') }}
-						Session(v-for="session of nextSessions", :session="session")
+						Session(v-for="session of nextSessions", :session="session", :now="now")
 					.no-sessions(v-if="!session && !nextSessions.length") {{ $t('standalone/Anonymous:no-sessions') }}
 			.hint(v-if="activeSidebarTab !== 'schedule' && isAnonymous") {{ $t('standalone/Anonymous:footer-anonymously') }}
 		.no-content(v-else) {{ $t('standalone/Anonymous:no-content') }}
@@ -32,7 +32,7 @@
 // - reactions?
 import { mapState, mapGetters } from 'vuex'
 // Replace '@pretalx/schedule' Session import with local implementation
-import Session from 'views/schedule/schedule-components/Session.vue'
+import Session from '@schedule/components/Session.vue'
 import AppBar from 'components/AppBar'
 import Polls from 'components/Polls'
 import Questions from 'components/Questions'

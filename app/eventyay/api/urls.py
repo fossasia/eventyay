@@ -238,6 +238,11 @@ urlpatterns = [
         name='submission.favourite',
     ),
     path(
+        'events/<slug:event>/submissions/favourites/merge/',
+        submission.favourites_merge_view,
+        name='submission.favourites.merge',
+    ),
+    path(
         'events/<slug:event>/rooms/<int:room_pk>/',
         include(room_router.urls),
     ),
