@@ -57,7 +57,6 @@ nav.navbar {
   z-index: 1100;
   font-weight: 500;
   min-height: 50px;
-  height: 50px;
 }
 
 /* ============================================
@@ -398,5 +397,46 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 @media (max-width: 767px) {
   .hidden-xs {
     display: none !important;
+  }
+
+  nav.navbar {
+    padding-bottom: 10px;
+  }
+
+  .navbar-top-links.navbar-right {
+    float: left !important;
+  }
+
+  .navbar-top-links li {
+    height: 50px;
+  }
+
+  .navbar-top-links li a,
+  .navbar-top-links li form button.btn-link {
+    padding: 15px;
+    min-height: 50px;
+    height: 50px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .navbar-top-links li form {
+    display: inline;
+    margin: 0;
+    padding: 0;
+  }
+
+  nav.navbar.navbar-inverse #button-sudo,
+  .navbar-inverse #button-sudo {
+    padding: 15px;
+    min-height: 50px;
+    height: 50px;
+    font-size: 14px;
+    line-height: 20px;
+    display: block;
+    white-space: nowrap;
+  }
+  #main-title {
+    margin-top: 70px;
   }
 }
