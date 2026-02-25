@@ -2572,7 +2572,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1900, 1, 1).astimezone(self.tz)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i
