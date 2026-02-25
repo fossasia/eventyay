@@ -12,11 +12,11 @@ from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.i18n import is_rtl
 from eventyay.mail.context import get_available_placeholders, get_mail_context
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
 from eventyay.mail.signals import queuedmail_post_send, queuedmail_pre_send
 from eventyay.talk_rules.submission import orga_can_change_submissions
-from eventyay.helpers.i18n import is_rtl
 
 from .mixins import PretalxModel
 
@@ -408,8 +408,10 @@ class QueuedMail(PretalxModel):
         has_event = getattr(self, 'event', None)
 
         to = self.to.split(',') if self.to else []
+        to_users = []
         if self.id:
-            to += [user.primary_email for user in self.to_users.all()]
+            to_users = list(self.to_users.prefetch_related('emailaddress_set'))
+            to += [user.primary_email for user in to_users]
             if has_event:
                 queuedmail_pre_send.send_robust(
                     sender=self.event,
@@ -442,11 +444,13 @@ class QueuedMail(PretalxModel):
         self.sent = now()
 
         if self.pk:
+            if not to_users:
+                to_users = list(self.to_users.prefetch_related('emailaddress_set'))
             self.log_action(
                 'pretalx.mail.sent',
                 person=requestor,
                 orga=orga,
-                data={'to_users': [(user.pk, user.primary_email) for user in self.to_users.all()]},
+                data={'to_users': [(user.pk, user.primary_email) for user in to_users]},
             )
             self.save()
             queuedmail_post_send.send(

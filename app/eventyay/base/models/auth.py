@@ -347,10 +347,12 @@ class User(
             str: The primary email address if available, otherwise the user's email field,
                  or an empty string if neither exists.
         """
-        email_address = EmailAddress.objects.filter(user=self, primary=True).first()
-        if email_address:
-            return email_address.email
-        return self.email or ''
+        # Expect the queryset to be created with `prefetch_related('emailaddress_set')` beforehand,
+        # to avoid 1 + N query problem.
+        addrs = tuple(self.emailaddress_set.filter(primary=True).values_list('email', flat=True))
+        if addrs:
+            return addrs[0].lower()
+        return self.email.lower() if self.email else ''
 
     @cached_property
     def email_addresses(self) -> tuple[str, ...]:

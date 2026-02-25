@@ -979,9 +979,9 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
         self.kwargs = kwargs
         if not self.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        email = user.primary_email if user.is_authenticated else ''
-
-        if not self.order.is_modification_allowed_by(email):
+        email_addresses = user.email_addresses if user.is_authenticated else ()
+        can_modify = email_addresses and any(self.order.is_modification_allowed_by(addr) for addr in email_addresses)
+        if not can_modify:
             messages.error(request, _('You cannot modify this order'))
             return redirect(self.get_order_url())
         return super().dispatch(request, *args, **kwargs)

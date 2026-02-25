@@ -78,6 +78,10 @@ Import statements should be placed at the top of the file, not inside functions,
 
 - When defining a Django management command, declare parameters explicitly in the `handle()` method, rather than retrieving them from the `options` dictionary.
 
+## Django API
+
+- Do not use Django private API like `_prefetched_objects_cache`, because Django can change it anytime without notice, causing our code to break. Instead, use the public API, like `prefetch_related` and friends.
+
 ## Type safety
 
 - For new code, try to add type annotations (function parameters and return types). Typed code helps IDEs provide accurate autocompletion, enables type checking tools (such as `MyPy`, `ty`, etc.) to catch bugs early, and makes refactoring easier (ensuring we update related code). Although we are far from being fully typed, let's implement it gradually.
