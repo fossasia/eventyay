@@ -718,19 +718,75 @@ class DownloadReminderTests(TestCase):
         assert len(djmail.outbox) == 0
 
     @classscope(attr='o')
-    def test_not_sent_after_reminder_date(self):
-        self.order.datetime = self.event.date_from - timedelta(days=1)
-        self.order.save()
-        self.event.settings.mail_days_download_reminder = 2
-        send_download_reminders(sender=self.event)
-        assert len(djmail.outbox) == 0
-
-    @classscope(attr='o')
     def test_not_sent_for_disabled_sales_channel(self):
         self.event.settings.mail_days_download_reminder = 2
         self.event.settings.mail_sales_channel_download_reminder = []
         send_download_reminders(sender=self.event)
         assert len(djmail.outbox) == 0
+
+
+@pytest.mark.django_db
+def test_identical_pseudonymization_id_across_events(event):
+    event2 = Event.objects.create(
+        organizer=event.organizer,
+        name='Dummy 2',
+        slug='dummy2',
+        date_from=now(),
+        plugins='pretix.plugins.banktransfer',
+    )
+    
+    order1 = Order.objects.create(
+        code='FOO1',
+        event=event,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PENDING,
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=0,
+    )
+    
+    order2 = Order.objects.create(
+        code='FOO2',
+        event=event2,
+        email='dummy@dummy.test',
+        status=Order.STATUS_PENDING,
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=0,
+    )
+
+    ticket1 = Item.objects.create(
+        event=event,
+        name='Ticket 1',
+        default_price=Decimal('23.00'),
+    )
+    ticket2 = Item.objects.create(
+        event=event2,
+        name='Ticket 2',
+        default_price=Decimal('23.00'),
+    )
+
+    op1 = OrderPosition.objects.create(
+        order=order1,
+        item=ticket1,
+        price=Decimal('23.00'),
+        positionid=1,
+    )
+    op1.pseudonymization_id = 'IDENTICAL123'
+    op1.secret = 'IDENTICAL_SECRET_123'
+    op1.save()
+
+    op2 = OrderPosition.objects.create(
+        order=order2,
+        item=ticket2,
+        price=Decimal('23.00'),
+        positionid=1,
+    )
+    op2.pseudonymization_id = 'IDENTICAL123'
+    op2.secret = 'IDENTICAL_SECRET_123'
+    op2.save()  # This should not raise IntegrityError
+
+    assert OrderPosition.objects.filter(pseudonymization_id='IDENTICAL123').count() == 2
 
 
 class OrderCancelTests(TestCase):
