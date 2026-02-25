@@ -232,7 +232,7 @@
                                         <i class="fa fa-angle-down"></i>
                                     </a>
                                 </span>
-                                <div class="collapse{% if "settings." in url_name %} show{% endif %}" aria-expand="true" id="collapseSettings">
+                                <div class="collapse{% if "settings." in url_name %} show{% endif %}" id="collapseSettings">
                                     <a href="{{ request.event.orga_urls.settings }}" class="nav-link nav-link-second-level{% if "settings.event." in url_name %} active{% endif %}">
                                         <span>{{ phrases.base.general }}</span>
                                     </a>
@@ -262,7 +262,7 @@
                                         <i class="fa fa-angle-down"></i>
                                     </a>
                                 </span>
-                                <div class="collapse{% if "cfp." in url_name %} show{% endif %}" aria-expand="true" id="collapseCfP">
+                                <div class="collapse{% if "cfp." in url_name %} show{% endif %}" id="collapseCfP">
                                     <a href="{{ request.event.cfp.urls.text }}" class="nav-link nav-link-second-level{% if "cfp.text" in url_name %} active{% endif %}">
                                         <span>{% translate "Content" %}</span>
                                     </a>
@@ -299,7 +299,7 @@
                                         <i class="fa fa-angle-down"></i>
                                     </a>
                                 </span>
-                                <div class="collapse{% if "speakers." in url_name|slice:":9" %} show{% endif %}" aria-expand="true" id="collapseSpeakers">
+                                <div class="collapse{% if "speakers." in url_name|slice:":9" %} show{% endif %}" id="collapseSpeakers">
                                     <a href="{{ request.event.orga_urls.speakers }}" class="nav-link nav-link-second-level{% if "speakers.list" in url_name or "speakers.view" in url_name %} active{% endif %}">
                                         <span>{{ phrases.schedule.speakers }}</span>
                                     </a>
@@ -326,7 +326,7 @@
                                     <i class="fa fa-angle-down"></i>
                                 </a>
                             </span>
-                            <div class="collapse{% if "submissions." in url_name|slice:":13" %} show{% endif %}" aria-expand="true" id="collapseSubmissions">
+                            <div class="collapse{% if "submissions." in url_name|slice:":13" %} show{% endif %}" id="collapseSubmissions">
                                 <a href="{{ request.event.orga_urls.submissions }}" class="nav-link nav-link-second-level{% if "submissions." in url_name and "submissions.statistics" not in url_name and "submissions.feedback" not in url_name and "submissions.tag" not in url_name %} active{% endif %}">
                                     <span>{{ phrases.schedule.sessions }}</span>
                                 </a>
@@ -359,7 +359,7 @@
                                         <i class="fa fa-angle-down"></i>
                                     </a>
                                 </span>
-                                <div class="collapse{% if "reviews." in url_name|slice:":9" %} show{% endif %}" aria-expand="true" id="collapseReviews">
+                                <div class="collapse{% if "reviews." in url_name|slice:":9" %} show{% endif %}" id="collapseReviews">
                                     <a href="{% url "orga:reviews.dashboard" event=request.event.slug %}" class="nav-link nav-link-second-level{% if "reviews.dashboard" in url_name %} active{% endif %}">
                                         <span>{% translate "Review" %}</span>
                                     </a>
@@ -391,7 +391,7 @@
                                     <i class="fa fa-angle-down"></i>
                                 </a>
                             </span>
-                            <div class="collapse{% if "schedule." in url_name %} show{% endif %}" aria-expand="true" id="collapseSchedule">
+                            <div class="collapse{% if "schedule." in url_name %} show{% endif %}" id="collapseSchedule">
                                 <a href="{{ request.event.orga_urls.schedule }}" class="nav-link nav-link-second-level{% if "schedule.main" in url_name %} active{% endif %}">
                                     <span>{% translate "Editor" %}</span>
                                 </a>
@@ -417,7 +417,7 @@
                                     <i class="fa fa-angle-down"></i>
                                 </a>
                             </span>
-                            <div class="collapse{% if "mails." in url_name %} show{% endif %}" aria-expand="true" id="collapseMails">
+                            <div class="collapse{% if "mails." in url_name %} show{% endif %}" id="collapseMails">
                                 <a href="{{ request.event.orga_urls.outbox }}" class="nav-link nav-link-second-level{% if "mails.outbox" in url_name %} {% if not form or not form.instance.sent %}active{% endif %}{% endif %}">
                                     <span>{% translate "Outbox" %}</span>
                                 </a>

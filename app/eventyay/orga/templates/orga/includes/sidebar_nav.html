@@ -1,4 +1,5 @@
 {% load static %}
+{% with nav_prefix=nav_prefix|default:'global' %}
 {% if nav_element.children %}
     <div class="nav-fold">
         <span class="has-children">
@@ -14,7 +15,7 @@
                 <i class="fa fa-angle-down"></i>
             </a>
         </span>
-        <div class="collapse{% if nav_element.active %} show{% endif %}" aria-expand="true" id="collapseSidebar{{ nav_prefix }}{{ forloop.counter }}">
+        <div class="collapse{% if nav_element.active %} show{% endif %}" id="collapseSidebar{{ nav_prefix }}{{ forloop.counter }}">
             {% for child in nav_element.children %}
                 <a href="{{ child.url }}" class="nav-link nav-link-second-level{% if child.active %} active{% endif %}">
                     <span>{{ child.label }}</span>
@@ -32,3 +33,4 @@
         <span class="sidebar-text">{{ nav_element.label }}</span>
     </a>
 {% endif %}
+{% endwith %}
