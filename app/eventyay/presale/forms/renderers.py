@@ -1,3 +1,5 @@
+import re
+
 from bootstrap3.renderers import FieldRenderer
 from bootstrap3.text import text_value
 from bootstrap3.utils import add_css_class
@@ -154,6 +156,64 @@ class CheckoutFieldRenderer(FieldRenderer):
             label_for=self.field.id_for_label,
             label_title=escape(strip_tags(self.field_help)),
         )
+
+    def make_input(self, widget=None):
+        """
+        Override to fix RadioSelect rendering in the CfP submission area.
+
+        The bootstrap3 library wraps radio inputs in ``<div class="radio">``
+        which produces bold labels placed *below* each radio button (Bootstrap 3
+        behaviour).  This override replaces that wrapper with the Bootstrap 4
+        ``form-check form-check-inline`` pattern so labels appear inline to the
+        right of each radio button with normal font weight, consistent with the
+        organiser area and the rest of the application.
+
+        Fixes: https://github.com/fossasia/eventyay/issues/1780
+        """
+        if isinstance(self.field.field.widget, RadioSelect):
+            # Render the RadioSelect widget (produces a <ul> with <li> items)
+            rendered = self.field.field.widget.render(
+                self.field.html_name,
+                self.field.value(),
+                attrs=self.widget.attrs,
+            )
+            # Replace each <li>…</li> block with Bootstrap 4 form-check markup.
+            # The rendered output looks like:
+            #   <ul id="…"><li><label><input … /> Label text</label></li>…</ul>
+            # We transform it so that:
+            #   - each option gets its own <div class="form-check form-check-inline">
+            #   - the <input> and <label> are siblings (not nested)
+            #   - the <label> has class="form-check-label" and correct `for=` attr
+            #   - the <input> has class="form-check-input"
+            choices = self.field.field.widget.subwidgets(
+                self.field.html_name,
+                self.field.value(),
+                attrs=self.widget.attrs,
+            )
+            parts = []
+            for subwidget in choices:
+                input_html = subwidget.tag()
+                # Add form-check-input class to the <input>
+                input_html = re.sub(
+                    r'(<input)',
+                    r'\1 class="form-check-input"',
+                    input_html,
+                    count=1,
+                )
+                label_html = (
+                    '<label class="form-check-label" for="{for_id}">{label}</label>'.format(
+                        for_id=subwidget.id_for_label,
+                        label=escape(subwidget.choice_label),
+                    )
+                )
+                parts.append(
+                    '<div class="form-check form-check-inline">{input}{label}</div>'.format(
+                        input=input_html,
+                        label=label_html,
+                    )
+                )
+            return mark_safe(''.join(parts))
+        return super().make_input(widget)
 
     def wrap_label_and_field(self, html):
         if self.is_group_widget:
