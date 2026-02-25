@@ -4,7 +4,7 @@ import sys
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 from urllib.parse import urlparse
 
 import django.conf.locale
@@ -21,7 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.consts import DEFAULT_PLUGINS, EVENTYAY_EMAIL_NONE_VALUE, SizeKey
+from eventyay.consts import DEFAULT_PLUGINS, SizeKey
 
 
 # To avoid loading unnecessary environment variables
@@ -190,46 +190,17 @@ class BaseSettings(_BaseSettings):
             toml_settings,
         )
 
-    size_limit_mb: dict[str, int] = Field(
-        default_factory=lambda: {
-            "upload_size_csv": 1,
-            "upload_size_image": 10,
-            "upload_size_pdf": 10,
-            "upload_size_xlsx": 2,
-            "upload_size_favicon": 1,
-            "upload_size_attachment": 10,
-            "upload_size_mail": 4,
-            "upload_size_question": 20,
-            "upload_size_other": 10,
-
-            "response_size_webhook": 1,
-        }
-    )
-
-    # Optional single-line override fields.
-    # These allow simple top-level config entries (e.g. `question = 300` in TOML)
-    # to override corresponding entries in `size_limit_mb`.
-    # The dictionary remains the canonical source of truth.
-    upload_size_csv: int | None = None
-    upload_size_image: int | None = None
-    upload_size_pdf: int | None = None
-    upload_size_xlsx: int | None = None
-    upload_size_favicon: int | None = None
-    upload_size_attachment: int | None = None
-    upload_size_mail: int | None = None
-    upload_size_question: int | None = None
-    upload_size_other: int | None = None
-
-    response_size_webhook: int | None = None
-
-    #   Apply top-level single-line size limit overrides to `size_limit_mb`.
-    #   Any override field that is set (not None) will replace the corresponding
-    #   entry in the size_limit_mb dictionary.
-    def apply_size_limit_overrides(self) -> None:
-        for key in self.size_limit_mb:
-            override = getattr(self, key, None)
-            if override is not None:
-                self.size_limit_mb[key] = override
+    # Upload size limit in MB, needs to to in accordance with SizeKey
+    upload_size_csv: int = 1
+    upload_size_image: int = 10
+    upload_size_pdf: int = 10
+    upload_size_xlsx: int = 2
+    upload_size_favicon: int = 1
+    upload_size_attachment: int = 10
+    upload_size_mail: int = 4
+    upload_size_question: int = 20
+    upload_size_other: int = 10
+    response_size_webhook: int = 1
 
 
 def discover_toml_files() -> list[Path]:
@@ -272,9 +243,6 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
-
-# Merge single-line TOML overrides into size_limit_mb
-conf.apply_size_limit_overrides()
 
 # --- Now, provide values to Django's settings. ---
 
@@ -661,6 +629,14 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'bn': {
+        'name': _('Bengali'),
+        'natural_name': 'বাংলা',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'ca': {
         'name': _('Catalan'),
         'natural_name': 'Català',
@@ -734,6 +710,22 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'hi': {
+        'name': _('Hindi'),
+        'natural_name': 'हिन्दी',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'gu': {
+        'name': _('Gujarati'),
+        'natural_name': 'ગુજરાતી',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'id': {
         'name': _('Indonesian'),
         'natural_name': 'Bahasa Indonesia',
@@ -767,6 +759,14 @@ _LANGUAGES_CONFIG = {
         'percentage': 88,
         'incubating': False,
     },
+    'km': {
+        'name': _('Khmer'),
+        'natural_name': 'ខ្មែរ',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'lv': {
         'name': _('Latvian'),
         'natural_name': 'Latviešu',
@@ -778,6 +778,22 @@ _LANGUAGES_CONFIG = {
     'ms': {
         'name': _('Malay'),
         'natural_name': 'Bahasa Melayu',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'ml': {
+        'name': _('Malayalam'),
+        'natural_name': 'മലയാളം',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'mr': {
+        'name': _('Marathi'),
+        'natural_name': 'मराठी',
         'bidi': False,
         'official': False,
         'percentage': 0,
@@ -891,6 +907,22 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'ta': {
+        'name': _('Tamil'),
+        'natural_name': 'தமிழ்',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'te': {
+        'name': _('Telugu'),
+        'natural_name': 'తెలుగు',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'th': {
         'name': _('Thai'),
         'natural_name': 'ไทย',
@@ -912,6 +944,14 @@ _LANGUAGES_CONFIG = {
         'natural_name': 'Українська',
         'bidi': False,
         'official': True,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'ur': {
+        'name': _('Urdu'),
+        'natural_name': 'اردو',
+        'bidi': True,
+        'official': False,
         'percentage': 0,
         'incubating': False,
     },
@@ -1021,6 +1061,10 @@ CELERY_TASK_QUEUES = (
 )
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_TASK_TRACK_STARTED = True
+# Keep Django/eventyay logging configuration in workers and avoid redirecting stdout/stderr.
+# This ensures logger output remains visible as configured and is not swallowed by Celery.
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_REDIRECT_STDOUTS = False
 CELERY_TASK_ROUTES = {
     'eventyay.base.services.notifications.*': {'queue': 'notifications'},
     'eventyay.api.webhooks.*': {'queue': 'notifications'},
@@ -1298,10 +1342,7 @@ FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 BYTES_IN_MB = 1024 * 1024
 
 # Config for max size limits
-MAX_SIZE_CONFIG = {
-    key.value: BYTES_IN_MB * conf.size_limit_mb[key.value]
-    for key in SizeKey
-}
+MAX_SIZE_CONFIG = {key: BYTES_IN_MB * cast(int, getattr(conf, key)) for key in SizeKey}
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
 
