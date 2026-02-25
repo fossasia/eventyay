@@ -6,6 +6,8 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
+from django.utils.functional import lazy
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -31,6 +33,7 @@ from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
 
 ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
+format_html_lazy = lazy(format_html, str)
 
 SCHEDULE_DISPLAY_CHOICES = (
     ('grid', _('Grid')),
@@ -181,9 +184,11 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=str(_('The signature will be added to outgoing mails, preceded by “-- ”.'))
-        + ' '
-        + phrases.base.use_markdown,
+        help_text=format_html_lazy(
+            '{} <span class="markdown-hint">{}</span>',
+            _('The signature will be added to outgoing mails, preceded by “-- ”.'),
+            _('You can use Markdown in this field.'),
+        ),
         required=False,
         widget=forms.Textarea,
     )
