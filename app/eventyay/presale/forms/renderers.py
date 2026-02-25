@@ -186,14 +186,7 @@ class CheckoutFieldRenderer(FieldRenderer):
             )
             parts = []
             for subwidget in choices:
-                input_html = subwidget.tag()
-                # Add form-check-input class to the <input>
-                input_html = re.sub(
-                    r'(<input)',
-                    r'\1 class="form-check-input"',
-                    input_html,
-                    count=1,
-                )
+               
                 label_html = (
                     '<label class="form-check-label" for="{for_id}">{label}</label>'.format(
                         for_id=subwidget.id_for_label,
