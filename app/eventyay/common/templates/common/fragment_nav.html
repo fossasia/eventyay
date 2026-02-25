@@ -22,13 +22,6 @@
                     <i class="fa fa-calendar"></i> {{ schedule_label }}
                 </a>
             {% endwith %}
-            {% if current_event.display_settings.schedule_display != "list" %}
-                {% with sessions_url=current_event.talk_session_url|default:current_event.urls.talks %}
-                    <a href="{{ sessions_url }}" class="header-tab {% if '/sessions/' in path %}active{% endif %}">
-                        <i class="fa fa-comments-o"></i> {{ sessions_label }}
-                    </a>
-                {% endwith %}
-            {% endif %}
             {% if current_event.speakers.exists %}
                 {% with speakers_url=current_event.talk_speaker_url|default:current_event.urls.speakers %}
                     <a href="{{ speakers_url }}" class="header-tab {% if '/speakers/' in path %}active{% endif %}">

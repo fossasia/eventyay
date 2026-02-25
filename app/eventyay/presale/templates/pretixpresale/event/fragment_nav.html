@@ -27,10 +27,6 @@
                     <i class="fa fa-calendar"></i> {% translate "Schedule" %}
                 </a>
 
-                <a href="{{ request.event.talk_session_url }}" class="header-tab {% if '/sessions/' in request.path_info %}active{% endif %}">
-                    <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
-                </a>
-
                 {% if request.event.speakers.exists %}
                     <a href="{{ request.event.talk_speaker_url }}" class="header-tab {% if '/speakers/' in request.path_info %}active{% endif %}">
                         <i class="fa fa-group"></i> {% translate "Speakers" %}

@@ -257,6 +257,7 @@ export default {
 			allTracks: [],
 			allRooms: [],
 			allTypes: [],
+			allLanguages: [],
 			onlyFavs: false,
 			scheduleError: false,
 			onHomeServer: false,
@@ -294,14 +295,18 @@ export default {
 		filteredTypes () {
 			return this.allTypes.filter(t => t.selected)
 		},
+		filteredLanguages () {
+			return this.allLanguages.filter(l => l.selected)
+		},
 		hasActiveFilterSelections () {
-			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0
+			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0
 		},
 		filterGroups () {
 			return [
 				{ refKey: 'track', title: 'Tracks', data: this.allTracks },
 				{ refKey: 'room', title: 'Rooms', data: this.allRooms },
-				{ refKey: 'type', title: 'Types', data: this.allTypes }
+				{ refKey: 'type', title: 'Types', data: this.allTypes },
+				{ refKey: 'language', title: 'Languages', data: this.allLanguages }
 			]
 		},
 		speakersLookup () {
@@ -316,6 +321,10 @@ export default {
 				if (this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
 				if (this.filteredRooms.length && !this.filteredRooms.find(r => r.id === session.room)) continue
 				if (this.filteredTypes.length && !this.filteredTypes.find(t => t.value === session.session_type)) continue
+				if (this.filteredLanguages.length) {
+					const sessionLanguage = this.normalizeLanguageCode(session.language)
+					if (!this.filteredLanguages.find(l => l.value === sessionLanguage)) continue
+				}
 				const start = moment.tz(session.start, this.currentTimezone)
 				if (this.displayDates.length && !this.displayDates.includes(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
@@ -332,6 +341,7 @@ export default {
 					fav_count: session.fav_count,
 					tags: session.tags,
 					session_type: session.session_type,
+					language: session.language,
 					resources: session.resources,
 					answers: session.answers,
 					exporters: session.exporters,
@@ -485,6 +495,18 @@ export default {
 				this.allTypes.push({ value: s.session_type, label: s.session_type, selected: false })
 			}
 		})
+		const languageSet = new Set()
+		this.schedule.talks.forEach(s => {
+			const languageCode = this.normalizeLanguageCode(s.language)
+			if (!languageCode || languageSet.has(languageCode)) return
+			languageSet.add(languageCode)
+			this.allLanguages.push({
+				value: languageCode,
+				label: this.getLanguageLabel(languageCode),
+				selected: false
+			})
+		})
+		this.allLanguages.sort((a, b) => a.label.localeCompare(b.label, this.locale || 'en'))
 
 		// set API URL before loading favs
 		this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
@@ -603,6 +625,24 @@ export default {
 			if (!message || !message.length) return
 			if (this.errorMessages.includes(message)) return
 			this.errorMessages.push(message)
+		},
+		normalizeLanguageCode (languageCode) {
+			if (!languageCode) return ''
+			return String(languageCode).trim().replace('_', '-').toLowerCase()
+		},
+		getLanguageLabel (languageCode) {
+			const code = this.normalizeLanguageCode(languageCode)
+			if (!code) return ''
+			try {
+				if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
+					const displayNames = new Intl.DisplayNames([this.locale || 'en'], { type: 'language' })
+					const label = displayNames.of(code)
+					if (label) return label
+				}
+			} catch {
+				// Fall back to normalized code.
+			}
+			return code.toUpperCase()
 		},
 		pruneFavs (favs, schedule) {
 			const talks = schedule.talks || []
@@ -772,6 +812,7 @@ export default {
 			this.allTracks.forEach(t => t.selected = false)
 			this.allRooms.forEach(r => r.selected = false)
 			this.allTypes.forEach(t => t.selected = false)
+			this.allLanguages.forEach(l => l.selected = false)
 		}
 	}
 }
