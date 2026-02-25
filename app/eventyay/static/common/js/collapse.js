@@ -21,11 +21,22 @@ const handleCollapse = (controller, target) => {
 }
 
 const setupCollapse = (element) => {
-    const target = document.querySelector(element.getAttribute('data-target'))
+    const selector = element.getAttribute('data-target')
+    if (!selector) return
+
+    // Prefer the collapse panel in the same nav-fold to avoid accidental
+    // cross-targeting when IDs are reused in different sidebar sections.
+    const localTarget = element.closest('.nav-fold')?.querySelector(selector)
+    const target = localTarget || document.querySelector(selector)
     if (!target) return
-    element.addEventListener('click', () => handleCollapse(element, target))
+    element.addEventListener('click', (event) => {
+        event.preventDefault()
+        handleCollapse(element, target)
+    })
     if (target.classList.contains('show')) {
         makeCollapsed(element, target, false)
+    } else {
+        makeCollapsed(element, target, true)
     }
 }
 
