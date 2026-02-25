@@ -104,7 +104,7 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             elif question and unanswered:
                 answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
                 qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
-            qs = qs.order_by('id').distinct()
+            qs = qs.distinct()
             return self.sort_queryset(qs)
 
     def post(self, request, *args, **kwargs):
