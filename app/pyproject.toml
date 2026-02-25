@@ -295,3 +295,9 @@ filterwarnings = [
 
 [tool.pytest_env]
 EVY_RUNNING_ENVIRONMENT = "testing"
+
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+    "**/*.ipynb",
+]
