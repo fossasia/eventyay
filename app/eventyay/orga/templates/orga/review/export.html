@@ -32,7 +32,7 @@
                     </label>
                     <div class="col-md-9">
                         {% for radio in form.target %}
-                        <div class="form-check form-check-inline">
+                        <div class="form-check mb-2">
                             {{ radio.tag }}
                             <label class="form-check-label" for="{{ radio.id_for_label }}">
                                 {{ radio.choice_label }}

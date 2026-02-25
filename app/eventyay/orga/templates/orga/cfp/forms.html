@@ -57,25 +57,7 @@
 
         {% include "common/forms/errors.html" %}
         {% include "common/forms/errors.html" with form=sform %}
-        <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">
-                {{ sform.count_length_in.label }}
-                {% if sform.count_length_in.field.required %}*{% endif %}
-            </label>
-            <div class="col-md-9">
-                {% for radio in sform.count_length_in %}
-                <div class="form-check form-check-inline">
-                    {{ radio.tag }}
-                    <label class="form-check-label" for="{{ radio.id_for_label }}">
-                        {{ radio.choice_label }}
-                    </label>
-                </div>
-                {% endfor %}
-                {% if sform.count_length_in.help_text %}
-                <small class="form-text text-muted d-block mt-2">{{ sform.count_length_in.help_text }}</small>
-                {% endif %}
-            </div>
-        </div>
+        {{ sform.count_length_in.as_field_group }}
         <fieldset>
                 <legend id="proposal-information">
                     <div>
