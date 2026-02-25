@@ -38,7 +38,6 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager, scope, scopes_disabled
 from i18nfield.fields import I18nCharField, I18nTextField
-from i18nfield.strings import LazyI18nString
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
@@ -2665,45 +2664,31 @@ class Event(
         try:
             with scope(event=self):
                 template = self.mail_templates.get(role=role)
-            self._ensure_mail_template_locales(template, role)
-            return template
         except MailTemplate.DoesNotExist:
             subject, text = get_default_template(role)
-            subject = self._localize_default_mail_template_value(subject)
-            text = self._localize_default_mail_template_value(text)
             with scope(event=self):
                 template, __ = MailTemplate.objects.get_or_create(
                     event=self, role=role, defaults={'subject': subject, 'text': text}
                 )
-            return template
-
-    def _localize_default_mail_template_value(self, value):
-        if not hasattr(value, 'localize'):
-            return value
-        return LazyI18nString(
-            {
-                locale: str(value.localize(locale))
-                for locale in self.locales
-                if locale
-            }
-        )
+        self._ensure_mail_template_locales(template, role)
+        return template
 
     def _ensure_mail_template_locales(self, template, role):
         from eventyay.mail.default_templates import get_default_template
 
         default_subject, default_text = get_default_template(role)
-        localized_defaults = {
-            "subject": self._localize_default_mail_template_value(default_subject),
-            "text": self._localize_default_mail_template_value(default_text),
-        }
         changed = False
-        for field_name, default_value in localized_defaults.items():
+        for field_name, default_value in (('subject', default_subject), ('text', default_text)):
             current_value = getattr(template, field_name)
-            if not hasattr(current_value, 'data') or not hasattr(default_value, 'data'):
+            if not (
+                hasattr(current_value, 'data')
+                and isinstance(current_value.data, dict)
+                and hasattr(default_value, 'localize')
+            ):
                 continue
-            for locale, localized_value in default_value.data.items():
+            for locale in self.locales:
                 if locale and locale not in current_value.data:
-                    current_value.data[locale] = localized_value
+                    current_value.data[locale] = str(default_value.localize(locale))
                     changed = True
         if changed:
             with scope(event=self):
