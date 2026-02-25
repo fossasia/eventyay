@@ -742,17 +742,17 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
-    'gu': {
-        'name': _('Gujarati'),
-        'natural_name': 'ગુજરાતી',
+    'hi': {
+        'name': _('Hindi'),
+        'natural_name': 'हिन्दी',
         'bidi': False,
         'official': False,
         'percentage': 0,
         'incubating': False,
     },
-    'hi': {
-        'name': _('Hindi'),
-        'natural_name': 'हिन्दी',
+    'gu': {
+        'name': _('Gujarati'),
+        'natural_name': 'ગુજરાતી',
         'bidi': False,
         'official': False,
         'percentage': 0,
