@@ -50,6 +50,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
+from eventyay.helpers.http import smtp_reachable
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.presale.ical import get_ical
 
@@ -709,14 +710,16 @@ def get_mail_backend(timeout=None):
     from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 
     gs = GlobalSettingsObject()
+    smtp_host = gs.settings.smtp_host
+    smtp_port = gs.settings.smtp_port
 
     if gs.settings.email_vendor is not None:
         if gs.settings.email_vendor == 'sendgrid':
             return SendGridEmail(api_key=gs.settings.send_grid_api_key)
-        else:
+        if smtp_reachable(smtp_host, smtp_port, timeout=timeout):
             return CustomSMTPBackend(
-                host=gs.settings.smtp_host,
-                port=gs.settings.smtp_port,
+                host=smtp_host,
+                port=smtp_port,
                 username=gs.settings.smtp_username,
                 password=gs.settings.smtp_password,
                 use_tls=gs.settings.smtp_use_tls,
@@ -724,5 +727,9 @@ def get_mail_backend(timeout=None):
                 fail_silently=False,
                 timeout=timeout,
             )
-    else:
-        return get_connection(fail_silently=False)
+        logger.warning(
+            'Event SMTP %s:%s is not reachable, falling back to system email backend',
+            smtp_host,
+            smtp_port,
+        )
+    return get_connection(fail_silently=False)
