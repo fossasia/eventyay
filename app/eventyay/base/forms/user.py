@@ -117,13 +117,22 @@ class UserSettingsForm(forms.ModelForm):
 
     def clean(self):
         password1 = self.cleaned_data.get('new_pw')
-        email = self.cleaned_data.get('email')
         old_pw = self.cleaned_data.get('old_pw')
 
-        if not self.requires_password_reset and (password1 or email != self.user.email) and not old_pw:
-            raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
+        email_changed = 'email' in self.changed_data
+        password_changed = bool(password1)
 
-        if password1:
+        if (
+            not self.requires_password_reset
+            and (password_changed or email_changed)
+            and not old_pw
+        ):
+            raise forms.ValidationError(
+                self.error_messages['pw_current'],
+                code='pw_current'
+            )
+
+        if password_changed:
             self.instance.set_password(password1)
 
         return self.cleaned_data
