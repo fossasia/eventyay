@@ -71,7 +71,7 @@ class SpeakerProfileForm(
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
-        self.not_strict = kwargs.pop('not_strict', False)
+        self.not_strict = getattr(self, 'not_strict', kwargs.pop('not_strict', False))
         self.enforce_account_name_match = enforce_account_name_match
         kwargs['instance'] = None
         if self.user:

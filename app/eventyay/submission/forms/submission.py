@@ -65,7 +65,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
         if not instance or not instance.content_locale:
             initial['content_locale'] = self.event.locale
 
-        self.not_strict = kwargs.pop('not_strict', False)
+        self.not_strict = getattr(self, 'not_strict', kwargs.pop('not_strict', False))
         super().__init__(initial=initial, not_strict=self.not_strict, **kwargs)
         self.submission = self.instance
 
