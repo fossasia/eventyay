@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -51,6 +51,7 @@ from eventyay.submission.forms import (
     TagForm,
 )
 from eventyay.base.models import (
+    Answer,
     Feedback,
     Resource,
     Submission,
@@ -58,6 +59,7 @@ from eventyay.base.models import (
     SubmissionStates,
     Tag,
 )
+from eventyay.base.models.profile import SpeakerProfile
 from eventyay.talk_rules.submission import (
     annotate_assigned,
     get_reviewer_tracks,
@@ -238,13 +240,60 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     @cached_property
     def speakers(self):
         submission = self.object
+        speakers_qs = (
+            submission.speakers.all()
+            .prefetch_related(
+                Prefetch(
+                    'profiles',
+                    queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities'),
+                    to_attr='_event_profiles',
+                ),
+                Prefetch(
+                    'answers',
+                    queryset=Answer.objects.filter(
+                        question__event=submission.event,
+                        question__is_visible_to_reviewers=True,
+                    ).select_related('question').order_by('question__position'),
+                    to_attr='_reviewer_answers',
+                ),
+                Prefetch(
+                    'submissions',
+                    queryset=Submission.objects.filter(event=submission.event).prefetch_related(
+                        Prefetch(
+                            'answers',
+                            queryset=Answer.objects.filter(
+                                question__event=submission.event,
+                                question__is_visible_to_reviewers=True,
+                            ).select_related('question').order_by('question__position'),
+                            to_attr='_reviewer_answers',
+                        )
+                    ),
+                    to_attr='_event_submissions',
+                ),
+            )
+        )
         return [
             {
                 'user': speaker,
                 'profile': speaker.event_profile(submission.event),
-                'other_submissions': speaker.submissions.filter(event=submission.event).exclude(code=submission.code),
+                'other_submissions': [
+                    s for s in speaker._event_submissions
+                    if s.code != submission.code
+                ],
+                'email': speaker.email,
+                'avatar': speaker.avatar,
+                'avatar_source': speaker.avatar_source,
+                'avatar_license': speaker.avatar_license,
+                'reviewer_answers': sorted(
+                    speaker._reviewer_answers + [
+                        answer
+                        for submission_obj in speaker._event_submissions
+                        for answer in submission_obj._reviewer_answers
+                    ],
+                    key=lambda a: a.question.position,
+                ),
             }
-            for speaker in submission.speakers.all()
+            for speaker in speakers_qs
         ]
 
     def form_valid(self, form):
@@ -272,8 +321,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
 class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm
-    template_name = 'orga/submission/content.html'
-    permission_required = 'base.orga_list_submission'
+    template_name = 'orga/submission/content_edit.html'
 
     def get_object(self):
         try:
@@ -395,7 +443,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
     def get_permission_required(self):
         if 'code' in self.kwargs:
-            return ['base.orga_list_submission']
+            return ['base.orga_update_submission']
         return ['base.create_submission']
 
     @property
@@ -460,6 +508,17 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     @cached_property
     def can_edit(self):
         return self.object and self.request.user.has_perm('base.orga_update_submission', self.request.event)
+
+
+class SubmissionContentView(SubmissionContent):
+    template_name = "orga/submission/content.html"
+    http_method_names = ['get', 'head', 'options']
+
+    def get_permission_required(self):
+        if "code" in self.kwargs:
+            return ["base.orga_list_submission"]  # View permission for reviewers
+        return ["base.create_submission"]
+  
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
@@ -606,7 +665,7 @@ class Anonymise(SubmissionViewMixin, UpdateView):
 
 class SubmissionHistory(SubmissionViewMixin, ListView):
     template_name = 'orga/submission/history.html'
-    permission_required = 'base.administrator_user'
+    permission_required = 'base.orga_update_submission'
     paginate_by = 200
     context_object_name = 'log_entries'
 

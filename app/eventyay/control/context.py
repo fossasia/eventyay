@@ -15,7 +15,6 @@ from eventyay.control.navigation import (
     get_admin_navigation,
     get_event_navigation,
     get_global_navigation,
-    get_organizer_navigation,
 )
 
 from ..eventyay_common.utils import EventCreatedFor
@@ -107,8 +106,6 @@ def _default_context(request):
         if request.GET.get('subevent', ''):
             # Do not use .get() for lazy evaluation
             ctx['selected_subevents'] = request.event.subevents.filter(pk=request.GET.get('subevent'))
-    elif getattr(request, 'organizer', None) and request.user.is_authenticated:
-        ctx['nav_items'] = get_organizer_navigation(request)
     elif request.user.is_authenticated:
         ctx['nav_items'] = get_global_navigation(request)
 
@@ -147,13 +144,13 @@ def _default_context(request):
             StaffSession.objects.filter(user=request.user, date_end__isnull=False).filter(
                 Q(comment__isnull=True) | Q(comment='')
             )
-            if request.user.is_staff and settings.PRETIX_ADMIN_AUDIT_COMMENTS
+            if request.user.is_staff and settings.EVENTYAY_ADMIN_AUDIT_COMMENTS
             else StaffSession.objects.none()
         )
 
     ctx['talk_hostname'] = settings.TALK_HOSTNAME
 
-    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
-    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
+    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
+    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
 
     return ctx

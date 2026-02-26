@@ -28,7 +28,7 @@ table {
       background-color: var(--color-grey-ultralight);
     }
   }
-  a:hover {
+  a:not(.btn):hover {
     text-decoration: none;
     color: var(--color-primary-text-dark);
   }
@@ -111,7 +111,7 @@ summary.btn {
     font-weight: normal;
     --highlight-color: transparent;
     color: var(--color-primary-text);
-	border: none;	
+	border: none;
 	background: transparent;
 
     &:hover {
@@ -286,6 +286,9 @@ a {
 .alert.alert-danger:before {
   content: "";
 }
+.alert-margin {
+  margin-top: 20px;
+}
 
 .btn-outline-success {
   --highlight-color: var(--color-success);
@@ -304,7 +307,7 @@ a {
   display: flex;
   align-items: center;
   position: relative;
-  margin-bottom: var(--size-spacer);
+  margin: 16px;
   padding: 16px;
   border: 2px solid var(--highlight-color);
   color: var(--highlight-color-text);
@@ -375,6 +378,10 @@ a {
     padding: 0 0.6em;
     border-radius: 10rem;
   }
+}
+
+.badge.text-dark {
+  color: #333;
 }
 
 .card {
@@ -624,6 +631,12 @@ a {
   &.show {
     max-height: 100vh;
     transition: max-height 0.5s ease-in-out;
+  }
+  /* Bootstrap 3 compatibility: legacy collapses use .in instead of .show */
+  &.in {
+    max-height: none;
+    overflow: visible;
+    transition: none;
   }
 }
 
@@ -1116,7 +1129,7 @@ pl-0 {
     display: none;
   }
   @page {
-    size: A4 portrait;
-    margin: 0;
+    size: A4 landscape;
+    margin: 5mm;
   }
 }

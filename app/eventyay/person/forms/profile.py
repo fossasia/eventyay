@@ -113,12 +113,7 @@ class SpeakerProfileForm(
         elif 'avatar' in self.fields:
             self.fields['avatar'].required = False
             self.fields['avatar'].widget.is_required = False
-        if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
-            # Replace self.data with a version that uses initial["availabilities"]
-            # in order to have event and timezone data available
-            data = self.data.copy()
-            data['availabilities'] = initial.get('availabilities', [])
-            self.data = data
+
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
             event=self.event,
@@ -128,6 +123,13 @@ class SpeakerProfileForm(
 
         # Reorder fields based on configuration
         self.order_fields_by_config('speaker')
+
+        if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
+            # Replace self.data with a version that uses initial["availabilities"]
+            # in order to have event and timezone data available
+            data = self.data.copy()
+            data['availabilities'] = initial.get('availabilities', [])
+            self.data = data
 
     @cached_property
     def user_fields(self):
@@ -182,13 +184,24 @@ class SpeakerProfileForm(
             if user_attribute == 'avatar':
                 if value is False:
                     self.user.avatar = None
+                    # Clear thumbnails when removing avatar
+                    self.user.avatar_thumbnail = None
+                    self.user.avatar_thumbnail_tiny = None
                 elif value:
+                    # Clear old thumbnails before assigning new avatar
+                    self.user.avatar_thumbnail = None
+                    self.user.avatar_thumbnail_tiny = None
                     self.user.avatar = value
             elif value is None and user_attribute == 'get_gravatar':
                 self.user.get_gravatar = False
             else:
                 setattr(self.user, user_attribute, value)
-            self.user.save(update_fields=[user_attribute])
+            
+            # Add thumbnail fields to update_fields when avatar changes
+            update_fields = [user_attribute]
+            if user_attribute == 'avatar':
+                update_fields.extend(['avatar_thumbnail', 'avatar_thumbnail_tiny'])
+            self.user.save(update_fields=update_fields)
 
         self.instance.event = self.event
         self.instance.user = self.user

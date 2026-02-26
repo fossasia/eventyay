@@ -19,12 +19,12 @@
                 {% endblocktrans %}
             </p>
 
-            <a href="{% url "control:organizer.device.add" organizer=request.organizer.slug %}"
+            <a href="{% url "eventyay_common:organizer.devices.add" organizer=request.organizer.slug %}"
                     class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
         </div>
     {% else %}
         <p>
-            <a href="{% url "control:organizer.device.add" organizer=request.organizer.slug %}"
+            <a href="{% url "eventyay_common:organizer.devices.add" organizer=request.organizer.slug %}"
                     class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
         </p>
         <div class="table-responsive">
@@ -87,20 +87,20 @@
                         </td>
                         <td class="text-right flip">
                             {% if not d.initialized %}
-                                <a href="{% url "control:organizer.device.connect" organizer=request.organizer.slug device=d.id %}"
+                                <a href="{% url "eventyay_common:organizer.devices.connect" organizer=request.organizer.slug device=d.id %}"
                                         class="btn btn-primary btn-sm"><i class="fa fa-link"></i>
                                     {% trans "Connect" %}</a>
                             {% elif d.api_token %}
-                                <a href="{% url "control:organizer.device.revoke" organizer=request.organizer.slug device=d.id %}"
+                                <a href="{% url "eventyay_common:organizer.devices.revoke" organizer=request.organizer.slug device=d.id %}"
                                         class="btn btn-default btn-sm">
                                     {% trans "Revoke access" %}</a>
                             {% endif %}
-                            <a href="{% url "control:organizer.device.logs" organizer=request.organizer.slug device=d.id %}"
+                            <a href="{% url "eventyay_common:organizer.devices.logs" organizer=request.organizer.slug device=d.id %}"
                                class="btn btn-default btn-sm">
                                 <span class="fa fa-list-alt"></span>
                                 {% trans "Logs" %}
                             </a>
-                            <a href="{% url "control:organizer.device.edit" organizer=request.organizer.slug device=d.id %}"
+                            <a href="{% url "eventyay_common:organizer.devices.edit" organizer=request.organizer.slug device=d.id %}"
                                     class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
                         </td>
                     </tr>

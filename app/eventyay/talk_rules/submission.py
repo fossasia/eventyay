@@ -38,7 +38,7 @@ orga_or_reviewer_can_change_submission = orga_can_change_submissions | (is_revie
 @rules.predicate
 def is_cfp_open(user, obj):
     event = getattr(obj, 'event', None)
-    return event and event.is_public and event.cfp.is_open
+    return event and event.talks_published and event.cfp.is_open
 
 
 @rules.predicate
@@ -46,7 +46,7 @@ def are_featured_submissions_visible(user, event):
     from eventyay.talk_rules.agenda import is_agenda_visible
 
     show_featured = event.get_feature_flag('show_featured')
-    if not event.is_public or show_featured == 'never':
+    if not event.talks_published or show_featured == 'never':
         return False
     if show_featured == 'always':
         return True
@@ -248,6 +248,8 @@ def submissions_for_user(event, user):
 @rules.predicate
 def is_wip(user, obj):
     schedule = getattr(obj, 'schedule', None)
+    if schedule is None and hasattr(obj, 'version') and hasattr(obj, 'event'):
+        schedule = obj
     if schedule is None and hasattr(obj, 'current_schedule'):
         schedule = obj.current_schedule
     if schedule is None:

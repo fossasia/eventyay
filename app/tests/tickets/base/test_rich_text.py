@@ -1,6 +1,6 @@
 import pytest
 
-from pretix.base.templatetags.rich_text import (
+from eventyay.base.templatetags.rich_text import (
     markdown_compile_email,
     rich_text,
     rich_text_snippet,

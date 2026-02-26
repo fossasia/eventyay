@@ -57,7 +57,6 @@ nav.navbar {
   z-index: 1100;
   font-weight: 500;
   min-height: 50px;
-  height: 50px;
 }
 
 /* ============================================
@@ -209,7 +208,7 @@ nav.navbar.navbar-inverse .navbar-brand img,
   height: 30px;
   width: auto;
   margin-top: 2px;
-  margin-right: 6px;
+  margin-right: 4px;
 }
 
 nav.navbar.navbar-inverse .navbar-brand:hover,
@@ -316,6 +315,7 @@ nav.navbar.navbar-inverse #button-sudo,
   color: #f8f9fa;
   background: transparent;
   line-height: 20px;
+  margin-left: 2px;
 }
 
 nav.navbar.navbar-inverse #button-shop i,
@@ -395,7 +395,53 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
 }
 
 @media (max-width: 767px) {
+  :root {
+    --navbar-height: 60px;
+  }
+
   .hidden-xs {
     display: none !important;
+  }
+
+  nav.navbar {
+    padding-bottom: 10px;
+  }
+
+  .navbar-top-links.navbar-right {
+    float: left !important;
+  }
+
+  .navbar-top-links li {
+    min-height: var(--navbar-height);
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-top-links li a,
+  .navbar-top-links li form button.btn-link {
+    padding: 15px;
+    min-height: var(--navbar-height);
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .navbar-top-links li form {
+    display: inline;
+    margin: 0;
+    padding: 0;
+  }
+
+  nav.navbar.navbar-inverse #button-sudo,
+  .navbar-inverse #button-sudo {
+    padding: 15px;
+    min-height: var(--navbar-height);
+    font-size: 14px;
+    line-height: 20px;
+    display: block;
+    white-space: nowrap;
+  }
+
+  #main-title {
+    margin-top: calc(var(--navbar-height) + 10px);
   }
 }

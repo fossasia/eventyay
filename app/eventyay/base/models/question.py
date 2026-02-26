@@ -7,6 +7,7 @@ from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import Choices
 from eventyay.common.text.path import path_with_hash
+from eventyay.helpers.countries import get_country_name
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.talk_rules.agenda import is_agenda_visible
@@ -41,6 +42,7 @@ class TalkQuestionVariant(Choices):
     FILE = 'file'
     CHOICES = 'choices'
     MULTIPLE = 'multiple_choice'
+    COUNTRY = 'country'
 
     valid_choices = [
         (NUMBER, _('Number')),
@@ -49,10 +51,11 @@ class TalkQuestionVariant(Choices):
         (URL, _('URL')),
         (DATE, _('Date')),
         (DATETIME, _('Date and time')),
-        (BOOLEAN, _('Yes/No')),
+        (BOOLEAN, _('Confirmation')),
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
+        (COUNTRY, _('Country List')),
     ]
 
 
@@ -102,7 +105,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
     the opportunity to get all the information they need.
 
     :param variant: Can be any of 'number', 'string', 'text', 'boolean',
-        'file', 'choices', or 'multiple_choice'. Defined in the
+        'file', 'choices', 'multiple_choice', or 'country'. Defined in the
         ``TalkQuestionVariant`` class.
     :param target: Can be any of 'submission', 'speaker', or 'reviewer'.
         Defined in the ``TalkQuestionTarget`` class.
@@ -165,7 +168,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         verbose_name=_('Session Types'),
         blank=True,
     )
-    question = I18nCharField(max_length=800, verbose_name=_('Label'))
+    question = I18nCharField(max_length=800, verbose_name=_('Custom question'))
     help_text = I18nCharField(
         null=True,
         blank=True,
@@ -181,7 +184,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         help_text=_('Inactive fields will no longer be shown.'),
     )
     contains_personal_data = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_('Responses contain personal data'),
         help_text=_('If a user deletes their account, responses containing personal data will be removed, too.'),
     )
@@ -436,6 +439,8 @@ class Answer(PretalxModel):
             return self.answer_file.url if self.answer_file else ''
         if self.question.variant in ('choices', 'multiple_choice'):
             return ', '.join(str(option.answer) for option in self.options.all())
+        if self.question.variant == TalkQuestionVariant.COUNTRY:
+            return get_country_name(self.answer) or self.answer or ''
 
     @property
     def is_answered(self):

@@ -21,6 +21,7 @@ class ExportForm(forms.Form):
             ('json', _('JSON export')),
         ),
         widget=forms.RadioSelect,
+        initial='csv',
     )
     data_delimiter = forms.ChoiceField(
         required=False,
@@ -29,10 +30,11 @@ class ExportForm(forms.Form):
             'How do you want to separate data within a single cell (for example, multiple speakers in one session/multiple sessions for one speaker)?'
         ),
         choices=(
-            ('newline', _('Newline')),
             ('comma', _('Comma')),
+            ('newline', _('Newline')),
         ),
         widget=forms.RadioSelect,
+        initial='comma',
     )
 
     def __init__(self, *args, event=None, **kwargs):

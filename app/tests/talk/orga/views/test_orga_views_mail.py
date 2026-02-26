@@ -377,8 +377,8 @@ def test_orga_can_compose_single_mail_team(orga_client, review_user, event):
         assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
         assert len(djmail.outbox) == 1
         mail = djmail.outbox[0]
-        assert mail.subject == f"foo {review_user.name}"
-        assert mail.body == f"bar {review_user.name}"
+        assert mail.subject == f"foo {review_user.fullname}"
+        assert mail.body == f"bar {review_user.fullname}"
 
 
 @pytest.mark.django_db
@@ -404,7 +404,7 @@ def test_orga_can_compose_single_mail_team_by_pk(
         assert QueuedMail.objects.filter(sent__isnull=False).count() == 0
         assert len(djmail.outbox) == 2
         for user in (orga_user, review_user):
-            mail = [m for m in djmail.outbox if m.subject == f"foo {user.name}"][0]
+            mail = [m for m in djmail.outbox if m.subject == f"foo {user.fullname}"][0]
             assert mail.body == f"bar {user.email}"
 
 
@@ -436,7 +436,7 @@ def test_orga_can_compose_single_mail(
     with scope(event=event):
         mails = QueuedMail.objects.filter(sent__isnull=True)
         assert mails.count() == 2  # one of them is the accept mail!
-        mail = [m for m in mails if m.subject == f"foo {speaker.name}"][0]
+        mail = [m for m in mails if m.subject == f"foo {speaker.fullname}"][0]
         assert mail.text == f"bar {submission.title}"
 
 

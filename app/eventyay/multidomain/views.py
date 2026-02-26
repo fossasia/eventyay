@@ -19,8 +19,9 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
+from eventyay.agenda.views.utils import build_public_schedule_exporters
 
-WEBAPP_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'webapp'
+VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +48,7 @@ class VideoSPAView(View):
             except Event.DoesNotExist:
                 return HttpResponse('Event not found', status=404)
 
-        index_path = WEBAPP_DIST_DIR / 'index.html'
+        index_path = VIDEO_DIST_DIR / 'index.html'
         if index_path.is_file():
             html_content = index_path.read_text()
         else:
@@ -67,7 +68,9 @@ class VideoSPAView(View):
 
             with scope(event=event):
                 schedule = event.current_schedule or event.wip_schedule
-                schedule_data = schedule.build_data(all_talks=False) if schedule else None
+                schedule_data = schedule.build_data(all_talks=False, enrich=True) if schedule else None
+                schedule_version = schedule.version if schedule else None
+                schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 
             base_path = event.urls.video_base.rstrip('/')
             base_href = event.urls.video_base
@@ -91,7 +94,26 @@ class VideoSPAView(View):
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
                 'schedule': schedule_data,
+                'scheduleMeta': {
+                    'version': schedule_version or '',
+                    'is_current': schedule == event.current_schedule if schedule else False,
+                    'changelog_url': str(event.urls.changelog),
+                    'current_schedule_url': str(event.urls.schedule) if event.current_schedule else '',
+                    'versions': [
+                        {
+                            'version': v,
+                            'url': f'{str(event.urls.schedule)}v/{v}/',
+                            'isCurrent': v == schedule_version,
+                        }
+                        for v in event.schedules.filter(version__isnull=False)
+                        .order_by('-published')
+                        .values_list('version', flat=True)
+                    ],
+                    'exporters': schedule_exporters,
+                },
                 # Extra values expected by config.js/theme
+                'eventUrl': str(event.urls.base),
+                'eventSlug': event.slug,
                 'basePath': base_path,
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
@@ -132,16 +154,16 @@ class VideoAssetView(View):
         # Accept empty path -> index handling done by SPA view
         candidate_paths = (
             [
-                os.path.join(WEBAPP_DIST_DIR, path),
-                os.path.join(WEBAPP_DIST_DIR, 'assets', path),
+                os.path.join(VIDEO_DIST_DIR, path),
+                os.path.join(VIDEO_DIST_DIR, 'assets', path),
             ]
             if path
             else []
         )
         for fp in candidate_paths:
             if os.path.isfile(fp):
-                rel = os.path.relpath(fp, WEBAPP_DIST_DIR)
-                resp = static_serve(request, rel, document_root=WEBAPP_DIST_DIR)
+                rel = os.path.relpath(fp, VIDEO_DIST_DIR)
+                resp = static_serve(request, rel, document_root=VIDEO_DIST_DIR)
                 resp._csp_ignore = True
                 # Ensure proper content type for module scripts
                 ctype, _ = guess_type(fp)

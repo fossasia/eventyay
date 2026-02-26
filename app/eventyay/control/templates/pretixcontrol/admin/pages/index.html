@@ -4,6 +4,11 @@
 {% load static %}
 {% load eventurl %}
 {% block title %}{% trans "Page settings" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
+    <script defer src="{% static 'pretixcontrol/js/admin-pages-visibility-toggle.js' %}"></script>
+{% endblock %}
 {% block content %}
     <h1>{% trans "Page settings" %}</h1>
     {% if pages|length == 0 %}
@@ -23,11 +28,13 @@
             </a>
         </p>
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-condensed table-hover"
+                   data-pages-toggle-csrf="{{ csrf_token }}">
                 <thead>
                 <tr>
                     <th>{% trans "Page title" %}</th>
-                    <th></th>
+                    <th class="text-center">{% trans "Start page" %}</th>
+                    <th class="text-center">{% trans "System" %}</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -36,6 +43,34 @@
                     <tr>
                         <td>
                             <strong><a href="{% url "eventyay_admin:admin.pages.edit" id=p.id%}">{{ p.title }}</a></strong>
+                        </td>
+                        <td class="text-center">
+                            <label class="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    class="js-page-visibility-toggle"
+                                    id="page-startpage-{{ p.pk }}"
+                                    data-page-id="{{ p.pk }}"
+                                    data-scope="startpage"
+                                    data-toggle-url="{% url "eventyay_admin:admin.pages.toggle" id=p.id scope='startpage' %}"
+                                    {% if p.link_on_website_start_page %}checked{% endif %}
+                                    aria-label="{% trans "Toggle start page visibility" %}">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </td>
+                        <td class="text-center">
+                            <label class="toggle-switch">
+                                <input
+                                    type="checkbox"
+                                    class="js-page-visibility-toggle"
+                                    id="page-system-{{ p.pk }}"
+                                    data-page-id="{{ p.pk }}"
+                                    data-scope="system"
+                                    data-toggle-url="{% url "eventyay_admin:admin.pages.toggle" id=p.id scope='system' %}"
+                                    {% if p.link_in_system %}checked{% endif %}
+                                    aria-label="{% trans "Toggle system visibility" %}">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </td>
                         <td class="text-right">
                             <a href="{% url "page" slug=p.slug %}" class="btn btn-default btn-sm" target="_blank"><i class="fa fa-eye"></i></a>

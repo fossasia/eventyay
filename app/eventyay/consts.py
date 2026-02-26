@@ -2,6 +2,7 @@ import zoneinfo
 from enum import StrEnum
 from pathlib import Path
 
+
 # The root directory of the project, where "./manage.py" file is located.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -10,7 +11,17 @@ TIMEZONE_CHOICES = sorted(
 )
 
 # The directory for frontend development resources (node_modules, build scripts, etc.).
-FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'frontend'
+FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'webapp'
+
+# Default plugins enabled for new events
+DEFAULT_PLUGINS = (
+    'eventyay.plugins.sendmail',
+    'eventyay.plugins.statistics',
+    'eventyay.plugins.checkinlists',
+)
+
+# Email configuration constants
+EVENTYAY_EMAIL_NONE_VALUE = 'info@eventyay.com'
 
 class SizeKey(StrEnum):
     UPLOAD_SIZE_CSV = "upload_size_csv"

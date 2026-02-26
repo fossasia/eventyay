@@ -13,18 +13,26 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.functional import cached_property
-from django.utils.translation import activate, gettext_lazy as _
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import activate
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView, UpdateView, View
 from django_scopes import scopes_disabled
 
 from eventyay.base.forms.user import UserSettingsForm
 from eventyay.base.models import Event, LogEntry, NotificationSetting, User
 from eventyay.base.notifications import get_all_notification_types
+from eventyay.common.utils.language import (
+    get_event_enforce_ui_language_cookie_name,
+    get_event_language_cookie_name,
+    strict_match_language,
+)
+from eventyay.helpers.cookies import set_cookie_without_samesite
 
 from ...navigation import get_account_navigation
 from .common import AccountMenuMixIn
+
 
 logger = getLogger(__name__)
 PASSWORD_RESET_INTENT = 'password_reset'
@@ -144,12 +152,20 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         ctx['requires_password_reset'] = requires_reset
         provider_label = get_social_account_provider_label(user)
         ctx['password_reset_message'] = build_password_reset_message(requires_reset, provider_label)
+
+        # Get the primary email or fallback to first email or user email
+        email_addresses = user.emailaddress_set.all()
+        primary_email = next((ea.email for ea in email_addresses if ea.primary), None)
+        if not primary_email:
+            primary_email = next((ea.email for ea in email_addresses), user.email or _('(no email address)'))
+        ctx['primary_email'] = primary_email
+
         # Passed by the post() method when the password reset form was submitted.
         password_reset_form = kwargs.get('password_reset_form')
         # If this form is present, it means we need to render it with errors,
         # otherwise, create a new blank form for password reset.
         if not password_reset_form and requires_reset:
-            ctx['password_reset_form'] = ResetPasswordForm(initial={'email': user.email})
+            ctx['password_reset_form'] = ResetPasswordForm(initial={'email': primary_email})
             return ctx
         return ctx
 
@@ -200,14 +216,14 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
                 self.request.user.log_action('eventyay.user.settings.notifications.enabled', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
-                dest += '?event={}'.format(self.event.pk)
+                dest += f'?event={self.event.pk}'
             return redirect(dest)
         else:
             for method, __ in NotificationSetting.CHANNELS:
                 old_enabled = self.currently_set[method]
 
                 for at in self.types.keys():
-                    val = request.POST.get('{}:{}'.format(method, at))
+                    val = request.POST.get(f'{method}:{at}')
 
                     # True → False
                     if old_enabled.get(at) is True and val == 'off':
@@ -240,7 +256,7 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
             self.request.user.log_action('eventyay.user.settings.notifications.changed', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
-                dest += '?event={}'.format(self.event.pk)
+                dest += f'?event={self.event.pk}'
             return redirect(dest)
 
     def get_context_data(self, **kwargs):
@@ -322,6 +338,7 @@ def build_password_reset_message(requires_reset: bool, provider_label: str) -> s
         ).format(provider=provider_label)
     return _('Your account does not have a password yet. Send yourself a password setup link below.')
 
+
 class LanguageSwitchView(View):
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or '/'
@@ -345,4 +362,31 @@ class LanguageSwitchView(View):
                 expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
                 domain=settings.SESSION_COOKIE_DOMAIN,
             )
+
+            event_slug = request.POST.get('event')
+            organizer_slug = request.POST.get('organizer')
+            event = None
+            if event_slug and organizer_slug:
+                with scopes_disabled():
+                    event = Event.objects.filter(
+                        slug=event_slug,
+                        organizer__slug=organizer_slug,
+                    ).first()
+
+            if event:
+                enforce_cookie_name = get_event_enforce_ui_language_cookie_name(event.slug, event.organizer.slug)
+                if request.COOKIES.get(enforce_cookie_name, '0') == '1':
+                    linked_event_language = strict_match_language(locale, event.locales)
+                    if linked_event_language:
+                        event_cookie_name = get_event_language_cookie_name(event.slug, event.organizer.slug)
+                        set_cookie_without_samesite(
+                            request,
+                            response,
+                            event_cookie_name,
+                            linked_event_language,
+                            max_age=max_age,
+                            expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                            domain=settings.SESSION_COOKIE_DOMAIN,
+                            path='/',
+                        )
         return response

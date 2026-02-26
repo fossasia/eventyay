@@ -27,26 +27,6 @@ os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'testing')
 
 import django
 
-
-# Patch urlman to handle documentation builds gracefully
-try:
-    import urlman
-    original_urls_getattribute = urlman.Urls.__getattribute__
-    
-    def patched_getattribute(self, name):
-        try:
-            return original_urls_getattribute(self, name)
-        except Exception:
-            # During docs build, return a placeholder for missing attributes
-            if name in ('__wrapped__', '__name__'):
-                return self.__class__.__name__
-            raise
-    
-    urlman.Urls.__getattribute__ = patched_getattribute
-except Exception:
-    # urlman not available or patching failed, continue anyway
-    pass
-
 # Configure Django and override LOGGING settings for documentation builds
 # This must be done AFTER django.setup() to avoid triggering early settings initialization
 try:
@@ -72,6 +52,7 @@ except ImportError:
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinxcontrib.httpdomain',
@@ -89,6 +70,7 @@ autodoc_default_options = {
     'undoc-members': False,
     'show-inheritance': True,
 }
+autodoc_typehints = 'none'
 
 # Don't fail the build on autodoc import errors
 autodoc_warningiserror = False
@@ -379,13 +361,7 @@ if HAS_PYENCHANT:
     spelling_show_suggestions = True
 
     # List of filter classes to be added to the tokenizer that produces words to be checked.
-    # Note: spelling_filters is read by sphinxcontrib.spelling extension
-    try:
-        from checkin_filter import CheckinFilter
-        spelling_filters = [CheckinFilter]
-    except ImportError:
-        # checkin_filter module not available, skip custom filters
-        spelling_filters = []
+    spelling_filters = ['checkin_filter.CheckinFilter']
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
@@ -402,7 +378,14 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
     # Also skip any attribute ending with _urls
     if name.endswith('_urls'):
         return True
-    return skip
+
+    # Avoid evaluating QuerySets during introspection (repr() can hit the DB).
+    try:
+        from django.db.models.query import QuerySet as DjangoQuerySet
+        if isinstance(obj, DjangoQuerySet):
+            return True
+    except ImportError:
+        return skip
 
 
 def setup(app):

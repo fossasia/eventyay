@@ -1,13 +1,18 @@
-import bleach
+import nh3
+import json
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import FormView, ListView, TemplateView, UpdateView
 
 from eventyay.base.models.page import Page
+from eventyay.base.templatetags.rich_text import compile_markdown
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.helpers.compat import CompatDeleteView
@@ -32,7 +37,7 @@ class PageCreate(AdministratorPermissionRequiredMixin, FormView):
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages',
+            'eventyay_admin:admin.pages',
         )
 
     def form_valid(self, form):
@@ -54,7 +59,7 @@ class PageDetailMixin:
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages',
+            'eventyay_admin:admin.pages',
         )
 
 
@@ -73,7 +78,7 @@ class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateVi
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages.edit',
+            'eventyay_admin:admin.pages.edit',
             kwargs={
                 'id': self.object.pk,
             },
@@ -103,6 +108,57 @@ class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateVi
         return super().form_invalid(form)
 
 
+class PageVisibilityToggle(AdministratorPermissionRequiredMixin, PageDetailMixin, View):
+    _field_by_scope = {
+        'startpage': 'link_on_website_start_page',
+        'system': 'link_in_system',
+    }
+
+    def post(self, request, *args, **kwargs):
+        is_json_request = (request.content_type or '').startswith('application/json')
+        data = request.POST
+        if not data:
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except (ValueError, AttributeError):
+                data = {}
+
+        scope = self.kwargs.get('scope')
+        field_name = self._field_by_scope.get(scope)
+        if not field_name:
+            if is_json_request:
+                return JsonResponse({'ok': False, 'error': _('Invalid field.')}, status=400)
+            raise Http404(_('The requested page does not exist.'))
+
+        page = self.get_object()
+        value = data.get('value')
+        if value is None:
+            new_value = not getattr(page, field_name)
+        else:
+            new_value = str(value).lower() in {'true', '1', 'yes', 'on'}
+
+        setattr(page, field_name, new_value)
+        page.save(update_fields=[field_name])
+
+        if is_json_request:
+            return JsonResponse(
+                {
+                    'ok': True,
+                    'startpage': page.link_on_website_start_page,
+                    'system': page.link_in_system,
+                }
+            )
+
+        next_url = request.POST.get('next', '')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return redirect(next_url)
+        return redirect('eventyay_admin:admin.pages')
+
+
 class PageDelete(AdministratorPermissionRequiredMixin, PageDetailMixin, CompatDeleteView):
     model = Page
     template_name = 'pretixcontrol/admin/pages/delete.html'
@@ -128,19 +184,24 @@ class ShowPageView(TemplateView):
         ctx = super().get_context_data()
         page = self.get_page()
         ctx['page'] = page
-        ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
-        ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
+        ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
+        ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
 
-        attributes = dict(bleach.ALLOWED_ATTRIBUTES)
-        attributes['a'] = ['href', 'title', 'target']
-        attributes['p'] = ['class']
-        attributes['li'] = ['class']
-        attributes['img'] = ['src']
+        attributes = {
+            **nh3.ALLOWED_ATTRIBUTES,
+            'a': nh3.ALLOWED_ATTRIBUTES['a'] | {'title', 'target'},
+            'p': {'class'},
+            'li': {'class'},
+        }
 
-        ctx['content'] = bleach.clean(
-            str(page.text),
-            tags=bleach.ALLOWED_TAGS + ['img', 'p', 'br', 's', 'sup', 'sub', 'u', 'h3', 'h4', 'h5', 'h6'],
+        tags = nh3.ALLOWED_TAGS
+
+        url_schemes = set(getattr(nh3, 'DEFAULT_URL_SCHEMES', nh3.ALLOWED_URL_SCHEMES)) | {'data'}
+
+        ctx['content'] = nh3.clean(
+            compile_markdown(str(page.text)),
+            tags=tags,
             attributes=attributes,
-            protocols=bleach.ALLOWED_PROTOCOLS + ['data'],
+            url_schemes=url_schemes,
         )
         return ctx

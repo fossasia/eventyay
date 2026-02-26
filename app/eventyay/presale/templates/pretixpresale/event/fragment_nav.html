@@ -2,48 +2,66 @@
 {% load bootstrap3 %}
 {% load eventurl %}
 {% load event_tags %}
+{% load staff_session %}
 
 <nav id='header-nav-bar'>
     <div class="navigation">
-        <a href="{% eventurl request.event 'presale:event.index' %}" class="header-tab underline">
-            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+        {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
+        {% tickets_tab_visible as show_tickets_tab %}
+        {% can_view_talks as show_talks_tab %}
+        <a href="{% eventurl request.event 'presale:event.index' %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' %}underline{% endif %}">
+            <i class="fa fa-info-circle"></i> {% translate "Info" %}
         </a>
 
-        {% if schedule or request.event.has_schedule_content %}
-            <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">
-                <i class="fa fa-calendar"></i> {% translate "Schedule" %}
-            </a>
-
-            <a href="{{ request.event.talk_session_url }}" class="header-tab {% if '/sessions/' in request.path_info %}active{% endif %}">
-                <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
-            </a>
-
-            {% if request.event.speakers.exists %}
-                <a href="{{ request.event.talk_speaker_url }}" class="header-tab {% if '/speakers/' in request.path_info %}active{% endif %}">
-                    <i class="fa fa-group"></i> {% translate "Speakers" %}
+        {% if request.event.live or is_organiser %}
+            {% if show_tickets_tab %}
+                <a href="{% eventurl request.event 'presale:event.index' %}#tickets" id="nav-tab-tickets" class="header-tab">
+                    <i class="fa fa-ticket"></i> {% translate "Tickets" %}
                 </a>
             {% endif %}
         {% endif %}
 
-        {% with cfp=request.event.cfp %}
-            {% if cfp.is_open or access_code.is_valid %}
-                <a class="header-tab"
-                    href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
-                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+        {% if show_talks_tab %}
+            {% if schedule or request.event.has_schedule_content %}
+                <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">
+                    <i class="fa fa-calendar"></i> {% translate "Schedule" %}
                 </a>
-            {% elif not cfp.settings.hide_after_deadline %}
-                <a class="header-tab"
-                    href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
-                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
-                </a>
-            {% endif %}
-        {% endwith %}
 
-        <div class="video-link">
-            <a id="join-event-link" class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
-                href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
-                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
-            </a>
-        </div>
+                <a href="{{ request.event.talk_session_url }}" class="header-tab {% if '/sessions/' in request.path_info %}active{% endif %}">
+                    <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
+                </a>
+
+                {% if request.event.speakers.exists %}
+                    <a href="{{ request.event.talk_speaker_url }}" class="header-tab {% if '/speakers/' in request.path_info %}active{% endif %}">
+                        <i class="fa fa-group"></i> {% translate "Speakers" %}
+                    </a>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+
+        {% if show_talks_tab %}
+            {% with cfp=request.event.cfp %}
+                {% if cfp.is_open or access_code.is_valid %}
+                    <a class="header-tab"
+                        href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
+                        <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+                    </a>
+                {% elif not cfp.settings.hide_after_deadline %}
+                    <a class="header-tab"
+                        href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
+                        <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
+                    </a>
+                {% endif %}
+            {% endwith %}
+        {% endif %}
+
+        {% if show_online_video_link|default:False %}
+            <div class="video-link">
+                <a id="join-event-link" class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
+                    href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
+                    <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+                </a>
+            </div>
+        {% endif %}
     </div>
 </nav>
