@@ -307,19 +307,18 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
     permission_required = 'base.update_speakerprofile'
 
     def post(self, request, *args, **kwargs):
-        with scope(event=self.request.event):
-            self.profile.is_featured = not self.profile.is_featured
-            self.profile.save(update_fields=['is_featured'])
-            action = (
-                'eventyay.speaker.featured'
-                if self.profile.is_featured
-                else 'eventyay.speaker.unfeatured'
-            )
-            self.object.log_action(
-                action,
-                data={'event': self.request.event.slug},
-                user=self.request.user,
-            )
+        self.profile.is_featured = not self.profile.is_featured
+        self.profile.save(update_fields=['is_featured'])
+        action = (
+            'eventyay.speaker.featured'
+            if self.profile.is_featured
+            else 'eventyay.speaker.unfeatured'
+        )
+        self.object.log_action(
+            action,
+            data={'event': self.request.event.slug},
+            user=self.request.user,
+        )
         return HttpResponse()
 
 
