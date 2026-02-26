@@ -209,13 +209,24 @@ input[type="file"] {
 }
 
 .form-check {
-  display: flex !important;
-  flex-direction: row !important;
+  display: flex;
+  flex-direction: row;
   align-items: center;
   min-height: 1.5rem;
   padding-left: 0;
   margin-bottom: 0.5rem;
-  width: 100%; /* Ensure they take full width to stack vertically */
+
+  &.form-check-inline {
+    display: inline-flex;
+    margin-right: 0.75rem;
+    width: auto;
+  }
+
+  &.form-check-vertical,
+  .form-check-vertical-group & {
+    width: 100%;
+    display: flex;
+  }
 
   input[type="checkbox"],
   input[type="radio"] {
@@ -228,6 +239,7 @@ input[type="checkbox"],
 input[type="radio"] {
   -moz-appearance: none;
   -webkit-appearance: none;
+  appearance: none;
 
   width: 24px;
   height: 24px;
@@ -249,8 +261,6 @@ input[type="radio"] {
     pointer-events: none;
   }
 
-  /* Target labels that wrap inputs (standard Django/Bootstrap structure) */
-  &:has(+ label),
   /* Target labels that are siblings (alternative structure) */
   & + label,
   & ~ .form-check-label {
@@ -275,15 +285,15 @@ input[type="radio"] {
 label:has(> input[type="radio"]),
 label:has(> input[type="checkbox"]),
 label.form-check-label {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    font-weight: normal !important;
-    align-items: center;
-    gap: 8px;
-    padding-top: 0;
-    padding-bottom: 0;
-    text-align: left;
-    margin-bottom: 0;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  font-weight: normal !important;
+  align-items: center;
+  gap: 8px;
+  padding-top: 0;
+  padding-bottom: 0;
+  text-align: left;
+  margin-bottom: 0;
 }
 
 input[type="checkbox"] {
@@ -344,6 +354,7 @@ select {
 
 input[type="search"] {
   -webkit-appearance: textfield;
+  appearance: textfield;
   outline-offset: -2px; /* Safari */
   height: fit-content;
   &.form-control.is-valid {
@@ -352,6 +363,7 @@ input[type="search"] {
 }
 ::-webkit-search-decoration {
   -webkit-appearance: none;
+  appearance: none;
 }
 
 .bootstrap4-multi-input {
@@ -360,10 +372,12 @@ input[type="search"] {
 
 input[type="number"] {
   -moz-appearance: textfield !important;
+  appearance: textfield !important;
 
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
     -webkit-appearance: none !important;
+    appearance: none !important;
     margin: 0;
   }
 }
