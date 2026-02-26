@@ -27,6 +27,8 @@
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
+
+    <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
@@ -326,71 +328,10 @@
     {% endif %}
     {% if subevent or not event.has_subevents %}
         {% if featured_speakers %}
-            <section class="front-page" id="featured-speakers" aria-labelledby="featured-speakers-heading">
-                <h3 id="featured-speakers-heading">{% trans "Featured Speakers" %}</h3>
-                <div class="row featured-speakers-grid">
-                    {% for speaker in featured_speakers %}
-                        <div class="col-md-4 col-sm-6 col-xs-12 featured-speaker-column">
-                            <details class="featured-speaker-card">
-                                <summary class="featured-speaker-summary">
-                                    <div class="thumbnail">
-                                        {% if request.event.cfp.request_avatar and speaker.user.avatar %}
-                                            <img loading="lazy" src="{{ speaker.user.avatar|thumb:'400x400^' }}" alt="{% trans "The speaker's profile picture" %}">
-                                        {% else %}
-                                            <img loading="lazy" src="{{ request.event.urls.speakers }}avatar.svg" alt="{% trans "The speaker's profile picture" %}">
-                                        {% endif %}
-                                        <div class="caption text-center">
-                                            <h4>{{ speaker.featured_display_name }}</h4>
-                                            {% if speaker.biography %}
-                                                <p>{{ speaker.biography|event_localize|striptags|truncatechars:100 }}</p>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </summary>
-                                <div class="featured-speaker-details">
-                                    {% if speaker.biography %}
-                                        <div class="featured-speaker-bio">
-                                            {{ speaker.biography|event_localize|rich_text_without_links }}
-                                        </div>
-                                    {% endif %}
-                                    {% if speaker.featured_slots %}
-                                        <hr class="featured-speaker-divider">
-                                        <div class="featured-speaker-sessions">
-                                            <h4>{% trans "Sessions" %}</h4>
-                                            {% for session in speaker.featured_slots %}
-                                                <div class="featured-speaker-session">
-                                                    <small class="featured-speaker-session-time">
-                                                        <span data-time="{{ session.start|date:'c' }}" data-timezone="{{ request.event.settings.timezone }}">
-                                                            {{ session.start|date:'SHORT_DATETIME_FORMAT' }}
-                                                        </span>
-                                                    </small>
-                                                    <a
-                                                        href="{{ session.submission.urls.public }}"
-                                                        class="featured-speaker-session-link"
-                                                        style="--session-color:{{ session.featured_color }};"
-                                                    >
-                                                        <span class="featured-speaker-session-slot">
-                                                            {{ session.start|date:'TIME_FORMAT' }} - {{ session.end|date:'TIME_FORMAT' }}
-                                                        </span>
-                                                        <span class="featured-speaker-session-title">
-                                                            {{ session.submission.title|event_localize }}
-                                                        </span>
-                                                    </a>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                    <div class="featured-speaker-profile-link">
-                                        <a href="{{ speaker.urls.public }}">{% trans "View speaker profile" %}</a>
-                                    </div>
-                                </div>
-                            </details>
-                        </div>
-                    {% endfor %}
-                </div>
-                <p class="featured-speakers-more">
-                    <a href="{{ request.event.urls.speakers }}" class="btn btn-info btn-sm">{% translate "More speakers" %}</a>
-                </p>
+            <section class="front-page" id="featured-speakers" aria-label="{% trans 'Featured Speakers' %}">
+                {{ featured_speakers_widget_schedule|json_script:"pretalx-schedule-data" }}
+                <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+                <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
             </section>
         {% endif %}
     {% endif %}

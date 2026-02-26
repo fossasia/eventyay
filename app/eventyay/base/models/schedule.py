@@ -784,13 +784,15 @@ class Schedule(PretalxModel):
             for room in self.event.rooms.all()
             if room in rooms
         ]
+
         include_avatar = self.event.cfp.request_avatar
         speaker_list = []
         for user in speakers:
+            profile = user.event_profile(self.event)
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
-                'biography': getattr(user.event_profile(self.event), 'biography', ''),
+                'biography': getattr(profile, 'biography', ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None
@@ -798,6 +800,8 @@ class Schedule(PretalxModel):
                 'avatar_thumbnail_tiny': (
                     user.get_avatar_url(event=self.event, thumbnail='tiny') if include_avatar else None
                 ),
+                'is_featured': bool(getattr(profile, 'is_featured', False)),
+                'featured_position': getattr(profile, 'position', None),
             }
             if enrich:
                 spk_base = f'{base_url}speakers/{user.code}'

@@ -6,7 +6,8 @@
 	template(v-else-if="isTalkView && schedule && resolvedTalk")
 		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
 	template(v-else-if="isSpeakerView && schedule")
-		speakers-list(v-if="view === 'speakers'")
+		featured-speakers(v-if="view === 'featured-speakers'")
+		speakers-list(v-else-if="view === 'speakers'")
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
 	template(v-else-if="schedule && schedule.talks.length")
 		schedule-toolbar(v-if="scheduleMeta || schedule",
@@ -103,6 +104,7 @@ import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
 import SpeakersList from '~/components/SpeakersList'
+import FeaturedSpeakers from '~/components/FeaturedSpeakers'
 import SpeakerDetail from '~/components/SpeakerDetail'
 import TalkDetail from '~/components/TalkDetail'
 import { findScrollParent, getLocalizedString, getSessionTime, isProperSession } from '~/utils'
@@ -119,7 +121,7 @@ const markdownIt = MarkdownIt({
 
 export default {
 	name: 'PretalxSchedule',
-	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, SpeakerDetail, TalkDetail },
+	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, FeaturedSpeakers, SpeakerDetail, TalkDetail },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -310,7 +312,9 @@ export default {
 					do_not_record: session.do_not_record,
 					start: start,
 					end: moment.tz(session.end, this.currentTimezone),
-					speakers: session.speakers?.map(s => this.speakersLookup[s]),
+					speakers: (session.speakers || [])
+						.map(code => this.speakersLookup[code] || { code })
+						.filter(Boolean),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
 					fav_count: session.fav_count,
@@ -368,7 +372,7 @@ export default {
 			return new Intl.DateTimeFormat(this.locale, {hour: 'numeric'}).resolvedOptions().hour12
 		},
 		isSpeakerView () {
-			return this.view === 'speakers' || this.view === 'speaker'
+			return this.view === 'speakers' || this.view === 'speaker' || this.view === 'featured-speakers'
 		},
 		isTalkView () {
 			return this.view === 'talk'
@@ -394,7 +398,12 @@ export default {
 		},
 		remoteApiUrl () {
 			if (!this.eventUrl) return ''
-			const eventUrlObj = new URL(this.eventUrl)
+			let eventUrlObj
+			try {
+				eventUrlObj = new URL(this.eventUrl)
+			} catch {
+				eventUrlObj = new URL(this.eventUrl, window.location.origin)
+			}
 			return `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
 		}
 	},
@@ -505,6 +514,7 @@ export default {
 				this.allLanguages.push({ value: code, label: displayName, selected: false })
 			}
 		})
+
 		// Also include any per-talk locales not already covered by event locales
 		this.schedule.talks.forEach(s => {
 			if (s.content_locale && !langSet.has(s.content_locale)) {
