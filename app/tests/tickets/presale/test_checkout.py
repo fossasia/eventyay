@@ -882,6 +882,49 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.get(id=cr1.id)
         self.assertEqual(cr1.company, 'foobar')
 
+    def test_attendee_job_title_required(self):
+        self.event.settings.set('attendee_job_title_asked', True)
+        self.event.settings.set('attendee_job_title_required', True)
+        with scopes_disabled():
+            cr1 = CartPosition.objects.create(
+                event=self.event,
+                cart_id=self.session_key,
+                item=self.ticket,
+                price=23,
+                expires=now() + timedelta(minutes=10),
+            )
+        response = self.client.get(
+            '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
+            follow=True,
+        )
+        doc = BeautifulSoup(response.content.decode(), 'lxml')
+        self.assertEqual(len(doc.select('input[name="%s-job_title"]' % cr1.id)), 1)
+
+        # Not all required fields filled out, expect failure
+        response = self.client.post(
+            '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
+            {'%s-job_title' % cr1.id: '', 'email': 'admin@localhost'},
+            follow=True,
+        )
+        doc = BeautifulSoup(response.content.decode(), 'lxml')
+        self.assertGreaterEqual(len(doc.select('.has-error')), 1)
+
+        # Corrected request
+        response = self.client.post(
+            '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
+            {'%s-job_title' % cr1.id: 'Engineer', 'email': 'admin@localhost'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/checkout/payment/' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+
+        with scopes_disabled():
+            cr1 = CartPosition.objects.get(id=cr1.id)
+        self.assertEqual(cr1.job_title, 'Engineer')
+
     def test_attendee_address_required(self):
         self.event.settings.set('attendee_addresses_asked', True)
         self.event.settings.set('attendee_addresses_required', True)

@@ -267,6 +267,37 @@
                         {% endwith %}
                         {% endif %}
 
+                        {# Job title #}
+                        {% if field.id == "job_title" %}
+                        {% with field=sform.attendee_job_title_asked_required %}
+                        {% if field %}
+                        <tr data-dnd-id="job_title">
+                            <th id="{{ field.auto_id }}_label">{% translate "Job title" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% translate 'Required status for Job title' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="dnd-container text-center text-nowrap"></td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+                        {% endif %}
+
                         {# Attendee addresses - represents multiple backend fields #}
                         {% if field.id == "street" %}
                         {% with field=sform.attendee_addresses_asked_required %}

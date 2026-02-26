@@ -70,7 +70,7 @@ from eventyay.control.forms.product import (
     QuestionOptionForm,
     QuotaForm,
 )
-from eventyay.control.forms.event import EventSettingsForm
+from eventyay.control.forms.event import OrderFormSettingsForm
 from eventyay.control.permissions import (
     EventPermissionRequiredMixin,
     event_permission_required,
@@ -380,6 +380,7 @@ def reorder_questions(request, organizer, event):
         'attendee_name_parts',
         'attendee_email',
         'company',
+        'job_title',
         'street',
         'zipcode',
         'city',
@@ -1680,7 +1681,7 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
     permission = 'can_change_items'
 
     def sform(self):
-        return EventSettingsForm(
+        return OrderFormSettingsForm(
             obj=self.request.event,
             prefix='settings',
             data=self.request.POST if self.request.method == 'POST' else None,
@@ -1699,7 +1700,7 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         
         # Build sorted field order list for template rendering
         system_question_order = self.request.event.settings.system_question_order or {}
-        system_fields = ['attendee_name_parts', 'attendee_email', 'company', 'street']
+        system_fields = ['attendee_name_parts', 'attendee_email', 'company', 'job_title', 'street']
         
         # Create questions lookup map for O(1) access
         questions_by_id = {str(q.id): q for q in questions}
