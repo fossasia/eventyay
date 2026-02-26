@@ -170,7 +170,7 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
 
 
 class TalkReviewView(TalkView):
-    template_name = 'agenda/talk.html'
+    template_name = 'agenda/talk_review.html'
 
     def has_permission(self):
         return self.request.event.get_feature_flag('submission_public_review')
@@ -195,6 +195,21 @@ class TalkReviewView(TalkView):
     @context
     def hide_speaker_links(self):
         return True
+
+    def get_context_data(self, **kwargs):
+        # TalkView.get_context_data returns early (skipping speakers) when the
+        # visitor lacks base.view_schedule permission – which is always the case
+        # for anonymous reviewers when the schedule is not yet public.  Fill in
+        # the speaker data unconditionally for the review page.
+        ctx = super().get_context_data(**kwargs)
+        if 'speakers' not in ctx:
+            result = []
+            for speaker in self.submission.speakers.all().with_profiles(self.request.event):
+                speaker.talk_profile = speaker.event_profile(event=self.request.event)
+                result.append(speaker)
+            ctx['speakers'] = result
+            ctx['submission_tags'] = self.submission.tags.all()
+        return ctx
 
 
 class SingleICalView(EventPageMixin, TalkMixin, View):
