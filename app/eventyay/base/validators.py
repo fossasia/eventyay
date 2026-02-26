@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE
+from eventyay import consts
 
 
 class BanlistValidator:
@@ -60,5 +60,5 @@ class OrganizerSlugBanlistValidator(BanlistValidator):
 @deconstructible
 class EmailBanlistValidator(BanlistValidator):
     banlist = [
-        EVENTYAY_EMAIL_NONE_VALUE,
+        consts.EVENTYAY_EMAIL_NONE_VALUE,
     ]
