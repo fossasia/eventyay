@@ -31,7 +31,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
 		.fav-count(v-if="showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
-	.stream-indicator(v-if="isLive && session.stream_url", @click.prevent.stop="openStream")
+	.stream-indicator(v-if="hasStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
 	.session-icons
@@ -148,6 +148,20 @@ export default {
 			const now = this.effectiveNow
 			return now && this.session.start < now && this.session.end > now
 		},
+		hasStream () {
+			return !!(this.session.stream_url || this.session.room?.video_url)
+		},
+		streamLink () {
+			// Prefer internal video room link over external stream URL
+			const joinLink = this.getJoinRoomLink(this.session)
+			if (joinLink) return joinLink
+			if (this.session.room?.video_url) return this.session.room.video_url
+			if (this.session.stream_url) return this.session.stream_url
+			return ''
+		},
+		streamTooltip () {
+			return this.isLive ? 'Watch stream' : 'View video room'
+		},
 		abstractText () {
 			try {
 				return markdownIt.renderInline(this.session.abstract)
@@ -158,7 +172,6 @@ export default {
 	},
 	methods: {
 		toggleFav () {
-			console.log("toggling fav")
 			if (this.faved) {
 				this.$emit('unfav', this.session.id)
 			} else {
@@ -166,9 +179,9 @@ export default {
 			}
 		},
 		openStream () {
-			const roomLink = this.getJoinRoomLink(this.session)
-			if (roomLink) {
-				window.location.href = roomLink
+			const link = this.streamLink
+			if (link) {
+				window.open(link, '_blank', 'noopener,noreferrer')
 			}
 		}
 	}
@@ -325,12 +338,14 @@ export default {
 		align-items: center
 		justify-content: center
 		border-radius: 50%
-		background-color: $clr-danger
+		background-color: var(--track-color)
 		color: $clr-primary-text-dark
 		cursor: pointer
 		z-index: 20
 		box-shadow: 0 2px 6px rgba(0,0,0,0.25)
-		transition: transform 0.15s ease
+		transition: transform 0.15s ease, background-color 0.15s ease
+		&.live
+			background-color: $clr-danger
 		&:hover
 			transform: translateY(-50%) scale(1.15)
 	svg

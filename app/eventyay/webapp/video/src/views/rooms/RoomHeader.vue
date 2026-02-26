@@ -22,7 +22,7 @@
 // TODO
 // better ellipsing for room name + session title on small screens
 import {mapGetters, mapState} from 'vuex'
-import { inferRoomType } from 'lib/room-types'
+import { inferRoomType, inferType } from 'lib/room-types'
 import RecordingsPrompt from 'components/RecordingsPrompt'
 import QRCodePrompt from 'components/QRCodePrompt'
 
@@ -48,12 +48,25 @@ export default {
 		...mapState(['rooms']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		room() {
-			if (this.roomId === undefined) return this.rooms[0] // '/' is the first room
-			return this.rooms.find(room => room.id === this.roomId)
+			if (this.roomId === undefined) {
+				const rooms = this.rooms || []
+				const homeRoom = rooms.find(room => {
+					if (!room) return false
+					if (Array.isArray(room.module_config)) {
+						return !!inferType({ module_config: room.module_config })
+					}
+					return !!inferRoomType(room)
+				})
+				return homeRoom || rooms[0]
+			}
+			const wantedId = String(this.roomId)
+			return this.rooms?.find(room => String(room.id) === wantedId)
 		},
 		roomType() {
 			if (!this.room) return null
-			const type = inferRoomType(this.room)
+			const type = Array.isArray(this.room.module_config)
+				? inferType({ module_config: this.room.module_config })
+				: inferRoomType(this.room)
 			return type ? type.id : null
 		},
 		modules() {
@@ -72,6 +85,36 @@ export default {
 				if (this.hasPermission(permission)) return true
 			}
 			return false
+		}
+	},
+	watch: {
+		room: {
+			handler: 'redirectIfUninitiated',
+			immediate: true
+		},
+		rooms: {
+			handler: 'redirectIfUninitiated',
+			deep: true
+		},
+		roomId: 'redirectIfUninitiated'
+	},
+	methods: {
+		redirectIfUninitiated() {
+			// Only enforce this for direct room navigation (/rooms/:roomId).
+			// Home ('/') will always show the first available room.
+			if (this.roomId === undefined) return
+			// Wait until rooms have loaded.
+			if (!this.rooms || this.rooms.length === 0) return
+			// If the room does not exist or is unconfigured, redirect to home.
+			const inferred = this.room
+				? (Array.isArray(this.room.module_config)
+					? inferType({ module_config: this.room.module_config })
+					: inferRoomType(this.room))
+				: null
+			if (!inferred) {
+				if (this.$route.name === 'home') return
+				this.$router.replace({name: 'home'})
+			}
 		}
 	}
 }

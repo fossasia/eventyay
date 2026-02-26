@@ -121,7 +121,7 @@ export default {
 		},
 	},
 	validations() {
-		return {
+		const rules = {
 			formData: {
 				url: {
 					required: required('Stream URL is required'),
@@ -138,6 +138,7 @@ export default {
 				},
 			},
 		};
+		return rules;
 	},
 	async created() {
 		await this.fetchStreamSchedules();
@@ -210,8 +211,8 @@ export default {
 			this.formData = {
 				title: schedule.title || '',
 				url: schedule.url,
-				start_time: moment.tz(schedule.start_time, tz),
-				end_time: moment.tz(schedule.end_time, tz),
+				start_time: schedule.start_time ? this.parseApiDateTime(schedule.start_time).tz(tz) : null,
+				end_time: schedule.end_time ? this.parseApiDateTime(schedule.end_time).tz(tz) : null,
 				stream_type: schedule.stream_type,
 			};
 		},
@@ -233,17 +234,19 @@ export default {
 			this.v$.$touch();
 			if (this.v$.$invalid) return;
 
-			const now = moment();
+			// Compare timestamps in UTC to avoid browser-timezone surprises.
+			const now = moment.utc();
 			if (this.formData.start_time) {
-				if (!this.editingSchedule && this.formData.start_time.isBefore(now)) {
+				const startTimeUtc = this.formData.start_time.clone().utc();
+				if (!this.editingSchedule && startTimeUtc.isBefore(now)) {
 					this.saveError = 'Start time cannot be in the past.';
 					return;
 				}
 				if (
 					this.editingSchedule &&
 					this.editingSchedule.start_time &&
-					moment(this.editingSchedule.start_time).isSameOrAfter(now) &&
-					this.formData.start_time.isBefore(now)
+					this.parseApiDateTime(this.editingSchedule.start_time).utc().isSameOrAfter(now) &&
+					startTimeUtc.isBefore(now)
 				) {
 					this.saveError = 'Start time cannot be in the past.';
 					return;
@@ -401,7 +404,25 @@ export default {
 		formatDateTime(datetime) {
 			if (!datetime) return '';
 			const tz = this.eventTimezone || 'UTC';
-			return moment.tz(datetime, tz).format('YYYY-MM-DD HH:mm');
+			return this.parseApiDateTime(datetime).tz(tz).format('YYYY-MM-DD HH:mm');
+		},
+		parseApiDateTime(datetime) {
+			if (!datetime) return moment.invalid();
+			if (moment.isMoment(datetime)) return datetime.clone();
+			if (datetime instanceof Date) return moment(datetime);
+			const value = String(datetime);
+			// If the backend returns a timezone offset (e.g. 'Z' or '+01:00'), preserve it.
+			// Otherwise treat the timestamp as UTC (not browser-local).
+			const hasTimezone = /([zZ]|[+-]\d\d:?\d\d)$/.test(value);
+			return hasTimezone ? moment.parseZone(value) : moment.utc(value);
+		},
+		localizedTitle(title) {
+			if (typeof title === 'string') return title;
+			if (typeof title === 'object' && title) {
+				const lang = this.$store.state.schedule?.currentLanguage || 'en';
+				return title[lang] || title.en || Object.values(title)[0] || 'Untitled';
+			}
+			return 'Untitled';
 		},
 	},
 };

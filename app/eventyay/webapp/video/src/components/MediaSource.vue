@@ -11,7 +11,9 @@
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
-	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
+	.iframe-error(v-if="!iframeEl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
+		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
+		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -79,6 +81,38 @@ const shouldUseLivestream = computed(() => {
 		return false;
 	}
 	return true;
+});
+
+// When stream schedules are enabled, the backend returns 404 (mapped to null) if
+// no stream is currently active. For iframe-based streams we show a full-size
+// offline placeholder (same frame size as the player) instead of showing nothing.
+//
+// Important: If the module has a configured default URL/ytid, we still render it
+// even when there is no active schedule.
+const iframeOffline = computed(() => {
+	if (!props.room || !module.value) return false;
+	if (shouldUseLivestream.value) return false;
+
+	const streamType = props.room?.currentStream?.stream_type;
+	const moduleType = module.value.type;
+	const isIFrame = streamType === 'iframe' || moduleType === 'livestream.iframe';
+	const isYouTube = streamType === 'youtube' || moduleType === 'livestream.youtube';
+	const isVimeo = streamType === 'vimeo';
+
+	if (!isIFrame && !isYouTube && !isVimeo) return false;
+
+	// Prefer schedule-provided stream URL when present.
+	const scheduleUrl = props.room?.currentStream?.url || null;
+	if (isYouTube) {
+		if (scheduleUrl && normalizeYoutubeVideoId(scheduleUrl)) return false;
+		const ytid = module.value.config?.ytid || null;
+		if (ytid && normalizeYoutubeVideoId(ytid)) return false;
+		return true;
+	}
+
+	if (scheduleUrl) return false;
+	const moduleUrl = module.value.config?.url || null;
+	return !moduleUrl;
 });
 
 const inRoomManager = computed(() => route.name === 'room:manage');
@@ -196,9 +230,11 @@ function unmuteYouTubePlayer() {
 }
 
 async function initializeIframe(mute) {
+	iframeError.value = null;
 	try {
 		if (!module.value) return;
 		if (shouldUseLivestream.value) return;
+		if (iframeOffline.value) return;
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
@@ -483,7 +519,7 @@ defineExpose({ isPlaying });
 	// 	transition-delay: .1s
 	.background-room-enter-from, .background-room-leave-to
 		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
-.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, iframe.iframe-media-source
+.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, iframe.iframe-media-source
 	position: fixed
 	transition: all .3s ease
 	&.size-tiny, &.background
@@ -492,12 +528,10 @@ defineExpose({ isPlaying });
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
 	&:not(.size-tiny):not(.background)
-		top: 104px
-		width: var(--mediasource-placeholder-width)
-		height: var(--mediasource-placeholder-height)
-		+below('l')
-			bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
-			right: calc(100vw - var(--mediasource-placeholder-width))
+		top: var(--mediasource-placeholder-top, 104px)
+		left: var(--mediasource-placeholder-left, var(--sidebar-width))
+		width: var(--mediasource-placeholder-width, 100vw)
+		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none
@@ -509,4 +543,29 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
+.c-media-source .iframe-error
+	display: flex
+	justify-content: center
+	align-items: center
+	background-color: $clr-blue-grey-200
+	z-index: 1
+	// Fallbacks prevent the overlay from shrinking to its text when
+	// --mediasource-placeholder-* are not yet available.
+	&:not(.size-tiny):not(.background)
+		width: var(--mediasource-placeholder-width, 100vw)
+		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+	&.size-tiny, &.background
+		width: 86px
+		height: 48px
+		pointer-events: none
+		z-index: 101
+	.offline-message
+		font-size: 36px
+		color: $clr-secondary-text-light
+		text-align: center
+		padding: 16px
+	&.size-tiny, &.background
+		.offline-message
+			font-size: 14px
+			padding: 8px
 </style>

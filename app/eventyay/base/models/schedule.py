@@ -15,6 +15,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
+from django_scopes import scope
 from i18nfield.fields import I18nTextField
 
 from eventyay.agenda.tasks import export_schedule_html
@@ -624,12 +625,21 @@ class Schedule(PretalxModel):
                 'submission__answers__options',
             )
         talks = talks.order_by('start')
-        # Pre-fetch all stream schedules for this event's rooms
-        stream_schedules = list(
-            StreamSchedule.objects.filter(
-                room__event=self.event,
-            ).select_related('room').order_by('start_time')
-        )
+        # Pre-fetch all stream schedules for this event's rooms.
+        # Attach stream URL if a stream schedule contains this talk's time and room.
+        with scope(event=self.event):
+            stream_schedules = (
+                StreamSchedule.objects.filter(
+                    room__event=self.event,
+                )
+                .select_related('room')
+                .only('room_id', 'start_time', 'end_time', 'url', 'stream_type')
+                .order_by('start_time')
+            )
+        stream_schedules_by_room = defaultdict(list)
+        for ss in stream_schedules:
+            if ss.room_id and ss.start_time and ss.end_time:
+                stream_schedules_by_room[ss.room_id].append(ss)
         rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks = set()
         speakers = set()
@@ -673,18 +683,13 @@ class Schedule(PretalxModel):
                     'session_type': talk.submission.submission_type.name,
                     'content_locale': talk.submission.content_locale,
                 }
-                # Attach stream URL if a stream schedule overlaps this talk's time and room
-                for ss in stream_schedules:
-                    if (
-                        ss.room_id == talk.room_id
-                        and talk.start
-                        and talk.end
-                        and ss.start_time <= talk.start
-                        and ss.end_time >= talk.end
-                    ):
-                        talk_data['stream_url'] = ss.url
-                        talk_data['stream_type'] = ss.stream_type
-                        break
+                # Attach stream URL if a stream schedule fully contains this slot.
+                if talk.room_id and talk.start and talk.end:
+                    for ss in stream_schedules_by_room.get(talk.room_id, []):
+                        if ss.start_time <= talk.start and ss.end_time >= talk.end:
+                            talk_data['stream_url'] = ss.url
+                            talk_data['stream_type'] = ss.stream_type
+                            break
                 if enrich:
                     talk_data['resources'] = [
                         {
