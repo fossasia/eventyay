@@ -60,13 +60,15 @@ class UserSettingsForm(forms.ModelForm):
         self.user = kwargs.pop('user')
         self.requires_password_reset = kwargs.pop('require_password_reset', False)
         super().__init__(*args, **kwargs)
-        self.fields['email'].required = True
+        # Email addresses are managed via the dedicated email management page (allauth).
+        # The account settings page does not submit an email field, so keep it read-only here.
+        self.fields['email'].required = False
+        self.fields['email'].disabled = True
         self.fields['wikimedia_username'].disabled = True
         if self.user.auth_backend != 'native':
             del self.fields['old_pw']
             del self.fields['new_pw']
             del self.fields['new_pw_repeat']
-            self.fields['email'].disabled = True
         elif self.requires_password_reset:
             for field in ('old_pw', 'new_pw', 'new_pw_repeat'):
                 self.fields.pop(field, None)
@@ -95,7 +97,12 @@ class UserSettingsForm(forms.ModelForm):
         return old_pw
 
     def clean_email(self):
-        email = self.cleaned_data['email']
+        if self.fields['email'].disabled:
+            return self.instance.email
+
+        email = self.cleaned_data.get('email')
+        if not email:
+            return email
         if User.objects.filter(Q(email__iexact=email) & ~Q(pk=self.instance.pk)).exists():
             raise forms.ValidationError(
                 self.error_messages['duplicate_identifier'],
@@ -117,10 +124,9 @@ class UserSettingsForm(forms.ModelForm):
 
     def clean(self):
         password1 = self.cleaned_data.get('new_pw')
-        email = self.cleaned_data.get('email')
         old_pw = self.cleaned_data.get('old_pw')
 
-        if not self.requires_password_reset and (password1 or email != self.user.email) and not old_pw:
+        if not self.requires_password_reset and password1 and not old_pw:
             raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
 
         if password1:
