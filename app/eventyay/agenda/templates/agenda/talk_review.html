@@ -1,4 +1,4 @@
-{% extends "agenda/base.html" %}
+{% extends 'agenda/base.html' %}
 
 {% load event_tags %}
 {% load i18n %}
@@ -9,75 +9,75 @@
 
 {% block agenda_content %}
 <div class="talk-review">
-  <h1>{{ submission.title|event_localize }}</h1>
+    <h1>{{ submission.title|event_localize }}</h1>
 
-  <div class="talk-review-meta row mb-3">
-    {% if submission.submission_type %}
-      <div class="col-auto">
-        <span class="text-muted">{% translate "Session type" %}:</span>
-        {{ submission.submission_type.name|event_localize }}
-      </div>
-    {% endif %}
-    {% if submission.duration %}
-      <div class="col-auto">
-        <span class="text-muted">{% translate "Duration" %}:</span>
-        {% blocktranslate trimmed with minutes=submission.duration %}
-          {{ minutes }} min
-        {% endblocktranslate %}
-      </div>
-    {% endif %}
-    {% if request.event|get_feature_flag:"use_tracks" and submission.track %}
-      <div class="col-auto">
-        <span class="text-muted">{% translate "Track" %}:</span>
-        {{ submission.track.name|event_localize }}
-      </div>
-    {% endif %}
-  </div>
+    <div class="talk-review-meta row mb-3">
+        {% if submission.submission_type %}
+        <div class="col-auto">
+            <span class="text-muted">{% translate 'Session type' %}:</span>
+            {{ submission.submission_type.name|event_localize }}
+        </div>
+        {% endif %}
+        {% if submission.duration %}
+        <div class="col-auto">
+            <span class="text-muted">{% translate 'Duration' %}:</span>
+            {% blocktranslate trimmed with minutes=submission.duration %}
+            {{ minutes }} min
+            {% endblocktranslate %}
+        </div>
+        {% endif %}
+        {% if request.event|get_feature_flag:'use_tracks' and submission.track %}
+        <div class="col-auto">
+            <span class="text-muted">{% translate 'Track' %}:</span>
+            {{ submission.track.name|event_localize }}
+        </div>
+        {% endif %}
+    </div>
 
-  {% if speakers %}
+    {% if speakers %}
     <div class="talk-review-speakers mb-4">
-      <h3>{% translate "Speakers" %}</h3>
-      {% for speaker in speakers %}
+        <h3>{% translate 'Speakers' %}</h3>
+        {% for speaker in speakers %}
         <div class="speaker mb-2">
-          {% if hide_speaker_links %}
+            {% if hide_speaker_links %}
             <strong>{{ speaker.get_display_name }}</strong>
-          {% else %}
+            {% else %}
             <a href="{{ speaker.talk_profile.urls.public }}">
-              <strong>{{ speaker.get_display_name }}</strong>
+                <strong>{{ speaker.get_display_name }}</strong>
             </a>
-          {% endif %}
-          {% if speaker.talk_profile and speaker.talk_profile.biography %}
+            {% endif %}
+            {% if speaker.talk_profile and speaker.talk_profile.biography %}
             <div class="speaker-bio">{{ speaker.talk_profile.biography|event_localize|rich_text }}</div>
-          {% endif %}
+            {% endif %}
         </div>
-      {% endfor %}
+        {% endfor %}
     </div>
-  {% endif %}
+    {% endif %}
 
-  {% if submission.abstract %}
+    {% if submission.abstract %}
     <div class="talk-review-abstract mb-4">
-      <h3>{% translate "Abstract" %}</h3>
-      {{ submission.abstract|event_localize|rich_text }}
+        <h3>{% translate 'Abstract' %}</h3>
+        {{ submission.abstract|event_localize|rich_text }}
     </div>
-  {% endif %}
+    {% endif %}
 
-  {% if submission.description %}
+    {% if submission.description %}
     <div class="talk-review-description mb-4">
-      <h3>{% translate "Description" %}</h3>
-      {{ submission.description|event_localize|rich_text }}
+        <h3>{% translate 'Description' %}</h3>
+        {{ submission.description|event_localize|rich_text }}
     </div>
-  {% endif %}
+    {% endif %}
 
-  {% if answers %}
+    {% if answers %}
     <div class="talk-review-answers mb-4">
-      <h3>{% translate "Additional information" %}</h3>
-      {% for answer in answers %}
+        <h3>{% translate 'Additional information' %}</h3>
+        {% for answer in answers %}
         <div class="answer mb-2">
-          <strong>{{ answer.question.question|event_localize }}</strong><br>
-          {{ answer.answer_string }}
+            <strong>{{ answer.question.question|event_localize }}</strong><br>
+            {{ answer.answer_string }}
         </div>
-      {% endfor %}
+        {% endfor %}
     </div>
-  {% endif %}
+    {% endif %}
 </div>
 {% endblock agenda_content %}
