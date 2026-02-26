@@ -416,7 +416,7 @@ class Submission(GenerateCode, PretalxModel):
         )
         if self.track:
             qs = qs.filter(Q(question__tracks__in=[self.track]) | Q(question__tracks__isnull=True))
-        return []
+        return qs
 
     def get_duration(self) -> int:
         """Returns this submission's duration in minutes.
