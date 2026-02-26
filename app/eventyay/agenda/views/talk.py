@@ -199,6 +199,18 @@ class TalkReviewView(TalkView):
     def hide_speaker_links(self):
         return True
 
+    def _build_speakers_context(self, speakers_qs):
+        # Override to avoid calling event_profile(), which can create and save a
+        # SpeakerProfile row when one doesn't exist.  That is an unwanted DB
+        # write on every anonymous GET of a public review link.  Instead, use
+        # the _event_profiles attribute populated by with_profiles() directly.
+        result = []
+        for speaker in speakers_qs:
+            profiles = getattr(speaker, '_event_profiles', [])
+            speaker.talk_profile = profiles[0] if profiles else None
+            result.append(speaker)
+        return result
+
     def get_context_data(self, **kwargs):
         # TalkView.get_context_data returns early (skipping speakers) when the
         # visitor lacks base.view_schedule permission – which is always the case
