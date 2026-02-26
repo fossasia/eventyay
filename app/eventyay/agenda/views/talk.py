@@ -114,6 +114,14 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         response._csp_update = csp_update
         return response
 
+    def _build_speakers_context(self, speakers_qs):
+        """Enrich a speaker queryset and return a list ready for template context."""
+        result = []
+        for speaker in speakers_qs:
+            speaker.talk_profile = speaker.event_profile(event=self.request.event)
+            result.append(speaker)
+        return result
+
     def get_context_data(self, **kwargs):
         from django.db.models import Prefetch
 
@@ -126,13 +134,11 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         ctx['submission_tags'] = self.submission.tags.all()
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
-        result = []
         other_slots = (
             schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
             if schedule
             else TalkSlot.objects.none()
         )
-
         other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related('event', 'event__organizer')
         speakers = (
             self.submission.speakers.all()
@@ -145,10 +151,7 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
                 )
             )
         )
-        for speaker in speakers:
-            speaker.talk_profile = speaker.event_profile(event=self.request.event)
-            result.append(speaker)
-        ctx['speakers'] = result
+        ctx['speakers'] = self._build_speakers_context(speakers)
         return ctx
 
     @context
@@ -203,11 +206,8 @@ class TalkReviewView(TalkView):
         # the speaker data unconditionally for the review page.
         ctx = super().get_context_data(**kwargs)
         if 'speakers' not in ctx:
-            result = []
-            for speaker in self.submission.speakers.all().with_profiles(self.request.event):
-                speaker.talk_profile = speaker.event_profile(event=self.request.event)
-                result.append(speaker)
-            ctx['speakers'] = result
+            speakers = self.submission.speakers.all().with_profiles(self.request.event)
+            ctx['speakers'] = self._build_speakers_context(speakers)
             ctx['submission_tags'] = self.submission.tags.all()
         return ctx
 
