@@ -131,7 +131,7 @@ class RequestRequire:
             # Line breaks should only be counted as one character
             length = len(value.replace('\r\n', '\n'))
         else:
-            length = len(re.findall(r'\b\w+\b', value))
+            length = len(value.split())
         if (min_length and min_length > length) or (max_length and max_length < length):
             error_message = RequestRequire.get_help_text('', min_length, max_length, count_in)
             errors = {
