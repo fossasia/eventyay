@@ -234,10 +234,14 @@ export default {
 				sessions = sessions.filter(s => {
 					const title = (getLocalizedString(s.title) || '').toLowerCase()
 					const abstract = (getLocalizedString(s.abstract) || '').toLowerCase()
+					const description = (getLocalizedString(s.description) || '').toLowerCase()
 					const speakers = (s.speakers || []).map(sp => (sp?.name || '').toLowerCase()).join(' ')
-					const track = (s.track?.name || '').toLowerCase()
-					const room = (s.room?.name || '').toLowerCase()
-					return [title, abstract, speakers, track, room].some(f => f.includes(q))
+					const track = (getLocalizedString(s.track?.name) || '').toLowerCase()
+					const room = (getLocalizedString(s.room?.name) || '').toLowerCase()
+					const tags = (s.tags || [])
+						.map(t => (t?.tag || t?.name || '').toLowerCase())
+						.join(' ')
+					return [title, abstract, description, speakers, track, room, tags].some(f => f.includes(q))
 				})
 			}
 			return sessions

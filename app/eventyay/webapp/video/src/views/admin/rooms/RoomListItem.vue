@@ -9,7 +9,7 @@ router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {
 </template>
 <script>
 import { ElementMixin, HandleDirective } from 'vue-slicksort'
-import { inferRoomType, inferType } from 'lib/room-types'
+import { inferType } from 'lib/room-types'
 
 export default {
 	directives: { handle: HandleDirective },
@@ -19,10 +19,10 @@ export default {
 	},
 	computed: {
 		inferredType () {
-			const fromConfig = Array.isArray(this.room?.module_config)
-				? inferType({ module_config: this.room.module_config })
-				: null
-			return fromConfig || inferRoomType(this.room)
+			// Only treat rooms as configured when they have module_config.
+			// Unconfigured rooms should stay visibly "mystery" in the list.
+			if (!Array.isArray(this.room?.module_config) || this.room.module_config.length === 0) return null
+			return inferType({ module_config: this.room.module_config })
 		},
 		badgeLabel () {
 			return this.inferredType ? this.inferredType.name : 'Unconfigured'

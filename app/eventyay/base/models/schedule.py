@@ -626,7 +626,7 @@ class Schedule(PretalxModel):
             )
         talks = talks.order_by('start')
         # Pre-fetch all stream schedules for this event's rooms.
-        # Attach stream URL if a stream schedule contains this talk's time and room.
+        # Attach stream URL if a stream schedule overlaps this talk's time and room.
         with scope(event=self.event):
             stream_schedules = (
                 StreamSchedule.objects.filter(
@@ -683,13 +683,21 @@ class Schedule(PretalxModel):
                     'session_type': talk.submission.submission_type.name,
                     'content_locale': talk.submission.content_locale,
                 }
-                # Attach stream URL if a stream schedule fully contains this slot.
+                # Attach stream URL if a stream schedule overlaps this slot.
                 if talk.room_id and talk.start and talk.end:
-                    for ss in stream_schedules_by_room.get(talk.room_id, []):
-                        if ss.start_time <= talk.start and ss.end_time >= talk.end:
-                            talk_data['stream_url'] = ss.url
-                            talk_data['stream_type'] = ss.stream_type
-                            break
+                    schedules = stream_schedules_by_room.get(talk.room_id)
+                    if schedules:
+                        match = next(
+                            (
+                                ss
+                                for ss in schedules
+                                if ss.start_time < talk.end and ss.end_time > talk.start
+                            ),
+                            None,
+                        )
+                        if match:
+                            talk_data['stream_url'] = match.url
+                            talk_data['stream_type'] = match.stream_type
                 if enrich:
                     talk_data['resources'] = [
                         {

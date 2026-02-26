@@ -103,7 +103,7 @@
 						:href="v.url",
 						:class="{active: v.version === version}"
 					)
-						span {{ v.version.startsWith('v') ? v.version : 'v' + v.version }}
+						span {{ formatVersionLabel(v.version) }}
 						span.version-current-badge(v-if="v.isCurrent") {{ t.current }}
 					.version-menu-divider(v-if="changelogUrl && versionOptions.length")
 					a.version-item.changelog-link(v-if="changelogUrl", :href="changelogUrl")
@@ -245,7 +245,7 @@ export default {
 			return this.exporters || []
 		},
 		currentVersionLabel() {
-			if (this.version) return this.version.startsWith('v') ? this.version : 'v' + this.version
+			if (this.version) return this.formatVersionLabel(this.version)
 			return this.t.latest
 		},
 		versionOptions() {
@@ -346,6 +346,10 @@ export default {
 		document.removeEventListener('fullscreenchange', this.onFullscreenChange)
 	},
 	methods: {
+		formatVersionLabel(version) {
+			if (!version) return ''
+			return version.startsWith('v') ? version : 'v' + version
+		},
 		outsideClick(event) {
 			const path = event.composedPath ? event.composedPath() : [event.target]
 			if (this.$refs.exportDropdown && !path.includes(this.$refs.exportDropdown)) {

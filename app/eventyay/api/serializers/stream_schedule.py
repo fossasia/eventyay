@@ -84,8 +84,8 @@ class StreamScheduleSerializer(PretalxSerializer):
                 room=room,
                 submission__isnull=False,
                 is_visible=True,
-                start__gte=start_time,
-                end__lte=end_time,
+                start__lt=end_time,
+                end__gt=start_time,
             ).exists()
 
         if not match_exists:

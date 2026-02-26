@@ -31,7 +31,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
 		.fav-count(v-if="showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
-	.stream-indicator(v-if="hasStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
+	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
 	.session-icons
@@ -148,19 +148,17 @@ export default {
 			const now = this.effectiveNow
 			return now && this.session.start < now && this.session.end > now
 		},
-		hasStream () {
-			return !!(this.session.stream_url || this.session.room?.video_url)
+		canOpenStream () {
+			// Only show when the session is live and the backend indicates there's a stream scheduled.
+			// Always link to the internal video room page (no external redirects).
+			return this.isLive && !!this.session.stream_url && !!this.streamLink
 		},
 		streamLink () {
-			// Prefer internal video room link over external stream URL
 			const joinLink = this.getJoinRoomLink(this.session)
-			if (joinLink) return joinLink
-			if (this.session.room?.video_url) return this.session.room.video_url
-			if (this.session.stream_url) return this.session.stream_url
-			return ''
+			return joinLink || ''
 		},
 		streamTooltip () {
-			return this.isLive ? 'Watch stream' : 'View video room'
+			return 'Watch live'
 		},
 		abstractText () {
 			try {

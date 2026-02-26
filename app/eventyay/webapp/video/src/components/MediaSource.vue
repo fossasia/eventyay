@@ -230,11 +230,11 @@ function unmuteYouTubePlayer() {
 }
 
 async function initializeIframe(mute) {
+	if (!module.value) return;
+	if (shouldUseLivestream.value) return;
+	if (iframeOffline.value) return;
 	iframeError.value = null;
 	try {
-		if (!module.value) return;
-		if (shouldUseLivestream.value) return;
-		if (iframeOffline.value) return;
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;

@@ -190,7 +190,7 @@ export default {
 			})),
 			showJoinRoom: computed(() => this.showJoinRoom),
 			getJoinRoomLink: (session) => {
-				const base = this.joinRoomBaseUrl || (this.eventUrl ? `${this.eventUrl.replace(/\/$/, '')}/video/rooms/` : '')
+				const base = this.joinRoomBaseUrl || this.defaultJoinRoomBaseUrl
 				if (!base || !session?.room) return ''
 				const roomId = typeof session.room === 'object' ? session.room.id : session.room
 				return roomId ? `${base}${roomId}/` : ''
@@ -240,6 +240,10 @@ export default {
 		}
 	},
 	computed: {
+		defaultJoinRoomBaseUrl () {
+			if (!this.eventUrl) return ''
+			return `${this.eventUrl.replace(/\/$/, '')}/video/rooms/`
+		},
 		scheduleMaxWidth () {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 365) : this.scrollParentWidth
 		},

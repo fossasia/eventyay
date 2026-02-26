@@ -17,7 +17,7 @@
 				.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.toISOString()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 				.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 			.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
-				svg(viewBox="0 0 10 10")
+				svg(viewBox="0 0 10 10", :title="nowHoverTime")
 					path(d="M 0 0 L 10 5 L 0 10 z")
 			template(v-for="session of sessions")
 				session(
@@ -122,12 +122,18 @@ export default {
 			scrollContentWidth: 0,
 			scrollThumbWidth: 100,
 			scrollThumbLeft: 0,
+			_scrollDayUpdate: false,
 			_scrollSource: null,
 			_thumbDrag: null,
 			roomTooltip: { visible: false, text: '', x: 0, y: 0 }
 		}
 	},
 	computed: {
+		nowHoverTime () {
+			if (!this.now || !this.timezone) return ''
+			const zonedNow = this.now.clone().tz(this.timezone)
+			return this.hasAmPm ? zonedNow.format('h:mm A') : zonedNow.format('HH:mm')
+		},
 		hasSessionsWithoutRoom () {
 			return this.sessions.some(s => !s.room)
 		},
