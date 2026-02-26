@@ -18,12 +18,14 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
     Exists,
+    F,
     IntegerField,
     OuterRef,
     Prefetch,
     Q,
     Value,
 )
+from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -35,13 +37,15 @@ from django.utils.translation import pgettext_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
+from django_scopes import scope
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
-    ProductVariation,
     Order,
+    ProductVariation,
     Quota,
     SeatCategoryMapping,
+    SpeakerProfile,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
@@ -73,6 +77,7 @@ from . import (
     get_cart,
     iframe_entry_view_wrapper,
 )
+
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -597,6 +602,60 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         context['event_name'] = event_name
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
+        context['featured_speakers'] = []
+
+        event = self.request.event
+        if event.talks_published and event.get_feature_flag('show_schedule') and event.current_schedule:
+            with scope(event=event):
+                featured_speakers = list(
+                    SpeakerProfile.objects.filter(
+                        event=event,
+                        user__in=event.speakers,
+                        is_featured=True,
+                    )
+                    .select_related('user')
+                    .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
+                )
+                slots_by_speaker = defaultdict(list)
+                if featured_speakers:
+                    speaker_codes = {profile.user.code for profile in featured_speakers}
+                    use_track_colors = event.get_feature_flag('use_tracks')
+                    featured_slots = (
+                        event.current_schedule.talks.filter(
+                            is_visible=True,
+                            submission__isnull=False,
+                            submission__speakers__code__in=speaker_codes,
+                        )
+                        .select_related(
+                            'submission',
+                            'submission__event',
+                            'submission__event__organizer',
+                            'submission__track',
+                            'room',
+                        )
+                        .prefetch_related('submission__speakers')
+                        .order_by('start', 'pk')
+                        .distinct()
+                    )
+                    for slot in featured_slots:
+                        if use_track_colors and slot.submission.track and slot.submission.track.color:
+                            slot.featured_color = slot.submission.track.color
+                        else:
+                            slot.featured_color = event.visible_primary_color
+                        for speaker in slot.submission.speakers.all():
+                            if speaker.code in speaker_codes:
+                                slots_by_speaker[speaker.code].append(slot)
+
+                for speaker_profile in featured_speakers:
+                    speaker_profile.featured_slots = slots_by_speaker.get(speaker_profile.user.code, [])
+                    speaker_profile.featured_display_name = (
+                        speaker_profile.user.fullname
+                        or speaker_profile.user.email
+                        or speaker_profile.user.code
+                        or str(speaker_profile.user.pk)
+                    )
+
+                context['featured_speakers'] = featured_speakers
 
         return context
 

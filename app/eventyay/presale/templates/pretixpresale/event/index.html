@@ -14,6 +14,9 @@
 
 {% block custom_header %}
     {{ block.super }}
+    {% compress css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/featured-speakers.css' %}"/>
+    {% endcompress %}
     <meta property="og:title" content="{{ ev.name|event_localize }}" />
     <meta property="og:description" content="{{ ev.get_date_range_display }}" />
     {% if subevent %}
@@ -319,6 +322,76 @@
                 </form>
                 {% endif %}
             {% endif %}
+        {% endif %}
+    {% endif %}
+    {% if subevent or not event.has_subevents %}
+        {% if featured_speakers %}
+            <section class="front-page" id="featured-speakers" aria-labelledby="featured-speakers-heading">
+                <h3 id="featured-speakers-heading">{% trans "Featured Speakers" %}</h3>
+                <div class="row featured-speakers-grid">
+                    {% for speaker in featured_speakers %}
+                        <div class="col-md-4 col-sm-6 col-xs-12 featured-speaker-column">
+                            <details class="featured-speaker-card">
+                                <summary class="featured-speaker-summary">
+                                    <div class="thumbnail">
+                                        {% if request.event.cfp.request_avatar and speaker.user.avatar %}
+                                            <img loading="lazy" src="{{ speaker.user.avatar|thumb:'400x400^' }}" alt="{% trans "The speaker's profile picture" %}">
+                                        {% else %}
+                                            <img loading="lazy" src="{{ request.event.urls.speakers }}avatar.svg" alt="{% trans "The speaker's profile picture" %}">
+                                        {% endif %}
+                                        <div class="caption text-center">
+                                            <h4>{{ speaker.featured_display_name }}</h4>
+                                            {% if speaker.biography %}
+                                                <p>{{ speaker.biography|event_localize|striptags|truncatechars:100 }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </summary>
+                                <div class="featured-speaker-details">
+                                    {% if speaker.biography %}
+                                        <div class="featured-speaker-bio">
+                                            {{ speaker.biography|event_localize|rich_text_without_links }}
+                                        </div>
+                                    {% endif %}
+                                    {% if speaker.featured_slots %}
+                                        <hr class="featured-speaker-divider">
+                                        <div class="featured-speaker-sessions">
+                                            <h4>{% trans "Sessions" %}</h4>
+                                            {% for session in speaker.featured_slots %}
+                                                <div class="featured-speaker-session">
+                                                    <small class="featured-speaker-session-time">
+                                                        <span data-time="{{ session.start|date:'c' }}" data-timezone="{{ request.event.settings.timezone }}">
+                                                            {{ session.start|date:'SHORT_DATETIME_FORMAT' }}
+                                                        </span>
+                                                    </small>
+                                                    <a
+                                                        href="{{ session.submission.urls.public }}"
+                                                        class="featured-speaker-session-link"
+                                                        style="--session-color:{{ session.featured_color }};"
+                                                    >
+                                                        <span class="featured-speaker-session-slot">
+                                                            {{ session.start|date:'TIME_FORMAT' }} - {{ session.end|date:'TIME_FORMAT' }}
+                                                        </span>
+                                                        <span class="featured-speaker-session-title">
+                                                            {{ session.submission.title|event_localize }}
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="featured-speaker-profile-link">
+                                        <a href="{{ speaker.urls.public }}">{% trans "View speaker profile" %}</a>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    {% endfor %}
+                </div>
+                <p class="featured-speakers-more">
+                    <a href="{{ request.event.urls.speakers }}" class="btn btn-info btn-sm">{% translate "More speakers" %}</a>
+                </p>
+            </section>
         {% endif %}
     {% endif %}
     </main>
