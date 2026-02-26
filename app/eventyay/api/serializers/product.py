@@ -216,14 +216,54 @@ class ProductSerializer(I18nAwareModelSerializer):
 
         Product.clean_per_order(data.get('min_per_order'), data.get('max_per_order'))
         Product.clean_available(data.get('available_from'), data.get('available_until'))
+
+        # For partial updates, validate consistency against the effective state (incoming data + existing instance).
+        validity_mode = data.get(
+            'validity_mode',
+            self.instance.validity_mode if self.instance else '',
+        )
+        validity_fixed_from = data.get(
+            'validity_fixed_from',
+            self.instance.validity_fixed_from if self.instance else None,
+        )
+        validity_fixed_until = data.get(
+            'validity_fixed_until',
+            self.instance.validity_fixed_until if self.instance else None,
+        )
+
+        fixed_from_provided = (
+            'validity_fixed_from' in data and data.get('validity_fixed_from') is not None
+        )
+        fixed_until_provided = (
+            'validity_fixed_until' in data and data.get('validity_fixed_until') is not None
+        )
+        if (fixed_from_provided or fixed_until_provided) and validity_mode != Product.VALIDITY_MODE_FIXED:
+            errors = {
+                'validity_mode': _(
+                    'Set validity_mode to "fixed" to use validity_fixed_from/validity_fixed_until.'
+                ),
+            }
+            if fixed_from_provided:
+                errors['validity_fixed_from'] = _(
+                    'This can only be set when validity_mode is "fixed".'
+                )
+            if fixed_until_provided:
+                errors['validity_fixed_until'] = _(
+                    'This can only be set when validity_mode is "fixed".'
+                )
+            raise ValidationError(errors)
+
         validity_errors = Product.clean_validity(
-            data.get('validity_mode', ''),
-            data.get('validity_fixed_from'),
-            data.get('validity_fixed_until'),
+            validity_mode,
+            validity_fixed_from,
+            validity_fixed_until,
             event=self.context['event'],
         )
         if validity_errors:
             raise ValidationError(validity_errors)
+        if 'validity_mode' in data and data.get('validity_mode') != Product.VALIDITY_MODE_FIXED:
+            data['validity_fixed_from'] = None
+            data['validity_fixed_until'] = None
 
         if data.get('issue_giftcard'):
             if data.get('tax_rule') and data.get('tax_rule').rate > 0:
