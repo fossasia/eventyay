@@ -45,7 +45,7 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
     sortable_fields = ('position', 'user__email', 'user__fullname')
-    default_sort_field = 'position'
+    default_sort_field = None
     secondary_sort = {'position': ('user__fullname',)}
     permission_required = 'base.orga_list_speakerprofile'
 
