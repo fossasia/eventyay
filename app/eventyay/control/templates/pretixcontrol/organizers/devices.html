@@ -23,9 +23,13 @@
                     class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
         </div>
     {% else %}
-        <p>
+        <p class="clearfix">
             <a href="{% url "eventyay_common:organizer.devices.add" organizer=request.organizer.slug %}"
                     class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Connect a device" %}</a>
+            <a href="{% url "eventyay_common:organizer.devices.revoke-all" organizer=request.organizer.slug %}"
+                    class="btn btn-danger pull-right">
+                <i class="fa fa-trash"></i> {% trans "Revoke and Remove all devices" %}
+            </a>
         </p>
         <div class="table-responsive">
             <table class="table table-condensed table-hover">
