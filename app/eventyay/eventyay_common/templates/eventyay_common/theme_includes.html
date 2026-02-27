@@ -1,0 +1,51 @@
+{% comment %}
+Theme-aware base template includes and initialization.
+
+This template snippet should be included in your base template to enable
+the token-based theming system across your application.
+{% endcomment %}
+
+{% load static %}
+
+{# Include theme styles and CSS variables #}
+<link rel="stylesheet" href="{% static 'css/theme-tokens.css' %}">
+{% if event_theme_custom_css %}
+  <style id="event-theme-custom-css">{{ event_theme_custom_css|safe }}</style>
+{% endif %}
+
+{# Theme initialization script #}
+<script type="module">
+  import { themeManager, loadEventTheme } from '{% static "js/theme.js" %}';
+
+  // Initialize theme from saved preferences
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Get organization and event context from page
+    const organizer = document.body.dataset.organizerSlug;
+    const event = document.body.dataset.eventSlug;
+
+    // Load event-specific theme if available
+    if (organizer && event) {
+      await loadEventTheme(organizer, event);
+    }
+
+    // Check for theme toggle in UI
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+      themeToggle.addEventListener('change', (e) => {
+        const mode = e.target.checked ? 'dark' : 'light';
+        themeManager.setColorMode(mode);
+      });
+    }
+  });
+</script>
+
+{# Alternative: Inline theme configuration for specific events #}
+{% if event_theme %}
+  <script type="module">
+    import { themeManager } from '{% static "js/theme.js" %}';
+
+    // Apply inline theme configuration
+    themeManager.loadTheme({{ event_theme_tokens|safe }});
+    themeManager.setColorMode('{{ event_theme_color_mode }}');
+  </script>
+{% endif %}
