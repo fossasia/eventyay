@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
@@ -36,6 +37,7 @@ from eventyay.base.models.information import SpeakerInformation
 from eventyay.schedule.forms import AvailabilitiesFormMixin
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget
 from eventyay.base.models.submission import SubmissionStates
+from eventyay.consts import SizeKey
 
 
 def get_email_address_error():
@@ -85,11 +87,14 @@ class SpeakerProfileForm(
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
         for field in self.user_fields:
             field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
-            self.fields[field] = field_class(
-                initial=initial.get(field),
-                disabled=read_only,
-                help_text=User._meta.get_field(field).help_text,
-            )
+            field_kwargs = {
+                'initial': initial.get(field),
+                'disabled': read_only,
+                'help_text': User._meta.get_field(field).help_text,
+            }
+            if field == 'avatar':
+                field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
+            self.fields[field] = field_class(**field_kwargs)
             if self.Meta.widgets.get(field):
                 self.fields[field].widget = self.Meta.widgets.get(field)()
             self._update_cfp_texts(field)
