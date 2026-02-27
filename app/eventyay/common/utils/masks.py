@@ -1,6 +1,7 @@
 # Masking data for logging purposes.
 
 import random
+from collections.abc import Iterable
 
 
 class EmailMasker:
@@ -28,3 +29,7 @@ class EmailMasker:
 
     def to_json(self) -> str:
         return str(self)
+
+    @classmethod
+    def from_multi(cls, emails: Iterable[str]) -> tuple['EmailMasker', ...]:
+        return tuple(cls(email) for email in emails)
