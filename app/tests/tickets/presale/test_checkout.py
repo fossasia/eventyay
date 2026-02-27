@@ -885,6 +885,8 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
     def test_attendee_job_title_required(self):
         self.event.settings.set('attendee_job_title_asked', True)
         self.event.settings.set('attendee_job_title_required', True)
+        questions_url = f"/{self.orga.slug}/{self.event.slug}/checkout/questions/"
+        payment_url = f"/{self.orga.slug}/{self.event.slug}/checkout/payment/"
         with scopes_disabled():
             cr1 = CartPosition.objects.create(
                 event=self.event,
@@ -893,17 +895,18 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
                 price=23,
                 expires=now() + timedelta(minutes=10),
             )
+        job_title_field_name = f"{cr1.id}-job_title"
         response = self.client.get(
-            '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
+            questions_url,
             follow=True,
         )
         doc = BeautifulSoup(response.content.decode(), 'lxml')
-        self.assertEqual(len(doc.select('input[name="%s-job_title"]' % cr1.id)), 1)
+        self.assertEqual(len(doc.select(f'input[name="{job_title_field_name}"]')), 1)
 
         # Not all required fields filled out, expect failure
         response = self.client.post(
-            '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
-            {'%s-job_title' % cr1.id: '', 'email': 'admin@localhost'},
+            questions_url,
+            {job_title_field_name: '', 'email': 'admin@localhost'},
             follow=True,
         )
         doc = BeautifulSoup(response.content.decode(), 'lxml')
@@ -911,13 +914,13 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
 
         # Corrected request
         response = self.client.post(
-            '/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug),
-            {'%s-job_title' % cr1.id: 'Engineer', 'email': 'admin@localhost'},
+            questions_url,
+            {job_title_field_name: 'Engineer', 'email': 'admin@localhost'},
             follow=True,
         )
         self.assertRedirects(
             response,
-            '/%s/%s/checkout/payment/' % (self.orga.slug, self.event.slug),
+            payment_url,
             target_status_code=200,
         )
 
