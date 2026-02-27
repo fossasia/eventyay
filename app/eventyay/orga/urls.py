@@ -334,6 +334,11 @@ urlpatterns = [
                                 speaker.SpeakerToggleArrived.as_view(),
                                 name='speakers.arrived',
                             ),
+                            path(
+                                'toggle-featured',
+                                speaker.SpeakerToggleFeatured.as_view(),
+                                name='speakers.featured',
+                            ),
                         ]
                     ),
                 ),

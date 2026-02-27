@@ -18,12 +18,14 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
     Exists,
+    F,
     IntegerField,
     OuterRef,
     Prefetch,
     Q,
     Value,
 )
+from django.db.models.expressions import OrderBy
 from django.db.models.functions import Lower
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -36,6 +38,7 @@ from django.utils.translation import pgettext_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
+from django_scopes import scope
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
@@ -43,6 +46,7 @@ from eventyay.base.models import (
     ProductVariation,
     Quota,
     SeatCategoryMapping,
+    SpeakerProfile,
     User,
     Voucher,
 )
@@ -466,7 +470,9 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            redirect_url = eventreverse(
+                request.event, 'presale:event.index', kwargs=kwargs
+            ) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
@@ -600,6 +606,60 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         context['event_name'] = event_name
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
+        context['featured_speakers'] = []
+
+        event = self.request.event
+        if event.talks_published and event.get_feature_flag('show_schedule') and event.current_schedule:
+            with scope(event=event):
+                featured_speakers = list(
+                    SpeakerProfile.objects.filter(
+                        event=event,
+                        user__in=event.speakers,
+                        is_featured=True,
+                    )
+                    .select_related('user')
+                    .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
+                )
+                slots_by_speaker = defaultdict(list)
+                if featured_speakers:
+                    speaker_codes = {profile.user.code for profile in featured_speakers}
+                    use_track_colors = event.get_feature_flag('use_tracks')
+                    featured_slots = (
+                        event.current_schedule.talks.filter(
+                            is_visible=True,
+                            submission__isnull=False,
+                            submission__speakers__code__in=speaker_codes,
+                        )
+                        .select_related(
+                            'submission',
+                            'submission__event',
+                            'submission__event__organizer',
+                            'submission__track',
+                            'room',
+                        )
+                        .prefetch_related('submission__speakers')
+                        .order_by('start', 'pk')
+                        .distinct()
+                    )
+                    for slot in featured_slots:
+                        if use_track_colors and slot.submission.track and slot.submission.track.color:
+                            slot.featured_color = slot.submission.track.color
+                        else:
+                            slot.featured_color = event.visible_primary_color
+                        for speaker in slot.submission.speakers.all():
+                            if speaker.code in speaker_codes:
+                                slots_by_speaker[speaker.code].append(slot)
+
+                for speaker_profile in featured_speakers:
+                    speaker_profile.featured_slots = slots_by_speaker.get(speaker_profile.user.code, [])
+                    speaker_profile.featured_display_name = (
+                        speaker_profile.user.fullname
+                        or speaker_profile.user.email
+                        or speaker_profile.user.code
+                        or str(speaker_profile.user.pk)
+                    )
+
+                context['featured_speakers'] = featured_speakers
 
         return context
 
@@ -755,7 +815,9 @@ class SeatingPlanView(EventViewMixin, TemplateView):
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            redirect_url = eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            redirect_url = eventreverse(
+                request.event, 'presale:event.seatingplan', kwargs=kwargs
+            ) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
@@ -874,7 +936,9 @@ class JoinOnlineVideoView(EventViewMixin, View):
 
         # Check if this is an AJAX request (from JavaScript button)
         # If not (e.g., direct URL access), do a server-side redirect instead of returning JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get(
+            'Accept', ''
+        ):
             # AJAX request - return JSON for JavaScript to handle
             return JsonResponse({'redirect_url': redirect_url}, status=200)
         else:
@@ -959,11 +1023,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
                     f'eventyay-video-category-{order_position.product.category_id}',
                 }
                 | {f'eventyay-video-product-{p.product_id}' for p in order_position.addons.all()}
-                | {
-                    f'eventyay-video-variation-{p.variation_id}'
-                    for p in order_position.addons.all()
-                    if p.variation_id
-                }
+                | {f'eventyay-video-variation-{p.variation_id}' for p in order_position.addons.all() if p.variation_id}
                 | {
                     f'eventyay-video-category-{p.product.category_id}'
                     for p in order_position.addons.all()
@@ -978,10 +1038,9 @@ class JoinOnlineVideoView(EventViewMixin, View):
         # Ensure the URL includes the event identifier so VideoSPAView has event context
         # Format: http://localhost:8000/organizer-slug/event-slug/video/#token=...
         # Use Django's reverse() to properly construct the video URL path
-        video_path = reverse('video.spa', kwargs={
-            'organizer': self.request.event.organizer.slug,
-            'event': self.request.event.slug
-        })
+        video_path = reverse(
+            'video.spa', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug}
+        )
 
         # Parse the base URL to get scheme and netloc (domain)
         parsed = urlparse(baseurl)
