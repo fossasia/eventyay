@@ -326,12 +326,15 @@ class User(
 
     @cached_property
     def gravatar_parameter(self) -> str:
+        if not self.email:
+            return ''
         return md5(self.email.strip().encode()).hexdigest()
 
     @cached_property
     def has_avatar(self) -> bool:
         return bool(self.avatar) and self.avatar != 'False'
 
+    @property
     def primary_email(self) -> str:
         """
         Get the primary email address for sending emails to this user.
@@ -353,6 +356,7 @@ class User(
             return addrs[0].lower()
         return self.email.lower() if self.email else ''
 
+    @property
     def email_addresses(self) -> tuple[str, ...]:
         """
         Return a tuple of all unique email addresses associated with this user.
