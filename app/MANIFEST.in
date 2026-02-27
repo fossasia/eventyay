@@ -1,0 +1,6 @@
+include README.rst
+include LICENSE
+include NOTICE
+recursive-include eventyay/templates *.html
+recursive-include eventyay/static *
+recursive-include eventyay/locale *
