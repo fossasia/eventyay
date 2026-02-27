@@ -1022,7 +1022,6 @@ class VideoAccessAuthenticator(View):
         # Video is integrated; do not toggle event plugins here.
 
     def generate_token_url(self, request, traits):
-        # TODO: Use primary_email after enabling django-allauth backend.
         uid_token = encode_email(request.user.email)
         iat = datetime.now(UTC)
         exp = iat + dt.timedelta(days=1)

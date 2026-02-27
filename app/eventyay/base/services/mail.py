@@ -49,6 +49,7 @@ from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.celery_app import app
+from eventyay.common.utils.masks import EmailMasker
 from eventyay.consts import SizeKey
 from eventyay.helpers.http import smtp_reachable
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -479,8 +480,8 @@ def mail_send_task(
             email.attach(attach_file_name, attach_file_content, 'application/pdf')
 
         try:
-            logger.info('Try to send email to %s with subject "%s"', to, subject)
-            logger.debug('Email backend: %s', backend)
+            logger.info('Try to send email to %s with subject "%s"', EmailMasker(to), subject)
+            logger.debug('Email backend: %s', backend.__class__.__name__)
             backend.send_messages([email])
         except (smtplib.SMTPResponseException, smtplib.SMTPSenderRefused) as e:
             logger.debug('Got error %s. Retry...', e)
@@ -499,7 +500,7 @@ def mail_send_task(
                                 'message': e.smtp_error.decode()
                                 if isinstance(e.smtp_error, bytes)
                                 else str(e.smtp_error),
-                                'recipient': '',
+                                'recipient': EmailMasker(to),
                                 'invoices': [],
                             },
                         )
@@ -512,12 +513,12 @@ def mail_send_task(
                     data={
                         'subject': f'SMTP code {e.smtp_code}',
                         'message': e.smtp_error.decode() if isinstance(e.smtp_error, bytes) else str(e.smtp_error),
-                        'recipient': '',
+                        'recipient': EmailMasker(to),
                         'invoices': [],
                     },
                 )
 
-            raise SendMailException(f'Failed to send an email to {to}.')
+            raise SendMailException(f'Failed to send an email to {EmailMasker(to)}.')
         except smtplib.SMTPRecipientsRefused as e:
             smtp_codes = [a[0] for a in e.recipients.values()]
 
@@ -542,12 +543,12 @@ def mail_send_task(
                     data={
                         'subject': 'SMTP error',
                         'message': '\n'.join(message),
-                        'recipient': '',
+                        'recipient': EmailMasker(to),
                         'invoices': [],
                     },
                 )
 
-            raise SendMailException(f'Failed to send an email to {to}.')
+            raise SendMailException(f'Failed to send an email to {EmailMasker(to)}.')
         except Exception as e:
             if isinstance(
                 e,
@@ -569,7 +570,7 @@ def mail_send_task(
                             data={
                                 'subject': 'Internal error',
                                 'message': 'Max retries exceeded',
-                                'recipient': '',
+                                'recipient': EmailMasker(to),
                                 'invoices': [],
                             },
                         )
@@ -580,12 +581,12 @@ def mail_send_task(
                     data={
                         'subject': 'Internal error',
                         'message': str(e),
-                        'recipient': '',
+                        'recipient': EmailMasker(to),
                         'invoices': [],
                     },
                 )
             logger.exception('Error sending email')
-            raise SendMailException(f'Failed to send an email to {to}.')
+            raise SendMailException(f'Failed to send an email to {EmailMasker(to)}.')
 
 
 def mail_send(*args, **kwargs):
@@ -611,12 +612,12 @@ def replace_images_with_cid_paths(body_html):
             original_image_src = image['src']
 
             try:
-                cid_id = 'image_%s' % cid_images.index(original_image_src)
+                cid_id = f'image_{cid_images.index(original_image_src)}'
             except ValueError:
                 cid_images.append(original_image_src)
-                cid_id = 'image_%s' % (len(cid_images) - 1)
+                cid_id = f'image_{len(cid_images) - 1}'
 
-            image['src'] = 'cid:%s' % cid_id
+            image['src'] = f'cid:{cid_id}'
 
         return str(email), cid_images
     else:
@@ -627,13 +628,13 @@ def attach_cid_images(msg, cid_images, verify_ssl=True):
     if cid_images and len(cid_images) > 0:
         msg.mixed_subtype = 'mixed'
         for key, image in enumerate(cid_images):
-            cid = 'image_%s' % key
+            cid = f'image_{key}'
             try:
                 mime_image = convert_image_to_cid(image, cid, verify_ssl)
                 if mime_image:
                     msg.attach(mime_image)
             except:
-                logger.exception('ERROR attaching CID image %s[%s]' % (cid, image))
+                logger.exception('ERROR attaching CID image %s[%s]', cid, image)
 
 
 def encoder_linelength(msg):
@@ -659,7 +660,7 @@ def convert_image_to_cid(image_src, cid_id, verify_ssl=True):
             mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
             mime_image.add_header('Content-Transfer-Encoding', 'base64')
         elif image_src.startswith('data:'):
-            logger.exception('ERROR creating MIME element %s[%s]' % (cid_id, image_src))
+            logger.exception('ERROR creating MIME element %s[%s]', cid_id, image_src)
             return None
         else:
             image_src = normalize_image_url(image_src)
@@ -670,11 +671,11 @@ def convert_image_to_cid(image_src, cid_id, verify_ssl=True):
             response = requests.get(image_src, verify=verify_ssl)
             mime_image = MIMEImage(response.content, _subtype=guess_subtype)
 
-        mime_image.add_header('Content-ID', '<%s>' % cid_id)
+        mime_image.add_header('Content-ID', f'<{cid_id}>')
 
         return mime_image
     except:
-        logger.exception('ERROR creating mime_image %s[%s]' % (cid_id, image_src))
+        logger.exception('ERROR creating mime_image %s[%s]', cid_id, image_src)
         return None
 
 

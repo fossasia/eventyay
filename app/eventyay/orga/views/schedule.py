@@ -221,7 +221,7 @@ class ScheduleToggleView(EventPermissionRequired, View):
                 kwargs={
                     'is_show_schedule': self.request.event.feature_flags['show_schedule'],
                     'event_slug': self.request.event.slug,
-                    'organiser_slug': self.request.event.organiser.slug,
+                    'organizer_slug': self.request.event.organizer.slug,
                     'user_email': self.request.user.primary_email,
                 },
                 ignore_result=True,

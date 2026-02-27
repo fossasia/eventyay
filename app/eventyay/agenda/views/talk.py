@@ -489,7 +489,6 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             "aud": venueless_settings.audience,
             "exp": exp,
             "iat": iat,
-            # TODO: Use primary_email when we enable allauth backend
             "uid": encode_email(request.user.email),
             "profile": profile,
             "traits": list(

@@ -332,7 +332,6 @@ class User(
     def has_avatar(self) -> bool:
         return bool(self.avatar) and self.avatar != 'False'
 
-    @cached_property
     def primary_email(self) -> str:
         """
         Get the primary email address for sending emails to this user.
@@ -354,7 +353,6 @@ class User(
             return addrs[0].lower()
         return self.email.lower() if self.email else ''
 
-    @cached_property
     def email_addresses(self) -> tuple[str, ...]:
         """
         Return a tuple of all unique email addresses associated with this user.

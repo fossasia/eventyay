@@ -1,28 +1,29 @@
 import logging
-from datetime import datetime, timedelta, timezone
-from urllib.parse import urljoin
+from datetime import UTC, datetime, timedelta
 
 import jwt
-import requests
 from django.conf import settings
 
 from eventyay.celery_app import app
+from eventyay.common.utils.masks import EmailMasker
+
 
 logger = logging.getLogger(__name__)
 
 
-def generate_sso_token(user_email):
+def generate_sso_token(user_email: str) -> str:
     jwt_payload = {
         'email': user_email,
         'has_perms': 'base.edit_schedule',
-        'exp': datetime.now(timezone.utc) + timedelta(hours=1),
-        'iat': datetime.now(timezone.utc),
+        'exp': datetime.now(UTC) + timedelta(hours=1),
+        'iat': datetime.now(UTC),
     }
     jwt_token = jwt.encode(jwt_payload, settings.SECRET_KEY, algorithm='HS256')
+    logger.info('Generated SSO token for user: %s', EmailMasker(user_email))
     return jwt_token
 
 
-def set_header_token(user_email):
+def set_header_token(user_email: str) -> dict:
     token = generate_sso_token(user_email)
     # Define the headers, including the Authorization header with the Bearer token
     headers = {
@@ -38,27 +39,8 @@ def set_header_token(user_email):
     max_retries=3,
     default_retry_delay=60,
 )
-def trigger_public_schedule(self, is_show_schedule, event_slug, organizer_slug, user_email):
-    try:
-        headers = set_header_token(user_email)
-        payload = {'is_show_schedule': is_show_schedule}
-        # Send the POST request with the payload and the headers
-        ticket_uri = urljoin(
-            settings.EVENTYAY_TICKET_BASE_PATH,
-            f'api/v1/{organizer_slug}/{event_slug}/schedule-public/',
-        )
-        response = requests.post(ticket_uri, json=payload, headers=headers)
-        response.raise_for_status()  # Raise exception for bad status codes
-    except requests.RequestException as e:
-        logger.error(
-            'Error occurred when triggering hide/unhide schedule for tickets component.'
-            'Event: %s, Organizer: %s. Error: %s',
-            event_slug,
-            organizer_slug,
-            e,
-        )
-        # Retry the task if an exception occurs (with exponential backoff by default)
-        try:
-            self.retry(exc=e)
-        except self.MaxRetriesExceededError:
-            logger.error('Max retries exceeded for sending organizer webhook.')
+def trigger_public_schedule(self, is_show_schedule: bool, event_slug: str, organizer_slug: str, user_email: str):
+    # Before, this task called the 'eventyay-talk' server API, but because we have now merged
+    # 'eventyay-tickets' and 'eventyay-talk' into the same app,
+    # we should call a Python function directly.
+    logger.info('Not implemented `trigger_public_schedule` yet.')
