@@ -15,6 +15,23 @@
 							span.track-color-dot(v-if="item.color", :style="{backgroundColor: item.color}")
 							span.filter-dropdown-label(:style="item.color ? {'--track-color': item.color} : {}") {{ item.label }}
 					.filter-dropdown-empty(v-else) No {{ group.title.toLowerCase() }} available
+		button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view")
+			template(v-if="sessionsMode")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+					line(x1="16", y1="2", x2="16", y2="6")
+					line(x1="8", y1="2", x2="8", y2="6")
+					line(x1="3", y1="10", x2="21", y2="10")
+				|  {{ t.calendar_view }}
+			template(v-else)
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					line(x1="8", y1="6", x2="21", y2="6")
+					line(x1="8", y1="12", x2="21", y2="12")
+					line(x1="8", y1="18", x2="21", y2="18")
+					line(x1="3", y1="6", x2="3.01", y2="6")
+					line(x1="3", y1="12", x2="3.01", y2="12")
+					line(x1="3", y1="18", x2="3.01", y2="18")
+				|  {{ t.list_view }}
 		button.toolbar-btn.fav-toggle(v-if="favsCount", :class="{active: onlyFavs}", @click="$emit('toggleFavs')")
 			svg.star-icon(viewBox="0 0 24 24")
 				polygon(
@@ -40,29 +57,35 @@
 				path(d="M9 18l6-6-6-6")
 	.toolbar-right
 		.timezone-area(v-if="!inEventTimezone")
-			bunt-select.timezone-select(
-				ref="timezoneSelect",
-				name="timezone",
-				:options="otherTimezones",
-				v-model="timezoneModel",
-				:findOptionByValue="findTimezoneOption",
-				@getOptionLabel="getTimezoneLabel",
-				dropdownClass="timezone-dropdown-menu",
-				@blur="$emit('saveTimezone')"
-			)
-				template(#result-header)
-					ul.timezone-pinned
-						li.timezone-option(
-							v-for="option in pinnedTimezones",
+			.timezone-compact(ref="timezoneDropdown")
+				button.toolbar-btn.tz-btn(@click="toggleTzDropdown", :title="timezoneModel")
+					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+						circle(cx="12", cy="12", r="10")
+						line(x1="2", y1="12", x2="22", y2="12")
+						path(d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z")
+					span.tz-label {{ timezoneModel.replace(/^.*\//, '').replace(/_/g, ' ') }}
+					svg.chevron-icon(:class="{open: tzOpen}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+						path(d="M6 9l6 6 6-6")
+				.tz-dropdown-menu(v-if="tzOpen")
+					.tz-section-label Pinned
+					.tz-option(
+						v-for="option in pinnedTimezones",
+						:key="option.id",
+						:class="{ active: timezoneModel === option.id }",
+						@click="selectTimezone(option.id); tzOpen = false"
+					)
+						span {{ option.label }}
+					.tz-divider
+					.tz-section-label {{ t.other_timezones }}
+					input.tz-search(v-model="tzSearch", placeholder="Search timezones...", @click.stop)
+					.tz-scroll
+						.tz-option(
+							v-for="option in filteredOtherTimezones",
 							:key="option.id",
 							:class="{ active: timezoneModel === option.id }",
-							@click="selectTimezone(option.id)"
+							@click="selectTimezone(option.id); tzOpen = false"
 						)
 							span {{ option.label }}
-					div.timezone-divider(v-if="otherTimezones.length")
-					span.timezone-section-label {{ t.other_timezones }}
-				template(#no-options)
-					span(v-if="otherTimezones.length") {{ t.no_matching_options }}
 		.timezone-label(v-else) {{ scheduleTimezone }}
 		.version-area(v-if="versionOptions.length || changelogUrl")
 			.version-dropdown(ref="versionDropdown")
@@ -80,7 +103,7 @@
 						:href="v.url",
 						:class="{active: v.version === version}"
 					)
-						span {{ 'v' + v.version }}
+						span {{ formatVersionLabel(v.version) }}
 						span.version-current-badge(v-if="v.isCurrent") {{ t.current }}
 					.version-menu-divider(v-if="changelogUrl && versionOptions.length")
 					a.version-item.changelog-link(v-if="changelogUrl", :href="changelogUrl")
@@ -114,6 +137,16 @@
 						span.exporter-name {{ exp.verbose_name }}
 						transition(name="fade")
 							.qr-hover(v-if="hoveredExporter === exp && exp.qrcode_svg", v-html="exp.qrcode_svg")
+		.search-area(ref="searchArea")
+			.search-compact(:class="{expanded: searchExpanded}")
+				button.toolbar-btn.search-toggle(@click="toggleSearch", :title="t.search")
+					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+						circle(cx="11", cy="11", r="8")
+						line(x1="21", y1="21", x2="16.65", y2="16.65")
+				input.search-input(v-if="searchExpanded", ref="searchInput", :value="searchQuery", @input="$emit('update:searchQuery', $event.target.value)", :placeholder="t.search_placeholder", @keydown.esc="closeSearch")
+				button.search-clear(v-if="searchExpanded && searchQuery", @click="$emit('update:searchQuery', ''); $refs.searchInput.focus()")
+					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+						path(d="M18 6L6 18M6 6l12 12")
 		button.toolbar-btn(v-if="showPrint", @click="printSchedule", :title="t.print")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				polyline(points="6 9 6 2 18 2 18 9")
@@ -159,6 +192,8 @@ export default {
 		showFullscreen: { type: Boolean, default: true },
 		showPrint: { type: Boolean, default: true },
 		fullscreenTarget: { type: Object, default: null },
+		sessionsMode: { type: Boolean, default: false },
+		searchQuery: { type: String, default: '' },
 		favsCount: { type: Number, default: 0 },
 		onlyFavs: { type: Boolean, default: false },
 		hasActiveFilters: { type: Boolean, default: false },
@@ -169,11 +204,14 @@ export default {
 		days: { type: Array, default: () => [] },
 		currentDay: { type: String, default: '' }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'filterToggle', 'selectDay'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
 	data() {
 		return {
 			exportOpen: false,
 			versionOpen: false,
+			tzOpen: false,
+			searchExpanded: false,
+			tzSearch: '',
 			hoveredExporter: null,
 			isFullscreen: false,
 			openFilterDropdowns: {},
@@ -197,13 +235,17 @@ export default {
 				version_warning_old: m.version_warning_old || 'You are currently viewing an older schedule version.',
 				export: m.export || 'Export',
 				current: m.current || 'current',
+				list_view: m.list_view || 'List View',
+				calendar_view: m.calendar_view || 'Calendar View',
+				search: m.search || 'Search',
+				search_placeholder: m.search_placeholder || 'Search sessions…',
 			}
 		},
 		resolvedExporters() {
 			return this.exporters || []
 		},
 		currentVersionLabel() {
-			if (this.version) return 'v' + this.version
+			if (this.version) return this.formatVersionLabel(this.version)
 			return this.t.latest
 		},
 		versionOptions() {
@@ -254,6 +296,11 @@ export default {
 		allTimezoneOptions() {
 			return [...this.pinnedTimezones, ...this.otherTimezones]
 		},
+		filteredOtherTimezones() {
+			if (!this.tzSearch) return this.otherTimezones
+			const q = this.tzSearch.toLowerCase()
+			return this.otherTimezones.filter(tz => tz.label.toLowerCase().includes(q))
+		},
 		timezoneModel: {
 			get() { return this.currentTimezone },
 			set(value) { this.$emit('update:currentTimezone', value) }
@@ -299,6 +346,10 @@ export default {
 		document.removeEventListener('fullscreenchange', this.onFullscreenChange)
 	},
 	methods: {
+		formatVersionLabel(version) {
+			if (!version) return ''
+			return version.startsWith('v') ? version : 'v' + version
+		},
 		outsideClick(event) {
 			const path = event.composedPath ? event.composedPath() : [event.target]
 			if (this.$refs.exportDropdown && !path.includes(this.$refs.exportDropdown)) {
@@ -307,6 +358,13 @@ export default {
 			if (this.$refs.versionDropdown && !path.includes(this.$refs.versionDropdown)) {
 				this.versionOpen = false
 			}
+			if (this.$refs.timezoneDropdown && !path.includes(this.$refs.timezoneDropdown)) {
+				if (this.tzOpen) {
+					this.tzOpen = false
+					this.tzSearch = ''
+					this.$emit('saveTimezone')
+				}
+			}
 			for (const key of Object.keys(this.openFilterDropdowns)) {
 				const refName = 'filterDrop_' + key
 				const el = this.$refs[refName]
@@ -314,6 +372,9 @@ export default {
 				if (dropdownEl && !path.includes(dropdownEl)) {
 					this.openFilterDropdowns[key] = false
 				}
+			}
+			if (this.searchExpanded && this.$refs.searchArea && !path.includes(this.$refs.searchArea)) {
+				this.closeSearch()
 			}
 		},
 		toggleFilterDropdown(refKey) {
@@ -354,7 +415,11 @@ export default {
 		},
 		selectTimezone(value) {
 			this.$emit('update:currentTimezone', value)
-			this.$refs.timezoneSelect?.blur()
+			this.$emit('saveTimezone')
+		},
+		toggleTzDropdown() {
+			this.tzOpen = !this.tzOpen
+			this.tzSearch = ''
 		},
 		toggleFilter(item) {
 			item.selected = !item.selected
@@ -363,6 +428,18 @@ export default {
 		shiftDays(delta) {
 			const max = Math.max(0, this.days.length - 3)
 			this.dayWindowStart = Math.max(0, Math.min(max, this.dayWindowStart + delta))
+		},
+		toggleSearch() {
+			this.searchExpanded = !this.searchExpanded
+			if (this.searchExpanded) {
+				this.$nextTick(() => this.$refs.searchInput?.focus())
+			} else {
+				this.$emit('update:searchQuery', '')
+			}
+		},
+		closeSearch() {
+			this.searchExpanded = false
+			this.$emit('update:searchQuery', '')
 		}
 	}
 }
@@ -451,6 +528,8 @@ export default {
 			color: #999
 			font-size: 13px
 			font-style: italic
+		.sessions-toggle
+			white-space: nowrap
 	.toolbar-center
 		display: flex
 		align-items: center
@@ -497,69 +576,107 @@ export default {
 		flex-shrink: 0
 		flex: 1
 		justify-content: flex-end
-		.timezone-area
-			margin-right: 8px
-			.bunt-select
-				min-width: 100px
-				max-width: 400px
-				width: auto
-				border-radius: 2px
-				&:hover
-					background-color: rgba(0, 0, 0, 0.05)
-				.bunt-input
+		.search-area
+			position: relative
+			display: flex
+			align-items: center
+			.search-compact
+				display: flex
+				align-items: center
+				gap: 0
+				border-radius: 4px
+				transition: all 0.2s ease
+				&.expanded
+					background: #f5f5f5
+					border: 1px solid #ddd
+				.search-toggle
+					flex-shrink: 0
+				.search-input
+					border: none
 					background: transparent
-					height: auto !important
-					padding-top: 0 !important
-					min-height: 0
-					&::before, &::after
-						display: none
-					.label-input-container
-						padding: 0
-						label
-							display: none
-						input
-							border: none
-							background: transparent
-							font-size: 14px
-							padding: 4px 22px 4px 8px
-							height: 32px
-							color: #333 !important
-							cursor: pointer
-							user-select: none
-							caret-color: transparent
-							&::selection
-								background: transparent
-								color: #333
-							&:focus
-								outline: none
-								color: #333
-						svg.outline
-							display: none !important
-						.open-indicator
-							position: absolute
-							right: 6px
-							top: 50%
-							transform: translateY(-50%)
-							font-size: 0
-							line-height: 0
-							color: #666
-							pointer-events: none
-							transition: transform 0.25s ease
-							&::after
-								content: ''
-								display: inline-block
-								width: 0
-								height: 0
-								border-left: 4px solid transparent
-								border-right: 4px solid transparent
-								border-top: 5px solid #666
-								vertical-align: middle
-				&.open
-					.bunt-input .label-input-container .open-indicator
-						transform: translateY(-50%) rotate(180deg)
-				.bunt-input
-					.hint
-						display: none
+					outline: none
+					font-size: 13px
+					padding: 4px 4px 4px 0
+					width: 140px
+					max-width: 180px
+					&::placeholder
+						color: #999
+				.search-clear
+					border: none
+					background: transparent
+					cursor: pointer
+					padding: 2px 4px
+					display: flex
+					align-items: center
+					color: #999
+					&:hover
+						color: #333
+					.tb-icon
+						width: 14px
+						height: 14px
+		.timezone-area
+			position: relative
+			margin-right: 4px
+			.timezone-compact
+				position: relative
+				display: inline-block
+			.tz-btn
+				gap: 4px
+				.tz-label
+					font-size: 12px
+					color: #555
+					white-space: nowrap
+					overflow: hidden
+					text-overflow: ellipsis
+					max-width: 120px
+			.tz-dropdown-menu
+				position: absolute
+				right: 0
+				top: 100%
+				background: #fff
+				width: 260px
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18)
+				border-radius: 4px
+				z-index: 200
+				padding: 4px 0
+			.tz-section-label
+				display: block
+				padding: 6px 12px 2px
+				font-weight: 600
+				font-size: 11px
+				color: $clr-secondary-text-light
+				text-transform: uppercase
+				letter-spacing: 0.03em
+			.tz-option
+				display: flex
+				align-items: center
+				padding: 6px 12px
+				cursor: pointer
+				font-size: 13px
+				&:hover
+					background-color: #f5f5f5
+				&.active
+					font-weight: 600
+					background-color: #e8f4fd
+			.tz-divider
+				height: 1px
+				background: #e0e0e0
+				margin: 4px 0
+			.tz-search
+				display: block
+				box-sizing: border-box
+				width: calc(100% - 16px)
+				margin: 4px 8px
+				padding: 5px 8px
+				border: 1px solid #ccc
+				border-radius: 3px
+				font-size: 13px
+				outline: none
+				&:focus
+					border-color: var(--pretalx-clr-primary, #3aa57c)
+			.tz-scroll
+				max-height: 200px
+				overflow-y: auto
 		.timezone-label
 			cursor: default
 			color: $clr-secondary-text-light
@@ -682,58 +799,14 @@ export default {
 		gap: 4px
 		&:hover
 			background-color: rgba(0, 0, 0, 0.05)
+		&.sessions-toggle.active
+			background-color: var(--pretalx-clr-primary, #3aa57c)
+			color: #fff
+			border-radius: 4px
 	.fade-enter-active, .fade-leave-active
 		transition: opacity 0.3s
 	.fade-enter-from, .fade-leave-to
 		opacity: 0
-
-.timezone-dropdown-menu
-	user-select: none
-	ul
-		padding: 0
-		margin: 0
-		li
-			padding: 0 12px
-			background-color: transparent !important
-			&:hover
-				background-color: rgba(0, 0, 0, 0.04) !important
-.timezone-pinned
-	list-style: none
-	margin: 0
-	padding: 0
-	user-select: none
-	.timezone-option
-		display: flex
-		align-items: center
-		height: 32px
-		padding: 0 12px
-		cursor: pointer
-		transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out
-		&:hover
-			background-color: rgba(0, 0, 0, 0.04)
-		&.active
-			background-color: rgba(0, 0, 0, 0.06)
-			font-weight: 600
-.timezone-divider
-	display: flex
-	align-items: center
-	min-height: 8px
-	padding: 0 12px
-	border-top: 1px solid #d0d7de
-	border-bottom: 1px solid #d0d7de
-	background: #f7f8fa
-	color: $clr-secondary-text-light
-	font-weight: 700
-	text-transform: uppercase
-	letter-spacing: 0.02em
-	user-select: none
-.timezone-section-label
-	display: block
-	padding: 6px 12px 2px
-	font-weight: 600
-	font-size: 12px
-	color: $clr-secondary-text-light
-	user-select: none
 
 .chevron-icon
 	width: 14px
@@ -742,6 +815,37 @@ export default {
 	flex-shrink: 0
 	&.open
 		transform: rotate(180deg)
+
+@media (max-width: 600px)
+	.c-schedule-toolbar
+		flex-wrap: wrap
+		height: auto
+		min-height: 40px
+		padding: 4px 6px
+		gap: 4px
+		.toolbar-left
+			order: 1
+			flex: 1 1 100%
+			overflow-x: auto
+			-webkit-overflow-scrolling: touch
+			scrollbar-width: none
+			&::-webkit-scrollbar
+				display: none
+		.toolbar-center
+			order: 2
+			flex: 1 1 auto
+			justify-content: center
+			.day-btn
+				padding: 3px 6px
+				font-size: 12px
+		.toolbar-right
+			order: 3
+			flex: 0 0 auto
+			gap: 2px
+		.toolbar-btn
+			padding: 0 6px
+			height: 28px
+			font-size: 12px
 
 @media print
 	.c-schedule-toolbar

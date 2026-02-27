@@ -369,6 +369,8 @@ def schedule_messages(request, **kwargs):
             'You are currently viewing an older schedule version.'
         ),
         'join_room': _('Join room'),
+        'view_video': _('View Video'),
+        'watch_live': _('Watch live'),
         'speaker_fallback': _('Speaker'),
         'speaker_name_not_provided': _('Speaker name not provided'),
         'add_to_calendar': _('Add to Calendar'),

@@ -21,7 +21,6 @@ body {
 
 header {
     z-index: 1000;
-    height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
