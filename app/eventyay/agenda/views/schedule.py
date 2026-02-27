@@ -299,12 +299,12 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return list(exporter(self.request.event) for _, exporter in register_my_data_exporters.send(self.request.event))
 
     @context
-    def is_sessions_page(self):
-        return self.request.path.endswith('/sessions/')
-
-    @context
     def show_talk_list(self):
-        return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
+        # Check query parameter first for user preference, then fall back to event settings
+        view_param = self.request.GET.get('view', '').lower()
+        if view_param in ('list', 'calendar'):
+            return view_param == 'list'
+        return self.request.event.display_settings['schedule'] == 'list'
 
     @context
     def schedule_json(self):
@@ -343,6 +343,18 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         }
         ctx['schedule_meta_json'] = escape_json_for_script(json.dumps(meta))
         return ctx
+
+
+class SessionsRedirectView(PermissionRequired, ScheduleMixin, TemplateView):
+    permission_required = 'base.view_schedule'
+
+    def get(self, request, **kwargs):
+        query = request.GET.copy()
+        query['view'] = 'list'
+        target_url = str(request.event.urls.schedule)
+        if query:
+            target_url = f'{target_url}?{query.urlencode()}'
+        return HttpResponseRedirect(target_url)
 
 
 @cache_page(60 * 60 * 24)
