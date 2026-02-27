@@ -114,6 +114,14 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         response._csp_update = csp_update
         return response
 
+    def _build_speakers_context(self, speakers_qs):
+        """Enrich a speaker queryset and return a list ready for template context."""
+        result = []
+        for speaker in speakers_qs:
+            speaker.talk_profile = speaker.event_profile(event=self.request.event)
+            result.append(speaker)
+        return result
+
     def get_context_data(self, **kwargs):
         from django.db.models import Prefetch
 
@@ -126,13 +134,11 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         ctx['submission_tags'] = self.submission.tags.all()
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
-        result = []
         other_slots = (
             schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
             if schedule
             else TalkSlot.objects.none()
         )
-
         other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related('event', 'event__organizer')
         speakers = (
             self.submission.speakers.all()
@@ -145,10 +151,7 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
                 )
             )
         )
-        for speaker in speakers:
-            speaker.talk_profile = speaker.event_profile(event=self.request.event)
-            result.append(speaker)
-        ctx['speakers'] = result
+        ctx['speakers'] = self._build_speakers_context(speakers)
         return ctx
 
     @context
@@ -170,7 +173,7 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
 
 
 class TalkReviewView(TalkView):
-    template_name = 'agenda/talk.html'
+    template_name = 'agenda/talk_review.html'
 
     def has_permission(self):
         return self.request.event.get_feature_flag('submission_public_review')
@@ -195,6 +198,30 @@ class TalkReviewView(TalkView):
     @context
     def hide_speaker_links(self):
         return True
+
+    def _build_speakers_context(self, speakers_qs):
+        # Override to avoid calling event_profile(), which can create and save a
+        # SpeakerProfile row when one doesn't exist.  That is an unwanted DB
+        # write on every anonymous GET of a public review link.  Instead, use
+        # the _event_profiles attribute populated by with_profiles() directly.
+        result = []
+        for speaker in speakers_qs:
+            profiles = getattr(speaker, '_event_profiles', [])
+            speaker.talk_profile = profiles[0] if profiles else None
+            result.append(speaker)
+        return result
+
+    def get_context_data(self, **kwargs):
+        # TalkView.get_context_data returns early (skipping speakers) when the
+        # visitor lacks base.view_schedule permission – which is always the case
+        # for anonymous reviewers when the schedule is not yet public.  Fill in
+        # the speaker data unconditionally for the review page.
+        ctx = super().get_context_data(**kwargs)
+        if 'speakers' not in ctx:
+            speakers = self.submission.speakers.all().with_profiles(self.request.event)
+            ctx['speakers'] = self._build_speakers_context(speakers)
+            ctx['submission_tags'] = self.submission.tags.all()
+        return ctx
 
 
 class SingleICalView(EventPageMixin, TalkMixin, View):
