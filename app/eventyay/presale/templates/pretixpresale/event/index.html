@@ -37,7 +37,7 @@
         </script>
     {% endautoescape %}
     {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
-    <main aria-label="{% if show_cart %}{% trans "Your cart, general information, add products to your cart" %}{% else %}{% trans "General information, add products to your cart" %}{% endif %}">
+    <div aria-label="{% if show_cart %}{% trans "Your cart, general information, add products to your cart" %}{% else %}{% trans "General information, add products to your cart" %}{% endif %}">
     {% if show_cart %}
         {% if request.event.live or is_organiser %}
         <details class="panel panel-primary cart" open>
@@ -394,7 +394,7 @@
             </section>
         {% endif %}
     {% endif %}
-    </main>
+    </div>
     {% if show_vouchers %}
         {% if can_view_tickets %}
         {% if request.event.live or is_organiser %}
