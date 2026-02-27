@@ -163,6 +163,25 @@ DEFAULT_SETTINGS = {
             widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_company_asked'}),
         ),
     },
+    'attendee_job_title_asked': {
+        'default': 'False',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Ask for job title per ticket'),
+        ),
+    },
+    'attendee_job_title_required': {
+        'default': 'False',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Require job title per ticket'),
+            widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_job_title_asked'}),
+        ),
+    },
     'attendee_addresses_asked': {
         'default': 'False',
         'type': bool,
