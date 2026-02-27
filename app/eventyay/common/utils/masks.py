@@ -15,7 +15,7 @@ class EmailMasker:
     def __init__(self, email: str):
         self._email = email
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Add some asterisks to random positions in the local part of the email to mask it.
         """
@@ -25,3 +25,6 @@ class EmailMasker:
         positions = random.sample(range(len(local_part)), min(2, len(local_part)))  # Randomly select positions to mask
         masked_local = ''.join('*' if i in positions else char for i, char in enumerate(local_part))
         return f'{masked_local}@{domain}'
+
+    def to_json(self) -> str:
+        return str(self)

@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
 from typing import cast
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlencode, urlparse, urlunparse
 
 import isoweek
 import jwt
@@ -468,11 +468,14 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
+            take_cart_id = request.GET['take_cart_id']
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            redirect_url = eventreverse(
-                request.event, 'presale:event.index', kwargs=kwargs
-            ) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            params = {
+                'require_cookie': 'true',
+                'cart_id': take_cart_id,
+            }
+            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs) + '?' + urlencode(params)
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
@@ -480,20 +483,17 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             get_or_create_cart_id(request)
         elif 'require_cookie' in request.GET and settings.SESSION_COOKIE_NAME not in request.COOKIES:
             # Cookies are in fact not supported
+            params = {
+                'src': 'widget',
+                'take_cart_id': request.GET.get('cart_id', ''),
+            }
+            url_kwards = {'cart_namespace': kwargs.get('cart_namespace', '')}
+            event_url = eventreverse(request.event, 'presale:event.index', kwargs=url_kwards)
             r = render(
                 request,
                 'pretixpresale/event/cookies.html',
                 {
-                    'url': eventreverse(
-                        request.event,
-                        'presale:event.index',
-                        kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
-                    )
-                    + (
-                        '?src=widget&take_cart_id={}'.format(request.GET.get('cart_id'))
-                        if 'cart_id' in request.GET
-                        else ''
-                    )
+                    'url': f'{event_url}?{urlencode(params)}',
                 },
             )
             r._csp_ignore = True

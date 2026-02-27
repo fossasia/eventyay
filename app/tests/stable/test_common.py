@@ -6,6 +6,9 @@ import json
 
 from django.urls import reverse
 
+from eventyay.common.utils.masks import EmailMasker
+from eventyay.helpers.json import CustomJSONEncoder
+
 
 @pytest.mark.django_db
 class TestCommonPages:
@@ -107,3 +110,13 @@ class TestJavaScriptHelpers:
         response = client.get('/js_helpers/states/')
         # Should return state data
         assert response.status_code in [200, 400]  # 400 if no country specified
+
+def test_email_masker_json_serialization_masks_email():
+    payload = {'recipient': EmailMasker('alice@example.com')}
+
+    serialized = json.dumps(payload, cls=CustomJSONEncoder)
+    loaded = json.loads(serialized)
+
+    assert loaded['recipient'].endswith('@example.com')
+    assert '*' in loaded['recipient']
+    assert loaded['recipient'] != 'alice@example.com'
