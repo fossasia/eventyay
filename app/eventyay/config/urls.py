@@ -11,6 +11,7 @@ from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers
 from eventyay.control.views import pages
 from eventyay.eventyay_common.views.custom import ConfirmEmailView
 
+
 base_patterns = [
     path(
         'download/<id>/',
