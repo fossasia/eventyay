@@ -209,4 +209,15 @@ export default {
 				font-size: 20px
 				font-weight: 500
 				color: $clr-secondary-text-light
+
+@media (max-width: 600px)
+	.c-linear-schedule
+		.bucket
+			.bucket-label
+				font-size: 13px
+				padding-left: 8px
+			.break
+				margin: 6px 4px
+				.title
+					font-size: 16px
 </style>

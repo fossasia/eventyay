@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
+from i18nfield.strings import LazyI18nString
 
 from pretix.base.models import (
     Event,
@@ -883,3 +884,29 @@ class ItemsTest(ItemFormTest):
             i = Item.objects.get(name__icontains='New Item')
             q = Quota.objects.get(name__icontains='New Quota')
             assert q.items.filter(pk=i.pk).exists()
+
+    def test_order_forms_save_does_not_reset_common_settings(self):
+        self.event1.settings.set('frontpage_text', LazyI18nString({'en': 'Presale intro text'}))
+        self.event1.settings.set('primary_color', '#8fc93a')
+        self.event1.settings.set('theme_color_success', '#157c02')
+        self.event1.settings.set('theme_color_danger', '#d80000')
+        self.event1.settings.set('theme_color_background', '#a0a0a0')
+        self.event1.settings.set('hover_button_color', '#00826c')
+        self.event1.settings.flush()
+
+        doc = self.get_doc('/control/event/%s/%s/orderforms/' % (self.orga1.slug, self.event1.slug))
+        form_data = extract_form_fields(doc.select('form')[0])
+        assert 'settings-attendee_job_title_asked_required' in form_data
+
+        doc = self.post_doc('/control/event/%s/%s/orderforms/' % (self.orga1.slug, self.event1.slug), form_data)
+        assert doc.select('.alert-success')
+
+        self.event1.settings.flush()
+        assert self.event1.settings.get('primary_color') == '#8fc93a'
+        assert self.event1.settings.get('theme_color_success') == '#157c02'
+        assert self.event1.settings.get('theme_color_danger') == '#d80000'
+        assert self.event1.settings.get('theme_color_background') == '#a0a0a0'
+        assert self.event1.settings.get('hover_button_color') == '#00826c'
+
+        frontpage_text = self.event1.settings.get('frontpage_text', as_type=LazyI18nString)
+        assert frontpage_text.data.get('en') == 'Presale intro text'
