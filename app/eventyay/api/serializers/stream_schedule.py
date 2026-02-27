@@ -78,6 +78,11 @@ class StreamScheduleSerializer(PretalxSerializer):
         if not (room and start_time and end_time):
             return
 
+        # Allow creating stream schedules while the event schedule is still being drafted.
+        # Enforce the overlap requirement once talks are published.
+        if not room.event.talks_published:
+            return
+
         with scope(event=room.event):
             match_exists = TalkSlot.objects.filter(
                 schedule__event=room.event,

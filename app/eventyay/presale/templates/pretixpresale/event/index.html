@@ -329,7 +329,7 @@
     {% if subevent or not event.has_subevents %}
         {% if featured_speakers %}
             <section class="front-page" id="featured-speakers" aria-label="{% trans 'Featured Speakers' %}">
-                {{ featured_speakers_widget_schedule|json_script:"pretalx-schedule-data" }}
+                <script id="pretalx-schedule-data" type="application/json">{{ featured_speakers_widget_schedule_json|safe }}</script>
                 <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
                 <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
             </section>

@@ -416,14 +416,6 @@ export default {
 			const hasTimezone = /([zZ]|[+-]\d\d:?\d\d)$/.test(value);
 			return hasTimezone ? moment.parseZone(value) : moment.utc(value);
 		},
-		localizedTitle(title) {
-			if (typeof title === 'string') return title;
-			if (typeof title === 'object' && title) {
-				const lang = this.$store.state.schedule?.currentLanguage || 'en';
-				return title[lang] || title.en || Object.values(title)[0] || 'Untitled';
-			}
-			return 'Untitled';
-		},
 	},
 };
 </script>

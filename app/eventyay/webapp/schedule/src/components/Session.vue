@@ -105,7 +105,8 @@ export default {
 				return () => {}
 			}
 		},
-		getJoinRoomLink: { default: () => () => '' }
+		getJoinRoomLink: { default: () => () => '' },
+		translationMessages: { default: () => ({}) }
 	},
 	components: {
 		FavButton
@@ -158,7 +159,8 @@ export default {
 			return joinLink || ''
 		},
 		streamTooltip () {
-			return 'Watch live'
+			const m = this.translationMessages || {}
+			return m.watch_live || m.watchLive || 'Watch live'
 		},
 		abstractText () {
 			try {

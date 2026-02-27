@@ -41,6 +41,8 @@ from django.views.generic import TemplateView
 from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.agenda.views.utils import escape_json_for_script
+
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
     Order,
@@ -606,6 +608,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
         context['featured_speakers'] = []
         context['featured_speakers_widget_schedule'] = None
+        context['featured_speakers_widget_schedule_json'] = ''
 
         event = self.request.event
         with scope(event=event):
@@ -669,7 +672,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                     for t in all_talks_list
                     if featured_codes.intersection(set(t.get('speakers') or []))
                 ]
-                schedule_data['talks'] = filtered_talks or all_talks_list
+                schedule_data['talks'] = filtered_talks
 
                 track_ids = {t.get('track') for t in schedule_data['talks'] if t.get('track') is not None}
                 room_ids = {t.get('room') for t in schedule_data['talks'] if t.get('room') is not None}
@@ -679,8 +682,10 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 schedule_data['rooms'] = [
                     rm for rm in schedule_data.get('rooms', []) if rm.get('id') in room_ids
                 ]
-                schedule_data = json.loads(json.dumps(schedule_data, cls=I18nJSONEncoder))
                 context['featured_speakers_widget_schedule'] = schedule_data
+                context['featured_speakers_widget_schedule_json'] = escape_json_for_script(
+                    json.dumps(schedule_data, cls=I18nJSONEncoder)
+                )
             else:
                 include_avatar = event.cfp.request_avatar
                 widget_speakers = []
@@ -715,6 +720,9 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                     'event_end': event.date_to.isoformat(),
                     'content_locales': event.content_locales,
                 }
+                context['featured_speakers_widget_schedule_json'] = escape_json_for_script(
+                    json.dumps(context['featured_speakers_widget_schedule'], cls=I18nJSONEncoder)
+                )
 
         return context
 

@@ -192,7 +192,8 @@ export default {
 			})),
 			showJoinRoom: computed(() => this.showJoinRoom),
 			getJoinRoomLink: (session) => {
-				const base = this.joinRoomBaseUrl || this.defaultJoinRoomBaseUrl
+				if (!this.showJoinRoom) return ''
+				const base = this.joinRoomBaseUrl || (session?.stream_url ? this.defaultJoinRoomBaseUrl : '')
 				if (!base || !session?.room) return ''
 				const roomId = typeof session.room === 'object' ? session.room.id : session.room
 				return roomId ? `${base}${roomId}/` : ''

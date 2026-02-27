@@ -40,7 +40,8 @@ export default {
 	data() {
 		return {
 			showRecordingsPrompt: false,
-			showQRCodePrompt: false
+			showQRCodePrompt: false,
+			_redirectCheckTimer: null
 		}
 	},
 	computed: {
@@ -89,16 +90,25 @@ export default {
 	},
 	watch: {
 		room: {
-			handler: 'redirectIfUninitiated',
+			handler: 'scheduleRedirectIfUninitiated',
 			immediate: true
 		},
 		rooms: {
-			handler: 'redirectIfUninitiated',
+			handler: 'scheduleRedirectIfUninitiated',
 			deep: true
 		},
-		roomId: 'redirectIfUninitiated'
+		roomId: 'scheduleRedirectIfUninitiated'
 	},
 	methods: {
+		scheduleRedirectIfUninitiated() {
+			if (this._redirectCheckTimer) {
+				clearTimeout(this._redirectCheckTimer)
+			}
+			this._redirectCheckTimer = setTimeout(() => {
+				this._redirectCheckTimer = null
+				this.redirectIfUninitiated()
+			}, 50)
+		},
 		redirectIfUninitiated() {
 			// Only enforce this for direct room navigation (/rooms/:roomId).
 			// Home ('/') will always show the first available room.
@@ -115,6 +125,12 @@ export default {
 				if (this.$route.name === 'home') return
 				this.$router.replace({name: 'home'})
 			}
+		}
+	},
+	beforeUnmount() {
+		if (this._redirectCheckTimer) {
+			clearTimeout(this._redirectCheckTimer)
+			this._redirectCheckTimer = null
 		}
 	}
 }

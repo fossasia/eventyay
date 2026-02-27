@@ -11,6 +11,7 @@ from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Count
 from django.db.utils import DatabaseError
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -32,6 +33,8 @@ from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 from .mixins import PretalxModel
 from .stream_schedule import StreamSchedule
 from .submission import SubmissionFavourite
+
+from datetime import timezone as dt_timezone
 
 
 @lru_cache(maxsize=512)
@@ -687,14 +690,28 @@ class Schedule(PretalxModel):
                 if talk.room_id and talk.start and talk.end:
                     schedules = stream_schedules_by_room.get(talk.room_id)
                     if schedules:
-                        match = next(
-                            (
-                                ss
-                                for ss in schedules
-                                if ss.start_time < talk.end and ss.end_time > talk.start
-                            ),
-                            None,
-                        )
+                        slot_start = talk.start
+                        slot_end = talk.end
+                        if timezone.is_naive(slot_start):
+                            slot_start = timezone.make_aware(slot_start, timezone.get_current_timezone())
+                        if timezone.is_naive(slot_end):
+                            slot_end = timezone.make_aware(slot_end, timezone.get_current_timezone())
+                        slot_start = slot_start.astimezone(dt_timezone.utc)
+                        slot_end = slot_end.astimezone(dt_timezone.utc)
+
+                        match = None
+                        for ss in schedules:
+                            ss_start = ss.start_time
+                            ss_end = ss.end_time
+                            if timezone.is_naive(ss_start):
+                                ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
+                            if timezone.is_naive(ss_end):
+                                ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
+                            ss_start = ss_start.astimezone(dt_timezone.utc)
+                            ss_end = ss_end.astimezone(dt_timezone.utc)
+                            if ss_start < slot_end and ss_end > slot_start:
+                                match = ss
+                                break
                         if match:
                             talk_data['stream_url'] = match.url
                             talk_data['stream_type'] = match.stream_type
