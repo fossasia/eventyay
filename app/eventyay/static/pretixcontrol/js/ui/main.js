@@ -164,7 +164,7 @@ var form_handlers = function (el) {
 
     el.find(".datetimepicker[data-date-after], .datepickerfield[data-date-after]").each(function () {
         var later_field = $(this),
-            earlier_field = $($(this).attr("data-date-after")),
+            earlier_field = safeSelector($(this).attr("data-date-after")),
             update = function () {
                 var earlier = earlier_field.data('DateTimePicker').date(),
                     later = later_field.data('DateTimePicker').date();
