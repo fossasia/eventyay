@@ -1,13 +1,4 @@
-/*global $,u2f */
-
-/**
- * Safely resolve a DOM attribute value as a jQuery CSS selector.
- * Prevents the string from being interpreted as HTML by jQuery's $() if it
- * starts with '<'.
- */
-function safeSelector(s) {
-    return (s && typeof s === 'string' && s.charAt(0) !== '<') ? $(s) : $();
-}
+/*global $,u2f,safeSelector */
 
 $(function () {
     $('.sidebar .dropdown, ul.navbar-nav .dropdown, .navbar-events-collapse').on('shown.bs.collapse shown.bs.dropdown', function () {

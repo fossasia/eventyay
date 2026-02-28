@@ -1,12 +1,4 @@
-/*global $ */
-
-/**
- * Safely resolve a string as a jQuery CSS selector without allowing HTML
- * interpretation (jQuery's $() treats strings starting with '<' as HTML).
- */
-function safeSelector(s) {
-    return (s && typeof s === 'string' && s.charAt(0) !== '<') ? $(s) : $();
-}
+/*global $,safeSelector */
 
 function questions_toggle_dependent(ev) {
     function q_should_be_shown($el) {
