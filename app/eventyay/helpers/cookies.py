@@ -49,14 +49,14 @@ def drops_unrecognized_same_site_cookies(useragent):
 
 
 # Regex parsing of User-Agent string. (See note above!)
-RE_CHROMIUM = re.compile(r'Chrom(e|ium)')
+RE_CHROMIUM = re.compile(r'Chrom(?:e|ium)')
 RE_CHROMIUM_VERSION = re.compile(r'Chrom(?:e|ium)[ /]([0-9]+)')
-RE_UC_VERSION = re.compile(r'UC[ ]?Browser/([0-9]+)\.([0-9]+)\.([0-9]+)[.0-9]*')
+RE_UC_VERSION = re.compile(r'UC[ ]?Browser/([0-9]+)\.([0-9]+)\.([0-9]+)')
 RE_IOS_VERSION = re.compile(r'\(iP[^;]+; CPU [^)]*OS ([0-9]+)[_0-9]*[^)]*\) AppleWebKit/')
 RE_MAC_VERSION = re.compile(r'\(Macintosh;[^)]*Mac OS X ([0-9]+)_([0-9]+)[_0-9]*[^)]*\) AppleWebKit/')
-RE_SAFARI = re.compile(r'Version/[^ ]* Safari/')
+RE_SAFARI = re.compile(r'Version/\S+(?: \S+)* Safari/')
 RE_MAC_EMBEDDED = re.compile(
-    r'^Mozilla/[.0-9]+ \(Macintosh;.*Mac OS X [_0-9]+\) AppleWebKit/[.0-9]+ \(KHTML, '
+    r'^Mozilla/[.0-9]+ \(Macintosh;[^)]*Mac OS X [_0-9]+\) AppleWebKit/[.0-9]+ \(KHTML, '
     r'like Gecko\)$'
 )
 
