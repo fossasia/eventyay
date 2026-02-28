@@ -8,28 +8,102 @@ function setImage(url) {
     imageWrapper.classList.remove('d-none');
 }
 
+const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+};
+
+const getErrorMessageElement = (form) => {
+    let errorElement = form.querySelector('.file-validation-error');
+    if (!errorElement) {
+        const uploadDiv = form.querySelector('.avatar-upload');
+        errorElement = document.createElement('div');
+        errorElement.className = 'file-validation-error alert alert-danger mt-2 d-none';
+        uploadDiv.parentNode.insertBefore(errorElement, uploadDiv.nextSibling);
+    }
+    return errorElement;
+};
+
+const clearFileError = (form) => {
+    const errorElement = getErrorMessageElement(form);
+    errorElement.textContent = '';
+    errorElement.classList.add('d-none');
+};
+
+const showFileError = (form, message) => {
+    const errorElement = getErrorMessageElement(form);
+    errorElement.textContent = message;
+    errorElement.classList.remove('d-none');
+};
+
+const validateImageFile = (file, maxSizeBytes) => {
+    // Allowed image types
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/jpg'];
+    
+    // Check file type
+    if (!allowedTypes.includes(file.type)) {
+        return {
+            valid: false,
+            error: 'Invalid file format. Only PNG, JPG, JPEG, and GIF images are allowed.'
+        };
+    }
+    
+    // Check file size
+    if (file.size > maxSizeBytes) {
+        const maxSizeFormatted = formatFileSize(maxSizeBytes);
+        const fileSizeFormatted = formatFileSize(file.size);
+        return {
+            valid: false,
+            error: `File size (${fileSizeFormatted}) exceeds the maximum allowed size of ${maxSizeFormatted}. Please choose a smaller image.`
+        };
+    }
+    
+    return { valid: true };
+};
+
 const updateFileInput = (ev) => {
+    const form = ev.target.closest('.avatar-form');
     const imageSelected = ev.target.value !== '';
 
     if (imageSelected) {
-        ev.target.closest('.avatar-form').querySelector('input[type=checkbox]').checked = false;
+        form.querySelector('input[type=checkbox]').checked = false;
         const files = ev.target.files;
-        if (files) {
+        if (files && files.length > 0) {
+            // Get max size from data attribute
+            const maxSizeBytes = parseInt(ev.target.dataset.maxsize) || 10485760; // 10MB default
+            
+            // Validate file
+            const validation = validateImageFile(files[0], maxSizeBytes);
+            
+            if (!validation.valid) {
+                showFileError(form, validation.error);
+                form.querySelector('.form-image-preview').classList.add('d-none');
+                ev.target.value = ''; // Clear the input
+                return;
+            }
+            
+            clearFileError(form);
+            
             const reader = new FileReader();
             reader.onload = (e) => setImage(e.target.result);
             reader.readAsDataURL(files[0]);
-            ev.target.closest('.avatar-form').querySelector('input[type=checkbox]').checked = false;
-        } else if (ev.target.closest('.avatar-form').querySelector('img').dataset.avatar) {
-            setImage(ev.target.closest('.avatar-form').querySelector('img').dataset.avatar);
-            ev.target.closest('.avatar-form').querySelector('input[type=checkbox]').checked = false;
+            form.querySelector('input[type=checkbox]').checked = false;
+        } else if (form.querySelector('img').dataset.avatar) {
+            clearFileError(form);
+            setImage(form.querySelector('img').dataset.avatar);
+            form.querySelector('input[type=checkbox]').checked = false;
         } else {
-            ev.target.closest('.avatar-form').querySelector('.form-image-preview').classList.add('d-none');
+            form.querySelector('.form-image-preview').classList.add('d-none');
         }
-    } else if (ev.target.closest('.avatar-form').querySelector('img').dataset.avatar) {
-        setImage(ev.target.closest('.avatar-form').querySelector('img').dataset.avatar);
-        ev.target.closest('.avatar-form').querySelector('input[type=checkbox]').checked = false;
+    } else if (form.querySelector('img').dataset.avatar) {
+        clearFileError(form);
+        setImage(form.querySelector('img').dataset.avatar);
+        form.querySelector('input[type=checkbox]').checked = false;
     } else {
-        ev.target.closest('.avatar-form').querySelector('.form-image-preview').classList.add('d-none');
+        form.querySelector('.form-image-preview').classList.add('d-none');
     }
 }
 

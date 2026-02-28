@@ -10,6 +10,11 @@
             <div>
                 <div class="avatar-upload hide-label">
                     {{ form.avatar.as_field_group }}
+                    {% if form.avatar.help_text %}
+                        <small class="form-text text-muted d-block mt-2">
+                            {{ form.avatar.help_text|safe }}
+                        </small>
+                    {% endif %}
                 </div>
                 {{ form.get_gravatar.as_field_group }}
             </div>
