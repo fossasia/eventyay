@@ -10,7 +10,7 @@
 			:filterGroups="filterGroups",
 			:favsCount="resolvedFavs.length",
 			:onlyFavs="onlyFavs",
-			:hasActiveFilters="onlyFavs || activeFilterCount > 0",
+			:hasActiveFilters="onlyFavs || activeFilterCount > 0 || recordingFilter !== 'all'",
 			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="resolvedSchedule.timezone",
@@ -20,13 +20,16 @@
 			:days="computedDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
+			:showRecordingFilter="showRecordingFilter",
+			:recordingFilter="recordingFilter",
 			v-model:searchQuery="searchQuery",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone",
-			@toggleSessionsMode="sessionsMode = !sessionsMode")
+			@toggleSessionsMode="sessionsMode = !sessionsMode",
+			@setRecordingFilter="setRecordingFilter")
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 				:sessions="filteredSessions",
@@ -115,6 +118,7 @@ export default {
 			userTimezone: null,
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
+			recordingFilter: 'all',
 			filterState: {
 				tracks: [],
 				rooms: [],
@@ -199,6 +203,13 @@ export default {
 				}))
 				.sort((a, b) => a.start.diff(b.start))
 		},
+		showRecordingFilter() {
+			const sessions = this.enrichedSessions
+			if (!sessions || !sessions.length) return false
+			const hasRecorded = sessions.some(s => !s.do_not_record)
+			const hasNotRecorded = sessions.some(s => s.do_not_record)
+			return hasRecorded && hasNotRecorded
+		},
 		filteredSessions() {
 			let sessions = this.enrichedSessions
 			// In linear-only (sessions) mode, filter out breaks
@@ -228,6 +239,11 @@ export default {
 			}
 			if (selectedLanguages.length) {
 				sessions = sessions.filter(s => s.content_locale && selectedLanguages.includes(s.content_locale))
+			}
+			if (this.recordingFilter === 'yes') {
+				sessions = sessions.filter(s => !s.do_not_record)
+			} else if (this.recordingFilter === 'no') {
+				sessions = sessions.filter(s => s.do_not_record)
 			}
 			if (this.searchQuery) {
 				const q = this.searchQuery.toLowerCase()
@@ -297,6 +313,12 @@ export default {
 	created() {
 		this.userTimezone = moment.tz.guess()
 		this.currentTimezone = localStorage.getItem('userTimezone') || this.timezone || this.scheduleData?.timezone || this.userTimezone
+		// Restore recording filter from URL
+		const urlParams = new URLSearchParams(window.location.search)
+		const recParam = urlParams.get('recording')
+		if (recParam && ['all', 'yes', 'no'].includes(recParam)) {
+			this.recordingFilter = recParam
+		}
 	},
 	mounted() {
 		this.onResize()
@@ -389,12 +411,26 @@ export default {
 			for (const group of Object.values(this.filterState)) {
 				for (const item of group) { item.selected = false }
 			}
+			this.recordingFilter = 'all'
+			const url = new URL(window.location)
+			url.searchParams.delete('recording')
+			window.history.replaceState({}, '', url)
 		},
 		onFilterChange() {
 			this.onlyFavs = false
 		},
 		saveTimezone() {
 			localStorage.setItem('userTimezone', this.currentTimezone)
+		},
+		setRecordingFilter(value) {
+			this.recordingFilter = value
+			const url = new URL(window.location)
+			if (value === 'all') {
+				url.searchParams.delete('recording')
+			} else {
+				url.searchParams.set('recording', value)
+			}
+			window.history.replaceState({}, '', url)
 		},
 		onFav(id) {
 			if (this.scheduleFav) this.scheduleFav(id)

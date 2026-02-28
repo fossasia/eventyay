@@ -21,7 +21,7 @@
 			:filterGroups="filterGroups",
 			:favsCount="favs.length",
 			:onlyFavs="onlyFavs",
-			:hasActiveFilters="onlyFavs || hasActiveFilterSelections",
+			:hasActiveFilters="onlyFavs || hasActiveFilterSelections || recordingFilter !== 'all'",
 			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="schedule.timezone",
@@ -29,13 +29,16 @@
 			:days="days",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
+			:showRecordingFilter="showRecordingFilter",
+			:recordingFilter="recordingFilter",
 			v-model:searchQuery="searchQuery",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
-			@resetFilters="onlyFavs = false; resetAllFilters()",
+			@resetFilters="onlyFavs = false; recordingFilter = 'all'; resetAllFilters()",
 			@saveTimezone="saveTimezone",
-			@toggleSessionsMode="sessionsMode = !sessionsMode")
+			@toggleSessionsMode="sessionsMode = !sessionsMode",
+			@setRecordingFilter="setRecordingFilter")
 		grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 			:sessions="sessions",
 			:rooms="rooms",
@@ -240,6 +243,7 @@ export default {
 			scheduleMeta: null,
 			sessionsMode: false,
 			searchQuery: '',
+			recordingFilter: 'all',
 		}
 	},
 	computed: {
@@ -275,7 +279,7 @@ export default {
 			return this.allLanguages.filter(l => l.selected)
 		},
 		hasActiveFilterSelections () {
-			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0
+			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0 || this.recordingFilter !== 'all'
 		},
 		filterGroups () {
 			const groups = [
@@ -292,6 +296,13 @@ export default {
 			if (!this.schedule) return {}
 			return this.schedule.speakers.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
 		},
+		showRecordingFilter () {
+			if (!this.schedule || !this.schedule.talks) return false
+			const talks = this.schedule.talks.filter(s => s.start)
+			const hasRecorded = talks.some(s => !s.do_not_record)
+			const hasNotRecorded = talks.some(s => s.do_not_record)
+			return hasRecorded && hasNotRecorded
+		},
 		// baseSessions: filtered by favs/tracks/rooms/types/languages/dates but NOT search.
 		// Used for structural data (days, rooms) so the UI scaffold stays stable during search.
 		baseSessions () {
@@ -303,6 +314,8 @@ export default {
 				if (this.filteredRooms.length && !this.filteredRooms.find(r => r.id === session.room)) continue
 				if (this.filteredTypes.length && !this.filteredTypes.find(t => t.value === session.session_type)) continue
 				if (this.filteredLanguages.length && !this.filteredLanguages.find(l => l.value === session.content_locale)) continue
+				if (this.recordingFilter === 'yes' && session.do_not_record) continue
+				if (this.recordingFilter === 'no' && !session.do_not_record) continue
 				const start = moment.tz(session.start, this.currentTimezone)
 				if (this.displayDates.length && !this.displayDates.includes(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
@@ -530,6 +543,13 @@ export default {
 		// set API URL before loading favs
 		this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+
+		// Restore recording filter from URL
+		const urlParams = new URLSearchParams(window.location.search)
+		const recParam = urlParams.get('recording')
+		if (recParam && ['all', 'yes', 'no'].includes(recParam)) {
+			this.recordingFilter = recParam
+		}
 
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
@@ -814,6 +834,20 @@ export default {
 			this.allRooms.forEach(r => r.selected = false)
 			this.allTypes.forEach(t => t.selected = false)
 			this.allLanguages.forEach(l => l.selected = false)
+			this.recordingFilter = 'all'
+			const url = new URL(window.location)
+			url.searchParams.delete('recording')
+			window.history.replaceState({}, '', url)
+		},
+		setRecordingFilter (value) {
+			this.recordingFilter = value
+			const url = new URL(window.location)
+			if (value === 'all') {
+				url.searchParams.delete('recording')
+			} else {
+				url.searchParams.set('recording', value)
+			}
+			window.history.replaceState({}, '', url)
 		}
 	}
 }

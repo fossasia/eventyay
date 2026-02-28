@@ -39,6 +39,14 @@
 					points="14.43,10 12,2 9.57,10 2,10 8.18,14.41 5.83,22 12,17.31 18.18,22 15.83,14.41 22,10"
 				)
 			|  {{ favsCount }}
+		.recording-filter-area(v-if="showRecordingFilter", ref="recordingDrop")
+			button.toolbar-btn.recording-btn(:class="{active: recordingFilter !== 'all'}", @click="recDropOpen = !recDropOpen", :title="t.filter_recording", :aria-label="t.filter_recording")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none")
+					path(d="M15 8v8H5V8h10m1-2H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4V7c0-.55-.45-1-1-1z", :fill="recordingFilter !== 'all' ? 'var(--pretalx-clr-primary, #3aa57c)' : 'currentColor'")
+			.recording-dropdown-menu(v-if="recDropOpen")
+				.recording-option(:class="{active: recordingFilter === 'all'}", @click="$emit('setRecordingFilter', 'all'); recDropOpen = false") {{ t.all_sessions }}
+				.recording-option(:class="{active: recordingFilter === 'yes'}", @click="$emit('setRecordingFilter', 'yes'); recDropOpen = false") {{ t.recorded_only }}
+				.recording-option(:class="{active: recordingFilter === 'no'}", @click="$emit('setRecordingFilter', 'no'); recDropOpen = false") {{ t.not_recorded }}
 		button.toolbar-btn.reset-btn(v-if="hasActiveFilters", @click="$emit('resetFilters')", :title="t.reset_all_filters")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				path(d="M18 6L6 18M6 6l12 12")
@@ -202,9 +210,11 @@ export default {
 		scheduleTimezone: String,
 		userTimezone: String,
 		days: { type: Array, default: () => [] },
-		currentDay: { type: String, default: '' }
+		currentDay: { type: String, default: '' },
+		showRecordingFilter: { type: Boolean, default: false },
+		recordingFilter: { type: String, default: 'all' }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setRecordingFilter'],
 	data() {
 		return {
 			exportOpen: false,
@@ -215,7 +225,8 @@ export default {
 			hoveredExporter: null,
 			isFullscreen: false,
 			openFilterDropdowns: {},
-			dayWindowStart: 0
+			dayWindowStart: 0,
+			recDropOpen: false
 		}
 	},
 	computed: {
@@ -239,6 +250,10 @@ export default {
 				calendar_view: m.calendar_view || 'Calendar View',
 				search: m.search || 'Search',
 				search_placeholder: m.search_placeholder || 'Search sessions…',
+				filter_recording: m.filter_recording || 'Filter by recording',
+				all_sessions: m.all_sessions || 'All sessions',
+				recorded_only: m.recorded_only || 'Recorded only',
+				not_recorded: m.not_recorded || 'Not recorded',
 			}
 		},
 		resolvedExporters() {
@@ -365,6 +380,9 @@ export default {
 					this.$emit('saveTimezone')
 				}
 			}
+			if (this.$refs.recordingDrop && !path.includes(this.$refs.recordingDrop)) {
+				this.recDropOpen = false
+			}
 			for (const key of Object.keys(this.openFilterDropdowns)) {
 				const refName = 'filterDrop_' + key
 				const el = this.$refs[refName]
@@ -481,6 +499,32 @@ export default {
 				height: 18px
 		.reset-btn
 			color: #666
+		.recording-filter-area
+			position: relative
+			.recording-btn
+				&.active
+					border: 2px solid var(--pretalx-clr-primary, #3aa57c)
+					background-color: rgba(58, 165, 124, 0.08)
+			.recording-dropdown-menu
+				position: absolute
+				left: 0
+				top: 100%
+				background: #fff
+				min-width: 160px
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+				border-radius: 4px
+				z-index: 200
+				padding: 4px 0
+				.recording-option
+					padding: 6px 12px
+					cursor: pointer
+					font-size: 13px
+					white-space: nowrap
+					&:hover
+						background-color: #f5f5f5
+					&.active
+						font-weight: 600
+						background-color: #e8f4fd
 		.filter-dropdown-area
 			position: relative
 		.filter-dropdown-menu
