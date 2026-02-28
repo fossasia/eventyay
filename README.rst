@@ -1,6 +1,18 @@
 eventyay-tickets (ENext)
 ========================
 
+.. image:: https://img.shields.io/github/stars/fossasia/eventyay?style=social
+   :target: https://github.com/fossasia/eventyay
+
+.. image:: https://img.shields.io/github/forks/fossasia/eventyay
+   :target: https://github.com/fossasia/eventyay/network
+
+.. image:: https://img.shields.io/github/issues/fossasia/eventyay
+   :target: https://github.com/fossasia/eventyay/issues
+
+.. image:: https://img.shields.io/github/license/fossasia/eventyay
+   :target: https://github.com/fossasia/eventyay/blob/dev/LICENSE
+   
 Project status & release cycle
 ------------------------------
 
