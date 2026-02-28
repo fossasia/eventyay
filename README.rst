@@ -29,7 +29,7 @@ For Nushell:
 
 If you are using other Linux distros, please guess the corresponding package names for that list.
 
-Other than that, please install `uv`_, the Python package manager.
+Other than that, please install `uv`, the Python package manager.
 
 Getting Started
 ---------------
@@ -101,7 +101,7 @@ In case you cannot take advantage of PostgreSQL *peer* mode, you need to create 
 
 7. **Activate virtual environment**
 
-After running ``uv sync```, activate a virtual environment
+After running ``uv sync``, activate the virtual environment:
 
 .. code-block:: sh
 
