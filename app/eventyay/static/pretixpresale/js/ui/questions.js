@@ -1,5 +1,13 @@
 /*global $ */
 
+/**
+ * Safely resolve a string as a jQuery CSS selector without allowing HTML
+ * interpretation (jQuery's $() treats strings starting with '<' as HTML).
+ */
+function safeSelector(s) {
+    return (s && typeof s === 'string' && s.charAt(0) !== '<') ? $(s) : $();
+}
+
 function questions_toggle_dependent(ev) {
     function q_should_be_shown($el) {
         if (!$el.attr('data-question-dependency')) {
@@ -34,7 +42,7 @@ function questions_toggle_dependent(ev) {
                 }
                 $dependency_el = $("input[value=" + dependency_values[0] + "][name=" + dependency_name + "]");
                 if (!$dependency_el.closest(".form-group").hasClass("dependency-hidden")) {  // do not show things that depend on hidden things
-                    return q_should_be_shown($dependency_el) && $(filter).length;
+                    return q_should_be_shown($dependency_el) && safeSelector(filter).length;
                 }
             }
         }

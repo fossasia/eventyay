@@ -1,4 +1,14 @@
 /*global $,u2f */
+
+/**
+ * Safely resolve a DOM attribute value as a jQuery CSS selector.
+ * Prevents the string from being interpreted as HTML by jQuery's $() if it
+ * starts with '<'.
+ */
+function safeSelector(s) {
+    return (s && typeof s === 'string' && s.charAt(0) !== '<') ? $(s) : $();
+}
+
 $(function () {
     $('.sidebar .dropdown, ul.navbar-nav .dropdown, .navbar-events-collapse').on('shown.bs.collapse shown.bs.dropdown', function () {
         $(this).parent().find("input").val("").change().focus();
@@ -9,7 +19,7 @@ $(function () {
 
     $("[data-event-typeahead]").each(function () {
         var $container = $(this);
-        var $query = $(this).find('[data-typeahead-query]').length ? $(this).find('[data-typeahead-query]') : $($(this).attr("data-typeahead-field"));
+        var $query = $(this).find('[data-typeahead-query]').length ? $(this).find('[data-typeahead-query]') : safeSelector($(this).attr("data-typeahead-field"));
         $container.find("li:not(.query-holder)").remove();
         var lastQuery = "";
 

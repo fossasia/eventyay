@@ -1,5 +1,14 @@
 /*global $,gettext*/
 
+/**
+ * Safely resolve a DOM attribute value as a jQuery CSS selector.
+ * Prevents the string from being interpreted as HTML by jQuery's $() if it
+ * starts with '<'.
+ */
+function safeSelector(s) {
+    return (s && typeof s === 'string' && s.charAt(0) !== '<') ? $(s) : $();
+}
+
 function gettext(msgid) {
     if (typeof django !== 'undefined' && typeof django.gettext !== 'undefined') {
         return django.gettext(msgid);
@@ -181,7 +190,7 @@ var form_handlers = function (el) {
 
     el.find(".datetimepicker[data-date-default], .datepickerfield[data-date-default]").each(function () {
         var fill_field = $(this),
-            default_field = $($(this).attr("data-date-default")),
+            default_field = safeSelector($(this).attr("data-date-default")),
             show = function () {
                 var fill_date = fill_field.data('DateTimePicker').date(),
                     default_date = default_field.data('DateTimePicker').date();
@@ -314,7 +323,7 @@ var form_handlers = function (el) {
 
     el.find("input[data-checkbox-dependency]").each(function () {
         var dependent = $(this),
-            dependency = $($(this).attr("data-checkbox-dependency")),
+            dependency = safeSelector($(this).attr("data-checkbox-dependency")),
             update = function () {
                 var enabled = dependency.prop('checked');
                 dependent.prop('disabled', !enabled).closest('.form-group, .form-field-boundary').toggleClass('disabled', !enabled);
@@ -331,7 +340,7 @@ var form_handlers = function (el) {
         if (dependency.substr(0, 1) === '<') {
             dependency = $(this).closest("form, .form-horizontal").find(dependency.substr(1));
         } else {
-            dependency = $(dependency);
+            dependency = safeSelector(dependency);
         }
 
         var dependent = $(this),
@@ -347,7 +356,7 @@ var form_handlers = function (el) {
         if (searchString.substr(0, 1) === '<') {
             return $(sourceElement).closest("form, .form-horizontal").find(searchString.substr(1));
         } else {
-            return $(searchString);
+            return safeSelector(searchString);
         }
     }
 
@@ -400,7 +409,7 @@ var form_handlers = function (el) {
 
     el.find("input[data-required-if], select[data-required-if], textarea[data-required-if]").each(function () {
         var dependent = $(this),
-            dependency = $($(this).attr("data-required-if")),
+            dependency = safeSelector($(this).attr("data-required-if")),
             update = function (ev) {
                 var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
                 dependent.prop('required', enabled).closest('.form-group').toggleClass('required', enabled).find('.optional').stop().animate({
@@ -705,8 +714,8 @@ $(function () {
 
     $('.collapsible').collapse();
     $("input[data-toggle=radiocollapse]").change(function () {
-        $($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
-        $($(this).attr("data-target")).collapse('show');
+        safeSelector($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
+        safeSelector($(this).attr("data-target")).collapse('show');
     });
     $("div.collapsed").removeClass("collapsed").addClass("collapse");
     $(".has-error").each(function () {
@@ -763,7 +772,7 @@ $(function () {
     $(".qrcode-canvas").each(function () {
         $(this).qrcode(
             {
-                text: $.trim($($(this).attr("data-qrdata")).html())
+                text: $.trim(safeSelector($(this).attr("data-qrdata")).html())
             }
         );
     });
