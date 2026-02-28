@@ -27,7 +27,7 @@ For Nushell:
   > open deb-packages.txt | lines | sudo apt install ...$in
 
 
-If you are using other Linux distros, please guess the corresponding package names for that list.
+If you are using another Linux distribution, install the corresponding packages available for your system.
 
 Other than that, please install `uv`, the Python package manager.
 
@@ -129,8 +129,7 @@ Mobile testing note: If you want to test the site from an **Android emulator**, 
 ``http://10.0.2.2:8000/`` (Android's alias for the host machine's localhost).
 
 
-Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
-all below it are own by you.
+Note: If you encounter permission errors for ``eventyay/static/CACHE``, ensure that the directory and its contents are owned by your user.
 
 Docker based development
 ------------------------
