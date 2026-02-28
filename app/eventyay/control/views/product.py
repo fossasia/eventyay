@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
+from django.db.models import Count, Exists, F, Max, OuterRef, Prefetch, Q
 from django.forms.models import inlineformset_factory
 from django.http import (
     Http404,
@@ -762,6 +762,13 @@ class QuestionCreate(EventPermissionRequiredMixin, QuestionMixin, CreateView):
         if form.cleaned_data.get('type') in ('M', 'C'):
             if not self.formset.is_valid():
                 return self.get(self.request, *self.args, **self.kwargs)
+
+        system_question_order = self.request.event.settings.system_question_order or {}
+        max_system = max(system_question_order.values(), default=-1)
+        max_question = (
+            self.request.event.questions.aggregate(Max('position'))['position__max'] or -1
+        )
+        form.instance.position = max(max_system, max_question) + 1
 
         messages.success(self.request, _('The new question has been created.'))
         ret = super().form_valid(form)
