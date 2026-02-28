@@ -1,5 +1,3 @@
-from contextlib import suppress
-
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
@@ -7,6 +5,7 @@ from rest_framework import serializers
 
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.slot import TalkSlot
 from eventyay.base.models.stream_schedule import StreamSchedule
 
 
@@ -64,16 +63,57 @@ class StreamScheduleSerializer(PretalxSerializer):
                 {'end_time': _('End time must be after start time.')}
             )
 
-        room = self.instance.room if self.instance else self.context.get('room')
-        if not room:
-            request = self.context.get('request')
-            if request and hasattr(request, 'resolver_match'):
-                room_pk = request.resolver_match.kwargs.get('room_pk')
-                if room_pk:
-                    from eventyay.base.models.room import Room
-                    with suppress(Room.DoesNotExist):
-                        room = Room.objects.get(pk=room_pk)
-        
+        self._validate_coincides_with_session(
+            room=self._get_room(), start_time=start_time, end_time=end_time
+        )
+        return self._validate_overlap(data)
+
+    def _get_room(self):
+        if self.instance:
+            return self.instance.room
+
+        return self.context.get('room')
+
+    def _validate_coincides_with_session(self, *, room, start_time, end_time):
+        if not (room and start_time and end_time):
+            return
+
+        # Allow creating stream schedules while the event schedule is still being drafted.
+        # Enforce the overlap requirement once talks are published.
+        if not room.event.talks_published:
+            return
+
+        with scope(event=room.event):
+            match_exists = TalkSlot.objects.filter(
+                schedule__event=room.event,
+                room=room,
+                submission__isnull=False,
+                is_visible=True,
+                start__lt=end_time,
+                end__gt=start_time,
+            ).exists()
+
+        if not match_exists:
+            raise serializers.ValidationError(
+                {
+                    '__all__': [
+                        _(
+                            'Stream schedules must include at least one scheduled session in this room.'
+                        )
+                    ]
+                }
+            )
+
+    def _validate_overlap(self, data):
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+
+        if self.instance:
+            start_time = start_time or self.instance.start_time
+            end_time = end_time or self.instance.end_time
+
+        room = self._get_room()
+
         if room and start_time and end_time:
             with scope(event=room.event):
                 overlapping = StreamSchedule.objects.filter(

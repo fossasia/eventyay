@@ -115,6 +115,16 @@
                             </span>
                         </dd>
                     {% endif %}
+                    {% if line.product.admission and event.settings.attendee_job_title_asked and line.job_title %}
+                        <dt class="sr-only">
+                            {% translate "Attendee job title" %}
+                        </dt>
+                        <dd class="toplevel">
+                            <span data-toggle="tooltip" title="{% translate "Attendee job title" %}">
+                                {{ line.job_title }}
+                            </span>
+                        </dd>
+                    {% endif %}
                     {% if line.product.admission and event.settings.attendee_addresses_asked %}
                         {% if line.street or line.zipcode or line.city %}
                             <dt class="sr-only">

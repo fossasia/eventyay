@@ -202,7 +202,7 @@ DEFAULT_VARIABLES = OrderedDict(
             'attendee_job_title',
             {
                 'label': _('Attendee job title'),
-                'editor_sample': _('Sample company'),
+                'editor_sample': _('Sample job title'),
                 'evaluate': lambda op, order, ev: op.job_title or (op.addon_to.job_title if op.addon_to else ''),
             },
         ),
