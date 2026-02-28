@@ -112,10 +112,9 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         if 'new_pw' in form.changed_data:
             msgs.append(_('Your password has been changed.'))
 
-        email_addr = form.cleaned_data['email']
-        if 'email' in form.changed_data:
-            msgs.append(_('Your email address has been changed to {email}.').format(email=email_addr))
-
+        # Email is managed through a separate page, so we get it from the user object
+        email_addr = self.request.user.email
+        
         if msgs:
             self.request.user.send_security_notice(msgs, email=email_addr)
             if self._old_email != email_addr:
