@@ -195,4 +195,37 @@
             <div class="clearfix"></div>
         </div>
     </form>
+{% if request.event|has_plugin:'eventyay.plugins.badges' %}
+<div id="badge-preview">
+    <h4>{% trans "Badge Preview" %}</h4>
+    <p>{% trans "This is a preview of your badge based on the information entered." %}</p>
+</div>
+<script>
+function updatePreview() {
+    var form = document.getElementById('questions_group').closest('form');
+    var data = new FormData(form);
+    fetch('{% url "plugins:badges:checkout-preview" organizer=request.event.organizer.slug event=request.event.slug %}', {
+        method: 'POST',
+        body: data,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    }).then(response => response.json()).then(data => {
+        if (data.pdf_base64) {
+            document.getElementById('badge-preview').innerHTML = '<h4>{% trans "Badge Preview" %}</h4><iframe src="data:application/pdf;base64,' + data.pdf_base64 + '" width="400" height="300"></iframe>';
+        } else if (data.error) {
+            document.getElementById('badge-preview').innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>Error: ' + data.error + '</p>';
+        }
+    }).catch(error => {
+        document.getElementById('badge-preview').innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>{% trans "Error loading preview." %}</p>';
+    });
+}
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        el.addEventListener('input', updatePreview);
+    });
+});
+</script>
+{% endif %}
 {% endblock %}

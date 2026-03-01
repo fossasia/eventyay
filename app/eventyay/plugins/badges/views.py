@@ -1,4 +1,4 @@
-import json
+import base64
 from datetime import timedelta
 from io import BytesIO
 
@@ -7,7 +7,7 @@ from django.contrib.staticfiles import finders
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.templatetags.static import static
 from django.urls import reverse
@@ -19,7 +19,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
-from eventyay.base.models import CachedFile, OrderPosition
+from eventyay.base.models import CachedFile, Event, Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
@@ -29,6 +29,7 @@ from eventyay.plugins.badges.forms import BadgeLayoutForm
 from eventyay.plugins.badges.tasks import badges_create_pdf
 
 from .models import BadgeLayout
+from .providers import BadgeOutputProvider
 
 class BadgePluginEnabledMixin:
 
@@ -279,3 +280,38 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
             str(cf.id),
             positions,
         )
+
+
+class BadgeCheckoutPreviewView(View):
+    def post(self, request, organizer, event):
+        event = get_object_or_404(Event, organizer__slug=organizer, slug=event)
+        if 'eventyay.plugins.badges' not in event.plugins:
+            return JsonResponse({'error': 'Badges plugin not enabled'}, status=400)
+        layout = event.badge_layouts.filter(default=True).first()
+        if not layout:
+            return JsonResponse({'error': 'No default badge layout'}, status=400)
+        # Create mock order
+        order = Order(event=event, code='PREVIEW', email=request.POST.get('email', 'preview@example.com'))
+        # Get product
+        product = event.items.filter(admission=True).first()
+        if not product:
+            product = event.items.first()
+        if not product:
+            return JsonResponse({'error': 'No products'}, status=400)
+        # Get attendee data
+        attendee_name = request.POST.get('attendee_name', 'John Doe')
+        attendee_email = request.POST.get('attendee_email', 'john@example.com')
+        pos = OrderPosition(
+            order=order,
+            product=product,
+            attendee_name=attendee_name,
+            attendee_email=attendee_email
+        )
+        # Generate
+        provider = BadgeOutputProvider(event)
+        try:
+            _, _, pdf_content = provider.generate(pos)
+            base64_pdf = base64.b64encode(pdf_content).decode('utf-8')
+            return JsonResponse({'pdf_base64': base64_pdf})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
