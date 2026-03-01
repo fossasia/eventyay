@@ -1,6 +1,7 @@
 import base64
 from datetime import timedelta
 from io import BytesIO
+import logging
 
 from django.contrib import messages
 from django.contrib.staticfiles import finders
@@ -30,6 +31,8 @@ from eventyay.plugins.badges.tasks import badges_create_pdf
 
 from .models import BadgeLayout
 from .providers import BadgeOutputProvider
+
+logger = logging.getLogger(__name__)
 
 class BadgePluginEnabledMixin:
 
@@ -314,4 +317,5 @@ class BadgeCheckoutPreviewView(View):
             base64_pdf = base64.b64encode(pdf_content).decode('utf-8')
             return JsonResponse({'pdf_base64': base64_pdf})
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            logger.error('Error generating badge preview', exc_info=e)
+            return JsonResponse({'error': 'An error occurred while generating the preview.'}, status=500)

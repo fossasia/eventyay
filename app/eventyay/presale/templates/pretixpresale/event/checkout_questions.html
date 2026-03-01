@@ -11,7 +11,7 @@
             You need to fill all fields that are marked with <span>*</span> to continue.
         {% endblocktrans %}
     </p>
-    <form class="form-horizontal" method="post" enctype="multipart/form-data">
+    <form id="checkout-questions-form" class="form-horizontal" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="panel-group" id="questions_group">
             <details class="panel panel-default" open>
@@ -201,8 +201,8 @@
     <p>{% trans "This is a preview of your badge based on the information entered." %}</p>
 </div>
 <script>
+const form = document.getElementById('checkout-questions-form');
 function updatePreview() {
-    var form = document.getElementById('questions_group').closest('form');
     var data = new FormData(form);
     fetch('{% url "plugins:badges:checkout-preview" organizer=request.event.organizer.slug event=request.event.slug %}', {
         method: 'POST',
@@ -211,18 +211,30 @@ function updatePreview() {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
         }
     }).then(response => response.json()).then(data => {
+        const previewDiv = document.getElementById('badge-preview');
+        previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>{% trans "This is a preview of your badge based on the information entered." %}</p>';
         if (data.pdf_base64) {
-            document.getElementById('badge-preview').innerHTML = '<h4>{% trans "Badge Preview" %}</h4><iframe src="data:application/pdf;base64,' + data.pdf_base64 + '" width="400" height="300"></iframe>';
+            const iframe = document.createElement('iframe');
+            iframe.src = 'data:application/pdf;base64,' + data.pdf_base64;
+            iframe.width = '400';
+            iframe.height = '300';
+            previewDiv.appendChild(iframe);
         } else if (data.error) {
-            document.getElementById('badge-preview').innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>Error: ' + data.error + '</p>';
+            const p = document.createElement('p');
+            p.textContent = 'Error: ' + data.error;
+            previewDiv.appendChild(p);
         }
     }).catch(error => {
-        document.getElementById('badge-preview').innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>{% trans "Error loading preview." %}</p>';
+        const previewDiv = document.getElementById('badge-preview');
+        previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4>';
+        const p = document.createElement('p');
+        p.textContent = 'Error loading preview.';
+        previewDiv.appendChild(p);
     });
 }
 document.addEventListener('DOMContentLoaded', function() {
     updatePreview();
-    document.querySelectorAll('input, select, textarea').forEach(el => {
+    form.querySelectorAll('input, select, textarea').forEach(el => {
         el.addEventListener('input', updatePreview);
     });
 });
