@@ -43,7 +43,7 @@
     "eslint-plugin-vue": "^9.25.0",
     "eslint-plugin-vue-pug": "^0.6.2",
     "i18next-conv": "^16.0.0",
-    "i18next-parser": "^9.0.0",
+    "i18next-parser": "^9.4.0",
     "pug": "^3.0.3",
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^36.0.0",
