@@ -3,6 +3,8 @@ from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.utils.functional import cached_property
+from django.conf import settings
+from eventyay.consts import SizeKey
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
@@ -85,10 +87,14 @@ class SpeakerProfileForm(
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
         for field in self.user_fields:
             field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
+            extra_kwargs = {}
+            if field == 'avatar':
+                extra_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
             self.fields[field] = field_class(
                 initial=initial.get(field),
                 disabled=read_only,
                 help_text=User._meta.get_field(field).help_text,
+                **extra_kwargs,
             )
             if self.Meta.widgets.get(field):
                 self.fields[field].widget = self.Meta.widgets.get(field)()
