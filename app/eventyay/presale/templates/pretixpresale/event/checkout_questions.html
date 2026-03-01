@@ -255,7 +255,8 @@ function updatePreview() {
 document.addEventListener('DOMContentLoaded', function() {
     updatePreview();
     const debouncedUpdatePreview = debounce(updatePreview, 400);
-    form.querySelectorAll('input, select, textarea').forEach(el => {
+    // Exclude file inputs from debounced preview updates to avoid repeatedly POSTing large files
+    form.querySelectorAll('input:not([type="file"]), select, textarea').forEach(el => {
         el.addEventListener('input', debouncedUpdatePreview);
 
         if (

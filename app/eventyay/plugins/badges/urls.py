@@ -67,3 +67,4 @@ urlpatterns = [
     ),
 ]
 event_router.register('badgeitems', BadgeProductViewSet)
+event_router.register('badgelayouts', BadgeLayoutViewSet)

@@ -19,7 +19,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
-from eventyay.base.models import CachedFile, Event, Order, OrderPosition
+from eventyay.base.models import CachedFile, Event, ItemVariation, Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
@@ -294,8 +294,33 @@ class BadgeCheckoutPreviewView(View):
             return JsonResponse({'error': _('Badge preview is not configured for this event.')}, status=400)
         # Create mock order
         order = Order(event=event, code='PREVIEW', email=request.POST.get('email', 'preview@example.com'))
-        # Get product
-        product = event.items.filter(admission=True).first()
+
+        # Get product: prefer the item/variation explicitly selected in the checkout data
+        product = None
+        variation = None
+
+        # Try to resolve by variation first, as that is more specific
+        variation_id = request.POST.get('variation') or request.POST.get('variation_id')
+        if variation_id:
+            try:
+                variation = ItemVariation.objects.select_related('item').get(
+                    id=variation_id,
+                    item__event=event,
+                )
+                product = variation.item
+            except ItemVariation.DoesNotExist:
+                variation = None
+                product = None
+
+        # If no variation was found, try to resolve by item id
+        if not product:
+            item_id = request.POST.get('item') or request.POST.get('item_id')
+            if item_id:
+                product = event.items.filter(id=item_id).first()
+
+        # Fallback to a sensible default if no explicit selection was provided
+        if not product:
+            product = event.items.filter(admission=True).first()
         if not product:
             product = event.items.first()
         if not product:
@@ -326,6 +351,7 @@ class BadgeCheckoutPreviewView(View):
         pos = OrderPosition(
             order=order,
             product=product,
+            variation=variation,
             attendee_name=attendee_name,
             attendee_email=attendee_email
         )
