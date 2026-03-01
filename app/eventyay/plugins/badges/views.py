@@ -300,14 +300,29 @@ class BadgeCheckoutPreviewView(View):
             product = event.items.first()
         if not product:
             return JsonResponse({'error': _('Unable to generate a badge preview for this event.')}, status=400)
-        # Get attendee data from POST, matching form field names
-        attendee_name = 'John Doe'
-        attendee_email = 'john@example.com'
-        for key, value in request.POST.items():
-            if 'attendee_name' in key and value.strip():
-                attendee_name = value
-            if 'attendee_email' in key and value.strip():
-                attendee_email = value
+        # Get attendee data from POST, preferring exact field names and then
+        # known patterns like ``attendee_name_<position-id>`` / ``attendee_email_<position-id>``.
+        # This avoids broad substring matches and unintended overrides.
+        attendee_name = request.POST.get('attendee_name', '').strip() or 'John Doe'
+        attendee_email = request.POST.get('attendee_email', '').strip() or 'john@example.com'
+
+        # If the form uses position-specific fields (e.g. attendee_name_<position-id>),
+        # fall back to the first such field only if the generic ones are not present.
+        if 'attendee_name' not in request.POST:
+            for key, value in request.POST.items():
+                if key.startswith('attendee_name_'):
+                    value = value.strip()
+                    if value:
+                        attendee_name = value
+                        break
+
+        if 'attendee_email' not in request.POST:
+            for key, value in request.POST.items():
+                if key.startswith('attendee_email_'):
+                    value = value.strip()
+                    if value:
+                        attendee_email = value
+                        break
         pos = OrderPosition(
             order=order,
             product=product,

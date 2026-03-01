@@ -257,6 +257,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const debouncedUpdatePreview = debounce(updatePreview, 400);
     form.querySelectorAll('input, select, textarea').forEach(el => {
         el.addEventListener('input', debouncedUpdatePreview);
+
+        if (
+            el.tagName === 'SELECT' ||
+            (el.tagName === 'INPUT' && ['checkbox', 'radio'].includes(el.type))
+        ) {
+            el.addEventListener('change', debouncedUpdatePreview);
+        }
     });
 });
 </script>
