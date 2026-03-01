@@ -101,7 +101,7 @@ const initFileInput = function () {
     })
 }
 const blockFormOnOversizedAvatar = () => {
-    document.querySelectorAll('.speaker-profile-form, form[enctype="multipart/form-data"]').forEach((form) => {
+    document.querySelectorAll('.speaker-profile-form').forEach((form) => {
         form.addEventListener('submit', (ev) => {
             const fileInput = form.querySelector('input[type=file][data-maxsize]');
             if (!fileInput || !fileInput.files || !fileInput.files.length) return;
@@ -110,11 +110,11 @@ const blockFormOnOversizedAvatar = () => {
                 ev.preventDefault();
                 ev.stopPropagation();
                 fileInput.classList.add('is-invalid');
-                let warning = fileInput.parentElement.querySelector('.invalid-feedback');
+                let warning = fileInput.closest('.form-group')?.querySelector('.invalid-feedback');
                 if (!warning) {
                     warning = document.createElement('div');
                     warning.classList.add('invalid-feedback');
-                    fileInput.parentElement.appendChild(warning);
+                    fileInput.closest('.form-group')?.appendChild(warning);
                 }
                 warning.textContent = fileInput.dataset.sizewarning;
                 fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
