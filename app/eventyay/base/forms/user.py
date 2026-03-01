@@ -5,7 +5,6 @@ from django.contrib.auth.password_validation import (
     password_validators_help_texts,
     validate_password,
 )
-from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from pytz import common_timezones
 
@@ -18,7 +17,7 @@ class UserSettingsForm(forms.ModelForm):
         'duplicate_identifier': _(
             'There already is an account associated with this e-mail address. Please choose a different one.'
         ),
-        'pw_current': _('Please enter your current password if you want to change your e-mail address or password.'),
+        'pw_current': _('Please enter your current password if you want to change your password.'),
         'pw_current_wrong': _('The current password you entered was not correct.'),
         'pw_mismatch': _('Please enter the same password twice'),
         'rate_limit': _('For security reasons, please wait 5 minutes before you try again.'),
@@ -97,18 +96,7 @@ class UserSettingsForm(forms.ModelForm):
         return old_pw
 
     def clean_email(self):
-        if self.fields['email'].disabled:
-            return self.instance.email
-
-        email = self.cleaned_data.get('email')
-        if not email:
-            return email
-        if User.objects.filter(Q(email__iexact=email) & ~Q(pk=self.instance.pk)).exists():
-            raise forms.ValidationError(
-                self.error_messages['duplicate_identifier'],
-                code='duplicate_identifier',
-            )
-        return email
+        return self.instance.email
 
     def clean_new_pw(self):
         password1 = self.cleaned_data.get('new_pw', '')
