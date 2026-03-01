@@ -31,7 +31,7 @@
     "zod": "^4.0.10"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.23",
+    "@types/lodash": "^4.17.24",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.3.0",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
