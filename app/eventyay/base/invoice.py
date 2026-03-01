@@ -7,6 +7,7 @@ from typing import Tuple
 import nh3
 import vat_moss.exchange_rates
 from django.contrib.staticfiles import finders
+from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from django.utils.formats import date_format, localize
 from django.utils.translation import (
@@ -36,6 +37,7 @@ from reportlab.platypus import (
 )
 
 from eventyay.base.decimal import round_decimal
+from eventyay.base.image_safety import validate_image
 from eventyay.base.models import Event, Invoice, Order
 from eventyay.base.signals import register_invoice_renderers
 from eventyay.base.templatetags.money import money_filter
@@ -341,12 +343,17 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     def _draw_logo(self, canvas):
         if self.invoice.event.settings.invoice_logo_image:
             logo_file = self.invoice.event.settings.get('invoice_logo_image', binary_file=True)
+            try:
+                validate_image(logo_file)
+            except ValidationError as e:
+                logger.warning('Invoice logo image rejected by safety validation: %s', e)
+                return
             ir = ThumbnailingImageReader(logo_file)
             try:
                 ir.resize(self.logo_width, self.logo_height, 300)
-            except:
+            except (OSError, ValueError):
                 logger.exception('Can not resize image')
-                pass
+                return
             canvas.drawImage(
                 ir,
                 self.logo_left,
