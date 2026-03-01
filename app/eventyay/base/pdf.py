@@ -15,6 +15,7 @@ from arabic_reshaper import ArabicReshaper
 from bidi.algorithm import get_display
 from django.conf import settings
 from django.contrib.staticfiles import finders
+from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from django.utils.formats import date_format
 from django.utils.html import conditional_escape
@@ -36,6 +37,7 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
 
 from eventyay.base.i18n import language
+from eventyay.base.image_safety import validate_image
 from eventyay.base.invoice import ThumbnailingImageReader
 from eventyay.base.models import Order, OrderPosition, Question
 from eventyay.base.settings import PERSON_NAME_SCHEMES
@@ -608,6 +610,17 @@ def images_from_questions(sender, *args, **kwargs):
         else:
             if etag:
                 return hashlib.sha1(a.file.name.encode()).hexdigest()
+
+            try:
+                validate_image(a.file)
+            except ValidationError as e:
+                logger.warning(
+                    'Potential DoS attempt or invalid image detected in question answer: %s. Error: %s',
+                    a.pk,
+                    e,
+                )
+                return None
+
             return a.file
 
     d = {}
@@ -752,9 +765,9 @@ class Renderer:
         ir = ThumbnailingImageReader(img)
         try:
             width, height = ir.resize(None, float(o['size']) * mm, 300)
-        except:
+        except (OSError, TypeError, ValueError):
             logger.exception('Can not resize image')
-            pass
+            return
         canvas.drawImage(
             ir,
             float(o['left']) * mm,
@@ -796,18 +809,19 @@ class Renderer:
                 return self._get_text_content(op, order, o, True)
 
         ev = self._get_ev(op, order)
-        if not o['content']:
+        content = o.get('content')
+        if not content:
             return '(error)'
-        if o['content'] == 'other':
+        if content == 'other':
             return o['text']
-        elif o['content'].startswith('productmeta:'):
-            return op.product.meta_data.get(o['content'][12:]) or ''
-        elif o['content'].startswith('meta:'):
-            return ev.meta_data.get(o['content'][5:]) or ''
-        elif o['content'] in self.variables:
+        elif content.startswith('productmeta:'):
+            return op.product.meta_data.get(content[12:]) or ''
+        elif content.startswith('meta:'):
+            return ev.meta_data.get(content[5:]) or ''
+        elif content in self.variables:
             try:
-                return self.variables[o['content']]['evaluate'](op, order, ev)
-            except:
+                return self.variables[content]['evaluate'](op, order, ev)
+            except (AttributeError, IndexError, KeyError, TypeError, ValueError):
                 logger.exception('Failed to process variable.')
                 return '(error)'
         return ''
@@ -819,17 +833,24 @@ class Renderer:
         else:
             try:
                 image_file = self.images[o['content']]['evaluate'](op, order, ev)
-            except:
+            except (AttributeError, IndexError, KeyError, TypeError, ValueError):
                 logger.exception('Failed to process variable.')
+                image_file = None
+
+        if image_file:
+            try:
+                validate_image(image_file)
+            except ValidationError as e:
+                logger.warning('Image rejected by safety validation in _draw_imagearea: %s', e)
                 image_file = None
 
         if image_file:
             ir = ThumbnailingImageReader(image_file)
             try:
                 ir.resize(float(o['width']) * mm, float(o['height']) * mm, 300)
-            except:
+            except (OSError, TypeError, ValueError):
                 logger.exception('Can not resize image')
-                pass
+                return
             canvas.drawImage(
                 image=ir,
                 x=float(o['left']) * mm,
@@ -882,9 +903,9 @@ class Renderer:
         }
         reshaper = ArabicReshaper(configuration=configuration)
         try:
-            text = '<br/>'.join(get_display(reshaper.reshape(l)) for l in text.split('<br/>'))
-        except:
-            logger.exception('Reshaping/Bidi fixes failed on string {}'.format(repr(text)))
+            text = '<br/>'.join(get_display(reshaper.reshape(line)) for line in text.split('<br/>'))
+        except (TypeError, UnicodeError, ValueError):
+            logger.exception('Reshaping/Bidi fixes failed on string %r', text)
 
         p = Paragraph(text, style=style)
         w, h = p.wrapOn(canvas, float(o['width']) * mm, 1000 * mm)
