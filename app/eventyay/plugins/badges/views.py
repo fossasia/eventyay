@@ -19,7 +19,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
-from eventyay.base.models import CachedFile, Event, ItemVariation, Order, OrderPosition
+from pretix.base.models import CachedFile, ItemVariation
 from eventyay.base.pdf import Renderer
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
