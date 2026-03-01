@@ -9,7 +9,6 @@ from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -289,10 +288,10 @@ class BadgeCheckoutPreviewView(View):
     def post(self, request, organizer, event):
         event = get_object_or_404(Event, organizer__slug=organizer, slug=event)
         if 'eventyay.plugins.badges' not in event.plugins:
-            return JsonResponse({'error': 'Badges plugin not enabled'}, status=400)
+            return JsonResponse({'error': _('Badge preview is currently unavailable.')}, status=400)
         layout = event.badge_layouts.filter(default=True).first()
         if not layout:
-            return JsonResponse({'error': 'No default badge layout'}, status=400)
+            return JsonResponse({'error': _('Badge preview is not configured for this event.')}, status=400)
         # Create mock order
         order = Order(event=event, code='PREVIEW', email=request.POST.get('email', 'preview@example.com'))
         # Get product
@@ -300,10 +299,15 @@ class BadgeCheckoutPreviewView(View):
         if not product:
             product = event.items.first()
         if not product:
-            return JsonResponse({'error': 'No products'}, status=400)
-        # Get attendee data
-        attendee_name = request.POST.get('attendee_name', 'John Doe')
-        attendee_email = request.POST.get('attendee_email', 'john@example.com')
+            return JsonResponse({'error': _('Unable to generate a badge preview for this event.')}, status=400)
+        # Get attendee data from POST, matching form field names
+        attendee_name = 'John Doe'
+        attendee_email = 'john@example.com'
+        for key, value in request.POST.items():
+            if 'attendee_name' in key and value.strip():
+                attendee_name = value
+            if 'attendee_email' in key and value.strip():
+                attendee_email = value
         pos = OrderPosition(
             order=order,
             product=product,
@@ -316,6 +320,6 @@ class BadgeCheckoutPreviewView(View):
             _, _, pdf_content = provider.generate(pos)
             base64_pdf = base64.b64encode(pdf_content).decode('utf-8')
             return JsonResponse({'pdf_base64': base64_pdf})
-        except Exception as e:
-            logger.error('Error generating badge preview', exc_info=e)
-            return JsonResponse({'error': 'An error occurred while generating the preview.'}, status=500)
+        except Exception:
+            logger.exception('Error generating badge preview')
+            return JsonResponse({'error': _('An error occurred while generating the preview.')}, status=500)

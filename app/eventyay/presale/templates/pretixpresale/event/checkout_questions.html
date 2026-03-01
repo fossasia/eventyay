@@ -202,6 +202,22 @@
 </div>
 <script>
 const form = document.getElementById('checkout-questions-form');
+
+/**
+ * Simple debounce helper to avoid firing preview updates on every keystroke.
+ * The wrapped function will only run after `wait` ms have passed without
+ * another call.
+ */
+function debounce(fn, wait) {
+    let timeoutId;
+    return function debounced(...args) {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => fn.apply(this, args), wait);
+    };
+}
+
 function updatePreview() {
     var data = new FormData(form);
     fetch('{% url "plugins:badges:checkout-preview" organizer=request.event.organizer.slug event=request.event.slug %}', {
@@ -234,8 +250,9 @@ function updatePreview() {
 }
 document.addEventListener('DOMContentLoaded', function() {
     updatePreview();
+    const debouncedUpdatePreview = debounce(updatePreview, 400);
     form.querySelectorAll('input, select, textarea').forEach(el => {
-        el.addEventListener('input', updatePreview);
+        el.addEventListener('input', debouncedUpdatePreview);
     });
 });
 </script>
