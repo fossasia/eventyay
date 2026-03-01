@@ -201,6 +201,10 @@
     <p>{% trans "This is a preview of your badge based on the information entered." %}</p>
 </div>
 <script>
+const errorPrefix = '{% trans "Error:" %}';
+const errorLoading = '{% trans "Error loading preview." %}';
+</script>
+<script>
 const form = document.getElementById('checkout-questions-form');
 
 /**
@@ -237,14 +241,14 @@ function updatePreview() {
             previewDiv.appendChild(iframe);
         } else if (data.error) {
             const p = document.createElement('p');
-            p.textContent = 'Error: ' + data.error;
+            p.textContent = errorPrefix + ' ' + data.error;
             previewDiv.appendChild(p);
         }
     }).catch(error => {
         const previewDiv = document.getElementById('badge-preview');
         previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4>';
         const p = document.createElement('p');
-        p.textContent = 'Error loading preview.';
+        p.textContent = errorLoading;
         previewDiv.appendChild(p);
     });
 }
