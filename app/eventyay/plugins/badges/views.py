@@ -1,9 +1,11 @@
 import base64
+import json
 from datetime import timedelta
 from io import BytesIO
 import logging
 
 from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
 from django.contrib.staticfiles import finders
 from django.core.files import File
 from django.core.files.storage import default_storage
@@ -13,12 +15,13 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
-from eventyay.base.models import Event, Order, OrderPosition
+from eventyay.base.models import CachedFile, Event, Order, OrderPosition
 from eventyay.base.pdf import Renderer
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
