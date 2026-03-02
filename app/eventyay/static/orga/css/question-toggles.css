@@ -222,3 +222,41 @@ select.required-status-dropdown[data-current="after_deadline"] {
 .cfp-option-table tbody td {
     vertical-align: middle;
 }
+
+.cfp-option-table .btn-info {
+    --highlight-color: #2a8fd7;
+    border-color: #2a8fd7;
+    background-color: #2a8fd7;
+}
+
+.cfp-option-table .btn-info:hover,
+.cfp-option-table .btn-info:focus-visible {
+    --highlight-color: #2178b5;
+    border-color: #2178b5;
+    background-color: #2178b5;
+}
+
+.cfp-option-table .btn-info:active {
+    --highlight-color: #1b6599;
+    border-color: #1b6599;
+    background-color: #1b6599;
+}
+
+.cfp-option-table .btn-danger {
+    --highlight-color: #b6373f;
+    border-color: #b6373f;
+    background-color: #b6373f;
+}
+
+.cfp-option-table .btn-danger:hover,
+.cfp-option-table .btn-danger:focus-visible {
+    --highlight-color: #9e2f36;
+    border-color: #9e2f36;
+    background-color: #9e2f36;
+}
+
+.cfp-option-table .btn-danger:active {
+    --highlight-color: #88282e;
+    border-color: #88282e;
+    background-color: #88282e;
+}

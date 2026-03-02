@@ -181,8 +181,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=str(_('The signature will be added to outgoing mails, preceded by “-- ”.'))
-        + ' '
+        help_text=_('The signature will be added to outgoing mails, preceded by “-- ”. ')
         + phrases.base.use_markdown,
         required=False,
         widget=forms.Textarea,
