@@ -13,7 +13,6 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView
 from reportlab.lib import pagesizes
@@ -288,10 +287,10 @@ class BadgeCheckoutPreviewView(View):
     def post(self, request, organizer, event):
         event = get_object_or_404(Event, organizer__slug=organizer, slug=event)
         if 'eventyay.plugins.badges' not in event.plugins:
-            return JsonResponse({'error': _('Badge preview is currently unavailable.')}, status=400)
+            return JsonResponse({'error': 'Badge preview is currently unavailable.'}, status=400)
         layout = event.badge_layouts.filter(default=True).first()
         if not layout:
-            return JsonResponse({'error': _('Badge preview is not configured for this event.')}, status=400)
+            return JsonResponse({'error': 'Badge preview is not configured for this event.'}, status=400)
         # Create mock order
         order = Order(event=event, code='PREVIEW', email=request.POST.get('email', 'preview@example.com'))
 
@@ -300,7 +299,7 @@ class BadgeCheckoutPreviewView(View):
         if not product:
             product = event.items.first()
         if not product:
-            return JsonResponse({'error': _('Unable to generate a badge preview for this event.')}, status=400)
+            return JsonResponse({'error': 'Unable to generate a badge preview for this event.'}, status=400)
         # Get attendee data from POST, preferring exact field names and then
         # known patterns like ``attendee_name_<position-id>`` / ``attendee_email_<position-id>``.
         # This avoids broad substring matches and unintended overrides.
@@ -338,4 +337,4 @@ class BadgeCheckoutPreviewView(View):
             return JsonResponse({'pdf_base64': base64_pdf})
         except Exception:
             logger.exception('Error generating badge preview')
-            return JsonResponse({'error': _('An error occurred while generating the preview.')}, status=500)
+            return JsonResponse({'error': 'An error occurred while generating the preview.'}, status=500)
