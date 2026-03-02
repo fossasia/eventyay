@@ -95,8 +95,14 @@ class SpeakerProfileForm(
             if field == 'avatar':
                 field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
             self.fields[field] = field_class(**field_kwargs)
-            if self.Meta.widgets.get(field):
-                self.fields[field].widget = self.Meta.widgets.get(field)()
+            custom_widget_class = self.Meta.widgets.get(field)
+            if custom_widget_class:
+                old_widget = self.fields[field].widget
+                new_widget = custom_widget_class()
+                if hasattr(old_widget, 'attrs') and hasattr(new_widget, 'attrs'):
+                    # Preserve attrs added by field init (e.g. data-maxsize/data-sizewarning)
+                    new_widget.attrs.update(old_widget.attrs)
+                self.fields[field].widget = new_widget
             self._update_cfp_texts(field)
 
         field_names = list(self.fields)

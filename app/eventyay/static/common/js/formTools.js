@@ -467,7 +467,7 @@ const warnFileSize = (element) => {
     let warning = element.parentElement.querySelector(".invalid-feedback")
     if (!warning) {
         warning = document.createElement("div")
-        warning.classList = ["invalid-feedback"]
+        warning.classList.add("invalid-feedback")
         element.parentElement.appendChild(warning)
     }
     warning.textContent = element.dataset.sizewarning
@@ -480,23 +480,22 @@ const unwarnFileSize = (element) => {
 }
 
 const initFileSizeCheck = (element) => {
-    const checkFileSize = () => {
-        const files = element.files
-        if (!files || !files.length) {
-            unwarnFileSize(element)
-            return true
-        } else {
-            const maxsize = parseInt(element.dataset.maxsize)
-            if (files[0].size > maxsize) {
-                warnFileSize(element)
-                return false
-            } else {
-                unwarnFileSize(element)
-                return true
-            }
-        }
+    const hasOversizedFiles = (fileInput) => {
+        const files = Array.from(fileInput.files || [])
+        if (!files.length) return false
+        const maxsize = parseInt(fileInput.dataset.maxsize, 10)
+        if (Number.isNaN(maxsize)) return false
+        return files.some((file) => file.size > maxsize)
     }
-    element.addEventListener("change", checkFileSize, false)
+    const checkFileSize = (fileInput) => {
+        if (hasOversizedFiles(fileInput)) {
+            warnFileSize(fileInput)
+            return false
+        }
+        unwarnFileSize(fileInput)
+        return true
+    }
+    element.addEventListener("change", () => checkFileSize(element), false)
 
     if (element.form && !element.form.dataset.fileSizeGuardRegistered) {
         element.form.dataset.fileSizeGuardRegistered = "true"
@@ -504,13 +503,8 @@ const initFileSizeCheck = (element) => {
             const fileInputs = element.form.querySelectorAll("input[data-maxsize][type=file]")
             let firstInvalid = null
             fileInputs.forEach((fileInput) => {
-                const isValid = (
-                    !fileInput.files
-                    || !fileInput.files.length
-                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize)
-                )
+                const isValid = checkFileSize(fileInput)
                 if (!isValid) {
-                    warnFileSize(fileInput)
                     if (!firstInvalid) firstInvalid = fileInput
                 }
             })
