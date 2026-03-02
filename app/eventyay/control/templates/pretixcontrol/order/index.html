@@ -427,6 +427,14 @@
                                                 {% if line.company %}{{ line.company }}{% else %}<em>{% trans "not answered" %}</em>{% endif %}
                                             </dd>
                                         {% endif %}
+                                        {% if line.item.admission and event.settings.attendee_job_title_asked and line.job_title %}
+                                            <dt>
+                                                {% trans "Attendee job title" %}
+                                            </dt>
+                                            <dd>
+                                                {{ line.job_title }}
+                                            </dd>
+                                        {% endif %}
                                         {% if line.item.admission and event.settings.attendee_addresses_asked %}
                                             <dt>
                                                 {% trans "Attendee address" %}
