@@ -134,6 +134,13 @@ class Device(LoggedModel):
     def _is_live_and_published(event) -> bool:
         return bool(event.live and event.tickets_published)
 
+    def _has_event_access(self, organizer, event) -> bool:
+        if organizer != self.organizer or not self._is_live_and_published(event):
+            return False
+        if self.all_events:
+            return True
+        return self.limit_events.filter(pk=event.pk).exists()
+
     def get_event_permission_set(self, organizer, event) -> set:
         """
         Gets a set of permissions (as strings) that a token holds for a particular event
@@ -142,9 +149,7 @@ class Device(LoggedModel):
         :param event: The event to check
         :return: set of permissions
         """
-        has_event_access = (
-            self.all_events and organizer == self.organizer and self._is_live_and_published(event)
-        ) or (event in self.limit_events.all())
+        has_event_access = self._has_event_access(organizer, event)
         return self.permission_set() if has_event_access else set()
 
     def get_organizer_permission_set(self, organizer) -> set:
@@ -167,9 +172,7 @@ class Device(LoggedModel):
         :param request: This parameter is ignored and only defined for compatibility reasons.
         :return: bool
         """
-        has_event_access = (
-            self.all_events and organizer == self.organizer and self._is_live_and_published(event)
-        ) or (event in self.limit_events.all())
+        has_event_access = self._has_event_access(organizer, event)
         if isinstance(perm_name, (tuple, list)):
             return has_event_access and any(p in self.permission_set() for p in perm_name)
         return has_event_access and (not perm_name or perm_name in self.permission_set())
@@ -194,10 +197,10 @@ class Device(LoggedModel):
 
         :return: Iterable of Events
         """
+        published_events = self.organizer.events.filter(live=True, tickets_published=True)
         if self.all_events:
-            return self.organizer.events.filter(live=True, tickets_published=True)
-        else:
-            return self.limit_events.all()
+            return published_events
+        return published_events.filter(pk__in=self.limit_events.values('pk'))
 
     def get_events_with_permission(self, permission, request=None):
         """

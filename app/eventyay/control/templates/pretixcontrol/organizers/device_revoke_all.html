@@ -1,30 +1,30 @@
-{% extends "pretixcontrol/organizers/base.html" %}
+{% extends 'pretixcontrol/organizers/base.html' %}
 {% load i18n %}
 {% load bootstrap3 %}
 {% block inner %}
-    <h1>{% trans "Revoke and remove all devices" %}</h1>
-    <form action="" method="post" class="form-horizontal">
-        {% csrf_token %}
-        <p>
-            <strong>{% trans "This will permanently revoke and remove all connected devices." %}</strong>
-        </p>
-        <p>
-            {% blocktrans trimmed count count=device_count %}
-                Once confirmed, {{ count }} connected device will be deleted from the database.
-            {% plural %}
-                Once confirmed, {{ count }} connected devices will be deleted from the database.
-            {% endblocktrans %}
-        </p>
-        <div class="alert alert-warning">
-            {% trans "This action cannot be undone." %}
-        </div>
-        <div class="form-group submit-group">
-            <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}" class="btn btn-default btn-cancel">
-                {% trans "Cancel" %}
-            </a>
-            <button type="submit" class="btn btn-danger btn-save">
-                {% trans "Revoke and Remove all devices" %}
-            </button>
-        </div>
-    </form>
+  <h1>{% trans "Revoke and remove all devices" %}</h1>
+  <form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <p>
+      <strong>{% trans "This will permanently revoke and remove all connected devices." %}</strong>
+    </p>
+    <p>
+      {% blocktrans trimmed count count=device_count %}
+        Once confirmed, {{ count }} connected device will be deleted from the database.
+      {% plural %}
+        Once confirmed, {{ count }} connected devices will be deleted from the database.
+      {% endblocktrans %}
+    </p>
+    <div class="alert alert-warning">
+      {% trans "This action cannot be undone." %}
+    </div>
+    <div class="form-group submit-group">
+      <a href="{% url 'eventyay_common:organizer.devices' organizer=request.organizer.slug %}" class="btn btn-default btn-cancel">
+        {% trans "Cancel" %}
+      </a>
+      <button type="submit" class="btn btn-danger btn-save">
+        {% trans "Revoke and Remove all devices" %}
+      </button>
+    </div>
+  </form>
 {% endblock %}
