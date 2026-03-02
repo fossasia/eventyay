@@ -159,6 +159,10 @@ def validate_event_settings(event, settings_dict):
         raise ValidationError(
             {'attendee_emails_required': _('You have to ask for attendee emails if you want to make them required.')}
         )
+    if settings_dict.get('attendee_job_title_required') and not settings_dict.get('attendee_job_title_asked'):
+        raise ValidationError(
+            {'attendee_job_title_required': _('You have to ask for attendee job titles if you want to make them required.')}
+        )
     if settings_dict.get('order_email_required') and not settings_dict.get('order_email_asked'):
         raise ValidationError(
             {'order_email_required': _('You have to ask for order email if you want to make it required.')}
