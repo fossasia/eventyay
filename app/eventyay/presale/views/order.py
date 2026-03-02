@@ -49,6 +49,7 @@ from eventyay.base.models import (
     TaxRule,
     User,
 )
+from eventyay.common.utils.masks import EmailMasker
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.orders import (
     CachedCombinedTicket,
@@ -172,12 +173,19 @@ class OrderDetailMixin(LoginRequiredMixin, NoSearchIndexViewMixin):
                     break
         
         if not verified_email_found:
+            logger.warning(
+                'User with unverified email attempting to access order. '
+                'Redirecting to email verification. Order: %s, User: %s',
+                self.order.code if self.order else 'unknown',
+                EmailMasker(user.email) if user.email else 'unknown'
+            )
             messages.error(
                 request,
                 _('Please verify your email address to access this order. '
                   'Check your inbox for a verification link.')
             )
-            return redirect(self.get_order_url())
+            # Redirect to account email management page for verification
+            return redirect('eventyay_common:account.email')
         
         return super().dispatch(request, *args, **kwargs)
 
@@ -254,18 +262,19 @@ class OrderPositionDetailMixin(LoginRequiredMixin, NoSearchIndexViewMixin):
                     break
         
         if not verified_email_found:
+            logger.warning(
+                'User with unverified email attempting to access order. '
+                'Redirecting to email verification. Order: %s, User: %s',
+                self.order.code if self.order else 'unknown',
+                EmailMasker(user.email) if user.email else 'unknown'
+            )
             messages.error(
                 request,
                 _('Please verify your email address to access this order. '
                   'Check your inbox for a verification link.')
             )
-            # Redirect to the order page, not position page, as that's where users can see the verification message
-            order_url = eventreverse(
-                self.request.event,
-                'presale:event.order',
-                kwargs={'order': self.position.order.code, 'secret': self.position.order.secret},
-            )
-            return redirect(order_url)
+            # Redirect to account email management page for verification
+            return redirect('eventyay_common:account.email')
         
         return super().dispatch(request, *args, **kwargs)
 
