@@ -4,7 +4,7 @@ import unicodedata
 import reportlab.rl_config
 from django.contrib import messages
 from django.contrib.staticfiles import finders
-from django.http import HttpResponse
+from django.http import FileResponse
 from django.shortcuts import redirect
 from django.utils.html import conditional_escape
 from django.utils.timezone import now
@@ -169,14 +169,12 @@ class SubmissionCards(EventPermissionRequired, View):
         doc.build(self.get_story(doc))
         buffer.seek(0)
         timestamp = now().strftime('%Y-%m-%d-%H%M')
-        r = HttpResponse(
+        return FileResponse(
+            buffer,
+            as_attachment=True,
+            filename=f'{request.event.slug}_submission_cards_{timestamp}.pdf',
             content_type='application/pdf',
-            headers={
-                'Content-Disposition': f'attachment; filename="{request.event.slug}_submission_cards_{timestamp}.pdf"'
-            },
         )
-        r.write(buffer.read())
-        return r
 
     def get_style(self):
         stylesheet = StyleSheet1()
