@@ -28,6 +28,7 @@
 					:timezone="timezone",
 					:style="getSessionStyle(session)",
 					:showAbstract="false", :showRoom="false",
+					:showFavCount="showFavCount",
 					:faved="favs.includes(session.id)",
 					:hasAmPm="hasAmPm",
 					:onHomeServer="onHomeServer",
@@ -64,6 +65,7 @@
 							:timezone="timezone",
 							:style="getChunkSessionStyle(session, chunk)",
 							:showAbstract="false", :showRoom="false",
+							:showFavCount="showFavCount",
 							:faved="favs.includes(session.id)",
 							:hasAmPm="hasAmPm",
 							:onHomeServer="onHomeServer",
@@ -113,6 +115,10 @@ export default {
 		hasAmPm: Boolean,
 		scrollParent: Element,
 		onHomeServer: Boolean,
+		showFavCount: {
+			type: Boolean,
+			default: false
+		},
 		disableAutoScroll: Boolean
 	},
 	data () {

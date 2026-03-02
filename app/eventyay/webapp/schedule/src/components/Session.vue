@@ -254,6 +254,7 @@ export default {
 		display: flex
 		flex-direction: column
 		padding: 8px
+		padding-right: 72px
 		border: border-separator()
 		border-left: none
 		border-radius: 0 6px 6px 0
@@ -263,7 +264,7 @@ export default {
 			font-size: 16px
 			font-weight: 500
 			margin-bottom: 4px
-			margin-right: 20px
+			margin-right: 0
 		.speakers
 			color: $clr-secondary-text-light
 			display: flex
@@ -386,6 +387,7 @@ export default {
 				font-size: 14px
 		.info
 			padding: 6px
+			padding-right: 64px
 			.title
 				font-size: 14px
 			.abstract

@@ -12,6 +12,7 @@
 					:timezone="timezone",
 					:locale="locale",
 					:hasAmPm="hasAmPm",
+					:showFavCount="showFavCount",
 					:faved="session.id && favs.includes(session.id)",
 					:onHomeServer="onHomeServer",
 					@fav="$emit('fav', session.id)",
@@ -33,6 +34,10 @@ export default {
 		locale: String,
 		hasAmPm: Boolean,
 		timezone: String,
+		showFavCount: {
+			type: Boolean,
+			default: false
+		},
 		favs: {
 			type: Array,
 			default () {

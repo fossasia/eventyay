@@ -12,16 +12,15 @@
 		.filter-group(v-if="availableLanguages.length > 1")
 			.dropdown-wrapper
 				button.filter-btn(@click="toggleDropdown('language')", :class="{'active': selectedLanguages.length}")
-					svg.filter-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-						path(d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5a17.92 17.92 0 0 1-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418")
+					svg.filter-icon(viewBox="0 0 24 24", fill="currentColor", aria-hidden="true")
+						path(d="M12.87 15.07l-2.54-2.51c.86-1.02 1.52-2.12 1.99-3.28H14V7h-4V5H8v2H4v2h7.17c-.39 1.17-.96 2.27-1.7 3.25-.48-.63-.9-1.31-1.25-2.03H6.1c.5 1.09 1.17 2.14 2 3.11L3 20h2l5-5 3.11 3.11.76-3.04z")
+						path(d="M15.5 11h-2L9 22h2l1-3h4l1 3h2l-3.5-11zm-2.3 6 .8-2.8.8 2.8h-1.6z")
 					span.btn-label {{ t.language }}
 					span.badge(v-if="selectedLanguages.length") {{ selectedLanguages.length }}
 				.dropdown-menu(v-if="openDropdown === 'language'")
 					label.dropdown-item(v-for="lang in availableLanguages", :key="lang")
 						input(type="checkbox", :value="lang", v-model="selectedLanguages")
-						| {{ lang }}
-					.dropdown-actions(v-if="selectedLanguages.length")
-						button.clear-btn(@click="selectedLanguages = []") {{ t.clear }}
+						| {{ formatLanguageLabel(lang) }}
 		.filter-group(v-if="availableTracks.length > 1")
 			.dropdown-wrapper
 				button.filter-btn(@click="toggleDropdown('track')", :class="{'active': selectedTracks.length}")
@@ -37,6 +36,14 @@
 						| {{ getLocalizedString(track.name) }}
 					.dropdown-actions(v-if="selectedTracks.length")
 						button.clear-btn(@click="selectedTracks = []") {{ t.clear }}
+		button.filter-btn.clear-filters-btn(
+			v-if="hasActiveFilters",
+			:title="t.reset_all_filters",
+			:aria-label="t.reset_all_filters",
+			@click="clearAllFilters"
+		)
+			svg.filter-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+				path(d="M18 6L6 18M6 6l12 12")
 		.sort-group
 			.dropdown-wrapper
 				button.filter-btn(@click="toggleDropdown('sort')")
@@ -182,7 +189,11 @@ export default {
 				view_list: m.view_list || 'Switch to list view',
 				view_details: m.view_details || 'Switch to details view',
 				clear: m.clear || 'Clear',
+				reset_all_filters: m.reset_all_filters || 'Reset all filters',
 			}
+		},
+		hasActiveFilters() {
+			return Boolean(this.searchQuery) || this.selectedLanguages.length > 0 || this.selectedTracks.length > 0
 		},
 		sortOptions() {
 			return [
@@ -208,8 +219,8 @@ export default {
 			return this.scheduleData.schedule?.tracks || []
 		},
 		availableLanguages() {
-			const locales = this.scheduleData?.schedule?.content_locales || []
-			if (locales.length) return locales
+			const locales = (this.scheduleData?.schedule?.content_locales || []).filter(Boolean)
+			if (locales.length) return [...new Set(locales)].sort()
 			const langs = new Set()
 			for (const talk of this.rawTalks) {
 				if (talk.content_locale) langs.add(talk.content_locale)
@@ -300,6 +311,15 @@ export default {
 				'--session-color': session?.track?.color || 'var(--pretalx-clr-primary)'
 			}
 		},
+		formatLanguageLabel(code) {
+			if (!code) return ''
+			const uiLang = localStorage.getItem('userLanguage') || 'en'
+			try {
+				return new Intl.DisplayNames([uiLang], { type: 'language' }).of(code) || code
+			} catch {
+				return code
+			}
+		},
 		formatSessionSlot(session) {
 			const tz = this.scheduleData?.timezone
 			const hasAmPm = this.scheduleData?.hasAmPm
@@ -319,6 +339,12 @@ export default {
 		},
 		toggleDropdown(name) {
 			this.openDropdown = this.openDropdown === name ? null : name
+		},
+		clearAllFilters() {
+			this.searchQuery = ''
+			this.selectedLanguages = []
+			this.selectedTracks = []
+			this.openDropdown = null
 		},
 		toggleView() {
 			this.viewMode = this.viewMode === 'list' ? 'details' : 'list'
@@ -436,6 +462,9 @@ export default {
 				font-size: 11px
 				font-weight: 600
 				padding: 0 4px
+			&.clear-filters-btn
+				padding: 6px 10px
+				justify-content: center
 		.dropdown-menu
 			position: absolute
 			top: calc(100% + 4px)

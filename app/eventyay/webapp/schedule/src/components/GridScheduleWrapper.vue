@@ -12,6 +12,7 @@
 		:locale="locale",
 		:scrollParent="scrollParent",
 		:favs="favs",
+		:showFavCount="showFavCount",
 		:onHomeServer="onHomeServer",
 		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
@@ -42,6 +43,10 @@ export default {
 		hasAmPm: Boolean,
 		scrollParent: Element,
 		onHomeServer: Boolean,
+		showFavCount: {
+			type: Boolean,
+			default: false,
+		},
 		disableAutoScroll: Boolean,
 		forceScrollDay: { type: Number, default: 0 }
 	},

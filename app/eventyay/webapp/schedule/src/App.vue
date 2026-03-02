@@ -21,6 +21,8 @@
 			:filterGroups="filterGroups",
 			:showRecordingFilter="showRecordingFilter",
 			v-model:recordingFilter="recordingFilter",
+			:sortOptions="sortOptions",
+			v-model:sortBy="sortBy",
 			:favsCount="favs.length",
 			:onlyFavs="onlyFavs",
 			:hasActiveFilters="onlyFavs || hasActiveFilterSelections || recordingFilter !== 'all'",
@@ -49,6 +51,7 @@
 			:locale="locale",
 			:scrollParent="scrollParent",
 			:favs="favs",
+			:showFavCount="showPopularityOnCalendar",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
@@ -65,6 +68,8 @@
 			:locale="locale",
 			:scrollParent="scrollParent",
 			:favs="favs",
+			:showFavCount="showPopularityOnList",
+			:sortBy="effectiveSortBy",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:showBreaks="!sessionsMode",
@@ -150,6 +155,11 @@ export default {
 			type: String,
 			default: ''
 		},
+		// URL returning an array of favourited talk codes for public display
+		publicFavsUrl: {
+			type: String,
+			default: ''
+		},
 		// List the dates that should be displayed, as comma-separated ISO strings
 		dateFilter: {
 			type: String,
@@ -218,6 +228,7 @@ export default {
 			getLocalizedString,
 			getSessionTime,
 			markdownIt,
+			sortBy: 'room',
 			scrollParentWidth: Infinity,
 			schedule: null,
 			userTimezone: null,
@@ -226,6 +237,7 @@ export default {
 			forceScrollDay: 0,
 			currentTimezone: null,
 			favs: [],
+			favsReadOnly: false,
 			allTracks: [],
 			allRooms: [],
 			allTypes: [],
@@ -424,9 +436,31 @@ export default {
 				eventUrlObj = new URL(this.eventUrl, window.location.origin)
 			}
 			return `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
+		},
+		popularityFeatureEnabled () {
+			return !!this.schedule?.feature_flags?.session_popularity_enabled
+		},
+		showPopularityOnCalendar () {
+			return this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_calendar
+		},
+		showPopularityOnList () {
+			return this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_list
+		},
+		sortOptions () {
+			const options = ['room', 'title']
+			if (this.popularityFeatureEnabled) options.push('popularity')
+			return options
+		},
+		effectiveSortBy () {
+			return this.sortOptions.includes(this.sortBy) ? this.sortBy : 'room'
 		}
 	},
 	watch: {
+		popularityFeatureEnabled (enabled) {
+			if (!enabled && this.sortBy === 'popularity') {
+				this.sortBy = 'room'
+			}
+		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
 		}
@@ -500,7 +534,13 @@ export default {
 			this.now = moment.tz(this.currentTimezone)
 			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 			this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
-			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			if (this.publicFavsUrl) {
+				this.favsReadOnly = true
+				this.onlyFavs = true
+				this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
+			} else {
+				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			}
 			return
 		}
 
@@ -553,7 +593,13 @@ export default {
 
 		// set API URL before loading favs
 		this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
-		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+		if (this.publicFavsUrl) {
+			this.favsReadOnly = true
+			this.onlyFavs = true
+			this.favs = this.pruneFavs(await this.loadPublicFavs(), this.schedule)
+		} else {
+			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+		}
 
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment.tz(fragment, this.currentTimezone)
@@ -687,6 +733,19 @@ export default {
 			}
 			return localFavs
 		},
+		async loadPublicFavs () {
+			if (!this.publicFavsUrl) return []
+			try {
+				const response = await fetch(this.publicFavsUrl)
+				if (!response.ok) return []
+				const data = await response.json()
+				if (Array.isArray(data)) return data
+				if (data && Array.isArray(data.favs)) return data.favs
+			} catch {
+				return []
+			}
+			return []
+		},
 		pushErrorMessage (message) {
 			if (!message || !message.length) return
 			if (this.errorMessages.includes(message)) return
@@ -712,6 +771,7 @@ export default {
 			}
 		},
 		async fav (id) {
+			if (this.favsReadOnly) return
 			if (this.favs.includes(id)) return
 			this.favs.push(id)
 			this.saveFavs()
@@ -725,6 +785,7 @@ export default {
 			}
 		},
 		async unfav (id) {
+			if (this.favsReadOnly) return
 			this.favs = this.favs.filter(elem => elem !== id)
 			this.saveFavs()
 			if (this.loggedIn) {

@@ -3,8 +3,17 @@
 	.toolbar-left
 		template(v-for="group in filterGroups", :key="group.refKey")
 			.filter-dropdown-area(:ref="'filterDrop_' + group.refKey")
-				button.toolbar-btn(@click="toggleFilterDropdown(group.refKey)")
-					span {{ group.title }}
+				button.toolbar-btn(
+					:class="{ 'icon-only': group.refKey === 'language' }",
+					:title="group.title",
+					:aria-label="group.title",
+					@click="toggleFilterDropdown(group.refKey)")
+					template(v-if="group.refKey === 'language'")
+						svg.tb-icon(viewBox="0 0 24 24", fill="currentColor", aria-hidden="true")
+							path(d="M12.87 15.07l-2.54-2.51c.86-1.02 1.52-2.12 1.99-3.28H14V7h-4V5H8v2H4v2h7.17c-.39 1.17-.96 2.27-1.7 3.25-.48-.63-.9-1.31-1.25-2.03H6.1c.5 1.09 1.17 2.14 2 3.11L3 20h2l5-5 3.11 3.11.76-3.04z")
+							path(d="M15.5 11h-2L9 22h2l1-3h4l1 3h2l-3.5-11zm-2.3 6 .8-2.8.8 2.8h-1.6z")
+					template(v-else)
+						span {{ group.title }}
 					span.filter-badge(v-if="selectedCount(group) > 0") {{ selectedCount(group) }}
 					svg.chevron-icon(:class="{open: openFilterDropdowns[group.refKey]}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						path(d="M6 9l6 6 6-6")
@@ -45,31 +54,36 @@
 					role="menuitemradio",
 					:aria-checked="recordingModel === 'no' ? 'true' : 'false'",
 					@click="selectRecording('no')") {{ t.not_recorded }}
-		button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view")
-			template(v-if="sessionsMode")
-				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-					rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
-					line(x1="16", y1="2", x2="16", y2="6")
-					line(x1="8", y1="2", x2="8", y2="6")
-					line(x1="3", y1="10", x2="21", y2="10")
-				|  {{ t.calendar_view }}
-			template(v-else)
-				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-					line(x1="8", y1="6", x2="21", y2="6")
-					line(x1="8", y1="12", x2="21", y2="12")
-					line(x1="8", y1="18", x2="21", y2="18")
-					line(x1="3", y1="6", x2="3.01", y2="6")
-					line(x1="3", y1="12", x2="3.01", y2="12")
-					line(x1="3", y1="18", x2="3.01", y2="18")
-				|  {{ t.list_view }}
-		button.toolbar-btn.fav-toggle(v-if="favsCount", :class="{active: onlyFavs}", @click="$emit('toggleFavs')")
-			svg.star-icon(viewBox="0 0 24 24")
+		.sort-area(v-if="sessionsMode && resolvedSortOptions.length", ref="sortDropdown")
+			button.toolbar-btn.sort-btn(
+				@click="sortOpen = !sortOpen",
+				:aria-label="t.sort_by",
+				:aria-expanded="sortOpen ? 'true' : 'false'",
+				aria-haspopup="menu")
+				|  {{ currentSortLabel }}
+				svg.chevron-icon(:class="{open: sortOpen}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					path(d="M6 9l6 6 6-6")
+			.sort-dropdown-menu(v-if="sortOpen", role="menu", @keydown.esc.prevent.stop="sortOpen = false")
+				button.sort-item(
+					v-for="opt in resolvedSortOptions",
+					:key="opt.value",
+					:class="{active: sortModel === opt.value}",
+					role="menuitemradio",
+					:aria-checked="sortModel === opt.value ? 'true' : 'false'",
+					@click="selectSort(opt.value)") {{ opt.label }}
+		button.toolbar-btn.fav-toggle(
+			:class="{active: onlyFavs}",
+			:disabled="!favsCount",
+			:title="t.starred",
+			:aria-label="t.starred",
+			:aria-pressed="onlyFavs ? 'true' : 'false'",
+			@click="$emit('toggleFavs')")
+			svg.star-icon(viewBox="0 0 24 24", aria-hidden="true")
 				polygon(
 					:style="{fill: '#FFA000', stroke: '#FFA000'}"
 					points="14.43,10 12,2 9.57,10 2,10 8.18,14.41 5.83,22 12,17.31 18.18,22 15.83,14.41 22,10"
 				)
-			|  {{ favsCount }}
-		button.toolbar-btn.reset-btn(v-if="hasActiveFilters", @click="$emit('resetFilters')", :title="t.reset_all_filters")
+		button.toolbar-btn.clear-filters-btn(v-if="hasActiveFilters", :title="t.reset_all_filters", :aria-label="t.reset_all_filters", @click="$emit('resetFilters')")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				path(d="M18 6L6 18M6 6l12 12")
 	.toolbar-center(v-if="days && days.length > 1")
@@ -177,6 +191,23 @@
 				button.search-clear(v-if="searchExpanded && searchQuery", @click="$emit('update:searchQuery', ''); $refs.searchInput.focus()")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						path(d="M18 6L6 18M6 6l12 12")
+		button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view")
+			template(v-if="sessionsMode")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+					line(x1="16", y1="2", x2="16", y2="6")
+					line(x1="8", y1="2", x2="8", y2="6")
+					line(x1="3", y1="10", x2="21", y2="10")
+				|  {{ t.calendar_view }}
+			template(v-else)
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					line(x1="8", y1="6", x2="21", y2="6")
+					line(x1="8", y1="12", x2="21", y2="12")
+					line(x1="8", y1="18", x2="21", y2="18")
+					line(x1="3", y1="6", x2="3.01", y2="6")
+					line(x1="3", y1="12", x2="3.01", y2="12")
+					line(x1="3", y1="18", x2="3.01", y2="18")
+				|  {{ t.list_view }}
 		button.toolbar-btn(v-if="showPrint", @click="printSchedule", :title="t.print")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				polyline(points="6 9 6 2 18 2 18 9")
@@ -235,9 +266,11 @@ export default {
 		currentDay: { type: String, default: '' }
 		,
 		showRecordingFilter: { type: Boolean, default: false },
-		recordingFilter: { type: String, default: 'all' }
+		recordingFilter: { type: String, default: 'all' },
+		sortBy: { type: String, default: 'room' },
+		sortOptions: { type: Array, default: () => ['room', 'title'] }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
 	data() {
 		return {
 			exportOpen: false,
@@ -249,7 +282,8 @@ export default {
 			isFullscreen: false,
 			openFilterDropdowns: {},
 			dayWindowStart: 0,
-			recordingOpen: false
+			recordingOpen: false,
+			sortOpen: false
 		}
 	},
 	computed: {
@@ -261,6 +295,11 @@ export default {
 				view_changelog: m.view_changelog || 'View Changelog',
 				go_to_current_version: m.go_to_current_version || 'Go to current version',
 				reset_all_filters: m.reset_all_filters || 'Reset all filters',
+				sort_by: m.sort_by || 'Sort',
+				sort_by_room: m.sort_by_room || 'By room',
+				sort_by_title: m.sort_by_title || 'A–Z',
+				sort_by_popularity: m.sort_by_popularity || 'Most popular',
+					starred: m.starred || 'Starred',
 				print: m.print || 'Print',
 				fullscreen: m.fullscreen || 'Fullscreen',
 				exit_fullscreen: m.exit_fullscreen || 'Exit Fullscreen',
@@ -278,6 +317,25 @@ export default {
 				recorded_only: m.recorded_only || 'Recorded only',
 				not_recorded: m.not_recorded || 'Not recorded',
 			}
+		},
+		sortModel: {
+			get() { return this.sortBy },
+			set(value) { this.$emit('update:sortBy', value) }
+		},
+		resolvedSortOptions() {
+			const allowed = Array.isArray(this.sortOptions) ? this.sortOptions : []
+			const labelMap = {
+				room: this.t.sort_by_room,
+				title: this.t.sort_by_title,
+				popularity: this.t.sort_by_popularity,
+			}
+			return allowed
+				.filter(v => ['room', 'title', 'popularity'].includes(v))
+				.map(v => ({ value: v, label: labelMap[v] || v }))
+		},
+		currentSortLabel() {
+			const current = this.resolvedSortOptions.find(o => o.value === this.sortModel)
+			return current ? current.label : this.t.sort_by_room
 		},
 		resolvedExporters() {
 			return this.exporters || []
@@ -418,9 +476,17 @@ export default {
 			if (this.$refs.recordingDropdown && !path.includes(this.$refs.recordingDropdown)) {
 				this.recordingOpen = false
 			}
+			if (this.$refs.sortDropdown && !path.includes(this.$refs.sortDropdown)) {
+				this.sortOpen = false
+			}
 			if (this.searchExpanded && this.$refs.searchArea && !path.includes(this.$refs.searchArea)) {
 				this.closeSearch()
 			}
+		},
+		selectSort(value) {
+			this.sortModel = value
+			this.sortOpen = false
+			this.$nextTick(() => this.$refs.sortDropdown?.querySelector?.('button')?.focus?.())
 		},
 		toggleRecordingDropdown() {
 			this.recordingOpen = !this.recordingOpen
@@ -558,13 +624,27 @@ export default {
 		.fav-toggle
 			display: flex
 			align-items: center
-			gap: 4px
-			&.active
-				border: 2px solid #FFA000
+			gap: 6px
+			white-space: nowrap
+			position: relative
+			&.active::after
+				content: ''
+				position: absolute
+				right: 6px
+				top: 6px
+				width: 7px
+				height: 7px
+				border-radius: 50%
+				background: var(--pretalx-clr-primary, #3aa57c)
+			&:disabled
+				opacity: 0.5
+				cursor: default
+				&:hover
+					background-color: transparent
 			.star-icon
 				width: 18px
 				height: 18px
-		.reset-btn
+		.clear-filters-btn
 			color: #666
 		.filter-dropdown-area
 			position: relative
@@ -590,7 +670,7 @@ export default {
 			&:hover
 				background-color: #f5f5f5
 			.filter-checkbox
-				accent-color: var(--track-color, var(--clr-primary, #3aa57c))
+				accent-color: var(--track-color, var(--pretalx-clr-primary, #3aa57c))
 				margin: 0
 			.track-color-dot
 				width: 10px
@@ -601,7 +681,7 @@ export default {
 				white-space: nowrap
 		.filter-badge
 			font-size: 11px
-			background: var(--clr-primary, #3aa57c)
+			background: var(--pretalx-clr-primary, #3aa57c)
 			color: #fff
 			padding: 0 6px
 			border-radius: 10px
@@ -641,8 +721,34 @@ export default {
 						background-color: #f5f5f5
 					&.active
 						font-weight: 600
-		.sessions-toggle
-			white-space: nowrap
+		.sort-area
+			position: relative
+			flex-shrink: 0
+			.sort-dropdown-menu
+				position: absolute
+				left: 0
+				top: 100%
+				background: #fff
+				min-width: 180px
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+				border-radius: 4px
+				z-index: 200
+				padding: 4px 0
+				display: flex
+				flex-direction: column
+				gap: 0
+				.sort-item
+					border: none
+					background: transparent
+					text-align: left
+					padding: 8px 12px
+					font-size: 13px
+					cursor: pointer
+					color: #333
+					&:hover, &:focus
+						background-color: #f5f5f5
+					&.active
+						font-weight: 600
 	.toolbar-center
 		display: flex
 		align-items: center
@@ -689,6 +795,8 @@ export default {
 		flex-shrink: 0
 		flex: 1
 		justify-content: flex-end
+		.sessions-toggle
+			white-space: nowrap
 		.search-area
 			position: relative
 			display: flex
@@ -910,6 +1018,9 @@ export default {
 		display: flex
 		align-items: center
 		gap: 4px
+		&.icon-only
+			padding: 0 8px
+			gap: 4px
 		&:hover
 			background-color: rgba(0, 0, 0, 0.05)
 		&.sessions-toggle.active
