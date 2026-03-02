@@ -15,6 +15,36 @@
 							span.track-color-dot(v-if="item.color", :style="{backgroundColor: item.color}")
 							span.filter-dropdown-label(:style="item.color ? {'--track-color': item.color} : {}") {{ item.label }}
 					.filter-dropdown-empty(v-else) No {{ group.title.toLowerCase() }} available
+		.recording-filter-area(v-if="showRecordingFilter", ref="recordingDropdown")
+			button.toolbar-btn.recording-btn(
+				:class="{active: recordingModel !== 'all'}",
+				@click="toggleRecordingDropdown",
+				@keydown.esc.prevent.stop="closeRecordingDropdown",
+				:aria-label="t.filter_by_recording",
+				:aria-expanded="recordingOpen ? 'true' : 'false'",
+				aria-haspopup="menu")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+					path(d="M4 7a2 2 0 012-2h8l2 2h2a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V7z")
+					path(d="M15 12l5-3v6l-5-3z")
+			.recording-dropdown-menu(v-if="recordingOpen", role="menu", @keydown.esc.prevent.stop="closeRecordingDropdown", @keydown.down.prevent.stop="focusNextRecordingOption", @keydown.up.prevent.stop="focusPrevRecordingOption")
+				button.recording-item(
+					ref="recordingOptionButtons",
+					:class="{active: recordingModel === 'all'}",
+					role="menuitemradio",
+					:aria-checked="recordingModel === 'all' ? 'true' : 'false'",
+					@click="selectRecording('all')") {{ t.all_sessions }}
+				button.recording-item(
+					ref="recordingOptionButtons",
+					:class="{active: recordingModel === 'yes'}",
+					role="menuitemradio",
+					:aria-checked="recordingModel === 'yes' ? 'true' : 'false'",
+					@click="selectRecording('yes')") {{ t.recorded_only }}
+				button.recording-item(
+					ref="recordingOptionButtons",
+					:class="{active: recordingModel === 'no'}",
+					role="menuitemradio",
+					:aria-checked="recordingModel === 'no' ? 'true' : 'false'",
+					@click="selectRecording('no')") {{ t.not_recorded }}
 		button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view")
 			template(v-if="sessionsMode")
 				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
@@ -203,8 +233,11 @@ export default {
 		userTimezone: String,
 		days: { type: Array, default: () => [] },
 		currentDay: { type: String, default: '' }
+		,
+		showRecordingFilter: { type: Boolean, default: false },
+		recordingFilter: { type: String, default: 'all' }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
 	data() {
 		return {
 			exportOpen: false,
@@ -215,7 +248,8 @@ export default {
 			hoveredExporter: null,
 			isFullscreen: false,
 			openFilterDropdowns: {},
-			dayWindowStart: 0
+			dayWindowStart: 0,
+			recordingOpen: false
 		}
 	},
 	computed: {
@@ -239,6 +273,10 @@ export default {
 				calendar_view: m.calendar_view || 'Calendar View',
 				search: m.search || 'Search',
 				search_placeholder: m.search_placeholder || 'Search sessions…',
+				filter_by_recording: m.filter_by_recording || 'Filter by recording',
+				all_sessions: m.all_sessions || 'All sessions',
+				recorded_only: m.recorded_only || 'Recorded only',
+				not_recorded: m.not_recorded || 'Not recorded',
 			}
 		},
 		resolvedExporters() {
@@ -304,6 +342,10 @@ export default {
 		timezoneModel: {
 			get() { return this.currentTimezone },
 			set(value) { this.$emit('update:currentTimezone', value) }
+		},
+		recordingModel: {
+			get() { return this.recordingFilter || 'all' },
+			set(value) { this.$emit('update:recordingFilter', value) }
 		},
 		visibleDays() {
 			if (!this.days || this.days.length <= 1) return []
@@ -373,9 +415,52 @@ export default {
 					this.openFilterDropdowns[key] = false
 				}
 			}
+			if (this.$refs.recordingDropdown && !path.includes(this.$refs.recordingDropdown)) {
+				this.recordingOpen = false
+			}
 			if (this.searchExpanded && this.$refs.searchArea && !path.includes(this.$refs.searchArea)) {
 				this.closeSearch()
 			}
+		},
+		toggleRecordingDropdown() {
+			this.recordingOpen = !this.recordingOpen
+			if (this.recordingOpen) {
+				this.$nextTick(() => this.focusSelectedRecordingOption())
+			}
+		},
+		closeRecordingDropdown() {
+			this.recordingOpen = false
+		},
+		selectRecording(value) {
+			this.recordingModel = value
+			this.recordingOpen = false
+			this.$nextTick(() => this.$refs.recordingDropdown?.querySelector?.('button')?.focus?.())
+		},
+		getRecordingOptionButtons() {
+			const btns = this.$refs.recordingOptionButtons
+			if (!btns) return []
+			return Array.isArray(btns) ? btns : [btns]
+		},
+		focusSelectedRecordingOption() {
+			const buttons = this.getRecordingOptionButtons()
+			if (!buttons.length) return
+			const idx = ['all', 'yes', 'no'].indexOf(this.recordingModel)
+			const target = buttons[Math.max(0, idx)] || buttons[0]
+			target?.focus?.()
+		},
+		focusNextRecordingOption() {
+			const buttons = this.getRecordingOptionButtons()
+			if (!buttons.length) return
+			const idx = buttons.findIndex(b => b === document.activeElement)
+			const next = buttons[(idx + 1 + buttons.length) % buttons.length] || buttons[0]
+			next?.focus?.()
+		},
+		focusPrevRecordingOption() {
+			const buttons = this.getRecordingOptionButtons()
+			if (!buttons.length) return
+			const idx = buttons.findIndex(b => b === document.activeElement)
+			const prev = buttons[(idx - 1 + buttons.length) % buttons.length] || buttons[buttons.length - 1]
+			prev?.focus?.()
 		},
 		toggleFilterDropdown(refKey) {
 			this.openFilterDropdowns = {
@@ -528,6 +613,34 @@ export default {
 			color: #999
 			font-size: 13px
 			font-style: italic
+		.recording-filter-area
+			position: relative
+			flex-shrink: 0
+			.recording-dropdown-menu
+				position: absolute
+				left: 0
+				top: 100%
+				background: #fff
+				min-width: 180px
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+				border-radius: 4px
+				z-index: 200
+				padding: 4px 0
+				display: flex
+				flex-direction: column
+				gap: 0
+				.recording-item
+					border: none
+					background: transparent
+					text-align: left
+					padding: 8px 12px
+					font-size: 13px
+					cursor: pointer
+					color: #333
+					&:hover, &:focus
+						background-color: #f5f5f5
+					&.active
+						font-weight: 600
 		.sessions-toggle
 			white-space: nowrap
 	.toolbar-center
@@ -803,6 +916,17 @@ export default {
 			background-color: var(--pretalx-clr-primary, #3aa57c)
 			color: #fff
 			border-radius: 4px
+		&.recording-btn
+			position: relative
+		&.recording-btn.active::after
+			content: ''
+			position: absolute
+			right: 6px
+			top: 6px
+			width: 7px
+			height: 7px
+			border-radius: 50%
+			background: var(--pretalx-clr-primary, #3aa57c)
 	.fade-enter-active, .fade-leave-active
 		transition: opacity 0.3s
 	.fade-enter-from, .fade-leave-to

@@ -19,9 +19,11 @@
 			:versions="scheduleMeta?.versions || []",
 			:fullscreenTarget="$el",
 			:filterGroups="filterGroups",
+			:showRecordingFilter="showRecordingFilter",
+			v-model:recordingFilter="recordingFilter",
 			:favsCount="favs.length",
 			:onlyFavs="onlyFavs",
-			:hasActiveFilters="onlyFavs || hasActiveFilterSelections",
+			:hasActiveFilters="onlyFavs || hasActiveFilterSelections || recordingFilter !== 'all'",
 			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="schedule.timezone",
@@ -240,6 +242,7 @@ export default {
 			scheduleMeta: null,
 			sessionsMode: false,
 			searchQuery: '',
+			recordingFilter: 'all',
 		}
 	},
 	computed: {
@@ -277,6 +280,17 @@ export default {
 		hasActiveFilterSelections () {
 			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0 || this.filteredLanguages.length > 0
 		},
+		showRecordingFilter () {
+			if (!this.schedule?.talks?.length) return false
+			let hasRecorded = false
+			let hasNotRecorded = false
+			for (const s of this.schedule.talks) {
+				if (s?.do_not_record === true) hasNotRecorded = true
+				else if (s?.do_not_record === false) hasRecorded = true
+				if (hasRecorded && hasNotRecorded) return true
+			}
+			return false
+		},
 		filterGroups () {
 			const groups = [
 				{ refKey: 'track', title: 'Tracks', data: this.allTracks },
@@ -299,6 +313,10 @@ export default {
 			const sessions = []
 			for (const session of this.schedule.talks.filter(s => s.start)) {
 				if (this.onlyFavs && !this.favs.includes(session.code)) continue
+				if (this.showRecordingFilter) {
+					if (this.recordingFilter === 'yes' && session.do_not_record !== false) continue
+					if (this.recordingFilter === 'no' && session.do_not_record !== true) continue
+				}
 				if (this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
 				if (this.filteredRooms.length && !this.filteredRooms.find(r => r.id === session.room)) continue
 				if (this.filteredTypes.length && !this.filteredTypes.find(t => t.value === session.session_type)) continue
@@ -408,9 +426,15 @@ export default {
 			return `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
 		}
 	},
+	watch: {
+		recordingFilter () {
+			this.writeRecordingQueryParam()
+		}
+	},
 	async created () {
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
+		this.readRecordingQueryParam()
 		moment.locale(this.locale)
 		this.userTimezone = moment.tz.guess()
 		// If opened via old /sessions/ URL, activate sessions mode
@@ -562,6 +586,29 @@ export default {
 		// TODO destroy observers
 	},
 	methods: {
+		readRecordingQueryParam () {
+			try {
+				const url = new URL(window.location.href)
+				const value = url.searchParams.get('recording')
+				if (value === 'yes' || value === 'no' || value === 'all') {
+					this.recordingFilter = value
+				}
+			} catch {
+				// ignore invalid URL contexts
+			}
+		},
+		writeRecordingQueryParam () {
+			try {
+				const url = new URL(window.location.href)
+				const value = (this.recordingFilter === 'yes' || this.recordingFilter === 'no' || this.recordingFilter === 'all')
+					? this.recordingFilter
+					: 'all'
+				url.searchParams.set('recording', value)
+				window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+			} catch {
+				// ignore invalid URL contexts
+			}
+		},
 		setCurrentDay (day) {
 			// Find best match among days, because timezones can muddle this
 			const matchingDays = this.days.filter(d => d.format('YYYY-MM-DD') === day.format('YYYY-MM-DD'))
@@ -814,6 +861,7 @@ export default {
 			this.allRooms.forEach(r => r.selected = false)
 			this.allTypes.forEach(t => t.selected = false)
 			this.allLanguages.forEach(l => l.selected = false)
+			this.recordingFilter = 'all'
 		}
 	}
 }
