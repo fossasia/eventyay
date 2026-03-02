@@ -168,11 +168,11 @@ class SubmissionCards(EventPermissionRequired, View):
         )
         doc.build(self.get_story(doc))
         buffer.seek(0)
-        timestamp = now().strftime('%Y-%m-%d-%H%M')
+        timestamp = now()
         return FileResponse(
             buffer,
             as_attachment=True,
-            filename=f'{request.event.slug}_submission_cards_{timestamp}.pdf',
+            filename=f'{request.event.slug}_submission_cards_{timestamp:%Y-%m-%d-%H%M}.pdf',
             content_type='application/pdf',
         )
 
