@@ -37,6 +37,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import TemplateView, View
 
+from django.contrib.auth.mixins import LoginRequiredMixin
+from allauth.account.models import EmailAddress
 from eventyay.base.models import (
     CachedTicket,
     GiftCard,
@@ -100,7 +102,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class OrderDetailMixin(NoSearchIndexViewMixin):
+class OrderDetailMixin(LoginRequiredMixin, NoSearchIndexViewMixin):
     @cached_property
     def order(self) -> Order | None:
         queryset = Order.objects.filter(event=self.request.event, code=self.kwargs['order'])
@@ -121,8 +123,66 @@ class OrderDetailMixin(NoSearchIndexViewMixin):
             kwargs={'order': self.order.code, 'secret': self.order.secret},
         )
 
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        """
+        Check if the authenticated user is authorized to access this order.
+        
+        For authenticated users, we check if any of their email addresses can modify this order.
+        However, we only allow access if the email address used for authorization is verified.
+        This prevents users from accessing orders by adding unverified email addresses.
+        
+        Orders are still shown in the order list for unverified emails (to avoid confusion),
+        but detail access requires verification.
+        """
+        self.request = request
+        self.kwargs = kwargs
+        
+        if not self.order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        
+        # For authenticated users, check email verification for access
+        user = cast(User, request.user)
+        email_addresses = user.email_addresses
+        if not email_addresses:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+            
+        # Find which email addresses can modify this order
+        can_modify_emails = [
+            addr for addr in email_addresses 
+            if self.order.is_modification_allowed_by(addr)
+        ]
+        
+        if not can_modify_emails:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        
+        # Check if at least one of the modifying emails is verified
+        verified_email_found = False
+        for addr in can_modify_emails:
+            # User.email is always allowed (backward compatibility)
+            if addr.lower() == user.email.lower() if user.email else False:
+                verified_email_found = True
+                break
+            else:
+                # Check if this EmailAddress entry is verified
+                email_verified = EmailAddress.objects.filter(
+                    user=user, email__iexact=addr, verified=True
+                ).exists()
+                if email_verified:
+                    verified_email_found = True
+                    break
+        
+        if not verified_email_found:
+            messages.error(
+                request,
+                _('Please verify your email address to access this order. '
+                  'Check your inbox for a verification link.')
+            )
+            return redirect(self.get_order_url())
+        
+        return super().dispatch(request, *args, **kwargs)
 
-class OrderPositionDetailMixin(NoSearchIndexViewMixin):
+
+class OrderPositionDetailMixin(LoginRequiredMixin, NoSearchIndexViewMixin):
     @cached_property
     def position(self):
         p = (
@@ -140,6 +200,74 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
                 return p
             else:
                 return None
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        """
+        Check if the authenticated user is authorized to access this order position.
+        
+        For authenticated users, we check if any of their email addresses can modify this position.
+        However, we only allow access if the email address used for authorization is verified.
+        This prevents users from accessing orders by adding unverified email addresses.
+        
+        Orders are still shown in the order list for unverified emails (to avoid confusion),
+        but detail access requires verification.
+        """
+        self.request = request
+        self.kwargs = kwargs
+        
+        if not self.position:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        
+        # Check the associated order as well
+        if not self.position.order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        
+        # For authenticated users, check email verification for access
+        user = cast(User, request.user)
+        email_addresses = user.email_addresses
+        if not email_addresses:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+            
+        # Find which email addresses can modify this order/position
+        can_modify_emails = [
+            addr for addr in email_addresses 
+            if self.position.order.is_modification_allowed_by(addr)
+        ]
+        
+        if not can_modify_emails:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        
+        # Check if at least one of the modifying emails is verified
+        verified_email_found = False
+        for addr in can_modify_emails:
+            # User.email is always allowed (backward compatibility)
+            if addr.lower() == user.email.lower() if user.email else False:
+                verified_email_found = True
+                break
+            else:
+                # Check if this EmailAddress entry is verified
+                email_verified = EmailAddress.objects.filter(
+                    user=user, email__iexact=addr, verified=True
+                ).exists()
+                if email_verified:
+                    verified_email_found = True
+                    break
+        
+        if not verified_email_found:
+            messages.error(
+                request,
+                _('Please verify your email address to access this order. '
+                  'Check your inbox for a verification link.')
+            )
+            # Redirect to the order page, not position page, as that's where users can see the verification message
+            order_url = eventreverse(
+                self.request.event,
+                'presale:event.order',
+                kwargs={'order': self.position.order.code, 'secret': self.position.order.secret},
+            )
+            return redirect(order_url)
+        
+        return super().dispatch(request, *args, **kwargs)
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')

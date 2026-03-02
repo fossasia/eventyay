@@ -1,3 +1,4 @@
+from allauth.account.models import EmailAddress
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django_scopes import scopes_disabled
@@ -93,7 +94,9 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         input_serializer.is_valid(raise_exception=True)
         email = input_serializer.validated_data['email']
 
-        if team.members.filter(email__iexact=email).exists():
+        # Check if user already exists with this email (checking all email addresses via EmailAddress model)
+        email_addr = EmailAddress.objects.filter(email__iexact=email).select_related('user').first()
+        if email_addr and team.members.filter(pk=email_addr.user.pk).exists():
             raise exceptions.ValidationError('This user is already a member of the team.')
         if team.invites.filter(email__iexact=email).exists():
             raise exceptions.ValidationError('This user has already been invited to the team.')

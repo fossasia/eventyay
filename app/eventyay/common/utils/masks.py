@@ -1,14 +1,14 @@
 # Masking data for logging purposes.
 
-import random
 from collections.abc import Iterable
 
 
 class EmailMasker:
     """
-    Uitlity to mask email address by replacing some characters with asterisks.
+    Utility to mask email address by replacing some characters with asterisks.
 
     The mask action is delayed until the __str__ method is called, to save computation when log message is not emitted.
+    Uses deterministic masking for consistent log correlation.
     """
 
     _email: str
@@ -18,13 +18,15 @@ class EmailMasker:
 
     def __str__(self) -> str:
         """
-        Add some asterisks to random positions in the local part of the email to mask it.
+        Mask characters at odd positions (1, 3, 5...) in the local part of the email.
+        This provides deterministic masking for consistent log correlation while
+        still protecting user privacy by hiding approximately half of the local part.
         """
         if not self._email or '@' not in self._email:
             return ''
         local_part, domain = self._email.split('@', 1)
-        positions = random.sample(range(len(local_part)), min(2, len(local_part)))  # Randomly select positions to mask
-        masked_local = ''.join('*' if i in positions else char for i, char in enumerate(local_part))
+        # Mask characters at odd positions (index 1, 3, 5, ...)
+        masked_local = ''.join('*' if i % 2 == 1 else char for i, char in enumerate(local_part))
         return f'{masked_local}@{domain}'
 
     def to_json(self) -> str:

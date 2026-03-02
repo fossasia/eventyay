@@ -43,4 +43,12 @@ def trigger_public_schedule(self, is_show_schedule: bool, event_slug: str, organ
     # Before, this task called the 'eventyay-talk' server API, but because we have now merged
     # 'eventyay-tickets' and 'eventyay-talk' into the same app,
     # we should call a Python function directly.
-    logger.info('Not implemented `trigger_public_schedule` yet.')
+    # TODO: Implement direct Python call to update public schedule visibility.
+    # For now, log a warning to indicate this functionality is not yet implemented.
+    logger.warning(
+        'trigger_public_schedule called but not yet implemented. '
+        'Event: %s, Organizer: %s, User: %s, Show: %s',
+        event_slug, organizer_slug, EmailMasker(user_email), is_show_schedule
+    )
+    # Raise NotImplementedError to make it clear this needs implementation
+    raise NotImplementedError('Public schedule trigger is not yet implemented in the merged codebase.')

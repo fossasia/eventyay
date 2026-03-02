@@ -334,7 +334,7 @@ class User(
     def has_avatar(self) -> bool:
         return bool(self.avatar) and self.avatar != 'False'
 
-    @property
+    @cached_property
     def primary_email(self) -> str:
         """
         Get the primary email address for sending emails to this user.
@@ -349,14 +349,15 @@ class User(
             str: The primary email address if available, otherwise the user's email field,
                  or an empty string if neither exists.
         """
-        # Expect the queryset to be created with `prefetch_related('emailaddress_set')` beforehand,
-        # to avoid 1 + N query problem.
+        # Use values_list to get just the email value efficiently.
+        # No need to worry about stale cache: views that add/remove email addresses
+        # query the EmailAddress model directly, not through this cached_property.
         addrs = tuple(self.emailaddress_set.filter(primary=True).values_list('email', flat=True))
         if addrs:
             return addrs[0].lower()
         return self.email.lower() if self.email else ''
 
-    @property
+    @cached_property
     def email_addresses(self) -> tuple[str, ...]:
         """
         Return a tuple of all unique email addresses associated with this user.
@@ -365,12 +366,23 @@ class User(
         linked to the user via the EmailAddress model. The result is used for filtering
         Event, Order, and Submission objects based on the user's email addresses.
 
+        Includes the legacy User.email field even if unverified (for backward compatibility
+        with existing users created before email verification was enforced), but only includes
+        EmailAddress model entries that are verified to prevent authorization widening.
+
         Returns:
             tuple[str, ...]: A tuple containing all unique email addresses as strings.
         """
         addrs = frozenset([self.email.lower()]) if self.email else frozenset()
         # django-allauth already make email addresses lowercase in its model.
-        return tuple(addrs | frozenset(EmailAddress.objects.filter(user=self).values_list('email', flat=True)))
+        # Include User.email even if unverified for backward compatibility with existing users,
+        # but only include EmailAddress entries that are verified to prevent unauthorized access.
+        # Use values_list for efficiency. Cache is safe because views modifying
+        # email addresses query EmailAddress directly.
+        email_addrs = frozenset(
+            EmailAddress.objects.filter(user=self, verified=True).values_list('email', flat=True)
+        )
+        return tuple(addrs | email_addrs)
 
     # Methods
     def save(self, *args, **kwargs):
