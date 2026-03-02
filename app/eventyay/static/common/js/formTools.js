@@ -464,10 +464,10 @@ const startMarkdownEditorObserver = () => {
 }
 
 const warnFileSize = (element) => {
-    let warning = element.parentElement.querySelector(".invalid-feedback")
+    let warning = element.parentElement.querySelector(".eventyay-size-warning")
     if (!warning) {
         warning = document.createElement("div")
-        warning.classList.add("invalid-feedback")
+        warning.classList.add("invalid-feedback", "eventyay-size-warning")
         element.parentElement.appendChild(warning)
     }
     warning.textContent = element.dataset.sizewarning
@@ -475,7 +475,7 @@ const warnFileSize = (element) => {
 }
 const unwarnFileSize = (element) => {
     element.classList.remove("is-invalid")
-    const warning = element.parentElement.querySelector(".invalid-feedback")
+    const warning = element.parentElement.querySelector(".eventyay-size-warning")
     if (warning) element.parentElement.removeChild(warning)
 }
 
