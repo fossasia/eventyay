@@ -2,13 +2,15 @@ import json
 
 from django.conf import settings
 from django.contrib import messages
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
+from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.devices import Device
 from eventyay.base.models.log import LogEntry
 from eventyay.control.forms.organizer_forms.device_form import DeviceForm
@@ -209,3 +211,49 @@ class DeviceRevokeView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
                 },
             )
         )
+
+
+class DeviceRevokeAllView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, TemplateView):
+    template_name = 'pretixcontrol/organizers/device_revoke_all.html'
+    permission = 'can_change_organizer_settings'
+
+    def _devices_qs(self):
+        return self.request.organizer.devices.all()
+
+    def _success_url(self):
+        return reverse(
+            'eventyay_common:organizer.devices',
+            kwargs={
+                'organizer': self.request.organizer.slug,
+            },
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['device_count'] = self._devices_qs().count()
+        return ctx
+
+    def get(self, request, *args, **kwargs):
+        if not self._devices_qs().exists():
+            messages.success(self.request, _('There are no connected devices to revoke and remove.'))
+            return redirect(self._success_url())
+        return super().get(request, *args, **kwargs)
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        device_ids = list(self._devices_qs().values_list('id', flat=True))
+        if not device_ids:
+            messages.success(self.request, _('There are no connected devices to revoke and remove.'))
+            return redirect(self._success_url())
+
+        Checkin.objects.filter(device_id__in=device_ids).update(device=None)
+        LogEntry.all.filter(device_id__in=device_ids).update(device=None)
+        self._devices_qs().filter(id__in=device_ids).delete()
+
+        self.request.organizer.log_action(
+            'eventyay.device.revoked_all',
+            user=self.request.user,
+            data={'count': len(device_ids)},
+        )
+        messages.success(self.request, _('All connected devices have been revoked and removed permanently.'))
+        return redirect(self._success_url())

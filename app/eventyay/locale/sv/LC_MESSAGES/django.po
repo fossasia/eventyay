@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-16 06:15+0000\n"
+"PO-Revision-Date: 2026-03-02 00:16+0000\n"
 "Last-Translator: Kristoffer Grundström <swedishsailfishosuser@tutanota.com>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sv/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.16.1-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -618,7 +618,7 @@ msgstr ""
 #: presale/checkoutflowstep/confirm_step.py:65 presale/forms/checkout.py:53
 #: presale/forms/user.py:6 presale/templates/pretixpresale/event/order.html:298
 msgid "E-mail"
-msgstr "Epost"
+msgstr "E-post"
 
 #: base/auth.py:124 base/forms/auth.py:136 base/forms/auth.py:192
 #: control/forms/event.py:1170 control/forms/global_settings.py:171
@@ -2672,12 +2672,12 @@ msgstr ""
 #: base/configurations/default_setting.py:2604
 msgctxt "person_name_salutation"
 msgid "Ms"
-msgstr "Ms"
+msgstr "Frk"
 
 #: base/configurations/default_setting.py:2605
 msgctxt "person_name_salutation"
 msgid "Mr"
-msgstr "Mr"
+msgstr "Herr"
 
 #: base/configurations/default_setting.py:2615
 #: base/configurations/default_setting.py:2633
@@ -2786,19 +2786,16 @@ msgstr ""
 #: base/configurations/default_setting.py:2829
 #: base/configurations/default_setting.py:2848
 #: base/configurations/default_setting.py:2869
-#, fuzzy
-#| msgctxt "invoice"
-#| msgid "Cancellation"
 msgctxt "person_name"
 msgid "Salutation"
-msgstr "Avbokning"
+msgstr "Hälsningsfras"
 
 #: base/configurations/default_setting.py:2837
 #: base/configurations/default_setting.py:2857
 #: base/configurations/default_setting.py:2881
 msgctxt "person_name_sample"
 msgid "Mr"
-msgstr "Mr"
+msgstr "Herr"
 
 #: base/configurations/default_setting.py:2873
 msgctxt "person_name"
@@ -3490,7 +3487,7 @@ msgstr ""
 #: plugins/banktransfer/refund_export.py:29
 #: plugins/checkinlists/exporters.py:531
 msgid "Comment"
-msgstr ""
+msgstr "Kommentar"
 
 #: base/exporters/orderlist.py:359
 #: control/templates/pretixcontrol/orders/index.html:125
@@ -3771,7 +3768,7 @@ msgstr ""
 #: control/templates/pretixcontrol/items/quota.html:65
 #: control/views/product.py:962
 msgid "Infinite"
-msgstr ""
+msgstr "Oändlig"
 
 #: base/exporters/orderlist.py:1040
 msgid "Gift card redemptions"
@@ -3791,7 +3788,7 @@ msgstr ""
 #: base/exporters/orderlist.py:1066
 #: control/templates/pretixcontrol/giftcards/payment.html:10
 msgid "Issuer"
-msgstr ""
+msgstr "Utgivare"
 
 #: base/exporters/orderlist.py:1094
 #: control/templates/pretixcontrol/organizers/edit.html:72
@@ -3832,7 +3829,7 @@ msgstr "Alla"
 
 #: base/exporters/orderlist.py:1114 control/forms/filter.py:1103
 msgid "Live"
-msgstr ""
+msgstr "Direkt"
 
 #: base/exporters/orderlist.py:1126 control/forms/filter.py:1108
 #: control/forms/filter.py:1111
@@ -4617,7 +4614,7 @@ msgstr ""
 
 #: base/models/billing.py:22 base/models/orders.py:168
 msgid "expired"
-msgstr ""
+msgstr "förfallen"
 
 #: base/models/billing.py:23 base/models/orders.py:169
 #: base/models/submission.py:80 cfp/templates/cfp/event/fragment_state.html:15
@@ -4752,7 +4749,7 @@ msgstr ""
 #: base/models/devices.py:86
 #: control/templates/pretixcontrol/organizers/gates.html:16
 msgid "Gate"
-msgstr ""
+msgstr "Ingångar"
 
 #: base/models/devices.py:100
 #: control/templates/pretixcontrol/organizers/devices.html:38
@@ -5507,7 +5504,7 @@ msgstr "Din beställning: %(code)s"
 
 #: base/models/orders.py:1208
 msgid "<file>"
-msgstr ""
+msgstr "<file>"
 
 #: base/models/orders.py:1309 base/models/orders.py:1316
 msgid "Empty, if this product is not an admission ticket"
@@ -5525,7 +5522,7 @@ msgstr "skapades"
 #: base/models/orders.py:1505
 msgctxt "payment_state"
 msgid "pending"
-msgstr ""
+msgstr "väntande"
 
 #: base/models/orders.py:1506
 msgctxt "payment_state"
@@ -6537,7 +6534,7 @@ msgstr ""
 #: orga/templates/orga/review/dashboard.html:201
 #: orga/templates/orga/submission/list.html:86
 msgid "Type"
-msgstr ""
+msgstr "Typ"
 
 #: base/models/product.py:1187
 #, fuzzy
@@ -6763,7 +6760,7 @@ msgstr ""
 #: control/templates/control/janus_list.html:16
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:31
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: base/models/question.py:52
 #, fuzzy
@@ -6981,7 +6978,7 @@ msgstr ""
 #: base/models/review.py:235 base/models/review.py:256
 #: control/forms/product.py:510 orga/forms/event.py:68
 msgid "Never"
-msgstr ""
+msgstr "Aldrig"
 
 #: base/models/review.py:236
 msgid "After reviewing the proposal"
@@ -7267,7 +7264,7 @@ msgstr "Typ av session"
 #: orga/templates/orga/submission/content.html:62 orga/views/submission.py:953
 #: submission/forms/submission.py:262
 msgid "Tags"
-msgstr ""
+msgstr "Taggar"
 
 #: base/models/submission.py:206 control/forms/filter.py:1015
 #: orga/forms/submission.py:69
@@ -7585,7 +7582,7 @@ msgstr ""
 #: control/views/vouchers.py:122
 #: orga/templates/orga/submission/tag/list.html:12 orga/views/submission.py:950
 msgid "Tag"
-msgstr ""
+msgstr "Tagg"
 
 #: base/models/vouchers.py:194
 msgid ""
@@ -8717,7 +8714,7 @@ msgstr ""
 
 #: base/pdf.py:921 plugins/ticketoutputpdf/ticketoutput.py:79
 msgid "Ticket"
-msgstr ""
+msgstr "Biljett"
 
 #: base/plugins.py:61 common/plugins.py:9
 msgctxt "Type of plugin"
@@ -9122,7 +9119,7 @@ msgstr ""
 
 #: base/services/invoices.py:396
 msgid "012345"
-msgstr ""
+msgstr "012345"
 
 #: base/services/invoices.py:415
 #, python-brace-format
@@ -9463,7 +9460,7 @@ msgstr ""
 
 #: base/services/stats.py:216
 msgid "Uncategorized"
-msgstr ""
+msgstr "Utan kategori"
 
 #: base/services/tickets.py:97 control/views/pdf.py:71
 msgid "Sample workshop"
@@ -9549,7 +9546,7 @@ msgstr ""
 
 #: base/shredder.py:173
 msgid "E-mails"
-msgstr ""
+msgstr "E-postmeddelanden"
 
 #: base/shredder.py:176
 msgid ""
@@ -9794,7 +9791,7 @@ msgstr ""
 
 #: base/templates/pretixbase/forms/widgets/reldatetime.html:21
 msgid "at"
-msgstr ""
+msgstr "vid"
 
 #: base/ticketoutput.py:152
 msgid "Enable ticket format"
@@ -10226,7 +10223,7 @@ msgstr "Acceptera inbjudan?"
 #: presale/templates/pretixpresale/fragment_modals.html:74
 #: presale/templates/pretixpresale/startpage.html:119
 msgid "Login"
-msgstr ""
+msgstr "Logga in"
 
 #: cfp/templates/cfp/event/login.html:8
 #: control/templates/pretixcontrol/user/reauth.html:9
@@ -11552,7 +11549,7 @@ msgstr ""
 #: control/templates/pretixcontrol/admin/pages/form.html:39
 #: control/templates/pretixcontrol/pdf/index.html:161
 msgid "Copy"
-msgstr ""
+msgstr "Kopiera"
 
 #: common/templatetags/times.py:14
 msgid "once"
@@ -11656,7 +11653,7 @@ msgstr ""
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:88
 #: plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/edit.html:42
 msgid "Save"
-msgstr ""
+msgstr "Spara"
 
 #: common/text/phrases.py:51 control/templates/control/bbb_delete.html:13
 #: control/templates/control/bbb_form.html:12
@@ -11740,7 +11737,7 @@ msgstr "Avbryt"
 #: orga/templates/orga/submission/content.html:227
 #: orga/templatetags/orga_edit_link.py:12
 msgid "Edit"
-msgstr ""
+msgstr "Redigera"
 
 #: common/text/phrases.py:54
 msgid "all"
@@ -11759,7 +11756,7 @@ msgstr ""
 #: plugins/sendmail/templates/pretixplugins/sendmail/delete_confirmation.html:24
 #: plugins/sendmail/templates/pretixplugins/sendmail/purge_confirmation.html:23
 msgid "Back"
-msgstr ""
+msgstr "Bakåt"
 
 #. Translators: This is a label on delete buttons.
 #: common/text/phrases.py:58 control/templates/control/bbb_delete.html:11
@@ -11808,7 +11805,7 @@ msgstr ""
 #: plugins/sendmail/templates/pretixplugins/sendmail/purge_confirmation.html:28
 #: plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/delete.html:15
 msgid "Delete"
-msgstr ""
+msgstr "Ta bort"
 
 #: common/text/phrases.py:60
 #: plugins/sendmail/templates/pretixplugins/sendmail/delete_confirmation.html:5
@@ -12477,7 +12474,7 @@ msgstr ""
 
 #: control/forms/event.py:971
 msgid "Signature"
-msgstr ""
+msgstr "Signatur"
 
 #: control/forms/event.py:974
 #, python-brace-format
@@ -12597,7 +12594,7 @@ msgstr ""
 
 #: control/forms/event.py:1146 control/forms/global_settings.py:45
 msgid "SMTP"
-msgstr ""
+msgstr "SMTP"
 
 #: control/forms/event.py:1149
 #, fuzzy
@@ -12608,18 +12605,18 @@ msgstr "E-postadress"
 #: control/forms/event.py:1155 control/forms/global_settings.py:147
 #: orga/forms/event.py:200
 msgid "Hostname"
-msgstr ""
+msgstr "Värdnamn"
 
 #: control/forms/event.py:1160 control/forms/global_settings.py:155
 #: control/templates/pretixcontrol/admin/systemconfig.html:83
 #: orga/forms/event.py:201
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: control/forms/event.py:1165 control/forms/global_settings.py:163
 #: orga/forms/event.py:202
 msgid "Username"
-msgstr ""
+msgstr "Användarnamn"
 
 #: control/forms/event.py:1179 control/forms/global_settings.py:183
 #: orga/forms/event.py:224
@@ -12683,11 +12680,11 @@ msgstr ""
 
 #: control/forms/event.py:1331
 msgid "Individual"
-msgstr ""
+msgstr "Individuell"
 
 #: control/forms/event.py:1332
 msgid "Business"
-msgstr ""
+msgstr "Affär"
 
 #: control/forms/event.py:1333
 msgid "Business with valid VAT ID"
@@ -12798,7 +12795,7 @@ msgstr ""
 
 #: control/forms/event.py:1542
 msgid "Free"
-msgstr ""
+msgstr "Gratis"
 
 #: control/forms/event.py:1545
 msgid "Quantity available"
@@ -12830,7 +12827,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/orders/fragment_order_status.html:13
 #: plugins/reports/exporters.py:332
 msgid "Pending"
-msgstr ""
+msgstr "Väntande"
 
 #: control/forms/filter.py:168
 #: control/templates/pretixcontrol/items/question.html:23
@@ -12884,7 +12881,7 @@ msgstr ""
 
 #: control/forms/filter.py:189
 msgid "Overpaid"
-msgstr ""
+msgstr "Överbetald"
 
 #: control/forms/filter.py:190
 msgid "Partially paid"
@@ -12986,7 +12983,7 @@ msgstr ""
 
 #: control/forms/filter.py:772 control/forms/filter.py:1454
 msgid "Inactive"
-msgstr ""
+msgstr "Inaktiv"
 
 #: control/forms/filter.py:773 control/forms/filter.py:1175
 #: control/templates/pretixcontrol/admin/events/index.html:148
@@ -13018,7 +13015,7 @@ msgstr ""
 #: control/forms/filter.py:789 control/forms/subevents.py:440
 #: control/forms/subevents.py:474
 msgid "Weekday"
-msgstr ""
+msgstr "Veckodag"
 
 #: control/forms/filter.py:791
 msgid "All days"
@@ -13026,31 +13023,31 @@ msgstr ""
 
 #: control/forms/filter.py:792
 msgid "Monday"
-msgstr ""
+msgstr "Måndag"
 
 #: control/forms/filter.py:793
 msgid "Tuesday"
-msgstr ""
+msgstr "Tisdag"
 
 #: control/forms/filter.py:794
 msgid "Wednesday"
-msgstr ""
+msgstr "Onsdag"
 
 #: control/forms/filter.py:795
 msgid "Thursday"
-msgstr ""
+msgstr "Torsdag"
 
 #: control/forms/filter.py:796
 msgid "Friday"
-msgstr ""
+msgstr "Fredag"
 
 #: control/forms/filter.py:797
 msgid "Saturday"
-msgstr ""
+msgstr "Lördag"
 
 #: control/forms/filter.py:798
 msgid "Sunday"
-msgstr ""
+msgstr "Söndag"
 
 #: control/forms/filter.py:913 control/forms/filter.py:915
 #, fuzzy
@@ -13199,7 +13196,7 @@ msgstr "Förköp"
 #: control/forms/filter.py:1459 control/forms/filter.py:1462
 #: control/templates/pretixcontrol/admin/users/index.html:42
 msgid "Administrator"
-msgstr ""
+msgstr "Administratör"
 
 #: control/forms/filter.py:1463
 msgid "No administrator"
@@ -13207,11 +13204,11 @@ msgstr ""
 
 #: control/forms/filter.py:1528
 msgid "Valid"
-msgstr ""
+msgstr "Giltig"
 
 #: control/forms/filter.py:1529
 msgid "Unredeemed"
-msgstr ""
+msgstr "Outlöst"
 
 #: control/forms/filter.py:1530
 msgid "Redeemed at least once"
@@ -13753,7 +13750,7 @@ msgstr ""
 #: control/views/vouchers.py:125
 #: presale/templates/pretixpresale/event/checkout_questions.html:86
 msgid "Seat"
-msgstr ""
+msgstr "Sittplats"
 
 #: control/forms/orders.py:270
 msgid "Including taxes, if any. Keep empty for the product's default price"
@@ -13762,7 +13759,7 @@ msgstr ""
 #: control/forms/orders.py:293 control/forms/orders.py:433
 #: control/forms/product.py:883
 msgid "inactive"
-msgstr ""
+msgstr "inaktiv"
 
 #: control/forms/orders.py:372 control/forms/orders.py:375
 #: control/forms/orders.py:384 control/forms/orders.py:414
@@ -13810,11 +13807,11 @@ msgstr ""
 #: plugins/sendmail/forms.py:488 plugins/sendmail/forms.py:587
 #: plugins/sendmail/views.py:239 plugins/sendmail/views.py:489
 msgid "Subject"
-msgstr ""
+msgstr "Ämne"
 
 #: control/forms/orders.py:520
 msgid "Recipient"
-msgstr ""
+msgstr "Mottagare"
 
 #: control/forms/orders.py:523 control/forms/orders.py:537
 #: control/forms/orders.py:714 control/forms/orders.py:759
@@ -13825,7 +13822,7 @@ msgstr ""
 #: plugins/sendmail/forms.py:36 plugins/sendmail/forms.py:164
 #: plugins/sendmail/forms.py:495 plugins/sendmail/forms.py:594
 msgid "Message"
-msgstr ""
+msgstr "Meddelande"
 
 #: control/forms/orders.py:552
 msgid ""
@@ -14207,7 +14204,7 @@ msgstr ""
 
 #: control/forms/product.py:359
 msgid "Size"
-msgstr ""
+msgstr "Storlek"
 
 #: control/forms/product.py:360
 msgid "Number of tickets"
@@ -14267,7 +14264,7 @@ msgstr ""
 
 #: control/forms/product.py:721
 msgid "Add-ons"
-msgstr ""
+msgstr "Tillägg"
 
 #: control/forms/product.py:749
 msgid "You added the same add-on category twice"
@@ -14293,7 +14290,7 @@ msgstr "Du valde ingen av produkterna."
 #: control/templates/pretixcontrol/items/question_edit.html:134
 msgctxt "form"
 msgid "Optional"
-msgstr ""
+msgstr "Valfritt"
 
 #: control/forms/renderers.py:87
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:48
@@ -14343,11 +14340,11 @@ msgstr ""
 
 #: control/forms/subevents.py:383
 msgid "year(s)"
-msgstr ""
+msgstr "år(en)"
 
 #: control/forms/subevents.py:384
 msgid "month(s)"
-msgstr ""
+msgstr "månad(er)"
 
 #: control/forms/subevents.py:385
 msgid "week(s)"
@@ -14355,11 +14352,11 @@ msgstr ""
 
 #: control/forms/subevents.py:386
 msgid "day(s)"
-msgstr ""
+msgstr "dag(ar)"
 
 #: control/forms/subevents.py:390
 msgid "Interval"
-msgstr ""
+msgstr "Intervall"
 
 #: control/forms/subevents.py:405
 msgid "Number of repetitions"
@@ -14372,26 +14369,26 @@ msgstr ""
 #: control/forms/subevents.py:415 control/forms/subevents.py:457
 msgctxt "rrule"
 msgid "first"
-msgstr ""
+msgstr "första"
 
 #: control/forms/subevents.py:416 control/forms/subevents.py:458
 msgctxt "rrule"
 msgid "second"
-msgstr ""
+msgstr "andra"
 
 #: control/forms/subevents.py:417 control/forms/subevents.py:459
 msgctxt "rrule"
 msgid "third"
-msgstr ""
+msgstr "tredje"
 
 #: control/forms/subevents.py:418 control/forms/subevents.py:460
 msgctxt "rrule"
 msgid "last"
-msgstr ""
+msgstr "sista"
 
 #: control/forms/subevents.py:439 control/forms/subevents.py:473
 msgid "Day"
-msgstr ""
+msgstr "Dag"
 
 #: control/forms/subevents.py:441 control/forms/subevents.py:475
 msgid "Weekend day"
@@ -14417,7 +14414,7 @@ msgstr ""
 
 #: control/forms/vouchers.py:253
 msgid "Codes"
-msgstr ""
+msgstr "Koder"
 
 #: control/forms/vouchers.py:254
 msgid ""
@@ -14471,12 +14468,12 @@ msgstr ""
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:23
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:25
 msgid "Recipients"
-msgstr ""
+msgstr "Mottagare"
 
 #: control/forms/vouchers.py:281
 #: presale/templates/pretixpresale/fragment_modals.html:109
 msgid "or"
-msgstr ""
+msgstr "eller"
 
 #: control/forms/vouchers.py:287
 msgid ""
@@ -14544,7 +14541,7 @@ msgstr ""
 
 #: control/logdisplay.py:35 control/logdisplay.py:41
 msgid "(unknown)"
-msgstr ""
+msgstr "(okänd)"
 
 #: control/logdisplay.py:47
 msgid "The order has been changed:"
@@ -15649,7 +15646,7 @@ msgstr ""
 
 #: control/navigation.py:77
 msgid "Invoicing"
-msgstr ""
+msgstr "Fakturering"
 
 #: control/navigation.py:88
 msgctxt "action"
@@ -15673,11 +15670,11 @@ msgstr ""
 #: orga/templates/orga/settings/form.html:22
 #: orga/templates/orga/settings/form.html:26
 msgid "Settings"
-msgstr ""
+msgstr "Inställningar"
 
 #: control/navigation.py:174
 msgid "Categories"
-msgstr ""
+msgstr "Kategorier"
 
 #: control/navigation.py:185
 #: control/templates/pretixcontrol/items/orderforms.html:7
@@ -15689,7 +15686,7 @@ msgstr "Beställningsavgifter"
 
 #: control/navigation.py:233
 msgid "Overview"
-msgstr ""
+msgstr "Överblick"
 
 #: control/navigation.py:267
 #: control/templates/pretixcontrol/order/index.html:706
@@ -15697,23 +15694,23 @@ msgstr ""
 #: control/templates/pretixcontrol/orders/refunds.html:12
 #: presale/templates/pretixpresale/event/order.html:129
 msgid "Refunds"
-msgstr ""
+msgstr "Återbetalningar"
 
 #: control/navigation.py:281
 #: orga/templates/orga/review/assignment-import.html:21
 msgid "Import"
-msgstr ""
+msgstr "Importera"
 
 #: control/navigation.py:294 eventyay_common/navigation.py:227
 #: orga/templates/orga/base.html:305 orga/templates/orga/base.html:338
 #: orga/templates/orga/base.html:394
 msgid "Export"
-msgstr ""
+msgstr "Exportera"
 
 #: control/navigation.py:325
 msgctxt "navigation"
 msgid "Check-in"
-msgstr ""
+msgstr "Incheckning"
 
 #: control/navigation.py:337
 #: control/templates/pretixcontrol/checkin/lists.html:3
@@ -15775,7 +15772,7 @@ msgstr ""
 
 #: control/navigation.py:477
 msgid "Pages"
-msgstr ""
+msgstr "Sidor"
 
 #: control/navigation.py:483
 #: control/templates/pretixcontrol/admin/events/index.html:85
@@ -15917,7 +15914,7 @@ msgstr "Lägg till en till"
 #: control/templates/control/turn_list.html:15
 #: control/templates/pretixcontrol/boxoffice/payment.html:11
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: control/templates/control/bbb_list.html:22
 #, fuzzy
@@ -16075,7 +16072,7 @@ msgstr "API-åtkomst"
 #: plugins/badges/templates/pretixplugins/badges/index.html:79
 #: plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/index.html:76
 msgid "Clone"
-msgstr ""
+msgstr "Klona"
 
 #: control/templates/control/event_list.html:65
 msgid "No events yet."
@@ -16176,7 +16173,7 @@ msgstr "Spår"
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:29
 #: control/templates/pretixcontrol/checkin/index.html:86
 msgid "Timestamp"
-msgstr ""
+msgstr "Tidsstämpel"
 
 #: control/templates/control/systemlog_detail.html:25
 msgid "Level"
@@ -16318,7 +16315,7 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/detail.html:79
 #: eventyay_common/templates/eventyay_common/events/index.html:104
 msgid "Series"
-msgstr ""
+msgstr "Serier"
 
 #: control/templates/pretixcontrol/admin/events/index.html:134
 #: control/templates/pretixcontrol/subevents/index.html:118
@@ -16657,7 +16654,7 @@ msgstr ""
 #: control/templates/pretixcontrol/admin/update.html:63
 #: control/templates/pretixcontrol/global_update.html:59
 msgid "Component"
-msgstr ""
+msgstr "Komponent"
 
 #: control/templates/pretixcontrol/admin/update.html:64
 #: control/templates/pretixcontrol/global_update.html:60
@@ -16688,7 +16685,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:30
 msgid "Method"
-msgstr ""
+msgstr "Metod"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:32
 msgid "On behalf of"
@@ -16739,7 +16736,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/admin/users/form.html:18
 msgid "Anonymize"
-msgstr ""
+msgstr "Anonymisera"
 
 #: control/templates/pretixcontrol/admin/users/form.html:36
 msgid "Authentication backend"
@@ -16853,7 +16850,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/auth/oauth_authorization.html:53
 msgid "Error:"
-msgstr ""
+msgstr "Fel:"
 
 #: control/templates/pretixcontrol/base.html:102
 #: eventyay_common/templates/eventyay_common/base.html:103
@@ -17088,11 +17085,11 @@ msgstr ""
 #: control/templates/pretixcontrol/orders/overview.html:17
 #: plugins/ticketoutputpdf/ticketoutput.py:31
 msgid "PDF"
-msgstr ""
+msgstr "PDF"
 
 #: control/templates/pretixcontrol/checkin/index.html:30
 msgid "CSV"
-msgstr ""
+msgstr "CSV"
 
 #: control/templates/pretixcontrol/checkin/index.html:54
 msgid "No attendee record was found."
@@ -17106,7 +17103,7 @@ msgstr "Produkt"
 
 #: control/templates/pretixcontrol/checkin/index.html:101
 msgid "unpaid"
-msgstr ""
+msgstr "ej betald"
 
 #: control/templates/pretixcontrol/checkin/index.html:145
 msgid "Checked in automatically"
@@ -17160,7 +17157,7 @@ msgstr ""
 #: control/templates/pretixcontrol/event/payment.html:79
 #: control/templates/pretixcontrol/event/tax_edit.html:38
 msgid "Advanced"
-msgstr ""
+msgstr "Avancerat"
 
 #: control/templates/pretixcontrol/checkin/list_edit.html:47
 msgid ""
@@ -17535,7 +17532,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/settings.html:21
 #: orga/templates/orga/event/component_link.html:5
 msgid "Home"
-msgstr ""
+msgstr "Hem"
 
 #: control/templates/pretixcontrol/event/component_link.html:12
 #: eventyay_common/templates/eventyay_common/event/component_link.html:12
@@ -17556,7 +17553,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/settings.html:35
 #: orga/templates/orga/event/component_link.html:16
 msgid "Videos"
-msgstr ""
+msgstr "Videor"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:5
 #: control/templates/pretixcontrol/event/settings.html:254
@@ -17708,7 +17705,7 @@ msgstr ""
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:94
 #: control/templates/pretixcontrol/subevents/detail.html:53
 msgid "Timeline"
-msgstr ""
+msgstr "Tidslinje"
 
 #: control/templates/pretixcontrol/event/index.html:29
 msgid ""
@@ -17812,7 +17809,7 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/logs.html:72
 #: eventyay_common/templates/eventyay_common/includes/logs.html:42
 msgid "Inspect"
-msgstr ""
+msgstr "Inspektera"
 
 #: control/templates/pretixcontrol/event/index.html:238
 msgid "Show more logs"
@@ -17938,7 +17935,7 @@ msgstr ""
 #: control/templates/pretixcontrol/event/tickets.html:42
 #: control/templates/pretixcontrol/pdf/index.html:422
 msgid "Preview"
-msgstr ""
+msgstr "Förhandsgranska"
 
 #: control/templates/pretixcontrol/event/mail.html:53
 #: orga/templates/orga/settings/mail.html:14
@@ -17969,7 +17966,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/event/payment.html:67
 msgid "Deadlines"
-msgstr ""
+msgstr "Tidsfrister"
 
 #: control/templates/pretixcontrol/event/payment_provider.html:15
 msgid "Payment provider:"
@@ -17977,7 +17974,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/event/payment_provider.html:21
 msgid "Warning:"
-msgstr ""
+msgstr "Varning:"
 
 #: control/templates/pretixcontrol/event/payment_provider.html:22
 msgid ""
@@ -18028,7 +18025,7 @@ msgstr ""
 #: control/templates/pretixcontrol/event/plugins.html:72
 #: eventyay_common/templates/eventyay_common/event/plugins.html:72
 msgid "Incompatible"
-msgstr ""
+msgstr "Inkompatibel"
 
 #: control/templates/pretixcontrol/event/plugins.html:75
 #: eventyay_common/templates/eventyay_common/event/plugins.html:75
@@ -18043,7 +18040,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/plugins.html:78
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:39
 msgid "Disable"
-msgstr ""
+msgstr "Stäng av"
 
 #: control/templates/pretixcontrol/event/plugins.html:81
 #: control/templates/pretixcontrol/global_settings.html:146
@@ -18054,13 +18051,13 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/plugins.html:81
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:43
 msgid "Enable"
-msgstr ""
+msgstr "Aktivera"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:14
 #: control/templates/pretixcontrol/event/settings_base.html:10
 #: eventyay_common/templates/eventyay_common/event/settings_base.html:10
 msgid "Congratulations!"
-msgstr ""
+msgstr "Grattis!"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:16
 #: control/templates/pretixcontrol/event/settings_base.html:12
@@ -18119,7 +18116,7 @@ msgstr "Mina beställningar"
 #: control/templates/pretixcontrol/event/quick_setup.html:141
 #: control/views/event.py:382
 msgid "Features"
-msgstr ""
+msgstr "Funktioner"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:143
 msgid ""
@@ -18196,11 +18193,11 @@ msgstr "Bekräftelser"
 
 #: control/templates/pretixcontrol/event/settings.html:151
 msgid "Display"
-msgstr ""
+msgstr "Skärm"
 
 #: control/templates/pretixcontrol/event/settings.html:171
 msgid "Cart"
-msgstr ""
+msgstr "Vagn"
 
 #: control/templates/pretixcontrol/event/settings.html:186
 msgid "Item metadata"
@@ -18396,7 +18393,7 @@ msgstr ""
 #: control/templates/pretixcontrol/fragment_quota_box.html:3
 #: control/templates/pretixcontrol/fragment_quota_box_paid.html:3
 msgid "Quota:"
-msgstr ""
+msgstr "Kvot:"
 
 #: control/templates/pretixcontrol/fragment_quota_box.html:3
 #, python-format
@@ -18493,7 +18490,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/global_sso.html:18
 msgid "Submit"
-msgstr ""
+msgstr "Skicka in"
 
 #: control/templates/pretixcontrol/global_update.html:28
 msgid "The eventyay server returned an error code."
@@ -18685,7 +18682,7 @@ msgstr ""
 #: control/templates/pretixcontrol/item/include_addons.html:28
 #: control/templates/pretixcontrol/item/include_addons.html:62
 msgid "Add-On"
-msgstr ""
+msgstr "Tillägg"
 
 #: control/templates/pretixcontrol/item/include_addons.html:86
 msgid "Add a new add-on"
@@ -18727,7 +18724,7 @@ msgstr ""
 #: control/templates/pretixcontrol/item/index.html:95
 #: orga/templates/orga/cfp/forms.html:700 schedule/forms.py:18
 msgid "Availability"
-msgstr ""
+msgstr "Tillgänglighet"
 
 #: control/templates/pretixcontrol/item/index.html:117
 msgid "Tickets & check-in"
@@ -18801,7 +18798,7 @@ msgstr "Beskrivning"
 
 #: control/templates/pretixcontrol/items/fragment_quota_availability.html:3
 msgid "Closed"
-msgstr ""
+msgstr "Stängt"
 
 #: control/templates/pretixcontrol/items/fragment_quota_availability.html:5
 msgid "Sold out (pending orders)"
@@ -23062,12 +23059,12 @@ msgstr "Sessioner"
 
 #: eventyay_common/navigation.py:198 eventyay_common/navigation.py:206
 msgid "Devices"
-msgstr ""
+msgstr "Enheter"
 
 #: eventyay_common/navigation.py:270
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:31
 msgid "Notifications"
-msgstr ""
+msgstr "Aviseringar"
 
 #: eventyay_common/navigation.py:276
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:4
@@ -23570,7 +23567,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/auth/login.html:45
 #: eventyay_common/templates/eventyay_common/auth/register.html:36
 msgid "Register"
-msgstr ""
+msgstr "Registrera"
 
 #: eventyay_common/templates/eventyay_common/auth/login.html:29
 #: presale/templates/pretixpresale/fragment_login_status.html:18
