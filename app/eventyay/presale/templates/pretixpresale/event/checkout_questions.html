@@ -201,72 +201,80 @@
     <p>{% trans "This is a preview of your badge based on the information entered." %}</p>
 </div>
 <script>
-const errorPrefix = 'Error:';
-const errorLoading = 'Error loading preview.';
-</script>
-<script>
-const form = document.getElementById('checkout-questions-form');
+(function () {
+    'use strict';
 
-/**
- * Simple debounce helper to avoid firing preview updates on every keystroke.
- * The wrapped function will only run after `wait` ms have passed without
- * another call.
- */
-function debounce(fn, wait) {
-    let timeoutId;
-    return function debounced(...args) {
-        if (timeoutId) {
-            clearTimeout(timeoutId);
-        }
-        timeoutId = setTimeout(() => fn.apply(this, args), wait);
-    };
-}
+    // Localised strings rendered by the server so the JS never hardcodes English.
+    var errorPrefix = '{% trans "Error:" %}';
+    var errorLoading = '{% trans "Error loading preview." %}';
 
-function updatePreview() {
-    var data = new FormData(form);
-    fetch('{% url "plugins:badges:checkout-preview" organizer=request.event.organizer.slug event=request.event.slug %}', {
-        method: 'POST',
-        body: data,
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        }
-    }).then(response => response.json()).then(data => {
-        const previewDiv = document.getElementById('badge-preview');
-        previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>{% trans "This is a preview of your badge based on the information entered." %}</p>';
-        if (data.pdf_base64) {
-            const iframe = document.createElement('iframe');
-            iframe.src = 'data:application/pdf;base64,' + data.pdf_base64;
-            iframe.width = '400';
-            iframe.height = '300';
-            previewDiv.appendChild(iframe);
-        } else if (data.error) {
-            const p = document.createElement('p');
-            p.textContent = errorPrefix + ' ' + data.error;
+    var form = document.getElementById('checkout-questions-form');
+
+    /**
+     * Simple debounce helper to avoid firing preview updates on every keystroke.
+     * The wrapped function will only run after `wait` ms have passed without
+     * another call.
+     */
+    function debounce(fn, wait) {
+        var timeoutId;
+        return function debounced() {
+            var args = arguments;
+            var ctx = this;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            timeoutId = setTimeout(function () { fn.apply(ctx, args); }, wait);
+        };
+    }
+
+    function updatePreview() {
+        var data = new FormData(form);
+        fetch('{% url "plugins:badges:checkout-preview" organizer=request.event.organizer.slug event=request.event.slug %}', {
+            method: 'POST',
+            body: data,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            var previewDiv = document.getElementById('badge-preview');
+            previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>{% trans "This is a preview of your badge based on the information entered." %}</p>';
+            if (data.pdf_base64) {
+                var iframe = document.createElement('iframe');
+                iframe.src = 'data:application/pdf;base64,' + data.pdf_base64;
+                iframe.width = '400';
+                iframe.height = '300';
+                previewDiv.appendChild(iframe);
+            } else if (data.error) {
+                var p = document.createElement('p');
+                p.textContent = errorPrefix + ' ' + data.error;
+                previewDiv.appendChild(p);
+            }
+        }).catch(function () {
+            var previewDiv = document.getElementById('badge-preview');
+            previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4>';
+            var p = document.createElement('p');
+            p.textContent = errorLoading;
             previewDiv.appendChild(p);
-        }
-    }).catch(error => {
-        const previewDiv = document.getElementById('badge-preview');
-        previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4>';
-        const p = document.createElement('p');
-        p.textContent = errorLoading;
-        previewDiv.appendChild(p);
-    });
-}
-document.addEventListener('DOMContentLoaded', function() {
-    updatePreview();
-    const debouncedUpdatePreview = debounce(updatePreview, 400);
-    // Exclude file inputs from debounced preview updates to avoid repeatedly POSTing large files
-    form.querySelectorAll('input:not([type="file"]), select, textarea').forEach(el => {
-        el.addEventListener('input', debouncedUpdatePreview);
+        });
+    }
 
-        if (
-            el.tagName === 'SELECT' ||
-            (el.tagName === 'INPUT' && ['checkbox', 'radio'].includes(el.type))
-        ) {
-            el.addEventListener('change', debouncedUpdatePreview);
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        updatePreview();
+        var debouncedUpdatePreview = debounce(updatePreview, 400);
+        // Exclude file inputs to avoid repeatedly POSTing large files.
+        form.querySelectorAll('input:not([type="file"]), select, textarea').forEach(function (el) {
+            el.addEventListener('input', debouncedUpdatePreview);
+            if (
+                el.tagName === 'SELECT' ||
+                (el.tagName === 'INPUT' && ['checkbox', 'radio'].indexOf(el.type) !== -1)
+            ) {
+                el.addEventListener('change', debouncedUpdatePreview);
+            }
+        });
     });
-});
+}());
 </script>
 {% endif %}
 {% endblock %}

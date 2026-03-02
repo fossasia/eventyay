@@ -35,6 +35,18 @@ from .providers import BadgeOutputProvider
 
 logger = logging.getLogger(__name__)
 
+def _get_badge_layout_for_event(event):
+    """Return the default BadgeLayout for *event*, or None.
+
+    Also returns None when the badges plugin is not enabled for the event.
+    This is a module-level helper so that both the control views and the
+    presale preview view share a single, consistent lookup.
+    """
+    if 'eventyay.plugins.badges' not in event.get_plugins():
+        return None
+    return event.badge_layouts.filter(default=True).first()
+
+
 class BadgePluginEnabledMixin:
 
     def dispatch(self, request, *args, **kwargs):
@@ -289,11 +301,19 @@ class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncA
 class BadgeCheckoutPreviewView(View):
     def post(self, request, organizer, event):
         event = get_object_or_404(Event, organizer__slug=organizer, slug=event)
-        if 'eventyay.plugins.badges' not in event.plugins:
-            return JsonResponse({'error': 'Badge preview is currently unavailable.'}, status=400)
-        layout = event.badge_layouts.filter(default=True).first()
-        if not layout:
-            return JsonResponse({'error': 'Badge preview is not configured for this event.'}, status=400)
+
+        # Re-use the shared helper to check the plugin and fetch the layout.
+        layout = _get_badge_layout_for_event(event)
+        if layout is None:
+            # Plugin not enabled OR no default layout configured.
+            if 'eventyay.plugins.badges' not in event.get_plugins():
+                return JsonResponse(
+                    {'error': _('Badge preview is currently unavailable.')}, status=400
+                )
+            return JsonResponse(
+                {'error': _('Badge preview is not configured for this event.')}, status=400
+            )
+
         # Create mock order
         order = Order(event=event, code='PREVIEW', email=request.POST.get('email', 'preview@example.com'))
 
@@ -302,7 +322,10 @@ class BadgeCheckoutPreviewView(View):
         if not product:
             product = event.items.first()
         if not product:
-            return JsonResponse({'error': 'Unable to generate a badge preview for this event.'}, status=400)
+            return JsonResponse(
+                {'error': _('Unable to generate a badge preview for this event.')}, status=400
+            )
+
         # Get attendee data from POST, preferring exact field names and then
         # known patterns like ``attendee_name_<position-id>`` / ``attendee_email_<position-id>``.
         # This avoids broad substring matches and unintended overrides.
@@ -326,18 +349,22 @@ class BadgeCheckoutPreviewView(View):
                     if value:
                         attendee_email = value
                         break
+
         pos = OrderPosition(
             order=order,
             product=product,
             attendee_name=attendee_name,
-            attendee_email=attendee_email
+            attendee_email=attendee_email,
         )
-        # Generate
+
+        # Generate the badge PDF.
         provider = BadgeOutputProvider(event)
         try:
-            _, _, pdf_content = provider.generate(pos)
+            _fname, _mime, pdf_content = provider.generate(pos)
             base64_pdf = base64.b64encode(pdf_content).decode('utf-8')
             return JsonResponse({'pdf_base64': base64_pdf})
         except Exception:
             logger.exception('Error generating badge preview')
-            return JsonResponse({'error': 'An error occurred while generating the preview.'}, status=500)
+            return JsonResponse(
+                {'error': _('An error occurred while generating the preview.')}, status=500
+            )
