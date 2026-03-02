@@ -29,6 +29,9 @@ class EmailMasker:
         masked_local = ''.join('*' if i % 2 == 1 else char for i, char in enumerate(local_part))
         return f'{masked_local}@{domain}'
 
+    def __repr__(self) -> str:
+        return str(self)
+
     def to_json(self) -> str:
         return str(self)
 
