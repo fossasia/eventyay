@@ -41,7 +41,7 @@
 				button.expand-toggle(type="button", @click="toggleStarrersExpanded") {{ starrersExpanded ? t.hide_list : t.view_all }}
 			.avatars-line
 				template(v-for="u of starrersInlineItems", :key="u.code")
-					a.starrer(v-if="u.url", :href="u.url", target="_blank", rel="noopener noreferrer", :title="starrerTitle(u)")
+					a.starrer(v-if="starrerUrl(u)", :href="starrerUrl(u)", @click="onStarrerClick($event, u)", :title="starrerTitle(u)")
 						img.avatar-circle(v-if="u.avatar_url", :src="u.avatar_url", :alt="starrerTitle(u)")
 						.avatar-placeholder.avatar-circle(v-else)
 							svg(viewBox="0 0 24 24")
@@ -54,7 +54,7 @@
 			.starrers-expanded(v-if="starrersExpanded")
 				.starrers-list
 					template(v-for="u of starrers.items", :key="u.code")
-						a.starrer-row(v-if="u.url", :href="u.url", target="_blank", rel="noopener noreferrer")
+						a.starrer-row(v-if="starrerUrl(u)", :href="starrerUrl(u)", @click="onStarrerClick($event, u)")
 							img.avatar-circle(v-if="u.avatar_url", :src="u.avatar_url", :alt="starrerTitle(u)")
 							.avatar-placeholder.avatar-circle(v-else)
 								svg(viewBox="0 0 24 24")
@@ -102,6 +102,8 @@ export default {
 		},
 		showJoinRoom: { default: false },
 		getJoinRoomLink: { default: () => () => '' },
+		generateStarrerLinkUrl: { default: () => (user) => user.url || '' },
+		onStarrerLinkClick: { default: () => () => {} },
 		translationMessages: { default: () => ({}) }
 	},
 	props: {
@@ -214,6 +216,13 @@ export default {
 		starrerTitle(user) {
 			if (!user || !user.url) return this.t.anonymous_attendee
 			return user.name || this.t.anonymous_attendee
+		},
+		starrerUrl(user) {
+			if (!user) return ''
+			return this.generateStarrerLinkUrl(user) || user.url || ''
+		},
+		onStarrerClick(event, user) {
+			this.onStarrerLinkClick(event, user)
 		},
 		getStarrersUrl({ limit } = {}) {
 			if (!this.baseUrl || !this.resolvedTalk?.id) return ''

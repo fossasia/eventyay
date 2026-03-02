@@ -94,7 +94,27 @@ export default {
 			onSpeakerLinkClick: async (event, speaker) => {
 				event.preventDefault()
 				await this.$router.push({name: 'schedule:speaker', params: {speakerId: speaker.code}})
-			}
+			},
+			showJoinRoom: true,
+			getJoinRoomLink: (session) => {
+				// Mirror agenda logic: only show join room link when the session
+				// has both a room and a stream_url (i.e. it actually streams live)
+				if (!session?.stream_url || !session?.room) return ''
+				const roomId = typeof session.room === 'object' ? session.room.id : session.room
+				if (!roomId) return ''
+				return this.$router.resolve({name: 'room', params: {roomId}}).href
+			},
+			generateStarrerLinkUrl: (user) => {
+				if (!user?.url || !user?.code) return ''
+				return this.$router.resolve({name: 'schedule:public-stars', params: {userCode: user.code}}).href
+			},
+			onStarrerLinkClick: async (event, user) => {
+				if (user?.code && user?.url) {
+					event.preventDefault()
+					await this.$router.push({name: 'schedule:public-stars', params: {userCode: user.code}})
+				}
+			},
+			translationMessages: window.eventyay?.translationMessages || {}
 		}
 	},
 	data() {

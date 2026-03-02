@@ -103,4 +103,8 @@ class PublicStarredScheduleDataView(View):
                 .order_by('submission__code')
             )
 
-        return JsonResponse(favs, safe=False)
+        user = self.public_user
+        display_name = user.get_display_name() or user.code
+        if _is_email_like(display_name):
+            display_name = None  # don't leak email
+        return JsonResponse({'name': display_name, 'favs': favs})

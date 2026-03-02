@@ -1024,8 +1024,8 @@ export default {
 		&:hover
 			background-color: rgba(0, 0, 0, 0.05)
 		&.sessions-toggle.active
-			background-color: var(--pretalx-clr-primary, #3aa57c)
-			color: #fff
+			color: var(--pretalx-clr-primary, #3aa57c)
+			font-weight: 600
 			border-radius: 4px
 		&.recording-btn
 			position: relative

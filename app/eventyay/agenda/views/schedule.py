@@ -391,11 +391,20 @@ def schedule_messages(request, **kwargs):
         'speakers': _('Speakers'),
         'downloads': _('Downloads'),
         'starred_by': _('Starred by'),
+        'starred': _('Starred'),
         'export': _('Export'),
+        'exports': _('Exports'),
         'no_file_provided': _('No file provided'),
         'no_response': _('No response'),
         'other_timezones': _('Other Timezones'),
         'current': _('current'),
+        'print': _('Print'),
+        'list_view': _('List View'),
+        'calendar_view': _('Calendar View'),
+        'search': _('Search'),
+        'featured_speakers': _('Featured Speakers'),
+        'view_profile': _('View speaker profile'),
+        'no_starred_sessions': _('No starred sessions.'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(

@@ -41,6 +41,7 @@
 				:locale="locale",
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
+				:showFavCount="showFavCountOnCalendar",
 				@changeDay="setCurrentDay",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -54,6 +55,7 @@
 				:locale="locale",
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
+				:showFavCount="showFavCountOnList",
 				:sortBy="sortBy",
 				:showBreaks="!linearOnly && !sessionsMode",
 				@changeDay="dayScrolled",
@@ -156,6 +158,14 @@ export default {
 		},
 		scheduleReady() {
 			return !!(this.resolvedSchedule && this.enrichedSessions.length)
+		},
+		showFavCountOnCalendar() {
+			const flags = this.scheduleData?.schedule?.feature_flags || {}
+			return !!(flags.session_popularity_enabled && flags.session_popularity_show_on_calendar)
+		},
+		showFavCountOnList() {
+			const flags = this.scheduleData?.schedule?.feature_flags || {}
+			return !!(flags.session_popularity_enabled && flags.session_popularity_show_on_list)
 		},
 		hasError() {
 			return !!(this.errorLoading || this.scheduleData?.errorLoading)

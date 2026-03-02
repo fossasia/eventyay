@@ -10,7 +10,7 @@
 		speakers-list(v-else-if="view === 'speakers'")
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
 	template(v-else-if="schedule && schedule.talks.length")
-		schedule-toolbar(v-if="scheduleMeta || schedule",
+		schedule-toolbar(v-if="(scheduleMeta || schedule) && !publicFavsUrl",
 			:version="scheduleMeta?.version || ''",
 			:isCurrent="scheduleMeta?.is_current !== false",
 			:changelogUrl="scheduleMeta?.changelog_url || ''",
