@@ -12,6 +12,7 @@ from typing import cast
 from urllib.parse import urlparse, urlunparse
 
 import jwt
+from allauth.account.models import EmailAddress
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -37,8 +38,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import TemplateView, View
 
-from django.contrib.auth.mixins import LoginRequiredMixin
-from allauth.account.models import EmailAddress
 from eventyay.base.models import (
     CachedTicket,
     GiftCard,
@@ -49,7 +48,6 @@ from eventyay.base.models import (
     TaxRule,
     User,
 )
-from eventyay.common.utils.masks import EmailMasker
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.orders import (
     CachedCombinedTicket,
@@ -85,12 +83,14 @@ from eventyay.base.signals import (
 from eventyay.base.templatetags.money import money_filter
 from eventyay.base.views.mixins import OrderQuestionsViewMixin
 from eventyay.base.views.tasks import AsyncAction
+from eventyay.common.utils.masks import EmailMasker
 from eventyay.eventyay_common.utils import encode_email
 from eventyay.helpers.safedownload import check_token
 from eventyay.multidomain.urlreverse import build_absolute_uri, eventreverse
 from eventyay.presale.forms.checkout import InvoiceAddressForm, QuestionsForm
 from eventyay.presale.forms.order import OrderPositionChangeForm
 from eventyay.presale.signals import question_form_fields_overrides
+from eventyay.presale.utils import belong_to_verified_user
 from eventyay.presale.views import (
     CartMixin,
     EventViewMixin,
@@ -110,6 +110,12 @@ class OrderDetailMixin(NoSearchIndexViewMixin):
         order = queryset.select_related('event').first()
         if not order:
             return None
+
+        # If order belongs to a verified user, return order directly
+        if belong_to_verified_user(order, self.request.user):
+            return order
+
+        # For unauthenticated users or users who don't own the order, require secret validation
         order_secret = order.secret.lower()
         passed_secret = self.kwargs['secret'].lower()
         # This comparison method is to reduce risk of timing attacks
@@ -127,36 +133,36 @@ class OrderDetailMixin(NoSearchIndexViewMixin):
     def dispatch(self, request: HttpRequest, *args, **kwargs):
         """
         Check if the request is authorized to access this order.
-        
+
         If user is authenticated, we check if any of their email addresses can modify this order
         and that at least one is verified.
-        
+
         If user is not authenticated, we allow access through the secret link but check if the
         order email belongs to a verified user account. If it does but is unverified, we require
         the secret to match.
         """
         self.request = request
         self.kwargs = kwargs
-        
+
         if not self.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        
+
         # For authenticated users, check email verification for access
         if request.user.is_authenticated:
             user = cast(User, request.user)
             email_addresses = user.email_addresses
             if not email_addresses:
                 raise Http404(_('Unknown order code or not authorized to access this order.'))
-                
+
             # Find which email addresses can modify this order
             can_modify_emails = [
-                addr for addr in email_addresses 
+                addr for addr in email_addresses
                 if self.order.is_modification_allowed_by(addr)
             ]
-            
+
             if not can_modify_emails:
                 raise Http404(_('Unknown order code or not authorized to access this order.'))
-            
+
             # Check if at least one of the modifying emails is verified
             verified_email_found = False
             for addr in can_modify_emails:
@@ -172,7 +178,7 @@ class OrderDetailMixin(NoSearchIndexViewMixin):
                     if email_verified:
                         verified_email_found = True
                         break
-            
+
             if not verified_email_found:
                 logger.warning(
                     'User with unverified email attempting to access order. '
@@ -196,19 +202,19 @@ class OrderDetailMixin(NoSearchIndexViewMixin):
                 verified_user_email = EmailAddress.objects.filter(
                     email__iexact=order_email, verified=True
                 ).first()
-                
+
                 if verified_user_email:
                     # This email belongs to a verified user account
                     # Access is only allowed through the secret link
                     pass  # Secret already verified in order property
                 # If email doesn't belong to any verified user, allow access through secret
-        
+
         return super().dispatch(request, *args, **kwargs)
 
 
 class OrderPositionDetailMixin(NoSearchIndexViewMixin):
     @cached_property
-    def position(self):
+    def position(self) -> OrderPosition | None:
         p = (
             OrderPosition.objects.filter(
                 order__event=self.request.event,
@@ -219,49 +225,55 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
             .select_related('order', 'order__event')
             .first()
         )
-        if p:
-            if p.web_secret.lower() == self.kwargs['secret'].lower():
-                return p
-            else:
-                return None
+        if not p or not p.order:
+            return None
+
+        # If order belongs to a verified user, return position directly
+        if belong_to_verified_user(p.order, self.request.user):
+            return p
+
+        # For unauthenticated users or users who don't own the order, require secret validation
+        if p.web_secret.lower() == self.kwargs['secret'].lower():
+            return p
+        return None
 
     def dispatch(self, request: HttpRequest, *args, **kwargs):
         """
         Check if the request is authorized to access this order position.
-        
+
         If user is authenticated, we check if any of their email addresses can modify this position
         and that at least one is verified.
-        
+
         If user is not authenticated, we allow access through the secret link but check if the
         order email belongs to a verified user account. If it does but is unverified, we require
         the secret to match.
         """
         self.request = request
         self.kwargs = kwargs
-        
+
         if not self.position:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        
+
         # Check the associated order as well
         if not self.position.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        
+
         # For authenticated users, check email verification for access
         if request.user.is_authenticated:
             user = cast(User, request.user)
             email_addresses = user.email_addresses
             if not email_addresses:
                 raise Http404(_('Unknown order code or not authorized to access this order.'))
-                
+
             # Find which email addresses can modify this order/position
             can_modify_emails = [
-                addr for addr in email_addresses 
+                addr for addr in email_addresses
                 if self.position.order.is_modification_allowed_by(addr)
             ]
-            
+
             if not can_modify_emails:
                 raise Http404(_('Unknown order code or not authorized to access this order.'))
-            
+
             # Check if at least one of the modifying emails is verified
             verified_email_found = False
             for addr in can_modify_emails:
@@ -277,7 +289,7 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
                     if email_verified:
                         verified_email_found = True
                         break
-            
+
             if not verified_email_found:
                 logger.warning(
                     'User with unverified email attempting to access order. '
@@ -301,13 +313,13 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
                 verified_user_email = EmailAddress.objects.filter(
                     email__iexact=order_email, verified=True
                 ).first()
-                
+
                 if verified_user_email:
                     # This email belongs to a verified user account
                     # Access is only allowed through the secret link
                     pass  # Secret already verified in position property
                 # If email doesn't belong to any verified user, allow access through secret
-        
+
         return super().dispatch(request, *args, **kwargs)
 
 
