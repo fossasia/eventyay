@@ -1,4 +1,5 @@
 import hashlib
+import os
 from urllib.parse import unquote
 
 from csp.decorators import csp_exempt
@@ -12,21 +13,31 @@ from eventyay.talk_rules.agenda import is_widget_visible
 from eventyay.common.views import conditional_cache_page
 
 WIDGET_JS_CHECKSUM = None
-WIDGET_PATH = 'agenda/js/pretalx-schedule.min.js'
+WIDGET_JS_MTIME = None
+WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
 def color_etag(request, organizer=None, event=None, **kwargs):
-    return request.event.primary_color or 'none'
+    return request.event.visible_primary_color or 'none'
 
 
 def widget_js_etag(request, organizer=None, event=None, **kwargs):
     # The widget is stable across all events, we just return a checksum of the JS file
     # to make sure clients reload the widget when it changes.
-    global WIDGET_JS_CHECKSUM
-    if not WIDGET_JS_CHECKSUM:
-        file_path = finders.find(WIDGET_PATH)
+    global WIDGET_JS_CHECKSUM, WIDGET_JS_MTIME
+    file_path = finders.find(WIDGET_PATH)
+    if not file_path:
+        return 'missing'
+
+    try:
+        mtime = os.path.getmtime(file_path)
+    except OSError:
+        return 'missing'
+
+    if WIDGET_JS_CHECKSUM is None or WIDGET_JS_MTIME != mtime:
         with open(file_path, encoding='utf-8') as fp:
             WIDGET_JS_CHECKSUM = hashlib.md5(fp.read().encode()).hexdigest()
+        WIDGET_JS_MTIME = mtime
     return WIDGET_JS_CHECKSUM
 
 
@@ -113,9 +124,6 @@ def widget_script(request, organizer=None, event=None, **kwargs):
     # /<event>/widget/schedule.js path, as it cuts down the transferred data
     # by about 80% for the schedule.js file, which is the largest file on the
     # main schedule page).
-    if not request.user.has_perm('base.view_widget_schedule', request.event):
-        raise Http404()
-
     file_path = finders.find(WIDGET_PATH)
     with open(file_path, encoding='utf-8') as fp:
         code = fp.read()
@@ -124,17 +132,20 @@ def widget_script(request, organizer=None, event=None, **kwargs):
 
 
 @condition(etag_func=color_etag)
-@cache_page(5 * 60)
 @csp_exempt()
 def event_css(request, organizer=None, event=None, **kwargs):
     # If this event has custom colours, we send back a simple CSS file that sets the
     # root colours for the event.
     result = ''
-    if request.event.primary_color:
+    if request.event.visible_primary_color:
         if request.GET.get('target') == 'orga':
             # The organizer area sometimes needs the event’s colour, but shouldn’t use
             # it as primary colour automatically.
-            result = ':root {' + f'--color-primary-event: {request.event.primary_color};' + '}'
+            result = ':root {' + f'--color-primary-event: {request.event.visible_primary_color};' + '}'
         else:
-            result = ':root {' + f'--color-primary: {request.event.primary_color};' + '}'
-    return HttpResponse(result, content_type='text/css')
+            result = ':root {' + f'--color-primary: {request.event.visible_primary_color};' + '}'
+    response = HttpResponse(result, content_type='text/css')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response

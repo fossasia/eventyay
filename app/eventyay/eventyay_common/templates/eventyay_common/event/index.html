@@ -9,16 +9,16 @@
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
             <div class="navigation-title">
-                <h1>
+                <h2>
                     {{ request.event.name }}
-                    <small>
+                    <small class="text-muted small">
                         {% if request.event.has_subevents %}
                             {% trans "Event series" %}
                         {% else %}
                             {{ request.event.get_date_range_display }}
                         {% endif %}
                     </small>
-                </h1>
+                </h2>
             </div>
             {% include "eventyay_common/event/component_link.html" %}
         </div>
@@ -63,9 +63,6 @@
     {% endif %}
     <br>
     {% include "eventyay_common/event/fragment_dashboard.html" %}
-    {% if not request.event.has_subevents or subevent %}
-        {% include "pretixcontrol/event/fragment_timeline.html" %}
-    {% endif %}
     <div class="dashboard">
         {% for w in widgets %}
             <div class="widget-container widget-{{ w.display_size|default:"small" }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">

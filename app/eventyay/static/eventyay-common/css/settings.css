@@ -23,6 +23,16 @@
     border-radius: 3px;
 }
 
+.header-small {
+    height: 21px;
+    font-size: 18px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.spacer {
+    margin-bottom: 50px;
+}
 
 .setting-part {
     margin-bottom: 1%;
@@ -44,4 +54,8 @@
     .disabled {
         margin-left: 0;
     }
+}
+
+.form-narrow {
+    max-width: 600px;
 }

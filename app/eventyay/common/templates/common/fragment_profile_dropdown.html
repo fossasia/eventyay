@@ -1,0 +1,58 @@
+{% load i18n %}
+
+<li class="nav-item">
+    <details class="dropdown fix-height" id="profile-dropdown">
+        <summary class="header-nav">
+            <i class="fa fa-user"></i> {{ request.user.get_full_name }}
+            <i class="fa fa-caret-down"></i>
+        </summary>
+        <div class="dropdown-content dropdown-content-sw">
+            <div class="dashboard-dropdown">
+                <a class="dropdown-item dashboard-dropdown-toggle" href="{{ base_path }}/common/" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa fa-tachometer"></i> {% translate "Dashboard" %}
+                </a>
+                <div class="dropdown-content dropdown-content-w" role="menu">
+                    <a class="dropdown-item" href="{{ base_path }}/common/">
+                        <i class="fa fa-tachometer"></i> {% translate "Main dashboard" %}
+                    </a>
+                    <a class="dropdown-item" href="{{ base_path }}/control/">
+                        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+                    </a>
+                    <a class="dropdown-item" href="{{ base_path }}/orga/event/">
+                        <i class="fa fa-microphone"></i> {% translate "Talks" %}
+                    </a>
+                </div>
+            </div>
+
+            <a class="dropdown-item" href="{{ base_path }}/common/orders/">
+                <i class="fa fa-shopping-cart"></i> {% translate "My orders" %}
+            </a>
+            <a class="dropdown-item" href="{{ base_path }}/common/sessions/">
+                <i class="fa fa-sticky-note-o"></i> {% translate "My sessions" %}
+            </a>
+            <a class="dropdown-item" href="{{ base_path }}/common/events/">
+                <i class="fa fa-calendar"></i> {% translate "My Events" %}
+            </a>
+            <a class="dropdown-item" href="{{ base_path }}/common/organizers/">
+                <i class="fa fa-users"></i> {% translate "Organizers" %}
+            </a>
+
+            <hr />
+
+            <a class="dropdown-item" href="{{ base_path }}/common/account/">
+                <i class="fa fa-user-circle"></i> {% translate "Account" %}
+            </a>
+            {% if request.user.is_staff and staff_session %}
+                <a class="dropdown-item" href="{{ base_path }}/admin/">
+                    <i class="fa fa-cog"></i> {% translate "Admin" %}
+                </a>
+            {% endif %}
+
+            <hr />
+
+            <a class="dropdown-item" href="{{ base_path }}/common/logout/?back={{ request.get_full_path|urlencode }}">
+                <i class="fa fa-sign-out"></i> {% translate "Logout" %}
+            </a>
+        </div>
+    </details>
+</li>

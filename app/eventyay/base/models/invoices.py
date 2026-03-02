@@ -286,9 +286,9 @@ class InvoiceLine(models.Model):
     :param subevent: The subevent this line refers to
     :type subevent: SubEvent
     :param event_date_from: Event date of the (sub)event at the time the invoice was created
-    :type event_date_from: datetime
+    :type event_date_from: datetime.datetime
     :param event_date_to: Event end date of the (sub)event at the time the invoice was created
-    :type event_date_to: datetime
+    :type event_date_to: datetime.datetime
     :param product: The product this line refers to
     :type product: Product
     :param variation: The variation this line refers to

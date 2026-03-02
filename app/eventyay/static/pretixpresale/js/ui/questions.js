@@ -1,4 +1,4 @@
-/*global $ */
+/*global $,safeSelector */
 
 function questions_toggle_dependent(ev) {
     function q_should_be_shown($el) {
@@ -34,7 +34,7 @@ function questions_toggle_dependent(ev) {
                 }
                 $dependency_el = $("input[value=" + dependency_values[0] + "][name=" + dependency_name + "]");
                 if (!$dependency_el.closest(".form-group").hasClass("dependency-hidden")) {  // do not show things that depend on hidden things
-                    return q_should_be_shown($dependency_el) && $(filter).length;
+                    return q_should_be_shown($dependency_el) && safeSelector(filter).length;
                 }
             }
         }

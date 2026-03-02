@@ -36,14 +36,7 @@
                             {% bootstrap_field filter_form.organizer layout='inline' %}
                         </div>
                         <div class="col-md-3 col-sm-6 col-xs-12">
-                            <div class="form-group" style="gap: 20px; display: flex;">
-                                <button class="btn btn-primary" type="submit">
-                                    <span class="fa fa-filter"></span>
-                                </button>
-                                <a href="?" class="btn btn-default">
-                                    <span class="fa fa-eraser"></span>
-                                </a>
-                            </div>
+                            {% include "eventyay_common/filter_actions.html" %}
                         </div>
                     </div>
                 </form>
@@ -146,13 +139,11 @@
                         {% endif %}
                     </td>
                     <td class="text-right flip">
-                        {% if 'pretix_venueless' in e.plugins_array %}
-                            <a href='{% url "eventyay_common:event.create_access_to_video" organizer=e.organizer.slug event=e.slug %}'
-                               class="btn btn-sm btn-default" title="{% trans "Enable video access" %}"
-                               data-toggle="tooltip">
-                                <span class="fa fa-video-camera"></span>
-                            </a>
-                        {% endif %}
+                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=e.organizer.slug event=e.slug %}'
+                           class="btn btn-sm btn-default" title="{% trans "Enable video access" %}"
+                           data-toggle="tooltip">
+                            <span class="fa fa-video-camera"></span>
+                        </a>
                         <a href='{% url "eventyay_common:event.update" organizer=e.organizer.slug event=e.slug %}'
                            class="btn btn-sm btn-default" title="{% trans "Edit" %}"
                            data-toggle="tooltip">

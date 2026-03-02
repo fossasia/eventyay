@@ -3,9 +3,12 @@ import urllib.parse
 from copy import copy
 from functools import partial
 
+# TODO: Remove bleach import
 import bleach
 import markdown
+# TODO: Remove bleach import
 from bleach import DEFAULT_CALLBACKS
+# TODO: Remove bleach import
 from bleach.linkifier import build_email_re, build_url_re
 from django import template
 from django.conf import settings
@@ -44,6 +47,7 @@ ALLOWED_TAGS = {
     'li',
     'ol',
     'strong',
+    'u',
     'ul',
     'p',
     'pre',
@@ -75,6 +79,7 @@ ALLOWED_ATTRIBUTES = {
 
 ALLOWED_PROTOCOLS = {'http', 'https', 'mailto', 'tel'}
 
+# TODO: Remove bleach library
 URL_RE = build_url_re(tlds=TLD_SET)
 EMAIL_RE = build_email_re(tlds=TLD_SET)
 
@@ -97,6 +102,7 @@ def link_callback(attrs, is_new, safelink=True):
 safelink_callback = partial(link_callback, safelink=True)
 abslink_callback = partial(link_callback, safelink=False)
 
+# TODO: Implement nh3 equivalent
 CLEANER = bleach.Cleaner(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
@@ -113,6 +119,7 @@ CLEANER = bleach.Cleaner(
     ],
 )
 
+# TODO: Implement nh3 equivalent
 ABSLINK_CLEANER = bleach.Cleaner(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
@@ -129,6 +136,7 @@ ABSLINK_CLEANER = bleach.Cleaner(
     ],
 )
 
+# TODO: Implement nh3 equivalent
 NO_LINKS_CLEANER = bleach.Cleaner(
     tags=copy(ALLOWED_TAGS) - {'a'},
     attributes=ALLOWED_ATTRIBUTES,
@@ -138,7 +146,7 @@ NO_LINKS_CLEANER = bleach.Cleaner(
 
 STRIKETHROUGH_RE = '(~{2})(.+?)(~{2})'
 
-
+# TODO: Implement nh3 equivalent
 def markdown_compile_email(source):
     linker = bleach.Linker(
         url_re=URL_RE,
@@ -184,10 +192,16 @@ md = markdown.Markdown(
 )
 
 
+def compile_markdown(text: str) -> str:
+    if not text:
+        return ''
+    return md.reset().convert(str(text))
+
+
 def render_markdown(text: str, cleaner=CLEANER) -> str:
     if not text:
         return ''
-    body_md = cleaner.clean(md.reset().convert(str(text)))
+    body_md = cleaner.clean(compile_markdown(text))
     return mark_safe(body_md)
 
 

@@ -679,14 +679,14 @@ def product_meta_values(request, organizer, event):
     matches = matches.filter(product__event__organizer_id=organizer.pk)
     all_access = (
         request.user.has_active_staff_session(request.session.session_key)
-        or request.user.teams.filter(all_events=True, organizer=organizer, can_change_products=True).exists()
+        or request.user.teams.filter(all_events=True, organizer=organizer, can_change_items=True).exists()
     )
     if not all_access:
         defaults = matches.filter(
-            event__id__in=request.user.teams.filter(can_change_products=True).values_list('limit_events__id', flat=True)
+            event__id__in=request.user.teams.filter(can_change_items=True).values_list('limit_events__id', flat=True)
         )
         matches = matches.filter(
-            product__event__id__in=request.user.teams.filter(can_change_products=True).values_list(
+            product__event__id__in=request.user.teams.filter(can_change_items=True).values_list(
                 'limit_events__id', flat=True
             )
         )

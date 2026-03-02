@@ -421,8 +421,22 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
 
     # From Talk
     limit_tracks = models.ManyToManyField(to='Track', verbose_name=_('Limit to tracks'), blank=True)
-    can_change_submissions = models.BooleanField(default=False, verbose_name=_('Can work with and change proposals'))
-    is_reviewer = models.BooleanField(default=False, verbose_name=_('Is a reviewer'))
+    can_change_submissions = models.BooleanField(
+        default=False,
+        verbose_name=_('Reviewer Manager — can edit and manage submissions'),
+        help_text=_(
+            'Can edit submission details, change proposal states (accept/reject/waitlist), '
+            'manage submission metadata, and oversee the review workflow. '
+            'This provides full management permissions beyond standard reviewing.'
+        )
+    )
+    is_reviewer = models.BooleanField(
+        default=False,
+        verbose_name=_('Reviewer — can only review submissions'),
+        help_text=_(
+            'Can review and provide feedback on submissions but cannot edit details or change submission states.'
+        )
+    )
     force_hide_speaker_names = models.BooleanField(
         verbose_name=_('Always hide speaker names'),
         help_text=_(
@@ -431,6 +445,52 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'and always hide speaker names for this team.'
         ),
         default=False,
+    )
+
+    can_video_create_stages = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create stages'),
+        help_text=_('Allows creating livestream stages inside Eventyay Video.'),
+    )
+    can_video_create_channels = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create channels'),
+        help_text=_('Allows creating chat/video channels inside Eventyay Video.'),
+    )
+    can_video_direct_message = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can send direct messages'),
+        help_text=_('Grants permission to open new direct message conversations.'),
+    )
+    can_video_manage_announcements = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create announcements'),
+        help_text=_('Allows posting announcements in the Eventyay Video interface.'),
+    )
+    can_video_view_users = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can view users'),
+        help_text=_('Allows access to the user directory in Eventyay Video.'),
+    )
+    can_video_manage_users = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can message, ban, and silence users'),
+        help_text=_('Allows moderating users (ban, silence, reactivate) in Eventyay Video.'),
+    )
+    can_video_manage_rooms = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create and edit rooms'),
+        help_text=_('Allows editing and deleting rooms inside Eventyay Video.'),
+    )
+    can_video_manage_kiosks = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create and edit kiosks'),
+        help_text=_('Allows managing kiosk displays inside Eventyay Video.'),
+    )
+    can_video_manage_configuration = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can edit event configuration'),
+        help_text=_('Allows editing the global Eventyay Video configuration.'),
     )
 
     @cached_property

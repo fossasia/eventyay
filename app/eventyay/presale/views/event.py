@@ -1,6 +1,7 @@
 import calendar
 import datetime as dt
 import importlib.util
+import json
 import logging
 import sys
 from collections import defaultdict
@@ -18,12 +19,14 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
     Exists,
+    F,
     IntegerField,
     OuterRef,
     Prefetch,
     Q,
     Value,
 )
+from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -35,18 +38,24 @@ from django.utils.translation import pgettext_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
+from django_scopes import scope
+from i18nfield.utils import I18nJSONEncoder
+
+from eventyay.agenda.views.utils import escape_json_for_script
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
-    ProductVariation,
     Order,
+    ProductVariation,
     Quota,
     SeatCategoryMapping,
+    SpeakerProfile,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import (
     ProductBundle,
+    ProductMetaValue,
     SubEventProduct,
     SubEventProductVariation,
 )
@@ -73,12 +82,6 @@ from . import (
     iframe_entry_view_wrapper,
 )
 
-package_name = 'pretix_venueless'
-
-if importlib.util.find_spec(package_name) is not None:
-    pretix_venueless = import_module(package_name)
-else:
-    pretix_venueless = None
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -250,6 +253,15 @@ def get_grouped_products(
         qa.compute()
         quota_cache.update({q.pk: r for q, r in qa.results.items()})
 
+    product_ids = [p.pk for p in products]
+    limit_one_per_user_product_ids = set(
+        ProductMetaValue.objects.filter(
+            product_id__in=product_ids,
+            property__event=event,
+            property__name='limit_one_per_user',
+        ).values_list('product_id', flat=True)
+    )
+
     for product in products:
         if voucher and voucher.product_id and voucher.variation_id:
             # Restrict variations if the voucher only allows one
@@ -291,10 +303,17 @@ def get_grouped_products(
                 product._remove = True
                 continue
 
+            product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+
             product.order_max = min(
                 product.cached_availability[1] if product.cached_availability[1] is not None else sys.maxsize,
                 max_per_order,
             )
+
+            if product.limit_one_per_user:
+                product.order_max = min(product.order_max, 1)
+                if product.min_per_order and product.min_per_order > 1:
+                    product.min_per_order = 1
 
             original_price = product_price_override.get(product.pk, product.default_price)
             if voucher:
@@ -320,6 +339,11 @@ def get_grouped_products(
 
             display_add_to_cart = display_add_to_cart or product.order_max > 0
         else:
+            product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+
+            if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
+                product.min_per_order = 1
+
             for var in product.available_variations:
                 var.description = str(var.description)
                 for recv, resp in product_description.send(sender=event, product=product, variation=var):
@@ -340,6 +364,11 @@ def get_grouped_products(
                     var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
                     max_per_order,
                 )
+
+                if product.limit_one_per_user:
+                    var.order_max = min(var.order_max, 1)
+                    if hasattr(var, 'min_per_order') and var.min_per_order and var.min_per_order > 1:
+                        var.min_per_order = 1
 
                 original_price = var_price_override.get(var.pk, var.price)
                 if voucher:
@@ -530,15 +559,21 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['cart'] = self.get_cart()
         context['has_addon_choices'] = any(cp.has_addon_choices for cp in get_cart(self.request))
         if self.subevent:
-            context['frontpage_text'] = str(self.subevent.frontpage_text)
+            context['frontpage_text'] = self.subevent.frontpage_text
         else:
-            context['frontpage_text'] = str(self.request.event.settings.frontpage_text)
+            context['frontpage_text'] = self.request.event.settings.frontpage_text
 
         if self.request.event.has_subevents:
             context.update(self._subevent_list_context())
 
-        context['show_cart'] = context['cart']['positions'] and (
-            self.request.event.has_subevents or self.request.event.presale_is_running
+        context['can_view_tickets'] = self.request.event.user_can_view_tickets(
+            self.request.user,
+            request=self.request,
+        )
+        context['show_cart'] = (
+            context['can_view_tickets']
+            and context['cart']['positions']
+            and (self.request.event.has_subevents or self.request.event.presale_is_running)
         )
         if self.request.event.settings.redirect_to_checkout_directly:
             context['cart_redirect'] = eventreverse(
@@ -570,26 +605,124 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             event_name = event_name_data
 
         context['event_name'] = event_name
-
-        context['is_video_plugin_enabled'] = False
-
-        if (
-            getattr(
-                getattr(getattr(pretix_venueless, 'apps', None), 'PluginApp', None),
-                'name',
-                None,
-            )
-            in self.request.event.get_plugins()
-        ):
-            context['is_video_plugin_enabled'] = True
-
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
+        context['featured_speakers'] = []
+        context['featured_speakers_widget_schedule'] = None
+        context['featured_speakers_widget_schedule_json'] = ''
 
-        if not context['guest_checkout_allowed'] and not self.request.user.is_authenticated:
-            messages.error(
-                self.request,
-                _('This event only available for registered users. Please login to continue.'),
+        event = self.request.event
+        with scope(event=event):
+            featured_speakers = list(
+                SpeakerProfile.objects.filter(
+                    event=event,
+                    is_featured=True,
+                )
+                .select_related('user')
+                .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
             )
+
+        if featured_speakers:
+            context['featured_speakers'] = featured_speakers
+
+            featured_codes = {profile.user.code for profile in featured_speakers if profile.user_id}
+
+            schedule = event.current_schedule or getattr(event, 'wip_schedule', None)
+            can_view_schedule = (
+                bool(schedule)
+                and (
+                    self.request.user.has_perm('base.view_widget_schedule', event)
+                    or event.talks_published
+                )
+            )
+
+            if schedule and can_view_schedule:
+                with scope(event=event):
+                    schedule_data = schedule.build_data(all_talks=not schedule.version)
+
+                schedule_speakers = list(schedule_data.get('speakers', []) or [])
+                schedule_speaker_codes = {s.get('code') for s in schedule_speakers if isinstance(s, dict)}
+                include_avatar = event.cfp.request_avatar
+                for speaker_profile in featured_speakers:
+                    if not speaker_profile.user_id:
+                        continue
+                    user = speaker_profile.user
+                    if user.code in schedule_speaker_codes:
+                        continue
+                    schedule_speakers.append(
+                        {
+                            'code': user.code,
+                            'name': user.fullname or None,
+                            'biography': speaker_profile.biography or '',
+                            'avatar': (user.get_avatar_url(event=event) if include_avatar else None),
+                            'avatar_thumbnail_default': (
+                                user.get_avatar_url(event=event, thumbnail='default') if include_avatar else None
+                            ),
+                            'avatar_thumbnail_tiny': (
+                                user.get_avatar_url(event=event, thumbnail='tiny') if include_avatar else None
+                            ),
+                            'is_featured': True,
+                            'featured_position': speaker_profile.position,
+                        }
+                    )
+                schedule_data['speakers'] = schedule_speakers
+
+                all_talks_list = list(schedule_data.get('talks', []) or [])
+                filtered_talks = [
+                    t
+                    for t in all_talks_list
+                    if featured_codes.intersection(set(t.get('speakers') or []))
+                ]
+                schedule_data['talks'] = filtered_talks
+
+                track_ids = {t.get('track') for t in schedule_data['talks'] if t.get('track') is not None}
+                room_ids = {t.get('room') for t in schedule_data['talks'] if t.get('room') is not None}
+                schedule_data['tracks'] = [
+                    tr for tr in schedule_data.get('tracks', []) if tr.get('id') in track_ids
+                ]
+                schedule_data['rooms'] = [
+                    rm for rm in schedule_data.get('rooms', []) if rm.get('id') in room_ids
+                ]
+                context['featured_speakers_widget_schedule'] = schedule_data
+                context['featured_speakers_widget_schedule_json'] = escape_json_for_script(
+                    json.dumps(schedule_data, cls=I18nJSONEncoder)
+                )
+            else:
+                include_avatar = event.cfp.request_avatar
+                widget_speakers = []
+                for speaker_profile in featured_speakers:
+                    if not speaker_profile.user_id:
+                        continue
+                    user = speaker_profile.user
+                    widget_speakers.append(
+                        {
+                            'code': user.code,
+                            'name': user.fullname or None,
+                            'biography': speaker_profile.biography or '',
+                            'avatar': (user.get_avatar_url(event=event) if include_avatar else None),
+                            'avatar_thumbnail_default': (
+                                user.get_avatar_url(event=event, thumbnail='default') if include_avatar else None
+                            ),
+                            'avatar_thumbnail_tiny': (
+                                user.get_avatar_url(event=event, thumbnail='tiny') if include_avatar else None
+                            ),
+                            'is_featured': True,
+                            'featured_position': speaker_profile.position,
+                        }
+                    )
+                context['featured_speakers_widget_schedule'] = {
+                    'talks': [],
+                    'speakers': widget_speakers,
+                    'tracks': [],
+                    'rooms': [],
+                    'version': '',
+                    'timezone': event.timezone,
+                    'event_start': event.date_from.isoformat(),
+                    'event_end': event.date_to.isoformat(),
+                    'content_locales': event.content_locales,
+                }
+                context['featured_speakers_widget_schedule_json'] = escape_json_for_script(
+                    json.dumps(context['featured_speakers_widget_schedule'], cls=I18nJSONEncoder)
+                )
 
         return context
 
@@ -844,10 +977,9 @@ class EventAuth(View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class JoinOnlineVideoView(EventViewMixin, View):
     def get(self, request, *args, **kwargs):
-        # First check if video plugin is installed and values is set
+        # First check if video is configured
         if (
-            'pretix_venueless' not in self.request.event.get_plugins()
-            or not self.request.event.settings.venueless_url
+            not self.request.event.settings.venueless_url
             or not self.request.event.settings.venueless_issuer
             or not self.request.event.settings.venueless_audience
             or not self.request.event.settings.venueless_secret

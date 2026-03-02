@@ -10,13 +10,13 @@ from eventyay.orga.views import (
     mails,
     organizer,
     person,
-    plugins,
     review,
     schedule,
     speaker,
     submission,
     typeahead,
 )
+
 
 app_name = 'orga'
 urlpatterns = [
@@ -57,46 +57,20 @@ urlpatterns = [
                     name="organizer.delete",
                 ),
                 path("api/users", organizer.speaker_search, name="organizer.user_list"),
-                *organizer.TeamView.get_urls(
-                    url_base="teams",
-                    url_name="organizer.teams",
-                    namespace="orga",
-                ),
-                path(
-                    "teams/<int:team_pk>/members/<int:user_pk>/delete/",
-                    organizer.TeamMemberDelete.as_view(),
-                    name="organizer.teams.members.delete",
-                ),
-                path(
-                    "teams/<int:team_pk>/members/<int:user_pk>/reset/",
-                    organizer.TeamResetPassword.as_view(),
-                    name="organizer.teams.members.reset",
-                ),
-                path(
-                    "teams/<int:pk>/invites/<int:invite_pk>/uninvite/",
-                    organizer.TeamUninvite.as_view(),
-                    name="organizer.teams.invites.uninvite",
-                ),
-                path(
-                    "teams/<int:pk>/invites/<int:invite_pk>/resend/",
-                    organizer.TeamResend.as_view(),
-                    name="organizer.teams.invites.resend",
-                ),
                 path(
                     "speakers/",
                     organizer.OrganizerSpeakerList.as_view(),
                     name="organizer.speakers",
                 ),
+
             ]
         ),
     ),
-    path("event/new/", event.EventWizard.as_view(), name="event.create"),
     path("event/", dashboard.DashboardEventListView.as_view(), name="event.list"),
     path(
         'event/<slug:event>/',
         include(
             [
-                path("login/", auth.LoginView.as_view(), name="event.login"),
                 path("delete", event.EventDelete.as_view(), name="event.delete"),
                 path("reset/", auth.ResetView.as_view(), name="event.auth.reset"),
                 path(
@@ -139,11 +113,7 @@ urlpatterns = [
                     event.WidgetSettings.as_view(),
                     name='settings.widget',
                 ),
-                path(
-                    'settings/plugins',
-                    plugins.EventPluginsView.as_view(),
-                    name='settings.plugins.select',
-                ),
+
                 path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
@@ -151,6 +121,7 @@ urlpatterns = [
                 ),
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
+                path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
                 *cfp.QuestionView.get_urls(
                     url_base='cfp/questions',
                     url_name='cfp.questions',
@@ -237,8 +208,13 @@ urlpatterns = [
                         [
                             path(
                                 '',
-                                submission.SubmissionContent.as_view(),
-                                name='submissions.content.view',
+                                submission.SubmissionContentView.as_view(),  # Read-only view
+                                name="submissions.content",
+                            ),
+                            path(
+                                'edit',
+                                submission.SubmissionContent.as_view(),  # Edit view
+                                name="submissions.content.edit",
                             ),
                             path(
                                 'submit',
@@ -357,6 +333,11 @@ urlpatterns = [
                                 'toggle-arrived',
                                 speaker.SpeakerToggleArrived.as_view(),
                                 name='speakers.arrived',
+                            ),
+                            path(
+                                'toggle-featured',
+                                speaker.SpeakerToggleFeatured.as_view(),
+                                name='speakers.featured',
                             ),
                         ]
                     ),

@@ -2,6 +2,7 @@
 
 {% load i18n %}
 {% load orga_edit_link %}
+{% load event_tags %}
 
 {% block orga_edit_link %}
     {% orga_edit_link request.event.cfp.urls.text "information" %}
@@ -25,5 +26,11 @@
 
         {{ form.availabilities.as_field_group }}
     {% endif %}
+
+    {% for field in form %}
+        {% if field.name|startswith:"question_" %}
+            {{ field.as_field_group }}
+        {% endif %}
+    {% endfor %}
 
 {% endblock inner %}

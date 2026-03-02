@@ -7,8 +7,8 @@ from django.utils.timezone import now
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
-from eventyay.common.views.mixins import PermissionRequired
 from eventyay.base.models import Event
+from eventyay.common.views.mixins import PermissionRequired
 from eventyay.talk_rules.event import get_events_for_user
 
 
@@ -60,8 +60,7 @@ class EventCfP(EventStartpage):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        site_name = dict(settings.TALK_CONFIG.items('site')).get('name')
-        context['site_name'] = site_name
+        context['site_name'] = settings.INSTANCE_NAME
         return context
 
     @context

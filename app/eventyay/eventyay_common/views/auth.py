@@ -39,6 +39,7 @@ from eventyay.base.forms.auth import (
     PasswordForgotForm,
     PasswordRecoverForm,
     RegistrationForm,
+    PASSWORD_COMPLEXITY_ERROR,
 )
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.models.page import Page
@@ -65,7 +66,12 @@ def process_login(request, user, keep_logged_in):
     :return: This method returns a ``HttpResponse``.
     """
     request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
-    next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
+    
+    # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
+    next_url = request.session.pop('socialauth_next_url', None)
+    if not next_url:
+        next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
+    
     if user.require_2fa:
         request.session['eventyay_auth_2fa_user'] = user.pk
         request.session['eventyay_auth_2fa_time'] = str(int(time.time()))
@@ -201,6 +207,10 @@ def register(request):
     else:
         form = RegistrationForm()
     ctx['form'] = form
+    ctx['password_requirement'] = PASSWORD_COMPLEXITY_ERROR
+    # Hide help if the exact requirement message is already present as a password error
+    pw_errors = form.errors.get('password', []) if hasattr(form, 'errors') else []
+    ctx['show_password_requirement_help'] = not any(str(e) == str(PASSWORD_COMPLEXITY_ERROR) for e in pw_errors)
     ctx['confirmation_required'] = Page.objects.filter(confirmation_required=True)
     return render(request, 'eventyay_common/auth/register.html', ctx)
 
@@ -291,6 +301,9 @@ def invite(request, token):
     else:
         form = RegistrationForm(initial={'email': inv.email})
     ctx['form'] = form
+    ctx['password_requirement'] = PASSWORD_COMPLEXITY_ERROR
+    pw_errors = form.errors.get('password', []) if hasattr(form, 'errors') else []
+    ctx['show_password_requirement_help'] = not any(str(e) == str(PASSWORD_COMPLEXITY_ERROR) for e in pw_errors)
     return render(request, 'eventyay_common/auth/invite.html', ctx)
 
 

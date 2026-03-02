@@ -14,19 +14,6 @@
     {% has_event_perm "base.update_submission" request.user request submission as can_edit_speakers %}
     {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
-    {% if can_edit_speakers %}<div class="alert">
-        <form method="POST" class="form d-flex w-100 flex-column">
-            {% csrf_token %}
-            <div class="d-flex flex-row">
-                <div class="w-50 hide-optional mr-4">{{ form.email.as_field_group }}</div>
-                <div class="w-50">{{ form.name.as_field_group }}</div>
-            </div>
-            <div class="d-flex flex-row hide-optional">
-                <div class="w-50 hide-optional mr-4">{% if form.locale %}{{ form.locale.as_field_group }}{% endif %}</div>
-                <div class="w-50 mt-4"><button type="submit" class="btn btn-sm btn-success btn-block btn-lg mt-2"><i class="fa fa-plus"></i> {% translate "Add speaker" %}</button></div>
-            </div>
-        </form>
-    </div>{% endif %}
 
     {% for speaker in speakers %}
         <div class="card mb-3"><div class="card-body">
@@ -34,23 +21,67 @@
                 <a href="{% url "orga:speakers.view" event=request.event.slug code=speaker.user.code %}">
                     {{ speaker.user.get_display_name }}
                 </a>
-                {% if speaker.user.avatar and request.event.cfp.request_avatar %}
-                    <div class="speaker-avatar">
-                        <a href="{{ speaker.user.avatar.url }}" data-lightbox>
-                            <img loading="lazy" width="100%" src="{{ speaker.user.avatar|thumbnail:"default" }}" alt="{% translate "The speaker’s profile picture" %}">
-                        </a>
-                    </div>
-                {% endif %}
             </h3>
             {% if request.event.cfp.request_biography %}
                 <p class="card-text">
-                    <h5>{% translate "Biography" %}:</h5>
+                    <strong>{% translate "Biography" %}:</strong>
                     {{ speaker.profile.biography|rich_text|default:"-" }}
                 </p>
             {% endif %}
-            <p class="card-text">
-                {% if speaker.other_submissions %}
-                    <h5>{% translate "Other proposals by this speaker:" %}</h5>
+            {% if request.event.cfp.request_avatar and speaker.avatar %}
+                <p class="card-text">
+                    <strong>{% translate "Avatar" %}:</strong>
+                    <a href="{{ speaker.avatar.url }}" data-lightbox>
+                        <img loading="lazy" width="100px" src="{{ speaker.avatar|thumbnail:"default" }}" alt="{% translate "The speaker's profile picture" %}">
+                    </a>
+                </p>
+            {% endif %}
+            {% if request.event.cfp.request_avatar_source and speaker.avatar_source %}
+                <p class="card-text">
+                    <strong>{% translate "Profile Picture Source" %}:</strong>
+                    {{ speaker.avatar_source }}
+                </p>
+            {% endif %}
+            {% if request.event.cfp.request_avatar_license and speaker.avatar_license %}
+                <p class="card-text">
+                    <strong>{% translate "Profile Picture License" %}:</strong>
+                    {{ speaker.avatar_license }}
+                </p>
+            {% endif %}
+            {% if speaker.email %}
+                <p class="card-text">
+                    <strong>{% translate "E-Mail" %}:</strong>
+                    {{ speaker.email }}
+                </p>
+            {% endif %}
+            {% if request.event.cfp.request_availabilities %}
+                {% with speaker.profile.availabilities.all as availabilities %}
+                    {% if availabilities %}
+                        <p class="card-text">
+                            <strong>{% translate "Availabilities" %}:</strong><br>
+                            {% for availability in availabilities %}
+                                {% translate "Start time" %}: {{ availability.start }}<br>
+                                {% translate "End time" %}: {{ availability.end }}<br>
+                                <br>
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+            {% if speaker.reviewer_answers %}
+                <div class="card-text">
+                    <strong>{% translate "Speaker Information" %}:</strong><br>
+                    {% for answer in speaker.reviewer_answers %}
+                        <div class="mb-1">
+                            <strong>{{ answer.question.question }}:</strong>
+                            <span class="ml-1">{% include "common/question_answer.html" with answer=answer %}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if speaker.other_submissions %}
+                <div class="card-text">
+                    <strong>{% translate "Other proposals by this speaker:" %}</strong>
                     <ul>
                         {% for submission in speaker.other_submissions %}
                             <li>
@@ -59,8 +90,8 @@
                             </li>
                         {% endfor %}
                     </ul>
-                {% endif %}
-            </p>
+                </div>
+            {% endif %}
             {% if can_edit_speakers %}
                 {% if can_mark_speaker and submission.state in 'accepted,confirmed' %}
                     {% include "orga/includes/mark_speakers_arrived.html" with speaker=speaker.profile %}
@@ -82,6 +113,20 @@
             {% endif %}
         </div></div>
     {% endfor %}
+
+    {% if can_edit_speakers %}<div class="alert">
+        <form method="POST" class="form d-flex w-100 flex-column">
+            {% csrf_token %}
+            <div class="d-flex flex-row">
+                <div class="w-50 hide-optional mr-4">{{ form.email.as_field_group }}</div>
+                <div class="w-50">{{ form.name.as_field_group }}</div>
+            </div>
+            <div class="d-flex flex-row hide-optional">
+                <div class="w-50 hide-optional mr-4">{% if form.locale %}{{ form.locale.as_field_group }}{% endif %}</div>
+                <div class="w-50 mt-4"><button type="submit" class="btn btn-sm btn-success btn-block btn-lg mt-2"><i class="fa fa-plus"></i> {% translate "Add speaker" %}</button></div>
+            </div>
+        </form>
+    </div>{% endif %}
 
     <span id="vars" remoteUrl="{{ request.event.organiser.orga_urls.user_search }}"></span>
     {% compress js %}

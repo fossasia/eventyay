@@ -1,4 +1,4 @@
-/*global $ */
+/*global $,safeSelector */
 
 function gettext(msgid) {
     if (typeof django !== 'undefined' && typeof django.gettext !== 'undefined') {
@@ -142,8 +142,8 @@ $(function () {
     $("body").removeClass("nojs");
 
     $("input[data-toggle=radiocollapse]").change(function () {
-        $($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
-        $($(this).attr("data-target")).collapse('show');
+        safeSelector($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
+        safeSelector($(this).attr("data-target")).collapse('show');
     });
     $(".js-only").removeClass("js-only");
     $(".js-hidden").hide();
@@ -252,7 +252,7 @@ $(function () {
     var update_cart_form = function () {
         var is_enabled = $(".product-row input[type=checkbox]:checked, .variations input[type=checkbox]:checked, .product-row input[type=radio]:checked, .variations input[type=radio]:checked").length;
         if (!is_enabled) {
-            $(".input-item-count").each(function () {
+            $(".input-product-count").each(function () {
                 if ($(this).val() && $(this).val() !== "0") {
                     is_enabled = true;
                 }
@@ -274,7 +274,7 @@ $(function () {
         }
     };
     update_cart_form();
-    $(".product-row input[type=checkbox], .variations input[type=checkbox], .product-row input[type=radio], .variations input[type=radio], .input-item-count, .input-seat-selection")
+    $(".product-row input[type=checkbox], .variations input[type=checkbox], .product-row input[type=radio], .variations input[type=radio], .input-product-count, .input-seat-selection")
         .on("change mouseup keyup", update_cart_form);
 
     $(".table-calendar td.has-events").click(function () {
@@ -293,7 +293,7 @@ $(function () {
     $("input[data-required-if], select[data-required-if], textarea[data-required-if]").each(function () {
         var dependent = $(this),
             dependentLabel = $("label[for="+this.id+"]"),
-            dependency = $($(this).attr("data-required-if")),
+            dependency = safeSelector($(this).attr("data-required-if")),
             update = function (ev) {
                 var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
                 if (!dependent.is("[data-no-required-attr]")) {
@@ -314,7 +314,7 @@ $(function () {
 
     $("input[data-display-dependency], div[data-display-dependency], select[data-display-dependency], textarea[data-display-dependency]").each(function () {
         var dependent = $(this),
-            dependency = $($(this).attr("data-display-dependency")),
+            dependency = safeSelector($(this).attr("data-display-dependency")),
             update = function (ev) {
                 var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
                 var $toggling = dependent;
@@ -430,31 +430,34 @@ $(function () {
         });
     }
 
-    var local_tz = moment.tz.guess()
+    const local_tz = moment.tz.guess();
+    const localTimeFormat = moment.localeData().longDateFormat('LT') || $("body").attr("data-timeformat") || "h:mm A";
+    const localDateTimeFormat = moment.localeData().longDateFormat('LLL') || $("body").attr("data-datetimeformat") || "LL h:mm A";
+
     $("span[data-timezone], small[data-timezone]").each(function() {
-        var t = moment.tz($(this).attr("data-time"), $(this).attr("data-timezone"))
-        var tz = moment.tz.zone($(this).attr("data-timezone"))
+        var tzName = $(this).attr("data-timezone")
+        var t = moment.tz($(this).attr("data-time"), tzName)
 
         $(this).tooltip({
-            'title': gettext("Time zone:") + " " + tz.abbr(t)
+            'title': gettext("Time zone:") + " " + tzName
         });
-        if (t.tz(tz.name).format() !== t.tz(local_tz).format()) {
+        if (t.tz(tzName).format() !== t.tz(local_tz).format()) {
             var $add = $("<span>")
             $add.append($("<span>").addClass("fa fa-globe"))
             if ($(this).is("[data-time-short]")) {
-                $add.append($("<em>").text(" " + t.tz(local_tz).format($("body").attr("data-timeformat"))))
+                $add.append($("<em>").text(" " + t.tz(local_tz).format(localTimeFormat)))
             } else {
                 $add.addClass("text-muted")
                 $add.append(" " + gettext("Your local time:") + " ")
-                if (t.tz(tz.name).format("YYYY-MM-DD") != t.tz(local_tz).format("YYYY-MM-DD")) {
-                    $add.append(t.tz(local_tz).format($("body").attr("data-datetimeformat")))
+                if (t.tz(tzName).format("YYYY-MM-DD") != t.tz(local_tz).format("YYYY-MM-DD")) {
+                    $add.append(t.tz(local_tz).format(localDateTimeFormat))
                 } else {
-                    $add.append(t.tz(local_tz).format($("body").attr("data-timeformat")))
+                    $add.append(t.tz(local_tz).format(localTimeFormat))
                 }
             }
             $add.insertAfter($(this));
             $add.tooltip({
-                'title': gettext("Time zone:") + " " + moment.tz.zone(local_tz).abbr(t),
+                'title': gettext("Time zone:") + " " + local_tz,
             });
         }
     });
