@@ -64,6 +64,7 @@ from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
+from eventyay.helpers.http import smtp_reachable
 from eventyay.helpers.json import safe_string
 from eventyay.helpers.thumb import get_thumbnail
 from eventyay.talk_rules.event import (
@@ -1057,6 +1058,13 @@ class Event(
         if self.settings.smtp_use_custom or force_custom:
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
+            if not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
+                logger.warning(
+                    'Event SMTP %s:%s is not reachable, falling back to system email backend',
+                    self.settings.smtp_host,
+                    self.settings.smtp_port,
+                )
+                return get_connection(fail_silently=False, timeout=timeout)
             return CustomSMTPBackend(
                 host=self.settings.smtp_host,
                 port=self.settings.smtp_port,
@@ -1070,19 +1078,24 @@ class Event(
         elif gs.settings.email_vendor is not None:
             if gs.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=gs.settings.send_grid_api_key)
-            else:
-                return CustomSMTPBackend(
-                    host=gs.settings.smtp_host,
-                    port=gs.settings.smtp_port,
-                    username=gs.settings.smtp_username,
-                    password=gs.settings.smtp_password,
-                    use_tls=gs.settings.smtp_use_tls,
-                    use_ssl=gs.settings.smtp_use_ssl,
-                    fail_silently=False,
-                    timeout=timeout,
+            if not smtp_reachable(gs.settings.smtp_host, gs.settings.smtp_port, timeout=timeout):
+                logger.warning(
+                    'Global SMTP %s:%s is not reachable, falling back to system email backend',
+                    gs.settings.smtp_host,
+                    gs.settings.smtp_port,
                 )
-        else:
-            return get_connection(fail_silently=False)
+                return get_connection(fail_silently=False, timeout=timeout)
+            return CustomSMTPBackend(
+                host=gs.settings.smtp_host,
+                port=gs.settings.smtp_port,
+                username=gs.settings.smtp_username,
+                password=gs.settings.smtp_password,
+                use_tls=gs.settings.smtp_use_tls,
+                use_ssl=gs.settings.smtp_use_ssl,
+                fail_silently=False,
+                timeout=timeout,
+            )
+        return get_connection(fail_silently=False, timeout=timeout)
 
     @property
     def payment_term_last(self):
@@ -2572,7 +2585,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1900, 1, 1).astimezone(self.tz)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i

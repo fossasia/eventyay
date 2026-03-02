@@ -1,8 +1,9 @@
 from enum import StrEnum
+import json
 import logging
 import datetime as dt
 from http import HTTPStatus
-from urllib.parse import unquote, urlparse, urljoin
+from urllib.parse import unquote, urlparse, urljoin, quote
 from typing import TypeVar
 
 import jwt
@@ -11,17 +12,21 @@ import vobject
 from django.conf import settings
 from django.contrib import messages
 from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView, View
 from django_context_decorator import context
+from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.views.utils import encode_email
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
+from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
@@ -74,7 +79,10 @@ class TalkMixin(PermissionRequired):
         return self.submission
 
 
-class TalkView(TalkMixin, TemplateView):
+from eventyay.agenda.views.speaker import ScheduleDataMixin
+
+
+class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
     template_name = 'agenda/talk.html'
 
     def get_contrast_color(self, bg_color):
@@ -106,6 +114,14 @@ class TalkView(TalkMixin, TemplateView):
         response._csp_update = csp_update
         return response
 
+    def _build_speakers_context(self, speakers_qs):
+        """Enrich a speaker queryset and return a list ready for template context."""
+        result = []
+        for speaker in speakers_qs:
+            speaker.talk_profile = speaker.event_profile(event=self.request.event)
+            result.append(speaker)
+        return result
+
     def get_context_data(self, **kwargs):
         from django.db.models import Prefetch
 
@@ -118,13 +134,11 @@ class TalkView(TalkMixin, TemplateView):
         ctx['submission_tags'] = self.submission.tags.all()
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
-        result = []
         other_slots = (
             schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
             if schedule
             else TalkSlot.objects.none()
         )
-
         other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related('event', 'event__organizer')
         speakers = (
             self.submission.speakers.all()
@@ -137,10 +151,7 @@ class TalkView(TalkMixin, TemplateView):
                 )
             )
         )
-        for speaker in speakers:
-            speaker.talk_profile = speaker.event_profile(event=self.request.event)
-            result.append(speaker)
-        ctx['speakers'] = result
+        ctx['speakers'] = self._build_speakers_context(speakers)
         return ctx
 
     @context
@@ -162,7 +173,7 @@ class TalkView(TalkMixin, TemplateView):
 
 
 class TalkReviewView(TalkView):
-    template_name = 'agenda/talk.html'
+    template_name = 'agenda/talk_review.html'
 
     def has_permission(self):
         return self.request.event.get_feature_flag('submission_public_review')
@@ -188,11 +199,36 @@ class TalkReviewView(TalkView):
     def hide_speaker_links(self):
         return True
 
+    def _build_speakers_context(self, speakers_qs):
+        # Override to avoid calling event_profile(), which can create and save a
+        # SpeakerProfile row when one doesn't exist.  That is an unwanted DB
+        # write on every anonymous GET of a public review link.  Instead, use
+        # the _event_profiles attribute populated by with_profiles() directly.
+        result = []
+        for speaker in speakers_qs:
+            profiles = getattr(speaker, '_event_profiles', [])
+            speaker.talk_profile = profiles[0] if profiles else None
+            result.append(speaker)
+        return result
+
+    def get_context_data(self, **kwargs):
+        # TalkView.get_context_data returns early (skipping speakers) when the
+        # visitor lacks base.view_schedule permission – which is always the case
+        # for anonymous reviewers when the schedule is not yet public.  Fill in
+        # the speaker data unconditionally for the review page.
+        ctx = super().get_context_data(**kwargs)
+        if 'speakers' not in ctx:
+            speakers = self.submission.speakers.all().with_profiles(self.request.event)
+            ctx['speakers'] = self._build_speakers_context(speakers)
+            ctx['submission_tags'] = self.submission.tags.all()
+        return ctx
+
 
 class SingleICalView(EventPageMixin, TalkMixin, View):
     def get(self, request, event, **kwargs):
         code = self.submission.code
-        talk_slots = self.submission.slots.filter(schedule=self.request.event.current_schedule, is_visible=True)
+        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        talk_slots = self.submission.slots.filter(schedule=schedule, is_visible=True) if schedule else self.submission.slots.none()
 
         netloc = urlparse(settings.SITE_URL).netloc
         cal = vobject.iCalendar()
@@ -204,6 +240,167 @@ class SingleICalView(EventPageMixin, TalkMixin, View):
             content_type='text/calendar',
             headers={'Content-Disposition': f'attachment; filename="{request.event.slug}-{code}.ics"'},
         )
+
+
+class SingleExportView(EventPageMixin, TalkMixin, View):
+    """Export a single talk in iCal, JSON, XML or XCal format."""
+
+    permission_required = 'base.list_schedule'
+
+    def get(self, request, event, slug, **kwargs):
+        fmt = kwargs.get('format', '')
+        schedule = request.event.current_schedule or request.event.wip_schedule
+        if not schedule:
+            raise Http404
+        talk_slots = (
+            self.submission.slots
+            .filter(schedule=schedule, is_visible=True)
+            .select_related('room', 'submission', 'submission__track', 'submission__submission_type')
+            .prefetch_related('submission__speakers', 'submission__resources')
+        )
+        if not talk_slots.exists():
+            raise Http404
+
+        handler = {
+            'ics': self._render_ical,
+            'json': self._render_json,
+            'xml': self._render_xml,
+            'xcal': self._render_xcal,
+        }.get(fmt)
+        if not handler:
+            raise Http404
+        return handler(request, talk_slots)
+
+    def _render_ical(self, request, talk_slots):
+        code = self.submission.code
+        netloc = urlparse(settings.SITE_URL).netloc
+        cal = vobject.iCalendar()
+        cal.add('prodid').value = f'-//eventyay//{netloc}//{code}'
+        for slot in talk_slots:
+            slot.build_ical(cal)
+        return HttpResponse(
+            cal.serialize(),
+            content_type='text/calendar',
+            headers={'Content-Disposition': f'attachment; filename="{request.event.slug}-{code}.ics"'},
+        )
+
+    def _render_json(self, request, talk_slots):
+        event = request.event
+        base_url = get_base_url(event)
+        talks_data = []
+        for slot in talk_slots:
+            sub = slot.submission
+            talks_data.append({
+                'guid': slot.uuid,
+                'code': sub.code,
+                'id': sub.id,
+                'date': slot.local_start.isoformat(),
+                'start': slot.local_start.strftime('%H:%M'),
+                'duration': slot.export_duration,
+                'room': localize_event_text(slot.room.name) if slot.room else None,
+                'slug': slot.frab_slug,
+                'url': sub.urls.public.full(),
+                'title': localize_event_text(sub.title),
+                'track': localize_event_text(sub.track.name) if sub.track else None,
+                'type': localize_event_text(sub.submission_type.name),
+                'language': sub.content_locale,
+                'abstract': localize_event_text(sub.abstract),
+                'description': localize_event_text(sub.description),
+                'do_not_record': sub.do_not_record,
+                'persons': [
+                    {
+                        'code': p.code,
+                        'name': p.get_display_name(),
+                        'biography': localize_event_text(p.event_profile(event).biography),
+                    }
+                    for p in sub.speakers.all()
+                ],
+                'links': [
+                    {'title': localize_event_text(r.description), 'url': r.link}
+                    for r in sub.resources.all() if r.link
+                ],
+                'attachments': [
+                    {'title': localize_event_text(r.description), 'url': r.resource.url}
+                    for r in sub.resources.all() if not r.link
+                ],
+            })
+        data = {
+            'code': self.submission.code,
+            'base_url': base_url,
+            'talks': talks_data,
+        }
+        return JsonResponse(data, encoder=I18nJSONEncoder)
+
+    def _render_xml(self, request, talk_slots):
+        event = request.event
+        base_url = get_base_url(event)
+        context = {
+            'talk_slots': talk_slots,
+            'event': event,
+            'base_url': base_url,
+        }
+        content = get_template('agenda/single_talk.xml').render(context=context)
+        return HttpResponse(content, content_type='text/xml')
+
+    def _render_xcal(self, request, talk_slots):
+        url = get_base_url(request.event)
+        domain = urlparse(url).netloc
+        context = {
+            'talk_slots': talk_slots,
+            'url': url,
+            'domain': domain,
+        }
+        content = get_template('agenda/single_talk.xcal').render(context=context)
+        return HttpResponse(content, content_type='text/xml')
+
+
+class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
+    """Redirect to Google Calendar or Webcal for a single talk."""
+
+    permission_required = 'base.list_schedule'
+
+    def get(self, request, event, slug, **kwargs):
+        provider = kwargs.get('provider', '')
+        schedule = request.event.current_schedule or request.event.wip_schedule
+        if not schedule:
+            raise Http404
+        talk_slots = self.submission.slots.filter(schedule=schedule, is_visible=True)
+        if not talk_slots.exists():
+            raise Http404
+
+        slot = talk_slots.first()
+        ical_url = request.build_absolute_uri(
+            reverse('agenda:ical', kwargs={
+                'organizer': request.event.organizer.slug,
+                'event': event,
+                'slug': slug,
+            })
+        )
+
+        if provider == 'google-calendar':
+            return self._google_calendar_redirect(slot, request)
+        if provider == 'webcal':
+            webcal_url = ical_url.replace('https://', 'webcal://').replace('http://', 'webcal://')
+            return HttpResponseRedirect(webcal_url)
+        raise Http404
+
+    def _google_calendar_redirect(self, slot, request):
+        sub = slot.submission
+        start = slot.start
+        end = slot.real_end
+        fmt = '%Y%m%dT%H%M%SZ'
+        dates = f'{start.strftime(fmt)}/{end.strftime(fmt)}'
+        title = localize_event_text(sub.title)
+        location = localize_event_text(slot.room.name) if slot.room else ''
+        details = localize_event_text(sub.abstract) or ''
+        url = (
+            'https://calendar.google.com/calendar/render?action=TEMPLATE'
+            f'&text={quote(str(title))}'
+            f'&dates={dates}'
+            f'&location={quote(str(location))}'
+            f'&details={quote(str(details))}'
+        )
+        return HttpResponseRedirect(url)
 
 
 class FeedbackView(TalkMixin, FormView):

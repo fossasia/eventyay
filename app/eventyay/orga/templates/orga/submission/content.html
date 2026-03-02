@@ -197,7 +197,7 @@
                                             <i class="fa fa-paperclip"></i> {{ field.field.answer.answer_file.name }}
                                         </a>
                                     {% else %}
-                                        {{ field.field.answer.answer|rich_text|default:"-" }}
+                                        {{ field.field.answer.answer_string|rich_text|default:"-" }}
                                     {% endif %}
                                 {% else %}
                                     <em class="text-muted">{% translate "No answer provided" %}</em>

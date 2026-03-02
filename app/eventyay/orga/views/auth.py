@@ -23,7 +23,7 @@ from eventyay.common.views import GenericLoginView, GenericResetView
 def logout_view(request):
     if request.method == HTTPMethod.POST:
         logout(request)
-    response = redirect(GenericLoginView.get_next_url_or_fallback(request, reverse('orga:login')))
+    response = redirect(GenericLoginView.get_next_url_or_fallback(request, reverse('eventyay_common:auth.login')))
     if request.method == HTTPMethod.POST:
         # Remove the JWT cookie
         response.delete_cookie('sso_token')  # Same domain used when setting the cookie
@@ -38,7 +38,7 @@ class ResetView(GenericResetView):
     def get_success_url(self):
         if getattr(self.request, 'event', None):
             return reverse('orga:event.login', kwargs={'event': self.request.event.slug})
-        return reverse('orga:login')
+        return reverse('eventyay_common:auth.login')
 
 
 class RecoverView(FormView):
@@ -70,4 +70,4 @@ class RecoverView(FormView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('orga:login')
+        return reverse('eventyay_common:auth.login')

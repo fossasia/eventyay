@@ -54,9 +54,15 @@ def i18n_string(data, locales):
         english = data.get('en', '')
 
     for locale in locales:
-        if locale != 'en' and not data.get(locale):
-            with language(locale):
-                data[locale] = gettext(english)
+        if locale != 'en':
+            stored = data.get(locale, '')
+            # Re-evaluate if missing OR if the stored value is identical to English,
+            # which indicates a failed gettext lookup that was cached as a fallback.
+            if not stored or stored == english:
+                with language(locale):
+                    translation = gettext(english)
+                    if translation != english:
+                        data[locale] = translation
     return LazyI18nString(data)
 
 

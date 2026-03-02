@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 15:55+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-02-27 20:09+0000\n"
+"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.16.1-dev\n"
 "X-Poedit-Bookmarks: -1,-1,904,-1,-1,-1,-1,-1,-1,-1\n"
 
 #: agenda/phrases.py:8
@@ -2112,16 +2112,18 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"wir haben Ihre Bestellung für {event} mit einem Gesamtbetrag von\n"
-"{total_with_currency} erhalten. Bitte schließen Sie die Bezahlung bis "
-"{expire_date} ab.\n"
+"Ihre Bestellung für {event} im Gesamtwert von\n"
+"{total_with_currency} ist bei uns eingegangen. Bitte schließen Sie Ihre "
+"Zahlung bis zum {expire_date} ab.\n"
+"\n"
 "{payment_info}\n"
 "\n"
-"Sie können Ihre Bestellung unter folgender Adresse einsehen und ändern:\n"
+"Unter folgender Adresse können Sie Ihre Bestelldaten ändern und den Status "
+"Ihrer Bestellung einsehen:\n"
 "{url}\n"
 "\n"
-"Viele Grüße,\n"
-"Das {event} Team"
+"Mit freundlichen Grüßen,\n"
+"Ihr {event}-Team"
 
 #: base/configurations/default_setting.py:1739
 #, python-brace-format
@@ -2275,27 +2277,27 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"Sie haben sich auf die Warteliste für {event} \n"
-"für das Produkt {product} eingetragen.\n"
+"Sie haben sich für {event} auf die Warteliste gesetzt,\n"
+"und zwar für das Produkt {product}.\n"
 "\n"
-"Wir haben nun ein Ticket für Sie! Sie können es in unserem Ticket-Shop "
-"erwerben,\n"
-"indem Sie in den nächsten {hours} Stunden den folgenden Gutscheincode "
+"Es liegt nun ein Ticket für Sie bereit! Sie können es in unserem Ticketshop "
+"innerhalb der\n"
+"nächsten {hours} Stunden einlösen, indem Sie den folgenden Gutscheincode "
 "eingeben:\n"
 "\n"
 "{code}\n"
 "\n"
-"Alternativ können Sie auch auf den folgenden Link klicken:\n"
+"Alternativ können Sie auch einfach auf den folgenden Link klicken:\n"
 "\n"
 "{url}\n"
 "\n"
-"Bitte beachten, dass dieser Link nur in den nächsten {hours} Stunden gültig\n"
-"ist! Wir werden das Ticket an die nächste Person auf der Warteliste "
-"weitergeben,\n"
-"wenn Sie den Gutschein nicht in diesem Zeitraum einlösen.\n"
+"Bitte beachten Sie, dass dieser Link nur innerhalb der nächsten {hours} "
+"gültig ist!\n"
+"Wenn Sie den Gutschein nicht innerhalb dieses Zeitraums einlösen, wird das\n"
+"Ticket an die nächste Person auf der Liste vergeben.\n"
 "\n"
-"Viele Grüße,\n"
-"Ihr {event} Team"
+"Mit freundlichen Grüßen,\n"
+"Ihr {event}-Team"
 
 #: base/configurations/default_setting.py:1852
 #, python-brace-format
@@ -2339,17 +2341,17 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"wir haben Ihre Bestellung für {event} freigegeben und freuen uns, Sie auf "
-"unserer\n"
-"Veranstaltung zu begrüßen. Bitte fahren Sie fort, indem Sie bis zum "
-"{expire_date} die\n"
-"Bezahlung abschließen.\n"
+"Ihre Bestellung für {event} wurde freigegeben und wir freuen uns, Sie\n"
+"bei unserer Veranstaltung begrüßen zu dürfen.\n"
 "\n"
-"Dies können Sie unter folgender Adresse tun:\n"
+"Bitte bezahlen Sie Ihre Bestellung bis zum {expire_date}.\n"
+"\n"
+"Hier können Sie eine Zahlungsmethode auswählen und die Zahlung vornehmen:\n"
+"\n"
 "{url}\n"
 "\n"
-"Viele Grüße,\n"
-"Das {event} Team"
+"Mit freundlichen Grüßen,\n"
+"Ihr {event}-Team"
 
 #: base/configurations/default_setting.py:1888
 #, python-brace-format
@@ -2394,15 +2396,16 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"Ihre Bestellung für {event} wurde leider abgelehnt.\n"
+"leider mussten wir Ihre Bestellung für {event} ablehnen.\n"
 "\n"
 "{comment}\n"
 "\n"
-"Sie können Ihre Bestellung unter folgender Adresse einsehen:\n"
+"Die Details Ihrer Bestellung können hier eingesehen werden:\n"
+"\n"
 "{url}\n"
 "\n"
-"Viele Grüße,\n"
-"Das {event} Team"
+"Mit freundlichen Grüßen,\n"
+"Ihr {event} Team"
 
 #: base/configurations/default_setting.py:1924
 #, python-brace-format
@@ -5009,7 +5012,9 @@ msgstr ""
 
 #: base/models/devices.py:69 base/models/product.py:1285
 msgid "This identifier is already used for a different question."
-msgstr "Diese ID ist bereits in Verwendung, bitte wählen Sie eine andere."
+msgstr ""
+"Diese Kennung wird bereits für eine andere Frage verwendet. Bitte eine "
+"andere wählen."
 
 #: base/models/devices.py:86
 #: control/templates/pretixcontrol/organizers/gates.html:16
@@ -5041,12 +5046,12 @@ msgid ""
 "you can also choose to use a random value. This will be used in URLs, order "
 "codes, invoice numbers, and bank transfer references."
 msgstr ""
-"Sollte kurz sein und darf nur Kleinbuchstaben, Zahlen, Bindestriche und "
-"Punkte enthalten. Muss unter Ihren Veranstaltungen einmalig sein. Wir "
-"empfehlen eine Abkürzung oder ein Datum mit unter 10 Zeichen, das man sich "
-"gut merken kann. Sie können jedoch auch einen zufälligen Wert verwendet. "
-"Dies wird z.B. in Links,  Bestellnummern, Rechnungsnummern und "
-"Verwendungszwecken für Banküberweisungen benutzt."
+"Sollte kurz sein, nur Kleinbuchstaben, Zahlen, Punkte und Bindestriche "
+"enthalten und unter Ihren Veranstaltungen eindeutig sein. Wir empfehlen eine "
+"Abkürzung oder ein Datum mit weniger als 10 Zeichen, das sich leicht merken "
+"lässt. Sie können jedoch auch einen zufälligen Wert verwenden. Dieser wird "
+"in URLs, Bestellcodes, Rechnungsnummern und Banküberweisungsreferenzen "
+"verwendet."
 
 #: base/models/event.py:588 base/models/organizer.py:124
 msgid "The slug may only contain letters, numbers, dots and dashes."
@@ -5169,7 +5174,9 @@ msgstr "Auf bestimmte Verkaufskanäle einschränken"
 
 #: base/models/event.py:668
 msgid "Only sell tickets for this event on the following sales channels."
-msgstr "Tickets für diese Veranstaltung nur über die folgenden Kanäle verkaufen"
+msgstr ""
+"Verkaufen Sie Tickets für diese Veranstaltung ausschließlich über die "
+"folgenden Vertriebskanäle."
 
 #: base/models/event.py:672
 msgid "Add video call"
@@ -5354,7 +5361,7 @@ msgstr "Das Ende des Vorverkaufs muss nach dem Beginn des Vorverkaufs liegen."
 #: orga/templates/orga/base.html:356 orga/templates/orga/base.html:369
 #: orga/templates/orga/submission/review.html:196
 msgid "Review"
-msgstr "Review"
+msgstr "Überprüfung"
 
 #: base/models/event.py:2690
 msgid "Selection"
@@ -5443,9 +5450,10 @@ msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
 msgstr ""
-"Wenn diese Option aktiv ist, kann eine Veranstaltung nur veröffentlicht "
-"werden, wenn ein Wert eingetragen ist. In einer Veranstaltungsreihe ist das "
-"Eintragen eines Wertes immer optional."
+"Wenn diese Option aktiviert ist, kann eine Veranstaltung nur dann in "
+"Echtzeit übertragen werden, wenn ein Wert für diese Eigenschaft festgelegt "
+"ist. Bei Veranstaltungsreihen ist es immer optional, einen Wert für einzelne "
+"Termine festzulegen."
 
 #: base/models/event.py:3060
 msgid "Valid values"
@@ -5636,7 +5644,7 @@ msgstr "Neues Programm veröffentlicht"
 #: base/models/mail.py:91 base/models/mail.py:311 plugins/sendmail/forms.py:452
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:36
 msgid "Reply-To"
-msgstr "Reply-To"
+msgstr "Antwort an"
 
 #: base/models/mail.py:92
 msgid ""
@@ -6921,8 +6929,8 @@ msgstr "Hilfetext"
 #: base/models/product.py:1182
 msgid "If the question needs to be explained or clarified, do it here!"
 msgstr ""
-"Wenn diese Frage noch weitere Erklärung braucht, können Sie sie hier "
-"eintragen."
+"Wenn diese Frage noch weitere Erklärungen benötigt, können Sie diese hier "
+"eintragen!"
 
 #: base/models/product.py:1186 control/forms/product.py:81
 #: control/templates/pretixcontrol/boxoffice/payment.html:41
@@ -7343,7 +7351,7 @@ msgstr "Antwort"
 
 #: base/models/review.py:33
 msgid "Leave empty to use this category for all tracks."
-msgstr "Leer lassen, um die Standard-Kategorie zu verwenden."
+msgstr "Leer lassen, um diese Kategorie für alle Tracks zu verwenden."
 
 #: base/models/review.py:37
 msgid "Independent score"
@@ -7593,22 +7601,22 @@ msgid ""
 "- And create your schedule here, once you have accepted proposals:\n"
 "  {event_schedule}\n"
 msgstr ""
-"Hi,\n"
+"Hallo,\n"
 "\n"
-"der CfP für eure Veranstaltung ist nun geschlossen. Hier sind ein paar "
-"Links, die\n"
-"in den nächsten Tagen nützlich sein sollten:\n"
+"ich schreibe Ihnen nur, um Ihnen mitzuteilen, dass Ihre Aufforderung zur "
+"Teilnahme nun\n"
+"geschlossen ist. Hier ist eine Liste mit Links, die Ihnen in den nächsten "
+"Tagen nützlich sein dürften:\n"
 "\n"
-"- Ihr findet eine Liste aller {submission_count} Einreichungen hier:\n"
-"   {event_submissions}\n"
-"- Hier könnt ihr Reviewer hinzufügen:\n"
-"   {event_team}\n"
-"- Übersicht über Reviews gibt es hier:\n"
-"   {event_review}\n"
-"- Und hier könnt ihr ein Programm erstellen, wenn ihr die ersten "
-"Einreichungen\n"
-"angenommen habt:\n"
-"   {event_schedule}\n"
+"• Eine Liste aller Ihrer {submission_count} Vorschläge finden Sie hier:\n"
+"  {event_submissions}\n"
+"• Hier können Sie Rezensenten hinzufügen:\n"
+"  {event_team}\n"
+"• Hier können Sie Vorschläge prüfen:\n"
+"  {event_review}\n"
+"• Und hier können Sie Ihr Programm erstellen, sobald Sie Vorschläge "
+"angenommen haben:\n"
+"  {event_schedule}\n"
 
 #: base/models/settings.py:112
 #, python-brace-format
@@ -8665,10 +8673,11 @@ msgid ""
 "rel=\"noopener\">Click here for detailed information on what this does.</a> "
 "Don't forget to set the correct fees above!"
 msgstr ""
-"Wir empfehlen, diese Option zu aktivieren, wenn Sie die Gebühren Ihres "
-"Zahlungsdienstleisters an Ihre Kunden weitergeben wollen. Denken Sie daran, "
-"oben die richtigen Gebührensätze des Zahlungsanbieters einzustellen. <a "
-"href=\"{docs_url}\" target=\"_blank\">Weitere Informationen</a>."
+"Es wird empfohlen, diese Option zu aktivieren, wenn Sie möchten, dass Ihre "
+"Nutzer die Zahlungsgebühren Ihres Zahlungsanbieters übernehmen. <a href=\""
+"{docs_url}\" target=\"_blank\" rel=\"noopener\">Klicken Sie hier, um "
+"detaillierte Informationen zu dieser Funktion zu erhalten.</a> Vergessen Sie "
+"nicht, oben die korrekten Gebühren anzugeben!"
 
 #: base/payment.py:347
 msgid "Restrict to countries"
@@ -9235,7 +9244,7 @@ msgstr "Ticket"
 #: base/plugins.py:61 common/plugins.py:9
 msgctxt "Type of plugin"
 msgid "Features"
-msgstr "Features"
+msgstr "Funktionen"
 
 #: base/plugins.py:62 common/plugins.py:10
 msgctxt "Type of plugin"
@@ -10282,7 +10291,7 @@ msgstr ""
 
 #: base/templates/400.html:4 base/templates/400.html:8
 msgid "Bad Request"
-msgstr "Bad Request"
+msgstr "Ungültige Anfrage"
 
 #: base/templates/400.html:9
 msgid "We were unable to parse your request."
@@ -10384,7 +10393,7 @@ msgstr ""
 #: presale/templates/pretixpresale/base_footer.html:13
 #, python-format
 msgid "powered by <a %(a_attr)s>eventyay</a>"
-msgstr "powered by <a %(a_attr)s>eventyay</a>"
+msgstr "unterstützt durch <a %(a_attr)s>eventyay</a>"
 
 #: base/templates/pretixbase/email/notification.html:55
 #: base/templates/pretixbase/email/notification.txt:14
@@ -10969,7 +10978,7 @@ msgstr "Fortfahren"
 
 #: cfp/templates/cfp/event/submission_base.html:78
 msgid "Submit proposal!"
-msgstr "Zur Einreichung"
+msgstr "Vorschlag einreichen!"
 
 #: cfp/templates/cfp/event/submission_base.html:82
 msgid "or save as draft for now"
@@ -11133,13 +11142,13 @@ msgstr ""
 #: orga/templates/orga/submission/content_edit.html:50
 msgid "Speaker"
 msgid_plural "Speakers"
-msgstr[0] "Vortragende"
-msgstr[1] "Vortragende"
+msgstr[0] "Referent"
+msgstr[1] "Referenten"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:51
 msgid "Submitter"
 msgid_plural "Submitters"
-msgstr[0] "Einreichende"
+msgstr[0] "Einreichende(r)"
 msgstr[1] "Einreichende"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:82
@@ -11292,8 +11301,8 @@ msgstr ""
 #: cfp/templates/cfp/event/user_submissions.html:155
 msgid "If you did, maybe you used a different account? Check your emails!"
 msgstr ""
-"Wenn doch, dann hast du vielleicht einen anderen Account genutzt? Guck im "
-"Zweifel in deine Mails."
+"Wenn dies der Fall ist, haben Sie möglicherweise ein anderes Konto "
+"verwendet? Bitte überprüfen Sie Ihr Postfach."
 
 #: cfp/templates/cfp/event/user_submissions.html:158
 msgid ""
@@ -13755,7 +13764,7 @@ msgstr "Suchbegriff"
 
 #: control/forms/filter.py:1172
 msgid "Shop live"
-msgstr "Shop live"
+msgstr "Tickets können gekauft werden"
 
 #: control/forms/filter.py:1174
 msgid "Shop not live"
@@ -13914,7 +13923,7 @@ msgstr "Zusätzlicher Footer-Link"
 
 #: control/forms/global_settings.py:76
 msgid "Will be included as the link in the additional footer text."
-msgstr "Der zusätzliche Text in der Fußzeile wird zu dieser URL verlinkt."
+msgstr "Wird als Link im zusätzlichen Fußzeilentext eingefügt."
 
 #: control/forms/global_settings.py:84
 msgid "Global message banner"
@@ -14583,17 +14592,19 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"mit dieser E-Mail müssen wir Sie leider darüber informieren, dass {event} "
-"abgesagt wurde.\n"
+"mit dieser E-Mail müssen wir Ihnen leider mitteilen, dass {event} abgesagt "
+"wurde.\n"
 "\n"
-"Wir erstatten Ihnen {refund_amount} auf Ihre ursprüngliche Zahlungsmethode "
-"zurück.\n"
+"Wir erstatten Ihnen {refund_amount} über Ihre ursprüngliche "
+"Zahlungsmethode.\n"
 "\n"
-"Sie können die Details und den Status Ihrer Tickets hier einsehen:\n"
+"Den aktuellen Status Ihrer Bestellung kann hier eingesehen werden:\n"
+"\n"
 "{url}\n"
 "\n"
-"Freundliche Grüße,\n"
-"Das {event} Team"
+"Mit freundlichen Grüßen,\n"
+"\n"
+"Ihr {event}-Team"
 
 #: control/forms/orders.py:766
 #, python-brace-format
@@ -14610,13 +14621,14 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"mit dieser E-Mail müssen wir Sie leider darüber informieren, dass {event} "
-"abgesagt wurde.\n"
+"mit dieser E-Mail müssen wir Ihnen leider mitteilen, dass die Veranstaltung "
+"{event} abgesagt wurde.\n"
 "\n"
-"Sie werden daher kein Ticket von der Warteliste erhalten.\n"
+"Daher erhalten Sie kein Ticket von der Warteliste.\n"
 "\n"
-"Freundliche Grüße,\n"
-"Das {event} Team"
+"Mit freundlichen Grüßen,\n"
+"\n"
+"Ihr {event}-Team"
 
 #: control/forms/orders.py:805 plugins/sendmail/forms.py:118
 msgctxt "subevent"
@@ -14948,7 +14960,7 @@ msgstr "Zusatzprodukte"
 
 #: control/forms/product.py:749
 msgid "You added the same add-on category twice"
-msgstr "Sie haben dieselbe Kategorie zweimal hinzugefügt."
+msgstr "Sie haben dieselbe Add-on-Kategorie zweimal hinzugefügt."
 
 #: control/forms/product.py:798
 msgid ""
@@ -15261,7 +15273,7 @@ msgstr ""
 #: control/logdisplay.py:96
 #, python-brace-format
 msgid "Price of position #{posid} changed from {old_price} to {new_price}."
-msgstr "Preis von Position #{posid} von  {old_price} auf {new_price} geändert."
+msgstr "Preis von Position #{posid} von {old_price} auf {new_price} geändert."
 
 #: control/logdisplay.py:107
 #, python-brace-format
@@ -16391,7 +16403,7 @@ msgstr "Export"
 #: control/navigation.py:325
 msgctxt "navigation"
 msgid "Check-in"
-msgstr "Check-in"
+msgstr "Einchecken"
 
 #: control/navigation.py:337
 #: control/templates/pretixcontrol/checkin/lists.html:3
@@ -16656,7 +16668,7 @@ msgstr "Veranstaltungsdaten löschen"
 
 #: control/templates/control/event_clear.html:8
 msgid "Delete statistics, systemlog, chat messages, questions, …"
-msgstr "Statistiken, Systemlog, Chatnachrichten, Fragen, … löschen"
+msgstr "Statistiken, Systemprotokolle, Chat-Nachrichten, Fragen usw. löschen"
 
 #: control/templates/control/event_clear.html:9
 msgid "Delete user accounts and audit logs"
@@ -16801,7 +16813,7 @@ msgstr "User-Agent"
 
 #: control/templates/control/systemlog_detail.html:18
 msgid "Trace"
-msgstr "Trace"
+msgstr "Nachverfolgen"
 
 #: control/templates/control/systemlog_detail.html:24
 #: control/templates/control/systemlog_list.html:10
@@ -17156,7 +17168,7 @@ msgstr "Keine Celery-Worker konfiguriert."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:140
 msgid "Broker"
-msgstr "Broker"
+msgstr "Vermittlungsdienst"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:143
 msgid "Backend"
@@ -17477,7 +17489,8 @@ msgstr "Die App wird folgende Berechtigungen haben:"
 msgid ""
 "Please select the organizer accounts this application should get access to:"
 msgstr ""
-"Bitte wählen Sie die Veranstalterkonten aus, auf die die App zugreifen darf:"
+"Bitte wählen Sie die Veranstalterkonten aus, auf die diese App Zugriff "
+"erhalten soll:"
 
 #: control/templates/pretixcontrol/auth/oauth_authorization.html:41
 msgid ""
@@ -19119,11 +19132,12 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"        Ihr Geschenkgutschein wird zur Bezahlung dieser Bestellung benutzt. "
-"Wenn das Guthaben auf dem Geschenkgutschein niedriger ist als die\n"
-"Bestellsumme, können Sie den Restbetrag mit einer anderen Zahlungsmethode "
-"bezahlen. Wenn das Guthaben höher ist als die Bestellsumme,\n"
-"können Sie den Gutschein in Zukunft erneut verwenden.\n"
+"        Ihr Geschenkgutschein wird zur Bezahlung dieser Bestellung "
+"verwendet. Wenn das Guthaben auf dem Geschenkgutschein geringer ist als der "
+"Gesamtbetrag der Bestellung, können Sie den\n"
+"        Differenzbetrag mit einer anderen Zahlungsmethode begleichen. Wenn "
+"das Guthaben höher ist als der Gesamtbetrag der Bestellung, können Sie den "
+"Geschenkgutschein in Zukunft erneut verwenden.\n"
 "    "
 
 #: control/templates/pretixcontrol/global_message.html:5
@@ -22142,10 +22156,10 @@ msgid ""
 "new set of quotas to <strong>replace</strong> the quota setup of all "
 "selected dates."
 msgstr ""
-"Die ausgewählten Termine enthalten unterschiedliche Kontingent-"
-"Konfigurationen und können daher nicht gemeinsam bearbeitet werden. "
-"Stattdessen können Sie neue Kontingente angeben, die die existierenden für "
-"alle Termine <strong>ersetzen</strong> werden."
+"Die ausgwählten Termine enthalten derzeit unterschiedliche Kontingente und "
+"können daher nicht gemeinsam geändert werden. Stattdessen können Sie neue "
+"Kontingente einrichten, die die Kontingente aller ausgewählten Termine "
+"<strong>ersetzen</strong>."
 
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:257
 msgid ""
@@ -23000,7 +23014,7 @@ msgstr ""
 
 #: control/views/event.py:1426
 msgid "The issue has been marked as resolved!"
-msgstr "Das Problem wurde als gelöst markiert."
+msgstr "Das Problem wurde als „Gelöst“ kennzeichnet!"
 
 #: control/views/event.py:1452 control/views/orders.py:570
 msgid "The comment has been updated."
@@ -23181,11 +23195,10 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"leider können wir Ihrer Anfrage nicht entgegenkommen und die Bestellung "
+"leider konnten wir Ihrer Anfrage nicht nachkommen und Ihre Bestellung "
 "stornieren.\n"
 "\n"
-"Viele Grüße,\n"
-"Das {event} Team"
+"Ihr {event}-Team"
 
 #: control/views/orders.py:937
 msgid ""
@@ -23358,8 +23371,8 @@ msgid ""
 "The invoice file has not yet been generated, we will generate it for you "
 "now. Please try again in a few seconds."
 msgstr ""
-"Diese Rechnung wurde bisher noch nicht fertig erstellt, wir werden die PDF-"
-"Datei jetzt erstellen. Bitte probieren Sie es in wenigen Sekunden erneut."
+"Die Rechnung wurde noch nicht erstellt, wird aber jetzt für Sie generiert. "
+"Bitte versuchen Sie es in ein paar Sekunden erneut."
 
 #: control/views/orders.py:1713
 msgid "The payment term has been changed."
@@ -24081,8 +24094,8 @@ msgstr "Blackberry (Link über Google)"
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:52
 msgid "Add a new account to the app by scanning the following barcode:"
 msgstr ""
-"Fügen Sie in der App ein neues Konto hinzu, indem Sie den folgenden QR-Code "
-"scannen:"
+"Fügen Sie der App ein neues Konto hinzu, indem Sie den folgenden QR-Code "
+"einlesen:"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:56
 msgid "Can't scan the barcode?"
@@ -25102,9 +25115,9 @@ msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
 msgstr ""
-"Diese Links werden auf allen öffentlichen Veranstaltungsseiten in der "
-"Fußzeile angezeigt. Du könntest hier beispielsweise das Impressum, die AGB "
-"oder die Datenschutzbestimmung verlinken."
+"Diese Links werden in der Fußzeile aller Ihrer öffentlichen Seiten "
+"angezeigt. Sie können hier beispielsweise Ihre Nutzungsbedingungen, Ihr "
+"Impressum oder Ihre Datenschutzerklärung verlinken."
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:173
 msgid "Design"
@@ -26162,20 +26175,16 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
-"Hi!\n"
+"Hallo!\n"
 "\n"
-"Deine Einreichung “{submission_title}” für\n"
-"{event_name} ist bei uns angekommen. Wir melden uns bei dir, sobald wir "
-"Zeit\n"
-"hatten alle Einreichungen anzusehen. In der Zwischenzeit kannst du deine "
-"Einreichung\n"
-"unter folgendem Link ansehen und bearbeiten:\n"
-"{submission_url}\n"
+"Wir haben Ihren Vorschlag „{submission_title}” für\n"
+"{event_name} erhalten. Wir werden Sie benachrichtigen, sobald wir alle\n"
+"Vorschläge geprüft haben. Bis dahin können Sie Ihren Vorschlag unter\n"
+"{submission_url} einsehen und bearbeiten.\n"
 "\n"
-"Bitte zögere nicht, dich bei uns zu melden, wenn du irgendwelche Fragen "
-"hast.\n"
+"Bei Fragen stehen wir Ihnen gerne zur Verfügung!\n"
 "\n"
-"Das {event_name}-Team"
+"Die Organisatoren von {event_name}"
 
 #: mail/default_templates.py:23
 #, python-brace-format
@@ -26200,15 +26209,18 @@ msgid ""
 msgstr ""
 "Hallo!\n"
 "\n"
-"Wir freuen uns, dir mitzuteilen, dass wir deinen Vorschlag \""
-"{submission_title}\" für {event_name} angenommen haben. Bitte klicke auf "
-"diesen Link, um deine Teilnahme zu bestätigen:\n"
+"Wir freuen uns, Ihnen mitteilen zu können, dass wir Ihren Vorschlag „"
+"{submission_title}”\n"
+"für {event_name} angenommen haben. Bitte klicken Sie auf diesen Link, um "
+"Ihre Teilnahme zu bestätigen:\n"
 "\n"
 "{confirmation_link}\n"
 "\n"
-"Wir freuen uns darauf, dich bei {event_name} zu sehen - Bitte kontaktiere "
-"uns, falls du Fragen hast! Wir melden uns vor der Konferenz erneut, um dir "
-"Details zu deinem Slot im Zeitplan sowie technische Informationen zum Raum "
+"Wir freuen uns darauf, Sie bei {event_name} begrüßen zu dürfen – bitte "
+"kontaktieren Sie uns, wenn Sie Fragen haben!\n"
+"Wir werden uns vor der Konferenz noch einmal bei Ihnen melden, um Ihnen "
+"Einzelheiten\n"
+"zu Ihrem Zeitfenster im Programm und technische Details zum Raum\n"
 "und zur Präsentationstechnik mitzuteilen.\n"
 "\n"
 "Wir sehen uns dort!\n"
@@ -26226,17 +26238,15 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
-"Hi!\n"
+"Hallo!\n"
 "\n"
-"leider können wir deine Einreichung “{submission_title}” für\n"
-"{event_name} nicht akzeptieren. Es gab schlicht zu viele tolle "
-"Einreichungen,\n"
-"sodass wir nicht alle berücksichtigen konnten. Wir hoffen, dich als "
-"Teilnehmer trotzdem\n"
-"zu {event_name} begrüßen zu dürfen!\n"
+"Leider müssen wir Ihnen mitteilen, dass wir Ihren Vorschlag\n"
+"„{submission_title}” für {event_name} nicht annehmen können.\n"
+"Es gab einfach zu viele großartige Vorschläge – wir hoffen, Sie statt als "
+"Referent\n"
+"als Teilnehmer bei {event_name} begrüßen zu dürfen!\n"
 "\n"
-"Viele Grüße,\n"
-"Das {event_name}-Team"
+"Die Organisatoren von {event_name}"
 
 #: mail/default_templates.py:53
 msgid "New schedule!"
@@ -27898,7 +27908,7 @@ msgstr ""
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"
-msgstr "Dem Team beitreten"
+msgstr "Werden Sie Teil des Teams!"
 
 #: orga/templates/orga/mails/_mail_editor.html:6
 #: orga/templates/orga/mails/_mail_editor.html:15
@@ -28162,8 +28172,8 @@ msgstr "Es gibt keine Organisatoren, die Sie bearbeiten können."
 #: orga/views/dashboard.py:329
 msgid "speaker"
 msgid_plural "speakers"
-msgstr[0] "Vortragende"
-msgstr[1] "Vortragende"
+msgstr[0] "Referent"
+msgstr[1] "Referenten"
 
 #: orga/templates/orga/organizer/speaker_list.html:35
 #: orga/templates/orga/speaker/list.html:43
@@ -28289,7 +28299,7 @@ msgstr "Zuweisungen importieren"
 #: orga/templates/orga/submission/content_edit.html:66
 #: orga/templates/orga/submission/review.html:10 orga/views/dashboard.py:179
 msgid "Reviews"
-msgstr "Reviews"
+msgstr "Bewertungen"
 
 #: orga/templates/orga/review/bulk.html:22
 #, python-format
@@ -28844,10 +28854,11 @@ msgid ""
 "website. This way, your attendees can see your schedule without leaving your "
 "website, and you can style the schedule to fit right in with your website."
 msgstr ""
-"Das eventyay-Widget erlaubt es, den Programmplan in die Veranstaltungsseite "
-"zu integrieren. Auf diesem Weg können Teilnehmende das Programm sehen, ohne "
-"die Veranstaltungsseite zu verlassen, und es kann mithilfe von CSS so "
-"angepasst werden, dass es sich in die Seite gut einfügt."
+"Mit dem eventyay-Terminkalender-Widget können Sie Ihren Zeitplan in Ihre "
+"Veranstaltungswebsite einbetten. Auf diese Weise können Ihre Teilnehmer "
+"Ihren Zeitplan einsehen, ohne Ihre Website verlassen zu müssen, und Sie "
+"können den Zeitplan so gestalten, dass er sich nahtlos in Ihre Website "
+"einfügt."
 
 #: orga/templates/orga/settings/widget.html:48
 msgid ""
@@ -28944,7 +28955,7 @@ msgstr "Neue Information hinzufügen"
 #: orga/templates/orga/speaker/list.html:13 orga/views/dashboard.py:348
 msgid "submitter"
 msgid_plural "submitters"
-msgstr[0] "Einreichende"
+msgstr[0] "Einreichende(r)"
 msgstr[1] "Einreichende"
 
 #: orga/templates/orga/speaker/list.html:70
@@ -29815,7 +29826,7 @@ msgstr "Der Vortragende wurde der Einreichung hinzugefügt."
 
 #: orga/views/submission.py:490
 msgid "The proposal has been updated!"
-msgstr "Die Einreichung wurde gespeichert."
+msgstr "Der Vorschlag wurde aktualisiert!"
 
 #: orga/views/submission.py:656
 msgid "The anonymisation has been updated."
@@ -29897,8 +29908,8 @@ msgid ""
 "Please provide a profile picture or allow us to load your picture from "
 "gravatar!"
 msgstr ""
-"Bitte lade ein Profilbild hoch, oder erlaube uns, ein Bild von Gravatar zu "
-"laden."
+"Bitte fügen Sie ein Profilbild hinzu oder erlauben Sie uns, Ihr Bild von "
+"Gravatar zu laden!"
 
 #: person/forms/profile.py:174
 msgid ""
@@ -29963,7 +29974,7 @@ msgstr ""
 #: plugins/badges/templates/pretixplugins/badges/index.html:4
 #: plugins/badges/templates/pretixplugins/badges/index.html:9
 msgid "Badges"
-msgstr "Badges"
+msgstr "Namensschilder"
 
 #: plugins/badges/apps.py:35
 msgid ""
@@ -30893,7 +30904,7 @@ msgstr "Automatisch eingecheckt"
 #: plugins/checkinlists/exporters.py:513 plugins/checkinlists/exporters.py:691
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:68
 msgid "Secret"
-msgstr "Secret"
+msgstr "Vertraulicher Schlüssel"
 
 #: plugins/checkinlists/exporters.py:677
 msgid "Check-in log (all successful scans)"
@@ -31430,7 +31441,6 @@ msgid "SocialAuth"
 msgstr "Mit sozialem Netzwerk authentifizieren"
 
 #: plugins/socialauth/apps.py:13
-#, fuzzy
 msgid "the eventyay team"
 msgstr "Das eventyay-Team"
 
@@ -31489,10 +31499,8 @@ msgstr "Erstelle eine OAuth-Anwendung auf"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:21
 #: plugins/socialauth/templates/socialauth/social_setup.html:40
-#, fuzzy
-#| msgid "Integrations"
 msgid "Instructions:"
-msgstr "Integrationen"
+msgstr "Anweisungen:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:23
 msgid "Follow the setup guide:"
@@ -31527,10 +31535,8 @@ msgstr ""
 "müssen Sie eine OAuth-Anwendung bei MediaWiki registrieren."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:57
-#, fuzzy
-#| msgid "Import attendees"
 msgid "Important Notes"
-msgstr "Teilnehmer importieren"
+msgstr "Wichtige Hinweise"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
@@ -31543,16 +31549,12 @@ msgstr ""
 "Bis zur Genehmigung kann sich nur der Eigentümer der Anwendung anmelden."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:63
-#, fuzzy
-#| msgid "Registration details"
 msgid "Registration Steps"
-msgstr "Anmeldedetails"
+msgstr "Anmeldeschritte"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:65
-#, fuzzy
-#| msgid "Register a new application"
 msgid "Register your OAuth application at:"
-msgstr "Neue App registrieren"
+msgstr "Registrieren Sie Ihre OAuth-Anwendung unter:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:68
 msgid "Click \"Propose new OAuth 2.0 client\""
@@ -31563,14 +31565,10 @@ msgid "On the form enter"
 msgstr "Geben Sie im Formular ein"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:72
-#, fuzzy
-#| msgid "Application name"
 msgid "an application name"
-msgstr "Name der Applikation"
+msgstr "Name der Anwendung"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:73
-#, fuzzy
-#| msgid "Product description"
 msgid "an description description"
 msgstr "Produktbeschreibung"
 
@@ -31579,20 +31577,16 @@ msgid "Set Oauth \"callback\" URL to:"
 msgstr "Setzen Sie die OAuth \"callback\"-URL auf:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:80
-#, fuzzy
-#| msgid "Contact address"
 msgid "Contact Email address"
-msgstr "Kontakt-E-Mail"
+msgstr "Kontakt-E-Mail-Adresse"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
 msgstr "„Kunde ist vertraulich“ ankreuzen"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:82
-#, fuzzy
-#| msgid "Authorization Code"
 msgid "Tick \"Authorization code\""
-msgstr "Authorisierungscode"
+msgstr "„Autorisierungscode“ auswählen"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:83
 msgid "Tick \"Refresh token\""
@@ -31625,16 +31619,12 @@ msgstr ""
 "zurückgegebenen OAuth-Zugangsinformationen:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:91
-#, fuzzy
-#| msgid "Disable application"
 msgid "Client application key"
-msgstr "App deaktivieren"
+msgstr "App-Schlüssel des Nutzers"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:92
-#, fuzzy
-#| msgid "Generate new application secret"
 msgid "Client application secret"
-msgstr "Neuen geheimen Schlüssel erstellen"
+msgstr "Geheimer Schlüssel der Hauptanwendung"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:95
 msgid ""
@@ -32338,10 +32328,8 @@ msgstr ""
 "wir Ihnen einen Link, über den Sie die Bestellung bezahlen können."
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:199
-#, fuzzy
-#| msgid "Placed order"
 msgid "Place order"
-msgstr "Getätigte Bestellung"
+msgstr "Bestellung aufgeben"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:201
 msgid "Submit registration"
@@ -32562,9 +32550,9 @@ msgid ""
 "the order clicked the link in the email they received to confirm the email "
 "address is valid."
 msgstr ""
-"Sie können Ihre Tickets hier herunterladen sobald die Person, die die "
-"Bestellung aufgegeben hat, einen Link in der an sie geschickten E-Mail "
-"geklickt hat."
+"Hier können Sie Ihre Tickets herunterladen, sobald die Person, die die "
+"Bestellung aufgegeben hat, auf den Link in der E-Mail geklickt hat, um zu "
+"bestätigen, dass die E-Mail-Adresse gültig ist."
 
 #: presale/templates/pretixpresale/event/fragment_downloads.html:26
 msgid ""
@@ -33418,10 +33406,8 @@ msgstr "Ticket nicht gefunden?"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:18
 #: presale/templates/pretixpresale/fragment_modals.html:33
-#, fuzzy
-#| msgid "Send out emails"
 msgid "Resend the email"
-msgstr "E-Mails verschicken"
+msgstr "Die E-Mail erneut senden"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:20
 #: presale/templates/pretixpresale/fragment_modals.html:35
@@ -33430,67 +33416,49 @@ msgstr "um es zu erhalten."
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:23
 #: presale/templates/pretixpresale/fragment_modals.html:38
-#, fuzzy
-#| msgid "If you already ordered a ticket"
 msgid "Want to order a ticket?"
-msgstr "Wenn Sie bereits ein Ticket bestellt haben"
+msgstr "Möchten Sie ein Ticket bestellen?"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:25
 #: presale/templates/pretixpresale/fragment_modals.html:40
-#, fuzzy
-#| msgid "Go to the ticket shop"
 msgid "Get a ticket here"
-msgstr "Zum Ticket-Shop"
+msgstr "Ticket hier kaufen"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:31
 #: presale/templates/pretixpresale/fragment_modals.html:46
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Waiting, product %(num)sx available\n"
-#| "                                "
+#, python-format
 msgid ""
 "\n"
 "                            Want to create a %(event_name)s account?\n"
 "                        "
 msgstr ""
 "\n"
-"                                    Wartet, Produkt %(num)sx verfügbar\n"
-"                                "
+"                            Möchten Sie ein %(event_name)s-Konto erstellen?\n"
+"                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:35
 #: presale/templates/pretixpresale/fragment_modals.html:50
-#, fuzzy
-#| msgid "Signature"
 msgid "Sign up here"
-msgstr "Signatur"
+msgstr "Hier anmelden"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:39
 #: presale/templates/pretixpresale/fragment_modals.html:54
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                        from %(start_date)s\n"
-#| "                                    "
+#, python-format
 msgid ""
 "\n"
 "                            Already have a %(event_name)s account?\n"
 "                        "
 msgstr ""
 "\n"
-"                                        ab %(start_date)s\n"
-"                                    "
+"                            Sie haben bereits ein %(event_name)s-Konto?\n"
+"                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:43
 #: presale/templates/pretixpresale/fragment_modals.html:58
-#, fuzzy
-#| msgid "Login"
 msgid "Login here"
-msgstr "Login"
+msgstr "Hier anmelden"
 
 #: presale/templates/pretixpresale/fragment_login_status.html:7
-#, fuzzy
-#| msgid "Account"
 msgid "account"
 msgstr "Konto"
 
@@ -37740,3 +37708,11 @@ msgstr "abgelehnt"
 
 #~ msgid "Already have a %(event_name)s account?"
 #~ msgstr "Haben Sie bereits ein %(event_name)s Konto?"
+
+#: cfp/templates/cfp/includes/forms_header.html:6
+msgid "Choose file"
+msgstr "Datei auswählen"
+
+#: cfp/templates/cfp/includes/forms_header.html:7
+msgid "No file chosen"
+msgstr "Keine Datei ausgewählt"

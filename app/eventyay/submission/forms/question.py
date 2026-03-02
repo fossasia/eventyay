@@ -66,6 +66,8 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
                 readonly=readonly,
                 not_strict=self.not_strict,
             )
+            if field is None:
+                continue
             field.question = question
             field.answer = initial_object
             self.fields[f'question_{question.pk}'] = field
@@ -75,7 +77,7 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
         return [
             forms.BoundField(self, field, name)
             for name, field in self.fields.items()
-            if field.question.target == TalkQuestionTarget.SPEAKER
+            if name.startswith('question_') and field.question.target == TalkQuestionTarget.SPEAKER
         ]
 
     @cached_property
@@ -83,7 +85,7 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
         return [
             forms.BoundField(self, field, name)
             for name, field in self.fields.items()
-            if field.question.target == TalkQuestionTarget.SUBMISSION
+            if name.startswith('question_') and field.question.target == TalkQuestionTarget.SUBMISSION
         ]
 
     def save(self):

@@ -1,4 +1,5 @@
 from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 
 from eventyay.common.views import EventSocialMediaCard, get_static
 
@@ -97,7 +98,7 @@ urlpatterns = [
         speaker.SpeakerRedirect.as_view(),
         name='speaker.redirect',
     ),
-    path('sessions/', schedule.ScheduleView.as_view(), name='talks'),
+    path('sessions/', RedirectView.as_view(url='../schedule/', permanent=True), name='talks'),
     path('talk/<slug>/', talk.TalkView.as_view(), name='talk.detail'),
     path(
         'talk/<slug>/og-image',
@@ -113,6 +114,41 @@ urlpatterns = [
         'talk/<slug>.ics',
         talk.SingleICalView.as_view(),
         name='ical',
+    ),
+    path(
+        'talk/<slug>.json',
+        talk.SingleExportView.as_view(),
+        {'format': 'json'},
+        name='talk-export-json',
+    ),
+    path(
+        'talk/<slug>.xml',
+        talk.SingleExportView.as_view(),
+        {'format': 'xml'},
+        name='talk-export-xml',
+    ),
+    path(
+        'talk/<slug>.xcal',
+        talk.SingleExportView.as_view(),
+        {'format': 'xcal'},
+        name='talk-export-xcal',
+    ),
+    path(
+        'talk/<slug>/export/google-calendar',
+        talk.SingleCalendarRedirectView.as_view(),
+        {'provider': 'google-calendar'},
+        name='talk-google-calendar',
+    ),
+    path(
+        'talk/<slug>/export/webcal',
+        talk.SingleCalendarRedirectView.as_view(),
+        {'provider': 'webcal'},
+        name='talk-webcal',
+    ),
+    path(
+        'talk/<slug>/export/<str:format>',
+        talk.SingleExportView.as_view(),
+        name='talk-export',
     ),
     path(
         'talk/review/<slug>',
@@ -133,6 +169,36 @@ urlpatterns = [
         'speakers/<code>/talks.ics',
         speaker.SpeakerTalksIcalView.as_view(),
         name='speaker.talks.ical',
+    ),
+    path(
+        'speakers/<code>/talks.json',
+        speaker.SpeakerTalksExportView.as_view(),
+        {'format': 'json'},
+        name='speaker.talks.json',
+    ),
+    path(
+        'speakers/<code>/talks.xml',
+        speaker.SpeakerTalksExportView.as_view(),
+        {'format': 'xml'},
+        name='speaker.talks.xml',
+    ),
+    path(
+        'speakers/<code>/talks.xcal',
+        speaker.SpeakerTalksExportView.as_view(),
+        {'format': 'xcal'},
+        name='speaker.talks.xcal',
+    ),
+    path(
+        'speakers/<code>/talks/export/google-calendar',
+        speaker.SpeakerTalksCalendarRedirectView.as_view(),
+        {'provider': 'google-calendar'},
+        name='speaker.talks.google-calendar',
+    ),
+    path(
+        'speakers/<code>/talks/export/webcal',
+        speaker.SpeakerTalksCalendarRedirectView.as_view(),
+        {'provider': 'webcal'},
+        name='speaker.talks.webcal',
     ),
     path(
         'og-image',

@@ -21,7 +21,6 @@ body {
 
 header {
     z-index: 1000;
-    height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -39,7 +38,6 @@ header .header-wrapper {
 }
 
 header .header-row-right {
-    padding-bottom: 4px;
 	color: var(--color-primary);
     margin-left: auto;
     display: flex;
