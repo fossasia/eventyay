@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-grid-schedule
+.c-grid-schedule(:class="'density-' + density")
 	.sticky-header
 		.rooms-bar(ref="roomsBar")
 			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
@@ -119,7 +119,11 @@ export default {
 			type: Boolean,
 			default: false
 		},
-		disableAutoScroll: Boolean
+		disableAutoScroll: Boolean,
+		density: {
+			type: String,
+			default: 'default'
+		}
 	},
 	data () {
 		return {
@@ -272,6 +276,7 @@ export default {
 			return this.timeslices.filter(slice => slice.date.minute() % 30 === 0)
 		},
 		gridStyle () {
+			const scale = this.density === 'compact' ? 0.65 : this.density === 'comfortable' ? 1.4 : 1
 			let rows = ''
 			rows += this.timeslices.map((slice, index) => {
 				const next = this.timeslices[index + 1]
@@ -283,6 +288,7 @@ export default {
 				} else if (next) {
 					height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
 				}
+				height = Math.round(height * scale)
 				return `[${slice.name}] minmax(${height}px, auto)`
 			}).join(' ')
 			return {
@@ -728,6 +734,30 @@ export default {
 		z-index: 30
 	.print-grids
 		display: none
+
+.c-grid-schedule.density-compact
+	.timeslice
+		padding: 4px 6px 0 10px
+		font-size: 12px
+	.rooms-bar .rooms-inner > .room
+		font-size: 14px
+		padding: 4px 2px
+	.grid
+		grid-template-columns: 60px repeat(var(--total-rooms), 1fr) auto
+	.rooms-inner
+		grid-template-columns: 60px repeat(var(--total-rooms), 1fr) auto
+
+.c-grid-schedule.density-comfortable
+	.timeslice
+		padding: 12px 14px 0 20px
+		font-size: 16px
+	.rooms-bar .rooms-inner > .room
+		font-size: 20px
+		padding: 12px 6px
+	.grid
+		grid-template-columns: 96px repeat(var(--total-rooms), 1fr) auto
+	.rooms-inner
+		grid-template-columns: 96px repeat(var(--total-rooms), 1fr) auto
 
 @media print
 	.c-grid-schedule

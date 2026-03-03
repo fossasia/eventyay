@@ -86,6 +86,23 @@
 		button.toolbar-btn.clear-filters-btn(v-if="hasActiveFilters", :title="t.reset_all_filters", :aria-label="t.reset_all_filters", @click="$emit('resetFilters')")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				path(d="M18 6L6 18M6 6l12 12")
+		button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view")
+			template(v-if="sessionsMode")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+					line(x1="16", y1="2", x2="16", y2="6")
+					line(x1="8", y1="2", x2="8", y2="6")
+					line(x1="3", y1="10", x2="21", y2="10")
+				|  {{ t.calendar_view }}
+			template(v-else)
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					line(x1="8", y1="6", x2="21", y2="6")
+					line(x1="8", y1="12", x2="21", y2="12")
+					line(x1="8", y1="18", x2="21", y2="18")
+					line(x1="3", y1="6", x2="3.01", y2="6")
+					line(x1="3", y1="12", x2="3.01", y2="12")
+					line(x1="3", y1="18", x2="3.01", y2="18")
+				|  {{ t.list_view }}
 	.toolbar-center(v-if="days && days.length > 1")
 		button.day-arrow(:disabled="dayWindowStart <= 0", @click="shiftDays(-2)")
 			svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
@@ -191,23 +208,23 @@
 				button.search-clear(v-if="searchExpanded && searchQuery", @click="$emit('update:searchQuery', ''); $refs.searchInput.focus()")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						path(d="M18 6L6 18M6 6l12 12")
-		button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view")
-			template(v-if="sessionsMode")
+		.density-controls
+			button.toolbar-btn.density-btn(:class="{active: density === 'compact'}", @click="$emit('setDensity', 'compact')", :title="t.density_compact")
 				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-					rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
-					line(x1="16", y1="2", x2="16", y2="6")
-					line(x1="8", y1="2", x2="8", y2="6")
+					line(x1="3", y1="6", x2="21", y2="6")
 					line(x1="3", y1="10", x2="21", y2="10")
-				|  {{ t.calendar_view }}
-			template(v-else)
+					line(x1="3", y1="14", x2="21", y2="14")
+					line(x1="3", y1="18", x2="21", y2="18")
+			button.toolbar-btn.density-btn(:class="{active: density === 'default'}", @click="$emit('setDensity', 'default')", :title="t.density_default")
 				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-					line(x1="8", y1="6", x2="21", y2="6")
-					line(x1="8", y1="12", x2="21", y2="12")
-					line(x1="8", y1="18", x2="21", y2="18")
-					line(x1="3", y1="6", x2="3.01", y2="6")
-					line(x1="3", y1="12", x2="3.01", y2="12")
-					line(x1="3", y1="18", x2="3.01", y2="18")
-				|  {{ t.list_view }}
+					line(x1="3", y1="5", x2="21", y2="5")
+					line(x1="3", y1="12", x2="21", y2="12")
+					line(x1="3", y1="19", x2="21", y2="19")
+			button.toolbar-btn.density-btn(:class="{active: density === 'comfortable'}", @click="$emit('setDensity', 'comfortable')", :title="t.density_comfortable")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+					line(x1="3", y1="4", x2="21", y2="4")
+					line(x1="3", y1="12", x2="21", y2="12")
+					line(x1="3", y1="20", x2="21", y2="20")
 		button.toolbar-btn(v-if="showPrint", @click="printSchedule", :title="t.print")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				polyline(points="6 9 6 2 18 2 18 9")
@@ -268,9 +285,10 @@ export default {
 		showRecordingFilter: { type: Boolean, default: false },
 		recordingFilter: { type: String, default: 'all' },
 		sortBy: { type: String, default: 'room' },
-		sortOptions: { type: Array, default: () => ['room', 'title'] }
+		sortOptions: { type: Array, default: () => ['room', 'title'] },
+		density: { type: String, default: 'default' }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'filterToggle', 'selectDay', 'toggleSessionsMode'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setDensity'],
 	data() {
 		return {
 			exportOpen: false,
@@ -316,6 +334,9 @@ export default {
 				all_sessions: m.all_sessions || 'All sessions',
 				recorded_only: m.recorded_only || 'Recorded only',
 				not_recorded: m.not_recorded || 'Not recorded',
+				density_compact: m.density_compact || 'Compact',
+				density_default: m.density_default || 'Default',
+				density_comfortable: m.density_comfortable || 'Comfortable',
 			}
 		},
 		sortModel: {
@@ -795,6 +816,16 @@ export default {
 		flex-shrink: 0
 		flex: 1
 		justify-content: flex-end
+		.density-controls
+			display: flex
+			align-items: center
+			gap: 1px
+			margin-right: 4px
+			.density-btn
+				&.active
+					background-color: var(--pretalx-clr-primary, #3aa57c)
+					color: #fff
+					border-color: var(--pretalx-clr-primary, #3aa57c)
 		.sessions-toggle
 			white-space: nowrap
 		.search-area
@@ -1011,16 +1042,16 @@ export default {
 		border: none
 		background: transparent
 		cursor: pointer
-		height: 32px
-		padding: 0 10px
+		height: 28px
+		padding: 0 6px
 		border-radius: 2px
 		font-size: 14px
 		display: flex
 		align-items: center
 		gap: 4px
 		&.icon-only
-			padding: 0 8px
-			gap: 4px
+			padding: 0 5px
+			gap: 3px
 		&:hover
 			background-color: rgba(0, 0, 0, 0.05)
 		&.sessions-toggle.active

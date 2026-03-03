@@ -33,13 +33,15 @@
 			:days="days",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
+			:density="density",
 			v-model:searchQuery="searchQuery",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
 			@resetFilters="onlyFavs = false; resetAllFilters()",
 			@saveTimezone="saveTimezone",
-			@toggleSessionsMode="sessionsMode = !sessionsMode")
+			@toggleSessionsMode="sessionsMode = !sessionsMode",
+			@setDensity="setDensity($event)")
 		grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 			:sessions="sessions",
 			:rooms="rooms",
@@ -55,6 +57,7 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
+			:density="density",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -73,6 +76,7 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:showBreaks="!sessionsMode",
+			:density="density",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -255,6 +259,7 @@ export default {
 			sessionsMode: false,
 			searchQuery: '',
 			recordingFilter: 'all',
+			density: localStorage.getItem('schedule-density') || 'default',
 		}
 	},
 	computed: {
@@ -923,6 +928,10 @@ export default {
 			this.allTypes.forEach(t => t.selected = false)
 			this.allLanguages.forEach(l => l.selected = false)
 			this.recordingFilter = 'all'
+		},
+		setDensity (level) {
+			this.density = level
+			localStorage.setItem('schedule-density', level)
 		}
 	}
 }

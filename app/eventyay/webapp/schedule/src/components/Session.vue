@@ -397,4 +397,54 @@ export default {
 	.c-linear-schedule-session.has-date
 		.time-box
 			width: 76px
+
+.density-compact .c-linear-schedule-session,
+.density-compact .break
+	min-height: 64px
+	margin: 4px 4px
+	font-size: 12px
+	.time-box
+		width: 50px
+		padding: 6px 4px 4px 4px
+		.start
+			font-size: 13px
+			margin-bottom: 4px
+			.duration
+				font-size: 11px
+			.ampm
+				font-size: 11px
+	.info
+		padding: 4px
+		padding-right: 56px
+		.title
+			font-size: 13px
+		.speakers
+			font-size: 12px
+		.bottom-info
+			font-size: 11px
+
+.density-comfortable .c-linear-schedule-session,
+.density-comfortable .break
+	min-height: 120px
+	margin: 12px 8px
+	font-size: 16px
+	.time-box
+		width: 76px
+		padding: 14px 10px 8px 10px
+		.start
+			font-size: 18px
+			margin-bottom: 10px
+			.duration
+				font-size: 14px
+			.ampm
+				font-size: 14px
+	.info
+		padding: 12px
+		padding-right: 80px
+		.title
+			font-size: 18px
+		.speakers
+			font-size: 15px
+		.bottom-info
+			font-size: 14px
 </style>

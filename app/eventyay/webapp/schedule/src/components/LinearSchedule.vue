@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-linear-schedule(v-scrollbar.y="")
+.c-linear-schedule(v-scrollbar.y="", :class="'density-' + density")
 	.bucket(v-for="({date, sessions}, index) of sessionBuckets")
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISOString()")
 			.day(v-if="index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
@@ -57,6 +57,10 @@ export default {
 		showBreaks: {
 			type: Boolean,
 			default: true
+		},
+		density: {
+			type: String,
+			default: 'default'
 		}
 	},
 	data () {
@@ -225,4 +229,26 @@ export default {
 				margin: 6px 4px
 				.title
 					font-size: 16px
+
+.c-linear-schedule.density-compact
+	.bucket
+		padding-top: 4px
+		.bucket-label
+			font-size: 12px
+		.break
+			margin: 4px
+			padding: 4px
+			.title
+				font-size: 16px
+
+.c-linear-schedule.density-comfortable
+	.bucket
+		padding-top: 14px
+		.bucket-label
+			font-size: 16px
+		.break
+			margin: 12px
+			padding: 12px
+			.title
+				font-size: 22px
 </style>
