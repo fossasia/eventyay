@@ -32,6 +32,28 @@ from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models import TalkQuestionTarget
 
 
+def get_or_create_speaker_profile(event, speaker_code):
+    """Get a speaker profile by code, creating one if needed.
+
+    This handles cases where a speaker was added to talks but doesn't have
+    an explicit profile record for the event.
+    """
+    profile = SpeakerProfile.objects.filter(
+        event=event, user__code__iexact=speaker_code
+    ).first()
+
+    if not profile:
+        try:
+            user = User.objects.get(code__iexact=speaker_code)
+            profile = SpeakerProfile.objects.get_or_create(
+                user=user, event=event
+            )[0]
+        except User.DoesNotExist:
+            pass
+
+    return profile
+
+
 class ScheduleDataMixin:
     """Provide schedule_json context for pages that embed the schedule widget."""
 
@@ -89,11 +111,7 @@ class SpeakerView(ScheduleDataMixin, PermissionRequired, TemplateView):
     @context
     @cached_property
     def profile(self):
-        return (
-            SpeakerProfile.objects.filter(event=self.request.event, user__code__iexact=self.kwargs['code'])
-            .select_related('user', 'event', 'event__organizer')
-            .first()
-        )
+        return get_or_create_speaker_profile(self.request.event, self.kwargs['code'])
 
     @context
     @cached_property
@@ -137,7 +155,7 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
     slug_field = 'code'
 
     def get_object(self, queryset=None):
-        return SpeakerProfile.objects.filter(event=self.request.event, user__code__iexact=self.kwargs['code']).first()
+        return get_or_create_speaker_profile(self.request.event, self.kwargs['code'])
 
     def get(self, request, event, *args, **kwargs):
         if not self.request.event.current_schedule:
@@ -173,9 +191,7 @@ class SpeakerTalksExportView(EventPermissionRequired, View):
     permission_required = 'base.list_schedule'
 
     def get_speaker_and_slots(self, request):
-        speaker = SpeakerProfile.objects.filter(
-            event=request.event, user__code__iexact=self.kwargs['code']
-        ).select_related('user').first()
+        speaker = get_or_create_speaker_profile(request.event, self.kwargs['code'])
         if not speaker:
             raise Http404()
         schedule = request.event.current_schedule
@@ -276,9 +292,7 @@ class SpeakerTalksCalendarRedirectView(EventPermissionRequired, View):
 
     def get(self, request, event, **kwargs):
         provider = kwargs.get('provider', '')
-        speaker = SpeakerProfile.objects.filter(
-            event=request.event, user__code__iexact=self.kwargs['code']
-        ).select_related('user').first()
+        speaker = get_or_create_speaker_profile(request.event, self.kwargs['code'])
         if not speaker:
             raise Http404()
         schedule = request.event.current_schedule
