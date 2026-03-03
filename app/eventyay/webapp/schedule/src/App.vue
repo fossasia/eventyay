@@ -125,6 +125,24 @@ function getCsrfToken () {
 	return match ? match[1] : ''
 }
 
+function normalizeLocaleCode (code) {
+	if (!code) return ''
+	return code.toString().trim().toLowerCase().replace(/_/g, '-')
+}
+
+function localePrimary (code) {
+	const normalized = normalizeLocaleCode(code)
+	return normalized.split('-')[0] || normalized
+}
+
+function localesMatch (filterValue, sessionValue) {
+	const a = normalizeLocaleCode(filterValue)
+	const b = normalizeLocaleCode(sessionValue)
+	if (!a || !b) return false
+	if (a === b) return true
+	return localePrimary(a) === localePrimary(b)
+}
+
 const markdownIt = MarkdownIt({
 	linkify: false,
 	breaks: true
@@ -337,7 +355,11 @@ export default {
 				if (this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
 				if (this.filteredRooms.length && !this.filteredRooms.find(r => r.id === session.room)) continue
 				if (this.filteredTypes.length && !this.filteredTypes.find(t => t.value === session.session_type)) continue
-				if (this.filteredLanguages.length && !this.filteredLanguages.find(l => l.value === session.content_locale)) continue
+				if (this.filteredLanguages.length) {
+					const fallbackLocale = this.schedule?.content_locales?.[0] || null
+					const sessionLocale = session.content_locale || fallbackLocale
+					if (!this.filteredLanguages.find(l => localesMatch(l.value, sessionLocale))) continue
+				}
 				const start = moment.tz(session.start, this.currentTimezone)
 				if (this.displayDates.length && !this.displayDates.includes(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
@@ -452,7 +474,7 @@ export default {
 			return this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_list
 		},
 		sortOptions () {
-			const options = ['room', 'title']
+			const options = ['room', 'title', 'title_desc']
 			if (this.popularityFeatureEnabled) options.push('popularity')
 			return options
 		},

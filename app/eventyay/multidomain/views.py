@@ -71,7 +71,17 @@ class VideoSPAView(View):
             cfg = event.config or {}
 
             with scope(event=event):
-                schedule = event.current_schedule or event.wip_schedule
+                requested_version = request.GET.get('v') or request.GET.get('version')
+                schedule = None
+                if requested_version:
+                    schedule = (
+                        event.schedules.filter(version=requested_version)
+                        .order_by('-published')
+                        .first()
+                    )
+                if not schedule:
+                    schedule = event.current_schedule or event.wip_schedule
+
                 schedule_data = schedule.build_data(all_talks=False, enrich=True) if schedule else None
                 schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
@@ -102,11 +112,11 @@ class VideoSPAView(View):
                     'version': schedule_version or '',
                     'is_current': schedule == event.current_schedule if schedule else False,
                     'changelog_url': str(event.urls.changelog),
-                    'current_schedule_url': str(event.urls.schedule) if event.current_schedule else '',
+                    'current_schedule_url': f'{base_href}schedule' if event.current_schedule else '',
                     'versions': [
                         {
                             'version': v,
-                            'url': f'{str(event.urls.schedule)}v/{v}/',
+                            'url': f'{base_href}schedule?v={v}',
                             'isCurrent': v == schedule_version,
                         }
                         for v in event.schedules.filter(version__isnull=False)

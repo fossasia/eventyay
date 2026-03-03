@@ -125,6 +125,25 @@
 import moment from 'moment-timezone'
 import { getLocalizedString } from '../utils'
 
+function normalizeLocaleCode (code) {
+	if (!code || typeof code !== 'string') return null
+	return code.replace(/_/g, '-').trim().toLowerCase()
+}
+
+function localePrimary (code) {
+	const normalized = normalizeLocaleCode(code)
+	if (!normalized) return null
+	return normalized.split('-')[0] || null
+}
+
+function localesMatch (filterValue, sessionValue) {
+	const a = normalizeLocaleCode(filterValue)
+	const b = normalizeLocaleCode(sessionValue)
+	if (!a || !b) return false
+	if (a === b) return true
+	return localePrimary(a) && localePrimary(a) === localePrimary(b)
+}
+
 export default {
 	name: 'SpeakersList',
 	inject: {
@@ -253,9 +272,14 @@ export default {
 		},
 		languageFilteredSpeakers() {
 			if (!this.selectedLanguages.length) return this.trackFilteredSpeakers
-			return this.trackFilteredSpeakers.filter(speaker =>
-				(speaker.sessions || []).some(s => this.selectedLanguages.includes(s.content_locale))
-			)
+			const fallbackLocale = this.scheduleData?.schedule?.content_locales?.[0] || null
+			return this.trackFilteredSpeakers.filter(speaker => {
+				return (speaker.sessions || []).some(s => {
+					const sessionLocale = s?.content_locale || fallbackLocale
+					if (!sessionLocale) return false
+					return this.selectedLanguages.some(sel => localesMatch(sel, sessionLocale))
+				})
+			})
 		},
 		sortedSpeakers() {
 			const speakers = [...this.languageFilteredSpeakers]

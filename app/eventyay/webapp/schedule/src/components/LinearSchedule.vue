@@ -52,7 +52,7 @@ export default {
 		sortBy: {
 			type: String,
 			default: 'room',
-			validator: v => ['room', 'title', 'popularity'].includes(v)
+			validator: v => ['room', 'title', 'title_desc', 'popularity'].includes(v)
 		},
 		showBreaks: {
 			type: Boolean,
@@ -145,6 +145,11 @@ export default {
 						const titleA = getLocalizedString(a.title) || ''
 						const titleB = getLocalizedString(b.title) || ''
 						return titleA.localeCompare(titleB)
+					}
+					case 'title_desc': {
+						const titleA = getLocalizedString(a.title) || ''
+						const titleB = getLocalizedString(b.title) || ''
+						return titleB.localeCompare(titleA)
 					}
 					case 'popularity':
 						return (b.fav_count || 0) - (a.fav_count || 0)

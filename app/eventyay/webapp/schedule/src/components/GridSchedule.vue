@@ -578,7 +578,7 @@ export default {
 	background-color: $clr-grey-50
 	.sticky-header
 		position: sticky
-		top: calc(var(--pretalx-sticky-top-offset, 0px) + 30px)
+		top: calc(var(--pretalx-sticky-top-offset, 0px) + 30px + var(--pretalx-version-warning-height, 0px))
 		z-index: 25
 		background-color: $clr-white
 	.rooms-bar
@@ -598,15 +598,16 @@ export default {
 					display: inline-flex
 					justify-content: center
 					align-items: center
-					border: 2px solid $clr-grey-400
+					border: 1px solid $clr-grey-400
 					border-radius: 100%
-					height: 20px
-					width: 20px
+					height: 1.1em
+					width: 1.1em
 					font-weight: bold
-					font-size: 12px
+					font-size: 0.75em
+					line-height: 1
 					color: $clr-grey-500
 					background: $clr-white
-					margin-left: 8px
+					margin-left: 0.4em
 					cursor: pointer
 					user-select: none
 					flex-shrink: 0

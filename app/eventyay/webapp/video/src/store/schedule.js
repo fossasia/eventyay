@@ -93,6 +93,7 @@ export default {
 					title: session.title,
 					abstract: session.abstract,
 					description: session.description,
+					content_locale: session.content_locale,
 					do_not_record: session.do_not_record,
 					url: session.url,
 					start: moment.tz(session.start, rootState.userTimezone),

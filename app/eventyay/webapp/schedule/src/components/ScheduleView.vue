@@ -22,13 +22,17 @@
 			:days="computedDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
+			:density="density",
 			v-model:searchQuery="searchQuery",
+			:sortOptions="sortOptions",
+			v-model:sortBy="internalSortBy",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone",
-			@toggleSessionsMode="sessionsMode = !sessionsMode")
+			@toggleSessionsMode="sessionsMode = !sessionsMode",
+			@setDensity="setDensity")
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 				:sessions="filteredSessions",
@@ -42,6 +46,7 @@
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
 				:showFavCount="showFavCountOnCalendar",
+				:density="density",
 				@changeDay="setCurrentDay",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -56,8 +61,9 @@
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
 				:showFavCount="showFavCountOnList",
-				:sortBy="sortBy",
+				:sortBy="effectiveSortBy",
 				:showBreaks="!linearOnly && !sessionsMode",
+				:density="density",
 				@changeDay="dayScrolled",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -73,6 +79,24 @@ import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
 import { getLocalizedString, isProperSession } from '../utils'
+
+function normalizeLocaleCode (code) {
+	if (!code) return ''
+	return code.toString().trim().toLowerCase().replace(/_/g, '-')
+}
+
+function localePrimary (code) {
+	const normalized = normalizeLocaleCode(code)
+	return normalized.split('-')[0] || normalized
+}
+
+function localesMatch (filterValue, sessionValue) {
+	const a = normalizeLocaleCode(filterValue)
+	const b = normalizeLocaleCode(sessionValue)
+	if (!a || !b) return false
+	if (a === b) return true
+	return localePrimary(a) === localePrimary(b)
+}
 
 export default {
 	name: 'ScheduleView',
@@ -120,6 +144,8 @@ export default {
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
 			recordingFilter: 'all',
+			density: localStorage.getItem('schedule-density') || 'default',
+			internalSortBy: this.sortBy || 'room',
 			filterState: {
 				tracks: [],
 				rooms: [],
@@ -258,7 +284,12 @@ export default {
 				})
 			}
 			if (selectedLanguages.length) {
-				sessions = sessions.filter(s => s.content_locale && selectedLanguages.includes(s.content_locale))
+				const fallbackLocale = this.resolvedSchedule?.content_locales?.[0] || null
+				sessions = sessions.filter(s => {
+					const sessionLocale = s.content_locale || fallbackLocale
+					if (!sessionLocale) return false
+					return selectedLanguages.some(sel => localesMatch(sel, sessionLocale))
+				})
 			}
 			if (this.searchQuery) {
 				const q = this.searchQuery.toLowerCase()
@@ -315,11 +346,28 @@ export default {
 		},
 		showGrid() {
 			return !this.linearOnly && this.scrollParentWidth > 710
+		},
+		popularityFeatureEnabled() {
+			return !!this.resolvedSchedule?.feature_flags?.session_popularity_enabled
+		},
+		sortOptions() {
+			const options = ['room', 'title', 'title_desc']
+			if (this.popularityFeatureEnabled) options.push('popularity')
+			return options
+		},
+		effectiveSortBy() {
+			return this.sortOptions.includes(this.internalSortBy) ? this.internalSortBy : 'room'
 		}
 	},
 	watch: {
 		recordingFilter() {
 			this.writeRecordingQueryParam()
+		},
+		sortBy: {
+			handler(val) {
+				if (val && val !== this.internalSortBy) this.internalSortBy = val
+			},
+			immediate: true
 		},
 		resolvedSchedule: {
 			handler(val) {
@@ -345,6 +393,14 @@ export default {
 		this._resizeObserver?.disconnect()
 	},
 	methods: {
+		setDensity(density) {
+			this.density = density
+			try {
+				localStorage.setItem('schedule-density', density)
+			} catch {
+				// ignore localStorage access errors
+			}
+		},
 		readRecordingQueryParam() {
 			try {
 				const url = new URL(window.location.href)
@@ -487,7 +543,7 @@ export default {
 		overflow: auto
 		// The toolbar sits outside this scroll container, so reset
 		// the sticky offset to cancel the +40px baked into GridSchedule.
-		--pretalx-sticky-top-offset: -40px
+		--pretalx-sticky-top-offset: calc(-30px - var(--pretalx-version-warning-height, 0px))
 	.schedule-error
 		padding: 32px
 		text-align: center
