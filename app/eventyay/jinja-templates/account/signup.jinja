@@ -10,10 +10,14 @@
 
     <form method='post' action="{{ url_for('account_signup') }}">
       <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+      {{ redirect_field }}
 
       <div class='form-group'>
-        <label for='id_email'>{{ _('Email') }}</label>
-        <input type='email' name='email' id='id_email' value='{{ form.email.value() or "" }}' required>
+        <label for='{{ form.email.id_for_label }}'>
+          {{ form.email.label }}
+          {% if form.email.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ form.email }}
         {% if form.email.errors %}
           <div class='field-error'>
             {% for error in form.email.errors %}
@@ -24,8 +28,11 @@
       </div>
 
       <div class='form-group'>
-        <label for='id_password1'>{{ _('Password') }}</label>
-        <input type='password' name='password1' id='id_password1' required>
+        <label for='{{ form.password1.id_for_label }}'>
+          {{ form.password1.label }}
+          {% if form.password1.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ form.password1 }}
         {% if form.password1.errors %}
           <div class='field-error'>
             {% for error in form.password1.errors %}
@@ -33,11 +40,17 @@
             {% endfor %}
           </div>
         {% endif %}
+        {% if form.password1.help_text %}
+          <div class='field-help'>{{ form.password1.help_text }}</div>
+        {% endif %}
       </div>
 
       <div class='form-group'>
-        <label for='id_password2'>{{ _('Confirm Password') }}</label>
-        <input type='password' name='password2' id='id_password2' required>
+        <label for='{{ form.password2.id_for_label }}'>
+          {{ form.password2.label }}
+          {% if form.password2.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ form.password2 }}
         {% if form.password2.errors %}
           <div class='field-error'>
             {% for error in form.password2.errors %}

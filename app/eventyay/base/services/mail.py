@@ -728,8 +728,8 @@ def get_mail_backend(timeout=None):
                 timeout=timeout,
             )
         logger.warning(
-            'Event SMTP %s:%s is not reachable, falling back to system email backend',
+            'Global SMTP %s:%s is not reachable, falling back to system email backend',
             smtp_host,
             smtp_port,
         )
-    return get_connection(fail_silently=False)
+    return get_connection(fail_silently=False, timeout=timeout)
