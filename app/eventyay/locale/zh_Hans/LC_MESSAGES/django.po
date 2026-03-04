@@ -11200,11 +11200,11 @@ msgid ""
 msgstr "启用后，只要该语言可用于此活动，活动语言将随您的界面语言而变。"
 
 #: common/templates/common/fragment_header_user.html:41
-msgid "Event Language"
+msgid "Event language"
 msgstr "活动语言"
 
 #: common/templates/common/fragment_header_user.html:54
-msgid "UI Language"
+msgid "UI language"
 msgstr "界面语言"
 
 #: common/templates/common/fragment_nav.html:7 event/stages.py:81

@@ -38,7 +38,7 @@
                 </div>
                 <div class="language-columns">
                     <div class="language-column">
-                        <p class="dropdown-heading">{% translate "Event Language" %}</p>
+                        <p class="dropdown-heading">{% translate "Event language" %}</p>
                         <div class="language-column-scroll">
                         {% with active_event_lang=request.event_language|default_if_none:current_event.locale|default_if_none:request.LANGUAGE_CODE %}
                         {% for l, name in current_event.named_locales %}
@@ -51,7 +51,7 @@
                         </div>
                     </div>
                     <div class="language-column">
-                        <p class="dropdown-heading">{% translate "UI Language" %}</p>
+                        <p class="dropdown-heading">{% translate "UI language" %}</p>
                         <div class="language-column-scroll">
                             <form method="post" action="{% url 'eventyay_common:account.locale' %}">
                                 {% csrf_token %}
