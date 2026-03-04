@@ -1,10 +1,10 @@
-import tempfile
+import io
 import unicodedata
 
 import reportlab.rl_config
 from django.contrib import messages
 from django.contrib.staticfiles import finders
-from django.http import HttpResponse
+from django.http import FileResponse
 from django.shortcuts import redirect
 from django.utils.html import conditional_escape
 from django.utils.timezone import now
@@ -125,58 +125,56 @@ class SubmissionCards(EventPermissionRequired, View):
         if not self.get_queryset().exists():
             messages.warning(request, _('You don’t seem to have any proposals yet.'))
             return redirect(request.event.orga_urls.submissions)
-        with tempfile.NamedTemporaryFile(suffix='.pdf') as f:
-            doc = BaseDocTemplate(
-                f.name,
-                pagesize=A4,
-                leftMargin=0,
-                rightMargin=0,
-                topMargin=0,
-                bottomMargin=0,
-            )
-            doc.addPageTemplates(
-                [
-                    PageTemplate(
-                        id='All',
-                        frames=[
-                            Frame(
-                                0,
-                                0,
-                                doc.width / 2,
-                                doc.height,
-                                leftPadding=0,
-                                rightPadding=0,
-                                topPadding=0,
-                                bottomPadding=0,
-                                id='left',
-                            ),
-                            Frame(
-                                doc.width / 2,
-                                0,
-                                doc.width / 2,
-                                doc.height,
-                                leftPadding=0,
-                                rightPadding=0,
-                                topPadding=0,
-                                bottomPadding=0,
-                                id='right',
-                            ),
-                        ],
-                        pagesize=A4,
-                    )
-                ]
-            )
-            doc.build(self.get_story(doc))
-            f.seek(0)
-            timestamp = now().strftime('%Y-%m-%d-%H%M')
-            r = HttpResponse(
-                content_type='application/pdf',
-                headers={
-                    'Content-Disposition': f'attachment; filename="{request.event.slug}_submission_cards_{timestamp}.pdf"'
-                },
-            )
-            r.write(f.read())
-            return r
+        buffer = io.BytesIO()
+        doc = BaseDocTemplate(
+            buffer,
+            pagesize=A4,
+            leftMargin=0,
+            rightMargin=0,
+            topMargin=0,
+            bottomMargin=0,
+        )
+        doc.addPageTemplates(
+            [
+                PageTemplate(
+                    id='All',
+                    frames=[
+                        Frame(
+                            0,
+                            0,
+                            doc.width / 2,
+                            doc.height,
+                            leftPadding=0,
+                            rightPadding=0,
+                            topPadding=0,
+                            bottomPadding=0,
+                            id='left',
+                        ),
+                        Frame(
+                            doc.width / 2,
+                            0,
+                            doc.width / 2,
+                            doc.height,
+                            leftPadding=0,
+                            rightPadding=0,
+                            topPadding=0,
+                            bottomPadding=0,
+                            id='right',
+                        ),
+                    ],
+                    pagesize=A4,
+                )
+            ]
+        )
+        doc.build(self.get_story(doc))
+        buffer.seek(0)
+        timestamp = now()
+        return FileResponse(
+            buffer,
+            as_attachment=True,
+            filename=f'{request.event.slug}_submission_cards_{timestamp:%Y-%m-%d-%H%M}.pdf',
+            content_type='application/pdf',
+        )
 
     def get_style(self):
         stylesheet = StyleSheet1()
