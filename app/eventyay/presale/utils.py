@@ -263,4 +263,6 @@ def belong_to_verified_user(order: Order, user: AnonymousUser | User) -> bool:
             return True
 
     # If no matching verified email found, order doesn't belong to user
+    logger.debug('Order %s is associated with email %s, but user %s does not have a verified email matching this order.',
+                 order.code, order.email, user)
     return False

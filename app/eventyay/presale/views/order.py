@@ -8,16 +8,15 @@ import secrets
 from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import cast
+from typing import Literal, cast
 from urllib.parse import urlparse, urlunparse
 
 import jwt
-from allauth.account.models import EmailAddress
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q, Sum
@@ -37,6 +36,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.generic import TemplateView, View
+from safe_result import Err, Ok, Result
 
 from eventyay.base.models import (
     CachedTicket,
@@ -102,33 +102,70 @@ from eventyay.presale.views.robots import NoSearchIndexViewMixin
 logger = logging.getLogger(__name__)
 
 
+def to_optional[T](result: Result[T, ...]) -> T | None:
+    """
+    Convert a Result to an optional value.
+    Returns the value if Ok, None if Err.
+    """
+    return result.unwrap_or(None)
+
+
+class UnverifiedEmailOrderError(ValueError):
+    code: Literal['unverified-email'] = 'unverified-email'
+
+
+class UnmatchedSecretOrderError(ValueError):
+    code: Literal['unmatched-secret'] = 'unmatched-secret'
+
+
+type OrderAccessError = UnverifiedEmailOrderError | UnmatchedSecretOrderError | ObjectDoesNotExist
+
 
 class OrderDetailMixin(NoSearchIndexViewMixin):
     @cached_property
-    def order(self) -> Order | None:
+    def order(self) -> Result[Order, OrderAccessError]:
         queryset = Order.objects.filter(event=self.request.event, code=self.kwargs['order'])
         order = queryset.select_related('event').first()
+        logger.info('Looking up order with code %s: %s', self.kwargs['order'], 'found' if order else 'not found')
         if not order:
-            return None
+            return Err(ObjectDoesNotExist())
 
         # If order belongs to a verified user, return order directly
         if belong_to_verified_user(order, self.request.user):
-            return order
+            return Ok(order)
 
         # For unauthenticated users or users who don't own the order, require secret validation
         order_secret = order.secret.lower()
         passed_secret = self.kwargs['secret'].lower()
         # This comparison method is to reduce risk of timing attacks
         if secrets.compare_digest(order_secret, passed_secret):
-            return order
-        return None
+            return Ok(order)
+
+        # If user is authenticated and order belongs to them but email is unverified,
+        # return an error with the specific reason
+        if (
+            self.request.user.is_authenticated
+            and order.email
+            and any(order.email.lower() == addr.lower() for addr in self.request.user.email_addresses)
+        ):
+            return Err(UnverifiedEmailOrderError())
+
+        return Err(UnmatchedSecretOrderError())
 
     def get_order_url(self):
-        return eventreverse(
-            self.request.event,
-            'presale:event.order',
-            kwargs={'order': self.order.code, 'secret': self.order.secret},
-        )
+        def _build_url(order: Order) -> str:
+            return eventreverse(
+                self.request.event,
+                'presale:event.order',
+                kwargs={'order': order.code, 'secret': order.secret},
+            )
+
+        match self.order:
+            case Ok(order):
+                return _build_url(order)
+            case Err(_):
+                # Fallback - redirect to general account page where user can see their orders
+                return reverse('eventyay_common:account.general')
 
     def dispatch(self, request: HttpRequest, *args, **kwargs):
         """
@@ -144,77 +181,35 @@ class OrderDetailMixin(NoSearchIndexViewMixin):
         self.request = request
         self.kwargs = kwargs
 
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-
-        # For authenticated users, check email verification for access
-        if request.user.is_authenticated:
-            user = cast(User, request.user)
-            email_addresses = user.email_addresses
-            if not email_addresses:
-                raise Http404(_('Unknown order code or not authorized to access this order.'))
-
-            # Find which email addresses can modify this order
-            can_modify_emails = [
-                addr for addr in email_addresses
-                if self.order.is_modification_allowed_by(addr)
-            ]
-
-            if not can_modify_emails:
-                raise Http404(_('Unknown order code or not authorized to access this order.'))
-
-            # Check if at least one of the modifying emails is verified
-            verified_email_found = False
-            for addr in can_modify_emails:
-                # User.email is always allowed (backward compatibility)
-                if addr.lower() == user.email.lower() if user.email else False:
-                    verified_email_found = True
-                    break
-                else:
-                    # Check if this EmailAddress entry is verified
-                    email_verified = EmailAddress.objects.filter(
-                        user=user, email__iexact=addr, verified=True
-                    ).exists()
-                    if email_verified:
-                        verified_email_found = True
-                        break
-
-            if not verified_email_found:
+        # Check the result and handle different error types
+        match self.order:
+            case Err(UnverifiedEmailOrderError()):
+                # User owns the order but email is unverified - show flash message and redirect
                 logger.warning(
                     'User with unverified email attempting to access order. '
                     'Redirecting to email verification. Order: %s, User: %s',
-                    self.order.code if self.order else 'unknown',
-                    EmailMasker(user.email) if user.email else 'unknown'
+                    self.kwargs['order'],
+                    EmailMasker(request.user.email) if request.user.email else 'unknown'
                 )
                 messages.error(
                     request,
                     _('Please verify your email address to access this order. '
                       'Check your inbox for a verification link.')
                 )
-                # Redirect to account email management page for verification
                 return redirect('eventyay_common:account.email')
-        else:
-            # For unauthenticated users, check if the order email belongs to any verified user
-            # If it does but is unverified, require the secret to match
-            order_email = self.order.email
-            if order_email:
-                # Check if this email belongs to any verified user account
-                verified_user_email = EmailAddress.objects.filter(
-                    email__iexact=order_email, verified=True
-                ).first()
-
-                if verified_user_email:
-                    # This email belongs to a verified user account
-                    # Access is only allowed through the secret link
-                    pass  # Secret already verified in order property
-                # If email doesn't belong to any verified user, allow access through secret
+            case Err(_e):
+                # ObjectDoesNotExist or UnmatchedSecretOrderError
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
+            case Ok(_order):
+                # Order access granted - continue with the request
+                pass
 
         return super().dispatch(request, *args, **kwargs)
 
 
 class OrderPositionDetailMixin(NoSearchIndexViewMixin):
     @cached_property
-    def position(self) -> OrderPosition | None:
+    def position(self) -> Result[OrderPosition, OrderAccessError]:
         p = (
             OrderPosition.objects.filter(
                 order__event=self.request.event,
@@ -226,101 +221,26 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
             .first()
         )
         if not p or not p.order:
-            return None
+            return Err(ObjectDoesNotExist())
 
         # If order belongs to a verified user, return position directly
         if belong_to_verified_user(p.order, self.request.user):
-            return p
+            return Ok(p)
 
         # For unauthenticated users or users who don't own the order, require secret validation
         if p.web_secret.lower() == self.kwargs['secret'].lower():
-            return p
-        return None
+            return Ok(p)
 
-    def dispatch(self, request: HttpRequest, *args, **kwargs):
-        """
-        Check if the request is authorized to access this order position.
+        # If user is authenticated and order belongs to them but email is unverified,
+        # return an error with the specific reason
+        if (
+            self.request.user.is_authenticated
+            and p.order.email
+            and any(p.order.email.lower() == addr.lower() for addr in self.request.user.email_addresses)
+        ):
+            return Err(UnverifiedEmailOrderError())
 
-        If user is authenticated, we check if any of their email addresses can modify this position
-        and that at least one is verified.
-
-        If user is not authenticated, we allow access through the secret link but check if the
-        order email belongs to a verified user account. If it does but is unverified, we require
-        the secret to match.
-        """
-        self.request = request
-        self.kwargs = kwargs
-
-        if not self.position:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-
-        # Check the associated order as well
-        if not self.position.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-
-        # For authenticated users, check email verification for access
-        if request.user.is_authenticated:
-            user = cast(User, request.user)
-            email_addresses = user.email_addresses
-            if not email_addresses:
-                raise Http404(_('Unknown order code or not authorized to access this order.'))
-
-            # Find which email addresses can modify this order/position
-            can_modify_emails = [
-                addr for addr in email_addresses
-                if self.position.order.is_modification_allowed_by(addr)
-            ]
-
-            if not can_modify_emails:
-                raise Http404(_('Unknown order code or not authorized to access this order.'))
-
-            # Check if at least one of the modifying emails is verified
-            verified_email_found = False
-            for addr in can_modify_emails:
-                # User.email is always allowed (backward compatibility)
-                if addr.lower() == user.email.lower() if user.email else False:
-                    verified_email_found = True
-                    break
-                else:
-                    # Check if this EmailAddress entry is verified
-                    email_verified = EmailAddress.objects.filter(
-                        user=user, email__iexact=addr, verified=True
-                    ).exists()
-                    if email_verified:
-                        verified_email_found = True
-                        break
-
-            if not verified_email_found:
-                logger.warning(
-                    'User with unverified email attempting to access order. '
-                    'Redirecting to email verification. Order: %s, User: %s',
-                    self.order.code if self.order else 'unknown',
-                    EmailMasker(user.email) if user.email else 'unknown'
-                )
-                messages.error(
-                    request,
-                    _('Please verify your email address to access this order. '
-                      'Check your inbox for a verification link.')
-                )
-                # Redirect to account email management page for verification
-                return redirect('eventyay_common:account.email')
-        else:
-            # For unauthenticated users, check if the order email belongs to any verified user
-            # If it does but is unverified, require the secret to match
-            order_email = self.position.order.email
-            if order_email:
-                # Check if this email belongs to any verified user account
-                verified_user_email = EmailAddress.objects.filter(
-                    email__iexact=order_email, verified=True
-                ).first()
-
-                if verified_user_email:
-                    # This email belongs to a verified user account
-                    # Access is only allowed through the secret link
-                    pass  # Secret already verified in position property
-                # If email doesn't belong to any verified user, allow access through secret
-
-        return super().dispatch(request, *args, **kwargs)
+        return Err(UnmatchedSecretOrderError())
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
@@ -331,34 +251,41 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
     """
 
     def post(self, request: HttpRequest, *args, **kwargs):
-        if not self.position:
+        position = to_optional(self.position)
+        if not position:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
+        order = position.order
 
         forbidden = (
-            (self.order.status != Order.STATUS_PAID and not (self.order.status == Order.STATUS_PENDING and request.event.settings.venueless_allow_pending))
-            or self.position.canceled
-            or not self.position.product.admission
+            (
+                order.status != Order.STATUS_PAID
+                and not (order.status == Order.STATUS_PENDING and request.event.settings.venueless_allow_pending)
+            )
+            or position.canceled
+            or not position.product.admission
         )
         if forbidden:
             raise PermissionDenied()
 
         if request.event.settings.venueless_start and request.event.settings.venueless_start.datetime(
-            self.position.subevent or request.event
+            position.subevent or request.event
         ) > now():
             raise PermissionDenied()
 
         iat = datetime.now(UTC)
         exp = iat + timedelta(days=30)
         profile = {'fields': {}}
-        if self.position.attendee_name:
-            profile['display_name'] = self.position.attendee_name
-        if self.position.company:
-            profile['fields']['company'] = self.position.company
+        if position.attendee_name:
+            profile['display_name'] = position.attendee_name
+        if position.company:
+            profile['fields']['company'] = position.company
 
-        for a in self.position.answers.filter(question_id__in=request.event.settings.venueless_questions).select_related('question'):
+        for a in position.answers.filter(question_id__in=request.event.settings.venueless_questions).select_related(
+            'question'
+        ):
             profile['fields'][a.question.identifier] = a.answer
 
-        uid_token = encode_email(self.order.email) if self.order.email else self.position.pseudonymization_id
+        uid_token = encode_email(order.email) if order.email else position.pseudonymization_id
 
         payload = {
             'iss': request.event.settings.venueless_issuer,
@@ -371,16 +298,16 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
                 {
                     'attendee',
                     f'eventyay-video-event-{request.event.slug}',
-                    f'eventyay-video-subevent-{self.position.subevent_id}',
-                    f'eventyay-video-product-{self.position.product_id}',
-                    f'eventyay-video-variation-{self.position.variation_id}',
-                    f'eventyay-video-category-{self.position.product.category_id}',
+                    f'eventyay-video-subevent-{position.subevent_id}',
+                    f'eventyay-video-product-{position.product_id}',
+                    f'eventyay-video-variation-{position.variation_id}',
+                    f'eventyay-video-category-{position.product.category_id}',
                 }
-                | {f'eventyay-video-product-{p.product_id}' for p in self.position.addons.all()}
-                | {f'eventyay-video-variation-{p.variation_id}' for p in self.position.addons.all() if p.variation_id}
+                | {f'eventyay-video-product-{p.product_id}' for p in position.addons.all()}
+                | {f'eventyay-video-variation-{p.variation_id}' for p in position.addons.all() if p.variation_id}
                 | {
                     f'eventyay-video-category-{p.product.category_id}'
-                    for p in self.position.addons.all()
+                    for p in position.addons.all()
                     if p.product.category_id
                 }
             ),
@@ -390,7 +317,7 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
 
         cl = CheckinList.objects.get_or_create(
             event=request.event,
-            subevent=self.position.subevent,
+            subevent=position.subevent,
             name=gettext('Eventyay Video'),
             defaults={
                 'all_products': True,
@@ -398,14 +325,14 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
             },
         )[0]
         try:
-            perform_checkin(self.position, cl, {})
+            perform_checkin(position, cl, {})
         except Exception:
             logger.exception(
                 'Error during Eventyay Video check-in',
                 extra={
                     'event_id': getattr(request.event, 'id', None),
-                    'order_code': getattr(getattr(self, 'order', None), 'code', None),
-                    'position_id': getattr(self.position, 'id', None),
+                    'order_code': order.code,
+                    'position_id': position.id,
                 },
             )
 
@@ -436,31 +363,37 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
         return redirect(redirect_url)
 
     @cached_property
-    def order(self):
-        return self.position.order if self.position else None
+    def order(self) -> Order | None:
+        position = to_optional(self.position)
+        return position.order if position else None
 
     def get_position_url(self):
-        return eventreverse(
-            self.request.event,
-            'presale:event.order.position',
-            kwargs={
-                'order': self.order.code,
-                'secret': self.position.web_secret,
-                'position': self.position.positionid,
-            },
-        )
+        match self.position:
+            case Ok(position):
+                return eventreverse(
+                    self.request.event,
+                    'presale:event.order.position',
+                    kwargs={
+                        'order': position.order.code,
+                        'secret': position.web_secret,
+                        'position': position.positionid,
+                    },
+                )
+            case Err(_):
+                return reverse('eventyay_common:account.general')
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
 class OrderOpen(EventViewMixin, OrderDetailMixin, View):
     def get(self, request, *args, **kwargs):
-        if not self.order:
+        order = to_optional(self.order)
+        if not order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if kwargs.get('hash') == self.order.email_confirm_hash():
-            if not self.order.email_known_to_work:
-                self.order.log_action('eventyay.event.order.contact.confirmed')
-                self.order.email_known_to_work = True
-                self.order.save(update_fields=['email_known_to_work'])
+        if kwargs.get('hash') == order.email_confirm_hash():
+            if not order.email_known_to_work:
+                order.log_action('eventyay.event.order.contact.confirmed')
+                order.email_known_to_work = True
+                order.save(update_fields=['email_known_to_work'])
         return redirect(self.get_order_url())
 
 
@@ -468,18 +401,25 @@ class TicketPageMixin:
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        ctx['order'] = self.order
+        order = to_optional(cast(Result[Order, OrderAccessError], self.order))
+        ctx['order'] = order
 
-        can_download = all([r for rr, r in allow_ticket_download.send(self.request.event, order=self.order)])
-        if self.request.event.settings.ticket_download_date:
-            ctx['ticket_download_date'] = self.order.ticket_download_date
-        can_download = can_download and self.order.ticket_download_available and list(self.order.positions_with_tickets)
-        ctx['download_email_required'] = can_download and (
-            self.request.event.settings.ticket_download_require_validated_email
-            and self.order.sales_channel == 'web'
-            and not self.order.email_known_to_work
-        )
-        ctx['can_download'] = can_download and not ctx['download_email_required']
+        if not order:
+            can_download = False
+            ctx['ticket_download_date'] = None
+            ctx['download_email_required'] = False
+            ctx['can_download'] = False
+        else:
+            can_download = all([r for rr, r in allow_ticket_download.send(self.request.event, order=order)])
+            if self.request.event.settings.ticket_download_date:
+                ctx['ticket_download_date'] = order.ticket_download_date
+            can_download = can_download and order.ticket_download_available and list(order.positions_with_tickets)
+            ctx['download_email_required'] = can_download and (
+                self.request.event.settings.ticket_download_require_validated_email
+                and order.sales_channel == 'web'
+                and not order.email_known_to_work
+            )
+            ctx['can_download'] = can_download and not ctx['download_email_required']
 
         ctx['download_buttons'] = self.download_buttons
 
@@ -526,47 +466,67 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         user = cast(User | AnonymousUser, self.request.user)
+        order = to_optional(self.order)
+        if not order:
+            ctx['cart'] = self.get_cart(
+                answers=True,
+                downloads=ctx['can_download'],
+                queryset=OrderPosition.objects.none(),
+                order=None,
+            )
+            ctx['tickets_with_download'] = []
+            ctx['can_download_multi'] = False
+            ctx['invoices'] = []
+            ctx['can_generate_invoice'] = False
+            ctx['invoice_address_asked'] = False
+            ctx['can_pay'] = False
+            ctx['refunds'] = []
+            ctx['user_change_allowed'] = False
+            ctx['user_cancel_allowed'] = False
+            ctx['can_modify_order'] = False
+            return ctx
+
         ctx['cart'] = self.get_cart(
             answers=True,
             downloads=ctx['can_download'],
-            queryset=self.order.positions.prefetch_related('issued_gift_cards').select_related('tax_rule'),
-            order=self.order,
+            queryset=order.positions.prefetch_related('issued_gift_cards').select_related('tax_rule'),
+            order=order,
         )
         ctx['tickets_with_download'] = [p for p in ctx['cart']['positions'] if p.generate_ticket]
         ctx['can_download_multi'] = any([b['multi'] for b in self.download_buttons]) and (
             [p.generate_ticket for p in ctx['cart']['positions']].count(True) > 1
         )
-        ctx['invoices'] = list(self.order.invoices.all())
-        ctx['can_generate_invoice'] = can_generate_invoice(self.request.event, self.order, ignore_payments=True)
+        ctx['invoices'] = list(order.invoices.all())
+        ctx['can_generate_invoice'] = can_generate_invoice(self.request.event, order, ignore_payments=True)
         if ctx['can_generate_invoice']:
             if (
-                not self.order.payments.exclude(
+                not order.payments.exclude(
                     state__in=[
                         OrderPayment.PAYMENT_STATE_CANCELED,
                         OrderPayment.PAYMENT_STATE_FAILED,
                     ]
                 ).exists()
-                and self.order.status == Order.STATUS_PENDING
+                and order.status == Order.STATUS_PENDING
             ):
                 ctx['generate_invoice_requires'] = 'payment'
         ctx['url'] = build_absolute_uri(
             self.request.event,
             'presale:event.order',
-            kwargs={'order': self.order.code, 'secret': self.order.secret},
+            kwargs={'order': order.code, 'secret': order.secret},
         )
         ctx['invoice_address_asked'] = self.request.event.settings.invoice_address_asked and (
-            self.order.total != Decimal('0.00') or not self.request.event.settings.invoice_address_not_asked_free
+            order.total != Decimal('0.00') or not self.request.event.settings.invoice_address_not_asked_free
         )
 
-        if self.order.status == Order.STATUS_PENDING:
-            ctx['pending_sum'] = self.order.pending_sum
-            ctx['payment_sum_neg'] = ctx['pending_sum'] - self.order.total
+        if order.status == Order.STATUS_PENDING:
+            ctx['pending_sum'] = order.pending_sum
+            ctx['payment_sum_neg'] = ctx['pending_sum'] - order.total
 
-            lp = self.order.payments.last()
+            lp = order.payments.last()
             ctx['can_pay'] = False
 
             for provider in self.request.event.get_payment_providers().values():
-                if provider.is_enabled and provider.order_change_allowed(self.order):
+                if provider.is_enabled and provider.order_change_allowed(order):
                     ctx['can_pay'] = True
                     break
 
@@ -583,20 +543,20 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
                 if lp.state == OrderPayment.PAYMENT_STATE_PENDING and not pp.abort_pending_allowed:
                     ctx['can_pay'] = False
 
-            ctx['can_pay'] = ctx['can_pay'] and self.order._can_be_paid() is True
+            ctx['can_pay'] = ctx['can_pay'] and order._can_be_paid() is True
 
-        elif self.order.status == Order.STATUS_PAID:
+        elif order.status == Order.STATUS_PAID:
             ctx['can_pay'] = False
 
-        ctx['refunds'] = self.order.refunds.filter(
+        ctx['refunds'] = order.refunds.filter(
             state__in=(
                 OrderRefund.REFUND_STATE_DONE,
                 OrderRefund.REFUND_STATE_TRANSIT,
                 OrderRefund.REFUND_STATE_CREATED,
             )
         ).exclude(provider__in=('offsetting', 'reseller', 'boxoffice', 'manual'))
-        ctx['user_change_allowed'] = self.order.user_change_allowed
-        ctx['user_cancel_allowed'] = self.order.user_cancel_allowed
+        ctx['user_change_allowed'] = order.user_change_allowed
+        ctx['user_cancel_allowed'] = order.user_cancel_allowed
         for r in ctx['refunds']:
             if r.provider == 'giftcard':
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
@@ -607,7 +567,7 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
         else:
             # The Order is bound to email addresses instead of users, and user can
             # change his primary email address, so we need to check with all email addresses of the user.
-            can_modify_order = any(self.order.is_modification_allowed_by(addr) for addr in user.email_addresses)
+            can_modify_order = any(order.is_modification_allowed_by(addr) for addr in user.email_addresses)
         ctx['can_modify_order'] = can_modify_order
 
         return ctx
@@ -619,7 +579,7 @@ class OrderPositionDetails(EventViewMixin, OrderPositionDetailMixin, CartMixin, 
 
     def get(self, request, *args, **kwargs):
         self.kwargs = kwargs
-        if not self.position:
+        if not to_optional(self.position):
             raise Http404(_('Unknown order code or not authorized to access this order.'))
         return super().get(request, *args, **kwargs)
 
@@ -647,15 +607,19 @@ class OrderPositionDetails(EventViewMixin, OrderPositionDetailMixin, CartMixin, 
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        position = to_optional(self.position)
+        if not position:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        order = position.order
         ctx['can_download_multi'] = False
-        ctx['position'] = self.position
+        ctx['position'] = position
         ctx['cart'] = self.get_cart(
             answers=True,
             downloads=ctx['can_download'],
-            queryset=self.order.positions.select_related('tax_rule').filter(
-                Q(pk=self.position.pk) | Q(addon_to__id=self.position.pk)
+            queryset=order.positions.select_related('tax_rule').filter(
+                Q(pk=position.pk) | Q(addon_to__id=position.pk)
             ),
-            order=self.order,
+            order=order,
         )
         ctx['tickets_with_download'] = [p for p in ctx['cart']['positions'] if p.generate_ticket]
         return ctx
@@ -673,27 +637,40 @@ class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.request = request
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
         if (
-            self.order.status not in (Order.STATUS_PENDING, Order.STATUS_EXPIRED)
+            order.status not in (Order.STATUS_PENDING, Order.STATUS_EXPIRED)
             or self.payment.state != OrderPayment.PAYMENT_STATE_CREATED
             or not self.payment.payment_provider.is_enabled
-            or self.order._can_be_paid() is not True
+            or order._can_be_paid() is not True
         ):
             messages.error(request, _('The payment for this order cannot be continued.'))
             return redirect(self.get_order_url())
 
-        term_last = self.order.payment_term_last
+        term_last = order.payment_term_last
         if term_last and now() > term_last:
             messages.error(request, _('The payment is too late to be accepted.'))
             return redirect(self.get_order_url())
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
         resp = self.payment.payment_provider.payment_prepare(request, self.payment)
-        if f'payment_change_{self.order.pk}' in request.session:
-            del request.session[f'payment_change_{self.order.pk}']
+        if f'payment_change_{order.pk}' in request.session:
+            del request.session[f'payment_change_{order.pk}']
         if isinstance(resp, str):
             return redirect(resp)
         elif resp is True:
@@ -703,7 +680,8 @@ class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['order'] = self.order
+        order = to_optional(self.order)
+        ctx['order'] = order
         ctx['form'] = self.form
         ctx['provider'] = self.payment.payment_provider
         return ctx
@@ -717,15 +695,21 @@ class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
 
     @cached_property
     def payment(self):
-        return get_object_or_404(self.order.payments, pk=self.kwargs['payment'])
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        return get_object_or_404(order.payments, pk=self.kwargs['payment'])
 
     def get_confirm_url(self):
+        order = to_optional(self.order)
+        if not order:
+            return reverse('eventyay_common:account.general')
         return eventreverse(
             self.request.event,
             'presale:event.order.pay.confirm',
             kwargs={
-                'order': self.order.code,
-                'secret': self.order.secret,
+                'order': order.code,
+                'secret': order.secret,
                 'payment': self.payment.pk,
             },
         )
@@ -744,13 +728,26 @@ class OrderPaymentConfirm(EventViewMixin, OrderDetailMixin, TemplateView):
 
     @cached_property
     def payment(self):
-        return get_object_or_404(self.order.payments, pk=self.kwargs['payment'])
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        return get_object_or_404(order.payments, pk=self.kwargs['payment'])
 
     def dispatch(self, request, *args, **kwargs):
         self.request = request
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if self.payment.state != OrderPayment.PAYMENT_STATE_CREATED or not self.order._can_be_paid():
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if self.payment.state != OrderPayment.PAYMENT_STATE_CREATED or not order._can_be_paid():
             messages.error(request, _('The payment for this order cannot be continued.'))
             return redirect(self.get_order_url())
         if (
@@ -760,7 +757,7 @@ class OrderPaymentConfirm(EventViewMixin, OrderDetailMixin, TemplateView):
             messages.error(request, _('The payment information you entered was incomplete.'))
             return redirect(self.get_payment_url())
 
-        term_last = self.order.payment_term_last
+        term_last = order.payment_term_last
         if term_last and now() > term_last:
             messages.error(request, _('The payment is too late to be accepted.'))
             return redirect(self.get_order_url())
@@ -768,41 +765,48 @@ class OrderPaymentConfirm(EventViewMixin, OrderDetailMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
         try:
-            if not self.order.invoices.exists() and invoice_qualified(self.order):
+            if not order.invoices.exists() and invoice_qualified(order):
                 if self.request.event.settings.get('invoice_generate') == 'True' or (
                     self.request.event.settings.get('invoice_generate') == 'paid'
                     and self.payment.payment_provider.requires_invoice_immediately
                 ):
-                    i = generate_invoice(self.order)
-                    self.order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
+                    i = generate_invoice(order)
+                    order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
                     messages.success(self.request, _('An invoice has been generated.'))
             resp = self.payment.payment_provider.execute_payment(request, self.payment)
         except PaymentException as e:
             messages.error(request, str(e))
             return redirect(self.get_order_url())
-        if f'payment_change_{self.order.pk}' in request.session:
-            del request.session[f'payment_change_{self.order.pk}']
+        if f'payment_change_{order.pk}' in request.session:
+            del request.session[f'payment_change_{order.pk}']
         return redirect(resp or self.get_order_url())
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['order'] = self.order
+        order = to_optional(self.order)
+        ctx['order'] = order
         ctx['payment'] = self.payment
         if 'order' in inspect.signature(self.payment.payment_provider.checkout_confirm_render).parameters:
-            ctx['payment_info'] = self.payment.payment_provider.checkout_confirm_render(self.request, order=self.order)
+            ctx['payment_info'] = self.payment.payment_provider.checkout_confirm_render(self.request, order=order)
         else:
             ctx['payment_info'] = self.payment.payment_provider.checkout_confirm_render(self.request)
         ctx['payment_provider'] = self.payment.payment_provider
         return ctx
 
     def get_payment_url(self):
+        order = to_optional(self.order)
+        if not order:
+            return reverse('eventyay_common:account.general')
         return eventreverse(
             self.request.event,
             'presale:event.order.pay',
             kwargs={
-                'order': self.order.code,
-                'secret': self.order.secret,
+                'order': order.code,
+                'secret': order.secret,
                 'payment': self.payment.pk,
             },
         )
@@ -818,13 +822,26 @@ class OrderPaymentComplete(EventViewMixin, OrderDetailMixin, View):
 
     @cached_property
     def payment(self):
-        return get_object_or_404(self.order.payments, pk=self.kwargs['payment'])
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        return get_object_or_404(order.payments, pk=self.kwargs['payment'])
 
     def dispatch(self, request, *args, **kwargs):
         self.request = request
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if self.payment.state != OrderPayment.PAYMENT_STATE_CREATED or not self.order._can_be_paid():
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if self.payment.state != OrderPayment.PAYMENT_STATE_CREATED or not order._can_be_paid():
             messages.error(request, _('The payment for this order cannot be continued.'))
             return redirect(self.get_order_url())
         if (
@@ -834,7 +851,7 @@ class OrderPaymentComplete(EventViewMixin, OrderDetailMixin, View):
             messages.error(request, _('The payment information you entered was incomplete.'))
             return redirect(self.get_payment_url())
 
-        term_last = self.order.payment_term_last
+        term_last = order.payment_term_last
         if term_last and now() > term_last:
             messages.error(request, _('The payment is too late to be accepted.'))
             return redirect(self.get_order_url())
@@ -842,25 +859,31 @@ class OrderPaymentComplete(EventViewMixin, OrderDetailMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
         try:
             resp = self.payment.payment_provider.execute_payment(request, self.payment)
         except PaymentException as e:
             messages.error(request, str(e))
             return redirect(self.get_order_url())
 
-        if self.order.status == Order.STATUS_PAID:
+        if order.status == Order.STATUS_PAID:
             return redirect(resp or self.get_order_url() + '?paid=yes')
         else:
             return redirect(resp or self.get_order_url() + '?thanks=yes')
 
     def get_payment_url(self):
+        order = to_optional(self.order)
+        if not order:
+            return reverse('eventyay_common:account.general')
         return eventreverse(
             self.request.event,
             'presale:event.order.pay',
             kwargs={
-                'order': self.order.code,
+                'order': order.code,
                 'payment': self.payment.pk,
-                'secret': self.order.secret,
+                'secret': order.secret,
             },
         )
 
@@ -871,13 +894,23 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.request = request
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if self.order.status not in (Order.STATUS_PENDING, Order.STATUS_EXPIRED) or not self.order._can_be_paid():
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if order.status not in (Order.STATUS_PENDING, Order.STATUS_EXPIRED) or not order._can_be_paid():
             messages.error(request, _('The payment method for this order cannot be changed.'))
             return redirect(self.get_order_url())
 
-        term_last = self.order.payment_term_last
+        term_last = order.payment_term_last
         if term_last and now() > term_last:
             messages.error(request, _('The payment is too late to be accepted.'))
             return redirect(self.get_order_url())
@@ -891,18 +924,24 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_payment_url(self, payment):
+        order = to_optional(self.order)
+        if not order:
+            return reverse('eventyay_common:account.general')
         return eventreverse(
             self.request.event,
             'presale:event.order.pay',
             kwargs={
-                'order': self.order.code,
-                'secret': self.order.secret,
+                'order': order.code,
+                'secret': order.secret,
                 'payment': payment.pk,
             },
         )
 
     @cached_property
     def open_fees(self):
+        order = to_optional(self.order)
+        if not order:
+            return OrderFee.objects.none()
         e = OrderPayment.objects.filter(
             fee=OuterRef('pk'),
             state__in=(
@@ -910,11 +949,14 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
                 OrderPayment.PAYMENT_STATE_REFUNDED,
             ),
         )
-        return self.order.fees.annotate(has_p=Exists(e)).filter(Q(fee_type=OrderFee.FEE_TYPE_PAYMENT) & ~Q(has_p=True))
+        return order.fees.annotate(has_p=Exists(e)).filter(Q(fee_type=OrderFee.FEE_TYPE_PAYMENT) & ~Q(has_p=True))
 
     @cached_property
     def open_payment(self):
-        lp = self.order.payments.last()
+        order = to_optional(self.order)
+        if not order:
+            return None
+        lp = order.payments.last()
         if lp and lp.state not in (
             OrderPayment.PAYMENT_STATE_CONFIRMED,
             OrderPayment.PAYMENT_STATE_REFUNDED,
@@ -924,11 +966,17 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
 
     @cached_property
     def _position_sum(self):
-        return self.order.positions.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
+        order = to_optional(self.order)
+        if not order:
+            return Decimal('0.00')
+        return order.positions.aggregate(sum=Sum('price'))['sum'] or Decimal('0.00')
 
     @transaction.atomic()
     def mark_paid_free(self):
-        p = self.order.payments.create(
+        order = to_optional(self.order)
+        if not order:
+            return
+        p = order.payments.create(
             state=OrderPayment.PAYMENT_STATE_CREATED,
             provider='manual',
             amount=Decimal('0.00'),
@@ -940,7 +988,10 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
             pass
 
     def get(self, request, *args, **kwargs):
-        if self.order.pending_sum <= Decimal('0.00'):
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if order.pending_sum <= Decimal('0.00'):
             try:
                 self.mark_paid_free()
             except Quota.QuotaExceededException as e:
@@ -956,15 +1007,18 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
     @cached_property
     def provider_forms(self):
         providers = []
-        pending_sum = self.order.pending_sum
+        order = to_optional(self.order)
+        if not order:
+            return providers
+        pending_sum = order.pending_sum
         for provider in self.request.event.get_payment_providers().values():
-            if not provider.is_enabled or not provider.order_change_allowed(self.order):
+            if not provider.is_enabled or not provider.order_change_allowed(order):
                 continue
             current_fee = sum(f.value for f in self.open_fees) or Decimal('0.00')
             fee = provider.calculate_fee(pending_sum - current_fee)
             if 'order' in inspect.signature(provider.payment_form_render).parameters:
                 form = provider.payment_form_render(
-                    self.request, abs(pending_sum + fee - current_fee), order=self.order
+                    self.request, abs(pending_sum + fee - current_fee), order=order
                 )
             elif 'total' in inspect.signature(provider.payment_form_render).parameters:
                 form = provider.payment_form_render(self.request, abs(pending_sum + fee - current_fee))
@@ -984,13 +1038,16 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         self.request = request
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
         for p in self.provider_forms:
             if p['provider'].identifier == request.POST.get('payment', ''):
                 request.session['payment'] = p['provider'].identifier
-                request.session[f'payment_change_{self.order.pk}'] = '1'
+                request.session[f'payment_change_{order.pk}'] = '1'
 
                 with transaction.atomic():
-                    old_fee, new_fee, fee, newpayment = change_payment_provider(self.order, p['provider'], None)
+                    old_fee, new_fee, fee, newpayment = change_payment_provider(order, p['provider'], None)
 
                 resp = p['provider'].payment_prepare(request, newpayment)
                 if isinstance(resp, str):
@@ -1004,18 +1061,22 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['order'] = self.order
+        order = to_optional(self.order)
+        ctx['order'] = order
         ctx['providers'] = self.provider_forms
         ctx['show_fees'] = any(p['fee_diff'] for p in self.provider_forms)
         return ctx
 
     def get_confirm_url(self, payment):
+        order = to_optional(self.order)
+        if not order:
+            return reverse('eventyay_common:account.general')
         return eventreverse(
             self.request.event,
             'presale:event.order.pay.confirm',
             kwargs={
-                'order': self.order.code,
-                'secret': self.order.secret,
+                'order': order.code,
+                'secret': order.secret,
                 'payment': payment.pk,
             },
         )
@@ -1047,18 +1108,31 @@ def can_generate_invoice(event, order, ignore_payments=False):
 class OrderInvoiceCreate(EventViewMixin, OrderDetailMixin, View):
     def dispatch(self, request, *args, **kwargs):
         self.request = request
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        match self.order:
+            case Ok(_):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if not can_generate_invoice(self.request.event, self.order):
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if not can_generate_invoice(self.request.event, order):
             messages.error(self.request, _('You cannot generate an invoice for this order.'))
-        elif self.order.invoices.exists():
+        elif order.invoices.exists():
             messages.error(self.request, _('An invoice for this order already exists.'))
         else:
-            i = generate_invoice(self.order)
-            self.order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
+            i = generate_invoice(order)
+            order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
             messages.success(self.request, _('The invoice has been generated.'))
         return redirect(self.get_order_url())
 
@@ -1089,6 +1163,9 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
         return override_sets
 
     def post(self, request, *args, **kwargs):
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
         failed = not self.save() or not self.invoice_form.is_valid()
         if failed:
             messages.error(
@@ -1107,7 +1184,7 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
                     return self.get(request, *args, **kwargs)
         if hasattr(self.invoice_form, 'save'):
             self.invoice_form.save()
-        self.order.log_action(
+        order.log_action(
             'eventyay.event.order.modified',
             {
                 'invoice_data': self.invoice_form.cleaned_data,
@@ -1124,31 +1201,31 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
                 ],
             },
         )
-        order_modified.send(sender=self.request.event, order=self.order)
+        order_modified.send(sender=self.request.event, order=order)
         if request.GET.get('generate_invoice') == 'true':
-            if not can_generate_invoice(self.request.event, self.order):
+            if not can_generate_invoice(self.request.event, order):
                 messages.error(self.request, _('You cannot generate an invoice for this order.'))
-            elif self.order.invoices.exists():
+            elif order.invoices.exists():
                 messages.error(self.request, _('An invoice for this order already exists.'))
             else:
-                i = generate_invoice(self.order)
-                self.order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
+                i = generate_invoice(order)
+                order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
                 messages.success(self.request, _('The invoice has been generated.'))
         elif self.request.event.settings.invoice_reissue_after_modify:
             if self.invoice_form.changed_data:
-                inv = self.order.invoices.last()
+                inv = order.invoices.last()
                 if inv and not inv.canceled and not inv.shredded:
                     c = generate_cancellation(inv)
-                    if self.order.status != Order.STATUS_CANCELED:
-                        inv = generate_invoice(self.order)
+                    if order.status != Order.STATUS_CANCELED:
+                        inv = generate_invoice(order)
                     else:
                         inv = c
-                    self.order.log_action('eventyay.event.order.invoice.reissued', data={'invoice': inv.pk})
+                    order.log_action('eventyay.event.order.invoice.reissued', data={'invoice': inv.pk})
                     messages.success(self.request, _('The invoice has been reissued.'))
 
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
-        CachedTicket.objects.filter(order_position__order=self.order).delete()
-        CachedCombinedTicket.objects.filter(order=self.order).delete()
+        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': order.pk})
+        CachedTicket.objects.filter(order_position__order=order).delete()
+        CachedCombinedTicket.objects.filter(order=order).delete()
         return redirect(self.get_order_url())
 
     def get(self, request, *args, **kwargs):
@@ -1158,10 +1235,20 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
         self.request = request
         user = cast(User | AnonymousUser, request.user)
         self.kwargs = kwargs
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
         email_addresses = user.email_addresses if user.is_authenticated else ()
-        can_modify = email_addresses and any(self.order.is_modification_allowed_by(addr) for addr in email_addresses)
+        can_modify = email_addresses and any(order.is_modification_allowed_by(addr) for addr in email_addresses)
         if not can_modify:
             messages.error(request, _('You cannot modify this order'))
             return redirect(self.get_order_url())
@@ -1175,9 +1262,19 @@ class OrderCancel(EventViewMixin, OrderDetailMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         self.kwargs = kwargs
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if not self.order.user_cancel_allowed:
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if not order.user_cancel_allowed:
             messages.error(request, _('You cannot cancel this order.'))
             return redirect(self.get_order_url())
         return super().dispatch(request, *args, **kwargs)
@@ -1187,11 +1284,21 @@ class OrderCancel(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['order'] = self.order
-        prs = self.order.payment_refund_sum
-        fee = self.order.user_cancel_fee
+        order = to_optional(self.order)
+        if not order:
+            ctx['order'] = None
+            ctx['cancel_fee'] = Decimal('0.00')
+            ctx['refund_amount'] = Decimal('0.00')
+            ctx['payment_refund_sum'] = Decimal('0.00')
+            ctx['can_auto_refund'] = False
+            ctx['proposals'] = []
+            ctx['ticks'] = '[]'
+            return ctx
+        ctx['order'] = order
+        prs = order.payment_refund_sum
+        fee = order.user_cancel_fee
         refund_amount = prs - fee
-        proposals = self.order.propose_auto_refunds(refund_amount)
+        proposals = order.propose_auto_refunds(refund_amount)
         ctx['cancel_fee'] = fee
         ctx['refund_amount'] = refund_amount
         ctx['payment_refund_sum'] = prs
@@ -1221,14 +1328,24 @@ class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
         return self.get_order_url()
 
     def post(self, request, *args, **kwargs):
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if not self.order.user_cancel_allowed:
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if not order.user_cancel_allowed:
             messages.error(request, _('You cannot cancel this order.'))
             return redirect(self.get_order_url())
         fee = None
-        if self.order.status == Order.STATUS_PAID and self.order.total != Decimal('0.00'):
-            fee = self.order.user_cancel_fee
+        if order.status == Order.STATUS_PAID and order.total != Decimal('0.00'):
+            fee = order.user_cancel_fee
         if 'cancel_fee' in request.POST and self.request.event.settings.cancel_allow_user_paid_adjust_fees:
             fee = fee or Decimal('0.00')
             fee_in = re.sub('[^0-9.,]', '', request.POST.get('cancel_fee'))
@@ -1240,7 +1357,7 @@ class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
                 except:
                     messages.error(request, _('You chose an invalid cancellation fee.'))
                     return redirect(self.get_order_url())
-            if custom_fee is not None and fee <= custom_fee <= self.order.payment_refund_sum:
+            if custom_fee is not None and fee <= custom_fee <= order.payment_refund_sum:
                 if self.request.event.settings.cancel_allow_user_paid_adjust_fees_step:
                     if (
                         custom_fee - fee
@@ -1257,16 +1374,16 @@ class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
             and self.request.POST.get('giftcard') == 'true'
         )
         if self.request.event.settings.cancel_allow_user_paid_require_approval:
-            self.order.cancellation_requests.create(
+            order.cancellation_requests.create(
                 cancellation_fee=fee or Decimal('0.00'),
                 refund_as_giftcard=giftcard,
             )
-            self.order.log_action('eventyay.event.order.refund.requested')
+            order.log_action('eventyay.event.order.refund.requested')
             return self.success(None)
         else:
             comment = gettext('Canceled by customer')
             return self.do(
-                self.order.pk,
+                order.pk,
                 cancellation_fee=fee,
                 try_auto_refund=True,
                 refund_as_giftcard=giftcard,
@@ -1275,7 +1392,8 @@ class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['order'] = self.order
+        order = to_optional(self.order)
+        ctx['order'] = order
         return ctx
 
     def get_success_message(self, value):
@@ -1288,10 +1406,13 @@ class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
 @method_decorator(xframe_options_exempt, 'dispatch')
 class AnswerDownload(EventViewMixin, OrderDetailMixin, View):
     def get(self, request, *args, **kwargs):
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
         answid = kwargs.get('answer')
         token = request.GET.get('token', '')
 
-        answer = get_object_or_404(QuestionAnswer, orderposition__order=self.order, id=answid)
+        answer = get_object_or_404(QuestionAnswer, orderposition__order=order, id=answid)
         if not answer.file:
             raise Http404()
         if not check_token(request, answer, token):
@@ -1301,7 +1422,7 @@ class AnswerDownload(EventViewMixin, OrderDetailMixin, View):
         resp = FileResponse(answer.file, content_type=ftype or 'application/binary')
         resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}"'.format(
             self.request.event.slug.upper(),
-            self.order.code,
+            order.code,
             answer.orderposition.positionid,
             os.path.basename(answer.file.name).split('.', 1)[1],
         )
@@ -1309,12 +1430,23 @@ class AnswerDownload(EventViewMixin, OrderDetailMixin, View):
 
 
 class OrderDownloadMixin:
+    """Shared download behavior for order and position download views.
+
+    ``self.order`` is not declared in this mixin: it is provided by the concrete
+    view's mixins (e.g. ``OrderDetailMixin``), where it is modeled as
+    ``Result[Order, OrderAccessError]``. Therefore checks/accesses in this mixin
+    intentionally treat ``self.order`` as a Result-backed value.
+    """
+
     def get_success_url(self, value):
         return self.get_self_url()
 
     @cached_property
     def output(self):
-        if not all([r for rr, r in allow_ticket_download.send(self.request.event, order=self.order)]):
+        order = to_optional(self.order)
+        if not order:
+            return None
+        if not all([r for rr, r in allow_ticket_download.send(self.request.event, order=order)]):
             return None
         responses = register_ticket_outputs.send(self.request.event)
         for receiver, response in responses:
@@ -1330,19 +1462,25 @@ class OrderDownloadMixin:
         return self.post(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        match cast(Result[Order, OrderAccessError], self.order):
+            case Ok(order):
+                pass
+            case Err(_):
+                return self.error(OrderError(_('Unknown order code or not authorized to access this order.')))
+
         if not self.output or not self.output.is_enabled:
             return self.error(OrderError(_('You requested an invalid ticket output type.')))
-        if not self.order or ('position' in kwargs and not self.order_position):
+        if 'position' in kwargs and not self.order_position:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if not self.order.ticket_download_available:
+        if not order.ticket_download_available:
             return self.error(OrderError(_('Ticket download is not (yet) enabled for this order.')))
         if 'position' in kwargs and not self.order_position.generate_ticket:
             return self.error(OrderError(_('Ticket download is not enabled for this product.')))
 
         if (
             self.request.event.settings.ticket_download_require_validated_email
-            and self.order.sales_channel == 'web'
-            and not self.order.email_known_to_work
+            and order.sales_channel == 'web'
+            and not order.email_known_to_work
         ):
             return self.error(OrderError(_('Please click the link we sent you via email to download your tickets.')))
 
@@ -1351,7 +1489,7 @@ class OrderDownloadMixin:
             return self.success(ct)
         return self.do(
             'orderposition' if 'position' in kwargs else 'order',
-            self.order_position.pk if 'position' in kwargs else self.order.pk,
+            self.order_position.pk if 'position' in kwargs else order.pk,
             self.output.identifier,
         )
 
@@ -1359,6 +1497,9 @@ class OrderDownloadMixin:
         return ''
 
     def success(self, value):
+        order = to_optional(self.order)
+        if not order:
+            return redirect(self.get_self_url())
         if 'ajax' in self.request.POST or 'ajax' in self.request.GET:
             return JsonResponse(
                 {
@@ -1378,22 +1519,25 @@ class OrderDownloadMixin:
                     # Subevent date in filename improves accessibility e.g. for screen reader users
                     resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}{}"'.format(
                         self.request.event.slug.upper(),
-                        self.order.code,
+                        order.code,
                         self.order_position.positionid,
                         self.order_position.subevent.date_from.strftime('%Y_%m_%d'),
                         value.extension,
                     )
                 else:
-                    resp['Content-Disposition'] = f'attachment; filename="{self.request.event.slug.upper()}-{self.order.code}-{self.order_position.positionid}{value.extension}"'
+                    resp['Content-Disposition'] = f'attachment; filename="{self.request.event.slug.upper()}-{order.code}-{self.order_position.positionid}{value.extension}"'
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
-            resp['Content-Disposition'] = f'attachment; filename="{self.request.event.slug.upper()}-{self.order.code}{value.extension}"'
+            resp['Content-Disposition'] = f'attachment; filename="{self.request.event.slug.upper()}-{order.code}{value.extension}"'
             return resp
         else:
             return redirect(self.get_self_url())
 
     def get_last_ct(self):
+        order = to_optional(self.order)
+        if not order:
+            return None
         if 'position' in self.kwargs:
             ct = CachedTicket.objects.filter(
                 order_position=self.order_position,
@@ -1402,7 +1546,7 @@ class OrderDownloadMixin:
             ).last()
         else:
             ct = CachedCombinedTicket.objects.filter(
-                order=self.order, provider=self.output.identifier, file__isnull=False
+                order=order, provider=self.output.identifier, file__isnull=False
             ).last()
         if not ct or not ct.file:
             return None
@@ -1426,8 +1570,11 @@ class OrderDownload(OrderDownloadMixin, EventViewMixin, OrderDetailMixin, AsyncA
 
     @cached_property
     def order_position(self):
+        order = to_optional(self.order)
+        if not order:
+            return None
         try:
-            return self.order.positions.get(pk=self.kwargs.get('position'))
+            return order.positions.get(pk=self.kwargs.get('position'))
         except OrderPosition.DoesNotExist:
             return None
 
@@ -1449,8 +1596,11 @@ class OrderPositionDownload(OrderDownloadMixin, EventViewMixin, OrderPositionDet
 
     @cached_property
     def order_position(self):
+        order = to_optional(self.order)
+        if not order:
+            return None
         try:
-            return self.order.positions.get(
+            return order.positions.get(
                 Q(pk=self.kwargs.get('pid')) & Q(Q(pk=self.position.pk) | Q(addon_to__id=self.position.pk))
             )
         except OrderPosition.DoesNotExist:
@@ -1460,11 +1610,12 @@ class OrderPositionDownload(OrderDownloadMixin, EventViewMixin, OrderPositionDet
 @method_decorator(xframe_options_exempt, 'dispatch')
 class InvoiceDownload(EventViewMixin, OrderDetailMixin, View):
     def get(self, request, *args, **kwargs):
-        if not self.order:
+        order = to_optional(self.order)
+        if not order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
 
         try:
-            invoice = Invoice.objects.get(event=self.request.event, order=self.order, id=self.kwargs['invoice'])
+            invoice = Invoice.objects.get(event=self.request.event, order=order, id=self.kwargs['invoice'])
         except Invoice.DoesNotExist:
             raise Http404(_('This invoice has not been found'))
 
@@ -1504,9 +1655,19 @@ class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         self.kwargs = kwargs
-        if not self.order:
-            raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if not self.order.user_change_allowed:
+        match self.order:
+            case Ok(order):
+                pass
+            case Err(UnverifiedEmailOrderError()):
+                messages.error(
+                    request,
+                    _('Please verify your email address to access this order. '
+                      'Check your inbox for a verification link.')
+                )
+                return redirect('eventyay_common:account.email')
+            case Err(_):
+                raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if not order.user_change_allowed:
             messages.error(request, _('You cannot change this order.'))
             return redirect(self.get_order_url())
         return super().dispatch(request, *args, **kwargs)
@@ -1527,20 +1688,24 @@ class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['order'] = self.order
+        order = to_optional(self.order)
+        ctx['order'] = order
         ctx['positions'] = self.positions
         ctx['formgroups'] = self.formdict
         return ctx
 
     @cached_property
     def positions(self):
+        order = to_optional(self.order)
+        if not order:
+            return []
         positions = list(
-            self.order.positions.select_related('product', 'product__tax_rule').prefetch_related(
+            order.positions.select_related('product', 'product__tax_rule').prefetch_related(
                 'product__quotas', 'product__variations', 'product__variations__quotas'
             )
         )
         try:
-            ia = self.order.invoice_address
+            ia = order.invoice_address
         except InvoiceAddress.DoesNotExist:
             ia = None
         for p in positions:
@@ -1554,8 +1719,11 @@ class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
         return positions
 
     def _process_change(self, ocm):
+        order = to_optional(self.order)
+        if not order:
+            return False
         try:
-            ia = self.order.invoice_address
+            ia = order.invoice_address
         except InvoiceAddress.DoesNotExist:
             ia = None
         for p in self.positions:
@@ -1600,9 +1768,12 @@ class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
         return True
 
     def post(self, *args, **kwargs):
-        was_paid = self.order.status == Order.STATUS_PAID
+        order = to_optional(self.order)
+        if not order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        was_paid = order.status == Order.STATUS_PAID
         ocm = OrderChangeManager(
-            self.order,
+            order,
             user=self.request.user,
             notify=True,
             reissue_invoice=True,
@@ -1617,20 +1788,20 @@ class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
             except OrderError as e:
                 messages.error(self.request, str(e))
             else:
-                if self.order.status != Order.STATUS_PAID and was_paid:
+                if order.status != Order.STATUS_PAID and was_paid:
                     messages.success(
                         self.request,
                         _(
                             'The order has been changed. You can now proceed by paying the open amount of {amount}.'
-                        ).format(amount=money_filter(self.order.pending_sum, self.request.event.currency)),
+                        ).format(amount=money_filter(order.pending_sum, self.request.event.currency)),
                     )
                     return redirect(
                         eventreverse(
                             self.request.event,
                             'presale:event.order.pay.change',
                             kwargs={
-                                'order': self.order.code,
-                                'secret': self.order.secret,
+                                'order': order.code,
+                                'secret': order.secret,
                             },
                         )
                     )

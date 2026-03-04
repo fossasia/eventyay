@@ -212,6 +212,7 @@ dependencies = [
     "yarl>=1.22.0",
     "zipp>=3.21.0",
     "zxcvbn>=4.4.28",
+    "safe-result>=4.0.3",
 ]
 
 [build-system]
