@@ -464,10 +464,12 @@ const startMarkdownEditorObserver = () => {
 }
 
 const warnFileSize = (element) => {
-    let warning = element.parentElement.querySelector(".invalid-feedback")
+    let warning = element.parentElement.querySelector('.file-size-warning[data-file-size-warning="true"]')
     if (!warning) {
         warning = document.createElement("div")
         warning.classList.add("invalid-feedback")
+        warning.classList.add("file-size-warning")
+        warning.dataset.fileSizeWarning = "true"
         element.parentElement.appendChild(warning)
     }
     warning.textContent = element.dataset.sizewarning
@@ -475,7 +477,7 @@ const warnFileSize = (element) => {
 }
 const unwarnFileSize = (element) => {
     element.classList.remove("is-invalid")
-    const warning = element.parentElement.querySelector(".invalid-feedback")
+    const warning = element.parentElement.querySelector('.file-size-warning[data-file-size-warning="true"]')
     if (warning) element.parentElement.removeChild(warning)
 }
 
@@ -500,7 +502,13 @@ const initFileSizeCheck = (element) => {
     if (element.form && !element.form.dataset.fileSizeGuardRegistered) {
         element.form.dataset.fileSizeGuardRegistered = "true"
         element.form.addEventListener("submit", (event) => {
-            const fileInputs = element.form.querySelectorAll("input[data-maxsize][type=file]")
+            const form = (
+                event.currentTarget instanceof HTMLFormElement
+                    ? event.currentTarget
+                    : element.form
+            )
+            if (!form) return
+            const fileInputs = form.querySelectorAll("input[data-maxsize][type=file]")
             let firstInvalid = null
             fileInputs.forEach((fileInput) => {
                 const isValid = checkFileSize(fileInput)

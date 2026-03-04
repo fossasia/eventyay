@@ -86,14 +86,14 @@ class SpeakerProfileForm(
         if self.user:
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
         for field in self.user_fields:
+            is_avatar_field = field == 'avatar'
             field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
             field_kwargs = {
                 'initial': initial.get(field),
                 'disabled': read_only,
                 'help_text': User._meta.get_field(field).help_text,
+                **({'max_size': settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]} if is_avatar_field else {}),
             }
-            if field == 'avatar':
-                field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
             self.fields[field] = field_class(**field_kwargs)
             custom_widget_class = self.Meta.widgets.get(field)
             if custom_widget_class:
@@ -103,6 +103,12 @@ class SpeakerProfileForm(
                     # Preserve attrs added by field init (e.g. data-maxsize/data-sizewarning)
                     new_widget.attrs.update(old_widget.attrs)
                 self.fields[field].widget = new_widget
+            if is_avatar_field:
+                size_warning = self.fields[field].widget.attrs.get('data-sizewarning')
+                if size_warning:
+                    existing_added_help = getattr(self.fields[field], 'added_help_text', '')
+                    if size_warning not in existing_added_help:
+                        self.fields[field].added_help_text = f'{existing_added_help} {size_warning}'.strip()
             self._update_cfp_texts(field)
 
         field_names = list(self.fields)
