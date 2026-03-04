@@ -512,9 +512,12 @@ TEMPLATES = (
     },
 )
 
+# See: https://django-allauth.readthedocs.io/en/latest/configuration.html
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
+    # To support multiple email addresses per user, we use django-allauth's authentication backend.
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 # Password validation
@@ -1245,8 +1248,16 @@ LOGGING = {
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# 'mandatory' means allauth's own login view (/accounts/login/) will block unverified users.
+# Existing users who registered before email verification was enforced may be affected if they
+# use that URL. Our custom login view (eventyay_common:auth.login) does not enforce this,
+# so those users remain unaffected. After signup, allauth redirects to
+# account_email_verification_sent (not to the login page), so ACCOUNT_SIGNUP_REDIRECT_URL
+# below is only reached when the user is already verified (e.g. social auth signup).
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # Prefer Jinja2 templates for django-allauth
 ACCOUNT_TEMPLATE_EXTENSION = 'jinja'
+ACCOUNT_SIGNUP_REDIRECT_URL = 'eventyay_common:auth.login'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/common/account/email'
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
