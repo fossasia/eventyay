@@ -20,9 +20,9 @@ from eventyay.orga.views import (
 
 app_name = 'orga'
 urlpatterns = [
-    path("", RedirectView.as_view(url="event", permanent=False), name="base"),
-    path("reset/", auth.ResetView.as_view(), name="auth.reset"),
-    path("reset/<token>", auth.RecoverView.as_view(), name="auth.recover"),
+    path('', RedirectView.as_view(url='event', permanent=False), name='base'),
+    path('reset/', auth.ResetView.as_view(), name='auth.reset'),
+    path('reset/<token>', auth.RecoverView.as_view(), name='auth.recover'),
     path('me', person.UserSettings.as_view(), name='user.view'),  # Change this to common/account/general.
     path('me/subuser', person.SubuserView.as_view(), name='user.subuser'),
     path(
@@ -31,52 +31,51 @@ urlpatterns = [
         name='invitation.view',
     ),
     path('nav/typeahead/', typeahead.nav_typeahead, name='nav.typeahead'),
-        path(
-        "organizer/",
-        dashboard.DashboardOrganizerListView.as_view(),
-        name="organizer.list",
-    ),
-    path("organizer/new", organizer.OrganizerDetail.as_view(), name="organizer.create"),
     path(
-        "organizer/<slug:organizer>/",
+        'organizer/',
+        dashboard.DashboardOrganizerListView.as_view(),
+        name='organizer.list',
+    ),
+    path('organizer/new', organizer.OrganizerDetail.as_view(), name='organizer.create'),
+    path(
+        'organizer/<slug:organizer>/',
         include(
             [
                 path(
-                    "",
+                    '',
                     dashboard.DashboardOrganizerEventListView.as_view(),
-                    name="organizer.dashboard",
+                    name='organizer.dashboard',
                 ),
                 path(
-                    "settings/",
+                    'settings/',
                     organizer.OrganizerDetail.as_view(),
-                    name="organizer.settings",
+                    name='organizer.settings',
                 ),
                 path(
-                    "settings/delete/",
+                    'settings/delete/',
                     organizer.OrganizerDelete.as_view(),
-                    name="organizer.delete",
+                    name='organizer.delete',
                 ),
-                path("api/users", organizer.speaker_search, name="organizer.user_list"),
+                path('api/users', organizer.speaker_search, name='organizer.user_list'),
                 path(
-                    "speakers/",
+                    'speakers/',
                     organizer.OrganizerSpeakerList.as_view(),
-                    name="organizer.speakers",
+                    name='organizer.speakers',
                 ),
-
             ]
         ),
     ),
-    path("event/", dashboard.DashboardEventListView.as_view(), name="event.list"),
+    path('event/', dashboard.DashboardEventListView.as_view(), name='event.list'),
     path(
         'event/<slug:event>/',
         include(
             [
-                path("delete", event.EventDelete.as_view(), name="event.delete"),
-                path("reset/", auth.ResetView.as_view(), name="event.auth.reset"),
+                path('delete', event.EventDelete.as_view(), name='event.delete'),
+                path('reset/', auth.ResetView.as_view(), name='event.auth.reset'),
                 path(
-                    "reset/<token>",
+                    'reset/<token>',
                     auth.RecoverView.as_view(),
-                    name="event.auth.recover",
+                    name='event.auth.recover',
                 ),
                 path('live', event.EventLive.as_view(), name='event.live'),
                 path('', dashboard.EventDashboardView.as_view(), name='event.dashboard'),
@@ -113,7 +112,6 @@ urlpatterns = [
                     event.WidgetSettings.as_view(),
                     name='settings.widget',
                 ),
-
                 path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
@@ -203,18 +201,28 @@ urlpatterns = [
                     namespace='orga',
                 ),
                 path(
+                    'submissions/import/',
+                    submission.SubmissionImportView.as_view(),
+                    name='submissions.import',
+                ),
+                path(
+                    'submissions/import/<uuid:file>/',
+                    submission.SubmissionImportProcessView.as_view(),
+                    name='submissions.import.process',
+                ),
+                path(
                     'submissions/<code>/',
                     include(
                         [
                             path(
                                 '',
                                 submission.SubmissionContentView.as_view(),  # Read-only view
-                                name="submissions.content",
+                                name='submissions.content',
                             ),
                             path(
                                 'edit',
                                 submission.SubmissionContent.as_view(),  # Edit view
-                                name="submissions.content.edit",
+                                name='submissions.content.edit',
                             ),
                             path(
                                 'submit',
@@ -314,6 +322,16 @@ urlpatterns = [
                     'speakers/export/',
                     speaker.SpeakerExport.as_view(),
                     name='speakers.export',
+                ),
+                path(
+                    'speakers/import/',
+                    speaker.SpeakerImportView.as_view(),
+                    name='speakers.import',
+                ),
+                path(
+                    'speakers/import/<uuid:file>/',
+                    speaker.SpeakerImportProcessView.as_view(),
+                    name='speakers.import.process',
                 ),
                 path(
                     'speakers/<code>/',

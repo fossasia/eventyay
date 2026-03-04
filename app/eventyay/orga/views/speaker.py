@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, F, OuterRef, Q
@@ -7,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
@@ -14,8 +18,12 @@ from django_scopes import scope
 
 from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.base.models import Answer, SpeakerProfile, User
+from eventyay.base.models.base import CachedFile
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
+from eventyay.base.services.orderimport import parse_csv
+from eventyay.base.services.talkimport import import_speakers
+from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.image import gravatar_csp
 from eventyay.common.text.phrases import phrases
@@ -29,6 +37,8 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     Sortable,
 )
+from eventyay.consts import SizeKey
+from eventyay.orga.forms.importers import CSVImportForm, SpeakerImportProcessForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
 from eventyay.person.forms import (
     SpeakerFilterForm,
@@ -51,9 +61,7 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
 
     def get_filter_form(self):
         with scope(event=self.request.event):
-            any_arrived = SpeakerProfile.objects.filter(
-                event=self.request.event, has_arrived=True
-            ).exists()
+            any_arrived = SpeakerProfile.objects.filter(event=self.request.event, has_arrived=True).exists()
         return SpeakerFilterForm(self.request.GET, event=self.request.event, filter_arrival=any_arrived)
 
     def get_queryset(self):
@@ -309,11 +317,7 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
     def post(self, request, *args, **kwargs):
         self.profile.is_featured = not self.profile.is_featured
         self.profile.save(update_fields=['is_featured'])
-        action = (
-            'eventyay.speaker.featured'
-            if self.profile.is_featured
-            else 'eventyay.speaker.unfeatured'
-        )
+        action = 'eventyay.speaker.featured' if self.profile.is_featured else 'eventyay.speaker.unfeatured'
         self.object.log_action(
             action,
             data={'event': self.request.event.slug},
@@ -370,3 +374,110 @@ class SpeakerExport(EventPermissionRequired, FormView):
             messages.success(self.request, _('No data to be exported'))
             return redirect(self.request.path)
         return result
+
+
+class SpeakerImportView(EventPermissionRequired, FormView):
+    permission_required = 'base.update_event'
+    template_name = 'orga/speaker/import.html'
+    form_class = CSVImportForm
+    IMPORT_FILENAME = 'speaker_import.csv'
+
+    def form_valid(self, form):
+        cf = CachedFile.objects.create(
+            expires=now() + timedelta(days=1),
+            date=now(),
+            filename=self.IMPORT_FILENAME,
+            type='text/csv',
+            web_download=False,
+            session_key=self.request.session.session_key,
+        )
+        cf.file.save(self.IMPORT_FILENAME, form.cleaned_data['file'])
+        return redirect(self.request.event.orga_urls.speakers_import + str(cf.id) + '/')
+
+
+class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
+    permission_required = 'base.update_event'
+    template_name = 'orga/speaker/import_process.html'
+    form_class = SpeakerImportProcessForm
+    task = import_speakers
+    known_errortypes = ['ImportExecutionError']
+    IMPORT_FILENAME = 'speaker_import.csv'
+
+    @cached_property
+    def file(self):
+        return get_object_or_404(
+            CachedFile,
+            pk=self.kwargs.get('file'),
+            filename=self.IMPORT_FILENAME,
+            session_key=self.request.session.session_key,
+        )
+
+    @cached_property
+    def parsed(self):
+        return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['headers'] = self.parsed.fieldnames if self.parsed else []
+        kwargs['event'] = self.request.event
+        kwargs['initial'] = self.request.event.settings.speaker_import_settings
+        return kwargs
+
+    @context
+    def preview_rows(self):
+        if not self.parsed:
+            return []
+        rows = []
+        headers = self.parsed.fieldnames or []
+        for i, row in enumerate(self.parsed):
+            if i >= 5:
+                break
+            rows.append([row.get(h, '') for h in headers])
+        return rows
+
+    @context
+    def headers(self):
+        return self.parsed.fieldnames if self.parsed else []
+
+    def get(self, request, *args, **kwargs):
+        if 'async_id' in request.GET and settings.HAS_CELERY:
+            return self.get_result(request)
+        if not self.parsed:
+            messages.error(request, _('Could not parse the uploaded CSV file.'))
+            return redirect(self.request.event.orga_urls.speakers_import)
+        return FormView.get(self, request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.parsed:
+            messages.error(request, _('Could not parse the uploaded CSV file.'))
+            return redirect(self.request.event.orga_urls.speakers_import)
+        return FormView.post(self, request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.request.event.settings.speaker_import_settings = form.cleaned_data
+        return self.do(
+            self.request.event.pk,
+            str(self.file.id),
+            form.cleaned_data,
+            self.request.LANGUAGE_CODE,
+            self.request.user.pk,
+        )
+
+    def get_success_url(self, value):
+        return self.request.event.orga_urls.speakers
+
+    def get_error_url(self):
+        return self.request.event.orga_urls.speakers_import
+
+    def get_success_message(self, value):
+        if isinstance(value, dict):
+            msg = _('Speaker import complete: {created} created, {updated} updated, {skipped} skipped.').format(
+                created=value.get('created', 0),
+                updated=value.get('updated', 0),
+                skipped=value.get('skipped', 0),
+            )
+            errors = value.get('errors', [])
+            if errors:
+                msg += ' ' + _('Errors: {errors}').format(errors='; '.join(str(e) for e in errors[:10]))
+            return msg
+        return _('The speaker import was successful.')
