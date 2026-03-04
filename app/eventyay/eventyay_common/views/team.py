@@ -29,7 +29,8 @@ class UnifiedTeamManagementRedirectMixin:
 
     def dispatch(self, request, *args, **kwargs):
         team_id = kwargs.get('team')
-        query_params = {'section': 'permissions'}
+        section = request.GET.get('section', 'permissions')
+        query_params = {'section': section}
         if team_id:
             query_params['team'] = team_id
         target = reverse(
@@ -274,9 +275,14 @@ class TeamMemberView(
             return self.get(request, *args, **kwargs)
 
     def get_success_url(self) -> str:
-        return reverse(
-            'eventyay_common:organizer.team',
-            kwargs={'organizer': self.request.organizer.slug, 'team': self.object.pk},
+        section = self.request.GET.get('section', 'members')
+    
+        return (
+            reverse(
+                'eventyay_common:organizer.teams',
+                kwargs={'organizer': self.request.organizer.slug},
+            )
+            + f'?section={section}&team={self.object.pk}'
         )
 
 
