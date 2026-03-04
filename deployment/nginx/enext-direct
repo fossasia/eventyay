@@ -2,7 +2,18 @@ server {
 	server_name <SERVER_NAME>;
 
 	access_log /var/log/nginx/<SERVER_NAME>-access.log;
-        error_log /var/log/nginx/<SERVER_NAME>-error.log;
+    error_log /var/log/nginx/<SERVER_NAME>-error.log;
+	
+	set $cors_origin "";
+    if ($http_origin ~* ^https?://access\.eventyay\.com$) {
+            set $cors_origin $http_origin;
+    }
+
+    add_header Access-Control-Allow-Origin $cors_origin always;
+    add_header Access-Control-Allow-Credentials 'true' always;
+    add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
+    add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
+
 
 	# WebSocket connections - route to daphne
 	location /ws/ {
@@ -20,8 +31,25 @@ server {
 	}
 
 	# Regular HTTP requests - route to gunicorn
-        location / {
-        	proxy_pass http://127.0.0.1:8000;
+    location / {
+        
+		if ($cors_preflight) {
+            add_header Referrer-Policy same-origin always;
+            add_header Access-Control-Allow-Origin $cors_origin always;
+            add_header Access-Control-Allow-Credentials 'true' always;
+            add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
+            add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, PUT, DELETE' always;
+            add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
+            return 204;
+        }
+
+        add_header Referrer-Policy same-origin always;
+        add_header Access-Control-Allow-Origin $cors_origin always;
+        add_header Access-Control-Allow-Credentials 'true' always;
+        add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
+        add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
+
+		proxy_pass http://127.0.0.1:8000;
 		proxy_set_header Host $http_host;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
