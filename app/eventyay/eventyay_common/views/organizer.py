@@ -528,7 +528,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         )
 
         messages.success(self.request, _('The new member has been added to the team.'))
-        return self._redirect_to_team_permissions(team.pk)
+        return self._redirect_to_team_members_panel(team.pk)
 
     def _handle_create_invite(self, team, invite_form):
         """Handle creating an invite for a user that doesn't exist yet."""
@@ -554,7 +554,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             data={'email': invite_form.cleaned_data['user']},
         )
         messages.success(self.request, _('The new member has been invited to the team.'))
-        return self._redirect_to_team_permissions(team.pk)
+        return self._redirect_to_team_members_panel(team.pk)
 
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
