@@ -15,7 +15,6 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
-from eventyay.base.forms import I18nAutoExpandingTextarea
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
 
@@ -27,7 +26,7 @@ from eventyay.api.serializers.i18n import I18nField, I18nURLField
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
     LazyI18nStringList,
 )
-from eventyay.base.forms import I18nURLFormField
+from eventyay.base.forms import I18nAutoExpandingTextarea, I18nURLFormField
 from eventyay.base.models.tax import TaxRule
 from eventyay.base.reldate import (
     RelativeDateField,
@@ -234,7 +233,7 @@ DEFAULT_SETTINGS = {
         ),
     },
     'include_wikimedia_username': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'form_class': forms.BooleanField,
         'serializer_class': serializers.BooleanField,
@@ -2790,7 +2789,7 @@ NAME_SCHEMES = OrderedDict(
                 ),
                 'concatenation': lambda d: (
                     str(d.get('family_name', ''))
-                    + str((', ' if d.get('family_name') and d.get('given_name') else ''))
+                    + str(', ' if d.get('family_name') and d.get('given_name') else '')
                     + str(d.get('given_name', ''))
                 ),
                 'sample': {
@@ -2893,7 +2892,7 @@ NAME_SCHEMES = OrderedDict(
                 ),
                 'concatenation': lambda d: (
                     ' '.join(str(p) for p in (d.get(key, '') for key in ['title', 'given_name', 'family_name']) if p)
-                    + str((', ' if d.get('degree') else ''))
+                    + str(', ' if d.get('degree') else '')
                     + str(d.get('degree', ''))
                 ),
                 'sample': {

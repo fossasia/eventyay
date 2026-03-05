@@ -54,6 +54,11 @@ class SpeakerExportForm(ExportForm):
             label=_('Picture License'),
             help_text=_("The license of the speaker's profile picture"),
         )
+        self.fields['include_wikimedia_username'] = forms.BooleanField(
+            required=False,
+            label=_('Wikimedia Username'),
+            initial=True,
+        )
 
     @cached_property
     def questions(self):
@@ -74,6 +79,7 @@ class SpeakerExportForm(ExportForm):
             'avatar_license',
             'submission_ids',
             'submission_titles',
+            'include_wikimedia_username',
         ]
 
     def get_queryset(self):
@@ -98,6 +104,9 @@ class SpeakerExportForm(ExportForm):
 
     def _get_submission_titles_value(self, obj):
         return list(obj.submissions.filter(event=self.event).values_list('title', flat=True))
+
+    def _get_include_wikimedia_username_value(self, obj):
+        return obj.wikimedia_username
 
     def _prepare_object_data(self, obj):
         obj._profile = obj.event_profile(self.event)
