@@ -1256,7 +1256,7 @@ dependencies = [
     { name = "eventyay-paypal" },
     { name = "eventyay-stripe" },
     { name = "execnet" },
-    { name = "exhibitors" },
+    { name = "exhibition" },
     { name = "fido2" },
     { name = "fonttools" },
     { name = "frozenlist" },
@@ -1489,7 +1489,7 @@ requires-dist = [
     { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-paypal.git?rev=main" },
     { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=main" },
     { name = "execnet", specifier = ">=2.1.2" },
-    { name = "exhibitors", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main" },
+    { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main" },
     { name = "fido2", specifier = ">=2.1.0" },
     { name = "fonttools", specifier = ">=4.61.1" },
     { name = "frozenlist", specifier = ">=1.8.0" },
@@ -1646,9 +1646,9 @@ wheels = [
 ]
 
 [[package]]
-name = "exhibitors"
+name = "exhibition"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#a53b23c1befd3939f145b1a34e255d675de74fbc" }
+source = { git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main#c2f18196d2229353f434050cc34c21606fed5da2" }
 dependencies = [
     { name = "flake8" },
 ]
