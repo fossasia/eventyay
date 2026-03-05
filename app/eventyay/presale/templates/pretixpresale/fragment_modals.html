@@ -46,7 +46,7 @@
                         {% blocktrans with event_name=event_name %}
                             Want to create a {{ event_name }} account?
                         {% endblocktrans %}
-                        <a class="btn btn-link" href='{% url "eventyay_common:auth.register" %}?next={{ request.get_full_path|urlencode }}'>
+                        <a class="btn btn-link" href='{% url "account_signup" %}?next={{ request.get_full_path|urlencode }}'>
                             {% translate 'Sign up here' %}
                         </a>
                     </p>
@@ -120,7 +120,7 @@
             </div>
 
             <div class="checkout-login-footer">
-                <p>{% translate "Don't have an account?" %} <a href="{% url 'eventyay_common:auth.register' %}">{% translate "Create one" %}</a></p>
+                <p>{% translate "Don't have an account?" %} <a href="{% url 'account_signup' %}">{% translate "Create one" %}</a></p>
             </div>
         </div>
     </div>
@@ -273,7 +273,7 @@ if (modal) {
             }
 
             modal.style.display = 'flex';
-            
+
             // Focus management for accessibility
             const firstInput = modal.querySelector('#checkout-email');
             if (firstInput) {
@@ -351,7 +351,7 @@ if (modal) {
                         errorDiv.textContent = '{% translate "Invalid email or password. Please try again." %}';
                         errorDiv.style.display = 'block';
                     }
-                } 
+                }
                 // Server errors (5xx)
                 else if (response.status >= 500) {
                     console.error('Server error during login:', response.status, response.statusText);
@@ -359,7 +359,7 @@ if (modal) {
                         errorDiv.textContent = '{% translate "Server error. Please try again later." %}';
                         errorDiv.style.display = 'block';
                     }
-                } 
+                }
                 // Other errors (4xx except handled cases, network issues, etc.)
                 else {
                     console.error('Login failed with status:', response.status, response.statusText);
@@ -368,7 +368,7 @@ if (modal) {
                         errorDiv.style.display = 'block';
                     }
                 }
-                
+
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             } catch (error) {

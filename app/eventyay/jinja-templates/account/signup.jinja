@@ -1,0 +1,71 @@
+{% extends 'account/base.jinja' %}
+
+{% block head_title %}
+  {{ _('Sign Up') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='signup-container'>
+    <h1>{{ _('Create Account') }}</h1>
+
+    <form method='post' action="{{ url_for('account_signup') }}">
+      <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+
+      <div class='form-group'>
+        <label for='id_email'>{{ _('Email') }}</label>
+        <input type='email' name='email' id='id_email' value='{{ form.email.value() or "" }}' required>
+        {% if form.email.errors %}
+          <div class='field-error'>
+            {% for error in form.email.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class='form-group'>
+        <label for='id_password1'>{{ _('Password') }}</label>
+        <input type='password' name='password1' id='id_password1' required>
+        {% if form.password1.errors %}
+          <div class='field-error'>
+            {% for error in form.password1.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class='form-group'>
+        <label for='id_password2'>{{ _('Confirm Password') }}</label>
+        <input type='password' name='password2' id='id_password2' required>
+        {% if form.password2.errors %}
+          <div class='field-error'>
+            {% for error in form.password2.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if form.non_field_errors() %}
+        <div class='alert alert-danger'>
+          {% for error in form.non_field_errors() %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <button type='submit' class='btn btn-primary'>
+        <i class='fa fa-check'></i>
+        {{ _('Create Account') }}
+      </button>
+    </form>
+
+    <div class='additional-links'>
+      <p>
+        {{ _('Already have an account?') }}
+        <a href="{{ url_for('account_login') }}">{{ _('Log in') }}</a>
+      </p>
+    </div>
+  </div>
+{% endblock content %}

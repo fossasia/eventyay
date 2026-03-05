@@ -105,7 +105,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 
 @register_serializer(versions=CURRENT_VERSIONS)
 class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
-    email = EmailField(source="user.email")
+    email = EmailField(source="user.primary_email", read_only=True)
     timezone = CharField(source="user.timezone", read_only=True)
     locale = CharField(source="user.locale", read_only=True)
     availabilities = AvailabilitySerializer(many=True, required=False)
@@ -139,6 +139,7 @@ class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
 
 @register_serializer(versions=CURRENT_VERSIONS)
 class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
+    # Do not let users change their email via the API endpoint using this serializer.
     avatar = UploadedFileField(required=False, source="speaker.user")
 
     def update(self, instance, validated_data):
@@ -153,16 +154,6 @@ class SpeakerUpdateSerializer(SpeakerOrgaSerializer):
             instance.save(update_fields=("avatar",))
             instance.user.process_image("avatar", generate_thumbnail=True)
         return instance
-
-    def validate_email(self, value):
-        value = value.lower()
-        if (
-            User.objects.exclude(pk=self.instance.pk)
-            .filter(email__iexact=value)
-            .exists()
-        ):
-            raise exceptions.ValidationError("Email already exists in system.")
-        return value
 
     class Meta(SpeakerOrgaSerializer.Meta):
         fields = SpeakerOrgaSerializer.Meta.fields + ("avatar",)

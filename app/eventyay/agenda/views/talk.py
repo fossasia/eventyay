@@ -1,17 +1,16 @@
-from enum import StrEnum
-import json
-import logging
 import datetime as dt
+import logging
+from enum import StrEnum
 from http import HTTPStatus
-from urllib.parse import unquote, urlparse, urljoin, quote
 from typing import TypeVar
+from urllib.parse import unquote, urlencode, urljoin, urlparse
 
 import jwt
 import requests
 import vobject
 from django.conf import settings
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -23,7 +22,9 @@ from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
+from eventyay.agenda.views.speaker import ScheduleDataMixin
 from eventyay.agenda.views.utils import encode_email
+from eventyay.base.models import Event, Submission, SubmissionStates, TalkSlot, User
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
@@ -33,9 +34,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.base.models import Event, TalkSlot, User
 from eventyay.submission.forms import FeedbackForm
-from eventyay.base.models import Submission, SubmissionStates
 
 
 logger = logging.getLogger(__name__)
@@ -79,9 +78,6 @@ class TalkMixin(PermissionRequired):
         return self.submission
 
 
-from eventyay.agenda.views.speaker import ScheduleDataMixin
-
-
 class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
     template_name = 'agenda/talk.html'
 
@@ -123,8 +119,6 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         return result
 
     def get_context_data(self, **kwargs):
-        from django.db.models import Prefetch
-
         ctx = super().get_context_data(**kwargs)
         schedule = self.request.event.current_schedule or self.request.event.wip_schedule
         if not self.request.user.has_perm('base.view_schedule', schedule):
@@ -393,12 +387,15 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
         details = localize_event_text(sub.abstract) or ''
+        params = {
+            'action': 'TEMPLATE',
+            'text': title,
+            'dates': dates,
+            'location': location,
+            'details': details,
+        }
         url = (
-            'https://calendar.google.com/calendar/render?action=TEMPLATE'
-            f'&text={quote(str(title))}'
-            f'&dates={dates}'
-            f'&location={quote(str(location))}'
-            f'&details={quote(str(details))}'
+            'https://calendar.google.com/calendar/render?' + urlencode(params)
         )
         return HttpResponseRedirect(url)
 
@@ -568,7 +565,7 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
         base_url = f'{base_url}/'
     organizer_slug = event.organizer.slug
     event_slug = event.slug
-    check_payload = {'user_email': user.email}
+    check_payload = {'user_email': user.primary_email}
     # call to ticket to check if user order ticket yet or not
     api_url = urljoin(base_url, f'api/v1/{organizer_slug}/{event_slug}/ticket-check')
     logger.info('To call API %s', api_url)

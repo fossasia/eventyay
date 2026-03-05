@@ -9,13 +9,12 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext as _n
 from django_scopes.forms import SafeModelMultipleChoiceField
 
+from eventyay.base.models import Review, Submission, SubmissionStates, TalkQuestion, User
 from eventyay.common.forms.mixins import ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple, MarkdownWidget
 from eventyay.common.text.phrases import phrases
 from eventyay.orga.forms.export import ExportForm
-from eventyay.base.models import User
-from eventyay.base.models import TalkQuestion, Review, Submission, SubmissionStates
 
 
 class TagsForm(ReadOnlyFlag, forms.ModelForm):
@@ -375,8 +374,8 @@ class ReviewExportForm(ExportForm):
     def _get_user_name_value(self, obj):
         return obj.user.fullname
 
-    def _get_user_email_value(self, obj):
-        return obj.user.email
+    def _get_user_email_value(self, obj: Review):
+        return obj.user.primary_email
 
     def get_answer(self, question, obj):
         return question.answers.filter(review=obj).first()

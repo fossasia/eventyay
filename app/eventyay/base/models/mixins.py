@@ -9,6 +9,7 @@ from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.helpers.json import CustomJSONEncoder
 
+
 SENSITIVE_KEYS = ['password', 'secret', 'api_key']
 
 

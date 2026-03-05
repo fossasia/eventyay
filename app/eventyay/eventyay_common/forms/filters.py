@@ -1,7 +1,10 @@
+from typing import cast
+
 from django import forms
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.models import Event
+from eventyay.base.models import Event, User
 
 
 class UserOrderFilterForm(forms.Form):
@@ -14,13 +17,14 @@ class UserOrderFilterForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Get the user from the kwargs
+        user = cast(User | None, kwargs.pop('user', None))  # Get the user from the kwargs
         super().__init__(*args, **kwargs)
 
         if user:
-            # Query distinct events based on the user's orders
-            events = Event.objects.filter(orders__email__iexact=user.email).distinct()
-            self.fields['event'].queryset = events
+            # Query distinct events based on the user's orders.
+            # user.email_addresses already provides lowercase emails.
+            events = Event.objects.annotate(order_email=Lower('orders__email')).filter(order_email__in=user.email_addresses)
+            self.fields['event'].queryset = events.distinct()
 
 
 class SessionsFilterForm(forms.Form):
@@ -44,5 +48,7 @@ class SessionsFilterForm(forms.Form):
 
         if user:
             # Query distinct events based on the user's proposals
-            events = Event.objects.filter(submissions__speakers__email__iexact=user.email).distinct()
-            self.fields['event'].queryset = events
+            # user.email_addresses already provides lowercase emails.
+            events = Event.objects.annotate(speaker_email=Lower('submissions__speakers__email'))
+            events = events.filter(speaker_email__in=user.email_addresses)
+            self.fields['event'].queryset = events.distinct()

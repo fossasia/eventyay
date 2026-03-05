@@ -1,9 +1,12 @@
 import logging
 import warnings
 from importlib import import_module
+from typing import cast
 from urllib.parse import urljoin
 
+from allauth.account.models import EmailAddress
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import redirect
@@ -14,12 +17,13 @@ from django.views.defaults import permission_denied
 from django_scopes import scope
 
 from eventyay.base.middleware import LocaleMiddleware
-from eventyay.base.models import Event, Organizer
+from eventyay.base.models import Event, Order, Organizer, User
 from eventyay.multidomain.urlreverse import (
     get_event_domain,
     get_organizer_domain,
 )
 from eventyay.presale.signals import process_request, process_response
+
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 logger = logging.getLogger(__name__)
@@ -105,8 +109,8 @@ def _detect_event(request, require_live=True, require_plugin=None):
                     request.user.is_authenticated
                     and request.user.has_event_permission(request.organizer, request.event, request=request)
                 )
-                if not can_access and 'eventyay_event_access_{}'.format(request.event.pk) in request.session:
-                    parent_session_key = request.session.get('eventyay_event_access_{}'.format(request.event.pk))
+                if not can_access and f'eventyay_event_access_{request.event.pk}' in request.session:
+                    parent_session_key = request.session.get(f'eventyay_event_access_{request.event.pk}')
                     sparent = SessionStore(parent_session_key)
                     try:
                         parentdata = sparent.load()
@@ -227,3 +231,38 @@ def event_view(function=None, require_live=True):
         return fn
 
     return function or noop
+
+
+def belong_to_verified_user(order: Order, user: AnonymousUser | User) -> bool:
+    """
+    Determine if the order belongs to the current authenticated user with a verified email.
+
+    Returns True if:
+    1. The user is authenticated
+    2. The user owns the order (email matches)
+    3. The user's email is verified
+
+    Returns False if the user is not authenticated, doesn't own the order, or email is not verified.
+    """
+    # If user is not authenticated, order doesn't belong to them
+    if not user.is_authenticated:
+        return False
+
+    # For authenticated users, check if they own the order with a verified email
+    user = cast(User, user)
+
+    # Check if user's primary email matches the order email (always allowed for backward compatibility)
+    if user.email and order.email and user.email.lower() == order.email.lower():
+        return True
+
+    # Check if any of the user's verified email addresses match the order email
+    verified_emails = EmailAddress.objects.filter(user=user, verified=True).values_list('email', flat=True)
+    for email in verified_emails:
+        # email is already a string from values_list with flat=True
+        if order.email and email.lower() == order.email.lower() and order.is_modification_allowed_by(email):
+            return True
+
+    # If no matching verified email found, order doesn't belong to user
+    logger.debug('Order %s is associated with email %s, but user %s does not have a verified email matching this order.',
+                 order.code, order.email, user)
+    return False

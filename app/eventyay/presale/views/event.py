@@ -1,6 +1,5 @@
 import calendar
 import datetime as dt
-import importlib.util
 import json
 import logging
 import sys
@@ -8,13 +7,14 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
-from urllib.parse import urlparse, urlunparse
+from typing import cast
+from urllib.parse import urlencode, urlparse, urlunparse
 
 import isoweek
 import jwt
 import pytz
 from django.conf import settings
-from django.contrib import messages
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
@@ -27,7 +27,8 @@ from django.db.models import (
     Value,
 )
 from django.db.models.expressions import OrderBy
-from django.http import Http404, HttpResponse, JsonResponse
+from django.db.models.functions import Lower
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -42,7 +43,6 @@ from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.views.utils import escape_json_for_script
-
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
     Order,
@@ -50,6 +50,7 @@ from eventyay.base.models import (
     Quota,
     SeatCategoryMapping,
     SpeakerProfile,
+    User,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
@@ -470,9 +471,14 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
+            take_cart_id = request.GET['take_cart_id']
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            params = {
+                'require_cookie': 'true',
+                'cart_id': take_cart_id,
+            }
+            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs) + '?' + urlencode(params)
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
@@ -480,20 +486,17 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             get_or_create_cart_id(request)
         elif 'require_cookie' in request.GET and settings.SESSION_COOKIE_NAME not in request.COOKIES:
             # Cookies are in fact not supported
+            params = {
+                'src': 'widget',
+                'take_cart_id': request.GET.get('cart_id', ''),
+            }
+            url_kwards = {'cart_namespace': kwargs.get('cart_namespace', '')}
+            event_url = eventreverse(request.event, 'presale:event.index', kwargs=url_kwards)
             r = render(
                 request,
                 'pretixpresale/event/cookies.html',
                 {
-                    'url': eventreverse(
-                        request.event,
-                        'presale:event.index',
-                        kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
-                    )
-                    + (
-                        '?src=widget&take_cart_id={}'.format(request.GET.get('cart_id'))
-                        if 'cart_id' in request.GET
-                        else ''
-                    )
+                    'url': f'{event_url}?{urlencode(params)}',
                 },
             )
             r._csp_ignore = True
@@ -878,7 +881,9 @@ class SeatingPlanView(EventViewMixin, TemplateView):
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            redirect_url = eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            redirect_url = eventreverse(
+                request.event, 'presale:event.seatingplan', kwargs=kwargs
+            ) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
@@ -956,7 +961,7 @@ class EventAuth(View):
         except:
             raise PermissionDenied(_('Please go back and try again.'))
 
-        parent = data.get('pretix_event_access_{}'.format(request.event.pk))
+        parent = data.get(f'pretix_event_access_{request.event.pk}')
 
         sparent = SessionStore(parent)
         try:
@@ -967,7 +972,7 @@ class EventAuth(View):
             if 'event_access' not in parentdata:
                 raise PermissionDenied(_('Please go back and try again.'))
 
-        request.session['pretix_event_access_{}'.format(request.event.pk)] = parent
+        request.session[f'pretix_event_access_{request.event.pk}'] = parent
         redirect_url = eventreverse(request.event, 'presale:event.index')
         logger.info('Redirecting to %s...', redirect_url)
         return redirect(redirect_url)
@@ -997,7 +1002,9 @@ class JoinOnlineVideoView(EventViewMixin, View):
 
         # Check if this is an AJAX request (from JavaScript button)
         # If not (e.g., direct URL access), do a server-side redirect instead of returning JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get(
+            'Accept', ''
+        ):
             # AJAX request - return JSON for JavaScript to handle
             return JsonResponse({'redirect_url': redirect_url}, status=200)
         else:
@@ -1005,19 +1012,20 @@ class JoinOnlineVideoView(EventViewMixin, View):
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
 
-    def validate_access(self, request, *args, **kwargs):
-        if not hasattr(self.request, 'user'):
-            # Customer not logged in yet
-            return False, None, None
-        if not self.request.user.is_authenticated:
+    def validate_access(self, request: HttpRequest, *args, **kwargs):
+        user = cast(User | AnonymousUser, self.request.user)
+        if not user.is_authenticated:
             # Customer not logged in yet
             return False, None, None
         # Get all PAID orders of customer which belong to this event
-        # CRITICAL FIX: Only paid orders should grant video access
+        # CRITICAL FIX: Only paid orders should grant video access.
+        queryset = Order.objects.annotate(email_lower=Lower('email'))
+        # django-allauth already stores email addresses in lowercase,
+        # we only need to lowercase the order emails for comparison.
         order_list = (
-            Order.objects.filter(
+            queryset.filter(
                 Q(event=self.request.event)
-                & Q(email__iexact=self.request.user.email)
+                & Q(email_lower__in=user.email_addresses)
                 & Q(status=Order.STATUS_PAID)  # Only paid orders
             )
             .select_related('event')
@@ -1074,20 +1082,16 @@ class JoinOnlineVideoView(EventViewMixin, View):
                     # Without this, users with valid tickets received auth.denied because
                     # none of the event trait_grants matched the token traits.
                     'attendee',
-                    'eventyay-video-event-{}'.format(request.event.slug),
-                    'eventyay-video-subevent-{}'.format(order_position.subevent_id),
-                    'eventyay-video-product-{}'.format(order_position.product_id),
-                    'eventyay-video-variation-{}'.format(order_position.variation_id),
-                    'eventyay-video-category-{}'.format(order_position.product.category_id),
+                    f'eventyay-video-event-{request.event.slug}',
+                    f'eventyay-video-subevent-{order_position.subevent_id}',
+                    f'eventyay-video-product-{order_position.product_id}',
+                    f'eventyay-video-variation-{order_position.variation_id}',
+                    f'eventyay-video-category-{order_position.product.category_id}',
                 }
-                | {'eventyay-video-product-{}'.format(p.product_id) for p in order_position.addons.all()}
+                | {f'eventyay-video-product-{p.product_id}' for p in order_position.addons.all()}
+                | {f'eventyay-video-variation-{p.variation_id}' for p in order_position.addons.all() if p.variation_id}
                 | {
-                    'eventyay-video-variation-{}'.format(p.variation_id)
-                    for p in order_position.addons.all()
-                    if p.variation_id
-                }
-                | {
-                    'eventyay-video-category-{}'.format(p.product.category_id)
+                    f'eventyay-video-category-{p.product.category_id}'
                     for p in order_position.addons.all()
                     if p.product.category_id
                 }
@@ -1100,10 +1104,9 @@ class JoinOnlineVideoView(EventViewMixin, View):
         # Ensure the URL includes the event identifier so VideoSPAView has event context
         # Format: http://localhost:8000/organizer-slug/event-slug/video/#token=...
         # Use Django's reverse() to properly construct the video URL path
-        video_path = reverse('video.spa', kwargs={
-            'organizer': self.request.event.organizer.slug,
-            'event': self.request.event.slug
-        })
+        video_path = reverse(
+            'video.spa', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug}
+        )
 
         # Parse the base URL to get scheme and netloc (domain)
         parsed = urlparse(baseurl)
@@ -1111,4 +1114,4 @@ class JoinOnlineVideoView(EventViewMixin, View):
         # Reconstruct the full URL with the proper path from reverse()
         baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
 
-        return '{}/#token={}'.format(baseurl, token).replace('//#', '/#')
+        return f'{baseurl}/#token={token}'.replace('//#', '/#')

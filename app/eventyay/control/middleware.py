@@ -24,6 +24,7 @@ from eventyay.helpers.security import (
     assert_session_valid,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,7 +38,7 @@ class PermissionMiddleware:
     EXCEPTIONS = (
         'auth.login',
         'auth.login.2fa',
-        'auth.register',
+        'account_signup',
         'auth.forgot',
         'auth.forgot.recover',
         'auth.invite',
@@ -187,7 +188,7 @@ class AuditLogMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if (request.path.startswith(get_script_prefix() + 'control') or 
+        if (request.path.startswith(get_script_prefix() + 'control') or
             request.path.startswith(get_script_prefix() + 'admin')) and request.user.is_authenticated:
             if getattr(request.user, 'is_hijacked', False):
                 hijack_history = request.session.get('hijack_history', False)

@@ -264,7 +264,8 @@ class SpeakerPasswordReset(SpeakerViewMixin, ActionConfirmMixin, DetailView):
 
     def action_object_name(self):
         user = self.get_object()
-        return f'{user.get_display_name()} ({user.email})'
+        display_name = user.get_display_name()
+        return f'{display_name} ({user.primary_email})'
 
     def action_back_url(self):
         return self.get_object().event_profile(self.request.event).orga_urls.base

@@ -512,9 +512,12 @@ TEMPLATES = (
     },
 )
 
+# See: https://django-allauth.readthedocs.io/en/latest/configuration.html
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
+    # To support multiple email addresses per user, we use django-allauth's authentication backend.
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 # Password validation
@@ -1233,8 +1236,10 @@ LOGGING = {
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # Prefer Jinja2 templates for django-allauth
 ACCOUNT_TEMPLATE_EXTENSION = 'jinja'
+ACCOUNT_SIGNUP_REDIRECT_URL = 'eventyay_common:auth.login'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/common/account/email'
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True

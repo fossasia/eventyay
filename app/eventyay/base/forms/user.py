@@ -78,8 +78,8 @@ class UserSettingsForm(forms.ModelForm):
             from django_redis import get_redis_connection
 
             rc = get_redis_connection('redis')
-            cnt = rc.incr('pretix_pwchange_%s' % self.user.pk)
-            rc.expire('pretix_pwchange_%s' % self.user.pk, 300)
+            cnt = rc.incr(f'pretix_pwchange_{self.user.pk}')
+            rc.expire(f'pretix_pwchange_{self.user.pk}', 300)
             if cnt > 10:
                 raise forms.ValidationError(
                     self.error_messages['rate_limit'],
@@ -120,6 +120,7 @@ class UserSettingsForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         old_pw = self.cleaned_data.get('old_pw')
 
+        # TODO: We should use django-allauth to respect user primary email changes
         if not self.requires_password_reset and (password1 or email != self.user.email) and not old_pw:
             raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
 

@@ -1335,6 +1335,7 @@ dependencies = [
     { name = "rjsmin" },
     { name = "rpds-py" },
     { name = "rules" },
+    { name = "safe-result" },
     { name = "sendgrid" },
     { name = "sentry-sdk" },
     { name = "sepaxml" },
@@ -1568,6 +1569,7 @@ requires-dist = [
     { name = "rjsmin", specifier = ">=1.2.2" },
     { name = "rpds-py", specifier = ">=0.22.3" },
     { name = "rules", specifier = ">=3.5" },
+    { name = "safe-result", specifier = ">=4.0.3" },
     { name = "sendgrid", specifier = ">=6.12.5" },
     { name = "sentry-sdk", specifier = ">=2.49.0" },
     { name = "sepaxml", specifier = ">=2.7.0" },
@@ -3220,6 +3222,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f7/36/918cf4cc9fd0e38bb9310b2d1a13ae6ebb2b5732d56e7de6feb4a992a6ed/rules-3.5.tar.gz", hash = "sha256:f01336218f4561bab95f53672d22418b4168baea271423d50d9e8490d64cb27a", size = 55504, upload-time = "2024-09-02T16:01:46.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ea/33/16213dd62ca8ce8749985318a966ac1300ab55c977b2d66632a45b405c99/rules-3.5-py2.py3-none-any.whl", hash = "sha256:0f00fc9ee448b3f82e9aff9334ab0c56c76dce4dfa14f1598f57969f1022acc0", size = 25658, upload-time = "2024-09-02T16:01:44.844Z" },
+]
+
+[[package]]
+name = "safe-result"
+version = "4.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/23/6e/fa5f5a88af83d4d6cbf3d5e1a24e8b8b494692e3e76c03b99d966bd40e3b/safe_result-4.0.3.tar.gz", hash = "sha256:829e2080d64a4f55c801abfbe2b3a71d2f76698f3bd392633507880b7a8c1ab2", size = 23301, upload-time = "2025-04-07T10:10:55.756Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b6/b9/e0859533af625398cff2d73e7aafbc1080ba7c5b1e17241bd3e19f708d19/safe_result-4.0.3-py3-none-any.whl", hash = "sha256:7066afbea46ceb92b407883b8faa82aba407dc912f32873ae7d4ceafbd98003f", size = 8455, upload-time = "2025-04-07T10:10:54.215Z" },
 ]
 
 [[package]]

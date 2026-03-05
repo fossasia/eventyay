@@ -56,7 +56,7 @@ The error was {exception} at {location}.
             return ''
         if self.request.user.is_anonymous:
             return 'an anonymous user'
-        return f'{self.request.user.fullname} <{self.request.user.email}>'
+        return f'{self.request.user.name} <{self.request.user.primary_email}>'
 
     def get_tldr(self):
         if not self.request:
