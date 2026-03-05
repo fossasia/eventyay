@@ -181,46 +181,107 @@
 </div>
 
 <script type="module">
-  import { themeManager } from '{% static "js/theme.js" %}';
 
+  // Get form field elements
+  const form = document.querySelector('.theme-form');
   const primaryColorInput = document.getElementById('primary_color');
-  const primaryColorText = document.getElementById('primary_color_text');
   const secondaryColorInput = document.getElementById('secondary_color');
-  const secondaryColorText = document.getElementById('secondary_color_text');
+  const colorModeInputs = document.querySelectorAll('input[name="color_mode"]');
+  const inheritOrgThemeInput = document.getElementById('inherit_organizer_theme');
+  const isActiveInput = document.getElementById('is_active');
+  const customCssInput = document.getElementById('custom_css');
+  const descriptionInput = document.getElementById('description');
 
+  // Get preview elements
+  const themePreview = document.getElementById('theme-preview');
+
+  console.log('Theme form initialized', {
+    primaryColorInput: !!primaryColorInput,
+    secondaryColorInput: !!secondaryColorInput,
+    colorModeInputs: colorModeInputs.length,
+  });
+
+  /**
+   * Update the live preview with current colors
+   */
   const updatePreview = () => {
-    const primary = primaryColorInput.value;
-    const secondary = secondaryColorInput.value;
+    const primary = primaryColorInput?.value || '#EB2188';
+    const secondary = secondaryColorInput?.value || '#3B82F6';
 
+    // Update CSS variables in the preview section
+    if (themePreview) {
+      themePreview.style.setProperty('--color-primary', primary);
+      themePreview.style.setProperty('--color-secondary', secondary);
+    }
+
+    // Also apply to document root for real-time preview
     document.documentElement.style.setProperty('--color-primary', primary);
     document.documentElement.style.setProperty('--color-secondary', secondary);
 
-    primaryColorText.value = primary;
-    secondaryColorText.value = secondary;
+    console.log('Preview updated:', { primary, secondary });
   };
 
-  primaryColorInput.addEventListener('input', updatePreview);
-  secondaryColorInput.addEventListener('input', updatePreview);
+  /**
+   * Sync text inputs with color inputs
+   */
+  const syncTextInputs = () => {
+    const primaryHex = primaryColorInput?.value || '#EB2188';
+    const secondaryHex = secondaryColorInput?.value || '#3B82F6';
 
-  primaryColorText.addEventListener('change', (e) => {
-    primaryColorInput.value = e.target.value;
-    updatePreview();
-  });
+    const primaryText = document.getElementById('primary_color_text');
+    const secondaryText = document.getElementById('secondary_color_text');
 
-  secondaryColorText.addEventListener('change', (e) => {
-    secondaryColorInput.value = e.target.value;
-    updatePreview();
-  });
+    if (primaryText) primaryText.value = primaryHex;
+    if (secondaryText) secondaryText.value = secondaryHex;
+  };
 
-  document.getElementById('export-btn').addEventListener('click', () => {
+  // Bind event listeners for color inputs
+  if (primaryColorInput) {
+    primaryColorInput.addEventListener('input', () => {
+      syncTextInputs();
+      updatePreview();
+    });
+  }
+
+  if (secondaryColorInput) {
+    secondaryColorInput.addEventListener('input', () => {
+      syncTextInputs();
+      updatePreview();
+    });
+  }
+
+  // Bind event listeners for text inputs
+  const primaryText = document.getElementById('primary_color_text');
+  const secondaryText = document.getElementById('secondary_color_text');
+
+  if (primaryText) {
+    primaryText.addEventListener('change', (e) => {
+      if (primaryColorInput && /^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+        primaryColorInput.value = e.target.value;
+        updatePreview();
+      }
+    });
+  }
+
+  if (secondaryText) {
+    secondaryText.addEventListener('change', (e) => {
+      if (secondaryColorInput && /^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+        secondaryColorInput.value = e.target.value;
+        updatePreview();
+      }
+    });
+  }
+
+  // Export functionality
+  document.getElementById('export-btn')?.addEventListener('click', () => {
     const theme = {
-      primaryColor: primaryColorInput.value,
-      secondaryColor: secondaryColorInput.value,
-      colorMode: document.querySelector('input[name="color_mode"]:checked')?.value || 'auto',
-      description: document.getElementById('description').value,
-      inheritOrganizerTheme: document.getElementById('inherit_organizer_theme').checked,
-      isActive: document.getElementById('is_active').checked,
-      customCSS: document.getElementById('custom_css').value,
+      primaryColor: primaryColorInput?.value || '#EB2188',
+      secondaryColor: secondaryColorInput?.value || '#3B82F6',
+      colorMode: Array.from(colorModeInputs).find(r => r.checked)?.value || 'auto',
+      description: descriptionInput?.value || '',
+      inheritOrganizerTheme: inheritOrgThemeInput?.checked || false,
+      isActive: isActiveInput?.checked || true,
+      customCSS: customCssInput?.value || '',
     };
 
     const json = JSON.stringify(theme, null, 2);
@@ -233,55 +294,56 @@
     URL.revokeObjectURL(url);
   });
 
-  document.getElementById('import-btn').addEventListener('click', () => {
-    document.getElementById('theme-file-input').click();
+  // Import functionality
+  document.getElementById('import-btn')?.addEventListener('click', () => {
+    document.getElementById('theme-file-input')?.click();
   });
 
-  document.getElementById('theme-file-input').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-      return;
-    }
+  const fileInput = document.getElementById('theme-file-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const theme = JSON.parse(event.target.result);
-        if (theme.primaryColor) {
-          primaryColorInput.value = theme.primaryColor;
-        }
-        if (theme.secondaryColor) {
-          secondaryColorInput.value = theme.secondaryColor;
-        }
-        if (theme.colorMode) {
-          const modeInput = document.querySelector(`input[name="color_mode"][value="${theme.colorMode}"]`);
-          if (modeInput) {
-            modeInput.checked = true;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const theme = JSON.parse(event.target.result);
+          if (theme.primaryColor && primaryColorInput) {
+            primaryColorInput.value = theme.primaryColor;
           }
+          if (theme.secondaryColor && secondaryColorInput) {
+            secondaryColorInput.value = theme.secondaryColor;
+          }
+          if (theme.colorMode && colorModeInputs.length) {
+            const modeInput = Array.from(colorModeInputs).find(input => input.value === theme.colorMode);
+            if (modeInput) modeInput.checked = true;
+          }
+          if (theme.description !== undefined && descriptionInput) {
+            descriptionInput.value = theme.description;
+          }
+          if (theme.inheritOrganizerTheme !== undefined && inheritOrgThemeInput) {
+            inheritOrgThemeInput.checked = Boolean(theme.inheritOrganizerTheme);
+          }
+          if (theme.isActive !== undefined && isActiveInput) {
+            isActiveInput.checked = Boolean(theme.isActive);
+          }
+          if (theme.customCSS !== undefined && customCssInput) {
+            customCssInput.value = theme.customCSS;
+          }
+          syncTextInputs();
+          updatePreview();
+        } catch (error) {
+          alert('Invalid JSON file format.');
+          console.error('Import error:', error);
         }
-        if (theme.description !== undefined) {
-          document.getElementById('description').value = theme.description;
-        }
-        if (theme.inheritOrganizerTheme !== undefined) {
-          document.getElementById('inherit_organizer_theme').checked = Boolean(theme.inheritOrganizerTheme);
-        }
-        if (theme.isActive !== undefined) {
-          document.getElementById('is_active').checked = Boolean(theme.isActive);
-        }
-        if (theme.customCSS !== undefined) {
-          document.getElementById('custom_css').value = theme.customCSS;
-        }
-        updatePreview();
-      } catch (error) {
-        alert('{% trans "Invalid JSON file format." %}');
-      }
-    };
-    reader.readAsText(file);
-  });
-
-  updatePreview();
-  if (themeManager && document.querySelector('input[name="color_mode"]:checked')) {
-    themeManager.setColorMode(document.querySelector('input[name="color_mode"]:checked').value);
+      };
+      reader.readAsText(file);
+    });
   }
+
+  // Initialize preview with current values
+  syncTextInputs();
+  updatePreview();
 </script>
 {% endblock %}

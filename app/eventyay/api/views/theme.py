@@ -10,6 +10,7 @@ from typing import Any
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -34,6 +35,7 @@ class OrganizerThemeViewSet(viewsets.ViewSet):
     Provides endpoints for retrieving, updating, and customizing themes
     at the organization scope.
     """
+    permission_classes = [AllowAny]
 
     def get_organizer(self, request: Request, organizer_slug: str) -> Organizer:
         """Get organizer or raise 404."""
@@ -43,6 +45,10 @@ class OrganizerThemeViewSet(viewsets.ViewSet):
         """Get or create organizer theme."""
         theme, _ = OrganizerTheme.objects.get_or_create(organizer=organizer)
         return theme
+
+    @staticmethod
+    def _organizer_slug_from_kwargs(kwargs: dict[str, Any]) -> str | None:
+        return kwargs.get('organizer_slug') or kwargs.get('organizer')
 
     @staticmethod
     def _can_change_organizer(request: Request, organizer: Organizer) -> bool:
@@ -65,15 +71,25 @@ class OrganizerThemeViewSet(viewsets.ViewSet):
         current[keys[-1]] = value
         return overrides
 
-    def retrieve(self, request: Request, organizer_slug: str) -> Response:
+    def retrieve(self, request: Request, *args, **kwargs) -> Response:
         """Retrieve organizer theme configuration."""
+        organizer_slug = self._organizer_slug_from_kwargs(kwargs)
         organizer = self.get_organizer(request, organizer_slug)
         theme = self.get_theme(organizer)
         serializer = OrganizerThemeSerializer(theme)
         return Response(serializer.data)
 
-    def update(self, request: Request, organizer_slug: str) -> Response:
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        """Retrieve organizer theme configuration (list route)."""
+        organizer_slug = self._organizer_slug_from_kwargs(kwargs)
+        organizer = self.get_organizer(request, organizer_slug)
+        theme = self.get_theme(organizer)
+        serializer = OrganizerThemeSerializer(theme)
+        return Response(serializer.data)
+
+    def update(self, request: Request, *args, **kwargs) -> Response:
         """Update organizer theme configuration."""
+        organizer_slug = self._organizer_slug_from_kwargs(kwargs)
         organizer = self.get_organizer(request, organizer_slug)
         theme = self.get_theme(organizer)
 
@@ -91,8 +107,9 @@ class OrganizerThemeViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='update-token')
-    def update_token(self, request: Request, organizer_slug: str) -> Response:
+    def update_token(self, request: Request, *args, **kwargs) -> Response:
         """Update a specific theme token."""
+        organizer_slug = self._organizer_slug_from_kwargs(kwargs)
         organizer = self.get_organizer(request, organizer_slug)
         theme = self.get_theme(organizer)
 
@@ -127,8 +144,9 @@ class OrganizerThemeViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='export')
-    def export(self, request: Request, organizer_slug: str) -> Response:
+    def export(self, request: Request, *args, **kwargs) -> Response:
         """Export theme configuration as JSON."""
+        organizer_slug = self._organizer_slug_from_kwargs(kwargs)
         organizer = self.get_organizer(request, organizer_slug)
         theme = self.get_theme(organizer)
 
@@ -139,8 +157,9 @@ class OrganizerThemeViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['post'], url_path='import')
-    def import_theme(self, request: Request, organizer_slug: str) -> Response:
+    def import_theme(self, request: Request, *args, **kwargs) -> Response:
         """Import theme configuration from JSON."""
+        organizer_slug = self._organizer_slug_from_kwargs(kwargs)
         organizer = self.get_organizer(request, organizer_slug)
         theme = self.get_theme(organizer)
 
@@ -171,6 +190,14 @@ class EventThemeViewSet(viewsets.ViewSet):
     Provides endpoints for retrieving, updating, and customizing themes
     at the event scope. Event themes can override organizer themes.
     """
+
+    permission_classes = [AllowAny]  # Allow anonymous access to read themes
+
+    @staticmethod
+    def _slugs_from_kwargs(kwargs: dict[str, Any]) -> tuple[str | None, str | None]:
+        organizer_slug = kwargs.get('organizer_slug') or kwargs.get('organizer')
+        event_slug = kwargs.get('event_slug') or kwargs.get('event')
+        return organizer_slug, event_slug
 
     def get_event(self, organizer_slug: str, event_slug: str) -> Event:
         """Get event or raise 404."""
@@ -204,22 +231,25 @@ class EventThemeViewSet(viewsets.ViewSet):
         current[keys[-1]] = value
         return overrides
 
-    def list(self, request: Request, organizer_slug: str = None, event_slug: str = None) -> Response:
+    def list(self, request: Request, *args, **kwargs) -> Response:
         """Retrieve event theme configuration."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
         serializer = EventThemeSerializer(theme)
         return Response(serializer.data)
 
-    def retrieve(self, request: Request, organizer_slug: str = None, event_slug: str = None, pk: str = None) -> Response:
+    def retrieve(self, request: Request, pk: str = None, *args, **kwargs) -> Response:
         """Retrieve event theme configuration."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
         serializer = EventThemeSerializer(theme)
         return Response(serializer.data)
 
-    def update(self, request: Request, organizer_slug: str, event_slug: str) -> Response:
+    def update(self, request: Request, *args, **kwargs) -> Response:
         """Update event theme configuration."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
 
@@ -236,8 +266,9 @@ class EventThemeViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'], url_path='preview')
-    def preview(self, request: Request, organizer_slug: str, event_slug: str) -> Response:
+    def preview(self, request: Request, *args, **kwargs) -> Response:
         """Get theme preview data for live preview."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
 
@@ -254,8 +285,9 @@ class EventThemeViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['post'], url_path='update-token')
-    def update_token(self, request: Request, organizer_slug: str, event_slug: str) -> Response:
+    def update_token(self, request: Request, *args, **kwargs) -> Response:
         """Update a specific event theme token."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
 
@@ -290,8 +322,9 @@ class EventThemeViewSet(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='reset')
-    def reset(self, request: Request, organizer_slug: str, event_slug: str) -> Response:
+    def reset(self, request: Request, *args, **kwargs) -> Response:
         """Reset event theme to base tokens."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
 
@@ -308,8 +341,9 @@ class EventThemeViewSet(viewsets.ViewSet):
         )
 
     @action(detail=False, methods=['post'], url_path='export')
-    def export(self, request: Request, organizer_slug: str, event_slug: str) -> Response:
+    def export(self, request: Request, *args, **kwargs) -> Response:
         """Export event theme configuration as JSON."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
 
@@ -321,8 +355,9 @@ class EventThemeViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['post'], url_path='import')
-    def import_theme(self, request: Request, organizer_slug: str, event_slug: str) -> Response:
+    def import_theme(self, request: Request, *args, **kwargs) -> Response:
         """Import event theme configuration from JSON."""
+        organizer_slug, event_slug = self._slugs_from_kwargs(kwargs)
         event = self.get_event(organizer_slug, event_slug)
         theme = self.get_theme(event)
 

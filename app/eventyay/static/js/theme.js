@@ -5,7 +5,6 @@
  */
 
 class ThemeManager {
-  #instance = null;
   #colorMode = 'auto';
   #tokens = {};
   #isDark = false;
@@ -246,20 +245,98 @@ export function useTheme() {
  */
 export async function loadEventTheme(organizerSlug, eventSlug) {
   try {
-    const response = await fetch(`/api/v1/organizers/${organizerSlug}/events/${eventSlug}/theme/`);
-    if (response.ok) {
-      const data = await response.json();
-      themeManager.loadTheme(data.tokens || {});
-      // Handle both colorMode (camelCase) and color_mode (snake_case)
-      const colorMode = data.colorMode || data.color_mode;
-      if (colorMode) {
-        themeManager.setColorMode(colorMode);
-      }
-    } else {
-      console.warn(`Failed to load theme: ${response.status} ${response.statusText}`);
+    const url = `/api/v1/organizers/${organizerSlug}/events/${eventSlug}/theme/`;
+    console.log('Fetching theme from:', url);
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`Theme API returned ${response.status}: ${response.statusText}`);
+      return false;
     }
+    
+    const data = await response.json();
+    console.log('Theme data received:', data);
+    
+    // Load tokens from the API response
+    const tokens = data.tokens || {};
+    if (Object.keys(tokens).length > 0) {
+      themeManager.loadTheme(tokens);
+      console.log('Tokens loaded successfully');
+    } else {
+      console.warn('No tokens found in theme data');
+    }
+    
+    // Handle both colorMode (camelCase) and color_mode (snake_case)
+    const colorMode = data.colorMode || data.color_mode || 'auto';
+    themeManager.setColorMode(colorMode);
+    console.log('Color mode set to:', colorMode);
+    
+    // Store loaded theme in sessionStorage to persist across navigation
+    try {
+      sessionStorage.setItem(
+        `theme-${organizerSlug}-${eventSlug}`,
+        JSON.stringify({ tokens, colorMode })
+      );
+      console.log('Theme stored in sessionStorage');
+    } catch (error) {
+      console.warn('Could not store theme in sessionStorage:', error);
+    }
+    
+    return true;
   } catch (error) {
     console.error('Failed to load event theme:', error);
+    
+    // Try to restore from sessionStorage if API fails
+    try {
+      const cached = sessionStorage.getItem(`theme-${organizerSlug}-${eventSlug}`);
+      if (cached) {
+        const { tokens, colorMode } = JSON.parse(cached);
+        themeManager.loadTheme(tokens);
+        themeManager.setColorMode(colorMode);
+        console.log('Theme restored from sessionStorage cache');
+        return true;
+      }
+    } catch (cacheError) {
+      console.warn('Could not restore from cache:', cacheError);
+    }
+    
+    return false;
+  }
+}
+
+/**
+ * Fetch and load organizer theme for organizer profile/public pages.
+ */
+export async function loadOrganizerTheme(organizerSlug) {
+  try {
+    const url = `/api/v1/organizers/${organizerSlug}/themes/`;
+    console.log('Fetching organizer theme from:', url);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`Organizer theme API returned ${response.status}: ${response.statusText}`);
+      return false;
+    }
+
+    const data = await response.json();
+    console.log('Organizer theme data received:', data);
+
+    const tokens = data.tokens || {};
+    if (Object.keys(tokens).length > 0) {
+      themeManager.loadTheme(tokens);
+      console.log('Organizer tokens loaded successfully');
+    } else {
+      console.warn('No tokens found in organizer theme data');
+    }
+
+    const colorMode = data.colorMode || data.color_mode || 'auto';
+    themeManager.setColorMode(colorMode);
+    console.log('Organizer color mode set to:', colorMode);
+
+    return true;
+  } catch (error) {
+    console.error('Failed to load organizer theme:', error);
+    return false;
   }
 }
 
