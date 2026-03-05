@@ -98,12 +98,6 @@ const routes = [
 				props: true
 			},
 			{
-				path: 'sessions',
-				name: 'schedule:sessions',
-				component: Schedule,
-				props: () => ({ linearOnly: true })
-			},
-			{
 				path: 'schedule/speakers',
 				name: 'schedule:speakers',
 				component: Speakers

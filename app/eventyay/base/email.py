@@ -2,7 +2,7 @@ import inspect
 import logging
 import os
 import secrets
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
 from decimal import Decimal
 from email import policy
@@ -10,7 +10,6 @@ from email.parser import BytesParser
 from itertools import groupby
 from pathlib import Path
 from smtplib import SMTPResponseException
-from typing import Iterable
 from zoneinfo import ZoneInfo
 
 from css_inline import inline as inline_css
@@ -22,7 +21,6 @@ from django.db.models import Count
 from django.dispatch import receiver
 from django.template.loader import get_template
 from django.utils.timezone import now as djnow
-from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Attachment, Bcc, Mail
@@ -41,6 +39,7 @@ from eventyay.base.signals import (
 )
 from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.helpers.i18n import is_rtl
+
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +87,8 @@ class SendGridEmail:
                     if content_type == 'text/html' and 'attachment' not in content_disposition:
                         html_content = part.get_payload(decode=True).decode(part.get_content_charset())
                         break  # Found the HTML content, no need to continue
-            except Exception as e:
-                logger.error('Error happened when trying to parse mail template: %s' % e)
+            except UnicodeDecodeError:
+                logger.exception('Error happened when trying to parse mail template')
                 html_content = email.body
             message = Mail(
                 from_email=email.from_email,
@@ -117,11 +116,11 @@ class CustomSMTPBackend(EmailBackend):
             self.connection.ehlo_or_helo_if_needed()
             (code, resp) = self.connection.mail(from_addr, [])
             if code != 250:
-                logger.warn('Error testing mail settings, code %d, resp: %s' % (code, resp))
+                logger.warning('Error testing mail settings, code %d, resp: %s', code, resp)
                 raise SMTPResponseException(code, resp)
             (code, resp) = self.connection.rcpt('test@eventyay.com')
             if (code != 250) and (code != 251):
-                logger.warn('Error testing mail settings, code %d, resp: %s' % (code, resp))
+                logger.warning('Error testing mail settings, code %d, resp: %s', code, resp)
                 raise SMTPResponseException(code, resp)
         finally:
             self.close()
@@ -472,7 +471,7 @@ def get_best_name(position_or_address, parts=False):
 
 def generate_sample_video_url():
     sample_token = secrets.token_urlsafe(16)
-    return '{}/#token={}'.format(settings.SITE_URL, sample_token)
+    return f'{settings.SITE_URL}/#token={sample_token}'
 
 
 @receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_mail_placeholders')
@@ -810,7 +809,7 @@ def base_placeholders(sender: Event, **kwargs):
             continue
         ph.append(
             SimpleFunctionalMailTextPlaceholder(
-                'attendee_name_%s' % f,
+                f'attendee_name_{f}',
                 ['position'],
                 lambda position, f=f: position.attendee_name_parts.get(f, ''),
                 name_scheme['sample'][f],
@@ -818,7 +817,7 @@ def base_placeholders(sender: Event, **kwargs):
         )
         ph.append(
             SimpleFunctionalMailTextPlaceholder(
-                'name_%s' % f,
+                f'name_{f}',
                 ['position_or_address'],
                 lambda position_or_address, f=f: get_best_name(position_or_address, parts=True).get(f, ''),
                 name_scheme['sample'][f],
@@ -827,7 +826,7 @@ def base_placeholders(sender: Event, **kwargs):
 
     for k, v in sender.meta_data.items():
         ph.append(
-            SimpleFunctionalMailTextPlaceholder('meta_%s' % k, ['event'], lambda event, k=k: event.meta_data[k], v)
+            SimpleFunctionalMailTextPlaceholder(f'meta_{k}', ['event'], lambda event, k=k: event.meta_data[k], v)
         )
 
     return ph

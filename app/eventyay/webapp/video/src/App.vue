@@ -46,6 +46,7 @@
 import { mapState } from 'vuex'
 import { computed, reactive } from 'vue'
 import moment from 'lib/timetravelMoment'
+import { inferRoomType, inferType } from 'lib/room-types'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -121,8 +122,17 @@ export default {
 			const routeName = this.$route?.name
 			if (!routeName) return
 			if (routeName.startsWith && routeName.startsWith('admin')) return
-			if (routeName === 'home') return this.rooms?.[0]
-			return this.rooms?.find(room => room.id === this.$route.params.roomId)
+			const rooms = this.rooms || []
+			const isInitiated = (room) => {
+				if (!room) return false
+				if (Array.isArray(room.module_config)) {
+					return !!inferType({ module_config: room.module_config })
+				}
+				return !!inferRoomType(room)
+			}
+			if (routeName === 'home') return rooms.find(isInitiated) || rooms[0]
+			const wantedId = String(this.$route.params.roomId)
+			return rooms.find(room => String(room.id) === wantedId)
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {
@@ -172,6 +182,8 @@ export default {
 			}
 			if (this.mediaSourcePlaceholderRect) {
 				Object.assign(style, {
+					'--mediasource-placeholder-top': this.mediaSourcePlaceholderRect.top + 'px',
+					'--mediasource-placeholder-left': this.mediaSourcePlaceholderRect.left + 'px',
 					'--mediasource-placeholder-height': this.mediaSourcePlaceholderRect.height + 'px',
 					'--mediasource-placeholder-width': this.mediaSourcePlaceholderRect.width + 'px'
 				})

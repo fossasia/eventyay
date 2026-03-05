@@ -1,4 +1,5 @@
 from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 
 from eventyay.common.views import EventSocialMediaCard, get_static
 
@@ -97,7 +98,7 @@ urlpatterns = [
         speaker.SpeakerRedirect.as_view(),
         name='speaker.redirect',
     ),
-    path('sessions/', schedule.ScheduleView.as_view(), name='talks'),
+    path('sessions/', RedirectView.as_view(url='../schedule/', permanent=True), name='talks'),
     path('talk/<slug>/', talk.TalkView.as_view(), name='talk.detail'),
     path(
         'talk/<slug>/og-image',

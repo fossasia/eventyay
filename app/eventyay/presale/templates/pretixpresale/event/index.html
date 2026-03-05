@@ -14,6 +14,9 @@
 
 {% block custom_header %}
     {{ block.super }}
+    {% compress css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/featured-speakers.css' %}"/>
+    {% endcompress %}
     <meta property="og:title" content="{{ ev.name|event_localize }}" />
     <meta property="og:description" content="{{ ev.get_date_range_display }}" />
     {% if subevent %}
@@ -24,6 +27,8 @@
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
+
+    <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
@@ -319,6 +324,15 @@
                 </form>
                 {% endif %}
             {% endif %}
+        {% endif %}
+    {% endif %}
+    {% if subevent or not event.has_subevents %}
+        {% if featured_speakers %}
+            <section class="front-page" id="featured-speakers" aria-label="{% trans 'Featured Speakers' %}">
+                <script id="pretalx-schedule-data" type="application/json">{{ featured_speakers_widget_schedule_json|safe }}</script>
+                <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+                <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
+            </section>
         {% endif %}
     {% endif %}
     </main>
