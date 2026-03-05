@@ -559,9 +559,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        token_form_prefix = self._token_form_prefix(team)
+        prefixed_name_field = f'{token_form_prefix}-name'
         token_form = TokenForm(
-            data=(self.request.POST if 'name' in self.request.POST else None),
-            prefix=self._token_form_prefix(team),
+            data=(self.request.POST if prefixed_name_field in self.request.POST else None),
+            prefix=token_form_prefix,
         )
 
         post = self.request.POST
@@ -569,7 +571,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         with transaction.atomic():
             if 'remove-token' in post:
                 return self._handle_remove_token(team, post)
-            if 'name' in post and token_form.is_valid() and token_form.has_changed():
+            if prefixed_name_field in post and token_form.is_valid() and token_form.has_changed():
                 return self._handle_create_token(team, token_form)
 
         messages.error(self.request, _('Your changes could not be saved.'))
