@@ -1257,6 +1257,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # Prefer Jinja2 templates for django-allauth
 ACCOUNT_TEMPLATE_EXTENSION = 'jinja'
+ACCOUNT_ADAPTER = 'eventyay.eventyay_common.adapter.CustomAccountAdapter'
 ACCOUNT_SIGNUP_REDIRECT_URL = 'eventyay_common:auth.login'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/common/account/email'
 
