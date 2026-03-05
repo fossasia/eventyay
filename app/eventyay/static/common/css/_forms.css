@@ -265,12 +265,12 @@ input[type="radio"] {
   & + label,
   & ~ .form-check-label {
     cursor: pointer;
-    font-weight: normal !important;
+    font-weight: normal;
     padding-left: 0;
     vertical-align: middle;
     font-size: 1rem;
-    display: inline-flex !important;
-    flex-direction: row !important;
+    display: inline-flex;
+    flex-direction: row;
     align-items: center;
     gap: 4px;
     & ~ a .badge,
@@ -285,9 +285,9 @@ input[type="radio"] {
 label:has(> input[type="radio"]),
 label:has(> input[type="checkbox"]),
 label.form-check-label {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  font-weight: normal !important;
+  display: inline-flex;
+  flex-direction: row;
+  font-weight: normal;
   align-items: center;
   gap: 8px;
   padding-top: 0;
