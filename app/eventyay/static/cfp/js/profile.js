@@ -105,8 +105,12 @@ const blockFormOnOversizedAvatar = () => {
         form.addEventListener('submit', (ev) => {
             const fileInput = form.querySelector('input[type=file][data-maxsize]');
             if (!fileInput || !fileInput.files || !fileInput.files.length) return;
-            const maxSize = parseInt(fileInput.dataset.maxsize);
-            if (fileInput.files[0].size > maxSize) {
+           const maxSize = parseInt(fileInput.dataset.maxsize, 10);
+if (Number.isNaN(maxSize)) {
+    console.warn('Invalid or missing data-maxsize on avatar file input', fileInput);
+    return;
+}
+if (fileInput.files[0].size > maxSize) {
                 ev.preventDefault();
                 ev.stopPropagation();
                 fileInput.classList.add('is-invalid');
