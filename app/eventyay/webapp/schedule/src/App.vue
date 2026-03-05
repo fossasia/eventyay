@@ -242,6 +242,7 @@ export default {
 					this.showSpeakerDetails(speaker, event)
 				}
 			},
+			loggedIn: computed(() => this.loggedIn),
 			translationMessages: computed(() => this.translationMessages)
 		}
 	},
@@ -468,14 +469,14 @@ export default {
 			return !!this.schedule?.feature_flags?.session_popularity_enabled
 		},
 		showPopularityOnCalendar () {
-			return this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_calendar
+			return this.loggedIn && this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_calendar
 		},
 		showPopularityOnList () {
-			return this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_list
+			return this.loggedIn && this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_list
 		},
 		sortOptions () {
 			const options = ['room', 'title', 'title_desc']
-			if (this.popularityFeatureEnabled) options.push('popularity')
+			if (this.loggedIn && this.popularityFeatureEnabled) options.push('popularity')
 			return options
 		},
 		effectiveSortBy () {
@@ -486,6 +487,15 @@ export default {
 		popularityFeatureEnabled (enabled) {
 			if (!enabled && this.sortBy === 'popularity') {
 				this.sortBy = 'room'
+			}
+		},
+		loggedIn (isLoggedIn) {
+			if (!isLoggedIn && this.sortBy === 'popularity') {
+				this.sortBy = 'room'
+			}
+			if (!isLoggedIn) {
+				this.onlyFavs = false
+				this.favs = []
 			}
 		},
 		recordingFilter () {
@@ -733,6 +743,7 @@ export default {
 			return response.json()
 		},
 		async loadFavs () {
+			if (!this.loggedIn) return []
 			const storageKey = `${this.eventSlug}_favs`
 			const data = localStorage.getItem(storageKey)
 			let localFavs = []
@@ -786,11 +797,10 @@ export default {
 			return favs.filter(e => talkIds.includes(e))
 		},
 		saveFavs () {
-			if (!this.loggedIn) {
-				localStorage.setItem(`${this.eventSlug}_favs`, JSON.stringify(this.favs))
-			}
+			if (!this.loggedIn) return
 		},
 		toggleSessionModalFav (id) {
+			if (!this.loggedIn) return
 			if (this.favs.includes(id)) {
 				this.unfav(id)
 			} else {
@@ -798,30 +808,28 @@ export default {
 			}
 		},
 		async fav (id) {
+			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			if (this.favs.includes(id)) return
 			this.favs.push(id)
 			this.saveFavs()
-			if (this.loggedIn) {
-				try {
-					await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
-				} catch (error) {
-					console.error('Failed to save favourite: %s', error)
-					this.pushErrorMessage(this.translationMessages.favs_not_saved)
-				}
+			try {
+				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
+			} catch (error) {
+				console.error('Failed to save favourite: %s', error)
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
 			}
 		},
 		async unfav (id) {
+			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			this.favs = this.favs.filter(elem => elem !== id)
 			this.saveFavs()
-			if (this.loggedIn) {
-				try {
-					await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
-				} catch (error) {
-					console.error('Failed to remove favourite: %s', error)
-					this.pushErrorMessage(this.translationMessages.favs_not_saved)
-				}
+			try {
+				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
+			} catch (error) {
+				console.error('Failed to remove favourite: %s', error)
+				this.pushErrorMessage(this.translationMessages.favs_not_saved)
 			}
 			if (!this.favs.length) this.onlyFavs = false
 		},

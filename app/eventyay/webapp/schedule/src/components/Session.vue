@@ -30,12 +30,12 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
-		.fav-count(v-if="showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
+		.fav-count(v-if="loggedIn && showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
 	.session-icons
-		fav-button(@toggleFav="toggleFav")
+		fav-button(v-if="loggedIn", @toggleFav="toggleFav")
 
 </template>
 <script>
@@ -106,6 +106,7 @@ export default {
 			}
 		},
 		getJoinRoomLink: { default: () => () => '' },
+		loggedIn: { default: false },
 		translationMessages: { default: () => ({}) }
 	},
 	components: {
@@ -172,6 +173,7 @@ export default {
 	},
 	methods: {
 		toggleFav () {
+			if (!this.loggedIn) return
 			if (this.faved) {
 				this.$emit('unfav', this.session.id)
 			} else {

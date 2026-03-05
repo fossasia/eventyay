@@ -105,6 +105,7 @@ export default {
 		scheduleData: { default: null },
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
+		loggedIn: { default: false },
 		scheduleExporters: { default: () => [] },
 		scheduleMetaData: { default: () => ({}) }
 	},
@@ -187,11 +188,11 @@ export default {
 		},
 		showFavCountOnCalendar() {
 			const flags = this.scheduleData?.schedule?.feature_flags || {}
-			return !!(flags.session_popularity_enabled && flags.session_popularity_show_on_calendar)
+			return !!(this.loggedIn && flags.session_popularity_enabled && flags.session_popularity_show_on_calendar)
 		},
 		showFavCountOnList() {
 			const flags = this.scheduleData?.schedule?.feature_flags || {}
-			return !!(flags.session_popularity_enabled && flags.session_popularity_show_on_list)
+			return !!(this.loggedIn && flags.session_popularity_enabled && flags.session_popularity_show_on_list)
 		},
 		hasError() {
 			return !!(this.errorLoading || this.scheduleData?.errorLoading)
@@ -352,7 +353,7 @@ export default {
 		},
 		sortOptions() {
 			const options = ['room', 'title', 'title_desc']
-			if (this.popularityFeatureEnabled) options.push('popularity')
+			if (this.loggedIn && this.popularityFeatureEnabled) options.push('popularity')
 			return options
 		},
 		effectiveSortBy() {
@@ -492,6 +493,7 @@ export default {
 			this.currentDay = dayStr
 		},
 		toggleFavs() {
+			if (!this.loggedIn) return
 			this.onlyFavs = !this.onlyFavs
 			if (this.onlyFavs) this.resetFilters()
 		},
@@ -512,10 +514,12 @@ export default {
 			localStorage.setItem('userTimezone', this.currentTimezone)
 		},
 		onFav(id) {
+			if (!this.loggedIn) return
 			if (this.scheduleFav) this.scheduleFav(id)
 			this.$emit('fav', id)
 		},
 		onUnfav(id) {
+			if (!this.loggedIn) return
 			if (this.scheduleUnfav) this.scheduleUnfav(id)
 			this.$emit('unfav', id)
 		},

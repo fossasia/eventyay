@@ -22,15 +22,15 @@
 							span.filter-title
 								span.filter-title-text {{ group.title }}
 								span.filter-dot(v-if="selectedCount(group) > 0")
-						svg.chevron-icon(:class="{open: openFilterDropdowns[group.refKey]}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-						path(d="M6 9l6 6 6-6")
-				.filter-dropdown-menu(v-if="openFilterDropdowns[group.refKey]")
-					template(v-if="group.data.length")
-						label.filter-dropdown-item(v-for="item in group.data", :key="item.value")
-							input.filter-checkbox(type="checkbox", :checked="item.selected", @change="toggleFilter(item)")
-							span.track-color-dot(v-if="item.color", :style="{backgroundColor: item.color}")
-							span.filter-dropdown-label(:style="item.color ? {'--track-color': item.color} : {}") {{ item.label }}
-					.filter-dropdown-empty(v-else) No {{ group.title.toLowerCase() }} available
+						svg.chevron-icon(v-if="group.refKey !== 'language'", :class="{open: openFilterDropdowns[group.refKey]}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+							path(d="M6 9l6 6 6-6")
+					.filter-dropdown-menu(v-if="openFilterDropdowns[group.refKey]")
+						template(v-if="group.data.length")
+							label.filter-dropdown-item(v-for="item in group.data", :key="item.value")
+								input.filter-checkbox(type="checkbox", :checked="item.selected", @change="toggleFilter(item)")
+								span.track-color-dot(v-if="item.color", :style="{backgroundColor: item.color}")
+								span.filter-dropdown-label(:style="item.color ? {'--track-color': item.color} : {}") {{ item.label }}
+						.filter-dropdown-empty(v-else) No {{ group.title.toLowerCase() }} available
 			.recording-filter-area(v-if="showRecordingFilter", ref="recordingDropdown")
 				button.toolbar-btn.icon-only.recording-btn(
 					:class="{active: recordingModel !== 'all'}",
@@ -79,6 +79,7 @@
 						:aria-checked="sortModel === opt.value ? 'true' : 'false'",
 						@click="selectSort(opt.value)") {{ opt.label }}
 			button.toolbar-btn.icon-only.fav-toggle(
+				v-if="loggedIn",
 				:class="{active: onlyFavs}",
 				:disabled="!favsCount",
 				:aria-label="t.starred",
@@ -270,7 +271,8 @@ const FA_SVG_MAP = {
 export default {
 	name: 'ScheduleToolbar',
 	inject: {
-		translationMessages: { default: () => ({}) }
+		translationMessages: { default: () => ({}) },
+		loggedIn: { default: false }
 	},
 	props: {
 		version: { type: String, default: '' },
