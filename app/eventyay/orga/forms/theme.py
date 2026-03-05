@@ -49,10 +49,15 @@ class BaseThemeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Ensure token_overrides is initialized as dict
+        if self.instance and not getattr(self.instance, 'pk', None):
+            self.instance.token_overrides = self.instance.token_overrides or {}
         # Populate synthetic fields from token_overrides on initial render.
-        if not self.is_bound and self.instance and getattr(self.instance, 'pk', None):
-            self.fields['primary_color'].initial = self.instance.get_primary_color() or '#EB2188'
-            self.fields['secondary_color'].initial = self.instance.get_secondary_color() or '#3B82F6'
+        if not self.is_bound and self.instance:
+            primary = self.instance.get_primary_color()
+            secondary = self.instance.get_secondary_color()
+            self.fields['primary_color'].initial = primary if primary else '#EB2188'
+            self.fields['secondary_color'].initial = secondary if secondary else '#3B82F6'
 
     def clean_primary_color(self) -> str | None:
         """Validate primary color format."""
@@ -77,6 +82,10 @@ class BaseThemeForm(forms.ModelForm):
     def save(self, commit: bool = True):
         """Save form and update token overrides."""
         instance = super().save(commit=False)
+
+        # Ensure token_overrides is a dict
+        if not isinstance(instance.token_overrides, dict):
+            instance.token_overrides = {}
 
         # Update primary color in token overrides
         primary = self.cleaned_data.get('primary_color')

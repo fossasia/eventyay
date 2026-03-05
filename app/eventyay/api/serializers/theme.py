@@ -42,9 +42,28 @@ class BaseThemeSerializer(serializers.ModelSerializer):
 
     def get_tokens(self, obj) -> dict:
         """Get merged tokens for the theme."""
-        if isinstance(obj, EventTheme):
-            return obj.get_effective_tokens()
-        return ThemeTokenLoader.get_merged_tokens(base_overrides=obj.token_overrides)
+        try:
+            if isinstance(obj, EventTheme):
+                return obj.get_effective_tokens()
+            return ThemeTokenLoader.get_merged_tokens(base_overrides=obj.token_overrides)
+        except Exception:
+            return {}
+    
+    def to_representation(self, instance):
+        """Override to ensure color_mode uses camelCase in response."""
+        data = super().to_representation(instance)
+        # Convert snake_case to camelCase for API consistency
+        if 'color_mode' in data:
+            data['colorMode'] = data.pop('color_mode')
+        if 'token_overrides' in data:
+            data['tokenOverrides'] = data.pop('token_overrides')
+        if 'primary_color' in data:
+            data['primaryColor'] = data.pop('primary_color')
+        if 'secondary_color' in data:
+            data['secondaryColor'] = data.pop('secondary_color')
+        if 'is_active' in data:
+            data['isActive'] = data.pop('is_active')
+        return data
 
 
 class OrganizerThemeSerializer(BaseThemeSerializer):
