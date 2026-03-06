@@ -3,7 +3,7 @@ import logging
 from typing import TypedDict
 
 from django.conf import settings as django_settings
-from django.db import IntegrityError, transaction
+from django.db import DataError, IntegrityError, OperationalError, transaction
 from django.utils.crypto import get_random_string
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
@@ -314,7 +314,7 @@ def _apply_submission_fields(
         except (ValueError, TypeError):
             pass
     if content_locale:
-        sub.content_locale = content_locale
+        sub.content_locale = content_locale[:32]
     if do_not_record:
         sub.do_not_record = _truthy(do_not_record)
     if is_featured:
@@ -346,6 +346,7 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
 
     if not title:
         raise ImportExecutionError(_('Missing session title.'))
+    title = title[:200]
 
     # Resolve submission type (use pre-fetched cache to avoid per-row DB queries)
     sub_type = _resolve_submission_type(sub_type_val, caches) if sub_type_val and caches else None
@@ -405,7 +406,7 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
     # after catching IntegrityError, which poisons any enclosing PostgreSQL transaction.
     try:
         submission.save()
-    except IntegrityError as exc:
+    except (IntegrityError, DataError) as exc:
         raise ImportExecutionError(
             _('Database error for session "{title}": {error}').format(title=title, error=exc)
         ) from exc
@@ -422,7 +423,7 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
             # Tags
             if tags_val:
                 for tag_name in tags_val.split(','):
-                    stripped_tag = tag_name.strip()
+                    stripped_tag = tag_name.strip()[:50]
                     if stripped_tag:
                         tag, _created = Tag.objects.get_or_create(event=event, tag=stripped_tag)
                         submission.tags.add(tag)
@@ -483,7 +484,7 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
         if was_created and submission.pk:
             try:
                 submission.delete()
-            except Exception:
+            except (IntegrityError, OperationalError):
                 logger.exception('Failed to clean up submission after import error: %s', submission.pk)
         raise ImportExecutionError(
             _('Database error while finalizing session "{title}": {error}').format(title=title, error=exc)

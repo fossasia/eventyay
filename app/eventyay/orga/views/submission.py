@@ -1055,13 +1055,19 @@ class SubmissionImportView(EventPermissionRequired, FormView):
     IMPORT_FILENAME = 'session_import.csv'
 
     def form_valid(self, form):
+        session = self.request.session
+        if not session.session_key:
+            session.save()
+        if not session.session_key:
+            messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
+            return redirect(self.request.path)
         cf = CachedFile.objects.create(
             expires=now() + timedelta(days=1),
             date=now(),
             filename=self.IMPORT_FILENAME,
             type='text/csv',
             web_download=False,
-            session_key=self.request.session.session_key,
+            session_key=session.session_key,
         )
         cf.file.save(self.IMPORT_FILENAME, form.cleaned_data['file'])
         return redirect(self.request.event.orga_urls.submissions_import + str(cf.id) + '/')
