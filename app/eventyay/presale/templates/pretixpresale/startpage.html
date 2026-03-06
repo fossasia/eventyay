@@ -205,7 +205,16 @@
                                 {% for event in upcoming_events %}
                                     {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
                                 {% empty %}
-                                    <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
+                                    <div class="startpage-empty text-center" style="padding: 2rem 0;">
+                                        <i class="fa fa-calendar-o fa-3x text-muted" aria-hidden="true"></i>
+                                        <p style="margin-top: 1rem;">{% trans "No upcoming events available yet." %}</p>
+                                        {% if request.user.is_authenticated %}
+                                            <a class="btn btn-primary" href="{% url 'eventyay_common:events.add' %}">
+                                                <i class="fa fa-plus" aria-hidden="true"></i>
+                                                {% trans "Create your first event" %}
+                                            </a>
+                                        {% endif %}
+                                    </div>
                                 {% endfor %}
                             </div>
                         </section>
