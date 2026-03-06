@@ -15,7 +15,7 @@
                 {% endblocktrans %}
             </div>
             <div class="col-sm-12 col-md-3">
-                <form action="{% url "eventyay_common:event.live" event=request.event.slug organizer=request.organizer.slug %}"
+                <form action="{% url "control:event.live" event=request.event.slug organizer=request.organizer.slug %}"
                         method="post">
                     {% csrf_token %}
                     <input type="hidden" name="live" value="false">

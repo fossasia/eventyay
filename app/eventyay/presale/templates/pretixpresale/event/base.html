@@ -38,36 +38,7 @@
         {% if request.user.is_authenticated %}
             {% has_event_perm "base.orga_access_event" request.user request event as is_organiser %}
             {% can_view_tickets as can_view_tickets %}
-            <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
-                <div class="container">
-                    <span class="fa fa-user-secret" aria-hidden="true"></span>
-                    {% if can_view_tickets %}
-                        {% trans "This shop is currently in private test mode. Only event team members and system administrators can view or purchase tickets." %}
-                        <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
-                            {% trans "Manage shop status" %}
-                        </a>
-                    {% else %}
-                        {% trans "This event is currently in private test mode. Ticket sales are not available." %}
-                    {% endif %}
-                </div>
-            </div>
         {% endif %}
-    {% elif not event.live %}
-        {% has_event_perm "base.orga_access_event" request.user request event as is_organiser %}
-        {% can_view_tickets as can_view_tickets %}
-        <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
-            <div class="container">
-                <span class="fa fa-user-secret" aria-hidden="true"></span>
-                {% if can_view_tickets %}
-                    {% trans "This shop is currently offline. Only event team members and system administrators can purchase tickets." %}
-                    <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
-                        {% trans "Take it live now" %}
-                    </a>
-                {% else %}
-                    {% trans "This event is currently offline. Ticket sales are not yet available." %}
-                {% endif %}
-            </div>
-        </div>
     {% endif %}
 {% endblock %}
 
@@ -84,24 +55,9 @@
 
 
 {% block alerts %}
-    {% if request.event.testmode %}
-        {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
-        {% if request.event.live or is_organiser %}
-            {% if request.sales_channel.testmode_supported %}
-                <div class="alert alert-warning alert-margin">
-                    <strong>
-                        {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
-                    </strong>
-                </div>
-            {% else %}
-                <div class="alert alert-danger">
-                    <strong>
-                        {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
-                    </strong>
-                </div>
-            {% endif %}
-        {% endif %}
-    {% endif %}
+    {% block testmode_alert %}
+        {% include "pretixpresale/event/fragment_testmode_alert.html" %}
+    {% endblock testmode_alert %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert {{ message.tags }}">

@@ -1,6 +1,8 @@
 import logging
 import sys
 import warnings
+from collections import Counter
+from functools import lru_cache
 from pathlib import Path
 
 from django.conf import settings
@@ -13,11 +15,22 @@ from django_scopes import get_scope
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
-from eventyay.helpers.i18n import get_javascript_format, get_moment_locale
+from eventyay.helpers.i18n import get_javascript_format, get_moment_locale, is_rtl
 
+from .language import get_language_choices_native_with_ui_name
 from .text.phrases import phrases
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=None)
+def _get_native_language_name(code: str) -> str:
+    language_info = settings.LANGUAGES_INFORMATION.get(code, {})
+    language_name = language_info.get('name')
+    if language_name is None:
+        return code
+    with translation.override(code):
+        return str(language_name)
 
 
 def add_events(request: HttpRequest):
@@ -42,19 +55,28 @@ def locale_context(request):
     AVAILABLE_CALENDAR_LOCALES = tuple(
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
-    # Build language list with natural names (native language names)
-    languages_with_natural_names = [
-        (code, settings.LANGUAGES_INFORMATION[code]['natural_name'])
-        for code in dict(settings.LANGUAGES)
-    ]
-    languages = sorted(
-        languages_with_natural_names,
-        key=lambda l: (
-            0 if l[0] in settings.LANGUAGES_OFFICIAL else (1 if l[0] not in settings.LANGUAGES_INCUBATING else 2),
-            str(l[1]),
-        ),
-    )
-    language_options = [{'code': code, 'label': name} for code, name in languages]
+    available_codes = [code for code, __ in settings.LANGUAGES]
+    ordered_codes = [code for code, __ in get_language_choices_native_with_ui_name(available_codes)]
+    supported_languages = [(code, settings.LANGUAGES_INFORMATION[code]['natural_name']) for code in ordered_codes]
+    natural_name_counts = Counter(natural_name for __, natural_name in supported_languages)
+    labels_by_code = {}
+    for code, natural_name in supported_languages:
+        label = natural_name
+        if natural_name_counts[natural_name] > 1:
+            native_language_name = _get_native_language_name(code)
+            if native_language_name:
+                label = native_language_name
+        labels_by_code[code] = label
+
+    # Ensure labels remain unique even if native variants still collide.
+    label_counts = Counter(labels_by_code.values())
+    languages_with_natural_names = []
+    for code, __ in supported_languages:
+        label = labels_by_code[code]
+        if label_counts[label] > 1:
+            label = f'{label} ({code})'
+        languages_with_natural_names.append((code, label))
+    language_options = [{'code': code, 'label': name} for code, name in languages_with_natural_names]
 
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),
@@ -63,7 +85,7 @@ def locale_context(request):
         'quotation_open': phrases.base.quotation_open,
         'quotation_close': phrases.base.quotation_close,
         'DAY_MONTH_DATE_FORMAT': get_day_month_date_format(),
-        'rtl': getattr(request, 'LANGUAGE_CODE', 'en') in settings.LANGUAGES_BIDI,
+        'rtl': is_rtl(getattr(request, 'LANGUAGE_CODE', 'en')),
         'AVAILABLE_CALENDAR_LOCALES': AVAILABLE_CALENDAR_LOCALES,
         'language_options': language_options,
     }

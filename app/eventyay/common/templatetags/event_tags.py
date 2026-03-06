@@ -43,7 +43,7 @@ def cfp_locale_switch_url(context, locale_code):
 @register.filter
 def short_user_label(user):
     """
-    Compact user display: prefer first name, then name, then email local part.
+    Compact user display: prefer first name, then full name, then email local part.
     Truncate to 11 chars with ellipsis when longer.
     """
     if not user:
@@ -158,3 +158,22 @@ def private_testmode_tickets_enabled(context, event=None):
     if not event:
         return False
     return event.private_testmode and event.settings.get('private_testmode_tickets', True, as_type=bool)
+
+
+@register.simple_tag(takes_context=True)
+def private_testmode_talks_enabled(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    return event.private_testmode and event.settings.get('private_testmode_talks', False, as_type=bool)
+
+
+@register.simple_tag(takes_context=True)
+def is_event_team_member(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    user = getattr(request, 'user', None)
+    if not event or not user or user.is_anonymous:
+        return False
+    return user.has_event_permission(event.organizer, event, request=request)

@@ -1105,6 +1105,11 @@ class Question(LoggedModel):
     :param products: A set of ``Products`` objects that this question should be applied to
     :param ask_during_checkin: Whether to ask this question during check-in instead of during check-out.
     :type ask_during_checkin: bool
+    :param active: Whether this question is active. Inactive questions are not shown to customers
+                   during checkout or check-in. Unlike ``hidden`` (which is system-level and hides
+                   questions completely from the public interface), ``active`` is an organizer-controlled
+                   toggle for temporarily disabling questions without deleting them.
+    :type active: bool
     :param hidden: Whether to only show the question in the backend
     :type hidden: bool
     :param identifier: An arbitrary, internal identifier
@@ -1149,6 +1154,15 @@ class Question(LoggedModel):
 
     event = models.ForeignKey(Event, related_name='questions', on_delete=models.CASCADE)
     question = I18nTextField(verbose_name=_('Custom Field'))
+    active = models.BooleanField(
+        default=True,
+        verbose_name=_('Active'),
+        help_text=_(
+            'Inactive questions are not shown to customers during checkout or check-in. '
+            'Unlike hidden questions (which are system-level), active controls visibility '
+            'and can be toggled by event organizers.'
+        )
+    )
     description = I18nTextField(
         verbose_name=_('Description'),
         default='',

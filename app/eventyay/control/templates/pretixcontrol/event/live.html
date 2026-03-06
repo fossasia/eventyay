@@ -1,0 +1,87 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n %}
+
+{% block inside %}
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h1>{% trans "Ticket shop status" %}</h1>
+            </div>
+            {% include "pretixcontrol/event/component_link.html" %}
+        </div>
+    </nav>
+    <legend>
+        {% trans "Tickets" %}
+    </legend>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            {% trans "Ticket shop status" %}
+        </div>
+        <div class="panel-body">
+            {% if not ticketing_ready %}
+                <p>
+                    {% trans "The ticket shop is not set up yet. You can still publish the event, but tickets will remain unavailable until you configure them." %}
+                </p>
+                <div class="text-right">
+                    <a class="btn btn-lg btn-default btn-save"
+                       href="{% url "control:event.quick" organizer=request.organizer.slug event=request.event.slug %}">
+                        {% trans "Set up ticketing" %}
+                    </a>
+                </div>
+            {% elif not request.event.live %}
+                <p>
+                    {% trans "Publish the event to enable ticket visibility on the presale page." %}
+                </p>
+                <div class="text-right">
+                    <button type="button" class="btn btn-lg btn-primary btn-save" disabled>
+                        {% trans "Publish Tickets" %}
+                    </button>
+                </div>
+            {% else %}
+                {% if tickets_published %}
+                    <p>
+                        {% trans "Tickets are public on the presale page. Unpublish to hide them from the public." %}
+                    </p>
+                    <form action="" method="post" class="text-right flip">
+                        {% csrf_token %}
+                        <input type="hidden" name="tickets_published" value="false">
+                        <button type="submit" class="btn btn-lg btn-danger btn-save">
+                            {% trans "Unpublish Tickets" %}
+                        </button>
+                    </form>
+                {% else %}
+                    <p>
+                        {% trans "Publish tickets to show them on the presale page." %}
+                    </p>
+                    {% if ticket_issues %}
+                        <div class="alert alert-warning">
+                            <p>
+                                {% trans "To publish tickets, you first need to resolve the following issues:" %}
+                            </p>
+                            <ul>
+                                {% for issue in ticket_issues %}
+                                    <li>{{ issue|safe }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-lg btn-primary btn-save" disabled>
+                                {% trans "Publish Tickets" %}
+                            </button>
+                        </div>
+                    {% else %}
+                        <form action="" method="post" class="text-right flip">
+                            {% csrf_token %}
+                            <input type="hidden" name="tickets_published" value="true">
+                            <button type="submit" class="btn btn-lg btn-primary btn-save">
+                                {% trans "Publish Tickets" %}
+                            </button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+            <div class="clear"></div>
+        </div>
+    </div>
+    {% include "eventyay_common/event/fragment_ticket_modes.html" %}
+{% endblock %}

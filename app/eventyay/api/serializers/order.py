@@ -481,6 +481,7 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
         # (hopefully), we'll be extra careful here and be explicit about the model fields we update.
         update_fields = [
             'attendee_name_parts',
+            'job_title',
             'company',
             'street',
             'zipcode',
@@ -587,6 +588,7 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
             'price',
             'attendee_name',
             'attendee_name_parts',
+            'job_title',
             'company',
             'street',
             'zipcode',
@@ -930,6 +932,7 @@ class OrderPositionCreateSerializer(I18nAwareModelSerializer):
             'attendee_name_parts',
             'attendee_email',
             'company',
+            'job_title',
             'street',
             'zipcode',
             'city',

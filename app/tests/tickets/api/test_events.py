@@ -215,7 +215,7 @@ def test_event_create(team, token_client, organizer, event, meta_prop):
             .exists()
         )
         assert not organizer.events.get(slug='2030').meta_values.filter(property__name='protected').exists()
-        assert organizer.events.get(slug='2030').plugins == settings.PRETIX_PLUGINS_DEFAULT
+        assert organizer.events.get(slug='2030').plugins == ','.join(settings.EVENTYAY_PLUGINS_DEFAULT)
         assert organizer.events.get(slug='2030').settings.timezone == 'Europe/Amsterdam'
 
     resp = token_client.post(

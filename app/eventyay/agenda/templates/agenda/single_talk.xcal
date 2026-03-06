@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8' ?>
+{% load presale_locale %}
+<iCalendar xmlns:pentabarf='http://pentabarf.org' xmlns:xCal='urn:ietf:params:xml:ns:xcal'>
+  <vcalendar>
+    <version>2.0</version>
+    <prodid>-//Pentabarf//Schedule//EN</prodid>
+    {% for slot in talk_slots %}
+    <vevent>
+      <method>PUBLISH</method>
+      <uid>{{ slot.submission.code }}@@{{ domain }}</uid>
+      <pentabarf:event-id>{{ slot.integer_uuid }}</pentabarf:event-id>
+      <pentabarf:event-slug>{{ slot.submission.event.slug }}-{{ slot.submission.code }}</pentabarf:event-slug>
+      <pentabarf:title>{{ slot.submission.title|event_localize }}</pentabarf:title>
+      <pentabarf:subtitle></pentabarf:subtitle>
+      <pentabarf:language>{{ slot.submission.content_locale }}</pentabarf:language>
+      <pentabarf:language-code>{{ slot.submission.content_locale }}</pentabarf:language-code>
+      <dtstart>{{ slot.start|date:"Ymd\THis" }}</dtstart>
+      <dtend>{{ slot.end|date:"Ymd\THis" }}</dtend>
+      <duration>{{ slot.pentabarf_export_duration }}</duration>
+      <summary>{{ slot.submission.title|event_localize }}</summary>
+      <description>{{ slot.submission.description|event_localize|default_if_none:"" }}</description>
+      <class>PUBLIC</class>
+      <status>CONFIRMED</status>
+      <category>{{ slot.submission.submission_type.name|event_localize }}</category>
+      <url>{{ url }}{{ slot.submission.urls.public }}</url>
+      <location>{% if slot.room %}{{ slot.room.name|event_localize }}{% endif %}</location>
+      {% for person in slot.submission.speakers.all %}
+      <attendee>{{ person.get_display_name }}</attendee>
+      {% endfor %}
+    </vevent>
+    {% endfor %}
+  </vcalendar>
+</iCalendar>
