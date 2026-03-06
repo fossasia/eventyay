@@ -150,6 +150,13 @@ error_messages = {
 logger = logging.getLogger(__name__)
 
 
+def order_requires_approval(positions):
+    return any(
+        p.product.require_approval and not (p.voucher_id and p.voucher.bypass_approval)
+        for p in positions
+    )
+
+
 def mark_order_paid(*args, **kwargs):
     raise NotImplementedError('This method is no longer supported since pretix 1.17.')
 
@@ -984,10 +991,7 @@ def _create_order(
             total=total,
             testmode=True if sales_channel.testmode_supported and event.testmode else False,
             meta_info=json.dumps(meta_info or {}),
-            require_approval=any(
-                p.product.require_approval and not (p.voucher_id and p.voucher.bypass_approval)
-                for p in positions
-            ),
+            require_approval=order_requires_approval(positions),
             sales_channel=sales_channel.identifier,
         )
         order.set_expires(now_dt, event.subevents.filter(id__in=[p.subevent_id for p in positions]))

@@ -285,10 +285,9 @@ class OrderBulkAction(EventPermissionRequiredMixin, View):
     def _get_orders(self):
         if self.request.POST.get('__ALL'):
             filter_form = EventOrderFilterForm(data=self.request.POST, event=self.request.event)
-            qs = Order.objects.filter(event=self.request.event)
-            if filter_form.is_valid():
-                qs = filter_form.filter_qs(qs)
-            return qs
+            if not filter_form.is_valid():
+                return Order.objects.none()
+            return filter_form.filter_qs(Order.objects.filter(event=self.request.event))
         codes = self.request.POST.getlist('order')
         return Order.objects.filter(event=self.request.event, code__in=[c.upper() for c in codes])
 

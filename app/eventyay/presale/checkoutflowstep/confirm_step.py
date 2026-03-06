@@ -9,7 +9,7 @@ from django.utils.translation import pgettext_lazy
 
 from eventyay import consts
 from eventyay.base.models.orders import Order, OrderPayment
-from eventyay.base.services.orders import perform_order
+from eventyay.base.services.orders import order_requires_approval, perform_order
 from eventyay.base.templatetags.rich_text import rich_text_snippet
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.multidomain.urlreverse import eventreverse
@@ -52,10 +52,7 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
         if self.payment_provider:
             ctx['payment'] = self.payment_provider.checkout_confirm_render(self.request)
             ctx['payment_provider'] = self.payment_provider
-        ctx['require_approval'] = any(
-            cp.product.require_approval and not (cp.voucher_id and cp.voucher.bypass_approval)
-            for cp in ctx['cart']['positions']
-        )
+        ctx['require_approval'] = order_requires_approval(ctx['cart']['positions'])
         ctx['addr'] = self.invoice_address
         ctx['confirm_messages'] = self.confirm_messages
         ctx['cart_session'] = self.cart_session
