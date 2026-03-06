@@ -341,6 +341,16 @@ class SubmissionContent(SubmissionViewMixin, TemplateView):
     def can_edit(self):
         return self.object and self.request.user.has_perm('base.orga_update_submission', self.request.event)
 
+    @context
+    @cached_property
+    def questions_form(self):
+        return TalkQuestionsForm(
+            target='submission',
+            submission=self.object,
+            event=self.request.event,
+            readonly=True,
+        )
+
 
 class SubmissionContentEdit(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission

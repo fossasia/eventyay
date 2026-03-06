@@ -149,23 +149,28 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Session image" %}</label>
                 <div class="col-md-9 mt-1">
-                    <a href="{{ submission.image.url }}" target="_blank">
+                    <a href="{{ submission.image.url }}" data-lightbox>
                         <img width="100px" src="{{ submission.image|thumbnail:"default" }}" alt="{{ submission.title }}">
                     </a>
                 </div>
             </div>
         {% endif %}
 
-        {% if resources %}
+        {% if submission.active_resources %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Resources" %}</label>
                 <div class="col-md-9 mt-1">
                     <ul class="list-unstyled">
-                        {% for resource in resources %}
+                        {% for resource in submission.active_resources %}
                             <li class="mb-2">
-                                <i class="fa fa-paperclip"></i>
-                                <a href="{{ resource.resource.url }}" target="_blank">{{ resource.description|default:resource.filename }}</a>
-                                ({{ resource.resource.size|filesizeformat }})
+                                {% if resource.link %}
+                                    <i class="fa fa-link"></i>
+                                    <a href="{{ resource.link }}" target="_blank">{{ resource.description }}</a>
+                                {% else %}
+                                    <i class="fa fa-paperclip"></i>
+                                    <a href="{{ resource.resource.url }}" target="_blank">{{ resource.description|default:resource.filename }}</a>
+                                    ({{ resource.resource.size|filesizeformat }})
+                                {% endif %}
                             </li>
                         {% endfor %}
                     </ul>
@@ -173,15 +178,31 @@
             </div>
         {% endif %}
 
-        {% if answers %}
+        {% if questions_form and questions_form.fields %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{{ phrases.cfp.custom_fields }}</label>
                 <div class="col-md-9">
-                    {% for answer in answers %}
+                    {% for field in questions_form %}
                         <div class="mb-3">
-                            <strong>{{ answer.question.question }}</strong>
+                            <strong>{{ field.label }}</strong>
                             <div class="mt-1">
-                                {% include "common/question_answer.html" with answer=answer %}
+                                {% if field.field.answer %}
+                                    {% if field.field.widget.input_type == 'checkbox' %}
+                                        {% if field.field.answer.boolean_answer %}
+                                            <i class="fa fa-check text-success"></i> {% translate "Yes" %}
+                                        {% else %}
+                                            <i class="fa fa-times text-danger"></i> {% translate "No" %}
+                                        {% endif %}
+                                    {% elif field.field.answer.answer_file %}
+                                        <a href="{{ field.field.answer.answer_file.url }}" target="_blank">
+                                            <i class="fa fa-paperclip"></i> {{ field.field.answer.answer_file.name }}
+                                        </a>
+                                    {% else %}
+                                        {{ field.field.answer.answer_string|rich_text|default:"-" }}
+                                    {% endif %}
+                                {% else %}
+                                    <em class="text-muted">{% translate "No answer provided" %}</em>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
