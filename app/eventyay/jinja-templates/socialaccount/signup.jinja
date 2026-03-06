@@ -1,0 +1,67 @@
+{% extends 'account/base.jinja' %}
+
+{% block head_title %}
+  {{ _('Signup') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='password-reset-container'>
+    <h1>{{ _('Sign Up') }}</h1>
+
+    <p class='description'>
+      {% set provider_name = account.get_provider().name %}
+      {{ _(
+        'You are about to use your {provider_name} account to login to {site_name}. '
+        'As a final step, please complete the following form:'
+      ).format(provider_name=provider_name, site_name=site.name) }}
+    </p>
+
+    {% if form.non_field_errors() %}
+      <div class='alert alert-danger'>
+        <i class='fa fa-exclamation-triangle'></i>
+        {% for error in form.non_field_errors() %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method='post' action="{{ url_for('socialaccount_signup') }}" class='password-form'>
+      <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+
+      {% for hidden in form.hidden_fields() %}
+        {{ hidden }}
+      {% endfor %}
+
+      {% for field in form.visible_fields() %}
+        <div class='form-group'>
+          <label for='{{ field.id_for_label }}'>
+            {{ field.label }}
+            {% if field.field.required %}<span class='required'>*</span>{% endif %}
+          </label>
+          {{ field }}
+          {% if field.errors %}
+            <div class='field-error'>
+              {% for error in field.errors %}
+                <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if field.help_text %}
+            <div class='field-help'>{{ field.help_text }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      {% if redirect_field %}
+        {{ redirect_field }}
+      {% elif redirect_field_name and redirect_field_value %}
+        <input type='hidden' name='{{ redirect_field_name }}' value='{{ redirect_field_value }}'>
+      {% endif %}
+
+      <button type='submit' class='btn btn-primary btn-lg'>
+        <i class='fa fa-user-plus'></i>
+        {{ _('Sign Up') }}
+      </button>
+    </form>
+  </div>
+{% endblock content %}
