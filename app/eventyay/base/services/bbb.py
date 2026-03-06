@@ -148,7 +148,7 @@ def get_create_params_for_room(
             event=room.event, room=room, prefer_server=prefer_server
         )
         if server is None:
-            logger.error("bbb.failed.no_server: No active BBB server available for event %s", room.event)
+            logger.warning("bbb.failed.no_server: No active BBB server available for event %s", room.event)
             raise ValueError("bbb.failed.no_server")
         call = BBBCall.objects.create(
             room=room,
