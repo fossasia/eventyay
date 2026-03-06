@@ -5,11 +5,11 @@ import RoomHeader from 'views/rooms/RoomHeader'
 import Room from 'views/rooms/item'
 import RoomManager from 'views/rooms/manage'
 import Channel from 'views/channels/item'
-import Schedule from 'views/schedule'
-import Talk from 'views/schedule/talks/item'
-import Session from 'views/schedule/sessions'
-import Speakers from 'views/schedule/speakers'
-import Speaker from 'views/schedule/speakers/item'
+import Schedule from '@schedule/components/ScheduleView'
+import Talk from '@schedule/components/TalkDetail'
+import Speakers from '@schedule/components/SpeakersList'
+import Speaker from '@schedule/components/SpeakerDetail'
+import PublicStars from '@schedule/components/PublicStars'
 import Exhibitor from 'views/exhibitors/item'
 import ContactRequests from 'views/contact-requests'
 import Preferences from 'views/preferences'
@@ -96,13 +96,10 @@ const routes = [
 				path: 'schedule/talks/:talkId',
 				name: 'schedule:talk',
 				component: Talk,
-				props: true
-			},
-			{
-				path: 'sessions',
-				name: 'schedule:sessions',
-				component: Session,
-				props: true
+				props: route => ({
+					talkId: route.params.talkId,
+					baseUrl: window.eventyay?.eventUrl || ''
+				})
 			},
 			{
 				path: 'schedule/speakers',
@@ -114,6 +111,15 @@ const routes = [
 				name: 'schedule:speaker',
 				component: Speaker,
 				props: true
+			},
+			{
+				path: 'schedule/people/:userCode/stars',
+				name: 'schedule:public-stars',
+				component: PublicStars,
+				props: route => ({
+					userCode: route.params.userCode,
+					baseUrl: window.eventyay?.eventUrl || ''
+				})
 			},
 			{
 				path: 'exhibitors/:exhibitorId',

@@ -36,6 +36,7 @@ from eventyay.base.settings import (
 )
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDateTimeInput
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
     MultipleLanguagesWidget,
@@ -91,6 +92,9 @@ class EventWizardFoundationForm(forms.Form):
         self.user = kwargs.pop('user')
         self.session = kwargs.pop('session')
         super().__init__(*args, **kwargs)
+        localized_language_choices = get_language_choices_native_with_ui_name()
+        self.fields['locales'].choices = localized_language_choices
+        self.fields['content_locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
             qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
@@ -601,6 +605,8 @@ class EventSettingsForm(SettingsForm):
         'attendee_emails_required',
         'attendee_company_asked',
         'attendee_company_required',
+        'attendee_job_title_asked',
+        'attendee_job_title_required',
         'attendee_addresses_asked',
         'attendee_addresses_required',
         'attendee_data_explanation_text',
@@ -653,9 +659,10 @@ class EventSettingsForm(SettingsForm):
                 data[required_key] = True
             # Explicitly check for 'do_not_ask'.
             # Do not overwrite as default-behaviour when no value for virtual field is transmitted!
+            # Note: Only set asked to False, preserve the existing required value
             elif data[virtual_key] == 'do_not_ask':
                 data[asked_key] = False
-                data[required_key] = False
+                # Don't touch required_key - preserve existing required state
 
             # hierarkey.forms cannot handle non-existent keys in cleaned_data => do not delete, but set to None
             data[virtual_key] = None
@@ -718,6 +725,37 @@ class EventSettingsForm(SettingsForm):
                 self.initial[virtual_key] = "optional"
             else:
                 self.initial[virtual_key] = 'do_not_ask'
+
+
+class OrderFormSettingsForm(EventSettingsForm):
+    """
+    Settings form used on the dedicated order-forms page.
+
+    Keep this list limited to fields rendered there so saving that page
+    cannot overwrite unrelated event settings.
+    """
+
+    auto_fields = [
+        'attendee_names_asked',
+        'attendee_names_required',
+        'attendee_emails_asked',
+        'attendee_emails_required',
+        'attendee_company_asked',
+        'attendee_company_required',
+        'attendee_job_title_asked',
+        'attendee_job_title_required',
+        'attendee_addresses_asked',
+        'attendee_addresses_required',
+        'attendee_data_explanation_text',
+        'order_phone_asked',
+        'order_phone_required',
+        'order_email_asked',
+        'order_email_required',
+        'order_email_asked_twice',
+        'require_registered_account_for_tickets',
+        'include_wikimedia_username',
+        'checkout_show_copy_answers_button',
+    ]
 
 
 class CancelSettingsForm(SettingsForm):

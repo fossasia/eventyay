@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
+from django.db.models import Count, Exists, F, Max, OuterRef, Prefetch, Q
 from django.forms.models import inlineformset_factory
 from django.http import (
     Http404,
@@ -70,7 +70,7 @@ from eventyay.control.forms.product import (
     QuestionOptionForm,
     QuotaForm,
 )
-from eventyay.control.forms.event import EventSettingsForm
+from eventyay.control.forms.event import OrderFormSettingsForm
 from eventyay.control.permissions import (
     EventPermissionRequiredMixin,
     event_permission_required,
@@ -380,6 +380,7 @@ def reorder_questions(request, organizer, event):
         'attendee_name_parts',
         'attendee_email',
         'company',
+        'job_title',
         'street',
         'zipcode',
         'city',
@@ -480,6 +481,24 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
                 'eventyay.event.question.changed',
                 user=self.request.user,
                 data={'required': value}
+            )
+        elif field == 'active':
+            # Validate presence and type for boolean fields
+            if value is None or not isinstance(value, bool):
+                logger.warning(
+                    'Invalid value for question %s field %s: expected bool, got %s',
+                    question.pk, field, type(value).__name__ if value is not None else 'None'
+                )
+                return JsonResponse({
+                    'error': 'Value must be a boolean for active field',
+                    'received': type(value).__name__ if value is not None else 'None'
+                }, status=400)
+            question.active = value
+            question.save(update_fields=['active'])
+            question.log_action(
+                'eventyay.event.question.changed',
+                user=self.request.user,
+                data={'active': value}
             )
         else:
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
@@ -743,6 +762,13 @@ class QuestionCreate(EventPermissionRequiredMixin, QuestionMixin, CreateView):
         if form.cleaned_data.get('type') in ('M', 'C'):
             if not self.formset.is_valid():
                 return self.get(self.request, *self.args, **self.kwargs)
+
+        system_question_order = self.request.event.settings.system_question_order or {}
+        max_system = max(system_question_order.values(), default=-1)
+        max_question = (
+            self.request.event.questions.aggregate(Max('position'))['position__max'] or -1
+        )
+        form.instance.position = max(max_system, max_question) + 1
 
         messages.success(self.request, _('The new question has been created.'))
         ret = super().form_valid(form)
@@ -1662,7 +1688,7 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
     permission = 'can_change_items'
 
     def sform(self):
-        return EventSettingsForm(
+        return OrderFormSettingsForm(
             obj=self.request.event,
             prefix='settings',
             data=self.request.POST if self.request.method == 'POST' else None,
@@ -1681,7 +1707,7 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         
         # Build sorted field order list for template rendering
         system_question_order = self.request.event.settings.system_question_order or {}
-        system_fields = ['attendee_name_parts', 'attendee_email', 'company', 'street']
+        system_fields = ['attendee_name_parts', 'attendee_email', 'company', 'job_title', 'street']
         
         # Create questions lookup map for O(1) access
         questions_by_id = {str(q.id): q for q in questions}

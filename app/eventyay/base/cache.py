@@ -1,9 +1,12 @@
 import hashlib
 import time
-from typing import Callable, Dict, List
+from collections.abc import Callable
+from typing import Any, Dict, List, TypeVar, cast
 
 from django.core.cache import caches
 from django.db.models import Model
+
+T = TypeVar('T')
 
 
 class NamespacedCache:
@@ -46,12 +49,31 @@ class NamespacedCache:
     def get(self, key: str) -> str:
         return self.cache.get(self._prefix_key(key, known_prefix=self._last_prefix))
 
-    def get_or_set(self, key: str, default: Callable, timeout=300) -> str:
-        return self.cache.get_or_set(
-            self._prefix_key(key, known_prefix=self._last_prefix),
-            default=default,
-            timeout=timeout,
-        )
+    def get_or_set(self, key: str, default: T | Callable[[], T], timeout: int = 300) -> T:
+        """
+        Resolve callable defaults without relying on backend-level ``get_or_set``.
+
+        Some callers use defaults that themselves access cached settings. Evaluating
+        the default in user space avoids backend callable handling. We still keep
+        first-writer-wins semantics by using ``add()`` and re-fetching on conflicts.
+        """
+        prefixed_key = self._prefix_key(key, known_prefix=self._last_prefix)
+        missing = object()
+        current = self.cache.get(prefixed_key, missing)
+
+        if current is missing:
+            resolved = default() if callable(default) else default
+            added = self.cache.add(prefixed_key, resolved, timeout=timeout)
+            if added:
+                return resolved
+
+            current = self.cache.get(prefixed_key, missing)
+            if current is missing:
+                # Fallback if the competing value disappeared between add/get.
+                self.cache.set(prefixed_key, resolved, timeout=timeout)
+                return resolved
+
+        return cast(T, current)
 
     def get_many(self, keys: List[str]) -> Dict[str, str]:
         values = self.cache.get_many([self._prefix_key(key) for key in keys])

@@ -24,6 +24,7 @@
         {% has_event_perm "base.review_submission" request.user request submission as can_review %}
         {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
         {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
+        {% has_event_perm "base.orga_update_submission" request.user request request.event as is_core_organiser %}
         <div id="main-title" class="d-md-flex justify-content-between">
             <h2>
                 <span>
@@ -83,7 +84,7 @@
                     {% endwith %}
                 </a>
             {% endif %}
-            {% if request.user.is_administrator %}
+            {% if request.user.is_administrator or is_core_organiser %}
                 <a role="tab" href="{{ submission.orga_urls.history }}" {% if "submissions.history" in url_name %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
                     {% translate "History" %}
                 </a>

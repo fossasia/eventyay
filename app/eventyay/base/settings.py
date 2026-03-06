@@ -1,6 +1,7 @@
 import json
 import operator
 from typing import Any
+import datetime as dt
 
 from django.core.exceptions import ValidationError
 from django.db.models import Model
@@ -48,6 +49,14 @@ settings_hierarkey.add_default('venueless_issuer', '', str)
 settings_hierarkey.add_default('venueless_audience', '', str)
 settings_hierarkey.add_default('venueless_talk_schedule_url', '', str)
 settings_hierarkey.add_default('venueless_show_public_link', False, bool)
+
+# Telemetry settings for anonymous usage data collection
+# These are used by GlobalSettingsObject via settings_hierarkey
+settings_hierarkey.add_default('telemetry_enabled', False, bool)
+settings_hierarkey.add_default('telemetry_last_sent', None, dt.datetime)
+settings_hierarkey.add_default('telemetry_endpoint', '', str)
+settings_hierarkey.add_default('telemetry_api_key', '', str)
+settings_hierarkey.add_default('telemetry_contact_email', '', str)
 
 
 def i18n_uns(v):
@@ -148,6 +157,10 @@ def validate_event_settings(event, settings_dict):
     if settings_dict.get('attendee_emails_required') and not settings_dict.get('attendee_emails_asked'):
         raise ValidationError(
             {'attendee_emails_required': _('You have to ask for attendee emails if you want to make them required.')}
+        )
+    if settings_dict.get('attendee_job_title_required') and not settings_dict.get('attendee_job_title_asked'):
+        raise ValidationError(
+            {'attendee_job_title_required': _('You have to ask for attendee job titles if you want to make them required.')}
         )
     if settings_dict.get('order_email_required') and not settings_dict.get('order_email_asked'):
         raise ValidationError(
