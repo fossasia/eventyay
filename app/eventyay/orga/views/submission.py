@@ -318,10 +318,34 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return self.object.orga_urls.speakers
 
 
-class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
+class SubmissionContent(SubmissionViewMixin, TemplateView):
+    template_name = 'orga/submission/content.html'
+    permission_required = 'base.orga_list_submission'
+
+    @context
+    @cached_property
+    def answers(self):
+        return (
+            self.object.answers.all()
+            .select_related('question')
+            .order_by('question__position')
+        )
+
+    @context
+    @cached_property
+    def resources(self):
+        return self.object.resources.all()
+
+    @context
+    @cached_property
+    def can_edit(self):
+        return self.object and self.request.user.has_perm('base.orga_update_submission', self.request.event)
+
+
+class SubmissionContentEdit(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm
-    template_name = 'orga/submission/content.html'
+    template_name = 'orga/submission/submission_form.html'
     permission_required = 'base.orga_list_submission'
 
     def get_object(self):
