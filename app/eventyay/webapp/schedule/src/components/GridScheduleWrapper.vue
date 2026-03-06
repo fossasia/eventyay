@@ -12,9 +12,11 @@
 		:locale="locale",
 		:scrollParent="scrollParent",
 		:favs="favs",
+		:showFavCount="showFavCount",
 		:onHomeServer="onHomeServer",
 		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
+		:density="density",
 		@changeDay="$emit('changeDay', $event)",
 		@fav="$emit('fav', $event)",
 		@unfav="$emit('unfav', $event)"
@@ -42,8 +44,16 @@ export default {
 		hasAmPm: Boolean,
 		scrollParent: Element,
 		onHomeServer: Boolean,
+		showFavCount: {
+			type: Boolean,
+			default: false,
+		},
 		disableAutoScroll: Boolean,
-		forceScrollDay: { type: Number, default: 0 }
+		forceScrollDay: { type: Number, default: 0 },
+		density: {
+			type: String,
+			default: 'default'
+		}
 	},
 	computed: {
 		gridGroups () {
