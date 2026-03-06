@@ -86,6 +86,7 @@
                     {% bootstrap_field form.tag layout="control" %}
                     {% bootstrap_field form.comment layout="control" %}
                     {% bootstrap_field form.show_hidden_products layout="control" %}
+                    {% bootstrap_field form.bypass_approval layout="control" %}
                 </fieldset>
                 {% eventsignal request.event "eventyay.control.signals.voucher_form_html" form=form %}
             </div>

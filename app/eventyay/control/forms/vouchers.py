@@ -47,6 +47,7 @@ class VoucherForm(I18nModelForm):
             'price_mode',
             'subevent',
             'show_hidden_products',
+            'bypass_approval',
             'budget',
         ]
         field_classes = {
@@ -313,6 +314,7 @@ class VoucherBulkForm(VoucherForm):
             'price_mode',
             'subevent',
             'show_hidden_products',
+            'bypass_approval',
             'budget',
         ]
         field_classes = {
