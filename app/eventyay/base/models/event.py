@@ -77,10 +77,9 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
-from .organizer import Organizer, Team
+from .organizer import Organizer, OrganizerBillingModel, Team
 from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
-
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 logger = logging.getLogger(__name__)
@@ -1382,12 +1381,12 @@ class Event(
 
     def _get_trait_grants_with_defaults(self):
         base_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
-        slug = getattr(self, 'slug', None) or getattr(self, 'id', None)
+        slug = getattr(self, "slug", None) or getattr(self, "id", None)
         if not slug:
             return base_trait_grants
         augmented = dict(base_trait_grants)
         for role, trait_name in VIDEO_TRAIT_ROLE_MAP.items():
-            augmented.setdefault(role, [f'eventyay-video-event-{slug}-{trait_name.replace("_", "-")}'])
+            augmented.setdefault(role, [f"eventyay-video-event-{slug}-{trait_name.replace('_', '-')}"])
         return augmented
 
     def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
@@ -1406,7 +1405,10 @@ class Event(
 
         if not has_direct_messaging_trait:
             direct_message_value = Permission.EVENT_CHAT_DIRECT.value
-            result[self] = {p for p in result[self] if normalize_permission_value(p) != direct_message_value}
+            result[self] = {
+                p for p in result[self]
+                if normalize_permission_value(p) != direct_message_value
+            }
 
     def has_permission_implicit(
         self,
@@ -1421,17 +1423,29 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
 
         for role, required_traits in event_trait_grants.items():
-            if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
+            if (
+                traits_match_required(traits, required_traits)
+                and (required_traits or allow_empty_traits)
+            ):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                if any(
+                    normalize_permission_value(p) in role_permissions
+                    for p in permissions
+                ):
                     return True
 
         if room:
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
-                if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
+                if (
+                    traits_match_required(traits, required_traits)
+                    and (required_traits or allow_empty_traits)
+                ):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    if any(normalize_permission_value(p) in role_permissions for p in permissions):
+                    if any(
+                        normalize_permission_value(p) in role_permissions
+                        for p in permissions
+                    ):
                         return True
 
         # Return False if no permission was granted
@@ -1511,13 +1525,16 @@ class Event(
         user_traits = user.traits or []
 
         for role, required_traits in event_trait_grants.items():
-            if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
+            if (
+                traits_match_required(user_traits, required_traits)
+                and (required_traits or allow_empty_traits)
+            ):
                 role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                 result[self].update(role_perms)
 
         # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
         # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
-        admin_mode_active = 'admin' in user_traits
+        admin_mode_active = "admin" in user_traits
 
         if admin_mode_active:
             # Grant all video manager permissions when admin mode is active
@@ -1532,7 +1549,10 @@ class Event(
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
-                if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
+                if (
+                    traits_match_required(user_traits, required_traits)
+                    and (required_traits or allow_empty_traits)
+                ):
                     result[room].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
 
         for grant in user.room_grants.select_related('room'):
@@ -1869,7 +1889,9 @@ class Event(
         return bool(self.testmode or self.talks_testmode)
 
     def user_can_view_tickets(self, user=None, request=None):
-        private_tickets = self.private_testmode and self.settings.get('private_testmode_tickets', True, as_type=bool)
+        private_tickets = self.private_testmode and self.settings.get(
+            'private_testmode_tickets', True, as_type=bool
+        )
         if not self.tickets_published and not private_tickets:
             return False
         if not private_tickets:
@@ -1881,7 +1903,9 @@ class Event(
         return user.has_event_permission(self.organizer, self, request=request)
 
     def user_can_view_talks(self, user=None, request=None):
-        private_talks = self.private_testmode and self.settings.get('private_testmode_talks', False, as_type=bool)
+        private_talks = self.private_testmode and self.settings.get(
+            'private_testmode_talks', False, as_type=bool
+        )
         if not self.talks_published and not private_talks:
             return False
         if not private_talks:
@@ -1965,6 +1989,7 @@ class Event(
         return issues
 
     def billing_issues(self):
+        from django.utils.html import format_html
         from django.utils.translation import gettext
 
         from eventyay.base.models.organizer import OrganizerBillingModel
@@ -2240,7 +2265,11 @@ class Event(
         Prefer the common (event settings) primary color, then fall back to the legacy
         event field, finally defaulting to the installation default.
         """
-        return self.settings.get('primary_color') or self.primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        return (
+            self.settings.get('primary_color')
+            or self.primary_color
+            or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        )
 
     @cached_property
     def _visible_logo_path(self):
@@ -2252,7 +2281,6 @@ class Event(
         The logo_image setting is actually used for HEADER images (see default_setting.py),
         so we must NOT use it here to prevent header images from appearing as logos.
         """
-
         def _extract_path(obj):
             if not obj:
                 return None
@@ -2288,16 +2316,16 @@ class Event(
                 if not rel_to_media.startswith('..'):
                     path = rel_to_media
             except OSError:
-                logger.exception('Failed to relativize path %s against MEDIA_ROOT %s', abs_path, media_root)
+                logger.exception("Failed to relativize path %s against MEDIA_ROOT %s", abs_path, media_root)
 
             # Drop leading media prefixes
             for prefix in ('/media/', 'media/'):
                 if path.startswith(prefix):
-                    path = path[len(prefix) :]
+                    path = path[len(prefix):]
 
             # Collapse to pub/… if present
             if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
+                path = path[path.index('pub/'):]
 
             path = path.lstrip('/')
             if path:
@@ -2310,7 +2338,6 @@ class Event(
         """
         Resolve a usable header image path/URL from common settings, falling back to the legacy field.
         """
-
         def _extract_path(obj):
             if not obj:
                 return None
@@ -2344,15 +2371,13 @@ class Event(
                 if not rel_to_media.startswith('..'):
                     path = rel_to_media
             except OSError:
-                logger.exception(
-                    'Failed to relativize header image path %s against MEDIA_ROOT %s', abs_path, media_root
-                )
+                logger.exception("Failed to relativize header image path %s against MEDIA_ROOT %s", abs_path, media_root)
 
             for prefix in ('/media/', 'media/'):
                 if path.startswith(prefix):
-                    path = path[len(prefix) :]
+                    path = path[len(prefix):]
             if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/') :]
+                path = path[path.index('pub/'):]
 
             path = path.lstrip('/')
             if path:
@@ -2562,7 +2587,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.UTC)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i

@@ -897,7 +897,7 @@ DEFAULT_SETTINGS = {
             required=True,
             label=_('Active languages'),
             help_text=_(
-                'Users will be able to use eventyay in these languages, and you will be able to provide all texts in '
+                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
                 "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
                 "event's default language instead."
             ),
@@ -1292,7 +1292,7 @@ DEFAULT_SETTINGS = {
             )
         ),
         'form_kwargs': dict(
-            label=_('Allow customers to modify their information'),
+            label=_("Allow customers to modify their information"),
             widget=forms.RadioSelect,
             choices=(
                 ('no', _('No modifications after order was submitted')),
