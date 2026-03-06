@@ -23,16 +23,23 @@ def test_landing_page_shows_featured_speakers_in_custom_order(
 
     assert response.status_code == 200
     assert 'Featured Speakers' in response.text
-    assert response.text.index(other_speaker.fullname) < response.text.index(
-        speaker.fullname
-    )
-    assert '<details class="featured-speaker-card">' in response.text
-    assert 'featured-speaker-sessions' in response.text
-    assert slot.submission.title in response.text
-    assert other_slot.submission.title in response.text
-    assert 'More speakers' in response.text
-    assert 'class="btn btn-info btn-sm"' in response.text
-    assert f'href="{event.urls.speakers}"' in response.text
+
+    widget_schedule = response.context['featured_speakers_widget_schedule']
+    assert widget_schedule is not None
+    speakers_by_code = {s['code']: s for s in widget_schedule['speakers']}
+    assert set(speakers_by_code.keys()) >= {other_speaker.code, speaker.code}
+    assert speakers_by_code[speaker.code]['is_featured'] is True
+    assert speakers_by_code[speaker.code]['featured_position'] == 1
+    assert speakers_by_code[other_speaker.code]['is_featured'] is True
+    assert speakers_by_code[other_speaker.code]['featured_position'] == 0
+
+    talk_codes = {t['code'] for t in widget_schedule['talks']}
+    assert {
+        other_slot.submission.code,
+        slot.submission.code,
+    }.issubset(talk_codes)
+    assert 'pretalx-schedule-data' in response.text
+    assert 'view="featured-speakers"' in response.text
 
 
 @pytest.mark.django_db
@@ -48,4 +55,5 @@ def test_landing_page_hides_featured_speakers_when_none_are_marked(
 
     assert response.status_code == 200
     assert 'Featured Speakers' not in response.text
-    assert 'More speakers' not in response.text
+    assert 'pretalx-schedule-data' not in response.text
+    assert 'view="featured-speakers"' not in response.text

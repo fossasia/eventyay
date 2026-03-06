@@ -230,4 +230,15 @@ export default {
 			img, .avatar-placeholder
 				width: 96px
 				height: 96px
+	@media (max-width: 480px)
+		.speaker-wrapper
+			padding: 10px
+		.speaker-avatar
+			width: 72px
+			height: 72px
+			img, .avatar-placeholder
+				width: 72px
+				height: 72px
+		.biography
+			font-size: 14px
 </style>
