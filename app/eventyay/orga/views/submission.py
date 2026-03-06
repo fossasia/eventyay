@@ -318,9 +318,15 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return self.object.orga_urls.speakers
 
 
-class SubmissionContent(SubmissionViewMixin, TemplateView):
+class SubmissionContent(ReviewerSubmissionFilter, SubmissionViewMixin, TemplateView):
     template_name = 'orga/submission/content.html'
     permission_required = 'base.orga_list_submission'
+
+    def get_object(self):
+        return get_object_or_404(
+            self.get_queryset(for_review=True),
+            code__iexact=self.kwargs.get('code'),
+        )
 
     @context
     @cached_property
@@ -348,8 +354,28 @@ class SubmissionContent(SubmissionViewMixin, TemplateView):
             target='submission',
             submission=self.object,
             event=self.request.event,
+            for_reviewers=not self.request.user.has_perm('base.orga_update_submission', self.request.event),
             readonly=True,
         )
+
+    @context
+    @cached_property
+    def anonymise(self):
+        return not self.request.user.has_perm('base.orga_list_speakerprofile', self.object)
+
+    @context
+    @cached_property
+    def display_submission(self):
+        if self.anonymise:
+            # We create a proxy-like object for the template to access anonymized fields
+            previous_data = self.object.anonymised
+            return {
+                'title': previous_data.get('title') or self.object.title,
+                'abstract': previous_data.get('abstract') or self.object.abstract,
+                'description': previous_data.get('description') or self.object.description,
+                'notes': previous_data.get('notes') or self.object.notes,
+            }
+        return self.object
 
 
 class SubmissionContentEdit(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
