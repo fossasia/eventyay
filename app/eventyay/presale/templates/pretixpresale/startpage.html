@@ -207,7 +207,7 @@
                                 {% empty %}
                                     <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
                                     <p class="startpage-empty">
-                                        <a class="btn btn-primary" href="/control/events/create">
+                                        <a class="btn btn-primary" href="{% url 'control:event.create' %}">
                                             {% trans "Create your first event" %}
                                         </a>
                                     </p>
