@@ -204,8 +204,15 @@
                             <div class="startpage-event-list">
                                 {% for event in upcoming_events %}
                                     {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
-                                {% empty %}
-                                    <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
+                                    {% empty %}
+                                    <div class="startpage-empty text-center">
+                                        <p>{% trans "No upcoming events available yet." %}</p>
+                                    
+                                        <a href="{% url 'eventyay_common:events.add' %}" class="btn btn-primary">
+                                            <span class="fa fa-plus"></span>
+                                            {% trans "Create your first event" %}
+                                        </a>
+                                    </div>
                                 {% endfor %}
                             </div>
                         </section>
