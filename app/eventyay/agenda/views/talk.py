@@ -20,6 +20,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView, View
 from django_context_decorator import context
+from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
@@ -33,12 +34,22 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.base.models import Event, TalkSlot, User
+from eventyay.base.models import Event, SubmissionFavourite, TalkSlot, User
 from eventyay.submission.forms import FeedbackForm
 from eventyay.base.models import Submission, SubmissionStates
 
 
 logger = logging.getLogger(__name__)
+
+
+def _is_email_like(value: str) -> bool:
+    value = (value or '').strip()
+    if '@' not in value:
+        return False
+    local_part, _, domain = value.partition('@')
+    if not local_part or not domain:
+        return False
+    return True
 
 
 class TicketCheckResult(StrEnum):
@@ -77,6 +88,85 @@ class TalkMixin(PermissionRequired):
 
     def get_permission_object(self):
         return self.submission
+
+
+def talk_starrers(request, event, slug, **kwargs):
+    """Return public starrers for a session.
+
+    This endpoint is intended for the schedule web component and is safe for public use.
+    Only users with ``show_publicly=True`` are returned.
+    """
+
+    if not request.event.feature_flags.get('session_popularity_enabled', False):
+        response = JsonResponse({'total': 0, 'public_total': 0, 'items': []})
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        return response
+
+    submission = (
+        request.event.submissions.filter(code__iexact=slug)
+        .select_related('event', 'event__organizer')
+        .first()
+    )
+    if not submission or not request.user.has_perm('base.view_public_submission', submission):
+        raise Http404()
+
+    try:
+        limit = int(request.GET.get('limit', 15))
+    except (TypeError, ValueError):
+        limit = 15
+
+    # ``limit=0`` means "return everything" (within a reasonable ceiling).
+    max_limit = 1000
+    if limit < 0:
+        limit = 15
+    if limit == 0:
+        limit = max_limit
+    limit = min(limit, max_limit)
+
+    with scope(event=request.event):
+        qs = SubmissionFavourite.objects.filter(submission=submission)
+        total = qs.count()
+        public_total = qs.filter(user__show_publicly=True, user__deleted=False).count()
+
+        base_url = str(request.event.urls.base)
+        items = []
+        for fav in qs.select_related('user').order_by('-id')[:limit]:
+            user = fav.user
+            display_name = user.get_display_name() if user else ''
+            is_public_user = bool(
+                user
+                and user.show_publicly
+                and not user.deleted
+                and user.code
+                and not _is_email_like(display_name)
+            )
+            if is_public_user:
+                items.append(
+                    {
+                        'code': user.code,
+                        'name': display_name,
+                        'avatar_url': user.get_avatar_url(
+                            event=request.event,
+                            thumbnail='tiny',
+                        ),
+                        'url': f'{base_url}people/{user.code}/stars/',
+                    }
+                )
+            else:
+                items.append(
+                    {
+                        'code': f'anon-{fav.id}',
+                        'name': '',
+                        'avatar_url': '',
+                        'url': '',
+                    }
+                )
+
+    response = JsonResponse({'total': total, 'public_total': public_total, 'items': items})
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+    return response
 
 
 from eventyay.agenda.views.speaker import ScheduleDataMixin
