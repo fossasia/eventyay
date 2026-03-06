@@ -22,7 +22,7 @@ class TurnServer(models.Model):
         expire = int(time.time()) + (24 * 3600)
         username = f"{expire}:{username}"
         hmacv = hmac.new(
-            self.auth_secret.encode(), username.encode(), hashlib.sha1
+            self.auth_secret.encode(), username.encode(), hashlib.sha256
         ).digest()
         password = base64.b64encode(hmacv).decode()
         return username, password
