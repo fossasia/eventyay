@@ -7,17 +7,8 @@ from django_context_decorator import context
 from django_scopes import scope
 
 from eventyay.agenda.views.speaker import ScheduleDataMixin
+from eventyay.agenda.views.utils import is_email_like
 from eventyay.base.models import SubmissionFavourite, User
-
-
-def _is_email_like(value: str) -> bool:
-    value = (value or '').strip()
-    if '@' not in value:
-        return False
-    local_part, _, domain = value.partition('@')
-    if not local_part or not domain:
-        return False
-    return True
 
 
 class PublicStarredScheduleView(ScheduleDataMixin, TemplateView):
@@ -61,7 +52,7 @@ class PublicStarredScheduleView(ScheduleDataMixin, TemplateView):
     @context
     def page_title(self) -> str:
         display_name = self.public_user.get_display_name()
-        if _is_email_like(display_name):
+        if is_email_like(display_name):
             display_name = _('Anonymous (name not shared)')
         return _('%(name)s’s starred sessions') % {'name': display_name}
 
@@ -105,6 +96,6 @@ class PublicStarredScheduleDataView(View):
 
         user = self.public_user
         display_name = user.get_display_name() or user.code
-        if _is_email_like(display_name):
+        if is_email_like(display_name):
             display_name = None  # don't leak email
         return JsonResponse({'name': display_name, 'favs': favs})
