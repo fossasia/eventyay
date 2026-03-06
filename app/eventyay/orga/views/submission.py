@@ -328,14 +328,6 @@ class SubmissionContent(ReviewerSubmissionFilter, SubmissionViewMixin, TemplateV
             code__iexact=self.kwargs.get('code'),
         )
 
-    @context
-    @cached_property
-    def answers(self):
-        return (
-            self.object.answers.all()
-            .select_related('question')
-            .order_by('question__position')
-        )
 
     @context
     @cached_property
