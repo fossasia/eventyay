@@ -16,7 +16,8 @@ from eventyay.presale.urls import (
 )
 from eventyay.presale.views.startpage import StartPageView
 
-from .views import VideoAssetView, VideoSPAView, AnonymousInviteRedirectView
+from .views import AnonymousInviteRedirectView, VideoAssetView, VideoSPAView
+
 
 logger = logging.getLogger(__name__)
 
