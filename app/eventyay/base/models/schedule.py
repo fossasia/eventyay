@@ -628,6 +628,26 @@ class Schedule(PretalxModel):
                 'submission__answers__options',
             )
         talks = talks.order_by('start')
+
+        popularity_enabled = bool(self.event.feature_flags.get('session_popularity_enabled', False))
+        show_popularity_calendar = bool(self.event.feature_flags.get('session_popularity_show_on_calendar', True))
+        show_popularity_list = bool(self.event.feature_flags.get('session_popularity_show_on_list', True))
+
+        talk_list = list(talks)
+        fav_counts: dict[str, int] = {}
+        if popularity_enabled:
+            submission_codes = [t.submission.code for t in talk_list if t.submission]
+            if submission_codes:
+                with scope(event=self.event):
+                    fav_counts = {
+                        row['submission__code']: row['count']
+                        for row in SubmissionFavourite.objects.filter(
+                            submission__event=self.event,
+                            submission__code__in=submission_codes,
+                        )
+                        .values('submission__code')
+                        .annotate(count=Count('id'))
+                    }
         # Pre-fetch all stream schedules for this event's rooms.
         # Attach stream URL if a stream schedule overlaps this talk's time and room.
         with scope(event=self.event):
@@ -653,11 +673,16 @@ class Schedule(PretalxModel):
             'event_start': self.event.date_from.isoformat(),
             'event_end': self.event.date_to.isoformat(),
             'content_locales': self.event.content_locales,
+            'feature_flags': {
+                'session_popularity_enabled': popularity_enabled,
+                'session_popularity_show_on_calendar': show_popularity_calendar,
+                'session_popularity_show_on_list': show_popularity_list,
+            },
         }
         show_do_not_record = self.event.cfp.request_do_not_record
         base_url = str(self.event.urls.base)
         full_base_url = str(self.event.urls.base.full())
-        for talk in talks:
+        for talk in talk_list:
             # Only add room if it's not deleted
             if talk.room and not talk.room.deleted:
                 rooms.add(talk.room)
@@ -680,7 +705,11 @@ class Schedule(PretalxModel):
                     'duration': talk.submission.get_duration(),
                     'updated': talk.updated.isoformat(),
                     'state': talk.submission.state if all_talks else None,
-                    'fav_count': (count_fav_talk(talk.submission.code) if talk.submission else 0),
+                    'fav_count': (
+                        fav_counts.get(talk.submission.code, 0)
+                        if (popularity_enabled and talk.submission)
+                        else 0
+                    ),
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                     'tags': talk.submission.get_tag(),
                     'session_type': talk.submission.submission_type.name,
