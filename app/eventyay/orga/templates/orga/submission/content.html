@@ -162,7 +162,7 @@
                 <div class="col-md-9 mt-1">
                     <ul class="list-unstyled">
                         {% for resource in submission.active_resources %}
-                            <li class="mb-2">
+                            <li class="custom-field-item">
                                 {% if resource.link %}
                                     <i class="fa fa-link"></i>
                                     <a href="{{ resource.link }}" target="_blank">{{ resource.description }}</a>
@@ -183,8 +183,8 @@
                 <label class="col-md-3 col-form-label">{{ phrases.cfp.custom_fields }}</label>
                 <div class="col-md-9">
                     {% for field in questions_form %}
-                        <div class="mb-3">
-                            <strong>{{ field.label }}</strong>
+                        <div class="custom-field-item">
+                            <strong class="custom-field-label">{{ field.label }}</strong>
                             <div class="mt-1">
                                 {% if field.field.answer %}
                                     {% if field.field.widget.input_type == 'checkbox' %}

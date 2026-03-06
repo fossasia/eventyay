@@ -13,9 +13,21 @@
 }
 
 .submission-content-view .form-group .col-md-9 {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center; /* Align inner content vertically */
+    /* Ensure children stack vertically */
+    display: block;
+}
+
+.submission-content-view .custom-field-item {
+    padding: 0.5rem;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-left: 3px solid #007bff;
+    margin-bottom: 0.75rem;
+}
+
+.submission-content-view .custom-field-label {
+    display: block;
+    margin-bottom: 0.25rem;
 }
 
 .submission-content-view .badge {
