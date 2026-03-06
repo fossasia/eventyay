@@ -412,70 +412,82 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
 
     # Wrap all post-save writes atomically so a failure in tags/speakers/questions rolls back
     # those side effects without affecting the already-committed submission row.
-    with transaction.atomic():
-        # Ensure TalkSlot exists in WIP schedule (required for schedule editor visibility)
-        submission.update_talk_slots()
+    # If the atomic block fails for a newly created submission, delete it so the DB stays
+    # consistent with what the result counters report.
+    try:
+        with transaction.atomic():
+            # Ensure TalkSlot exists in WIP schedule (required for schedule editor visibility)
+            submission.update_talk_slots()
 
-        # Tags
-        if tags_val:
-            for tag_name in tags_val.split(','):
-                stripped_tag = tag_name.strip()
-                if stripped_tag:
-                    tag, _created = Tag.objects.get_or_create(event=event, tag=stripped_tag)
-                    submission.tags.add(tag)
+            # Tags
+            if tags_val:
+                for tag_name in tags_val.split(','):
+                    stripped_tag = tag_name.strip()
+                    if stripped_tag:
+                        tag, _created = Tag.objects.get_or_create(event=event, tag=stripped_tag)
+                        submission.tags.add(tag)
 
-        # Room assignment (via slot if schedule exists; use pre-fetched cache)
-        if room_val:
-            room = (
-                _resolve_room(room_val, caches)
-                if caches
-                else (
-                    Room.objects.filter(event=event, name__icontains=room_val).first()
-                    or Room.objects.filter(event=event, pk__in=_safe_int(room_val)).first()
+            # Room assignment (via slot if schedule exists; use pre-fetched cache)
+            if room_val:
+                room = (
+                    _resolve_room(room_val, caches)
+                    if caches
+                    else (
+                        Room.objects.filter(event=event, name__icontains=room_val).first()
+                        or Room.objects.filter(event=event, pk__in=_safe_int(room_val)).first()
+                    )
                 )
-            )
-            if room:
-                slot = submission.slots.filter(schedule=event.wip_schedule).first()
-                if slot:
-                    slot.room = room
-                    slot.save(update_fields=['room'])
+                if room:
+                    slot = submission.slots.filter(schedule=event.wip_schedule).first()
+                    if slot:
+                        slot.room = room
+                        slot.save(update_fields=['room'])
 
-        # Link speakers
-        if speaker_cache is None:
-            speaker_cache = {}
-        all_speaker_refs = []
-        if linked_speakers:
-            all_speaker_refs.extend(linked_speakers.split(','))
-        if speakers_val:
-            all_speaker_refs.extend(speakers_val.split(','))
-        for ref in all_speaker_refs:
-            stripped_ref = ref.strip()
-            if not stripped_ref:
-                continue
-            cache_key = stripped_ref.lower()
-            if cache_key not in speaker_cache:
-                speaker_cache[cache_key] = _find_user_for_speaker(event, stripped_ref)
-            speaker_user = speaker_cache[cache_key]
-            if speaker_user:
-                SpeakerRole.objects.get_or_create(submission=submission, user=speaker_user)
-                SpeakerProfile.objects.get_or_create(user=speaker_user, event=event)
-
-        # Question answers
-        for key, value in settings.items():
-            if key.startswith('question_') and value:
-                try:
-                    question_id = int(key.split('_', 1)[1])
-                except (ValueError, IndexError):
+            # Link speakers
+            if speaker_cache is None:
+                speaker_cache = {}
+            all_speaker_refs = []
+            if linked_speakers:
+                all_speaker_refs.extend(linked_speakers.split(','))
+            if speakers_val:
+                all_speaker_refs.extend(speakers_val.split(','))
+            for ref in all_speaker_refs:
+                stripped_ref = ref.strip()
+                if not stripped_ref:
                     continue
-                answer_text = _resolve_csv(value, record)
-                if answer_text:
-                    _set_question_answer(submission, question_id, answer_text)
+                cache_key = stripped_ref.lower()
+                if cache_key not in speaker_cache:
+                    speaker_cache[cache_key] = _find_user_for_speaker(event, stripped_ref)
+                speaker_user = speaker_cache[cache_key]
+                if speaker_user:
+                    SpeakerRole.objects.get_or_create(submission=submission, user=speaker_user)
+                    SpeakerProfile.objects.get_or_create(user=speaker_user, event=event)
 
-        event.log_action(
-            'eventyay.submission.imported',
-            data={'title': title, 'code': submission.code},
-            user=acting_user,
-        )
+            # Question answers
+            for key, value in settings.items():
+                if key.startswith('question_') and value:
+                    try:
+                        question_id = int(key.split('_', 1)[1])
+                    except (ValueError, IndexError):
+                        continue
+                    answer_text = _resolve_csv(value, record)
+                    if answer_text:
+                        _set_question_answer(submission, question_id, answer_text)
+
+            event.log_action(
+                'eventyay.submission.imported',
+                data={'title': title, 'code': submission.code},
+                user=acting_user,
+            )
+    except IntegrityError as exc:
+        if was_created and submission.pk:
+            try:
+                submission.delete()
+            except Exception:
+                logger.exception('Failed to clean up submission after import error: %s', submission.pk)
+        raise ImportExecutionError(
+            _('Database error while finalizing session "{title}": {error}').format(title=title, error=exc)
+        ) from exc
 
     return was_created
 
