@@ -1,0 +1,42 @@
+{% extends 'agenda/base.html' %}
+
+{% load compress %}
+{% load html_signal %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ page_title }} ::{% endblock title %}
+{% block meta_title %}{{ page_title }}{% endblock meta_title %}
+{% block social_title %}{{ page_title }}{% endblock social_title %}
+
+{% block agenda_custom_header %}
+<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+{% endblock agenda_custom_header %}
+
+{% block agenda_content %}
+{% html_signal 'eventyay.agenda.signals.html_above_schedule_pages' sender=request.event request=request %}
+<div>
+    <h1>{{ page_title }}</h1>
+    <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
+    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+
+    {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
+    <pretalx-schedule
+        event-url="{{ request.event.urls.base }}"
+        locale="{{ request.LANGUAGE_CODE }}"
+        timezone="{{ event_tz }}"
+        format="list"
+        view="sessions"
+        public-favs-url="{{ public_favs_url }}"
+        style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"
+        disable-auto-scroll
+    ></pretalx-schedule>
+    {% endwith %}
+
+    <noscript>
+        <h1>{{ page_title }}</h1>
+        <p>{% translate 'This page requires JavaScript to show the starred sessions.' %}</p>
+    </noscript>
+</div>
+{% html_signal 'eventyay.agenda.signals.html_below_schedule_pages' sender=request.event request=request %}
+{% endblock agenda_content %}
