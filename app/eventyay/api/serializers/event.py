@@ -91,6 +91,9 @@ class ImportEventFromDatasetSerializer(serializers.Serializer):
         data['date_from'] = date_from
         data['date_to'] = date_to or date_from
 
+        if data['date_to'] < data['date_from']:
+            raise ValidationError(_('End date cannot be earlier than start date.'))
+
         # Build location from city/country if location not provided
         location = data.get('location') or ''
         if not location.strip() and (data.get('city') or data.get('country')):

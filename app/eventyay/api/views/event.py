@@ -228,8 +228,29 @@ class EventViewSet(viewsets.ModelViewSet):
                         data={'source': 'import_from_dataset', 'index': i},
                     )
                     created.append({'slug': event.slug, 'name': str(event.name)})
-            except Exception as e:
-                errors.append({'index': i, 'data': item, 'errors': {'__all__': [str(e)]}})
+            except IntegrityError:
+                errors.append(
+                    {
+                        'index': i,
+                        'data': item,
+                        'errors': {
+                            '__all__': ['Database constraint error while creating this event.'],
+                        },
+                    }
+                )
+            except DRFValidationError as e:
+                errors.append({'index': i, 'data': item, 'errors': e.detail})
+            except Exception:
+                logger.exception('Unexpected error in import_from_dataset', extra={'index': i, 'item': item})
+                errors.append(
+                    {
+                        'index': i,
+                        'data': item,
+                        'errors': {
+                            '__all__': ['Unexpected error while creating this event. Please try again later.'],
+                        },
+                    }
+                )
 
         return Response({
             'created': len(created),
