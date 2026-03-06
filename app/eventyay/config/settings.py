@@ -1134,18 +1134,6 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 CSP_DEFAULT_SRC = ("'self'", "'unsafe-eval'")
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CORS_ORIGIN_REGEX_WHITELIST = (
-    (
-        r'^https?://([\w\-]+\.)?eventyay\.com$',  # Allow any subdomain of eventyay.com
-        r'^https?://app-test\.eventyay\.com(:\d+)?$',  # Allow video-dev.eventyay.com with any port
-        r'^https?://app\.eventyay\.com(:\d+)?$',  # Allow wikimania-live.eventyay.com with any port
-    )
-    if IS_PRODUCTION
-    else (
-        r'^http://localhost$',
-        r'^http://localhost:\d+$',
-    )
-)
 
 # URL settings
 ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
