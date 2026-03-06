@@ -8,6 +8,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django_countries.serializers import CountryFieldMixin
 from pytz import common_timezones
+from rest_framework import serializers
 from rest_framework.fields import ChoiceField, Field
 from rest_framework.relations import SlugRelatedField
 
@@ -25,6 +26,87 @@ from eventyay.base.settings import validate_event_settings
 from eventyay.base.signals import api_event_settings_fields
 
 logger = logging.getLogger(__name__)
+
+# Industry mapping from trade-show-calendar / awesome-trade-shows style to eventyay industry_sector
+IMPORT_INDUSTRY_TO_SECTOR = {
+    'technology': 'technology',
+    'tech': 'technology',
+    'food': 'food_beverage',
+    'food & beverage': 'food_beverage',
+    'food_beverage': 'food_beverage',
+    'healthcare': 'healthcare',
+    'manufacturing': 'manufacturing',
+    'automotive': 'automotive',
+    'fashion': 'retail',
+    'energy': 'energy',
+    'agriculture': 'other',
+    'construction': 'construction',
+    'retail': 'retail',
+    'logistics': 'logistics',
+    'finance': 'finance',
+}
+
+# Frequency mapping from dataset (e.g. "Annual", "Biennial") to recurrence_frequency
+IMPORT_FREQUENCY_TO_RECURRENCE = {
+    'annual': 'annual',
+    'yearly': 'annual',
+    'biennial': 'biennial',
+    'every two years': 'biennial',
+}
+
+
+class ImportEventFromDatasetSerializer(serializers.Serializer):
+    """Accepts event records from open datasets (e.g. trade-show-calendar CSV/JSON)."""
+
+    name = serializers.CharField(max_length=200)
+    slug = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    start_date = serializers.DateField(required=False)
+    end_date = serializers.DateField(required=False)
+    date_from = serializers.DateTimeField(required=False)
+    date_to = serializers.DateTimeField(required=False)
+    city = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    country = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    location = serializers.CharField(required=False, allow_blank=True, max_length=200)
+    website = serializers.URLField(required=False, allow_blank=True)
+    industry = serializers.CharField(required=False, allow_blank=True, max_length=50)
+    frequency = serializers.CharField(required=False, allow_blank=True, max_length=30)
+    region = serializers.CharField(required=False, allow_blank=True, max_length=50)
+    notes = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        from datetime import datetime, time
+        from django.utils.timezone import make_aware
+
+        # Prefer date_from/date_to; else derive from start_date/end_date
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        if not date_from and start_date:
+            date_from = make_aware(datetime.combine(start_date, time(0, 0)))
+        if not date_to and end_date:
+            date_to = make_aware(datetime.combine(end_date, time(23, 59, 59)))
+        if not date_from:
+            raise ValidationError(_('Either date_from or start_date is required.'))
+        data['date_from'] = date_from
+        data['date_to'] = date_to or date_from
+
+        # Build location from city/country if location not provided
+        location = data.get('location') or ''
+        if not location.strip() and (data.get('city') or data.get('country')):
+            parts = [data.get('city', '').strip(), data.get('country', '').strip()]
+            location = ', '.join(p for p in parts if p)
+        data['location'] = location
+
+        # Map industry to eventyay industry_sector
+        industry = (data.get('industry') or '').strip().lower()
+        data['industry_sector'] = IMPORT_INDUSTRY_TO_SECTOR.get(industry, 'other' if industry else '')
+
+        # Map frequency to recurrence_frequency
+        freq = (data.get('frequency') or '').strip().lower()
+        data['recurrence_frequency'] = IMPORT_FREQUENCY_TO_RECURRENCE.get(freq, '')
+
+        return data
 
 
 class MetaDataField(Field):
@@ -137,6 +219,9 @@ class EventSerializer(I18nAwareModelSerializer):
             'product_meta_properties',
             'valid_keys',
             'sales_channels',
+            'event_type',
+            'industry_sector',
+            'recurrence_frequency',
         )
 
     def __init__(self, *args, **kwargs):

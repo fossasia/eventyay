@@ -675,6 +675,61 @@ class Event(
         default=False,
     )
 
+    # Event type and trade show / exhibition metadata
+    EVENT_TYPE_GENERAL = 'general'
+    EVENT_TYPE_CONFERENCE = 'conference'
+    EVENT_TYPE_EXHIBITION = 'exhibition'
+    EVENT_TYPE_CHOICES = [
+        (EVENT_TYPE_GENERAL, _('General event')),
+        (EVENT_TYPE_CONFERENCE, _('Conference')),
+        (EVENT_TYPE_EXHIBITION, _('Exhibition / Trade show')),
+    ]
+    event_type = models.CharField(
+        max_length=20,
+        choices=EVENT_TYPE_CHOICES,
+        default=EVENT_TYPE_GENERAL,
+        verbose_name=_('Event type'),
+        help_text=_('Event type affects which features and metadata are shown (e.g. industry sector for trade shows).'),
+    )
+    INDUSTRY_SECTOR_CHOICES = [
+        ('', _('— Not specified —')),
+        ('manufacturing', _('Manufacturing')),
+        ('healthcare', _('Healthcare')),
+        ('technology', _('Technology')),
+        ('logistics', _('Logistics')),
+        ('retail', _('Retail')),
+        ('energy', _('Energy')),
+        ('automotive', _('Automotive')),
+        ('food_beverage', _('Food & Beverage')),
+        ('construction', _('Construction')),
+        ('finance', _('Finance')),
+        ('other', _('Other')),
+    ]
+    industry_sector = models.CharField(
+        max_length=30,
+        choices=INDUSTRY_SECTOR_CHOICES,
+        blank=True,
+        default='',
+        verbose_name=_('Industry / sector'),
+        help_text=_('Optional. Main industry or sector (especially relevant for exhibitions and trade shows).'),
+    )
+    RECURRENCE_NONE = ''
+    RECURRENCE_ANNUAL = 'annual'
+    RECURRENCE_BIENNIAL = 'biennial'
+    RECURRENCE_CHOICES = [
+        (RECURRENCE_NONE, _('One-off event')),
+        (RECURRENCE_ANNUAL, _('Annual (recurring every year)')),
+        (RECURRENCE_BIENNIAL, _('Biennial (recurring every two years)')),
+    ]
+    recurrence_frequency = models.CharField(
+        max_length=20,
+        choices=RECURRENCE_CHOICES,
+        blank=True,
+        default=RECURRENCE_NONE,
+        verbose_name=_('Recurrence'),
+        help_text=_('Whether this event recurs at the same venue (e.g. annual trade show).'),
+    )
+
     # Fields for talk
     timezone = models.CharField(
         choices=[(tz, tz) for tz in TIMEZONE_CHOICES],
@@ -1125,6 +1180,9 @@ class Event(
 
         self.plugins = other.plugins
         self.is_public = other.is_public
+        self.event_type = other.event_type
+        self.industry_sector = other.industry_sector
+        self.recurrence_frequency = other.recurrence_frequency
         if other.date_admission:
             self.date_admission = self.date_from + (other.date_admission - other.date_from)
         self.testmode = other.testmode

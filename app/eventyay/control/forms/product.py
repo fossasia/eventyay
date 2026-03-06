@@ -380,6 +380,7 @@ class ProductCreateForm(I18nModelForm):
                 'original_price',
                 'sales_channels',
                 'issue_giftcard',
+                'badge_type',
                 'require_approval',
                 'allow_waitinglist',
                 'show_quota_left',

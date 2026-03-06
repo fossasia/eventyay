@@ -152,6 +152,7 @@ class EventUpdateForm(I18nModelForm):
         fields = [
             'name', 'slug', 'date_from', 'date_to', 'date_admission',
             'is_public', 'location', 'geo_lat', 'geo_lon', 'email',
+            'event_type', 'industry_sector', 'recurrence_frequency',
         ]
         field_classes = {
             'date_from': SplitDateTimeField, 'date_to': SplitDateTimeField, 'date_admission': SplitDateTimeField,

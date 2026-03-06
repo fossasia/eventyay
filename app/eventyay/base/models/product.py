@@ -473,6 +473,31 @@ class Product(LoggedModel):
         ),
         default=False,
     )
+    # Badge / attendee role (useful for trade shows: exhibitor, buyer, press, VIP)
+    BADGE_TYPE_ATTENDEE = 'attendee'
+    BADGE_TYPE_EXHIBITOR = 'exhibitor'
+    BADGE_TYPE_BUYER = 'buyer'
+    BADGE_TYPE_PRESS = 'press'
+    BADGE_TYPE_VIP = 'vip'
+    BADGE_TYPE_CHOICES = [
+        ('', _('— Default (attendee) —')),
+        (BADGE_TYPE_ATTENDEE, _('Attendee')),
+        (BADGE_TYPE_EXHIBITOR, _('Exhibitor')),
+        (BADGE_TYPE_BUYER, _('Buyer')),
+        (BADGE_TYPE_PRESS, _('Press')),
+        (BADGE_TYPE_VIP, _('VIP')),
+    ]
+    badge_type = models.CharField(
+        max_length=20,
+        choices=BADGE_TYPE_CHOICES,
+        blank=True,
+        default='',
+        verbose_name=_('Badge / attendee type'),
+        help_text=_(
+            'Optional. For trade shows and exhibitions: use this to distinguish exhibitor, buyer, press, or VIP '
+            'tickets for badge printing and access control.'
+        ),
+    )
     # !!! Attention: If you add new fields here, also add them to the copying code in
     # eventyay/control/forms/product.py if applicable.
 
