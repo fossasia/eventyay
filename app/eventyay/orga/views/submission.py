@@ -345,7 +345,7 @@ class SubmissionContent(SubmissionViewMixin, TemplateView):
 class SubmissionContentEdit(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm
-    template_name = 'orga/submission/submission_form.html'
+    template_name = 'orga/submission/content_edit.html'
     permission_required = 'base.orga_list_submission'
 
     def get_object(self):
