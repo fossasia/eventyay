@@ -58,6 +58,8 @@ class OrderListExporter(MultiSheetListExporter):
     def _order_status_display(order):
         if order.status == Order.STATUS_PENDING and order.require_approval:
             return _('Approval pending')
+        if order.status == Order.STATUS_PENDING and not order.require_approval:
+            return _('Approved, payment pending')
         return order.get_status_display()
 
     @cached_property

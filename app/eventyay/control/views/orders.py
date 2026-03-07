@@ -279,19 +279,35 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
         return EventOrderFilterForm(data=self.request.GET, event=self.request.event)
 
 
-class OrderBulkAction(EventPermissionRequiredMixin, View):
+class OrderBulkAction(OrderSearchMixin, EventPermissionRequiredMixin, View):
     permission = 'can_change_orders'
+
+    def get_forms(self):
+        f = [
+            EventOrderExpertFilterForm(
+                data=self.request.POST,
+                event=self.request.event,
+                prefix='expert',
+            )
+        ]
+        for recv, resp in order_search_forms.send(sender=self.request.event, request=self.request):
+            f.append(resp)
+        return f
 
     def _get_orders(self):
         if self.request.POST.get('__ALL'):
+            qs = Order.objects.filter(event=self.request.event)
             filter_form = EventOrderFilterForm(data=self.request.POST, event=self.request.event)
             if not filter_form.is_valid():
                 return Order.objects.none()
-            return filter_form.filter_qs(Order.objects.filter(event=self.request.event))
+            qs = filter_form.filter_qs(qs)
+            for f in self.get_forms():
+                if any(k.startswith(f.prefix) for k in self.request.POST.keys()) and f.is_valid():
+                    qs = f.filter_qs(qs)
+            return qs
         codes = self.request.POST.getlist('order')
         return Order.objects.filter(event=self.request.event, code__in=[c.upper() for c in codes])
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         orders = self._get_orders()

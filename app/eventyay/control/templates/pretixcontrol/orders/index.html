@@ -109,6 +109,9 @@
         {% csrf_token %}
         <div class="hidden">
             {{ filter_form.as_p }}
+            {% for key, value in request.GET.items %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endfor %}
         </div>
         <div class="table-responsive">
             <table class="table table-condensed table-hover table-orders">
