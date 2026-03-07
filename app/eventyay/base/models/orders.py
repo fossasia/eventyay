@@ -2305,6 +2305,15 @@ class OrderPosition(AbstractPosition):
 
     @scopes_disabled()
     def assign_pseudonymization_id(self):
+        """Assign a unique-per-event pseudonymization ID.
+
+        Requires ``self.order`` to be set, since uniqueness is checked
+        within the scope of ``self.order.event``.
+        """
+        if not self.order_id and not (hasattr(self, 'order') and self.order):
+            raise ValueError(
+                'Cannot assign pseudonymization_id: position must be associated with an order first.'
+            )
         # This omits some character pairs completely because they are hard to read even on screens (1/I and O/0)
         # and includes only one of two characters for some pairs because they are sometimes hard to distinguish in
         # handwriting (2/Z, 4/A, 5/S, 6/G). This allows for better detection e.g. in incoming wire transfers that
