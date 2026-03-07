@@ -118,7 +118,7 @@ import SpeakersList from '~/components/SpeakersList'
 import FeaturedSpeakers from '~/components/FeaturedSpeakers'
 import SpeakerDetail from '~/components/SpeakerDetail'
 import TalkDetail from '~/components/TalkDetail'
-import { findScrollParent, getLocalizedString, getSessionTime, isProperSession } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -598,9 +598,10 @@ export default {
 		this.schedule.rooms.forEach(r => { this.allRooms.push({ id: r.id, value: r.id, label: getLocalizedString(r.name), selected: false }) })
 		const typeSet = new Set()
 		this.schedule.talks.forEach(s => {
-			if (s.session_type && !typeSet.has(s.session_type)) {
-				typeSet.add(s.session_type)
-				this.allTypes.push({ value: s.session_type, label: s.session_type, selected: false })
+			const typeLabel = getSessionTypeLabel(s.session_type)
+			if (typeLabel && !typeSet.has(typeLabel)) {
+				typeSet.add(typeLabel)
+				this.allTypes.push({ value: typeLabel, label: typeLabel, selected: false })
 			}
 		})
 		// Build language filter from event content_locales (configured by organiser),
