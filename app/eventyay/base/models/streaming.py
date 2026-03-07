@@ -26,7 +26,7 @@ class StreamingServer(models.Model):
         ordering = ("name",)
 
     def generate_streamkey(self, name, days):
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
 
         n = name + "".join(
             random.choice(string.ascii_uppercase + string.digits) for _ in range(8)

@@ -370,7 +370,7 @@ def generate_tokens(event, number, traits, days, by_user, long=False):
     secret = jwt_config["secret"]
     audience = jwt_config["audience"]
     issuer = jwt_config["issuer"]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=days)
     result = []
     bulk_create = []

@@ -165,7 +165,7 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
         ) > now():
             raise PermissionDenied()
 
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
         exp = iat + datetime.timedelta(days=30)
         profile = {'fields': {}}
         if self.position.attendee_name:

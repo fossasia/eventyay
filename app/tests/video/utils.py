@@ -9,7 +9,7 @@ from django.utils.crypto import get_random_string
 def get_token(world, traits, uid=None):
     config = world.config["JWT_secrets"][0]
 
-    iat = dt.datetime.utcnow()
+    iat = dt.datetime.now(dt.timezone.utc)
     exp = iat + dt.timedelta(days=999)
     payload = {
         "iss": config["issuer"],

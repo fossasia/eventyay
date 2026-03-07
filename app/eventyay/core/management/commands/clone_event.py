@@ -39,7 +39,7 @@ class Command(BaseCommand):
 
         jwt_config = new.config["JWT_secrets"][0]
         print("Admin url:")
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
         exp = iat + datetime.timedelta(days=365)
         payload = {
             "iss": jwt_config["issuer"],
