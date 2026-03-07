@@ -438,7 +438,7 @@ def iframe_entry_view_wrapper(view_func):
                 settings.LANGUAGE_COOKIE_NAME,
                 locale,
                 max_age=max_age,
-                expires=(datetime.now(timezone.utc) + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                expires=f"{(datetime.now(timezone.utc) + timedelta(seconds=max_age)):%a, %d-%b-%Y %H:%M:%S GMT}",
                 domain=settings.SESSION_COOKIE_DOMAIN,
             )
             return resp
