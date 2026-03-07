@@ -11,7 +11,7 @@ def remove_placeholder_emails(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0016_alter_talkquestion_variant'),
+        ('base', '0019_alter_event_locale_alter_user_locale'),
     ]
 
     operations = [
