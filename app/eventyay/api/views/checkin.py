@@ -560,7 +560,16 @@ def _append_badge_download(downloads, op, request):
     if 'eventyay.plugins.badges' in op.order.event.plugins:
         badge_url = f'/api/v1/organizers/{request.organizer.slug}/events/{op.order.event.slug}/orderpositions/{op.pk}/download/badge/'
         downloads.append({'output': 'badge', 'url': badge_url})
+        _ensure_badge_generated(op)
     return downloads
+
+
+def _ensure_badge_generated(op):
+    from eventyay.base.models import CachedTicket
+    from eventyay.base.services.tickets import generate
+
+    if not CachedTicket.objects.filter(order_position=op, provider='badge', file__isnull=False).exists():
+        generate.apply_async(args=('orderposition', op.pk, 'badge'))
 
 
 def _redeem_process(
