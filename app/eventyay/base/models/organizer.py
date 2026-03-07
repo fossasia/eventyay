@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
+from django.core.exceptions import PermissionDenied
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
@@ -44,8 +45,7 @@ def check_access_permissions(organizer):
     warnings = []
     teams = organizer.teams.all().annotate(member_count=models.Count('members')).filter(member_count__gt=0)
     if not [t for t in teams if t.can_change_teams]:
-        # TODO: Should use a concrete exception type
-        raise Exception(
+        raise PermissionDenied(
             _(
                 'There must be at least one team with the permission to change teams, '
                 'as otherwise nobody can create new teams or grant permissions to existing teams.'
@@ -69,8 +69,7 @@ def check_access_permissions(organizer):
     for event in organizer.events.all():
         event_teams = teams.filter(models.Q(limit_events=event) | models.Q(all_events=True)).distinct()
         if not event_teams:
-            # TODO: Should use a concrete exception type
-            raise Exception(
+            raise PermissionDenied(
                 str(
                     _(
                         'There must be at least one team with access to every event. '
