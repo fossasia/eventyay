@@ -11,10 +11,9 @@ TIMEZONE_CHOICES = sorted(
         tz
         for tz in zoneinfo.available_timezones()
         if not tz.startswith('Etc/')
-        and tz != 'localtime'
-        and tz != 'Asia/Calcutta'
+        and tz not in {'localtime', 'Asia/Calcutta'}
     ]
-)ss
+)
 
 # The directory for frontend development resources (node_modules, build scripts, etc.).
 FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'webapp'
