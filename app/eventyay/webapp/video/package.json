@@ -40,7 +40,7 @@
     "moment-timezone": "^0.6.0",
     "mux-embed": "^5.17.10",
     "mux.js": "^6.3.0",
-    "pdfjs-dist": "^5.4.624",
+    "pdfjs-dist": "^5.5.207",
     "preact": "^10.28.4",
     "qrcode": "^1.5.4",
     "quill": "^2.0.3",
