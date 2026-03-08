@@ -160,7 +160,7 @@ We assume your current working directory is the checkout of this repo.
 
       docker compose up -d --build
 
-3. **Create a superuser account** (for accessing the admin panel):
+3. **Create a admin account** (for accessing the admin panel):
 
    This asks for an email and a password, and this information will be
    used to log into the system the first time.
