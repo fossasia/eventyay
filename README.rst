@@ -12,7 +12,7 @@ Getting Started
 ---------------
 
 Python-based development
-------------------------
+------------------------------------------------------------
 
 0. **Clone the repository**:
 
