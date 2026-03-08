@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 14:48+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-03-09 04:11+0000\n"
+"Last-Translator: Oleksandr Polieno <polyenoom@gmail.com>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/uk/>\n"
 "Language: ua\n"
@@ -18,45 +18,50 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
-msgstr ""
+msgstr "Дякуємо за ваш відгук!"
 
 #: agenda/phrases.py:9
 msgid "Thanks, we (and our speakers) appreciate your feedback!"
-msgstr ""
+msgstr "Дякуємо, ми (та наші спікери) цінуємо ваш відгук!"
 
 #: agenda/phrases.py:11
 msgid "This session will not be recorded."
-msgstr ""
+msgstr "Ця сесія не буде записуватися."
 
 #: agenda/phrases.py:13
 msgid "View conference schedule"
-msgstr ""
+msgstr "Показати розклад конференції"
 
 #: agenda/phrases.py:14
 msgid "View schedule preview"
-msgstr ""
+msgstr "Переглянути попередній розклад"
 
 #: agenda/phrases.py:15
 msgid "Edit or view your proposals"
-msgstr ""
+msgstr "Редагувати або переглянути ваші пропозиції"
 
 #: agenda/templates/agenda/base.html:36 cfp/templates/cfp/event/base.html:19
 msgid ""
 "Talk pages are currently in test mode. Please do not treat schedules or "
 "submissions as final, as they may change or be removed without notice."
 msgstr ""
+"Сторінки обговорення наразі знаходяться в режимі тестування. Будь ласка, не "
+"розглядайте розклади або подання як остаточні, оскільки вони можуть "
+"змінитися або бути видалені без попередження."
 
 #: agenda/templates/agenda/base.html:46
 msgid "This schedule-related page is non-public. Only organisers can see it."
 msgstr ""
+"Ця сторінка, пов'язана з розкладом, не є публічною. Її можуть переглядати "
+"тільки організатори."
 
 #: agenda/templates/agenda/changelog_block.html:15
 msgid "We have new sessions!"
-msgstr ""
+msgstr "Ми маємо нові сесії!"
 
 #: agenda/templates/agenda/changelog_block.html:22
 #: agenda/templates/agenda/changelog_block.html:40
@@ -66,33 +71,35 @@ msgstr ""
 #: agenda/templates/agenda/changelog_block.html:125
 #, python-format
 msgid "%(quote_open)s%(title)s%(quote_close)s by %(speakers)s"
-msgstr ""
+msgstr "%(quote_open)s%(title)s%(quote_close)s від %(speakers)s"
 
 #: agenda/templates/agenda/changelog_block.html:35
 msgid "We have a new session: "
-msgstr ""
+msgstr "У нас є нова сесія: "
 
 #: agenda/templates/agenda/changelog_block.html:55
 msgid "Sadly, we had to cancel sessions:"
-msgstr ""
+msgstr "На жаль, нам довелося скасувати сесії:"
 
 #: agenda/templates/agenda/changelog_block.html:73
 msgid "We sadly had to cancel a session: "
-msgstr ""
+msgstr "На жаль, нам довелося скасувати сесію: "
 
 #: agenda/templates/agenda/changelog_block.html:92
 msgid ""
 "We had to move some sessions, so if you were planning on seeing them, check "
 "their new dates or locations:"
 msgstr ""
+"Нам довелося перенести деякі сесії, тому якщо ви планували їх відвідати, "
+"перевірте їхні нові дати і місцезнаходження:"
 
 #: agenda/templates/agenda/changelog_block.html:120
 msgid "We have moved a session around: "
-msgstr ""
+msgstr "Ми перемістили сесію: "
 
 #: agenda/templates/agenda/featured.html:15
 msgid "Welcome to our list of featured sessions!"
-msgstr ""
+msgstr "Ласкаво просимо до нашого списку вибраних сесій!"
 
 #: agenda/templates/agenda/featured.html:18
 msgid ""
@@ -100,22 +107,28 @@ msgid ""
 "conference. Please keep in mind that this is not our full schedule. We will "
 "follow up with the full schedule in time, stay tuned!"
 msgstr ""
+"Ми підготували список захопливих сесій, щоб ви могли отримати уявлення про "
+"нашу конференцію. Будь ласка, майте на увазі, що це не повний розклад. Ми "
+"опублікуємо повний розклад пізніше, слідкуйте за оновленнями!"
 
 #: agenda/templates/agenda/featured.html:24
 msgid ""
 "In the near future you will see a curated list of sessions we’d like to show "
 "off here. Right now we are busy reviewing proposals.<br> Check back later!"
 msgstr ""
+"У найближчому майбутньому ви побачите тут кураторський список сесій, які ми "
+"хотіли б показати. Зараз ми зайняті розглядом пропозицій.<br> Завітайте "
+"пізніше!"
 
 #: agenda/templates/agenda/feed/description.html:6
 #, python-format
 msgid "A new %(event_name)s schedule has been released!"
-msgstr ""
+msgstr "Опубліковано новий розклад %(event_name)s!"
 
 #: agenda/templates/agenda/feed/description.html:10
 #, python-format
 msgid "The first %(event_name)s schedule has been released!"
-msgstr ""
+msgstr "Перший розклад %(event_name)s опубліковано!"
 
 #: agenda/templates/agenda/feedback.html:10 base/models/feedback.py:36
 #: cfp/templates/cfp/event/user_submissions.html:138
@@ -123,12 +136,13 @@ msgstr ""
 #: orga/templates/orga/submission/base.html:69
 #: orga/templates/orga/submission/feedbacks_list.html:20
 msgid "Feedback"
-msgstr ""
+msgstr "Зворотний зв'язок"
 
 #: agenda/templates/agenda/feedback.html:21
 msgid ""
 "This review is for you personally, not for all speakers in this session."
 msgstr ""
+"Цей відгук призначений для вас особисто, не для всіх доповідачів у цій сесії."
 
 #: agenda/templates/agenda/feedback_form.html:18
 msgid ""
@@ -136,19 +150,23 @@ msgid ""
 "presentation. Even a short review can prove valuable to a speaker! Please "
 "take the time and communicate your feedback in a constructive way."
 msgstr ""
+"Відгуки є цінним інструментом для спікерів для покращення їхнього контенту "
+"та презентації. Навіть короткий відгук може бути цінним для спікера! Будь "
+"ласка, приділіть час і надайте свій зворотний зв'язок у конструктивний "
+"спосіб."
 
 #: agenda/templates/agenda/feedback_form.html:25
 msgid "You can’t give feedback for this session at this time."
-msgstr ""
+msgstr "Ви не можете залишити відгук для цієї сесії зараз."
 
 #: agenda/templates/agenda/schedule.html:23
 msgid "Changelog"
-msgstr ""
+msgstr "Журнал змін"
 
 #: agenda/templates/agenda/schedule.html:29
 #, python-format
 msgid "Exports and subscriptions below are for version %(version)s."
-msgstr ""
+msgstr "Експорти та підписки нижче призначені для версії %(version)s."
 
 #: agenda/templates/agenda/schedule.html:82
 #, python-format
@@ -156,6 +174,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
+"Щоб переглянути наш розклад, будь ласка, увімкніть JavaScript або перейдіть "
+"<a href=\"%(href)s\">сюди</a> до нашого розкладу без JS."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -164,82 +184,87 @@ msgid ""
 "personal scheduling, please enable JavaScript and go <a "
 "href=\"%(href)s\">here</a>."
 msgstr ""
+"Щоб переглянути наш розклад з повною функціональністю, як-от конвертація "
+"часових поясів та персональне планування, будь ласка, увімкніть JavaScript "
+"та перейдіть <a href=\"%(href)s\">сюди</a>."
 
 #: agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
 msgid "No sessions on %(weekday)s, %(current_day)s."
-msgstr ""
+msgstr "Немає сесій у %(weekday)s, %(current_day)s."
 
 #: agenda/templates/agenda/session_block.html:13
 #, python-format
 msgid "%(minutes)smin"
-msgstr ""
+msgstr "%(minutes)s хв"
 
 #: agenda/templates/agenda/speaker.html:43
 #: agenda/templates/agenda/speakers.html:19
 #: agenda/templates/agenda/speakers.html:21
 #: agenda/templates/agenda/talk.html:164
 msgid "The speaker’s profile picture"
-msgstr ""
+msgstr "Зображення профілю спікера"
 
 #: agenda/templates/agenda/speaker.html:61
 #: features/analytics/graphs/report.py:401
 msgid "Session"
 msgid_plural "Sessions"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "Сесія"
+msgstr[1] "Сесії"
+msgstr[2] "Сесій"
 
 #: agenda/templates/agenda/talk.html:45
 msgid "Favourite this session"
-msgstr ""
+msgstr "Додати цю сесію до обраного"
 
 #: agenda/templates/agenda/talk.html:46
 msgid "Remove this session from your favourites"
-msgstr ""
+msgstr "Видалити сесію з обраного"
 
 #: agenda/templates/agenda/talk.html:96
 msgid "This session’s header image"
-msgstr ""
+msgstr "Зображення заголовка цієї сесії"
 
 #: agenda/templates/agenda/talk.html:135
 msgid "See also:"
-msgstr ""
+msgstr "Див. також:"
 
 #: agenda/templates/agenda/talk.html:177
 msgid "This speaker also appears in:"
-msgstr ""
+msgstr "Цей спікер також з'являється в:"
 
 #: agenda/views/schedule.py:200
 msgid "No published sessions."
-msgstr ""
+msgstr "Немає опублікованих сесій."
 
 #: agenda/views/schedule.py:201
 msgid "No published schedule."
-msgstr ""
+msgstr "Розклад не опубліковано."
 
 #: agenda/views/schedule.py:206
 msgid "Our schedule is not live yet."
-msgstr ""
+msgstr "Наш розклад ще не опубліковано."
 
 #: agenda/views/schedule.py:308
 msgid ""
 "You're currently not logged in, so your favourited talks will only be stored "
 "locally in your browser."
 msgstr ""
+"Ви наразі не авторизовані, тому ваші обрані доповіді будуть зберігатися лише "
+"локально у вашому браузері."
 
 #: agenda/views/schedule.py:310
 msgid "Your favourites could only be saved locally in your browser."
-msgstr ""
+msgstr "Улюблене можна зберегти лише локально у вашому браузері."
 
 #: agenda/views/speaker.py:37 agenda/views/speaker.py:65
 msgid "No published speakers."
-msgstr ""
+msgstr "Немає опублікованих спікерів."
 
 #: agenda/views/talk.py:152
 #, python-brace-format
 msgid "The session “{title}” at {event}"
-msgstr ""
+msgstr "Сесія \"{title}\" на {event}"
 
 #: api/auth/devicesecurity.py:7
 msgid ""
@@ -250,36 +275,34 @@ msgstr ""
 "карток, читання продуктів та налаштувань)"
 
 #: api/auth/devicesecurity.py:27
-#, fuzzy
-#| msgid "eventyay"
 msgid "eventyay_checkin"
-msgstr "eventyay"
+msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
 msgid "eventyay_checkin (kiosk mode, online only)"
-msgstr ""
+msgstr "eventyay_checkin (режим кіоску, тільки онлайн)"
 
 #: api/models.py:23
 msgid "Application name"
-msgstr ""
+msgstr "Назва застосунку"
 
 #: api/models.py:27
 msgid "Redirection URIs"
-msgstr ""
+msgstr "URI перенаправлення"
 
 #: api/models.py:28
 msgid "Allowed URIs list, space separated"
-msgstr ""
+msgstr "Список дозволених URI, розділених пробілами"
 
 #: api/models.py:33
 msgid "Allowed list with space separated"
-msgstr ""
+msgstr "Дозволений список, розділений пробілами"
 
 #: api/models.py:37 control/forms/global_settings.py:258
 #: control/forms/global_settings.py:336
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:56
 msgid "Client ID"
-msgstr ""
+msgstr "ID клієнта"
 
 #: api/models.py:44
 msgid "Client secret"
@@ -287,53 +310,53 @@ msgstr ""
 
 #: api/models.py:115
 msgid "Enable webhook"
-msgstr ""
+msgstr "Активувати webhook"
 
 #: api/models.py:116
 #: control/templates/pretixcontrol/organizers/webhooks.html:36
 msgid "Target URL"
-msgstr ""
+msgstr "Цільова URL-адреса"
 
 #: api/models.py:117 base/models/devices.py:96 base/models/organizer.py:345
 msgid "All events (including newly created ones)"
-msgstr ""
+msgstr "Усі події (включно з новоствореними)"
 
 #: api/models.py:118 base/models/devices.py:97 base/models/organizer.py:346
 #: base/models/vouchers.py:579
 msgid "Limit to events"
-msgstr ""
+msgstr "Обмежити подіями"
 
 #: api/serializers/cart.py:92 api/serializers/order.py:1353
 #, python-brace-format
 msgid "The product \"{}\" is not assigned to a quota."
-msgstr ""
+msgstr "Продукту \"{}\" не призначено квоту."
 
 #: api/serializers/cart.py:99 api/serializers/order.py:1367
 #, python-brace-format
 msgid ""
 "There is not enough quota available on quota \"{}\" to perform the operation."
-msgstr ""
+msgstr "Недостатньо доступної квоти \"{}\" для виконання операції."
 
 #: api/serializers/cart.py:130 api/serializers/order.py:1313
 #: base/services/orders.py:1472
 #, python-brace-format
 msgid "The selected seat \"{seat}\" is not available."
-msgstr ""
+msgstr "Обране місце \"{seat}\" недоступне."
 
 #: api/serializers/checkin.py:56 base/models/event.py:2943
 #: base/models/product.py:1406 base/models/product.py:1635
 msgid "One or more products do not belong to this event."
-msgstr ""
+msgstr "Один або більше продуктів не належать до цієї події."
 
 #: api/serializers/checkin.py:60 api/serializers/checkin.py:63
 #: base/models/product.py:1648 base/models/product.py:1651
 #: base/models/waitinglist.py:182 base/models/waitinglist.py:185
 msgid "The subevent does not belong to this event."
-msgstr ""
+msgstr "Ця підподія не належить до цієї події."
 
 #: api/serializers/checkin.py:67
 msgid "Unknown sales channel."
-msgstr ""
+msgstr "Невідомий канал продажів."
 
 #: api/serializers/event.py:174
 msgid ""
