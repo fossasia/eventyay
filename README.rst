@@ -11,6 +11,9 @@ ENext is the new and updated version of Eventyay with a unified codebase for the
 Getting Started
 ---------------
 
+Python-based development
+------------------------------------------------------------
+
 0. **Clone the repository**:
 
 .. code-block:: bash
@@ -119,7 +122,15 @@ After running ``uv sync``, activate a virtual environment
 
   python manage.py create_admin_user
 
-10. **Run the development server**:
+10. **Build Frontend Assets**:
+
+.. code-block:: bash
+
+  make npminstall
+  python manage.py collectstatic --noinput
+  python manage.py compress --force
+
+11. **Run the development server**:
 
 .. code-block:: bash
 
@@ -149,7 +160,7 @@ We assume your current working directory is the checkout of this repo.
 
       docker compose up -d --build
 
-3. **Create a superuser account** (for accessing the admin panel):
+3. **Create a admin account** (for accessing the admin panel):
 
    This asks for an email and a password, and this information will be
    used to log into the system the first time.
@@ -160,7 +171,7 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-      docker exec -ti eventyay-next-web python manage.py createsuperuser
+      docker exec -ti eventyay-next-web python manage.py create_admin_user
 
 4. **Visit the site**
 
