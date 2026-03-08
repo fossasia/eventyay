@@ -49,13 +49,26 @@
             </div>
         </div>
         <div class="form-group buttons">
+            {% if preferred_provider %}
+                {% for provider, settings in login_providers.items %}
+                    {% if provider == preferred_provider and settings.state %}
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
+                           data-method="post" class="btn btn-primary btn-block btn-preferred">
+                            {% with provider|capfirst as provider_capitalized %}
+                                {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                            {% endwith %}
+                        </a>
+                        <p class="login-separator">{% translate "or use the following:" %}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
             <button type="button" id="toggle-login" class="btn btn-primary btn-block" data-toggle="collapse" data-target="#login-form">
                 {% translate "Login with Email" %}
             </button>
             {% if login_providers %}
                 {% for provider, settings in login_providers.items %}
-                    {% if settings.state %}
-                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
+                    {% if settings.state and provider != preferred_provider %}
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
                            data-method="post" class="btn btn-primary btn-block">
                             {% with provider|capfirst as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}

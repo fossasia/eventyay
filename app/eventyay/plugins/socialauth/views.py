@@ -30,14 +30,20 @@ adapter = get_adapter()
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
-        
-        # Store the 'next' URL in session for redirecting user back after login
+
         next_url = request.GET.get('next', '')
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             request.session['socialauth_next_url'] = next_url
 
         gs = GlobalSettingsObject()
-        client_id = gs.settings.get('login_providers', as_type=dict).get(provider, {}).get('client_id')
+        login_providers = gs.settings.get('login_providers', as_type=dict)
+        if provider not in login_providers or not login_providers[provider].get('state'):
+            messages.error(request, _('This login method is not available.'))
+            return redirect('eventyay_common:auth.login')
+        provider_config = login_providers[provider]
+        if provider_config.get('is_preferred'):
+            request.session['socialauth_keep_logged_in'] = True
+        client_id = provider_config.get('client_id')
         provider_instance = adapter.get_provider(request, provider, client_id=client_id)
 
         base_url = provider_instance.get_login_url(request)
@@ -96,10 +102,10 @@ class OAuthReturnView(View):
             # Re-validation provides defense against session tampering
             next_url = request.session.pop('socialauth_next_url', None)
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-                # Store in session with a clear key for process_login to use
                 request.session['socialauth_next_url'] = next_url
-            
-            response = process_login_and_set_cookie(request, user, False)
+
+            keep_logged_in = request.session.pop('socialauth_keep_logged_in', False)
+            response = process_login_and_set_cookie(request, user, keep_logged_in)
             return response
         except AttributeError as e:
             messages.error(request, _('Error while authorizing: no email address available.'))
@@ -173,15 +179,19 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['login_providers'] = self.gs.settings.get('login_providers', as_type=dict)
-        # tickets_domain is only used to append /github/..., so make sure we don't have
-        # a trailing /
+        login_providers = self.gs.settings.get('login_providers', as_type=dict)
+        context['login_providers'] = login_providers
+        context['any_preferred'] = any(
+            p.get('is_preferred', False) for p in login_providers.values()
+        )
         context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip("/")
         return context
 
     def post(self, request, *args, **kwargs):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         setting_state = request.POST.get('save_credentials', '').lower()
+
+        self._apply_preferred_provider(request, login_providers)
 
         for provider in LoginProviders.model_fields.keys():
             if setting_state == self.SettingState.CREDENTIALS:
@@ -191,6 +201,16 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
         self.gs.settings.set('login_providers', login_providers)
         return redirect(self.get_success_url())
+
+    def _apply_preferred_provider(self, request, login_providers):
+        preferred = request.POST.get('preferred_provider', '').strip().lower()
+        valid_providers = set(LoginProviders.model_fields.keys())
+        if preferred == 'none' or preferred not in valid_providers:
+            for provider in valid_providers:
+                login_providers.setdefault(provider, {})['is_preferred'] = False
+            return
+        for provider in valid_providers:
+            login_providers.setdefault(provider, {})['is_preferred'] = provider == preferred
 
     def update_credentials(self, request, provider, login_providers):
         client_id_value = request.POST.get(f'{provider}_client_id', '')
@@ -212,6 +232,8 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         setting_state = request.POST.get(f'{provider}_login', '').lower()
         if setting_state in [s.value for s in self.SettingState]:
             login_providers[provider]['state'] = setting_state == self.SettingState.ENABLED
+            if not login_providers[provider]['state']:
+                login_providers[provider]['is_preferred'] = False
 
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')
