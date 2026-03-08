@@ -8,11 +8,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 TIMEZONE_CHOICES = sorted(
     [
-        'Asia/Kolkata' if tz == 'Asia/Calcutta' else tz
+        tz
         for tz in zoneinfo.available_timezones()
-        if not tz.startswith('Etc/') and tz != 'localtime'
+        if not tz.startswith('Etc/')
+        and tz != 'localtime'
+        and tz != 'Asia/Calcutta'
     ]
-)
+)ss
 
 # The directory for frontend development resources (node_modules, build scripts, etc.).
 FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'webapp'
