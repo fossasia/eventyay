@@ -28,6 +28,16 @@ def escape_json_for_script(json_str: str) -> str:
     return json_str.translate(JSON_SCRIPT_ESCAPES)
 
 
+def is_email_like(value: str) -> bool:
+    value = (value or '').strip()
+    if '@' not in value:
+        return False
+    local_part, _, domain = value.partition('@')
+    if not local_part or not domain:
+        return False
+    return True
+
+
 logger = logging.getLogger(__name__)
 
 def load_starred_ics_token(token: str, *, event=None):
