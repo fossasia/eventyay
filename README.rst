@@ -141,12 +141,12 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-      cp deployment/env.sample .env.dev
+      cp deployment/env.dev.sample .env.dev
 
 2. **Edit .env.dev**
 
    Change <SERVER_NAME> and the value of `EVY_RUNNING_ENVIRONMENT=production`
-   to `EVY_RUNNING_ENVIRONMENT=development`
+   to `EVY_RUNNING_ENVIRONMENT=development` if using production env file.
 
 3. **Make sure you don't have some old volumes hanging around**
 
