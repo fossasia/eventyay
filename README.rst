@@ -101,7 +101,7 @@ In case you cannot take advantage of PostgreSQL *peer* mode, you need to create 
 
 7. **Activate virtual environment**
 
-After running ``uv sync```, activate a virtual environment
+After running ``uv sync``, activate a virtual environment
 
 .. code-block:: sh
 
