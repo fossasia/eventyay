@@ -1979,7 +1979,7 @@ def test_order_create_code_optional(token_client, organizer, event, item, quota,
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'code': ['This order code is already in use.']}
+    assert resp.data == {'code': ['This order code is already in use for this event.']}
 
     res['code'] = 'ABaDE'
     resp = token_client.post(
@@ -1989,6 +1989,34 @@ def test_order_create_code_optional(token_client, organizer, event, item, quota,
     )
     assert resp.status_code == 400
     assert resp.data == {'code': ['This order code contains invalid characters.']}
+
+
+@pytest.mark.django_db
+def test_order_create_code_reusable_across_events(token_client, organizer, event, event2, item, item2, quota, question, question2):
+    res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
+    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['answers'][0]['question'] = question.pk
+    res['code'] = 'ABCDE'
+
+    first_resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert first_resp.status_code == 201
+
+    second_payload = copy.deepcopy(ORDER_CREATE_PAYLOAD)
+    second_payload['positions'][0]['item'] = item2.pk
+    second_payload['positions'][0]['answers'][0]['question'] = question2.pk
+    second_payload['code'] = 'ABCDE'
+
+    second_resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event2.slug),
+        format='json',
+        data=second_payload,
+    )
+    assert second_resp.status_code == 201
+
 
 
 @pytest.mark.django_db
