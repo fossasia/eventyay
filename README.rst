@@ -11,7 +11,7 @@ ENext is the new and updated version of Eventyay with a unified codebase for the
 Getting Started
 ---------------
 
-Python based development (Highly recommended)
+Python-based development
 ------------------------
 
 0. **Clone the repository**:
