@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-09 09:11+0000\n"
+"PO-Revision-Date: 2026-03-10 13:09+0000\n"
 "Last-Translator: Oleksandr Polieno <polyenoom@gmail.com>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/uk/>\n"
@@ -455,10 +455,8 @@ msgstr ""
 
 #: api/templates/rest_framework/api.html:18
 #: orga/templates/orga/auth/base.html:29
-#, fuzzy
-#| msgid "eventyay"
 msgid "The eventyay logo"
-msgstr "eventyay"
+msgstr "Логотип eventyay"
 
 #: api/views/oauth.py:91 control/logdisplay.py:593
 #, python-brace-format
@@ -1189,7 +1187,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:878 control/forms/event.py:64
 msgid "Active languages"
-msgstr ""
+msgstr "Активні мови"
 
 #: base/configurations/default_setting.py:880 control/forms/event.py:67
 msgid ""
@@ -3691,7 +3689,7 @@ msgstr ""
 
 #: base/forms/auth.py:48 base/forms/auth.py:243
 msgid "This account is inactive."
-msgstr ""
+msgstr "Цей обліковий запис не є активним."
 
 #: base/forms/auth.py:131
 msgid ""
@@ -4115,7 +4113,7 @@ msgstr ""
 
 #: base/models/auth.py:182
 msgid "Is active"
-msgstr ""
+msgstr "Є активним"
 
 #: base/models/auth.py:183
 msgid "Is site admin"
@@ -4757,7 +4755,7 @@ msgstr ""
 #: orga/templates/orga/cfp/forms.html:849
 #: orga/templates/orga/cfp/talkquestion/list.html:56
 msgid "Active"
-msgstr ""
+msgstr "Активний"
 
 #: base/models/event.py:2778
 msgid ""
@@ -6442,7 +6440,7 @@ msgstr ""
 
 #: base/models/question.py:180
 msgid "active"
-msgstr ""
+msgstr "активний"
 
 #: base/models/question.py:181
 msgid "Inactive fields will no longer be shown."
@@ -10541,10 +10539,8 @@ msgstr ""
 
 #: common/templates/common/base.html:146
 #: common/templates/common/fragment_header_user.html:96
-#, fuzzy
-#| msgid "Login with email"
 msgid "Event emails"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Електронні адреси заходу"
 
 #: common/templates/common/base.html:157
 #: common/templates/common/fragment_header_user.html:107
@@ -11205,10 +11201,8 @@ msgid "General"
 msgstr ""
 
 #: common/text/phrases.py:121
-#, fuzzy
-#| msgid "Login with email"
 msgid "Login with MediaWiki SSO or Email"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Увійти за допомогою MediaWiki SSO чи електронної пошти"
 
 #: common/views/mixins.py:293
 msgid "ManagementForm data is missing or has been tampered with."
@@ -15450,10 +15444,8 @@ msgid "Links"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:154
-#, fuzzy
-#| msgid "eventyay"
 msgid "eventyay website"
-msgstr "eventyay"
+msgstr "Веб-сайт eventyay"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:157
 msgid "eventyay documentation"
@@ -17641,10 +17633,8 @@ msgid "Required status for Attendee names"
 msgstr ""
 
 #: control/templates/pretixcontrol/items/orderforms.html:196
-#, fuzzy
-#| msgid "Login with email"
 msgid "Attendee emails"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Електронні адреси учасників"
 
 #: control/templates/pretixcontrol/items/orderforms.html:226
 msgid "Required status for Attendee emails"
@@ -22069,8 +22059,6 @@ msgid "Lost password?"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/auth/login.html:53
-#, fuzzy
-#| msgid "Login with email"
 msgid "Login with Email"
 msgstr "Увійти за допомогою електронної пошти"
 
@@ -22714,10 +22702,8 @@ msgid "invited, pending response"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:194
-#, fuzzy
-#| msgid "Login with email"
 msgid "Resend invite"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Надіслати запрошення повторно"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:213
 msgid ""
@@ -24137,10 +24123,8 @@ msgid "Reviewer name"
 msgstr ""
 
 #: orga/forms/review.py:292
-#, fuzzy
-#| msgid "Login with email"
 msgid "Reviewer email"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Електронна адреса рецензента"
 
 #: orga/forms/review.py:350
 #, python-brace-format
@@ -24877,10 +24861,8 @@ msgid "Accept email"
 msgstr ""
 
 #: orga/templates/orga/includes/mail_template_role.html:5
-#, fuzzy
-#| msgid "Login with email"
 msgid "Reject email"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Відхилити електронний лист"
 
 #: orga/templates/orga/includes/mail_template_role.html:7
 msgid "Schedule update"
@@ -25073,10 +25055,8 @@ msgid "Custom Mail"
 msgstr ""
 
 #: orga/templates/orga/mails/mailtemplate/list.html:69
-#, fuzzy
-#| msgid "Login with email"
 msgid "Send mails"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Надіслати листи"
 
 #: orga/templates/orga/mails/outbox_form.html:5
 #: orga/templates/orga/mails/outbox_form.html:18
@@ -25106,13 +25086,11 @@ msgid "Copy to draft"
 msgstr ""
 
 #: orga/templates/orga/mails/outbox_list.html:10
-#, fuzzy
-#| msgid "Login with email"
 msgid "pending email"
 msgid_plural "pending emails"
-msgstr[0] "Увійти за допомогою електронної пошти"
-msgstr[1] "Увійти за допомогою електронної пошти"
-msgstr[2] "Увійти за допомогою електронної пошти"
+msgstr[0] "електронний лист в очікуванні"
+msgstr[1] "електронних листів в очікуванні"
+msgstr[2] "електронних листів в очікуванні"
 
 #: orga/templates/orga/mails/outbox_list.html:27
 msgid "Send all on this page"
@@ -25174,10 +25152,8 @@ msgid ""
 msgstr ""
 
 #: orga/templates/orga/mails/sent_list.html:9
-#, fuzzy
-#| msgid "Login with email"
 msgid "Sent emails"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Надіслані електронні листи"
 
 #: orga/templates/orga/mails/sent_list.html:32
 msgid "Sort (latest first)"
@@ -26372,13 +26348,11 @@ msgstr[1] ""
 msgstr[2] ""
 
 #: orga/views/dashboard.py:357
-#, fuzzy
-#| msgid "Login with email"
 msgid "sent email"
 msgid_plural "sent emails"
-msgstr[0] "Увійти за допомогою електронної пошти"
-msgstr[1] "Увійти за допомогою електронної пошти"
-msgstr[2] "Увійти за допомогою електронної пошти"
+msgstr[0] "надісланий електронний лист"
+msgstr[1] "надісланих електронних листів"
+msgstr[2] "надісланих електронних листів"
 
 #: orga/views/event.py:265
 msgid "Review scoring"
@@ -26442,10 +26416,8 @@ msgid "Do you really want to send {count} mails?"
 msgstr ""
 
 #: orga/views/mails.py:133
-#, fuzzy
-#| msgid "Login with email"
 msgid "Send emails"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Надіслати електронні листи"
 
 #: orga/views/mails.py:149
 msgid ""
@@ -28050,22 +28022,16 @@ msgstr[1] ""
 msgstr[2] ""
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:113
-#, fuzzy
-#| msgid "Login with email"
 msgid "Send this email"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Надіслати цей електронний лист"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:121
-#, fuzzy
-#| msgid "Login with email"
 msgid "Edit this email"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Редагувати цей електронний лист"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:129
-#, fuzzy
-#| msgid "Login with email"
 msgid "Delete this email"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Видалити цей електронний лист"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:142
 msgid "Some emails failed to send:"
@@ -29952,10 +29918,8 @@ msgstr ""
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:18
 #: presale/templates/pretixpresale/fragment_modals.html:33
-#, fuzzy
-#| msgid "Login with email"
 msgid "Resend the email"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Повторно надіслати цей електронний лист"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:20
 #: presale/templates/pretixpresale/fragment_modals.html:35
@@ -29997,10 +29961,8 @@ msgstr ""
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:43
 #: presale/templates/pretixpresale/fragment_modals.html:58
-#, fuzzy
-#| msgid "Login with email"
 msgid "Login here"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Увійти тут"
 
 #: presale/templates/pretixpresale/fragment_login_status.html:7
 msgid "account"
@@ -30025,16 +29987,12 @@ msgid "Enter your password"
 msgstr ""
 
 #: presale/templates/pretixpresale/fragment_modals.html:115
-#, fuzzy
-#| msgid "Login with email"
 msgid "Login with MediaWiki"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Увійти за допомогою MediaWiki"
 
 #: presale/templates/pretixpresale/fragment_modals.html:118
-#, fuzzy
-#| msgid "Login with email"
 msgid "Login with Google"
-msgstr "Увійти за допомогою електронної пошти"
+msgstr "Увійти за допомогою Google"
 
 #: presale/templates/pretixpresale/fragment_modals.html:123
 msgid "Don't have an account?"
@@ -30290,10 +30248,8 @@ msgid "Unknown date selected."
 msgstr ""
 
 #: presale/views/order.py:212
-#, fuzzy
-#| msgid "eventyay"
 msgid "Eventyay Video"
-msgstr "eventyay"
+msgstr "Eventyay Video"
 
 #: presale/views/order.py:497 presale/views/order.py:567
 #: presale/views/order.py:641
