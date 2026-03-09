@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-09 04:11+0000\n"
+"PO-Revision-Date: 2026-03-09 09:11+0000\n"
 "Last-Translator: Oleksandr Polieno <polyenoom@gmail.com>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/uk/>\n"
@@ -99,7 +99,7 @@ msgstr "Ми перемістили сесію: "
 
 #: agenda/templates/agenda/featured.html:15
 msgid "Welcome to our list of featured sessions!"
-msgstr "Ласкаво просимо до нашого списку вибраних сесій!"
+msgstr "Ласкаво просимо до нашого списку рекомендованих сесій!"
 
 #: agenda/templates/agenda/featured.html:18
 msgid ""
@@ -219,7 +219,7 @@ msgstr "Додати цю сесію до обраного"
 
 #: agenda/templates/agenda/talk.html:46
 msgid "Remove this session from your favourites"
-msgstr "Видалити сесію з обраного"
+msgstr "Видалити сесію з вибраного"
 
 #: agenda/templates/agenda/talk.html:96
 msgid "This session’s header image"
@@ -288,7 +288,7 @@ msgstr "Назва застосунку"
 
 #: api/models.py:27
 msgid "Redirection URIs"
-msgstr "URI перенаправлення"
+msgstr "Redirection URIs"
 
 #: api/models.py:28
 msgid "Allowed URIs list, space separated"
