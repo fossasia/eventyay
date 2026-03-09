@@ -62,10 +62,12 @@ def get_polls(room, moderator=False, early_results=False, for_user=None, **kwarg
     ]
 
 
+# AFTER:
 @database_sync_to_async
 def update_poll(**kwargs):
-    # TODO: do we want to block updates after close/archive?
     poll = Poll.objects.get(pk=kwargs["id"], room=kwargs["room"])
+    if poll.state in (Poll.States.CLOSED, Poll.States.ARCHIVED):
+        raise ValueError("Cannot update a poll that is closed or archived.")
     options = kwargs.pop("options", None)
     for key, value in kwargs.items():
         setattr(poll, key, value)
