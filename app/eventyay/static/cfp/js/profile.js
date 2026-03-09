@@ -88,7 +88,7 @@ const initFileInput = function () {
                 preview.classList.add('d-none');
             }
         }
-        
+
         document.querySelectorAll('.avatar-upload input[type=file]').forEach((element) => {
             element.addEventListener('change', updateFileInput)
         })
@@ -125,4 +125,37 @@ const blockFormOnOversizedAvatar = () => {
 
 onReady(blockFormOnOversizedAvatar);
 
+const blockFormOnOversizedAvatar = () => {
+    document.querySelectorAll('.speaker-profile-form').forEach((form) => {
+        const fileInput = form.querySelector('input[type=file][data-maxsize]');
+        if (!fileInput) return;
+
+        // Clear error when user selects a new file
+        fileInput.addEventListener('change', () => {
+            fileInput.classList.remove('is-invalid');
+            const warning = fileInput.closest('.form-group')?.querySelector('.invalid-feedback');
+            if (warning) warning.textContent = '';
+        });
+
+        form.addEventListener('submit', (ev) => {
+            if (!fileInput.files || !fileInput.files.length) return;
+            const maxSize = parseInt(fileInput.dataset.maxsize);
+            if (fileInput.files[0].size > maxSize) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                fileInput.classList.add('is-invalid');
+                let warning = fileInput.closest('.form-group')?.querySelector('.invalid-feedback');
+                if (!warning) {
+                    warning = document.createElement('div');
+                    warning.classList.add('invalid-feedback');
+                    fileInput.closest('.form-group')?.appendChild(warning);
+                }
+                warning.textContent = fileInput.dataset.sizewarning;
+                fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    });
+}
+
 onReady(initFileInput)
+onReady(blockFormOnOversizedAvatar)

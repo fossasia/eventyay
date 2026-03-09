@@ -131,77 +131,74 @@ function areEqual() {
 
 const FieldComponent = {
     render() {
-    const h = Vue.h;
+        const h = Vue.h;
         const isQuestion = this.field.key.startsWith("question_");
         const questionUrl = window.location.pathname.replace(
             "flow/",
             this.field.key.replace("question_", "questions/")
         ) + "/edit";
-        const displayHelpText = isQuestion ? 
+        const displayHelpText = isQuestion ?
             marked.parse(this.fixed_help_text, markedOptions) :
             marked.parse(
                 this.field.help_text[currentLanguage] + " " + this.fixed_help_text,
                 markedOptions
             );
         const labelContent = [];
-        if (this.field.widget !== 'CheckboxInput') {
-            if (this.isModal) {
-                labelContent.push(
-                    h('div', { class: 'i18n-form-group mb-2 title-input', onClick: (e) => e.stopPropagation() }, 
-                        this.locales.map(locale => 
-                            h('input', {
-                                type: 'text',
-                                class: 'form-control',
-                                title: locale,
-                                lang: locale,
-                                value: this.field.label[locale],
-                                onInput: (e) => { this.field.label[locale] = e.target.value; }
-                            })
-                        )
+        if (this.isModal) {
+            labelContent.push(
+                h('div', { class: 'i18n-form-group mb-2 title-input', onClick: (e) => e.stopPropagation() },
+                    this.locales.map(locale =>
+                        h('input', {
+                            type: 'text',
+                            class: 'form-control',
+                            title: locale,
+                            lang: locale,
+                            value: this.field.label[locale],
+                            onInput: (e) => { this.field.label[locale] = e.target.value; }
+                        })
                     )
-                );
-                // Requirement editing logic
-                if (this.editRequirement) {
-                    if (!this.field.required && !this.field.hard_required) {
-                        labelContent.push(
-                            h('span', {
-                                class: this.editable ? 'editable optional' : 'optional',
-                                onClick: (e) => { e.stopPropagation(); this.field.required = true; }
-                            }, 'Optional')
-                        );
-                    } else if (!this.field.hard_required) {
-                        labelContent.push(
-                            h('span', {
-                                class: this.editable ? 'editable optional' : 'optional',
-                                onClick: (e) => { e.stopPropagation(); this.field.required = false; }
-                            }, [h('strong', 'Required')])
-                        );
-                    } else {
-                        labelContent.push(h('span', { class: 'optional' }, [h('strong', 'Required')]));
-                    }
+                )
+            );
+            if (this.editRequirement) {
+                if (!this.field.required && !this.field.hard_required) {
+                    labelContent.push(
+                        h('span', {
+                            class: this.editable ? 'editable optional' : 'optional',
+                            onClick: (e) => { e.stopPropagation(); this.field.required = true; }
+                        }, 'Optional')
+                    );
+                } else if (!this.field.hard_required) {
+                    labelContent.push(
+                        h('span', {
+                            class: this.editable ? 'editable optional' : 'optional',
+                            onClick: (e) => { e.stopPropagation(); this.field.required = false; }
+                        }, [h('strong', 'Required')])
+                    );
+                } else {
+                    labelContent.push(h('span', { class: 'optional' }, [h('strong', 'Required')]));
                 }
-            } else {
-                labelContent.push(
-                    h('span', {
-                        class: this.editable ? 'editable' : '',
-                        onClick: (e) => {
-                            e.stopPropagation();
-                            if (this.editable) {
-                                currentModal.data = this.field;
-                                currentModal.type = 'field';
-                                currentModal.show = true;
-                            }
-                        }
-                    }, this.field.label[this.currentLanguage]),
-                    h('br'),
-                    !this.field.required ?
-                        h('span', { class: 'optional' }, 'Optional') :
-                        h('span', { class: 'optional' }, [h('strong', 'Required')])
-                );
             }
+        } else {
+            labelContent.push(
+                h('span', {
+                    class: this.editable ? 'editable' : '',
+                    onClick: (e) => {
+                        e.stopPropagation();
+                        if (this.editable) {
+                            this.makeModal(e);
+                        }
+                    }
+                },
+                (this.field.label &&
+                    (this.field.label[this.currentLanguage] ||
+                     this.field.label[this.locales[0]])) || ''),
+                h('br'),
+                !this.field.required ?
+                    h('span', { class: 'optional' }, 'Optional') :
+                    h('span', { class: 'optional' }, [h('strong', 'Required')])
+            );
         }
         const fieldInput = this.getFieldInput(h);
-        // Help text content
         let helpTextContent;
         if (this.isModal) {
             helpTextContent = [
@@ -243,14 +240,7 @@ const FieldComponent = {
                 this.makeModal(e);
             }
         }, [
-            h('label', { class: 'col-md-3 col-form-label pt-0' }, 
-                this.field.widget === 'CheckboxInput' ? [
-                    h('div', { class: 'form-check' }, [
-                        h('input', { type: 'checkbox', class: 'form-check-input' }),
-                        h('label', { class: 'form-check-label' }, this.field.label[this.currentLanguage])
-                    ])
-                ] : labelContent
-            ),
+            h('label', { class: 'col-md-3 col-form-label pt-0' }, labelContent),
             h('div', { class: 'col-md-9' }, [
                 fieldInput,
                 helpTextContent
@@ -322,33 +312,35 @@ const FieldComponent = {
                 case 'TextInput':
                 case 'NumberInput':
                 case 'EmailInput':
-                    return h('input', { 
-                        class: 'form-control', 
-                        type: 'text', 
+                    return h('input', {
+                        class: 'form-control',
+                        type: 'text',
                         placeholder: this.field.title,
                         readonly: true,
                         disabled: true
                     });
                 case 'Select':
-                    return h('select', { 
-                        class: 'form-control', 
-                        type: 'text', 
+                    return h('select', {
+                        class: 'form-control',
+                        type: 'text',
                         placeholder: this.field.title,
                         readonly: true,
                         disabled: true
                     });
                 case 'Textarea':
                 case 'MarkdownWidget':
-                    return h('textarea', { 
-                        class: 'form-control', 
-                        type: 'text', 
+                    return h('textarea', {
+                        class: 'form-control',
+                        type: 'text',
                         placeholder: this.field.title,
                         readonly: true,
                         disabled: true,
                         style: { height: '2.5em' }
                     });
                 case 'CheckboxInput':
-                    return null; // Handled in label
+                    return h('div', { class: 'form-check' }, [
+                        h('input', { type: 'checkbox', class: 'form-check-input', disabled: true })
+                    ]);
                 case 'ClearableFileInput':
                     return h('div', { class: 'row bootstrap4-multi-input' }, [
                         h('div', { class: 'col-12' }, [
@@ -362,8 +354,8 @@ const FieldComponent = {
         getHelpTextContent(h, displayHelpText) {
             if (this.isModal) {
                 return [
-                    h('div', { class: 'i18n-form-group', onClick: (e) => e.stopPropagation() }, 
-                        this.locales.map(locale => 
+                    h('div', { class: 'i18n-form-group', onClick: (e) => e.stopPropagation() },
+                        this.locales.map(locale =>
                             h('input', {
                                 type: 'text',
                                 class: 'form-control',
@@ -377,7 +369,7 @@ const FieldComponent = {
                     this.fixed_help_text ? h('div', { class: 'text-muted' }, this.fixed_help_text) : null
                 ];
             } else {
-                return h('div', { 
+                return h('div', {
                     class: 'text-muted',
                     innerHTML: this.display_help_text
                 });
@@ -394,14 +386,14 @@ const FieldComponent = {
 
 const StepComponent = {
     render() {
-    const h = Vue.h;
-    const headerSteps = this.headerSteps;
-    const stepPosition = this.stepPosition;
-    const titleContent = this.editingTitle ? 
+        const h = Vue.h;
+        const headerSteps = this.headerSteps;
+        const stepPosition = this.stepPosition;
+        const titleContent = this.editingTitle ?
             h('span', { onClick: (e) => e.stopPropagation() }, [
                 h('div', { class: 'col-md-9' }, [
-                    h('div', { class: 'i18n-form-group', onClick: (e) => e.stopPropagation() }, 
-                        this.locales.map(locale => 
+                    h('div', { class: 'i18n-form-group', onClick: (e) => e.stopPropagation() },
+                        this.locales.map(locale =>
                             h('input', {
                                 type: 'text',
                                 class: 'form-control',
@@ -426,8 +418,8 @@ const StepComponent = {
         const textContent = this.editingText ?
             h('span', { onClick: (e) => e.stopPropagation() }, [
                 h('div', { class: 'col-md-9' }, [
-                    h('div', { class: 'i18n-form-group' }, 
-                        this.locales.map(locale => 
+                    h('div', { class: 'i18n-form-group' },
+                        this.locales.map(locale =>
                             h('textarea', {
                                 class: 'form-control',
                                 title: locale,
@@ -451,10 +443,10 @@ const StepComponent = {
                 innerHTML: this.marked(this.step.text[this.currentLanguage] || '…')
             });
         const fieldComponent = Vue.resolveComponent('field');
-        const formContent = this.step.identifier !== 'user' ? 
-            h('form', 
+        const formContent = this.step.identifier !== 'user' ?
+            h('form',
                 this.step.fields.filter(field => field && field.widget !== 'HiddenInput').map(field => {
-                    return h(fieldComponent, { 
+                    return h(fieldComponent, {
                         field: field,
                         locales: this.locales,
                         key: field.key
@@ -478,22 +470,22 @@ const StepComponent = {
                     h('div', { class: 'overlay' }, 'This form cannot be modified – a page to login or register needs to be in place, but you can change the page title and description.')
                 ])
             ]);
-        const questionAlert = this.step.identifier === 'questions' ? 
-            h('div', { class: 'alert alert-info' }, 'This step will only be shown if you have questions configured.') : 
+        const questionAlert = this.step.identifier === 'questions' ?
+            h('div', { class: 'alert alert-info' }, 'This step will only be shown if you have questions configured.') :
             null;
         return h('div', { class: 'step', onClick: () => { this.editingTitle = false; this.editingText = false; } }, [
-            h('div', { 
+            h('div', {
                 class: ['step-header', 'header', this.eventConfiguration.header_pattern],
                 style: this.headerStyle
-            }, this.eventConfiguration.header_image ? 
-                h('img', { src: this.eventConfiguration.header_image }) : 
+            }, this.eventConfiguration.header_image ?
+                h('img', { src: this.eventConfiguration.header_image }) :
                 null
             ),
             h('div', { class: 'step-main-container' }, [
-                h('div', { class: 'submission-steps stages' }, 
-                    headerSteps.map(stp => 
+                h('div', { class: 'submission-steps stages' },
+                    headerSteps.map(stp =>
                         h('span', { class: ['step', 'step-' + stp.phase] }, [
-                            h('div', { class: 'step-icon' }, 
+                            h('div', { class: 'step-icon' },
                                 h('span', { class: ['fa', 'fa-' + stp.icon] })
                             ),
                             h('div', { class: 'step-label' }, stp.label)
@@ -535,7 +527,6 @@ const StepComponent = {
             return currentLanguage
         },
         headerStyle() {
-            // logo_image, header_image, header_pattern
             return {
                 "background-color": this.eventConfiguration.primary_color
                     || this.eventConfiguration.visible_primary_color
@@ -581,10 +572,10 @@ const app = Vue.createApp({
         const h = Vue.h;
         const stepComponent = Vue.resolveComponent('step');
         const fieldComponent = Vue.resolveComponent('field');
-        const modalContent = currentModal.data ? 
+        const modalContent = currentModal.data ?
             h('div', { id: 'flow-modal' }, [
                 h('form', [
-                    h(fieldComponent, { 
+                    h(fieldComponent, {
                         field: currentModal.data,
                         isModal: true,
                         key: 'modal',
@@ -597,7 +588,7 @@ const app = Vue.createApp({
                 h('i', { class: 'fa fa-spinner fa-pulse fa-4x fa-fw text-primary mb-4 mt-4' }),
                 h('h3', { class: 'mt-2 mb-4' }, 'Loading talks, please wait.')
             ]) :
-            h('div', { id: 'steps' }, 
+            h('div', { id: 'steps' },
                 this.stepsConfiguration.map(step => {
                     return h(stepComponent, {
                         step: step,
@@ -612,7 +603,7 @@ const app = Vue.createApp({
             h('div', { class: 'step-header', ref: 'stepHeader' }),
             h('div', { id: 'unassigned-fields' }, [
                 h('div', { class: 'input-group' }, [
-                    h('div', { class: 'input-group-prepend input-group-text' }, 
+                    h('div', { class: 'input-group-prepend input-group-text' },
                         h('i', { class: 'fa fa-search' })
                     ),
                     h('input', {
@@ -623,7 +614,7 @@ const app = Vue.createApp({
                         onInput: (e) => { this.search = e.target.value; }
                     })
                 ]),
-                h('div', { id: 'unassigned-container', ref: 'unassigned' }, 
+                h('div', { id: 'unassigned-container', ref: 'unassigned' },
                     this.filteredFields.map(field => {
                         return h(fieldComponent, { field: field, key: field.id });
                     })
@@ -637,10 +628,10 @@ const app = Vue.createApp({
                     class: 'btn btn-success',
                     onClick: this.save,
                     disabled: this.saving
-                }, this.saving ? 
+                }, this.saving ?
                     h('span', [
                         h('i', { class: 'fa fa-spinner fa-pulse fa-fw text-success mb-2 mt-2' })
-                    ]) : 
+                    ]) :
                     h('span', 'Save now')
                 )
             ]) : null;
