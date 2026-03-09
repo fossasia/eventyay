@@ -464,33 +464,64 @@ const startMarkdownEditorObserver = () => {
 }
 
 const warnFileSize = (element) => {
-    const warning = document.createElement("div")
-    warning.classList = ["invalid-feedback"]
+    let warning = element.parentElement.querySelector('.file-size-warning[data-file-size-warning="true"]')
+    if (!warning) {
+        warning = document.createElement("div")
+        warning.classList.add("invalid-feedback")
+        warning.classList.add("file-size-warning")
+        warning.dataset.fileSizeWarning = "true"
+        element.parentElement.appendChild(warning)
+    }
     warning.textContent = element.dataset.sizewarning
-    element.parentElement.appendChild(warning)
     element.classList.add("is-invalid")
 }
 const unwarnFileSize = (element) => {
     element.classList.remove("is-invalid")
-    const warning = element.parentElement.querySelector(".invalid-feedback")
+    const warning = element.parentElement.querySelector('.file-size-warning[data-file-size-warning="true"]')
     if (warning) element.parentElement.removeChild(warning)
 }
 
 const initFileSizeCheck = (element) => {
-    const checkFileSize = () => {
-        const files = element.files
-        if (!files || !files.length) {
-            unwarnFileSize(element)
-        } else {
-            maxsize = parseInt(element.dataset.maxsize)
-            if (files[0].size > maxsize) {
-                warnFileSize(element)
-            } else {
-                unwarnFileSize(element)
-            }
-        }
+    const hasOversizedFiles = (fileInput) => {
+        const files = Array.from(fileInput.files || [])
+        if (!files.length) return false
+        const maxsize = parseInt(fileInput.dataset.maxsize, 10)
+        if (Number.isNaN(maxsize)) return false
+        return files.some((file) => file.size > maxsize)
     }
-    element.addEventListener("change", checkFileSize, false)
+    const checkFileSize = (fileInput) => {
+        if (hasOversizedFiles(fileInput)) {
+            warnFileSize(fileInput)
+            return false
+        }
+        unwarnFileSize(fileInput)
+        return true
+    }
+    element.addEventListener("change", () => checkFileSize(element), false)
+
+    if (element.form && !element.form.dataset.fileSizeGuardRegistered) {
+        element.form.dataset.fileSizeGuardRegistered = "true"
+        element.form.addEventListener("submit", (event) => {
+            const form = (
+                event.currentTarget instanceof HTMLFormElement
+                    ? event.currentTarget
+                    : element.form
+            )
+            if (!form) return
+            const fileInputs = form.querySelectorAll("input[data-maxsize][type=file]")
+            let firstInvalid = null
+            fileInputs.forEach((fileInput) => {
+                const isValid = checkFileSize(fileInput)
+                if (!isValid) {
+                    if (!firstInvalid) firstInvalid = fileInput
+                }
+            })
+            if (firstInvalid) {
+                event.preventDefault()
+                firstInvalid.focus()
+            }
+        })
+    }
 }
 
 const isVisible = (element) => {
