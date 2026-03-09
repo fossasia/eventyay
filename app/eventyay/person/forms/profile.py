@@ -1,10 +1,9 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.utils.functional import cached_property
-from django.conf import settings
-from eventyay.consts import SizeKey
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
@@ -88,18 +87,10 @@ class SpeakerProfileForm(
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
         for field in self.user_fields:
             field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
-<<<<<<< Updated upstream
-            extra_kwargs = {}
-            if field == 'avatar':
-                extra_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
-            self.fields[field] = field_class(
-=======
             field_kwargs = dict(
->>>>>>> Stashed changes
                 initial=initial.get(field),
                 disabled=read_only,
                 help_text=User._meta.get_field(field).help_text,
-                **extra_kwargs,
             )
             if field == 'avatar':
                 field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
@@ -140,12 +131,9 @@ class SpeakerProfileForm(
             readonly=read_only,
         )
 
-        # Reorder fields based on configuration
         self.order_fields_by_config('speaker')
 
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
-            # Replace self.data with a version that uses initial["availabilities"]
-            # in order to have event and timezone data available
             data = self.data.copy()
             data['availabilities'] = initial.get('availabilities', [])
             self.data = data
@@ -203,11 +191,9 @@ class SpeakerProfileForm(
             if user_attribute == 'avatar':
                 if value is False:
                     self.user.avatar = None
-                    # Clear thumbnails when removing avatar
                     self.user.avatar_thumbnail = None
                     self.user.avatar_thumbnail_tiny = None
                 elif value:
-                    # Clear old thumbnails before assigning new avatar
                     self.user.avatar_thumbnail = None
                     self.user.avatar_thumbnail_tiny = None
                     self.user.avatar = value
@@ -216,7 +202,6 @@ class SpeakerProfileForm(
             else:
                 setattr(self.user, user_attribute, value)
 
-            # Add thumbnail fields to update_fields when avatar changes
             update_fields = [user_attribute]
             if user_attribute == 'avatar':
                 update_fields.extend(['avatar_thumbnail', 'avatar_thumbnail_tiny'])
