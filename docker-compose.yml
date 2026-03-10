@@ -2,19 +2,18 @@ name: eventyay-next
 
 services:
   web:
-    build: ./app
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     platform: linux/amd64
     container_name: eventyay-next-web
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./app/eventyay:/usr/src/app/eventyay
-      - /usr/src/app/eventyay/static.dist
-      - /usr/src/app/eventyay/static/video
-      - /usr/src/app/eventyay/static/schedule-editor
-      - /usr/src/app/eventyay/webapp/video/node_modules
-      - /usr/src/app/eventyay/webapp/schedule-editor/node_modules
-      - /usr/src/app/eventyay/webapp/schedule/node_modules
-      - /usr/src/app/eventyay/webapp/webcheckin/node_modules
+      - ./src/eventyay:/usr/src/app/src/eventyay
+      - ./webapps/video:/usr/src/app/webapps/video
+      - ./webapps/schedule-editor:/usr/src/app/webapps/schedule-editor
+      - ./webapps/schedule:/usr/src/app/webapps/schedule
+      - ./webapps/webcheckin:/usr/src/app/webapps/webcheckin
     ports:
       - 8000:8000
     env_file:
@@ -24,19 +23,18 @@ services:
       - redis
 
   worker:
-    build: ./app
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     platform: linux/amd64
     container_name: eventyay-next-worker
-    entrypoint: celery -A eventyay worker -l info
+    entrypoint: python -m celery -A eventyay worker -l info
     volumes:
-      - ./app/eventyay:/usr/src/app/eventyay
-      - /usr/src/app/eventyay/static.dist
-      - /usr/src/app/eventyay/static/video
-      - /usr/src/app/eventyay/static/schedule-editor
-      - /usr/src/app/eventyay/webapp/video/node_modules
-      - /usr/src/app/eventyay/webapp/schedule-editor/node_modules
-      - /usr/src/app/eventyay/webapp/schedule/node_modules
-      - /usr/src/app/eventyay/webapp/webcheckin/node_modules
+      - ./src/eventyay:/usr/src/app/src/eventyay
+      - ./webapps/video:/usr/src/app/webapps/video
+      - ./webapps/schedule-editor:/usr/src/app/webapps/schedule-editor
+      - ./webapps/schedule:/usr/src/app/webapps/schedule
+      - ./webapps/webcheckin:/usr/src/app/webapps/webcheckin
     env_file:
       - ./.env.dev
     environment:

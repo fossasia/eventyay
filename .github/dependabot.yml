@@ -2,7 +2,7 @@ version: 2
 
 updates:
   - package-ecosystem: "uv"
-    directory: "/app"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
@@ -17,25 +17,25 @@ updates:
       - dependency-name: "setuptools"
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/webapp/video"
+    directory: "/webapps/video"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/webapp/schedule"
+    directory: "/webapps/schedule"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/webapp/schedule-editor"
+    directory: "/webapps/schedule-editor"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/webapp/webcheckin"
+    directory: "/webapps/webcheckin"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10

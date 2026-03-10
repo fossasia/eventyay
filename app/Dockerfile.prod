@@ -68,22 +68,22 @@ RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 COPY . $APP_HOME
 
 # schedule editor
-COPY eventyay/webapp/schedule-editor eventyay/webapp/schedule-editor
-RUN npm ci --prefix=eventyay/webapp/schedule-editor
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp/schedule-editor
+COPY webapps/schedule-editor webapps/schedule-editor
+RUN npm ci --prefix=webapps/schedule-editor
+RUN OUT_DIR=/home/app/web/data/compiled-frontend npm run build --prefix=webapps/schedule-editor
 # schedule widget
-COPY eventyay/webapp/schedule eventyay/webapp/schedule
-RUN npm ci --prefix=eventyay/webapp/schedule
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build:wc --prefix=eventyay/webapp/schedule
+COPY webapps/schedule webapps/schedule
+RUN npm ci --prefix=webapps/schedule
+RUN OUT_DIR=/home/app/web/data/compiled-frontend npm run build:wc --prefix=webapps/schedule
 # Video SPA app
-COPY eventyay/webapp/video eventyay/webapp/video
-RUN npm ci --prefix=eventyay/webapp/video
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp/video
+COPY webapps/video webapps/video
+RUN npm ci --prefix=webapps/video
+RUN OUT_DIR=/home/app/web/data/compiled-frontend npm run build --prefix=webapps/video
 # webcheckin web component build
-COPY eventyay/webapp/webcheckin eventyay/webapp/webcheckin
-RUN npm ci --prefix=eventyay/webapp/webcheckin
+COPY webapps/webcheckin webapps/webcheckin
+RUN npm ci --prefix=webapps/webcheckin
 # Write build output to compiled-frontend (collected by collectstatic)
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/webcheckin
+RUN OUT_DIR=/home/app/web/data/compiled-frontend/ npm run build --prefix=webapps/webcheckin
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 
