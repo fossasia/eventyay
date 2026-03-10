@@ -46,9 +46,11 @@ const store = useStore();
 const route = useRoute();
 
 const iframeError = ref(null);
+const joinErrorKey = ref(null);
 const iframeEl = ref(null);
 const languageIframeUrl = ref(null);
 const isUnmounted = ref(false);
+
 
 // Template refs
 const livestream = ref(null);
@@ -229,10 +231,33 @@ function unmuteYouTubePlayer() {
 	}
 }
 
+function getJoinErrorKey(error) {
+	const code =
+		error?.apiError?.code ??
+		error?.error ??
+		error?.message ??
+		null
+
+	switch (code) {
+		case 'bbb.join.missing_profile':
+			return 'MediaSource:join-error:missing-profile:text'
+
+		case 'bbb.failed':
+			return 'MediaSource:join-error:bbb-failed:text'
+
+		case 'bbb.no_server':
+			return 'MediaSource:join-error:no-server:text'
+
+		case 'zoom.no_meeting_id':
+			return 'MediaSource:join-error:zoom-no-meeting-id:text'
+
+		default:
+			return null
+	}
+}
+
 async function initializeIframe(mute) {
-	if (!module.value) return;
-	if (shouldUseLivestream.value) return;
-	if (iframeOffline.value) return;
+	joinErrorKey.value = null;
 	iframeError.value = null;
 	try {
 		let iframeUrl;
@@ -362,7 +387,15 @@ async function initializeIframe(mute) {
 			};
 		}
 	} catch (error) {
-		iframeError.value = error;
+		joinErrorKey.value = getJoinErrorKey(error);
+
+		if (joinErrorKey.value) {
+			iframeError.value = null;
+		} else {
+			iframeError.value = error;
+		}
+
+		console.error('MediaSource join failed:', error);
 	}
 }
 
