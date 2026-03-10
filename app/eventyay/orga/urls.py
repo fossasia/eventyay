@@ -169,7 +169,7 @@ urlpatterns = [
                 ),
                 path(
                     'submissions/new',
-                    submission.SubmissionContent.as_view(),
+                    submission.SubmissionContentEdit.as_view(),
                     name='submissions.create',
                 ),
                 path(
@@ -215,6 +215,11 @@ urlpatterns = [
                                 'edit',
                                 submission.SubmissionContent.as_view(),  # Edit view
                                 name="submissions.content.edit",
+                            ),
+                            path(
+                                'edit/',
+                                submission.SubmissionContentEdit.as_view(),
+                                name='submissions.content.edit',
                             ),
                             path(
                                 'submit',

@@ -1,12 +1,12 @@
 {% extends "orga/submission/base.html" %}
-
 {% load compress %}
 {% load filesize %}
 {% load staff_session %}
 {% load i18n %}
-{% load static %}
-{% load rules %}
 {% load rich_text %}
+{% load rules %}
+{% load static %}
+{% load thumbnail %}
 
 {% block stylesheets %}
     {{ block.super }}
@@ -37,7 +37,7 @@
         <div class="form-group row">
             <label class="col-md-3 col-form-label">{% translate "Proposal title" %}</label>
             <div class="col-md-9 mt-1">
-                <strong>{{ submission.title }}</strong>
+                <strong>{{ display_submission.title }}</strong>
             </div>
         </div>
 
@@ -68,34 +68,34 @@
             </div>
         {% endif %}
 
-        {% if submission.abstract %}
+        {% if display_submission.abstract %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Abstract" %}</label>
                 <div class="col-md-9 mt-1">
-                    {{ submission.abstract|rich_text }}
+                    {{ display_submission.abstract|rich_text }}
                 </div>
             </div>
         {% endif %}
 
-        {% if submission.description %}
+        {% if display_submission.description %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Description" %}</label>
                 <div class="col-md-9 mt-1">
-                    {{ submission.description|rich_text }}
+                    {{ display_submission.description|rich_text }}
                 </div>
             </div>
         {% endif %}
 
-        {% if submission.notes %}
+        {% if display_submission.notes %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Notes" %}</label>
                 <div class="col-md-9 mt-1">
-                    {{ submission.notes|rich_text }}
+                    {{ display_submission.notes|rich_text }}
                 </div>
             </div>
         {% endif %}
 
-        {% if submission.internal_notes %}
+        {% if not anonymise and submission.internal_notes %}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Internal notes" %}</label>
                 <div class="col-md-9 mt-1">
@@ -149,8 +149,8 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label">{% translate "Session image" %}</label>
                 <div class="col-md-9 mt-1">
-                    <a href="{{ submission.image.url }}" target="_blank">
-                        <img src="{{ submission.image.url }}" alt="{{ submission.title }}">
+                    <a href="{{ submission.image.url }}" data-lightbox>
+                        <img width="100px" src="{{ submission.image|thumbnail:"default" }}" alt="{{ submission.title }}">
                     </a>
                 </div>
             </div>
@@ -162,13 +162,14 @@
                 <div class="col-md-9 mt-1">
                     <ul class="list-unstyled">
                         {% for resource in submission.active_resources %}
-                            <li class="mb-2">
+                            <li class="custom-field-item">
                                 {% if resource.link %}
                                     <i class="fa fa-link"></i>
                                     <a href="{{ resource.link }}" target="_blank">{{ resource.description }}</a>
                                 {% else %}
                                     <i class="fa fa-paperclip"></i>
-                                    <a href="{{ resource.resource.url }}" target="_blank">{{ resource.description }}</a>
+                                    <a href="{{ resource.resource.url }}" target="_blank">{{ resource.description|default:resource.filename }}</a>
+                                    ({{ resource.resource.size|filesizeformat }})
                                 {% endif %}
                             </li>
                         {% endfor %}
@@ -182,8 +183,8 @@
                 <label class="col-md-3 col-form-label">{{ phrases.cfp.custom_fields }}</label>
                 <div class="col-md-9">
                     {% for field in questions_form %}
-                        <div class="mb-3">
-                            <strong>{{ field.label }}</strong>
+                        <div class="custom-field-item">
+                            <strong class="custom-field-label">{{ field.label }}</strong>
                             <div class="mt-1">
                                 {% if field.field.answer %}
                                     {% if field.field.widget.input_type == 'checkbox' %}
