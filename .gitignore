@@ -53,7 +53,7 @@ src/production_settings.py
 
 # enext specific
 eventyay/config/static.dist
-app/eventyay/static/CACHE
+src/eventyay/static/CACHE
 
 # .env files
 .env.dev
@@ -75,7 +75,7 @@ node_modules
 dist
 dist-ssr
 
-app/eventyay/data
+data
 
 # AI history
 *.aider.*

@@ -5,7 +5,6 @@
 .secrets
 .env
 eventyay/static.dist
-eventyay/data
 *.egg-info
 **/__pycache__
 **/node_modules

@@ -1,0 +1,4 @@
+$(function(){var popup_window=null
+var popup_check_interval=null
+$("#join-event-link").on("click",function(e){e.preventDefault();var url=$(this).attr('href');$.ajax({"method":"GET","url":url,"success":function(json){if(json.redirect_url){window.location.href=json.redirect_url;}},"error":function(jqXHR,textStatus,errorThrown){if(jqXHR.responseText==='user_not_allowed'){$("body").addClass("has-join-popup")
+$("#join-video-popupmodal").removeAttr("hidden");}}});});$('#join-online-close-button').click(function(){$('#join-video-popupmodal').attr('hidden','true');$("body").removeClass("has-join-popup")});});

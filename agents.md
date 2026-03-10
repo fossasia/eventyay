@@ -12,12 +12,12 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 
 ## Verified Project Facts
 
-- Runtime baseline is Python 3.12 (`app/pyproject.toml`).
+- Runtime baseline is Python 3.12 (`pyproject.toml` at the repository root).
 - Core stack: Django 5.2+, PostgreSQL, Redis, Celery, Channels, Vue 3.
 - Primary development paths:
-  - `app/eventyay/` for product code
-  - `app/tests/` for tests
-  - `doc/` for documentation
+ - `src/eventyay/` for product code
+ - `tests/` for tests
+ - `docs/` for documentation
 - Legacy product names (`pretix`, `pretalx`, `venueless`) are historical references only.
 - If top-level legacy directories such as `talk/`, `video/`, or `src/` appear in a branch, treat them as reference-only unless explicitly requested.
 
@@ -42,22 +42,22 @@ Always apply the matching scoped rule file before editing:
 
 ## Verified Commands
 
-Run from `app/` unless noted:
+Run from the repository root unless noted:
 
 - Install deps: `uv sync --all-extras --all-groups`
 - Activate venv: `. .venv/bin/activate`
-- Migrate DB: `python manage.py migrate`
-- Run dev server: `python manage.py runserver`
-- Run Celery worker: `celery -A eventyay worker -l info`
+- Migrate DB: `uv run python manage.py migrate`
+- Run dev server: `uv run python manage.py runserver`
+- Run Celery worker: `uv run celery -A eventyay worker -l info`
 - Build assets (dev): `make staticfiles`
 - Build assets (prod): `make production`
-- Test suite: `pytest tests/`
+- Test suite: `uv run pytest tests/`
 
 ## Agent Checklist
 
 Before submitting changes:
 
-1. Confirm edited files are in the intended path (`app/eventyay/`, `app/tests/`, or explicitly requested paths).
+1. Confirm edited files are in the intended path (`src/eventyay/`, `tests/`, or explicitly requested paths).
 2. Confirm imports and namespaces follow `eventyay.*` conventions.
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
