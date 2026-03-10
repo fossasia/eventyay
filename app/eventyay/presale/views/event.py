@@ -1,6 +1,7 @@
 import calendar
 import datetime as dt
 import importlib.util
+import json
 import logging
 import sys
 from collections import defaultdict
@@ -18,12 +19,14 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
     Exists,
+    F,
     IntegerField,
     OuterRef,
     Prefetch,
     Q,
     Value,
 )
+from django.db.models.expressions import OrderBy
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -35,13 +38,18 @@ from django.utils.translation import pgettext_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
+from django_scopes import scope
+from i18nfield.utils import I18nJSONEncoder
+
+from eventyay.agenda.views.utils import escape_json_for_script
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
-    ProductVariation,
     Order,
+    ProductVariation,
     Quota,
     SeatCategoryMapping,
+    SpeakerProfile,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
@@ -73,6 +81,7 @@ from . import (
     get_cart,
     iframe_entry_view_wrapper,
 )
+
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -597,6 +606,123 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         context['event_name'] = event_name
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
+        context['featured_speakers'] = []
+        context['featured_speakers_widget_schedule'] = None
+        context['featured_speakers_widget_schedule_json'] = ''
+
+        event = self.request.event
+        with scope(event=event):
+            featured_speakers = list(
+                SpeakerProfile.objects.filter(
+                    event=event,
+                    is_featured=True,
+                )
+                .select_related('user')
+                .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
+            )
+
+        if featured_speakers:
+            context['featured_speakers'] = featured_speakers
+
+            featured_codes = {profile.user.code for profile in featured_speakers if profile.user_id}
+
+            schedule = event.current_schedule or getattr(event, 'wip_schedule', None)
+            can_view_schedule = (
+                bool(schedule)
+                and (
+                    self.request.user.has_perm('base.view_widget_schedule', event)
+                    or event.talks_published
+                )
+            )
+
+            if schedule and can_view_schedule:
+                with scope(event=event):
+                    schedule_data = schedule.build_data(all_talks=not schedule.version)
+
+                schedule_speakers = list(schedule_data.get('speakers', []) or [])
+                schedule_speaker_codes = {s.get('code') for s in schedule_speakers if isinstance(s, dict)}
+                include_avatar = event.cfp.request_avatar
+                for speaker_profile in featured_speakers:
+                    if not speaker_profile.user_id:
+                        continue
+                    user = speaker_profile.user
+                    if user.code in schedule_speaker_codes:
+                        continue
+                    schedule_speakers.append(
+                        {
+                            'code': user.code,
+                            'name': user.fullname or None,
+                            'biography': speaker_profile.biography or '',
+                            'avatar': (user.get_avatar_url(event=event) if include_avatar else None),
+                            'avatar_thumbnail_default': (
+                                user.get_avatar_url(event=event, thumbnail='default') if include_avatar else None
+                            ),
+                            'avatar_thumbnail_tiny': (
+                                user.get_avatar_url(event=event, thumbnail='tiny') if include_avatar else None
+                            ),
+                            'is_featured': True,
+                            'featured_position': speaker_profile.position,
+                        }
+                    )
+                schedule_data['speakers'] = schedule_speakers
+
+                all_talks_list = list(schedule_data.get('talks', []) or [])
+                filtered_talks = [
+                    t
+                    for t in all_talks_list
+                    if featured_codes.intersection(set(t.get('speakers') or []))
+                ]
+                schedule_data['talks'] = filtered_talks
+
+                track_ids = {t.get('track') for t in schedule_data['talks'] if t.get('track') is not None}
+                room_ids = {t.get('room') for t in schedule_data['talks'] if t.get('room') is not None}
+                schedule_data['tracks'] = [
+                    tr for tr in schedule_data.get('tracks', []) if tr.get('id') in track_ids
+                ]
+                schedule_data['rooms'] = [
+                    rm for rm in schedule_data.get('rooms', []) if rm.get('id') in room_ids
+                ]
+                context['featured_speakers_widget_schedule'] = schedule_data
+                context['featured_speakers_widget_schedule_json'] = escape_json_for_script(
+                    json.dumps(schedule_data, cls=I18nJSONEncoder)
+                )
+            else:
+                include_avatar = event.cfp.request_avatar
+                widget_speakers = []
+                for speaker_profile in featured_speakers:
+                    if not speaker_profile.user_id:
+                        continue
+                    user = speaker_profile.user
+                    widget_speakers.append(
+                        {
+                            'code': user.code,
+                            'name': user.fullname or None,
+                            'biography': speaker_profile.biography or '',
+                            'avatar': (user.get_avatar_url(event=event) if include_avatar else None),
+                            'avatar_thumbnail_default': (
+                                user.get_avatar_url(event=event, thumbnail='default') if include_avatar else None
+                            ),
+                            'avatar_thumbnail_tiny': (
+                                user.get_avatar_url(event=event, thumbnail='tiny') if include_avatar else None
+                            ),
+                            'is_featured': True,
+                            'featured_position': speaker_profile.position,
+                        }
+                    )
+                context['featured_speakers_widget_schedule'] = {
+                    'talks': [],
+                    'speakers': widget_speakers,
+                    'tracks': [],
+                    'rooms': [],
+                    'version': '',
+                    'timezone': event.timezone,
+                    'event_start': event.date_from.isoformat(),
+                    'event_end': event.date_to.isoformat(),
+                    'content_locales': event.content_locales,
+                }
+                context['featured_speakers_widget_schedule_json'] = escape_json_for_script(
+                    json.dumps(context['featured_speakers_widget_schedule'], cls=I18nJSONEncoder)
+                )
 
         return context
 

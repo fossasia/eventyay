@@ -11,10 +11,12 @@ from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Count
 from django.db.utils import DatabaseError
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
+from django_scopes import scope
 from i18nfield.fields import I18nTextField
 
 from eventyay.agenda.tasks import export_schedule_html
@@ -29,7 +31,10 @@ from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from .mixins import PretalxModel
+from .stream_schedule import StreamSchedule
 from .submission import SubmissionFavourite
+
+from datetime import timezone as dt_timezone
 
 
 @lru_cache(maxsize=512)
@@ -623,6 +628,41 @@ class Schedule(PretalxModel):
                 'submission__answers__options',
             )
         talks = talks.order_by('start')
+
+        popularity_enabled = bool(self.event.feature_flags.get('session_popularity_enabled', False))
+        show_popularity_calendar = bool(self.event.feature_flags.get('session_popularity_show_on_calendar', True))
+        show_popularity_list = bool(self.event.feature_flags.get('session_popularity_show_on_list', True))
+
+        talk_list = list(talks)
+        fav_counts: dict[str, int] = {}
+        if popularity_enabled:
+            submission_codes = [t.submission.code for t in talk_list if t.submission]
+            if submission_codes:
+                with scope(event=self.event):
+                    fav_counts = {
+                        row['submission__code']: row['count']
+                        for row in SubmissionFavourite.objects.filter(
+                            submission__event=self.event,
+                            submission__code__in=submission_codes,
+                        )
+                        .values('submission__code')
+                        .annotate(count=Count('id'))
+                    }
+        # Pre-fetch all stream schedules for this event's rooms.
+        # Attach stream URL if a stream schedule overlaps this talk's time and room.
+        with scope(event=self.event):
+            stream_schedules = (
+                StreamSchedule.objects.filter(
+                    room__event=self.event,
+                )
+                .select_related('room')
+                .only('room_id', 'start_time', 'end_time', 'url', 'stream_type')
+                .order_by('start_time')
+            )
+        stream_schedules_by_room = defaultdict(list)
+        for ss in stream_schedules:
+            if ss.room_id and ss.start_time and ss.end_time:
+                stream_schedules_by_room[ss.room_id].append(ss)
         rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks = set()
         speakers = set()
@@ -632,11 +672,17 @@ class Schedule(PretalxModel):
             'timezone': self.event.timezone,
             'event_start': self.event.date_from.isoformat(),
             'event_end': self.event.date_to.isoformat(),
+            'content_locales': self.event.content_locales,
+            'feature_flags': {
+                'session_popularity_enabled': popularity_enabled,
+                'session_popularity_show_on_calendar': show_popularity_calendar,
+                'session_popularity_show_on_list': show_popularity_list,
+            },
         }
         show_do_not_record = self.event.cfp.request_do_not_record
         base_url = str(self.event.urls.base)
         full_base_url = str(self.event.urls.base.full())
-        for talk in talks:
+        for talk in talk_list:
             # Only add room if it's not deleted
             if talk.room and not talk.room.deleted:
                 rooms.add(talk.room)
@@ -659,11 +705,45 @@ class Schedule(PretalxModel):
                     'duration': talk.submission.get_duration(),
                     'updated': talk.updated.isoformat(),
                     'state': talk.submission.state if all_talks else None,
-                    'fav_count': (count_fav_talk(talk.submission.code) if talk.submission else 0),
+                    'fav_count': (
+                        fav_counts.get(talk.submission.code, 0)
+                        if (popularity_enabled and talk.submission)
+                        else 0
+                    ),
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                     'tags': talk.submission.get_tag(),
                     'session_type': talk.submission.submission_type.name,
+                    'content_locale': talk.submission.content_locale,
                 }
+                # Attach stream URL if a stream schedule overlaps this slot.
+                if talk.room_id and talk.start and talk.end:
+                    schedules = stream_schedules_by_room.get(talk.room_id)
+                    if schedules:
+                        slot_start = talk.start
+                        slot_end = talk.end
+                        if timezone.is_naive(slot_start):
+                            slot_start = timezone.make_aware(slot_start, timezone.get_current_timezone())
+                        if timezone.is_naive(slot_end):
+                            slot_end = timezone.make_aware(slot_end, timezone.get_current_timezone())
+                        slot_start = slot_start.astimezone(dt_timezone.utc)
+                        slot_end = slot_end.astimezone(dt_timezone.utc)
+
+                        match = None
+                        for ss in schedules:
+                            ss_start = ss.start_time
+                            ss_end = ss.end_time
+                            if timezone.is_naive(ss_start):
+                                ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
+                            if timezone.is_naive(ss_end):
+                                ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
+                            ss_start = ss_start.astimezone(dt_timezone.utc)
+                            ss_end = ss_end.astimezone(dt_timezone.utc)
+                            if ss_start < slot_end and ss_end > slot_start:
+                                match = ss
+                                break
+                        if match:
+                            talk_data['stream_url'] = match.url
+                            talk_data['stream_type'] = match.stream_type
                 if enrich:
                     talk_data['resources'] = [
                         {
@@ -750,13 +830,15 @@ class Schedule(PretalxModel):
             for room in self.event.rooms.all()
             if room in rooms
         ]
+
         include_avatar = self.event.cfp.request_avatar
         speaker_list = []
         for user in speakers:
+            profile = user.event_profile(self.event)
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
-                'biography': getattr(user.event_profile(self.event), 'biography', ''),
+                'biography': getattr(profile, 'biography', ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None
@@ -764,6 +846,8 @@ class Schedule(PretalxModel):
                 'avatar_thumbnail_tiny': (
                     user.get_avatar_url(event=self.event, thumbnail='tiny') if include_avatar else None
                 ),
+                'is_featured': bool(getattr(profile, 'is_featured', False)),
+                'featured_position': getattr(profile, 'position', None),
             }
             if enrich:
                 spk_base = f'{base_url}speakers/{user.code}'

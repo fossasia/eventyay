@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 def get_url(operation, params, base_url, secret):
     encoded = urlencode(params)
     payload = operation + encoded + secret
-    checksum = hashlib.sha1(payload.encode()).hexdigest()
+    checksum = hashlib.sha256(payload.encode()).hexdigest()
     return urljoin(
         base_url, "api/" + operation + "?" + encoded + "&checksum=" + checksum
     )
