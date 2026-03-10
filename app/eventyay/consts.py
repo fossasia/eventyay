@@ -23,6 +23,14 @@ DEFAULT_PLUGINS = (
 # Email configuration constants
 EVENTYAY_EMAIL_NONE_VALUE = 'info@eventyay.com'
 
+# Stripe webhook URL paths.
+# STRIPE_WEBHOOK_PATH is the canonical backend path, mounted under /api/v1/ in config/urls.py.
+# STRIPE_WEBHOOK_LEGACY_PATH is the legacy path currently configured in the Stripe dashboard.
+# TODO (#2463): Remove STRIPE_WEBHOOK_LEGACY_PATH and its URL alias in config/urls.py once
+#              the Stripe dashboard endpoint has been updated to the canonical path.
+STRIPE_WEBHOOK_PATH = 'webhook/stripe'
+STRIPE_WEBHOOK_LEGACY_PATH = '_stripe/webhook'
+
 class SizeKey(StrEnum):
     UPLOAD_SIZE_CSV = "upload_size_csv"
     UPLOAD_SIZE_IMAGE = "upload_size_image"
