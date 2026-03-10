@@ -13,7 +13,7 @@
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
 	.join-error(
-	v-if="joinErrorKey",
+	v-if="joinErrorKey && !background",
 	role="alert",
 	aria-live="polite",
 	@click="joinErrorKey = null"
