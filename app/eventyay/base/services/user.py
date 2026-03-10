@@ -243,12 +243,15 @@ def create_user(
 def update_user(
     event_id, id, *, traits=None, data=None, is_admin=False, serialize=True
 ):
-    # TODO: Exception handling
-    user = (
-        User.objects.select_related("event")
-        .select_for_update()
-        .get(id=id, event_id=event_id)
-    )
+    try:
+        user = (
+            User.objects.select_related("event")
+            .select_for_update()
+            .get(id=id, event_id=event_id)
+        )
+    except User.DoesNotExist:
+        logger.warning("update_user called with non-existent user id=%s event_id=%s", id, event_id)
+        return None
 
     if traits is not None:
         if user.traits != traits:
