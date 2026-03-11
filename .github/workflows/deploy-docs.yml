@@ -67,7 +67,7 @@ jobs:
       - name: Build documentation
         working-directory: ./docs
         run: |
-          ./.venv/bin/sphinx-build -b html -d _build/doctrees . _build/html
+          ../.venv/bin/sphinx-build -b html -d _build/doctrees . _build/html
 
       - name: Prepare deployment
         if: github.event_name == 'push'

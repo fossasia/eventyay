@@ -34,5 +34,5 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --group docs
       - name: Spellcheck docs
-        run: ./.venv/bin/sphinx-build -b spelling -d _build/doctrees . _build/spelling
+        run: ../.venv/bin/sphinx-build -b spelling -d _build/doctrees . _build/spelling
         working-directory: ./docs

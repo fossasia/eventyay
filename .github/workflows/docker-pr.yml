@@ -17,6 +17,7 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
+          file: ./app/Dockerfile.prod
           push: false
           tags: eventyay-ticket:${{ github.sha }}
           build-args: GITHUB_TOKEN=${{ secrets.EVENTYAY_TOKEN }}
