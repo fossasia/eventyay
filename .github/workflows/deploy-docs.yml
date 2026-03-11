@@ -63,19 +63,18 @@ jobs:
 
       - name: Install Python dependencies
         run: uv sync --group docs
-        working-directory: ./app
 
       - name: Build documentation
-        working-directory: ./doc
+        working-directory: ./docs
         run: |
-          ../app/.venv/bin/sphinx-build -b html -d _build/doctrees . _build/html
+          ./.venv/bin/sphinx-build -b html -d _build/doctrees . _build/html
 
       - name: Prepare deployment
         if: github.event_name == 'push'
         run: |
           mkdir -p _site
-          cp -r doc/_build/html/* _site/
-          cp doc/CNAME _site/
+          cp -r docs/_build/html/* _site/
+          cp docs/CNAME _site/
           touch _site/.nojekyll
           ls -la _site/
 

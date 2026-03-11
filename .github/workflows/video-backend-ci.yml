@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: app/eventyay/webapp/video
+        working-directory: webapps/video
     steps:
       - uses: actions/checkout@v4
 
@@ -68,7 +68,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: app/eventyay/webapp/video/package-lock.json
+          cache-dependency-path: webapps/video/package-lock.json
 
       - name: Install dependencies
         run: npm ci
