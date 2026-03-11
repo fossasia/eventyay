@@ -277,9 +277,9 @@ def base_placeholders(sender, **kwargs):
             'jane@example.org',
             _('The addressed user’s email address'),
         ),
+        # AFTER:
         *placeholder_aliases(
-            # TODO: remove alias in 2026, maybe
-            ['speaker_schedule_new', 'notifications'],
+            ['notifications'],
             ['user', 'event'],
             lambda user, event: render_notifications(
                 get_current_notifications(user, event),
