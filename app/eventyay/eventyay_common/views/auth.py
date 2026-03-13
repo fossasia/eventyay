@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 
 def _order_login_providers(login_providers):
-    """Return login_providers as an ordered dict with preferred provider first."""
+    """Return login_providers as a dict with the preferred provider first."""
     if not login_providers:
         return login_providers
     preferred = _get_preferred_provider(login_providers)
