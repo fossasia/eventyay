@@ -39,7 +39,7 @@ def _renderer(event, layout):
         bgf = default_storage.open(layout.background.name, 'rb')
     else:
         bgf = open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
-    return Renderer(event, json.loads(layout.layout), bgf)
+    return Renderer(event, json.loads(layout.layout), bgf, auto_inject_validity=False)
 
 
 OPTIONS = OrderedDict(

@@ -386,6 +386,9 @@ class ProductCreateForm(I18nModelForm):
                 'hidden_if_available',
                 'require_bundling',
                 'checkin_attention',
+                'validity_mode',
+                'validity_fixed_from',
+                'validity_fixed_until',
             )
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
@@ -578,8 +581,18 @@ class ProductUpdateForm(I18nModelForm):
         )
         self.fields['category'].widget.choices = self.fields['category'].choices
 
+        # Pre-fill validity dates with event dates when not yet set
+        event = self.instance.event
+        if not self.instance.validity_fixed_from and event.date_from:
+            self.initial['validity_fixed_from'] = event.date_from
+        if not self.instance.validity_fixed_until and getattr(event, 'date_to', None):
+            self.initial['validity_fixed_until'] = event.date_to
+
     def clean(self):
         d = super().clean()
+        if d.get('validity_mode') != 'fixed':
+            d['validity_fixed_from'] = None
+            d['validity_fixed_until'] = None
         if d['issue_giftcard']:
             if d['tax_rule'] and d['tax_rule'].rate > 0:
                 self.add_error(
@@ -593,6 +606,14 @@ class ProductUpdateForm(I18nModelForm):
                     'admission',
                     _('Gift card products should not be admission products at the same time.'),
                 )
+        validity_errors = Product.clean_validity(
+            d.get('validity_mode', ''),
+            d.get('validity_fixed_from'),
+            d.get('validity_fixed_until'),
+            event=self.instance.event,
+        )
+        for field, msg in validity_errors.items():
+            self.add_error(field, msg)
         return d
 
     def save(self, *args, **kwargs):
@@ -638,15 +659,24 @@ class ProductUpdateForm(I18nModelForm):
             'show_quota_left',
             'hidden_if_available',
             'issue_giftcard',
+            'validity_mode',
+            'validity_fixed_from',
+            'validity_fixed_until',
         ]
         field_classes = {
             'available_from': SplitDateTimeField,
             'available_until': SplitDateTimeField,
+            'validity_fixed_from': SplitDateTimeField,
+            'validity_fixed_until': SplitDateTimeField,
             'hidden_if_available': SafeModelChoiceField,
         }
         widgets = {
             'available_from': SplitDateTimePickerWidget(),
             'available_until': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_available_from_0'}),
+            'validity_fixed_from': SplitDateTimePickerWidget(),
+            'validity_fixed_until': SplitDateTimePickerWidget(
+                attrs={'data-date-after': '#id_validity_fixed_from_0'}
+            ),
             'generate_tickets': TicketNullBooleanSelect(),
             'show_quota_left': ShowQuotaNullBooleanSelect(),
         }

@@ -4,6 +4,7 @@ from functools import partial, reduce
 import dateutil
 import dateutil.parser
 from django.core.files import File
+from django.utils.formats import date_format
 from django.db import transaction
 from django.db.models import (
     BooleanField,
@@ -453,6 +454,26 @@ def perform_checkin(
             logic = get_logic_environment(op.subevent or clist.event)
             if not logic.apply(clist.rules, rule_data):
                 raise CheckInError(_('This entry is not permitted due to custom rules.'), 'rules')
+
+        if type == Checkin.TYPE_ENTRY and not force:
+            product = op.product
+            if getattr(product, 'validity_mode', '') == 'fixed':
+                if product.validity_fixed_from and dt < product.validity_fixed_from:
+                    raise CheckInError(
+                        _('This ticket is not yet valid (valid from %(from)s, current time %(now)s).') % {
+                            'from': date_format(product.validity_fixed_from, 'SHORT_DATETIME_FORMAT'),
+                            'now': date_format(dt, 'SHORT_DATETIME_FORMAT'),
+                        },
+                        'invalid_time',
+                    )
+                if product.validity_fixed_until and dt > product.validity_fixed_until:
+                    raise CheckInError(
+                        _('This ticket is no longer valid (valid until %(until)s, current time %(now)s).') % {
+                            'until': date_format(product.validity_fixed_until, 'SHORT_DATETIME_FORMAT'),
+                            'now': date_format(dt, 'SHORT_DATETIME_FORMAT'),
+                        },
+                        'invalid_time',
+                    )
 
         device = None
         if isinstance(auth, Device):
