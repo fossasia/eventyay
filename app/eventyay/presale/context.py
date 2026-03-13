@@ -1,3 +1,4 @@
+import json
 import logging
 
 from django.conf import settings
@@ -131,10 +132,36 @@ def _default_context(request):
         ctx['event'] = request.event
         ctx['languages'] = [_safe_language_info(code) for code in request.event.settings.locales]
 
+        # Add theme data to context
+        try:
+            from eventyay.eventyay_common.models import EventTheme
+            event_theme = EventTheme.objects.filter(event=request.event).first()
+            if event_theme:
+                ctx['event_theme'] = event_theme
+                ctx['event_theme_tokens'] = json.dumps(event_theme.get_effective_tokens())
+                ctx['event_theme_color_mode'] = event_theme.color_mode
+                if event_theme.is_active and event_theme.custom_css:
+                    ctx['event_theme_custom_css'] = event_theme.custom_css
+        except Exception:
+            pass
+
         if request.resolver_match:
             ctx['cart_namespace'] = request.resolver_match.kwargs.get('cart_namespace', '')
     elif hasattr(request, 'organizer'):
         ctx['languages'] = [_safe_language_info(code) for code in request.organizer.settings.locales]
+        
+        # Add organizer theme data to context
+        try:
+            from eventyay.eventyay_common.models import OrganizerTheme
+            organizer_theme = OrganizerTheme.objects.filter(organizer=request.organizer).first()
+            if organizer_theme:
+                ctx['organizer_theme'] = organizer_theme
+                ctx['organizer_theme_tokens'] = json.dumps(
+                    organizer_theme.get_effective_tokens()
+                )
+                ctx['organizer_theme_color_mode'] = organizer_theme.color_mode
+        except Exception:
+            pass
 
     if hasattr(request, 'organizer'):
         if request.organizer.settings.presale_css_file and not hasattr(request, 'event'):

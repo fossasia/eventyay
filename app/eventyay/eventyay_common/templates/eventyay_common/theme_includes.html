@@ -1,0 +1,100 @@
+{% comment %}
+Theme-aware base template includes and initialization.
+
+This template snippet should be included in your base template to enable
+the token-based theming system across your application.
+{% endcomment %}
+
+{% load static %}
+
+{# Include theme styles and CSS variables #}
+<link rel="stylesheet" href="{% static 'css/theme-tokens.css' %}">
+{% if event_theme_custom_css %}
+  <style id="event-theme-custom-css">{{ event_theme_custom_css|safe }}</style>
+{% endif %}
+
+{# Theme initialization script #}
+<script type="module">
+  import { themeManager, loadEventTheme, loadOrganizerTheme } from '{% static "js/theme.js" %}';
+
+  // Initialize theme system
+  (async () => {
+    const inlineTokens = {% if event_theme_tokens %}{{ event_theme_tokens|safe }}{% elif organizer_theme_tokens %}{{ organizer_theme_tokens|safe }}{% else %}null{% endif %};
+    const inlineColorMode = {% if event_theme_color_mode %}'{{ event_theme_color_mode|escapejs }}'{% elif organizer_theme_color_mode %}'{{ organizer_theme_color_mode|escapejs }}'{% else %}null{% endif %};
+
+    // Apply inline context tokens first so public pages render with saved theme
+    // even if API is temporarily unavailable.
+    if (inlineTokens && typeof inlineTokens === 'object') {
+      themeManager.loadTheme(inlineTokens);
+      if (inlineColorMode) {
+        themeManager.setColorMode(inlineColorMode);
+      }
+    }
+
+    const initialOrganizer = {% if request.event %}'{{ request.event.organizer.slug|escapejs }}'{% elif request.organizer %}'{{ request.organizer.slug|escapejs }}'{% else %}null{% endif %};
+    const initialEvent = {% if request.event %}'{{ request.event.slug|escapejs }}'{% else %}null{% endif %};
+
+    const getContext = () => {
+      const organizer = initialOrganizer || document.body?.dataset?.organizerSlug || null;
+      const event = initialEvent || document.body?.dataset?.eventSlug || null;
+      return { organizer, event };
+    };
+
+    const { organizer, event } = getContext();
+
+    console.log('Theme initialization', { organizer, event });
+
+    // Load event/organizer-specific theme if available
+    if (organizer && event) {
+      try {
+        await loadEventTheme(organizer, event);
+        console.log('Theme loaded successfully from API');
+      } catch (error) {
+        console.error('Failed to load theme from API:', error);
+      }
+    } else if (organizer) {
+      try {
+        // Organizer pages do not have an event slug.
+        await loadOrganizerTheme(organizer);
+        console.log('Organizer theme loaded successfully from API');
+      } catch (error) {
+        console.error('Failed to load organizer theme from API:', error);
+      }
+    } else {
+      console.warn('Could not determine organizer/event context from page attributes');
+    }
+
+    // Check for theme toggle in UI
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+      themeToggle.addEventListener('change', (e) => {
+        const mode = e.target.checked ? 'dark' : 'light';
+        themeManager.setColorMode(mode);
+        console.log('Theme mode changed to:', mode);
+      });
+    }
+
+    // Watch for navigation and reload theme if needed.
+    let lastOrganizer = organizer;
+    let lastEvent = event;
+    
+    const checkAndReloadTheme = async () => {
+      const { organizer: currentOrganizer, event: currentEvent } = getContext();
+      
+      if ((currentOrganizer !== lastOrganizer || currentEvent !== lastEvent) && currentOrganizer) {
+        console.log('Organization/event changed, reloading theme', { currentOrganizer, currentEvent });
+        lastOrganizer = currentOrganizer;
+        lastEvent = currentEvent;
+        if (currentEvent) {
+          await loadEventTheme(currentOrganizer, currentEvent);
+        } else {
+          await loadOrganizerTheme(currentOrganizer);
+        }
+      }
+    };
+
+    // Check on popstate/back-forward cache restoration.
+    window.addEventListener('popstate', checkAndReloadTheme);
+    window.addEventListener('pageshow', checkAndReloadTheme);
+  })();
+</script>

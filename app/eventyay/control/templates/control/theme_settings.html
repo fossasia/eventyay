@@ -1,0 +1,349 @@
+{% extends "control/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Theme Settings" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1>{% trans "Theme Settings" %}</h1>
+      <p class="text-muted">
+        {% trans "Customize the appearance of your event with design tokens and branding options." %}
+      </p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <form method="post" class="theme-form">
+        {% csrf_token %}
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            {{ form.errors }}
+          </div>
+        {% endif %}
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">{% trans "Quick Theme Colors" %}</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-4">
+              <label class="form-label">{% trans "Color Mode" %}</label>
+              <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="color_mode" id="light-mode" value="light" {% if form.color_mode.value == "light" %}checked{% endif %}>
+                <label class="btn btn-outline-secondary" for="light-mode">{% trans "Light" %}</label>
+
+                <input type="radio" class="btn-check" name="color_mode" id="dark-mode" value="dark" {% if form.color_mode.value == "dark" %}checked{% endif %}>
+                <label class="btn btn-outline-secondary" for="dark-mode">{% trans "Dark" %}</label>
+
+                <input type="radio" class="btn-check" name="color_mode" id="auto-mode" value="auto" {% if form.color_mode.value == "auto" %}checked{% endif %}>
+                <label class="btn btn-outline-secondary" for="auto-mode">{% trans "Auto" %}</label>
+              </div>
+              <small class="form-text text-muted mt-2">
+                {% trans "Choose how color mode is selected: Light/Dark for fixed mode, Auto to follow system preference." %}
+              </small>
+            </div>
+
+            <div class="mb-4">
+              <label for="primary_color" class="form-label">{% trans "Primary Color" %}</label>
+              <div class="input-group">
+                <input type="color" class="form-control form-control-color" id="primary_color" name="primary_color" value="{{ form.primary_color.value|default:'#EB2188' }}" style="width: 60px;">
+                <input type="text" class="form-control" id="primary_color_text" name="primary_color_text" value="{{ form.primary_color.value|default:'#EB2188' }}" placeholder="#EB2188">
+              </div>
+              <small class="form-text text-muted">
+                {% trans "Your brand's primary color used for buttons, links, and highlights." %}
+              </small>
+            </div>
+
+            <div class="mb-4">
+              <label for="secondary_color" class="form-label">{% trans "Secondary Color" %}</label>
+              <div class="input-group">
+                <input type="color" class="form-control form-control-color" id="secondary_color" name="secondary_color" value="{{ form.secondary_color.value|default:'#3B82F6' }}" style="width: 60px;">
+                <input type="text" class="form-control" id="secondary_color_text" name="secondary_color_text" value="{{ form.secondary_color.value|default:'#3B82F6' }}" placeholder="#3B82F6">
+              </div>
+              <small class="form-text text-muted">
+                {% trans "Secondary accent color for additional UI elements." %}
+              </small>
+            </div>
+
+            <div class="mb-4">
+              <label for="description" class="form-label">{% trans "Theme Description" %}</label>
+              <textarea class="form-control" id="description" name="description" rows="3" placeholder="{% trans 'Internal notes about this theme configuration...' %}">{{ form.description.value }}</textarea>
+              <small class="form-text text-muted">
+                {% trans "Optional internal notes to help you remember why you configured this theme." %}
+              </small>
+            </div>
+
+            <div class="form-check mb-3">
+              <input type="checkbox" class="form-check-input" id="inherit_organizer_theme" name="inherit_organizer_theme" {% if form.inherit_organizer_theme.value %}checked{% endif %}>
+              <label class="form-check-label" for="inherit_organizer_theme">{% trans "Inherit organizer theme" %}</label>
+            </div>
+
+            <div class="form-check mb-0">
+              <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if form.is_active.value %}checked{% endif %}>
+              <label class="form-check-label" for="is_active">{% trans "Theme is active" %}</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <a class="text-decoration-none" data-toggle="collapse" href="#advanced-options" aria-expanded="false">
+                {% trans "Advanced Options" %}
+              </a>
+            </h5>
+          </div>
+          <div id="advanced-options" class="collapse">
+            <div class="card-body">
+              <div class="mb-4">
+                <label for="custom_css" class="form-label">{% trans "Custom CSS" %}</label>
+                <textarea class="form-control font-monospace" id="custom_css" name="custom_css" rows="6" data-editor="css" placeholder="/* Custom CSS rules */&#10;.custom-class { color: red; }">{{ form.custom_css.value }}</textarea>
+                <small class="form-text text-muted">
+                  {% trans "Add custom CSS rules that will be applied to this event." %}
+                </small>
+              </div>
+
+              <div class="mb-0">
+                <h6>{% trans "Theme Import/Export" %}</h6>
+                <p class="text-muted small">
+                  {% trans "Save your theme configuration as JSON for backup or sharing." %}
+                </p>
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-outline-secondary" id="export-btn">{% trans "Export as JSON" %}</button>
+                  <button type="button" class="btn btn-outline-secondary" id="import-btn">{% trans "Import from JSON" %}</button>
+                </div>
+                <input type="file" id="theme-file-input" style="display: none;" accept=".json">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mb-4">
+          <button type="submit" class="btn btn-primary">{% trans "Save Theme" %}</button>
+          <button type="reset" class="btn btn-default">{% trans "Reset" %}</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="sticky-top" style="top: 20px;">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">{% trans "Live Preview" %}</h5>
+          </div>
+          <div class="card-body" id="theme-preview">
+            <div style="background-color: var(--color-primary, #EB2188); color: white; padding: 12px; border-radius: 4px; margin-bottom: 16px;">
+              <h6 class="mb-0">{% trans "Header Preview" %}</h6>
+            </div>
+
+            <div class="mb-4">
+              <p class="small text-muted">{% trans "Buttons" %}</p>
+              <button class="btn btn-primary btn-sm me-2" style="background-color: var(--color-primary, #EB2188);">{% trans "Primary" %}</button>
+              <button class="btn btn-outline-secondary btn-sm">{% trans "Secondary" %}</button>
+            </div>
+
+            <div class="mb-4">
+              <p class="small text-muted">{% trans "Text Colors" %}</p>
+              <p style="color: var(--color-text, #111827);">{% trans "Primary text color example" %}</p>
+              <p style="color: var(--color-text-secondary, #6B7280);">{% trans "Secondary text color example" %}</p>
+            </div>
+
+            <div class="mb-4">
+              <p class="small text-muted">{% trans "Color Palette" %}</p>
+              <div class="row g-2">
+                <div class="col-4">
+                  <div class="bg-primary rounded" style="height: 50px; background-color: var(--color-primary, #EB2188);" title="Primary"></div>
+                  <small class="mt-1 text-muted">{% trans "Primary" %}</small>
+                </div>
+                <div class="col-4">
+                  <div class="bg-secondary rounded" style="height: 50px; background-color: var(--color-secondary, #3B82F6);" title="Secondary"></div>
+                  <small class="mt-1 text-muted">{% trans "Secondary" %}</small>
+                </div>
+                <div class="col-4">
+                  <div class="rounded" style="height: 50px; background-color: var(--color-success, #10B981); border: 1px solid #e0e0e0;" title="Success"></div>
+                  <small class="mt-1 text-muted">{% trans "Success" %}</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-info small mb-0">
+              {% trans "Colors will update in real-time as you adjust the settings." %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+
+  // Get form field elements
+  const form = document.querySelector('.theme-form');
+  const primaryColorInput = document.getElementById('primary_color');
+  const secondaryColorInput = document.getElementById('secondary_color');
+  const colorModeInputs = document.querySelectorAll('input[name="color_mode"]');
+  const inheritOrgThemeInput = document.getElementById('inherit_organizer_theme');
+  const isActiveInput = document.getElementById('is_active');
+  const customCssInput = document.getElementById('custom_css');
+  const descriptionInput = document.getElementById('description');
+
+  // Get preview elements
+  const themePreview = document.getElementById('theme-preview');
+
+  console.log('Theme form initialized', {
+    primaryColorInput: !!primaryColorInput,
+    secondaryColorInput: !!secondaryColorInput,
+    colorModeInputs: colorModeInputs.length,
+  });
+
+  /**
+   * Update the live preview with current colors
+   */
+  const updatePreview = () => {
+    const primary = primaryColorInput?.value || '#EB2188';
+    const secondary = secondaryColorInput?.value || '#3B82F6';
+
+    // Update CSS variables in the preview section
+    if (themePreview) {
+      themePreview.style.setProperty('--color-primary', primary);
+      themePreview.style.setProperty('--color-secondary', secondary);
+    }
+
+    // Also apply to document root for real-time preview
+    document.documentElement.style.setProperty('--color-primary', primary);
+    document.documentElement.style.setProperty('--color-secondary', secondary);
+
+    console.log('Preview updated:', { primary, secondary });
+  };
+
+  /**
+   * Sync text inputs with color inputs
+   */
+  const syncTextInputs = () => {
+    const primaryHex = primaryColorInput?.value || '#EB2188';
+    const secondaryHex = secondaryColorInput?.value || '#3B82F6';
+
+    const primaryText = document.getElementById('primary_color_text');
+    const secondaryText = document.getElementById('secondary_color_text');
+
+    if (primaryText) primaryText.value = primaryHex;
+    if (secondaryText) secondaryText.value = secondaryHex;
+  };
+
+  // Bind event listeners for color inputs
+  if (primaryColorInput) {
+    primaryColorInput.addEventListener('input', () => {
+      syncTextInputs();
+      updatePreview();
+    });
+  }
+
+  if (secondaryColorInput) {
+    secondaryColorInput.addEventListener('input', () => {
+      syncTextInputs();
+      updatePreview();
+    });
+  }
+
+  // Bind event listeners for text inputs
+  const primaryText = document.getElementById('primary_color_text');
+  const secondaryText = document.getElementById('secondary_color_text');
+
+  if (primaryText) {
+    primaryText.addEventListener('change', (e) => {
+      if (primaryColorInput && /^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+        primaryColorInput.value = e.target.value;
+        updatePreview();
+      }
+    });
+  }
+
+  if (secondaryText) {
+    secondaryText.addEventListener('change', (e) => {
+      if (secondaryColorInput && /^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+        secondaryColorInput.value = e.target.value;
+        updatePreview();
+      }
+    });
+  }
+
+  // Export functionality
+  document.getElementById('export-btn')?.addEventListener('click', () => {
+    const theme = {
+      primaryColor: primaryColorInput?.value || '#EB2188',
+      secondaryColor: secondaryColorInput?.value || '#3B82F6',
+      colorMode: Array.from(colorModeInputs).find(r => r.checked)?.value || 'auto',
+      description: descriptionInput?.value || '',
+      inheritOrganizerTheme: inheritOrgThemeInput?.checked || false,
+      isActive: isActiveInput?.checked || true,
+      customCSS: customCssInput?.value || '',
+    };
+
+    const json = JSON.stringify(theme, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'theme-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Import functionality
+  document.getElementById('import-btn')?.addEventListener('click', () => {
+    document.getElementById('theme-file-input')?.click();
+  });
+
+  const fileInput = document.getElementById('theme-file-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const theme = JSON.parse(event.target.result);
+          if (theme.primaryColor && primaryColorInput) {
+            primaryColorInput.value = theme.primaryColor;
+          }
+          if (theme.secondaryColor && secondaryColorInput) {
+            secondaryColorInput.value = theme.secondaryColor;
+          }
+          if (theme.colorMode && colorModeInputs.length) {
+            const modeInput = Array.from(colorModeInputs).find(input => input.value === theme.colorMode);
+            if (modeInput) modeInput.checked = true;
+          }
+          if (theme.description !== undefined && descriptionInput) {
+            descriptionInput.value = theme.description;
+          }
+          if (theme.inheritOrganizerTheme !== undefined && inheritOrgThemeInput) {
+            inheritOrgThemeInput.checked = Boolean(theme.inheritOrganizerTheme);
+          }
+          if (theme.isActive !== undefined && isActiveInput) {
+            isActiveInput.checked = Boolean(theme.isActive);
+          }
+          if (theme.customCSS !== undefined && customCssInput) {
+            customCssInput.value = theme.customCSS;
+          }
+          syncTextInputs();
+          updatePreview();
+        } catch (error) {
+          alert('Invalid JSON file format.');
+          console.error('Import error:', error);
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  // Initialize preview with current values
+  syncTextInputs();
+  updatePreview();
+</script>
+{% endblock %}

@@ -228,6 +228,7 @@ urlpatterns = [
                     r'^settings/tax/(?P<rule>\d+)/delete$', event.TaxDelete.as_view(), name='event.settings.tax.delete'
                 ),
                 url(r'^settings/widget$', event.WidgetSettings.as_view(), name='event.settings.widget'),
+                url(r'^settings/theme$', event.EventThemeSettings.as_view(), name='event.settings.theme'),
                 url(r'^pdf/editor/webfonts.css', pdf.FontsCSSView.as_view(), name='pdf.css'),
                 url(r'^pdf/editor/(?P<filename>[^/]+).pdf$', pdf.PdfView.as_view(), name='pdf.background'),
                 url(r'^subevents/$', subevents.SubEventList.as_view(), name='event.subevents'),

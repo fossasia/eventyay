@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Eventyay Design Token Overrides",
+  "description": "Schema for validating custom theme token overrides",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "colors": {
+      "type": "object",
+      "description": "Color token overrides",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$|^rgb(a)?\\([0-9]{1,3},\\s*[0-9]{1,3},\\s*[0-9]{1,3}(,\\s*[0-9](\\.)?[0-9]*)?\\)$"
+      }
+    },
+    "typography": {
+      "type": "object",
+      "description": "Typography token overrides",
+      "properties": {
+        "fontFamily": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "fontSize": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9]+(px|em|rem)$"
+          }
+        },
+        "fontWeight": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["integer", "string"],
+            "minimum": 100,
+            "maximum": 900
+          }
+        },
+        "lineHeight": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["number", "string"]
+          }
+        }
+      }
+    },
+    "spacing": {
+      "type": "object",
+      "description": "Spacing token overrides",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9]+(px|em|rem)$"
+      }
+    },
+    "borderRadius": {
+      "type": "object",
+      "description": "Border radius token overrides",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9]+(px|em|rem|%)$"
+      }
+    },
+    "shadows": {
+      "type": "object",
+      "description": "Shadow token overrides",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "semanticTokens": {
+      "type": "object",
+      "description": "Semantic token overrides",
+      "additionalProperties": true
+    }
+  }
+}

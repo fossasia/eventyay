@@ -1,7 +1,9 @@
 {% extends "common/base_public.html" %}
 {% load i18n %}
+{% load static %}
 
 {% block custom_header %}
+    {% include "eventyay_common/theme_includes.html" %}
     {% block cfp_header %}{% endblock cfp_header %}
 {% endblock custom_header %}
 

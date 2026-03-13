@@ -106,6 +106,17 @@ def get_event_navigation(request: HttpRequest):
                 ),
                 'active': url.url_name == 'event.settings.widget',
             },
+            {
+                'label': _('Theme'),
+                'url': reverse(
+                    'control:event.settings.theme',
+                    kwargs={
+                        'event': request.event.slug,
+                        'organizer': request.event.organizer.slug,
+                    },
+                ),
+                'active': url.url_name == 'event.settings.theme',
+            },
         ]
         event_settings += sorted(
             sum(

@@ -69,6 +69,7 @@ from eventyay.control.forms.event import (
     TicketSettingsForm,
     WidgetCodeForm,
 )
+from eventyay.orga.forms.theme import EventThemeForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.user import RecentAuthenticationRequiredMixin
 from eventyay.helpers.database import rolledback_transaction
@@ -1899,3 +1900,60 @@ class QuickSetupView(FormView):
             if self.request.method != 'POST'
             else [],
         )
+
+
+class EventThemeSettings(EventSettingsViewMixin, FormView):
+    """View for managing event theme and branding settings."""
+
+    model = Event
+    form_class = EventThemeForm
+    template_name = 'control/theme_settings.html'
+    permission = 'can_change_event_settings'
+
+    def get_form_kwargs(self):
+        """Get form kwargs, binding to the event's theme instance."""
+        kwargs = super().get_form_kwargs()
+        from eventyay.eventyay_common.models import EventTheme
+
+        theme, _ = EventTheme.objects.get_or_create(event=self.request.event)
+        kwargs['instance'] = theme
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        """Add theme and preview data to context."""
+        ctx = super().get_context_data(**kwargs)
+        from eventyay.eventyay_common.models import EventTheme
+
+        theme, _ = EventTheme.objects.get_or_create(event=self.request.event)
+        ctx['theme'] = theme
+        ctx['event_theme_tokens'] = json.dumps(theme.get_effective_tokens())
+        ctx['event_theme_color_mode'] = theme.color_mode
+        return ctx
+
+    def get_success_url(self):
+        """Redirect back to theme settings after save."""
+        return reverse(
+            'control:event.settings.theme',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        """Handle form submission."""
+        form = self.get_form()
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                _('Theme settings have been saved successfully.'),
+            )
+            self.request.event.log_action(
+                'eventyay.event.theme.changed',
+                user=self.request.user,
+                data={'color_mode': form.instance.color_mode},
+            )
+            return redirect(self.get_success_url())
+        return self.form_invalid(form)

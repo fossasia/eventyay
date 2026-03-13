@@ -76,6 +76,7 @@
     {% else %}
         <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
     {% endif %}
+    {% include "eventyay_common/theme_includes.html" %}
     {{ block.super }}
 {% endblock %}
 
@@ -88,6 +89,11 @@
     data-dateformat="{{ js_date_format }}"
     data-datetimelocale="{{ js_locale }}"
     data-currency="{{ request.event.currency }}"
+    {% if request.event %}
+    data-organizer-slug="{{ request.event.organizer.slug }}" data-event-slug="{{ request.event.slug }}"
+    {% elif request.organizer %}
+    data-organizer-slug="{{ request.organizer.slug }}"
+    {% endif %}
 {% endblock %}
 
 {% block body_top %}

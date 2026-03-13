@@ -28,6 +28,7 @@ from .views import (
     speaker_information,
     stream_schedule,
     submission,
+    theme,
     upload,
     user,
     version,
@@ -63,6 +64,7 @@ orga_router.register(r'giftcards', organizer.GiftCardViewSet)
 orga_router.register(r'teams', organizer.TeamViewSet)
 orga_router.register(r'devices', organizer.DeviceViewSet)
 orga_router.register(r'exporters', exporters.OrganizerExportersViewSet, basename='exporters')
+orga_router.register(r'themes', theme.OrganizerThemeViewSet, basename='organizer_theme')
 
 team_router = routers.DefaultRouter()
 team_router.register(r'members', organizer.TeamMemberViewSet)
@@ -105,6 +107,7 @@ event_router.register(
     speaker_information.SpeakerInformationViewSet,
     basename='speaker_information',
 )
+event_router.register(r'theme', theme.EventThemeViewSet, basename='event_theme')
 
 checkinlist_router = routers.DefaultRouter()
 checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, basename='checkinlistpos')
