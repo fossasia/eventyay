@@ -14,6 +14,7 @@ class CfPFormMixin:
     """
 
     def __init__(self, *args, field_configuration=None, **kwargs):
+        self.not_strict = getattr(self, 'not_strict', kwargs.pop('not_strict', False))
         super().__init__(*args, **kwargs)
         self.field_configuration = field_configuration
         if self.field_configuration:
@@ -21,6 +22,10 @@ class CfPFormMixin:
             for field_data in self.field_configuration:
                 if field_data in self.fields:
                     self._update_cfp_texts(field_data)
+
+        if self.not_strict:
+            for field in self.fields.values():
+                field.required = False
 
     def _update_cfp_texts(self, field_name):
         field = self.fields.get(field_name)

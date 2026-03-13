@@ -87,13 +87,13 @@ class SubmitWizard(EventPageMixin, View):
         steps = steps or request.event.cfp_flow.steps
         for step in steps:
             if step.is_applicable(request):
-                if not step.is_completed(request):
+                if not step.is_completed(request, not_strict=draft):
                     query = {'draft': 1} if draft else None
                     return redirect(step.get_step_url(request, query=query))
                 valid_steps.append(step)
 
         # We are done, or at least the data checks out. Time to save results.
-        request.event.cfp_flow.steps_dict['user'].done(request)
+        request.event.cfp_flow.steps_dict['user'].done(request, draft=draft)
         for step in valid_steps:
             if step.identifier != 'user':
                 step.done(request, draft=draft)

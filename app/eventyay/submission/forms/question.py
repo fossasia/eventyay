@@ -64,6 +64,7 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
                 initial=initial,
                 initial_object=initial_object,
                 readonly=readonly,
+                not_strict=self.not_strict,
             )
             if field is None:
                 continue
