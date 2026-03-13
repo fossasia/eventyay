@@ -36,7 +36,7 @@ class OAuthLoginView(View):
             request.session['socialauth_next_url'] = next_url
 
         gs = GlobalSettingsObject()
-        login_providers = gs.settings.get('login_providers', as_type=dict)
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
         if provider not in login_providers or not login_providers[provider].get('state'):
             messages.error(request, _('This login method is not available.'))
             return redirect('eventyay_common:auth.login')
