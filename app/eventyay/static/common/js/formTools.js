@@ -486,7 +486,7 @@ const initFileSizeCheck = (element) => {
             unwarnFileSize(element)
             return true
         } else {
-            const maxsize = parseInt(element.dataset.maxsize)
+            const maxsize = parseInt(element.dataset.maxsize , 10)
             if (files[0].size > maxsize) {
                 warnFileSize(element)
                 return false
@@ -506,7 +506,7 @@ const initFileSizeCheck = (element) => {
                 const isValid = (
                     !fileInput.files
                     || !fileInput.files.length
-                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize)
+                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize , 10)
                 )
                 if (!isValid) {
                     warnFileSize(fileInput)
