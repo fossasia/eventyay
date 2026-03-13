@@ -6,7 +6,7 @@
 {% with nav_context=nav_context|default:"agenda" %}
     {% if current_event and current_event.locales and not is_html_export %}
         <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
-            <summary>
+            <summary role="button">
 				{% translate "Language" %}
 				<i class="fa fa-caret-down ml-1"></i>
             </summary>
@@ -77,7 +77,7 @@
     {% if current_event and request.user.is_authenticated and not is_html_export %}
         <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
             {% is_event_organiser request.user request current_event as can_see_orga_area %}
-            <summary>
+            <summary role="button">
                 {{ request.user|short_user_label }} <i class="fa fa-caret-down ml-1"></i>
             </summary>
             <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">

@@ -219,7 +219,7 @@ header {
   padding: 0;
   border: none;
   main {
-    padding: var(--size-spacer);
+    padding: calc(var(--size-spacer) * 2);
   }
 }
 
