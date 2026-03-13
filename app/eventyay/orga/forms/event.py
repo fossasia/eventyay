@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -199,8 +200,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=_('The signature will be added to outgoing mails, preceded by “-- ”. ')
-        + phrases.base.use_markdown,
+        help_text='',
         required=False,
         widget=forms.Textarea,
     )
@@ -246,6 +246,11 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['signature'].help_text = format_html(
+            '{} <span class="markdown-hint">{}</span>',
+            _('The signature will be added to outgoing mails, preceded by “-- ”.'),
+            _('You can use Markdown in this field.'),
+        )
         if self.fields['smtp_password'].initial:
             self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
 
