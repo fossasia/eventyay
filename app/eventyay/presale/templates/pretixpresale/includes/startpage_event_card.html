@@ -18,7 +18,7 @@
             <img src="{{ event.visible_header_image_url }}" alt="{{ event.name|event_localize }}">
         {% else %}
             <div class="startpage-event-media-placeholder">
-                <i class="fa fa-calendar"></i>
+                <i class="fa fa-calendar" aria-hidden="true"></i>
             </div>
         {% endif %}
     </a>
@@ -32,7 +32,7 @@
             </span>
             {% if event.location %}
                 <span class="startpage-event-location">
-                    <i class="fa fa-map-marker"></i>
+                    <i class="fa fa-map-marker" aria-hidden="true"></i>
                     {{ event.location|event_localize }}
                 </span>
             {% endif %}
