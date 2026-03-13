@@ -179,8 +179,7 @@ def login(request):
 
     gs = GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict)
-    ordered = _order_login_providers(raw_providers)
-    ctx['login_providers'] = ordered
+    ctx['login_providers'] = _order_login_providers(raw_providers)
     ctx['preferred_provider'] = _get_preferred_provider(raw_providers)
     return render(request, 'eventyay_common/auth/login.html', ctx)
 

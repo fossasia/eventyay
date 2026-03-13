@@ -53,7 +53,7 @@
                 {% for provider, settings in login_providers.items %}
                     {% if provider == preferred_provider and settings.state %}
                         <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
-                           data-method="post" class="btn btn-primary btn-block btn-preferred">
+                           data-method="post" class="btn btn-primary btn-block">
                             {% with provider|capfirst as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                             {% endwith %}

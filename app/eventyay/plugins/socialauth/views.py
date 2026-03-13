@@ -43,6 +43,8 @@ class OAuthLoginView(View):
         provider_config = login_providers[provider]
         if provider_config.get('is_preferred'):
             request.session['socialauth_keep_logged_in'] = True
+        else:
+            request.session.pop('socialauth_keep_logged_in', None)
         client_id = provider_config.get('client_id')
         provider_instance = adapter.get_provider(request, provider, client_id=client_id)
 
@@ -182,7 +184,8 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         context['login_providers'] = login_providers
         context['any_preferred'] = any(
-            p.get('is_preferred', False) for p in login_providers.values()
+            p.get('state', False) and p.get('is_preferred', False)
+            for p in login_providers.values()
         )
         context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip("/")
         return context
@@ -206,6 +209,10 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         preferred = request.POST.get('preferred_provider', '').strip().lower()
         valid_providers = set(LoginProviders.model_fields.keys())
         if preferred == 'none' or preferred not in valid_providers:
+            for provider in valid_providers:
+                login_providers.setdefault(provider, {})['is_preferred'] = False
+            return
+        if not login_providers.get(preferred, {}).get('state'):
             for provider in valid_providers:
                 login_providers.setdefault(provider, {})['is_preferred'] = False
             return
