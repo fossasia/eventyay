@@ -7,8 +7,7 @@ class HeaderSelect(RadioSelect):
 
 
 class MultipleLanguagesWidget(CheckboxSelectMultiple):
-    template_name = 'django/forms/widgets/checkbox_select.html'
-    option_template_name = 'django/forms/widgets/checkbox_option.html'
+    template_name = 'orga/widgets/multi_languages_select.html'
 
     def __init__(self, *args, **kwargs):
         kwargs['attrs'] = kwargs.get('attrs', {})
