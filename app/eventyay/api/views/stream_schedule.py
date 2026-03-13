@@ -1,9 +1,6 @@
 from asgiref.sync import async_to_sync
 from django.core.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import viewsets
-from rest_framework.response import Response
-
 from eventyay.api.documentation import build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
@@ -11,6 +8,8 @@ from eventyay.base.models.room import Room
 from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services.event import notify_event_change
 from eventyay.base.services.room import broadcast_stream_change
+from rest_framework import viewsets
+from rest_framework.response import Response
 
 
 @extend_schema_view(
