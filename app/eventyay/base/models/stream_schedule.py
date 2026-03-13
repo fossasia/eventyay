@@ -16,9 +16,7 @@ class StreamSchedule(models.Model):
         max_length=255,
         blank=True,
         verbose_name=_('Title'),
-        help_text=_(
-            'Optional label for this stream (e.g., "Day 1 Stream", "Keynotes")'
-        ),
+        help_text=_('Optional label for this stream (e.g., "Day 1 Stream", "Keynotes")'),
     )
     url = models.URLField(
         verbose_name=_('Stream URL'),
@@ -48,9 +46,7 @@ class StreamSchedule(models.Model):
         default=dict,
         blank=True,
         verbose_name=_('Additional Configuration'),
-        help_text=_(
-            'Extra configuration for the stream (e.g., YouTube video ID, language settings)'
-        ),
+        help_text=_('Extra configuration for the stream (e.g., YouTube video ID, language settings)'),
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

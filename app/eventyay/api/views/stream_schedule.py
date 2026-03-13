@@ -13,9 +13,7 @@ from rest_framework.response import Response
 
 
 @extend_schema_view(
-    list=extend_schema(
-        summary='List Stream Schedules', parameters=[build_search_docs('title')]
-    ),
+    list=extend_schema(summary='List Stream Schedules', parameters=[build_search_docs('title')]),
     retrieve=extend_schema(summary='Show Stream Schedule'),
     create=extend_schema(
         summary='Create Stream Schedule',
@@ -91,9 +89,7 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             instance = serializer.save(room=room)
             current_stream = instance.room.get_current_stream()
             if previous_stream != current_stream:
-                async_to_sync(broadcast_stream_change)(
-                    instance.room.pk, current_stream, reload=True
-                )
+                async_to_sync(broadcast_stream_change)(instance.room.pk, current_stream, reload=True)
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)
             return Response(StreamScheduleSerializer(instance).data, status=201)
@@ -120,9 +116,7 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             instance = serializer.save()
             current_stream = instance.room.get_current_stream()
             if previous_stream != current_stream:
-                async_to_sync(broadcast_stream_change)(
-                    instance.room.pk, current_stream, reload=True
-                )
+                async_to_sync(broadcast_stream_change)(instance.room.pk, current_stream, reload=True)
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)
             return Response(StreamScheduleSerializer(instance).data)
