@@ -9,7 +9,7 @@ allowed_hosts = ['*']
 # Can be overridden with EVY_SITE_URL environment variable
 site_url = 'http://localhost:8000'
 
-redis_url = 'redis://localhost/0'
+redis_url = 'redis://redis/0'
 
 # For local development, use localhost
 # Can be overridden with EVY_SHORT_URL environment variable
@@ -31,3 +31,9 @@ short_url = 'http://localhost:8000'
 
 # External Response Size Limits
 # response_size_webhook = 1            # Max external response size for questions
+
+postgres_host = 'db'
+postgres_port = 5432
+postgres_db = 'eventyay'
+postgres_user = 'eventyay'
+postgres_password = 'eventyay'
