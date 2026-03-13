@@ -5,7 +5,7 @@ let eventyayToastuiIdSeq = 0
 
 const createEventyayUnderlinePlugin = () => {
     const convertUnderlineSyntax = (src) => {
-        const input = String(src || "")
+        const input = String(src || '')
         if (!input.includes('++')) return input
 
         const codeSpanRe = /(`+)([\s\S]*?)\1/g
@@ -464,18 +464,19 @@ const startMarkdownEditorObserver = () => {
 }
 
 const warnFileSize = (element) => {
-    let warning = element.parentElement.querySelector(".eventyay-size-warning")
+    let warning = element.parentElement.querySelector('.eventyay-size-warning')
     if (!warning) {
-        warning = document.createElement("div")
-        warning.classList.add("invalid-feedback", "eventyay-size-warning")
+        warning = document.createElement('div')
+        warning.classList.add('invalid-feedback', 'eventyay-size-warning')
         element.parentElement.appendChild(warning)
     }
+element.classList.add('is-invalid')
     warning.textContent = element.dataset.sizewarning
     element.classList.add("is-invalid")
 }
 const unwarnFileSize = (element) => {
-    element.classList.remove("is-invalid")
-    const warning = element.parentElement.querySelector(".eventyay-size-warning")
+    element.classList.remove('is-invalid')
+    const warning = element.parentElement.querySelector('.eventyay-size-warning')
     if (warning) element.parentElement.removeChild(warning)
 }
 
