@@ -95,3 +95,34 @@
         {% endfor %}
     </div>
 {% endblock %}
+{% block js %}
+{{ block.super }}
+<script>
+    // Ensure Tickets permission modal works properly
+    (function() {
+        function ensureModalWorks() {
+            // Make sure modal backdrop doesn't interfere with button clicks
+            var modal = document.getElementById('tickets-permission-modal');
+            if (modal) {
+                // Ensure the modal button is clickable
+                var okButton = modal.querySelector('button[data-dismiss="modal"]');
+                if (okButton) {
+                    okButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof $ !== 'undefined' && $.fn.modal) {
+                            $(modal).modal('hide');
+                        }
+                    });
+                }
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ensureModalWorks);
+        } else {
+            ensureModalWorks();
+        }
+    })();
+</script>
+{% endblock %}

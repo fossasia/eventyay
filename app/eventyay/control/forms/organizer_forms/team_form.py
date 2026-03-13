@@ -137,7 +137,26 @@ class TeamForm(forms.ModelForm):
         data = super().clean()
         all_events = data.get("all_events")
         limit_events = data.get("limit_events")
-        if not all_events and not limit_events:
+        
+        # Check if this is a Talk-only team (has Talk permissions but no Ticket/Settings permissions)
+        has_talk_perms = bool(data.get("can_change_submissions") or data.get("is_reviewer"))
+        has_ticket_perms = bool(
+            data.get("can_view_orders") or
+            data.get("can_change_orders") or
+            data.get("can_change_items") or
+            data.get("can_view_vouchers") or
+            data.get("can_change_vouchers") or
+            data.get("can_checkin_orders")
+        )
+        has_settings_perms = bool(
+            data.get("can_change_event_settings") or
+            data.get("can_change_organizer_settings")
+        )
+        is_talk_only = has_talk_perms and not has_ticket_perms and not has_settings_perms
+        
+        # For Talk-only teams, allow creating without events (they'll be auto-synced)
+        # For other teams, require events to be selected
+        if not all_events and not limit_events and not is_talk_only:
             error = forms.ValidationError(
                 _(
                     "Please either pick some events for this team, or grant access to all your events!"

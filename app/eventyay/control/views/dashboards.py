@@ -62,6 +62,17 @@ NUM_WIDGET = '<div class="numwidget"><span class="num">{num}</span><span class="
 
 @receiver(signal=event_dashboard_widgets)
 def base_widgets(sender, subevent=None, lazy=False, **kwargs):
+    # Filter out order-related widgets for users without can_view_orders permission
+    request = kwargs.get('request')
+    if request and hasattr(request, 'user') and request.user.is_authenticated:
+        if not request.user.has_event_permission(
+            sender.organizer,
+            sender,
+            'can_view_orders',
+            request=request,
+        ):
+            return []
+    
     if not lazy:
         prodc = (
             Product.objects.filter(

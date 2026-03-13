@@ -27,6 +27,8 @@ from eventyay.control.views.organizer import InviteForm, TokenForm
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
+from django.core.exceptions import PermissionDenied
+from django.utils.translation import gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +114,54 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     permission = 'can_change_organizer_settings'
     context_object_name = 'organizer'
 
+    @classmethod
+    def as_view(cls, **initkwargs):
+        """
+        Override as_view to allow read-only access for users who belong to teams,
+        even if they don't have can_change_organizer_settings permission.
+        """
+        # Manually create the view function that Django's as_view() would create
+        # This ensures cls (OrganizerTeamsView) is used, preserving model, form_class, etc.
+        def view(request, *args, **kwargs):
+            self = cls(**initkwargs)
+            if hasattr(self, 'get') and not hasattr(self, 'head'):
+                self.head = self.get
+            self.request = request
+            self.args = args
+            self.kwargs = kwargs
+            return self.dispatch(request, *args, **kwargs)
+        
+        # Update view function attributes for introspection
+        view.view_class = cls
+        view.view_initkwargs = initkwargs
+        
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                raise PermissionDenied()
+            
+            # Check if user has the required permission
+            has_permission = request.user.has_organizer_permission(
+                request.organizer, cls.permission, request=request
+            )
+            
+            # Also check if user belongs to any team in this organizer
+            # Use reverse relationship from User.teams
+            with scopes_disabled():
+                user_teams = request.user.teams.filter(organizer=request.organizer)
+                belongs_to_team = user_teams.exists()
+            
+            # Allow access if user has permission OR belongs to a team
+            if has_permission or belongs_to_team:
+                return view(request, *args, **kwargs)
+            
+            raise PermissionDenied(_('You do not have permission to view this content.'))
+        
+        # Copy view attributes to wrapper
+        wrapper.view_class = cls
+        wrapper.view_initkwargs = initkwargs
+        
+        return wrapper
+
     def dispatch(self, request, *args, **kwargs):
         self._team_form_overrides = {}
         self._team_create_form_override = None
@@ -171,9 +221,33 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         ctx['selected_team_id'] = selected_team_id
         ctx['selected_panel'] = selected_panel
 
-        if self.can_manage_teams:
-            teams_qs = self._get_team_queryset()
-            ctx['team_create_form'] = self._get_team_create_form()
+        # Check if user belongs to any teams (for read-only access)
+        # Use the reverse relationship from User.teams to get teams for this organizer
+        with scopes_disabled():
+            user_teams_qs = self.request.user.teams.filter(organizer=self.request.organizer)
+            can_view_teams = self.can_manage_teams or user_teams_qs.exists()
+        
+        ctx['can_view_teams'] = can_view_teams  # Add to context for template
+
+        if can_view_teams:
+            if self.can_manage_teams:
+                # Full management access - show all teams
+                teams_qs = self._get_team_queryset()
+                ctx['team_create_form'] = self._get_team_create_form()
+            else:
+                # Read-only access - only show teams user belongs to
+                with scopes_disabled():
+                    teams_qs = (
+                        user_teams_qs.annotate(
+                            memcount=Count('members', distinct=True),
+                            eventcount=Count('limit_events', distinct=True),
+                            invcount=Count('invites', distinct=True),
+                        )
+                        .prefetch_related('members', 'invites', 'tokens', 'limit_events')
+                        .order_by('name')
+                    )
+                ctx['team_create_form'] = None
+            
             # Iterate within scopes_disabled to avoid scope errors when accessing related objects
             with scopes_disabled():
                 ctx['teams'] = list(teams_qs)

@@ -243,6 +243,7 @@ class EventIndexView(TemplateView):
                 ),
                 'is_video_enabled': is_video_enabled(request.event),
                 'can_change_event_settings': permissions['can_change_event_settings'],
+                'can_view_orders': permissions['can_view_orders'],
                 **self._check_event_statuses(permissions['can_view_orders']),
             }
         )
@@ -387,6 +388,26 @@ class EventWidgetGenerator:
             </a>
         """
 
+    @staticmethod
+    def generate_ticket_button(event: Event, request: HttpRequest) -> str:
+        """
+        Generate a ticket button based on user permissions.
+        Shows permission modal if user doesn't have can_view_orders permission.
+        """
+        can_view_orders = request.user.has_event_permission(
+            event.organizer, event, 'can_view_orders', request=request
+        )
+        if can_view_orders:
+            ticket_url = reverse(
+                'control:event.index',
+                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+            )
+            return f'<a href="{ticket_url}" class="component">{_("Tickets")}</a>'
+        else:
+            # Return a link that triggers the permission modal
+            # The modal will be added to the dashboard template
+            return f'<a href="#" class="component tickets-permission-link" data-event-slug="{event.slug}" data-organizer-slug="{event.organizer.slug}">{_("Tickets")}</a>'
+
     @classmethod
     def generate_widget(cls, event: Event, request: HttpRequest, lazy: bool = False) -> Dict[str, Any]:
         """
@@ -404,7 +425,7 @@ class EventWidgetGenerator:
                 <div class="times">{times}</div>
             </a>
             <div class="bottomrow">
-                <a href="{ticket_url}" class="component">Tickets</a>
+                {ticket_button}
                 {talk_button}
                 {video_button}
             </div>
@@ -421,10 +442,7 @@ class EventWidgetGenerator:
                         'event': event.slug,
                     },
                 ),
-                ticket_url=reverse(
-                    'control:event.index',
-                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-                ),
+                ticket_button=cls.generate_ticket_button(event, request),
                 video_button=cls.generate_video_button(event),
                 talk_button=cls.generate_talk_button(event),
             )
