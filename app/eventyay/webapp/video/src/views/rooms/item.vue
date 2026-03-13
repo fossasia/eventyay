@@ -1,11 +1,11 @@
 <template lang="pug">
 .c-room(v-if="room", :class="{'standalone-chat': modules['chat.native'] && room.modules.length === 1}")
-	.stage(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
+	.stage(v-if="modules['livestream.native'] || modules['livestream.hls'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
 		media-source-placeholder
-		reactions-overlay(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
+		reactions-overlay(v-if="modules['livestream.native'] || modules['livestream.hls'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
 		upcoming-stream-countdown(:room="room")
 		.stage-tool-blocker(v-if="activeStageTool !== null", @click="activeStageTool = null")
-		.stage-tools(v-if="modules['livestream.native'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
+		.stage-tools(v-if="modules['livestream.native'] || modules['livestream.hls'] || modules['livestream.youtube'] || modules['livestream.iframe'] || modules['call.janus']")
 			// Added dropdown menu for audio translations near the reactions bar
 			reactions-bar(:expanded="true", @expand="activeStageTool = 'reaction'")
 			AudioTranslationDropdown(v-if="languages.length > 1", :languages="languages", @languageChanged="handleLanguageChange")

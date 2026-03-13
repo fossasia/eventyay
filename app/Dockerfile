@@ -4,8 +4,7 @@
 
 # pull official base image
 FROM python:3.12-slim-trixie AS builder
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
+RUN pip install uv && cp $(which uv) /bin/uv && cp $(which uv) /bin/uvx
 # set work directory
 WORKDIR /usr/src/app
 

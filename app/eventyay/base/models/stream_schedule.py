@@ -62,6 +62,12 @@ class StreamSchedule(models.Model):
         indexes = [
             models.Index(fields=['room', 'start_time', 'end_time']),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(end_time__gt=models.F('start_time')),
+                name='stream_schedule_end_after_start',
+            )
+        ]
 
     def __str__(self):
         if self.title:
@@ -99,3 +105,4 @@ class StreamSchedule(models.Model):
 
         at_time = at_time or now()
         return self.start_time <= at_time < self.end_time
+

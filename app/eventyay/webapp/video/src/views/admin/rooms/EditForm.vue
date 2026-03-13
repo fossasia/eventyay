@@ -10,7 +10,7 @@
 					bunt-input(v-if="inferredType.id === 'stage' || inferredType.id === 'channel-bbb'", name="pretalx_id", v-model="config.pretalx_id", label="pretalx ID", :validation="v$.config.pretalx_id")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
-			stream-schedule(v-if="!creating && config.id && inferredType && inferredType.id === 'stage'", :room-id="String(config.id)")
+				stream-schedule(v-if="showStreamSchedule", :room-id="String(config.id)")
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
 		.errors {{ validationErrors.join(', ') }}
@@ -82,6 +82,18 @@ export default {
 		inferredType() {
 			return inferType(this.config)
 		},
+                 showStreamSchedule() {
+                     if (this.creating) return false
+                     if (!this.config?.id) return false
+                     if (!this.config?.module_config) return false
+                     const STREAM_MODULES = [
+                          'livestream.native',
+                          'livestream.youtube',
+                          'livestream.iframe',
+                          'livestream.hls',
+                     ]
+                     return this.config.module_config.some(m => STREAM_MODULES.includes(m.type))
+                },
 		localizedName: {
 			get() {
 				return this.$localize(this.config.name)

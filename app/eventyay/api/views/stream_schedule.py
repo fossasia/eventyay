@@ -12,6 +12,14 @@ from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services.event import notify_event_change
 from eventyay.base.services.room import broadcast_stream_change
 
+# ADD: defines which module types count as "livestream" rooms
+STREAM_SUPPORTED_MODULES = frozenset({
+    'livestream.native',
+    'livestream.youtube',
+    'livestream.iframe',
+    'livestream.hls',
+})
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -58,6 +66,15 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             self._room_cache = queryset.filter(pk=room_id).first()
         return self._room_cache
 
+    # ADD: helper to check if room has a livestream module
+    def _room_supports_streaming(self, room):
+        if not room or not room.module_config:
+            return False
+        return any(
+            m.get('type') in STREAM_SUPPORTED_MODULES
+            for m in room.module_config
+        )
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         room = self.get_room()
@@ -69,7 +86,8 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         room_id = self.kwargs.get('room_pk')
         if room_id:
             room = self.get_room()
-            if not room:
+            # ADD: block non-livestream rooms from returning any schedule data
+            if not room or not self._room_supports_streaming(room):
                 return StreamSchedule.objects.none()
             return StreamSchedule.objects.filter(room=room)
         if not self.event:
@@ -80,6 +98,13 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         room = self.get_room()
         if not room:
             return Response({'room': ['Room not found.']}, status=400)
+
+        # ADD: block creating schedules on non-livestream rooms
+        if not self._room_supports_streaming(room):
+            return Response(
+                {'room': ['Stream schedules are only supported for rooms with a livestream module.']},
+                status=400
+            )
 
         serializer = self.get_serializer(data=request.data)
         serializer.context['room'] = room
