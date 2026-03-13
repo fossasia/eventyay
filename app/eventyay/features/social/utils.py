@@ -24,7 +24,7 @@ def update_user_profile_from_social(
         if "/" in ext:
             ext = ".png"  # just a default guess
         try:
-            r = requests.get(avatar_url)
+            r = requests.get(avatar_url, timeout=15)
             r.raise_for_status()
             c = ContentFile(r.content)
             sf = StoredFile.objects.create(

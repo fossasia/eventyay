@@ -17,7 +17,7 @@ class Command(BaseCommand):
     def _update_cost(self, server: BBBServer):
         try:
             meetings_url = get_url("getMeetings", {}, server.url, server.secret)
-            r = requests.get(meetings_url)
+            r = requests.get(meetings_url, timeout=15)
             r.raise_for_status()
             cost = 0
 

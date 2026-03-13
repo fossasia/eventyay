@@ -101,7 +101,7 @@ def get_schedule(event: Event, fail_silently=True):
         return {}
 
     try:
-        r = requests.get(url)
+        r = requests.get(url, timeout=15)
         r.raise_for_status()
         return r.json()
     except requests.RequestException:

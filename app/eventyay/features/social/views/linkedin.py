@@ -59,6 +59,7 @@ def return_view(request):
                 "client_id": settings.LINKEDIN_CLIENT_ID,
                 "client_secret": settings.LINKEDIN_CLIENT_SECRET,
             },
+            timeout=15,
         )
         r.raise_for_status()
         d = r.json()
@@ -85,6 +86,7 @@ def return_view(request):
             headers={
                 "Authorization": f"Bearer {access_token}",
             },
+            timeout=15,
         )
         r.raise_for_status()
         d = r.json()

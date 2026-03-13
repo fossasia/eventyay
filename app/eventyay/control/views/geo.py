@@ -38,7 +38,8 @@ class GeoCodeView(LoginRequiredMixin, View):
         gs = GlobalSettingsObject()
 
         r = requests.get(
-            'https://api.opencagedata.com/geocode/v1/json?q={}&key={}'.format(quote(q), gs.settings.opencagedata_apikey)
+            'https://api.opencagedata.com/geocode/v1/json?q={}&key={}'.format(quote(q), gs.settings.opencagedata_apikey),
+            timeout=15,
         )
         r.raise_for_status()
         d = r.json()
@@ -58,7 +59,8 @@ class GeoCodeView(LoginRequiredMixin, View):
         r = requests.get(
             'https://www.mapquestapi.com/geocoding/v1/address?location={}&key={}'.format(
                 quote(q), gs.settings.mapquest_apikey
-            )
+            ),
+            timeout=15,
         )
         r.raise_for_status()
         d = r.json()

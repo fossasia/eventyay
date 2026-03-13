@@ -653,7 +653,7 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
     api_url = urljoin(base_url, f'api/v1/{organizer_slug}/{event_slug}/ticket-check')
     logger.info('To call API %s', api_url)
     # In development, we disable the SSL verification.
-    response = requests.post(api_url, json=check_payload, verify=(not settings.DEBUG))
+    response = requests.post(api_url, json=check_payload, verify=(not settings.DEBUG), timeout=15)
 
     if response.status_code != HTTPStatus.OK:
         logger.debug('Response from eventyay-ticket: %s', response.text)

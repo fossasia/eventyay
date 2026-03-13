@@ -56,7 +56,7 @@ def update_check():
         'plugins': [{'name': p.module, 'version': p.version} for p in get_all_plugins()],
     }
     try:
-        r = requests.post('https://eventyay.org/.update_check/', json=check_payload)
+        r = requests.post('https://eventyay.org/.update_check/', json=check_payload, timeout=15)
         gs.settings.set('update_check_last', now())
         if r.status_code != 200:
             gs.settings.set('update_check_result', {'error': 'http_error'})
