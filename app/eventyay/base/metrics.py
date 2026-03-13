@@ -239,7 +239,7 @@ def estimate_count_fast(type):
     """
     if 'postgres' in settings.DATABASES['default']['ENGINE']:
         cursor = connection.cursor()
-        cursor.execute("select reltuples from pg_class where relname='%s';" % type._meta.db_table)
+        cursor.execute("select reltuples from pg_class where relname=%s;", [type._meta.db_table])
         row = cursor.fetchone()
         return int(row[0])
     else:
