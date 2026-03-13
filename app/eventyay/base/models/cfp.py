@@ -19,6 +19,7 @@ def default_settings():
         'count_length_in': 'chars',
         'show_deadline': True,
         'hide_after_deadline': False,
+        'allow_gravatar': True,  # Allow speakers to use Gravatar for profile pictures
     }
 
 

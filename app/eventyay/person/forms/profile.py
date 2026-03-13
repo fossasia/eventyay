@@ -113,6 +113,15 @@ class SpeakerProfileForm(
         elif 'avatar' in self.fields:
             self.fields['avatar'].required = False
             self.fields['avatar'].widget.is_required = False
+            # Check if Gravatar is allowed by event organizer
+            if not self.event.cfp.settings.get('allow_gravatar', True):
+                self.fields.pop('get_gravatar', None)
+        if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
+            # Replace self.data with a version that uses initial["availabilities"]
+            # in order to have event and timezone data available
+            data = self.data.copy()
+            data['availabilities'] = initial.get('availabilities', [])
+            self.data = data
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
