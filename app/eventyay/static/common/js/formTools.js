@@ -515,6 +515,11 @@ const initFileSizeCheck = (element) => {
             })
             if (firstInvalid) {
                 event.preventDefault()
+                if (typeof event.stopImmediatePropagation === "function") {
+                    event.stopImmediatePropagation()
+                } else if (typeof event.stopPropagation === "function") {
+                    event.stopPropagation()
+                }
                 firstInvalid.focus()
             }
         })
