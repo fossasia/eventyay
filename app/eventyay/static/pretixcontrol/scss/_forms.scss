@@ -394,6 +394,13 @@ label .optional {
   color: $text-muted;
   font-weight: normal;
 }
+.form-horizontal .control-label {
+  pointer-events: none;
+}
+.form-horizontal .control-label .label-text,
+.form-horizontal .control-label .optional {
+  pointer-events: auto;
+}
 @media (max-width: $screen-sm-max) {
   .form-horizontal .control-label {
     text-align: left;
