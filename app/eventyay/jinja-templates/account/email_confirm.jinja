@@ -21,15 +21,17 @@
           <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
           {{ redirect_field }}
 
-          <button type='submit' class='btn btn-primary btn-lg'>
-            <i class='fa fa-check'></i>
-            {{ _('Confirm') }}
-          </button>
+          <div class='btn-group'>
+            <button type='submit' class='btn btn-primary'>
+              <i class='fa fa-check'></i>
+              {{ _('Confirm') }}
+            </button>
 
-          <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-default'>
-            <i class='fa fa-times'></i>
-            {{ _('Cancel') }}
-          </a>
+            <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-white'>
+              <i class='fa fa-times'></i>
+              {{ _('Cancel') }}
+            </a>
+          </div>
         </form>
       {% else %}
         <div class='alert alert-danger'>

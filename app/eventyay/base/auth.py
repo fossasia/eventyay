@@ -1,19 +1,13 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from importlib import import_module
+from typing import cast
 
 from django import forms
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
-
-
-def get_auth_backends():
-    backends = {}
-    for b in settings.EVENTYAY_AUTH_BACKENDS:
-        mod, name = b.rsplit('.', 1)
-        b = getattr(import_module(mod), name)()
-        backends[b.identifier] = b
-    return backends
 
 
 class BaseAuthBackend:
@@ -135,3 +129,12 @@ class NativeAuthBackend(BaseAuthBackend):
         )
         if u and u.auth_backend == self.identifier:
             return u
+
+
+def get_auth_backends() -> dict[str, BaseAuthBackend]:
+    backends = {}
+    for b in cast(tuple[str, ...], settings.EVENTYAY_AUTH_BACKENDS):
+        mod, name = b.rsplit('.', 1)
+        _b = getattr(import_module(mod), name)()
+        backends[_b.identifier] = _b
+    return backends

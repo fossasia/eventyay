@@ -50,6 +50,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
+from eventyay.helpers.http import smtp_reachable
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.presale.ical import get_ical
 
@@ -610,12 +611,12 @@ def replace_images_with_cid_paths(body_html):
             original_image_src = image['src']
 
             try:
-                cid_id = 'image_%s' % cid_images.index(original_image_src)
+                cid_id = f'image_{cid_images.index(original_image_src)}'
             except ValueError:
                 cid_images.append(original_image_src)
                 cid_id = 'image_%s' % (len(cid_images) - 1)
 
-            image['src'] = 'cid:%s' % cid_id
+            image['src'] = f'cid:{cid_id}'
 
         return str(email), cid_images
     else:
@@ -626,13 +627,13 @@ def attach_cid_images(msg, cid_images, verify_ssl=True):
     if cid_images and len(cid_images) > 0:
         msg.mixed_subtype = 'mixed'
         for key, image in enumerate(cid_images):
-            cid = 'image_%s' % key
+            cid = f'image_{key}'
             try:
                 mime_image = convert_image_to_cid(image, cid, verify_ssl)
                 if mime_image:
                     msg.attach(mime_image)
             except:
-                logger.exception('ERROR attaching CID image %s[%s]' % (cid, image))
+                logger.exception(f'ERROR attaching CID image {cid}[{image}]')
 
 
 def encoder_linelength(msg):
@@ -658,7 +659,7 @@ def convert_image_to_cid(image_src, cid_id, verify_ssl=True):
             mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
             mime_image.add_header('Content-Transfer-Encoding', 'base64')
         elif image_src.startswith('data:'):
-            logger.exception('ERROR creating MIME element %s[%s]' % (cid_id, image_src))
+            logger.exception(f'ERROR creating MIME element {cid_id}[{image_src}]')
             return None
         else:
             image_src = normalize_image_url(image_src)
@@ -669,11 +670,11 @@ def convert_image_to_cid(image_src, cid_id, verify_ssl=True):
             response = requests.get(image_src, verify=verify_ssl)
             mime_image = MIMEImage(response.content, _subtype=guess_subtype)
 
-        mime_image.add_header('Content-ID', '<%s>' % cid_id)
+        mime_image.add_header('Content-ID', f'<{cid_id}>')
 
         return mime_image
     except:
-        logger.exception('ERROR creating mime_image %s[%s]' % (cid_id, image_src))
+        logger.exception(f'ERROR creating mime_image {cid_id}[{image_src}]')
         return None
 
 
@@ -709,14 +710,16 @@ def get_mail_backend(timeout=None):
     from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 
     gs = GlobalSettingsObject()
+    smtp_host = gs.settings.smtp_host
+    smtp_port = gs.settings.smtp_port
 
     if gs.settings.email_vendor is not None:
         if gs.settings.email_vendor == 'sendgrid':
             return SendGridEmail(api_key=gs.settings.send_grid_api_key)
-        else:
+        if smtp_reachable(smtp_host, smtp_port, timeout=timeout):
             return CustomSMTPBackend(
-                host=gs.settings.smtp_host,
-                port=gs.settings.smtp_port,
+                host=smtp_host,
+                port=smtp_port,
                 username=gs.settings.smtp_username,
                 password=gs.settings.smtp_password,
                 use_tls=gs.settings.smtp_use_tls,
@@ -724,5 +727,9 @@ def get_mail_backend(timeout=None):
                 fail_silently=False,
                 timeout=timeout,
             )
-    else:
-        return get_connection(fail_silently=False)
+        logger.warning(
+            'Global SMTP %s:%s is not reachable, falling back to system email backend',
+            smtp_host,
+            smtp_port,
+        )
+    return get_connection(fail_silently=False, timeout=timeout)

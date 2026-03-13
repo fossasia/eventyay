@@ -1,0 +1,84 @@
+{% extends 'account/base.jinja' %}
+
+{% block head_title %}
+  {{ _('Sign Up') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='signup-container'>
+    <h1>{{ _('Create Account') }}</h1>
+
+    <form method='post' action="{{ url_for('account_signup') }}">
+      <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+      {{ redirect_field }}
+
+      <div class='form-group'>
+        <label for='{{ form.email.id_for_label }}'>
+          {{ form.email.label }}
+          {% if form.email.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class='field-error'>
+            {% for error in form.email.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class='form-group'>
+        <label for='{{ form.password1.id_for_label }}'>
+          {{ form.password1.label }}
+          {% if form.password1.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+          <div class='field-error'>
+            {% for error in form.password1.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% if form.password1.help_text %}
+          <div class='field-help'>{{ form.password1.help_text }}</div>
+        {% endif %}
+      </div>
+
+      <div class='form-group'>
+        <label for='{{ form.password2.id_for_label }}'>
+          {{ form.password2.label }}
+          {% if form.password2.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+          <div class='field-error'>
+            {% for error in form.password2.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if form.non_field_errors() %}
+        <div class='alert alert-danger'>
+          {% for error in form.non_field_errors() %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <button type='submit' class='btn btn-primary'>
+        <i class='fa fa-check'></i>
+        {{ _('Create Account') }}
+      </button>
+    </form>
+
+    <div class='additional-links'>
+      <p>
+        {{ _('Already have an account?') }}
+        <a href="{{ url_for('account_login') }}">{{ _('Log in') }}</a>
+      </p>
+    </div>
+  </div>
+{% endblock content %}
