@@ -30,12 +30,12 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
-		.fav-count(v-if="showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
+		.fav-count(v-if="loggedIn && showFavCount && session.fav_count > 0") {{ session.fav_count > 99 ? "99+" : session.fav_count }}
 	.stream-indicator(v-if="canOpenStream", :class="{live: isLive}", :title="streamTooltip", @click.prevent.stop="openStream")
 		svg(viewBox="0 0 24 24", width="20", height="20", fill="currentColor", xmlns="http://www.w3.org/2000/svg")
 			path(d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z")
 	.session-icons
-		fav-button(@toggleFav="toggleFav")
+		fav-button(v-if="loggedIn", @toggleFav="toggleFav")
 
 </template>
 <script>
@@ -106,6 +106,7 @@ export default {
 			}
 		},
 		getJoinRoomLink: { default: () => () => '' },
+		loggedIn: { default: false },
 		translationMessages: { default: () => ({}) }
 	},
 	components: {
@@ -172,6 +173,7 @@ export default {
 	},
 	methods: {
 		toggleFav () {
+			if (!this.loggedIn) return
 			if (this.faved) {
 				this.$emit('unfav', this.session.id)
 			} else {
@@ -254,6 +256,7 @@ export default {
 		display: flex
 		flex-direction: column
 		padding: 8px
+		padding-right: 72px
 		border: border-separator()
 		border-left: none
 		border-radius: 0 6px 6px 0
@@ -263,7 +266,7 @@ export default {
 			font-size: 16px
 			font-weight: 500
 			margin-bottom: 4px
-			margin-right: 20px
+			margin-right: 0
 		.speakers
 			color: $clr-secondary-text-light
 			display: flex
@@ -386,6 +389,7 @@ export default {
 				font-size: 14px
 		.info
 			padding: 6px
+			padding-right: 64px
 			.title
 				font-size: 14px
 			.abstract
@@ -395,4 +399,54 @@ export default {
 	.c-linear-schedule-session.has-date
 		.time-box
 			width: 76px
+
+.density-compact .c-linear-schedule-session,
+.density-compact .break
+	min-height: 64px
+	margin: 4px 4px
+	font-size: 12px
+	.time-box
+		width: 50px
+		padding: 6px 4px 4px 4px
+		.start
+			font-size: 13px
+			margin-bottom: 4px
+			.duration
+				font-size: 11px
+			.ampm
+				font-size: 11px
+	.info
+		padding: 4px
+		padding-right: 56px
+		.title
+			font-size: 13px
+		.speakers
+			font-size: 12px
+		.bottom-info
+			font-size: 11px
+
+.density-comfortable .c-linear-schedule-session,
+.density-comfortable .break
+	min-height: 120px
+	margin: 12px 8px
+	font-size: 16px
+	.time-box
+		width: 76px
+		padding: 14px 10px 8px 10px
+		.start
+			font-size: 18px
+			margin-bottom: 10px
+			.duration
+				font-size: 14px
+			.ampm
+				font-size: 14px
+	.info
+		padding: 12px
+		padding-right: 80px
+		.title
+			font-size: 18px
+		.speakers
+			font-size: 15px
+		.bottom-info
+			font-size: 14px
 </style>

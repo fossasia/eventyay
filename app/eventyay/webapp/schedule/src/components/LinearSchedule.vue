@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-linear-schedule(v-scrollbar.y="")
+.c-linear-schedule(v-scrollbar.y="", :class="'density-' + density")
 	.bucket(v-for="({date, sessions}, index) of sessionBuckets")
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISOString()")
 			.day(v-if="index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
@@ -12,6 +12,7 @@
 					:timezone="timezone",
 					:locale="locale",
 					:hasAmPm="hasAmPm",
+					:showFavCount="showFavCount",
 					:faved="session.id && favs.includes(session.id)",
 					:onHomeServer="onHomeServer",
 					@fav="$emit('fav', session.id)",
@@ -33,6 +34,10 @@ export default {
 		locale: String,
 		hasAmPm: Boolean,
 		timezone: String,
+		showFavCount: {
+			type: Boolean,
+			default: false
+		},
 		favs: {
 			type: Array,
 			default () {
@@ -47,11 +52,15 @@ export default {
 		sortBy: {
 			type: String,
 			default: 'room',
-			validator: v => ['room', 'title', 'popularity'].includes(v)
+			validator: v => ['room', 'title', 'title_desc', 'popularity'].includes(v)
 		},
 		showBreaks: {
 			type: Boolean,
 			default: true
+		},
+		density: {
+			type: String,
+			default: 'default'
 		}
 	},
 	data () {
@@ -137,6 +146,11 @@ export default {
 						const titleB = getLocalizedString(b.title) || ''
 						return titleA.localeCompare(titleB)
 					}
+					case 'title_desc': {
+						const titleA = getLocalizedString(a.title) || ''
+						const titleB = getLocalizedString(b.title) || ''
+						return titleB.localeCompare(titleA)
+					}
 					case 'popularity':
 						return (b.fav_count || 0) - (a.fav_count || 0)
 					default:
@@ -220,4 +234,26 @@ export default {
 				margin: 6px 4px
 				.title
 					font-size: 16px
+
+.c-linear-schedule.density-compact
+	.bucket
+		padding-top: 4px
+		.bucket-label
+			font-size: 12px
+		.break
+			margin: 4px
+			padding: 4px
+			.title
+				font-size: 16px
+
+.c-linear-schedule.density-comfortable
+	.bucket
+		padding-top: 14px
+		.bucket-label
+			font-size: 16px
+		.break
+			margin: 12px
+			padding: 12px
+			.title
+				font-size: 22px
 </style>
