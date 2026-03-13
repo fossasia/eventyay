@@ -99,13 +99,12 @@ class SpeakerProfileForm(
             if custom_widget_class:
                 old_widget = self.fields[field].widget
                 new_widget = custom_widget_class()
-                if hasattr(old_widget, 'attrs') and hasattr(new_widget, 'attrs'):
-                    # Preserve selected attributes (such as data-maxsize, data-sizewarning, accept)
-                    # that may have been set on the original widget, without overriding
-                    # attributes defined by the new custom widget.
-                    for attr_name in ('data-maxsize', 'data-sizewarning', 'accept'):
-                        if attr_name in old_widget.attrs and attr_name not in new_widget.attrs:
-                            new_widget.attrs[attr_name] = old_widget.attrs[attr_name]
+                # Preserve selected attributes (such as data-maxsize, data-sizewarning, accept)
+                # that may have been set on the original widget, without overriding
+                # attributes defined by the new custom widget.
+                for attr_name in ('data-maxsize', 'data-sizewarning', 'accept'):
+                    if attr_name in old_widget.attrs and attr_name not in new_widget.attrs:
+                        new_widget.attrs[attr_name] = old_widget.attrs[attr_name]
                 self.fields[field].widget = new_widget
             self._update_cfp_texts(field)
 
