@@ -42,6 +42,7 @@ from eventyay.api.views.order import OrderPositionFilter
 from eventyay.base.i18n import language
 from eventyay.base.models import (
     CachedFile,
+    CachedTicket,
     Checkin,
     CheckinList,
     Device,
@@ -58,6 +59,7 @@ from eventyay.base.services.checkin import (
     SQLLogic,
     perform_checkin,
 )
+from eventyay.base.services.tickets import generate
 from eventyay.consts import SizeKey
 from eventyay.helpers.database import FixedOrderBy
 
@@ -560,7 +562,13 @@ def _append_badge_download(downloads, op, request):
     if 'eventyay.plugins.badges' in op.order.event.plugins:
         badge_url = f'/api/v1/organizers/{request.organizer.slug}/events/{op.order.event.slug}/orderpositions/{op.pk}/download/badge/'
         downloads.append({'output': 'badge', 'url': badge_url})
+        _ensure_badge_generated(op)
     return downloads
+
+
+def _ensure_badge_generated(op):
+    if not CachedTicket.objects.filter(order_position=op, provider='badge').exists():
+        generate.apply_async(args=('orderposition', op.pk, 'badge'))
 
 
 def _redeem_process(
