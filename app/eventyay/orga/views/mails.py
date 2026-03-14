@@ -403,11 +403,33 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             return self.get(self.request, *self.args, **self.kwargs)
 
         result = form.save()
+        scheduled_at = form.cleaned_data.get('scheduled_at')
         if len(result) and result[0].sent:
             self.success_url = self.request.event.orga_urls.sent_mails
             messages.success(
                 self.request,
                 _('{count} emails have been sent.').format(count=len(result)),
+            )
+        elif scheduled_at:
+            if not result:
+                messages.error(
+                    self.request,
+                    _('No emails could be created. Please check your recipient selection.')
+                )
+                return redirect(self.request.event.orga_urls.compose_mails_sessions)
+            self.success_url = self.request.event.orga_urls.outbox
+            for mail in result:
+                mail.log_action(
+                    'pretalx.mail.scheduled',
+                    person=self.request.user,
+                    orga=True,
+                    data={'scheduled_at': scheduled_at.isoformat()},
+                )
+            messages.success(
+                self.request,
+                _('{count} emails have been scheduled for {datetime}.').format(
+                    count=len(result), datetime=scheduled_at
+                ),
             )
         else:
             self.success_url = self.request.event.orga_urls.outbox
