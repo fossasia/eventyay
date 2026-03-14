@@ -36,7 +36,8 @@ def fetch_schedule_from_conftool(url, password):
         f"&form_export_sessions_options[]=presentations_abstracts&form_export_sessions_options[]=presentations_subpapers"
         f"&form_export_sessions_options[]=presentations_downloads"
         f"&export_form_export_sessions_options[]=presentations_authors_extended_firstname"
-        f"&form_export_sessions_options[]=all"
+        f"&form_export_sessions_options[]=all",
+        timeout=30,
     )
     r.encoding = "utf-8"
     root = etree.fromstring(r.text.encode())
@@ -196,7 +197,8 @@ def mirror_conftool_file(event, url, password, nonce, preview=False):
     try:
         passhash = hashlib.sha256((str(nonce) + password).encode()).hexdigest()
         r = requests.get(
-            f"{url.replace('index.php', 'rest.php')}&nonce={nonce}&passhash={passhash}"
+            f"{url.replace('index.php', 'rest.php')}&nonce={nonce}&passhash={passhash}",
+            timeout=30,
         )
         r.raise_for_status()
 
@@ -294,8 +296,9 @@ def create_posters_from_conftool(
         f"&form_export_papers_options[]=newlines"
         f"&form_export_format=xml"
         f"&form_status={status}"
-        f"&cmd_create_export=true"
+        f"&cmd_create_export=true",
         # TODO: filter by form_track ?
+        timeout=30,
     )
     r.raise_for_status()
     r.encoding = "utf-8"

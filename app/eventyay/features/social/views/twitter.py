@@ -60,6 +60,7 @@ def return_view(request):
                 "code_verifier": request.session.get("social_twitter_challenge"),
             },
             auth=(settings.TWITTER_CLIENT_ID, settings.TWITTER_CLIENT_SECRET),
+            timeout=15,
         )
         r.raise_for_status()
         d = r.json()
@@ -85,6 +86,7 @@ def return_view(request):
             headers={
                 "Authorization": f"Bearer {access_token}",
             },
+            timeout=15,
         )
         r.raise_for_status()
         d = r.json()

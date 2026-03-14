@@ -666,7 +666,7 @@ def convert_image_to_cid(image_src, cid_id, verify_ssl=True):
             path = urlparse(image_src).path
             guess_subtype = os.path.splitext(path)[1][1:]
 
-            response = requests.get(image_src, verify=verify_ssl)
+            response = requests.get(image_src, verify=verify_ssl, timeout=15)
             mime_image = MIMEImage(response.content, _subtype=guess_subtype)
 
         mime_image.add_header('Content-ID', '<%s>' % cid_id)
