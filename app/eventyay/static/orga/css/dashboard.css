@@ -125,3 +125,49 @@
 .dashboard-live {
   margin-top: 12px;
 }
+
+.navigation-button {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+@media (max-width: 768px) {
+
+  .navigation-button {
+    position: relative;
+    margin: 12px 0 16px;
+    padding: 8px 12px;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    border-bottom: 1px solid var(--color-grey-light);
+  }
+
+  .navigation-button .header-nav {
+    flex: 1 1 calc(50% - 8px);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .navbar-top-links {
+    flex-wrap: wrap;
+  }
+
+  .event-header-nav {
+    margin-bottom: 1rem;
+  }
+
+  #main-title {
+    position: relative;
+    z-index: 1;
+    margin-top: 8px;
+  }
+
+  #main-title .navigation-title h2 {
+    margin-top: 0;
+  }
+}
+
+
