@@ -1086,7 +1086,10 @@ h1 .label {
 
     #page-wrapper {
         height: auto;
-        overflow-y: visible;
+        max-height: calc(100vh - var(--navbar-height, 50px));
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
         box-sizing: border-box;
         padding: 0 10px;
     }
@@ -1094,6 +1097,17 @@ h1 .label {
     #page-wrapper > .container-fluid {
         padding-left: 4px;
         padding-right: 4px;
+    }
+
+    .table-responsive,
+    .table-responsive-sm,
+    .table-responsive-md,
+    .table-responsive-lg,
+    .table-responsive-xl {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 

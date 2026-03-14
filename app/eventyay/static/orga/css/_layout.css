@@ -43,6 +43,56 @@ body {
   }
 }
 
+.cfp-forms-actions {
+  margin-left: auto;
+}
+
+@media (max-width: 767.98px) {
+  .table-responsive-sm {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cfp-forms-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .cfp-forms-header > .cfp-forms-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .cfp-forms-header > .cfp-forms-actions .btn {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .cfp-new-field-row.row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .cfp-forms-page {
+    overflow-x: hidden;
+  }
+
+  .cfp-new-field-row > .cfp-new-field-col {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .cfp-new-field-row .btn {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .cfp-new-field-row > .cfp-new-field-col {
+    margin-left: 25%;
+  }
+}
+
 .global-top-warning {
   position: absolute;
   background: var(--color-danger);
