@@ -5,7 +5,7 @@ let eventyayToastuiIdSeq = 0
 
 const createEventyayUnderlinePlugin = () => {
     const convertUnderlineSyntax = (src) => {
-        const input = String(src || "")
+        const input = String(src || '')
         if (!input.includes('++')) return input
 
         const codeSpanRe = /(`+)([\s\S]*?)\1/g
@@ -464,15 +464,19 @@ const startMarkdownEditorObserver = () => {
 }
 
 const warnFileSize = (element) => {
-    const warning = document.createElement("div")
-    warning.classList = ["invalid-feedback"]
+    let warning = element.parentElement.querySelector('.eventyay-size-warning')
+    if (!warning) {
+        warning = document.createElement('div')
+        warning.classList.add('invalid-feedback', 'eventyay-size-warning')
+        element.parentElement.appendChild(warning)
+    }
+element.classList.add('is-invalid')
     warning.textContent = element.dataset.sizewarning
-    element.parentElement.appendChild(warning)
     element.classList.add("is-invalid")
 }
 const unwarnFileSize = (element) => {
-    element.classList.remove("is-invalid")
-    const warning = element.parentElement.querySelector(".invalid-feedback")
+    element.classList.remove('is-invalid')
+    const warning = element.parentElement.querySelector('.eventyay-size-warning')
     if (warning) element.parentElement.removeChild(warning)
 }
 
@@ -481,16 +485,46 @@ const initFileSizeCheck = (element) => {
         const files = element.files
         if (!files || !files.length) {
             unwarnFileSize(element)
+            return true
         } else {
-            maxsize = parseInt(element.dataset.maxsize)
+            const maxsize = parseInt(element.dataset.maxsize , 10)
             if (files[0].size > maxsize) {
                 warnFileSize(element)
+                return false
             } else {
                 unwarnFileSize(element)
+                return true
             }
         }
     }
     element.addEventListener("change", checkFileSize, false)
+    if (element.form && !element.form.dataset.fileSizeGuardRegistered) {
+        element.form.dataset.fileSizeGuardRegistered = "true"
+        element.form.addEventListener("submit", (event) => {
+            const fileInputs = element.form.querySelectorAll("input[data-maxsize][type=file]")
+            let firstInvalid = null
+            fileInputs.forEach((fileInput) => {
+                const isValid = (
+                    !fileInput.files
+                    || !fileInput.files.length
+                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize , 10)
+                )
+                if (!isValid) {
+                    warnFileSize(fileInput)
+                    if (!firstInvalid) firstInvalid = fileInput
+                }
+            })
+            if (firstInvalid) {
+                event.preventDefault()
+                if (typeof event.stopImmediatePropagation === "function") {
+                    event.stopImmediatePropagation()
+                } else if (typeof event.stopPropagation === "function") {
+                    event.stopPropagation()
+                }
+                firstInvalid.focus()
+            }
+        })
+    }
 }
 
 const isVisible = (element) => {
