@@ -7,6 +7,20 @@
 
 const GLOBAL_INIT_FLAG = 'eventyayDropdownGlobalInit';
 const initializedDropdowns = new WeakSet();
+const LANGUAGE_SCROLL_PADDING = 12;
+
+const scrollActiveItemsIntoView = function(dropdown) {
+    const scrollContainers = dropdown.querySelectorAll('.language-column-scroll');
+    if (!scrollContainers.length) return;
+
+    scrollContainers.forEach(function(container) {
+        const activeItem = container.querySelector('.dropdown-item.active');
+        if (!activeItem) return;
+
+        activeItem.scrollIntoView({ block: 'start' });
+        container.scrollTop = Math.max(0, container.scrollTop - LANGUAGE_SCROLL_PADDING);
+    });
+};
 
 const getOpenDropdowns = function() {
     return document.querySelectorAll('details.dropdown[open]');
@@ -59,6 +73,9 @@ const initDropdowns = function() {
         dropdown.addEventListener('toggle', function() {
             if (!dropdown.open) return;
             closeOtherDropdowns(dropdown);
+            requestAnimationFrame(function() {
+                scrollActiveItemsIntoView(dropdown);
+            });
         });
     });
 
@@ -112,4 +129,3 @@ if (document.readyState === 'loading') {
 } else {
     initDropdowns();
 }
-

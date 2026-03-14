@@ -12451,13 +12451,13 @@ msgstr ""
 #: common/templates/common/fragment_header_user.html:41
 #, fuzzy
 #| msgid "Event name"
-msgid "Event Language"
+msgid "Event language"
 msgstr "Veranstaltungstitel"
 
 #: common/templates/common/fragment_header_user.html:54
 #, fuzzy
 #| msgid "Language"
-msgid "UI Language"
+msgid "UI language"
 msgstr "Sprache"
 
 #: common/templates/common/fragment_nav.html:7 event/stages.py:81

@@ -11961,11 +11961,11 @@ msgstr ""
 "beschikbaar is voor dit event."
 
 #: common/templates/common/fragment_header_user.html:41
-msgid "Event Language"
+msgid "Event language"
 msgstr "Evenementtaal"
 
 #: common/templates/common/fragment_header_user.html:54
-msgid "UI Language"
+msgid "UI language"
 msgstr "UI-taal"
 
 #: common/templates/common/fragment_nav.html:7 event/stages.py:81

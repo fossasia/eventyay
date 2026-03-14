@@ -10822,11 +10822,11 @@ msgstr ""
 #: common/templates/common/fragment_header_user.html:41
 #, fuzzy
 #| msgid "Event list"
-msgid "Event Language"
+msgid "Event language"
 msgstr "Eseménylista"
 
 #: common/templates/common/fragment_header_user.html:54
-msgid "UI Language"
+msgid "UI language"
 msgstr ""
 
 #: common/templates/common/fragment_nav.html:7 event/stages.py:81
