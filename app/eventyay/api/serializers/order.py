@@ -1109,8 +1109,11 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
         return channel
 
     def validate_code(self, code):
-        if code and Order.objects.filter(event__organizer=self.context['event'].organizer, code=code).exists():
-            raise ValidationError('This order code is already in use.')
+        event = self.context.get('event')
+        if event is None:
+            raise ValidationError('Event context is required for order code validation.')
+        if code and Order.objects.filter(event=event, code=code).exists():
+            raise ValidationError('This order code is already in use for this event.')
         if any(c not in 'ABCDEFGHJKLMNPQRSTUVWXYZ1234567890' for c in code):
             raise ValidationError('This order code contains invalid characters.')
         return code
