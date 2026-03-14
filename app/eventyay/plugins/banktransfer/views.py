@@ -500,7 +500,7 @@ class ImportView(ListView):
         try:
             o.settings.set('banktransfer_csvhint', hint)
         except (ValueError, TypeError) as e:
-            logger.error('Import using stored hint failed: ' + str(e))
+            logger.exception('Import using stored hint failed: ' + str(e))
         else:
             parsed, __ = csvimport.parse(data, hint)
             return self.start_processing(parsed)
