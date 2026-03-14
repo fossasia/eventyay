@@ -4,7 +4,6 @@ from django.contrib.auth.password_validation import (
     password_validators_help_texts,
     validate_password,
 )
-from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from pytz import common_timezones
 
@@ -62,7 +61,15 @@ class UserEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'].required = True
+        # Only require email for new users or users that already have an email
+        # Allow existing users without email to remain without email
+        if self.instance and self.instance.pk and not self.instance.email:
+            self.fields['email'].required = False
+        else:
+            self.fields['email'].required = True
+        # Normalize None to empty string to prevent "None" from displaying in form fields
+        if self.instance and self.instance.email is None:
+            self.initial['email'] = ''
         self.fields['last_login'].disabled = True
         if self.instance and self.instance.auth_backend != 'native':
             del self.fields['new_pw']
@@ -70,8 +77,21 @@ class UserEditForm(forms.ModelForm):
             self.fields['email'].disabled = True
 
     def clean_email(self):
-        email = self.cleaned_data['email']
-        if User.objects.filter(Q(email__iexact=email) & ~Q(pk=self.instance.pk)).exists():
+        email = self.cleaned_data.get('email')
+        # Normalize empty string to None for consistency
+        if email == '':
+            email = None
+        # Allow None/empty email only for existing users who currently have no email
+        if not email:
+            if self.instance and self.instance.pk and not self.instance.email:
+                return None
+            # Should not occur: new users have required email; existing users with email keep it
+            return email
+        # Check for duplicate emails only when an email is provided
+        qs = User.objects.filter(email__iexact=email)
+        if self.instance is not None and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
             raise forms.ValidationError(
                 self.error_messages['duplicate_identifier'],
                 code='duplicate_identifier',

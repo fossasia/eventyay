@@ -21,7 +21,7 @@
         <dt>{% trans "End date" %}</dt>
         <dd>{{ session.date_end|date:"SHORT_DATETIME_FORMAT" }}</dd>
         <dt>{% trans "User" %}</dt>
-        <dd>{{ session.user.email }}</dd>
+        <dd>{{ session.user.email|default:"—" }}</dd>
     </dl>
     <table class="table table-condensed">
     <thead>
