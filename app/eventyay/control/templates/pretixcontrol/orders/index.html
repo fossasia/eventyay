@@ -105,7 +105,7 @@
                 </a>
             </p>
         {% endif %}
-        <form action="{% url "control:event.orders.bulkaction" event=request.event.slug organizer=request.event.organizer.slug %}" method="post">
+        <form action="{% url 'control:event.orders.bulkaction' event=request.event.slug organizer=request.event.organizer.slug %}" method="post">
         {% csrf_token %}
         <div class="hidden">
             {{ filter_form.as_p }}
@@ -119,7 +119,7 @@
                 <tr>
                     <th>
                         {% if "can_change_orders" in request.eventpermset %}
-                            <label aria-label="{% trans "select all rows for batch-operation" %}" class="batch-select-label"><input type="checkbox" data-toggle-table/></label>
+                            <label aria-label="{% trans 'select all rows for batch-operation' %}" class="batch-select-label"><input type="checkbox" data-toggle-table/></label>
                         {% endif %}
                     </th>
                     <th>{% trans "Order code" %}
@@ -158,7 +158,7 @@
                     <tr>
                         <td>
                             {% if "can_change_orders" in request.eventpermset %}
-                                <label aria-label="{% trans "select row for batch-operation" %}" class="batch-select-label"><input type="checkbox" name="order" class="batch-select-checkbox" value="{{ o.code }}"/></label>
+                                <label aria-label="{% trans 'select row for batch-operation' %}" class="batch-select-label"><input type="checkbox" name="order" class="batch-select-checkbox" value="{{ o.code }}"/></label>
                             {% endif %}
                         </td>
                         <td>
@@ -248,11 +248,11 @@
         {% if "can_change_orders" in request.eventpermset %}
         <div class="batch-select-actions">
             <button type="submit" class="btn btn-success btn-save" name="action" value="approve"
-                    onclick="return confirm('{% trans "Are you sure you want to approve all selected orders?" %}');">
+                    onclick="return confirm('{% trans 'Are you sure you want to approve all selected orders?' %}');">
                 <i class="fa fa-thumbs-up"></i> {% trans "Approve selected" %}
             </button>
             <button type="submit" class="btn btn-danger btn-save" name="action" value="deny"
-                    onclick="return confirm('{% trans "Are you sure you want to deny all selected orders?" %}');">
+                    onclick="return confirm('{% trans 'Are you sure you want to deny all selected orders?' %}');">
                 <i class="fa fa-thumbs-down"></i> {% trans "Deny selected" %}
             </button>
         </div>

@@ -356,7 +356,7 @@ class OrderBulkAction(OrderSearchMixin, EventPermissionRequiredMixin, View):
                     _('%(count)d order(s) could not be denied.') % {'count': error_count},
                 )
 
-        skipped = orders.count() - pending_approval.count()
+        skipped = orders.count() - (success_count + error_count)
         if skipped:
             messages.info(
                 request,
