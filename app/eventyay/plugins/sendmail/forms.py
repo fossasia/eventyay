@@ -20,7 +20,7 @@ from eventyay.base.models.orders import Order
 from eventyay.consts import SizeKey
 from eventyay.control.forms import CachedFileField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser
+from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser, ScheduledMail
 
 
 MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP = _( 'If the order contains attendees with email addresses different from the person who orders the ' 'tickets, the following email will be sent out to the attendees.' )
@@ -602,3 +602,175 @@ class TeamMailForm(forms.Form):
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             label=_("Send to members of these teams")
         )
+
+
+class ScheduledMailForm(forms.ModelForm):
+    checkin_lists = SafeModelMultipleChoiceField(
+        queryset=CheckinList.objects.none(), required=False
+    )
+    products = forms.ModelMultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+        label=_('Only send to people who bought'),
+        required=True,
+        queryset=Product.objects.none(),
+    )
+    send_date = forms.SplitDateTimeField(
+        widget=SplitDateTimePickerWidget(),
+        label=_('Send date'),
+        required=False,
+    )
+
+    class Meta:
+        model = ScheduledMail
+        fields = [
+            'enabled', 'subject', 'message', 'recipients', 'order_status',
+            'products', 'has_filter_checkins', 'checkin_lists', 'not_checked_in', 'subevent',
+            'schedule_type', 'send_date', 'send_offset_days', 'send_offset_time'
+        ]
+        widgets = {
+            'subject': I18nTextInput,
+            'message': I18nTextarea,
+            'order_status': forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
+            'recipients': forms.RadioSelect,
+            'schedule_type': forms.RadioSelect,
+            'send_offset_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        }
+        labels = {
+            'enabled': _('Enabled'),
+            'subject': _('Subject'),
+            'message': _('Message'),
+            'recipients': _('Send email to'),
+            'order_status': _('Restrict to orders with status'),
+            'has_filter_checkins': _('Filter check-in status'),
+            'not_checked_in': _('Send to customers not checked in'),
+            'subevent': _('Only send to customers of'),
+            'schedule_type': _('Type of schedule time'),
+            'send_offset_days': _('Days offset'),
+            'send_offset_time': _('Time offset'),
+        }
+
+    def _set_field_placeholders(self, fn, base_parameters):
+        phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
+        ht = _('Available placeholders: {list}').format(list=', '.join(phs))
+        help_text = getattr(self.fields[fn], 'help_text', '')
+        if help_text:
+            self.fields[fn].help_text = str(help_text) + ' ' + str(ht)
+        else:
+            self.fields[fn].help_text = ht
+        self.fields[fn].validators.append(PlaceholderValidator(phs))
+
+    def __init__(self, *args, **kwargs):
+        event = self.event = kwargs.pop('event')
+        super().__init__(*args, **kwargs)
+
+        self.fields['subject'].locales = event.settings.get('locales')
+        self.fields['message'].locales = event.settings.get('locales')
+
+        self._set_field_placeholders('subject', ['event', 'order', 'position_or_address'])
+        self._set_field_placeholders('message', ['event', 'order', 'position_or_address'])
+
+        recp_choices = [('orders', _('Everyone who created a ticket order'))]
+        if event.settings.attendee_emails_asked:
+            recp_choices += [
+                ('attendees', _('Every attendee (falling back to the order contact when no attendee email address is given)')),
+                ('both', _('Both (all order contact addresses and all attendee email addresses)')),
+            ]
+        self.fields['recipients'].choices = recp_choices
+
+        choices = [(e, l) for e, l in Order.STATUS_CHOICE if e != 'n']
+        choices.insert(0, ('na', _('payment pending (except unapproved)')))
+        choices.insert(0, ('pa', _('approval pending')))
+        if not event.settings.get('payment_term_expire_automatically', as_type=bool):
+            choices.append(('overdue', _('pending with payment overdue')))
+        self.fields['order_status'].choices = choices
+        if not self.initial.get('order_status'):
+            self.initial['order_status'] = ['p', 'na']
+
+        self.fields['products'].queryset = event.products.all()
+
+        self.fields['checkin_lists'].queryset = event.checkin_lists.all()
+        self.fields['checkin_lists'].widget = Select2Multiple(
+            attrs={
+                'data-model-select2': 'generic',
+                'data-select2-url': reverse(
+                    'control:event.orders.checkinlists.select2',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                ),
+                'data-placeholder': _('Restrict to check-in list'),
+            }
+        )
+        self.fields['checkin_lists'].widget.choices = self.fields['checkin_lists'].choices
+
+        # Convert the subevent IntegerField to a proper ModelChoiceField for the form
+        self.fields['subevent'] = forms.ModelChoiceField(
+            queryset=SubEvent.objects.none(),
+            required=False,
+            empty_label=pgettext_lazy('subevent', 'All dates'),
+            label=_('Restrict to a specific event date'),
+        )
+        if event.has_subevents:
+            self.fields['subevent'].queryset = event.subevents.all()
+            self.fields['subevent'].widget = Select2(
+                attrs={
+                    'data-model-select2': 'event',
+                    'data-select2-url': reverse(
+                        'control:event.subevents.select2',
+                        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                    ),
+                    'data-placeholder': pgettext_lazy('subevent', 'Date'),
+                }
+            )
+            self.fields['subevent'].widget.choices = self.fields['subevent'].choices
+        else:
+            del self.fields['subevent']
+
+        # Populate initial values when editing an existing rule
+        if self.instance and self.instance.pk:
+            if self.instance.products:
+                self.initial['products'] = event.products.filter(pk__in=self.instance.products)
+            if self.instance.checkin_lists:
+                self.initial['checkin_lists'] = event.checkin_lists.filter(pk__in=self.instance.checkin_lists)
+            if self.instance.subevent and event.has_subevents:
+                self.initial['subevent'] = event.subevents.filter(pk=self.instance.subevent).first()
+            if self.instance.order_status:
+                self.initial['order_status'] = self.instance.order_status
+
+        self.fields['enabled'].help_text = _('Only enabled rules are actually sent')
+        self.fields['send_date'].help_text = _(
+            'For technical reasons, the email might actually be sent a bit later than your configured date. '
+            'Typically, this will not be more than 10 minutes. Your email will never be sent earlier than the time you configured.'
+        )
+
+    def clean(self):
+        d = super().clean()
+        st = d.get('schedule_type')
+        if st == 'absolute':
+            if not d.get('send_date'):
+                self.add_error('send_date', _('Please enter a valid date.'))
+        else:
+            if d.get('send_offset_days') is None:
+                self.add_error('send_offset_days', _('Please enter a valid number of days.'))
+            if not d.get('send_offset_time'):
+                self.add_error('send_offset_time', _('Please enter a valid time.'))
+        return d
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Convert ModelMultipleChoiceField (QuerySet of objects) → list of PKs
+        # because the model stores these as ArrayField(BigIntegerField/IntegerField)
+        products = self.cleaned_data.get('products')
+        if products is not None:
+            instance.products = [p.pk for p in products]
+
+        checkin_lists = self.cleaned_data.get('checkin_lists')
+        if checkin_lists is not None:
+            instance.checkin_lists = [cl.pk for cl in checkin_lists]
+
+        # Convert ModelChoiceField (SubEvent instance) → integer PK
+        subevent = self.cleaned_data.get('subevent')
+        instance.subevent = subevent.pk if subevent else None
+
+        if commit:
+            instance.save()
+        return instance

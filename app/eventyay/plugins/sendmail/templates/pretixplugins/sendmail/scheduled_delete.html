@@ -1,0 +1,21 @@
+{% extends "pretixcontrol/event/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}{% translate "Delete scheduled email" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Delete scheduled email" %}</h1>
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        <p>{% translate "Are you sure you want to delete this scheduled email rule?" %}</p>
+        <div class="form-actions form-group">
+            <a href="{% url "plugins:sendmail:scheduled_list" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default">
+                {% translate "Cancel" %}
+            </a>
+            <button type="submit" class="btn btn-danger">
+                {% translate "Delete" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

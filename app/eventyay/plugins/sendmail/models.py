@@ -1,4 +1,8 @@
+import datetime
 import logging
+from datetime import timedelta
+
+import pytz
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -395,3 +399,175 @@ class EmailQueueFilter(models.Model):
 
     def __str__(self):
         return f"Filters for mail {self.mail_id}"
+
+
+class ScheduleType(models.TextChoices):
+    ABSOLUTE = 'absolute', 'Absolute'
+    RELATIVE_BEFORE_EVENT_START = 'relative_before_event_start', 'Relative, before event start'
+    RELATIVE_BEFORE_EVENT_END = 'relative_before_event_end', 'Relative, before event end'
+    RELATIVE_AFTER_EVENT_START = 'relative_after_event_start', 'Relative, after event start'
+    RELATIVE_AFTER_EVENT_END = 'relative_after_event_end', 'Relative, after event end'
+
+
+class ScheduledMail(models.Model):
+    """
+    A scheduling rule that automatically sends emails to event attendees
+    at a configured time (absolute or relative to event dates).
+
+    :param event: The event this rule belongs to.
+    :param enabled: Only enabled rules are processed by the periodic task.
+    :param subject: I18n email subject template.
+    :param message: I18n email body template.
+    :param recipients: Who to send to: orders / attendees / both.
+    :param order_status: Filter by order status codes.
+    :param products: Filter by product IDs.
+    :param checkin_lists: Filter by check-in list IDs.
+    :param has_filter_checkins: Whether the check-in filter is active.
+    :param not_checked_in: If True, target only attendees NOT checked in.
+    :param subevent: Restrict to a specific subevent ID.
+    :param schedule_type: How the send time is computed.
+    :param send_date: Absolute send datetime (used when schedule_type=absolute).
+    :param send_offset_days: Days before/after event for relative schedule.
+    :param send_offset_time: Wall-clock time on that day for relative schedule.
+    :param last_execution: Timestamp of the last time this rule fired for this event cycle.
+    """
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='scheduled_mails',
+    )
+    enabled = models.BooleanField(default=True)
+
+    # Content
+    subject = I18nTextField(null=True, blank=True)
+    message = I18nTextField(null=True, blank=True)
+
+    # Recipient settings
+    recipients = models.CharField(
+        max_length=10,
+        choices=Recipients.choices,
+        default=Recipients.ORDERS,
+    )
+
+    # Filters — mirror EmailQueueFilter fields
+    order_status = ArrayField(models.CharField(max_length=20), blank=True, default=list)
+    products = ArrayField(models.BigIntegerField(), blank=True, default=list)
+    checkin_lists = ArrayField(models.IntegerField(), blank=True, default=list)
+    has_filter_checkins = models.BooleanField(default=False)
+    not_checked_in = models.BooleanField(default=False)
+    subevent = models.IntegerField(null=True, blank=True)
+
+    # Schedule
+    schedule_type = models.CharField(
+        max_length=40,
+        choices=ScheduleType.choices,
+        default=ScheduleType.ABSOLUTE,
+    )
+    send_date = models.DateTimeField(null=True, blank=True)
+    send_offset_days = models.IntegerField(null=True, blank=True)
+    send_offset_time = models.TimeField(null=True, blank=True)
+
+    # Execution tracking
+    last_execution = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'ScheduledMail(event={self.event.slug}, schedule_type={self.schedule_type})'
+
+    def compute_send_datetime(self):
+        """
+        Compute the effective datetime when this rule should fire.
+        Returns None if insufficient data is available.
+        """
+        from django.utils.timezone import now
+
+        if self.schedule_type == ScheduleType.ABSOLUTE:
+            return self.send_date
+
+        event = self.event
+        tz = pytz.timezone(event.settings.timezone) if event.settings.timezone else pytz.utc
+
+        if self.schedule_type in (
+            ScheduleType.RELATIVE_BEFORE_EVENT_START,
+            ScheduleType.RELATIVE_AFTER_EVENT_START,
+        ):
+            base_dt = event.date_from
+        else:  # before/after event end
+            base_dt = event.date_to
+            if base_dt is None:
+                return None
+
+        if self.send_offset_days is None:
+            return None
+
+        if self.schedule_type in (
+            ScheduleType.RELATIVE_BEFORE_EVENT_START,
+            ScheduleType.RELATIVE_BEFORE_EVENT_END,
+        ):
+            target_date = (base_dt - timedelta(days=self.send_offset_days)).astimezone(tz).date()
+        else:
+            target_date = (base_dt + timedelta(days=self.send_offset_days)).astimezone(tz).date()
+
+        send_time = self.send_offset_time or now().time().replace(hour=9, minute=0, second=0)
+        naive_dt = datetime.datetime.combine(target_date, send_time)
+        return tz.localize(naive_dt)
+
+    def is_due(self):
+        """
+        Returns True if this rule should fire right now.
+        A rule fires if:
+        - it is enabled
+        - compute_send_datetime() <= now
+        - it has never fired, or its last_execution was before the computed send time
+          (prevents double-firing within the same scheduled window)
+        """
+        from django.utils.timezone import now
+
+        if not self.enabled:
+            return False
+
+        send_dt = self.compute_send_datetime()
+        if send_dt is None:
+            return False
+
+        current = now()
+        if current < send_dt:
+            return False
+
+        # Already fired after this scheduled time — skip
+        if self.last_execution and self.last_execution >= send_dt:
+            return False
+
+        return True
+
+
+class ScheduledMailLog(models.Model):
+    """
+    Records each firing of a ScheduledMail rule.
+
+    :param rule: The rule that fired.
+    :param fired_at: When the task ran.
+    :param recipient_count: Number of emails dispatched.
+    :param error: Optional error message if the run failed.
+    """
+
+    rule = models.ForeignKey(
+        ScheduledMail,
+        on_delete=models.CASCADE,
+        related_name='logs',
+    )
+    fired_at = models.DateTimeField(auto_now_add=True)
+    recipient_count = models.IntegerField(default=0)
+    error = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-fired_at']
+
+    def __str__(self):
+        return f'ScheduledMailLog(rule={self.rule_id}, fired_at={self.fired_at})'
