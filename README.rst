@@ -38,7 +38,7 @@ For Nushell:
   > open deb-packages.txt | lines | sudo apt install ...$in
 
 
-If you are using other Linux distros, please guess the corresponding package names for that list.
+If you are using other Linux distributions, install the equivalent packages listed in deb-packages.txt using your distribution's package manager.
 
 Other than that, please install `uv`_, the Python package manager.
 
@@ -48,7 +48,7 @@ Depending on your distribution.
 
 3. **Create a PostgreSQL database**
 
-The default database name that the project needs is ``eventyay-db``. If you are using Linux, the simplest way
+The default database name required by the project is ``eventyay-db``. If you are using Linux, the simplest way
 to work with database is to use its "peer" mode (no need to remember password).
 
 Create a Postgres user with the same name as your Linux user:
@@ -141,9 +141,9 @@ Mobile testing note: If you want to test the site from an **Android emulator**, 
 
 
 Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
-all below it are own by you.
+all below it are owned by you.
 
-Docker based development
+Docker-based development
 ------------------------
 
 We assume your current working directory is the checkout of this repo.
@@ -231,7 +231,7 @@ After this, hard-refresh the browser (Ctrl + Shift + R).
 
 The database in the dev docker setup is created in a docker volume. If you see
 errors concerning login etc, you can completely reset the database (you will
-loose all configuration/organizers/events!) and removing the database container
+lose all configuration/organizers/events!) and removing the database container
 by calling
 
 .. code-block:: bash
@@ -251,7 +251,7 @@ Other than that, the configuration is divided to three running environments:
 * ``production``: With default values in *eventyay.production.toml*.
 * ``testing``: With default values in *eventyay.testing.toml*.
 
-The values in these files will override ones in ``BaseSettings``.
+The values in these files will override the ones in ``BaseSettings``.
 
 Running environment is selected via the ``EVY_RUNNING_ENVIRONMENT`` environment variable. It is pre-set in *manage.py*, *wsgi.py* and *asgi.py*.
 For example, if you want to run a command in production environment, you can do:
