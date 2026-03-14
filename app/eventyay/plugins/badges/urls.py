@@ -16,6 +16,7 @@ from .views import (
     LayoutListView,
     LayoutSetDefault,
     OrderPrintDo,
+    BadgeCheckoutPreviewView,
 )
 
 urlpatterns = [
@@ -59,7 +60,11 @@ urlpatterns = [
         BadgePreviewView.as_view(),
         name='badge-preview',
     ),
+    path(
+        'event/<orgslug:organizer>/<slug:event>/badges/checkout-preview/',
+        BadgeCheckoutPreviewView.as_view(),
+        name='checkout-preview',
+    ),
 ]
-
-event_router.register('badgelayouts', BadgeLayoutViewSet)
 event_router.register('badgeitems', BadgeProductViewSet)
+event_router.register('badgelayouts', BadgeLayoutViewSet)
