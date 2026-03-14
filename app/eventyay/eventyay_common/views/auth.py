@@ -52,6 +52,30 @@ from eventyay.multidomain.middlewares import get_cookie_domain
 logger = logging.getLogger(__name__)
 
 
+def _order_login_providers(login_providers):
+    """Return login_providers as a dict with the preferred provider first."""
+    if not login_providers:
+        return login_providers
+    preferred = _get_preferred_provider(login_providers)
+    ordered = {}
+    if preferred and preferred in login_providers and login_providers[preferred].get('state'):
+        ordered[preferred] = login_providers[preferred]
+    for key, value in login_providers.items():
+        if key != preferred:
+            ordered[key] = value
+    return ordered
+
+
+def _get_preferred_provider(login_providers):
+    """Return the provider key that is preferred, or None."""
+    if not login_providers:
+        return None
+    for key, config in login_providers.items():
+        if config.get('state') and config.get('is_preferred'):
+            return key
+    return None
+
+
 def get_used_backend(request):
     backend_str = request.session[BACKEND_SESSION_KEY]
     backend = load_backend(backend_str)
@@ -154,7 +178,9 @@ def login(request):
     ctx['backend'] = backend
 
     gs = GlobalSettingsObject()
-    ctx['login_providers'] = gs.settings.get('login_providers', as_type=dict)
+    raw_providers = gs.settings.get('login_providers', as_type=dict)
+    ctx['login_providers'] = _order_login_providers(raw_providers)
+    ctx['preferred_provider'] = _get_preferred_provider(raw_providers)
     return render(request, 'eventyay_common/auth/login.html', ctx)
 
 
