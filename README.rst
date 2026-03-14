@@ -340,6 +340,18 @@ See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
 This project is maintained by **FOSSASIA**.
 
+AI Development
+--------------
+
+This repository includes structured AI development guidance.
+
+AI tools should consult:
+
+- `.github/instructions/` — file-scoped coding standards for Python, JavaScript, Django templates, TOML, and Git commits
+- `.agents/skills/` — reusable operational knowledge about repository structure, backend conventions, deployment, and workflows
+
+See `.agents/README.md` for the recommended reading order for AI agents.
+
 .. _uv: https://docs.astral.sh/uv/getting-started/installation/
 .. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/
 .. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
