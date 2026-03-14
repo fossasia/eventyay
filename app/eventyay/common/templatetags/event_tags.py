@@ -177,3 +177,20 @@ def is_event_team_member(context, event=None):
     if not event or not user or user.is_anonymous:
         return False
     return user.has_event_permission(event.organizer, event, request=request)
+
+
+@register.simple_tag(takes_context=True)
+def user_has_submissions(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    user = getattr(request, 'user', None)
+    if not event or not user or user.is_anonymous:
+        return False
+    # Cache the result on the request object to avoid duplicate queries
+    cache_attr = '_user_has_submissions_{}'.format(getattr(event, 'pk', 'default'))
+    if request is not None and hasattr(request, cache_attr):
+        return getattr(request, cache_attr)
+    has_submissions = user.submissions.filter(event=event).exists()
+    if request is not None:
+        setattr(request, cache_attr, has_submissions)
+    return has_submissions
