@@ -738,14 +738,23 @@ const initFileInputWrappers = () => {
         // Skip inputs that are already inside known custom upload/button wrappers
         if (input.closest('.fileinput-button')) return
         if (input.closest('.btn')) return
-        input.addEventListener('change', function () {
-    const file = this.files[0];
-    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+       const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const FILE_SIZE_ERROR_MESSAGE = 'File size must be less than 5MB.';
 
-    if (file && file.size > MAX_SIZE) {
-        alert("File size must be less than 5MB.");
-        this.value = "";
+input.addEventListener('change', function () {
+  const file = this.files[0];
+
+  if (file && file.size > MAX_FILE_SIZE) {
+    const errorMessage = document.createElement('small');
+    errorMessage.className = 'text-danger';
+    errorMessage.innerText = FILE_SIZE_ERROR_MESSAGE;
+
+    if (!this.parentNode.querySelector('.text-danger')) {
+      this.parentNode.appendChild(errorMessage);
     }
+
+    this.value = '';
+  }
 });
 
         input.dataset.eventyayFileWrapped = 'true'
