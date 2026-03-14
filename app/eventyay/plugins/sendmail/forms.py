@@ -453,7 +453,7 @@ class EmailQueueEditForm(forms.ModelForm):
             'bcc': _('BCC'),
         }
         help_texts = {
-            'reply_to': _("Any changes to the Reply-To field will apply only to this queued email."),
+            'reply_to': _("Any changes to the Reply-To field apply only to this queued email. If left empty, the event's default Reply-To will be used."),
             'bcc': _("Any changes to the BCC field will apply only to this queued email."),
         }
         widgets = {
