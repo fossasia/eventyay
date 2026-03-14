@@ -22,8 +22,8 @@
 </template>
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString } from '../utils'
-import Session from './Session'
+import { getLocalizedString } from '../../utils.js'
+import Session from './Session.vue'
 
 export default {
 	components: { Session },

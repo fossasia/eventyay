@@ -15,10 +15,9 @@ export default defineConfig({
   css: {
 		preprocessorOptions: {
 			stylus: {
-        additionalData: `
-          @import "buntpapier/buntpapier/index.styl"
-          @import "${path.resolve(__dirname, 'src/styles/variables.styl')}"
-        `}
+        additionalData: `@import "buntpapier/buntpapier/index.styl"
+        @import "${path.resolve(__dirname, 'src/styles/variables.styl')}"`
+      }
 		}
 	},
   server:{

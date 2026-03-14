@@ -75,6 +75,10 @@ export default {
 				sessions: new Set(dayToSessions.get(day)),
 				rooms: new Set(dayToSessions.get(day).map((session) => session.room)),
 			}));
+
+			if(initialGroups.length === 0){
+				return []
+			}
 			const dayMap = new Map();
 			dayMap.set(initialGroups[0].days[0], initialGroups[0]);
 

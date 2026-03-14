@@ -286,6 +286,7 @@ export default {
 		},
 		nowSlice () {
 			let slice
+			if(!this.now) return null
 			for (const s of this.timeslices) {
 				if (this.now.isBefore(s.date)) break
 				slice = s
@@ -303,8 +304,7 @@ export default {
 					slice,
 					offset: this.now.diff(slice.date, 'minutes') / nextSlice.date.diff(slice.date, 'minutes')
 				}
-			}
-			return null
+			}		
 		},
 		roomTooltipStyle () {
 			return {
@@ -535,7 +535,7 @@ export default {
 			document.addEventListener('mouseup', onMouseUp)
 		},
 		onIntersect (entries) {
-			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
+			const entry = entries.sort((a, b) => b.time - a.time).find(entry => entry.isIntersecting)
 			if (!entry) return
 			const day = moment(entry.target.dataset.slice).startOf('day')
 			if (day.format('YYYY-MM-DD') !== this.currentDay) {

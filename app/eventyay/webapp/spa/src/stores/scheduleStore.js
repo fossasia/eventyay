@@ -33,7 +33,7 @@ export const useScheduleStore = defineStore('schedule', {
       const tz = state.schedule.timezone
   
       const start = moment.tz(state.schedule.event_start, tz)
-      const end = moment.tz(state.schedule.event_end, tz).add(1, 'day')
+      const end = moment.tz(state.schedule.event_end, tz)
 
       const result = []
       const current = start.clone()
