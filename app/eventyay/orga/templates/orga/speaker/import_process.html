@@ -1,0 +1,81 @@
+{% extends "orga/base.html" %}
+
+{% load i18n %}
+
+{% block extra_title %}{% translate "Import speakers – Column mapping" %} :: {% endblock extra_title %}
+
+{% block content %}
+    <h2>{% translate "Import speakers – Column mapping" %}</h2>
+
+    {% if preview_rows %}
+        <h3>{% translate "CSV preview (first rows)" %}</h3>
+        <div class="table-responsive mb-4">
+            <table class="table table-sm table-bordered table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        {% for header in headers %}
+                            <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview_rows %}
+                        <tr>
+                            {% for cell in row %}
+                                <td>{{ cell }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <h3>{% translate "Map columns" %}</h3>
+    <p>
+        {% blocktranslate trimmed %}
+            For each speaker field below, select which CSV column provides the
+            data, or leave empty to skip the field. Fields marked with * are
+            required.
+        {% endblocktranslate %}
+    </p>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right" for="{{ field.id_for_label }}">
+                    {{ field.label }}{% if field.field.required %} *{% endif %}
+                </label>
+                <div class="col-md-9">
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        <div class="form-group row">
+            <div class="col-md-9 offset-md-3">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fa fa-check"></i>
+                    {% translate "Start import" %}
+                </button>
+                <a href="{{ request.event.orga_urls.speakers_import }}" class="btn btn-outline-secondary btn-lg ml-2">
+                    {% translate "Cancel" %}
+                </a>
+            </div>
+        </div>
+    </form>
+{% endblock content %}

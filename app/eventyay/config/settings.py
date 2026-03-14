@@ -191,7 +191,7 @@ class BaseSettings(_BaseSettings):
         )
 
     # Upload size limit in MB, needs to to in accordance with SizeKey
-    upload_size_csv: int = 1
+    upload_size_csv: int = 10
     upload_size_image: int = 10
     upload_size_pdf: int = 10
     upload_size_xlsx: int = 2

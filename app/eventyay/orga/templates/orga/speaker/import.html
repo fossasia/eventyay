@@ -1,0 +1,37 @@
+{% extends "orga/base.html" %}
+
+{% load i18n %}
+
+{% block extra_title %}{% translate "Import speakers" %} :: {% endblock extra_title %}
+
+{% block content %}
+    <h2>{% translate "Import speakers" %}</h2>
+
+    <p>
+        {% blocktranslate trimmed %}
+            Upload a CSV file containing speaker data. The first row must contain
+            column headers. In the next step you will map CSV columns to speaker
+            fields and preview the data before importing.
+        {% endblocktranslate %}
+    </p>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="fa fa-upload"></i>
+            {% translate "Upload and continue" %}
+        </button>
+    </form>
+{% endblock content %}

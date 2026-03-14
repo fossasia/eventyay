@@ -1,8 +1,10 @@
 import json
 from collections import Counter
+from datetime import timedelta
 from operator import itemgetter
 
 from dateutil import rrule
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
@@ -14,17 +16,32 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
-from eventyay.talk_rules.agenda import is_agenda_submission_visible
+from eventyay.base.models import (
+    Answer,
+    Feedback,
+    LogEntry,
+    Resource,
+    Submission,
+    SubmissionComment,
+    SubmissionStates,
+    Tag,
+    User,
+)
+from eventyay.base.models.base import CachedFile
+from eventyay.base.models.mail import MailTemplateRoles
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.services.orderimport import parse_csv
+from eventyay.base.services.talkimport import import_submissions
+from eventyay.base.views.tasks import AsyncAction
 from eventyay.common.exceptions import SubmissionError
 from eventyay.common.forms.fields import SizeFileInput
-from eventyay.base.models import LogEntry
 from eventyay.common.text.phrases import phrases
-from eventyay.common.views.generic import CreateOrUpdateView
-from eventyay.common.views.generic import OrgaCRUDView
+from eventyay.common.views.generic import CreateOrUpdateView, OrgaCRUDView
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
@@ -33,7 +50,8 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     Sortable,
 )
-from eventyay.base.models.mail import MailTemplateRoles
+from eventyay.consts import SizeKey
+from eventyay.orga.forms.importers import CSVImportForm, SessionImportProcessForm
 from eventyay.orga.forms.submission import (
     AddSpeakerForm,
     AddSpeakerInlineForm,
@@ -41,25 +59,15 @@ from eventyay.orga.forms.submission import (
     SubmissionForm,
     SubmissionStateChangeForm,
 )
-from eventyay.base.models import User
-from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.submission.forms import (
-    TalkQuestionsForm,
     ResourceForm,
     SubmissionCommentForm,
     SubmissionFilterForm,
     TagForm,
+    TalkQuestionsForm,
 )
-from eventyay.base.models import (
-    Answer,
-    Feedback,
-    Resource,
-    Submission,
-    SubmissionComment,
-    SubmissionStates,
-    Tag,
-)
-from eventyay.base.models.profile import SpeakerProfile
+from eventyay.talk_rules.agenda import is_agenda_submission_visible
+from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.talk_rules.submission import (
     annotate_assigned,
     get_reviewer_tracks,
@@ -164,7 +172,8 @@ class SubmissionStateChange(SubmissionViewMixin, FormView):
             messages.info(
                 self.request,
                 _(
-                    'Somebody else was faster than you: this proposal was already in the state you wanted to change it to.'
+                    'Somebody else was faster than you: '
+                    'this proposal was already in the state you wanted to change it to.'
                 ),
             )
             return redirect(self.get_success_url())
@@ -240,52 +249,51 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     @cached_property
     def speakers(self):
         submission = self.object
-        speakers_qs = (
-            submission.speakers.all()
-            .prefetch_related(
-                Prefetch(
-                    'profiles',
-                    queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities'),
-                    to_attr='_event_profiles',
-                ),
-                Prefetch(
-                    'answers',
-                    queryset=Answer.objects.filter(
-                        question__event=submission.event,
-                        question__is_visible_to_reviewers=True,
-                    ).select_related('question').order_by('question__position'),
-                    to_attr='_reviewer_answers',
-                ),
-                Prefetch(
-                    'submissions',
-                    queryset=Submission.objects.filter(event=submission.event).prefetch_related(
-                        Prefetch(
-                            'answers',
-                            queryset=Answer.objects.filter(
-                                question__event=submission.event,
-                                question__is_visible_to_reviewers=True,
-                            ).select_related('question').order_by('question__position'),
-                            to_attr='_reviewer_answers',
+        speakers_qs = submission.speakers.all().prefetch_related(
+            Prefetch(
+                'profiles',
+                queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities'),
+                to_attr='_event_profiles',
+            ),
+            Prefetch(
+                'answers',
+                queryset=Answer.objects.filter(
+                    question__event=submission.event,
+                    question__is_visible_to_reviewers=True,
+                )
+                .select_related('question')
+                .order_by('question__position'),
+                to_attr='_reviewer_answers',
+            ),
+            Prefetch(
+                'submissions',
+                queryset=Submission.objects.filter(event=submission.event).prefetch_related(
+                    Prefetch(
+                        'answers',
+                        queryset=Answer.objects.filter(
+                            question__event=submission.event,
+                            question__is_visible_to_reviewers=True,
                         )
-                    ),
-                    to_attr='_event_submissions',
+                        .select_related('question')
+                        .order_by('question__position'),
+                        to_attr='_reviewer_answers',
+                    )
                 ),
-            )
+                to_attr='_event_submissions',
+            ),
         )
         return [
             {
                 'user': speaker,
                 'profile': speaker.event_profile(submission.event),
-                'other_submissions': [
-                    s for s in speaker._event_submissions
-                    if s.code != submission.code
-                ],
+                'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
                 'email': speaker.email,
                 'avatar': speaker.avatar,
                 'avatar_source': speaker.avatar_source,
                 'avatar_license': speaker.avatar_license,
                 'reviewer_answers': sorted(
-                    speaker._reviewer_answers + [
+                    speaker._reviewer_answers
+                    + [
                         answer
                         for submission_obj in speaker._event_submissions
                         for answer in submission_obj._reviewer_answers
@@ -518,7 +526,6 @@ class SubmissionContentView(SubmissionContent):
         if "code" in self.kwargs:
             return ["base.orga_list_submission"]  # View permission for reviewers
         return ["base.create_submission"]
-  
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
@@ -777,7 +784,9 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
     @cached_property
     def raw_submission_timeline_data(self):
         talk_ids = list(
-            map(str, self.request.event.submissions.exclude(state=SubmissionStates.DELETED).values_list('id', flat=True))
+            map(
+                str, self.request.event.submissions.exclude(state=SubmissionStates.DELETED).values_list('id', flat=True)
+            )
         )
         data = Counter(
             log.timestamp.astimezone(self.request.event.tz).date()
@@ -862,8 +871,12 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
     @context
     def talk_timeline_data(self):
         talk_ids = list(
-            map(str, self.request.event.submissions.filter(state__in=SubmissionStates.accepted_states)
-                .values_list('id', flat=True))
+            map(
+                str,
+                self.request.event.submissions.filter(state__in=SubmissionStates.accepted_states).values_list(
+                    'id', flat=True
+                ),
+            )
         )
         data = Counter(
             log.timestamp.astimezone(self.request.event.tz).date().isoformat()
@@ -1033,3 +1046,116 @@ class ApplyPendingBulk(EventPermissionRequired, BaseSubmissionList):
     @context
     def next(self):
         return self.request.GET.get('next')
+
+
+class SubmissionImportView(EventPermissionRequired, FormView):
+    permission_required = 'base.update_event'
+    template_name = 'orga/submission/import.html'
+    form_class = CSVImportForm
+    IMPORT_FILENAME = 'session_import.csv'
+
+    def form_valid(self, form):
+        session = self.request.session
+        if not session.session_key:
+            session.save()
+        if not session.session_key:
+            messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
+            return redirect(self.request.path)
+        cf = CachedFile.objects.create(
+            expires=now() + timedelta(days=1),
+            date=now(),
+            filename=self.IMPORT_FILENAME,
+            type='text/csv',
+            web_download=False,
+            session_key=session.session_key,
+        )
+        cf.file.save(self.IMPORT_FILENAME, form.cleaned_data['file'])
+        return redirect(self.request.event.orga_urls.submissions_import + str(cf.id) + '/')
+
+
+class SubmissionImportProcessView(EventPermissionRequired, AsyncAction, FormView):
+    permission_required = 'base.update_event'
+    template_name = 'orga/submission/import_process.html'
+    form_class = SessionImportProcessForm
+    task = import_submissions
+    known_errortypes = ['ImportExecutionError']
+    IMPORT_FILENAME = 'session_import.csv'
+
+    @cached_property
+    def file(self):
+        return get_object_or_404(
+            CachedFile,
+            pk=self.kwargs.get('file'),
+            filename=self.IMPORT_FILENAME,
+            session_key=self.request.session.session_key,
+        )
+
+    @cached_property
+    def parsed(self):
+        return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['headers'] = self.parsed.fieldnames if self.parsed else []
+        kwargs['event'] = self.request.event
+        kwargs['initial'] = self.request.event.settings.submission_import_settings
+        return kwargs
+
+    @context
+    def preview_rows(self):
+        if not self.parsed:
+            return []
+        rows = []
+        headers = self.parsed.fieldnames or []
+        for i, row in enumerate(self.parsed):
+            if i >= 5:
+                break
+            rows.append([row.get(h, '') for h in headers])
+        return rows
+
+    @context
+    def headers(self):
+        return self.parsed.fieldnames if self.parsed else []
+
+    def get(self, request, *args, **kwargs):
+        if 'async_id' in request.GET and settings.HAS_CELERY:
+            return self.get_result(request)
+        if not self.parsed:
+            messages.error(request, _('Could not parse the uploaded CSV file.'))
+            return redirect(self.request.event.orga_urls.submissions_import)
+        return FormView.get(self, request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.parsed:
+            messages.error(request, _('Could not parse the uploaded CSV file.'))
+            return redirect(self.request.event.orga_urls.submissions_import)
+        return FormView.post(self, request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.request.event.settings.submission_import_settings = form.cleaned_data
+        return self.do(
+            self.request.event.pk,
+            str(self.file.id),
+            form.cleaned_data,
+            self.request.LANGUAGE_CODE,
+            self.request.user.pk,
+        )
+
+    def get_success_url(self, value):
+        return self.request.event.orga_urls.submissions
+
+    def get_error_url(self):
+        return self.request.event.orga_urls.submissions_import
+
+    def get_success_message(self, value):
+        if isinstance(value, dict):
+            msg = _('Session import complete: {created} created, {updated} updated, {skipped} skipped.').format(
+                created=value.get('created', 0),
+                updated=value.get('updated', 0),
+                skipped=value.get('skipped', 0),
+            )
+            errors = value.get('errors', [])
+            if errors:
+                msg += ' ' + _('Errors: {errors}').format(errors='; '.join(str(e) for e in errors[:10]))
+            return msg
+        return _('The session import was successful.')
