@@ -49,7 +49,7 @@ Depending on your distribution.
 3. **Create a PostgreSQL database**
 
 The default database name required by the project is ``eventyay-db``. If you are using Linux, the simplest way
-to work with database is to use its "peer" mode (no need to remember password).
+to work with the database is to use its "peer" mode (no need to remember a password).
 
 Create a Postgres user with the same name as your Linux user:
 
