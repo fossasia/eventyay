@@ -499,9 +499,8 @@ class ImportView(ListView):
         o = getattr(self.request, 'event', self.request.organizer)
         try:
             o.settings.set('banktransfer_csvhint', hint)
-        except Exception as e:  # TODO: narrow down
-            logger.error('Import using stored hint failed: ' + str(e))
-            pass
+        except (ValueError, TypeError) as e:
+            logger.exception('Import using stored hint failed: ' + str(e))
         else:
             parsed, __ = csvimport.parse(data, hint)
             return self.start_processing(parsed)
