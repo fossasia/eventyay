@@ -15,6 +15,7 @@ from arabic_reshaper import ArabicReshaper
 from bidi.algorithm import get_display
 from django.conf import settings
 from django.contrib.staticfiles import finders
+from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from django.utils.formats import date_format
 from django.utils.html import conditional_escape
@@ -36,6 +37,7 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import Paragraph
 
 from eventyay.base.i18n import language
+from eventyay.base.image_safety import validate_image
 from eventyay.base.invoice import ThumbnailingImageReader
 from eventyay.base.models import Order, OrderPosition, Question
 from eventyay.base.settings import PERSON_NAME_SCHEMES
@@ -608,6 +610,13 @@ def images_from_questions(sender, *args, **kwargs):
         else:
             if etag:
                 return hashlib.sha1(a.file.name.encode()).hexdigest()
+
+            try:
+                validate_image(a.file)
+            except ValidationError as e:
+                logger.warning('Potential DoS attempt or invalid image detected in question answer: %s. Error: %s', a.pk, e)
+                return None
+
             return a.file
 
     d = {}
@@ -824,12 +833,18 @@ class Renderer:
                 image_file = None
 
         if image_file:
+            try:
+                validate_image(image_file)
+            except ValidationError as e:
+                logger.warning('Image rejected by safety validation in _draw_imagearea: %s', e)
+                image_file = None
+
+        if image_file:
             ir = ThumbnailingImageReader(image_file)
             try:
                 ir.resize(float(o['width']) * mm, float(o['height']) * mm, 300)
-            except:
+            except (OSError, ValueError):
                 logger.exception('Can not resize image')
-                pass
             canvas.drawImage(
                 image=ir,
                 x=float(o['left']) * mm,
