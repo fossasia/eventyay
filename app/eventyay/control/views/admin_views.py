@@ -241,7 +241,7 @@ class EventAdminToken(AdminBase, DetailView):
         secret = jwt_config["secret"]
         audience = jwt_config["audience"]
         issuer = jwt_config["issuer"]
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(datetime.timezone.utc)
         exp = iat + datetime.timedelta(days=7)
         payload = {
             "iss": issuer,

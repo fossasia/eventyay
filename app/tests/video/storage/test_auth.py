@@ -28,7 +28,7 @@ def test_invalid_token_header(client, world):
 @pytest.mark.django_db
 def test_invalid_token(client, world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -50,7 +50,7 @@ def test_invalid_token(client, world):
 @pytest.mark.django_db
 def test_expired_token(client, world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat - datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -73,7 +73,7 @@ def test_expired_token(client, world):
 @pytest.mark.skip
 def test_no_permission(client, world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -109,7 +109,7 @@ def test_client_id(client, world, chat_room):
 @pytest.mark.django_db
 def test_admin_token(client, world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],

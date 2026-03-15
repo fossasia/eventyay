@@ -47,7 +47,7 @@ def test_non_existing_world(client):
 @pytest.mark.django_db
 def test_invalid_token(client, world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat + datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],
@@ -66,7 +66,7 @@ def test_invalid_token(client, world):
 @pytest.mark.django_db
 def test_expired_token(client, world):
     config = world.config["JWT_secrets"][0]
-    iat = datetime.datetime.utcnow()
+    iat = datetime.datetime.now(datetime.timezone.utc)
     exp = iat - datetime.timedelta(days=999)
     payload = {
         "iss": config["issuer"],

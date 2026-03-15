@@ -583,7 +583,7 @@ class SubmissionFavouriteDeprecatedView(View):
 
     @staticmethod
     def get_user_video_token(user_code, video_settings):
-        iat = dt.datetime.utcnow()
+        iat = dt.datetime.now(dt.timezone.utc)
         exp = iat + dt.timedelta(days=30)
         payload = {
             "iss": video_settings.issuer,

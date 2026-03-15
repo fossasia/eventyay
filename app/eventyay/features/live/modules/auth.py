@@ -598,7 +598,7 @@ class AuthModule(BaseModule):
                 user["token"] = None
                 return user
             jwt_config = jwt_secrets[0]
-            iat = datetime.datetime.utcnow()
+            iat = datetime.datetime.now(datetime.timezone.utc)
             exp = iat + datetime.timedelta(days=365)
             payload = {
                 "iss": jwt_config.get("issuer", ""),
