@@ -7,7 +7,12 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 TIMEZONE_CHOICES = sorted(
-    [tz for tz in zoneinfo.available_timezones() if not tz.startswith('Etc/') and tz != 'localtime']
+    [
+        tz
+        for tz in zoneinfo.available_timezones()
+        if not tz.startswith('Etc/')
+        and tz not in {'localtime', 'Asia/Calcutta'}
+    ]
 )
 
 # The directory for frontend development resources (node_modules, build scripts, etc.).
