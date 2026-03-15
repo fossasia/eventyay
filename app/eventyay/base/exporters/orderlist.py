@@ -54,6 +54,14 @@ class OrderListExporter(MultiSheetListExporter):
     identifier = 'orderlist'
     verbose_name = gettext_lazy('Order data')
 
+    @staticmethod
+    def _order_status_display(order):
+        if order.status == Order.STATUS_PENDING and order.require_approval:
+            return _('Approval pending')
+        if order.status == Order.STATUS_PENDING and not order.require_approval:
+            return _('Approved, payment pending')
+        return order.get_status_display()
+
     @cached_property
     def providers(self):
         return dict(get_all_payment_providers())
@@ -70,8 +78,21 @@ class OrderListExporter(MultiSheetListExporter):
     def additional_form_fields(self):
         d = [
             (
-                'paid_only',
-                forms.BooleanField(label=_('Only paid orders'), initial=True, required=False),
+                'order_status',
+                forms.ChoiceField(
+                    label=_('Order status'),
+                    choices=[
+                        ('all', _('All orders')),
+                        ('p', _('Paid')),
+                        ('n', _('Pending (all)')),
+                        ('pa', _('Approval pending')),
+                        ('na', _('Approved, payment pending')),
+                        ('e', _('Expired')),
+                        ('c', _('Canceled')),
+                    ],
+                    initial='p',
+                    required=False,
+                ),
             ),
             (
                 'include_payment_amounts',
@@ -231,6 +252,18 @@ class OrderListExporter(MultiSheetListExporter):
             return qs.annotate(**annotations).filter(**filters)
         return qs
 
+    def _apply_status_filter(self, qs, form_data, rel=''):
+        status = form_data.get('order_status', 'p')
+        if not status or status == 'all':
+            return qs
+        if status == 'pa':
+            return qs.filter(**{f'{rel}status': Order.STATUS_PENDING, f'{rel}require_approval': True})
+        if status == 'na':
+            return qs.filter(**{f'{rel}status': Order.STATUS_PENDING, f'{rel}require_approval': False})
+        if status == 'n':
+            return qs.filter(**{f'{rel}status': Order.STATUS_PENDING})
+        return qs.filter(**{f'{rel}status': status})
+
     def iterate_orders(self, form_data: dict):
         p_date = (
             OrderPayment.objects.filter(
@@ -298,8 +331,7 @@ class OrderListExporter(MultiSheetListExporter):
 
         qs = self._date_filter(qs, form_data, rel='')
 
-        if form_data.get('paid_only', True):
-            qs = qs.filter(status=Order.STATUS_PAID)
+        qs = self._apply_status_filter(qs, form_data, rel='')
         tax_rates = self._get_all_tax_rates(qs)
 
         # Check if we need to include wikimedia_username in the export
@@ -414,7 +446,7 @@ class OrderListExporter(MultiSheetListExporter):
                 self.event_object_cache[order.event_id].slug,
                 order.code,
                 order.total,
-                order.get_status_display(),
+                self._order_status_display(order),
                 order.email,
             ]
 
@@ -529,8 +561,7 @@ class OrderListExporter(MultiSheetListExporter):
             )
             .select_related('order', 'order__invoice_address', 'tax_rule')
         )
-        if form_data.get('paid_only', True):
-            qs = qs.filter(order__status=Order.STATUS_PAID)
+        qs = self._apply_status_filter(qs, form_data, rel='order__')
 
         qs = self._date_filter(qs, form_data, rel='order__')
 
@@ -574,7 +605,7 @@ class OrderListExporter(MultiSheetListExporter):
             row = [
                 self.event_object_cache[order.event_id].slug,
                 order.code,
-                order.get_status_display(),
+                self._order_status_display(order),
                 order.email,
                 str(order.phone) if order.phone else '',
                 order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
@@ -652,8 +683,7 @@ class OrderListExporter(MultiSheetListExporter):
             )
             .prefetch_related('answers', 'answers__question', 'answers__options')
         )
-        if form_data.get('paid_only', True):
-            qs = qs.filter(order__status=Order.STATUS_PAID)
+        qs = self._apply_status_filter(qs, form_data, rel='order__')
 
         qs = self._date_filter(qs, form_data, rel='order__')
 
@@ -754,7 +784,7 @@ class OrderListExporter(MultiSheetListExporter):
                     self.event_object_cache[order.event_id].slug,
                     order.code,
                     op.positionid,
-                    order.get_status_display(),
+                    self._order_status_display(order),
                     order.email,
                     str(order.phone) if order.phone else '',
                     order.datetime.astimezone(tz).strftime('%Y-%m-%d'),

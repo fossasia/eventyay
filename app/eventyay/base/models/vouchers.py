@@ -205,6 +205,14 @@ class Voucher(LoggedModel):
     show_hidden_products = models.BooleanField(
         verbose_name=_('Shows hidden products that match this voucher'), default=True
     )
+    bypass_approval = models.BooleanField(
+        verbose_name=_('Bypass approval requirement'),
+        default=False,
+        help_text=_(
+            'If activated, orders using this voucher will be automatically approved and will not enter '
+            'the pending approval state, even if the product normally requires approval.'
+        ),
+    )
 
     objects = ScopedManager(organizer='event__organizer')
 

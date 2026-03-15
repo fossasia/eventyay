@@ -279,6 +279,97 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
         return EventOrderFilterForm(data=self.request.GET, event=self.request.event)
 
 
+class OrderBulkAction(OrderSearchMixin, EventPermissionRequiredMixin, View):
+    permission = 'can_change_orders'
+
+    def get_forms(self):
+        f = [
+            EventOrderExpertFilterForm(
+                data=self.request.POST,
+                event=self.request.event,
+                prefix='expert',
+            )
+        ]
+        for recv, resp in order_search_forms.send(sender=self.request.event, request=self.request):
+            f.append(resp)
+        return f
+
+    def _get_orders(self):
+        if self.request.POST.get('__ALL'):
+            qs = Order.objects.filter(event=self.request.event)
+            filter_form = EventOrderFilterForm(data=self.request.POST, event=self.request.event)
+            if not filter_form.is_valid():
+                return Order.objects.none()
+            qs = filter_form.filter_qs(qs)
+            for f in self.get_forms():
+                if any(k.startswith(f.prefix) for k in self.request.POST.keys()) and f.is_valid():
+                    qs = f.filter_qs(qs)
+            return qs
+        codes = self.request.POST.getlist('order')
+        return Order.objects.filter(event=self.request.event, code__in=[c.upper() for c in codes])
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        orders = self._get_orders()
+        pending_approval = orders.filter(status=Order.STATUS_PENDING, require_approval=True)
+
+        if action not in ('approve', 'deny'):
+            messages.error(request, _('Invalid action.'))
+            return redirect(
+                'control:event.orders',
+                event=request.event.slug,
+                organizer=request.event.organizer.slug,
+            )
+
+        success_count = 0
+        error_count = 0
+        for order in pending_approval:
+            try:
+                if action == 'approve':
+                    approve_order(order, user=request.user)
+                else:
+                    deny_order(order, user=request.user)
+                success_count += 1
+            except OrderError:
+                error_count += 1
+
+        if action == 'approve':
+            if success_count:
+                messages.success(
+                    request,
+                    _('%(count)d order(s) have been approved.') % {'count': success_count},
+                )
+            if error_count:
+                messages.warning(
+                    request,
+                    _('%(count)d order(s) could not be approved.') % {'count': error_count},
+                )
+        else:
+            if success_count:
+                messages.success(
+                    request,
+                    _('%(count)d order(s) have been denied.') % {'count': success_count},
+                )
+            if error_count:
+                messages.warning(
+                    request,
+                    _('%(count)d order(s) could not be denied.') % {'count': error_count},
+                )
+
+        skipped = orders.count() - (success_count + error_count)
+        if skipped:
+            messages.info(
+                request,
+                _('%(count)d order(s) were skipped because they are not pending approval.') % {'count': skipped},
+            )
+
+        return redirect(
+            'control:event.orders',
+            event=request.event.slug,
+            organizer=request.event.organizer.slug,
+        )
+
+
 class OrderView(EventPermissionRequiredMixin, DetailView):
     context_object_name = 'order'
     model = Order

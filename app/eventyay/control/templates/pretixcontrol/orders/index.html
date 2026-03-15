@@ -105,10 +105,23 @@
                 </a>
             </p>
         {% endif %}
+        <form action="{% url 'control:event.orders.bulkaction' event=request.event.slug organizer=request.event.organizer.slug %}" method="post">
+        {% csrf_token %}
+        <div class="hidden">
+            {{ filter_form.as_p }}
+            {% for key, value in request.GET.items %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endfor %}
+        </div>
         <div class="table-responsive">
             <table class="table table-condensed table-hover table-orders">
                 <thead>
                 <tr>
+                    <th>
+                        {% if "can_change_orders" in request.eventpermset %}
+                            <label aria-label="{% trans 'select all rows for batch-operation' %}" class="batch-select-label"><input type="checkbox" data-toggle-table/></label>
+                        {% endif %}
+                    </th>
                     <th>{% trans "Order code" %}
                         <a href="?{% url_replace request 'ordering' '-code' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'code' %}"><i class="fa fa-caret-up"></i></a></th>
@@ -127,10 +140,27 @@
                         <a href="?{% url_replace request 'ordering' '-status' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'status' %}"><i class="fa fa-caret-up"></i></a></th>
                 </tr>
+                {% if "can_change_orders" in request.eventpermset and page_obj.paginator.num_pages > 1 %}
+                    <tr class="table-select-all warning hidden">
+                        <td>
+                            <input type="checkbox" name="__ALL" id="__all" data-results-total="{{ page_obj.paginator.count }}">
+                        </td>
+                        <td colspan="6">
+                            <label for="__all">
+                                {% trans "Select all results on other pages as well" %}
+                            </label>
+                        </td>
+                    </tr>
+                {% endif %}
                 </thead>
                 <tbody>
                 {% for o in orders %}
                     <tr>
+                        <td>
+                            {% if "can_change_orders" in request.eventpermset %}
+                                <label aria-label="{% trans 'select row for batch-operation' %}" class="batch-select-label"><input type="checkbox" name="order" class="batch-select-checkbox" value="{{ o.code }}"/></label>
+                            {% endif %}
+                        </td>
                         <td>
                             <strong>
                                 <a
@@ -189,6 +219,7 @@
                 {% if sums %}
                     <tfoot>
                     <tr>
+                        <th></th>
                         <th>{% trans "Sum over all pages" %}</th>
                         <th></th>
                         <th>
@@ -214,6 +245,19 @@
                 {% endif %}
             </table>
         </div>
+        {% if "can_change_orders" in request.eventpermset %}
+        <div class="batch-select-actions">
+            <button type="submit" class="btn btn-success btn-save" name="action" value="approve"
+                    onclick="return confirm('{% trans 'Are you sure you want to approve all selected orders?' %}');">
+                <i class="fa fa-thumbs-up"></i> {% trans "Approve selected" %}
+            </button>
+            <button type="submit" class="btn btn-danger btn-save" name="action" value="deny"
+                    onclick="return confirm('{% trans 'Are you sure you want to deny all selected orders?' %}');">
+                <i class="fa fa-thumbs-down"></i> {% trans "Deny selected" %}
+            </button>
+        </div>
+        {% endif %}
+        </form>
         {% include "pretixcontrol/pagination.html" %}
     {% endif %}
 {% endblock %}

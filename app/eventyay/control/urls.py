@@ -477,6 +477,7 @@ urlpatterns = [
                 url(r'^orders/export/do$', orders.ExportDoView.as_view(), name='event.orders.export.do'),
                 url(r'^orders/refunds/$', orders.RefundList.as_view(), name='event.orders.refunds'),
                 url(r'^orders/go$', orders.OrderGo.as_view(), name='event.orders.go'),
+                url(r'^orders/bulkaction$', orders.OrderBulkAction.as_view(), name='event.orders.bulkaction'),
                 url(r'^orders/$', orders.OrderList.as_view(), name='event.orders'),
                 url(r'^orders/search$', orders.OrderSearch.as_view(), name='event.orders.search'),
                 url(r'^dangerzone/$', event.DangerZone.as_view(), name='event.dangerzone'),
