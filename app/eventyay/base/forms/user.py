@@ -14,9 +14,6 @@ from eventyay.control.forms import SingleLanguageWidget
 
 class UserSettingsForm(forms.ModelForm):
     error_messages = {
-        'duplicate_identifier': _(
-            'There already is an account associated with this e-mail address. Please choose a different one.'
-        ),
         'pw_current': _('Please enter your current password if you want to change your password.'),
         'pw_current_wrong': _('The current password you entered was not correct.'),
         'pw_mismatch': _('Please enter the same password twice'),
