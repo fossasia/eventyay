@@ -1,6 +1,8 @@
 @import "../../fontawesome/scss/font-awesome.scss";
 
 #event-nav {
+    margin-bottom: 18px;
+
     .header-nav {
         border-color: darken($btn-primary-bg, 10%) !important;
         border: 1px solid;
@@ -17,10 +19,17 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        row-gap: 12px;
         font-weight: 200;
+
         .navigation-button {
             margin-left: auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
         }
+
         a {
             pointer-events: auto;
         }
