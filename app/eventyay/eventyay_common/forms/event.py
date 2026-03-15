@@ -44,6 +44,8 @@ class EventCommonSettingsForm(SettingsForm):
         'theme_round_borders',
         'primary_font',
         'frontpage_text',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def clean(self):

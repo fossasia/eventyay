@@ -2575,6 +2575,32 @@ Your {event} team"""
             help_text=_('Short text displayed on the public start page banner.'),
         ),
     },
+    'menu_label_tickets': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Alternative menu text for Tickets'),
+            widget=I18nTextInput,
+            help_text=_('Custom label for the "Tickets" menu item. Leave empty to use default.'),
+            widget_kwargs={'attrs': {'placeholder': _('e.g. Buy tickets')}},
+            required=False,
+        ),
+    },
+    'menu_label_join_video': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Alternative menu text for Join online video'),
+            widget=I18nTextInput,
+            help_text=_('Custom label for the "Join online video" menu item. Leave empty to use default.'),
+            widget_kwargs={'attrs': {'placeholder': _('e.g. Join live stream')}},
+            required=False,
+        ),
+    },
 }
 
 CSS_SETTINGS = {
