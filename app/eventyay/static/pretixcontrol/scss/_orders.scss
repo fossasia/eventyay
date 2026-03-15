@@ -52,3 +52,63 @@
         margin-bottom: 0;
     }
 }
+
+.batch-select-actions-orders {
+    margin-top: 15px;
+
+    .order-bulk-actions-menu {
+        > .btn {
+            min-width: 210px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        > .dropdown-menu {
+            min-width: 260px;
+            padding: 8px 0;
+            margin-bottom: 10px;
+        }
+    }
+
+    [data-batch-count-label] {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .caret {
+        flex-shrink: 0;
+    }
+
+    .order-bulk-action-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: $text-color;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 18px;
+        text-align: left;
+
+        &:hover,
+        &:focus {
+            background: $gray-lighter;
+            outline: 0;
+            text-decoration: none;
+        }
+
+        &:disabled {
+            background: transparent;
+            color: $text-muted;
+            cursor: not-allowed;
+        }
+
+        .fa {
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+    }
+}
