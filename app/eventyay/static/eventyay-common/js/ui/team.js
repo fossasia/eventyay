@@ -1,15 +1,16 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const reviewerCheckbox = document.getElementById('id_is_reviewer');
-    const reviewSettings = document.getElementById('review-settings');
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.team-review-settings').forEach(function (settingsDiv) {
+        var toggleId = settingsDiv.getAttribute('data-review-toggle');
+        if (!toggleId) return;
 
-    const toggleReviewSettings = () => {
-        if (!reviewerCheckbox || !reviewSettings) return;
+        var checkbox = document.getElementById(toggleId);
+        if (!checkbox) return;
 
-        reviewSettings.style.display = reviewerCheckbox.checked ? 'block' : 'none';
-    };
+        function toggle() {
+            settingsDiv.style.display = checkbox.checked ? '' : 'none';
+        }
 
-    if (reviewerCheckbox) {
-        reviewerCheckbox.addEventListener('change', toggleReviewSettings);
-        toggleReviewSettings();
-    }
+        checkbox.addEventListener('change', toggle);
+        toggle();
+    });
 });
