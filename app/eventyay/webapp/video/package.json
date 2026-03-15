@@ -72,7 +72,7 @@
     "eslint-plugin-vue-pug": "^1.0.0-alpha.5",
     "globals": "^17.4.0",
     "i18next-parser": "^9.4.0",
-    "pug": "^3.0.3",
+    "pug": "^3.0.4",
     "rollup-plugin-visualizer": "^7.0.1",
     "sass": "^1.98.0",
     "stylus": "^0.64.0",
