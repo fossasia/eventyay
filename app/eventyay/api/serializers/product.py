@@ -197,6 +197,7 @@ class ProductSerializer(I18nAwareModelSerializer):
             'hidden_if_available',
             'allow_waitinglist',
             'issue_giftcard',
+            'badge_type',
             'meta_data',
         )
         read_only_fields = ('has_variations',)

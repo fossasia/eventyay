@@ -22,8 +22,8 @@ from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from django_scopes import scopes_disabled
 from rest_framework import exceptions, filters, serializers, views, viewsets
 from rest_framework.authentication import get_authorization_header
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied, ValidationError as DRFValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,6 +37,7 @@ from eventyay.api.serializers.event import (
     CloneEventSerializer,
     EventSerializer as ApiEventSerializer,
     EventSettingsSerializer,
+    ImportEventFromDatasetSerializer,
     SubEventSerializer,
     TaxRuleSerializer,
 )
@@ -171,6 +172,91 @@ class EventViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(
                 'The event could not be deleted as some constraints (e.g. data created by plug-ins) do not allow it.'
             )
+
+    @action(detail=False, methods=['post'], url_path='import_from_dataset')
+    def import_from_dataset(self, request):
+        """
+        Bulk-import events from an open dataset (e.g. trade-show-calendar JSON/CSV).
+        POST body: { "events": [ { "name": "...", "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD",
+        "city", "country", "industry", "frequency", ... }, ... ] }
+        """
+        events_data = request.data.get('events')
+        if not isinstance(events_data, list):
+            raise DRFValidationError({'events': 'A list of events is required.'})
+        if len(events_data) > 100:
+            raise DRFValidationError({'events': 'At most 100 events per request.'})
+
+        organizer = request.organizer
+        created = []
+        errors = []
+        for i, item in enumerate(events_data):
+            ser = ImportEventFromDatasetSerializer(data=item)
+            if not ser.is_valid():
+                errors.append({'index': i, 'data': item, 'errors': ser.errors})
+                continue
+            data = ser.validated_data
+            slug = (data.get('slug') or '').strip()
+            if not slug:
+                from django.utils.text import slugify
+                base = slugify(str(data['name']))[:40]
+                slug = base or get_random_string(6).lower()
+                while Event.objects.filter(organizer=organizer, slug__iexact=slug).exists():
+                    slug = base + '-' + get_random_string(4).lower() if base else get_random_string(6).lower()
+            if Event.objects.filter(organizer=organizer, slug__iexact=slug).exists():
+                errors.append({'index': i, 'slug': slug, 'errors': {'slug': ['This short name is already taken.']}})
+                continue
+            try:
+                with transaction.atomic():
+                    event = Event.objects.create(
+                        organizer=organizer,
+                        name=data['name'],
+                        slug=slug,
+                        date_from=data['date_from'],
+                        date_to=data['date_to'],
+                        location=data.get('location') or '',
+                        event_type=Event.EVENT_TYPE_EXHIBITION,
+                        industry_sector=data.get('industry_sector') or '',
+                        recurrence_frequency=data.get('recurrence_frequency') or '',
+                        currency=settings.DEFAULT_CURRENCY,
+                        is_public=False,
+                        live=False,
+                    )
+                    event.log_action(
+                        'eventyay.event.added',
+                        user=request.user,
+                        auth=request.auth,
+                        data={'source': 'import_from_dataset', 'index': i},
+                    )
+                    created.append({'slug': event.slug, 'name': str(event.name)})
+            except IntegrityError:
+                errors.append(
+                    {
+                        'index': i,
+                        'data': item,
+                        'errors': {
+                            '__all__': ['Database constraint error while creating this event.'],
+                        },
+                    }
+                )
+            except DRFValidationError as e:
+                errors.append({'index': i, 'data': item, 'errors': e.detail})
+            except Exception:
+                logger.exception('Unexpected error in import_from_dataset', extra={'index': i, 'item': item})
+                errors.append(
+                    {
+                        'index': i,
+                        'data': item,
+                        'errors': {
+                            '__all__': ['Unexpected error while creating this event. Please try again later.'],
+                        },
+                    }
+                )
+
+        return Response({
+            'created': len(created),
+            'events': created,
+            'errors': errors if errors else None,
+        }, status=201 if created else 400)
 
 
 class CloneEventViewSet(viewsets.ModelViewSet):

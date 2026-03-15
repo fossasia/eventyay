@@ -191,6 +191,9 @@ class EventWizardBasicsForm(I18nModelForm):
             'geo_lat',
             'geo_lon',
             'email',
+            'event_type',
+            'industry_sector',
+            'recurrence_frequency',
         ]
         field_classes = {
             'date_from': SplitDateTimeField,
