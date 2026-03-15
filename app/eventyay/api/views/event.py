@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 from contextlib import suppress
@@ -24,6 +26,7 @@ from rest_framework import exceptions, filters, serializers, views, viewsets
 from rest_framework.authentication import get_authorization_header
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,6 +40,7 @@ from eventyay.api.serializers.event import (
     CloneEventSerializer,
     EventSerializer as ApiEventSerializer,
     EventSettingsSerializer,
+    PublicEventSerializer,
     SubEventSerializer,
     TaxRuleSerializer,
 )
@@ -95,6 +99,56 @@ with scopes_disabled():
 
         def sales_channel_qs(self, queryset, name, value):
             return queryset.filter(sales_channels__contains=value)
+
+    class PublicEventFilter(FilterSet):
+        is_past = django_filters.rest_framework.BooleanFilter(method='is_past_qs')
+        is_future = django_filters.rest_framework.BooleanFilter(method='is_future_qs')
+        organizer = django_filters.rest_framework.CharFilter(field_name='organizer__slug', lookup_expr='exact')
+        q = django_filters.rest_framework.CharFilter(method='search_qs')
+
+        class Meta:
+            model = Event
+            fields = ['has_subevents']
+
+        def is_past_qs(self, queryset, name, value):
+            expr = Q(has_subevents=False) & Q(
+                Q(Q(date_to__isnull=True) & Q(date_from__lt=now())) | Q(Q(date_to__isnull=False) & Q(date_to__lt=now()))
+            )
+            if value:
+                return queryset.filter(expr)
+            return queryset.exclude(expr)
+
+        def is_future_qs(self, queryset, name, value):
+            expr = Q(has_subevents=False) & Q(
+                Q(Q(date_to__isnull=True) & Q(date_from__gte=now()))
+                | Q(Q(date_to__isnull=False) & Q(date_to__gte=now()))
+            )
+            if value:
+                return queryset.filter(expr)
+            return queryset.exclude(expr)
+
+        def search_qs(self, queryset, name, value):
+            return queryset.filter(name__icontains=value)
+
+
+class PublicEventViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, viewsets.mixins.RetrieveModelMixin):
+    serializer_class = PublicEventSerializer
+    queryset = Event.objects.none()
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+    lookup_field = 'slug'
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    ordering = ('date_from',)
+    ordering_fields = ('date_from', 'name', 'slug')
+    filterset_class = PublicEventFilter
+
+    @scopes_disabled()
+    def get_queryset(self) -> 'QuerySet[Event]':
+        return (
+            Event.objects.filter(live=True, is_public=True)
+            .exclude(testmode=True)
+            .select_related('organizer')
+        )
 
 
 class EventViewSet(viewsets.ModelViewSet):
