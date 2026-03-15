@@ -55,4 +55,29 @@ urlpatterns = [
         views.MailTemplatesView.as_view(),
         name='templates',
     ),
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/sendmail/scheduled/',
+        views.ScheduledMailListView.as_view(),
+        name='scheduled_list',
+    ),
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/sendmail/scheduled/create/',
+        views.ScheduledMailCreateView.as_view(),
+        name='scheduled_create',
+    ),
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/sendmail/scheduled/<int:pk>/',
+        views.ScheduledMailUpdateView.as_view(),
+        name='scheduled_update',
+    ),
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/sendmail/scheduled/<int:pk>/delete/',
+        views.ScheduledMailDeleteView.as_view(),
+        name='scheduled_delete',
+    ),
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/sendmail/scheduled/<int:pk>/toggle/',
+        views.ScheduledMailToggleView.as_view(),
+        name='scheduled_toggle',
+    ),
 ]

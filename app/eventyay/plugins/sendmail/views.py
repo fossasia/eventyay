@@ -11,7 +11,7 @@ from django.utils import timezone as dj_timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
-from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
+from django.views.generic import CreateView, FormView, ListView, TemplateView, UpdateView, View
 from urllib.parse import urlencode
 
 from eventyay.base.email import get_available_placeholders
@@ -25,10 +25,10 @@ from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.helpers.timezone import get_browser_timezone, attach_timezone_to_naive_clock_time
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import CopyDraftMixin, QueryFilterOrderingMixin
-from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser
+from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser, ScheduledMail
 from eventyay.plugins.sendmail.tasks import send_queued_mail
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
-from .forms import MailContentSettingsForm, TeamMailForm
+from .forms import MailContentSettingsForm, TeamMailForm, ScheduledMailForm
 
 
 from . import forms
@@ -634,3 +634,98 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             'organizer': event.organizer.slug,
             'event': event.slug
         }))
+
+
+class ScheduledMailListView(EventPermissionRequiredMixin, ListView):
+    model = ScheduledMail
+    context_object_name = 'rules'
+    template_name = 'pretixplugins/sendmail/scheduled_list.html'
+    permission_required = 'can_change_orders'
+
+    def get_queryset(self):
+        return ScheduledMail.objects.filter(event=self.request.event)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['has_offline_shop'] = not self.request.event.live
+        return ctx
+
+
+class ScheduledMailCreateView(EventPermissionRequiredMixin, CreateView):
+    model = ScheduledMail
+    form_class = ScheduledMailForm
+    template_name = 'pretixplugins/sendmail/scheduled_form.html'
+    permission_required = 'can_change_orders'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.event = self.request.event
+        messages.success(self.request, _('The scheduled email rule has been created.'))
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('plugins:sendmail:scheduled_list', kwargs={
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug
+        })
+
+
+class ScheduledMailUpdateView(EventPermissionRequiredMixin, UpdateView):
+    model = ScheduledMail
+    form_class = ScheduledMailForm
+    template_name = 'pretixplugins/sendmail/scheduled_form.html'
+    permission_required = 'can_change_orders'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(ScheduledMail, event=self.request.event, pk=self.kwargs['pk'])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(self.request, _('The scheduled email rule has been updated.'))
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('plugins:sendmail:scheduled_list', kwargs={
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug
+        })
+
+
+class ScheduledMailDeleteView(EventPermissionRequiredMixin, TemplateView):
+    permission_required = 'can_change_orders'
+    template_name = 'pretixplugins/sendmail/scheduled_delete.html'
+
+    def post(self, request, *args, **kwargs):
+        rule = get_object_or_404(ScheduledMail, event=request.event, pk=kwargs['pk'])
+        rule.delete()
+        messages.success(request, _("The scheduled email rule has been deleted."))
+        return redirect(reverse('plugins:sendmail:scheduled_list', kwargs={
+            'organizer': request.event.organizer.slug,
+            'event': request.event.slug
+        }))
+
+
+class ScheduledMailToggleView(EventPermissionRequiredMixin, View):
+    permission_required = 'can_change_orders'
+
+    def post(self, request, *args, **kwargs):
+        rule = get_object_or_404(ScheduledMail, event=request.event, pk=kwargs['pk'])
+        rule.enabled = not rule.enabled
+        rule.save(update_fields=['enabled'])
+        if rule.enabled:
+            messages.success(request, _('The rule has been enabled.'))
+        else:
+            messages.success(request, _('The rule has been disabled.'))
+        return redirect(reverse('plugins:sendmail:scheduled_list', kwargs={
+            'organizer': request.event.organizer.slug,
+            'event': request.event.slug
+        }))
+

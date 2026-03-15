@@ -2,7 +2,7 @@ from django.dispatch import receiver
 from django.urls import resolve, reverse
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.signals import logentry_display
+from eventyay.base.signals import logentry_display, periodic_task
 from eventyay.control.signals import nav_event
 
 
@@ -83,6 +83,17 @@ def control_nav_import(sender, request=None, **kwargs):
                     ),
                     'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'templates'),
                 },
+                {
+                    'label': _('Scheduled emails'),
+                    'url': reverse(
+                        'plugins:sendmail:scheduled_list',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': (url.namespace == 'plugins:sendmail' and url.url_name.startswith('scheduled_')),
+                },
             ],
         },
     ]
@@ -97,3 +108,9 @@ def pretixcontrol_logentry_display(sender, logentry, **kwargs):
     }
     if logentry.action_type in plains:
         return plains[logentry.action_type]
+
+
+@receiver(signal=periodic_task)
+def scheduled_mails_receiver(sender, **kwargs):
+    from .tasks import process_scheduled_mails
+    process_scheduled_mails.apply_async()
