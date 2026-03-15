@@ -329,6 +329,155 @@ def test_order_deny(client, env):
 
 
 @pytest.mark.django_db
+def test_order_bulk_approve(client, env):
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        o.status = Order.STATUS_PENDING
+        o.require_approval = True
+        o.save()
+
+        second = Order.objects.create(
+            code='BAR',
+            event=env[0],
+            email='bar@dummy.test',
+            status=Order.STATUS_PENDING,
+            datetime=now(),
+            expires=now() + timedelta(days=10),
+            total=14,
+            locale='en',
+            require_approval=True,
+        )
+        second.payments.create(
+            amount=second.total,
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_PENDING,
+        )
+        OrderPosition.objects.create(
+            order=second,
+            item=env[3],
+            variation=None,
+            price=Decimal('14'),
+            attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
+        )
+
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    res = client.post(
+        '/control/event/dummy/dummy/orders/bulk-action',
+        {'action': 'approve', 'order': ['FOO', 'BAR']},
+    )
+
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        second = Order.objects.get(code='BAR')
+
+    assert res.status_code < 400
+    assert o.status == Order.STATUS_PENDING
+    assert not o.require_approval
+    assert second.status == Order.STATUS_PENDING
+    assert not second.require_approval
+
+
+@pytest.mark.django_db
+def test_order_bulk_deny(client, env):
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        o.status = Order.STATUS_PENDING
+        o.require_approval = True
+        o.save()
+
+        second = Order.objects.create(
+            code='BAR',
+            event=env[0],
+            email='bar@dummy.test',
+            status=Order.STATUS_PENDING,
+            datetime=now(),
+            expires=now() + timedelta(days=10),
+            total=14,
+            locale='en',
+            require_approval=True,
+        )
+        second.payments.create(
+            amount=second.total,
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_PENDING,
+        )
+        OrderPosition.objects.create(
+            order=second,
+            item=env[3],
+            variation=None,
+            price=Decimal('14'),
+            attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
+        )
+
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    res = client.post(
+        '/control/event/dummy/dummy/orders/bulk-action',
+        {'action': 'deny', 'order': ['FOO', 'BAR']},
+    )
+
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        second = Order.objects.get(code='BAR')
+
+    assert res.status_code < 400
+    assert o.status == Order.STATUS_CANCELED
+    assert o.require_approval
+    assert second.status == Order.STATUS_CANCELED
+    assert second.require_approval
+
+
+@pytest.mark.django_db
+def test_order_bulk_action_mixed_state(client, env):
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        o.status = Order.STATUS_PENDING
+        o.require_approval = True
+        o.save()
+
+        second = Order.objects.create(
+            code='BAR',
+            event=env[0],
+            email='bar@dummy.test',
+            status=Order.STATUS_PAID,
+            datetime=now(),
+            expires=now() + timedelta(days=10),
+            total=14,
+            locale='en',
+            require_approval=False,
+        )
+        second.payments.create(
+            amount=second.total,
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+        )
+        OrderPosition.objects.create(
+            order=second,
+            item=env[3],
+            variation=None,
+            price=Decimal('14'),
+            attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
+        )
+
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    res = client.post(
+        '/control/event/dummy/dummy/orders/bulk-action',
+        {'action': 'approve', 'order': ['FOO', 'BAR']},
+        follow=True,
+    )
+
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        second = Order.objects.get(code='BAR')
+
+    assert res.status_code < 400
+    assert 'pending approval' in res.content.decode()
+    assert o.require_approval
+    assert o.status == Order.STATUS_PENDING
+    assert second.status == Order.STATUS_PAID
+    assert not second.require_approval
+
+
+@pytest.mark.django_db
 def test_order_delete_require_testmode(client, env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     res = client.get('/control/event/dummy/dummy/orders/FOO/delete', {}, follow=True)
