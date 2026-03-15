@@ -53,6 +53,7 @@ def talks_to_submissions_redirect(request, event, subpath):
 
 router = routers.DefaultRouter()
 router.register(r'organizers', organizer.OrganizerViewSet)
+router.register(r'events', event.PublicEventViewSet, basename='public-events')
 
 orga_router = routers.DefaultRouter()
 orga_router.register(r'events', event.EventViewSet, basename='events')

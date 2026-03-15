@@ -103,6 +103,26 @@ class ValidKeysField(Field):
         }
 
 
+class PublicEventSerializer(I18nAwareModelSerializer):
+    organizer = SlugRelatedField(slug_field='slug', read_only=True)
+
+    class Meta:
+        model = Event
+        fields = (
+            'name',
+            'slug',
+            'organizer',
+            'date_from',
+            'date_to',
+            'location',
+            'currency',
+            'has_subevents',
+            'geo_lat',
+            'geo_lon',
+        )
+        read_only_fields = fields
+
+
 class EventSerializer(I18nAwareModelSerializer):
     meta_data = MetaDataField(required=False, source='*')
     product_meta_properties = MetaPropertyField(required=False, source='*')
