@@ -117,7 +117,6 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
                 position.attendee_name_parts = {'_scheme': event.settings.name_scheme}
                 position.meta_info = {}
                 order._positions.append(position)
-                position.assign_pseudonymization_id()
 
                 for c in cols:
                     c.assign(record.get(c.identifier), order, position, order._address)
