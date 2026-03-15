@@ -502,7 +502,43 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     def events(self):
         if self.all_events:
             return self.organizer.events.all()
+        # Lazy sync: ensure Talk-only teams have events synced when accessed
+        # This handles cases where teams exist but haven't been saved since implementation
+        # Only sync once per instance to avoid performance issues
+        if self.pk and not self.all_events and not getattr(self, '_events_synced', False):
+            from eventyay.base.services.team_event_sync import is_talk_only_team
+            if is_talk_only_team(self):
+                self.sync_events_for_talk_only()
+                self._events_synced = True
         return self.limit_events.all()
+
+    def sync_events_for_talk_only(self):
+        """
+        Automatically sync events to limit_events if this is a Talk-only team.
+        
+        This ensures Talk-only teams have access to events so they appear
+        in the general dashboard for Talk-only users.
+        """
+        # Prevent infinite recursion
+        if getattr(self, '_syncing_events', False):
+            return
+        
+        from eventyay.base.services.team_event_sync import is_talk_only_team, sync_events_to_talk_only_team
+        
+        if is_talk_only_team(self) and not self.all_events:
+            self._syncing_events = True
+            try:
+                sync_events_to_talk_only_team(self)
+            finally:
+                self._syncing_events = False
+
+    def save(self, *args, **kwargs):
+        """Override save to auto-sync events for Talk-only teams."""
+        super().save(*args, **kwargs)
+        # Sync events after save to ensure limit_events is updated
+        # Only sync if not already syncing (prevents recursion)
+        if not getattr(self, '_syncing_events', False):
+            self.sync_events_for_talk_only()
 
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this team."""

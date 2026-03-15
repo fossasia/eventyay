@@ -129,4 +129,39 @@
             </div>
         </div>
     </div>
+    <div class="modal popup-modal" id="tickets-permission-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-card">
+                        <div class="modal-card-icon">
+                            <i class="fa fa-lock big-icon"></i>
+                        </div>
+                        <div class="modal-card-content">
+                            <h3>{% trans "Permission Required" %}</h3>
+                            <p>{% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}</p>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok" %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    {{ block.super }}
+    <script>
+        // Handle Tickets permission links in event widgets
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.tickets-permission-link').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var modal = document.getElementById('tickets-permission-modal');
+                    if (modal) {
+                        $(modal).modal('show');
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}

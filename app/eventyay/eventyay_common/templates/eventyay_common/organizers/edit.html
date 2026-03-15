@@ -7,16 +7,25 @@
 {% block content %}
 <h1 class="page-header">{% translate "Teams" %}</h1>
 <div class="organizer-management">
-    {% if can_manage_teams %}
+    {% if can_view_teams %}
             <div class="mt-3">
                 <div class="clearfix">
                     <h2 class="pull-left" style="margin: 0;">{{ organizer.name }} {% translate "Teams" %}</h2>
+                    {% if can_manage_teams %}
                     <button type="button" class="btn btn-primary pull-right" data-toggle="collapse" data-target="#create-team-form">
                         <i class="fa fa-plus"></i> {% translate "Create a team" %}
                     </button>
+                    {% endif %}
                 </div>
-                <p class="text-muted" style="clear: both; padding-top: 10px;">{% translate "Edit permissions for existing teams. Click 'Edit' to expand the permissions form." %}</p>
+                <p class="text-muted" style="clear: both; padding-top: 10px;">
+                    {% if can_manage_teams %}
+                        {% translate "Edit permissions for existing teams. Click 'Edit' to expand the permissions form." %}
+                    {% else %}
+                        {% translate "View teams you belong to. You have read-only access." %}
+                    {% endif %}
+                </p>
 
+                {% if can_manage_teams %}
                 <div id="create-team-form" class="collapse">
                     <div class="panel panel-default">
                         <div class="panel-heading">
@@ -37,6 +46,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 {% for panel in team_panels %}
                 <div class="panel-group team-permissions-panel" id="team-accordion-{{ panel.team.pk }}">
@@ -86,6 +96,7 @@
                             </div>
                         </div>
                         <div class="team-actions btn-toolbar pull-right">
+                            {% if can_manage_teams %}
                             <div class="btn-group btn-group-sm">
                                 <button type="button"
                                         class="btn btn-primary btn-sm"
@@ -95,6 +106,7 @@
                                     <i class="fa fa-sliders"></i> {% translate "Team permissions" %}
                                 </button>
                             </div>
+                            {% endif %}
                             <div class="btn-group btn-group-sm">
                                 <button type="button"
                                         class="btn btn-default btn-sm"
@@ -104,6 +116,7 @@
                                     <i class="fa fa-users"></i> {% translate "Members & API" %}
                                 </button>
                             </div>
+                            {% if can_manage_teams %}
                             <form action="" method="post"
                                   id="team-delete-form-{{ panel.team.pk }}"
                                   class="team-delete-form hidden"
@@ -118,8 +131,10 @@
                                     <i class="fa fa-trash"></i> {% translate "Delete" %}
                                 </button>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
+                    {% if can_manage_teams %}
                     <div id="team-permissions-{{ panel.team.pk }}"
                          class="panel-collapse collapse {% if panel.is_permissions_open %}in{% endif %}"
                          data-parent="#team-accordion-{{ panel.team.pk }}">
@@ -138,6 +153,7 @@
                             </form>
                         </div>
                     </div>
+                    {% endif %}
                     <div id="team-members-{{ panel.team.pk }}"
                          class="panel-collapse collapse {% if panel.is_members_open %}in{% endif %}"
                          data-parent="#team-accordion-{{ panel.team.pk }}">
@@ -172,7 +188,8 @@
                                                     </td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-member" value="{{ member.id }}"
-                                                                class="btn btn-delete btn-sm btn-block">
+                                                                class="btn btn-delete btn-sm btn-block"
+                                                                {% if not can_manage_teams %}disabled{% endif %}>
                                                             <i class="fa fa-times"></i> {% translate "Remove" %}
                                                         </button>
                                                     </td>
@@ -190,15 +207,18 @@
                                                         {{ invite.email }}
                                                         <span class="fa fa-envelope-o" data-toggle="tooltip"
                                                               title="{% translate "invited, pending response" %}"></span>
+                                                        {% if can_manage_teams %}
                                                         <button type="submit" name="resend-invite" value="{{ invite.id }}"
                                                                 data-toggle="tooltip" title="{% translate "Resend invite" %}"
                                                                 class="btn-invisible">
                                                             <span class="fa fa-repeat"></span>
                                                         </button>
+                                                        {% endif %}
                                                     </td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-invite" value="{{ invite.id }}"
-                                                                class="btn btn-delete btn-sm btn-block">
+                                                                class="btn btn-delete btn-sm btn-block"
+                                                                {% if not can_manage_teams %}disabled{% endif %}>
                                                             <i class="fa fa-times"></i> {% translate "Remove" %}
                                                         </button>
                                                     </td>
@@ -217,7 +237,8 @@
                                                         </small>
                                                     </td>
                                                     <td class="text-right flip">
-                                                        <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                                        <button type="submit" class="btn btn-primary btn-sm btn-block"
+                                                                {% if not can_manage_teams %}disabled{% endif %}>
                                                             <i class="fa fa-plus"></i> {% translate "Add" %}
                                                         </button>
                                                     </td>
@@ -246,7 +267,8 @@
                                                     <td>{{ token.name }}</td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-token" value="{{ token.id }}"
-                                                                class="btn btn-delete btn-sm btn-block">
+                                                                class="btn btn-delete btn-sm btn-block"
+                                                                {% if not can_manage_teams %}disabled{% endif %}>
                                                             <i class="fa fa-times"></i> {% translate "Remove" %}
                                                         </button>
                                                     </td>
@@ -265,7 +287,8 @@
                                                         {% bootstrap_field panel.token_form.name layout='inline' %}
                                                     </td>
                                                     <td class="text-right flip">
-                                                        <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                                        <button type="submit" class="btn btn-primary btn-sm btn-block"
+                                                                {% if not can_manage_teams %}disabled{% endif %}>
                                                             <i class="fa fa-plus"></i> {% translate "Add" %}
                                                         </button>
                                                     </td>
@@ -281,10 +304,18 @@
                 </div>
                 {% empty %}
                 <div class="alert alert-info">
-                    {% translate "No teams exist yet. Click 'Create a team' to add your first team." %}
+                    {% if can_manage_teams %}
+                        {% translate "No teams exist yet. Click 'Create a team' to add your first team." %}
+                    {% else %}
+                        {% translate "You are not a member of any teams." %}
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
+    {% else %}
+        <div class="alert alert-warning">
+            {% translate "You do not have permission to view teams." %}
+        </div>
     {% endif %}
 </div>
 {% endblock %}

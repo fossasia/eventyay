@@ -31,7 +31,12 @@
                 {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
-                {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% trans "Go to" %} 
+                {% if can_view_orders %}
+                    <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% else %}
+                    <a href="#" class="tickets-permission-link" data-toggle="modal" data-target="#tickets-permission-modal">{% trans "Tickets Dashboard" %}</a>
+                {% endif %}
             </p>
         </div>
     </div>
@@ -91,4 +96,121 @@
             </div>
         </div>
     </div>
+    {% if not can_view_orders %}
+        <!-- Simple modal without Bootstrap classes to avoid interference -->
+        <div id="tickets-permission-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999998; align-items: center; justify-content: center; background: rgba(0,0,0,0.6);">
+            <div style="background: white; border-radius: 8px; padding: 40px; max-width: 600px; width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative; z-index: 999999;">
+                <div style="margin-bottom: 20px;">
+                    <i class="fa fa-lock" style="font-size: 64px; color: #d9534f;"></i>
+                </div>
+                <h3 style="margin: 0 0 15px 0; color: #333; font-weight: 600; font-size: 24px;">{% trans "Permission Required" %}</h3>
+                <p style="margin: 0 0 25px 0; color: #666; font-size: 16px; line-height: 1.5;">{% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}</p>
+                <button type="button" id="tickets-modal-ok-btn" onclick="document.getElementById('tickets-permission-modal').style.display='none'; document.body.style.overflow=''; return false;" style="min-width: 120px; padding: 12px 40px; font-size: 16px; font-weight: 600; background-color: #2185d0; border: 1px solid #2185d0; color: white; border-radius: 4px; cursor: pointer; position: relative; z-index: 1000000;">{% trans "Ok" %}</button>
+            </div>
+        </div>
+    {% endif %}
 </div>
+<script>
+    // Simple, direct modal handler - no Bootstrap interference
+    (function() {
+        function showTicketsModal() {
+            var modal = document.getElementById('tickets-permission-modal');
+            if (!modal) return;
+            
+            // Show modal with inline styles (no Bootstrap classes)
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // Attach click handler to button
+            var btn = document.getElementById('tickets-modal-ok-btn');
+            if (btn) {
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                    return false;
+                };
+                
+                // Also use event delegation
+                modal.onclick = function(e) {
+                    if (e.target === modal || e.target.id === 'tickets-modal-ok-btn' || e.target.closest('#tickets-modal-ok-btn')) {
+                        if (e.target.id === 'tickets-modal-ok-btn' || e.target.closest('#tickets-modal-ok-btn')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                        modal.style.display = 'none';
+                        document.body.style.overflow = '';
+                        return false;
+                    }
+                };
+            }
+        }
+        
+        function init() {
+            // Handle links that trigger modal
+            document.addEventListener('click', function(e) {
+                var target = e.target.closest('.tickets-permission-link, a[data-target="#tickets-permission-modal"]');
+                if (target) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showTicketsModal();
+                    return false;
+                }
+            }, true);
+            
+            // Close on Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    var modal = document.getElementById('tickets-permission-modal');
+                    if (modal && modal.style.display !== 'none') {
+                        modal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                }
+            });
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+</script>
+<style>
+    /* Simple modal styling - no Bootstrap interference */
+    #tickets-permission-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 999998;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.6);
+    }
+    
+    #tickets-permission-modal #tickets-modal-ok-btn {
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        position: relative !important;
+        z-index: 1000000 !important;
+    }
+    
+    #tickets-permission-modal #tickets-modal-ok-btn:hover {
+        background-color: #1a6ba0 !important;
+        border-color: #1a6ba0 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    #tickets-permission-modal #tickets-modal-ok-btn:active {
+        transform: translateY(0);
+        background-color: #155a87 !important;
+        border-color: #155a87 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+</style>
