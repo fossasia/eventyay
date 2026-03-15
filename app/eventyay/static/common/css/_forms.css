@@ -253,10 +253,38 @@ input[type="file"] {
   }
 }
 
+.form-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 1.5rem;
+  padding-left: 0;
+  margin-bottom: 0.5rem;
+
+  &.form-check-inline {
+    display: inline-flex;
+    margin-right: 0.75rem;
+    width: auto;
+  }
+
+  &.form-check-vertical,
+  .form-check-vertical-group & {
+    width: 100%;
+    display: flex;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+}
+
 input[type="checkbox"],
 input[type="radio"] {
   -moz-appearance: none;
   -webkit-appearance: none;
+  appearance: none;
 
   width: 24px;
   height: 24px;
@@ -278,18 +306,39 @@ input[type="radio"] {
     pointer-events: none;
   }
 
-  & + label {
+  /* Target labels that are siblings (alternative structure) */
+  & + label,
+  & ~ .form-check-label {
     cursor: pointer;
     font-weight: normal;
-    padding-left: 8px;
-    vertical-align: super;
+    padding-left: 0;
+    vertical-align: middle;
     font-size: 1rem;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
     & ~ a .badge,
     & ~ .badge {
       /* This is primarily for the multi_languages_widget.html badges */
       vertical-align: super;
     }
   }
+}
+
+/* Specific fix for labels that wrap inputs where the input is the first child */
+label:has(> input[type="radio"]),
+label:has(> input[type="checkbox"]),
+label.form-check-label {
+  display: inline-flex;
+  flex-direction: row;
+  font-weight: normal;
+  align-items: center;
+  gap: 8px;
+  padding-top: 0;
+  padding-bottom: 0;
+  text-align: left;
+  margin-bottom: 0;
 }
 
 input[type="checkbox"] {
@@ -350,6 +399,7 @@ select {
 
 input[type="search"] {
   -webkit-appearance: textfield;
+  appearance: textfield;
   outline-offset: -2px; /* Safari */
   height: fit-content;
   &.form-control.is-valid {
@@ -358,6 +408,7 @@ input[type="search"] {
 }
 ::-webkit-search-decoration {
   -webkit-appearance: none;
+  appearance: none;
 }
 
 .bootstrap4-multi-input {
@@ -366,10 +417,12 @@ input[type="search"] {
 
 input[type="number"] {
   -moz-appearance: textfield !important;
+  appearance: textfield !important;
 
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
     -webkit-appearance: none !important;
+    appearance: none !important;
     margin: 0;
   }
 }
