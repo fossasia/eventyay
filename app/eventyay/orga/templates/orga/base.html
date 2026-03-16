@@ -84,7 +84,8 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="{% url 'presale:index' %}">
                     <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
-                    {{ site_name }}
+                    <span class="hidden-xs">{{ site_name }}</span>
+                    <!-- {{ site_name }} -->
                 </a>
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
@@ -127,14 +128,17 @@
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-link" id="button-sudo">
-                                <i class="fa fa-id-card"></i> {% translate "Admin mode" %}
+                                <i class="fa fa-id-card"></i> <span>{% trans "Admin" %}</span>
+                                    <span class="hidden-xs">{% trans "mode" %}</span>
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                            <i class="fa fa-id-card"></i> {% translate "End admin session" %}
+                            <i class="fa fa-id-card"></i> 
+                            <span>{% trans "End" %}</span>
+                            <span class="hidden-xs">{% trans "admin session" %}</span>
                         </a>
                     </li>
                 {% endif %}

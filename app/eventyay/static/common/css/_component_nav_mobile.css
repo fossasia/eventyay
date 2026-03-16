@@ -21,6 +21,31 @@
     right: 0;
     top: 0;
   }
+
+  nav.navbar {
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-top-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .navbar-brand {
+    margin-right: 8px;
+  }
+
+  .mobile-profile-name{
+    max-width: 80px;     
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
   body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse {
     display: none;
   }
