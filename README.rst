@@ -139,6 +139,22 @@ After running ``uv sync``, activate a virtual environment
 Mobile testing note: If you want to test the site from an **Android emulator**, use
 ``http://10.0.2.2:8000/`` (Android's alias for the host machine's localhost).
 
+Development Smoke Check
+-----------------------
+
+Run the following command to verify that your local environment is configured correctly:
+
+.. code-block:: bash
+
+  python manage.py dev_check
+
+The command validates:
+
+1. Database connectivity
+2. Redis connectivity
+3. Django health endpoint
+4. Static files availability
+
 
 Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
 all below it are own by you.
