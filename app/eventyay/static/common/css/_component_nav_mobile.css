@@ -27,14 +27,44 @@
     align-items: center;
   }
 
-  .navbar-top-links {
+  .navbar-header {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
+    gap: 2px;
+  }
+
+  .navbar-top-links.navbar-right {
+    margin-left: auto; 
+    display: flex;
+    align-items: center;
+    gap: 2px;
   }
 
   .navbar-brand {
-    margin-right: 8px;
+    padding: 0;
+    margin-right: 10px;
+    margin-left: 10px;
+  }
+
+  nav.navbar.navbar-inverse #button-sudo {
+    font-size: 13px;
+    padding: 2px;
+    margin-left: 3px;
+    margin-right: 2px;
+  }
+
+  .navbar-top-links #profile-dropdown > summary,
+  .navbar-top-links #language-dropdown > summary {
+    padding: 2px;
+    min-height: 40px;
+    margin-left: 10px;
+    font-size: 13px;
+  }
+
+  .navbar-toggle.mobile-navbar-view-link {
+    padding: 5px 10px;
+    margin-right: 10px;
+    margin-left: 10px;
   }
 
   .mobile-profile-name{
@@ -83,3 +113,4 @@
     padding-right: 6px;
   }
 }
+ 
