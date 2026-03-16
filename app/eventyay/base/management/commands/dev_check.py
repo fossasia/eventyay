@@ -19,96 +19,96 @@ from django.urls import NoReverseMatch
 
 
 class Command(BaseCommand):
-	help = 'Validate local development dependencies (DB, Redis, API and static files).'
+    help = 'Validate local development dependencies (DB, Redis, API and static files).'
 
-	def handle(self, *args, **options):
-		checks = [
-			('Database', self.check_database),
-			('Redis', self.check_redis),
-			('Django API', self.check_api),
-			('Static Files', self.check_static_files),
-		]
+    def handle(self, *args, **options):
+        checks = [
+            ('Database', self.check_database),
+            ('Redis', self.check_redis),
+            ('Django API', self.check_api),
+            ('Static Files', self.check_static_files),
+        ]
 
-		self.stdout.write('Development Environment Validation\n')
+        self.stdout.write('Development Environment Validation\n')
 
-		has_failure = False
-		for name, check_fn in checks:
-			ok, reason, hint = check_fn()
-			if ok:
-				self.stdout.write(f'{name}: PASS')
-				continue
+        has_failure = False
+        for name, check_fn in checks:
+            ok, reason, hint = check_fn()
+            if ok:
+                self.stdout.write(f'{name}: PASS')
+                continue
 
-			has_failure = True
-			self.stdout.write(self.style.ERROR(f'{name}: FAIL'))
-			self.stdout.write(f'Reason: {reason}')
-			self.stdout.write(f'Hint: {hint}\n')
+            has_failure = True
+            self.stdout.write(self.style.ERROR(f'{name}: FAIL'))
+            self.stdout.write(f'Reason: {reason}')
+            self.stdout.write(f'Hint: {hint}\n')
 
-		if has_failure:
-			raise CommandError('One or more development checks failed.')
+        if has_failure:
+            raise CommandError('One or more development checks failed.')
 
-	def check_database(self):
-		try:
-			# Force a simple ORM query to ensure DB connectivity and model access.
-			get_user_model().objects.exists()
-			return True, '', ''
-		except OperationalError as exc:
-			return (
-				False,
-				str(exc),
-				'Verify PostgreSQL is running and values in eventyay.local.toml are correct.',
-			)
-		except ProgrammingError as exc:
-			return (
-				False,
-				str(exc),
-				'Run database migrations: python manage.py migrate',
-			)
+    def check_database(self):
+        try:
+            # Force a simple ORM query to ensure DB connectivity and model access.
+            get_user_model().objects.exists()
+            return True, '', ''
+        except OperationalError as exc:
+            return (
+                False,
+                str(exc),
+                'Verify PostgreSQL is running and values in eventyay.local.toml are correct.',
+            )
+        except ProgrammingError as exc:
+            return (
+                False,
+                str(exc),
+                'Run database migrations: python manage.py migrate',
+            )
 
-	def check_redis(self):
-		redis_url = getattr(settings, 'REDIS_URL', 'redis://localhost/0')
-		try:
-			client = redis.Redis.from_url(redis_url)
-			client.ping()
-			return True, '', ''
-		except (redis.exceptions.RedisError, ValueError) as exc:
-			return (
-				False,
-				f'Cannot connect to {redis_url} ({exc})',
-				'Make sure Redis server is running and REDIS_URL points to the right host/port.',
-			)
+    def check_redis(self):
+        redis_url = getattr(settings, 'REDIS_URL', 'redis://localhost/0')
+        try:
+            client = redis.Redis.from_url(redis_url)
+            client.ping()
+            return True, '', ''
+        except (redis.exceptions.RedisError, ValueError) as exc:
+            return (
+                False,
+                f'Cannot connect to {redis_url} ({exc})',
+                'Make sure Redis server is running and REDIS_URL points to the right host/port.',
+            )
 
-	def check_api(self):
-		url = self._build_healthcheck_url()
-		try:
-			with urlopen(url, timeout=3) as response:  # nosec B310
-				status = response.getcode()
-			if status == 200:
-				return True, '', ''
-			return (
-				False,
-				f'Health endpoint returned HTTP {status}.',
-				f'Start the dev server and verify this URL: {url}',
-			)
-		except HTTPError as exc:
-			return (
-				False,
-				f'Health endpoint returned HTTP {exc.code}.',
-				f'Start the dev server and verify this URL: {url}',
-			)
-		except URLError as exc:
-			return (
-				False,
-				f'Cannot reach {url} ({exc.reason}).',
-				f'Start the dev server with: python manage.py runserver',
-			)
-		except TimeoutError as exc:
-			return (
-				False,
-				str(exc),
-				f'Start the dev server and verify this URL: {url}',
-			)
+    def check_api(self):
+        url = self._build_healthcheck_url()
+        try:
+            with urlopen(url, timeout=3) as response:  # nosec B310
+                status = response.getcode()
+            if status == 200:
+                return True, '', ''
+            return (
+                False,
+                f'Health endpoint returned HTTP {status}.',
+                f'Start the dev server and verify this URL: {url}',
+            )
+        except HTTPError as exc:
+            return (
+                False,
+                f'Health endpoint returned HTTP {exc.code}.',
+                f'Start the dev server and verify this URL: {url}',
+            )
+        except URLError as exc:
+            return (
+                False,
+                f'Cannot reach {url} ({exc.reason}).',
+                f'Start the dev server with: python manage.py runserver',
+            )
+        except TimeoutError as exc:
+            return (
+                False,
+                str(exc),
+                f'Start the dev server and verify this URL: {url}',
+            )
 
-	def _build_healthcheck_url(self) -> str:
+    def _build_healthcheck_url(self) -> str:
 		try:
 			path = reverse('healthcheck')
 		except NoReverseMatch:
