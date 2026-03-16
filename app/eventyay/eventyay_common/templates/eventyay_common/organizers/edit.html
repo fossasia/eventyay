@@ -113,7 +113,7 @@
                                 <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
                             </form>
                             <div class="btn-group btn-group-sm">
-                                <span{% if not panel.can_delete %} tabindex="0" data-toggle="tooltip" title="{% translate 'The last team cannot be deleted.' %}" aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}"{% endif %}>
+                                <span{% if not panel.can_delete %} tabindex="0" data-toggle="tooltip" title="{% translate 'This team cannot be deleted while it is the only team with team-management members.' %}" aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}"{% endif %}>
                                     <button type="submit"
                                             form="team-delete-form-{{ panel.team.pk }}"
                                             class="btn btn-danger btn-sm"
