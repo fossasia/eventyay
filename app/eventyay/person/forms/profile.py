@@ -149,6 +149,12 @@ class SpeakerProfileForm(
         if qs.filter(email__iexact=email):
             raise ValidationError(get_email_address_error())
         return email
+    
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if avatar and avatar.size > 10 * 1024 * 1024:  # 10MB
+            raise ValidationError(_("File too large. Maximum allowed size is 10MB."))
+        return avatar
 
     def clean(self):
         data = super().clean()
