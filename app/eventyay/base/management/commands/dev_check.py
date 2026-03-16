@@ -109,50 +109,50 @@ class Command(BaseCommand):
             )
 
     def _build_healthcheck_url(self) -> str:
-		try:
-			path = reverse('healthcheck')
-		except NoReverseMatch:
-			path = '/healthcheck/'
+        try:
+            path = reverse('healthcheck')
+        except NoReverseMatch:
+            path = '/healthcheck/'
 
-		site_url = getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000')
-		parsed = urlparse(site_url)
-		scheme = parsed.scheme or 'http'
-		netloc = parsed.netloc or '127.0.0.1:8000'
-		if ':' not in netloc:
-			netloc = f'{netloc}:8000'
-		return urlunparse((scheme, netloc, path, '', '', ''))
+        site_url = getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000')
+        parsed = urlparse(site_url)
+        scheme = parsed.scheme or 'http'
+        netloc = parsed.netloc or '127.0.0.1:8000'
+        if ':' not in netloc:
+            netloc = f'{netloc}:8000'
+        return urlunparse((scheme, netloc, path, '', '', ''))
 
-	def check_static_files(self):
-		try:
-			static_root = Path(settings.STATIC_ROOT)
-		except (AttributeError, TypeError):
-			return (
-				False,
-				'STATIC_ROOT is not configured.',
-				'Check Django static settings before running this command.',
-			)
+    def check_static_files(self):
+        try:
+            static_root = Path(settings.STATIC_ROOT)
+        except (AttributeError, TypeError):
+            return (
+                False,
+                'STATIC_ROOT is not configured.',
+                'Check Django static settings before running this command.',
+            )
 
-		if static_root.exists() and static_root.is_dir():
-			if any(path.is_file() for path in static_root.rglob('*')):
-				return True, '', ''
-			return (
-				False,
-				f'STATIC_ROOT is empty: {static_root}',
-				'Run: python manage.py collectstatic --noinput',
-			)
+        if static_root.exists() and static_root.is_dir():
+            if any(path.is_file() for path in static_root.rglob('*')):
+                return True, '', ''
+            return (
+                False,
+                f'STATIC_ROOT is empty: {static_root}',
+                'Run: python manage.py collectstatic --noinput',
+            )
 
-		if settings.DEBUG:
-			static_dirs = [Path(p) for p in getattr(settings, 'STATICFILES_DIRS', ())]
-			if any(directory.exists() and any(path.is_file() for path in directory.rglob('*')) for directory in static_dirs):
-				return True, '', ''
-			return (
-				False,
-				'STATIC_ROOT does not exist and no static source directories were found.',
-				'Ensure STATICFILES_DIRS points to existing folders or run: python manage.py collectstatic --noinput',
-			)
+        if settings.DEBUG:
+            static_dirs = [Path(p) for p in getattr(settings, 'STATICFILES_DIRS', ())]
+            if any(directory.exists() and any(path.is_file() for path in directory.rglob('*')) for directory in static_dirs):
+                return True, '', ''
+            return (
+                False,
+                'STATIC_ROOT does not exist and no static source directories were found.',
+                'Ensure STATICFILES_DIRS points to existing folders or run: python manage.py collectstatic --noinput',
+            )
 
-		return (
-			False,
-			f'STATIC_ROOT does not exist: {static_root}',
-			'Run: python manage.py collectstatic --noinput',
-		)
+        return (
+            False,
+            f'STATIC_ROOT does not exist: {static_root}',
+            'Run: python manage.py collectstatic --noinput',
+        )
