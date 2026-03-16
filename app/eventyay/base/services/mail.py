@@ -48,7 +48,6 @@ from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
-from eventyay.common.mail import get_reply_to_address
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -162,7 +161,6 @@ def mail(
         content_plain = body_plain = render_mail(template, context)
         subject = str(subject).format_map(TolerantDict(context))
         sender = sender or (event.settings.get('mail_from') if event else settings.MAIL_FROM) or settings.MAIL_FROM
-        sender_email_raw = sender
         if event:
             sender_name = str(event.name)
             if len(sender_name) > 75:
@@ -190,10 +188,13 @@ def mail(
 
             # Use unified Reply-To resolution
             if not headers.get('Reply-To'):
+                from eventyay.common.mail import get_reply_to_address
+                
                 reply_to = get_reply_to_address(
                     event,
                     override=event_reply_to if not auto_email else None,
-                    sender_email=sender_email_raw
+                    auto_email=auto_email,
+                    use_custom_smtp=event.settings.mail_from != settings.DEFAULT_FROM_EMAIL
                 )
                 
                 if reply_to:
