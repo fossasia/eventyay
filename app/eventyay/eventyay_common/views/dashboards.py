@@ -209,10 +209,9 @@ class EventIndexView(TemplateView):
             and CancellationRequest.objects.filter(order__event=request.event).exists(),
         }
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs):        
         context = super().get_context_data(**kwargs)
         request = self.request
-
         # Get subevent and permissions
         subevent = get_subevent(request)
         permissions = self._get_user_permissions()
@@ -263,7 +262,7 @@ class EventIndexView(TemplateView):
 
         context['today'] = now().astimezone(ZoneInfo(request.event.timezone)).date()
         context['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
-        context['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
+        context['organizer_teams'] = request.event.teams.values_list('id', 'name')
         return context
 
     def post(self, request, *args, **kwargs):
