@@ -125,7 +125,7 @@ class Command(BaseCommand):
 	def check_static_files(self):
 		try:
 			static_root = Path(settings.STATIC_ROOT)
-		except Exception:
+		except (AttributeError, TypeError):
 			return (
 				False,
 				'STATIC_ROOT is not configured.',
