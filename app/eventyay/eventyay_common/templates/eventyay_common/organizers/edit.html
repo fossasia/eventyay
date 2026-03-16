@@ -41,7 +41,7 @@
                 {% for panel in team_panels %}
                 <div class="panel-group team-permissions-panel" id="team-accordion-{{ panel.team.pk }}">
                     <div class="panel panel-default mt-3">
-                    <div class="panel-heading clearfix">
+                    <div class="panel-heading team-panel-heading">
                         <div class="team-heading-main">
                             <h3 class="panel-title">{{ panel.team.name }}</h3>
                             <div class="text-muted team-meta">
@@ -85,7 +85,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="team-actions btn-toolbar pull-right">
+                        <div class="team-actions btn-toolbar">
                             <div class="btn-group btn-group-sm">
                                 <button type="button"
                                         class="btn btn-primary btn-sm"
@@ -114,7 +114,7 @@
                             </form>
                             <div class="btn-group btn-group-sm">
                                 <button type="submit" form="team-delete-form-{{ panel.team.pk }}" class="btn btn-danger btn-sm"
-                                        {% if not panel.can_delete %}disabled{% endif %}>
+                                        {% if not panel.can_delete %}disabled aria-disabled="true" data-toggle="tooltip" title="{% translate 'This team cannot be deleted while it is the only team with team-management members.' %}"{% endif %}>
                                     <i class="fa fa-trash"></i> {% translate "Delete" %}
                                 </button>
                             </div>
