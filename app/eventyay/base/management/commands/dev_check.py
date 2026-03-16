@@ -29,7 +29,7 @@ class Command(BaseCommand):
             ('Static Files', self.check_static_files),
         ]
 
-        self.stdout.write('Development Environment Validation\n')
+        self.stdout.write('Development Environment Validation')
 
         has_failure = False
         for name, check_fn in checks:
@@ -41,7 +41,7 @@ class Command(BaseCommand):
             has_failure = True
             self.stdout.write(self.style.ERROR(f'{name}: FAIL'))
             self.stdout.write(f'Reason: {reason}')
-            self.stdout.write(f'Hint: {hint}\n')
+            self.stdout.write(f'Hint: {hint}')
 
         if has_failure:
             raise CommandError('One or more development checks failed.')
