@@ -470,9 +470,8 @@ const warnFileSize = (element) => {
         warning.classList.add('invalid-feedback', 'eventyay-size-warning')
         element.parentElement.appendChild(warning)
     }
-element.classList.add('is-invalid')
+    element.classList.add('is-invalid')
     warning.textContent = element.dataset.sizewarning
-    element.classList.add("is-invalid")
 }
 const unwarnFileSize = (element) => {
     element.classList.remove('is-invalid')
