@@ -112,7 +112,7 @@ class Command(BaseCommand):
                 'Run: python manage.py collectstatic --noinput',
             )
 
-        if not any(static_root.rglob('*')):
+        if not any(p.is_file() for p in static_root.rglob('*')):
             return (
                 False,
                 f'STATIC_ROOT is empty: {static_root}',
