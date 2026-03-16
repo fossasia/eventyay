@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 
-from eventyay.base.models import Event
+from eventyay.base.models.event import Event
 from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
 
