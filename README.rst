@@ -157,7 +157,7 @@ The command validates:
 
 
 Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
-all below it are own by you.
+all below it are owned by you.
 
 Docker based development
 ------------------------
