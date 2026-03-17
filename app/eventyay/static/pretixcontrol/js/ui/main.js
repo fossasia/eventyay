@@ -780,8 +780,19 @@ $(function () {
     // Tables with bulk selection, e.g. subevent list
     $("input[data-toggle-table]").each(function (ev) {
         var $toggle = $(this);
-        var $actionButtons = $(".batch-select-actions button", this.form);
-        var countLabels = $("<span></span>").appendTo($actionButtons);
+        var $batchSelectActions = $(".batch-select-actions", this.form);
+        var $actionButtons = $batchSelectActions.find("[data-batch-action]");
+        if (!$actionButtons.length) {
+            $actionButtons = $batchSelectActions.find("button");
+        }
+        var $countTargets = $batchSelectActions.find("[data-batch-count-label]");
+        if (!$countTargets.length) {
+            $countTargets = $actionButtons.filter("button");
+        }
+        var countLabels = $();
+        $countTargets.each(function () {
+            countLabels = countLabels.add($("<span></span>").appendTo(this));
+        });
         var $table = $toggle.closest("table");
         var $selectAll = $table.find(".table-select-all");
         var $rows = $table.find("tbody tr");
@@ -859,7 +870,7 @@ $(function () {
 
             if (!allChecked) $selectAll.find("input").prop("checked", false); 
 
-            $actionButtons.attr("disabled", !nrOfChecked);
+            $actionButtons.prop("disabled", !nrOfChecked);
             $toggle.prop("checked", allChecked).prop("indeterminate", nrOfChecked > 0 && !allChecked);
             $selectAll.toggleClass("hidden", nrOfChecked !== $checkboxes.length).prop("hidden", nrOfChecked !== $checkboxes.length);
 
