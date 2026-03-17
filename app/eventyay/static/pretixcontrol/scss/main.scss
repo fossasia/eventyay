@@ -1109,11 +1109,11 @@ h1 .label {
 
     .team-permissions-panel {
         .panel-default {
-            background-color: #fff;
+            background-color: $main-box-bg;
         }
 
         .panel-default > .panel-heading {
-            background-color: #fff;
+            background-color: $main-box-bg;
         }
 
         .team-panel-heading {
