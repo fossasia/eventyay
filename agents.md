@@ -63,11 +63,16 @@ Before submitting changes:
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
 
+## Context Index (`.agents/context/`)
+
+| Context file | Purpose |
+|---|---|
+| `.agents/context/architecture.md` | Context: Architecture and project structure |
+
 ## Skills Index (`.agents/skills/`)
 
 | Skill directory/file | Purpose |
 |---|---|
-| `.agents/context/architecture.md` | Context: Architecture and project structure |
 | `.agents/skills/repo-navigation/skill.md` | Repository layout and where to find code |
 | `.agents/skills/django-create-model/skill.md` | Steps for creating or modifying a Django model |
 | `.agents/skills/django-create-api-endpoint/skill.md` | Steps for adding a new Django REST Framework API endpoint |

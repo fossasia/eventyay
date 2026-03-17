@@ -1,6 +1,6 @@
 ---
 applyTo:
-  - '**/Dockerfile'
+  - '**/Dockerfile*'
   - '**/docker-compose*.yml'
 ---
 # Docker and Container Reference
@@ -88,7 +88,7 @@ docker compose logs -f worker
 
 ```bash
 docker compose exec web python manage.py migrate
-docker compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py create_admin_user
 docker compose exec web python manage.py shell
 ```
 

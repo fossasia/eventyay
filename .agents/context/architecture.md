@@ -17,7 +17,7 @@ app/
 │   ├── base/           # Core shared models, managers, forms, and middleware
 │   ├── control/        # Organiser back-office (management UI, forms, urls)
 │   ├── presale/        # Attendee-facing (ticket purchase, public pages, urls)
-│   ├── eventyay_common/# Modern shared UI components and base templates
+│   ├── eventyay_common/  # Modern shared UI components and base templates
 │   ├── webapp/         # Modern Vue 3 bundled front-end applications
 │   ├── static/         # Legacy/Django-served static assets (CSS, images)
 │   ├── celery.py       # Celery task application configuration
