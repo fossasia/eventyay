@@ -1,4 +1,4 @@
-/*global $ */
+/*global $,safeSelector */
 
 function gettext(msgid) {
     if (typeof django !== 'undefined' && typeof django.gettext !== 'undefined') {
@@ -142,8 +142,8 @@ $(function () {
     $("body").removeClass("nojs");
 
     $("input[data-toggle=radiocollapse]").change(function () {
-        $($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
-        $($(this).attr("data-target")).collapse('show');
+        safeSelector($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
+        safeSelector($(this).attr("data-target")).collapse('show');
     });
     $(".js-only").removeClass("js-only");
     $(".js-hidden").hide();
@@ -293,7 +293,7 @@ $(function () {
     $("input[data-required-if], select[data-required-if], textarea[data-required-if]").each(function () {
         var dependent = $(this),
             dependentLabel = $("label[for="+this.id+"]"),
-            dependency = $($(this).attr("data-required-if")),
+            dependency = safeSelector($(this).attr("data-required-if")),
             update = function (ev) {
                 var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
                 if (!dependent.is("[data-no-required-attr]")) {
@@ -314,7 +314,7 @@ $(function () {
 
     $("input[data-display-dependency], div[data-display-dependency], select[data-display-dependency], textarea[data-display-dependency]").each(function () {
         var dependent = $(this),
-            dependency = $($(this).attr("data-display-dependency")),
+            dependency = safeSelector($(this).attr("data-display-dependency")),
             update = function (ev) {
                 var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
                 var $toggling = dependent;

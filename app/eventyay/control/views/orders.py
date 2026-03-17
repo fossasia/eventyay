@@ -38,7 +38,7 @@ from django.utils import formats
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme as is_safe_url
 from django.utils.timezone import make_aware, now
-from django.utils.translation import gettext
+from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     DetailView,
@@ -100,13 +100,17 @@ from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
     approve_order,
+    approve_order_without_side_effects,
     cancel_order,
     deny_order,
+    deny_order_without_side_effects,
     extend_order,
     mark_order_expired,
     mark_order_refunded,
     notify_user_changed_order,
     reactivate_order,
+    send_order_approved_notifications,
+    send_order_denied_notifications,
 )
 from eventyay.base.services.stats import order_overview
 from eventyay.base.services.tickets import generate
@@ -277,6 +281,100 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
     @cached_property
     def filter_form(self):
         return EventOrderFilterForm(data=self.request.GET, event=self.request.event)
+
+
+class OrderBulkAction(EventPermissionRequiredMixin, View):
+    permission = 'can_change_orders'
+
+    def _redirect_back(self):
+        if 'next' in self.request.POST and is_safe_url(self.request.POST.get('next'), allowed_hosts=None):
+            return redirect(self.request.POST.get('next'))
+        return redirect(
+            'control:event.orders',
+            event=self.request.event.slug,
+            organizer=self.request.event.organizer.slug,
+        )
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        if action not in ('approve', 'deny'):
+            messages.error(self.request, _('Please select a valid action.'))
+            return self._redirect_back()
+
+        selected_codes = [code.strip().upper() for code in self.request.POST.getlist('order') if code.strip()]
+        selected_codes = list(dict.fromkeys(selected_codes))
+        selected_orders = []
+
+        if not selected_codes:
+            messages.error(self.request, _('Please select at least one order.'))
+            return self._redirect_back()
+
+        try:
+            with transaction.atomic():
+                selected_orders = list(self.request.event.orders.select_for_update().filter(code__in=selected_codes))
+                if len(selected_orders) != len(selected_codes):
+                    messages.error(self.request, _('At least one selected order does not exist anymore.'))
+                    return self._redirect_back()
+
+                selected_by_code = {order.code: order for order in selected_orders}
+                selected_orders = [selected_by_code[code] for code in selected_codes]
+
+                invalid = [
+                    order.code
+                    for order in selected_orders
+                    if order.status != Order.STATUS_PENDING or not order.require_approval
+                ]
+                if invalid:
+                    messages.error(
+                        self.request,
+                        _('Bulk actions are only possible if all selected orders are pending approval.'),
+                    )
+                    return self._redirect_back()
+
+                for order in selected_orders:
+                    if action == 'approve':
+                        invoice = approve_order_without_side_effects(order, user=self.request.user)
+                        # Signals and emails must only run after the bulk transaction commits.
+                        transaction.on_commit(
+                            lambda order=order, invoice=invoice: send_order_approved_notifications(
+                                order,
+                                invoice=invoice,
+                                user=self.request.user,
+                            )
+                        )
+                    else:
+                        deny_order_without_side_effects(order, user=self.request.user)
+                        transaction.on_commit(
+                            lambda order=order: send_order_denied_notifications(order, user=self.request.user)
+                        )
+        except OrderError as e:
+            messages.error(self.request, str(e))
+            return self._redirect_back()
+
+        if action == 'approve':
+            messages.success(
+                self.request,
+                ngettext(
+                    '%(count)d order has been approved.',
+                    '%(count)d orders have been approved.',
+                    len(selected_orders),
+                )
+                % {'count': len(selected_orders)},
+            )
+        else:
+            messages.success(
+                self.request,
+                ngettext(
+                    '%(count)d order has been denied and is now canceled.',
+                    '%(count)d orders have been denied and are now canceled.',
+                    len(selected_orders),
+                )
+                % {'count': len(selected_orders)},
+            )
+        return self._redirect_back()
+
+    def get(self, *args, **kwargs):
+        return HttpResponseNotAllowed(['POST'])
 
 
 class OrderView(EventPermissionRequiredMixin, DetailView):
@@ -2500,7 +2598,9 @@ class ExportMixin:
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
             if test_form.is_valid():
-                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
+                initial = {
+                    k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET
+                }
             else:
                 initial = {}
 
@@ -2535,11 +2635,14 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
         query: dict[str, str] = {}
         if self.exporter:
             query['identifier'] = self.exporter.identifier
-        base_url = reverse('control:event.orders.export', kwargs={
-            'event': self.request.event.slug,
-            'organizer': self.request.event.organizer.slug,
-        })
-        return f"{base_url}?{urlencode(query)}" if query else base_url
+        base_url = reverse(
+            'control:event.orders.export',
+            kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+            },
+        )
+        return f'{base_url}?{urlencode(query)}' if query else base_url
 
     @cached_property
     def exporter(self) -> BaseExporter | None:

@@ -32,7 +32,6 @@ header {
   top: -180px;
 
   z-index: 1000;
-  height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -55,8 +54,7 @@ header {
     z-index: 400;
     background: var(--color-bg);
     border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
-    margin-bottom: -4px;
-    padding-bottom: 4px;
+    padding-bottom: 6px;
     flex-shrink: 0;
     a.header-tab {
       padding: 8px 10px 4px 10px;

@@ -96,10 +96,7 @@ class SecureOrderQuerySet(models.QuerySet):
             raise
 
         order_secret = order.tagged_secret(tag, secret_length) if tag else order.secret
-        valid_digest = hash_compare(order_secret, received_secret)
-        valid_sha1 = tag and hash_compare(hashlib.sha1(order.secret.encode()).hexdigest(), received_secret)
-
-        if not valid_digest and not valid_sha1:
+        if not hash_compare(order_secret, received_secret):
             raise Order.DoesNotExist
 
         return order
