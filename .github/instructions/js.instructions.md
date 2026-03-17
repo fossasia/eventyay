@@ -1,5 +1,5 @@
 ---
-description: 'JavaScript & Vue development standards (legacy JS + Vue 3 apps/bundlers)'
+description: 'JavaScript & Vue development standards (legacy JS without build step + modern bundled Vue 3 apps)'
 applyTo: 'app/**/*.{js,ts,vue}'
 ---
 

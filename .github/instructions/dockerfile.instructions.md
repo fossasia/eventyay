@@ -7,9 +7,11 @@ applyTo:
 
 This document covers Docker Compose usage, container services, environment variables, and the development workflow for Eventyay.
 
-For the full production deployment walkthrough (Nginx, SSL, backups), see [`DEPLOYMENT.md`](../../DEPLOYMENT.md). The production Docker Compose file is `deployment/docker-compose.yml` (note the `.yml` extension).
+**Core Architecture Principle:** We use ONE Dockerfile (`app/Dockerfile`) for both development and production. The key difference is how static files are served:
+- **Development (`docker-compose.yml`)**: The `web` container serves static assets directly via Django.
+- **Production (`deployment/docker-compose.yml`)**: Static assets are pre-built and served directly via the Nginx reverse-proxy fronting the Gunicorn application server.
 
----
+For the full production deployment walkthrough including Nginx, SSL, and backups, see [`DEPLOYMENT.md`](../../DEPLOYMENT.md).
 
 ## Files
 
@@ -120,6 +122,5 @@ Refer to [`DEPLOYMENT.md`](../../DEPLOYMENT.md) for the complete step-by-step gu
 
 ## Notes
 
-- Static files are pre-built and served by Nginx in production. In development, Django serves them directly.
-- The `web` and `worker` services share the same Docker image built from `app/Dockerfile`.
+- The `web` and `worker` services share the exact same Docker image built from `app/Dockerfile`.
 - Volume mounts in the development stack allow live code reloading without rebuilding the image.
