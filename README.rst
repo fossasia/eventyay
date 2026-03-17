@@ -347,8 +347,8 @@ This repository includes structured AI development guidance.
 
 AI tools should consult:
 
-- `.github/instructions/` — file-scoped coding standards for Python, JavaScript, Django templates, TOML, and Git commits
-- `.agents/skills/` — reusable operational knowledge about repository structure, backend conventions, deployment, and workflows
+- ``.github/instructions/`` — file-scoped coding standards for Python, JavaScript, Django templates, TOML, and Git commits
+- ``.agents/skills/`` — reusable operational knowledge about repository structure, backend conventions, deployment, and workflows
 
 See `agents.md <agents.md>`_ for the recommended reading order for AI agents.
 

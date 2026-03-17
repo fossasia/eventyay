@@ -1,6 +1,6 @@
 ---
-description: 'JavaScript development standards and best practices (run directly, without a build step)'
-applyTo: 'app/**/*.js'
+description: 'JavaScript & Vue development standards (legacy JS + Vue 3 apps/bundlers)'
+applyTo: 'app/**/*.{js,ts,vue}'
 ---
 
 ## Development Standards

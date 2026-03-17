@@ -13,7 +13,7 @@ applyTo: "**"
 
 ## Branching
 
-- Work in feature branches; open PRs against the default branch.
+- Work in feature branches; open PRs against the `dev` branch.
 - Keep commits focused and atomic.
 
 ## PR Expectations
