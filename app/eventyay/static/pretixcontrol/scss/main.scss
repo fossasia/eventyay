@@ -1075,6 +1075,16 @@ h1 .label {
     contain: content;
 }
 
+#page-wrapper > .container-fluid {
+  min-height: calc(100vh - var(--navbar-height, 50px));
+  display: flex;
+  flex-direction: column;
+}
+
+#page-wrapper > .container-fluid > footer {
+  margin-top: auto;
+}
+    
 @media (max-width: $screen-sm-max) {
     nav.navbar {
         position: static;
