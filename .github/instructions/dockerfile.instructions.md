@@ -7,7 +7,7 @@ applyTo:
 
 This document covers Docker Compose usage, container services, environment variables, and the development workflow for Eventyay.
 
-For the full production deployment walkthrough (Nginx, SSL, backups), see [`DEPLOYMENT.md`](../../DEPLOYMENT.md).
+For the full production deployment walkthrough (Nginx, SSL, backups), see [`DEPLOYMENT.md`](../../DEPLOYMENT.md). The production Docker Compose file is `deployment/docker-compose.yml` (note the `.yml` extension).
 
 ---
 
@@ -114,7 +114,7 @@ cd /home/$USER/$DEPLOYMENT_NAME/eventyay
 docker compose -f deployment/docker-compose.yml up -d
 ```
 
-Refer to [`DEPLOYMENT.md`](../../DEPLOYMENT.md) for the complete step-by-step guide including SSL setup with certbot.
+Refer to [`DEPLOYMENT.md`](../../DEPLOYMENT.md) for the complete step-by-step guide including SSL setup with Certbot.
 
 ---
 

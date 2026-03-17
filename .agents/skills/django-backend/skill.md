@@ -39,7 +39,7 @@ app/
 
 - Defined in `app/eventyay/api/` using Django REST Framework.
 - Routers are registered in `app/eventyay/api/urls.py` (or similar).
-- Avoid `SerializerMethodField`; prefer explicit field definitions.
+- Prefer explicit serializer fields when a direct model or nested relation mapping is possible; use `SerializerMethodField` for genuinely computed or conditional data.
 
 ## Forms and Validators
 

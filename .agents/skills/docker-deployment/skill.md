@@ -65,9 +65,9 @@ docker compose exec web python manage.py createsuperuser
 
 Required variables are documented in `deployment/env.sample` and `deployment/env.dev.sample`. At minimum, set:
 
-- `DJANGO_SECRET_KEY`
-- `DATABASE_URL` (or individual `POSTGRES_*` vars)
-- `REDIS_URL`
-- `SERVER_NAME` (production only)
+- `EVY_SECRET_KEY`
+- individual `EVY_POSTGRES_*` vars
+- `EVY_REDIS_URL`
+- `EVY_SITE_URL` (production only)
 
 See `DEPLOYMENT.md` for the full production setup walkthrough, including Nginx, SSL (certbot), and backup configuration.

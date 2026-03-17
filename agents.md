@@ -67,10 +67,10 @@ Before submitting changes:
 
 | Skill directory/file | Purpose |
 |---|---|
-| `skills/repo-navigation/skill.md` | Repository layout and where to find code |
-| `skills/django-backend/skill.md` | Django project structure, models, API, forms |
-| `skills/docker-deployment/skill.md` | Docker Compose, container services, deployment |
-| `skills/documentation/skill.md` | How to update project documentation |
+| `.agents/skills/repo-navigation/skill.md` | Repository layout and where to find code |
+| `.agents/skills/django-backend/skill.md` | Django project structure, models, API, forms |
+| `.agents/skills/docker-deployment/skill.md` | Docker Compose, container services, deployment |
+| `.agents/skills/documentation/skill.md` | How to update project documentation |
 
 ## Important Notes
 
