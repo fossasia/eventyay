@@ -737,8 +737,9 @@ class ScheduledMailForm(forms.ModelForm):
 
         self.fields['enabled'].help_text = _('Only enabled rules are actually sent')
         self.fields['send_date'].help_text = _(
-            'For technical reasons, the email might actually be sent a bit later than your configured date. '
-            'Typically, this will not be more than 10 minutes. Your email will never be sent earlier than the time you configured.'
+            'For technical reasons, the email may actually be sent later than your configured date. '
+            'It will be sent the next time the periodic background task runs after your chosen time, which can be anywhere '
+            'from a few minutes up to about a day later. Your email will never be sent earlier than the time you configured.'
         )
 
     def clean(self):
