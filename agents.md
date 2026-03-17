@@ -67,8 +67,14 @@ Before submitting changes:
 
 | Skill directory/file | Purpose |
 |---|---|
+| `.agents/context/architecture.md` | Context: Architecture and project structure |
 | `.agents/skills/repo-navigation/skill.md` | Repository layout and where to find code |
-| `.agents/skills/django-backend/skill.md` | Django project structure, models, API, forms |
+| `.agents/skills/django-create-model/skill.md` | Steps for creating or modifying a Django model |
+| `.agents/skills/django-create-api-endpoint/skill.md` | Steps for adding a new Django REST Framework API endpoint |
+| `.agents/skills/django-add-form/skill.md` | Steps for creating or modifying Django forms and adding validation |
+| `.agents/skills/django-run-migrations/skill.md` | Steps for generating and applying Django migrations |
+| `.agents/skills/django-add-management-command/skill.md` | Steps for defining a custom Django administration/management command |
+| `.agents/skills/django-run-locally/skill.md` | Steps for initiating the Django development server without Docker |
 | `.agents/skills/docker-deployment/skill.md` | Docker Compose, container services, deployment |
 | `.agents/skills/documentation/skill.md` | How to update project documentation |
 
