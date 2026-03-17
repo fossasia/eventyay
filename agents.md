@@ -6,9 +6,10 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 
 ## Precedence
 
-1. `agents.md` is the default policy for all agents.
+1. `agents.md` is the default policy for all agents (single source of truth).
 2. `.github/instructions/*.md` rules are mandatory when their `applyTo` pattern matches the edited file.
-3. Agent adapter files (`CLAUDE.md`, `CODEX.md`, `.cursorrules`, `.github/copilot-instructions.md`) should stay minimal and must not duplicate or override project rules.
+3. `.agents/skills/` contains reusable operational knowledge about the repository structure and deployment.
+4. Agent adapter files (`CLAUDE.md`, `CODEX.md`, `.cursorrules`, `.github/copilot-instructions.md`) should stay minimal and must not duplicate or override project rules.
 
 ## Verified Project Facts
 
@@ -61,3 +62,18 @@ Before submitting changes:
 2. Confirm imports and namespaces follow `eventyay.*` conventions.
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
+
+## Skills Index (`.agents/skills/`)
+
+| Skill directory/file | Purpose |
+|---|---|
+| `skills/repo-navigation/skill.md` | Repository layout and where to find code |
+| `skills/django-backend/skill.md` | Django project structure, models, API, forms |
+| `skills/docker-deployment/skill.md` | Docker Compose, container services, deployment |
+| `skills/documentation/skill.md` | How to update project documentation |
+
+## Important Notes
+
+- Skills **summarize and reference** existing instruction files; they do not duplicate coding rules.
+- When in doubt, defer to the coding standards in `.github/instructions/`.
+- All product code lives under `app/eventyay/`; use `eventyay.*` imports.
