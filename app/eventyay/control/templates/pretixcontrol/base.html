@@ -386,16 +386,6 @@
                             </strong>
                         </div>
                     {% endif %}
-                    {% if warning_update_check_active %}
-                        <div class="alert alert-info">
-                            <a href="{% url "eventyay_admin:admin.global.update" %}">
-                                {% blocktrans trimmed %}
-                                The system automatically checks for updates in the background.
-                                {% endblocktrans %}
-                            </a>
-                        </div>
-                    {% endif %}
-
                     {% if debug_warning %}
                         <div class="alert alert-danger">
                             {% trans "system is running in debug mode. For security reasons, please never run debug mode on a production instance." %}
