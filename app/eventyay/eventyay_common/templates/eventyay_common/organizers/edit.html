@@ -121,21 +121,23 @@
                                     </button>
                                 </div>
                             {% else %}
+                                {% translate "Cannot delete this team: it is the only team with team-management members." as team_delete_disabled_help %}
                                 <div class="btn-group btn-group-sm team-delete-disabled"
                                      tabindex="0"
+                                     role="button"
+                                     aria-disabled="true"
+                                     aria-label="{{ team_delete_disabled_help }}"
                                      data-toggle="tooltip"
                                      data-placement="bottom"
-                                     title="{% translate 'Cannot delete this team: it is the only team with team-management members.' %}">
+                                     title="{{ team_delete_disabled_help }}">
                                     <button type="submit"
                                             form="team-delete-form-{{ panel.team.pk }}"
                                             class="btn btn-danger btn-sm"
-                                            disabled
-                                            aria-disabled="true"
-                                            aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}">
+                                            disabled>
                                         <i class="fa fa-trash"></i> {% translate "Delete" %}
                                     </button>
-                                    <span id="team-delete-disabled-help-{{ panel.team.pk }}" class="sr-only">
-                                        {% translate "Cannot delete this team: it is the only team with team-management members." %}
+                                    <span class="sr-only">
+                                        {{ team_delete_disabled_help }}
                                     </span>
                                 </div>
                             {% endif %}
