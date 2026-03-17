@@ -1,5 +1,8 @@
 import logging
 
+from django.core.exceptions import ValidationError
+from django.db import DatabaseError
+from django.template import TemplateSyntaxError
 from eventyay.base.models import Event
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
@@ -139,7 +142,7 @@ def send_scheduled_mail(self, rule_id: int):
         if recipient_count > 0:
             send_queued_mail.apply_async(args=[event.pk, qm.pk])
 
-    except Exception as e:
+    except (DatabaseError, ValidationError, TemplateSyntaxError) as e:
         logger.exception("[SendMail] Failed to generate ScheduledMail %s", rule_id)
         ScheduledMailLog.objects.create(rule=rule, recipient_count=0, error=str(e))
 
@@ -153,5 +156,5 @@ def process_scheduled_mails():
         try:
             if rule.is_due():
                 send_scheduled_mail.apply_async(args=[rule.pk])
-        except Exception:
+        except (DatabaseError, ValidationError):
             logger.exception("Failed to process ScheduledMail rule %s", rule.pk)
