@@ -1,6 +1,7 @@
 # Masking data for logging purposes.
 
 from collections.abc import Iterable
+from itertools import cycle
 
 
 class EmailMasker:
@@ -26,7 +27,8 @@ class EmailMasker:
             return ''
         local_part, domain = self._email.split('@', 1)
         # Mask characters at odd positions (index 1, 3, 5, ...)
-        masked_local = ''.join('*' if i % 2 == 1 else char for i, char in enumerate(local_part))
+        chars = zip(local_part, cycle([False, True]))  # cycle to alternate between masking and not masking
+        masked_local = ''.join('*' if to_do else char for char, to_do in chars)
         return f'{masked_local}@{domain}'
 
     def __repr__(self) -> str:
