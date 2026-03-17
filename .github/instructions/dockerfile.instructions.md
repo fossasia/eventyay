@@ -7,9 +7,9 @@ applyTo:
 
 This document covers Docker Compose usage, container services, environment variables, and the development workflow for Eventyay.
 
-**Core Architecture Principle:** We use ONE Dockerfile (`app/Dockerfile`) for both development and production. The key difference is how static files are served:
-- **Development (`docker-compose.yml`)**: The `web` container serves static assets directly via Django.
-- **Production (`deployment/docker-compose.yml`)**: Static assets are pre-built and served directly via the Nginx reverse-proxy fronting the Gunicorn application server.
+**Core Architecture Principle:**
+- **Development (`docker-compose.yml`)**: Builds directly from `app/Dockerfile`. The `web` container serves static assets directly via Django.
+- **Production (`deployment/docker-compose.yml`)**: Uses a pre-built image (`eventyay/eventyay-next:${TAG}`) rather than building it locally. This image is built from `app/Dockerfile.prod` via CI/CD pipelines. Static assets are pre-built and served directly via the Nginx reverse-proxy fronting the Gunicorn application server.
 
 For the full production deployment walkthrough including Nginx, SSL, and backups, see [`DEPLOYMENT.md`](../../DEPLOYMENT.md).
 
@@ -112,8 +112,8 @@ The production stack uses Gunicorn (instead of Django's dev server) behind an Ng
 
 ```bash
 # On the production server
-cd /home/$USER/$DEPLOYMENT_NAME/eventyay
-docker compose -f deployment/docker-compose.yml up -d
+cd /home/$USER/$DEPLOYMENT_NAME
+docker compose -f docker-compose.yml up -d
 ```
 
 Refer to [`DEPLOYMENT.md`](../../DEPLOYMENT.md) for the complete step-by-step guide including SSL setup with Certbot.

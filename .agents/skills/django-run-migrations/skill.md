@@ -20,12 +20,16 @@ Use this skill continuously after modifying any `models.py` schema logic to appl
 
 ## Gotchas
 
-- **Do not manually edit auto-generated migration files** unless executing an explicitly necessary, advanced requirement (i.e. complex data backfill operations) OR performing non-schema DB modifications (see Tips).
+- **Do not manually edit auto-generated migration files** unless executing an explicitly necessary, advanced requirement (i.e. complex data backfill operations). Never rewrite migrations that have already been applied to a shared or production database; instead, create a new migration for any additional schema changes.
 
 ## Tips
-If the changes in Django models don't cause a change in the actual database schema, you don't need to create an additional DB migration script. You can just modify one of the existing scripts
+If your changes in Django models don't cause a change in the actual database schema, you don't need to create a migration at all. 
 
-This helps avoid generating too many DB migration scripts. The changes that don't cause an actual change in the DB schema are:
+Typical changes that do **not** affect the DB schema include:
 - `choices`
 - `verbose_name`
 - `help_text`
+
+In these cases:
+- Do not run `makemigrations` just to capture these metadata-only changes.
+- Do not edit existing migration files that may already have been applied. The only safe exception is in a narrowly scoped, pre-merge situation where a migration has never been applied to any shared or production database and you are cleaning up that pending migration before it lands. Otherwise, always create a new migration to capture real schema changes.
