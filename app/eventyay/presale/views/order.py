@@ -437,7 +437,7 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
     template_name = 'pretixpresale/event/order.html'
 
     def get(self, request, *args, **kwargs):
-        if not self.order:
+        if not self.order.is_err():
             raise Http404(_('Unknown order code or not authorized to access this order.'))
         return super().get(request, *args, **kwargs)
 

@@ -259,7 +259,7 @@ def belong_to_verified_user(order: Order, user: AnonymousUser | User) -> bool:
     verified_emails = EmailAddress.objects.filter(user=user, verified=True).values_list('email', flat=True)
     for email in verified_emails:
         # email is already a string from values_list with flat=True
-        if order.email and email.lower() == order.email.lower() and order.is_modification_allowed_by(email):
+        if order.email and email.lower() == order.email.lower():
             return True
 
     # If no matching verified email found, order doesn't belong to user
