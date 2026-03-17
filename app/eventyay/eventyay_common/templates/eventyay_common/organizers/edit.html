@@ -85,7 +85,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="team-actions btn-toolbar">
+                        <div class="team-actions">
                             <div class="btn-group btn-group-sm">
                                 <button type="button"
                                         class="btn btn-primary btn-sm"
@@ -112,21 +112,33 @@
                                 <input type="hidden" name="team_action" value="delete">
                                 <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
                             </form>
-                            <div class="btn-group btn-group-sm">
-                                <span{% if not panel.can_delete %} tabindex="0" data-toggle="tooltip" title="{% translate 'This team cannot be deleted while it is the only team with team-management members.' %}" aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}"{% endif %}>
+                            {% if panel.can_delete %}
+                                <div class="btn-group btn-group-sm">
+                                    <button type="submit"
+                                            form="team-delete-form-{{ panel.team.pk }}"
+                                            class="btn btn-danger btn-sm">
+                                        <i class="fa fa-trash"></i> {% translate "Delete" %}
+                                    </button>
+                                </div>
+                            {% else %}
+                                <div class="btn-group btn-group-sm team-delete-disabled"
+                                     tabindex="0"
+                                     data-toggle="tooltip"
+                                     data-placement="left"
+                                     title="{% translate 'Cannot delete this team: it is the only team with team-management members.' %}">
                                     <button type="submit"
                                             form="team-delete-form-{{ panel.team.pk }}"
                                             class="btn btn-danger btn-sm"
-                                            {% if not panel.can_delete %}disabled aria-disabled="true"{% endif %}>
+                                            disabled
+                                            aria-disabled="true"
+                                            aria-labelledby="team-delete-disabled-help-{{ panel.team.pk }}">
                                         <i class="fa fa-trash"></i> {% translate "Delete" %}
                                     </button>
-                                </span>
-                                {% if not panel.can_delete %}
                                     <span id="team-delete-disabled-help-{{ panel.team.pk }}" class="sr-only">
-                                        {% translate "This team cannot be deleted while it is the only team with team-management members." %}
+                                        {% translate "Cannot delete this team: it is the only team with team-management members." %}
                                     </span>
-                                {% endif %}
-                            </div>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div id="team-permissions-{{ panel.team.pk }}"

@@ -1108,10 +1108,7 @@ h1 .label {
     }
 
     .team-permissions-panel {
-        .panel-default {
-            background-color: $main-box-bg;
-        }
-
+        .panel-default,
         .panel-default > .panel-heading {
             background-color: $main-box-bg;
         }
@@ -1132,7 +1129,7 @@ h1 .label {
             display: flex;
             flex-wrap: wrap;
             justify-content: flex-end;
-            row-gap: 6px;
+            gap: 6px;
         }
     }
 }
