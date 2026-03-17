@@ -6,6 +6,7 @@
 
 {% block custom_header %}
     <script type="text/javascript" src="{% static "move-email-elements/moveEmailElements.js" %}"></script>
+    <script src="{% static 'custom/js/toggle_visibility.js' %}"></script>
 {% endblock %}
 
 {% block inner %}
@@ -37,7 +38,29 @@
                                 {% for field_name in field_names %}
                                     {% if field_name == "payment_stripe_publishable_key" or field_name == "payment_stripe_secret_key" %}
                                         {% with form|getitem:field_name as field %}
-                                            {% bootstrap_field field layout='control' %}
+                                            
+                                            {% if "secret" in field_name %}
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">{{ field.label }}</label>
+                                                <div class="col-md-9">
+                                                    <div class="input-group">
+                                                        {{ field }}
+                                                        <span class="input-group-addon toggle-visibility" data-target="#{{ field.id_for_label }}" style="cursor:pointer;">
+                                                            <i class="fa fa-eye"></i>
+                                                        </span>
+                                                    </div>
+                                                    {% if field.help_text %}
+                                                        <span class="help-block">{{ field.help_text }}</span>
+                                                    {% endif %}
+                                                    {% if field.errors %}
+                                                        <div class="help-block">{{ field.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                                {% bootstrap_field field layout='control' %}
+                                            {% endif %}
+
                                         {% endwith %}
                                     {% endif %}
                                 {% endfor %}
@@ -48,7 +71,29 @@
                                 {% for field_name in field_names %}
                                     {% if field_name == "payment_stripe_test_publishable_key" or field_name == "payment_stripe_test_secret_key" %}
                                         {% with form|getitem:field_name as field %}
-                                            {% bootstrap_field field layout='control' %}
+                                            
+                                            {% if "secret" in field_name %}
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">{{ field.label }}</label>
+                                                <div class="col-md-9">
+                                                    <div class="input-group">
+                                                        {{ field }}
+                                                        <span class="input-group-addon toggle-visibility" data-target="#{{ field.id_for_label }}" style="cursor:pointer;">
+                                                            <i class="fa fa-eye"></i>
+                                                        </span>
+                                                    </div>
+                                                    {% if field.help_text %}
+                                                        <span class="help-block">{{ field.help_text }}</span>
+                                                    {% endif %}
+                                                    {% if field.errors %}
+                                                        <div class="help-block">{{ field.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                                {% bootstrap_field field layout='control' %}
+                                            {% endif %}
+
                                         {% endwith %}
                                     {% endif %}
                                 {% endfor %}
@@ -59,7 +104,23 @@
                                 {% for field_name in field_names %}
                                     {% if field_name == "stripe_webhook_secret_key" %}
                                         {% with form|getitem:field_name as field %}
-                                            {% bootstrap_field field layout='control' %}
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">{{ field.label }}</label>
+                                                <div class="col-md-9">
+                                                    <div class="input-group">
+                                                        {{ field }}
+                                                        <span class="input-group-addon toggle-visibility" data-target="#{{ field.id_for_label }}" style="cursor:pointer;">
+                                                            <i class="fa fa-eye"></i>
+                                                        </span>
+                                                    </div>
+                                                    {% if field.help_text %}
+                                                        <span class="help-block">{{ field.help_text }}</span>
+                                                    {% endif %}
+                                                    {% if field.errors %}
+                                                        <div class="help-block">{{ field.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
                                         {% endwith %}
                                     {% endif %}
                                 {% endfor %}
@@ -88,7 +149,29 @@
                                 {% for field_name in field_names %}
                                     {% if field_name == "payment_stripe_connect_publishable_key" or field_name == "payment_stripe_connect_secret_key" %}
                                         {% with form|getitem:field_name as field %}
-                                            {% bootstrap_field field layout='control' %}
+
+                                            {% if "secret" in field_name %}
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">{{ field.label }}</label>
+                                                <div class="col-md-9">
+                                                    <div class="input-group">
+                                                        {{ field }}
+                                                        <span class="input-group-addon toggle-visibility" data-target="#{{ field.id_for_label }}" style="cursor:pointer;">
+                                                            <i class="fa fa-eye"></i>
+                                                        </span>
+                                                    </div>
+                                                    {% if field.help_text %}
+                                                        <span class="help-block">{{ field.help_text }}</span>
+                                                    {% endif %}
+                                                    {% if field.errors %}
+                                                        <div class="help-block">{{ field.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                                {% bootstrap_field field layout='control' %}
+                                            {% endif %}
+
                                         {% endwith %}
                                     {% endif %}
                                 {% endfor %}
@@ -99,7 +182,29 @@
                                 {% for field_name in field_names %}
                                     {% if field_name == "payment_stripe_connect_test_publishable_key" or field_name == "payment_stripe_connect_test_secret_key" %}
                                         {% with form|getitem:field_name as field %}
-                                            {% bootstrap_field field layout='control' %}
+
+                                            {% if "secret" in field_name %}
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">{{ field.label }}</label>
+                                                <div class="col-md-9">
+                                                    <div class="input-group">
+                                                        {{ field }}
+                                                        <span class="input-group-addon toggle-visibility" data-target="#{{ field.id_for_label }}" style="cursor:pointer;">
+                                                            <i class="fa fa-eye"></i>
+                                                        </span>
+                                                    </div>
+                                                    {% if field.help_text %}
+                                                        <span class="help-block">{{ field.help_text }}</span>
+                                                    {% endif %}
+                                                    {% if field.errors %}
+                                                        <div class="help-block">{{ field.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                                {% bootstrap_field field layout='control' %}
+                                            {% endif %}
+
                                         {% endwith %}
                                     {% endif %}
                                 {% endfor %}
