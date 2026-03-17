@@ -14,11 +14,11 @@ from django.db.models import (
     Max,
     Min,
     OuterRef,
+    Prefetch,
     Q,
     Subquery,
     Sum,
     When,
-    Prefetch,
 )
 from django.db.models.functions import Coalesce, TruncDate
 from django.dispatch import receiver
@@ -418,6 +418,7 @@ class OrderListExporter(MultiSheetListExporter):
         headers.append(_('Comment'))
         headers.append(_('Positions'))
         headers.append(_('Payment providers'))
+        payment_methods = []
         if self._include_payment_amounts(form_data):
             payment_methods = self._get_all_payment_methods(qs)
             for id, vn in payment_methods:
@@ -467,11 +468,13 @@ class OrderListExporter(MultiSheetListExporter):
             .annotate(taxsum=Sum('tax_value'), grosssum=Sum('price'))
         }
 
-        all_ids = list(qs.order_by('datetime').values_list('pk', flat=True))
-        yield self.ProgressSetTotal(total=len(all_ids))
-        for ids in chunked_iterable(all_ids, 1000):
-            orders = sorted(qs.filter(id__in=ids), key=lambda k: ids.index(k.pk))
-            for order in orders:
+        yield self.ProgressSetTotal(total=qs.count())
+        id_iterator = qs.order_by('datetime').values_list('pk', flat=True).iterator()
+        for ids in chunked_iterable(id_iterator, 1000):
+            ids = list(ids)
+            orders_by_id = {order.pk: order for order in qs.filter(id__in=ids)}
+            for order_id in ids:
+                order = orders_by_id[order_id]
                 tz = pytz.timezone(self.event_object_cache[order.event_id].settings.timezone)
                 row = [
                     self.event_object_cache[order.event_id].slug,
@@ -600,7 +603,6 @@ class OrderListExporter(MultiSheetListExporter):
                 )
 
                 if self._include_payment_amounts(form_data):
-                    payment_methods = self._get_all_payment_methods(qs)
                     for id, vn in payment_methods:
                         row.append(
                             payment_sum_cache.get((order.id, id), Decimal('0.00'))

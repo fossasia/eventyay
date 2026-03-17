@@ -139,8 +139,8 @@ class Voucher(LoggedModel):
         default=False,
         verbose_name=_('Allow to bypass approval'),
         help_text=_(
-            'If activated, a holder of this voucher code can buy tickets without awaiting for an approval by the '
-            'organiser. This is applicable for products that requires approval.'
+            'If activated, a holder of this voucher code can buy tickets without awaiting approval by the '
+            'organiser. This is applicable for products that require approval.'
         ),
     )
     price_mode = models.CharField(

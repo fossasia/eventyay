@@ -2247,7 +2247,7 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
         response = self.client.post('/%s/%s/checkout/confirm/' % (self.orga.slug, self.event.slug), follow=True)
         doc = BeautifulSoup(response.content.decode(), 'lxml')
         self.assertEqual(len(doc.select('.thank-you')), 1)
-        self.assertIn('Payment pending', doc.content.decode())
+        self.assertIn('Payment pending', response.content.decode())
         with scopes_disabled():
             self.assertFalse(CartPosition.objects.filter(id=cr1.id).exists())
             self.assertEqual(Order.objects.count(), 1)

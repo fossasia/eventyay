@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             name='allow_ignore_approval',
             field=models.BooleanField(
                 default=False,
-                help_text='If activated, a holder of this voucher code can buy tickets without awaiting for an approval by the organiser. This is applicable for products that requires approval.',
+                help_text='If activated, a holder of this voucher code can buy tickets without awaiting approval by the organiser. This is applicable for products that require approval.',
                 verbose_name='Allow to bypass approval',
             ),
         ),
