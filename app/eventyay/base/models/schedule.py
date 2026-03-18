@@ -688,15 +688,18 @@ class Schedule(PretalxModel):
                 rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)
-                speakers |= set(talk.submission.speakers.all())
+                speaker_qs = list(talk.submission.speakers.all())
+                speakers |= set(speaker_qs)
+                speaker_codes = [speaker.code for speaker in speaker_qs if speaker.code]
                 talk_data = {
                     'code': talk.submission.code if talk.submission else None,
                     'id': talk.id,
                     'title': (talk.submission.title if talk.submission else talk.description),
-                    'abstract': (talk.submission.abstract if talk.submission else None),
-                    'description': (talk.submission.description if talk.submission else None),
+                    # Some legacy databases can contain NULL values here. The schedule editor expects strings.
+                    'abstract': (str(talk.submission.abstract or '') if talk.submission else None),
+                    'description': (str(talk.submission.description or '') if talk.submission else None),
                     'speakers': (
-                        [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
+                        speaker_codes if talk.submission else None
                     ),
                     'track': talk.submission.track_id if talk.submission else None,
                     'start': talk.local_start,
