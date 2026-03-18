@@ -20,6 +20,12 @@
     outline: none;
   }
 
+.sidebar.collapsed:hover {
+    width: 70px;
+}
+.sidebar-collapsed .sidebar-text {
+    display: none;
+}
   .fa-bars {
     color: #fff;
   }
