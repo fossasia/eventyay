@@ -19,7 +19,6 @@
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
         <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
-        {{ html_head|safe }}
         {% if current_event and current_event.display_settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
@@ -41,6 +40,7 @@
         {% endblock %}
 
         <script src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
+        {{ html_head|safe }}
 
         {% block public_head_before_assets %}{% endblock public_head_before_assets %}
 

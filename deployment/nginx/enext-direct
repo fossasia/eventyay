@@ -2,7 +2,30 @@ server {
 	server_name <SERVER_NAME>;
 
 	access_log /var/log/nginx/<SERVER_NAME>-access.log;
-        error_log /var/log/nginx/<SERVER_NAME>-error.log;
+    error_log /var/log/nginx/<SERVER_NAME>-error.log;
+	
+	set $cors_origin "";
+    set $cors_allowed_origin 0;
+    if ($http_origin ~* ^https://access\.eventyay\.com$) {
+        set $cors_origin $http_origin;
+        set $cors_allowed_origin 1;
+    }
+
+    set $cors_preflight 0;
+    if ($request_method = OPTIONS) {
+        set $cors_preflight 1;
+    }
+    if ($http_access_control_request_method = "") {
+        set $cors_preflight 0;
+    }
+
+    set $cors_reject_preflight 0;
+    if ($cors_preflight = 1) {
+        set $cors_reject_preflight 1;
+    }
+    if ($cors_allowed_origin = 1) {
+        set $cors_reject_preflight 0;
+    }
 
 	# WebSocket connections - route to daphne
 	location /ws/ {
@@ -19,9 +42,39 @@ server {
 		proxy_read_timeout 86400;
 	}
 
-	# Regular HTTP requests - route to gunicorn
-        location / {
-        	proxy_pass http://127.0.0.1:8000;
+    # Regular HTTP requests - route to gunicorn
+    location / {
+        add_header Referrer-Policy same-origin always;
+
+        if ($cors_reject_preflight = 1) {
+            return 403;
+        }
+
+		if ($cors_preflight = 1) {
+            add_header Access-Control-Allow-Origin $cors_origin always;
+            add_header Access-Control-Allow-Credentials 'true' always;
+            add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
+            add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, PUT, DELETE' always;
+            add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
+            add_header Vary Origin always;
+            return 204;
+        }
+
+        if ($cors_allowed_origin = 1) {
+            add_header Referrer-Policy same-origin always;
+            add_header Access-Control-Allow-Origin $cors_origin always;
+            add_header Access-Control-Allow-Credentials 'true' always;
+            add_header Access-Control-Allow-Headers 'exhibitor, Authorization, Content-Type, DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Range' always;
+            add_header Access-Control-Expose-Headers 'Content-Length, Content-Range' always;
+            add_header Vary Origin always;
+        }
+
+		proxy_hide_header Access-Control-Allow-Origin;
+		proxy_hide_header Access-Control-Allow-Credentials;
+		proxy_hide_header Access-Control-Allow-Headers;
+		proxy_hide_header Access-Control-Allow-Methods;
+		proxy_hide_header Access-Control-Expose-Headers;
+		proxy_pass http://127.0.0.1:8000;
 		proxy_set_header Host $http_host;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
@@ -39,4 +92,3 @@ server {
 	}
         listen 80;
 }
-

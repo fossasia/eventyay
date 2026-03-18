@@ -79,6 +79,21 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         help_text=_('Attendees will be able to send in feedback after a session is over.'),
         required=False,
     )
+    session_popularity_enabled = forms.BooleanField(
+        label=_('Activate most popular session feature'),
+        help_text=_('Enables session popularity (favourites) counts and sorting options in the schedule webapp.'),
+        required=False,
+    )
+    session_popularity_show_on_calendar = forms.BooleanField(
+        label=_('Show popularity on calendar view'),
+        help_text=_('Shows favourite counts on session cards in the calendar/grid view. Only used if popularity is enabled.'),
+        required=False,
+    )
+    session_popularity_show_on_list = forms.BooleanField(
+        label=_('Show popularity on list view'),
+        help_text=_('Shows favourite counts on session cards in the list view. Only used if popularity is enabled.'),
+        required=False,
+    )
     export_html_on_release = forms.BooleanField(
         label=_('Generate HTML export on schedule release'),
         help_text=_('The static HTML export will be provided as a .zip archive on the schedule export page.'),
@@ -159,6 +174,9 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'schedule': 'display_settings',
             'show_featured': 'feature_flags',
             'use_feedback': 'feature_flags',
+            'session_popularity_enabled': 'feature_flags',
+            'session_popularity_show_on_calendar': 'feature_flags',
+            'session_popularity_show_on_list': 'feature_flags',
             'export_html_on_release': 'feature_flags',
             'html_export_url': 'display_settings',
             'header_pattern': 'display_settings',
@@ -181,8 +199,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=str(_('The signature will be added to outgoing mails, preceded by “-- ”.'))
-        + ' '
+        help_text=_('The signature will be added to outgoing mails, preceded by “-- ”. ')
         + phrases.base.use_markdown,
         required=False,
         widget=forms.Textarea,
@@ -357,8 +374,29 @@ class WidgetSettingsForm(JsonSubfieldMixin, forms.Form):
         required=False,
     )
 
+    session_popularity_enabled = forms.BooleanField(
+        label=_('Activate most popular session feature'),
+        help_text=_('Enables session popularity (favourites) counts and sorting options in the schedule webapp.'),
+        required=False,
+    )
+    session_popularity_show_on_calendar = forms.BooleanField(
+        label=_('Show popularity on calendar view'),
+        help_text=_('Shows favourite counts on session cards in the calendar/grid view. Only used if popularity is enabled.'),
+        required=False,
+    )
+    session_popularity_show_on_list = forms.BooleanField(
+        label=_('Show popularity on list view'),
+        help_text=_('Shows favourite counts on session cards in the list view. Only used if popularity is enabled.'),
+        required=False,
+    )
+
     class Meta:
-        json_fields = {'show_widget_if_not_public': 'feature_flags'}
+        json_fields = {
+            'show_widget_if_not_public': 'feature_flags',
+            'session_popularity_enabled': 'feature_flags',
+            'session_popularity_show_on_calendar': 'feature_flags',
+            'session_popularity_show_on_list': 'feature_flags',
+        }
 
 
 class WidgetGenerationForm(forms.ModelForm):

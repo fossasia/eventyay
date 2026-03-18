@@ -28,11 +28,11 @@ body {
   max-width: 100%;
   padding: 18px 44px;
   margin: 0;
-  margin-top: 50px;
-  height: calc(100vh - 50px);
+  margin-top: var(--navbar-height);
+  height: calc(100vh - var(--navbar-height));
   overflow-x: hidden;
   overflow-y: auto;
-  scroll-padding-top: 50px;
+  scroll-padding-top: var(--navbar-height);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -49,7 +49,7 @@ body {
   padding: 8px 20px;
   color: white;
   text-align: center;
-  margin-top: 50px;
+  margin-top: var(--navbar-height);
   position: absolute;
   z-index: 1000;
 
