@@ -30,13 +30,13 @@
             <p>
                 {% translate "You have not yet created any scheduled emails." %}
             </p>
-            <a href="{% url "plugins:sendmail:scheduled_create" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-primary btn-lg">
+            <a href="{% url 'plugins:sendmail:scheduled_create' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-primary btn-lg">
                 <i class="fa fa-plus"></i> {% translate "Create a new rule" %}
             </a>
         </div>
     {% else %}
         <p>
-            <a href="{% url "plugins:sendmail:scheduled_create" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default">
+            <a href="{% url 'plugins:sendmail:scheduled_create' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default">
                 <i class="fa fa-plus"></i> {% translate "Create a new rule" %}
             </a>
         </p>
