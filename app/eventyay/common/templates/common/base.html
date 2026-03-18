@@ -201,18 +201,26 @@
                     </div>
                 {% endif %}
                 {% include "common/powered_by.html" %}
-                {% if request.event %}
-                    ·
-                    <a href="mailto:{{ request.event.email }}">{% translate "Contact us" %}</a>
-                {% endif %}
-                {% if request.event.display_settings.imprint_url %}
-                    ·
-                    <a href="{{ request.event.display_settings.imprint_url }}" target="_blank" rel="noopener">{% translate "Imprint" %}</a>
-                {% endif %}
-                {% for footer in footer_links %}
-                    ·
-                    <a href="{% safelink footer.url %}" target="_blank" rel="noopener">{{ footer.label }}</a>
-                {% endfor %}
+
+                <div class="footer-links">
+                    {% if request.event %}
+                        <a href="mailto:{{ request.event.email }}">
+                            {% translate "Contact us" %}
+                        </a>
+                    {% endif %}
+
+                    {% if request.event.display_settings.imprint_url %}
+                        <a href="{{ request.event.display_settings.imprint_url }}" target="_blank" rel="noopener">
+                            {% translate "Imprint" %}
+                        </a>
+                    {% endif %}
+
+                    {% for footer in footer_links %}
+                        <a href="{% safelink footer.url %}" target="_blank" rel="noopener">
+                            {{ footer.label }}
+                        </a>
+                    {% endfor %}
+                </div>
             </footer>
         </div>
         {% include "common/includes/modals.html" %}
