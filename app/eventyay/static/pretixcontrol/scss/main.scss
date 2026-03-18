@@ -1115,7 +1115,7 @@ h1 .label {
 
         .team-panel-heading {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: flex-start;
             gap: 12px;
             flex-wrap: wrap;
@@ -1130,6 +1130,7 @@ h1 .label {
             flex-wrap: wrap;
             justify-content: flex-end;
             gap: 6px;
+            margin-left: auto;
         }
     }
 }
