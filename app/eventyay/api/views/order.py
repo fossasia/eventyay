@@ -1248,89 +1248,90 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['POST'])
     def refund(self, request, **kwargs):
-        payment = self.get_object()
-        amount = serializers.DecimalField(max_digits=10, decimal_places=2).to_internal_value(
-            request.data.get('amount', str(payment.amount))
-        )
-        if 'mark_refunded' in request.data:
-            mark_refunded = request.data.get('mark_refunded', False)
-        else:
-            mark_refunded = request.data.get('mark_canceled', False)
+        with transaction.atomic():
+            payment = OrderPayment.objects.select_for_update().get(pk=self.get_object().pk)
+            amount = serializers.DecimalField(max_digits=10, decimal_places=2).to_internal_value(
+                request.data.get('amount', str(payment.amount))
+            )
+            if 'mark_refunded' in request.data:
+                mark_refunded = request.data.get('mark_refunded', False)
+            else:
+                mark_refunded = request.data.get('mark_canceled', False)
 
-        if payment.state != OrderPayment.PAYMENT_STATE_CONFIRMED:
-            return Response(
-                {'detail': 'Invalid state of payment.'},
-                status=status.HTTP_400_BAD_REQUEST,
+            if payment.state != OrderPayment.PAYMENT_STATE_CONFIRMED:
+                return Response(
+                    {'detail': 'Invalid state of payment.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            full_refund_possible = payment.payment_provider.payment_refund_supported(payment)
+            partial_refund_possible = payment.payment_provider.payment_partial_refund_supported(payment)
+            available_amount = payment.amount - payment.refunded_amount
+
+            if amount <= 0:
+                return Response(
+                    {'amount': ['Invalid refund amount.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount > available_amount:
+                return Response(
+                    {'amount': ['Invalid refund amount, only {} are available to refund.'.format(available_amount)]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount != payment.amount and not partial_refund_possible:
+                return Response(
+                    {'amount': ['Partial refund not available for this payment method.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if amount == payment.amount and not full_refund_possible:
+                return Response(
+                    {'amount': ['Full refund not available for this payment method.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            r = payment.order.refunds.create(
+                payment=payment,
+                source=OrderRefund.REFUND_SOURCE_ADMIN,
+                state=OrderRefund.REFUND_STATE_CREATED,
+                amount=amount,
+                provider=payment.provider,
             )
 
-        full_refund_possible = payment.payment_provider.payment_refund_supported(payment)
-        partial_refund_possible = payment.payment_provider.payment_partial_refund_supported(payment)
-        available_amount = payment.amount - payment.refunded_amount
-
-        if amount <= 0:
-            return Response(
-                {'amount': ['Invalid refund amount.']},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if amount > available_amount:
-            return Response(
-                {'amount': ['Invalid refund amount, only {} are available to refund.'.format(available_amount)]},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if amount != payment.amount and not partial_refund_possible:
-            return Response(
-                {'amount': ['Partial refund not available for this payment method.']},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if amount == payment.amount and not full_refund_possible:
-            return Response(
-                {'amount': ['Full refund not available for this payment method.']},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        r = payment.order.refunds.create(
-            payment=payment,
-            source=OrderRefund.REFUND_SOURCE_ADMIN,
-            state=OrderRefund.REFUND_STATE_CREATED,
-            amount=amount,
-            provider=payment.provider,
-        )
-
-        try:
-            r.payment_provider.execute_refund(r)
-        except PaymentException as e:
-            r.state = OrderRefund.REFUND_STATE_FAILED
-            r.save()
-            return Response(
-                {'detail': 'External error: {}'.format(str(e))},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        else:
-            payment.order.log_action(
-                'eventyay.event.order.refund.created',
-                {
-                    'local_id': r.local_id,
-                    'provider': r.provider,
-                },
-                user=self.request.user if self.request.user.is_authenticated else None,
-                auth=self.request.auth,
-            )
-            if payment.order.pending_sum > 0:
-                if mark_refunded:
-                    mark_order_refunded(
-                        payment.order,
-                        user=self.request.user if self.request.user.is_authenticated else None,
-                        auth=self.request.auth,
-                    )
-                else:
-                    payment.order.status = Order.STATUS_PENDING
-                    payment.order.set_expires(
-                        now(),
-                        payment.order.event.subevents.filter(
-                            id__in=payment.order.positions.values_list('subevent_id', flat=True)
-                        ),
-                    )
-                    payment.order.save(update_fields=['status', 'expires'])
-            return Response(OrderRefundSerializer(r).data, status=status.HTTP_200_OK)
+            try:
+                r.payment_provider.execute_refund(r)
+            except PaymentException as e:
+                r.state = OrderRefund.REFUND_STATE_FAILED
+                r.save()
+                return Response(
+                    {'detail': 'External error: {}'.format(str(e))},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                payment.order.log_action(
+                    'eventyay.event.order.refund.created',
+                    {
+                        'local_id': r.local_id,
+                        'provider': r.provider,
+                    },
+                    user=self.request.user if self.request.user.is_authenticated else None,
+                    auth=self.request.auth,
+                )
+                if payment.order.pending_sum > 0:
+                    if mark_refunded:
+                        mark_order_refunded(
+                            payment.order,
+                            user=self.request.user if self.request.user.is_authenticated else None,
+                            auth=self.request.auth,
+                        )
+                    else:
+                        payment.order.status = Order.STATUS_PENDING
+                        payment.order.set_expires(
+                            now(),
+                            payment.order.event.subevents.filter(
+                                id__in=payment.order.positions.values_list('subevent_id', flat=True)
+                            ),
+                        )
+                        payment.order.save(update_fields=['status', 'expires'])
+                return Response(OrderRefundSerializer(r).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['POST'])
     def cancel(self, request, **kwargs):
