@@ -155,9 +155,12 @@
                         </div>
                     </div>
                 </div>
-                {% block header_navigation %}
-                    <div class="header-wrapper">
-                        <div id="header-tabs">
+                {% block header_navigation %}{% endblock header_navigation %}
+            </header>
+            {% block header_navigation_after %}
+                <div class="presale-sticky-tabs-wrap">
+                    <div class="header-wrapper presale-sticky-tabs-inner">
+                        <div id="header-tabs" class="presale-sticky-tabs">
                             {% block header_tabs %}{% endblock header_tabs %}
                             <div class="header-row-right">
                                 {% block header_right %}
@@ -166,9 +169,8 @@
                             </div>
                         </div>
                     </div>
-                {% endblock header_navigation %}
-            </header>
-            {% block header_navigation_after %}{% endblock header_navigation_after %}
+                </div>
+            {% endblock header_navigation_after %}
             <div class="card" id="main-card">
                 {% block alerts %}
                     {% if messages %}
