@@ -9,6 +9,8 @@ from django.core.exceptions import SuspiciousFileOperation
 from django.core.files import File
 from django.core.files.storage import Storage
 
+HTTP_TIMEOUT_SHORT = 10
+
 """
 This file contains a Django storage backend for the minimal CDN used by the eventyay SaaS service. The architecture
 of the CDN is described at https://behind.pretix.eu/2018/03/20/high-available-cdn/
@@ -89,7 +91,7 @@ class NanoCDNStorage(Storage):
         resp = requests.get(
              urllib.parse.urljoin(self.base_url, name),
              stream=True,
-            timeout=10
+            timeout=HTTP_TIMEOUT_SHORT
         )
         
         if resp.status_code == 404:
