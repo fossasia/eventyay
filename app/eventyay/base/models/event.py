@@ -2692,13 +2692,13 @@ class Event(
             if not self.review_phases.all().exists():
                 from eventyay.base.models import ReviewPhase
 
-                cfp_deadline = self.cfp.deadline
+                cfp_deadline = self.cfp.deadline if hasattr(self, 'cfp') else None
                 rp = ReviewPhase.objects.create(
                     event=self,
                     name=_('Review'),
                     start=cfp_deadline,
                     end=self.datetime_from - relativedelta(months=-3),
-                    is_active=bool(not cfp_deadline or cfp_deadline < now()),
+                    is_active=False,
                     position=0,
                 )
                 ReviewPhase.objects.create(

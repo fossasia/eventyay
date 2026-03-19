@@ -68,7 +68,7 @@
                 <div class="dashboard-live-text">
                     {% translate "Your talk component is currently" %}
                 </div>
-                {% if request.event.is_public %}
+                {% if request.event.talks_published %}
                     <div class="dashboard-live text-success">
                         <i class="fa fa-check-circle"></i>
                         {% translate "live" %}
