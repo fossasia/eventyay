@@ -129,7 +129,11 @@ class EventDashboardView(EventPermissionRequired, TemplateView):
 
     def get_cfp_tiles(self, _now, can_change_submissions=False):
         result = []
-        if self.request.event.cfp.is_open:
+        if (
+            self.request.event.cfp.is_open
+            and self.request.event.cfp.text
+            and self.request.event.cfp.max_deadline
+        ):
             result.append(
                 {
                     'url': self.request.event.cfp.urls.public,

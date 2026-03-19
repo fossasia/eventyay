@@ -304,17 +304,21 @@ def shop_state_widget(sender, **kwargs):
                 t2=_('Click here to change'),
                 state=(
                     _('live (private test mode)')
-                    if sender.live and sender.private_testmode
+                    if sender.live and sender.presale_is_running and sender.private_testmode
                     else (
                         _('live and in test mode')
-                        if sender.live and sender.testmode
+                        if sender.live and sender.presale_is_running and sender.testmode
                         else (
                             _('live')
-                            if sender.live
+                            if sender.live and sender.presale_is_running
                             else (
-                                _('in private test mode')
-                                if sender.private_testmode
-                                else (_('in test mode') if sender.testmode else _('not yet public'))
+                                _('not started')
+                                if sender.live
+                                else (
+                                    _('in private test mode')
+                                    if sender.private_testmode
+                                    else (_('in test mode') if sender.testmode else _('not yet public'))
+                                )
                             )
                         )
                     )
