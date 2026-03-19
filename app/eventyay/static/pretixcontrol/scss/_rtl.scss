@@ -103,7 +103,46 @@ html.rtl {
     border-left: 1px solid #d4d4d5;
     border-right: 0;
   }
+
+  .sidebar-minimized .sidebar .nav > li > a .fa, body.sidebar-minimized .sidebar .nav > li > a svg{
+    margin : auto;
+  }
+
+  .context-selector .fa-stack {
+    left: -2px  ;
+  }
+  .navbar-toggle-sidebar {
+    float: right;
+    margin-right: 15px;
+    margin-left: 0;
+  }
+
+  .dropdown .dropdown-content-se {
+    right: 20px;
+    left: auto;
+  }
+  .dropdown .dropdown-content-sw .dropdown-content-w {
+    right: auto;
+    left: 165px;
+  }  
+
+  .dropdown .dropdown-content-w::after {
+    top: 11px;
+    right: auto;
+    left: -15px;
+    border-color: transparent;
+    border-right-color: #fff;
+  }
+
+  details.dropdown .dropdown-content-w::before {
+    top: 10px;
+    right: -16px;
+    left: auto;
+    border-color: transparent;
+    border-left-color: transparent;
 }
+}
+
 @media (min-width: $screen-sm-min) {
   html.rtl #page-wrapper {
     margin: 0 $sidebar-width 0 0;
@@ -113,11 +152,6 @@ html.rtl {
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  html.rtl body.sidebar-minimized:has(.sidebar:hover) #page-wrapper {
-      margin: 0 $sidebar-width 0 0;
-  }
-}
 @media(max-width: $screen-sm-max) {
   html.rtl .timeline {
     .col-date {
