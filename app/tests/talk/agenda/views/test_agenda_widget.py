@@ -135,3 +135,10 @@ def test_event_css_etag_changes_when_header_colors_change(rf):
     request.event = make_event(header_background_color='#ffee00')
 
     assert color_etag(request) != default_etag
+
+
+def test_event_css_etag_returns_none_when_no_colors_are_set(rf):
+    request = rf.get('/settings.css')
+    request.event = make_event(primary_color='')
+
+    assert color_etag(request) == 'none'

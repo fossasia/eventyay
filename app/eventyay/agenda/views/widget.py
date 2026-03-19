@@ -18,14 +18,13 @@ WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
 def color_etag(request, organizer=None, event=None, **kwargs):
-    return '|'.join(
-        [
-            request.event.visible_primary_color or '',
-            request.event.settings.get('header_background_color') or '',
-            request.event.settings.get('header_text_color') or '',
-            request.event.settings.get('navigation_text_color') or '',
-        ]
-    ) or 'none'
+    parts = [
+        request.event.visible_primary_color or '',
+        request.event.settings.get('header_background_color') or '',
+        request.event.settings.get('header_text_color') or '',
+        request.event.settings.get('navigation_text_color') or '',
+    ]
+    return '|'.join(parts) if any(parts) else 'none'
 
 
 def widget_js_etag(request, organizer=None, event=None, **kwargs):
