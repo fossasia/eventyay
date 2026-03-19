@@ -114,7 +114,9 @@
 .presale-sticky-tabs #header-nav-bar {
     flex: 1 1 auto;
     margin: 6px 0 0;
-    /* Do NOT set overflow here — it creates a clipping container for dropdown menus */
+    /* Explicitly override global #header-nav-bar { overflow: auto } to avoid clipping.
+     * Scrolling is handled by .presale-tabs-scroll instead. */
+    overflow: visible;
 }
 
 .presale-sticky-tabs #header-nav-bar .navigation {
@@ -169,9 +171,10 @@
 
 #main-card {
     /* Sit above hero header (z-index:1000) so its date/title text does not
-     * bleed over page content. Below sticky nav (z-index:1200) so nav is on top. */
+     * bleed over page content. Below Bootstrap modals (z-index:1050) and
+     * sticky nav (z-index:1200) so overlays and nav are on top. */
     position: relative;
-    z-index: 1100;
+    z-index: 1040;
     scroll-margin-top: 72px;
 }
 
