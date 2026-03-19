@@ -11,6 +11,49 @@ ENext is the new and updated version of Eventyay with a unified codebase for the
 Getting Started
 ---------------
 
+Quick Start for Beginners
+------------------------
+
+This section provides a simplified setup guide for new contributors to quickly run the project locally.
+
+If you are new to the project, follow these steps to quickly set up the application:
+
+1. Install Python (3.10 or higher)
+2. Install PostgreSQL and create a database named ``eventyay-db``
+3. Install Redis server
+4. Clone the repository:
+
+   .. code-block:: bash
+
+      git clone https://github.com/fossasia/eventyay.git
+      cd eventyay/app
+
+5. Install dependencies:
+
+   .. code-block:: bash
+
+      uv sync --all-extras --all-groups
+
+6. Activate virtual environment:
+
+   .. code-block:: bash
+
+      . .venv/bin/activate
+
+7. Run database migrations:
+
+   .. code-block:: bash
+
+      python manage.py migrate
+
+8. Start the development server:
+
+   .. code-block:: bash
+
+      python manage.py runserver
+
+Then open ``http://localhost:8000`` in your browser.
+
 Python-based development
 ------------------------------------------------------------
 
@@ -38,13 +81,13 @@ For Nushell:
   > open deb-packages.txt | lines | sudo apt install ...$in
 
 
-If you are using other Linux distros, please guess the corresponding package names for that list.
+If you are using other Linux distributions, install the equivalent packages using your system's package manager (e.g., yum, pacman, zypper).
 
 Other than that, please install `uv`_, the Python package manager.
 
 2. **Install and run Redis**
 
-Depending on your distribution.
+Install Redis using your system's package manager and ensure the Redis server is running before starting the application.
 
 3. **Create a PostgreSQL database**
 
@@ -141,10 +184,12 @@ Mobile testing note: If you want to test the site from an **Android emulator**, 
 
 
 Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
-all below it are own by you.
+all files inside it are owned by your user.
 
 Docker based development
 ------------------------
+
+Note: Docker setup is recommended for beginners as it avoids manual installation of dependencies like PostgreSQL and Redis.
 
 We assume your current working directory is the checkout of this repo.
 
