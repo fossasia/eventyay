@@ -136,7 +136,7 @@
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
-    gap: 10px;
+    gap: 16px;
 }
 
 
@@ -178,6 +178,11 @@
     scroll-margin-top: 72px;
 }
 
+/* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
+.nav-icon-mobile {
+    display: none;
+}
+
 /* Desktop: hide mobile-only CfS abbreviation */
 .cfs-short {
     display: none;
@@ -215,15 +220,15 @@
     .presale-sticky-tabs a.header-tab {
         white-space: nowrap;
         flex-shrink: 0;
-        padding: 4px 4px 3px 4px;
-        font-size: 0.78rem;
+        padding: 4px 6px 3px 6px;
+        font-size: 0.8rem;
     }
 
     .presale-sticky-tabs .header-row-right {
         margin-left: 0;
         margin-right: 2px;
         flex-shrink: 0;
-        font-size: 0.78rem;
+        font-size: 0.8rem;
         gap: 0;
     }
 
@@ -240,6 +245,11 @@
     /* Hide text labels for Language and User dropdowns — icon-only on mobile */
     .mobile-hide-text {
         display: none;
+    }
+
+    /* Show the mobile-only icons on mobile */
+    .nav-icon-mobile {
+        display: inline;
     }
 
     /* Remove the caret arrow — redundant when showing icon-only */
@@ -278,6 +288,19 @@
         background: var(--color-primary-dark, var(--color-primary));
         text-decoration: none;
         opacity: 0.9;
+    }
+
+    /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
+    .login-link {
+        display: flex;
+        align-items: center;
+        padding: 2px 4px;
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+    .login-link:hover {
+        text-decoration: none;
+        opacity: 0.85;
     }
 }
 
