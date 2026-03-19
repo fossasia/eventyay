@@ -290,8 +290,8 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 365) : this.scrollParentWidth
 		},
 		showGrid () {
-			// Changes to the 710px cutoff must also be reflected in the static/agenda/_agenda.css file in pretalx-core
-			return this.scrollParentWidth > 710 && this.format !== 'list' // if we can't fit two rooms together, switch to list
+			// Always allow a distinct calendar grid view when not explicitly in list format
+			return this.format !== 'list'
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}

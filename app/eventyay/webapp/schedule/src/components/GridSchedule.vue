@@ -576,6 +576,7 @@ export default {
 .c-grid-schedule
 	flex: auto
 	background-color: $clr-grey-50
+	--room-col-min: 220px
 	.sticky-header
 		position: sticky
 		top: calc(var(--pretalx-sticky-top-offset, 0px) + 30px + var(--pretalx-version-warning-height, 0px))
@@ -585,8 +586,8 @@ export default {
 		overflow: hidden
 		.rooms-inner
 			display: grid
-			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
-			min-width: max(min-content, 100%)
+			grid-template-columns: 78px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
+			min-width: max(min-content, calc(78px + (var(--total-rooms) * var(--room-col-min)) + 60px))
 			> .room
 				display: flex
 				justify-content: center
@@ -650,9 +651,9 @@ export default {
 			display: none
 		.grid
 			display: grid
-			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
+			grid-template-columns: 78px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 			position: relative
-			min-width: max(min-content, 100%)
+			min-width: max(min-content, calc(78px + (var(--total-rooms) * var(--room-col-min)) + 60px))
 		.break
 			.time-box
 				background-color: $clr-grey-500
@@ -744,9 +745,9 @@ export default {
 		font-size: 14px
 		padding: 4px 2px
 	.grid
-		grid-template-columns: 60px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 60px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 	.rooms-inner
-		grid-template-columns: 60px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 60px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 
 .c-grid-schedule.density-comfortable
 	.timeslice
@@ -756,9 +757,13 @@ export default {
 		font-size: 20px
 		padding: 12px 6px
 	.grid
-		grid-template-columns: 96px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 	.rooms-inner
-		grid-template-columns: 96px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
+
+@media (max-width: 600px)
+	.c-grid-schedule
+		--room-col-min: 260px
 
 @media print
 	.c-grid-schedule
