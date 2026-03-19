@@ -34,6 +34,9 @@ from .billing_invoice import InvoicePDFGenerator
 from .schemas.billing import CollectBillingResponse
 from .video.permissions import build_video_traits_for_event
 
+HTTP_TIMEOUT_SHORT = 10
+HTTP_TIMEOUT_MEDIUM = 15
+
 logger = logging.getLogger(__name__)
 
 
@@ -61,7 +64,7 @@ def send_team_webhook(self, user_id, team):
             webhook_url,
             json=payload,
             headers=headers,
-            timeout=10,
+            HTTP_TIMEOUT_SHORT = 10,
         )
         response.raise_for_status()  # Raise exception for bad status codes
     except requests.RequestException as e:
@@ -102,7 +105,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
                 urljoin(settings.VIDEO_SERVER_HOSTNAME, 'api/v1/create-world/'),
                 json=payload,
                 headers=headers,
-                timeout=15,
+                HTTP_TIMEOUT_MEDIUM = 15,
             )
             response.raise_for_status()
             return response.json()
