@@ -18,7 +18,14 @@ WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
 def color_etag(request, organizer=None, event=None, **kwargs):
-    return request.event.visible_primary_color or 'none'
+    return '|'.join(
+        [
+            request.event.visible_primary_color or '',
+            request.event.settings.get('header_background_color') or '',
+            request.event.settings.get('header_text_color') or '',
+            request.event.settings.get('navigation_text_color') or '',
+        ]
+    ) or 'none'
 
 
 def widget_js_etag(request, organizer=None, event=None, **kwargs):
@@ -136,14 +143,25 @@ def widget_script(request, organizer=None, event=None, **kwargs):
 def event_css(request, organizer=None, event=None, **kwargs):
     # If this event has custom colours, we send back a simple CSS file that sets the
     # root colours for the event.
-    result = ''
+    variables = []
     if request.event.visible_primary_color:
         if request.GET.get('target') == 'orga':
             # The organizer area sometimes needs the event’s colour, but shouldn’t use
             # it as primary colour automatically.
-            result = ':root {' + f'--color-primary-event: {request.event.visible_primary_color};' + '}'
+            variables.append(f'--color-primary-event: {request.event.visible_primary_color};')
         else:
-            result = ':root {' + f'--color-primary: {request.event.visible_primary_color};' + '}'
+            variables.append(f'--color-primary: {request.event.visible_primary_color};')
+    if request.event.settings.get('header_background_color'):
+        variables.append(
+            f'--color-header-background: {request.event.settings.get("header_background_color")};'
+        )
+    if request.event.settings.get('header_text_color'):
+        variables.append(f'--color-header-text: {request.event.settings.get("header_text_color")};')
+    if request.event.settings.get('navigation_text_color'):
+        variables.append(
+            f'--color-header-navigation: {request.event.settings.get("navigation_text_color")};'
+        )
+    result = f':root {{{" ".join(variables)}}}' if variables else ''
     response = HttpResponse(result, content_type='text/css')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
