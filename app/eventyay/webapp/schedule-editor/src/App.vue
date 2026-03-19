@@ -3,6 +3,17 @@
 	template(v-if="schedule")
 		#main-wrapper
 			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="isUnassigning = false")
+				.density-controls
+					button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
+						i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
+						span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
+					.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
+						span.time-density-display {{ timeDensityMinutes }} min
+						i.fa.fa-chevron-down(aria-hidden="true")
+						.time-density-menu(v-if="showTimeDensityMenu")
+							.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
+								span {{ mins }} min
+								i.fa.fa-check(v-if="timeDensityMinutes === mins")
 				.title
 					bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
 					#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
@@ -16,18 +27,6 @@
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
-					.density-controls
-						button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="$t('Condensed view')")
-							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
-								circle(cx="11" cy="11" r="7")
-								line(x1="21" y1="21" x2="16.65" y2="16.65")
-								line(x1="8" y1="11" x2="14" y2="11")
-							span.density-btn-text {{ $t('Condensed view') }}
-						select.time-density-select(v-model.number="timeDensityMinutes", @change="onTimeDensityChange", :aria-label="$t('Time density')")
-							option(value="5") 5 min
-							option(value="15") 15 min
-							option(value="30") 30 min
-							option(value="60") 60 min
 					bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
 						bunt-tab(v-for="day of days", :key="day.format()", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
 				grid-schedule(:sessions="sessions",
@@ -197,6 +196,8 @@ const showUnassignedSortMenu = ref<boolean>(false)
 const newBreakTooltip = ref<string>('')
 const eventTimezone = ref<string | null>(null)
 const since = ref<string | undefined>(undefined)
+const showTimeDensityMenu = ref<boolean>(false)
+const customDropdownRef = ref<HTMLElement | null>(null)
 
 const condensedView = ref<boolean>(localStorage.getItem('schedule-editor-condensed') === '1')
 const timeDensityMinutes = ref<number>(Number(localStorage.getItem('schedule-time-density-minutes') || 30))
@@ -595,13 +596,21 @@ const onStorageChange = (e: StorageEvent) => {
   }
 }
 
+const onWindowClick = (e: MouseEvent) => {
+  if (showTimeDensityMenu.value && customDropdownRef.value && !customDropdownRef.value.contains(e.target as Node)) {
+    showTimeDensityMenu.value = false
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('click', onWindowClick)
   window.addEventListener('resize', onWindowResize)
   window.addEventListener('storage', onStorageChange)
   onWindowResize()
 })
 
 onUnmounted(() => {
+  window.removeEventListener('click', onWindowClick)
   window.removeEventListener('resize', onWindowResize)
   window.removeEventListener('storage', onStorageChange)
 })
@@ -670,6 +679,94 @@ onUnmounted(() => {
 			margin-right: 12px
 		> .bunt-scrollbar-rail-y
 			margin: 0
+		> .density-controls
+			display: flex
+			align-items: center
+			justify-content: flex-start
+			gap: 12px
+			padding: 0 8px
+			margin-bottom: 12px
+			.select-wrapper.custom-dropdown
+				position: relative
+				display: flex
+				align-items: center
+				background-color: transparent
+				border: 1px solid #999
+				border-radius: 4px
+				padding: 4px 28px 4px 10px
+				color: #333
+				cursor: pointer
+				font-size: 14px
+				font-weight: 500
+				line-height: 1.2
+				transition: all 0.15s ease
+				&:hover
+					background-color: #f3f4f6
+				.fa-chevron-down
+					position: absolute
+					right: 8px
+					pointer-events: none
+					font-size: 12px
+					color: #333
+				.time-density-menu
+					position: absolute
+					top: calc(100% + 4px)
+					right: 0
+					background-color: white
+					border-radius: 4px
+					box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)
+					border: 1px solid #e5e7eb
+					z-index: 1000
+					min-width: 120px
+					display: flex
+					flex-direction: column
+					overflow: hidden
+					cursor: default
+					.density-option
+						padding: 8px 12px
+						display: flex
+						justify-content: space-between
+						align-items: center
+						color: #374151
+						cursor: pointer
+						&:hover
+							background-color: #f3f4f6
+						&.active
+							background-color: #e5e7eb
+							color: #111
+						.fa-check
+							font-size: 12px
+							color: var(--color-primary, #3b82f6)
+			.density-btn
+				background: none
+				border: 1px solid #999
+				border-radius: 4px
+				padding: 4px 10px
+				cursor: pointer
+				color: #333
+				display: flex
+				align-items: center
+				justify-content: center
+				transition: all 0.15s ease
+				font-size: 14px
+				font-weight: 500
+				&:hover
+					background-color: #f3f4f6
+				&:focus-visible
+					outline: 2px solid var(--color-primary, #3b82f6)
+					outline-offset: -1px
+					background-color: #f3f4f6
+				&.active
+					background-color: #e5e7eb
+					color: #111
+					border-color: #6b7280
+					box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)
+				.fa
+					font-size: 14px
+				.density-btn-text
+					margin-left: 6px
+					font-weight: 500
+					white-space: nowrap
 		> .title
 			padding 4px 0
 			font-size: 18px
@@ -730,46 +827,6 @@ onUnmounted(() => {
 		background-color: $clr-white
 		.days
 			flex: 1
-		.density-controls
-			display: flex
-			align-items: center
-			gap: 2px
-			padding: 0 12px
-			flex-shrink: 0
-			.time-density-select
-				background: none
-				border: 1px solid #d8d8d8
-				border-radius: 4px
-				padding: 4px 8px
-				color: $clr-secondary-text-light
-				cursor: pointer
-				font-size: 14px
-				line-height: 1.1
-				&:focus
-					outline: none
-					border-color: var(--color-primary, #3b82f6)
-			.density-btn
-				background: none
-				border: 1px solid transparent
-				border-radius: 4px
-				padding: 4px 6px
-				cursor: pointer
-				color: $clr-secondary-text-light
-				display: flex
-				align-items: center
-				justify-content: center
-				transition: all 0.15s ease
-				&:hover
-					background-color: $clr-grey-100
-					color: $clr-primary-text-light
-				&.active
-					background-color: var(--color-primary, #3b82f6)
-					color: $clr-white
-					border-color: var(--color-primary, #3b82f6)
-				.density-btn-text
-					margin-left: 6px
-					font-weight: 600
-					white-space: nowrap
 	#schedule-wrapper
 		width: 100%
 		margin-right: 40px
