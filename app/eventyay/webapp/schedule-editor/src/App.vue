@@ -16,27 +16,23 @@
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
+					.density-controls
+						button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="$t('Condensed view')")
+							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
+								circle(cx="11" cy="11" r="7")
+								line(x1="21" y1="21" x2="16.65" y2="16.65")
+								line(x1="8" y1="11" x2="14" y2="11")
+							span.density-btn-text {{ $t('Condensed view') }}
+						select.time-density-select(v-model.number="timeDensityMinutes", @change="onTimeDensityChange", :aria-label="$t('Time density')")
+							option(value="5") 5 min
+							option(value="15") 15 min
+							option(value="30") 30 min
+							option(value="60") 60 min
 					bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
 						bunt-tab(v-for="day of days", :key="day.format()", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
-					.density-controls
-						button.density-btn(:class="{active: density === 'compact'}", @click="setDensity('compact')", :title="$t('Compact')")
-							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
-								line(x1="3", y1="6", x2="21", y2="6")
-								line(x1="3", y1="10", x2="21", y2="10")
-								line(x1="3", y1="14", x2="21", y2="14")
-								line(x1="3", y1="18", x2="21", y2="18")
-						button.density-btn(:class="{active: density === 'default'}", @click="setDensity('default')", :title="$t('Default')")
-							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
-								line(x1="3", y1="5", x2="21", y2="5")
-								line(x1="3", y1="12", x2="21", y2="12")
-								line(x1="3", y1="19", x2="21", y2="19")
-						button.density-btn(:class="{active: density === 'comfortable'}", @click="setDensity('comfortable')", :title="$t('Comfortable')")
-							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
-								line(x1="3", y1="4", x2="21", y2="4")
-								line(x1="3", y1="12", x2="21", y2="12")
-								line(x1="3", y1="20", x2="21", y2="20")
 				grid-schedule(:sessions="sessions",
-					:density="density",
+					:density="gridDensity",
+					:timeDensityMinutes="timeDensityMinutes",
 					:rooms="schedule.rooms",
 					:availabilities="availabilities",
 					:warnings="warnings",
@@ -202,12 +198,22 @@ const newBreakTooltip = ref<string>('')
 const eventTimezone = ref<string | null>(null)
 const since = ref<string | undefined>(undefined)
 
-type DensityLevel = 'compact' | 'default' | 'comfortable'
-const density = ref<DensityLevel>((localStorage.getItem('schedule-editor-density') as DensityLevel) || 'default')
+const condensedView = ref<boolean>(localStorage.getItem('schedule-editor-condensed') === '1')
+const timeDensityMinutes = ref<number>(Number(localStorage.getItem('schedule-time-density-minutes') || 30))
 
-function setDensity(level: DensityLevel): void {
-  density.value = level
-  localStorage.setItem('schedule-editor-density', level)
+const gridDensity = computed<'compact' | 'default' | 'comfortable'>(() => {
+  // Condensed view only affects how dense the grid looks (zoom/spacing).
+  // Time density only affects how the schedule timeslices are generated.
+  return condensedView.value ? 'compact' : 'default'
+})
+
+function toggleCondensedView (): void {
+  condensedView.value = !condensedView.value
+  localStorage.setItem('schedule-editor-condensed', condensedView.value ? '1' : '0')
+}
+
+function onTimeDensityChange (): void {
+  localStorage.setItem('schedule-time-density-minutes', String(timeDensityMinutes.value))
 }
 
 function $t(key: string): string {
@@ -580,13 +586,24 @@ onBeforeMount(async () => {
   })
 })
 
+const onStorageChange = (e: StorageEvent) => {
+  if (e.key === 'schedule-time-density-minutes' && e.newValue) {
+    timeDensityMinutes.value = Number(e.newValue)
+  }
+  if (e.key === 'schedule-editor-condensed') {
+    condensedView.value = e.newValue === '1'
+  }
+}
+
 onMounted(() => {
   window.addEventListener('resize', onWindowResize)
+  window.addEventListener('storage', onStorageChange)
   onWindowResize()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', onWindowResize)
+  window.removeEventListener('storage', onStorageChange)
 })
 </script>
 
@@ -705,7 +722,7 @@ onUnmounted(() => {
 	.schedule-controls
 		display: flex
 		align-items: center
-		justify-content: space-between
+		justify-content: flex-start
 		position: sticky
 		left: 0
 		top: 0
@@ -719,6 +736,18 @@ onUnmounted(() => {
 			gap: 2px
 			padding: 0 12px
 			flex-shrink: 0
+			.time-density-select
+				background: none
+				border: 1px solid #d8d8d8
+				border-radius: 4px
+				padding: 4px 8px
+				color: $clr-secondary-text-light
+				cursor: pointer
+				font-size: 14px
+				line-height: 1.1
+				&:focus
+					outline: none
+					border-color: var(--color-primary, #3b82f6)
 			.density-btn
 				background: none
 				border: 1px solid transparent
@@ -737,6 +766,10 @@ onUnmounted(() => {
 					background-color: var(--color-primary, #3b82f6)
 					color: $clr-white
 					border-color: var(--color-primary, #3b82f6)
+				.density-btn-text
+					margin-left: 6px
+					font-weight: 600
+					white-space: nowrap
 	#schedule-wrapper
 		width: 100%
 		margin-right: 40px

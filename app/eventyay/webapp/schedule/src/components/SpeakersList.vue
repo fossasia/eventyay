@@ -461,8 +461,6 @@ export default {
 		max-width: 100%
 		box-sizing: border-box
 		position: relative
-		.mobile-toggle-btn
-			display: none
 		.toolbar-filters,
 		.toolbar-secondary
 			display: flex
@@ -566,6 +564,7 @@ export default {
 				padding: 6px 10px
 				justify-content: center
 			&.mobile-toggle-btn
+				display: none
 				padding: 6px 10px
 				font-weight: 600
 		.dropdown-menu
@@ -851,7 +850,7 @@ export default {
 				order: 1
 				flex: 1 1 auto
 				min-width: 0
-			.mobile-toggle-btn
+			.filter-btn.mobile-toggle-btn
 				display: inline-flex
 				order: 2
 				flex: 0 0 auto
@@ -915,23 +914,4 @@ export default {
 		.backdrop
 			z-index: 110
 
-@media (min-width: 601px)
-	.c-speakers-list
-		.speakers-toolbar
-			.mobile-toggle-btn
-				display: none !important
-			.toolbar-filters,
-			.toolbar-secondary
-				display: flex
-				position: static
-				top: auto
-				left: auto
-				right: auto
-				padding: 0
-				border: none
-				border-radius: 0
-				box-shadow: none
-				max-width: none
-				max-height: none
-				overflow: visible
 </style>

@@ -22,7 +22,7 @@
 			:days="computedDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
-			:density="density",
+			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
 			:sortOptions="sortOptions",
 			v-model:sortBy="internalSortBy",
@@ -32,7 +32,7 @@
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
-			@setDensity="setDensity")
+			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 				:sessions="filteredSessions",
@@ -46,7 +46,8 @@
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
 				:showFavCount="showFavCountOnCalendar",
-				:density="density",
+				:density="'default'",
+				:timeDensityMinutes="timeDensityMinutes",
 				@changeDay="setCurrentDay",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -63,7 +64,7 @@
 				:showFavCount="showFavCountOnList",
 				:sortBy="effectiveSortBy",
 				:showBreaks="!linearOnly && !sessionsMode",
-				:density="density",
+				:density="'default'",
 				@changeDay="dayScrolled",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -145,7 +146,7 @@ export default {
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
 			recordingFilter: 'all',
-			density: localStorage.getItem('schedule-density') || 'default',
+			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
 			internalSortBy: this.sortBy || 'room',
 			filterState: {
 				tracks: [],
@@ -185,6 +186,10 @@ export default {
 		},
 		scheduleReady() {
 			return !!(this.resolvedSchedule && this.enrichedSessions.length)
+		},
+		densityLevel () {
+			// Viewing scale stays consistent; timeDensityMinutes controls timeslice generation.
+			return 'default'
 		},
 		showFavCountOnCalendar() {
 			const flags = this.scheduleData?.schedule?.feature_flags || {}
@@ -424,10 +429,10 @@ export default {
 				})
 			}
 		},
-		setDensity(density) {
-			this.density = density
+		setTimeDensityMinutes(minutes) {
+			this.timeDensityMinutes = Number(minutes)
 			try {
-				localStorage.setItem('schedule-density', density)
+				localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
 			} catch {
 				// ignore localStorage access errors
 			}

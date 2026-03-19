@@ -123,6 +123,10 @@ export default {
 		density: {
 			type: String,
 			default: 'default'
+		},
+		timeDensityMinutes: {
+			type: Number,
+			default: 30
 		}
 	},
 	data () {
@@ -156,7 +160,7 @@ export default {
 			return chunks.length ? chunks : [this.rooms]
 		},
 		timeslices () {
-			const minimumSliceMins = 30
+			const minimumSliceMins = this.timeDensityMinutes || 30
 			const slices = []
 			const slicesLookup = {}
 			const pushSlice = function (date, {hasSession = false, hasBreak = false, hasStart = false, hasEnd = false} = {}) {
@@ -224,7 +228,7 @@ export default {
 
 			const sliceIsFraction = function (slice) {
 				if (!slice) return
-				return slice.date.minute() !== 0 && slice.date.minute() !== minimumSliceMins
+				return slice.date.minute() % minimumSliceMins !== 0
 			}
 
 			const sliceShouldDisplay = function (slice, index) {
@@ -262,10 +266,10 @@ export default {
 					prevSlice.gap = true
 				}
 			}
-			// Only count slice as gap if it is longer than 30 minutes
+			// Only count slice as gap if it is longer than the base interval
 			compactedSlices.forEach((slice, index) => {
 				if (slice.gap && index < compactedSlices.length - 1) {
-					if (compactedSlices[index + 1].date.diff(slice.date, 'minutes') <= 30) slice.gap = false
+					if (compactedSlices[index + 1].date.diff(slice.date, 'minutes') <= minimumSliceMins) slice.gap = false
 				}
 			})
 			// remove gap at the end of the schedule
@@ -273,20 +277,23 @@ export default {
 			return compactedSlices
 		},
 		visibleTimeslices () {
-			return this.timeslices.filter(slice => slice.date.minute() % 30 === 0)
+			const minimumSliceMins = this.timeDensityMinutes || 30
+			return this.timeslices.filter(slice => slice.date.minute() % minimumSliceMins === 0)
 		},
 		gridStyle () {
 			const scale = this.density === 'compact' ? 0.65 : this.density === 'comfortable' ? 1.4 : 1
+			const minimumSliceMins = this.timeDensityMinutes || 30
+			const baseSliceHeight = 60 * (minimumSliceMins / 30)
 			let rows = ''
 			rows += this.timeslices.map((slice, index) => {
 				const next = this.timeslices[index + 1]
-				let height = 60
+				let height = baseSliceHeight
 				if (slice.gap) {
-					height = 100
+					height = 100 * (minimumSliceMins / 30)
 			} else if (slice.datebreak) {
-				height = 36
+					height = 36 * (minimumSliceMins / 30)
 				} else if (next) {
-					height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
+					height = Math.min(baseSliceHeight, next.date.diff(slice.date, 'minutes') * 2)
 				}
 				height = Math.round(height * scale)
 				return `[${slice.name}] minmax(${height}px, auto)`
@@ -297,6 +304,7 @@ export default {
 			}
 		},
 		nowSlice () {
+			const minimumSliceMins = this.timeDensityMinutes || 30
 			let slice
 			for (const s of this.timeslices) {
 				if (this.now.isBefore(s.date)) break
@@ -306,7 +314,7 @@ export default {
 				const nextSlice = this.timeslices[this.timeslices.indexOf(slice) + 1]
 				if (!nextSlice) return null
 				// is on daybreak
-				if (nextSlice.date.diff(slice.date, 'minutes') > 30) return {
+				if (nextSlice.date.diff(slice.date, 'minutes') > minimumSliceMins) return {
 					slice: nextSlice,
 					offset: 0,
 					onDaybreak: true

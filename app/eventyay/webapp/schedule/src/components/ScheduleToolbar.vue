@@ -105,6 +105,7 @@
 			.sort-area(v-if="sessionsMode && resolvedSortOptions.length", ref="sortDropdown")
 				button.toolbar-btn.icon-only.sort-btn(
 					@click="sortOpen = !sortOpen",
+					:class="{open: sortOpen}",
 					:aria-label="t.sort_by",
 					:aria-expanded="sortOpen ? 'true' : 'false'",
 					aria-haspopup="menu")
@@ -270,7 +271,7 @@
 				.density-area(ref="densityDropdown")
 					button.toolbar-btn.icon-only.density-btn(
 						@click="densityOpen = !densityOpen",
-						:aria-label="currentDensityLabel",
+						:aria-label="currentTimeDensityLabel",
 						:aria-expanded="densityOpen ? 'true' : 'false'",
 						aria-haspopup="menu")
 						svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
@@ -283,12 +284,12 @@
 							polyline(points="10 15 12 17 14 15")
 					.density-menu(v-if="densityOpen", role="menu", @keydown.esc.prevent.stop="densityOpen = false")
 						button.density-item(
-							v-for="opt in densityOptions",
+							v-for="opt in timeDensityOptions",
 							:key="opt.value",
-							:class="{active: density === opt.value}",
+							:class="{active: timeDensityMinutes === opt.value}",
 							role="menuitemradio",
-							:aria-checked="density === opt.value ? 'true' : 'false'",
-							@click="selectDensity(opt.value)") {{ opt.label }}
+							:aria-checked="timeDensityMinutes === opt.value ? 'true' : 'false'",
+							@click="selectTimeDensity(opt.value)") {{ opt.label }}
 				button.toolbar-btn.icon-only(v-if="showPrint", @click="printSchedule", :aria-label="t.print")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						polyline(points="6 9 6 2 18 2 18 9")
@@ -351,9 +352,9 @@ export default {
 		recordingFilter: { type: String, default: 'all' },
 		sortBy: { type: String, default: 'room' },
 		sortOptions: { type: Array, default: () => ['room', 'title'] },
-		density: { type: String, default: 'default' }
+		timeDensityMinutes: { type: Number, default: 30 }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setDensity'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
 		return {
 			exportOpen: false,
@@ -419,16 +420,17 @@ export default {
 				density_comfortable_view: m.density_comfortable_view || 'comfortable view',
 			}
 		},
-		densityOptions() {
+		timeDensityOptions() {
 			return [
-				{ value: 'compact', label: this.t.density_compact_view },
-				{ value: 'default', label: this.t.density_default_view },
-				{ value: 'comfortable', label: this.t.density_comfortable_view },
+				{ value: 5, label: '5 min' },
+				{ value: 15, label: '15 min' },
+				{ value: 30, label: '30 min' },
+				{ value: 60, label: '60 min' },
 			]
 		},
-		currentDensityLabel() {
-			const current = this.densityOptions.find(o => o.value === this.density)
-			return current ? current.label : this.t.density_default_view
+		currentTimeDensityLabel() {
+			const current = this.timeDensityOptions.find(o => o.value === this.timeDensityMinutes)
+			return current ? current.label : '30 min'
 		},
 		sortModel: {
 			get() { return this.sortBy },
@@ -651,8 +653,8 @@ export default {
 				this.mobileFiltersOpen = false
 			}
 		},
-		selectDensity(value) {
-			this.$emit('setDensity', value)
+		selectTimeDensity(value) {
+			this.$emit('setTimeDensityMinutes', value)
 			this.densityOpen = false
 			this.$nextTick(() => this.$refs.densityDropdown?.querySelector?.('button')?.focus?.())
 		},
@@ -959,6 +961,12 @@ export default {
 		.sort-area
 			position: relative
 			flex-shrink: 0
+		.sort-btn
+			svg.tb-icon
+				transition: transform 0.2s ease
+			&.open
+				svg.tb-icon
+					transform: rotate(180deg)
 			.sort-dropdown-menu
 				position: absolute
 				left: 0
@@ -1051,6 +1059,7 @@ export default {
 		.sessions-toggle-menu
 			display: none
 		.density-area
+			display: flex
 			position: relative
 			flex-shrink: 0
 			.density-menu
@@ -1525,6 +1534,9 @@ export default {
 				&.open
 					display: flex
 					align-items: flex-start
+				.density-area
+					display: flex
+					order: -1
 				.fullscreen-desktop
 					display: none
 				> *
