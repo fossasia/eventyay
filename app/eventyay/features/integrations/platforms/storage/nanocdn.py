@@ -86,7 +86,12 @@ class NanoCDNStorage(Storage):
         return NanoCDNFile(name, self, mode)
 
     def _read(self, name):
-        resp = requests.get(urllib.parse.urljoin(self.base_url, name), stream=True)
+        resp = requests.get(
+             urllib.parse.urljoin(self.base_url, name),
+             stream=True,
+            timeout=10
+        )
+        
         if resp.status_code == 404:
             raise FileNotFoundError()
         resp.raise_for_status()
