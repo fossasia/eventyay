@@ -93,6 +93,10 @@ header .header-row-right {
 }
 
 #main-card {
+    /* Sit above hero header (z-index:1000) so its date/title text does not
+     * bleed over page content. Below sticky nav (z-index:1200) so nav is on top. */
+    position: relative;
+    z-index: 1100;
     margin: 0 auto;
 }
 
@@ -121,6 +125,7 @@ header .header-row-right {
     background: var(--color-bg);
     border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
     flex-shrink: 0;
+    /* DO NOT set overflow here - it would clip dropdown menus */
 }
 
 .presale-sticky-tabs a.header-tab {
@@ -141,7 +146,7 @@ header .header-row-right {
 .presale-sticky-tabs #header-nav-bar {
     flex: 1 1 auto;
     margin: 6px 0 0;
-    overflow: auto;
+    /* Do NOT set overflow here — it creates a clipping container for absolute/fixed children */
 }
 
 .presale-sticky-tabs #header-nav-bar .navigation {
@@ -163,6 +168,7 @@ header .header-row-right {
     font-size: 1rem;
     gap: 10px;
 }
+
 
 .presale-sticky-tabs .header-row-right details.dropdown,
 .presale-sticky-tabs .header-row-right > a {
@@ -198,21 +204,86 @@ header .header-row-right {
 }
 
 @media (max-width: 768px) {
+    /* Keep the sticky tabs in a single flex row;
+     * .presale-tabs-scroll handles horizontal scrolling for tabs only */
     .presale-sticky-tabs {
-        align-items: flex-start;
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        /* NO overflow here — dropdown must escape this container */
     }
 
-    .presale-sticky-tabs #header-nav-bar,
-    .presale-sticky-tabs #header-nav-bar .navigation {
-        width: 100%;
+    /* ONLY the tab links scroll horizontally — NOT the dropdown container */
+    .presale-tabs-scroll {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .presale-tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Remove overflow from inner wrapper on mobile too */
+    .presale-sticky-tabs-inner {
+        overflow: visible;
+    }
+
+    .presale-sticky-tabs a.header-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 6px 8px 4px 8px;
+        font-size: 0.88rem;
     }
 
     .presale-sticky-tabs .header-row-right {
-        margin-left: 0;
-        margin-right: 0;
+        margin-left: 4px;
+        margin-right: 4px;
+        flex-shrink: 0;
+        font-size: 0.88rem;
+        gap: 6px;
+    }
+
+    /* Ensure dropdown menus don't overflow viewport on the right */
+    .presale-sticky-tabs .header-row-right details.dropdown {
+        position: relative;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 16px);
+    }
+}
+
+/* Mobile: Language locale dropdown narrow-screen override */
+@media (max-width: 480px) {
+    #locale-dropdown.dropdown-content {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 8px);
+    }
+
+    #locale-dropdown .language-columns {
         width: 100%;
-        justify-content: flex-end;
+        grid-template-columns: 1fr;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    #locale-dropdown .language-column {
+        max-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--color-border, #ced4da);
+    }
+
+    #locale-dropdown .language-enforce-bar {
+        width: 100%;
     }
 }
 
