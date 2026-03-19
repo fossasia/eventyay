@@ -1,10 +1,9 @@
 eventyay-tickets (ENext)
 ========================
 
-Project status & release cycle
-------------------------------
+## Project Status & Release Cycle
 
-Welcome to the **Eventyay** project! The ticketing component of the system provides options for **ticket sales and event-related items** such as T-shirts. Eventyay has been in development since **2014**. Its ticketing component is based on a fork of **Pretix**.
+Welcome to the **Eventyay** project!The ticketing component allows managing ticket sales and event-related items such as T-shirts. Eventyay has been in development since **2014**. Its ticketing component is based on a fork of **Pretix**.
 
 ENext is the new and updated version of Eventyay with a unified codebase for the Tickets, Talk, and Videos components.
 
