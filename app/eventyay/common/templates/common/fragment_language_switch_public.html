@@ -9,11 +9,15 @@
         <details class="dropdown fix-height" id="language-dropdown" aria-haspopup="menu">
             <summary class="header-nav" aria-label="{{ language_label }}">
                 <i class="fa fa-globe"></i>
+                        
                 {% for option in language_options %}
                     {% if option.code|lower == request.LANGUAGE_CODE|lower %}
-                        <span class="current-locale">{{ option.label }}</span>
+                        <span class="hidden-xs current-locale">
+                            {{ option.code|upper }}
+                        </span>
                     {% endif %}
                 {% endfor %}
+                    
                 <i class="fa fa-caret-down" aria-hidden="true"></i>
             </summary>
 
