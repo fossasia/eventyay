@@ -126,7 +126,7 @@
                             <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
                                 {% is_event_organiser request.user request request.event as can_see_orga_area %}
                                 <summary>
-                                    {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
+                                    <i class="fa fa-user"></i> <span class="d-none d-md-inline">{{ request.user|short_user_label }}</span> <i class="fa fa-caret-down ml-1"></i>
                                 </summary>
                                 <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                                     <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">

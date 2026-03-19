@@ -11,7 +11,7 @@
                 <i class="fa fa-globe"></i>
                 {% for option in language_options %}
                     {% if option.code|lower == request.LANGUAGE_CODE|lower %}
-                        <span class="current-locale">{{ option.label }}</span>
+                        <span class="current-locale d-none d-md-inline">{{ option.code|slice:":2"|title }}</span>
                     {% endif %}
                 {% endfor %}
                 <i class="fa fa-caret-down" aria-hidden="true"></i>
