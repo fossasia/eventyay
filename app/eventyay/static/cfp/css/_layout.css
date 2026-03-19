@@ -371,7 +371,6 @@ footer {
     header {
       top: -124px;
       padding: 0;
-      overflow: hidden; /* clip hero text within hero bounds so it doesn't bleed into sticky nav */
       #event-logo {
         max-height: 120px;
         width: auto;

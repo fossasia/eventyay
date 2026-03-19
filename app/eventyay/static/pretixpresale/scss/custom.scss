@@ -87,6 +87,15 @@
     /* DO NOT set overflow here - it would clip dropdown menus */
 }
 
+/* Base styles for all breakpoints: keep tab links as flex row.
+ * Mobile overrides add overflow-x:auto for horizontal scrolling. */
+.presale-tabs-scroll {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .presale-sticky-tabs a.header-tab {
     padding: 8px 10px 4px 10px;
     border-bottom: 2px solid transparent;
