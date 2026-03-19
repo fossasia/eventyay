@@ -27,7 +27,7 @@
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.34",
     "markdown-it": "^14.1.0",
-    "moment-timezone": "^0.5.45",
+    "moment-timezone": "^0.6.0",
     "vue": "^3.5.0-rc.1"
   },
   "devDependencies": {

@@ -486,6 +486,11 @@ a {
   }
 }
 
+#main-card {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 .list-group {
   display: flex;
   flex-direction: column;

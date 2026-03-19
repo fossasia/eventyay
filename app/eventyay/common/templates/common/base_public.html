@@ -155,17 +155,22 @@
                         </div>
                     </div>
                 </div>
-                <div class="header-wrapper">
-                    <div id="header-tabs">
-                        {% block header_tabs %}{% endblock header_tabs %}
-                        <div class="header-row-right">
-                            {% block header_right %}
-                                {% include "common/fragment_header_user.html" with current_event=current_event %}
-                            {% endblock header_right %}
+                {% block header_navigation %}{% endblock header_navigation %}
+            </header>
+            {% block header_navigation_after %}
+                <div class="presale-sticky-tabs-wrap">
+                    <div class="header-wrapper presale-sticky-tabs-inner">
+                        <div id="header-tabs" class="presale-sticky-tabs">
+                            {% block header_tabs %}{% endblock header_tabs %}
+                            <div class="header-row-right">
+                                {% block header_right %}
+                                    {% include "common/fragment_header_user.html" with current_event=current_event %}
+                                {% endblock header_right %}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </header>
+            {% endblock header_navigation_after %}
             <div class="card" id="main-card">
                 {% block alerts %}
                     {% if messages %}

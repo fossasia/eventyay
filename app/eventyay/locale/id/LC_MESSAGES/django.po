@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-23 12:20+0000\n"
-"Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
+"PO-Revision-Date: 2026-02-27 20:09+0000\n"
+"Last-Translator: Arif Budiman <arifpedia@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -206,11 +206,9 @@ msgstr "Foto profil pembicara"
 
 #: agenda/templates/agenda/speaker.html:61
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session type"
 msgid "Session"
 msgid_plural "Sessions"
-msgstr[0] "Jenis acara"
+msgstr[0] "Sesi"
 
 #: agenda/templates/agenda/talk.html:45
 msgid "Favourite this session"
@@ -278,10 +276,8 @@ msgid "eventyay_checkin"
 msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
-#, fuzzy
-#| msgid "eventyay (kiosk mode, online only)"
 msgid "eventyay_checkin (kiosk mode, online only)"
-msgstr "eventyay (mode kios, hanya daring)"
+msgstr "eventyay_checkin (mode kios, hanya online)"
 
 #: api/models.py:23
 msgid "Application name"
@@ -346,10 +342,8 @@ msgstr "Kursi \"{seat}\" yang dipilih tidak tersedia."
 
 #: api/serializers/checkin.py:56 base/models/event.py:2943
 #: base/models/product.py:1406 base/models/product.py:1635
-#, fuzzy
-#| msgid "One or more items do not belong to this event."
 msgid "One or more products do not belong to this event."
-msgstr "Satu item atau lebih tidak termasuk dalam acara ini."
+msgstr "Satu atau lebih produk tidak termasuk dalam acara ini."
 
 #: api/serializers/checkin.py:60 api/serializers/checkin.py:63
 #: base/models/product.py:1648 base/models/product.py:1651
@@ -414,16 +408,12 @@ msgid "This user already has permissions for this team."
 msgstr "Pengguna ini sebelumnya sudah diberi izin untuk tim ini."
 
 #: api/serializers/product.py:101 control/forms/product.py:913
-#, fuzzy
-#| msgid "The bundled item must not be the same item as the bundling one."
 msgid "The bundled product must not be the same product as the bundling one."
-msgstr "Item yang dibundel tidak boleh sama dengan item yang membundelnya."
+msgstr "Produk yang dibundel tidak boleh sama dengan produk yang membundel."
 
 #: api/serializers/product.py:104 control/forms/product.py:915
-#, fuzzy
-#| msgid "The bundled item must not have bundles on its own."
 msgid "The bundled product must not have bundles on its own."
-msgstr "Item yang dibundel tidak boleh memiliki bundel tambahan secara mandiri."
+msgstr "Produk yang dibundel tidak boleh memiliki bundel sendiri."
 
 #: api/serializers/product.py:209
 msgid ""
@@ -448,10 +438,9 @@ msgstr ""
 "saat yang sama."
 
 #: api/serializers/product.py:269
-#, fuzzy, python-brace-format
-#| msgid "Item meta data property '{name}' does not exist."
+#, python-brace-format
 msgid "Product meta data property '{name}' does not exist."
-msgstr "Atribut metadata untuk item '{name}' tidak tersedia."
+msgstr "Properti metadata produk '{name}' tidak ada."
 
 #: api/serializers/product.py:402
 msgid ""
@@ -731,17 +720,12 @@ msgstr ""
 "alamat email ini."
 
 #: base/configurations/default_setting.py:202
-#, fuzzy
-#| msgid "Require email addresses per ticket"
 msgid "Require email address per order"
-msgstr "Alamat surel wajib untuk setiap tiket"
+msgstr "Wajibkan alamat email per pesanan"
 
 #: base/configurations/default_setting.py:203
-#, fuzzy
-#| msgid ""
-#| "Require attendees to fill in postal addresses for all admission tickets."
 msgid "Require attendees to fill in an email address for the order."
-msgstr "Alamat pos wajib diisi oleh peserta pada setiap tiket masuk."
+msgstr "Wajibkan peserta mengisi alamat email untuk pesanan."
 
 #: base/configurations/default_setting.py:213
 #: control/templates/pretixcontrol/items/orderforms.html:77
@@ -4180,10 +4164,8 @@ msgid "Show secret key"
 msgstr "Tampilkan kunci rahasia"
 
 #: base/forms/__init__.py:157
-#, fuzzy
-#| msgid "Client secret"
 msgid "Hide secret key"
-msgstr "Rahasia Klien"
+msgstr "Sembunyikan kunci rahasia"
 
 #: base/forms/auth.py:17
 msgid ""
@@ -4659,6 +4641,8 @@ msgid ""
 "Numbers of times this access code can be used to submit a proposal. Leave "
 "empty for no limit."
 msgstr ""
+"Jumlah kali kode akses ini dapat digunakan untuk mengajukan proposal. "
+"Kosongkan untuk tanpa batas."
 
 #: base/models/auth.py:182
 msgid "Is active"
@@ -4834,11 +4818,8 @@ msgid "Events"
 msgstr "Acara"
 
 #: base/models/auth_token.py:69
-#, fuzzy
-#| msgctxt "Version of the conference schedule"
-#| msgid "Version"
 msgid "API version"
-msgstr "Jenis acara"
+msgstr "Versi API"
 
 #: base/models/billing.py:20 base/models/orders.py:166
 #: orga/templates/orga/review/dashboard.html:279
@@ -4869,7 +4850,7 @@ msgstr "teks"
 
 #: base/models/cfp.py:109
 msgid "Default session type"
-msgstr ""
+msgstr "Jenis sesi default"
 
 #: base/models/cfp.py:114 base/models/question.py:139 base/models/type.py:40
 #: orga/views/submission.py:764 orga/views/submission.py:772
@@ -4879,55 +4860,62 @@ msgstr "Batas waktu"
 #: base/models/cfp.py:115
 msgid "Please put in the last date you want to accept proposals from users."
 msgstr ""
+"Harap masukkan tanggal terakhir Anda ingin menerima proposal dari pengguna."
 
 #: base/models/checkin.py:17
 msgid "All products (including newly created ones)"
-msgstr ""
+msgstr "Semua produk (termasuk yang baru dibuat)"
 
 #: base/models/checkin.py:18 plugins/badges/exporters.py:263
 #: plugins/checkinlists/exporters.py:757
 msgid "Limit to products"
-msgstr ""
+msgstr "Batasi ke produk"
 
 #: base/models/checkin.py:27
 msgctxt "checkin"
 msgid "Include pending orders"
-msgstr ""
+msgstr "Sertakan pesanan yang tertunda"
 
 #: base/models/checkin.py:29
 msgid ""
 "With this option, people will be able to check in even if the order has not "
 "been paid."
 msgstr ""
+"Dengan opsi ini, orang dapat melakukan check-in meskipun pesanan belum "
+"dibayar."
 
 #: base/models/checkin.py:33
 #: control/templates/pretixcontrol/organizers/gates.html:5
 #: eventyay_common/navigation.py:214
 msgid "Gates"
-msgstr ""
+msgstr "Gerbang"
 
 #: base/models/checkin.py:36
 msgid ""
 "Does not have any effect for the validation of tickets, only for the "
 "automatic configuration of check-in devices."
 msgstr ""
+"Tidak berpengaruh pada validasi tiket, hanya untuk konfigurasi otomatis "
+"perangkat check-in."
 
 #: base/models/checkin.py:40
 msgid "Allow re-entering after an exit scan"
-msgstr ""
+msgstr "Izinkan masuk kembali setelah pemindaian keluar"
 
 #: base/models/checkin.py:42
 msgid "Allow multiple entries per ticket"
-msgstr ""
+msgstr "Izinkan beberapa entri per tiket"
 
 #: base/models/checkin.py:43
 msgid ""
 "Use this option to turn off warnings if a ticket is scanned a second time."
 msgstr ""
+"Gunakan opsi ini untuk menonaktifkan peringatan jika tiket dipindai untuk "
+"kedua kalinya."
 
 #: base/models/checkin.py:46
 msgid "Automatically check out everyone at"
-msgstr ""
+msgstr "Checkout otomatis semua orang pada pukul"
 
 #: base/models/checkin.py:50
 msgid "Sales channels to automatically check in"
@@ -6739,10 +6727,8 @@ msgid "The add-on's category must belong to the same event as the product."
 msgstr "Kategori add-on harus termasuk dalam acara yang sama dengan produk."
 
 #: base/models/product.py:986
-#, fuzzy
-#| msgid "This user already has been invited for this team."
 msgid "The product already has an add-on of this category."
-msgstr "Pengguna ini sebelumnya sudah diundang ke tim ini."
+msgstr "Produk sudah memiliki add-on dari kategori ini."
 
 #: base/models/product.py:991
 msgid "The minimum count needs to be equal to or greater than zero."
@@ -6760,7 +6746,7 @@ msgstr "Jumlah maksimum harus lebih besar dari jumlah minimum."
 #: control/templates/pretixcontrol/item/include_bundles.html:23
 #: control/templates/pretixcontrol/item/include_bundles.html:50
 msgid "Bundled product"
-msgstr ""
+msgstr "Produk yang dibundel"
 
 #: base/models/product.py:1031
 msgid "Bundled variation"
@@ -6788,20 +6774,17 @@ msgstr ""
 "Nilai ini TIDAK akan ditambahkan ke harga dasar produk."
 
 #: base/models/product.py:1068
-#, fuzzy
-#| msgid "The bundled item must not be the same item as the bundling one."
 msgid "The bundled product must belong to the same event as the product."
-msgstr "Item yang dibundel tidak boleh sama dengan item yang membundelnya."
+msgstr ""
+"Produk yang dibundel harus termasuk dalam acara yang sama dengan produk."
 
 #: base/models/product.py:1070
 msgid "A variation needs to be set for this product."
 msgstr "Variasi perlu ditetapkan untuk produk ini."
 
 #: base/models/product.py:1072
-#, fuzzy
-#| msgid "The subevent does not belong to this event."
 msgid "The chosen variation does not belong to this product."
-msgstr "Subacara ini tidak termasuk dalam acara tersebut."
+msgstr "Variasi yang dipilih tidak termasuk dalam produk ini."
 
 #: base/models/product.py:1077
 msgid "The count needs to be equal to or greater than zero."
@@ -6852,10 +6835,8 @@ msgstr "Kolom teks"
 #: control/templates/pretixcontrol/items/question_edit.html:10
 #: control/templates/pretixcontrol/items/question_edit.html:20
 #: control/templates/pretixcontrol/items/questions.html:31
-#, fuzzy
-#| msgid "Custom address field"
 msgid "Custom Field"
-msgstr "Kolom alamat khusus"
+msgstr "Bidang Kustom"
 
 #: base/models/product.py:1161
 msgid ""
@@ -7357,7 +7338,7 @@ msgstr "Selalu"
 #: base/models/review.py:235 base/models/review.py:256
 #: control/forms/product.py:510 orga/forms/event.py:68
 msgid "Never"
-msgstr ""
+msgstr "Tidak pernah"
 
 #: base/models/review.py:236
 msgid "After reviewing the proposal"
@@ -7747,7 +7728,7 @@ msgstr "Gambar sesi"
 
 #: base/models/submission.py:267 submission/forms/submission.py:46
 msgid "Use this if you want an illustration to go with your proposal."
-msgstr ""
+msgstr "Gunakan ini jika Anda ingin menyertakan ilustrasi untuk proposal Anda."
 
 #: base/models/submission.py:280
 msgid "Assigned reviewers"
@@ -8224,10 +8205,8 @@ msgid "You have been selected from the waitinglist for {event}"
 msgstr "Anda telah dipilih dari daftar tunggu untuk {event}"
 
 #: base/models/waitinglist.py:172
-#, fuzzy
-#| msgid "The subevent does not belong to this event."
 msgid "The selected product does not belong to this event."
-msgstr "Subacara ini tidak termasuk dalam acara tersebut."
+msgstr "Produk yang dipilih tidak termasuk dalam acara ini."
 
 #: base/models/waitinglist.py:174
 msgid "Please select a specific variation of this product."
@@ -9178,8 +9157,6 @@ msgid "Recording integrations"
 msgstr "Integrasi perekaman"
 
 #: base/plugins.py:66 common/plugins.py:14
-#, fuzzy
-#| msgid "Language"
 msgid "Languages"
 msgstr "Bahasa"
 
@@ -9284,10 +9261,9 @@ msgstr ""
 "pilih. Lihat rincian di bawah."
 
 #: base/services/cart.py:75
-#, fuzzy, python-format
-#| msgid "You cannot generate an invoice for this order."
+#, python-format
 msgid "You cannot select more than %s products per order."
-msgstr "Anda tidak dapat membuat faktur untuk pesanan ini."
+msgstr "Anda tidak dapat memilih lebih dari %s produk per pesanan."
 
 #: base/services/cart.py:76
 #, python-format
@@ -10011,7 +9987,7 @@ msgstr "Contoh lokakarya"
 
 #: base/services/update_check.py:82
 msgid "eventyay update available"
-msgstr ""
+msgstr "Pembaruan eventyay tersedia"
 
 #: base/services/update_check.py:85
 msgid ""
@@ -10373,18 +10349,14 @@ msgid "Download ticket"
 msgstr "Unduh tiket"
 
 #: base/timeline.py:43
-#, fuzzy
-#| msgid "Event created"
 msgctxt "timeline"
 msgid "Event starts"
-msgstr "Acara dibuat"
+msgstr "Acara dimulai"
 
 #: base/timeline.py:54
-#, fuzzy
-#| msgid "Event created"
 msgctxt "timeline"
 msgid "Event ends"
-msgstr "Acara dibuat"
+msgstr "Acara berakhir"
 
 #: base/timeline.py:65
 msgctxt "timeline"
@@ -10533,12 +10505,12 @@ msgstr ""
 "Mari mulai, ini tidak akan lama."
 
 #: cfp/flow.py:485
-#, fuzzy
-#| msgid "There was an error sending the mail. Please try again later."
 msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
-msgstr "Terjadi galat saat mengirim surel. Silakan coba lagi nanti."
+msgstr ""
+"Terjadi kesalahan saat masuk. Harap hubungi penyelenggara untuk bantuan "
+"lebih lanjut."
 
 #: cfp/flow.py:491 common/templates/common/base.html:151
 #: common/templates/common/fragment_header_user.html:101
@@ -11788,10 +11760,8 @@ msgstr "Usulan saya"
 
 #: common/templates/common/base.html:146
 #: common/templates/common/fragment_header_user.html:96
-#, fuzzy
-#| msgid "Event details changed"
 msgid "Event emails"
-msgstr "Detail acara diubah"
+msgstr "Email acara"
 
 #: common/templates/common/base.html:157
 #: common/templates/common/fragment_header_user.html:107
@@ -11872,10 +11842,8 @@ msgid "Optional"
 msgstr "Opsional"
 
 #: common/templates/common/fragment_header_user.html:15
-#, fuzzy
-#| msgid "Language"
 msgid "Enforce UI language"
-msgstr "Bahasa"
+msgstr "Paksa bahasa antarmuka"
 
 #: common/templates/common/fragment_header_user.html:31
 msgid "Help: Enforce UI language"
@@ -11890,16 +11858,12 @@ msgstr ""
 "bahasa itu tersedia untuk acara ini."
 
 #: common/templates/common/fragment_header_user.html:41
-#, fuzzy
-#| msgid "Language"
 msgid "Event Language"
-msgstr "Bahasa"
+msgstr "Bahasa Acara"
 
 #: common/templates/common/fragment_header_user.html:54
-#, fuzzy
-#| msgid "Language"
 msgid "UI Language"
-msgstr "Bahasa"
+msgstr "Bahasa Antarmuka"
 
 #: common/templates/common/fragment_nav.html:7 event/stages.py:81
 #: orga/templates/orga/settings/form.html:57
@@ -11995,10 +11959,8 @@ msgid "Talks"
 msgstr "Sesi"
 
 #: common/templates/common/fragment_profile_dropdown.html:31
-#, fuzzy
-#| msgid "Session type"
 msgid "My sessions"
-msgstr "Jenis acara"
+msgstr "Sesi saya"
 
 #: common/templates/common/fragment_profile_dropdown.html:34
 #: control/forms/filter.py:1171 eventyay_common/navigation.py:42
@@ -12447,7 +12409,7 @@ msgstr "Kata sandi telah disetel ulang."
 
 #: common/text/phrases.py:97
 msgid "You can use Markdown in this field."
-msgstr ""
+msgstr "Anda dapat menggunakan Markdown di bidang ini."
 
 #: common/text/phrases.py:99
 msgid "This content will be shown publicly."
@@ -12479,7 +12441,7 @@ msgstr "Umum"
 
 #: common/text/phrases.py:121
 msgid "Login with MediaWiki SSO or Email"
-msgstr ""
+msgstr "Masuk dengan MediaWiki SSO atau Email"
 
 #: common/views/mixins.py:293
 msgid "ManagementForm data is missing or has been tampered with."
@@ -12491,19 +12453,19 @@ msgstr "Bahasa Inggris"
 
 #: config/settings.py:606
 msgid "English (United States)"
-msgstr ""
+msgstr "Bahasa Inggris (Amerika Serikat)"
 
 #: config/settings.py:615
 msgid "English (United Kingdom)"
-msgstr ""
+msgstr "Bahasa Inggris (Britania Raya)"
 
 #: config/settings.py:624
 msgid "English (Australia)"
-msgstr ""
+msgstr "Bahasa Inggris (Australia)"
 
 #: config/settings.py:633
 msgid "English (Canada)"
-msgstr ""
+msgstr "Bahasa Inggris (Kanada)"
 
 #: config/settings.py:642
 msgid "German"
@@ -12519,11 +12481,11 @@ msgstr "Bahasa Arab"
 
 #: config/settings.py:667
 msgid "Bulgarian"
-msgstr ""
+msgstr "Bulgaria"
 
 #: config/settings.py:675
 msgid "Catalan"
-msgstr ""
+msgstr "Katalan"
 
 #: config/settings.py:683
 msgid "Czech"
@@ -12542,11 +12504,8 @@ msgid "Spanish"
 msgstr "Bahasa Spanyol"
 
 #: config/settings.py:715
-#, fuzzy
-#| msgctxt "Version of the conference schedule"
-#| msgid "Version"
 msgid "Persian"
-msgstr "Jenis acara"
+msgstr "Persia"
 
 #: config/settings.py:724
 msgid "Finnish"
@@ -12558,11 +12517,11 @@ msgstr "Bahasa Prancis"
 
 #: config/settings.py:740
 msgid "Hungarian"
-msgstr ""
+msgstr "Hungaria"
 
 #: config/settings.py:748
 msgid "Indonesian"
-msgstr ""
+msgstr "Indonesia"
 
 #: config/settings.py:756
 msgid "Italian"
@@ -12574,7 +12533,7 @@ msgstr "Jepang"
 
 #: config/settings.py:773
 msgid "Korean"
-msgstr ""
+msgstr "Korea"
 
 #: config/settings.py:781
 msgid "Latvian"
@@ -12582,11 +12541,11 @@ msgstr "Bahasa Latvia"
 
 #: config/settings.py:789
 msgid "Malay"
-msgstr ""
+msgstr "Melayu"
 
 #: config/settings.py:797
 msgid "Norwegian Bokmål"
-msgstr ""
+msgstr "Bokmål Norwegia"
 
 #: config/settings.py:805
 msgid "Dutch"
@@ -12602,11 +12561,11 @@ msgstr "Bahasa Polandia"
 
 #: config/settings.py:830
 msgid "Polish (informal)"
-msgstr ""
+msgstr "Polandia (informal)"
 
 #: config/settings.py:839
 msgid "Brazilian Portuguese"
-msgstr ""
+msgstr "Portugis Brasil"
 
 #: config/settings.py:848
 msgid "Portuguese"
@@ -12614,7 +12573,7 @@ msgstr "Portugis"
 
 #: config/settings.py:857
 msgid "Romanian"
-msgstr ""
+msgstr "Rumania"
 
 #: config/settings.py:865
 msgid "Russian"
@@ -12622,15 +12581,15 @@ msgstr "Bahasa Rusia"
 
 #: config/settings.py:873
 msgid "Sinhala"
-msgstr ""
+msgstr "Sinhala"
 
 #: config/settings.py:881
 msgid "Slovenian"
-msgstr ""
+msgstr "Slovenia"
 
 #: config/settings.py:889
 msgid "Swedish"
-msgstr ""
+msgstr "Swedia"
 
 #: config/settings.py:897
 msgid "Swahili"
@@ -12638,7 +12597,7 @@ msgstr "Bahasa Swahili"
 
 #: config/settings.py:905
 msgid "Thai"
-msgstr ""
+msgstr "Thai"
 
 #: config/settings.py:913
 msgid "Turkish"
@@ -12662,15 +12621,15 @@ msgstr "Cina Tradisional (Taiwan)"
 
 #: config/settings.py:1241
 msgid "User profile only"
-msgstr ""
+msgstr "Hanya profil pengguna"
 
 #: config/settings.py:1242
 msgid "Read access"
-msgstr ""
+msgstr "Akses baca"
 
 #: config/settings.py:1243
 msgid "Write access"
-msgstr ""
+msgstr "Akses tulis"
 
 #: control/forms/admin/admin.py:17 control/forms/global_settings.py:451
 msgid "Perform update checks"
@@ -12871,6 +12830,9 @@ msgid ""
 "already received orders might lead to unexpected behavior when sorting or "
 "changing names."
 msgstr ""
+"Ini menentukan bagaimana eventyay akan meminta nama orang. Mengubah ini "
+"setelah Anda menerima pesanan dapat menyebabkan perilaku tak terduga saat "
+"mengurutkan atau mengubah nama."
 
 #: control/forms/event.py:558
 msgid "Allowed titles"
@@ -13308,7 +13270,7 @@ msgstr ""
 
 #: control/forms/event.py:1487
 msgid "Payment by bank transfer"
-msgstr ""
+msgstr "Pembayaran melalui transfer bank"
 
 #: control/forms/event.py:1489
 msgid ""
@@ -13316,36 +13278,39 @@ msgid ""
 "then import your bank statements to process the payments within eventyay, or "
 "mark them as paid manually."
 msgstr ""
+"Pelanggan Anda akan diarahkan untuk mentransfer uang ke rekening Anda. Anda "
+"kemudian dapat mengimpor laporan bank untuk memproses pembayaran di "
+"eventyay, atau menandainya sebagai lunas secara manual."
 
 #: control/forms/event.py:1537
 #: control/templates/pretixcontrol/event/quick_setup.html:45
 msgid "Price (optional)"
-msgstr ""
+msgstr "Harga (opsional)"
 
 #: control/forms/event.py:1542
 msgid "Free"
-msgstr ""
+msgstr "Gratis"
 
 #: control/forms/event.py:1545
 msgid "Quantity available"
-msgstr ""
+msgstr "Jumlah tersedia"
 
 #: control/forms/filter.py:148 control/forms/filter.py:149
 msgid "Search for…"
-msgstr ""
+msgstr "Cari…"
 
 #: control/forms/filter.py:162 control/navigation.py:244
 #: control/templates/pretixcontrol/items/question.html:20
 msgid "All orders"
-msgstr ""
+msgstr "Semua pesanan"
 
 #: control/forms/filter.py:164
 msgid "Valid orders"
-msgstr ""
+msgstr "Pesanan valid"
 
 #: control/forms/filter.py:166
 msgid "Paid (or canceled with paid fee)"
-msgstr ""
+msgstr "Lunas (atau dibatalkan dengan biaya yang telah dibayar)"
 
 #: control/forms/filter.py:167
 #: control/templates/pretixcontrol/items/question.html:22
@@ -13354,54 +13319,54 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/orders/fragment_order_status.html:13
 #: plugins/reports/exporters.py:332
 msgid "Pending"
-msgstr ""
+msgstr "Tertunda"
 
 #: control/forms/filter.py:168
 #: control/templates/pretixcontrol/items/question.html:23
 msgid "Pending or paid"
-msgstr ""
+msgstr "Tertunda atau lunas"
 
 #: control/forms/filter.py:172
 msgid "Cancellations"
-msgstr ""
+msgstr "Pembatalan"
 
 #: control/forms/filter.py:174
 msgid "Canceled (fully)"
-msgstr ""
+msgstr "Dibatalkan (sepenuhnya)"
 
 #: control/forms/filter.py:175
 msgid "Canceled (fully or with paid fee)"
-msgstr ""
+msgstr "Dibatalkan (sepenuhnya atau dengan biaya yang telah dibayar)"
 
 #: control/forms/filter.py:176
 msgid "Cancellation requested"
-msgstr ""
+msgstr "Pembatalan diminta"
 
 #: control/forms/filter.py:177
 msgid "Fully canceled but invoice not canceled"
-msgstr ""
+msgstr "Dibatalkan sepenuhnya tetapi faktur belum dibatalkan"
 
 #: control/forms/filter.py:181
 msgid "Payment process"
-msgstr ""
+msgstr "Proses pembayaran"
 
 #: control/forms/filter.py:186
 #: control/templates/pretixcontrol/items/question.html:26
 msgid "Pending or expired"
-msgstr ""
+msgstr "Tertunda atau kedaluwarsa"
 
 #: control/forms/filter.py:188
 #: control/templates/pretixcontrol/items/question.html:24
 msgid "Pending (overdue)"
-msgstr ""
+msgstr "Tertunda (melewati jatuh tempo)"
 
 #: control/forms/filter.py:189
 msgid "Overpaid"
-msgstr ""
+msgstr "Kelebihan bayar"
 
 #: control/forms/filter.py:190
 msgid "Partially paid"
-msgstr ""
+msgstr "Dibayar sebagian"
 
 #: control/forms/filter.py:191
 msgid "Underpaid (but confirmed)"
@@ -13512,64 +13477,62 @@ msgstr "Presale berakhir"
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:73
 #: plugins/reports/exporters.py:682
 msgid "Date from"
-msgstr ""
+msgstr "Tanggal dari"
 
 #: control/forms/filter.py:784 control/forms/filter.py:1793
 #: plugins/reports/exporters.py:690
 msgid "Date until"
-msgstr ""
+msgstr "Tanggal hingga"
 
 #: control/forms/filter.py:789 control/forms/subevents.py:440
 #: control/forms/subevents.py:474
 msgid "Weekday"
-msgstr ""
+msgstr "Hari dalam seminggu"
 
 #: control/forms/filter.py:791
 msgid "All days"
-msgstr ""
+msgstr "Semua hari"
 
 #: control/forms/filter.py:792
 msgid "Monday"
-msgstr ""
+msgstr "Senin"
 
 #: control/forms/filter.py:793
 msgid "Tuesday"
-msgstr ""
+msgstr "Selasa"
 
 #: control/forms/filter.py:794
 msgid "Wednesday"
-msgstr ""
+msgstr "Rabu"
 
 #: control/forms/filter.py:795
 msgid "Thursday"
-msgstr ""
+msgstr "Kamis"
 
 #: control/forms/filter.py:796
 msgid "Friday"
-msgstr ""
+msgstr "Jumat"
 
 #: control/forms/filter.py:797
 msgid "Saturday"
-msgstr ""
+msgstr "Sabtu"
 
 #: control/forms/filter.py:798
 msgid "Sunday"
-msgstr ""
+msgstr "Minggu"
 
 #: control/forms/filter.py:913 control/forms/filter.py:915
 msgid "Name or email"
 msgstr "Nama atau email"
 
 #: control/forms/filter.py:925
-#, fuzzy
-#| msgid "Event created"
 msgid "Event filter"
-msgstr "Acara dibuat"
+msgstr "Filter acara"
 
 #: control/forms/filter.py:927 control/forms/filter.py:1170
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:62
 msgid "All events"
-msgstr ""
+msgstr "Semua acara"
 
 #: control/forms/filter.py:928
 msgid "Ongoing events"
@@ -13581,11 +13544,11 @@ msgstr "Acara terbaru"
 
 #: control/forms/filter.py:935 control/forms/filter.py:1369
 msgid "Check-in status"
-msgstr ""
+msgstr "Status check-in"
 
 #: control/forms/filter.py:937 control/forms/filter.py:1371
 msgid "All attendees"
-msgstr ""
+msgstr "Semua peserta"
 
 #: control/forms/filter.py:938
 msgid "Present"
@@ -13601,12 +13564,12 @@ msgstr "Sudah check-in namun keluar"
 #: control/templates/pretixcontrol/checkin/lists.html:80
 #: plugins/checkinlists/exporters.py:502
 msgid "Checked in"
-msgstr ""
+msgstr "Sudah check-in"
 
 #: control/forms/filter.py:941 control/forms/filter.py:1375
 #: control/templates/pretixcontrol/checkin/index.html:137
 msgid "Not checked in"
-msgstr ""
+msgstr "Belum check-in"
 
 #: control/forms/filter.py:1003
 msgid "Title or speaker"
@@ -13643,105 +13606,105 @@ msgstr "Ditarik"
 #: control/forms/filter.py:1119 control/forms/filter.py:1120
 #: control/forms/filter.py:1468 control/forms/filter.py:1469
 msgid "Search query"
-msgstr ""
+msgstr "Kueri pencarian"
 
 #: control/forms/filter.py:1172
 msgid "Shop live"
-msgstr ""
+msgstr "Toko aktif"
 
 #: control/forms/filter.py:1174
 msgid "Shop not live"
-msgstr ""
+msgstr "Toko tidak aktif"
 
 #: control/forms/filter.py:1177
 msgid "Single event running or in the future"
-msgstr ""
+msgstr "Acara tunggal yang sedang berjalan atau akan datang"
 
 #: control/forms/filter.py:1178
 msgid "Single event in the past"
-msgstr ""
+msgstr "Acara tunggal yang telah berlalu"
 
 #: control/forms/filter.py:1364 control/forms/filter.py:1365
 msgid "Search attendee…"
-msgstr ""
+msgstr "Cari peserta…"
 
 #: control/forms/filter.py:1372
 msgctxt "checkin state"
 msgid "Checked in but left"
-msgstr ""
+msgstr "Sudah check-in tetapi telah keluar"
 
 #: control/forms/filter.py:1373
 msgctxt "checkin state"
 msgid "Present"
-msgstr ""
+msgstr "Hadir"
 
 #: control/forms/filter.py:1459 control/forms/filter.py:1462
 #: control/templates/pretixcontrol/admin/users/index.html:42
 msgid "Administrator"
-msgstr ""
+msgstr "Administrator"
 
 #: control/forms/filter.py:1463
 msgid "No administrator"
-msgstr ""
+msgstr "Bukan administrator"
 
 #: control/forms/filter.py:1528
 msgid "Valid"
-msgstr ""
+msgstr "Valid"
 
 #: control/forms/filter.py:1529
 msgid "Unredeemed"
-msgstr ""
+msgstr "Belum ditukarkan"
 
 #: control/forms/filter.py:1530
 msgid "Redeemed at least once"
-msgstr ""
+msgstr "Ditukarkan setidaknya sekali"
 
 #: control/forms/filter.py:1531
 msgid "Fully redeemed"
-msgstr ""
+msgstr "Ditukarkan sepenuhnya"
 
 #: control/forms/filter.py:1533
 msgid "Redeemed and checked in with ticket"
-msgstr ""
+msgstr "Ditukarkan dan check-in dengan tiket"
 
 #: control/forms/filter.py:1538
 msgid "Quota handling"
-msgstr ""
+msgstr "Penanganan kuota"
 
 #: control/forms/filter.py:1542
 msgid "Allow to ignore quota"
-msgstr ""
+msgstr "Izinkan untuk mengabaikan kuota"
 
 #: control/forms/filter.py:1547 control/forms/filter.py:1550
 msgid "Filter by tag"
-msgstr ""
+msgstr "Filter berdasarkan tag"
 
 #: control/forms/filter.py:1556 control/forms/filter.py:1557
 msgid "Search voucher"
-msgstr ""
+msgstr "Cari voucher"
 
 #: control/forms/filter.py:1601 control/forms/vouchers.py:106
 #: control/views/typeahead.py:543 control/views/typeahead.py:548
 #: control/views/vouchers.py:137
 #, python-brace-format
 msgid "Any product in quota \"{quota}\""
-msgstr ""
+msgstr "Produk apa pun dalam kuota \"{quota}\""
 
 #: control/forms/filter.py:1731
 msgid "Refund status"
-msgstr ""
+msgstr "Status pengembalian dana"
 
 #: control/forms/filter.py:1733
 msgid "All open refunds"
-msgstr ""
+msgstr "Semua pengembalian dana yang masih terbuka"
 
 #: control/forms/filter.py:1734
 msgid "All refunds"
-msgstr ""
+msgstr "Semua pengembalian dana"
 
 #: control/forms/filter.py:1779 plugins/reports/exporters.py:667
 msgid "Date filter"
-msgstr ""
+msgstr "Filter tanggal"
 
 #: control/forms/filter.py:1781 plugins/reports/exporters.py:669
 msgid "Filter by…"
@@ -14275,7 +14238,7 @@ msgstr ""
 #: control/forms/orders.py:293 control/forms/orders.py:433
 #: control/forms/product.py:883
 msgid "inactive"
-msgstr ""
+msgstr "tidak aktif"
 
 #: control/forms/orders.py:372 control/forms/orders.py:375
 #: control/forms/orders.py:384 control/forms/orders.py:414
@@ -14682,10 +14645,8 @@ msgstr ""
 
 #: control/forms/organizer_forms/user_orders_form.py:13
 #: eventyay_common/forms/filters.py:13 eventyay_common/forms/filters.py:32
-#, fuzzy
-#| msgid "Select country"
 msgid "Select an Event"
-msgstr "Pilih negara"
+msgstr "Pilih Acara"
 
 #: control/forms/organizer_forms/web_hook_form.py:13
 msgctxt "webhooks"
@@ -14750,40 +14711,40 @@ msgstr "Opsi kuota"
 
 #: control/forms/product.py:344
 msgid "Add to existing quota"
-msgstr ""
+msgstr "Tambahkan ke kuota yang sudah ada"
 
 #: control/forms/product.py:353
 msgid "New quota name"
-msgstr ""
+msgstr "Nama kuota baru"
 
 #: control/forms/product.py:359
 msgid "Size"
-msgstr ""
+msgstr "Ukuran"
 
 #: control/forms/product.py:360
 msgid "Number of tickets"
-msgstr ""
+msgstr "Jumlah tiket"
 
 #: control/forms/product.py:475
 msgid "Quota name is required."
-msgstr ""
+msgstr "Nama kuota wajib diisi."
 
 #: control/forms/product.py:478
 msgid "Please select a quota."
-msgstr ""
+msgstr "Harap pilih kuota."
 
 #: control/forms/product.py:498 plugins/badges/forms.py:53
 #: plugins/ticketoutputpdf/forms.py:31
 msgid "(Event default)"
-msgstr ""
+msgstr "(Default acara)"
 
 #: control/forms/product.py:508
 msgid "Choose automatically depending on event settings"
-msgstr ""
+msgstr "Pilih secara otomatis tergantung pada pengaturan acara"
 
 #: control/forms/product.py:509
 msgid "Yes, if ticket generation is enabled in general"
-msgstr ""
+msgstr "Ya, jika pembuatan tiket diaktifkan secara umum"
 
 #: control/forms/product.py:520
 msgid ""
@@ -14791,6 +14752,9 @@ msgid ""
 "people over 65. This ticket includes access to all parts of the event, "
 "except the VIP area."
 msgstr ""
+"mis. Harga diskon ini tersedia untuk mahasiswa penuh waktu, pengangguran, "
+"dan orang di atas 65 tahun. Tiket ini mencakup akses ke semua bagian acara, "
+"kecuali area VIP."
 
 #: control/forms/product.py:529
 msgid "Limit one ticket per user (for this product)"
@@ -14806,7 +14770,7 @@ msgstr ""
 
 #: control/forms/product.py:559
 msgid "Shown independently of other products"
-msgstr ""
+msgstr "Ditampilkan secara independen dari produk lain"
 
 #: control/forms/product.py:667
 #, python-format
@@ -14815,28 +14779,33 @@ msgid ""
 "by a user or currently is in a user's cart. Please set the variation as "
 "\"inactive\" instead."
 msgstr ""
+"Variasi \"%s\" tidak dapat dihapus karena sudah dipesan oleh pengguna atau "
+"saat ini ada di keranjang pengguna. Harap atur variasi sebagai \"tidak "
+"aktif\"."
 
 #: control/forms/product.py:721
 msgid "Add-ons"
-msgstr ""
+msgstr "Add-on"
 
 #: control/forms/product.py:749
 msgid "You added the same add-on category twice"
-msgstr ""
+msgstr "Anda menambahkan kategori add-on yang sama dua kali"
 
 #: control/forms/product.py:798
 msgid ""
 "Be aware that setting a minimal number makes it impossible to buy this "
 "product if all available add-ons are sold out."
 msgstr ""
+"Perhatikan bahwa menetapkan jumlah minimal membuat produk ini tidak dapat "
+"dibeli jika semua add-on yang tersedia habis terjual."
 
 #: control/forms/product.py:806
 msgid "Bundled products"
-msgstr ""
+msgstr "Produk yang dibundel"
 
 #: control/forms/product.py:850
 msgid "You added the same bundled product twice."
-msgstr ""
+msgstr "Anda menambahkan produk bundel yang sama dua kali."
 
 #: control/forms/renderers.py:33
 #: control/templates/pretixcontrol/items/question_edit.html:134
@@ -14865,16 +14834,12 @@ msgid "Room ID"
 msgstr "ID Ruang"
 
 #: control/forms/server_management.py:243
-#, fuzzy
-#| msgid "Target URL"
 msgid "Target Server"
-msgstr "URL target"
+msgstr "Server Tujuan"
 
 #: control/forms/server_management.py:250
-#, fuzzy
-#| msgid "Client ID"
 msgid "Event ID"
-msgstr "ID Klien"
+msgstr "ID Acara"
 
 #: control/forms/subevents.py:99
 msgid "Keep the current values"
@@ -15757,10 +15722,8 @@ msgid "A bundled product has been added to this product."
 msgstr "Produk bundel telah ditambahkan ke produk ini."
 
 #: control/logdisplay.py:619
-#, fuzzy
-#| msgid "Add-on products will be excluded from the count."
 msgid "A bundled product has been removed from this product."
-msgstr "Produk tambahan tidak akan dihitung."
+msgstr "Sebuah produk bundel telah dihapus dari produk ini."
 
 #: control/logdisplay.py:620
 msgid "A bundled product has been changed on this product."
@@ -16029,10 +15992,8 @@ msgid "The check-in list has been deleted."
 msgstr "Daftar check-in telah dihapus."
 
 #: control/logdisplay.py:688
-#, fuzzy
-#| msgid "A new %(event_name)s schedule has been released!"
 msgid "A new question has been created."
-msgstr "Jadwal baru %(nama_acara) telah dirilis!"
+msgstr "Pertanyaan baru telah dibuat."
 
 #: control/logdisplay.py:689
 msgid "The question has been changed."
@@ -16306,10 +16267,8 @@ msgid "All Attendees"
 msgstr "Semua Peserta"
 
 #: control/navigation.py:465
-#, fuzzy
-#| msgid "Session type"
 msgid "All Sessions"
-msgstr "Jenis acara"
+msgstr "Semua Sesi"
 
 #: control/navigation.py:471
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:7
@@ -16364,10 +16323,8 @@ msgstr "Pengaturan Login Sosial"
 #: control/navigation.py:541
 #: control/templates/pretixcontrol/admin/systemconfig.html:13
 #: control/templates/pretixcontrol/admin/systemconfig.html:17
-#, fuzzy
-#| msgid "Order information changed"
 msgid "System information"
-msgstr "Informasi pesanan diubah"
+msgstr "Informasi sistem"
 
 #: control/navigation.py:568 control/templates/control/bbb_list.html:6
 msgid "BBB servers"
@@ -16547,10 +16504,8 @@ msgstr "Buat acara"
 
 #: control/templates/control/event_create.html:13
 #: control/templates/control/event_update.html:13
-#, fuzzy
-#| msgid "Language"
 msgid "Planned usages"
-msgstr "Bahasa"
+msgstr "Rencana penggunaan"
 
 #: control/templates/control/event_create.html:23
 #: control/templates/control/event_update.html:29
@@ -16676,10 +16631,8 @@ msgid "User Agent"
 msgstr "Agen Pengguna"
 
 #: control/templates/control/systemlog_detail.html:18
-#, fuzzy
-#| msgid "Track"
 msgid "Trace"
-msgstr "Topik bahasan"
+msgstr "Lacak"
 
 #: control/templates/control/systemlog_detail.html:24
 #: control/templates/control/systemlog_list.html:10
@@ -16778,10 +16731,8 @@ msgid "Filter"
 msgstr "Filter"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:77
-#, fuzzy
-#| msgid "Order denied"
 msgid "Order Code"
-msgstr "Pesanan ditolak"
+msgstr "Kode Pesanan"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:95
 msgid "Check in Status"
@@ -16916,10 +16867,8 @@ msgstr "Buat halaman baru"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
-#, fuzzy
-#| msgid "Session type"
 msgid "Submissions"
-msgstr "Jenis acara"
+msgstr "Pengajuan"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:15
 msgid "This is a list of all talk submissions across events."
@@ -18669,10 +18618,8 @@ msgid "Meta data"
 msgstr "Metadata"
 
 #: control/templates/pretixcontrol/event/settings.html:52
-#, fuzzy
-#| msgid "Order information changed"
 msgid "Order Modification"
-msgstr "Informasi pesanan diubah"
+msgstr "Modifikasi Pesanan"
 
 #: control/templates/pretixcontrol/event/settings.html:53
 msgid "Changes to existing orders"
@@ -19441,31 +19388,31 @@ msgstr ""
 
 #: control/templates/pretixcontrol/items/index.html:82
 msgid "Only available in a limited timeframe"
-msgstr ""
+msgstr "Hanya tersedia dalam jangka waktu terbatas"
 
 #: control/templates/pretixcontrol/items/index.html:89
 msgid "Admission ticket"
-msgstr ""
+msgstr "Tiket masuk"
 
 #: control/templates/pretixcontrol/items/index.html:96
 msgid "Product with variations"
-msgstr ""
+msgstr "Produk dengan variasi"
 
 #: control/templates/pretixcontrol/items/index.html:102
 msgid "Only available as an add-on product"
-msgstr ""
+msgstr "Hanya tersedia sebagai produk add-on"
 
 #: control/templates/pretixcontrol/items/index.html:105
 msgid "Only available as part of a bundle"
-msgstr ""
+msgstr "Hanya tersedia sebagai bagian dari bundel"
 
 #: control/templates/pretixcontrol/items/index.html:108
 msgid "Only visible with a voucher"
-msgstr ""
+msgstr "Hanya terlihat dengan voucher"
 
 #: control/templates/pretixcontrol/items/index.html:111
 msgid "Can only be bought using a voucher"
-msgstr ""
+msgstr "Hanya dapat dibeli menggunakan voucher"
 
 #: control/templates/pretixcontrol/items/orderforms.html:33
 msgid "Customer data (once per order)"
@@ -19500,10 +19447,8 @@ msgid "Ask twice"
 msgstr "Minta dua kali"
 
 #: control/templates/pretixcontrol/items/orderforms.html:105
-#, fuzzy
-#| msgid "Require a phone number per order"
 msgid "Required status for Phone number"
-msgstr "Nomor telepon wajib untuk setiap pesanan"
+msgstr "Status wajib untuk Nomor telepon"
 
 #: control/templates/pretixcontrol/items/orderforms.html:118
 msgid "Name and address"
@@ -19522,42 +19467,32 @@ msgid "Attendee data (once per admission ticket)"
 msgstr "Data peserta (sekali per tiket masuk)"
 
 #: control/templates/pretixcontrol/items/orderforms.html:163
-#, fuzzy
-#| msgid "Require attendee names"
 msgid "Attendee names"
-msgstr "Nama peserta wajib diisi"
+msgstr "Nama peserta"
 
 #: control/templates/pretixcontrol/items/orderforms.html:176
-#, fuzzy
-#| msgid "Require attendee names"
 msgid "Required status for Attendee names"
-msgstr "Nama peserta wajib diisi"
+msgstr "Status wajib untuk Nama peserta"
 
 #: control/templates/pretixcontrol/items/orderforms.html:196
 msgid "Attendee emails"
 msgstr "E-mail peserta"
 
 #: control/templates/pretixcontrol/items/orderforms.html:226
-#, fuzzy
-#| msgid "Require attendee names"
 msgid "Required status for Attendee emails"
-msgstr "Nama peserta wajib diisi"
+msgstr "Status wajib untuk Email peserta"
 
 #: control/templates/pretixcontrol/items/orderforms.html:257
 msgid "Required status for Company"
 msgstr "Status wajib untuk Perusahaan"
 
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Custom address field"
 msgid "Postal addresses"
-msgstr "Kolom alamat khusus"
+msgstr "Alamat pos"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Require a business addresses"
 msgid "Required status for Postal addresses"
-msgstr "Alamat bisnis wajib diisi"
+msgstr "Status wajib untuk Alamat pos"
 
 #: control/templates/pretixcontrol/items/orderforms.html:321
 msgid "Active status for"
@@ -19585,12 +19520,12 @@ msgstr "Pengaturan formulir"
 #: control/templates/pretixcontrol/items/question.html:9
 #, python-format
 msgid "Question: %(name)s"
-msgstr ""
+msgstr "Pertanyaan: %(name)s"
 
 #: control/templates/pretixcontrol/items/question.html:13
 #: control/templates/pretixcontrol/items/question.html:55
 msgid "Edit question"
-msgstr ""
+msgstr "Edit pertanyaan"
 
 #: control/templates/pretixcontrol/items/question.html:21
 #: control/templates/pretixcontrol/orders/fragment_order_status.html:25
@@ -19599,7 +19534,7 @@ msgstr ""
 #: plugins/checkinlists/exporters.py:510 plugins/reports/exporters.py:334
 #: presale/templates/pretixpresale/event/fragment_order_status.html:19
 msgid "Paid"
-msgstr ""
+msgstr "Lunas"
 
 #: control/templates/pretixcontrol/items/question.html:27
 #: control/templates/pretixcontrol/orders/fragment_order_status.html:35
@@ -19608,45 +19543,48 @@ msgstr ""
 #: plugins/reports/exporters.py:311
 #: presale/templates/pretixpresale/event/fragment_order_status.html:24
 msgid "Canceled"
-msgstr ""
+msgstr "Dibatalkan"
 
 #: control/templates/pretixcontrol/items/question.html:45
 msgid "No matching answers found."
-msgstr ""
+msgstr "Tidak ada jawaban yang cocok ditemukan."
 
 #: control/templates/pretixcontrol/items/question.html:51
 msgid "You need to assign the question to a product to collect answers."
-msgstr ""
+msgstr "Anda perlu menetapkan pertanyaan ke produk untuk mengumpulkan jawaban."
 
 #: control/templates/pretixcontrol/items/question.html:70
 #: orga/templates/orga/cfp/talkquestion/detail.html:77
 msgid "Count"
-msgstr ""
+msgstr "Jumlah"
 
 #: control/templates/pretixcontrol/items/question.html:71
 msgid "Percentage"
-msgstr ""
+msgstr "Persentase"
 
 #: control/templates/pretixcontrol/items/question.html:94
 msgid "Question history"
-msgstr ""
+msgstr "Riwayat pertanyaan"
 
 #: control/templates/pretixcontrol/items/question_delete.html:4
 #: control/templates/pretixcontrol/items/question_delete.html:6
 msgid "Delete question"
-msgstr ""
+msgstr "Hapus pertanyaan"
 
 #: control/templates/pretixcontrol/items/question_delete.html:9
 #, python-format
 msgid ""
 "Are you sure you want to delete the question <strong>%(question)s</strong>?"
 msgstr ""
+"Apakah Anda yakin ingin menghapus pertanyaan <strong>%(question)s</strong>?"
 
 #: control/templates/pretixcontrol/items/question_delete.html:11
 msgid ""
 "All answers to the question given by the buyers of the following products "
 "will be <strong>lost</strong>."
 msgstr ""
+"Semua jawaban atas pertanyaan yang diberikan oleh pembeli produk berikut "
+"akan <strong>hilang</strong>."
 
 #: control/templates/pretixcontrol/items/question_edit.html:8
 #: control/templates/pretixcontrol/items/question_edit.html:18
@@ -19660,6 +19598,9 @@ msgid ""
 "proceed. To allow the user to leave it unchecked, do not set the field as "
 "required."
 msgstr ""
+"Jika Kotak Centang Konfirmasi ditandai sebagai wajib, pengguna harus "
+"mencentangnya untuk melanjutkan. Agar pengguna dapat membiarkannya tidak "
+"dicentang, jangan atur bidang sebagai wajib."
 
 #: control/templates/pretixcontrol/items/question_edit.html:53
 msgid "Answer options"
@@ -19691,10 +19632,8 @@ msgstr "Ketergantungan bidang kustom"
 
 #: control/templates/pretixcontrol/items/questions.html:4
 #: control/templates/pretixcontrol/items/questions.html:9
-#, fuzzy
-#| msgid "Custom address field"
 msgid "Custom Fields"
-msgstr "Kolom alamat khusus"
+msgstr "Bidang Kustom"
 
 #: control/templates/pretixcontrol/items/questions.html:15
 msgid ""
@@ -22596,10 +22535,8 @@ msgid "Event is"
 msgstr "Acara sedang"
 
 #: control/views/dashboards.py:296
-#, fuzzy
-#| msgid "Ticket checked in"
 msgid "Ticket shop is"
-msgstr "Tiket telah lapor masuk"
+msgstr "Toko tiket sedang"
 
 #: control/views/dashboards.py:304 orga/templates/orga/event/dashboard.html:83
 msgid "Click here to change"
@@ -23837,10 +23774,8 @@ msgstr "Cari berdasarkan nama sesi"
 #: eventyay_common/navigation.py:36
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:6
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:9
-#, fuzzy
-#| msgid "Session type"
 msgid "My Sessions"
-msgstr "Jenis acara"
+msgstr "Sesi Saya"
 
 #: eventyay_common/navigation.py:198 eventyay_common/navigation.py:206
 msgid "Devices"
@@ -23859,10 +23794,8 @@ msgid "Two-factor authentication"
 msgstr "Otentikasi dua faktor"
 
 #: eventyay_common/navigation.py:282
-#, fuzzy
-#| msgid "Application name"
 msgid "OAuth applications"
-msgstr "Nama aplikasi"
+msgstr "Aplikasi OAuth"
 
 #: eventyay_common/navigation.py:288
 #: orga/templates/orga/event/dashboard.html:119
@@ -24183,10 +24116,8 @@ msgid "Add Email Address"
 msgstr "Tambah Alamat Email"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:51
-#, fuzzy
-#| msgid "E-mail"
 msgid "Add Email"
-msgstr "Surel"
+msgstr "Tambahkan Email"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:4
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:20
@@ -24219,10 +24150,8 @@ msgid "Email Address"
 msgstr "Alamat Email"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:60
-#, fuzzy
-#| msgid "Require email addresses per ticket"
 msgid "Manage email addresses"
-msgstr "Alamat surel wajib untuk setiap tiket"
+msgstr "Kelola alamat email"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:75
 msgid "Change two-factor settings"
@@ -24432,10 +24361,8 @@ msgid "Ok"
 msgstr "OK"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
-#, fuzzy
-#| msgid "Event details changed"
 msgid "Event Dashboard"
-msgstr "Detail acara diubah"
+msgstr "Dasbor Acara"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:11
 msgid ""
@@ -24642,10 +24569,8 @@ msgstr ""
 "peninjau, dan administrator sistem yang dapat melihat atau membeli tiket."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:8
-#, fuzzy
-#| msgid "Event created"
 msgid "Event status"
-msgstr "Acara dibuat"
+msgstr "Status acara"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:18
 msgid "Event visibility"
@@ -24869,10 +24794,8 @@ msgid "Show video link"
 msgstr "Tampilkan tautan video"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:357
-#, fuzzy
-#| msgid "The subevent does not belong to this event."
 msgid "The video module is not enabled for this event."
-msgstr "Subacara ini tidak termasuk dalam acara tersebut."
+msgstr "Modul video tidak diaktifkan untuk acara ini."
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:17
 msgid "- Settings"
@@ -25020,10 +24943,8 @@ msgid "Clear filters"
 msgstr "Hapus filter"
 
 #: eventyay_common/templates/eventyay_common/orders/orders.html:27
-#, fuzzy
-#| msgid "Order changed"
 msgid "Order Date"
-msgstr "Pesanan diubah"
+msgstr "Tanggal Pesanan"
 
 #: eventyay_common/templates/eventyay_common/orders/orders.html:53
 msgid "You have no orders."
@@ -25082,10 +25003,8 @@ msgid "Are you sure you want to delete this team?"
 msgstr "Anda yakin ingin menghapus tim ini?"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:135
-#, fuzzy
-#| msgid "Session type"
 msgid "Save permissions"
-msgstr "Jenis acara"
+msgstr "Simpan izin"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:147
 msgid "Members & invites"
@@ -25382,7 +25301,7 @@ msgstr "Anda sekarang menjadi bagian dari tim \"{}\"."
 #: eventyay_common/views/auth.py:298
 #, python-brace-format
 msgid "Welcome to eventyay! You are now part of the team \"{}\"."
-msgstr ""
+msgstr "Selamat datang di eventyay! Anda kini menjadi bagian dari tim \"{}\"."
 
 #: eventyay_common/views/auth.py:343
 msgid ""
@@ -25607,7 +25526,7 @@ msgstr "Anggota baru telah ditambahkan ke tim."
 
 #: eventyay_common/views/organizer.py:545 eventyay_common/views/team.py:206
 msgid "Users need to have a eventyay account before they can be invited."
-msgstr ""
+msgstr "Pengguna harus memiliki akun eventyay sebelum dapat diundang."
 
 #: eventyay_common/views/organizer.py:556 eventyay_common/views/team.py:217
 msgid "The new member has been invited to the team."
@@ -25638,10 +25557,9 @@ msgid "The team '%(team_name)s' cannot be deleted."
 msgstr "Tim '%(team_name)s' tidak dapat dihapus."
 
 #: eventyay_common/views/organizer.py:632 eventyay_common/views/team.py:455
-#, fuzzy, python-format
-#| msgid "The first %(event_name)s schedule has been released!"
+#, python-format
 msgid "The team '%(team_name)s' has been deleted."
-msgstr "Jadwal baru %(event_name)s telah dirilis!"
+msgstr "Tim '%(team_name)s' telah dihapus."
 
 #: eventyay_common/views/team.py:41
 msgid "Team management has moved into the unified organizer page."
@@ -26936,10 +26854,8 @@ msgid "The name of the speaker that should be displayed publicly."
 msgstr "Nama pembicara yang akan ditampilkan secara publik."
 
 #: orga/forms/submission.py:272
-#, fuzzy
-#| msgid "Language"
 msgid "Invite language"
-msgstr "Bahasa"
+msgstr "Bahasa undangan"
 
 #: orga/forms/submission.py:275
 msgid "The language in which the speaker will receive their invitation email."
@@ -28060,10 +27976,8 @@ msgid "You don’t have reviewer permissions for this event."
 msgstr "Anda tidak memiliki izin peninjau untuk acara ini."
 
 #: orga/templates/orga/review/dashboard.html:50
-#, fuzzy
-#| msgid "Edit or view your proposals"
 msgid "Review Proposals"
-msgstr "Sunting atau lihat proposal Anda"
+msgstr "Tinjau Proposal"
 
 #: orga/templates/orga/review/dashboard.html:57
 msgid "Columns"
@@ -28440,10 +28354,8 @@ msgid "Other settings"
 msgstr "Pengaturan lain"
 
 #: orga/templates/orga/settings/form.html:78
-#, fuzzy
-#| msgid "Event details changed"
 msgid "Event settings"
-msgstr "Detail acara diubah"
+msgstr "Pengaturan acara"
 
 #: orga/templates/orga/settings/form.html:82
 msgid "Delete talk data"
@@ -28684,10 +28596,8 @@ msgid "All tracks"
 msgstr "Semua jalur"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:63
-#, fuzzy
-#| msgid "Session type"
 msgid "All session types"
-msgstr "Jenis acara"
+msgstr "Semua jenis sesi"
 
 #: orga/templates/orga/submission/anonymise.html:9
 #: orga/templates/orga/submission/base.html:64
@@ -28991,11 +28901,8 @@ msgid "Your API tokens"
 msgstr "Token API Anda"
 
 #: orga/templates/orga/user.html:74
-#, fuzzy
-#| msgctxt "Version of the conference schedule"
-#| msgid "Version"
 msgid "Version"
-msgstr "Jenis acara"
+msgstr "Versi"
 
 #: orga/templates/orga/user.html:76
 msgid "Last used"
@@ -29024,16 +28931,12 @@ msgstr "Tidak ada bahasa yang dipilih"
 
 #: orga/templates/orga/widgets/multi_languages_select.html:57
 #: orga/templates/orga/widgets/multi_languages_select.html:63
-#, fuzzy
-#| msgid "Language"
 msgid "Remove language"
-msgstr "Bahasa"
+msgstr "Hapus bahasa"
 
 #: orga/templates/orga/widgets/multi_languages_select.html:75
-#, fuzzy
-#| msgid "Language"
 msgid "Select language"
-msgstr "Bahasa"
+msgstr "Pilih bahasa"
 
 #: orga/templates/orga/widgets/multi_languages_widget.html:8
 #, python-format
@@ -29214,10 +29117,8 @@ msgstr ""
 "akan dihapus dan tidak dapat dipulihkan."
 
 #: orga/views/mails.py:46
-#, fuzzy
-#| msgid "You can’t give feedback for this session at this time."
 msgid "You cannot send emails at this time."
-msgstr "Anda tidak dapat memberikan umpan balik untuk sesi ini sekarang."
+msgstr "Anda tidak dapat mengirim email saat ini."
 
 #: orga/views/mails.py:130
 #, python-brace-format
@@ -29569,10 +29470,8 @@ msgid "Read and write all endpoints"
 msgstr "Baca dan tulis semua endpoint"
 
 #: person/forms/auth_token.py:25
-#, fuzzy
-#| msgid "Session type"
 msgid "Customize permissions and endpoints"
-msgstr "Jenis acara"
+msgstr "Sesuaikan izin dan titik akhir"
 
 #: person/forms/auth_token.py:27
 msgid "Choose a preset or configure detailed permissions below."
@@ -29850,6 +29749,11 @@ msgid ""
 "import a digital bank statement in order to give eventyay the required "
 "information."
 msgstr ""
+"Saya telah memahami bahwa orang akan membayar harga tiket langsung ke "
+"rekening bank saya dan eventyay tidak dapat secara otomatis mengetahui "
+"pembayaran mana yang telah masuk. Oleh karena itu, saya akan menandai "
+"pembayaran sebagai selesai secara manual, atau secara rutin mengimpor "
+"laporan bank digital agar eventyay mendapat informasi yang diperlukan."
 
 #: plugins/banktransfer/payment.py:46
 msgid "Bank account type"
@@ -30671,48 +30575,52 @@ msgstr "Daftar pesanan dengan pajak"
 
 #: plugins/reports/exporters.py:631
 msgid "Taxes by country"
-msgstr ""
+msgstr "Pajak berdasarkan negara"
 
 #: plugins/reports/exporters.py:632
 msgid "Business customers"
-msgstr ""
+msgstr "Pelanggan bisnis"
 
 #: plugins/reports/exporters.py:813 plugins/reports/exporters.py:857
 msgid "Country code"
-msgstr ""
+msgstr "Kode negara"
 
 #: plugins/returnurl/apps.py:9 plugins/returnurl/apps.py:12
 #: plugins/returnurl/templates/returnurl/settings.html:8
 msgid "Redirection from order page"
-msgstr ""
+msgstr "Pengalihan dari halaman pesanan"
 
 #: plugins/returnurl/apps.py:16
 msgid ""
 "This plugin allows to link to payments and redirect back afterwards. This is "
 "useful in combination with our API."
 msgstr ""
+"Plugin ini memungkinkan untuk menautkan ke pembayaran dan mengalihkan "
+"kembali setelahnya. Ini berguna dikombinasikan dengan API kami."
 
 #: plugins/returnurl/signals.py:47
 msgid "Redirection"
-msgstr ""
+msgstr "Pengalihan"
 
 #: plugins/returnurl/templates/returnurl/settings.html:14
 msgid ""
 "This feature is useful if you use only the payment component of eventyay but "
 "build your own checkout interface for other steps."
 msgstr ""
+"Fitur ini berguna jika Anda hanya menggunakan komponen pembayaran eventyay "
+"tetapi membangun antarmuka checkout sendiri untuk langkah lainnya."
 
 #: plugins/returnurl/views.py:15
 msgid "Base redirection URL"
-msgstr ""
+msgstr "URL pengalihan dasar"
 
 #: plugins/returnurl/views.py:16
 msgid "Redirection will only be allowed to URLs that start with this prefix."
-msgstr ""
+msgstr "Pengalihan hanya akan diizinkan ke URL yang dimulai dengan awalan ini."
 
 #: plugins/sendmail/apps.py:16
 msgid "This plugin allows you to send out emails to all your customers."
-msgstr ""
+msgstr "Plugin ini memungkinkan Anda mengirim email ke semua pelanggan Anda."
 
 #: plugins/sendmail/forms.py:30
 msgid "The 'web' sales channel must be selected."
@@ -30720,11 +30628,11 @@ msgstr "Saluran penjualan 'web' harus dipilih."
 
 #: plugins/sendmail/forms.py:33
 msgid "Send email to"
-msgstr ""
+msgstr "Kirim email ke"
 
 #: plugins/sendmail/forms.py:38 plugins/sendmail/forms.py:561
 msgid "Attachment"
-msgstr ""
+msgstr "Lampiran"
 
 #: plugins/sendmail/forms.py:64 plugins/sendmail/forms.py:569
 msgid ""
@@ -30732,37 +30640,40 @@ msgid ""
 "being sorted into spam folders. We recommend only using PDFs of no more than "
 "2 MB in size."
 msgstr ""
+"Mengirim lampiran meningkatkan kemungkinan email Anda tidak terkirim atau "
+"tersortir ke folder spam. Kami menyarankan hanya menggunakan PDF berukuran "
+"tidak lebih dari 2 MB."
 
 #: plugins/sendmail/forms.py:71
 msgid "Only send to people who bought"
-msgstr ""
+msgstr "Hanya kirim ke orang yang membeli"
 
 #: plugins/sendmail/forms.py:75
 msgid "Filter check-in status"
-msgstr ""
+msgstr "Filter status check-in"
 
 #: plugins/sendmail/forms.py:79
 msgid "Send to customers not checked in"
-msgstr ""
+msgstr "Kirim ke pelanggan yang belum check-in"
 
 #: plugins/sendmail/forms.py:82
 msgid "Only send to customers of"
-msgstr ""
+msgstr "Hanya kirim ke pelanggan dari"
 
 #: plugins/sendmail/forms.py:88
 msgctxt "subevent"
 msgid "Only send to customers of dates starting at or after"
-msgstr ""
+msgstr "Hanya kirim ke pelanggan dengan tanggal mulai pada atau setelah"
 
 #: plugins/sendmail/forms.py:93
 msgctxt "subevent"
 msgid "Only send to customers of dates starting before"
-msgstr ""
+msgstr "Hanya kirim ke pelanggan dengan tanggal mulai sebelum"
 
 #: plugins/sendmail/forms.py:98
 msgctxt "subevent"
 msgid "Only send to customers with orders created after"
-msgstr ""
+msgstr "Hanya kirim ke pelanggan dengan pesanan yang dibuat setelah"
 
 #: plugins/sendmail/forms.py:103
 msgctxt "subevent"
@@ -31033,10 +30944,8 @@ msgid "This mail has already been sent."
 msgstr "This mail has already been sent."
 
 #: plugins/sendmail/views.py:287
-#, fuzzy
-#| msgid "This user already has been invited for this team."
 msgid "The mail has been queued for sending."
-msgstr "Pengguna ini sebelumnya sudah diundang ke tim ini."
+msgstr "Email telah dimasukkan ke antrean untuk dikirim."
 
 #: plugins/sendmail/views.py:329 plugins/sendmail/views.py:523
 msgid "We could not save the email. See below for details."
@@ -31082,7 +30991,7 @@ msgstr "SocialAuth"
 
 #: plugins/socialauth/apps.py:13
 msgid "the eventyay team"
-msgstr ""
+msgstr "tim eventyay"
 
 #: plugins/socialauth/apps.py:16
 msgid "This plugin allows you to login via social networks"
@@ -31117,88 +31026,92 @@ msgid ""
 "Note: When running tests on the server, the tickets component URL is "
 "typically"
 msgstr ""
+"Catatan: Saat menjalankan pengujian di server, URL komponen tiket biasanya "
+"adalah"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:9
 msgid "Therefore, the complete callback URL should be"
-msgstr ""
+msgstr "Oleh karena itu, URL callback lengkapnya seharusnya adalah"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:12
 msgid "If you are running on localhost, the callback URL is"
-msgstr ""
+msgstr "Jika Anda menjalankan di localhost, URL callback-nya adalah"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:17
 msgid "I. Google OAuth Application"
-msgstr ""
+msgstr "I. Aplikasi OAuth Google"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:19
 #: plugins/socialauth/templates/socialauth/social_setup.html:38
 msgid "Create an OAuth application on"
-msgstr ""
+msgstr "Buat aplikasi OAuth di"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:21
 #: plugins/socialauth/templates/socialauth/social_setup.html:40
 msgid "Instructions:"
-msgstr ""
+msgstr "Petunjuk:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:23
 msgid "Follow the setup guide:"
-msgstr ""
+msgstr "Ikuti panduan pengaturan:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:26
 #: plugins/socialauth/templates/socialauth/social_setup.html:42
 msgid "Set the callback URL to:"
-msgstr ""
+msgstr "Atur URL callback ke:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:31
 #: plugins/socialauth/templates/socialauth/social_setup.html:47
 msgid "Add the client ID and client secret to admin settings"
-msgstr ""
+msgstr "Tambahkan client ID dan client secret ke pengaturan admin"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:36
 msgid "II. GitHub OAuth Application"
-msgstr ""
+msgstr "II. Aplikasi OAuth GitHub"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:52
 msgid "III. MediaWiki OAuth Application"
-msgstr ""
+msgstr "III. Aplikasi OAuth MediaWiki"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:54
 msgid ""
 "To enable MediaWiki social login for your Eventyay instance, you need to "
 "register an OAuth application with MediaWiki."
 msgstr ""
+"Untuk mengaktifkan login sosial MediaWiki di instans Eventyay Anda, Anda "
+"perlu mendaftarkan aplikasi OAuth ke MediaWiki."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:57
 msgid "Important Notes"
-msgstr ""
+msgstr "Catatan Penting"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
-msgstr ""
+msgstr "Aplikasi OAuth harus disetujui oleh administrator MediaWiki"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:60
 msgid "Until approved, only the application owner can log in"
-msgstr ""
+msgstr "Sampai disetujui, hanya pemilik aplikasi yang dapat masuk"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:63
 msgid "Registration Steps"
-msgstr ""
+msgstr "Langkah Pendaftaran"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:65
 msgid "Register your OAuth application at:"
-msgstr ""
+msgstr "Daftarkan aplikasi OAuth Anda di:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:68
 msgid "Click \"Propose new OAuth 2.0 client\""
-msgstr ""
+msgstr "Klik \"Propose new OAuth 2.0 client\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:70
 msgid "On the form enter"
-msgstr ""
+msgstr "Pada formulir, masukkan"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:72
 msgid "an application name"
-msgstr ""
+msgstr "nama aplikasi"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:73
 msgid "an description description"
@@ -31698,10 +31611,8 @@ msgid "You can now join the event using the following button:"
 msgstr "Anda sekarang dapat bergabung ke acara menggunakan tombol berikut:"
 
 #: presale/templates/pretix_venueless/order_info.html:51
-#, fuzzy
-#| msgid "View schedule preview"
 msgid "View schedule"
-msgstr "Lihat pratinjau jadwal"
+msgstr "Lihat jadwal"
 
 #: presale/templates/pretix_venueless/order_info.html:61
 msgid ""
@@ -31885,14 +31796,8 @@ msgstr "Produk di keranjang Anda dipesan untuk Anda selama %(minutes)s menit."
 
 #: presale/templates/pretixpresale/event/checkout_base.html:44
 #: presale/templates/pretixpresale/event/checkout_confirm.html:48
-#, fuzzy
-#| msgid ""
-#| "The number of minutes the items in a user's cart are reserved for this "
-#| "user."
 msgid "The products in your cart are no longer reserved for you."
-msgstr ""
-"Lama waktu (dalam menit) barang di keranjang pengguna disimpan sebagai "
-"reservasi untuk pengguna."
+msgstr "Produk di keranjang Anda tidak lagi direservasi untuk Anda."
 
 #: presale/templates/pretixpresale/event/checkout_base.html:53
 #: presale/templates/pretixpresale/event/index.html:128
@@ -33121,10 +33026,8 @@ msgid "Invalid email or password. Please try again."
 msgstr "Email atau kata sandi tidak valid. Silakan coba lagi."
 
 #: presale/templates/pretixpresale/fragment_modals.html:359
-#, fuzzy
-#| msgid "There was an error sending the mail. Please try again later."
 msgid "Server error. Please try again later."
-msgstr "Terjadi galat saat mengirim surel. Silakan coba lagi nanti."
+msgstr "Kesalahan server. Harap coba lagi nanti."
 
 #: presale/templates/pretixpresale/fragment_modals.html:367
 msgid "Login failed. Please try again."
@@ -33277,10 +33180,8 @@ msgid "Start page header"
 msgstr "Header halaman awal"
 
 #: presale/templates/pretixpresale/startpage.html:155
-#, fuzzy
-#| msgid "Limit to events"
 msgid "Live events"
-msgstr "Batasi pada acara"
+msgstr "Acara yang sedang berlangsung"
 
 #: presale/templates/pretixpresale/startpage.html:178
 msgid "No matching events. Try a different search term."
@@ -33635,26 +33536,25 @@ msgid "speakers"
 msgstr "pembicara"
 
 #: submission/exporters.py:63
-#, fuzzy
-#| msgid "Session type"
 msgid "submissions"
-msgstr "Jenis acara"
+msgstr "pengajuan"
 
 #: submission/forms/feedback.py:18
 msgid "All speakers"
-msgstr ""
+msgstr "Semua pembicara"
 
 #: submission/forms/resource.py:28
 msgid "Please either provide a link or upload a file, you cannot do both!"
 msgstr ""
+"Harap berikan tautan atau unggah file, Anda tidak dapat melakukan keduanya!"
 
 #: submission/forms/resource.py:30
 msgid "Please provide a link or upload a file!"
-msgstr ""
+msgstr "Harap berikan tautan atau unggah file!"
 
 #: submission/forms/submission.py:37
 msgid "Additional Speaker"
-msgstr ""
+msgstr "Pembicara Tambahan"
 
 #: submission/forms/submission.py:39
 msgid ""
@@ -33662,6 +33562,10 @@ msgid ""
 "invite them to create an account. If you have more than one co-speaker, you "
 "can add more speakers after finishing the proposal process."
 msgstr ""
+"Jika Anda memiliki rekan pembicara, harap tambahkan alamat email mereka di "
+"sini, dan kami akan mengundang mereka untuk membuat akun. Jika Anda memiliki "
+"lebih dari satu rekan pembicara, Anda dapat menambahkan pembicara lainnya "
+"setelah menyelesaikan proses proposal."
 
 #: submission/forms/submission.py:166
 msgid ""
@@ -33673,20 +33577,20 @@ msgstr ""
 
 #: submission/forms/submission.py:238
 msgid "Proposal states"
-msgstr ""
+msgstr "Status proposal"
 
 #: submission/forms/submission.py:248
 msgid "exclude pending"
-msgstr ""
+msgstr "kecualikan yang tertunda"
 
 #: submission/forms/submission.py:362
 #, python-brace-format
 msgid "Pending {state}"
-msgstr ""
+msgstr "{state} yang tertunda"
 
 #: submission/forms/tag.py:21
 msgid "You already have a tag by this name!"
-msgstr ""
+msgstr "Anda sudah memiliki tag dengan nama ini!"
 
 #: submission/phrases.py:14
 msgctxt "proposal status"

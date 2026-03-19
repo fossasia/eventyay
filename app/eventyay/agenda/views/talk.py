@@ -20,10 +20,11 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView, View
 from django_context_decorator import context
+from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import encode_email
+from eventyay.agenda.views.utils import encode_email, is_email_like
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
@@ -33,14 +34,12 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.base.models import Event, TalkSlot, User
+from eventyay.base.models import Event, SubmissionFavourite, TalkSlot, User
 from eventyay.submission.forms import FeedbackForm
 from eventyay.base.models import Submission, SubmissionStates
 
 
 logger = logging.getLogger(__name__)
-
-
 class TicketCheckResult(StrEnum):
     HAS_TICKET = 'has_ticket'
     MISCONFIGURED = 'missing_configuration'
@@ -79,6 +78,87 @@ class TalkMixin(PermissionRequired):
         return self.submission
 
 
+def talk_starrers(request, event, slug, **kwargs):
+    """Return starrer information for a session.
+
+    This endpoint is intended for the schedule web component and is safe for
+    public use. It exposes identifying information only for users who are
+    public, non-deleted, have a non-email-like display name, and a non-empty
+    code. Other favourites are returned as anonymous placeholders.
+    """
+
+    if not request.event.feature_flags.get('session_popularity_enabled', False):
+        response = JsonResponse({'total': 0, 'public_total': 0, 'items': []})
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        return response
+
+    submission = (
+        request.event.submissions.filter(code__iexact=slug)
+        .select_related('event', 'event__organizer')
+        .first()
+    )
+    if not submission or not request.user.has_perm('base.view_public_submission', submission):
+        raise Http404()
+
+    try:
+        limit = int(request.GET.get('limit', 15))
+    except (TypeError, ValueError):
+        limit = 15
+
+    # ``limit=0`` means "return everything" (within a reasonable ceiling).
+    max_limit = 1000
+    if limit < 0:
+        limit = 15
+    if limit == 0:
+        limit = max_limit
+    limit = min(limit, max_limit)
+
+    with scope(event=request.event):
+        qs = SubmissionFavourite.objects.filter(submission=submission)
+        total = qs.count()
+        public_total = qs.filter(user__show_publicly=True, user__deleted=False).count()
+
+        base_url = str(request.event.urls.base)
+        items = []
+        for fav in qs.select_related('user').order_by('-id')[:limit]:
+            user = fav.user
+            display_name = user.get_display_name() if user else ''
+            is_public_user = bool(
+                user
+                and user.show_publicly
+                and not user.deleted
+                and user.code
+                and not is_email_like(display_name)
+            )
+            if is_public_user:
+                items.append(
+                    {
+                        'code': user.code,
+                        'name': display_name,
+                        'avatar_url': user.get_avatar_url(
+                            event=request.event,
+                            thumbnail='tiny',
+                        ),
+                        'url': f'{base_url}people/{user.code}/stars/',
+                    }
+                )
+            else:
+                items.append(
+                    {
+                        'code': f'anon-{fav.id}',
+                        'name': '',
+                        'avatar_url': '',
+                        'url': '',
+                    }
+                )
+
+    response = JsonResponse({'total': total, 'public_total': public_total, 'items': items})
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+    return response
+
+
 from eventyay.agenda.views.speaker import ScheduleDataMixin
 
 
@@ -114,6 +194,14 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         response._csp_update = csp_update
         return response
 
+    def _build_speakers_context(self, speakers_qs):
+        """Enrich a speaker queryset and return a list ready for template context."""
+        result = []
+        for speaker in speakers_qs:
+            speaker.talk_profile = speaker.event_profile(event=self.request.event)
+            result.append(speaker)
+        return result
+
     def get_context_data(self, **kwargs):
         from django.db.models import Prefetch
 
@@ -126,13 +214,11 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         ctx['submission_tags'] = self.submission.tags.all()
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
-        result = []
         other_slots = (
             schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
             if schedule
             else TalkSlot.objects.none()
         )
-
         other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related('event', 'event__organizer')
         speakers = (
             self.submission.speakers.all()
@@ -145,10 +231,7 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
                 )
             )
         )
-        for speaker in speakers:
-            speaker.talk_profile = speaker.event_profile(event=self.request.event)
-            result.append(speaker)
-        ctx['speakers'] = result
+        ctx['speakers'] = self._build_speakers_context(speakers)
         return ctx
 
     @context
@@ -170,7 +253,7 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
 
 
 class TalkReviewView(TalkView):
-    template_name = 'agenda/talk.html'
+    template_name = 'agenda/talk_review.html'
 
     def has_permission(self):
         return self.request.event.get_feature_flag('submission_public_review')
@@ -195,6 +278,30 @@ class TalkReviewView(TalkView):
     @context
     def hide_speaker_links(self):
         return True
+
+    def _build_speakers_context(self, speakers_qs):
+        # Override to avoid calling event_profile(), which can create and save a
+        # SpeakerProfile row when one doesn't exist.  That is an unwanted DB
+        # write on every anonymous GET of a public review link.  Instead, use
+        # the _event_profiles attribute populated by with_profiles() directly.
+        result = []
+        for speaker in speakers_qs:
+            profiles = getattr(speaker, '_event_profiles', [])
+            speaker.talk_profile = profiles[0] if profiles else None
+            result.append(speaker)
+        return result
+
+    def get_context_data(self, **kwargs):
+        # TalkView.get_context_data returns early (skipping speakers) when the
+        # visitor lacks base.view_schedule permission – which is always the case
+        # for anonymous reviewers when the schedule is not yet public.  Fill in
+        # the speaker data unconditionally for the review page.
+        ctx = super().get_context_data(**kwargs)
+        if 'speakers' not in ctx:
+            speakers = self.submission.speakers.all().with_profiles(self.request.event)
+            ctx['speakers'] = self._build_speakers_context(speakers)
+            ctx['submission_tags'] = self.submission.tags.all()
+        return ctx
 
 
 class SingleICalView(EventPageMixin, TalkMixin, View):
