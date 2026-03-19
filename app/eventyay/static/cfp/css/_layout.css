@@ -393,16 +393,12 @@ footer {
     margin-top: 3.8rem !important;
   }
 
-  .presale-sticky-tabs {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  /* NOTE: .presale-sticky-tabs flex-direction is handled in custom.css/custom.scss
+   * (flex-direction: row with .presale-tabs-scroll for horizontal scroll on mobile).
+   * Do NOT override it here with column. */
 
   .presale-sticky-tabs .header-row-right {
-    margin-left: 0;
-    margin-right: 0;
-    width: 100%;
-    justify-content: flex-end;
+    margin-left: auto;
   }
 
   .event-hero {
@@ -458,8 +454,6 @@ footer {
 
     .header-wrapper {
       overflow: visible;
-    .presale-sticky-tabs-inner {
-      overflow: auto;
       background: var(--color-bg);
     }
 
