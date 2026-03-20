@@ -11,6 +11,9 @@ ENext is the new and updated version of Eventyay with a unified codebase for the
 Getting Started
 ---------------
 
+Python-based development
+------------------------------------------------------------
+
 0. **Clone the repository**:
 
 .. code-block:: bash
@@ -113,13 +116,21 @@ After running ``uv sync``, activate a virtual environment
 
   python manage.py migrate
 
-9. **Create a admin user account** (for accessing the admin panel):
+9. **Create an admin user account** (for accessing the admin panel):
 
 .. code-block:: bash
 
   python manage.py create_admin_user
 
-10. **Run the development server**:
+10. **Build Frontend Assets**:
+
+.. code-block:: bash
+
+  make npminstall
+  python manage.py collectstatic --noinput
+  python manage.py compress --force
+
+11. **Run the development server**:
 
 .. code-block:: bash
 
@@ -149,7 +160,7 @@ We assume your current working directory is the checkout of this repo.
 
       docker compose up -d --build
 
-3. **Create a superuser account** (for accessing the admin panel):
+3. **Create an admin account** (for accessing the admin panel):
 
    This asks for an email and a password, and this information will be
    used to log into the system the first time.
@@ -160,7 +171,7 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-      docker exec -ti eventyay-next-web python manage.py createsuperuser
+      docker exec -ti eventyay-next-web python manage.py create_admin_user
 
 4. **Visit the site**
 
@@ -220,7 +231,7 @@ After this, hard-refresh the browser (Ctrl + Shift + R).
 
 The database in the dev docker setup is created in a docker volume. If you see
 errors concerning login etc, you can completely reset the database (you will
-loose all configuration/organizers/events!) and removing the database container
+lose all configuration/organizers/events!) and removing the database container
 by calling
 
 .. code-block:: bash
@@ -266,7 +277,7 @@ How to override the configuration values
 
     export EVY_DEBUG=true
 
-- Dotenv (*.env*) file is also supported, but please be aware that the values from *.env* file will be overriden by environment variables.
+- Dotenv (*.env*) file is also supported, but please be aware that the values from *.env* file will be overridden by environment variables.
 
 - Sensitive data like passwords, API keys should be provided via files in *.secrets* directory, each file for a key.
   The file name follows the pattern of environment variable names above (with prefix), the file content is the value.
