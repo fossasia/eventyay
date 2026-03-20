@@ -265,6 +265,7 @@ input[type="file"] {
     display: inline-flex;
     margin-right: 0.75rem;
     width: auto;
+    margin-bottom: 0;
   }
 
   &.form-check-vertical,
