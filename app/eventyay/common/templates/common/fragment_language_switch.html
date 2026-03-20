@@ -31,7 +31,14 @@
                             value="{{ option.code }}"
                             class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
                             role="menuitem">
-                        {{ option.code|cut:"-"|slice:":2"|upper }}
+                        
+                        <span aria-hidden="true">
+                            {{ option.code|cut:"-"|slice:":2"|upper }}
+                        </span>
+                        <span class="sr-only">
+                            {{ option.label }}
+                        </span>
+                        
                     </button>
                 {% endfor %}
             </div>
