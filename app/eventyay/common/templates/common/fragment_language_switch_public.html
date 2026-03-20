@@ -1,19 +1,25 @@
 {% load i18n %}
 
-{% translate "Language" as language_label %}
-
 <li class="nav-item">
     <form method="get" action="{% url 'presale:locale.set' %}" class="language-form">
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
 
         <details class="dropdown fix-height" id="language-dropdown" aria-haspopup="menu">
-            <summary class="header-nav" aria-label="{{ language_label }}">
+            <summary class="header-nav" aria-label="{% translate 'Language selector' %}">
                 <i class="fa fa-globe"></i>
+
                 {% for option in language_options %}
                     {% if option.code|lower == request.LANGUAGE_CODE|lower %}
-                        <span class="current-locale">{{ option.label }}</span>
+                        <span class="current-locale d-none d-md-inline">
+                            {{ option.code|cut:"-"|slice:":2"|upper }}
+                        </span>
+
+                        <span class="sr-only">
+                            {{ option.label }}
+                        </span>
                     {% endif %}
                 {% endfor %}
+
                 <i class="fa fa-caret-down" aria-hidden="true"></i>
             </summary>
 
@@ -24,7 +30,7 @@
                             value="{{ option.code }}"
                             class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
                             role="menuitem">
-                        {{ option.label }}
+                        {{ option.code|cut:"-"|slice:":2"|upper }}
                     </button>
                 {% endfor %}
             </div>
