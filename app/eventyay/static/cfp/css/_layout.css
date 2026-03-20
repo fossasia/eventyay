@@ -520,3 +520,23 @@ footer {
     }
   }
 }
+
+/* Hide mobile-only navbar icons and CfS short text on desktop */
+.nav-icon-mobile, .cfs-short {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .nav-icon-mobile {
+    display: inline-block;
+  }
+  .mobile-hide-text {
+    display: none;
+  }
+  .cfs-full {
+    display: none;
+  }
+  .cfs-short {
+    display: inline;
+  }
+}
