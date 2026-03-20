@@ -11,7 +11,9 @@
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
-	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
+	.iframe-error(v-if="!iframeEl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
+		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
+		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
 	.join-error(
 		v-if="joinErrorKey",
 		role="alert",
@@ -268,9 +270,9 @@ function getJoinErrorKey(error) {
 async function initializeIframe(mute) {
 	if (!module.value) return;
 	if (shouldUseLivestream.value) return;
-	if (iframeOffline.value) return;
 	joinErrorKey.value = null;
 	iframeError.value = null;
+	if (iframeOffline.value) return;
 	try {
 		let iframeUrl;
 		let hideIfBackground = false;
