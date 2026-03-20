@@ -84,9 +84,16 @@ class TestDraftSubmission:
         final_path = response.wsgi_request.path
         assert "/me/submissions/" not in final_path
 
-        # Check if error message is in content
-        content = response.content.decode().lower()
-        assert "is required" in content or "required" in content
+        # Check that the form has an error on the abstract field
+        form_with_errors = None
+        if response.context:
+            for ctx in response.context:
+                form = ctx.get("form")
+                if form is not None and "abstract" in form.errors:
+                    form_with_errors = form
+                    break
+
+        assert form_with_errors is not None, "Expected form error on 'abstract' field for final submission"
 
     @pytest.mark.django_db
     def test_draft_submission_skips_boolean_and_avatar_validation(self, event, client, user, cfp_setup):
