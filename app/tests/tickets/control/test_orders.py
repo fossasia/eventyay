@@ -26,7 +26,9 @@ from pretix.base.models import (
     Team,
     User,
 )
+from pretix.base.exporters.orderlist import OrderListExporter
 from pretix.base.payment import PaymentException
+from pretix.control.forms.orders import ExporterForm
 from pretix.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
@@ -169,6 +171,154 @@ def test_order_list(client, env):
     response = client.get('/control/event/dummy/dummy/orders/?status=testmode')
     assert 'FOO' in response.content.decode()
     assert 'TEST MODE' in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_order_export_form_rejects_conflicting_status_filters():
+    form = ExporterForm(
+        data={
+            'paid_only': 'on',
+            'approval_pending_only': 'on',
+            'include_payment_amounts': 'on',
+        }
+    )
+
+    assert not form.is_valid()
+    assert 'paid_only' in form.errors
+    assert 'approval_pending_only' in form.errors
+
+
+@pytest.mark.django_db
+def test_order_export_form_clears_payment_amounts_for_approval_pending_only():
+    form = ExporterForm(
+        data={
+            'approval_pending_only': 'on',
+            'include_payment_amounts': 'on',
+        }
+    )
+
+    assert form.is_valid()
+    assert form.cleaned_data['include_payment_amounts'] is False
+
+
+@pytest.mark.django_db
+def test_order_export_approval_pending_only_filters_orders(env):
+    event, user, order, ticket = env
+    order.require_approval = False
+    order.save()
+
+    paid_order = Order.objects.create(
+        code='PAID1',
+        event=event,
+        email='paid@example.test',
+        status=Order.STATUS_PAID,
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=Decimal('23.00'),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=paid_order, item=ticket, variation=None, price=Decimal('23.00'))
+
+    approval_order = Order.objects.create(
+        code='APPR1',
+        event=event,
+        email='approval@example.test',
+        status=Order.STATUS_PENDING,
+        require_approval=True,
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=Decimal('23.00'),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=approval_order, item=ticket, variation=None, price=Decimal('23.00'))
+
+    exporter = OrderListExporter(event)
+    rows = [
+        row
+        for row in exporter.iterate_orders({'approval_pending_only': True, 'include_payment_amounts': True})
+        if not isinstance(row, exporter.ProgressSetTotal)
+    ]
+
+    assert rows[0][1] == 'Order code'
+    assert not any(isinstance(cell, str) and cell.startswith('Paid by ') for cell in rows[0])
+    assert [row[1] for row in rows[1:]] == ['APPR1']
+
+
+@pytest.mark.django_db
+def test_order_export_paid_only_excludes_approval_pending_orders(env):
+    event, user, order, ticket = env
+    order.require_approval = True
+    order.save()
+
+    paid_order = Order.objects.create(
+        code='PAID1',
+        event=event,
+        email='paid@example.test',
+        status=Order.STATUS_PAID,
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=Decimal('23.00'),
+        locale='en',
+    )
+    OrderPosition.objects.create(order=paid_order, item=ticket, variation=None, price=Decimal('23.00'))
+
+    exporter = OrderListExporter(event)
+    rows = [
+        row for row in exporter.iterate_orders({'paid_only': True}) if not isinstance(row, exporter.ProgressSetTotal)
+    ]
+
+    assert [row[1] for row in rows[1:]] == ['PAID1']
+
+
+@pytest.mark.django_db
+def test_order_export_positions_include_name_company_and_job_title(env):
+    event, user, order, ticket = env
+    event.settings.set('name_scheme', 'given_family')
+    position = order.positions.first()
+    position.attendee_name_parts = {
+        'given_name': 'Ada',
+        'family_name': 'Lovelace',
+        '_scheme': 'given_family',
+    }
+    position.company = 'Analytical Engines Ltd'
+    position.job_title = 'Programmer'
+    position.attendee_email = 'ada@example.test'
+    position.save()
+
+    exporter = OrderListExporter(event)
+    rows = [row for row in exporter.iterate_positions({}) if not isinstance(row, exporter.ProgressSetTotal)]
+    headers = rows[0]
+    data = rows[1]
+
+    assert data[headers.index('Attendee name')] == 'Ada Lovelace'
+    assert data[headers.index('Attendee name: Given name')] == 'Ada'
+    assert data[headers.index('Attendee name: Family name')] == 'Lovelace'
+    assert data[headers.index('Company')] == 'Analytical Engines Ltd'
+    assert data[headers.index('Job Title')] == 'Programmer'
+
+
+@pytest.mark.django_db
+def test_order_export_orders_include_name_parts_from_position(env):
+    event, user, order, ticket = env
+    event.settings.set('name_scheme', 'given_family')
+    position = order.positions.first()
+    position.attendee_name_parts = {
+        'given_name': 'Ada',
+        'family_name': 'Lovelace',
+        '_scheme': 'given_family',
+    }
+    position.save()
+
+    exporter = OrderListExporter(event)
+    rows = [
+        row for row in exporter.iterate_orders({'paid_only': False}) if not isinstance(row, exporter.ProgressSetTotal)
+    ]
+    headers = rows[0]
+    data = rows[1]
+
+    assert data[headers.index('Name')] == 'Ada Lovelace'
+    assert data[headers.index('Given name')] == 'Ada'
+    assert data[headers.index('Family name')] == 'Lovelace'
 
 
 @pytest.mark.django_db
@@ -326,6 +476,155 @@ def test_order_deny(client, env):
     assert res.status_code < 400
     assert o.status == Order.STATUS_CANCELED
     assert o.require_approval
+
+
+@pytest.mark.django_db
+def test_order_bulk_approve(client, env):
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        o.status = Order.STATUS_PENDING
+        o.require_approval = True
+        o.save()
+
+        second = Order.objects.create(
+            code='BAR',
+            event=env[0],
+            email='bar@dummy.test',
+            status=Order.STATUS_PENDING,
+            datetime=now(),
+            expires=now() + timedelta(days=10),
+            total=14,
+            locale='en',
+            require_approval=True,
+        )
+        second.payments.create(
+            amount=second.total,
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_PENDING,
+        )
+        OrderPosition.objects.create(
+            order=second,
+            item=env[3],
+            variation=None,
+            price=Decimal('14'),
+            attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
+        )
+
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    res = client.post(
+        '/control/event/dummy/dummy/orders/bulk-action',
+        {'action': 'approve', 'order': ['FOO', 'BAR']},
+    )
+
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        second = Order.objects.get(code='BAR')
+
+    assert res.status_code < 400
+    assert o.status == Order.STATUS_PENDING
+    assert not o.require_approval
+    assert second.status == Order.STATUS_PENDING
+    assert not second.require_approval
+
+
+@pytest.mark.django_db
+def test_order_bulk_deny(client, env):
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        o.status = Order.STATUS_PENDING
+        o.require_approval = True
+        o.save()
+
+        second = Order.objects.create(
+            code='BAR',
+            event=env[0],
+            email='bar@dummy.test',
+            status=Order.STATUS_PENDING,
+            datetime=now(),
+            expires=now() + timedelta(days=10),
+            total=14,
+            locale='en',
+            require_approval=True,
+        )
+        second.payments.create(
+            amount=second.total,
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_PENDING,
+        )
+        OrderPosition.objects.create(
+            order=second,
+            item=env[3],
+            variation=None,
+            price=Decimal('14'),
+            attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
+        )
+
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    res = client.post(
+        '/control/event/dummy/dummy/orders/bulk-action',
+        {'action': 'deny', 'order': ['FOO', 'BAR']},
+    )
+
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        second = Order.objects.get(code='BAR')
+
+    assert res.status_code < 400
+    assert o.status == Order.STATUS_CANCELED
+    assert o.require_approval
+    assert second.status == Order.STATUS_CANCELED
+    assert second.require_approval
+
+
+@pytest.mark.django_db
+def test_order_bulk_action_mixed_state(client, env):
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        o.status = Order.STATUS_PENDING
+        o.require_approval = True
+        o.save()
+
+        second = Order.objects.create(
+            code='BAR',
+            event=env[0],
+            email='bar@dummy.test',
+            status=Order.STATUS_PAID,
+            datetime=now(),
+            expires=now() + timedelta(days=10),
+            total=14,
+            locale='en',
+            require_approval=False,
+        )
+        second.payments.create(
+            amount=second.total,
+            provider='banktransfer',
+            state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+        )
+        OrderPosition.objects.create(
+            order=second,
+            item=env[3],
+            variation=None,
+            price=Decimal('14'),
+            attendee_name_parts={'full_name': 'Bar', '_scheme': 'full'},
+        )
+
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    res = client.post(
+        '/control/event/dummy/dummy/orders/bulk-action',
+        {'action': 'approve', 'order': ['FOO', 'BAR']},
+        follow=True,
+    )
+
+    with scopes_disabled():
+        o = Order.objects.get(id=env[2].id)
+        second = Order.objects.get(code='BAR')
+
+    assert res.status_code < 400
+    assert 'pending approval' in res.content.decode()
+    assert o.require_approval
+    assert o.status == Order.STATUS_PENDING
+    assert second.status == Order.STATUS_PAID
+    assert not second.require_approval
 
 
 @pytest.mark.django_db

@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-grid-schedule(ref="rootEl")
+.c-grid-schedule(ref="rootEl", :class="'density-' + density")
 	.grid(ref="grid", :style="gridStyle", :class="gridClasses", @pointermove="updateHoverSlice($event)", @pointerup="stopDragging($event)")
 		template(v-for="slice of visibleTimeslices", :key="slice.name")
 			.timeslice(:ref="setTimesliceRef", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)", @click="expandTimeslice(slice)") {{ getSliceLabel(slice) }}
@@ -116,6 +116,7 @@ const props = defineProps<{
   rooms: Room[]
   currentDay: Moment | null
   draggedSession: SessionDatum | null
+  density: 'compact' | 'default' | 'comfortable'
 }>()
 
 const emit = defineEmits([
@@ -311,8 +312,15 @@ const visibleTimeslices = computed<Timeslice[]>(() => {
   )
 })
 
+const densityScale = computed(() => {
+  if (props.density === 'compact') return 0.65
+  if (props.density === 'comfortable') return 1.4
+  return 1
+})
+
 const gridStyle = computed(() => {
-  let rows = '[header] 52px '
+  const scale = densityScale.value
+  let rows = `[header] ${Math.round(52 * scale)}px `
   rows += timeslices.value.map((slice, index) => {
     const next = timeslices.value[index + 1]
     let height = 60
@@ -323,6 +331,7 @@ const gridStyle = computed(() => {
     } else if (next) {
       height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
     }
+    height = Math.round(height * scale)
     return `[${slice.name}] minmax(${height}px, auto)`
   }).join(' ')
 
@@ -699,6 +708,7 @@ onUnmounted(() => {
 
 		.c-linear-schedule-session
 			z-index: 10
+			transition: padding 0.2s ease, font-size 0.2s ease
 	.timeslice
 		color: $clr-secondary-text-light
 		padding: 8px 10px 0 10px
@@ -709,6 +719,7 @@ onUnmounted(() => {
 		background-color: $clr-grey-50
 		border-top: 1px solid $clr-dividers-light
 		z-index: 20
+		transition: padding 0.2s ease, font-size 0.2s ease
 		.expand
 			display: none
 		&.datebreak
@@ -724,6 +735,62 @@ onUnmounted(() => {
 				margin: 4px auto
 				path
 					fill: $clr-grey-500
+
+	// Density: compact
+	&.density-compact
+		.timeslice
+			padding: 4px 6px 0 6px
+			font-size: 12px
+		.c-linear-schedule-session
+			margin: 4px 3px
+			min-height: 48px
+			font-size: 12px
+			.time-box
+				width: 50px
+				padding: 4px 4px 2px 4px
+				.start
+					font-size: 13px
+					margin-bottom: 4px
+					.duration
+						font-size: 11px
+			.info
+				padding: 4px 6px
+				.title
+					font-size: 13px
+					margin-bottom: 2px
+				.speakers
+					font-size: 11px
+		.grid > .room
+			font-size: 14px
+			padding: 4px
+
+	// Density: comfortable
+	&.density-comfortable
+		.timeslice
+			padding: 12px 14px 0 14px
+			font-size: 15px
+		.c-linear-schedule-session
+			margin: 12px 9px
+			min-height: 120px
+			font-size: 15px
+			.time-box
+				width: 72px
+				padding: 14px 10px 8px 10px
+				.start
+					font-size: 18px
+					margin-bottom: 10px
+					.duration
+						font-size: 14px
+			.info
+				padding: 12px
+				.title
+					font-size: 18px
+					margin-bottom: 6px
+				.speakers
+					font-size: 14px
+		.grid > .room
+			font-size: 20px
+			padding: 12px
 
 	.timeseparator
 		height: 1px

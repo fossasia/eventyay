@@ -37,6 +37,7 @@
             <script type="text/javascript" src="{% static "charts/morris.js" %}"></script>
             <script type="text/javascript" src="{% static "clipboard/clipboard.js" %}"></script>
             <script type="text/javascript" src="{% static "rrule/rrule.js" %}"></script>
+            <script type="text/javascript" src="{% static "pretixcontrol/js/ui/utils.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixpresale/js/ui/questions.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/jquery.qrcode.min.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/clipboard.js" %}"></script>
@@ -347,16 +348,6 @@
                             </strong>
                         </div>
                     {% endif %}
-                    {% if warning_update_check_active %}
-                        <div class="alert alert-info">
-                            <a href="{% url "eventyay_admin:admin.global.update" %}">
-                                {% blocktrans trimmed %}
-                                The system automatically checks for updates in the background.
-                                {% endblocktrans %}
-                            </a>
-                        </div>
-                    {% endif %}
-
                     {% if debug_warning %}
                         <div class="alert alert-danger">
                             {% trans "system is running in debug mode. For security reasons, please never run debug mode on a production instance." %}
