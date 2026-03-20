@@ -208,13 +208,13 @@ urlpatterns = [
                         [
                             path(
                                 '',
-                                submission.SubmissionContentView.as_view(),  # Read-only view
+                                submission.SubmissionContent.as_view(),
                                 name="submissions.content",
                             ),
                             path(
                                 'edit',
-                                submission.SubmissionContent.as_view(),  # Edit view
-                                name="submissions.content.edit",
+                                RedirectView.as_view(pattern_name='orga:submissions.content.edit', permanent=True),
+                                name="submissions.content.edit.redirect",
                             ),
                             path(
                                 'edit/',

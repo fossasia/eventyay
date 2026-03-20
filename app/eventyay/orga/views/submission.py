@@ -321,6 +321,12 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
 class SubmissionContent(ReviewerSubmissionFilter, SubmissionViewMixin, TemplateView):
     template_name = 'orga/submission/content.html'
     permission_required = 'base.orga_list_submission'
+    http_method_names = ['get', 'head', 'options']
+
+    def get_permission_required(self):
+        if 'code' in self.kwargs:
+            return ['base.orga_list_submission']
+        return ['base.create_submission']
 
     def get_object(self):
         return get_object_or_404(
@@ -353,7 +359,7 @@ class SubmissionContent(ReviewerSubmissionFilter, SubmissionViewMixin, TemplateV
     @context
     @cached_property
     def anonymise(self):
-        return not self.request.user.has_perm('base.orga_list_speakerprofile', self.object)
+        return not self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event)
 
     @context
     @cached_property
@@ -563,14 +569,6 @@ class SubmissionContentEdit(ActionFromUrl, ReviewerSubmissionFilter, SubmissionV
         return self.object and self.request.user.has_perm('base.orga_update_submission', self.request.event)
 
 
-class SubmissionContentView(SubmissionContent):
-    template_name = "orga/submission/content.html"
-    http_method_names = ['get', 'head', 'options']
-
-    def get_permission_required(self):
-        if "code" in self.kwargs:
-            return ["base.orga_list_submission"]  # View permission for reviewers
-        return ["base.create_submission"]
   
 
 
