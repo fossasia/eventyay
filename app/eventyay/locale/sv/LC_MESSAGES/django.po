@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-02 00:16+0000\n"
+"PO-Revision-Date: 2026-03-19 01:09+0000\n"
 "Last-Translator: Kristoffer Grundström <swedishsailfishosuser@tutanota.com>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sv/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16.1-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -3961,8 +3961,6 @@ msgstr ""
 
 #: base/exporters/waitinglist.py:92 base/orderimport.py:149
 #: control/templates/pretixcontrol/checkin/index.html:72
-#, fuzzy
-#| msgid "Date"
 msgctxt "subevents"
 msgid "Date"
 msgstr "Datum"
@@ -4606,11 +4604,11 @@ msgstr "Version"
 #: orga/templates/orga/review/dashboard.html:279
 #: orga/templates/orga/speaker/form.html:60
 msgid "pending"
-msgstr ""
+msgstr "väntande"
 
 #: base/models/billing.py:21 base/models/orders.py:167
 msgid "paid"
-msgstr ""
+msgstr "betald"
 
 #: base/models/billing.py:22 base/models/orders.py:168
 msgid "expired"
@@ -5423,7 +5421,7 @@ msgstr ""
 
 #: base/models/orders.py:182 control/forms/filter.py:482
 msgid "Locale"
-msgstr ""
+msgstr "Språkkod"
 
 #: base/models/orders.py:186 base/models/orders.py:2437
 #: control/forms/orders.py:53
@@ -5542,7 +5540,7 @@ msgstr "misslyckades"
 #: base/models/orders.py:1509
 msgctxt "payment_state"
 msgid "refunded"
-msgstr ""
+msgstr "återbetald"
 
 #: base/models/orders.py:1523 base/models/orders.py:1948 base/shredder.py:453
 #: control/templates/pretixcontrol/organizers/billing.html:41
@@ -5822,7 +5820,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:7
 #: orga/templates/orga/review/assignment.html:41
 msgid "Team"
-msgstr ""
+msgstr "Lag"
 
 #: base/models/organizer.py:419 eventyay_common/navigation.py:175
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:8
