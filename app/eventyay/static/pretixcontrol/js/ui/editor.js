@@ -832,8 +832,14 @@ var editor = {
     },
 
     _source_save: function () {
-        editor.load(JSON.parse($("#source-textarea").val()));
-        $("#source-container").hide();
+        try {
+            var input = $("#source-textarea").val().trim();
+            var parsed = JSON.parse(input);
+            editor.load(parsed);
+            $("#source-container").hide();
+        } catch (e) {
+            alert(gettext('Invalid JSON format. Please correct the design JSON and try again.'));
+        }
     },
 
     _create_empty_background: function () {
