@@ -262,6 +262,9 @@ function getJoinErrorKey(error) {
 		case 'zoom.no_meeting_id':
 			return 'MediaSource:join-error:zoom-no-meeting-id:text'
 
+		case 'zoom.missing_profile':
+			return 'MediaSource:join-error:zoom-missing-profile:text'
+
 		default:
 			return null
 	}
@@ -510,76 +513,31 @@ function getLanguageIframeUrl(languageUrl) {
 defineExpose({ isPlaying });
 </script>
 <style lang="stylus">
-.c-media-source
-	position: absolute
-	width: 0
-	height: 0
-	&.in-background
-		z-index: 101
-	.background-room
-		position: fixed
-		top: 51px
-		right: 4px
-		card()
-		display: flex
-		align-items: center
-		height: 48px
-		min-width: 280px
-		max-width: 380px
-		.description
-			flex: auto
-			align-self: stretch
-			padding: 4px 8px
-			max-width: 238px
-			.hint
-				color: $clr-secondary-text-light
-				font-size: 10px
-				margin-bottom: 2px
-			.room-name
-				color: var(--clr-text-primary)
-				font-weight: 500
-				flex-grow: 0
-				ellipsis()
-		.global-placeholder
-			width: 86px
-			flex: none
-		.bunt-icon-button
-			icon-button-style(style: clear)
-			margin: 0 2px
-		+below('l')
-			top: 51px
-	.background-room-enter-active, .background-room-leave-active
-		transition: transform .3s ease
-	// .background-room-enter-active
-	// 	transition-delay: .1s
-	.background-room-enter-from, .background-room-leave-to
-		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
-.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, iframe.iframe-media-source
-	position: fixed
-	transition: all .3s ease
-	&.size-tiny, &.background
-		bottom: calc(var(--vh100) - 48px - 51px)
-		right: 4px + 36px + 4px
-		+below('l')
-			bottom: calc(var(--vh100) - 48px - 48px - 3px)
+.c-media-source .iframe-error
+	display: flex
+	justify-content: center
+	align-items: center
+	background-color: $clr-blue-grey-200
+	z-index: 1
 	&:not(.size-tiny):not(.background)
-		top: var(--mediasource-placeholder-top, 104px)
-		left: var(--mediasource-placeholder-left, var(--sidebar-width))
 		width: var(--mediasource-placeholder-width, 100vw)
 		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
-iframe.iframe-media-source
-	transition: all .3s ease
-	border: none
-	&.background
-		pointer-events: none
-		height: 48px
+	&.size-tiny, &.background
 		width: 86px
+		height: 48px
+		pointer-events: none
 		z-index: 101
-		&.hide-if-background
-			width: 0
-			height: 0
-	
-.join-error
+	.offline-message
+		font-size: 36px
+		color: $clr-secondary-text-light
+		text-align: center
+		padding: 16px
+	&.size-tiny, &.background
+		.offline-message
+			font-size: 14px
+			padding: 8px
+
+.c-media-source .join-error
 	position: fixed
 	top: 120px
 	left: 50%
@@ -614,6 +572,5 @@ iframe.iframe-media-source
 		opacity: 0.7
 		&:hover
 			opacity: 1
-
 
 </style>
