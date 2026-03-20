@@ -261,7 +261,6 @@ input[type="file"] {
   padding-left: 0;
   margin-bottom: 0.5rem;
 
-  &.form-check-inline {
   &.form-check-vertical,
   .form-check-vertical-group & {
     width: 100%;
@@ -273,6 +272,13 @@ input[type="file"] {
     margin-right: 8px;
     flex-shrink: 0;
   }
+}
+
+.form-check-inline {
+  display: inline-flex;
+  margin-right: 0.75rem;
+  width: auto;
+  margin-bottom: 0;
 }
 
 input[type="checkbox"],
@@ -1020,9 +1026,4 @@ input.password_strength {
 .toastui-editor-ww-container {
   padding: 12px;
   padding-top: 0;
-}
-
-.form-check-inline {
-  display: inline-block;
-  margin-right: 1rem;
 }
