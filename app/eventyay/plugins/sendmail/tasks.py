@@ -22,7 +22,8 @@ def send_queued_mail(self, event_id: int, queued_mail_id: int):
 
     try:
         qm = EmailQueue.objects.get(pk=queued_mail_id, event=event)
-        result = qm.send(async_send=True)
+        # Execute the actual mail transport in this task so outbox state reflects real send attempts.
+        result = qm.send(async_send=False)
 
         if not result:
             logger.warning("[SendMail] EmailQueue ID %s: no recipients to send to.", queued_mail_id)

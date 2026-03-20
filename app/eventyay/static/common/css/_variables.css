@@ -80,4 +80,7 @@
   --breakpoint-md: 768px;
   --breakpoint-lg: 992px;
   --breakpoint-xl: 1200px;
+
+  /* Navbar dimensions – shared by layout offsets and spacing */
+  --navbar-height: 50px;
 }

@@ -58,6 +58,9 @@
                 {{ form.show_schedule.as_field_group }}
                 {{ form.schedule.as_field_group }}
                 {{ form.show_featured.as_field_group }}
+                {{ form.session_popularity_enabled.as_field_group }}
+                {{ form.session_popularity_show_on_calendar.as_field_group }}
+                {{ form.session_popularity_show_on_list.as_field_group }}
                 {{ form.use_feedback.as_field_group }}
                 {{ form.export_html_on_release.as_field_group }}
                 {{ form.html_export_url.as_field_group }}
@@ -72,7 +75,7 @@
         </section>
         <div class="submit-group panel">
             <span>
-                {% url "eventyay_common:event.update" organizer=request.organizer.slug event=request.event.slug as event_settings_url %}
+                {% url "eventyay_common:event.update" organizer=request.event.organizer.slug event=request.event.slug as event_settings_url %}
                 <a class="btn btn-outline-info" href="{{ event_settings_url }}">
                     <i class="fa fa-cog"></i>
                     {% translate "Event settings" %}

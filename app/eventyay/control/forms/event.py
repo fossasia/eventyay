@@ -605,6 +605,8 @@ class EventSettingsForm(SettingsForm):
         'attendee_emails_required',
         'attendee_company_asked',
         'attendee_company_required',
+        'attendee_job_title_asked',
+        'attendee_job_title_required',
         'attendee_addresses_asked',
         'attendee_addresses_required',
         'attendee_data_explanation_text',
@@ -723,6 +725,37 @@ class EventSettingsForm(SettingsForm):
                 self.initial[virtual_key] = "optional"
             else:
                 self.initial[virtual_key] = 'do_not_ask'
+
+
+class OrderFormSettingsForm(EventSettingsForm):
+    """
+    Settings form used on the dedicated order-forms page.
+
+    Keep this list limited to fields rendered there so saving that page
+    cannot overwrite unrelated event settings.
+    """
+
+    auto_fields = [
+        'attendee_names_asked',
+        'attendee_names_required',
+        'attendee_emails_asked',
+        'attendee_emails_required',
+        'attendee_company_asked',
+        'attendee_company_required',
+        'attendee_job_title_asked',
+        'attendee_job_title_required',
+        'attendee_addresses_asked',
+        'attendee_addresses_required',
+        'attendee_data_explanation_text',
+        'order_phone_asked',
+        'order_phone_required',
+        'order_email_asked',
+        'order_email_required',
+        'order_email_asked_twice',
+        'require_registered_account_for_tickets',
+        'include_wikimedia_username',
+        'checkout_show_copy_answers_button',
+    ]
 
 
 class CancelSettingsForm(SettingsForm):

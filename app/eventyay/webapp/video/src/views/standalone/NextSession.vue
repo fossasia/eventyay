@@ -1,12 +1,12 @@
 <template lang="pug">
 .c-standalone-next-session(v-if="nextSession")
 	h2 {{ $t('standalone/NextSession:header') }}
-	Session(:session="nextSession")
+	Session(:session="nextSession", :now="now", :faved="favs.includes(nextSession.id)")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
 // Replace '@pretalx/schedule' Session import with local implementation
-import Session from 'views/schedule/schedule-components/Session.vue'
+import Session from '@schedule/components/Session.vue'
 
 export default {
 	components: {Session},

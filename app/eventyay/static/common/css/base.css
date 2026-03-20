@@ -28,7 +28,7 @@ table {
       background-color: var(--color-grey-ultralight);
     }
   }
-  a:hover {
+  a:not(.btn):hover {
     text-decoration: none;
     color: var(--color-primary-text-dark);
   }
@@ -486,6 +486,11 @@ a {
   }
 }
 
+#main-card {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 .list-group {
   display: flex;
   flex-direction: column;
@@ -631,6 +636,12 @@ a {
   &.show {
     max-height: 100vh;
     transition: max-height 0.5s ease-in-out;
+  }
+  /* Bootstrap 3 compatibility: legacy collapses use .in instead of .show */
+  &.in {
+    max-height: none;
+    overflow: visible;
+    transition: none;
   }
 }
 
@@ -1123,7 +1134,7 @@ pl-0 {
     display: none;
   }
   @page {
-    size: A4 portrait;
-    margin: 0;
+    size: A4 landscape;
+    margin: 5mm;
   }
 }

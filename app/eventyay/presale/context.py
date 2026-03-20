@@ -10,6 +10,7 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.permissions import is_event_organiser
 from eventyay.helpers.i18n import (
     get_javascript_format_without_seconds,
     get_moment_locale,
@@ -164,21 +165,16 @@ def _default_context(request):
     ctx['settings'] = eventyay_settings
     ctx['django_settings'] = settings
 
-    # Check to show organizer area
+    # Check to show organizer area (only for team members or admins)
     ctx['show_organizer_area'] = False
     if (
         request.user
         and request.user.is_authenticated
-        and hasattr(request, 'organizer')
-        and request.organizer
         and hasattr(request, 'event')
         and request.event
     ):
-        ctx['show_organizer_area'] = request.user.has_event_permission(
-            request.organizer,
-            request.event,
-            'can_change_event_settings',
-            request=request,
+        ctx['show_organizer_area'] = is_event_organiser(
+            request.user, request, request.event
         )
 
     ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
