@@ -752,7 +752,7 @@ class Renderer:
         ir = ThumbnailingImageReader(img)
         try:
             width, height = ir.resize(None, float(o['size']) * mm, 300)
-        except:
+        except Exception:
             logger.exception('Can not resize image')
             pass
         canvas.drawImage(
@@ -811,7 +811,7 @@ class Renderer:
         elif content in self.variables:
             try:
                 return self.variables[content]['evaluate'](op, order, ev)
-            except:
+            except Exception:
                 logger.exception('Failed to process variable.')
                 return '(error)'
         return ''
@@ -823,7 +823,7 @@ class Renderer:
         else:
             try:
                 image_file = self.images[o['content']]['evaluate'](op, order, ev)
-            except:
+            except Exception:
                 logger.exception('Failed to process variable.')
                 image_file = None
 
@@ -831,7 +831,7 @@ class Renderer:
             ir = ThumbnailingImageReader(image_file)
             try:
                 ir.resize(float(o['width']) * mm, float(o['height']) * mm, 300)
-            except:
+            except Exception:
                 logger.exception('Can not resize image')
                 pass
             canvas.drawImage(
@@ -887,7 +887,7 @@ class Renderer:
         reshaper = ArabicReshaper(configuration=configuration)
         try:
             text = '<br/>'.join(get_display(reshaper.reshape(l)) for l in text.split('<br/>'))
-        except:
+        except Exception:
             logger.exception('Reshaping/Bidi fixes failed on string {}'.format(repr(text)))
 
         p = Paragraph(text, style=style)

@@ -1027,25 +1027,14 @@ var editor = {
             }
         }).prop('disabled', !$.support.fileInput).parent().addClass($.support.fileInput ? undefined : 'disabled');
 
-        $("#toolbox input[type=number], #toolbox textarea, #toolbox input[type=text]").bind('change keydown keyup' +
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text]").bind('change keydown keyup' +
             ' input', editor._update_values_from_toolbox);
-        $("#toolbox input[type=number], #toolbox textarea, #toolbox input[type=text], #toolbox input[type=radio]").bind('change', editor._create_savepoint);
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio]").bind('change', editor._create_savepoint);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);
-        $("#toolbox select").bind('change', editor._update_values_from_toolbox);
-        $("#toolbox select").bind('change', editor._create_savepoint);
-        $("#toolbox-content, #toolbox-content-other").bind('change keyup input blur', editor._update_values_from_toolbox);
-        $("#toolbox-content, #toolbox-content-other").bind('change keyup input blur', function () {
-            if (!editor._toolbox_update_in_progress) {
-                editor._sync_active_text_object_from_toolbox();
-            }
-        });
-        $("#toolbox-content").bind('mouseup', function () {
-            window.setTimeout(function () {
-                if (!editor._toolbox_update_in_progress) {
-                    editor._sync_active_text_object_from_toolbox();
-                }
-            }, 0);
-        });
+        $("#toolbox select:not(#toolbox-content)").bind('change', editor._update_values_from_toolbox);
+        $("#toolbox select:not(#toolbox-content)").bind('change', editor._create_savepoint);
+        $("#toolbox-content").bind('change', editor._update_values_from_toolbox);
+        $("#toolbox-content-other").bind('change keyup input blur', editor._update_values_from_toolbox);
         $("#toolbox-content, #toolbox-content-other").bind('change', editor._create_savepoint);
         $("#toolbox button.toggling").bind('click change', function () {
             if ($(this).is(".option")) {

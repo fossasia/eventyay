@@ -3,6 +3,7 @@ import logging
 import mimetypes
 from datetime import timedelta
 from io import BytesIO
+from json import JSONDecodeError
 
 from django.conf import settings
 from django.core.files import File
@@ -118,21 +119,30 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
 
     def _get_posted_layout(self):
         data = self.request.POST.get('data')
-        if not data:
-            return None
-        return self._normalize_layout(json.loads(data))
+        if data is None or not data.strip():
+            raise ValueError(_('No layout data was provided.'))
+
+        try:
+            layout = json.loads(data)
+        except JSONDecodeError as exc:
+            raise ValueError(_('Invalid layout data was provided.')) from exc
+
+        if not isinstance(layout, list):
+            raise ValueError(_('Invalid layout data was provided.'))
+
+        return self._normalize_layout(layout)
 
     def _get_posted_layout_json(self):
         layout = self._get_posted_layout()
-        if layout is None:
-            return None
         return json.dumps(layout)
 
     def get_current_layout(self):
         return self._normalize_layout(self.request.event.settings.get(self.get_layout_settings_key(), as_type=list))
 
-    def save_layout(self):
-        self.request.event.settings.set(self.get_layout_settings_key(), self._get_posted_layout_json())
+    def save_layout(self, layout_data=None):
+        if layout_data is None:
+            layout_data = self._get_posted_layout_json()
+        self.request.event.settings.set(self.get_layout_settings_key(), layout_data)
 
     def save_background(self, f: CachedFile):
         fexisting = self.request.event.settings.get(self.get_background_settings_key(), as_type=File)
@@ -225,6 +235,18 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             except CachedFile.DoesNotExist:
                 pass
 
+        layout = None
+        layout_data = None
+        if 'preview' in request.POST or 'data' in request.POST:
+            try:
+                layout = self._get_posted_layout()
+            except ValueError as exc:
+                if 'preview' in request.POST:
+                    return HttpResponseBadRequest(str(exc))
+                return JsonResponse({'status': 'error', 'error': str(exc)}, status=400)
+
+            layout_data = json.dumps(layout)
+
         if 'preview' in request.POST:
             with (
                 rolledback_transaction(),
@@ -233,7 +255,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
                 p = self._get_preview_position()
                 fname, mimet, data = self.generate(
                     p,
-                    override_layout=self._get_posted_layout(),
+                    override_layout=layout,
                     override_background=cf.file if cf else None,
                 )
 
@@ -244,7 +266,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
         elif 'data' in request.POST:
             if cf:
                 self.save_background(cf)
-            self.save_layout()
+            self.save_layout(layout_data)
             return JsonResponse({'status': 'ok'})
         return HttpResponseBadRequest()
 

@@ -204,7 +204,8 @@ class LayoutEditorView(BaseEditorView):
             Question.TYPE_PHONENUMBER: '+1 202 555 0123',
         }
 
-        for question in self.request.event.questions.exclude(type=Question.TYPE_FILE):
+        questions = self.request.event.questions.exclude(type=Question.TYPE_FILE).prefetch_related('options')
+        for question in questions:
             answer_text = sample_answers.get(question.type, str(question.question))
             answer = QuestionAnswer.objects.get_or_create(
                 orderposition=p,
@@ -227,8 +228,11 @@ class LayoutEditorView(BaseEditorView):
 
         return p
 
-    def save_layout(self):
-        layout_data = self._get_posted_layout_json()
+    def save_layout(self, layout_data=None):
+        if layout_data is None:
+            layout_data = self._get_posted_layout_json()
+        if layout_data is None:
+            layout_data = '[]'
         self.layout.layout = layout_data
         self.layout.save(update_fields=['layout'])
         self.layout.log_action(
