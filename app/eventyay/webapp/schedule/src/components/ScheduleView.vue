@@ -78,7 +78,7 @@ import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
-import { getLocalizedString, isProperSession } from '../utils'
+import { getLocalizedString, getSessionTypeLabel, isProperSession } from '../utils'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -445,7 +445,7 @@ export default {
 			for (const talk of (schedule.talks || [])) {
 				const st = talk.session_type
 				if (!st) continue
-				const label = typeof st === 'object' ? (st[lang] || st.en || Object.values(st)[0]) : st
+				const label = getSessionTypeLabel(st)
 				if (label && !typeSet.has(label)) {
 					typeSet.add(label)
 					types.push({ value: label, label, selected: false })

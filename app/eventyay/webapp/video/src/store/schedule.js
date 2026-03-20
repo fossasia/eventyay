@@ -45,6 +45,10 @@ function bindStorageListener (state) {
 	const key = getFavStorageKey()
 	window.addEventListener('storage', (e) => {
 		if (e.key !== key) return
+		if (e.newValue === null) {
+			state.favs = []
+			return
+		}
 		try {
 			state.favs = JSON.parse(e.newValue) || []
 		} catch { /* ignore malformed data */ }
