@@ -21,6 +21,7 @@
 	)
 		span {{ $t(joinErrorKey) }}
 		button.join-error-dismiss(
+			type="button",
 			@click="joinErrorKey = null",
 			:aria-label="$t('Prompt:cancel:label')"
 		) ✕
