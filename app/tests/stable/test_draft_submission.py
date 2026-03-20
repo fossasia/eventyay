@@ -62,6 +62,33 @@ class TestDraftSubmission:
             assert submission.state == SubmissionStates.DRAFT
 
     @pytest.mark.django_db
+    def test_anonymous_save_draft_with_only_title(self, event, client, cfp_setup):
+        """Verify that an anonymous user can save a submission as a draft with only a title."""
+        submission_type = cfp_setup.pk
+
+        # Start wizard without logging in
+        response, current_url = self.perform_init_wizard(client, event=event)
+        assert not response.wsgi_request.user.is_authenticated
+
+        # Post only title and click "Save as draft" as anonymous user
+        data = {
+            "title": "Anonymous Minimal Draft Title",
+            "action": "draft",
+            "content_locale": "en",
+            "submission_type": submission_type,
+        }
+        response = client.post(current_url, data=data, follow=True)
+
+        # Response should be successful and not error out
+        assert response.status_code == 200
+        
+        # Verify anonymous submission exists in DRAFT state
+        with scope(event=event):
+            submission = Submission.all_objects.filter(title="Anonymous Minimal Draft Title").first()
+            assert submission is not None, "Anonymous draft submission was not created"
+            assert submission.state == SubmissionStates.DRAFT
+
+    @pytest.mark.django_db
     def test_final_submission_still_requires_fields(self, event, client, user, cfp_setup):
         """Verify that final submission is still blocked if required fields are missing."""
         client.force_login(user)

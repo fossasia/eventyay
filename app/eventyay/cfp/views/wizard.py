@@ -68,7 +68,6 @@ class SubmitWizard(EventPageMixin, View):
                     for step in request.event.cfp_flow.steps
                     if getattr(step, 'is_before', False)
                     or step.identifier == kwargs['step']
-                    or step.identifier == 'user'
                 ],
             )
         if request.method == 'POST' and request.POST.get('action') == 'back':
@@ -93,7 +92,8 @@ class SubmitWizard(EventPageMixin, View):
                 valid_steps.append(step)
 
         # We are done, or at least the data checks out. Time to save results.
-        request.event.cfp_flow.steps_dict['user'].done(request, draft=draft)
+        if not draft:
+            request.event.cfp_flow.steps_dict['user'].done(request, draft=draft)
         for step in valid_steps:
             if step.identifier != 'user':
                 step.done(request, draft=draft)
