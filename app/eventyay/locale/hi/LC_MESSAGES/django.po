@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-20 21:42+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-03-20 03:09+0000\n"
+"Last-Translator: Arnav Angarkar <arnav.angarkar20@gmail.com>\n"
 "Language-Team: Hindi <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "hi/>\n"
 "Language: hi\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.16.1-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -26853,6 +26853,8 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
+"इस फ़ील्ड में <strong>%(count)s</strong> प्रतिक्रियाएँ हैं, जिनमें से <strong>%(missing)"
+"s</strong> <a href=\"%(base_search_url)sunanswered=1\">अभी भी लंबित हैं</a>।"
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, python-format
@@ -26860,6 +26862,7 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, and no answers are "
 "missing."
 msgstr ""
+"इस फ़ील्ड में <strong>%(count)s</strong> प्रतिक्रियाएँ हैं, और कोई भी उत्तर शेष नहीं है।"
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:78
 #, python-format
@@ -26868,39 +26871,42 @@ msgstr ""
 
 #: orga/templates/orga/cfp/talkquestion/list.html:54
 msgid "Target"
-msgstr ""
+msgstr "लक्ष्य"
 
 #: orga/templates/orga/cfp/text.html:29
 msgid ""
 "A good Call for Participation will engage potential speakers. Remember to "
 "include:"
 msgstr ""
+"एक अच्छा भागीदारी आमंत्रण संभावित वक्ताओं को आकर्षित करेगा। कृपया इसमें शामिल करें:"
 
 #: orga/templates/orga/cfp/text.html:32
 msgid "The formats (sessions, workshops, panels) and their durations"
-msgstr ""
+msgstr "प्रारूप (सत्र, कार्यशालाएँ, पैनल) और उनकी अवधि"
 
 #: orga/templates/orga/cfp/text.html:33
 msgid "Topics you are looking for"
-msgstr ""
+msgstr "आप किन विषयों की तलाश कर रहे हैं"
 
 #: orga/templates/orga/cfp/text.html:34
 msgid "How open you are to alternative topics"
-msgstr ""
+msgstr "आप वैकल्पिक विषयों के लिए कितने खुले हैं"
 
 #: orga/templates/orga/cfp/text.html:35
 msgid "The people coming to your conference: interests, experience level …"
-msgstr ""
+msgstr "आपके सम्मेलन में आने वाले लोग: रुचियाँ, अनुभव स्तर …"
 
 #: orga/templates/orga/cfp/text.html:36
 msgid "Link your Code of Conduct and Data Protection statements."
-msgstr ""
+msgstr "अपनी आचार संहिता और डेटा संरक्षण वक्तव्यों के लिंक जोड़ें।"
 
 #: orga/templates/orga/cfp/text.html:37
 msgid ""
 "Do you offer financial or other support, e.g. support for first time "
 "speakers?"
 msgstr ""
+"क्या आप वित्तीय या अन्य सहायता प्रदान करते हैं, जैसे पहली बार बोलने वाले वक्ताओं के लिए "
+"सहायता?"
 
 #: orga/templates/orga/cfp/text.html:39
 msgid "Dates and location"
