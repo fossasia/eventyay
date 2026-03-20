@@ -11,7 +11,7 @@
             You need to fill all fields that are marked with <span>*</span> to continue.
         {% endblocktrans %}
     </p>
-    <form class="form-horizontal" method="post" enctype="multipart/form-data">
+    <form id="checkout-questions-form" class="form-horizontal" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="panel-group" id="questions_group">
             <details class="panel panel-default" open>
@@ -195,4 +195,86 @@
             <div class="clearfix"></div>
         </div>
     </form>
+{% if request.event|has_plugin:'eventyay.plugins.badges' %}
+<div id="badge-preview">
+    <h4>{% trans "Badge Preview" %}</h4>
+    <p>{% trans "This is a preview of your badge based on the information entered." %}</p>
+</div>
+<script>
+(function () {
+    'use strict';
+
+    // Localised strings rendered by the server so the JS never hardcodes English.
+    var errorPrefix = '{% trans "Error:" %}';
+    var errorLoading = '{% trans "Error loading preview." %}';
+
+    var form = document.getElementById('checkout-questions-form');
+
+    /**
+     * Simple debounce helper to avoid firing preview updates on every keystroke.
+     * The wrapped function will only run after `wait` ms have passed without
+     * another call.
+     */
+    function debounce(fn, wait) {
+        var timeoutId;
+        return function debounced() {
+            var args = arguments;
+            var ctx = this;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            timeoutId = setTimeout(function () { fn.apply(ctx, args); }, wait);
+        };
+    }
+
+    function updatePreview() {
+        var data = new FormData(form);
+        fetch('{% url "plugins:badges:checkout-preview" organizer=request.event.organizer.slug event=request.event.slug %}', {
+            method: 'POST',
+            body: data,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            var previewDiv = document.getElementById('badge-preview');
+            previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4><p>{% trans "This is a preview of your badge based on the information entered." %}</p>';
+            if (data.pdf_base64) {
+                var iframe = document.createElement('iframe');
+                iframe.src = 'data:application/pdf;base64,' + data.pdf_base64;
+                iframe.width = '400';
+                iframe.height = '300';
+                previewDiv.appendChild(iframe);
+            } else if (data.error) {
+                var p = document.createElement('p');
+                p.textContent = errorPrefix + ' ' + data.error;
+                previewDiv.appendChild(p);
+            }
+        }).catch(function () {
+            var previewDiv = document.getElementById('badge-preview');
+            previewDiv.innerHTML = '<h4>{% trans "Badge Preview" %}</h4>';
+            var p = document.createElement('p');
+            p.textContent = errorLoading;
+            previewDiv.appendChild(p);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        updatePreview();
+        var debouncedUpdatePreview = debounce(updatePreview, 400);
+        // Exclude file inputs to avoid repeatedly POSTing large files.
+        form.querySelectorAll('input:not([type="file"]), select, textarea').forEach(function (el) {
+            el.addEventListener('input', debouncedUpdatePreview);
+            if (
+                el.tagName === 'SELECT' ||
+                (el.tagName === 'INPUT' && ['checkbox', 'radio'].indexOf(el.type) !== -1)
+            ) {
+                el.addEventListener('change', debouncedUpdatePreview);
+            }
+        });
+    });
+}());
+</script>
+{% endif %}
 {% endblock %}
