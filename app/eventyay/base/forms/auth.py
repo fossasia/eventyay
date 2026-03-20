@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import User
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.helpers.dicts import move_to_end
 from eventyay.helpers.http import get_client_ip
 
@@ -61,6 +62,13 @@ class LoginForm(forms.Form):
             return
         for k, f in backend.login_form_fields.items():
             self.fields[k] = f
+
+        # Pre-select "Keep me logged in" if a preferred social provider is set
+        # This aligns with the requirement in #1525 to emphasize the "preferred" behavior
+        gs = GlobalSettingsObject()
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+        if login_providers.get('preferred_provider'):
+            self.fields['keep_logged_in'].initial = True
 
         # Authentication backends which use urls cannot have long sessions.
         if not settings.EVENTYAY_LONG_SESSIONS or backend.url:

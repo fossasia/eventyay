@@ -23,6 +23,7 @@ from eventyay.helpers.urls import build_absolute_uri
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
+
 logger = logging.getLogger(__name__)
 adapter = get_adapter()
 
@@ -30,15 +31,30 @@ adapter = get_adapter()
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
-        
+
+        # Store the current provider in session for deterministic behavior in OAuthReturnView
+        request.session['socialauth_provider'] = provider
+
         # Store the 'next' URL in session for redirecting user back after login
         next_url = request.GET.get('next', '')
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             request.session['socialauth_next_url'] = next_url
 
         gs = GlobalSettingsObject()
-        client_id = gs.settings.get('login_providers', as_type=dict).get(provider, {}).get('client_id')
-        provider_instance = adapter.get_provider(request, provider, client_id=client_id)
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+        provider_config = login_providers.get(provider, {})
+        
+        if provider == 'preferred_provider' or not isinstance(provider_config, dict) or not provider_config.get('state'):
+            messages.error(request, _('This social login provider is invalid or disabled.'))
+            return redirect('eventyay_common:auth.login')
+
+        client_id = provider_config.get('client_id')
+        try:
+            provider_instance = adapter.get_provider(request, provider, client_id=client_id)
+        except Exception as e:
+            logger.error('Error fetching social auth provider %s: %s', provider, e)
+            messages.error(request, _('This social login provider is currently unavailable.'))
+            return redirect('eventyay_common:auth.login')
 
         base_url = provider_instance.get_login_url(request)
         query_params = {'next': build_absolute_uri('plugins:socialauth:social.oauth.return')}
@@ -76,7 +92,7 @@ class OAuthReturnView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         try:
             user = self.get_or_create_user(request)
-            
+
             # Check for OAuth2 params first (Talk module integration)
             oauth2_params = request.session.pop('oauth2_params', {})
             if oauth2_params:
@@ -87,23 +103,46 @@ class OAuthReturnView(View):
                     # OAuth2 flow takes precedence - redirect to authorization endpoint
                     # Clean up socialauth_next_url to prevent it from being used later
                     request.session.pop('socialauth_next_url', None)
-                    response = process_login_and_set_cookie(request, user, False)
+                    
+                    # Apply 'keep_logged_in' if this is the preferred provider
+                    keep_logged_in = False
+                    gs = GlobalSettingsObject()
+                    login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+                    current_provider = request.session.get('socialauth_provider')
+                    if current_provider and login_providers.get('preferred_provider') == current_provider:
+                        keep_logged_in = True
+                    
+                    response = process_login_and_set_cookie(request, user, keep_logged_in)
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
-            
+
             # Retrieve and re-validate the stored 'next' URL from session
-            # Re-validation provides defense against session tampering
             next_url = request.session.pop('socialauth_next_url', None)
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-                # Store in session with a clear key for process_login to use
                 request.session['socialauth_next_url'] = next_url
+
+            # Apply 'keep_logged_in' if this is the preferred provider
+            keep_logged_in = False
+            gs = GlobalSettingsObject()
+            login_providers = gs.settings.get('login_providers', as_type=dict) or {}
             
-            response = process_login_and_set_cookie(request, user, False)
+            # Get the provider used for this specific login session
+            current_provider = request.session.pop('socialauth_provider', None)
+            if current_provider and login_providers.get('preferred_provider') == current_provider:
+                keep_logged_in = True
+            
+            response = process_login_and_set_cookie(request, user, keep_logged_in)
             return response
-        except AttributeError as e:
-            messages.error(request, _('Error while authorizing: no email address available.'))
-            logger.error('Error while authorizing: %s', e)
+        except (AttributeError, KeyError, ValidationError) as e:
+            messages.error(request, _('Error while authorizing: information missing or invalid.'))
+            logger.error('Social auth return error: %s', e)
+            return redirect('eventyay_common:auth.login')
+        except Exception:
+            messages.error(request, _('An unexpected error occurred during social login.'))
+            logger.exception('Unexpected social auth error')
+            if settings.DEBUG:
+                raise
             return redirect('eventyay_common:auth.login')
 
     @staticmethod
@@ -184,12 +223,40 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         setting_state = request.POST.get('save_credentials', '').lower()
 
         for provider in LoginProviders.model_fields.keys():
+            if provider == 'preferred_provider':
+                continue
             if setting_state == self.SettingState.CREDENTIALS:
                 self.update_credentials(request, provider, login_providers)
             else:
                 self.update_provider_state(request, provider, login_providers)
 
-        self.gs.settings.set('login_providers', login_providers)
+        if setting_state == self.SettingState.CREDENTIALS:
+            preferred_provider = request.POST.get('preferred_provider', '')
+
+            # Strict validation: must be a valid provider key (not including field itself)
+            valid_providers = [
+                provider
+                for provider in LoginProviders.model_fields.keys()
+                if provider != 'preferred_provider'
+            ]
+            if preferred_provider and preferred_provider not in valid_providers:
+                preferred_provider = ''
+
+            # If preferred provider is disabled or invalid, clear it
+            provider_config = login_providers.get(preferred_provider)
+            if preferred_provider and (not isinstance(provider_config, dict) or not provider_config.get('state', False)):
+                preferred_provider = ''
+
+            login_providers['preferred_provider'] = preferred_provider
+
+        # Final validation before saving
+        try:
+            LoginProviders.model_validate(login_providers)
+            self.gs.settings.set('login_providers', login_providers)
+        except ValidationError as e:
+            messages.error(request, _('Invalid settings provided. Please check your inputs.'))
+            logger.error('Validation error on save: %s', e)
+
         return redirect(self.get_success_url())
 
     def update_credentials(self, request, provider, login_providers):
@@ -199,7 +266,6 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         if client_id_value and secret_value:
             login_providers[provider]['client_id'] = client_id_value
             login_providers[provider]['secret'] = secret_value
-
             SocialApp.objects.update_or_create(
                 provider=provider,
                 defaults={
@@ -207,11 +273,27 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                     'secret': secret_value,
                 },
             )
+        elif not client_id_value and not secret_value:
+            login_providers[provider]['client_id'] = ''
+            login_providers[provider]['secret'] = ''
+            # If credentials are removed, we should delete the SocialApp
+            # and disable the provider state to keep the UI in sync
+            SocialApp.objects.filter(provider=provider).delete()
+            
+            if provider in login_providers:
+                login_providers[provider]['state'] = False
+                if login_providers.get('preferred_provider') == provider:
+                    login_providers['preferred_provider'] = ''
+        else:
+            messages.error(request, _(f'Both Client ID and Secret are required for {provider.title()}.'))
 
     def update_provider_state(self, request, provider, login_providers):
         setting_state = request.POST.get(f'{provider}_login', '').lower()
-        if setting_state in [s.value for s in self.SettingState]:
+        if setting_state in (self.SettingState.ENABLED, self.SettingState.DISABLED):
             login_providers[provider]['state'] = setting_state == self.SettingState.ENABLED
+            # If disabling a preferred provider, clear the preference
+            if not login_providers[provider]['state'] and login_providers.get('preferred_provider') == provider:
+                login_providers['preferred_provider'] = ''
 
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')

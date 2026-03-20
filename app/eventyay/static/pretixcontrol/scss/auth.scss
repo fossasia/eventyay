@@ -67,5 +67,36 @@ footer {
 	border-radius: $border-radius-base;
 }
 
+.social-login-container {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.ui.horizontal.divider {
+	display: flex;
+	align-items: center;
+	text-align: center;
+	margin: 25px 0;
+	color: #777;
+	font-size: 14px;
+	font-weight: normal;
+	text-transform: lowercase;
+
+	&::before, &::after {
+		content: '';
+		flex: 1;
+		border-bottom: 1px solid #ddd;
+	}
+
+	&:not(:empty)::before {
+		margin-right: 1.5rem;
+	}
+
+	&:not(:empty)::after {
+		margin-left: 1.5rem;
+	}
+}
+
 @import "../../pretixbase/scss/_rtl.scss";
 @import "../../bootstrap/scss/_rtl.scss";

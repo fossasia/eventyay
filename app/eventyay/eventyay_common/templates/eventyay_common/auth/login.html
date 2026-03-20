@@ -6,28 +6,30 @@
 {% load append_next_url %}
 {% block content %}
     <form class="form-signin" action="" method="post">
-        <div id="login-form" class="collapse">
-            {% if backends|length > 1 %}
-                <ul class="nav nav-pills">
-                    {% for b in backends %}
-                        {% if b.visible %}
-                            <li class="{% if backend.identifier == b.identifier %}active{% endif %}">
-                                <a href="{% if b.url %}{{ b.url }}{% else %}?{% url_replace request "backend" b.identifier %}{% endif %}">
-                                    {{ b.verbose_name }}
-                                </a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-                <br>
-            {% endif %}
-            {% csrf_token %}
-            {% bootstrap_form form %}
-            <div class="form-group buttons">
+        <div class="form-group buttons">
+            {# 1. Primary Email Form #}
+            <div id="login-form">
+                {% if backends|length > 1 %}
+                    <ul class="nav nav-pills">
+                        {% for b in backends %}
+                            {% if b.visible %}
+                                <li class="{% if backend.identifier == b.identifier %}active{% endif %}">
+                                    <a href="{% if b.url %}{{ b.url }}{% else %}?{% url_replace request 'backend' b.identifier %}{% endif %}">
+                                        {{ b.verbose_name }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                    <br>
+                {% endif %}
+                {% csrf_token %}
+                {% bootstrap_form form %}
                 {% if backend.login_form_fields %}
-                <button type="submit" class="btn btn-primary btn-block">
-                    {% translate "Log in" %}
-                </button>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="sign in icon"></i>
+                        {% translate "Log in" %}
+                    </button>
                 {% endif %}
                 {% if backend.url %}
                     <a href="{{ backend.url }}" class="btn btn-primary btn-block">
@@ -35,34 +37,56 @@
                     </a>
                 {% endif %}
                 {% if backend.identifier == "native" %}
-                    {% if can_reset %}
-                        <a href="{% url "eventyay_common:auth.forgot" %}" class="btn btn-link btn-block">
-                            {% translate "Lost password?" %}
-                        </a>
-                    {% endif %}
-                    {% if can_register %}
-                        <a href='{% url "eventyay_common:auth.register" %}{% append_next request.GET.next %}' class="btn btn-link btn-block">
-                            {% translate "Register" %}
-                        </a>
-                    {% endif %}
+                    <div class="text-center" style="margin-top: 10px;">
+                        {% if can_reset %}
+                            <a href="{% url 'eventyay_common:auth.forgot' %}">{% translate "Lost password?" %}</a>
+                        {% endif %}
+                        {% if can_register %}
+                            &nbsp;&middot;&nbsp;
+                            <a href="{% url 'eventyay_common:auth.register' %}{% append_next request.GET.next %}">{% translate "Register" %}</a>
+                        {% endif %}
+                    </div>
                 {% endif %}
             </div>
-        </div>
-        <div class="form-group buttons">
-            <button type="button" id="toggle-login" class="btn btn-primary btn-block" data-toggle="collapse" data-target="#login-form">
-                {% translate "Login with Email" %}
-            </button>
+
             {% if login_providers %}
-                {% for provider, settings in login_providers.items %}
-                    {% if settings.state %}
-                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
-                           data-method="post" class="btn btn-primary btn-block">
-                            {% with provider|capfirst as provider_capitalized %}
-                                {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
-                            {% endwith %}
-                        </a>
-                    {% endif %}
-                {% endfor %}
+                {% with preferred=login_providers.preferred_provider %}
+                    <div class="social-login-container">
+                        {# 1. Preferred Provider (Blue Button, placed first!) #}
+                        {% if preferred %}
+                            {% for provider, config in login_providers.items %}
+                                {% if provider == preferred and config.state %}
+                                    {% with provider|capfirst as provider_capitalized %}
+                                    <a href="{% url 'plugins:socialauth:social.oauth.login' provider=provider %}{% append_next request.GET.next %}"
+                                       class="btn btn-primary btn-block">
+                                        <i class="{{ provider }} icon"></i>
+                                        {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                                    </a>
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <h4 class="ui horizontal divider">
+                        {% translate "or" %}
+                    </h4>
+
+                    <div class="social-login-container">
+                        {# 2. Other Social Providers (White/Default Buttons) #}
+                        {% for provider, config in login_providers.items %}
+                            {% if provider != 'preferred_provider' and provider != preferred and config.state %}
+                                {% with provider|capfirst as provider_capitalized %}
+                                <a href="{% url 'plugins:socialauth:social.oauth.login' provider=provider %}{% append_next request.GET.next %}"
+                                   class="btn btn-default btn-block">
+                                    <i class="{{ provider }} icon"></i>
+                                    {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                                </a>
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endwith %}
             {% endif %}
         </div>
     </form>

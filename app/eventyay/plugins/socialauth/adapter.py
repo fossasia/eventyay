@@ -7,8 +7,14 @@ from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount import app_settings
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
+from django.contrib import messages
 from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+
+from eventyay.base.settings import GlobalSettingsObject
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +36,26 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         session.headers.update({'User-Agent': user_agent})
         session.request = functools.partial(session.request, timeout=app_settings.REQUESTS_TIMEOUT)
         return session
+
+    def pre_social_login(self, request, sociallogin):
+        """
+        Check if the social login provider is enabled in global settings.
+        This prevents bypassing the 'disabled' state via native allauth URLs.
+        """
+        provider = sociallogin.account.provider
+        gs = GlobalSettingsObject()
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+
+        # Check if provider is enabled
+        is_enabled = False
+        if login_providers:
+            provider_config = login_providers.get(provider, {})
+            if isinstance(provider_config, dict):
+                is_enabled = provider_config.get('state', False)
+
+        if not is_enabled:
+            messages.error(request, _('This social login provider is currently disabled.'))
+            raise ImmediateHttpResponse(redirect('eventyay_common:auth.login'))
 
     def on_authentication_error(self, request, provider, error=None, exception=None, extra_context=None):
         logger.error('Error while authorizing with %s: %s - %s', provider, error, exception)
