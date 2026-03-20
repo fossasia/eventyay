@@ -127,7 +127,9 @@ class NanoCDNStorage(Storage):
             urllib.parse.urljoin(self.base_url, os.path.join("upload", name)),
             data=content,
             allow_redirects=False,
+            timeout=HTTP_TIMEOUT_SHORT,
         )
+        
         if resp.status_code != 409:
             resp.raise_for_status()
 
@@ -148,23 +150,35 @@ class NanoCDNStorage(Storage):
     def delete(self, name):
         if isinstance(name, NanoCDNFile):
             name = name.name
-        resp = requests.delete(urllib.parse.urljoin(self.base_url, name))
+        resp = requests.delete(
+            urllib.parse.urljoin(self.base_url, name),
+            timeout=HTTP_TIMEOUT_SHORT,
+        )
+        
         if resp.status_code == 404:
             return resp  # That is fine
         resp.raise_for_status()
         return resp
 
     def exists(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = requests.head(
+            urllib.parse.urljoin(self.base_url, name),
+            timeout=HTTP_TIMEOUT_SHORT,
+        )
+        
         if resp.status_code == 404:
             return False
         resp.raise_for_status()
         return True
 
     def size(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = requests.head(
+            urllib.parse.urljoin(self.base_url, name),
+            timeout=HTTP_TIMEOUT_SHORT,
+        ) 
+        
         resp.raise_for_status()
-        return resp["Content-Length"]
+        return resp.headers["Content-Length"]
 
     def url(self, name):
         return urllib.parse.urljoin(settings.MEDIA_URL, name)
