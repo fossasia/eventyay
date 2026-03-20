@@ -1,0 +1,186 @@
+/*
+ * Featured speakers styles — single source of truth.
+ * Loaded via {% compress css %} in event/index.html.
+ *
+ * Resolved SCSS variables:
+ *   $border-radius-base  -> 3px
+ *   $brand-primary       -> #2185d0
+ *   $text-muted          -> #767676
+ */
+
+#featured-speakers .featured-speakers-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-left: -15px;
+    margin-right: -15px;
+}
+
+#featured-speakers #featured-speakers-heading {
+    margin-bottom: 18px;
+}
+
+#featured-speakers .featured-speaker-column {
+    float: none;
+    margin-bottom: 24px;
+}
+
+#featured-speakers .featured-speaker-card {
+    margin: 0;
+}
+
+#featured-speakers .featured-speaker-summary {
+    margin-bottom: 0;
+    cursor: pointer;
+    list-style: none;
+}
+
+#featured-speakers .featured-speaker-summary::-webkit-details-marker {
+    display: none;
+}
+
+#featured-speakers .featured-speaker-summary:focus,
+#featured-speakers .featured-speaker-summary:hover {
+    text-decoration: none;
+}
+
+/* Override Bootstrap .thumbnail styles used as layout wrapper inside summary */
+#featured-speakers .featured-speaker-summary .thumbnail {
+    margin-bottom: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+}
+
+#featured-speakers .featured-speaker-summary img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+#featured-speakers .featured-speaker-summary .caption h4 {
+    margin-top: 8px;
+    margin-bottom: 0;
+    color: #222;
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+#featured-speakers .featured-speaker-summary .caption p {
+    margin-top: 4px;
+    margin-bottom: 0;
+    color: #333;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+#featured-speakers .featured-speaker-details {
+    margin-top: 8px;
+    padding: 12px;
+    background: #f7f7f7;
+    border: 1px solid #dcdcdc;
+    border-radius: 3px;
+}
+
+#featured-speakers .featured-speaker-bio {
+    color: #333;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+#featured-speakers .featured-speaker-bio p:last-child {
+    margin-bottom: 0;
+}
+
+#featured-speakers .featured-speaker-divider {
+    margin: 12px 0 8px;
+    border-color: #dedede;
+}
+
+#featured-speakers .featured-speaker-sessions {
+    margin-top: 0;
+    padding: 0 12px;
+}
+
+#featured-speakers .featured-speaker-sessions h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #222;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+#featured-speakers .featured-speaker-session {
+    margin-bottom: 12px;
+}
+
+#featured-speakers .featured-speaker-session:last-child {
+    margin-bottom: 0;
+}
+
+#featured-speakers .featured-speaker-session-time {
+    display: block;
+    color: #767676;
+    margin-bottom: 4px;
+    font-size: 15px;
+    line-height: 1.35;
+    font-weight: 600;
+}
+
+#featured-speakers .featured-speaker-session-link {
+    display: block;
+    background-color: var(--session-color, #2185d0);
+    color: #fff;
+    border-radius: 3px;
+    font-weight: 700;
+    padding: 9px 11px;
+}
+
+#featured-speakers .featured-speaker-session-link:hover,
+#featured-speakers .featured-speaker-session-link:focus {
+    color: #fff;
+    text-decoration: none;
+    opacity: 0.92;
+}
+
+#featured-speakers .featured-speaker-session-slot {
+    display: block;
+    font-size: 12px;
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+#featured-speakers .featured-speaker-session-title {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+#featured-speakers .featured-speaker-profile-link {
+    margin-top: 12px;
+    text-align: right;
+}
+
+#featured-speakers .featured-speakers-more {
+    margin-top: 0;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    #featured-speakers .featured-speaker-summary .caption h4 {
+        font-size: 22px;
+    }
+
+    #featured-speakers .featured-speaker-sessions h4 {
+        font-size: 16px;
+    }
+
+    #featured-speakers .featured-speaker-session-title {
+        font-size: 14px;
+    }
+}

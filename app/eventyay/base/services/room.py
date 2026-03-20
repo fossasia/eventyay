@@ -1,14 +1,20 @@
 import sys
 
+from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 from django.db.transaction import atomic
+from django.dispatch import receiver
 from django.utils.timezone import now
+from django_scopes import scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
 from eventyay.base.models.room import Room
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import RoomConfigSerializer, RoomView
 from eventyay.base.services.user import get_public_users
+from eventyay.base.signals import periodic_task
+from eventyay.features.live.channels import GROUP_ROOM
 
 
 @database_sync_to_async
@@ -138,3 +144,49 @@ def reorder_rooms(event, id_list, by_user):
             "id_list": id_list,
         },
     )
+
+
+async def broadcast_stream_change(room_id, stream_schedule, reload=False):
+    from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
+
+    data = None
+    if stream_schedule:
+        serializer = StreamScheduleSerializer(stream_schedule)
+        data = serializer.data
+
+    await get_channel_layer().group_send(
+        GROUP_ROOM.format(id=room_id),
+        {
+            "type": "stream.change",
+            "stream": data,
+            "reload": reload,
+        },
+    )
+
+
+@receiver(signal=periodic_task)
+@scopes_disabled()
+def check_stream_schedule_changes(sender, **kwargs):
+    from django.core.cache import cache
+
+    # Keep the last broadcast marker stable across periodic runs to avoid repeated rebroadcasts.
+    cache_timeout = None
+
+    rooms = (
+        Room.objects.filter(deleted=False, stream_schedules__isnull=False)
+        .select_related('event')
+        .distinct()
+    )
+
+    for room in rooms:
+        current_stream = room.get_current_stream()
+        cache_key = f'room:{room.pk}:last_broadcast_stream'
+        last_broadcast_id = cache.get(cache_key)
+
+        current_stream_id = current_stream.pk if current_stream else None
+
+        if current_stream_id != last_broadcast_id:
+            cache.set(cache_key, current_stream_id, cache_timeout)
+            async_to_sync(broadcast_stream_change)(
+                room.pk, current_stream, reload=current_stream_id is None
+            )

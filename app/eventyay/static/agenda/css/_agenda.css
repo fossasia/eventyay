@@ -72,7 +72,7 @@
 }
 
 #main-container.main-schedule {
-  min-width: min-content;
+  max-width: 100%;
   margin: 0 auto;
   padding-left: 0;
   padding-right: 0;
@@ -80,16 +80,22 @@
   #main-card {
     margin: 0 auto;
     main {
-      padding: 1rem 0;
+      padding: 0;
       width: 100%;
     }
   }
 }
 
 #main-container #fahrplan {
-  overflow-x: auto;
+  overflow: visible;
   width: 100%;
   box-sizing: border-box;
+
+  pretalx-schedule {
+    display: block;
+    width: 100%;
+    --pretalx-sticky-top-offset: 40px;
+  }
 }
 
 #fahrplan noscript,
@@ -315,6 +321,27 @@ article .pretalx-session .pretalx-session-info .abstract {
   }
   .container {
     max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  #main-container {
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+  #main-container.main-schedule {
+    padding: 0;
+    margin: 0;
+  }
+  #main-card {
+    margin: 0;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+  #main-card main {
+    padding: 0;
   }
 }
 

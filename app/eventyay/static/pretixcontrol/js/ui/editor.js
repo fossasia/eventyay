@@ -108,6 +108,7 @@ var editor = {
     pdf_viewport: null,
     _history_pos: 0,
     _history_modification_in_progress: false,
+    _toolbox_update_in_progress: false,
     dirty: false,
     pdf_url: null,
     uploaded_file_id: null,
@@ -387,6 +388,7 @@ var editor = {
         if (!o) {
             return;
         }
+        editor._toolbox_update_in_progress = true;
         var bottom = editor.pdf_viewport.height - o.height * o.scaleY - o.top;
         if (o.downward) {
             bottom = editor.pdf_viewport.height - o.top;
@@ -405,7 +407,14 @@ var editor = {
             $("#toolbox-poweredby-style").val(o.content);
         } else if (o.type === "text" || o.type === "textarea") {
             var col = (new fabric.Color(o.fill))._source;
-            $("#toolbox-col").val("#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1));
+            var hexColor = "#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1);
+            $("#toolbox-col").val(hexColor);
+            // Update colorpicker's internal state and preview
+            var $colorInput = $("#toolbox-col");
+            if ($colorInput.data('colorpicker')) {
+                $colorInput.colorpicker('setValue', hexColor);
+            }
+            $colorInput.closest('.colorpicker-preview-group').find('.colorpicker-preview').css('background-color', hexColor);
             $("#toolbox-fontsize").val(editor._px2pt(o.fontSize).toFixed(1));
             //$("#toolbox-lineheight").val(o.lineHeight);
             $("#toolbox-fontfamily").val(o.fontFamily);
@@ -427,9 +436,13 @@ var editor = {
                 }
             }
         }
+        editor._toolbox_update_in_progress = false;
     },
 
     _update_values_from_toolbox: function () {
+        if (editor._toolbox_update_in_progress) {
+            return;
+        }
         var o = editor.fabric.getActiveObject();
         if (!o) {
             return;

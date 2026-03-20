@@ -149,6 +149,7 @@ class FrabXCalExporter(ScheduleData):
     identifier = 'schedule.xcal'
     verbose_name = 'XCal (frab compatible)'
     public = True
+    show_qrcode = True
     favs_retrieve = False
     talk_ids = []
     icon = 'fa-calendar'
@@ -180,9 +181,10 @@ class FrabJsonExporter(ScheduleData):
     identifier = 'schedule.json'
     verbose_name = 'JSON (frab compatible)'
     public = True
+    show_qrcode = True
     favs_retrieve = False
     talk_ids = []
-    icon = '{ }'
+    icon = 'fa-code'
     cors = '*'
 
     def get_data(self, **kwargs):
@@ -395,7 +397,7 @@ class FavedICalExporter(BaseExporter):
 
 class BaseCalendarExporter(BaseExporter):
     public = True
-    show_qrcode = False
+    show_qrcode = True
     icon = 'fa-calendar'
 
     @property
@@ -405,7 +407,7 @@ class BaseCalendarExporter(BaseExporter):
 
 class GoogleCalendarExporter(BaseCalendarExporter):
     identifier = 'google-calendar'
-    verbose_name = 'Subscribe in Google Calendar'
+    verbose_name = 'Subscribe to Google Calendar'
     icon = 'fa-google'
     ical_exporter_cls = ICalExporter
 
@@ -419,7 +421,7 @@ class MyGoogleCalendarExporter(BaseCalendarExporter):
 
 class WebcalExporter(BaseCalendarExporter):
     identifier = 'webcal'
-    verbose_name = 'Subscribe in Other Calendar'
+    verbose_name = 'Subscribe to Other Calendar'
     ical_exporter_cls = ICalExporter
 
 

@@ -5,15 +5,29 @@
 		span(v-if="errorCode")  ({{ errorCode }})
 		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
 	template(v-else-if="config")
-		.ui-page-header
-			bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
-			h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
-				span.room-name(v-html="$emojify($localize(config.name))")
-			.actions
-				bunt-button.btn-delete-room(@click="showDeletePrompt = true") delete
-		edit-form(:config="config")
+		template(v-if="!inferredType")
+			.ui-page-header
+				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
+				h1 Mystery Room
+			.mystery-room
+				p Room not instantiated.
+				bunt-button(@click="showRoomEditPrompt = true") Initiate room
+		template(v-else)
+			.ui-page-header
+				bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
+				h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
+					span.room-name(v-html="$emojify($localize(config.name))")
+				.actions
+					bunt-button(v-if="hasPermission('room:update')", @click="showRoomEditPrompt = true") Edit
+					bunt-button.btn-delete-room(@click="showDeletePrompt = true") delete
+			edit-form(:config="config")
 	bunt-progress-circular(v-else, size="huge")
 	transition(name="prompt")
+		RoomEditPrompt(
+			v-if="showRoomEditPrompt && config",
+			:room="{id: config.id}",
+			@close="closeRoomEditPrompt"
+		)
 		prompt.delete-prompt(v-if="showDeletePrompt", @close="showDeletePrompt = false")
 			.content
 				.prompt-header
@@ -25,14 +39,16 @@
 				bunt-button.delete-room(icon="delete", :disabled="deletingRoomName !== $localize(config.name)", @click="deleteRoom", :loading="deleting", :error-message="deleteError") delete this room
 </template>
 <script>
+import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
+import RoomEditPrompt from 'components/RoomEditPrompt'
 import { inferType } from 'lib/room-types'
 import EditForm from './EditForm'
 
 export default {
 	name: 'AdminRoom',
-	components: { EditForm, Prompt },
+	components: { EditForm, Prompt, RoomEditPrompt },
 	props: {
 		roomId: String
 	},
@@ -41,6 +57,7 @@ export default {
 			error: null,
 			errorCode: null,
 			config: null,
+			showRoomEditPrompt: false,
 			showDeletePrompt: false,
 			deletingRoomName: '',
 			deleting: false,
@@ -49,6 +66,7 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters(['hasPermission']),
 		inferredType() {
 			return inferType(this.config)
 		},
@@ -99,6 +117,10 @@ export default {
 				this.deleteError = this.$t(`error:${error.code}`)
 			}
 			this.deleting = false
+		},
+		closeRoomEditPrompt() {
+			this.showRoomEditPrompt = false
+			this.fetchConfig()
 		}
 	}
 }
@@ -143,6 +165,18 @@ export default {
 				margin-right: 16px
 			.btn-delete-room
 				button-style(color: $clr-danger)
+	.mystery-room
+		flex: auto
+		display: flex
+		flex-direction: column
+		justify-content: center
+		align-items: center
+		gap: 12px
+		padding: 24px
+		p
+			margin: 0
+			font-size: 16px
+			color: $clr-secondary-text-light
 
 	.delete-prompt
 		.content

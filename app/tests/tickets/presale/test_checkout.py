@@ -882,6 +882,52 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             cr1 = CartPosition.objects.get(id=cr1.id)
         self.assertEqual(cr1.company, 'foobar')
 
+    def test_attendee_job_title_required(self):
+        self.event.settings.set('attendee_job_title_asked', True)
+        self.event.settings.set('attendee_job_title_required', True)
+        questions_url = f'/{self.orga.slug}/{self.event.slug}/checkout/questions/'
+        payment_url = f'/{self.orga.slug}/{self.event.slug}/checkout/payment/'
+        with scopes_disabled():
+            cr1 = CartPosition.objects.create(
+                event=self.event,
+                cart_id=self.session_key,
+                item=self.ticket,
+                price=23,
+                expires=now() + timedelta(minutes=10),
+            )
+        job_title_field_name = f'{cr1.id}-job_title'
+        response = self.client.get(
+            questions_url,
+            follow=True,
+        )
+        doc = BeautifulSoup(response.content.decode(), 'lxml')
+        self.assertEqual(len(doc.select(f'input[name="{job_title_field_name}"]')), 1)
+
+        # Not all required fields filled out, expect failure
+        response = self.client.post(
+            questions_url,
+            {job_title_field_name: '', 'email': 'admin@localhost'},
+            follow=True,
+        )
+        doc = BeautifulSoup(response.content.decode(), 'lxml')
+        self.assertGreaterEqual(len(doc.select('.has-error')), 1)
+
+        # Corrected request
+        response = self.client.post(
+            questions_url,
+            {job_title_field_name: 'Engineer', 'email': 'admin@localhost'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            payment_url,
+            target_status_code=200,
+        )
+
+        with scopes_disabled():
+            cr1 = CartPosition.objects.get(id=cr1.id)
+        self.assertEqual(cr1.job_title, 'Engineer')
+
     def test_attendee_address_required(self):
         self.event.settings.set('attendee_addresses_asked', True)
         self.event.settings.set('attendee_addresses_required', True)
@@ -2145,6 +2191,71 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             self.assertEqual(OrderPosition.objects.first().price, 0)
             self.assertEqual(Order.objects.first().status, Order.STATUS_PENDING)
             self.assertEqual(Order.objects.first().require_approval, True)
+
+    def test_free_order_bypasses_approval_with_voucher(self):
+        self.ticket.require_approval = True
+        self.ticket.save()
+        with scopes_disabled():
+            voucher = self.event.vouchers.create(
+                item=self.ticket,
+                allow_ignore_approval=True,
+                price_mode='set',
+                value=Decimal('0.00'),
+            )
+            cr1 = CartPosition.objects.create(
+                event=self.event,
+                cart_id=self.session_key,
+                item=self.ticket,
+                price=0,
+                voucher=voucher,
+                expires=now() + timedelta(minutes=10),
+            )
+        self._set_session('payment', 'free')
+
+        response = self.client.post('/%s/%s/checkout/confirm/' % (self.orga.slug, self.event.slug), follow=True)
+        doc = BeautifulSoup(response.content.decode(), 'lxml')
+        self.assertEqual(len(doc.select('.thank-you')), 1)
+        self.assertIn('Confirmed', doc.select('.label-success')[0].text)
+        with scopes_disabled():
+            self.assertFalse(CartPosition.objects.filter(id=cr1.id).exists())
+            self.assertEqual(Order.objects.count(), 1)
+            self.assertEqual(OrderPosition.objects.count(), 1)
+            self.assertEqual(OrderPosition.objects.first().price, 0)
+            self.assertEqual(Order.objects.first().status, Order.STATUS_PAID)
+            self.assertEqual(Order.objects.first().require_approval, False)
+
+    def test_paid_order_bypasses_approval_with_voucher(self):
+        self.ticket.require_approval = True
+        self.ticket.save()
+        with scopes_disabled():
+            voucher = self.event.vouchers.create(
+                item=self.ticket,
+                allow_ignore_approval=True,
+                price_mode='set',
+                value=Decimal('10.00'),
+            )
+            cr1 = CartPosition.objects.create(
+                event=self.event,
+                cart_id=self.session_key,
+                item=self.ticket,
+                price=10,
+                voucher=voucher,
+                expires=now() + timedelta(minutes=10),
+            )
+        self._set_session('payment', 'banktransfer')
+
+        response = self.client.post('/%s/%s/checkout/confirm/' % (self.orga.slug, self.event.slug), follow=True)
+        doc = BeautifulSoup(response.content.decode(), 'lxml')
+        self.assertEqual(len(doc.select('.thank-you')), 1)
+        self.assertIn('Payment pending', response.content.decode())
+        with scopes_disabled():
+            self.assertFalse(CartPosition.objects.filter(id=cr1.id).exists())
+            self.assertEqual(Order.objects.count(), 1)
+            self.assertEqual(OrderPosition.objects.count(), 1)
+            self.assertEqual(OrderPosition.objects.first().price, 10)
+            self.assertEqual(Order.objects.first().status, Order.STATUS_PENDING)
+            self.assertEqual(Order.objects.first().require_approval, False)
+            self.assertEqual(OrderPayment.objects.count(), 1)
 
     def test_confirm_in_time(self):
         with scopes_disabled():

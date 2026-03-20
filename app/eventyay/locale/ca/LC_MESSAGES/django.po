@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-11-30 14:49+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 15:19+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Catalan <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ca/>\n"
 "Language: ca\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -2635,8 +2635,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This question will be asked to buyers of the selected products"
 msgid "The title will only be shown on the event front page."
-msgstr ""
-"Aquesta pregunta es demanarà als compradors dels productes seleccionats"
+msgstr "Aquesta pregunta es demanarà als compradors dels productes seleccionats"
 
 #: base/configurations/default_setting.py:2192
 msgid ""
@@ -3125,8 +3124,8 @@ msgstr "S'ha carregat l'import a la vostra targeta."
 #: base/email.py:776
 msgid "Please transfer money to this bank account: 9999-9999-9999-9999"
 msgstr ""
-"Si us plau, feu una transferència a aquest compte bancari: "
-"9999-9999-9999-9999"
+"Si us plau, feu una transferència a aquest compte bancari: 9999-9999-9999-"
+"9999"
 
 #: base/exporter.py:119 base/exporter.py:255 orga/forms/export.py:17
 msgid "Export format"
@@ -4686,8 +4685,8 @@ msgid ""
 "Bank on {date}, the invoice total corresponds to {total}."
 msgstr ""
 "S'està usant la taxa de conversió de 1:{rate} tal com publica el Banc "
-"Central Europeu a dia {date}, el total de la factura es correspon amb "
-"{total}."
+"Central Europeu a dia {date}, el total de la factura es correspon amb {total}"
+"."
 
 #: base/invoice.py:839
 #, fuzzy
@@ -4770,8 +4769,7 @@ msgstr "Zona horària"
 
 #: base/models/auth.py:189
 msgid "Two-factor authentication is required to log in"
-msgstr ""
-"Es necessita un factor d'autenticació de dues passes per iniciar sessió"
+msgstr "Es necessita un factor d'autenticació de dues passes per iniciar sessió"
 
 #: base/models/auth.py:192
 msgid "Receive notifications according to my settings below"
@@ -5071,8 +5069,7 @@ msgstr "Data d'inicialització"
 
 #: base/models/event.py:247
 msgid "The end of the presale period has to be later than its start."
-msgstr ""
-"La data del període de prevenda ha de ser posterior al seu començament."
+msgstr "La data del període de prevenda ha de ser posterior al seu començament."
 
 #: base/models/event.py:249
 msgid "The end of the event has to be later than its start."
@@ -6987,8 +6984,7 @@ msgstr "Requereix un nom de client"
 
 #: base/models/product.py:1193
 msgid "This question will be asked to buyers of the selected products"
-msgstr ""
-"Aquesta pregunta es demanarà als compradors dels productes seleccionats"
+msgstr "Aquesta pregunta es demanarà als compradors dels productes seleccionats"
 
 #: base/models/product.py:1197
 msgid "Ask during check-in instead of in the ticket buying process"
@@ -8055,15 +8051,13 @@ msgstr "No podeu seleccionar una quota que pertany a un esdeveniment diferent."
 
 #: base/models/vouchers.py:241
 msgid "You cannot select a quota and a specific product at the same time."
-msgstr ""
-"No podeu seleccionar una quota i un producte específic al mateix temps."
+msgstr "No podeu seleccionar una quota i un producte específic al mateix temps."
 
 #: base/models/vouchers.py:244
 #, fuzzy
 #| msgid "You cannot select an item that belongs to a different event."
 msgid "You cannot select an product that belongs to a different event."
-msgstr ""
-"No podeu seleccionar un element que pertany a un esdeveniment diferent."
+msgstr "No podeu seleccionar un element que pertany a un esdeveniment diferent."
 
 #: base/models/vouchers.py:247 base/models/vouchers.py:266
 msgid ""
@@ -10124,30 +10118,30 @@ msgstr "Complement: %s"
 msgid "The voucher has been sent to {recipient}."
 msgstr "Ja s'ha enviat un val a aquesta persona."
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 "Ha d'estar activada també la vostra configuració regional predeterminada "
 "(mireu el quadre de més amunt)."
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 msgid "Content languages must be a subset of the active languages."
 msgstr ""
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 "No podeu requerir que s'especifiquin noms d'assistents si no els demaneu."
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 "Heu de demanar els correus dels assistents si voleu que siguin un "
 "requeriment."
 
-#: base/settings.py:154
+#: base/settings.py:163
 #, fuzzy
 #| msgid ""
 #| "You have to ask for attendee emails if you want to make them required."
@@ -10156,18 +10150,18 @@ msgstr ""
 "Heu de demanar els correus dels assistents si voleu que siguin un "
 "requeriment."
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 "Heu de demanar les adreces de facturació si voleu que siguin un requeriment."
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 "Heu de demanar les adreces de facturació per poder demanar noms d'empresa."
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr "El darrer dia de pagament no pot ser abans de la fi de la prevenda."
 
@@ -14006,7 +14000,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -14224,23 +14218,62 @@ msgid ""
 "will be sent by this server locally."
 msgstr ""
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable payment method"
+msgid "Enable telemetry"
+msgstr "Activa el mètode de pagament"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+msgid "Telemetry endpoint"
+msgstr ""
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+msgid "Maintainer contact"
+msgstr ""
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "URIs de la redirecció"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 msgid "The Stripe key cannot be empty."
 msgstr ""
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -24075,8 +24108,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Two-factor authentication is required to log in"
 msgid "Please activate two-factor authentication using the button below."
-msgstr ""
-"Es necessita un factor d'autenticació de dues passes per iniciar sessió"
+msgstr "Es necessita un factor d'autenticació de dues passes per iniciar sessió"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:48
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:64
@@ -29623,8 +29655,7 @@ msgstr "Transferència bancària"
 
 #: plugins/banktransfer/apps.py:17
 msgid "This plugin allows you to receive payments via bank transfer."
-msgstr ""
-"Aquest complement us permet rebre pagaments via transferència bancària."
+msgstr "Aquest complement us permet rebre pagaments via transferència bancària."
 
 #: plugins/banktransfer/apps.py:31
 msgid ""
@@ -30886,8 +30917,7 @@ msgstr "l'equip de eventyay"
 #, fuzzy
 #| msgid "This plugin allows you to receive payments via bank transfer."
 msgid "This plugin allows you to login via social networks"
-msgstr ""
-"Aquest complement us permet rebre pagaments via transferència bancària."
+msgstr "Aquest complement us permet rebre pagaments via transferència bancària."
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:25
 #, fuzzy
@@ -31821,8 +31851,7 @@ msgstr "Abans de continuar, necessitem que ens proporcioneu més informació."
 #: presale/templates/pretixpresale/event/checkout_questions.html:10
 msgid ""
 "You need to fill all fields that are marked with <span>*</span> to continue."
-msgstr ""
-"Heu d'omplir tots els camps marcats amb <span>*</span> per a continuar."
+msgstr "Heu d'omplir tots els camps marcats amb <span>*</span> per a continuar."
 
 #: presale/templates/pretixpresale/event/checkout_questions.html:69
 msgid "Copy answers from above"
@@ -33033,8 +33062,8 @@ msgstr ""
 msgid ""
 "To log in and access your events, please <a %(a_attr)s>head over here</a>."
 msgstr ""
-"Si esteu mirant de configurar aquesta instal·lació, si us plau <a "
-"%(a_attr)s>aneu cap aquí</a>."
+"Si esteu mirant de configurar aquesta instal·lació, si us plau <a %(a_attr)s>"
+"aneu cap aquí</a>."
 
 #: presale/templates/pretixpresale/index.html:30
 msgid "Enjoy!"

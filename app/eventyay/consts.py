@@ -2,6 +2,7 @@ import zoneinfo
 from enum import StrEnum
 from pathlib import Path
 
+
 # The root directory of the project, where "./manage.py" file is located.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 

@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-11-30 09:10+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 14:40+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Bulgarian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/bg/>\n"
 "Language: bg\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -5074,8 +5074,7 @@ msgstr "Персонализирани CSS стилове за събитиет�
 msgid ""
 "Upload a custom CSS file if changing the primary colour is not sufficient "
 "for you."
-msgstr ""
-"Качете собствен CSS файл, ако смяната на основния цвят не е достатъчна."
+msgstr "Качете собствен CSS файл, ако смяната на основния цвят не е достатъчна."
 
 #: base/models/event.py:721
 msgid ""
@@ -9989,31 +9988,31 @@ msgstr "Приставки"
 msgid "The voucher has been sent to {recipient}."
 msgstr "Потребителят е изтрит."
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
 #| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
 msgstr "За стандартен може да изберете само някой от наличните езици."
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 
-#: base/settings.py:154
+#: base/settings.py:163
 msgid "You have to ask for order email if you want to make it required."
 msgstr ""
 
-#: base/settings.py:158
+#: base/settings.py:167
 #, fuzzy
 #| msgid ""
 #| "You have to provide a sender address if you use a custom SMTP server."
@@ -10022,11 +10021,11 @@ msgid ""
 msgstr ""
 "Трябва да укажете адрес на подател, ако сами настройвате сървър за SMTP."
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 
-#: base/settings.py:173
+#: base/settings.py:182
 #, fuzzy
 #| msgid "The event end cannot be before the start."
 msgid "The last payment date cannot be before the end of presale."
@@ -10699,8 +10698,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Може да подавате предложения отсега до %(deadline)s (%(timezone)s), "
-"%(until_string)s ."
+"Може да подавате предложения отсега до %(deadline)s (%(timezone)s), %"
+"(until_string)s ."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -12050,8 +12049,8 @@ msgid ""
 "The link you clicked on wants to redirect you to a destination on the "
 "website %(host)s."
 msgstr ""
-"Връзката, която сте последвали, иска да Ви пренасочи към страница на сайта "
-"%(host)s."
+"Връзката, която сте последвали, иска да Ви пренасочи към страница на сайта %"
+"(host)s."
 
 #: common/templates/common/redirect.html:18
 msgid "Please only proceed if you trust this website to be safe."
@@ -12434,8 +12433,7 @@ msgstr "Нова парола (отново)"
 
 #: common/text/phrases.py:88
 msgid "You entered two different passwords. Please enter the same one twice!"
-msgstr ""
-"Въвели сте две различни пароли. Моля, въведете еднаква парола два пъти!"
+msgstr "Въвели сте две различни пароли. Моля, въведете еднаква парола два пъти!"
 
 #: common/text/phrases.py:89
 msgctxt "noun / heading"
@@ -13140,8 +13138,7 @@ msgstr "Персонализирано писмо"
 msgid ""
 "All mail related to your event will be sent over your specified email "
 "gateway."
-msgstr ""
-"Всички писма относно събитието ще се пращат през зададения SMTP сървър."
+msgstr "Всички писма относно събитието ще се пращат през зададения SMTP сървър."
 
 #: control/forms/event.py:1141 control/forms/global_settings.py:140
 msgid "Sendgrid Token"
@@ -13960,7 +13957,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -14181,23 +14178,62 @@ msgstr ""
 "Ще Ви известим на този адрес, ако има налична нова версия. Този адрес няма "
 "да се подаде до eventyay.com – писмата се пращат локално от Вашия сървър."
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+msgid "Enable telemetry"
+msgstr ""
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+#, fuzzy
+#| msgid "Send all"
+msgid "Telemetry endpoint"
+msgstr "Пращане на всичко"
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+msgid "Maintainer contact"
+msgstr ""
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirect"
 msgid "Redirect URL"
 msgstr "Пренасочване"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 msgid "The Stripe key cannot be empty."
 msgstr ""
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -25431,8 +25467,7 @@ msgstr "За поправка"
 #| msgid "There may be easy ways to improve your event before its release!"
 msgid ""
 "There may be easy ways to improve your talk component before its release!"
-msgstr ""
-"Може да има лесни начини да подобрите събитието преди публикуването му!"
+msgstr "Може да има лесни начини да подобрите събитието преди публикуването му!"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:184
 #: orga/templates/orga/event/live.html:44
@@ -26795,8 +26830,8 @@ msgid ""
 msgstr ""
 "Здравейте!\n"
 "\n"
-"Щастливи сме да Ви съобщим, че приемаме Вашето предложение  "
-"„{submission_title}“\n"
+"Щастливи сме да Ви съобщим, че приемаме Вашето предложение  „"
+"{submission_title}“\n"
 "за {event_name}. Моля, щракнете върху тази връзка, за да потвърдите "
 "присъствието си:\n"
 "\n"
@@ -26988,8 +27023,8 @@ msgid ""
 msgstr ""
 "Здравейте!\n"
 "\n"
-"Добавени сте към предложение за {event_name} със заглавие "
-"„{proposal_title}“.\n"
+"Добавени сте към предложение за {event_name} със заглавие „{proposal_title}"
+"“.\n"
 "Моля, последвайте връзката, за да редактирате профила си и състоянието на "
 "предложението си:\n"
 "\n"
@@ -27322,8 +27357,7 @@ msgstr "Външен SMTP сървър"
 msgid ""
 "All mail related to your event will be sent over the SMTP server specified "
 "by you."
-msgstr ""
-"Всички писма относно събитието ще се пращат през зададения SMTP сървър."
+msgstr "Всички писма относно събитието ще се пращат през зададения SMTP сървър."
 
 #: orga/forms/event.py:197
 msgid "Sender address for outgoing emails."
@@ -28340,8 +28374,7 @@ msgstr "Добрата покана за предложения подканя �
 
 #: orga/templates/orga/cfp/text.html:32
 msgid "The formats (sessions, workshops, panels) and their durations"
-msgstr ""
-"Форматите (сесии, работилници, панелни дискусии) и продължителността им"
+msgstr "Форматите (сесии, работилници, панелни дискусии) и продължителността им"
 
 #: orga/templates/orga/cfp/text.html:33
 msgid "Topics you are looking for"
@@ -28526,9 +28559,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Ако вече имате акаунт – като лектор или организатор – на <a "
-"href=\"%(domain)s\">%(domain)s</a>, впишете се сега. Иначе, създайте си "
-"акаунт, за да се присъедините към екипа!"
+"Ако вече имате акаунт – като лектор или организатор – на <a href=\"%(domain)"
+"s\">%(domain)s</a>, впишете се сега. Иначе, създайте си акаунт, за да се "
+"присъедините към екипа!"
 
 #: orga/templates/orga/invitation.html:37
 #, fuzzy, python-format
@@ -28547,8 +28580,8 @@ msgid ""
 "invitation by mistake, please contact the organizer directly."
 msgstr ""
 "За да приемете поканата с текущия акаунт, натиснете бутона по-долу. Ако "
-"искате де приемете поканата с друг акаунт, може <a href=\"/orga/logout/?"
-"next=%(link)s\">да излезете</a> и да се впишете с другия акаунт. </p><p>Ако "
+"искате де приемете поканата с друг акаунт, може <a href=\"/orga/logout/"
+"?next=%(link)s\">да излезете</a> и да се впишете с другия акаунт. </p><p>Ако "
 "считате, че сте получили поканата по погрешка, свържете се направо с "
 "организатора."
 
@@ -28868,8 +28901,8 @@ msgstr ""
 "ползвате кодовете на предложенията като ключове (напр. „UX3N1“), а "
 "идентификаторите на потребителите като стойности, или обратно. За "
 "идентификатор може да ползвате или e-mail адреса на потребителите, или "
-"кодовете им (напр. „34KJN“). Може да погледнете примерен файл <a "
-"href='%(href)s'>тук</a>."
+"кодовете им (напр. „34KJN“). Може да погледнете примерен файл <a href='%"
+"(href)s'>тук</a>."
 
 #: orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -28928,10 +28961,10 @@ msgid ""
 "them first. You can change this in your <a href=\"%(href)s\">review "
 "settings</a>."
 msgstr ""
-"Рецензентите може да виждат и рецензират <strong>всички предложения</"
-"strong>, но предложенията, които са им разпределени, се изобразяват "
-"осветени, а рецензентите биват подканени да прегледат първо тях. Може да "
-"промените това в <a href='%(href)s'>настройките за рецензиране</a>."
+"Рецензентите може да виждат и рецензират <strong>всички предложения</strong>"
+", но предложенията, които са им разпределени, се изобразяват осветени, а "
+"рецензентите биват подканени да прегледат първо тях. Може да промените това "
+"в <a href='%(href)s'>настройките за рецензиране</a>."
 
 #: orga/templates/orga/review/assignment.html:114
 msgid ""
@@ -29342,8 +29375,7 @@ msgstr "Всички непотвърдени сесии."
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
 msgstr[0] "Една сесия все още <strong>не е поместена в програмата</strong>."
-msgstr[1] ""
-"%(count)s сесии все още <strong>не са поместени в програмата</strong>."
+msgstr[1] "%(count)s сесии все още <strong>не са поместени в програмата</strong>."
 
 #: orga/templates/orga/schedule/release.html:76
 #, python-format
@@ -29351,8 +29383,7 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] "Една сесия все още <strong>не е поместена в някой поток</strong>."
-msgstr[1] ""
-"%(count)s сесии все още <strong>не са поместени в някой поток</strong>."
+msgstr[1] "%(count)s сесии все още <strong>не са поместени в някой поток</strong>."
 
 #: orga/templates/orga/schedule/release.html:92
 msgid "Warnings"
@@ -29434,9 +29465,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Ако оценката от рецензията и текстът на рецензията не са задължителни, "
-"рецензентите ще разполагат с допълнителен бутон за "
-"%(quotation_open)sВъздържане%(quotation_close)s при прегледа на "
-"предложенията."
+"рецензентите ще разполагат с допълнителен бутон за %(quotation_open)"
+"sВъздържане%(quotation_close)s при прегледа на предложенията."
 
 #: orga/templates/orga/settings/review.html:84
 msgid ""

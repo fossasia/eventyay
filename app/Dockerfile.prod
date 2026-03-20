@@ -103,8 +103,7 @@ ENV PATH="$APP_HOME/.venv/bin:$PATH"
 ENV EVY_RUNNING_ENVIRONMENT=production
 
 
-# Temporarily disable because the PO files are wrong.
-# RUN python manage.py compilemessages
+RUN python manage.py compilemessages -i .venv
 RUN python manage.py compilejsi18n
 RUN python manage.py collectstatic --noinput
 #RUN python manage.py compress

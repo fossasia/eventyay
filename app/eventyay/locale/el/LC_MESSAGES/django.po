@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-11-30 11:20+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 15:06+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Greek <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "el/>\n"
 "Language: el\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -164,8 +164,7 @@ msgstr ""
 
 #: agenda/templates/agenda/feedback_form.html:25
 msgid "You can’t give feedback for this session at this time."
-msgstr ""
-"Δεν μπορείτε να υποβάλετε σχόλια για αυτήν τη συνεδρία αυτήν τη στιγμή."
+msgstr "Δεν μπορείτε να υποβάλετε σχόλια για αυτήν τη συνεδρία αυτήν τη στιγμή."
 
 #: agenda/templates/agenda/schedule.html:23
 #, fuzzy
@@ -5793,8 +5792,7 @@ msgstr "Όριο στα κομμάτια"
 
 #: base/models/information.py:37
 msgid "Leave empty to show this information to all tracks."
-msgstr ""
-"Αφήστε κενό για να εμφανιστούν αυτές οι πληροφορίες σε όλα τα κομμάτια."
+msgstr "Αφήστε κενό για να εμφανιστούν αυτές οι πληροφορίες σε όλα τα κομμάτια."
 
 #: base/models/information.py:41
 msgid "Limit to proposal types"
@@ -7094,8 +7092,7 @@ msgstr ""
 #, fuzzy
 #| msgid "The item's availability cannot end before it starts."
 msgid "The product's availability cannot end before it starts."
-msgstr ""
-"Η διαθεσιμότητα του στοιχείου δεν μπορεί να τερματιστεί πριν ξεκινήσει."
+msgstr "Η διαθεσιμότητα του στοιχείου δεν μπορεί να τερματιστεί πριν ξεκινήσει."
 
 #: base/models/product.py:735
 msgid "This is shown below the variation name in lists."
@@ -7165,8 +7162,7 @@ msgstr "Ο μέγιστος αριθμός πρέπει να είναι ίσος
 
 #: base/models/product.py:1001
 msgid "The maximum count needs to be greater than the minimum count."
-msgstr ""
-"Ο μέγιστος αριθμός πρέπει να είναι μεγαλύτερος από τον ελάχιστο αριθμό."
+msgstr "Ο μέγιστος αριθμός πρέπει να είναι μεγαλύτερος από τον ελάχιστο αριθμό."
 
 #: base/models/product.py:1025 control/forms/product.py:856
 #: control/templates/pretixcontrol/item/include_bundles.html:23
@@ -7942,8 +7938,7 @@ msgstr "Ο/Η {speaker} δεν είναι διαθέσιμος/η την προ�
 #: base/models/schedule.py:428
 #, python-brace-format
 msgid "{speaker} is scheduled for another session at the same time."
-msgstr ""
-"Ο/Η {speaker} πραγματοποιεί μια άλλη συνεδρία την προγραμματισμένη ώρα."
+msgstr "Ο/Η {speaker} πραγματοποιεί μια άλλη συνεδρία την προγραμματισμένη ώρα."
 
 #: base/models/seating.py:25
 msgid "Your layout file is not a valid JSON file."
@@ -8520,8 +8515,7 @@ msgstr "Τιμή κουπονιού"
 
 #: base/models/vouchers.py:158 control/forms/vouchers.py:31
 msgid "This product is added to the user's cart if the voucher is redeemed."
-msgstr ""
-"Αυτό το προϊόν προστίθεται στο καλάθι χρήστη αν το κουπόνι εξαργυρωθεί."
+msgstr "Αυτό το προϊόν προστίθεται στο καλάθι χρήστη αν το κουπόνι εξαργυρωθεί."
 
 #: base/models/vouchers.py:169
 msgid "This variation of the product select above is being used."
@@ -8770,8 +8764,7 @@ msgstr "Ένα κουπόνι έχει ήδη σταλεί σε αυτό το ά
 
 #: base/models/waitinglist.py:125
 msgid "This entry is anonymized and can no longer be used."
-msgstr ""
-"Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
+msgstr "Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
 
 #: base/models/waitinglist.py:135
 #, python-brace-format
@@ -9203,8 +9196,8 @@ msgstr ""
 #: base/payment.py:334
 msgid "Calculate the fee from the total value including the fee."
 msgstr ""
-"Υπολογίστε το τέλος(fee) από τη συνολική αξία συμπεριλαμβανομένου του "
-"τέλους(fee)."
+"Υπολογίστε το τέλος(fee) από τη συνολική αξία συμπεριλαμβανομένου του τέλους"
+"(fee)."
 
 #: base/payment.py:336
 #, python-brace-format
@@ -9999,8 +9992,8 @@ msgstr "Δεν μπορείτε να επιλέξετε περισσότερα �
 msgid ""
 "You cannot select more than %(max)s products of the product %(product)s."
 msgstr ""
-"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος "
-"%(product)s."
+"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος %"
+"(product)s."
 
 #: base/services/cart.py:77
 #, fuzzy, python-format
@@ -10140,8 +10133,7 @@ msgstr "Δεν μπορείτε να επιλέξετε ένα πρόσθετο 
 
 #: base/services/cart.py:119
 msgid "You can not select two variations of the same add-on product."
-msgstr ""
-"Δεν μπορείτε να επιλέξετε δύο παραλλαγές του ίδιου προϊόντος πρόσθετου."
+msgstr "Δεν μπορείτε να επιλέξετε δύο παραλλαγές του ίδιου προϊόντος πρόσθετου."
 
 #: base/services/cart.py:120
 #, python-format
@@ -10149,8 +10141,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία "
-"%(cat)s για το προϊόν %(base)s."
+"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία %"
+"(cat)s για το προϊόν %(base)s."
 
 #: base/services/cart.py:122
 #, python-format
@@ -10170,8 +10162,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία "
-"%(cat)s για το προϊόν %(base)s."
+"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία %"
+"(cat)s για το προϊόν %(base)s."
 
 #: base/services/cart.py:127
 msgid ""
@@ -10251,8 +10243,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This entry is anonymized and can no longer be used."
 msgid "This entry is not permitted due to custom rules."
-msgstr ""
-"Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
+msgstr "Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
 
 #: base/services/checkin.py:503
 msgid "This ticket has already been redeemed."
@@ -10426,8 +10417,8 @@ msgid ""
 "You cannot select more than %(max)s products of the product %(product)s. We "
 "removed the surplus products from your cart."
 msgstr ""
-"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος "
-"%(product)s. Καταργήσαμε τα πλεονάσματα από το καλάθι σας."
+"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος %"
+"(product)s. Καταργήσαμε τα πλεονάσματα από το καλάθι σας."
 
 #: base/services/orders.py:114
 msgid "The presale period has ended."
@@ -10800,32 +10791,32 @@ msgstr "Plugin: %s"
 msgid "The voucher has been sent to {recipient}."
 msgstr "Το κουπόνι έχει δημιουργηθεί."
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 "Η προεπιλεγμένη σας τοπική ρύθμιση πρέπει επίσης να είναι ενεργοποιημένη για "
 "την εκδήλωσή σας (δείτε το πλαίσιο παραπάνω)."
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
 #| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
 msgstr "Η προεπιλεγμένη γλώσσα πρέπει να είναι μία από τις ενεργές γλώσσες."
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 "Δεν μπορείτε να απαιτήσετε να διευκρινίσετε τα ονόματα των συμμετεχόντων εάν "
 "δεν τα ζητήσετε."
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 "Πρέπει να ζητήσετε emails για τους συμμετέχοντες, αν θέλετε να τα απαιτήσετε."
 
-#: base/settings.py:154
+#: base/settings.py:163
 #, fuzzy
 #| msgid ""
 #| "You have to ask for attendee emails if you want to make them required."
@@ -10833,7 +10824,7 @@ msgid "You have to ask for order email if you want to make it required."
 msgstr ""
 "Πρέπει να ζητήσετε emails για τους συμμετέχοντες, αν θέλετε να τα απαιτήσετε."
 
-#: base/settings.py:158
+#: base/settings.py:167
 #, fuzzy
 #| msgid ""
 #| "You have to ask for attendee emails if you want to make them required."
@@ -10842,13 +10833,13 @@ msgid ""
 msgstr ""
 "Πρέπει να ζητήσετε emails για τους συμμετέχοντες, αν θέλετε να τα απαιτήσετε."
 
-#: base/settings.py:164
+#: base/settings.py:173
 #, fuzzy
 #| msgid "This will require users to enter a company name."
 msgid "You have to require invoice addresses to require for company names."
 msgstr "Αυτό θα απαιτήσει από τους χρήστες να εισάγουν ένα όνομα εταιρείας."
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 "Η τελευταία ημερομηνία πληρωμής δεν μπορεί να είναι πριν από το τέλος της "
@@ -11100,8 +11091,7 @@ msgstr "Κάντε κλικ εδώ απενεργοποιήστε όλες τι�
 
 #: base/templates/pretixbase/email/notification.txt:15
 msgid "Click here to view and change your notification settings:"
-msgstr ""
-"Κάντε κλικ εδώ για να δείτε και να αλλάξετε τις ρυθμίσεις ειδοποιήσεων:"
+msgstr "Κάντε κλικ εδώ για να δείτε και να αλλάξετε τις ρυθμίσεις ειδοποιήσεων:"
 
 #: base/templates/pretixbase/email/notification.txt:17
 msgid "Click here disable all notifications immediately:"
@@ -11560,8 +11550,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Μπορείτε να εισάγετε προτάσεις μέχρι %(deadline)s (%(timezone)s), "
-"%(until_string)s από τώρα."
+"Μπορείτε να εισάγετε προτάσεις μέχρι %(deadline)s (%(timezone)s), %"
+"(until_string)s από τώρα."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -12095,8 +12085,7 @@ msgstr "Αυτή η πρόταση δεν έχει ακόμη μεταφορτώ
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:94
 msgid "You can either provide a URL or upload a file."
-msgstr ""
-"Μπορείτε είτε να δώσετε μια διεύθυνση URL είτε να ανεβάσετε ένα αρχείο."
+msgstr "Μπορείτε είτε να δώσετε μια διεύθυνση URL είτε να ανεβάσετε ένα αρχείο."
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:104
 msgid "Add another resource"
@@ -12979,8 +12968,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This change was performed by a member of the event orga."
 msgid "This change was performed by an event organiser."
-msgstr ""
-"Αυτή η αλλαγή πραγματοποιήθηκε από ένα μέλος της οργανωτικής επιτροπής."
+msgstr "Αυτή η αλλαγή πραγματοποιήθηκε από ένα μέλος της οργανωτικής επιτροπής."
 
 #: common/templates/common/question_answer.html:9
 msgid "No file provided"
@@ -14956,7 +14944,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -15203,19 +15191,62 @@ msgstr ""
 "eventyay.eu, τα μηνύματα ηλεκτρονικού ταχυδρομείου θα αποστέλλονται από "
 "αυτόν τον εξυπηρετητή τοπικά."
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable test mode"
+msgid "Enable telemetry"
+msgstr "Ενεργοποιήστε τη λειτουργία δοκιμής"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+#, fuzzy
+#| msgid "Send all"
+msgid "Telemetry endpoint"
+msgstr "Αποστολή όλων"
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+#, fuzzy
+#| msgid "Bancontact"
+msgid "Maintainer contact"
+msgstr "Bancontact"
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "URI ανακατεύθυνση"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 #, fuzzy
 #| msgid "The selected team cannot be deleted."
 msgid "The Stripe key cannot be empty."
 msgstr "Η επιλεγμένη ομάδα δεν μπορεί να διαγραφεί."
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -15226,7 +15257,7 @@ msgstr ""
 "Το παρεχόμενο κλειδί \"%(value)s\" δεν φαίνεται έγκυρο. Θα πρέπει να ξεκινά "
 "με το \"%(prefix)s\"."
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -16341,8 +16372,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Η θέση # {posid}: {old_item} ({old_price}) άλλαξε σε {new_item} "
-"({new_price})."
+"Η θέση # {posid}: {old_item} ({old_price}) άλλαξε σε {new_item} ({new_price})"
+"."
 
 #: control/logdisplay.py:70
 #, fuzzy, python-brace-format
@@ -16412,8 +16443,8 @@ msgid ""
 "Position #{posid} created: {product} ({price}) as an add-on to position "
 "#{addon_to}."
 msgstr ""
-"Η θέση #{posid} δημιουργήθηκε: {item} ({price}) ως πρόσθετο στη θέση "
-"#{addon_to}."
+"Η θέση #{posid} δημιουργήθηκε: {item} ({price}) ως πρόσθετο στη θέση #"
+"{addon_to}."
 
 #: control/logdisplay.py:175
 #, fuzzy, python-brace-format
@@ -16674,8 +16705,8 @@ msgstr "Η παραγγελία απορρίφθηκε."
 msgid ""
 "The email address has been changed from \"{old_email}\" to \"{new_email}\"."
 msgstr ""
-"Η διεύθυνση ηλεκτρονικού ταχυδρομείου έχει αλλάξει από \"{old_email}\" σε "
-"\"{new_email}\"."
+"Η διεύθυνση ηλεκτρονικού ταχυδρομείου έχει αλλάξει από \"{old_email}\" σε \""
+"{new_email}\"."
 
 #: control/logdisplay.py:503
 msgid ""
@@ -16691,8 +16722,8 @@ msgstr ""
 msgid ""
 "The phone number has been changed from \"{old_phone}\" to \"{new_phone}\"."
 msgstr ""
-"Η διεύθυνση ηλεκτρονικού ταχυδρομείου έχει αλλάξει από \"{old_email}\" σε "
-"\"{new_email}\"."
+"Η διεύθυνση ηλεκτρονικού ταχυδρομείου έχει αλλάξει από \"{old_email}\" σε \""
+"{new_email}\"."
 
 #: control/logdisplay.py:509
 msgid "The order locale has been changed."
@@ -20120,8 +20151,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Δεν υπάρχουν διαθέσιμοι πάροχοι πληρωμών. Μεταβείτε στις <a "
-"%(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
+"Δεν υπάρχουν διαθέσιμοι πάροχοι πληρωμών. Μεταβείτε στις <a %"
+"(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
 "περισσότερα πρόσθετα πληρωμής."
 
 #: control/templates/pretixcontrol/event/payment.html:67
@@ -20568,8 +20599,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Δεν υπάρχουν διαθέσιμες έξοδοι εισιτηρίων(ticket outputs). Μεταβείτε στις "
-"<a>%(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
+"Δεν υπάρχουν διαθέσιμες έξοδοι εισιτηρίων(ticket outputs). Μεταβείτε στις <a>"
+"%(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
 "περισσότερα πρόσθετα εισόδου εισιτηρίων."
 
 #: control/templates/pretixcontrol/event/tickets.html:71
@@ -21596,8 +21627,8 @@ msgstr "Διαγραφή quota"
 #, python-format
 msgid "Are you sure you want to delete the quota <strong>%(quota)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ποσόστωση(quota) <strong> "
-"%(quota)s </strong> ;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ποσόστωση(quota) <strong> %(quota)"
+"s </strong> ;"
 
 #: control/templates/pretixcontrol/items/quota_delete.html:12
 msgid "The following products might be no longer available for sale:"
@@ -22548,9 +22579,8 @@ msgid ""
 msgstr ""
 "Λάβαμε ειδοποίηση οτι <strong> %(amount)s </strong> έχει γίνει επιστροφή "
 "χρημάτων μέσω <strong> %(method)s </strong> . Εάν αυτή η επιστροφή χρημάτων "
-"υποβληθεί σε επεξεργασία, η παραγγελία θα υποπληρωθεί από <strong> "
-"%(pending)s </strong>. Η συνολική παραγγελία είναι <strong> %(total)s </"
-"strong> ."
+"υποβληθεί σε επεξεργασία, η παραγγελία θα υποπληρωθεί από <strong> %(pending)"
+"s </strong>. Η συνολική παραγγελία είναι <strong> %(total)s </strong> ."
 
 #: control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -26134,8 +26164,8 @@ msgstr "Διαγράψτε μια συσκευή επαλήθευσης δύο �
 msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε τη συσκευή ελέγχου ταυτότητας "
-"\"%(device)s\";"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε τη συσκευή ελέγχου ταυτότητας \"%"
+"(device)s\";"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 #, fuzzy
@@ -27916,8 +27946,7 @@ msgstr "Ο νέος διοργανωτής έχει δημιουργηθεί."
 
 #: eventyay_common/views/organizer.py:355 eventyay_common/views/team.py:312
 msgid "The team has been created. You can now add members to the team."
-msgstr ""
-"Η ομάδα έχει δημιουργηθεί. Τώρα μπορείτε να προσθέσετε μέλη στην ομάδα."
+msgstr "Η ομάδα έχει δημιουργηθεί. Τώρα μπορείτε να προσθέσετε μέλη στην ομάδα."
 
 #: eventyay_common/views/organizer.py:361
 #, fuzzy
@@ -28372,8 +28401,8 @@ msgid ""
 msgstr ""
 "Γεια!\n"
 "\n"
-"Είμαστε στην ευχάριστη θέση να σας πούμε ότι αποδεχόμαστε την πρότασή σας "
-"“{submission_title}”\n"
+"Είμαστε στην ευχάριστη θέση να σας πούμε ότι αποδεχόμαστε την πρότασή σας “"
+"{submission_title}”\n"
 "στο {event_name}. Κάντε κλικ σε αυτόν τον σύνδεσμο για να επιβεβαιώσετε τη "
 "συμμετοχή σας:\n"
 "\n"
@@ -29471,8 +29500,8 @@ msgid ""
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
 "Επιλέξτε τον τρόπο με τον οποίο θα μορφοποιηθεί το banner της αρχικής "
-"σελίδας. Πηγή μοτίβου:<a href=\"http://www.heropatterns.com/"
-"\">heropatterns.com</a>, CC BY 4.0."
+"σελίδας. Πηγή μοτίβου:<a href=\"http://www.heropatterns.com/\">"
+"heropatterns.com</a>, CC BY 4.0."
 
 #: orga/phrases.py:13
 msgid "Schedule display format"
@@ -29501,8 +29530,9 @@ msgid ""
 "{count} emails have been saved to the outbox – you can make individual "
 "changes there or just send them all."
 msgstr ""
-"{count} μηνύματα ηλεκτρονικού ταχυδρομείου έχουν αποθηκευτεί στα εξερχόμενα "
-"- μπορείτε να κάνετε μεμονωμένες αλλαγές εκεί ή απλώς να τα στείλετε όλα."
+"{count} μηνύματα ηλεκτρονικού ταχυδρομείου έχουν αποθηκευτεί στα "
+"εξερχόμενα - μπορείτε να κάνετε μεμονωμένες αλλαγές εκεί ή απλώς να τα "
+"στείλετε όλα."
 
 #: orga/templates/orga/base.html:164
 msgid "You’re using eventyay as a superuser. This is not recommended."
@@ -30010,9 +30040,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Αυτή η ερώτηση έχει απαντηθεί <strong>%(count)s</strong>, "
-"<strong>%(missing)s</strong> απαντήσεις <a "
-"href=\"%(base_search_url)sunanswered=1\">λείπουν ακόμα</a>."
+"Αυτή η ερώτηση έχει απαντηθεί <strong>%(count)s</strong>, <strong>%(missing)"
+"s</strong> απαντήσεις <a href=\"%(base_search_url)sunanswered=1\">λείπουν "
+"ακόμα</a>."
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, fuzzy, python-format
@@ -30255,8 +30285,8 @@ msgid ""
 msgstr ""
 "Για να αποδεχτείτε την πρόσκληση με τον λογαριασμό που είστε ενεργός αυτήν "
 "τη στιγμή, χρησιμοποιήστε το παρακάτω κουμπί. Εάν θέλετε να αποδεχτείτε την "
-"πρόσκληση με διαφορετικό λογαριασμό, μπορείτε να <a href=\"/orga/logout/?"
-"next=%(link)s\">αποσυνδεθείτε</a> και να συνδεθείτε με τον άλλο λογαριασμό. "
+"πρόσκληση με διαφορετικό λογαριασμό, μπορείτε να <a href=\"/orga/logout/"
+"?next=%(link)s\">αποσυνδεθείτε</a> και να συνδεθείτε με τον άλλο λογαριασμό. "
 "</p><p> Εάν πιστεύετε ότι λάβατε αυτήν την πρόσκληση κατά λάθος, "
 "επικοινωνήστε απευθείας με τον διοργανωτή."
 
@@ -30669,8 +30699,8 @@ msgid ""
 msgstr ""
 "Εδώ μπορείτε να αναθέσετε κριτικούς σε συγκεκριμένες προτάσεις! "
 "Χρησιμοποιήστε αυτό το αναπτυσσόμενο μενού για εναλλαγή μεταξύ των δύο "
-"τρόπων ανάθεσης (ανάθεση αναθεωρητών σε προτάσεις ή προτάσεων σε "
-"αναθεωρητές)."
+"τρόπων ανάθεσης (ανάθεση αναθεωρητών σε προτάσεις ή προτάσεων σε αναθεωρητές)"
+"."
 
 #: orga/templates/orga/review/assignment.html:118
 msgid ""
@@ -31113,11 +31143,11 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] ""
-"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα κομμάτι</"
-"strong>."
+"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα κομμάτι</strong>"
+"."
 msgstr[1] ""
-"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα κομμάτι</"
-"strong>."
+"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα κομμάτι</strong>"
+"."
 
 #: orga/templates/orga/schedule/release.html:92
 msgid "Warnings"
@@ -31187,8 +31217,8 @@ msgid ""
 "recommend that you add email settings here explicitly."
 msgstr ""
 "Αν δε δημιουργήσετε κατά παραγγελία ρυθμίσεις, θα χρησιμοποιηθεί η συνολική "
-"διαμόρφωση γι' αυτό τον server (ρωτήστε τον διαχειριστή σας για "
-"λεπτομέρειες). <br> Σας συνιστούμε να προσθέσετε ρυθμίσεις email εδώ."
+"διαμόρφωση γι' αυτό τον server (ρωτήστε τον διαχειριστή σας για λεπτομέρειες)"
+". <br> Σας συνιστούμε να προσθέσετε ρυθμίσεις email εδώ."
 
 #: orga/templates/orga/settings/review.html:8
 #: orga/templates/orga/settings/review.html:25
@@ -31203,8 +31233,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Εάν δεν χρειάζεστε ούτε βαθμολογία αξιολόγησης ούτε κείμενο κριτικής, θα "
-"προσφερθεί στους αξιολογητές ένα επιπλέον κουμπί "
-"%(quotation_open)sAbstain%(quotation_close)s κατά τον έλεγχο των προτάσεων."
+"προσφερθεί στους αξιολογητές ένα επιπλέον κουμπί %(quotation_open)sAbstain%"
+"(quotation_close)s κατά τον έλεγχο των προτάσεων."
 
 #: orga/templates/orga/settings/review.html:84
 msgid ""
@@ -31477,8 +31507,8 @@ msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
 msgstr ""
-"Επιβεβαιώστε ότι θέλετε πραγματικά να αλλάξετε την κατάσταση αυτών των "
-"%(count)s προτάσεων."
+"Επιβεβαιώστε ότι θέλετε πραγματικά να αλλάξετε την κατάσταση αυτών των %"
+"(count)s προτάσεων."
 
 #: orga/templates/orga/submission/apply_pending.html:33
 #: orga/templates/orga/submission/state_change.html:34
@@ -31765,10 +31795,10 @@ msgid ""
 "API tokens can be used to access the <a %(apiurl)s>eventyay API</a>. To find "
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
-"Αυτό το token μπορεί να χρησιμοποιηθεί για πρόσβαση στο <a "
-"%(apiurl)s>eventyay API</a>. Μπορείτε να δημιουργήσετε ένα νέο token, που θα "
-"ακυρώσει το παλιό. Για να δείτε περισσότερα, παρακαλώ ρίξτε μια ματιά στο <a "
-"%(docurl)s> API documentation</a>."
+"Αυτό το token μπορεί να χρησιμοποιηθεί για πρόσβαση στο <a %(apiurl)s>"
+"eventyay API</a>. Μπορείτε να δημιουργήσετε ένα νέο token, που θα ακυρώσει "
+"το παλιό. Για να δείτε περισσότερα, παρακαλώ ρίξτε μια ματιά στο <a %(docurl)"
+"s> API documentation</a>."
 
 #: orga/templates/orga/user.html:69
 #, fuzzy
@@ -32645,8 +32675,8 @@ msgstr "Εκτύπωση badges"
 msgid ""
 "Are you sure you want to delete the badge layout <strong>%(layout)s</strong>?"
 msgstr ""
-"Είστε σίγουροι ότι θέλετε να διαγράψετε τη διάταξη του badge "
-"<strong>%(layout)s</strong>;"
+"Είστε σίγουροι ότι θέλετε να διαγράψετε τη διάταξη του badge <strong>%"
+"(layout)s</strong>;"
 
 #: plugins/badges/templates/pretixplugins/badges/edit.html:6
 #: plugins/badges/templates/pretixplugins/badges/edit.html:16
@@ -34717,8 +34747,7 @@ msgstr "Παρακαλώ εισάγετε το όνομά σας."
 #: presale/checkoutflowstep/questions_step.py:304
 #: presale/checkoutflowstep/questions_step.py:312
 msgid "Please fill in answers to all required questions."
-msgstr ""
-"Παρακαλώ συμπληρώστε τις απαντήσεις σε όλες τις απαιτούμενες ερωτήσεις."
+msgstr "Παρακαλώ συμπληρώστε τις απαντήσεις σε όλες τις απαιτούμενες ερωτήσεις."
 
 #: presale/forms/checkout.py:32
 #, fuzzy
@@ -35740,8 +35769,7 @@ msgstr "Προβολή στο backend"
 #: presale/templates/pretixpresale/event/order.html:86
 #, python-format
 msgid "A payment of %(total)s is still pending for this order."
-msgstr ""
-"Μία πληρωμή %(total)s εξακολουθεί να εκκρεμεί για αυτήν την παραγγελία."
+msgstr "Μία πληρωμή %(total)s εξακολουθεί να εκκρεμεί για αυτήν την παραγγελία."
 
 #: presale/templates/pretixpresale/event/order.html:89
 #, python-format
@@ -36076,11 +36104,11 @@ msgid ""
 "to initiate the transfer manually. Please be patient as this might take a "
 "bit longer."
 msgstr ""
-"Με τη μέθοδο πληρωμής που χρησιμοποιήσατε, το ποσό επιστροφής %"
-"(amount)s<strong> δεν μπορεί να σας αποσταλεί αυτόματα </strong>. Αντ "
-"'αυτού, ο διοργανωτής εκδηλώσεων θα χρειαστεί να ξεκινήσει τη μεταφορά "
-"χειροκίνητα. Παρακαλούμε να είστε υπομονετικοί, καθώς αυτό μπορεί να "
-"διαρκέσει λίγο περισσότερο."
+"Με τη μέθοδο πληρωμής που χρησιμοποιήσατε, το ποσό επιστροφής %(amount)"
+"s<strong> δεν μπορεί να σας αποσταλεί αυτόματα </strong>. Αντ 'αυτού, ο "
+"διοργανωτής εκδηλώσεων θα χρειαστεί να ξεκινήσει τη μεταφορά χειροκίνητα. "
+"Παρακαλούμε να είστε υπομονετικοί, καθώς αυτό μπορεί να διαρκέσει λίγο "
+"περισσότερο."
 
 #: presale/templates/pretixpresale/event/order_cancel.html:195
 #, fuzzy
@@ -36498,8 +36526,8 @@ msgstr ""
 msgid ""
 "To log in and access your events, please <a %(a_attr)s>head over here</a>."
 msgstr ""
-"Αν θέλετε να διαμορφώσετε αυτήν την εγκατάσταση, παρακαλούμε να "
-"%(a_attr)sκατευθυνθείτε εδώ</a>."
+"Αν θέλετε να διαμορφώσετε αυτήν την εγκατάσταση, παρακαλούμε να %(a_attr)"
+"sκατευθυνθείτε εδώ</a>."
 
 #: presale/templates/pretixpresale/index.html:30
 msgid "Enjoy!"
@@ -36906,8 +36934,7 @@ msgstr ""
 
 #: schedule/forms.py:110
 msgid "The submitted availability does not comply with the required format."
-msgstr ""
-"Η υποβληθείσα διαθεσιμότητα δεν συμμορφώνεται με την απαιτούμενη μορφή."
+msgstr "Η υποβληθείσα διαθεσιμότητα δεν συμμορφώνεται με την απαιτούμενη μορφή."
 
 #: schedule/forms.py:124
 msgid "The submitted availability contains an invalid date."
@@ -36974,8 +37001,8 @@ msgstr "Δεν υπάρχουν σχόλια για αυτήν τη συνεδρ
 #, python-format
 msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
 msgstr ""
-"- Η συνεδρία σας \"%(title)s\" θα πραγματοποιηθεί στο %(start)s σε "
-"%(location)s"
+"- Η συνεδρία σας \"%(title)s\" θα πραγματοποιηθεί στο %(start)s σε %"
+"(location)s"
 
 #: schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
@@ -38400,9 +38427,6 @@ msgstr "μη αποδεκτή"
 
 #~ msgid "Alipay"
 #~ msgstr "Alipay"
-
-#~ msgid "Bancontact"
-#~ msgstr "Bancontact"
 
 #~ msgid "SOFORT"
 #~ msgstr "SOFORT"

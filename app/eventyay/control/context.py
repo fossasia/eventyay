@@ -1,4 +1,3 @@
-import sys
 from importlib import import_module
 from urllib.parse import urljoin
 
@@ -129,14 +128,11 @@ def _default_context(request):
     ctx['base_path'] = settings.BASE_PATH
 
     ctx['warning_update_available'] = False
-    ctx['warning_update_check_active'] = False
     gs = GlobalSettingsObject()
     ctx['global_settings'] = gs.settings
     if request.user.is_staff:
         if gs.settings.update_check_result_warning:
             ctx['warning_update_available'] = True
-        if not gs.settings.update_check_ack and 'runserver' not in sys.argv:
-            ctx['warning_update_check_active'] = True
 
     if request.user.is_authenticated:
         ctx['staff_session'] = request.user.has_active_staff_session(request.session.session_key)
@@ -150,7 +146,7 @@ def _default_context(request):
 
     ctx['talk_hostname'] = settings.TALK_HOSTNAME
 
-    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
-    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
+    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
+    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
 
     return ctx

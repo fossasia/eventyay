@@ -38,6 +38,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Run npm stuff (needs nodejs)
 RUN make npminstall
 
+# Pre-build static.dist so the image ships with the Vite manifest
+RUN uv run python manage.py collectstatic --noinput
+
 
 ###########
 # RUNTIME #
@@ -63,6 +66,7 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && apt-get install --no-install-recommends -y \
     netcat-traditional \
     nodejs \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 # esbuild needed by Django-Compressor
