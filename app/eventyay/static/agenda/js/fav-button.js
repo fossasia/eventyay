@@ -9,7 +9,7 @@
  * @attr {string} logged-in — "true" or "false"
  */
 class PretalxFavButton extends HTMLElement {
-  connectedCallback () {
+  connectedCallback() {
     if (!document.getElementById('fav-button-styles')) {
       const style = document.createElement('style')
       style.id = 'fav-button-styles'
@@ -37,10 +37,15 @@ class PretalxFavButton extends HTMLElement {
     this._starOutline = starOutline
     this._starFilled = starFilled
 
-    this.innerHTML =
-      '<button class="btn btn-xs btn-link">' +
-      '<span class="fav-icon">' + starOutline + '</span>' +
-      '</button>'
+    const button = document.createElement('button')
+    button.className = 'btn btn-xs btn-link'
+    const iconWrap = document.createElement('span')
+    iconWrap.className = 'fav-icon'
+    const parser = new DOMParser()
+    const svg = parser.parseFromString(starOutline, 'image/svg+xml').documentElement
+    iconWrap.appendChild(svg)
+    button.appendChild(iconWrap)
+    this.replaceChildren(button)
     this._button = this.querySelector('button')
     this._iconWrap = this.querySelector('.fav-icon')
     this._button.addEventListener('click', () => this._toggle())
@@ -48,7 +53,7 @@ class PretalxFavButton extends HTMLElement {
     this._loadState()
   }
 
-  async _loadState () {
+  async _loadState() {
     try {
       if (this._loggedIn) {
         const favs = await this._apiFetch('submissions/favourites/', 'GET')
@@ -64,7 +69,7 @@ class PretalxFavButton extends HTMLElement {
     if (this._loggedIn) this._syncLocalFavs()
   }
 
-  async _toggle () {
+  async _toggle() {
     this._isFaved = !this._isFaved
     this._syncLocalFavs()
     this._render()
@@ -81,11 +86,16 @@ class PretalxFavButton extends HTMLElement {
     }
   }
 
-  _render () {
-    this._iconWrap.innerHTML = this._isFaved ? this._starFilled : this._starOutline
+  _render() {
+    const parser = new DOMParser()
+    const svg = parser.parseFromString(
+      this._isFaved ? this._starFilled : this._starOutline,
+      'image/svg+xml'
+    ).documentElement
+    this._iconWrap.replaceChildren(svg)
   }
 
-  _spin () {
+  _spin() {
     this._iconWrap.style.animation = 'fav-spin 0.4s linear'
     setTimeout(() => { this._iconWrap.style.animation = '' }, 400)
   }
@@ -93,7 +103,7 @@ class PretalxFavButton extends HTMLElement {
   /**
    * @throws {Error} when the network request fails or returns a non-OK status
    */
-  async _apiFetch (path, method) {
+  async _apiFetch(path, method) {
     const headers = { 'Content-Type': 'application/json' }
     if (method === 'POST' || method === 'DELETE') {
       headers['X-CSRFToken'] = this._csrfToken
@@ -109,7 +119,7 @@ class PretalxFavButton extends HTMLElement {
     return response.json()
   }
 
-  _localFavs () {
+  _localFavs() {
     const data = localStorage.getItem(`${this._eventSlug}_favs`)
     if (!data) return []
     try {
@@ -121,7 +131,7 @@ class PretalxFavButton extends HTMLElement {
     }
   }
 
-  _syncLocalFavs () {
+  _syncLocalFavs() {
     let favs = this._localFavs()
     if (this._isFaved && !favs.includes(this._submissionId)) {
       favs.push(this._submissionId)
