@@ -19,7 +19,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
-from eventyay.base.models import CachedFile, OrderPosition
+from eventyay.base.models import CachedFile, OrderPosition, Question, QuestionAnswer
 from eventyay.base.pdf import Renderer
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
@@ -30,8 +30,8 @@ from eventyay.plugins.badges.tasks import badges_create_pdf
 
 from .models import BadgeLayout
 
-class BadgePluginEnabledMixin:
 
+class BadgePluginEnabledMixin:
     def dispatch(self, request, *args, **kwargs):
         if 'eventyay.plugins.badges' not in request.event.get_plugins():
             return redirect(
@@ -40,6 +40,7 @@ class BadgePluginEnabledMixin:
                 event=request.event.slug,
             )
         return super().dispatch(request, *args, **kwargs)
+
 
 class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, ListView):
     model = BadgeLayout
@@ -187,13 +188,53 @@ class LayoutEditorView(BaseEditorView):
     def title(self):
         return _('Badge layout: {}').format(self.layout)
 
+    def _get_preview_position(self):
+        p = super()._get_preview_position()
+        p.job_title = _('Sample job title')
+        p.company = _('Sample company')
+        p.save(update_fields=['job_title', 'company'])
+
+        sample_answers = {
+            Question.TYPE_BOOLEAN: 'True',
+            Question.TYPE_NUMBER: '42',
+            Question.TYPE_DATE: '2026-01-01',
+            Question.TYPE_TIME: '12:00',
+            Question.TYPE_DATETIME: '2026-01-01T12:00:00+00:00',
+            Question.TYPE_COUNTRYCODE: 'US',
+            Question.TYPE_PHONENUMBER: '+1 202 555 0123',
+        }
+
+        for question in self.request.event.questions.exclude(type=Question.TYPE_FILE):
+            answer_text = sample_answers.get(question.type, str(question.question))
+            answer = QuestionAnswer.objects.get_or_create(
+                orderposition=p,
+                question=question,
+                defaults={'answer': answer_text},
+            )[0]
+
+            if question.type in (Question.TYPE_CHOICE, Question.TYPE_CHOICE_MULTIPLE):
+                option = question.options.first()
+                if option:
+                    answer.answer = option.answer
+                    answer.save(update_fields=['answer'])
+                    answer.options.set([option])
+                else:
+                    answer.answer = ''
+                    answer.save(update_fields=['answer'])
+            elif answer.answer != answer_text:
+                answer.answer = answer_text
+                answer.save(update_fields=['answer'])
+
+        return p
+
     def save_layout(self):
-        self.layout.layout = self.request.POST.get('data')
+        layout_data = self._get_posted_layout_json()
+        self.layout.layout = layout_data
         self.layout.save(update_fields=['layout'])
         self.layout.log_action(
             action='eventyay.plugins.badges.layout.changed',
             user=self.request.user,
-            data={'layout': self.request.POST.get('data')},
+            data={'layout': layout_data},
         )
 
     def get_default_background(self):
@@ -221,7 +262,7 @@ class LayoutEditorView(BaseEditorView):
         return 'badge.pdf', 'application/pdf', outbuffer.read()
 
     def get_current_layout(self):
-        return json.loads(self.layout.layout)
+        return self._normalize_layout(json.loads(self.layout.layout))
 
     def get_current_background(self):
         return self.layout.background.url if self.layout.background else self.get_default_background()

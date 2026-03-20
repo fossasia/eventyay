@@ -654,7 +654,7 @@ def variables_from_questions(sender, *args, **kwargs):
             continue
         d['question_{}'.format(q.pk)] = {
             'label': _('Question: {question}').format(question=q.question),
-            'editor_sample': _('<Answer: {question}>').format(question=q.question),
+            'editor_sample': str(q.question),
             'evaluate': partial(get_answer, question_id=q.pk),
         }
     return d
@@ -796,17 +796,21 @@ class Renderer:
                 return self._get_text_content(op, order, o, True)
 
         ev = self._get_ev(op, order)
-        if not o['content']:
+        content = o.get('content')
+        if content == 'item':
+            content = 'event_name'
+
+        if not content:
             return '(error)'
-        if o['content'] == 'other':
+        if content == 'other':
             return o['text']
-        elif o['content'].startswith('productmeta:'):
-            return op.product.meta_data.get(o['content'][12:]) or ''
-        elif o['content'].startswith('meta:'):
-            return ev.meta_data.get(o['content'][5:]) or ''
-        elif o['content'] in self.variables:
+        elif content.startswith('productmeta:'):
+            return op.product.meta_data.get(content[12:]) or ''
+        elif content.startswith('meta:'):
+            return ev.meta_data.get(content[5:]) or ''
+        elif content in self.variables:
             try:
-                return self.variables[o['content']]['evaluate'](op, order, ev)
+                return self.variables[content]['evaluate'](op, order, ev)
             except:
                 logger.exception('Failed to process variable.')
                 return '(error)'

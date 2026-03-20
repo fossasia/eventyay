@@ -110,11 +110,29 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
             else self.get_default_background()
         )
 
+    def _normalize_layout(self, layout):
+        for obj in layout or []:
+            if isinstance(obj, dict) and obj.get('type') in ('text', 'textarea') and obj.get('content') == 'item':
+                obj['content'] = 'event_name'
+        return layout
+
+    def _get_posted_layout(self):
+        data = self.request.POST.get('data')
+        if not data:
+            return None
+        return self._normalize_layout(json.loads(data))
+
+    def _get_posted_layout_json(self):
+        layout = self._get_posted_layout()
+        if layout is None:
+            return None
+        return json.dumps(layout)
+
     def get_current_layout(self):
-        return self.request.event.settings.get(self.get_layout_settings_key(), as_type=list)
+        return self._normalize_layout(self.request.event.settings.get(self.get_layout_settings_key(), as_type=list))
 
     def save_layout(self):
-        self.request.event.settings.set(self.get_layout_settings_key(), self.request.POST.get('data'))
+        self.request.event.settings.set(self.get_layout_settings_key(), self._get_posted_layout_json())
 
     def save_background(self, f: CachedFile):
         fexisting = self.request.event.settings.get(self.get_background_settings_key(), as_type=File)
@@ -215,9 +233,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
                 p = self._get_preview_position()
                 fname, mimet, data = self.generate(
                     p,
-                    override_layout=(
-                        json.loads(self.request.POST.get('data')) if self.request.POST.get('data') else None
-                    ),
+                    override_layout=self._get_posted_layout(),
                     override_background=cf.file if cf else None,
                 )
 
