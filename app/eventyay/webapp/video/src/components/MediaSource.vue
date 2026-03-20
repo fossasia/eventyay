@@ -11,9 +11,18 @@
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
-	.iframe-error(v-if="!iframeEl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
-		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
+	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
+	.join-error(
+		v-if="joinErrorKey",
+		role="alert",
+		aria-live="polite"
+	)
+		span {{ $t(joinErrorKey) }}
+		button.join-error-dismiss(
+			@click="joinErrorKey = null",
+			:aria-label="$t('Prompt:cancel:label')"
+		) ✕
+	
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -264,13 +273,13 @@ async function initializeIframe(mute) {
 		let hideIfBackground = false;
 		let isYouTube = false;
 		const streamType = props.room?.currentStream?.stream_type;
-		const effectiveModuleType = streamType === 'youtube' 
-			? 'livestream.youtube' 
+		const effectiveModuleType = streamType === 'youtube'
+			? 'livestream.youtube'
 			: streamType === 'vimeo'
-			? 'livestream.vimeo'
-			: streamType === 'iframe'
-			? 'livestream.iframe'
-			: module.value.type;
+				? 'livestream.vimeo'
+				: streamType === 'iframe'
+					? 'livestream.iframe'
+					: module.value.type;
 		switch (effectiveModuleType) {
 			case 'call.bigbluebutton': {
 				({ url: iframeUrl } = await api.call('bbb.room_url', {
@@ -576,29 +585,42 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
-.c-media-source .iframe-error
+	
+.join-error
+	position: fixed
+	top: 120px
+	left: 50%
+	transform: translateX(-50%)
+	background: rgba($clr-danger, 0.12)
+	color: $clr-danger
+	padding: 12px 16px
+	border-radius: 4px
+	z-index: 50
+	max-width: 420px
+	text-align: center
 	display: flex
-	justify-content: center
 	align-items: center
-	background-color: $clr-blue-grey-200
-	z-index: 1
-	// Fallbacks prevent the overlay from shrinking to its text when
-	// --mediasource-placeholder-* are not yet available.
-	&:not(.size-tiny):not(.background)
-		width: var(--mediasource-placeholder-width, 100vw)
-		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
-	&.size-tiny, &.background
-		width: 86px
-		height: 48px
-		pointer-events: none
-		z-index: 101
-	.offline-message
-		font-size: 36px
-		color: $clr-secondary-text-light
-		text-align: center
-		padding: 16px
-	&.size-tiny, &.background
-		.offline-message
-			font-size: 14px
-			padding: 8px
+	gap: 8px
+
+	+below('l')
+		top: 64px
+		left: 8px
+		right: 8px
+		transform: none
+		max-width: calc(100% - 16px)
+
+	.join-error-dismiss
+		background: none
+		border: none
+		color: $clr-danger
+		cursor: pointer
+		font-size: 16px
+		line-height: 1
+		padding: 0 0 0 4px
+		flex-shrink: 0
+		opacity: 0.7
+		&:hover
+			opacity: 1
+
+
 </style>
