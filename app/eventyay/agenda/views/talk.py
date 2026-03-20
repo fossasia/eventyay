@@ -24,7 +24,7 @@ from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import encode_email
+from eventyay.agenda.views.utils import encode_email, is_email_like
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
@@ -40,18 +40,6 @@ from eventyay.base.models import Submission, SubmissionStates
 
 
 logger = logging.getLogger(__name__)
-
-
-def _is_email_like(value: str) -> bool:
-    value = (value or '').strip()
-    if '@' not in value:
-        return False
-    local_part, _, domain = value.partition('@')
-    if not local_part or not domain:
-        return False
-    return True
-
-
 class TicketCheckResult(StrEnum):
     HAS_TICKET = 'has_ticket'
     MISCONFIGURED = 'missing_configuration'
@@ -91,10 +79,12 @@ class TalkMixin(PermissionRequired):
 
 
 def talk_starrers(request, event, slug, **kwargs):
-    """Return public starrers for a session.
+    """Return starrer information for a session.
 
-    This endpoint is intended for the schedule web component and is safe for public use.
-    Only users with ``show_publicly=True`` are returned.
+    This endpoint is intended for the schedule web component and is safe for
+    public use. It exposes identifying information only for users who are
+    public, non-deleted, have a non-email-like display name, and a non-empty
+    code. Other favourites are returned as anonymous placeholders.
     """
 
     if not request.event.feature_flags.get('session_popularity_enabled', False):
@@ -139,7 +129,7 @@ def talk_starrers(request, event, slug, **kwargs):
                 and user.show_publicly
                 and not user.deleted
                 and user.code
-                and not _is_email_like(display_name)
+                and not is_email_like(display_name)
             )
             if is_public_user:
                 items.append(

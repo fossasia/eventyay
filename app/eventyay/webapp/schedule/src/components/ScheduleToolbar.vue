@@ -521,7 +521,19 @@ export default {
 			return version.startsWith('v') ? version : 'v' + version
 		},
 		outsideClick(event) {
-			const path = typeof event.composedPath === 'function' ? event.composedPath() : (event.path || [])
+			let path
+			if (typeof event.composedPath === 'function') {
+				path = event.composedPath()
+			} else if (Array.isArray(event.path) && event.path.length > 0) {
+				path = event.path
+			} else {
+				path = []
+				let node = event.target || null
+				while (node) {
+					path.push(node)
+					node = node.parentNode
+				}
+			}
 			const exportEl = this.$refs.exportDropdown
 			const exportDropdownEl = Array.isArray(exportEl) ? exportEl[0] : exportEl
 			if (exportDropdownEl && !path.includes(exportDropdownEl)) {
@@ -1218,15 +1230,24 @@ export default {
 			border-radius: 4px
 		&.recording-btn
 			position: relative
-		&.recording-btn.active::after
+		&.recording-btn.active::before
 			content: ''
 			position: absolute
-			right: 6px
-			top: 6px
-			width: 7px
-			height: 7px
+			right: 2px
+			top: 2px
+			width: 5px
+			height: 5px
+			aspect-ratio: 1 / 1
 			border-radius: 50%
 			background: var(--pretalx-clr-primary, #3aa57c)
+			border: 1px solid #fff
+			z-index: 2
+
+		&.fav-toggle.icon-only[aria-label]::after
+			left: 0
+			transform: translateY(-2px)
+		&.fav-toggle.icon-only[aria-label]:hover::after, &.fav-toggle.icon-only[aria-label]:focus-visible::after
+			transform: translateY(0)
 	.fade-enter-active, .fade-leave-active
 		transition: opacity 0.3s
 	.fade-enter-from, .fade-leave-to
