@@ -386,7 +386,7 @@ class User(
             mail(
                 email or self.email,
                 _('Account information changed'),
-                'eventyaycontrol/email/security_notice.txt',
+                'pretixcontrol/email/security_notice.txt',
                 {'user': self, 'messages': msg, 'url': build_absolute_uri('eventyay_common:account.general')},
                 event=None,
                 user=self,

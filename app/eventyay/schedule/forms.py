@@ -192,6 +192,7 @@ class RoomForm(AvailabilitiesFormMixin, ReadOnlyFlag, I18nModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.resolution = '00:15:00'
+        self.fields['name'].required = True
         self.fields['name'].widget.attrs['placeholder'] = _('Room I')
         self.fields['description'].widget.attrs['placeholder'] = _(
             'Description, e.g.: Our main meeting place, Room I, enter from the right.'

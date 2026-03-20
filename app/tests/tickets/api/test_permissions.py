@@ -221,6 +221,25 @@ def test_organizer_not_allowed_device(device_client, organizer):
 
 
 @pytest.mark.django_db
+def test_organizer_events_limited_device_excludes_unpublished(device_client, organizer, device, event):
+    device.all_events = False
+    device.save()
+    device.limit_events.add(event)
+
+    response = device_client.get('/api/v1/organizers/{}/events/'.format(organizer.slug))
+    assert response.status_code == 200
+    assert response.data['results'] == []
+
+    event.live = True
+    event.tickets_published = True
+    event.save(update_fields=['live', 'tickets_published'])
+
+    response = device_client.get('/api/v1/organizers/{}/events/'.format(organizer.slug))
+    assert response.status_code == 200
+    assert [result['slug'] for result in response.data['results']] == [event.slug]
+
+
+@pytest.mark.django_db
 def test_organizer_not_existing(token_client, organizer):
     resp = token_client.get('/api/v1/organizers/{}/events/'.format('o2'))
     assert resp.status_code == 403
@@ -238,6 +257,9 @@ def test_event_allowed_all_events(token_client, team, organizer, event, url):
 @pytest.mark.django_db
 @pytest.mark.parametrize('url', event_urls)
 def test_event_allowed_all_events_device(device_client, device, organizer, event, url):
+    event.live = True
+    event.tickets_published = True
+    event.save(update_fields=['live', 'tickets_published'])
     resp = device_client.get('/api/v1/organizers/{}/events/{}/{}'.format(organizer.slug, event.slug, url[1]))
     if url[0] is None or url[0] in device.permission_set():
         assert resp.status_code == 200
@@ -261,11 +283,28 @@ def test_event_allowed_limit_events_device(device_client, organizer, device, eve
     device.all_events = False
     device.save()
     device.limit_events.add(event)
+    event.live = True
+    event.tickets_published = True
+    event.save(update_fields=['live', 'tickets_published'])
     resp = device_client.get('/api/v1/organizers/{}/events/{}/{}'.format(organizer.slug, event.slug, url[1]))
     if url[0] is None or url[0] in device.permission_set():
         assert resp.status_code == 200
     else:
         assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('url', event_urls)
+def test_event_not_allowed_limit_events_device_unpublished(device_client, organizer, device, event, url):
+    device.all_events = False
+    device.save()
+    device.limit_events.add(event)
+    event.live = True
+    event.tickets_published = False
+    event.save(update_fields=['live', 'tickets_published'])
+
+    resp = device_client.get('/api/v1/organizers/{}/events/{}/{}'.format(organizer.slug, event.slug, url[1]))
+    assert resp.status_code == 403
 
 
 @pytest.mark.django_db
