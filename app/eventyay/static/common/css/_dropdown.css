@@ -830,3 +830,17 @@ nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover i {
   display: block;
   animation: dropdown-reveal 120ms ease-out;
 }
+
+@media (max-width: 768px) {
+  #language-dropdown .dropdown-content {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding: 10px;
+  }
+  #language-dropdown .dropdown-item {
+    white-space: nowrap;
+    padding: 8px 15px;
+  }
+}

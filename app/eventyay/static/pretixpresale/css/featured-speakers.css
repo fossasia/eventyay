@@ -183,4 +183,8 @@
     #featured-speakers .featured-speaker-session-title {
         font-size: 14px;
     }
+
+    #featured-speakers {
+        padding: 0 15px;
+    }
 }

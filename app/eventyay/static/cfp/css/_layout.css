@@ -420,4 +420,11 @@ footer {
       }
     }
   }
+
+  .event-date-line {
+    margin-top: 5px;
+  }
+  .event-hero-text {
+    margin-top: -10px;
+  }
 }
