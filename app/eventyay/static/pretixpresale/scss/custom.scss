@@ -28,13 +28,13 @@
     margin-top: 10px;
     margin-bottom: 3rem;
     overflow: auto;
-    
+
     div {
         font-size: 1.65rem;
         display: flex;
         gap: 2rem;
     }
-    
+
     a {
         cursor: pointer;
         position: relative;
@@ -141,7 +141,7 @@
 
 
 .presale-sticky-tabs .header-row-right details.dropdown,
-.presale-sticky-tabs .header-row-right > a {
+.presale-sticky-tabs .header-row-right>a {
     display: inline-flex;
     align-items: center;
 }
@@ -196,6 +196,7 @@
 }
 
 @media (max-width: 768px) {
+
     /* Keep the sticky tabs in a single flex row */
     .presale-sticky-tabs {
         flex-direction: row;
@@ -273,6 +274,7 @@
     .cfs-full {
         display: none;
     }
+
     .cfs-short {
         display: inline;
     }
@@ -291,6 +293,7 @@
         font-size: 0.88rem;
         font-weight: 500;
     }
+
     .join-video-link:hover {
         background: var(--color-primary-dark, var(--color-primary));
         text-decoration: none;
@@ -305,6 +308,7 @@
         color: var(--color-primary);
         text-decoration: none;
     }
+
     .login-link:hover {
         text-decoration: none;
         opacity: 0.85;
@@ -313,32 +317,32 @@
     /* Align hero title/logo and description text with same horizontal padding on mobile.
      * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
     .event-hero-overlay {
-        display: flex !important;
-        width: 100% !important;
-        padding-left: 12px !important;
-        padding-right: 12px !important;
+        display: flex;
+        width: 100%;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
     #main-card {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+        margin-left: 0;
+        margin-right: 0;
     }
 
     /* Target only the OUTER <main> (direct child of #main-card) so we apply padding once.
      * The presale event page has TWO nested <main> elements; without >, both get padded
      * and the content double-indents. */
-    #main-card > main {
-        padding-top: 0.5rem !important;
-        padding-left: 12px !important;
-        padding-right: 12px !important;
+    #main-card>main {
+        padding-top: 0.15rem;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     /* Zero the INNER <main aria-label> so its inherited 1rem from _layout.css
      * does not add to the outer main's 12px, keeping description exactly at 12px. */
-    #main-card > main > main {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+    #main-card>main>main {
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 
@@ -371,6 +375,7 @@
 
 #schedule-nav {
     margin: 16px 0px;
+
     .header-nav {
         border-color: darken($btn-primary-bg, 10%) !important;
         border: 1px solid;
@@ -378,22 +383,27 @@
         font-weight: normal;
         border-radius: 0;
     }
+
     .navigation {
         display: flex;
         flex-wrap: wrap;
+
         .navigation-button {
             margin-right: 8px;
             margin-bottom: 8px;
         }
+
         @media (min-width: 800px) {
             .video-link {
                 margin-left: auto;
             }
         }
+
         a:hover {
             color: #fff;
             background-color: $hover-button-color !important;
         }
+
         .popover-content {
             .options {
                 color: darken($btn-primary-bg, 10%);
@@ -403,21 +413,23 @@
                 font-weight: normal;
                 border-radius: 0;
             }
+
             .options:hover {
                 color: #fff;
                 color: darken($btn-primary-bg, 10%) !important;
             }
+
             div:first-child {
                 margin-bottom: 8px;
             }
         }
-        
+
     }
-    
+
 }
 
-.page-header-links{
-    .header-part{
+.page-header-links {
+    .header-part {
         a {
             color: #FFFFFF !important;
         }
