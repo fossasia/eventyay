@@ -59,13 +59,12 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext less
 
-# copy entrypoint.prod.sh
-COPY ./entrypoint.prod.sh .
-RUN sed -i 's/\r$//g'  $APP_HOME/entrypoint.prod.sh
-RUN chmod +x  $APP_HOME/entrypoint.prod.sh
-
 # copy project
 COPY . $APP_HOME
+
+# fix line endings for entrypoint.prod.sh
+RUN sed -i 's/\r$//g'  $APP_HOME/entrypoint.prod.sh
+RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 
 # schedule editor
 COPY eventyay/webapp/schedule-editor eventyay/webapp/schedule-editor
