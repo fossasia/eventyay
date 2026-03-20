@@ -179,6 +179,13 @@ class ExporterForm(forms.Form):
     def clean(self):
         data = super().clean()
 
+        if data.get('approval_pending_only') and data.get('paid_only'):
+            self.add_error('approval_pending_only', _('This option cannot be combined with only paid orders.'))
+            self.add_error('paid_only', _('This option cannot be combined with only approval pending orders.'))
+
+        if data.get('approval_pending_only') and 'include_payment_amounts' in data:
+            data['include_payment_amounts'] = False
+
         for k, v in data.items():
             if isinstance(v, models.Model):
                 data[k] = v.pk
