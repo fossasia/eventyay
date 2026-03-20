@@ -141,7 +141,7 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-      cp deployment/env.sample .env.dev
+      cp deployments/env.sample .env.dev
 
 2. **Edit .env.dev**
 

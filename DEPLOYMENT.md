@@ -137,9 +137,9 @@ git clone https://github.com/fossasia/eventyay.git
 cd eventyay
 git checkout main
 cd ..
-ln -s eventyay/deployment/docker-compose.yaml .
+ln -s eventyay/deployments/docker-compose.yaml .
 if [ ! -r .env ] ; then
-  cp eventyay/deployment/env.sample .env
+  cp eventyay/deployments/env.sample .env
 fi
 ```
 
@@ -150,7 +150,7 @@ Change at least `SERVER_NAME` and the `CHANGEME` entries.
 ## Install the nginx entry
 
 ```root@server
-cp /home/$USER/$DEPLOYMENT_NAME/eventyay/deployment/nginx/enext-direct /etc/nginx/sites-available
+cp /home/$USER/$DEPLOYMENT_NAME/eventyay/deployments/nginx/enext-direct /etc/nginx/sites-available
 ```
 
 ***IMPORTANT: EDIT /etc/nginx/sites-available/enext-direct***

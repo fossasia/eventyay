@@ -17,7 +17,7 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 - Primary development paths:
   - `app/eventyay/` for product code
   - `app/tests/` for tests
-  - `doc/` for documentation
+  - `docs/` for documentation
 - Legacy product names (`pretix`, `pretalx`, `venueless`) are historical references only.
 - If top-level legacy directories such as `talk/`, `video/`, or `src/` appear in a branch, treat them as reference-only unless explicitly requested.
 

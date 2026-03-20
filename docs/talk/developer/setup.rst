@@ -218,13 +218,13 @@ Working with the documentation
 To build the documentation, you will have to install the documentation dependencies. Go to the root
 directory of your git repository, and then run::
 
-    (.venv)$ pip install --upgrade-strategy eager -Ur doc/requirements.txt
+    (.venv)$ pip install --upgrade-strategy eager -Ur docs/requirements.txt
 
-Then, go to the ``doc`` directory and run ``make html`` to build the documentation::
+Then, go to the ``docs`` directory and run ``make html`` to build the documentation::
 
     (.venv)$ make html
 
-You will now find the generated documentation in the ``doc/_build/html/`` subdirectory.
+You will now find the generated documentation in the ``docs/_build/html/`` subdirectory.
 If you find yourself working with the documentation more than a little, give the ``autobuild``
 functionality a try::
 

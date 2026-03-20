@@ -139,7 +139,7 @@ Privacy & Compliance
 For Maintainers: Deploying the Receiver
 ----------------------------------------
 
-See ``doc/admin/telemetry_receiver.gs`` for the Google Apps Script implementation.
+See ``docs/admin/telemetry_receiver.gs`` for the Google Apps Script implementation.
 
 Quick Setup
 ^^^^^^^^^^^

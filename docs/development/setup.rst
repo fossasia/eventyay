@@ -174,14 +174,14 @@ First, you should install the requirements necessary for building the documentat
 Make sure you have your virtual python environment activated (see above). Then, install the
 packages by executing::
 
-    cd doc/
+    cd docs/
     pip3 install -r requirements.txt
 
-To build the documentation, run the following command from the ``doc/`` directory::
+To build the documentation, run the following command from the ``docs/`` directory::
 
     make html
 
-You will now find the generated documentation in the ``doc/_build/html/`` subdirectory. If you work
+You will now find the generated documentation in the ``docs/_build/html/`` subdirectory. If you work
 with the documentation a lot, you might find it useful to use sphinx-autobuild::
 
     pip3 install sphinx-autobuild

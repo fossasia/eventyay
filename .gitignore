@@ -20,9 +20,9 @@ __pycache__/
 .ipython/
 _static/
 # Exception: Track documentation static files
-!doc/_static/
-!doc/talk/_static/
-!doc/video/_static/
+!docs/_static/
+!docs/talk/_static/
+!docs/video/_static/
 .idea
 .secret
 atlassian-ide-plugin.xml
@@ -58,10 +58,10 @@ app/eventyay/static/CACHE
 # .env files
 .env.dev
 .env.prod
-deployment/.env.dev
-deployment/.env.prod
-deployment/.env
-deployment/data
+deployments/.env.dev
+deployments/.env.prod
+deployments/.env
+deployments/data
 *.local.cfg
 *.local.toml
 .secrets
