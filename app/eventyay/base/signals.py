@@ -238,7 +238,12 @@ class GlobalSignal(django.dispatch.Signal):
 
 class DeprecatedSignal(django.dispatch.Signal):
     def connect(self, receiver, sender=None, weak=True, dispatch_uid=None):
-        warnings.warn('This signal is deprecated and will soon be removed', stacklevel=3)
+        warnings.warn(
+            "This signal is deprecated and will be removed in a future release. "
+            "Please use the updated signal handlers instead.",
+            DeprecationWarning,
+            stacklevel=3
+        )
         super().connect(receiver, sender=None, weak=True, dispatch_uid=None)
 
 
