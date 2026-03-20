@@ -407,6 +407,8 @@ async function initializeIframe(mute) {
 function destroyIframe() {
 	iframeEl.value?.remove();
 	iframeEl.value = null;
+	joinErrorKey.value = null;
+	iframeError.value = null;
 }
 
 function isPlaying() {
@@ -513,6 +515,72 @@ function getLanguageIframeUrl(languageUrl) {
 defineExpose({ isPlaying });
 </script>
 <style lang="stylus">
+.c-media-source
+	position: absolute
+	width: 0
+	height: 0
+	&.in-background
+		z-index: 101
+	.background-room
+		position: fixed
+		top: 51px
+		right: 4px
+		card()
+		display: flex
+		align-items: center
+		height: 48px
+		min-width: 280px
+		max-width: 380px
+		.description
+			flex: auto
+			align-self: stretch
+			padding: 4px 8px
+			max-width: 238px
+			.hint
+				color: $clr-secondary-text-light
+				font-size: 10px
+				margin-bottom: 2px
+			.room-name
+				color: var(--clr-text-primary)
+				font-weight: 500
+				flex-grow: 0
+				ellipsis()
+		.global-placeholder
+			width: 86px
+			flex: none
+		.bunt-icon-button
+			icon-button-style(style: clear)
+			margin: 0 2px
+		+below('l')
+			top: 51px
+	.background-room-enter-active, .background-room-leave-active
+		transition: transform .3s ease
+	.background-room-enter-from, .background-room-leave-to
+		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
+.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, iframe.iframe-media-source
+	position: fixed
+	transition: all .3s ease
+	&.size-tiny, &.background
+		bottom: calc(var(--vh100) - 48px - 51px)
+		right: 4px + 36px + 4px
+		+below('l')
+			bottom: calc(var(--vh100) - 48px - 48px - 3px)
+	&:not(.size-tiny):not(.background)
+		top: var(--mediasource-placeholder-top, 104px)
+		left: var(--mediasource-placeholder-left, var(--sidebar-width))
+		width: var(--mediasource-placeholder-width, 100vw)
+		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+iframe.iframe-media-source
+	transition: all .3s ease
+	border: none
+	&.background
+		pointer-events: none
+		height: 48px
+		width: 86px
+		z-index: 101
+		&.hide-if-background
+			width: 0
+			height: 0
 .c-media-source .iframe-error
 	display: flex
 	justify-content: center
@@ -536,7 +604,6 @@ defineExpose({ isPlaying });
 		.offline-message
 			font-size: 14px
 			padding: 8px
-
 .c-media-source .join-error
 	position: fixed
 	top: 120px
@@ -552,14 +619,12 @@ defineExpose({ isPlaying });
 	display: flex
 	align-items: center
 	gap: 8px
-
 	+below('l')
 		top: 64px
 		left: 8px
 		right: 8px
 		transform: none
 		max-width: calc(100% - 16px)
-
 	.join-error-dismiss
 		background: none
 		border: none
@@ -572,5 +637,4 @@ defineExpose({ isPlaying });
 		opacity: 0.7
 		&:hover
 			opacity: 1
-
 </style>
