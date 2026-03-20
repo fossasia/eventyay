@@ -64,7 +64,7 @@ def send_team_webhook(self, user_id, team):
             webhook_url,
             json=payload,
             headers=headers,
-            HTTP_TIMEOUT_SHORT = 10,
+            timeout=HTTP_TIMEOUT_SHORT,
         )
         response.raise_for_status()  # Raise exception for bad status codes
     except requests.RequestException as e:
@@ -105,7 +105,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
                 urljoin(settings.VIDEO_SERVER_HOSTNAME, 'api/v1/create-world/'),
                 json=payload,
                 headers=headers,
-                HTTP_TIMEOUT_MEDIUM = 15,
+                timeout=HTTP_TIMEOUT_MEDIUM,
             )
             response.raise_for_status()
             return response.json()
