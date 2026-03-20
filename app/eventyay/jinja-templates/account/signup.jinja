@@ -60,6 +60,18 @@
         {% endif %}
       </div>
 
+      {% if confirmation_required %}
+        <div class='form-group'>
+          <label>
+            <input type='checkbox' class='checkbox' value='yes' required>
+            {{ _('I have read and agree with the content of the following pages:') }}
+            {% for page in confirmation_required %}
+              <a href="{{ url_for('page', slug=page.slug) }}">{{ page.title|safe }}</a>{% if not loop.last %}, {% else %}.{% endif %}
+            {% endfor %}
+          </label>
+        </div>
+      {% endif %}
+
       {% if form.non_field_errors() %}
         <div class='alert alert-danger'>
           {% for error in form.non_field_errors() %}
