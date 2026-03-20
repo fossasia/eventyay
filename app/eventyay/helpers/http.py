@@ -39,15 +39,14 @@ def smtp_reachable(host: str | None, port: int | None, timeout: int | float | No
     if not host or not port:
         return False
 
-    port_number = int(port)
     connect_timeout = timeout if timeout is not None else 5
-    cache_key = f'smtp_reachable:{host}:{port_number}'
+    cache_key = f'smtp_reachable:{host}:{port}'
     cached_value = cache.get(cache_key)
     if cached_value is not None:
         return cached_value
 
     try:
-        with socket.create_connection((host, port_number), connect_timeout):
+        with socket.create_connection((host, port), connect_timeout):
             reachable = True
     except (OSError, TypeError, ValueError):
         reachable = False

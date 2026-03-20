@@ -14,6 +14,7 @@ from lxml import etree
 from eventyay.base.forms import I18nMarkdownTextarea
 from eventyay.base.models.page import Page
 
+
 logger = logging.getLogger(__name__)
 
 # Keep inline image payloads reasonably bounded to avoid expensive decoding/storage.
