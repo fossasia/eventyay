@@ -262,12 +262,6 @@ input[type="file"] {
   margin-bottom: 0.5rem;
 
   &.form-check-inline {
-    display: inline-flex;
-    margin-right: 0.75rem;
-    width: auto;
-    margin-bottom: 0;
-  }
-
   &.form-check-vertical,
   .form-check-vertical-group & {
     width: 100%;
