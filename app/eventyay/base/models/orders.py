@@ -257,21 +257,19 @@ class Order(LockModel, LoggedModel):
     def user_has_existing_order(cls, event, email):
         """
         Check if a user (identified by email) already has an existing order for the event.
-        
+
         Args:
             event: The event to check
             email: The user's email address
-            
+
         Returns:
             bool: True if user has existing order, False otherwise
         """
         if not email:
             return False
-            
+
         return cls.objects.filter(
-            event=event,
-            email__iexact=email,
-            status__in=[cls.STATUS_PENDING, cls.STATUS_PAID]
+            event=event, email__iexact=email, status__in=[cls.STATUS_PENDING, cls.STATUS_PAID]
         ).exists()
 
     @property
@@ -771,7 +769,7 @@ class Order(LockModel, LoggedModel):
         ):
             return False
 
-        if self.event.settings.allow_modifications not in ("order", "attendee"):
+        if self.event.settings.allow_modifications not in ('order', 'attendee'):
             return False
 
         update_deadline = self.modify_deadline()
@@ -813,9 +811,9 @@ class Order(LockModel, LoggedModel):
             return self.email and self.email.lower() == email.lower()
 
         elif setting == 'attendee':
-            return (
-                self.email and self.email.lower() == email.lower()
-            ) or self.positions.filter(attendee_email__iexact=email).exists()
+            return (self.email and self.email.lower() == email.lower()) or self.positions.filter(
+                attendee_email__iexact=email
+            ).exists()
 
         return False
 
@@ -1345,6 +1343,14 @@ class AbstractPosition(models.Model):
         else:
             return {}
 
+    @property
+    def approval_is_bypassed(self):
+        return bool(self.voucher and self.voucher.allow_ignore_approval)
+
+    @property
+    def requires_approval(self):
+        return bool(self.product.require_approval and not self.approval_is_bypassed)
+
     @meta_info_data.setter
     def meta_info_data(self, d):
         self.meta_info = json.dumps(d)
@@ -1371,12 +1377,11 @@ class AbstractPosition(models.Model):
                 questions = list(copy.copy(q) for q in self.product.questions_to_ask)
             else:
                 questions = list(
-                    copy.copy(q) for q in self.product.questions.filter(ask_during_checkin=False, hidden=False, active=True)
+                    copy.copy(q)
+                    for q in self.product.questions.filter(ask_during_checkin=False, hidden=False, active=True)
                 )
         else:
-            questions = list(
-                copy.copy(q) for q in self.product.questions.filter(active=True)
-            )
+            questions = list(copy.copy(q) for q in self.product.questions.filter(active=True))
 
         question_cache = {q.pk: q for q in questions}
 

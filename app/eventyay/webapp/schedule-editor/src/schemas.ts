@@ -12,6 +12,13 @@ const toTitleRecord = (val: unknown): Record<string, string> => {
   return { en: '' };
 };
 
+const LocalizedTextSchema = z.union([
+  z.string(),
+  z.record(z.string(), z.string())
+]).transform(toTitleRecord);
+
+const NullableTextSchema = z.string().nullable().optional().transform(val => val ?? '');
+
 export const SpeakerSchema = z.object({
   code: z.string(),
   name: z.string().nullable().transform(val => val ?? ''),
@@ -19,22 +26,13 @@ export const SpeakerSchema = z.object({
 
 export const RoomSchema = z.object({
   id: z.number(),
-  name: z.union([
-    z.string(),
-    z.record(z.string(), z.string())
-  ]).transform(toTitleRecord),
-  description: z.union([
-    z.string(),
-    z.record(z.string(), z.string())
-  ]).transform(toTitleRecord)
+  name: LocalizedTextSchema,
+  description: LocalizedTextSchema
 });
 
 export const TrackSchema = z.object({
   id: z.number(),
-  name: z.union([
-    z.string(),
-    z.record(z.string(), z.string())
-  ]).transform(toTitleRecord)
+  name: LocalizedTextSchema
 });
 
 // Define availability entry schema
@@ -46,11 +44,9 @@ const AvailabilityEntrySchema = z.object({
 export const TalkSchema = z.object({
   id: z.number(),
   code: z.string().optional(),
-  title: z.union([
-    z.string(),
-    z.record(z.string(), z.string())
-  ]).transform(toTitleRecord),
-  abstract: z.string().optional(),
+  title: LocalizedTextSchema,
+  abstract: NullableTextSchema,
+  description: NullableTextSchema,
   speakers: z.union([
     z.array(z.string()),
     z.array(z.object({ name: z.string() }))
