@@ -72,11 +72,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 
-# Copy application code first
+# Copy application code from builder (includes .venv and base files)
 COPY --from=builder /usr/src/app /usr/src/app
 
-# THEN copy entrypoint (so it does NOT get overwritten)
+# Ensure correct entrypoint is used (avoid overwrite issues)
 COPY ./app/entrypoint.sh /usr/src/app/entrypoint.sh
+
+# Normalize line endings and make executable
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 
