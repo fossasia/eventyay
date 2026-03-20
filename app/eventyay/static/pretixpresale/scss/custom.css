@@ -38,7 +38,7 @@ header .header-wrapper {
 }
 
 header .header-row-right {
-	color: var(--color-primary);
+    color: var(--color-primary);
     margin-left: auto;
     display: flex;
     flex-wrap: nowrap;
@@ -94,14 +94,14 @@ header .header-row-right {
 
 #main-card {
     /* Sit above hero header (z-index:1000) so its date/title text does not
-     * bleed over page content. Below Bootstrap modals (z-index:1050) and
-     * sticky nav (z-index:1200) so overlays and nav are on top. */
+     * bleed over page content. Below Bootstrap modal-backdrop (z-index:1040),
+     * modals (z-index:1050) and sticky nav (z-index:1200) so overlays and nav
+     * are on top. */
     position: relative;
-    z-index: 1040;
+    z-index: 1030;
     margin: 0 auto;
 }
 
-/* Align the hero title/logo horizontal edge with the content text below */
 .event-hero-overlay {
     padding-left: 1rem;
     padding-right: 1rem;
@@ -132,11 +132,8 @@ header .header-row-right {
     background: var(--color-bg);
     border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
     flex-shrink: 0;
-    /* DO NOT set overflow here - it would clip dropdown menus */
 }
 
-/* Base styles for all breakpoints: keep tab links as flex row.
- * Mobile overrides overflow-x:auto for horizontal scrolling. */
 .presale-tabs-scroll {
     display: flex;
     align-items: center;
@@ -162,8 +159,6 @@ header .header-row-right {
 .presale-sticky-tabs #header-nav-bar {
     flex: 1 1 auto;
     margin: 6px 0 0;
-    /* Explicitly override global #header-nav-bar { overflow: auto } to avoid clipping.
-     * Scrolling is handled by .presale-tabs-scroll instead. */
     overflow: visible;
 }
 
@@ -189,7 +184,7 @@ header .header-row-right {
 
 
 .presale-sticky-tabs .header-row-right details.dropdown,
-.presale-sticky-tabs .header-row-right > a {
+.presale-sticky-tabs .header-row-right>a {
     display: inline-flex;
     align-items: center;
 }
@@ -221,27 +216,21 @@ header .header-row-right {
     scroll-margin-top: 72px;
 }
 
-/* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
 .nav-icon-mobile {
     display: none;
 }
 
-/* Desktop: hide mobile-only CfS abbreviation */
 .cfs-short {
     display: none;
 }
 
 @media (max-width: 768px) {
-    /* Keep the sticky tabs in a single flex row;
-     * .presale-tabs-scroll handles horizontal scrolling for tabs only */
     .presale-sticky-tabs {
         flex-direction: row;
         flex-wrap: nowrap;
         align-items: center;
-        /* NO overflow here — dropdown must escape this container */
     }
 
-    /* ONLY the tab links scroll horizontally — NOT the dropdown container */
     .presale-tabs-scroll {
         flex: 1 1 auto;
         min-width: 0;
@@ -257,7 +246,6 @@ header .header-row-right {
         display: none;
     }
 
-    /* Remove overflow from inner wrapper on mobile too */
     .presale-sticky-tabs-inner {
         overflow: visible;
     }
@@ -277,7 +265,6 @@ header .header-row-right {
         gap: 0;
     }
 
-    /* Ensure dropdown menus don't overflow viewport on the right */
     .presale-sticky-tabs .header-row-right details.dropdown {
         position: relative;
     }
@@ -288,35 +275,30 @@ header .header-row-right {
         max-width: calc(100vw - 16px);
     }
 
-    /* Hide text labels for Language and User dropdowns — icon-only on mobile */
     .mobile-hide-text {
         display: none;
     }
 
-    /* Show the mobile-only icons on mobile */
     .nav-icon-mobile {
         display: inline;
     }
 
-    /* Remove the caret arrow — redundant when showing icon-only */
     .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
         display: none;
     }
 
-    /* Tighten padding on the summary trigger button */
     .presale-sticky-tabs .header-row-right details.dropdown summary {
         padding: 2px 4px;
     }
 
-    /* Show abbreviated "CfS" instead of "Call for Speakers" */
     .cfs-full {
         display: none;
     }
+
     .cfs-short {
         display: inline;
     }
 
-    /* "Join online video" as a full-width button below the nav row */
     .join-video-link {
         display: block;
         width: 100%;
@@ -330,13 +312,13 @@ header .header-row-right {
         font-size: 0.88rem;
         font-weight: 500;
     }
+
     .join-video-link:hover {
         background: var(--color-primary-dark, var(--color-primary));
         text-decoration: none;
         opacity: 0.9;
     }
 
-    /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
     .login-link {
         display: flex;
         align-items: center;
@@ -344,13 +326,12 @@ header .header-row-right {
         color: var(--color-primary);
         text-decoration: none;
     }
+
     .login-link:hover {
         text-decoration: none;
         opacity: 0.85;
     }
 
-    /* Align hero title/logo and description text with same horizontal padding on mobile.
-     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
     .event-hero-overlay {
         display: flex !important;
         width: 100% !important;
@@ -358,29 +339,25 @@ header .header-row-right {
         padding-right: 12px !important;
     }
 
-    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
     #main-card {
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
 
-    /* Target only the OUTER <main> (direct child of #main-card) so we apply padding once.
-     * The presale event page has TWO nested <main> elements; without >, both get padded
-     * and the content double-indents. */
+
     #main-card > main {
+        padding-top: 0.5rem !important;
         padding-left: 12px !important;
         padding-right: 12px !important;
     }
 
-    /* Zero the INNER <main aria-label> so its inherited 1rem from _layout.css
-     * does not add to the outer main's 12px, keeping description exactly at 12px. */
-    #main-card > main > main {
+
+    #main-card>main>main {
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
 }
 
-/* Mobile: Language locale dropdown narrow-screen override */
 @media (max-width: 480px) {
     #locale-dropdown.dropdown-content {
         right: 0;
@@ -413,11 +390,12 @@ header .header-row-right {
     border-color: var(--color-primary);
     color: white;
     text-decoration: none;
-	&:hover {
-	    background: var(--color-primary-text-dark);
-		border-color: var(--color-primary-text-dark);
-	    color: white;
-	}
+
+    &:hover {
+        background: var(--color-primary-text-dark);
+        border-color: var(--color-primary-text-dark);
+        color: white;
+    }
 }
 
 .btn-default {
@@ -427,11 +405,12 @@ header .header-row-right {
     color: var(--color-primary);
     border-color: var(--color-primary);
     box-shadow: none;
-	&:hover {
-	    background: var(--color-primary-text-dark);
-		border-color: var(--color-primary-text-dark);
-	    color: white;
-	}
+
+    &:hover {
+        background: var(--color-primary-text-dark);
+        border-color: var(--color-primary-text-dark);
+        color: white;
+    }
 }
 
 #btn-add-to-cart:disabled {
@@ -442,22 +421,24 @@ header .header-row-right {
     box-shadow: none;
 }
 
-.panel-heading{
-	width: 100%;
+.panel-heading {
+    width: 100%;
 }
 
 .panel-primary {
     border-color: var(--color-primary);
 }
-.panel-primary > .panel-heading,
-.panel-primary > summary.panel-heading {
+
+.panel-primary>.panel-heading,
+.panel-primary>summary.panel-heading {
     background-color: var(--color-primary);
     border-color: var(--color-primary);
     color: #fff;
 }
-.panel-primary > .panel-heading .panel-title,
-.panel-primary > summary.panel-heading .panel-title,
-.panel-primary > .panel-heading .panel-title *,
-.panel-primary > summary.panel-heading .panel-title * {
+
+.panel-primary>.panel-heading .panel-title,
+.panel-primary>summary.panel-heading .panel-title,
+.panel-primary>.panel-heading .panel-title *,
+.panel-primary>summary.panel-heading .panel-title * {
     color: #fff;
 }

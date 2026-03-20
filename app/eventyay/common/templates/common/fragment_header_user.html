@@ -6,7 +6,7 @@
 {% with nav_context=nav_context|default:"agenda" %}
     {% if current_event and current_event.locales and not is_html_export %}
         <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
-            <summary>
+        <summary aria-label="{% translate 'Language' %}">
 				<i class="fa fa-globe nav-icon-mobile" aria-hidden="true"></i>
 				<span class="mobile-hide-text">{% translate "Language" %}</span>
 				<i class="fa fa-caret-down ml-1"></i>
@@ -122,7 +122,7 @@
             </div>
         </details>
     {% elif not subheader_login_link_disabled and not is_html_export %}
-        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}" class="login-link">
+        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}" class="login-link" aria-label="{% translate 'Login' %}">
             <i class="fa fa-user nav-icon-mobile" aria-hidden="true"></i>
             <span class="mobile-hide-text">{% translate "Login" %}</span>
         </a>
