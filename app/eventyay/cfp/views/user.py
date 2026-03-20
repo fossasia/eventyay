@@ -67,6 +67,7 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
         )
 
     @context
+    @context
     @cached_property
     def questions_form(self):
         bind = is_form_bound(self.request, 'questions')
@@ -79,8 +80,8 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
         )
 
     @context
-    def questions_exist(self):
-        return self.request.event.talkquestions.filter(target='speaker').exists()
+    def profile_question_fields(self):
+        return [field for field in self.profile_form if field.name.startswith('question_')]
 
     def post(self, request, *args, **kwargs):
         if self.profile_form.is_bound and self.profile_form.is_valid():
@@ -334,17 +335,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
         return True
 
-    @context
-    @cached_property
-    def qform(self):
-        return TalkQuestionsForm(
-            data=self.request.POST if self.request.method == 'POST' else None,
-            files=self.request.FILES if self.request.method == 'POST' else None,
-            submission=self.object,
-            target='submission',
-            event=self.request.event,
-            readonly=not self.can_edit,
-        )
+
 
     @cached_property
     def object(self):
@@ -352,7 +343,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        if form.is_valid() and self.qform.is_valid():
+        if form.is_valid():
             return self.form_valid(form)
         return self.form_invalid(form)
 
@@ -375,7 +366,6 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def form_valid(self, form):
         if self.can_edit:
             form.save()
-            self.qform.save()
             result = self.save_formset(form.instance)
             if not result:
                 return self.get(self.request, *self.args, **self.kwargs)

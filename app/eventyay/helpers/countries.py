@@ -48,6 +48,15 @@ class FastCountryField(CountryField):
 
         super().__init__(*args, **kwargs)
 
+    def check(self, **kwargs):
+        checks = super().check(**kwargs)
+        # CountryField choices are locale-sorted and expensive to evaluate during startup.
+        return [
+            check
+            for check in checks
+            if check.id not in {'fields.E004', 'fields.E005', 'fields.E009'}
+        ]
+
 
 def get_country_name(country_code):
     country = CachedCountries().countries

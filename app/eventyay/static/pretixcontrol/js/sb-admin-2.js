@@ -8,6 +8,7 @@
 //Loads the correct sidebar on window load,
 //collapses the sidebar on window resize.
 // Sets the min-height of #page-wrapper to window size
+// mobile-view: collapse on outside click or link click
 $(function () {
     'use strict';
 
@@ -71,6 +72,20 @@ $(function () {
         e.stopPropagation();
         toggleSidebar();
     });
+
+    if ($sidebar.length) {
+        $(document).on('click', function (e) {
+            if (!isMobileView() || $body.hasClass('sidebar-minimized')) return;
+            if ($(e.target).closest('.sidebar, #sidebar-toggle').length) return;
+            $body.addClass('sidebar-minimized');
+        });
+        $sidebar.on('click', 'a[href]', function () {
+            if (!isMobileView()) return;
+            var href = ($(this).attr('href') || '').trim();
+            if (!href || href.charAt(0) === '#') return;
+            $body.addClass('sidebar-minimized');
+        });
+    }
 
     let resizeTimeout;
     $(window).on('resize', function () {

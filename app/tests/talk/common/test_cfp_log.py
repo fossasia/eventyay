@@ -8,7 +8,7 @@ from pretalx.common.models.log import ActivityLog
 @pytest.fixture
 def activity_log(event, submission):
     return ActivityLog(
-        event=event, content_object=submission, action_type="pretalx.submission.create"
+        event=event, content_object=submission, action_type="eventyay.submission.create"
     )
 
 

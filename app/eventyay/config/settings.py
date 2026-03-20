@@ -4,7 +4,7 @@ import sys
 from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 from urllib.parse import urlparse
 
 import django.conf.locale
@@ -21,7 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.consts import SizeKey
+from eventyay.consts import DEFAULT_PLUGINS, SizeKey
 
 
 # To avoid loading unnecessary environment variables
@@ -70,12 +70,6 @@ IS_TESTING = active_environment == RunningEnvironment.TESTING
 IS_PRODUCTION = active_environment == RunningEnvironment.PRODUCTION
 
 DEFAULT_AUTH_BACKENDS = ('eventyay.base.auth.NativeAuthBackend',)
-DEFAULT_PLUGINS = (
-    'eventyay.plugins.sendmail',
-    'eventyay.plugins.statistics',
-    'eventyay.plugins.checkinlists',
-    'eventyay.plugins.autocheckin',
-)
 
 
 class BaseSettings(_BaseSettings):
@@ -196,46 +190,17 @@ class BaseSettings(_BaseSettings):
             toml_settings,
         )
 
-    size_limit_mb: dict[str, int] = Field(
-        default_factory=lambda: {
-            "upload_size_csv": 1,
-            "upload_size_image": 10,
-            "upload_size_pdf": 10,
-            "upload_size_xlsx": 2,
-            "upload_size_favicon": 1,
-            "upload_size_attachment": 10,
-            "upload_size_mail": 4,
-            "upload_size_question": 20,
-            "upload_size_other": 10,
-
-            "response_size_webhook": 1,
-        }
-    )
-
-    # Optional single-line override fields.
-    # These allow simple top-level config entries (e.g. `question = 300` in TOML)
-    # to override corresponding entries in `size_limit_mb`.
-    # The dictionary remains the canonical source of truth.
-    upload_size_csv: int | None = None
-    upload_size_image: int | None = None
-    upload_size_pdf: int | None = None
-    upload_size_xlsx: int | None = None
-    upload_size_favicon: int | None = None
-    upload_size_attachment: int | None = None
-    upload_size_mail: int | None = None
-    upload_size_question: int | None = None
-    upload_size_other: int | None = None
-
-    response_size_webhook: int | None = None
-
-    #   Apply top-level single-line size limit overrides to `size_limit_mb`.
-    #   Any override field that is set (not None) will replace the corresponding
-    #   entry in the size_limit_mb dictionary.
-    def apply_size_limit_overrides(self) -> None:
-        for key in self.size_limit_mb:
-            override = getattr(self, key, None)
-            if override is not None:
-                self.size_limit_mb[key] = override
+    # Upload size limit in MB, needs to to in accordance with SizeKey
+    upload_size_csv: int = 1
+    upload_size_image: int = 10
+    upload_size_pdf: int = 10
+    upload_size_xlsx: int = 2
+    upload_size_favicon: int = 1
+    upload_size_attachment: int = 10
+    upload_size_mail: int = 4
+    upload_size_question: int = 20
+    upload_size_other: int = 10
+    response_size_webhook: int = 1
 
 
 def discover_toml_files() -> list[Path]:
@@ -278,9 +243,6 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
-
-# Merge single-line TOML overrides into size_limit_mb
-conf.apply_size_limit_overrides()
 
 # --- Now, provide values to Django's settings. ---
 
@@ -401,26 +363,23 @@ _OURS_APPS = (
     'eventyay.submission',
 )
 
-PRETIX_PLUGINS_DEFAULT = conf.plugins_default
-
-# TODO: Merge these two.
-PRETIX_PLUGINS_EXCLUDE = conf.plugins_exclude
-PLUGINS_EXCLUDE = PRETIX_PLUGINS_EXCLUDE
+EVENTYAY_PLUGINS_DEFAULT = conf.plugins_default
+EVENTYAY_PLUGINS_EXCLUDE = conf.plugins_exclude
 
 eps = importlib_metadata.entry_points()
 
-# Pretix plugins
-pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in PLUGINS_EXCLUDE]
+# Ticket plugins (from legacy Pretix)
+ticket_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in EVENTYAY_PLUGINS_EXCLUDE]
 
-# Pretalx plugins
-pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PLUGINS_EXCLUDE]
+# Talk plugins (from legacy Pretalx)
+talk_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in EVENTYAY_PLUGINS_EXCLUDE]
 
-SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_pages'})
+SAFE_TICKET_PLUGINS = tuple(m for m in ticket_plugins if m not in {'pretix_pages'})
 
-INSTALLED_APPS = _LIBRARY_APPS + SAFE_PRETIX_PLUGINS + _OURS_APPS
+INSTALLED_APPS = _LIBRARY_APPS + SAFE_TICKET_PLUGINS + _OURS_APPS
 
 # TODO: What is it for?
-ALL_PLUGINS = sorted(pretix_plugins + pretalx_plugins)
+ALL_PLUGINS = sorted(ticket_plugins + talk_plugins)
 
 # For "Talk" (pretalx).
 # TODO: May rename, because it is extended from something, not only "core" modules.
@@ -670,6 +629,14 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'bn': {
+        'name': _('Bengali'),
+        'natural_name': 'বাংলা',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'ca': {
         'name': _('Catalan'),
         'natural_name': 'Català',
@@ -743,6 +710,22 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'hi': {
+        'name': _('Hindi'),
+        'natural_name': 'हिन्दी',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'gu': {
+        'name': _('Gujarati'),
+        'natural_name': 'ગુજરાતી',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'id': {
         'name': _('Indonesian'),
         'natural_name': 'Bahasa Indonesia',
@@ -776,6 +759,14 @@ _LANGUAGES_CONFIG = {
         'percentage': 88,
         'incubating': False,
     },
+    'km': {
+        'name': _('Khmer'),
+        'natural_name': 'ខ្មែរ',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'lv': {
         'name': _('Latvian'),
         'natural_name': 'Latviešu',
@@ -787,6 +778,22 @@ _LANGUAGES_CONFIG = {
     'ms': {
         'name': _('Malay'),
         'natural_name': 'Bahasa Melayu',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'ml': {
+        'name': _('Malayalam'),
+        'natural_name': 'മലയാളം',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'mr': {
+        'name': _('Marathi'),
+        'natural_name': 'मराठी',
         'bidi': False,
         'official': False,
         'percentage': 0,
@@ -900,6 +907,22 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'ta': {
+        'name': _('Tamil'),
+        'natural_name': 'தமிழ்',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
+    'te': {
+        'name': _('Telugu'),
+        'natural_name': 'తెలుగు',
+        'bidi': False,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'th': {
         'name': _('Thai'),
         'natural_name': 'ไทย',
@@ -924,6 +947,14 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
+    'ur': {
+        'name': _('Urdu'),
+        'natural_name': 'اردو',
+        'bidi': True,
+        'official': False,
+        'percentage': 0,
+        'incubating': False,
+    },
     'vi': {
         'name': _('Vietnamese'),
         'natural_name': 'Tiếng Việt',
@@ -933,7 +964,7 @@ _LANGUAGES_CONFIG = {
         'incubating': False,
     },
     'zh-hans': {
-        'name': _('Simplified Chinese'),
+        'name': _('Chinese Simplified'),
         'natural_name': '简体中文',
         'bidi': False,
         'official': False,
@@ -942,7 +973,7 @@ _LANGUAGES_CONFIG = {
         'incubating': False,
     },
     'zh-hant': {
-        'name': _('Traditional Chinese (Taiwan)'),
+        'name': _('Chinese Traditional'),
         'natural_name': '繁體中文',
         'bidi': False,
         'official': False,
@@ -1030,6 +1061,10 @@ CELERY_TASK_QUEUES = (
 )
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_TASK_TRACK_STARTED = True
+# Keep Django/eventyay logging configuration in workers and avoid redirecting stdout/stderr.
+# This ensures logger output remains visible as configured and is not swallowed by Celery.
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_REDIRECT_STDOUTS = False
 CELERY_TASK_ROUTES = {
     'eventyay.base.services.notifications.*': {'queue': 'notifications'},
     'eventyay.api.webhooks.*': {'queue': 'notifications'},
@@ -1096,24 +1131,15 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 CSP_DEFAULT_SRC = ("'self'", "'unsafe-eval'")
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CORS_ORIGIN_REGEX_WHITELIST = (
-    (
-        r'^https?://([\w\-]+\.)?eventyay\.com$',  # Allow any subdomain of eventyay.com
-        r'^https?://app-test\.eventyay\.com(:\d+)?$',  # Allow video-dev.eventyay.com with any port
-        r'^https?://app\.eventyay\.com(:\d+)?$',  # Allow wikimania-live.eventyay.com with any port
-    )
-    if IS_PRODUCTION
-    else (
-        r'^http://localhost$',
-        r'^http://localhost:\d+$',
-    )
-)
 
 # URL settings
 ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
 INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
+if IS_DEVELOPMENT and '*' not in ALLOWED_HOSTS:
+    # Android emulators access the host machine via these addresses.
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
 
 EMAIL_BACKEND = conf.email_backend
 # Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
@@ -1125,8 +1151,6 @@ EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
 EMAIL_USE_SSL = not conf.email_use_tls
-# TODO: Move to consts.py and rename
-EVENTYAY_EMAIL_NONE_VALUE = 'info@eventyay.com'
 # TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
 # Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
 MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
@@ -1286,7 +1310,7 @@ REST_FRAMEWORK = {
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
-# TODO: Remove.
+# TODO: Remove. This is an empty string used in URL construction. Needs careful evaluation before removal.
 BASE_PATH = ''
 
 SITE_URL = str(conf.site_url)
@@ -1306,10 +1330,7 @@ FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 BYTES_IN_MB = 1024 * 1024
 
 # Config for max size limits
-MAX_SIZE_CONFIG = {
-    key.value: BYTES_IN_MB * conf.size_limit_mb[key.value]
-    for key in SizeKey
-}
+MAX_SIZE_CONFIG = {key: BYTES_IN_MB * cast(int, getattr(conf, key)) for key in SizeKey}
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
 
@@ -1410,11 +1431,6 @@ EVENTYAY_ADMIN_AUDIT_COMMENTS = conf.admin_audit_comments_asked
 EVENTYAY_OBLIGATORY_2FA = conf.obligatory_2fa
 EVENTYAY_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 EVENTYAY_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
-# TODO: Merge with above.
-PRETIX_ADMIN_AUDIT_COMMENTS = EVENTYAY_ADMIN_AUDIT_COMMENTS
-PRETIX_SESSION_TIMEOUT_RELATIVE = 3600 * 3
-PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
-PRETIX_EMAIL_NONE_VALUE = EVENTYAY_EMAIL_NONE_VALUE
 
 # TODO: The `pdftk` tool should be auto-detected.
 PDFTK = ''

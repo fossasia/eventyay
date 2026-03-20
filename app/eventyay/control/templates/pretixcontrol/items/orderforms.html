@@ -267,6 +267,37 @@
                         {% endwith %}
                         {% endif %}
 
+                        {# Job title #}
+                        {% if field.id == "job_title" %}
+                        {% with field=sform.attendee_job_title_asked_required %}
+                        {% if field %}
+                        <tr data-dnd-id="job_title">
+                            <th id="{{ field.auto_id }}_label">{% translate "Job title" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% translate 'Required status for Job title' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="dnd-container text-center text-nowrap"></td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+                        {% endif %}
+
                         {# Attendee addresses - represents multiple backend fields #}
                         {% if field.id == "street" %}
                         {% with field=sform.attendee_addresses_asked_required %}
@@ -302,7 +333,7 @@
                         {% if field.type == "question" %}
                         {% with q=field.question %}
                         <tr data-dnd-id="{{ q.id }}">
-                            <th>
+                            <th id="question-label-{{ q.id }}">
                                 <strong>
                                     {% if q.type == "DES" %}
                                         <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
@@ -315,18 +346,15 @@
                                 <br><small class="text-muted">{{ q.identifier }}</small>
                             </th>
                             <td class="text-center">
-                                <label class="toggle-switch always-on"
-                                    aria-label="{% translate 'Custom field is always active' %}"
-                                    title="{% translate 'Custom fields cannot be deactivated, unlike system fields.' %}">
+                                <label class="toggle-switch"
+                                    aria-labelledby="question-label-{{ q.id }}">
                                     <input type="checkbox"
-                                        checked
-                                        disabled
-                                        aria-describedby="custom-field-always-active-{{ q.id }}">
+                                        aria-label="{% translate 'Active status for' %} {{ q.question }}"
+                                        class="question-active-toggle"
+                                        data-question-id="{{ q.id }}"
+                                        {% if q.active %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <span id="custom-field-always-active-{{ q.id }}" class="sr-only">
-                                    {% translate "This custom field is always active and cannot be deactivated, unlike system fields." %}
-                                </span>
                             </td>
                             <td class="text-center">
                                 {% if q.type != "DES" %}

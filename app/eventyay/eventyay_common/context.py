@@ -12,6 +12,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.eventyay_common.navigation import (
     get_event_navigation,
     get_global_navigation,
+    get_organizer_navigation
 )
 
 from ..helpers.plugin_enable import is_video_enabled
@@ -49,13 +50,16 @@ def _default_context(request: HttpRequest):
     if not request.user.is_authenticated:
         return ctx
 
-    ctx['nav_items'] = get_global_navigation(request)
+    if getattr(request, 'organizer', None) and 'organizer' in url.kwargs:
+        ctx['nav_items'] = get_organizer_navigation(request)
+    else:
+        ctx['nav_items'] = get_global_navigation(request)
     ctx['staff_session'] = request.user.has_active_staff_session(request.session.session_key)
     ctx['staff_need_to_explain'] = (
         StaffSession.objects.filter(user=request.user, date_end__isnull=False).filter(
             Q(comment__isnull=True) | Q(comment='')
         )
-        if request.user.is_staff and settings.PRETIX_ADMIN_AUDIT_COMMENTS
+        if request.user.is_staff and settings.EVENTYAY_ADMIN_AUDIT_COMMENTS
         else StaffSession.objects.none()
     )
 

@@ -64,6 +64,7 @@ from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
+from eventyay.helpers.http import smtp_reachable
 from eventyay.helpers.json import safe_string
 from eventyay.helpers.thumb import get_thumbnail
 from eventyay.talk_rules.event import (
@@ -192,6 +193,9 @@ def default_feature_flags():
         'show_schedule': True,
         'show_featured': 'pre_schedule',
         'show_widget_if_not_public': False,
+        'session_popularity_enabled': False,
+        'session_popularity_show_on_calendar': True,
+        'session_popularity_show_on_list': True,
         'export_html_on_release': False,
         'use_tracks': True,
         'use_feedback': True,
@@ -530,6 +534,8 @@ class Event(
     :type organizer: eventyay.base.models.organizer.Organizer
     :param testmode: This event is in test mode
     :type testmode: bool
+    :param private_testmode: This event hides tickets from non-organizers
+    :type private_testmode: bool
     :param name: This event's full title
     :type name: str
     :param slug: A short, alphanumeric, all-lowercase name for use in URLs. The slug has to
@@ -563,6 +569,7 @@ class Event(
     CURRENCY_CHOICES = [(c.alpha_3, c.alpha_3 + ' - ' + c.name) for c in settings.CURRENCIES]
     organizer = models.ForeignKey(Organizer, related_name='events', on_delete=models.PROTECT)
     testmode = models.BooleanField(default=False)
+    private_testmode = models.BooleanField(default=True)
     name = I18nCharField(
         max_length=200,
         verbose_name=_('Event name'),
@@ -589,6 +596,10 @@ class Event(
         verbose_name=_('Short form'),
     )
     live = models.BooleanField(default=False, verbose_name=_('Shop is live'))
+    startpage_visible = models.BooleanField(default=True, verbose_name=_('Visible on start page'))
+    startpage_featured = models.BooleanField(default=False, verbose_name=_('Featured on start page'))
+    tickets_published = models.BooleanField(default=False, verbose_name=_('Tickets are published'))
+    talks_published = models.BooleanField(default=False, verbose_name=_('Talk pages are published'))
     currency = models.CharField(
         max_length=10,
         verbose_name=_('Event currency'),
@@ -917,6 +928,8 @@ class Event(
         self.settings.invoice_email_attachment = True
         self.settings.name_scheme = 'given_family'
         self.settings.ticket_download = True
+        self.settings.private_testmode_tickets = True
+        self.settings.private_testmode_talks = True
 
     @property
     def social_image(self):
@@ -1048,6 +1061,13 @@ class Event(
         if self.settings.smtp_use_custom or force_custom:
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
+            if not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
+                logger.warning(
+                    'Event SMTP %s:%s is not reachable, falling back to system email backend',
+                    self.settings.smtp_host,
+                    self.settings.smtp_port,
+                )
+                return get_connection(fail_silently=False, timeout=timeout)
             return CustomSMTPBackend(
                 host=self.settings.smtp_host,
                 port=self.settings.smtp_port,
@@ -1061,19 +1081,24 @@ class Event(
         elif gs.settings.email_vendor is not None:
             if gs.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=gs.settings.send_grid_api_key)
-            else:
-                return CustomSMTPBackend(
-                    host=gs.settings.smtp_host,
-                    port=gs.settings.smtp_port,
-                    username=gs.settings.smtp_username,
-                    password=gs.settings.smtp_password,
-                    use_tls=gs.settings.smtp_use_tls,
-                    use_ssl=gs.settings.smtp_use_ssl,
-                    fail_silently=False,
-                    timeout=timeout,
+            if not smtp_reachable(gs.settings.smtp_host, gs.settings.smtp_port, timeout=timeout):
+                logger.warning(
+                    'Global SMTP %s:%s is not reachable, falling back to system email backend',
+                    gs.settings.smtp_host,
+                    gs.settings.smtp_port,
                 )
-        else:
-            return get_connection(fail_silently=False)
+                return get_connection(fail_silently=False, timeout=timeout)
+            return CustomSMTPBackend(
+                host=gs.settings.smtp_host,
+                port=gs.settings.smtp_port,
+                username=gs.settings.smtp_username,
+                password=gs.settings.smtp_password,
+                use_tls=gs.settings.smtp_use_tls,
+                use_ssl=gs.settings.smtp_use_ssl,
+                fail_silently=False,
+                timeout=timeout,
+            )
+        return get_connection(fail_silently=False, timeout=timeout)
 
     @property
     def payment_term_last(self):
@@ -1106,6 +1131,9 @@ class Event(
         if other.date_admission:
             self.date_admission = self.date_from + (other.date_admission - other.date_from)
         self.testmode = other.testmode
+        self.private_testmode = other.private_testmode
+        self.tickets_published = other.tickets_published
+        self.talks_published = other.talks_published
         self.save()
         self.log_action('eventyay.object.cloned', data={'source': other.slug, 'source_id': other.pk})
 
@@ -1854,6 +1882,42 @@ class Event(
         return result
 
     @property
+    def talks_testmode(self):
+        return self.settings.get('talks_testmode', False, as_type=bool)
+
+    @property
+    def has_component_testmode(self):
+        return bool(self.testmode or self.talks_testmode)
+
+    def user_can_view_tickets(self, user=None, request=None):
+        private_tickets = self.private_testmode and self.settings.get(
+            'private_testmode_tickets', True, as_type=bool
+        )
+        if not self.tickets_published and not private_tickets:
+            return False
+        if not private_tickets:
+            return True
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        if getattr(user, 'is_administrator', False):
+            return True
+        return user.has_event_permission(self.organizer, self, request=request)
+
+    def user_can_view_talks(self, user=None, request=None):
+        private_talks = self.private_testmode and self.settings.get(
+            'private_testmode_talks', False, as_type=bool
+        )
+        if not self.talks_published and not private_talks:
+            return False
+        if not private_talks:
+            return True
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        if getattr(user, 'is_administrator', False):
+            return True
+        return user.has_event_permission(self.organizer, self, request=request)
+
+    @property
     def has_paid_things(self):
         from .product import Product, ProductVariation
 
@@ -1891,7 +1955,7 @@ class Event(
         if self.has_paid_things and not self.has_payment_provider:
             issues.append(_('You have configured at least one paid product but have not enabled any payment methods.'))
 
-        if not self.quotas.exists():
+        if self.products.exists() and not self.quotas.exists():
             issues.append(_('You need to configure at least one quota to sell anything.'))
 
         if self.organizer.has_unpaid_invoice():
@@ -1916,28 +1980,40 @@ class Event(
                     )
                 )
 
-        gs = GlobalSettingsObject()
-        billing_validation_enabled = gs.settings.get('billing_validation', as_type=bool, default=True)
-
-        if billing_validation_enabled:
-            billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
-            if not billing_obj or not billing_obj.stripe_payment_method_id:
-                url = reverse(
-                    'control:organizer.settings.billing',
-                    kwargs={'organizer': self.organizer.slug},
-                )
-                issue = format_html(
-                    '<a href="{}#tab-0-1-open">{}</a>',
-                    url,
-                    gettext('You need to fill the billing information.'),
-                )
-                issues.append(issue)
+        issues.extend(self.billing_issues())
 
         responses = event_live_issues.send(self)
         for receiver, response in sorted(responses, key=lambda r: str(r[0])):
             if response:
                 issues.append(response)
 
+        return issues
+
+    def billing_issues(self):
+        from django.utils.html import format_html
+        from django.utils.translation import gettext
+
+        from eventyay.base.models.organizer import OrganizerBillingModel
+        from eventyay.base.settings import GlobalSettingsObject
+
+        issues = []
+        gs = GlobalSettingsObject()
+        billing_validation_enabled = gs.settings.get('billing_validation', as_type=bool, default=True)
+        if not billing_validation_enabled:
+            return issues
+
+        billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
+        if not billing_obj or not billing_obj.stripe_payment_method_id:
+            url = reverse(
+                'eventyay_common:organizer.billing',
+                kwargs={'organizer': self.organizer.slug},
+            )
+            issue = format_html(
+                '<a href="{}#tab-0-1-open">{}</a>',
+                url,
+                gettext('You need to fill the billing information.'),
+            )
+            issues.append(issue)
         return issues
 
     def get_users_with_any_permission(self):
@@ -2512,7 +2588,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1900, 1, 1).astimezone(self.tz)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i

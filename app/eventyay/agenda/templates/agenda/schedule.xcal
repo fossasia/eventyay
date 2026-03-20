@@ -1,5 +1,5 @@
-{% load presale_locale %}
 <?xml version='1.0' encoding='utf-8' ?>
+{% load presale_locale %}
 <iCalendar xmlns:pentabarf='http://pentabarf.org' xmlns:xCal='urn:ietf:params:xml:ns:xcal'>
     <vcalendar>
         <version>2.0</version>

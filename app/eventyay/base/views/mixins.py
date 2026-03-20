@@ -75,6 +75,7 @@ class BaseQuestionsViewMixin:
                         self.request.event.settings.attendee_names_asked
                         or self.request.event.settings.attendee_emails_asked
                         or self.request.event.settings.attendee_company_asked
+                        or self.request.event.settings.attendee_job_title_asked
                         or self.request.event.settings.attendee_addresses_asked
                     )
                 )
@@ -132,6 +133,8 @@ class BaseQuestionsViewMixin:
                         form.pos.attendee_email = v if v != '' else None
                     elif k == 'company':
                         form.pos.company = v if v != '' else None
+                    elif k == 'job_title':
+                        form.pos.job_title = v if v != '' else None
                     elif k == 'street':
                         form.pos.street = v if v != '' else None
                     elif k == 'zipcode':
@@ -235,7 +238,7 @@ class OrderQuestionsViewMixin(BaseQuestionsViewMixin):
     def positions(self):
         qqs = self.request.event.questions.all()
         if self.only_user_visible:
-            qqs = qqs.filter(ask_during_checkin=False, hidden=False)
+            qqs = qqs.filter(ask_during_checkin=False, hidden=False, active=True)
         return list(
             self.order.positions.select_related('product', 'variation').prefetch_related(
                 Prefetch(

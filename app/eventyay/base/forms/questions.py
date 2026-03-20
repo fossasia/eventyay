@@ -424,6 +424,13 @@ class BaseQuestionsForm(forms.Form):
                 max_length=255,
                 initial=(cartpos.company if cartpos else orderpos.company),
             )
+        if product.admission and event.settings.attendee_job_title_asked:
+            add_fields['job_title'] = forms.CharField(
+                required=event.settings.attendee_job_title_required and not self.all_optional,
+                label=_('Job title'),
+                max_length=255,
+                initial=(cartpos.job_title if cartpos else orderpos.job_title),
+            )
 
         if product.admission and event.settings.attendee_addresses_asked:
             add_fields['street'] = forms.CharField(
@@ -514,7 +521,7 @@ class BaseQuestionsForm(forms.Form):
                 position = system_question_order[lookup_name]
             else:
                 # Default positions for fields not in saved order
-                default_order = ['attendee_name_parts', 'attendee_email', 'company', 'street', 
+                default_order = ['attendee_name_parts', 'attendee_email', 'company', 'job_title', 'street',
                                 'zipcode', 'city', 'country', 'state']
                 position = default_order.index(lookup_name) if lookup_name in default_order else 999
             

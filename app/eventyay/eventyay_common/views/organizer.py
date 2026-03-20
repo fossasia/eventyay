@@ -18,17 +18,20 @@ from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.forms.filter import OrganizerFilterForm
+from eventyay.control.permissions import (
+    OrganizerCreationPermissionMixin,
+    OrganizerPermissionRequiredMixin,
+)
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
-from ...control.permissions import OrganizerPermissionRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'eventyay_common/organizers/index.html'
@@ -44,6 +47,7 @@ class OrganizerList(PaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
         return ctx
 
     @cached_property
@@ -51,15 +55,16 @@ class OrganizerList(PaginationMixin, ListView):
         return OrganizerFilterForm(data=self.request.GET, request=self.request)
 
 
-class OrganizerCreate(CreateView):
+class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     model = Organizer
     form_class = OrganizerForm
     template_name = 'eventyay_common/organizers/create.html'
     context_object_name = 'organizer'
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_active_staff_session(self.request.session.session_key):
-            raise PermissionDenied()
+        # Check if user has permission to create organizers
+        if not self._can_create_organizer(request.user):
+            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
@@ -100,7 +105,7 @@ class OrganizerCreate(CreateView):
     def get_success_url(self) -> str:
         return reverse('eventyay_common:organizers')
 
-class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
+class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     model = Organizer
     form_class = OrganizerUpdateForm
     template_name = 'eventyay_common/organizers/edit.html'
@@ -279,7 +284,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             override['token_form'] = token_form
 
     def _teams_tab_url(self, team_id=None, section='teams', panel=None, anchor='organizer-messages'):
-        base = reverse('eventyay_common:organizer.update', kwargs={'organizer': self.request.organizer.slug})
+        base = reverse('eventyay_common:organizer.teams', kwargs={'organizer': self.request.organizer.slug})
         query = {'section': section}
         if team_id:
             query['team'] = team_id
@@ -523,7 +528,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         )
 
         messages.success(self.request, _('The new member has been added to the team.'))
-        return self._redirect_to_team_permissions(team.pk)
+        return self._redirect_to_team_members_panel(team.pk)
 
     def _handle_create_invite(self, team, invite_form):
         """Handle creating an invite for a user that doesn't exist yet."""
@@ -549,14 +554,16 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             data={'email': invite_form.cleaned_data['user']},
         )
         messages.success(self.request, _('The new member has been invited to the team.'))
-        return self._redirect_to_team_permissions(team.pk)
+        return self._redirect_to_team_members_panel(team.pk)
 
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        token_form_prefix = self._token_form_prefix(team)
+        prefixed_name_field = f'{token_form_prefix}-name'
         token_form = TokenForm(
-            data=(self.request.POST if 'name' in self.request.POST else None),
-            prefix=self._token_form_prefix(team),
+            data=(self.request.POST if prefixed_name_field in self.request.POST else None),
+            prefix=token_form_prefix,
         )
 
         post = self.request.POST
@@ -564,7 +571,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         with transaction.atomic():
             if 'remove-token' in post:
                 return self._handle_remove_token(team, post)
-            if 'name' in post and token_form.is_valid() and token_form.has_changed():
+            if prefixed_name_field in post and token_form.is_valid() and token_form.has_changed():
                 return self._handle_create_token(team, token_form)
 
         messages.error(self.request, _('Your changes could not be saved.'))

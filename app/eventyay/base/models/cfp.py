@@ -55,6 +55,7 @@ def default_fields():
         'duration': {'visibility': 'do_not_ask'},
         'content_locale': {'visibility': 'required'},
         'additional_speaker': {'visibility': 'optional'},
+        'fullname': {'visibility': 'required'},
     }
 
 
@@ -106,6 +107,9 @@ class CfP(PretalxModel):
         on_delete=models.PROTECT,
         related_name='+',
         verbose_name=_('Default session type'),
+        null=True,
+        blank=True,
+        help_text=_('The default session type for new submissions. Leave empty to show no pre-selected type in the CFP form.'),
     )
     deadline = models.DateTimeField(
         null=True,

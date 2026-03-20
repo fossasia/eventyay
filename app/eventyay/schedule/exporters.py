@@ -149,6 +149,7 @@ class FrabXCalExporter(ScheduleData):
     identifier = 'schedule.xcal'
     verbose_name = 'XCal (frab compatible)'
     public = True
+    show_qrcode = True
     favs_retrieve = False
     talk_ids = []
     icon = 'fa-calendar'
@@ -180,9 +181,10 @@ class FrabJsonExporter(ScheduleData):
     identifier = 'schedule.json'
     verbose_name = 'JSON (frab compatible)'
     public = True
+    show_qrcode = True
     favs_retrieve = False
     talk_ids = []
-    icon = '{ }'
+    icon = 'fa-code'
     cors = '*'
 
     def get_data(self, **kwargs):
@@ -322,7 +324,7 @@ class ICalExporter(BaseExporter):
     identifier = 'schedule.ics'
     verbose_name = _('iCal (full event)')
     public = True
-    show_public = False
+    show_public = True
     show_qrcode = True
     favs_retrieve = False
     talk_ids = []
@@ -346,7 +348,7 @@ class ICalExporter(BaseExporter):
             .order_by('start')
         )
         for talk in talks:
-            if talk.submission and talk.submission.code not in self.talk_ids:
+            if self.favs_retrieve and talk.submission and talk.submission.code not in self.talk_ids:
                 continue
             talk.build_ical(cal, creation_time=creation_time, netloc=netloc)
 
@@ -366,6 +368,7 @@ class FavedICalExporter(BaseExporter):
     icon = 'fa-calendar'
     show_public = True
     cors = '*'
+    schedule = None
 
     def is_public(self, request, **kwargs):
         return (
@@ -379,7 +382,10 @@ class FavedICalExporter(BaseExporter):
             return None
 
         netloc = urlparse(settings.SITE_URL).netloc
-        slots = request.event.current_schedule.scheduled_talks.filter(submission__favourites__user__in=[request.user])
+        schedule = self.schedule or request.event.current_schedule
+        if not schedule:
+            return None
+        slots = schedule.scheduled_talks.filter(submission__favourites__user__in=[request.user])
 
         cal = vobject.iCalendar()
         cal.add('prodid').value = f'-//pretalx//{netloc}//{request.event.slug}//faved'
@@ -387,3 +393,39 @@ class FavedICalExporter(BaseExporter):
         for slot in slots:
             slot.build_ical(cal)
         return f'{self.event.slug}-favs.ics', 'text/calendar', cal.serialize()
+
+
+class BaseCalendarExporter(BaseExporter):
+    public = True
+    show_qrcode = True
+    icon = 'fa-calendar'
+
+    @property
+    def show_public(self):
+        return self.ical_exporter_cls(self.event).show_public
+
+
+class GoogleCalendarExporter(BaseCalendarExporter):
+    identifier = 'google-calendar'
+    verbose_name = 'Subscribe to Google Calendar'
+    icon = 'fa-google'
+    ical_exporter_cls = ICalExporter
+
+
+class MyGoogleCalendarExporter(BaseCalendarExporter):
+    identifier = 'my-google-calendar'
+    verbose_name = 'Subscribe to My ⭐ Sessions in Google Calendar'
+    icon = 'fa-google'
+    ical_exporter_cls = MyICalExporter
+
+
+class WebcalExporter(BaseCalendarExporter):
+    identifier = 'webcal'
+    verbose_name = 'Subscribe to Other Calendar'
+    ical_exporter_cls = ICalExporter
+
+
+class MyWebcalExporter(BaseCalendarExporter):
+    identifier = 'my-webcal'
+    verbose_name = 'Subscribe to My ⭐ Sessions in Other Calendar'
+    ical_exporter_cls = MyICalExporter

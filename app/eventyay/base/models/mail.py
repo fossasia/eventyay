@@ -16,6 +16,7 @@ from eventyay.mail.context import get_available_placeholders, get_mail_context
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
 from eventyay.mail.signals import queuedmail_post_send, queuedmail_pre_send
 from eventyay.talk_rules.submission import orga_can_change_submissions
+from eventyay.helpers.i18n import is_rtl
 
 from .mixins import PretalxModel
 
@@ -371,7 +372,7 @@ class QueuedMail(PretalxModel):
             'event': event,
             'color': (event.visible_primary_color if event else '') or settings.DEFAULT_EVENT_PRIMARY_COLOR,
             'locale': self.locale,
-            'rtl': self.locale in settings.LANGUAGES_BIDI,
+            'rtl': is_rtl(self.locale),
             'subject': self.subject,
             'signature': sig,
         }

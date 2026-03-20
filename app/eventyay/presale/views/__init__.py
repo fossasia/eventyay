@@ -264,7 +264,7 @@ def get_cart(request):
     from eventyay.presale.views.cart import get_or_create_cart_id
 
     qqs = request.event.questions.all()
-    qqs = qqs.filter(ask_during_checkin=False, hidden=False)
+    qqs = qqs.filter(ask_during_checkin=False, hidden=False, active=True)
 
     if not hasattr(request, '_cart_cache'):
         cart_id = get_or_create_cart_id(request, create=False)

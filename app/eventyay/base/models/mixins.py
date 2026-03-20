@@ -198,7 +198,7 @@ class FileCleanupMixin:
                 'pk': self.pk,
                 'generate_thumbnail': generate_thumbnail,
             },
-            countdown=10,
+            countdown=2,  # Reduced from 10 to 2 seconds
         )
 
 
