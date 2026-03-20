@@ -266,6 +266,9 @@ function getJoinErrorKey(error) {
 }
 
 async function initializeIframe(mute) {
+	if (!module.value) return;
+	if (shouldUseLivestream.value) return;
+	if (iframeOffline.value) return;
 	joinErrorKey.value = null;
 	iframeError.value = null;
 	try {
@@ -336,10 +339,6 @@ async function initializeIframe(mute) {
 					break;
 				}
 				const config = module.value.config || {};
-				// Smart muting logic to balance autoplay and user control:
-				// - Always mute if already muted (e.g., for language translation)
-				// - Mute for autoplay ONLY if controls are visible (so user can unmute)
-				// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
 				const shouldMute = mute || (autoplay.value && !config.hideControls);
 				iframeUrl = getYoutubeUrl(
 					ytid,
@@ -363,20 +362,16 @@ async function initializeIframe(mute) {
 		if (hideIfBackground) {
 			iframe.classList.add('hide-if-background');
 		}
-		// Add background and size-tiny classes if in background mode
 		if (props.background) {
 			iframe.classList.add('background');
 			iframe.classList.add('size-tiny');
 		}
-		// Set iframe permissions and attributes
 		iframe.allow =
 			'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' +
 			(autoplay.value ? '; autoplay *' : '');
 		iframe.allowFullscreen = true;
 		iframe.setAttribute('allowusermedia', 'true');
-		iframe.setAttribute('allowfullscreen', ''); // iframe.allowfullscreen is not enough in firefox
-		// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
-		// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+		iframe.setAttribute('allowfullscreen', '');
 		if (isYouTube) {
 			iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
 			iframe.id = `youtube-player-${Date.now()}`;
@@ -386,10 +381,8 @@ async function initializeIframe(mute) {
 		container.appendChild(iframe);
 		iframeEl.value = iframe;
 
-		// Wait for iframe to load before sending postMessage commands
 		if (isYouTube) {
 			iframe.onload = () => {
-				// If translation is already selected, mute the main player
 				if (youtubeTransUrl.value) {
 					setTimeout(() => muteYouTubePlayer(), 1000);
 				}
@@ -397,13 +390,11 @@ async function initializeIframe(mute) {
 		}
 	} catch (error) {
 		joinErrorKey.value = getJoinErrorKey(error);
-
 		if (joinErrorKey.value) {
 			iframeError.value = null;
 		} else {
 			iframeError.value = error;
 		}
-
 		console.error('MediaSource join failed:', error);
 	}
 }
