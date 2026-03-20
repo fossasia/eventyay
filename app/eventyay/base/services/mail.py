@@ -630,7 +630,7 @@ def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_
             try:
                 if mime_image := convert_image_to_cid(image, cid, verify_ssl):
                     msg.attach(mime_image)
-            except (IndexError, requests.RequestException, ssl.SSLError):
+            except (ValueError, IndexError, requests.RequestException, ssl.SSLError):
                 logger.exception('ERROR attaching CID image %s[%s]', cid, image)
 
 
@@ -649,8 +649,9 @@ def encoder_linelength(msg):
     msg.set_payload(b'\r\n'.join(pieces))
 
 
-# May raises:
-# - IndexError
+# May raise:
+# - ValueError (If image_src lacks ",")
+# - IndexError (If regex failed)
 # - requests.RequestException
 # - ssl.SSLError
 def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -> MIMEImage | None:
