@@ -128,11 +128,11 @@
                                      data-placement="bottom"
                                      title="{{ team_delete_disabled_help }}">
                                     <button type="submit"
-                                            form="team-delete-form-{{ panel.team.pk }}"
-                                            class="btn btn-danger btn-sm"
-                                            disabled 
-                                            aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}">
-                                        <i class="fa fa-trash"></i> {% translate "Delete" %}
+                                           form="team-delete-form-{{ panel.team.pk }}"
+                                           class="btn btn-danger btn-sm"
+                                           disabled
+                                           aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}">
+                                       <i class="fa fa-trash"></i> {% translate "Delete" %}
                                     </button>
                                     <span id="team-delete-disabled-help-{{ panel.team.pk }}" class="sr-only">
                                         {{ team_delete_disabled_help }}
