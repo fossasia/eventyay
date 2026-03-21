@@ -1139,7 +1139,7 @@ class Question(LoggedModel):
         (TYPE_STRING, _('Text (one line)')),
         (TYPE_TEXT, _('Multiline text')),
         (TYPE_BOOLEAN, _('Confirm Checkbox')),
-        (TYPE_CHOICE, _('Radio button (Choose one option)')),
+        (TYPE_CHOICE, _('Drop-down (one option)')),
         (TYPE_CHOICE_MULTIPLE, _('Checkbox (Choose one or several options)')),
         (TYPE_FILE, _('File upload')),
         (TYPE_DATE, _('Date')),
