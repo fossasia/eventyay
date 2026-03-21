@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-16 11:55+0000\n"
+"PO-Revision-Date: 2026-03-21 15:18+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hant/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -220,16 +220,12 @@ msgid "This speaker also appears in:"
 msgstr "此講者還出現在："
 
 #: agenda/views/schedule.py:200
-#, fuzzy
-#| msgid "Show featured sessions"
 msgid "No published sessions."
-msgstr "顯示精選議程"
+msgstr "沒有已發佈的場次。"
 
 #: agenda/views/schedule.py:201
-#, fuzzy
-#| msgid "New schedule!"
 msgid "No published schedule."
-msgstr "新的議程表發布了！"
+msgstr "沒有已發佈的行程。"
 
 #: agenda/views/schedule.py:206
 msgid "Our schedule is not live yet."
@@ -246,10 +242,8 @@ msgid "Your favourites could only be saved locally in your browser."
 msgstr "您的最愛只能儲存在瀏覽器本地端。"
 
 #: agenda/views/speaker.py:37 agenda/views/speaker.py:65
-#, fuzzy
-#| msgid "No speakers"
 msgid "No published speakers."
-msgstr "沒有講者"
+msgstr "沒有已發佈的講者。"
 
 #: agenda/views/talk.py:152
 #, python-brace-format
@@ -263,16 +257,12 @@ msgid ""
 msgstr "完全裝置存取（讀取與變更訂單與禮品卡、讀取商品與設定）"
 
 #: api/auth/devicesecurity.py:27
-#, fuzzy
-#| msgid "eventyay"
 msgid "eventyay_checkin"
-msgstr "eventyay掃描"
+msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
-#, fuzzy
-#| msgid "eventyay (kiosk mode, online only)"
 msgid "eventyay_checkin (kiosk mode, online only)"
-msgstr "eventyay掃描（資訊站模式，僅限線上使用）"
+msgstr "eventyay_checkin（自助服務模式，僅限線上）"
 
 #: api/models.py:23
 msgid "Application name"
@@ -337,10 +327,8 @@ msgstr "所選座位 \"{seat}\" 不可用。"
 
 #: api/serializers/checkin.py:56 base/models/event.py:2943
 #: base/models/product.py:1406 base/models/product.py:1635
-#, fuzzy
-#| msgid "One or more items do not belong to this event."
 msgid "One or more products do not belong to this event."
-msgstr "一個或多個項不屬於此活動。"
+msgstr "一個或多個產品不屬於此活動。"
 
 #: api/serializers/checkin.py:60 api/serializers/checkin.py:63
 #: base/models/product.py:1648 base/models/product.py:1651
@@ -401,16 +389,12 @@ msgid "This user already has permissions for this team."
 msgstr "該使用者已擁有此團隊的權限。"
 
 #: api/serializers/product.py:101 control/forms/product.py:913
-#, fuzzy
-#| msgid "The bundled item must not be the same item as the bundling one."
 msgid "The bundled product must not be the same product as the bundling one."
-msgstr "捆綁的商品不得與捆綁的商品相同。"
+msgstr "被綁定的產品不得與綁定產品相同。"
 
 #: api/serializers/product.py:104 control/forms/product.py:915
-#, fuzzy
-#| msgid "The bundled item must not be the same item as the bundling one."
 msgid "The bundled product must not have bundles on its own."
-msgstr "捆綁的商品不得與捆綁的商品相同。"
+msgstr "被綁定的產品本身不得有套組。"
 
 #: api/serializers/product.py:209
 msgid ""
@@ -694,18 +678,12 @@ msgid ""
 msgstr "每筆訂單都請求填寫電子郵件地址。訂單確認將寄至該電子郵件地址。"
 
 #: base/configurations/default_setting.py:202
-#, fuzzy
-#| msgid "Enter one email address per line."
 msgid "Require email address per order"
-msgstr "每行輸入一個電子郵件地址。"
+msgstr "每筆訂單需要電子郵件地址"
 
 #: base/configurations/default_setting.py:203
-#, fuzzy
-#| msgid ""
-#| "Require attendees to enter their primary email address twice to help "
-#| "prevent errors."
 msgid "Require attendees to fill in an email address for the order."
-msgstr "要求參加者必須填寫他們主要電子郵件地址兩次，以避免出現錯誤。"
+msgstr "要求參加者為訂單填寫電子郵件地址。"
 
 #: base/configurations/default_setting.py:213
 #: control/templates/pretixcontrol/items/orderforms.html:77
@@ -1233,20 +1211,14 @@ msgid "Active languages"
 msgstr "可使用語言"
 
 #: base/configurations/default_setting.py:880 control/forms/event.py:67
-#, fuzzy
-#| msgid ""
-#| "Users will be able to use eventyay in these languages, and you will be "
-#| "able to provide all texts in these languages. If you don’t provide a text "
-#| "in the language a user selects, it will be shown in your event’s default "
-#| "language instead."
 msgid ""
 "Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don't provide a text in the "
 "language a user selects, it will be shown in your event's default language "
 "instead."
 msgstr ""
-"用戶將能夠使用這些語言的eventyay，並且你將能夠提供這些語言的所有文字。如果你"
-"未以使用者選擇的語言提供文字，則會改為以活動的預設的語言顯示文字。"
+"使用者將能以這些語言使用 eventyay，而你將能以這些語言提供所有文字。若你未提供"
+"使用者所選語言的文字，將改以你的活動預設語言顯示。"
 
 #: base/configurations/default_setting.py:899 control/forms/event.py:74
 msgid "Content languages"
@@ -2658,10 +2630,8 @@ msgid "Displayed as the background image on the public start page."
 msgstr "顯示於公開首頁的背景圖片。"
 
 #: base/configurations/default_setting.py:2554
-#, fuzzy
-#| msgid "Frontpage header pattern"
 msgid "Start page header text"
-msgstr "前端頁面標頭樣式"
+msgstr "開始頁面頁首文字"
 
 #: base/configurations/default_setting.py:2556
 msgid "Short text displayed on the public start page banner."
@@ -3960,17 +3930,12 @@ msgid "Voucher code"
 msgstr ""
 
 #: base/forms/__init__.py:156
-#, fuzzy
-#| msgctxt "Allows users to select how many lines/elements are shown in lists."
-#| msgid "Show per page:"
 msgid "Show secret key"
-msgstr "每頁顯示："
+msgstr "顯示密鑰"
 
 #: base/forms/__init__.py:157
-#, fuzzy
-#| msgid "Client secret"
 msgid "Hide secret key"
-msgstr "用戶端密鑰"
+msgstr "隱藏密鑰"
 
 #: base/forms/auth.py:17
 msgid ""
@@ -4476,10 +4441,8 @@ msgstr ""
 "。"
 
 #: base/models/auth.py:263 orga/templates/orga/submission/speakers.html:41
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile Picture Source"
-msgstr "個人頭像"
+msgstr "個人檔案照片來源"
 
 #: base/models/auth.py:264
 msgid ""
@@ -4488,10 +4451,8 @@ msgid ""
 msgstr "請輸入圖片作者或來源名稱，若適用也請提供連結。"
 
 #: base/models/auth.py:269 orga/templates/orga/submission/speakers.html:47
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile Picture License"
-msgstr "個人頭像"
+msgstr "個人檔案照片授權"
 
 #: base/models/auth.py:270
 msgid ""
@@ -4795,16 +4756,12 @@ msgid "Visible on start page"
 msgstr "在首頁顯示"
 
 #: base/models/event.py:596
-#, fuzzy
-#| msgid "Featured sessions text"
 msgid "Featured on start page"
-msgstr "精選議程文字"
+msgstr "在開始頁面精選"
 
 #: base/models/event.py:597
-#, fuzzy
-#| msgid "New schedule published"
 msgid "Tickets are published"
-msgstr "新議程表已發布"
+msgstr "票券已發佈"
 
 #: base/models/event.py:598
 msgid "Talk pages are published"
@@ -4913,10 +4870,8 @@ msgstr "所有活動日期都將根據此時區進行在地化解讀。"
 #: base/models/event.py:685 control/forms/event.py:223
 #: control/forms/event.py:384 event/forms.py:279
 #: eventyay_common/forms/event.py:94
-#, fuzzy
-#| msgid "Organiser email address"
 msgid "Organizer email address"
-msgstr "主辦者電子郵件地址"
+msgstr "主辦單位電子郵件地址"
 
 #: base/models/event.py:686
 msgid "Will be used as Reply-To in emails."
@@ -5671,13 +5626,9 @@ msgid "Nobody on your teams has the permission to create new events."
 msgstr "您的團隊中沒有人有權限建立新活動。"
 
 #: base/models/organizer.py:65
-#, fuzzy
-#| msgid ""
-#| "Nobody on your teams has the permission to change organiser-level "
-#| "settings."
 msgid ""
 "Nobody on your teams has the permission to change organizer-level settings."
-msgstr "您的團隊中沒有人有權限變更主辦單位層級的設定。"
+msgstr "你的團隊中沒有人有權限變更主辦單位層級的設定。"
 
 #: base/models/organizer.py:76
 #, python-brace-format
@@ -5835,10 +5786,8 @@ msgstr ""
 "審查流程。這提供超越一般審查的完整管理權限。"
 
 #: base/models/organizer.py:435
-#, fuzzy
-#| msgid "Reviewers can see other reviews"
 msgid "Reviewer — can only review submissions"
-msgstr "審稿者可以看到其他審稿意見"
+msgstr "審查者 — 只能審查投稿"
 
 #: base/models/organizer.py:437
 msgid ""
@@ -5860,20 +5809,16 @@ msgstr ""
 "並始終隱藏此團隊的發言人姓名。"
 
 #: base/models/organizer.py:452
-#, fuzzy
-#| msgid "Add, remove and create tags"
 msgid "Video: Can create stages"
-msgstr "新增、移除與建立標籤"
+msgstr "影片：可建立舞台"
 
 #: base/models/organizer.py:453
 msgid "Allows creating livestream stages inside Eventyay Video."
 msgstr "允許在 Eventyay Video 中建立直播舞台。"
 
 #: base/models/organizer.py:457
-#, fuzzy
-#| msgid "Can create events"
 msgid "Video: Can create channels"
-msgstr "可以建立活動"
+msgstr "影片：可建立頻道"
 
 #: base/models/organizer.py:458
 msgid "Allows creating chat/video channels inside Eventyay Video."
@@ -5888,10 +5833,8 @@ msgid "Grants permission to open new direct message conversations."
 msgstr "授予開啟新的私訊對話的權限。"
 
 #: base/models/organizer.py:467
-#, fuzzy
-#| msgid "Can create events"
 msgid "Video: Can create announcements"
-msgstr "可以建立活動"
+msgstr "影片：可建立公告"
 
 #: base/models/organizer.py:468
 msgid "Allows posting announcements in the Eventyay Video interface."
@@ -5914,30 +5857,24 @@ msgid "Allows moderating users (ban, silence, reactivate) in Eventyay Video."
 msgstr "允許在 Eventyay Video 中管理使用者（封鎖、禁言、重新啟用）。"
 
 #: base/models/organizer.py:482
-#, fuzzy
-#| msgid "Reviewers can write and edit reviews"
 msgid "Video: Can create and edit rooms"
-msgstr "審稿者可以撰寫與編輯審稿意見"
+msgstr "影片：可建立並編輯房間"
 
 #: base/models/organizer.py:483
 msgid "Allows editing and deleting rooms inside Eventyay Video."
 msgstr "允許在 Eventyay Video 中編輯與刪除房間。"
 
 #: base/models/organizer.py:487
-#, fuzzy
-#| msgid "Reviewers can write and edit reviews"
 msgid "Video: Can create and edit kiosks"
-msgstr "審稿者可以撰寫與編輯審稿意見"
+msgstr "影片：可建立並編輯資訊亭"
 
 #: base/models/organizer.py:488
 msgid "Allows managing kiosk displays inside Eventyay Video."
 msgstr "允許在 Eventyay Video 中管理自助服務亭顯示。"
 
 #: base/models/organizer.py:492
-#, fuzzy
-#| msgid "Could not send mails, error in configuration."
 msgid "Video: Can edit event configuration"
-msgstr "設定中有錯誤，因此無法傳送電子郵件。"
+msgstr "影片：可編輯活動設定"
 
 #: base/models/organizer.py:493
 msgid "Allows editing the global Eventyay Video configuration."
@@ -5949,16 +5886,7 @@ msgid "Invite to team '{team}' for '{email}'"
 msgstr "邀請加入團隊 '{team}'，適用於 '{email}'"
 
 #: base/models/organizer.py:548
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi!\n"
-#| "You have been invited to the {name} event organiser team - Please click "
-#| "here to accept:\n"
-#| "\n"
-#| "{invitation_link}\n"
-#| "\n"
-#| "See you there,\n"
-#| "The {organiser} team"
+#, python-brace-format
 msgid ""
 "Hi!\n"
 "You have been invited to the {name} event organizer team - Please click here "
@@ -5969,19 +5897,17 @@ msgid ""
 "See you there,\n"
 "The {organizer} team"
 msgstr ""
-"Hi!\n"
-"您已被邀請加入「{name}」活動的主辦團隊 - 請點選下方連結來接受邀請：\n"
+"嗨！\n"
+"您已受邀加入 {name} 活動主辦團隊 - 請點擊此處接受：\n"
 "\n"
 "{invitation_link}\n"
 "\n"
-"期待您的加入，\n"
-"{organiser} 團隊敬上"
+"到時見，\n"
+"{organizer} 團隊"
 
 #: base/models/organizer.py:560
-#, fuzzy
-#| msgid "You have been invited to an organiser team"
 msgid "You have been invited to an organizer team"
-msgstr "您已被邀請加入主辦團隊"
+msgstr "您已受邀加入主辦團隊"
 
 #: base/models/organizer.py:682
 #: control/forms/organizer_forms/organizer_form.py:53
@@ -6383,10 +6309,8 @@ msgid "The product's tax rule must belong to the same event as the product."
 msgstr "產品的稅則必須屬於與該產品相同的活動。"
 
 #: base/models/product.py:695
-#, fuzzy
-#| msgid "The event end cannot be before the start."
 msgid "The product's availability cannot end before it starts."
-msgstr "活動的結束時間必須在開始時間之後。"
+msgstr "產品的可用性結束時間不能早於開始時間。"
 
 #: base/models/product.py:735
 msgid "This is shown below the variation name in lists."
@@ -6434,10 +6358,8 @@ msgid "The add-on's category must belong to the same event as the product."
 msgstr "加購項目的類別必須屬於與該產品相同的活動。"
 
 #: base/models/product.py:986
-#, fuzzy
-#| msgid "This user already has been invited for this team."
 msgid "The product already has an add-on of this category."
-msgstr "這位用戶已經被邀請加入團隊了。"
+msgstr "產品已經有此類別的附加項目。"
 
 #: base/models/product.py:991
 msgid "The minimum count needs to be equal to or greater than zero."
@@ -6481,20 +6403,16 @@ msgstr ""
 "，但一般可留空。此數值不會加入基礎產品的價格。"
 
 #: base/models/product.py:1068
-#, fuzzy
-#| msgid "The bundled item must not be the same item as the bundling one."
 msgid "The bundled product must belong to the same event as the product."
-msgstr "捆綁的商品不得與捆綁的商品相同。"
+msgstr "組合產品必須屬於與該產品相同的活動。"
 
 #: base/models/product.py:1070
 msgid "A variation needs to be set for this product."
 msgstr "此產品需設定一個變體。"
 
 #: base/models/product.py:1072
-#, fuzzy
-#| msgid "One or more items do not belong to this event."
 msgid "The chosen variation does not belong to this product."
-msgstr "一個或多個項不屬於此活動。"
+msgstr "所選的變體不屬於此產品。"
 
 #: base/models/product.py:1077
 msgid "The count needs to be equal to or greater than zero."
@@ -6545,8 +6463,6 @@ msgstr ""
 #: control/templates/pretixcontrol/items/question_edit.html:10
 #: control/templates/pretixcontrol/items/question_edit.html:20
 #: control/templates/pretixcontrol/items/questions.html:31
-#, fuzzy
-#| msgid "Custom field"
 msgid "Custom Field"
 msgstr "自訂欄位"
 
@@ -6576,10 +6492,8 @@ msgid "Type"
 msgstr "類型"
 
 #: base/models/product.py:1187
-#, fuzzy
-#| msgid "Hide field"
 msgid "Required field"
-msgstr "隱藏欄位"
+msgstr "必填欄位"
 
 #: base/models/product.py:1193
 msgid "This question will be asked to buyers of the selected products"
@@ -6594,8 +6508,6 @@ msgid "Not supported by all check-in apps for all question types."
 msgstr ""
 
 #: base/models/product.py:1202 control/forms/product.py:82
-#, fuzzy
-#| msgid "Hide field"
 msgid "Hidden field"
 msgstr "隱藏欄位"
 
@@ -6803,10 +6715,8 @@ msgid "URL"
 msgstr "網址"
 
 #: base/models/question.py:52
-#, fuzzy
-#| msgid "Confirm deletion"
 msgid "Confirmation"
-msgstr "確認刪除"
+msgstr "確認"
 
 #: base/models/question.py:65
 msgid "per proposal"
@@ -6879,11 +6789,8 @@ msgid "Session Types"
 msgstr "提交型態"
 
 #: base/models/question.py:168 orga/forms/cfp.py:284
-#, fuzzy
-#| msgctxt "Type of plugin"
-#| msgid "Customizations"
 msgid "Custom question"
-msgstr "客製化"
+msgstr "自訂問題"
 
 #: base/models/question.py:173
 msgid "help text"
@@ -7155,20 +7062,7 @@ msgid ""
 msgstr "請留下您的檢閱意見，為何您認為這份稿件可以被接受，或是不能被接受。"
 
 #: base/models/settings.py:71
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi,\n"
-#| "\n"
-#| "we hope you’re happy with eventyay as your event’s CfP system.\n"
-#| "These links may be helpful in the coming days and weeks:\n"
-#| "\n"
-#| "- Your event’s dashboard: {event_dashboard}\n"
-#| "- A list of proposals: {event_submissions}\n"
-#| "- Your schedule editor: {event_schedule}\n"
-#| "\n"
-#| "If there is anything you’re missing, come tell us about it\n"
-#| "at https://github.com/eventyay/eventyay/issues/new or via an\n"
-#| "email to support@eventyay.com!\n"
+#, python-brace-format
 msgid ""
 "Hi,\n"
 "\n"
@@ -7182,18 +7076,16 @@ msgid ""
 "If there is anything you’re missing, please contact us via our website on "
 "eventyay.com.\n"
 msgstr ""
-"Hi,\n"
+"嗨，\n"
 "\n"
-"希望您喜歡 Eventyay 的活動投稿系統。\n"
-"以下是活動的相關連結：\n"
+"我們希望您滿意使用 eventyay 作為您活動的 CfP 系統。\n"
+"這些連結可能會在接下來的幾天和幾週內派上用場：\n"
 "\n"
-"- 您的活動的資訊面板：{event_dashboard}\n"
-"- 目前提交的稿件：{event_submissions}\n"
-"- 您的活動議程表：{event_schedule}\n"
+"- 您活動的儀表板：{event_dashboard}\n"
+"- 投稿清單：{event_submissions}\n"
+"- 您的議程編輯器：{event_schedule}\n"
 "\n"
-"如果您覺得缺了什麼，請到這裡告訴我們：\n"
-"https://github.com/eventyay/eventyay/issues/new\n"
-"或是發電子郵件到 support@eventyay.com \n"
+"如果您有任何缺少的內容，請透過我們在 eventyay.com 的網站與我們聯絡。\n"
 
 #: base/models/settings.py:90
 #, python-brace-format
@@ -7227,23 +7119,7 @@ msgstr ""
 "  {event_schedule}\n"
 
 #: base/models/settings.py:112
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi,\n"
-#| "\n"
-#| "congratulations, your event is over! Hopefully it went well. Here are "
-#| "some\n"
-#| "statistics you might find interesting:\n"
-#| "\n"
-#| "- You had {submission_count} proposals,\n"
-#| "- Of which you selected {talk_count} sessions.\n"
-#| "- The reviewers wrote {review_count} reviews.\n"
-#| "- You released {schedule_count} schedules in total.\n"
-#| "- Over the course of the event, you sent {mail_count} mails.\n"
-#| "\n"
-#| "If there is anything you’re missing, come tell us about it\n"
-#| "at https://github.com/eventyay/eventyay/issues/new or via an\n"
-#| "email to support@eventyay.com!\n"
+#, python-brace-format
 msgid ""
 "Hi,\n"
 "\n"
@@ -7259,19 +7135,17 @@ msgid ""
 "If there is anything you’re missing, please contact us via our website on "
 "eventyay.com.\n"
 msgstr ""
-"Hi,\n"
+"嗨，\n"
 "\n"
-"恭喜，您的活動結束了！希望一切都順利。這裡有一些統計數字供您參考：\n"
+"恭喜，您的活動已結束！希望一切順利。以下是一些您可能會覺得有趣的統計資料：\n"
 "\n"
-"- 總共有 {submission_count} 份議程投稿，\n"
-"- 您接受了 {talk_count} 份。\n"
-"- 議程團隊總共寫下了 {review_count} 份檢閱意件。\n"
-"- 您總共發布了 {schedule_count} 次活動議程表。\n"
-"- 您總共發出了 {mail_count} 封郵件。\n"
+"- 您有 {submission_count} 份投稿，\n"
+"- 其中您選擇了 {talk_count} 場議程。\n"
+"- 審查者撰寫了 {review_count} 則審查。\n"
+"- 您總共發布了 {schedule_count} 份議程。\n"
+"- 在活動期間，您送出了 {mail_count} 封郵件。\n"
 "\n"
-"如果您覺得缺了什麼，請到這裡告訴我們：\n"
-"https://github.com/eventyay/eventyay/issues/new\n"
-"或是發電子郵件到 support@eventyay.com\n"
+"如果您有任何缺少的內容，請透過我們在 eventyay.com 的網站與我們聯絡。\n"
 
 #: base/models/slot.py:47 orga/views/schedule.py:514
 msgid "Room"
@@ -7480,14 +7354,10 @@ msgid "Show tag publicly"
 msgstr "公開顯示標籤"
 
 #: base/models/tag.py:37
-#, fuzzy
-#| msgid ""
-#| "Tags are currently only in use for organisers and reviewers. They will be "
-#| "visible publicly in a future release of eventyay."
 msgid ""
 "Tags are currently only in use for organisers and reviewers. They will be "
 "visible publicly in a future release of pretalx."
-msgstr "標籤目前僅供主辦單位和審稿者使用。在 eventyay 的未來版本中將可以公開顯示。"
+msgstr "標籤目前僅供主辦單位與審稿者使用。它們將在 pretalx 的未來版本中公開顯示。"
 
 #: base/models/tax.py:135
 msgid "Should be short, e.g. \"VAT\""
@@ -7877,10 +7747,8 @@ msgid "You have been selected from the waitinglist for {event}"
 msgstr "您已從 {event} 的候補名單中被選中。"
 
 #: base/models/waitinglist.py:172
-#, fuzzy
-#| msgid "One or more items do not belong to this event."
 msgid "The selected product does not belong to this event."
-msgstr "一個或多個項不屬於此活動。"
+msgstr "所選產品不屬於此活動。"
 
 #: base/models/waitinglist.py:174
 msgid "Please select a specific variation of this product."
@@ -8377,10 +8245,8 @@ msgid "You cannot pay with gift cards when buying a gift card."
 msgstr ""
 
 #: base/payment.py:1259 base/payment.py:1345
-#, fuzzy
-#| msgid "Please enter at least one email address!"
 msgid "Please enter a gift card code."
-msgstr "請至少輸入一個電子郵件地址！"
+msgstr "請輸入禮品卡代碼。"
 
 #: base/payment.py:1265 base/payment.py:1351 base/payment.py:1403
 #: base/services/orders.py:960
@@ -9565,10 +9431,8 @@ msgid ""
 msgstr "您的預設語系也必須為活動啟用（見上方方塊）。"
 
 #: base/settings.py:151 control/forms/event.py:131
-#, fuzzy
-#| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
-msgstr "您選擇的預設語言必須是可使用的語言之一。"
+msgstr "內容語言必須是啟用語言的子集。"
 
 #: base/settings.py:155
 msgid ""
@@ -9860,25 +9724,19 @@ msgid "Download ticket"
 msgstr "下載票券"
 
 #: base/timeline.py:43
-#, fuzzy
-#| msgid "Event start date"
 msgctxt "timeline"
 msgid "Event starts"
-msgstr "活動開始日期"
+msgstr "活動開始"
 
 #: base/timeline.py:54
-#, fuzzy
-#| msgid "Event end date"
 msgctxt "timeline"
 msgid "Event ends"
-msgstr "活動結束日期"
+msgstr "活動結束"
 
 #: base/timeline.py:65
-#, fuzzy
-#| msgid "Limit permissions to these events"
 msgctxt "timeline"
 msgid "Admissions for the event start"
-msgstr "只將權限套用到這些活動"
+msgstr "活動入場開始"
 
 #: base/timeline.py:76
 msgctxt "timeline"
@@ -10012,14 +9870,10 @@ msgid ""
 msgstr "我們很高興与我們的活動提出提案。讓我們開始吧，這不會花很長時間。"
 
 #: cfp/flow.py:485
-#, fuzzy
-#| msgid ""
-#| "There was an error when logging in. Please contact the organiser for "
-#| "further help."
 msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
-msgstr "登入時發生了錯誤。請聯繫主辦者以尋求協助。"
+msgstr "登入時發生錯誤。請聯絡主辦單位以取得進一步協助。"
 
 #: cfp/flow.py:491 common/templates/common/base.html:151
 #: common/templates/common/fragment_header_user.html:101
@@ -10209,10 +10063,8 @@ msgid "This Call for Papers closed on %(deadline)s (%(timezone)s)."
 msgstr "徵求議程投稿階段已於 %(deadline)s (%(timezone)s) 關閉。"
 
 #: cfp/templates/cfp/event/cfp.html:60
-#, fuzzy
-#| msgid "Speaker profile"
 msgid "View or edit speaker profile"
-msgstr "講者個人資料"
+msgstr "檢視或編輯講者個人檔案"
 
 #: cfp/templates/cfp/event/cfp.html:67
 msgid "Submit a proposal"
@@ -10283,19 +10135,14 @@ msgstr ""
 "。"
 
 #: cfp/templates/cfp/event/login.html:15
-#, fuzzy
-#| msgid ""
-#| "You do not need an account to view the event, or submit feedback, or "
-#| "receive schedule updates. You’ll only need an account if you participate "
-#| "in the event as speaker or as an organiser."
 msgid ""
 "You do not need an account to view the event, submit feedback, or receive "
 "schedule updates. An account is only necessary if you want to create your "
 "own personalized schedule, or if you are participating in the event as a "
 "speaker or organizer."
 msgstr ""
-"你不需要帳戶即可查看活動、提交回饋或接收議程表所安排的更新。只有當你以演講者"
-"或召集人的身份參加活動時，你才需要新的帳戶。"
+"您不需要帳號即可檢視活動、提交回饋或接收議程更新。只有在您想建立個人化議程，"
+"或以講者或主辦單位身分參與活動時，才需要帳號。"
 
 #: cfp/templates/cfp/event/recover.html:25
 msgid "Set your password to access your profile and proposals"
@@ -10359,24 +10206,17 @@ msgstr ""
 "你傳送，關於即將到來的截止日期的電子郵件提醒。"
 
 #: cfp/templates/cfp/event/submission_base.html:100
-#, fuzzy
-#| msgid "You have been assigned to this proposal"
 msgid "You need to be logged in to submit a proposal"
-msgstr "您已被分派審稿此投稿"
+msgstr "您需要登入才能提交提案"
 
 #: cfp/templates/cfp/event/submission_base.html:101
-#, fuzzy
-#| msgid ""
-#| "To create your proposal, you need an account on this page. This not only "
-#| "gives us a way to contact you, it also gives you the possibility to edit "
-#| "your proposal or to view its current state."
 msgid ""
 "Please log in or create an account to submit a proposal. This enables us to "
 "contact you and allows you to edit your proposal or check its status at any "
 "time."
 msgstr ""
-"要投稿議程，您需要有一個帳號。註冊帳號的目的不只是讓我們方便聯繫您，也讓您可"
-"以編輯您提交的內容，或查看目前的狀態。"
+"請登入或建立帳號以提交提案。這讓我們能與您聯絡，並允許您隨時編輯提案或查看其"
+"狀態。"
 
 #: cfp/templates/cfp/event/submission_questions.html:13
 msgid "… about your proposal:"
@@ -10709,10 +10549,8 @@ msgid "Past events"
 msgstr "過往活動"
 
 #: cfp/views/locale.py:46
-#, fuzzy
-#| msgid "Your changes have been saved."
 msgid "Your locale preferences have been saved."
-msgstr "您的變更已儲存。"
+msgstr "您的語系偏好已儲存。"
 
 #: cfp/views/user.py:262
 msgid "Your draft was discarded."
@@ -10738,14 +10576,11 @@ msgid "Supported formats: {formats}"
 msgstr "支援格式： {formats}"
 
 #: common/forms/fields.py:102 control/forms/__init__.py:209
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "This filetype ({extension}) is not allowed, it has to be one of the "
-#| "following: "
+#, python-brace-format
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
 "supported formats: {formats}."
-msgstr "此檔案型態（{extension}）不被接受。可接受的檔案型態如下： "
+msgstr "不支援檔案類型「{extension}」。請上傳支援的格式之一：{formats}。"
 
 #: common/forms/forms.py:12 common/forms/widgets.py:190
 #: common/templates/common/includes/search_form.html:7
@@ -11204,10 +11039,8 @@ msgid "We have encountered an error."
 msgstr "我們遇到麻煩了。"
 
 #: common/templates/common/auth.html:44
-#, fuzzy
-#| msgid "Organiser account"
 msgid "Register account"
-msgstr "主辦單位帳號"
+msgstr "註冊帳號"
 
 #: common/templates/common/avatar.html:23
 msgid "Your avatar"
@@ -11236,15 +11069,11 @@ msgstr "我提交的議程稿件"
 
 #: common/templates/common/base.html:146
 #: common/templates/common/fragment_header_user.html:96
-#, fuzzy
-#| msgid "Sent emails"
 msgid "Event emails"
-msgstr "傳送郵件"
+msgstr "活動電子郵件"
 
 #: common/templates/common/base.html:157
 #: common/templates/common/fragment_header_user.html:107
-#, fuzzy
-#| msgid "Organiser area"
 msgid "Organizer area"
 msgstr "主辦單位區域"
 
@@ -11273,12 +11102,10 @@ msgid "Imprint"
 msgstr "版本說明"
 
 #: common/templates/common/base_public.html:93
-#, fuzzy
-#| msgid "This event is currently non-public. Only organisers can see it."
 msgid ""
 "This event is currently offline. Only event team members and system "
 "administrators can see it."
-msgstr "這個活動尚未公開，只有主辦者可以查看。"
+msgstr "此活動目前離線。只有活動團隊成員與系統管理員可以看到。"
 
 #: common/templates/common/base_public.html:106
 msgid ""
@@ -11316,16 +11143,12 @@ msgid "Optional"
 msgstr "選填"
 
 #: common/templates/common/fragment_header_user.html:15
-#, fuzzy
-#| msgid "Preferred language"
 msgid "Enforce UI language"
-msgstr "預設語言"
+msgstr "強制使用介面語言"
 
 #: common/templates/common/fragment_header_user.html:31
-#, fuzzy
-#| msgid "Preferred language"
 msgid "Help: Enforce UI language"
-msgstr "預設語言"
+msgstr "說明：強制使用介面語言"
 
 #: common/templates/common/fragment_header_user.html:35
 msgid ""
@@ -11334,16 +11157,12 @@ msgid ""
 msgstr "啟用後，當該語言可用於本活動時，活動語言會跟隨您的介面語言。"
 
 #: common/templates/common/fragment_header_user.html:41
-#, fuzzy
-#| msgid "Language"
 msgid "Event Language"
-msgstr "語言"
+msgstr "活動語言"
 
 #: common/templates/common/fragment_header_user.html:54
-#, fuzzy
-#| msgid "Language"
 msgid "UI Language"
-msgstr "語言"
+msgstr "使用者介面語言"
 
 #: common/templates/common/fragment_nav.html:7 event/stages.py:81
 #: orga/templates/orga/settings/form.html:57
@@ -11401,10 +11220,8 @@ msgstr "票券"
 
 #: common/templates/common/fragment_nav.html:53
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
-#, fuzzy
-#| msgid "All speakers"
 msgid "Call for Speakers"
-msgstr "所有講者"
+msgstr "講者徵集"
 
 #: common/templates/common/fragment_nav.html:58
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -11441,11 +11258,8 @@ msgid "Talks"
 msgstr "演講"
 
 #: common/templates/common/fragment_profile_dropdown.html:31
-#, fuzzy
-#| msgid "session"
-#| msgid_plural "sessions"
 msgid "My sessions"
-msgstr "個議程"
+msgstr "我的議程"
 
 #: common/templates/common/fragment_profile_dropdown.html:34
 #: control/forms/filter.py:1171 eventyay_common/navigation.py:42
@@ -11885,10 +11699,8 @@ msgid "The password was reset."
 msgstr "密碼已重置。"
 
 #: common/text/phrases.py:97
-#, fuzzy
-#| msgid "You can use {link_start}Markdown{link_end} here."
 msgid "You can use Markdown in this field."
-msgstr "您可以使用 {link_start}Markdown{link_end} 語法。"
+msgstr "你可以在此欄位使用 Markdown。"
 
 #: common/text/phrases.py:99
 msgid "This content will be shown publicly."
@@ -11943,10 +11755,8 @@ msgid "English (Australia)"
 msgstr "英語（澳大利亞）"
 
 #: config/settings.py:633
-#, fuzzy
-#| msgid "English"
 msgid "English (Canada)"
-msgstr "英語"
+msgstr "英語（加拿大）"
 
 #: config/settings.py:642
 msgid "German"
@@ -11985,10 +11795,8 @@ msgid "Spanish"
 msgstr "西班牙語"
 
 #: config/settings.py:715
-#, fuzzy
-#| msgid "Version"
 msgid "Persian"
-msgstr "版本"
+msgstr "波斯語"
 
 #: config/settings.py:724
 msgid "Finnish"
@@ -12043,16 +11851,12 @@ msgid "Polish"
 msgstr "波蘭語"
 
 #: config/settings.py:830
-#, fuzzy
-#| msgid "Dutch (informal)"
 msgid "Polish (informal)"
-msgstr "荷蘭語 (非正式的)"
+msgstr "波蘭語（非正式）"
 
 #: config/settings.py:839
-#, fuzzy
-#| msgid "Brasilian Portuguese"
 msgid "Brazilian Portuguese"
-msgstr "巴西葡萄牙文"
+msgstr "巴西葡萄牙語"
 
 #: config/settings.py:848
 msgid "Portuguese"
@@ -12194,16 +11998,12 @@ msgid "This will create a new Video platform for this event."
 msgstr "這將為此活動建立一個新的 Video 平台。"
 
 #: control/forms/event.py:139
-#, fuzzy
-#| msgid ""
-#| "This short name is already taken, please choose another one (or ask the "
-#| "owner of that event to add you to their team)."
 msgid ""
 "This short name is already taken by another event. Please choose a different "
 "one or use the \"Set to random\" button for an automatic suggestion."
 msgstr ""
-"這個短名稱已被使用，請換另一個（或是請這個短名稱的擁有者將您加入他們的團隊中"
-"）。"
+"此短名稱已被其他活動使用。請選擇不同的名稱，或使用「設為隨機」按鈕以自動取得"
+"建議。"
 
 #: control/forms/event.py:143 eventyay_common/forms/event.py:24
 msgid "Event timezone"
@@ -12260,10 +12060,8 @@ msgid "Your default locale must be specified."
 msgstr "必須指定預設語系。"
 
 #: control/forms/event.py:291 control/forms/event.py:398 event/forms.py:293
-#, fuzzy
-#| msgid "Please provide a valid email address."
 msgid "Please provide a valid organizer email address."
-msgstr "請輸入正確的電子郵件地址。"
+msgstr "請提供有效的主辦方電子郵件地址。"
 
 #: control/forms/event.py:360 event/forms.py:316
 msgid "Copy configuration from"
@@ -12283,16 +12081,12 @@ msgid "Choose all languages that your event should be available in."
 msgstr "請將您的活動會用到的語言全部選入。"
 
 #: control/forms/event.py:425 event/forms.py:192
-#, fuzzy
-#| msgid ""
-#| "The organiser running the event can copy settings from previous events "
-#| "and share team permissions across all or multiple events."
 msgid ""
 "The organizer running the event can copy settings from previous events and "
 "share team permissions across all or multiple events."
 msgstr ""
-"此活動的主辦者，可以存先前的活動設定中複製過來，並讓這些活動的主辦團隊共享相"
-"同的權限。"
+"負責執行活動的主辦方可以從先前的活動複製設定，並在所有或多個活動之間共用團隊"
+"權限。"
 
 #: control/forms/event.py:435 event/forms.py:244
 msgid ""
@@ -12976,16 +12770,12 @@ msgid "Sunday"
 msgstr ""
 
 #: control/forms/filter.py:913 control/forms/filter.py:915
-#, fuzzy
-#| msgid "Speaker email"
 msgid "Name or email"
-msgstr "講者電子郵件地址"
+msgstr "姓名或電子郵件"
 
 #: control/forms/filter.py:925
-#, fuzzy
-#| msgid "Event date"
 msgid "Event filter"
-msgstr "活動日期"
+msgstr "活動篩選器"
 
 #: control/forms/filter.py:927 control/forms/filter.py:1170
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:62
@@ -12993,16 +12783,12 @@ msgid "All events"
 msgstr "所有活動"
 
 #: control/forms/filter.py:928
-#, fuzzy
-#| msgid "Upcoming events"
 msgid "Ongoing events"
-msgstr "未來活動"
+msgstr "進行中的活動"
 
 #: control/forms/filter.py:929
-#, fuzzy
-#| msgid "Delete event"
 msgid "Recent events"
-msgstr "刪除活動"
+msgstr "近期活動"
 
 #: control/forms/filter.py:935 control/forms/filter.py:1369
 msgid "Check-in status"
@@ -13034,53 +12820,36 @@ msgid "Not checked in"
 msgstr ""
 
 #: control/forms/filter.py:1003
-#, fuzzy
-#| msgid "per speaker"
 msgid "Title or speaker"
-msgstr "每位講者"
+msgstr "標題或講者"
 
 #: control/forms/filter.py:1005
-#, fuzzy
-#| msgid "New speaker information"
 msgid "Title, speaker name or email"
-msgstr "新增講者資訊"
+msgstr "標題、講者姓名或電子郵件"
 
 #: control/forms/filter.py:1017
-#, fuzzy
-#| msgid "My proposals"
 msgid "All proposals"
-msgstr "我提交的議程稿件"
+msgstr "所有提案"
 
 #: control/forms/filter.py:1018
-#, fuzzy
-#| msgid "Submitter"
-#| msgid_plural "Submitters"
 msgid "Submitted"
-msgstr "名提交者"
+msgstr "已提交"
 
 #: control/forms/filter.py:1019
-#, fuzzy
-#| msgid "accepted"
 msgid "Accepted"
 msgstr "已接受"
 
 #: control/forms/filter.py:1020
-#, fuzzy
-#| msgid "rejected"
 msgid "Rejected"
-msgstr "拒絕"
+msgstr "已拒絕"
 
 #: control/forms/filter.py:1021
-#, fuzzy
-#| msgid "confirmed"
 msgid "Confirmed"
 msgstr "已確認"
 
 #: control/forms/filter.py:1022
-#, fuzzy
-#| msgid "Withdraw"
 msgid "Withdrawn"
-msgstr "撤回"
+msgstr "已撤回"
 
 #: control/forms/filter.py:1119 control/forms/filter.py:1120
 #: control/forms/filter.py:1468 control/forms/filter.py:1469
@@ -13219,10 +12988,8 @@ msgid "Disabled"
 msgstr "停用"
 
 #: control/forms/global_settings.py:54 control/forms/global_settings.py:425
-#, fuzzy
-#| msgid "Input validation"
 msgid "Billing validation"
-msgstr "輸入驗證"
+msgstr "帳務驗證"
 
 #: control/forms/global_settings.py:56
 msgid ""
@@ -13438,10 +13205,8 @@ msgid "Payment Gateways"
 msgstr "付款網關"
 
 #: control/forms/global_settings.py:422
-#, fuzzy
-#| msgid "Ticket checked in"
 msgid "Ticket fee"
-msgstr "已驗票"
+msgstr "票券費用"
 
 #: control/forms/global_settings.py:428
 msgid "Maps"
@@ -13488,10 +13253,8 @@ msgstr ""
 "會收集個人資料。資料約每日傳送一次。"
 
 #: control/forms/global_settings.py:482
-#, fuzzy
-#| msgid "Read all endpoints"
 msgid "Telemetry endpoint"
-msgstr "讀取所有端點"
+msgstr "遙測端點"
 
 #: control/forms/global_settings.py:483
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
@@ -14036,10 +13799,8 @@ msgstr "無法儲存變更，因為這將導致沒有任何團隊仍擁有變更
 
 #: control/forms/organizer_forms/user_orders_form.py:13
 #: eventyay_common/forms/filters.py:13 eventyay_common/forms/filters.py:32
-#, fuzzy
-#| msgid "Delete event"
 msgid "Select an Event"
-msgstr "刪除活動"
+msgstr "選擇活動"
 
 #: control/forms/organizer_forms/web_hook_form.py:13
 msgctxt "webhooks"
@@ -14211,28 +13972,20 @@ msgid "Server"
 msgstr "伺服器"
 
 #: control/forms/server_management.py:235
-#, fuzzy
-#| msgid "Limit days"
 msgid "Validity in days"
-msgstr "限制天數"
+msgstr "有效期（天）"
 
 #: control/forms/server_management.py:240
-#, fuzzy
-#| msgid "Room I"
 msgid "Room ID"
-msgstr "會議室 1"
+msgstr "房間 ID"
 
 #: control/forms/server_management.py:243
-#, fuzzy
-#| msgid "Target group"
 msgid "Target Server"
-msgstr "目標族群"
+msgstr "目標伺服器"
 
 #: control/forms/server_management.py:250
-#, fuzzy
-#| msgid "Events"
 msgid "Event ID"
-msgstr "活動"
+msgstr "活動 ID"
 
 #: control/forms/subevents.py:99
 msgid "Keep the current values"
@@ -15057,16 +14810,12 @@ msgid "An add-on has been changed on this product."
 msgstr "此商品的附加項目已變更。"
 
 #: control/logdisplay.py:618
-#, fuzzy
-#| msgid "The speaker has been added to the proposal."
 msgid "A bundled product has been added to this product."
-msgstr "講者已新增至議程投稿。"
+msgstr "已將組合商品新增至此商品。"
 
 #: control/logdisplay.py:619
-#, fuzzy
-#| msgid "The speaker has been removed from the proposal."
 msgid "A bundled product has been removed from this product."
-msgstr "講者已從議程投稿中移除。"
+msgstr "已從此商品移除組合商品。"
 
 #: control/logdisplay.py:620
 msgid "A bundled product has been changed on this product."
@@ -15129,16 +14878,12 @@ msgid "A plugin has been disabled."
 msgstr "已停用外掛。"
 
 #: control/logdisplay.py:635
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The event has been published."
-msgstr "已加入此活動。"
+msgstr "活動已發佈。"
 
 #: control/logdisplay.py:636
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The event has been unpublished."
-msgstr "已加入此活動。"
+msgstr "活動已取消發佈。"
 
 #: control/logdisplay.py:637
 msgid "The shop has been taken into test mode."
@@ -15149,16 +14894,12 @@ msgid "The test mode has been disabled."
 msgstr "已停用測試模式。"
 
 #: control/logdisplay.py:639
-#, fuzzy
-#| msgid "The item has been deleted."
 msgid "Private test mode has been enabled."
-msgstr "項目已刪除。"
+msgstr "已啟用私人測試模式。"
 
 #: control/logdisplay.py:640
-#, fuzzy
-#| msgid "The item has been deleted."
 msgid "Private test mode has been disabled."
-msgstr "項目已刪除。"
+msgstr "已停用私人測試模式。"
 
 #: control/logdisplay.py:641
 msgid "The event has been created."
@@ -15297,56 +15038,40 @@ msgid "A manual transaction has been performed."
 msgstr "已進行手動交易."
 
 #: control/logdisplay.py:676
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The property has been deleted."
-msgstr "此使用者已被刪除。"
+msgstr "此屬性已刪除。"
 
 #: control/logdisplay.py:677
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The property has been changed."
-msgstr "已加入此活動。"
+msgstr "此屬性已變更。"
 
 #: control/logdisplay.py:678
-#, fuzzy
-#| msgid "The item has been deleted."
 msgid "The badge layout has been deleted."
-msgstr "項目已刪除。"
+msgstr "識別證版面配置已刪除。"
 
 #: control/logdisplay.py:679
 msgid "A new badge layout has been created."
 msgstr "已建立新的識別證版面。"
 
 #: control/logdisplay.py:680
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The badge layout has been changed."
-msgstr "已加入此活動。"
+msgstr "識別證版面配置已變更。"
 
 #: control/logdisplay.py:681
-#, fuzzy
-#| msgid "The comment has been deleted."
 msgid "A new ticket layout has been created."
-msgstr "審稿意見已刪除。"
+msgstr "已建立新的票券版面配置。"
 
 #: control/logdisplay.py:682
-#, fuzzy
-#| msgid "The item has been deleted."
 msgid "The ticket layout has been deleted."
-msgstr "項目已刪除。"
+msgstr "票券版面配置已刪除。"
 
 #: control/logdisplay.py:683
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The ticket layout has been changed."
-msgstr "已加入此活動。"
+msgstr "票券版面配置已變更。"
 
 #: control/logdisplay.py:684
-#, fuzzy
-#| msgid "The comment has been deleted."
 msgid "A new check-in list has been created."
-msgstr "審稿意見已刪除。"
+msgstr "已建立新的報到清單。"
 
 #: control/logdisplay.py:685
 msgid "The check-in list has been changed."
@@ -15357,10 +15082,8 @@ msgid "The check-in list has been deleted."
 msgstr "已刪除報到清單。"
 
 #: control/logdisplay.py:688
-#, fuzzy
-#| msgid "The session has been scheduled."
 msgid "A new question has been created."
-msgstr "此議程已被安排進議程表。"
+msgstr "已建立新的問題。"
 
 #: control/logdisplay.py:689
 msgid "The question has been changed."
@@ -15371,32 +15094,24 @@ msgid "The question has been deleted."
 msgstr "已刪除問題。"
 
 #: control/logdisplay.py:691
-#, fuzzy
-#| msgid "The anonymisation has been updated."
 msgid "A new answer option has been created."
-msgstr "匿名化已更新。"
+msgstr "已建立新的答案選項。"
 
 #: control/logdisplay.py:692
-#, fuzzy
-#| msgid "The session has been scheduled."
 msgid "The answer option has been changed."
-msgstr "此議程已被安排進議程表。"
+msgstr "答案選項已變更。"
 
 #: control/logdisplay.py:693
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The answer option has been deleted."
-msgstr "此使用者已被刪除。"
+msgstr "答案選項已刪除。"
 
 #: control/logdisplay.py:694
 msgid "User impersonation has started."
 msgstr "已開始使用者模擬。"
 
 #: control/logdisplay.py:695
-#, fuzzy
-#| msgid "The invitation has been sent."
 msgid "User impersonation has been stopped."
-msgstr "邀請已送出。"
+msgstr "已停止使用者冒用。"
 
 #: control/logdisplay.py:722
 msgid "The settings of a payment provider have been changed."
@@ -15562,10 +15277,8 @@ msgstr "類別"
 #: control/navigation.py:185
 #: control/templates/pretixcontrol/items/orderforms.html:7
 #: control/templates/pretixcontrol/items/orderforms.html:22
-#, fuzzy
-#| msgid "Order status"
 msgid "Order forms"
-msgstr "訂單狀態"
+msgstr "訂單表單"
 
 #: control/navigation.py:233
 msgid "Overview"
@@ -15632,16 +15345,12 @@ msgid "All Organizers"
 msgstr "所有主辦方"
 
 #: control/navigation.py:459
-#, fuzzy
-#| msgid "All events"
 msgid "All Attendees"
-msgstr "所有活動"
+msgstr "所有與會者"
 
 #: control/navigation.py:465
-#, fuzzy
-#| msgid "Sessions"
 msgid "All Sessions"
-msgstr "議程"
+msgstr "所有場次"
 
 #: control/navigation.py:471
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:7
@@ -15659,10 +15368,8 @@ msgstr "頁面"
 #: control/templates/pretixcontrol/admin/startpage.html:7
 #: presale/templates/pretixpresale/startpage.html:13
 #: presale/templates/pretixpresale/startpage.html:14
-#, fuzzy
-#| msgid "Start"
 msgid "Start page"
-msgstr "開始"
+msgstr "起始頁面"
 
 #: control/navigation.py:495
 msgid "All users"
@@ -15698,10 +15405,8 @@ msgstr "社群登入設定"
 #: control/navigation.py:541
 #: control/templates/pretixcontrol/admin/systemconfig.html:13
 #: control/templates/pretixcontrol/admin/systemconfig.html:17
-#, fuzzy
-#| msgid "Admin information"
 msgid "System information"
-msgstr "管理資訊"
+msgstr "系統資訊"
 
 #: control/navigation.py:568 control/templates/control/bbb_list.html:6
 msgid "BBB servers"
@@ -15728,10 +15433,8 @@ msgid "Streamkey generator"
 msgstr "串流金鑰產生器"
 
 #: control/navigation.py:598 control/templates/control/systemlog_list.html:5
-#, fuzzy
-#| msgid "System"
 msgid "System log"
-msgstr "系統"
+msgstr "系統日誌"
 
 #: control/navigation.py:603
 msgid "Conftool posters"
@@ -15748,20 +15451,16 @@ msgid "You do not have permission to view this content."
 msgstr "您沒有權限檢視此內容。"
 
 #: control/templates/control/bbb_delete.html:5
-#, fuzzy
-#| msgid "Delete event"
 msgid "Delete BBB server"
-msgstr "刪除活動"
+msgstr "刪除 BBB 伺服器"
 
 #: control/templates/control/bbb_delete.html:8
 #: control/templates/control/janus_delete.html:8
 #: control/templates/control/streaming_delete.html:8
 #: control/templates/control/turn_delete.html:8
-#, fuzzy, python-format
-#| msgid "Do you really want to delete this mail?"
-#| msgid_plural "Do you really want to purge {count} mails?"
+#, python-format
 msgid "Are you sure you want to delete %(id)s?"
-msgstr "您確定要刪除這 {count} 封郵件嗎？"
+msgstr "您確定要刪除 %(id)s 嗎？"
 
 #: control/templates/control/bbb_form.html:6
 msgid "Create or update BBB server"
@@ -15775,10 +15474,8 @@ msgstr "新增 BBB 伺服器"
 #: control/templates/control/janus_list.html:8
 #: control/templates/control/streaming_list.html:8
 #: control/templates/control/turn_list.html:8
-#, fuzzy
-#| msgid "Add a new note"
 msgid "Add new server"
-msgstr "新增一則備忘錄"
+msgstr "新增伺服器"
 
 #: control/templates/control/bbb_list.html:19
 #: control/templates/control/event_list.html:13
@@ -15814,10 +15511,8 @@ msgstr "動作"
 #: control/templates/control/janus_list.html:43
 #: control/templates/control/streaming_list.html:35
 #: control/templates/control/turn_list.html:43
-#, fuzzy
-#| msgid "No redis server has been configured."
 msgid "No servers configured yet."
-msgstr "並未設定 redis 伺服器。"
+msgstr "尚未設定任何伺服器。"
 
 #: control/templates/control/bbb_moveroom.html:6
 msgid "Move a BBB room to a new server"
@@ -15839,20 +15534,16 @@ msgstr ""
 "議您自行加入該房間以便應對。請小心使用。"
 
 #: control/templates/control/bbb_moveroom.html:14
-#, fuzzy
-#| msgid "Move item"
 msgid "Move"
-msgstr "移動項目"
+msgstr "移動"
 
 #: control/templates/control/conftool_syncposters.html:6
 msgid "Sync conftool posters"
 msgstr "同步 conftool 海報"
 
 #: control/templates/control/conftool_syncposters.html:11
-#, fuzzy
-#| msgid "Component"
 msgid "Completed."
-msgstr "組件"
+msgstr "已完成。"
 
 #: control/templates/control/conftool_syncposters.html:13
 msgid "Failed."
@@ -15871,10 +15562,8 @@ msgid "Sync"
 msgstr "同步"
 
 #: control/templates/control/event_clear.html:5
-#, fuzzy
-#| msgid "Delete event"
 msgid "Delete event data"
-msgstr "刪除活動"
+msgstr "刪除活動資料"
 
 #: control/templates/control/event_clear.html:8
 msgid "Delete statistics, systemlog, chat messages, questions, …"
@@ -15889,33 +15578,25 @@ msgid "Delete all uploaded files"
 msgstr "刪除所有上傳的檔案"
 
 #: control/templates/control/event_create.html:6
-#, fuzzy
-#| msgid "Can create events"
 msgid "Create event"
-msgstr "可以建立活動"
+msgstr "建立活動"
 
 #: control/templates/control/event_create.html:13
 #: control/templates/control/event_update.html:13
-#, fuzzy
-#| msgid "Unnamed user"
 msgid "Planned usages"
-msgstr "未命名使用者"
+msgstr "規劃的使用量"
 
 #: control/templates/control/event_create.html:23
 #: control/templates/control/event_update.html:29
 #: control/templates/pretixcontrol/admin/attendees/index.html:7
 #: control/templates/pretixcontrol/admin/attendees/index.html:12
-#, fuzzy
-#| msgid "Attendee feedback"
 msgid "Attendees"
-msgstr "參加者的意見回饋"
+msgstr "與會者"
 
 #: control/templates/control/event_create.html:55
 #: control/templates/control/event_update.html:73
-#, fuzzy
-#| msgid "Add link"
 msgid "Add planning"
-msgstr "新增連結"
+msgstr "新增規劃"
 
 #: control/templates/control/event_create.html:64
 #, python-format
@@ -15935,16 +15616,12 @@ msgid "Usage"
 msgstr "使用量"
 
 #: control/templates/control/event_list.html:42
-#, fuzzy
-#| msgid "Delete"
 msgid "Delete data"
-msgstr "刪除"
+msgstr "刪除資料"
 
 #: control/templates/control/event_list.html:49
-#, fuzzy
-#| msgid "Read access"
 msgid "Admin access"
-msgstr "讀取權限"
+msgstr "管理員存取權"
 
 #: control/templates/control/event_list.html:55
 #: control/templates/pretixcontrol/checkin/lists.html:140
@@ -15957,58 +15634,44 @@ msgid "Clone"
 msgstr "複製"
 
 #: control/templates/control/event_list.html:65
-#, fuzzy
-#| msgid "No comments yet."
 msgid "No events yet."
-msgstr "尚無留言。"
+msgstr "尚無活動。"
 
 #: control/templates/control/event_update.html:6
-#, fuzzy
-#| msgid "Past events"
 msgid "Update event"
-msgstr "過往活動"
+msgstr "更新活動"
 
 #: control/templates/control/event_update.html:86
 msgid "JWT config"
 msgstr "JWT 設定"
 
 #: control/templates/control/index.html:5
-#, fuzzy
-#| msgid "Admin Dashboard"
 msgid "Video admin dashboard"
-msgstr "管理員儀表板"
+msgstr "影片管理員儀表板"
 
 #: control/templates/control/index.html:6
 msgid "More insights coming soon."
 msgstr "更多深入資訊即將推出。"
 
 #: control/templates/control/janus_delete.html:5
-#, fuzzy
-#| msgid "Delete organiser"
 msgid "Delete Janus server"
-msgstr "刪除主辦者"
+msgstr "刪除 Janus 伺服器"
 
 #: control/templates/control/janus_form.html:6
 msgid "Create or update Janus server"
 msgstr "建立或更新 Janus 伺服器"
 
 #: control/templates/control/profile.html:5
-#, fuzzy
-#| msgid "Speaker profile"
 msgid "Change your profile"
-msgstr "講者個人資料"
+msgstr "變更您的個人資料"
 
 #: control/templates/control/profile.html:11
-#, fuzzy
-#| msgid "User settings"
 msgid "MFA settings"
-msgstr "使用者設定"
+msgstr "MFA 設定"
 
 #: control/templates/control/streaming_delete.html:5
-#, fuzzy
-#| msgid "Delete organiser"
 msgid "Delete streaming server"
-msgstr "刪除主辦者"
+msgstr "刪除串流伺服器"
 
 #: control/templates/control/streaming_form.html:6
 msgid "Create or update streaming server"
@@ -16027,16 +15690,12 @@ msgid "Stream key"
 msgstr ""
 
 #: control/templates/control/streamkey.html:13
-#, fuzzy
-#| msgid "Link URL"
 msgid "HLS URL"
-msgstr "連結網址"
+msgstr "HLS URL"
 
 #: control/templates/control/streamkey.html:23
-#, fuzzy
-#| msgid "General"
 msgid "Generate"
-msgstr "一般"
+msgstr "產生"
 
 #: control/templates/control/systemlog_detail.html:5
 msgid "System log entry"
@@ -16047,16 +15706,12 @@ msgid "Metadata"
 msgstr ""
 
 #: control/templates/control/systemlog_detail.html:14
-#, fuzzy
-#| msgid "User settings"
 msgid "User Agent"
-msgstr "使用者設定"
+msgstr "使用者代理程式"
 
 #: control/templates/control/systemlog_detail.html:18
-#, fuzzy
-#| msgid "Track"
 msgid "Trace"
-msgstr "議程軌"
+msgstr "追蹤"
 
 #: control/templates/control/systemlog_detail.html:24
 #: control/templates/control/systemlog_list.html:10
@@ -16085,26 +15740,21 @@ msgid "Details"
 msgstr "詳細資料"
 
 #: control/templates/control/systemlog_list.html:31
-#, fuzzy
-#| msgid "No archived events found."
 msgid "No log entries found."
-msgstr "找不到已歸檔的活動。"
+msgstr "找不到日誌項目。"
 
 #: control/templates/control/systemlog_list.html:39
 msgid "first"
 msgstr ""
 
 #: control/templates/control/systemlog_list.html:40
-#, fuzzy
-#| msgid "Previous step"
 msgid "previous"
-msgstr "前一步驟"
+msgstr "上一個"
 
 #: control/templates/control/systemlog_list.html:44
-#, fuzzy, python-format
-#| msgid "Step %(current)s of %(total)s"
+#, python-format
 msgid "Page %(current)s of %(total)s."
-msgstr "步驟 %(current)s / 共 %(total)s 步"
+msgstr "第 %(current)s 頁，共 %(total)s 頁。"
 
 #: control/templates/control/systemlog_list.html:48
 msgid "next"
@@ -16115,38 +15765,28 @@ msgid "last"
 msgstr ""
 
 #: control/templates/control/turn_delete.html:5
-#, fuzzy
-#| msgid "Delete event"
 msgid "Delete TURN server"
-msgstr "刪除活動"
+msgstr "刪除 TURN 伺服器"
 
 #: control/templates/control/turn_form.html:6
 msgid "Create or update TURN server"
 msgstr ""
 
 #: control/templates/control/turn_list.html:16
-#, fuzzy
-#| msgid "Hostname"
 msgid "Host name"
 msgstr "主機名稱"
 
 #: control/templates/control/user_list.html:8
-#, fuzzy
-#| msgid "Add a new note"
 msgid "Add new user"
-msgstr "新增一則備忘錄"
+msgstr "新增使用者"
 
 #: control/templates/control/user_list.html:30
-#, fuzzy
-#| msgid "No archived events found."
 msgid "No users found."
-msgstr "找不到已歸檔的活動。"
+msgstr "找不到使用者。"
 
 #: control/templates/control/user_update.html:5
-#, fuzzy
-#| msgid "Update check"
 msgid "Update user"
-msgstr "更新檢查"
+msgstr "更新使用者"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:15
 msgid "This is a list of all paid attendees and their check-in status."
@@ -16170,22 +15810,16 @@ msgid "Filter"
 msgstr "過濾器"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:77
-#, fuzzy
-#| msgid "Order denied"
 msgid "Order Code"
-msgstr "訂單已拒絕"
+msgstr "訂單代碼"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:95
-#, fuzzy
-#| msgid "Check-in lists"
 msgid "Check in Status"
-msgstr "報到清單"
+msgstr "報到狀態"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:161
-#, fuzzy
-#| msgid "There are no pending changes to apply right now."
 msgid "There are no attendees to show."
-msgstr "目前沒有待處理的變更需要套用。"
+msgstr "沒有可顯示的與會者。"
 
 #: control/templates/pretixcontrol/admin/events/index.html:14
 msgid ""
@@ -16316,40 +15950,31 @@ msgid "This is a list of all talk submissions across events."
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:92
-#, fuzzy
-#| msgid "Proposal state"
 msgid "Proposal State"
-msgstr "議程投稿狀態"
+msgstr "提案狀態"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:157
-#, fuzzy
-#| msgid "There are no organisers you can edit."
 msgid "There are no submissions to show."
-msgstr "沒有您可以編輯的主辦者。"
+msgstr "沒有可顯示的投稿。"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:21
-#, fuzzy, python-format
-#| msgid ""
-#| "You are running eventyay in development mode. Please <strong>STOP</"
-#| "strong> and set the DEBUG variable to False if this page is in any way "
-#| "reachable from the internet."
+#, python-format
 msgid ""
 "You are running %(site_name)s in development mode. Please <strong>STOP</"
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"您正以開發模式執行 Eventyay。若此頁面因任何理由可以由網際網路上存取到，"
-"請<strong>停止執行</strong>並將 DEBUG 變數設為 False。"
+"你正在以開發模式執行 %(site_name)s。如果此頁面以任何方式可從網際網路存取，請 "
+"<strong>停止</strong> 並將 DEBUG 變數設為 False。"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
 msgstr "您的 eventyay 版本為："
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:33
-#, fuzzy, python-format
-#| msgid "You can check for updates <a href=\"%(url)s\">here</a>."
+#, python-format
 msgid "You can check for updates <a href=\"%(update_url)s\">here</a>."
-msgstr "您可以在<a href=\"%(url)s\">這裡</a>檢查是否有更新。"
+msgstr "你可以在 <a href=\"%(update_url)s\">這裡</a> 檢查更新。"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:42
 msgid "Settings have been loaded from:"
@@ -17662,10 +17287,8 @@ msgstr "發布活動以在預售頁面上顯示票券。"
 #: eventyay_common/templates/eventyay_common/event/live.html:103
 #: eventyay_common/templates/eventyay_common/event/live.html:135
 #: eventyay_common/templates/eventyay_common/event/live.html:143
-#, fuzzy
-#| msgid "Publish answers"
 msgid "Publish Tickets"
-msgstr "公開回應"
+msgstr "發佈票券"
 
 #: control/templates/pretixcontrol/event/live.html:43
 #: eventyay_common/templates/eventyay_common/event/live.html:109
@@ -17899,10 +17522,8 @@ msgstr ""
 
 #: control/templates/pretixcontrol/event/quick_setup.html:132
 #: control/templates/pretixcontrol/event/tickets.html:79
-#, fuzzy
-#| msgid "My orders"
 msgid "Guest orders"
-msgstr "我的訂單"
+msgstr "訪客訂單"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:141
 #: control/views/event.py:382
@@ -17949,10 +17570,8 @@ msgid "Meta data"
 msgstr ""
 
 #: control/templates/pretixcontrol/event/settings.html:52
-#, fuzzy
-#| msgid "Notifications"
 msgid "Order Modification"
-msgstr "通知"
+msgstr "訂單修改"
 
 #: control/templates/pretixcontrol/event/settings.html:53
 msgid "Changes to existing orders"
@@ -18280,10 +17899,8 @@ msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr "此設定用於透過 Stripe 外掛處理票券付款。"
 
 #: control/templates/pretixcontrol/global_settings.html:76
-#, fuzzy
-#| msgid "Copy configuration from"
 msgid "Client Configuration"
-msgstr "複製組態"
+msgstr "用戶端設定"
 
 #: control/templates/pretixcontrol/global_settings.html:109
 msgid "App Fees"
@@ -18700,8 +18317,6 @@ msgstr ""
 
 #: control/templates/pretixcontrol/items/orderforms.html:44
 #: control/templates/pretixcontrol/items/orderforms.html:148
-#, fuzzy
-#| msgid "Fields"
 msgid "Field"
 msgstr "欄位"
 
@@ -18717,26 +18332,20 @@ msgstr "欄位"
 #: orga/templates/orga/cfp/forms.html:82 orga/templates/orga/cfp/forms.html:507
 #: orga/templates/orga/cfp/forms.html:850
 #: orga/templates/orga/cfp/talkquestion/list.html:55
-#, fuzzy
-#| msgid "required"
 msgid "Required"
-msgstr "必要"
+msgstr "必填"
 
 #: control/templates/pretixcontrol/items/orderforms.html:68
 msgid "Required status for E-mail"
 msgstr "電子郵件的必填狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:79
-#, fuzzy
-#| msgid "twice"
 msgid "Ask twice"
-msgstr "兩次"
+msgstr "詢問兩次"
 
 #: control/templates/pretixcontrol/items/orderforms.html:105
-#, fuzzy
-#| msgid "Require a phone number per order"
 msgid "Required status for Phone number"
-msgstr "每筆訂單要求電話號碼"
+msgstr "電話號碼的必填狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:118
 msgid "Name and address"
@@ -18755,63 +18364,45 @@ msgid "Attendee data (once per admission ticket)"
 msgstr "參加者資料（每張入場券一次）"
 
 #: control/templates/pretixcontrol/items/orderforms.html:163
-#, fuzzy
-#| msgid "Require attendee name"
 msgid "Attendee names"
-msgstr "要求訂單名字"
+msgstr "與會者姓名"
 
 #: control/templates/pretixcontrol/items/orderforms.html:176
-#, fuzzy
-#| msgid "Require attendee name"
 msgid "Required status for Attendee names"
-msgstr "要求訂單名字"
+msgstr "與會者姓名的必填狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:196
-#, fuzzy
-#| msgid "Send emails"
 msgid "Attendee emails"
-msgstr "傳送郵件"
+msgstr "與會者電子郵件"
 
 #: control/templates/pretixcontrol/items/orderforms.html:226
-#, fuzzy
-#| msgid "Require attendee name"
 msgid "Required status for Attendee emails"
-msgstr "要求訂單名字"
+msgstr "與會者電子郵件的必填狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:257
 msgid "Required status for Company"
 msgstr "公司的必填狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Postal addresses"
-msgstr "電子郵件地址"
+msgstr "郵寄地址"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Require a business addresses"
 msgid "Required status for Postal addresses"
-msgstr "需要登記地址"
+msgstr "郵寄地址的必填狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:321
-#, fuzzy
-#| msgid "Active languages"
 msgid "Active status for"
-msgstr "可使用語言"
+msgstr "以下項目的啟用狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:333
-#, fuzzy
-#| msgid "Requires access code"
 msgid "Required status for"
-msgstr "需要存取代碼"
+msgstr "以下項目的必填狀態"
 
 #: control/templates/pretixcontrol/items/orderforms.html:375
 #: control/templates/pretixcontrol/items/questions.html:22
-#, fuzzy
-#| msgid "New custom field"
 msgid "Create a new custom field"
-msgstr "新自訂欄位"
+msgstr "建立新的自訂欄位"
 
 #: control/templates/pretixcontrol/items/orderforms.html:378
 #: control/templates/pretixcontrol/items/questions.html:24
@@ -18819,10 +18410,8 @@ msgid "Create a text field"
 msgstr "建立文字欄位"
 
 #: control/templates/pretixcontrol/items/orderforms.html:388
-#, fuzzy
-#| msgid "Export settings"
 msgid "Form settings"
-msgstr "匯出設定"
+msgstr "表單設定"
 
 #: control/templates/pretixcontrol/items/question.html:6
 #: control/templates/pretixcontrol/items/question.html:9
@@ -18893,10 +18482,9 @@ msgstr "以下產品的買家對該問題所提供的所有答案將會 <strong>
 
 #: control/templates/pretixcontrol/items/question_edit.html:8
 #: control/templates/pretixcontrol/items/question_edit.html:18
-#, fuzzy, python-format
-#| msgid "Custom fields"
+#, python-format
 msgid "Custom Field: %(name)s"
-msgstr "自訂欄位"
+msgstr "自訂欄位：%(name)s"
 
 #: control/templates/pretixcontrol/items/question_edit.html:35
 msgid ""
@@ -18931,15 +18519,11 @@ msgid "Add a new option"
 msgstr "新增選項"
 
 #: control/templates/pretixcontrol/items/question_edit.html:133
-#, fuzzy
-#| msgid "Custom fields reminder"
 msgid "Custom field dependency"
-msgstr "自訂欄位提醒"
+msgstr "自訂欄位相依性"
 
 #: control/templates/pretixcontrol/items/questions.html:4
 #: control/templates/pretixcontrol/items/questions.html:9
-#, fuzzy
-#| msgid "Custom fields"
 msgid "Custom Fields"
 msgstr "自訂欄位"
 
@@ -18953,26 +18537,20 @@ msgstr ""
 "者的飲食需求。"
 
 #: control/templates/pretixcontrol/items/questions.html:64
-#, fuzzy
-#| msgid "New custom field"
 msgid "System custom field"
-msgstr "新自訂欄位"
+msgstr "系統自訂欄位"
 
 #: control/templates/pretixcontrol/items/questions.html:69
-#, fuzzy
-#| msgid "New custom field"
 msgid "Required custom field"
-msgstr "新自訂欄位"
+msgstr "必填自訂欄位"
 
 #: control/templates/pretixcontrol/items/questions.html:74
 msgid "Ask during check-in"
 msgstr "在報到時詢問"
 
 #: control/templates/pretixcontrol/items/questions.html:80
-#, fuzzy
-#| msgid "New custom field"
 msgid "Hidden custom field"
-msgstr "新自訂欄位"
+msgstr "隱藏自訂欄位"
 
 #: control/templates/pretixcontrol/items/questions.html:93
 msgid "All admission products"
@@ -21313,10 +20891,8 @@ msgid "All vouchers"
 msgstr "所有優惠券"
 
 #: control/templates/pretixcontrol/vouchers/index.html:24
-#, fuzzy
-#| msgid "Vouchers"
 msgid "Voucher Tags"
-msgstr "優惠券"
+msgstr "優惠券標籤"
 
 #: control/templates/pretixcontrol/vouchers/index.html:31
 msgid ""
@@ -21528,16 +21104,12 @@ msgid "That page number is less than 1"
 msgstr ""
 
 #: control/views/admin.py:119
-#, fuzzy
-#| msgid "Hide field"
 msgid "Invalid field."
-msgstr "隱藏欄位"
+msgstr "欄位無效。"
 
 #: control/views/admin.py:121
-#, fuzzy
-#| msgid "Page not found."
 msgid "Event not found."
-msgstr "找不到頁面。"
+msgstr "找不到活動。"
 
 #: control/views/admin.py:130
 msgid "Only published events without test mode can be shown on the start page."
@@ -21573,10 +21145,8 @@ msgid "Ok!"
 msgstr "完成！"
 
 #: control/views/admin_views.py:441
-#, fuzzy
-#| msgid "The item has been deleted."
 msgid "The data will soon be deleted."
-msgstr "項目已刪除。"
+msgstr "資料即將被刪除。"
 
 #: control/views/admin_views.py:762
 msgid "No BBB session found for this room."
@@ -21660,16 +21230,12 @@ msgid "{quota} left"
 msgstr "{quota} 剩餘"
 
 #: control/views/dashboards.py:296
-#, fuzzy
-#| msgid "Event list"
 msgid "Event is"
-msgstr "活動清單"
+msgstr "活動為"
 
 #: control/views/dashboards.py:296
-#, fuzzy
-#| msgid "Ticket checked in"
 msgid "Ticket shop is"
-msgstr "已驗票"
+msgstr "售票商店為"
 
 #: control/views/dashboards.py:304 orga/templates/orga/event/dashboard.html:83
 msgid "Click here to change"
@@ -21693,10 +21259,8 @@ msgid "in private test mode"
 msgstr "私人測試模式中"
 
 #: control/views/dashboards.py:317
-#, fuzzy
-#| msgid "Price mode"
 msgid "in test mode"
-msgstr "價格模式"
+msgstr "測試模式"
 
 #: control/views/dashboards.py:317
 msgid "not yet public"
@@ -21812,10 +21376,8 @@ msgid "This value will be replaced based on dynamic parameters."
 msgstr "此數值會依據動態參數進行替換。"
 
 #: control/views/event.py:883
-#, fuzzy
-#| msgid "Purchased products"
 msgid "invalid product"
-msgstr "已購買產品"
+msgstr "無效的產品"
 
 #: control/views/event.py:942
 msgid "Unknown e-mail renderer."
@@ -21839,16 +21401,12 @@ msgid "Please resolve the ticketing issues before publishing tickets."
 msgstr "請先解決票務問題，再發布票券。"
 
 #: control/views/event.py:1149 eventyay_common/views/event.py:666
-#, fuzzy
-#| msgid "This event is now public."
 msgid "Tickets are now published."
-msgstr "此活動已公開。"
+msgstr "門票已發佈。"
 
 #: control/views/event.py:1164 eventyay_common/views/event.py:680
-#, fuzzy
-#| msgid "{count} mails have been purged."
 msgid "Tickets have been unpublished."
-msgstr "{count} 份郵件已被毀滅。"
+msgstr "門票已取消發佈。"
 
 #: control/views/event.py:1170 eventyay_common/views/event.py:685
 msgid "Tickets must be published and set up before enabling test mode."
@@ -21974,10 +21532,9 @@ msgid "Please only upload CSV files."
 msgstr "請僅上傳 CSV 檔案。"
 
 #: control/views/orderimport.py:54
-#, fuzzy, python-brace-format
-#| msgid "Please do not upload files larger than {size}!"
+#, python-brace-format
 msgid "Please do not upload files larger than {size:.0f} MB."
-msgstr "請不要上傳大於 {size} 的檔案！"
+msgstr "請勿上傳大於 {size:.0f} MB 的檔案。"
 
 #: control/views/orderimport.py:129
 msgid "The import was successful."
@@ -22396,12 +21953,10 @@ msgstr "禮品卡已建立，現在可使用。"
 
 #: control/views/organizer_views/organizer_view.py:65
 #: eventyay_common/views/organizer.py:67
-#, fuzzy
-#| msgid "You do not have permission to perform this action."
 msgid ""
 "You do not have permission to create organizers. Please contact an "
 "administrator."
-msgstr "您沒有權限執行此操作。"
+msgstr "您沒有建立主辦單位的權限。請聯絡管理員。"
 
 #: control/views/organizer_views/organizer_view.py:70
 msgid "The new organizer has been created."
@@ -22457,10 +22012,8 @@ msgid "The requested product does not exist."
 msgstr "所請求的產品不存在。"
 
 #: control/views/product.py:131
-#, fuzzy
-#| msgid "The proposal has been updated!"
 msgid "The order of products has been updated."
-msgstr "議程投稿已更新！"
+msgstr "產品順序已更新。"
 
 #: control/views/product.py:164 control/views/product.py:200
 #: control/views/product.py:297
@@ -22850,18 +22403,14 @@ msgid "Release next event date?"
 msgstr "要發布新的活動日期嗎？"
 
 #: eventyay_common/forms/filters.py:38
-#, fuzzy
-#| msgid "Sessions by session type"
 msgid "Search by session name"
-msgstr "確認議程（依提交型態）"
+msgstr "依場次名稱搜尋"
 
 #: eventyay_common/navigation.py:36
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:6
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:9
-#, fuzzy
-#| msgid "Sessions"
 msgid "My Sessions"
-msgstr "議程"
+msgstr "我的場次"
 
 #: eventyay_common/navigation.py:198 eventyay_common/navigation.py:206
 msgid "Devices"
@@ -22880,10 +22429,8 @@ msgid "Two-factor authentication"
 msgstr ""
 
 #: eventyay_common/navigation.py:282
-#, fuzzy
-#| msgid "Application name"
 msgid "OAuth applications"
-msgstr "應用程式名稱"
+msgstr "OAuth 應用程式"
 
 #: eventyay_common/navigation.py:288
 #: orga/templates/orga/event/dashboard.html:119
@@ -22986,10 +22533,8 @@ msgid ""
 msgstr "您確定要刪除認證裝置 \"%(device)s\" 嗎？"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
-#, fuzzy
-#| msgid "You will not be able to revert this action."
 msgid "You will no longer be able to use this device to log in to pretix."
-msgstr "這個動作是不可挽回的。"
+msgstr "您將無法再使用此裝置登入 pretix。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:27
 msgid ""
@@ -23112,12 +22657,11 @@ msgid "The old codes will no longer work."
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:22
-#, fuzzy, python-format
-#| msgid "Are you sure you want to retract the invitation to this user?"
+#, python-format
 msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
-msgstr "您確定要撤回此使用者的邀請嗎？"
+msgstr "您確定要撤銷應用程式 %(application)s 對您帳號的存取權嗎？"
 
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -23140,8 +22684,6 @@ msgstr "沒有任何應用程式能存取您的 eventyay 帳戶。"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:4
 #: eventyay_common/templates/eventyay_common/account/email-management.html:7
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Email Addresses"
 msgstr "電子郵件地址"
 
@@ -23166,10 +22708,8 @@ msgid "Make Primary"
 msgstr "設為主要"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:35
-#, fuzzy
-#| msgid "Resend speaker notifications"
 msgid "Re-send Verification"
-msgstr "重新傳送講者通知"
+msgstr "重新寄送驗證郵件"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:36
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:176
@@ -23188,16 +22728,12 @@ msgid ""
 msgstr "您的帳戶目前未連結任何電子郵件地址。"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:44
-#, fuzzy
-#| msgid "Email address"
 msgid "Add Email Address"
-msgstr "電子郵件地址"
+msgstr "新增電子郵件地址"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:51
-#, fuzzy
-#| msgid "Email"
 msgid "Add Email"
-msgstr "電子郵件"
+msgstr "新增電子郵件"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:4
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:20
@@ -23226,16 +22762,12 @@ msgid "Login settings"
 msgstr "登入設定"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:55
-#, fuzzy
-#| msgid "Email address"
 msgid "Email Address"
 msgstr "電子郵件地址"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:60
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Manage email addresses"
-msgstr "電子郵件地址"
+msgstr "管理電子郵件地址"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:75
 msgid "Change two-factor settings"
@@ -23257,16 +22789,12 @@ msgid "Show account history"
 msgstr "顯示帳戶歷史紀錄"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:112
-#, fuzzy
-#| msgid "Forgot your password?"
 msgid "Set your password"
-msgstr "忘記您的密碼了嗎？"
+msgstr "設定你的密碼"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:120
-#, fuzzy
-#| msgid "Password reset time"
 msgid "Send password setup link"
-msgstr "密碼重設時間"
+msgstr "傳送密碼設定連結"
 
 #: eventyay_common/templates/eventyay_common/account/notification-flip-off.html:4
 msgid "Disable notifications"
@@ -23426,10 +22954,8 @@ msgid "Create a new account"
 msgstr "建立新帳戶"
 
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:35
-#, fuzzy
-#| msgid "Your upcoming events"
 msgid "You have no upcoming events"
-msgstr "正在進行的活動"
+msgstr "你沒有即將舉行的活動"
 
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:123
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:85
@@ -23447,10 +22973,8 @@ msgid "Ok"
 msgstr "確定"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
-#, fuzzy
-#| msgid "Dashboard"
 msgid "Event Dashboard"
-msgstr "資訊看板"
+msgstr "活動儀表板"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:11
 msgid ""
@@ -23600,10 +23124,8 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:87
 #: eventyay_common/templates/eventyay_common/event/live.html:272
 #: orga/templates/orga/event/live.html:132
-#, fuzzy
-#| msgid "Price mode"
 msgid "Private test mode"
-msgstr "價格模式"
+msgstr "私人測試模式"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:92
 msgid "Tickets are published. Private test mode cannot be enabled."
@@ -23642,16 +23164,12 @@ msgstr ""
 "買票券。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:8
-#, fuzzy
-#| msgid "Event date"
 msgid "Event status"
-msgstr "活動日期"
+msgstr "活動狀態"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:18
-#, fuzzy
-#| msgid "Event is public"
 msgid "Event visibility"
-msgstr "已公開此活動"
+msgstr "活動可見性"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:23
 msgid ""
@@ -23660,10 +23178,8 @@ msgid ""
 msgstr "活動為線上形式。取消發布可將其對外隱藏並下線。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:29
-#, fuzzy
-#| msgid "not public yet"
 msgid "Unpublish Event"
-msgstr "尚未公開"
+msgstr "取消發佈活動"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:34
 msgid "Take the event live by publishing the event info page to the public."
@@ -23675,16 +23191,12 @@ msgstr "要發布活動，您首先需要解決以下問題："
 
 #: eventyay_common/templates/eventyay_common/event/live.html:49
 #: eventyay_common/templates/eventyay_common/event/live.html:57
-#, fuzzy
-#| msgid "Publish answers"
 msgid "Publish Event"
-msgstr "公開回應"
+msgstr "發佈活動"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:64
-#, fuzzy
-#| msgid "Public changelog"
 msgid "Public pages"
-msgstr "公開的變更紀錄"
+msgstr "公開頁面"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:73
 msgid "No public pages are available yet."
@@ -23692,17 +23204,13 @@ msgstr "目前尚無公開頁面。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:159
 #: orga/templates/orga/event/live.html:19
-#, fuzzy
-#| msgid "Proposal states"
 msgid "Talk status"
-msgstr "投稿狀態"
+msgstr "演講狀態"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:163
 #: orga/templates/orga/event/live.html:23
-#, fuzzy
-#| msgid "Your event may not be ready for release yet!"
 msgid "Your talk component may not be ready for release yet!"
-msgstr "您的活動尚未準備好發布！"
+msgstr "你的演講元件可能尚未準備好發佈！"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:167
 #: eventyay_common/templates/eventyay_common/event/live.html:177
@@ -23713,11 +23221,9 @@ msgstr "請求修正"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:173
 #: orga/templates/orga/event/live.html:33
-#, fuzzy
-#| msgid "There may be easy ways to improve your event before its release!"
 msgid ""
 "There may be easy ways to improve your talk component before its release!"
-msgstr "在發布活動前，有些簡單的方法來改進！"
+msgstr "在發佈之前，可能有一些簡單的方法可以改善你的演講元件！"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:184
 #: orga/templates/orga/event/live.html:44
@@ -23728,10 +23234,8 @@ msgstr "發佈活動以在預售頁面啟用演講頁面。"
 #: eventyay_common/templates/eventyay_common/event/live.html:210
 #: orga/templates/orga/event/live.html:48
 #: orga/templates/orga/event/live.html:70
-#, fuzzy
-#| msgid "Publish answers"
 msgid "Publish Talks"
-msgstr "公開回應"
+msgstr "發佈演講"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:193
 #: orga/templates/orga/event/live.html:53
@@ -23742,10 +23246,8 @@ msgstr "演講頁面已在預售頁面公開。取消發佈可隱藏議程、場
 
 #: eventyay_common/templates/eventyay_common/event/live.html:199
 #: orga/templates/orga/event/live.html:59
-#, fuzzy
-#| msgid "Publish answers"
 msgid "Unpublish Talks"
-msgstr "公開回應"
+msgstr "取消發佈演講"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:204
 #: orga/templates/orga/event/live.html:64
@@ -23857,20 +23359,16 @@ msgid "Control whether the Join Online Video link is visible on public pages."
 msgstr "控制「加入線上視訊」連結是否在公開頁面顯示。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:349
-#, fuzzy
-#| msgid "Header links"
 msgid "Hide video link"
-msgstr "標頭連結"
+msgstr "隱藏影片連結"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:351
 msgid "Show video link"
 msgstr "顯示視訊連結"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:357
-#, fuzzy
-#| msgid "One or more items do not belong to this event."
 msgid "The video module is not enabled for this event."
-msgstr "一個或多個項不屬於此活動。"
+msgstr "此活動未啟用影片模組。"
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:17
 msgid "- Settings"
@@ -23917,18 +23415,10 @@ msgid "Set to random"
 msgstr "設為隨機"
 
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:18
-#, fuzzy
-#| msgid "Unavailable"
 msgid "Slug not available"
-msgstr "無法使用"
+msgstr "Slug 不可用"
 
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:21
-#, fuzzy
-#| msgid ""
-#| "This is the address your event will be available at. Should be short, "
-#| "only contain lowercase letters and numbers, and must be unique. We "
-#| "recommend some kind of abbreviation with less than 30 characters that can "
-#| "be easily remembered."
 msgid ""
 "This is the address your event will be available at. Should be short, only "
 "contain lowercase letters and numbers, and must be unique. We recommend some "
@@ -23936,8 +23426,9 @@ msgid ""
 "remembered. You cannot change the slug later on! If you don't provide a "
 "slug, a random one will be generated for you."
 msgstr ""
-"這是您的活動網址。應該簡短，只包含小寫字母和數字，並且必須是獨一無二的。我們"
-"建議使用少於 30 個字元的縮寫，以便容易記住。"
+"這是你的活動可用的網址。應該簡短，只包含小寫字母和數字，且必須是唯一的。我們"
+"建議使用某種少於 30 個字元、容易記住的縮寫。之後你將無法更改 slug！如果你沒有"
+"提供 slug，系統會為你產生一個隨機的 slug。"
 
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:29
 msgid ""
@@ -24006,28 +23497,20 @@ msgstr "啟用影片存取"
 
 #: eventyay_common/templates/eventyay_common/filter_actions.html:8
 #: eventyay_common/templates/eventyay_common/filter_actions.html:10
-#, fuzzy
-#| msgid "Media files"
 msgid "Clear filters"
-msgstr "媒體檔案"
+msgstr "清除篩選條件"
 
 #: eventyay_common/templates/eventyay_common/orders/orders.html:27
-#, fuzzy
-#| msgid "Order status"
 msgid "Order Date"
-msgstr "訂單狀態"
+msgstr "訂單日期"
 
 #: eventyay_common/templates/eventyay_common/orders/orders.html:53
-#, fuzzy
-#| msgid "You wrote {count} words."
 msgid "You have no orders."
-msgstr "您已寫了 {count} 個字。"
+msgstr "你沒有訂單。"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:15
-#, fuzzy
-#| msgid "Create new token"
 msgid "Create a team"
-msgstr "建立新的存取權杖"
+msgstr "建立團隊"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:18
 msgid ""
@@ -24042,65 +23525,46 @@ msgid "Create a new team"
 msgstr "建立新團隊"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:33
-#, fuzzy
-#| msgid "Create new token"
 msgid "Create team"
-msgstr "建立新的存取權杖"
+msgstr "建立團隊"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:51
-#, fuzzy, python-format
-#| msgctxt "Shown at the bottom of lists, always > 1 elements."
-#| msgid "%(count)s elements"
+#, python-format
 msgid "%(count)s member"
 msgid_plural "%(count)s members"
-msgstr[0] "%(count)s 個元素"
+msgstr[0] "%(count)s 位成員"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:65
-#, fuzzy, python-format
-#| msgctxt "Shown at the bottom of lists, always > 1 elements."
-#| msgid "%(count)s elements"
+#, python-format
 msgid "%(count)s event"
 msgid_plural "%(count)s events"
-msgstr[0] "%(count)s 個元素"
+msgstr[0] "%(count)s 個活動"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:78
-#, fuzzy, python-format
-#| msgctxt "Shown at the bottom of lists, always > 1 elements."
-#| msgid "%(count)s elements"
+#, python-format
 msgid "%(count)s invite pending"
 msgid_plural "%(count)s invites pending"
-msgstr[0] "%(count)s 個元素"
+msgstr[0] "%(count)s 個邀請待處理"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:95
-#, fuzzy
-#| msgid "Permissions"
 msgid "Team permissions"
-msgstr "權限"
+msgstr "團隊權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:104
-#, fuzzy
-#| msgid "Members"
 msgid "Members & API"
-msgstr "成員"
+msgstr "成員與 API"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:110
-#, fuzzy
-#| msgid "Do you really want to delete this mail?"
-#| msgid_plural "Do you really want to purge {count} mails?"
 msgid "Are you sure you want to delete this team?"
-msgstr "您確定要刪除這 {count} 封郵件嗎？"
+msgstr "你確定要刪除此團隊嗎？"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:135
-#, fuzzy
-#| msgid "Permissions"
 msgid "Save permissions"
-msgstr "權限"
+msgstr "儲存權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:147
-#, fuzzy
-#| msgid "Resend invite"
 msgid "Members & invites"
-msgstr "重新發送邀請"
+msgstr "成員與邀請"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:156
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:22
@@ -24118,10 +23582,8 @@ msgid "Two-factor authentication disabled"
 msgstr "已停用雙重驗證"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:183
-#, fuzzy
-#| msgid "No comments yet."
 msgid "No members yet."
-msgstr "尚無留言。"
+msgstr "尚無成員。"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:192
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:55
@@ -24153,20 +23615,16 @@ msgid "API tokens"
 msgstr "API 令牌"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:257
-#, fuzzy
-#| msgid "No celery workers have been configured."
 msgid "No tokens have been created yet."
-msgstr "並未設定 celery workers。"
+msgstr "尚未建立任何權杖。"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:284
 msgid "No teams exist yet. Click 'Create a team' to add your first team."
 msgstr "目前尚無任何團隊。點選 'Create a team' 以新增第一個團隊。"
 
 #: eventyay_common/templates/eventyay_common/organizers/index.html:61
-#, fuzzy
-#| msgid "Can change teams and permissions"
 msgid "Manage teams & permissions"
-msgstr "可以改變團隊與權限"
+msgstr "管理團隊與權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:10
 msgid "Organizer permissions"
@@ -24177,22 +23635,16 @@ msgid "Event permissions"
 msgstr "活動權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:25
-#, fuzzy
-#| msgid "Permissions"
 msgid "Ticket permissions"
-msgstr "權限"
+msgstr "票券權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:35
-#, fuzzy
-#| msgid "Permissions"
 msgid "Talk permissions"
-msgstr "權限"
+msgstr "講者權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:47
-#, fuzzy
-#| msgid "Permissions"
 msgid "Video permissions"
-msgstr "權限"
+msgstr "影片權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:5
 msgid "Delete team:"
@@ -24217,10 +23669,8 @@ msgid "Team:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:44
-#, fuzzy
-#| msgid "Are you sure you want to resend the invitation to this user?"
 msgid "Are you sure you want to remove this member?"
-msgstr "您確定要重新傳送邀請給此使用者嗎？"
+msgstr "您確定要移除此成員嗎？"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:57
 msgid "resend invite"
@@ -24240,20 +23690,16 @@ msgid "Team history"
 msgstr "團隊紀錄"
 
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:82
-#, fuzzy
-#| msgid "We have new sessions!"
 msgid "You have no sessions."
-msgstr "我們有新的議程喔！"
+msgstr "您沒有任何工作階段。"
 
 #: eventyay_common/views/account/basic.py:66
 msgid "We have emailed you a link to set your password."
 msgstr "我們已寄送設置密碼的連結到您的電子郵件。"
 
 #: eventyay_common/views/account/basic.py:154
-#, fuzzy
-#| msgid "Email address"
 msgid "(no email address)"
-msgstr "電子郵件地址"
+msgstr "（沒有電子郵件地址）"
 
 #: eventyay_common/views/account/basic.py:206
 #: eventyay_common/views/account/basic.py:249
@@ -24280,32 +23726,28 @@ msgid ""
 msgstr "您的帳戶尚未有密碼。請透過下方寄送設定密碼的連結給自己。"
 
 #: eventyay_common/views/account/email.py:28
-#, fuzzy
-#| msgid "Please provide an email address."
 msgid "Please select an email address first."
-msgstr "請提供電子郵件地址。"
+msgstr "請先選擇一個電子郵件地址。"
 
 #: eventyay_common/views/account/oauth.py:67
 msgid "Access for the selected application has been revoked."
 msgstr "已收回所選應用程式的存取權。"
 
 #: eventyay_common/views/account/oauth.py:124
-#, fuzzy, python-brace-format
-#| msgid "Are you sure you want to retract the invitation to this user?"
+#, python-brace-format
 msgid ""
 "Are you sure you want to generate a new client secret for the application "
 "{code}?"
-msgstr "您確定要撤回此使用者的邀請嗎？"
+msgstr "您確定要為應用程式 {code} 產生新的用戶端密鑰嗎？"
 
 #: eventyay_common/views/account/oauth.py:130
 msgid "A new client secret has been generated and is now effective."
 msgstr "已產生新的用戶端密鑰並已生效。"
 
 #: eventyay_common/views/account/oauth.py:149
-#, fuzzy, python-brace-format
-#| msgid "Are you sure you want to resend the invitation to this user?"
+#, python-brace-format
 msgid "Are you sure you want to disable the application {code} permanently?"
-msgstr "您確定要重新傳送邀請給此使用者嗎？"
+msgstr "您確定要永久停用應用程式 {code} 嗎？"
 
 #: eventyay_common/views/account/two_factor_auth.py:47
 msgid "Something went wrong, you cannot access this page now."
@@ -24465,10 +23907,8 @@ msgid ""
 msgstr "此電子郵件確認連結已過期或無效。請 %(email_action_link)s。"
 
 #: eventyay_common/views/dashboards.py:273
-#, fuzzy
-#| msgid "You do not have permission to perform this action."
 msgid "You do not have permission to change event settings."
-msgstr "您沒有權限執行此操作。"
+msgstr "您沒有權限變更活動設定。"
 
 #: eventyay_common/views/dashboards.py:282 eventyay_common/views/event.py:877
 msgid "Video link is now visible on public pages."
@@ -24487,10 +23927,8 @@ msgid "CFP"
 msgstr "徵稿"
 
 #: eventyay_common/views/event.py:576
-#, fuzzy
-#| msgid "Schedule session"
 msgid "Schedule / Sessions / Speakers"
-msgstr "安排議程時間"
+msgstr "排程／工作階段／講者"
 
 #: eventyay_common/views/event.py:583 orga/views/event.py:105
 msgid "The CfP doesn’t have a full text yet."
@@ -24518,16 +23956,12 @@ msgid "Please resolve the billing information before publishing the event."
 msgstr "請在發佈活動前先完成帳務資訊。"
 
 #: eventyay_common/views/event.py:634
-#, fuzzy
-#| msgid "This event is now public."
 msgid "Your event is now online."
-msgstr "此活動已公開。"
+msgstr "您的活動現在已上線。"
 
 #: eventyay_common/views/event.py:642
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "Your event has been unpublished."
-msgstr "已經更新你的購物車了。"
+msgstr "您的活動已取消發布。"
 
 #: eventyay_common/views/event.py:741 orga/views/event.py:148
 msgid "Publish the event before publishing talks."
@@ -24538,10 +23972,8 @@ msgid "Talk pages are now published."
 msgstr "講題頁面已發佈。"
 
 #: eventyay_common/views/event.py:772 orga/views/event.py:178
-#, fuzzy
-#| msgid "Your changes have been saved."
 msgid "Talk pages have been unpublished."
-msgstr "您的變更已儲存。"
+msgstr "演講頁面已取消發布。"
 
 #: eventyay_common/views/event.py:777 orga/views/event.py:183
 msgid "Talk pages must be published before enabling talk test mode."
@@ -24576,12 +24008,10 @@ msgid "The team has been created. You can now add members to the team."
 msgstr "團隊已建立。您現在可以新增成員到該團隊。"
 
 #: eventyay_common/views/organizer.py:361
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid ""
 "Something went wrong, your changes could not be saved. Please see below for "
 "details."
-msgstr "嗯，那個... 儲存您輸入的資料時發生了一點點問題—詳情請見下方。"
+msgstr "發生錯誤，無法儲存您的變更。請參閱下方的詳細資訊。"
 
 #: eventyay_common/views/organizer.py:391 eventyay_common/views/team.py:409
 #, python-format
@@ -24647,34 +24077,28 @@ msgstr ""
 "請將此秘密複製並妥善保存。您將無法在此再次查看。"
 
 #: eventyay_common/views/organizer.py:623 eventyay_common/views/team.py:457
-#, fuzzy, python-format
-#| msgid "The item has been deleted."
+#, python-format
 msgid "The team '%(team_name)s' cannot be deleted."
-msgstr "項目已刪除。"
+msgstr "無法刪除團隊「%(team_name)s」。"
 
 #: eventyay_common/views/organizer.py:632 eventyay_common/views/team.py:455
-#, fuzzy, python-format
-#| msgid "The item has been deleted."
+#, python-format
 msgid "The team '%(team_name)s' has been deleted."
-msgstr "項目已刪除。"
+msgstr "團隊「%(team_name)s」已刪除。"
 
 #: eventyay_common/views/team.py:41
 msgid "Team management has moved into the unified organizer page."
 msgstr "團隊管理已移至統一的主辦人頁面。"
 
 #: eventyay_common/views/team.py:337
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid ""
 "Something went wrong, your changes could not be saved. Please see below for "
 "details"
-msgstr "嗯，那個... 儲存您輸入的資料時發生了一點點問題—詳情請見下方。"
+msgstr "發生錯誤，無法儲存您的變更。請參閱下方的詳細資訊"
 
 #: features/analytics/graphs/report.py:279
-#, fuzzy
-#| msgid "Number of reviews"
 msgid "Total number of unique viewers"
-msgstr "評論數量"
+msgstr "不重複觀眾總數"
 
 #: features/analytics/graphs/report.py:282
 msgid "Average time spent in room"
@@ -24685,10 +24109,8 @@ msgid "Median time spent in room"
 msgstr "房間停留時間中位數"
 
 #: features/analytics/graphs/report.py:291
-#, fuzzy
-#| msgid "Number of reviews"
 msgid "Number of chat messages"
-msgstr "評論數量"
+msgstr "聊天訊息數量"
 
 #: features/analytics/graphs/report.py:302
 msgid "Number of users who sent chat messages"
@@ -24699,40 +24121,28 @@ msgid "Unique viewers by session"
 msgstr "每場次獨立觀眾數"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Reviewers"
 msgid "Viewers"
-msgstr "審稿者"
+msgstr "觀眾"
 
 #: features/analytics/graphs/report.py:410
-#, fuzzy
-#| msgid "Editor"
 msgid "Exhibitors"
-msgstr "編輯器"
+msgstr "參展商"
 
 #: features/analytics/graphs/report.py:426
-#, fuzzy
-#| msgid "Editor"
 msgid "Exhibitor"
-msgstr "編輯器"
+msgstr "參展商"
 
 #: features/analytics/graphs/report.py:427
-#, fuzzy
-#| msgid "Reviews"
 msgid "Views"
-msgstr "檢閱"
+msgstr "瀏覽次數"
 
 #: features/analytics/graphs/report.py:428
-#, fuzzy
-#| msgid "Invite reviewers"
 msgid "Unique viewers"
-msgstr "邀請檢閱者"
+msgstr "不重複觀眾"
 
 #: features/analytics/graphs/report.py:429
-#, fuzzy
-#| msgid "Contact address"
 msgid "Contact requests"
-msgstr "聯絡人電子郵件地址"
+msgstr "聯絡請求"
 
 #: features/analytics/graphs/report.py:479
 msgid "Sum"
@@ -24747,10 +24157,8 @@ msgid "Report timeframe end"
 msgstr "報告時段結束"
 
 #: features/analytics/graphs/report.py:514
-#, fuzzy
-#| msgid "Number of reviews"
 msgid "Number of users (total)"
-msgstr "評論數量"
+msgstr "使用者數量（總計）"
 
 #: features/analytics/graphs/report.py:516
 msgid "Users with authenticated access (total)"
@@ -24778,10 +24186,8 @@ msgstr "1:1 通話嘗試次數（時間範圍內）"
 
 #: features/live/templates/live/short_domain_invalid.html:4
 #: features/live/templates/live/short_domain_invalid.html:22
-#, fuzzy
-#| msgid "Input validation"
 msgid "Invalid link"
-msgstr "輸入驗證"
+msgstr "無效連結"
 
 #: features/live/templates/live/short_domain_invalid.html:23
 msgid ""
@@ -24983,26 +24389,7 @@ msgstr ""
 "{event_name} 主辦團隊 敬上"
 
 #: mail/default_templates.py:23
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi!\n"
-#| "\n"
-#| "We are happy to tell you that we accept your proposal "
-#| "“{submission_title}”\n"
-#| "to {event_name}. Please click this link to confirm your attendance:\n"
-#| "\n"
-#| "    {confirmation_link}\n"
-#| "\n"
-#| "We look forward to seeing you at {event_name} - Please contact us if you "
-#| "have any\n"
-#| "questions! We will reach out again before the conference to tell you "
-#| "details\n"
-#| "about your slot in the schedule and technical details concerning the "
-#| "room\n"
-#| "and presentation tech.\n"
-#| "\n"
-#| "See you there!\n"
-#| "The {event_name} organisers"
+#, python-brace-format
 msgid ""
 "Hi!\n"
 "\n"
@@ -25022,23 +24409,18 @@ msgid ""
 "See you there!\n"
 "The {event_name} organisers"
 msgstr ""
-"Hi!\n"
+"嗨！\n"
 "\n"
-"很高興通知您，您投稿到 {event_name} 的議程\n"
-"\n"
-"{submission_title}\n"
-"\n"
-"已被接受。請點擊下方的連結來確認您會前來參加：\n"
+"我們很高興告訴你，我們接受你對「{submission_title}」的提案，\n"
+"用於 {event_name}。請點擊此連結以確認你將出席：\n"
 "\n"
 "{confirmation_link}\n"
 "\n"
-"我們很期待在 {event_name} 與您相見。如果有任何問題，請與我們聯繫。在活動開始"
-"前我們會再通知您，\n"
-"關於您的議程的時程、會議室與其他演講時的細節。\n"
+"我們期待在 {event_name} 與你相見——如有任何問題，請聯絡我們！我們會在會議前再"
+"次聯絡你，告知你在議程中的時段細節，以及與會議室和簡報設備相關的技術細節。\n"
 "\n"
-"謝謝您的投稿。\n"
-"\n"
-"{event_name} 主辦團隊  敬上"
+"到時見！\n"
+"{event_name} 主辦單位"
 
 #: mail/default_templates.py:42
 #, python-brace-format
@@ -25128,18 +24510,7 @@ msgid "New proposal: {proposal_title}"
 msgstr "新投稿：{proposal_title}"
 
 #: mail/default_templates.py:89
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi,\n"
-#| "\n"
-#| "you have received a new proposal for your event {event_name}:\n"
-#| "“{submission_title}” by {speakers}.\n"
-#| "You can see details at\n"
-#| "\n"
-#| "  {orga_url}\n"
-#| "\n"
-#| "All the best,\n"
-#| "your {event_name} CfP system.\n"
+#, python-brace-format
 msgid ""
 "Hi,\n"
 "\n"
@@ -25152,15 +24523,16 @@ msgid ""
 "All the best,\n"
 "your {event_name} CfP system.\n"
 msgstr ""
-"Hi,\n"
+"嗨，\n"
 "\n"
-"您的活動「{event_name}」收到了一個新的投稿：\n"
-"標題：「{submission_title}」，講者為 {speakers}。\n"
-"您可以在以下網址查看詳情：\n"
+"你已收到一個針對你的活動 {event_name} 的新提案：\n"
+"由 {speakers} 提交的「{submission_title}」。\n"
+"你可以在此查看詳細資訊：\n"
 "\n"
-"{orga_url}\n"
+"{event_url}\n"
 "\n"
-"{event_name} 議程組敬上。\n"
+"祝好，\n"
+"你的 {event_name} CfP 系統。\n"
 
 #: mail/default_templates.py:103
 #, python-brace-format
@@ -25243,14 +24615,10 @@ msgid "Send mail on new proposal"
 msgstr "有新的議程投稿時傳送郵件"
 
 #: orga/forms/cfp.py:54
-#, fuzzy
-#| msgid ""
-#| "If this setting is checked, you will receive an email to the organiser "
-#| "address for every received proposal."
 msgid ""
 "If this setting is checked, you will receive an email to the organizer "
 "address for every received proposal."
-msgstr "如果勾選此選項，當收到議程投稿時就會傳送一封郵件到主辦者的電子郵件地址。"
+msgstr "若勾選此設定，每收到一份提案，你都會收到一封寄至主辦方地址的電子郵件。"
 
 #: orga/forms/cfp.py:59
 msgid "Allow submitters to share their proposal publicly"
@@ -25557,14 +24925,10 @@ msgid "Enable submission comments"
 msgstr "啟用投稿留言"
 
 #: orga/forms/event.py:305
-#, fuzzy
-#| msgid ""
-#| "Allow organisers and reviewers to comment on submissions, separate from "
-#| "reviews."
 msgid ""
 "Allow organizers and reviewers to comment on submissions, separate from "
 "reviews."
-msgstr "允許主辦單位和審稿者對投稿進行留言，與審稿意見分開。"
+msgstr "允許主辦方與審稿者在提交內容上留言，且與評審意見分開。"
 
 #: orga/forms/event.py:308
 msgid "Require a review score"
@@ -25910,28 +25274,20 @@ msgid "The link to the speaker’s profile picture"
 msgstr "講者個人頭像的連結"
 
 #: orga/forms/speaker.py:49
-#, fuzzy
-#| msgid "Picture"
 msgid "Picture Source"
-msgstr "圖片"
+msgstr "圖片來源"
 
 #: orga/forms/speaker.py:50
-#, fuzzy
-#| msgid "The link to the speaker’s profile picture"
 msgid "The source of the speaker's profile picture"
-msgstr "講者個人頭像的連結"
+msgstr "講者個人資料圖片的來源"
 
 #: orga/forms/speaker.py:54
-#, fuzzy
-#| msgid "Picture"
 msgid "Picture License"
-msgstr "圖片"
+msgstr "圖片授權"
 
 #: orga/forms/speaker.py:55
-#, fuzzy
-#| msgid "The link to the speaker’s profile picture"
 msgid "The license of the speaker's profile picture"
-msgstr "講者個人頭像的連結"
+msgstr "講者個人資料圖片的授權"
 
 #: orga/forms/submission.py:122 submission/forms/submission.py:149
 msgid "Leave empty to use the default duration for the session type."
@@ -26029,10 +25385,8 @@ msgid "Please click here to switch to an administrator account."
 msgstr "請點擊這裡切換到管理者帳號。"
 
 #: orga/templates/orga/base.html:192
-#, fuzzy
-#| msgid "Dashboard"
 msgid "Talk dashboard"
-msgstr "資訊看板"
+msgstr "講題儀表板"
 
 #: orga/templates/orga/base.html:259
 #: orga/templates/orga/mails/_mail_editor.html:31
@@ -26092,10 +25446,8 @@ msgstr "寄件匣"
 #: orga/templates/orga/mails/compose_choice.html:5
 #: plugins/sendmail/signals.py:47
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:5
-#, fuzzy
-#| msgid "Component"
 msgid "Compose"
-msgstr "組件"
+msgstr "撰寫"
 
 #: orga/templates/orga/base.html:420
 #: orga/templates/orga/mails/sent_list.html:31 plugins/sendmail/signals.py:65
@@ -26107,26 +25459,19 @@ msgid "Templates"
 msgstr "範本"
 
 #: orga/templates/orga/cfp/flow.html:26 orga/templates/orga/cfp/flow.html:30
-#, fuzzy
-#| msgid "CfP Editor"
 msgid "Call for Papers Editor"
-msgstr "徵求議程投稿編輯器"
+msgstr "徵稿啟事編輯器"
 
 #: orga/templates/orga/cfp/flow.html:34
-#, fuzzy, python-format
-#| msgid ""
-#| "This is the eventyay CfP editor. This page allows you to change the "
-#| "headline and information text on all of the individual CfP steps. You can "
-#| "also add a custom help text to individual fields. Just click on the item "
-#| "you want to change!"
+#, python-format
 msgid ""
 "This is the %(site_name)s Call for Papers editor. This page allows you to "
 "change the headline and information text on all of the individual Call for "
 "Papers steps. You can also add a custom help text to individual fields. Just "
 "click on the item you want to change!"
 msgstr ""
-"這是 eventyay 徵求議程投稿編輯器。此頁面允許您變更所有個別徵求議程投稿步驟的"
-"標題和資訊文字。您也可以為個別欄位新增自訂說明文字。只需點選您想要變更的項目"
+"這是 %(site_name)s 徵稿啟事編輯器。此頁面可讓你變更所有各個徵稿啟事步驟上的標"
+"題與資訊文字。你也可以為個別欄位新增自訂說明文字。只要點擊你想變更的項目即可"
 "！"
 
 #: orga/templates/orga/cfp/forms.html:39
@@ -26172,10 +25517,8 @@ msgstr "最大長度"
 #: orga/templates/orga/cfp/forms.html:85 orga/templates/orga/cfp/forms.html:510
 #: orga/templates/orga/cfp/forms.html:853
 #: orga/templates/orga/cfp/talkquestion/list.html:57
-#, fuzzy
-#| msgid "Public link"
 msgid "Public"
-msgstr "公開連結"
+msgstr "公開"
 
 #: orga/templates/orga/cfp/forms.html:86 orga/templates/orga/cfp/forms.html:511
 #: orga/templates/orga/cfp/forms.html:854
@@ -26224,10 +25567,8 @@ msgid "Move item"
 msgstr "移動項目"
 
 #: orga/templates/orga/cfp/forms.html:308
-#, fuzzy
-#| msgid "Content"
 msgid "Content Locale"
-msgstr "內容"
+msgstr "內容語系"
 
 #: orga/templates/orga/cfp/forms.html:384
 msgid "Recording opt-out"
@@ -26236,10 +25577,8 @@ msgstr "拒絕錄影"
 #: orga/templates/orga/cfp/forms.html:422
 #: orga/templates/orga/cfp/forms.html:774
 #: orga/templates/orga/cfp/forms.html:863
-#, fuzzy
-#| msgid "Custom Mail"
 msgid "Custom"
-msgstr "自訂郵件"
+msgstr "自訂"
 
 #: orga/templates/orga/cfp/forms.html:450
 #: orga/templates/orga/cfp/forms.html:802
@@ -26256,10 +25595,8 @@ msgstr "無法將此欄位設為公開，因為已有回應存在。"
 #: orga/templates/orga/cfp/forms.html:456
 #: orga/templates/orga/cfp/forms.html:808
 #: orga/templates/orga/cfp/forms.html:897
-#, fuzzy
-#| msgid "Public changelog"
 msgid "Public toggle for"
-msgstr "公開的變更紀錄"
+msgstr "公開切換："
 
 #: orga/templates/orga/cfp/forms.html:482
 #: orga/templates/orga/cfp/forms.html:834
@@ -26269,19 +25606,13 @@ msgid "New custom field"
 msgstr "新自訂欄位"
 
 #: orga/templates/orga/cfp/forms.html:498
-#, fuzzy
-#| msgid ""
-#| "Select which information should be requested and/or required during CfP "
-#| "proposal."
 msgid ""
 "Select which information should be requested and/or required from speakers."
-msgstr "選擇徵求議程投稿時，要求提供與必須提供的資訊有哪些。"
+msgstr "選擇應向講者請求和/或要求的資訊。"
 
 #: orga/templates/orga/cfp/forms.html:519
-#, fuzzy
-#| msgid "Name"
 msgid "Full Name"
-msgstr "名稱"
+msgstr "全名"
 
 #: orga/templates/orga/cfp/forms.html:521
 msgid "Full Name is always active"
@@ -26296,41 +25627,30 @@ msgid "Full Name is always required and cannot be changed."
 msgstr "全名為必填且無法變更。"
 
 #: orga/templates/orga/cfp/forms.html:626
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile picture source"
-msgstr "個人頭像"
+msgstr "個人檔案照片來源"
 
 #: orga/templates/orga/cfp/forms.html:663
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile picture license"
-msgstr "個人頭像"
+msgstr "個人檔案照片授權"
 
 #: orga/templates/orga/cfp/forms.html:737
 msgid "Additional speakers"
 msgstr "其他講者"
 
 #: orga/templates/orga/cfp/forms.html:841
-#, fuzzy
-#| msgid "Speaker Information"
 msgid "Reviewer Information"
-msgstr "講者資訊"
+msgstr "評審者資訊"
 
 #: orga/templates/orga/cfp/question/_form.html:36
 #: orga/templates/orga/cfp/talkquestion/_form.html:65
-#, fuzzy
-#| msgid ""
-#| "If you mark a Yes/No field as required, it means that the user has to "
-#| "select Yes and No is not accepted. If you want to allow both options, do "
-#| "not make this field required."
 msgid ""
 "If you mark a Confirmation field as required, it means that the user has to "
 "explicitly confirm and cannot proceed without doing so. If you want to allow "
 "users to leave this unchecked, do not make this field required."
 msgstr ""
-"如果您將是/否欄位標記為必填，表示使用者必須選擇「是」，「否」不被接受。如果您"
-"想要允許兩個選項，請勿將此欄位設為必填。"
+"如果你將「確認」欄位標示為必填，表示使用者必須明確確認，否則無法繼續。如果你"
+"想允許使用者不勾選也能繼續，請不要將此欄位設為必填。"
 
 #: orga/templates/orga/cfp/question/_form.html:46
 #: orga/templates/orga/cfp/talkquestion/_form.html:39
@@ -26539,10 +25859,8 @@ msgstr ""
 "）的場次型態與自訂問題欄位，就可以上路了！"
 
 #: orga/templates/orga/event/dashboard.html:69
-#, fuzzy
-#| msgid "Your event is currently"
 msgid "Your talk component is currently"
-msgstr "您的活動目前"
+msgstr "你的演講元件目前為"
 
 #: orga/templates/orga/event/dashboard.html:79
 msgid "not live"
@@ -26562,14 +25880,10 @@ msgid "Talk component status"
 msgstr "演講元件狀態"
 
 #: orga/templates/orga/event_list.html:49
-#, fuzzy
-#| msgid ""
-#| "You are currently in the organiser area of eventyay. To view your "
-#| "submitted proposals, please go directly to the event page:"
 msgid ""
 "You are currently in the organizer area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
-msgstr "您目前在 eventyay 的主辦單位區域。要檢視您送出的投稿，請直接前往活動頁面："
+msgstr "你目前在 eventyay 的組織者區域。要檢視你提交的提案，請直接前往活動頁面："
 
 #: orga/templates/orga/includes/dashboard_block_event.html:13
 #: orga/templates/orga/speaker/form.html:30 orga/views/dashboard.py:297
@@ -26637,41 +25951,28 @@ msgid "Invitation"
 msgstr "邀請函"
 
 #: orga/templates/orga/invitation.html:7
-#, fuzzy, python-format
-#| msgid "Invitation to the %(organiser)s team “%(name)s”"
+#, python-format
 msgid "Invitation to the %(organizer)s team “%(name)s”"
-msgstr "給 %(organiser)s 團隊 “%(name)s” 的邀請"
+msgstr "邀請加入 %(organizer)s 團隊「%(name)s」"
 
 #: orga/templates/orga/invitation.html:15
 #: orga/templates/orga/invitation.html:34
-#, fuzzy, python-format
-#| msgid "You have been invited to join the organiser team %(name)s."
+#, python-format
 msgid "You have been invited to join the organizer team %(name)s."
-msgstr "您已被邀請加入 %(name)s 團隊"
+msgstr "你已被邀請加入組織者團隊 %(name)s。"
 
 #: orga/templates/orga/invitation.html:20
-#, fuzzy, python-format
-#| msgid ""
-#| "If you already have an account – either as a speaker or an organiser – at "
-#| "<a href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, "
-#| "create a new account to join the team!"
+#, python-format
 msgid ""
 "If you already have an account – either as a speaker or an organizer – at <a "
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"如果你已經有一個帳戶 - 作為演講者或召集人 -at <a href=\"%(domain)s\">%"
-"(domain)s</a>, ，請立即登錄。否則，建立一個新帳戶加入團隊！"
+"如果你已經在 <a href=\"%(domain)s\">%(domain)s</a> 擁有帳號，無論是講者或組織"
+"者，請現在登入。否則，請建立新帳號以加入團隊！"
 
 #: orga/templates/orga/invitation.html:37
-#, fuzzy, python-format
-#| msgid ""
-#| "To accept the invitation with the account you’re currently active, please "
-#| "use the button below. If you want to accept the invitation with a "
-#| "different account, you can <a href=\"/orga/logout/?next=%(link)s\">log "
-#| "out</a> and log in with the other account. </p><p> If you believe to have "
-#| "received this invitation by mistake, please contact the organiser "
-#| "directly."
+#, python-format
 msgid ""
 "To accept the invitation with the account you’re currently active, please "
 "use the button below. If you want to accept the invitation with a different "
@@ -26679,9 +25980,9 @@ msgid ""
 "in with the other account. </p><p> If you believe to have received this "
 "invitation by mistake, please contact the organizer directly."
 msgstr ""
-"要使用你當前活躍的帳戶接受邀請，請使用下面的按鈕。如果要使用其他帳戶接受邀請"
-"，可以<a href=\"/orga/logout/?next=%(link)s\">log out</a> and log in with "
-"the other account. </p><p> 如果你認為錯誤地收到了此邀請，請直接與主辦方聯繫。"
+"要以目前使用中的帳號接受邀請，請使用下方的按鈕。如果你想以其他帳號接受邀請，"
+"你可以 <a href=\"/orga/logout/?next=%(link)s\">登出</a> 並以其他帳號登入。</"
+"p><p> 如果你認為自己是誤收此邀請，請直接聯絡組織者。"
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -26849,12 +26150,9 @@ msgid "Copy to draft"
 msgstr "複製到草稿"
 
 #: orga/templates/orga/mails/outbox_list.html:10
-#, fuzzy
-#| msgid "pending mail"
-#| msgid_plural "pending mails"
 msgid "pending email"
 msgid_plural "pending emails"
-msgstr[0] "暫未發出的郵件"
+msgstr[0] "待處理的電子郵件"
 
 #: orga/templates/orga/mails/outbox_list.html:27
 msgid "Send all on this page"
@@ -26936,10 +26234,8 @@ msgid_plural "Teams"
 msgstr[0] "個團隊"
 
 #: orga/templates/orga/organizer/list.html:51
-#, fuzzy
-#| msgid "There are no organisers you can edit."
 msgid "There are no organizers you can edit."
-msgstr "沒有您可以編輯的主辦者。"
+msgstr "沒有你可以編輯的組織者。"
 
 #: orga/templates/orga/organizer/speaker_list.html:6
 #: orga/templates/orga/organizer/speaker_list.html:11
@@ -26992,14 +26288,10 @@ msgstr ""
 "稿者分派到投稿。"
 
 #: orga/templates/orga/review/assignment.html:29
-#, fuzzy
-#| msgid ""
-#| "As teams can belong to multiple events, teams are managed in your "
-#| "organiser settings."
 msgid ""
 "As teams can belong to multiple events, teams are managed in your organizer "
 "settings."
-msgstr "由於團隊可以屬於多個活動，團隊在您的主辦單位設定中管理。"
+msgstr "由於團隊可能屬於多個活動，團隊會在你的組織者設定中管理。"
 
 #: orga/templates/orga/review/assignment.html:35
 msgid "New team"
@@ -27109,10 +26401,8 @@ msgid "You don’t have reviewer permissions for this event."
 msgstr "您沒有此活動的審稿者權限。"
 
 #: orga/templates/orga/review/dashboard.html:50
-#, fuzzy
-#| msgid "Proposals"
 msgid "Review Proposals"
-msgstr "議程投稿"
+msgstr "評審提案"
 
 #: orga/templates/orga/review/dashboard.html:57
 msgid "Columns"
@@ -27471,16 +26761,12 @@ msgid "Other settings"
 msgstr "其他設定"
 
 #: orga/templates/orga/settings/form.html:78
-#, fuzzy
-#| msgid "Export settings"
 msgid "Event settings"
-msgstr "匯出設定"
+msgstr "活動設定"
 
 #: orga/templates/orga/settings/form.html:82
-#, fuzzy
-#| msgid "Delete my account"
 msgid "Delete talk data"
-msgstr "刪除我的帳號"
+msgstr "刪除演講資料"
 
 #: orga/templates/orga/settings/mail.html:30
 msgid ""
@@ -27789,16 +27075,12 @@ msgid "This proposal was created using an access code:"
 msgstr "此份議程投稿是用此存取代碼所產生："
 
 #: orga/templates/orga/submission/content.html:116
-#, fuzzy
-#| msgid "Don’t record this session."
 msgid "Don't record this session."
-msgstr "不要錄製此議程。"
+msgstr "請勿錄製此工作階段。"
 
 #: orga/templates/orga/submission/content.html:203
-#, fuzzy
-#| msgid "No file provided"
 msgid "No answer provided"
-msgstr "未提供檔案"
+msgstr "未提供答案"
 
 #: orga/templates/orga/submission/content.html:216
 #: orga/templates/orga/submission/content_edit.html:70
@@ -27903,32 +27185,24 @@ msgid "Avatar"
 msgstr "大頭貼"
 
 #: orga/templates/orga/submission/speakers.html:35
-#, fuzzy
-#| msgid "The speaker’s profile picture"
 msgid "The speaker's profile picture"
-msgstr "講者的頭像"
+msgstr "講者的個人資料圖片"
 
 #: orga/templates/orga/submission/speakers.html:53
-#, fuzzy
-#| msgid "Mails"
 msgid "E-Mail"
-msgstr "郵件"
+msgstr "電子郵件"
 
 #: orga/templates/orga/submission/speakers.html:61
 msgid "Availabilities"
 msgstr "可用性"
 
 #: orga/templates/orga/submission/speakers.html:63
-#, fuzzy
-#| msgid "Start"
 msgid "Start time"
-msgstr "開始"
+msgstr "開始時間"
 
 #: orga/templates/orga/submission/speakers.html:64
-#, fuzzy
-#| msgid "Date and time"
 msgid "End time"
-msgstr "日期與時間"
+msgstr "結束時間"
 
 #: orga/templates/orga/submission/speakers.html:84
 msgid "Other proposals by this speaker:"
@@ -28039,16 +27313,12 @@ msgstr "未選擇語言"
 
 #: orga/templates/orga/widgets/multi_languages_select.html:57
 #: orga/templates/orga/widgets/multi_languages_select.html:63
-#, fuzzy
-#| msgid "Invite language"
 msgid "Remove language"
-msgstr "邀請語言"
+msgstr "移除語言"
 
 #: orga/templates/orga/widgets/multi_languages_select.html:75
-#, fuzzy
-#| msgid "Default language"
 msgid "Select language"
-msgstr "預設語言"
+msgstr "選取語言"
 
 #: orga/templates/orga/widgets/multi_languages_widget.html:8
 #, python-format
@@ -28204,14 +27474,10 @@ msgstr ""
 "塊，否則您的 SMTP 伺服器將不會被使用。"
 
 #: orga/views/event.py:492
-#, fuzzy
-#| msgid ""
-#| "There was a problem with your authentication. Please contact the "
-#| "organiser for further help."
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
-msgstr "您的驗證有問題。請聯絡主辦單位以取得進一步協助。"
+msgstr "您的驗證發生問題。請聯絡主辦方以取得進一步協助。"
 
 #: orga/views/event.py:506
 msgid "You are now part of the team!"
@@ -28224,10 +27490,8 @@ msgid ""
 msgstr "所有相關的資料，如議程投稿、講者資料、上傳資料等都會被刪除，並且無法復原。"
 
 #: orga/views/mails.py:46
-#, fuzzy
-#| msgid "You can’t give feedback for this session at this time."
 msgid "You cannot send emails at this time."
-msgstr "此刻您還不能對此議程發表回饋。"
+msgstr "目前無法傳送電子郵件。"
 
 #: orga/views/mails.py:130
 #, python-brace-format
@@ -28332,10 +27596,8 @@ msgstr ""
 "復原。"
 
 #: orga/views/organizer.py:90
-#, fuzzy
-#| msgid "The organiser and all related data have been deleted."
 msgid "The organizer and all related data have been deleted."
-msgstr "主辦單位及所有相關資料已被刪除。"
+msgstr "主辦方及所有相關資料已刪除。"
 
 #: orga/views/person.py:69
 msgid ""
@@ -28464,10 +27726,8 @@ msgid "The session has been scheduled."
 msgstr "此議程已被安排進議程表。"
 
 #: orga/views/schedule.py:524
-#, fuzzy
-#| msgid "The item has been deleted."
 msgid "The selected room has been deleted."
-msgstr "項目已刪除。"
+msgstr "所選房間已刪除。"
 
 #: orga/views/speaker.py:198
 msgid ""
@@ -28990,8 +28250,6 @@ msgid "Payer"
 msgstr "付款人"
 
 #: plugins/banktransfer/refund_export.py:78
-#, fuzzy
-#| msgid "Refunds"
 msgid "Refund"
 msgstr "退款"
 
@@ -29644,10 +28902,8 @@ msgid "This plugin allows you to send out emails to all your customers."
 msgstr "此外掛允許您向所有客戶發送電子郵件。"
 
 #: plugins/sendmail/forms.py:30
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The 'web' sales channel must be selected."
-msgstr "此使用者已被刪除。"
+msgstr "必須選取「web」銷售管道。"
 
 #: plugins/sendmail/forms.py:33
 msgid "Send email to"
@@ -29735,20 +28991,16 @@ msgid "Send to customers checked in on list"
 msgstr ""
 
 #: plugins/sendmail/forms.py:434
-#, fuzzy
-#| msgid "New team"
 msgid "New attachment"
-msgstr "新團隊"
+msgstr "新增附件"
 
 #: plugins/sendmail/forms.py:435
 msgid "Upload a new file to replace the existing one."
 msgstr "上傳新檔案以取代現有檔案。"
 
 #: plugins/sendmail/forms.py:440
-#, fuzzy
-#| msgid "One email address or several addresses separated by commas."
 msgid "Edit the list of recipient email addresses separated by commas."
-msgstr "如果有一個以上的電子郵件地址，請用逗號區隔。"
+msgstr "編輯以逗號分隔的收件人電子郵件地址清單。"
 
 #: plugins/sendmail/forms.py:456
 msgid "Any changes to the Reply-To field will apply only to this queued email."
@@ -29769,16 +29021,12 @@ msgid ""
 msgstr "您無法新增或移除收件人。只能編輯現有的電子郵件地址。"
 
 #: plugins/sendmail/forms.py:584
-#, fuzzy
-#| msgid "Placeholders"
 msgid "Available placeholders: "
-msgstr "預留位置"
+msgstr "可用的預留位置： "
 
 #: plugins/sendmail/forms.py:603
-#, fuzzy
-#| msgid "You are a member of this team"
 msgid "Send to members of these teams"
-msgstr "您是此團隊的成員"
+msgstr "傳送給這些團隊的成員"
 
 #: plugins/sendmail/signals.py:94
 msgid "Email was sent"
@@ -29797,20 +29045,14 @@ msgid "Attendees, Orders, Tickets"
 msgstr "與會者、訂單、票券"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:25
-#, fuzzy
-#| msgid ""
-#| "Send an email to speakers, authors, submitters, based on their proposal "
-#| "status and other filters."
 msgid ""
 "Send an email to attendees, orders, ticket buyers, based on their order "
 "status and other filters."
-msgstr "根據投稿狀態及其他篩選條件，傳送電子郵件給講者、作者或投稿者。"
+msgstr "根據訂單狀態及其他篩選條件，向與會者、訂單、票券購買者傳送電子郵件。"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:34
-#, fuzzy
-#| msgid "Send an email to your reviewers or other team members."
 msgid "Send an email to your team members."
-msgstr "傳送電子郵件給審稿者或其他團隊成員。"
+msgstr "向您的團隊成員傳送電子郵件。"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:22
 msgid "Placed order"
@@ -29849,10 +29091,8 @@ msgid "Attachments"
 msgstr "附件"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:100
-#, fuzzy
-#| msgid "Contains an attachment"
 msgid "Existing attachments"
-msgstr "包含附夾檔案"
+msgstr "現有附件"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:113
 msgid ""
@@ -29876,10 +29116,8 @@ msgstr[0] ""
 "                "
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:72
-#, fuzzy
-#| msgid "Recipients"
 msgid "Total recipients"
-msgstr "收件者"
+msgstr "收件者總數"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:98
 #, python-format
@@ -29897,20 +29135,16 @@ msgstr[0] ""
 "                        "
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:113
-#, fuzzy
-#| msgid "Send email"
 msgid "Send this email"
-msgstr "傳送電子郵件"
+msgstr "傳送此電子郵件"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:121
 msgid "Edit this email"
 msgstr "編輯此郵件"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:129
-#, fuzzy
-#| msgid "Reject email"
 msgid "Delete this email"
-msgstr "拒絕郵件"
+msgstr "刪除此電子郵件"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:142
 msgid "Some emails failed to send:"
@@ -29921,16 +29155,12 @@ msgid "and more"
 msgstr "更多"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:158
-#, fuzzy
-#| msgid "Send mails"
 msgid "No queued mails."
-msgstr "傳送郵件"
+msgstr "沒有佇列中的郵件。"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/purge_confirmation.html:11
-#, fuzzy
-#| msgid "Confirmed speakers"
 msgid "Confirm discard"
-msgstr "已確認的講者"
+msgstr "確認捨棄"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:11
 msgid "Attendees, orders, tickets"
@@ -29952,56 +29182,40 @@ msgstr[0] ""
 "                "
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:70
-#, fuzzy
-#| msgid "Recipients"
 msgid "No recipients"
-msgstr "收件者"
+msgstr "沒有收件者"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:77
-#, fuzzy
-#| msgid "No archived events found."
 msgid "No sent mails found."
-msgstr "找不到已歸檔的活動。"
+msgstr "找不到已寄出郵件。"
 
 #: plugins/sendmail/views.py:57
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid "We could not queue the email. See below for details."
-msgstr "嗯，那個... 儲存您輸入的資料時發生了一點點問題—詳情請見下方。"
+msgstr "我們無法將此電子郵件加入佇列。詳情請見下方。"
 
 #: plugins/sendmail/views.py:114
 msgid "There are no orders matching this selection."
 msgstr "沒有符合此篩選的訂單。"
 
 #: plugins/sendmail/views.py:174 plugins/sendmail/views.py:630
-#, fuzzy
-#| msgid "The email has been sent."
 msgid "Your email has been sent to the outbox."
-msgstr "電子郵件已傳送。"
+msgstr "您的電子郵件已送至寄件匣。"
 
 #: plugins/sendmail/views.py:281
-#, fuzzy
-#| msgid "The mail has been sent."
 msgid "This mail has already been sent."
-msgstr "此郵件已送出。"
+msgstr "此郵件已寄出。"
 
 #: plugins/sendmail/views.py:287
-#, fuzzy
-#| msgid "The mail has been sent."
 msgid "The mail has been queued for sending."
-msgstr "此郵件已送出。"
+msgstr "此郵件已加入佇列等待寄送。"
 
 #: plugins/sendmail/views.py:329 plugins/sendmail/views.py:523
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid "We could not save the email. See below for details."
-msgstr "嗯，那個... 儲存您輸入的資料時發生了一點點問題—詳情請見下方。"
+msgstr "我們無法儲存此電子郵件。詳情請見下方。"
 
 #: plugins/sendmail/views.py:334
-#, fuzzy
-#| msgid "This mail has been sent already. It cannot be sent again."
 msgid "This email has already been sent and cannot be edited."
-msgstr "此郵件已傳送，不能再送一次。"
+msgstr "此電子郵件已寄出，無法編輯。"
 
 #: plugins/sendmail/views.py:360 plugins/sendmail/views.py:366
 #: plugins/sendmail/views.py:545 plugins/sendmail/views.py:551
@@ -30010,37 +29224,28 @@ msgid "Invalid placeholder(s): {}"
 msgstr "無效的佔位符： {}"
 
 #: plugins/sendmail/views.py:405
-#, fuzzy
-#| msgid "This mail has been sent already. It cannot be sent again."
 msgid "This mail has already been sent and cannot be deleted."
-msgstr "此郵件已傳送，不能再送一次。"
+msgstr "此郵件已寄出，無法刪除。"
 
 #: plugins/sendmail/views.py:414
-#, fuzzy
-#| msgid "The organiser and all related data have been deleted."
 msgid "The mail and its related data have been deleted."
-msgstr "主辦單位及所有相關資料已被刪除。"
+msgstr "此郵件及其相關資料已刪除。"
 
 #: plugins/sendmail/views.py:433
-#, fuzzy, python-brace-format
-#| msgid "Do you really want to purge {count} mails?"
+#, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
-msgstr[0] "您確定要毀滅這 {count} 份郵件嗎？"
+msgstr[0] "您確定要清除 {count} 封郵件嗎？"
 
 #: plugins/sendmail/views.py:449
-#, fuzzy, python-brace-format
-#| msgid "The mail has been discarded."
-#| msgid_plural "{count} mails have been discarded."
+#, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
-msgstr[0] "{count} 封郵件已送出。"
+msgstr[0] "已捨棄 {count} 封郵件。"
 
 #: plugins/sendmail/views.py:582
-#, fuzzy
-#| msgid "There are no recipients matching this selection."
 msgid "There are no valid recipients for the selected teams."
-msgstr "沒有與此選擇相符的收件人。"
+msgstr "所選團隊沒有有效的收件者。"
 
 #: plugins/socialauth/apps.py:9 plugins/socialauth/apps.py:12
 msgid "SocialAuth"
@@ -30564,10 +29769,8 @@ msgid "Please fill in answers to all required questions."
 msgstr "請回答所有必填問題。"
 
 #: presale/forms/checkout.py:32
-#, fuzzy
-#| msgid "Username"
 msgid "Wikimedia Username"
-msgstr "帳號"
+msgstr "Wikimedia 使用者名稱"
 
 #: presale/forms/checkout.py:68
 msgid "E-mail address (repeated)"
@@ -30641,10 +29844,8 @@ msgid "You can now join the event using the following button:"
 msgstr "您現在可以使用下列按鈕加入活動："
 
 #: presale/templates/pretix_venueless/order_info.html:51
-#, fuzzy
-#| msgid "New schedule!"
 msgid "View schedule"
-msgstr "新的議程表發布了！"
+msgstr "檢視日程表"
 
 #: presale/templates/pretix_venueless/order_info.html:61
 msgid ""
@@ -31002,10 +30203,8 @@ msgstr "未提供參加者姓名"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:144
 #: presale/templates/pretixpresale/event/fragment_cart.html:195
-#, fuzzy
-#| msgid "Purchased products"
 msgid "price per product"
-msgstr "已購買產品"
+msgstr "每件產品價格"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:155
 msgid "Okay, we're removing that…"
@@ -31934,16 +31133,12 @@ msgid "Please log in to continue."
 msgstr "請登入以繼續。"
 
 #: presale/templates/pretixpresale/fragment_modals.html:87
-#, fuzzy
-#| msgid "Gather your team"
 msgid "Enter your email"
-msgstr "組織您的團隊"
+msgstr "輸入你的電子郵件"
 
 #: presale/templates/pretixpresale/fragment_modals.html:92
-#, fuzzy
-#| msgid "Forgot your password?"
 msgid "Enter your password"
-msgstr "忘記您的密碼了嗎？"
+msgstr "輸入你的密碼"
 
 #: presale/templates/pretixpresale/fragment_modals.html:115
 msgid "Login with MediaWiki"
@@ -31954,34 +31149,24 @@ msgid "Login with Google"
 msgstr "以 Google 登入"
 
 #: presale/templates/pretixpresale/fragment_modals.html:123
-#, fuzzy
-#| msgid "I already have an account"
 msgid "Don't have an account?"
-msgstr "我已經有帳號了"
+msgstr "沒有帳號嗎？"
 
 #: presale/templates/pretixpresale/fragment_modals.html:123
-#, fuzzy
-#| msgid "Created"
 msgid "Create one"
-msgstr "建立時間"
+msgstr "建立一個"
 
 #: presale/templates/pretixpresale/fragment_modals.html:325
-#, fuzzy
-#| msgid "Log in"
 msgid "Logging in..."
-msgstr "登入"
+msgstr "正在登入…"
 
 #: presale/templates/pretixpresale/fragment_modals.html:351
-#, fuzzy
-#| msgid "An email password has been set."
 msgid "Invalid email or password. Please try again."
-msgstr "已設定電子郵件密碼。"
+msgstr "電子郵件或密碼無效。請再試一次。"
 
 #: presale/templates/pretixpresale/fragment_modals.html:359
-#, fuzzy
-#| msgid "There was an error sending the mail. Please try again later."
 msgid "Server error. Please try again later."
-msgstr "傳送郵件時發生錯誤，請稍後再試。"
+msgstr "伺服器錯誤。請稍後再試。"
 
 #: presale/templates/pretixpresale/fragment_modals.html:367
 msgid "Login failed. Please try again."
@@ -32010,10 +31195,8 @@ msgid "Test Mode"
 msgstr "測試模式"
 
 #: presale/templates/pretixpresale/includes/startpage_event_card.html:50
-#, fuzzy
-#| msgid "Copy access code link"
 msgid "Copy event link"
-msgstr "複製存取代碼連結"
+msgstr "複製活動連結"
 
 #: presale/templates/pretixpresale/index.html:8
 msgid "Hello!"
@@ -32109,37 +31292,27 @@ msgid "Page %(page)s of %(of)s"
 msgstr "第 %(page)s 頁，共 %(of)s 頁"
 
 #: presale/templates/pretixpresale/startpage.html:15
-#, fuzzy
-#| msgid "No archived events found."
 msgid "Browse live events on"
-msgstr "找不到已歸檔的活動。"
+msgstr "瀏覽線上直播活動於"
 
 #: presale/templates/pretixpresale/startpage.html:83
 #: presale/templates/pretixpresale/startpage.html:84
 #: presale/templates/pretixpresale/startpage.html:167
 #: presale/templates/pretixpresale/startpage.html:168
-#, fuzzy
-#| msgid "Past events"
 msgid "Search events"
-msgstr "過往活動"
+msgstr "搜尋活動"
 
 #: presale/templates/pretixpresale/startpage.html:91
-#, fuzzy
-#| msgid "Upcoming events"
 msgid "No matching events"
-msgstr "未來活動"
+msgstr "沒有符合的活動"
 
 #: presale/templates/pretixpresale/startpage.html:128
-#, fuzzy
-#| msgid "Frontpage header pattern"
 msgid "Start page header"
-msgstr "前端頁面標頭樣式"
+msgstr "起始頁面標題"
 
 #: presale/templates/pretixpresale/startpage.html:155
-#, fuzzy
-#| msgid "View event"
 msgid "Live events"
-msgstr "檢視活動"
+msgstr "直播活動"
 
 #: presale/templates/pretixpresale/startpage.html:178
 msgid "No matching events. Try a different search term."
@@ -32147,16 +31320,12 @@ msgstr "找不到符合的活動。請嘗試其他搜尋關鍵字。"
 
 #: presale/templates/pretixpresale/startpage.html:184
 #: presale/templates/pretixpresale/startpage.html:185
-#, fuzzy
-#| msgid "Featured"
 msgid "Featured events"
-msgstr "精選"
+msgstr "精選活動"
 
 #: presale/templates/pretixpresale/startpage.html:199
-#, fuzzy
-#| msgid "Your upcoming events"
 msgid "No upcoming events available yet."
-msgstr "正在進行的活動"
+msgstr "目前尚無即將舉行的活動。"
 
 #: presale/templates/pretixpresale/waiting.html:22
 msgid "We are processing your request …"
@@ -32235,10 +31404,8 @@ msgid "Unknown date selected."
 msgstr "選擇的日期不明。"
 
 #: presale/views/order.py:212
-#, fuzzy
-#| msgid "eventyay website"
 msgid "Eventyay Video"
-msgstr "eventyay 網站"
+msgstr "Eventyay 影片"
 
 #: presale/views/order.py:497 presale/views/order.py:567
 #: presale/views/order.py:641
@@ -32354,11 +31521,9 @@ msgid ""
 msgstr "我們已將您加入等候名單。票券一旦重新供應，您將收到電子郵件通知。"
 
 #: presale/views/widget.py:310
-#, fuzzy
-#| msgid "powered by <a %(a_attr)s>eventyay</a>"
 msgctxt "widget"
 msgid "powered by eventyay"
-msgstr "由<a %(a_attr)s>eventyay</a>提供支持"
+msgstr "由 eventyay 提供技術支援"
 
 #: presale/views/widget.py:324
 msgid "This ticket shop is currently disabled."
@@ -32512,14 +31677,10 @@ msgstr ""
 "一位以上的共同講者，您可以在完成投稿流程後再新增更多講者。"
 
 #: submission/forms/submission.py:166
-#, fuzzy
-#| msgid ""
-#| "Please contact the organisers if you want to change how often you’re "
-#| "presenting this proposal."
 msgid ""
 "Please contact the organizers if you want to change how often you’re "
 "presenting this proposal."
-msgstr "如果您希望變更此投稿的演講頻率，請聯絡主辦單位。"
+msgstr "如果你想變更你呈現此提案的頻率，請聯絡主辦單位。"
 
 #: submission/forms/submission.py:238
 msgid "Proposal states"
