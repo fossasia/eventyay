@@ -191,6 +191,14 @@ select.required-status-dropdown[data-current="optional"] {
 }
 
 /* Order Form Option Table Styles */
+
+/* Use fixed table layout so column widths are enforced and long text wraps
+   instead of causing horizontal overflow (fixes #2882) */
+.order-form-option-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
 .order-form-option-table tbody select[name^="settings-order_"],
 .order-form-option-table tbody select[name^="settings-attendee_"] {
     display: none;
@@ -212,18 +220,15 @@ select.required-status-dropdown[data-current="optional"] {
     vertical-align: middle;
 }
 
-/* Constrain field column width to prevent excessive stretching */
-.order-form-option-table col.field-col {
-    max-width: 320px;
-}
-
-/* Align field labels to the left with consistent padding */
+/* Align field labels to the left and allow long text to wrap (#2882) */
 .order-form-option-table tbody th {
     text-align: left;
     padding-right: 12px;
     vertical-align: middle;
     font-weight: 600;
     white-space: normal;
+    overflow-wrap: break-word;
+    min-width: 0;
 }
 
 /* Center column headers */
@@ -360,4 +365,12 @@ select.required-status-dropdown[data-current="optional"] {
 /* Attendee data explanation spacing */
 .attendee-data-explanation {
     margin-top: 3em;
+}
+
+/* On smaller screens, shrink the fixed columns to give the Field column
+   more room and avoid horizontal overflow (#2882) */
+@media (max-width: 992px) {
+    .order-form-option-table colgroup col:not(.field-col) {
+        width: 100px;
+    }
 }
