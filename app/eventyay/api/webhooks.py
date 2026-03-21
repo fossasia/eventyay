@@ -313,7 +313,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False, timeout=30)
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
