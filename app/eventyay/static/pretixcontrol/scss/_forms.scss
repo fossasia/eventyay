@@ -728,3 +728,22 @@ table td > .checkbox input[type="checkbox"] {
     gap: 10px;
   }
 }
+
+
+.question-option-row,
+.table td,
+.table th {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.table-responsive {
+    overflow-x: hidden;
+}
+
+label,
+.form-group {
+    max-width: 100%;
+    word-break: break-word;
+}
