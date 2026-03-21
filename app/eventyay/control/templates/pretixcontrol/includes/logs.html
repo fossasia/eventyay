@@ -3,7 +3,7 @@
 
 <ul class="list-group">
     {% for log in obj.top_logentries %}
-        <li class="list-group-item logentry" style="overflow-wrap: anywhere;">
+        <li class="list-group-item logentry">
 
             <p class="meta">
                 <span class="fa fa-clock-o"></span> {{ log.datetime|date:"SHORT_DATETIME_FORMAT" }}
@@ -56,7 +56,7 @@
     {% endfor %}
 
     {% if obj.all_logentries_link and obj.top_logentries_has_more %}
-        <li class="list-group-item logentry" style="overflow-wrap: anywhere;">
+        <li class="list-group-item logentry">
             <a href="{{ obj.all_logentries_link }}">
                 {% trans "View full log" %}
             </a>

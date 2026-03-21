@@ -1138,3 +1138,6 @@ pl-0 {
     margin: 5mm;
   }
 }
+.logentry {
+    overflow-wrap: anywhere;
+}
