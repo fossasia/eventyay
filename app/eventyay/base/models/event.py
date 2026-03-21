@@ -2680,6 +2680,7 @@ class Event(
 
         if not hasattr(self, 'cfp'):
             CfP.objects.create(event=self, default_type=self._get_default_submission_type())
+        cfp = self.cfp
 
         with scope(event=self):
             if not self.schedules.filter(version__isnull=True).exists():
@@ -2692,7 +2693,7 @@ class Event(
             if not self.review_phases.all().exists():
                 from eventyay.base.models import ReviewPhase
 
-                cfp_deadline = self.cfp.deadline if hasattr(self, 'cfp') else None
+                cfp_deadline = cfp.deadline
                 rp = ReviewPhase.objects.create(
                     event=self,
                     name=_('Review'),

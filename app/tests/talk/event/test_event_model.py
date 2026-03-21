@@ -62,6 +62,10 @@ def test_initial_data(event):
         assert event.schedules.count()
         assert event.wip_schedule
 
+        assert event.review_phases.count() > 0
+        assert not event.review_phases.filter(is_active=True).exists()
+        first_phase = event.review_phases.order_by('position').first()
+        assert first_phase.is_active is False
 
 @pytest.mark.parametrize(
     "slug",
