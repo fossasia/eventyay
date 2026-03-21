@@ -4,12 +4,14 @@
  * Discovers event slug and API base URL from the page URL.
  * Syncs fav state via Django REST API (POST/DELETE) with CSRF token.
  * Falls back to localStorage for anonymous users.
+ * Uses replaceChildren() to safely render SVG nodes and prevent XSS injection.
  *
  * @attr {string} submission-id — the submission code
  * @attr {string} logged-in — "true" or "false"
  */
 class PretalxFavButton extends HTMLElement {
   connectedCallback () {
+    if (this._button) return
     if (!document.getElementById('fav-button-styles')) {
       const style = document.createElement('style')
       style.id = 'fav-button-styles'
@@ -37,14 +39,21 @@ class PretalxFavButton extends HTMLElement {
     this._starOutline = starOutline
     this._starFilled = starFilled
 
-    this.innerHTML =
-      '<button class="btn btn-xs btn-link">' +
-      '<span class="fav-icon">' + starOutline + '</span>' +
-      '</button>'
-    this._button = this.querySelector('button')
-    this._iconWrap = this.querySelector('.fav-icon')
+    const btn = document.createElement('button')
+    btn.className = 'btn btn-xs btn-link'
+    const span = document.createElement('span')
+    span.className = 'fav-icon'
+    const parser = new DOMParser()
+    this._starFilledNode = parser.parseFromString(this._starFilled, 'image/svg+xml').documentElement
+    this._starOutlineNode = parser.parseFromString(this._starOutline, 'image/svg+xml').documentElement
+
+    this._button = btn
+    this._iconWrap = span
+    this._button.appendChild(this._iconWrap)
+    this.appendChild(this._button)
     this._button.addEventListener('click', () => this._toggle())
 
+    this._render()
     this._loadState()
   }
 
@@ -82,7 +91,8 @@ class PretalxFavButton extends HTMLElement {
   }
 
   _render () {
-    this._iconWrap.innerHTML = this._isFaved ? this._starFilled : this._starOutline
+    const svgElement = this._isFaved ? this._starFilledNode : this._starOutlineNode
+    this._iconWrap.replaceChildren(svgElement.cloneNode(true))
   }
 
   _spin () {
