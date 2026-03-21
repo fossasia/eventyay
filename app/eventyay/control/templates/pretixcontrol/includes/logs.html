@@ -3,7 +3,7 @@
 
 <ul class="list-group">
     {% for log in obj.top_logentries %}
-        <li class="list-group-item logentry" style="word-break: break-word; overflow-wrap: break-word;">
+        <li class="list-group-item logentry" style="overflow-wrap: anywhere;">
             
             <p class="meta">
                 <span class="fa fa-clock-o"></span> {{ log.datetime|date:"SHORT_DATETIME_FORMAT" }}
