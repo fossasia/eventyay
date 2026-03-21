@@ -44,6 +44,14 @@ class BadgePluginEnabledMixin:
         return super().dispatch(request, *args, **kwargs)
 
 
+def _schedule_badge_cache_invalidation(event):
+    event_pk = event.pk
+    clear_badge_layout_cache(event)
+    transaction.on_commit(
+        lambda event_pk=event_pk: invalidate_cache.apply_async(kwargs={'event': event_pk, 'provider': 'badge'})
+    )
+
+
 class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, ListView):
     model = BadgeLayout
     permission = ('can_change_event_settings', 'can_view_orders')
@@ -84,8 +92,7 @@ class LayoutSettingsView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, 
     @transaction.atomic
     def form_valid(self, form):
         form.save()
-        clear_badge_layout_cache(self.request.event)
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'badge'})
+        _schedule_badge_cache_invalidation(self.request.event)
         self.layout.log_action(
             action='eventyay.plugins.badges.layout.changed',
             user=self.request.user,
@@ -130,8 +137,7 @@ class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Create
         super().form_valid(form)
         if form.instance.background and form.instance.background.name:
             form.instance.background.save('background.pdf', form.instance.background)
-        clear_badge_layout_cache(self.request.event)
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'badge'})
+        _schedule_badge_cache_invalidation(self.request.event)
         form.instance.log_action(
             'eventyay.plugins.badges.layout.added',
             user=self.request.user,
@@ -192,8 +198,7 @@ class LayoutSetDefault(BadgePluginEnabledMixin, EventPermissionRequiredMixin, De
         self.request.event.badge_layouts.exclude(pk=obj.pk).update(default=False)
         obj.default = True
         obj.save(update_fields=['default'])
-        clear_badge_layout_cache(self.request.event)
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'badge'})
+        _schedule_badge_cache_invalidation(self.request.event)
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
@@ -228,8 +233,7 @@ class LayoutDelete(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Delete
             if f:
                 f.default = True
                 f.save(update_fields=['default'])
-        clear_badge_layout_cache(self.request.event)
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'badge'})
+        _schedule_badge_cache_invalidation(self.request.event)
         messages.success(self.request, _('The selected badge layout been deleted.'))
         return redirect(self.get_success_url())
 
@@ -302,8 +306,7 @@ class LayoutEditorView(BaseEditorView):
             layout_data = '[]'
         self.layout.layout = layout_data
         self.layout.save(update_fields=['layout'])
-        clear_badge_layout_cache(self.request.event)
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'badge'})
+        _schedule_badge_cache_invalidation(self.request.event)
         self.layout.log_action(
             action='eventyay.plugins.badges.layout.changed',
             user=self.request.user,
@@ -345,8 +348,7 @@ class LayoutEditorView(BaseEditorView):
         if self.layout.background:
             self.layout.background.delete()
         self.layout.background.save('background.pdf', f.file)
-        clear_badge_layout_cache(self.request.event)
-        invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'badge'})
+        _schedule_badge_cache_invalidation(self.request.event)
 
 
 class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncAction, View):
