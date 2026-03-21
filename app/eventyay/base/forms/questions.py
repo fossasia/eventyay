@@ -591,12 +591,13 @@ class BaseQuestionsForm(forms.Form):
                     initial=(initial.answer if initial else (guess_country(event) if required else None)),
                 )
             elif q.type == Question.TYPE_CHOICE:
+                choices = list(q.options.all())
                 field = forms.ModelChoiceField(
                     queryset=q.options,
                     label=label,
                     required=required,
                     help_text=help_text,
-                    widget=forms.Select,
+                    widget=(forms.RadioSelect if len(choices) < 4 else forms.Select),
                     to_field_name='identifier',
                     empty_label='',
                     initial=initial.options.first() if initial else None,
