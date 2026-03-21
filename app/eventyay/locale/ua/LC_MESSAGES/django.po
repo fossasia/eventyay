@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-21 16:20+0000\n"
+"PO-Revision-Date: 2026-03-22 15:20+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/uk/>\n"
@@ -17065,12 +17065,12 @@ msgstr "Завдань не знайдено."
 #: control/templates/pretixcontrol/admin/update.html:9
 #: control/templates/pretixcontrol/global_update.html:7
 msgid "Update check results"
-msgstr ""
+msgstr "Оновити результати перевірки"
 
 #: control/templates/pretixcontrol/admin/update.html:12
 #: control/templates/pretixcontrol/global_update.html:10
 msgid "Update checks are disabled."
-msgstr ""
+msgstr "Перевірки оновлень вимкнено."
 
 #: control/templates/pretixcontrol/admin/update.html:15
 #: control/templates/pretixcontrol/global_update.html:14
@@ -17079,6 +17079,9 @@ msgid ""
 "installation. Update checks are performed on a daily basis if your cronjob "
 "is set up properly."
 msgstr ""
+"Після останнього оновлення цьої інсталяції ще не виконувалося жодної "
+"перевірки оновлень. Перевірки оновлень виконуються щодня, якщо cronjob "
+"налаштовано правильно."
 
 #: control/templates/pretixcontrol/admin/update.html:22
 #: control/templates/pretixcontrol/admin/update.html:42
@@ -17087,12 +17090,12 @@ msgstr ""
 #: control/templates/pretixcontrol/global_update.html:39
 #: control/templates/pretixcontrol/global_update.html:51
 msgid "Check for updates now"
-msgstr ""
+msgstr "Перевірити оновлення зараз"
 
 #: control/templates/pretixcontrol/admin/update.html:28
 #: control/templates/pretixcontrol/global_update.html:26
 msgid "The last update check was not successful."
-msgstr ""
+msgstr "Остання перевірка оновлень була неуспішною."
 
 #: control/templates/pretixcontrol/admin/update.html:30
 msgid "The eventyay.com server returned an error code."
@@ -17105,33 +17108,33 @@ msgstr "Сервер eventyay.com недосяжний."
 #: control/templates/pretixcontrol/admin/update.html:34
 #: control/templates/pretixcontrol/global_update.html:32
 msgid "This installation appears to be a development installation."
-msgstr ""
+msgstr "Ця інсталяція, схоже, є інсталяцією для розробки."
 
 #: control/templates/pretixcontrol/admin/update.html:50
 #: control/templates/pretixcontrol/global_update.html:47
 #, python-format
 msgid "Last updated: %(date)s"
-msgstr ""
+msgstr "Останнє оновлення: %(date)s"
 
 #: control/templates/pretixcontrol/admin/update.html:63
 #: control/templates/pretixcontrol/global_update.html:59
 msgid "Component"
-msgstr ""
+msgstr "Компонент"
 
 #: control/templates/pretixcontrol/admin/update.html:64
 #: control/templates/pretixcontrol/global_update.html:60
 msgid "Installed version"
-msgstr ""
+msgstr "Встановлена версія"
 
 #: control/templates/pretixcontrol/admin/update.html:65
 #: control/templates/pretixcontrol/global_update.html:61
 msgid "Latest version"
-msgstr ""
+msgstr "Остання версія"
 
 #: control/templates/pretixcontrol/admin/update.html:81
 #: control/templates/pretixcontrol/global_update.html:80
 msgid "Update check settings"
-msgstr ""
+msgstr "Налаштування перевірки оновлень"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:4
 msgid "Staff session"
@@ -18905,7 +18908,7 @@ msgstr "Дані станом на %(date)s"
 #: control/templates/pretixcontrol/fragment_quota_box_paid.html:3
 #, python-format
 msgid "Currently available: %(num)s"
-msgstr ""
+msgstr "Наразі доступно: %(num)s"
 
 #: control/templates/pretixcontrol/giftcards/checkout.html:4
 msgid ""
@@ -18918,6 +18921,14 @@ msgid ""
 "the difference.\n"
 "    "
 msgstr ""
+"\n"
+"        Якщо є подарункова картка, введіть її код тут. Якщо на подарунковій "
+"картці недостатньо\n"
+"        коштів для оплати всього замовлення, цю сторінку буде показано "
+"знову, і можна або\n"
+"        активувати іншу подарункову картку, або вибрати інший спосіб оплати "
+"для різниці.\n"
+"    "
 
 #: control/templates/pretixcontrol/giftcards/checkout_confirm.html:4
 msgid ""
@@ -18929,11 +18940,19 @@ msgid ""
 "future.\n"
 "    "
 msgstr ""
+"\n"
+"        Подарункову картку буде використано для оплати цього замовлення. "
+"Якщо баланс на подарунковій картці менший за суму замовлення, можна буде "
+"оплатити\n"
+"        різницю іншим способом оплати. Якщо баланс перевищує суму "
+"замовлення, можна буде використовувати подарункову картку знову у "
+"майбутньому.\n"
+"    "
 
 #: control/templates/pretixcontrol/global_message.html:5
 #: control/templates/pretixcontrol/global_message.html:7
 msgid "System message"
-msgstr ""
+msgstr "Системне повідомлення"
 
 #: control/templates/pretixcontrol/global_settings.html:30
 msgid "Stripe — Organizer Billing"
@@ -18991,24 +19010,24 @@ msgstr "Налаштуйте обробку платежів PayPal."
 
 #: control/templates/pretixcontrol/global_sso.html:18
 msgid "Submit"
-msgstr ""
+msgstr "Надіслати"
 
 #: control/templates/pretixcontrol/global_update.html:28
 msgid "The eventyay server returned an error code."
-msgstr ""
+msgstr "Сервер eventyay повернув код помилки."
 
 #: control/templates/pretixcontrol/global_update.html:30
 msgid "The eventyay server could not be reached."
-msgstr ""
+msgstr "Не вдалося підключитися до сервера eventyay."
 
 #: control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay_common/templates/eventyay_common/includes/logs.html:51
 msgid "View full log"
-msgstr ""
+msgstr "Переглянути повний журнал"
 
 #: control/templates/pretixcontrol/item/base.html:9
 msgid "Modify product:"
-msgstr ""
+msgstr "Змінити продукт:"
 
 #: control/templates/pretixcontrol/item/base.html:11
 msgid "Create product"
@@ -21015,10 +21034,13 @@ msgid ""
 "Download an app that is compatible with eventyay. For example, our check-in "
 "app <strong>eventyay Check-in</strong> is available on all major platforms."
 msgstr ""
+"Завантажте застосунок, сумісний з eventyay. Наприклад, наш застосунок для "
+"реєстрації <strong>eventyay Check-in</strong> доступний на всіх основних "
+"платформах."
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:14
 msgid "Download eventyay Check-in"
-msgstr ""
+msgstr "Завантажити eventyay Check-in"
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:18
 msgid ""
@@ -22151,7 +22173,7 @@ msgstr "Усі ваучери"
 
 #: control/templates/pretixcontrol/vouchers/index.html:24
 msgid "Voucher Tags"
-msgstr ""
+msgstr "Теги ваучерів"
 
 #: control/templates/pretixcontrol/vouchers/index.html:31
 msgid ""
@@ -22332,7 +22354,7 @@ msgstr "Перемістити в кінець списку"
 
 #: control/templates/registration/register.html:8
 msgid "New staff user"
-msgstr ""
+msgstr "Новий користувач персоналу"
 
 #: control/templatetags/hierarkey_form.py:44
 msgid "Organizer-level settings"
@@ -22392,15 +22414,17 @@ msgstr "Цей номер сторінки менший за 1"
 
 #: control/views/admin.py:119
 msgid "Invalid field."
-msgstr ""
+msgstr "Недійсне поле."
 
 #: control/views/admin.py:121
 msgid "Event not found."
-msgstr ""
+msgstr "Подію не знайдено."
 
 #: control/views/admin.py:130
 msgid "Only published events without test mode can be shown on the start page."
 msgstr ""
+"На стартовій сторінці можна показувати лише опубліковані події без тестового "
+"режиму."
 
 #: control/views/admin.py:466 control/views/admin.py:490
 #: control/views/vouchers.py:174 control/views/vouchers.py:231
@@ -22418,7 +22442,7 @@ msgstr "Вибраний ваучер було видалено."
 
 #: control/views/admin_views.py:117
 msgid "The user has been created successfully, they can now log in."
-msgstr ""
+msgstr "Користувача успішно створено, тепер можна увійти."
 
 #: control/views/admin_views.py:136 control/views/admin_views.py:379
 #: control/views/admin_views.py:416 control/views/admin_views.py:466
@@ -22429,23 +22453,23 @@ msgstr ""
 #: control/views/admin_views.py:690 control/views/admin_views.py:709
 #: control/views/admin_views.py:729
 msgid "Ok!"
-msgstr ""
+msgstr "OK"
 
 #: control/views/admin_views.py:441
 msgid "The data will soon be deleted."
-msgstr ""
+msgstr "Дані буде скоро видалено."
 
 #: control/views/admin_views.py:762
 msgid "No BBB session found for this room."
-msgstr ""
+msgstr "Сеанс BBB для цієї кімнати не знайдено."
 
 #: control/views/admin_views.py:774
 msgid "Kicking all attendees did not work."
-msgstr ""
+msgstr "Не вдалося видалити всіх учасників."
 
 #: control/views/admin_views.py:778
 msgid "Moved."
-msgstr ""
+msgstr "Переміщено."
 
 #: control/views/checkin.py:160
 msgid "The selected check-ins have been reverted."
@@ -22518,11 +22542,11 @@ msgstr "Залишилося {quota}"
 
 #: control/views/dashboards.py:296
 msgid "Event is"
-msgstr ""
+msgstr "Подія"
 
 #: control/views/dashboards.py:296
 msgid "Ticket shop is"
-msgstr ""
+msgstr "Магазин квитків"
 
 #: control/views/dashboards.py:304 orga/templates/orga/event/dashboard.html:83
 msgid "Click here to change"
@@ -22530,7 +22554,7 @@ msgstr "Натисніть тут, щоб змінити"
 
 #: control/views/dashboards.py:306
 msgid "live (private test mode)"
-msgstr ""
+msgstr "у прямому ефірі (приватний тестовий режим)"
 
 #: control/views/dashboards.py:309
 msgid "live and in test mode"
@@ -22547,7 +22571,7 @@ msgstr "у приватному тестовому режимі"
 
 #: control/views/dashboards.py:317
 msgid "in test mode"
-msgstr ""
+msgstr "у тестовому режимі"
 
 #: control/views/dashboards.py:317
 msgid "not yet public"
@@ -22560,7 +22584,7 @@ msgstr "Наразі – {list}"
 
 #: control/views/dashboards.py:373
 msgid "Get started with ticketing"
-msgstr ""
+msgstr "Почати роботу з продажем квитків"
 
 #: control/views/dashboards.py:375
 msgid ""
@@ -22572,7 +22596,7 @@ msgstr ""
 
 #: control/views/dashboards.py:378
 msgid "Set up Ticketing"
-msgstr ""
+msgstr "Налаштувати продаж квитків"
 
 #: control/views/dashboards.py:600 control/views/typeahead.py:58
 msgctxt "subevent"
@@ -22673,7 +22697,7 @@ msgstr "Це значення буде замінено на основі дин
 
 #: control/views/event.py:883
 msgid "invalid product"
-msgstr ""
+msgstr "недійсний продукт"
 
 #: control/views/event.py:942
 msgid "Unknown e-mail renderer."
@@ -23821,19 +23845,19 @@ msgstr "iOS (iTunes)"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:46
 msgid "Blackberry (Link via Google)"
-msgstr ""
+msgstr "Blackberry (Посилання через Google)"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:52
 msgid "Add a new account to the app by scanning the following barcode:"
-msgstr ""
+msgstr "Додайте ноа43ий оа43аунт до проа43рами, сканувавши наступний штрихкод:"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:56
 msgid "Can't scan the barcode?"
-msgstr ""
+msgstr "Не вдається сканувати штрихкод?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:62
 msgid "Use the \"provide a key\" option of your authenticator app."
-msgstr ""
+msgstr "Використайте опцію «Надати ключ» у застосунку-автентифікаторі."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:65
 msgid "In \"Account name\", type your login name for pretix."
@@ -23842,46 +23866,48 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:68
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
-msgstr ""
+msgstr "У «Секрет»/«Ключ оа43аунту» введіть наступний код:"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:73
 msgid "copy"
-msgstr ""
+msgstr "Копіювати"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:81
 msgid ""
 "If present, make sure \"Time-based\"/\"TOTP\" and 6 digit codes are selected."
-msgstr ""
+msgstr "Якщо є, переконайтеся, що вибрано «За часом»/«TOTP» та 6-значні коди."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:87
 msgid "Enter the displayed code here:"
-msgstr ""
+msgstr "Введіть відображений код тут:"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:96
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-webauthn.html:32
 msgid "Require second factor for future logins"
-msgstr ""
+msgstr "Вимагати другий фактор для майбутніх входів"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-webauthn.html:24
 msgid ""
 "Please connect your WebAuthn device. If it has a button, touch it now. You "
 "might have to unplug the device and plug it back in again."
 msgstr ""
+"Підключіть пристрій WebAuthn. Якщо на ньому є кнопка, натисніть її зараз. "
+"Можливо, доведеться відєднати пристрій та підключити його знову."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-webauthn.html:39
 msgid "Device registration failed."
-msgstr ""
+msgstr "Не вдалося зареєструвати пристрій."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:4
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:19
 msgid "Delete a two-factor authentication device"
-msgstr ""
+msgstr "Видалити пристрій двофакторної автентифікації"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:22
 #, python-format
 msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
-msgstr ""
+msgstr "Ви впевнені, що хочете видалити пристрій автентифікації «%(device)s»?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 msgid "You will no longer be able to use this device to log in to pretix."
@@ -23892,33 +23918,37 @@ msgid ""
 "If this is the only device connected to your account, we will disable two-"
 "factor authentication."
 msgstr ""
+"Якщо це єдиний пристрій, підключений до а43оа43аунту, двофакторну "
+"автентифікацію буде вимкнено."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-disable.html:4
 #: eventyay_common/templates/eventyay_common/account/2fa-disable.html:19
 msgid "Disable two-factor authentication"
-msgstr ""
+msgstr "Вимкнути двофакторну автентифікацію"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-disable.html:23
 msgid "Do you really want to disable two-factor authentication?"
-msgstr ""
+msgstr "Дійсно вимкнути двофакторну автентифікацію?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-disable.html:26
 msgid "You will no longer require a second device to log in to your account."
 msgstr ""
+"Для входу до а43оа43аунту більше не потрібно буде використовувати другий "
+"пристрій."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:4
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:19
 msgid "Enable two-factor authentication"
-msgstr ""
+msgstr "Увімкнути двофакторну автентифікацію"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:23
 msgid "Do you really want to enable two-factor authentication?"
-msgstr ""
+msgstr "Дійсно увімкнути двофакторну автентифікацію?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:26
 msgid ""
 "You will no longer be able to log in without one of your configured devices."
-msgstr ""
+msgstr "Без одноа43о з налаштованих пристроїв вхід буде неможливий."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:27
 msgid ""
@@ -28411,7 +28441,7 @@ msgstr "Будь ласка, додайте щонайменше одне міс
 #: presale/templates/pretixpresale/event/checkout_questions.html:20
 #: presale/templates/pretixpresale/event/order_modify.html:34
 msgid "Contact information"
-msgstr ""
+msgstr "Контактні дані"
 
 #: orga/templates/orga/settings/form.html:66
 msgid "Other settings"
@@ -31925,53 +31955,55 @@ msgstr "Товари у вашому кошику більше не зарезе
 #: presale/templates/pretixpresale/event/checkout_base.html:53
 #: presale/templates/pretixpresale/event/index.html:128
 msgid "Add tickets for a different date"
-msgstr ""
+msgstr "Додати квитки на іншу дату"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:7
 #: presale/templates/pretixpresale/event/checkout_confirm.html:9
 #: presale/templates/pretixpresale/event/checkout_confirm.html:10
 msgid "Review order"
-msgstr ""
+msgstr "Переглянути замовлення"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:12
 msgid "Please review the details below and confirm your order."
-msgstr ""
+msgstr "Перегляньте деталі нижче та підтвердьте замовлення."
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:14
 msgid "Please hang tight, we're finalizing your order!"
-msgstr ""
+msgstr "Будь ласка, зачекайте, триває остаточне оформлення замовлення!"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:29
 msgid "Add or remove tickets"
-msgstr ""
+msgstr "Додати або видалити квитки"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:61
 msgid "Modify payment"
-msgstr ""
+msgstr "Змінити оплату"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:63
 #: presale/templates/pretixpresale/event/checkout_confirm.html:85
 #: presale/templates/pretixpresale/event/checkout_confirm.html:135
 msgid "Modify"
-msgstr ""
+msgstr "Змінити"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:83
 msgid "Modify invoice information"
-msgstr ""
+msgstr "Змінити дані для рахунку"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:133
 msgid "Modify contact information"
-msgstr ""
+msgstr "Змінити контактні дані"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:163
 msgid "Confirmations"
-msgstr ""
+msgstr "Підтвердження"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:181
 msgid ""
 "Your order requires approval by the event organizer before it can be "
 "confirmed and forms a valid contract."
 msgstr ""
+"Замовлення потребує схвалення організатором події, щоб його можна було "
+"підтвердити та укласти дійсний договір."
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:183
 msgid ""
@@ -31979,34 +32011,37 @@ msgid ""
 "rejected your order. If your order was approved, we will send you a link "
 "that you can use to pay."
 msgstr ""
+"Ми надішлемо вам електронного листа, щойно як організатор події схвалить або "
+"відхилить замовлення. Якщо замовлення було схвалено, ми надішлемо посилання "
+"для оплати."
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:199
 msgid "Place order"
-msgstr ""
+msgstr "Оформити замовлення"
 
 #: presale/templates/pretixpresale/event/checkout_confirm.html:201
 msgid "Submit registration"
-msgstr ""
+msgstr "Надіслати реєстрацію"
 
 #: presale/templates/pretixpresale/event/checkout_payment.html:8
 msgid "Please select how you want to pay."
-msgstr ""
+msgstr "Будь ласка, виберіть спосіб оплати."
 
 #: presale/templates/pretixpresale/event/checkout_payment.html:42
 msgid "This sales channel does not provide support for test mode."
-msgstr ""
+msgstr "Цей канал продажів не підтримує тестовий режим."
 
 #: presale/templates/pretixpresale/event/checkout_payment.html:44
 msgid "If you continue, you might pay an actual order with non-existing money!"
-msgstr ""
+msgstr "Якщо продовжити, можна оплатити реальне замовлення неіснуючими грошима!"
 
 #: presale/templates/pretixpresale/event/checkout_payment.html:50
 msgid "This payment provider does not provide support for test mode."
-msgstr ""
+msgstr "Цей платіжний провайдер не підтримує тестовий режим."
 
 #: presale/templates/pretixpresale/event/checkout_payment.html:52
 msgid "If you continue, actual money might be transferred."
-msgstr ""
+msgstr "Якщо продовжити, можливе переказування реальних коштів."
 
 #: presale/templates/pretixpresale/event/checkout_payment.html:63
 msgid "There are no payment providers enabled."
@@ -32488,42 +32523,48 @@ msgid ""
 "cannot find the link, click on the following button to request the link to "
 "your order to be sent to you again."
 msgstr ""
+"Щоб переглянути або змінити статус і деталі замовлення, натисніть посилання "
+"в одному з листів, які були надіслані під час оформлення замовлення. Якщо не "
+"вдається знайти посилання, натисніть кнопку нижче, щоб надіслати посилання "
+"на замовлення ще раз."
 
 #: presale/templates/pretixpresale/event/index.html:374
 #: presale/templates/pretixpresale/event/resend_link.html:4
 #: presale/templates/pretixpresale/event/resend_link.html:11
 msgid "Resend order links"
-msgstr ""
+msgstr "Надіслати посилання на замовлення ще раз"
 
 #: presale/templates/pretixpresale/event/order.html:13
 #: presale/templates/pretixpresale/event/order.html:30
 msgid "Thank you!"
-msgstr ""
+msgstr "Дякуємо!"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:33
 msgid "Your order has been placed successfully. See below for details."
-msgstr ""
+msgstr "Замовлення успішно оформлено. Деталі нижче."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:45
 msgid "Your order has been processed successfully! See below for details."
-msgstr ""
+msgstr "Замовлення успішно оброблено! Деталі нижче."
 
 #: presale/templates/pretixpresale/event/order.html:19
 #: presale/templates/pretixpresale/event/order.html:47
 msgid "We successfully received your payment. See below for details."
-msgstr ""
+msgstr "Оплату успішно отримано. Деталі нижче."
 
 #: presale/templates/pretixpresale/event/order.html:36
 msgid ""
 "Please note that we still await approval by the event organizer before you "
 "can pay and complete this order."
 msgstr ""
+"Зверніть увагу: ще очікується підтвердження від організатора події, перед "
+"тим як можна буде оплатити та завершити це замовлення."
 
 #: presale/templates/pretixpresale/event/order.html:40
 msgid "Please note that we still await your payment to complete the process."
-msgstr ""
+msgstr "Зверніть увагу: для завершення процесу ще очікується оплата."
 
 #: presale/templates/pretixpresale/event/order.html:52
 msgid ""
@@ -32531,51 +32572,58 @@ msgid ""
 "your order later. We also sent you an email containing the link to the "
 "address you specified."
 msgstr ""
+"Додайте в закладки або збережіть посилання на цю сторінку, щоб мати доступ "
+"до замовлення пізніше. Також надіслано лист із посиланням на вказану адресу "
+"електронної пошти."
 
 #: presale/templates/pretixpresale/event/order.html:55
 msgid ""
 "Please save the following link if you want to access your order later. We "
 "also sent you an email containing the link to the address you specified."
 msgstr ""
+"Збережіть наступне посилання, щоб мати доступ до замовлення пізніше. Також "
+"надіслано лист із посиланням на вказану адресу електронної пошти."
 
 #: presale/templates/pretixpresale/event/order.html:72
 #: presale/templates/pretixpresale/event/position.html:18
 msgid "View in backend"
-msgstr ""
+msgstr "Переглянути в бекенді"
 
 #: presale/templates/pretixpresale/event/order.html:86
 #, python-format
 msgid "A payment of %(total)s is still pending for this order."
-msgstr ""
+msgstr "Очікується оплата %(total)s за це замовлення."
 
 #: presale/templates/pretixpresale/event/order.html:89
 #, python-format
 msgid "Please complete your payment before %(date)s"
-msgstr ""
+msgstr "Завершіть оплату до %(date)s"
 
 #: presale/templates/pretixpresale/event/order.html:98
 msgid "Re-try payment or choose another payment method"
-msgstr ""
+msgstr "Спробувати оплату ще раз або вибрати інший спосіб оплати"
 
 #: presale/templates/pretixpresale/event/order.html:106
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:45
 msgid "Pay now"
-msgstr ""
+msgstr "Оплатити зараз"
 
 #: presale/templates/pretixpresale/event/order.html:119
 msgid ""
 "We've received your request to cancel this order. Please stay patient while "
 "the event organizer decides on the cancellation."
 msgstr ""
+"Отримано запит на скасування цього замовлення. Зачекайте, поки організатор "
+"події прийме рішення щодо скасування."
 
 #: presale/templates/pretixpresale/event/order.html:136
 #, python-format
 msgid "A refund of %(amount)s will be sent out to you soon, please be patient."
-msgstr ""
+msgstr "Повернення %(amount)s буде незабаром надіслано, зачекайте."
 
 #: presale/templates/pretixpresale/event/order.html:143
 msgid "Print"
-msgstr ""
+msgstr "Друкувати"
 
 #: presale/templates/pretixpresale/event/order.html:145
 #, python-format
@@ -32583,11 +32631,13 @@ msgid ""
 "We've issued your refund of %(amount)s as a gift card. On your next purchase "
 "with us, you can use the following gift card code during payment:"
 msgstr ""
+"Повернення %(amount)s оформлено як подарункову картку. Під час наступної "
+"покупки можна буде використати такий код подарункової картки під час оплати:"
 
 #: presale/templates/pretixpresale/event/order.html:155
 #, python-format
 msgid "The current value of your gift card is %(value)s."
-msgstr ""
+msgstr "Поточний баланс подарункової картки: %(value)s."
 
 #: presale/templates/pretixpresale/event/order.html:162
 #, python-format
