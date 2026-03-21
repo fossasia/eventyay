@@ -10,7 +10,7 @@
 					.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
 						span.time-density-display {{ timeDensityMinutes }} min
 						i.fa.fa-chevron-down(aria-hidden="true")
-						.time-density-menu(v-if="showTimeDensityMenu")
+						.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
 							.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
 								span {{ mins }} min
 								i.fa.fa-check(v-if="timeDensityMinutes === mins")
@@ -708,7 +708,7 @@ onUnmounted(() => {
 					pointer-events: none
 					font-size: 12px
 					color: #333
-				.time-density-menu
+				.time-density-menu, .vue-dropdown
 					position: absolute
 					top: calc(100% + 4px)
 					right: 0

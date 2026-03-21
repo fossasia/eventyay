@@ -584,7 +584,7 @@ export default {
 .c-grid-schedule
 	flex: auto
 	background-color: $clr-grey-50
-	--room-col-min: 220px
+	--room-col-min: 320px
 	.sticky-header
 		position: sticky
 		top: calc(var(--pretalx-sticky-top-offset, 0px) + 30px + var(--pretalx-version-warning-height, 0px))
@@ -771,7 +771,7 @@ export default {
 
 @media (max-width: 600px)
 	.c-grid-schedule
-		--room-col-min: 260px
+		--room-col-min: 240px
 
 @media print
 	.c-grid-schedule

@@ -187,10 +187,6 @@ export default {
 		scheduleReady() {
 			return !!(this.resolvedSchedule && this.enrichedSessions.length)
 		},
-		densityLevel () {
-			// Viewing scale stays consistent; timeDensityMinutes controls timeslice generation.
-			return 'default'
-		},
 		showFavCountOnCalendar() {
 			const flags = this.scheduleData?.schedule?.feature_flags || {}
 			return !!(this.loggedIn && flags.session_popularity_enabled && flags.session_popularity_show_on_calendar)
@@ -430,7 +426,10 @@ export default {
 			}
 		},
 		setTimeDensityMinutes(minutes) {
-			this.timeDensityMinutes = Number(minutes)
+			const parsedMinutes = Number(minutes)
+			const fallbackMinutes = 30
+			const validMinutes = Number.isFinite(parsedMinutes) && parsedMinutes > 0 ? parsedMinutes : fallbackMinutes
+			this.timeDensityMinutes = validMinutes
 			try {
 				localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
 			} catch {

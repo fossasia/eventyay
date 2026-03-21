@@ -294,10 +294,6 @@ export default {
 			// Always allow a distinct calendar grid view when not explicitly in list format
 			return this.format !== 'list'
 		},
-		densityLevel () {
-			// Viewing scale stays consistent; timeDensityMinutes controls only the time interval.
-			return 'default'
-		},
 		roomsLookup () {
 			if (!this.schedule) return {}
 			return this.schedule.rooms.reduce((acc, room) => { acc[room.id] = room; return acc }, {})
@@ -966,8 +962,15 @@ export default {
 			this.recordingFilter = 'all'
 		},
 		setTimeDensityMinutes (minutes) {
-			this.timeDensityMinutes = Number(minutes)
-			localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
+			const parsedMinutes = Number(minutes)
+			const fallbackMinutes = 30
+			const validMinutes = Number.isFinite(parsedMinutes) && parsedMinutes > 0 ? parsedMinutes : fallbackMinutes
+			this.timeDensityMinutes = validMinutes
+			try {
+				localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
+			} catch (e) {
+				// Ignore storage errors (e.g., in restricted environments)
+			}
 		}
 	}
 }

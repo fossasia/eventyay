@@ -54,8 +54,11 @@
 				:aria-label="t.reset_all_filters",
 				@click="clearAllFilters"
 			)
-				svg.filter-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-					path(d="M18 6L6 18M6 6l12 12")
+				svg.filter-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+					line(x1="4" y1="4" x2="20" y2="4")
+					line(x1="7" y1="9" x2="17" y2="9")
+					line(x1="10" y1="14" x2="14" y2="14")
+					path(d="M17 17l4 4m0-4l-4 4")
 		button.filter-btn.mobile-toggle-btn.mobile-more-toggle(
 			@click="toggleMobileMore",
 			:class="{'active': mobileMoreOpen}",

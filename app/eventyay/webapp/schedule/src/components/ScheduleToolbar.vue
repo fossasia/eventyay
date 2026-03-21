@@ -20,20 +20,12 @@
 				template(v-for="group in nonLanguageFilterGroups", :key="group.refKey")
 					.filter-dropdown-area(:ref="'filterDrop_' + group.refKey")
 						button.toolbar-btn(
-							:class="{ 'icon-only': group.refKey === 'language' }",
 							:aria-label="group.title",
 							@click="toggleFilterDropdown(group.refKey)")
-							template(v-if="group.refKey === 'language'")
-								span.filter-title.filter-icon-title
-									svg.tb-icon(viewBox="0 0 24 24", fill="currentColor", aria-hidden="true")
-										path(d="M12.87 15.07l-2.54-2.51c.86-1.02 1.52-2.12 1.99-3.28H14V7h-4V5H8v2H4v2h7.17c-.39 1.17-.96 2.27-1.7 3.25-.48-.63-.9-1.31-1.25-2.03H6.1c.5 1.09 1.17 2.14 2 3.11L3 20h2l5-5 3.11 3.11.76-3.04z")
-										path(d="M15.5 11h-2L9 22h2l1-3h4l1 3h2l-3.5-11zm-2.3 6 .8-2.8.8 2.8h-1.6z")
-									span.filter-dot(v-if="selectedCount(group) > 0")
-							template(v-else)
-								span.filter-title
-									span.filter-title-text {{ group.title }}
-									span.filter-dot(v-if="selectedCount(group) > 0")
-							svg.chevron-icon(v-if="group.refKey !== 'language'", :class="{open: openFilterDropdowns[group.refKey]}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+							span.filter-title
+								span.filter-title-text {{ group.title }}
+								span.filter-dot(v-if="selectedCount(group) > 0")
+							svg.chevron-icon(:class="{open: openFilterDropdowns[group.refKey]}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 								path(d="M6 9l6 6 6-6")
 						.filter-dropdown-menu(v-if="openFilterDropdowns[group.refKey]")
 							template(v-if="group.data.length")
@@ -72,9 +64,6 @@
 							role="menuitemradio",
 							:aria-checked="recordingModel === 'no' ? 'true' : 'false'",
 							@click="selectRecording('no')") {{ t.not_recorded }}
-				button.toolbar-btn.icon-only.clear-filters-btn(v-if="effectiveHasActiveFilters", :aria-label="t.reset_all_filters", @click="$emit('resetFilters')")
-					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-						path(d="M18 6L6 18M6 6l12 12")
 			.filter-dropdown-area.language-filter-area(v-if="languageGroup", ref="filterDrop_language")
 				button.toolbar-btn.icon-only(
 					:aria-label="languageGroup.title",
@@ -102,6 +91,12 @@
 						:style="onlyFavs ? {fill: '#FFA000', stroke: '#FFA000'} : {fill: 'none', stroke: '#B0B0B0'}"
 						points="14.43,10 12,2 9.57,10 2,10 8.18,14.41 5.83,22 12,17.31 18.18,22 15.83,14.41 22,10"
 					)
+			button.toolbar-btn.icon-only.clear-filters-btn(v-if="hasActiveFilters", :aria-label="t.reset_all_filters", @click="$emit('resetFilters')")
+				svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round")
+					line(x1="4" y1="4" x2="20" y2="4")
+					line(x1="7" y1="9" x2="17" y2="9")
+					line(x1="10" y1="14" x2="14" y2="14")
+					path(d="M17 17l4 4m0-4l-4 4")
 			.sort-area(v-if="sessionsMode && resolvedSortOptions.length", ref="sortDropdown")
 				button.toolbar-btn.icon-only.sort-btn(
 					@click="sortOpen = !sortOpen",
@@ -374,11 +369,6 @@ export default {
 		}
 	},
 	computed: {
-		effectiveHasActiveFilters() {
-			const hasDropdownFilterSelections = this.nonLanguageFilterGroups.some(group => this.selectedCount(group) > 0)
-			const hasRecordingSelection = this.showRecordingFilter && this.recordingModel !== 'all'
-			return hasDropdownFilterSelections || hasRecordingSelection
-		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -418,14 +408,16 @@ export default {
 				density_compact_view: m.density_compact_view || 'compact view',
 				density_default_view: m.density_default_view || 'default view',
 				density_comfortable_view: m.density_comfortable_view || 'comfortable view',
+				minutes: m.minutes || 'min',
 			}
 		},
 		timeDensityOptions() {
+			const minText = this.t.minutes || 'min'
 			return [
-				{ value: 5, label: '5 min' },
-				{ value: 15, label: '15 min' },
-				{ value: 30, label: '30 min' },
-				{ value: 60, label: '60 min' },
+				{ value: 5, label: `5 ${minText}` },
+				{ value: 15, label: `15 ${minText}` },
+				{ value: 30, label: `30 ${minText}` },
+				{ value: 60, label: `60 ${minText}` },
 			]
 		},
 		currentTimeDensityLabel() {
@@ -967,31 +959,31 @@ export default {
 			&.open
 				svg.tb-icon
 					transform: rotate(180deg)
-			.sort-dropdown-menu
-				position: absolute
-				left: 0
-				top: 100%
-				background: #fff
-				min-width: 180px
-				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
-				border-radius: 4px
-				z-index: 200
-				padding: 4px 0
-				display: flex
-				flex-direction: column
-				gap: 0
-				.sort-item
-					border: none
-					background: transparent
-					text-align: left
-					padding: 8px 12px
-					font-size: 13px
-					cursor: pointer
-					color: #333
-					&:hover, &:focus
-						background-color: #f5f5f5
-					&.active
-						font-weight: 600
+		.sort-dropdown-menu
+			position: absolute
+			left: 0
+			top: 100%
+			background: #fff
+			min-width: 180px
+			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+			border-radius: 4px
+			z-index: 200
+			padding: 4px 0
+			display: flex
+			flex-direction: column
+			gap: 0
+			.sort-item
+				border: none
+				background: transparent
+				text-align: left
+				padding: 8px 12px
+				font-size: 13px
+				cursor: pointer
+				color: #333
+				&:hover, &:focus
+					background-color: #f5f5f5
+				&.active
+					font-weight: 600
 	.toolbar-center
 		display: flex
 		align-items: center

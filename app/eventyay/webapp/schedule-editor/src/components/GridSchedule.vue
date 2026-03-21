@@ -287,7 +287,7 @@ const timeslices = computed<Timeslice[]>(() => {
     }
 
     const prevSlice = slices[index - 1]
-    if (sliceShouldDisplay(prevSlice, index - 1) && !prevSlice.datebreak) {
+    if (prevSlice && sliceShouldDisplay(prevSlice, index - 1) && !prevSlice.datebreak) {
       prevSlice.gap = true
     }
   }
