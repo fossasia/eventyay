@@ -13,8 +13,11 @@
 {% endblock %}
 {% block content %}
 <aside aria-label="{% trans "Your cart" %}">
-    <details class="panel panel-default cart" {% if "open_cart" in request.GET %}open{% endif %}>
-        <summary class="panel-heading">
+<details class="panel panel-default cart"
+    {% if request.event.settings.redirect_to_checkout_directly or "open_cart" in request.GET %}
+        open
+    {% endif %}>
+            <summary class="panel-heading">
             <h3 class="panel-title">
                 <span>
                     <i class="fa fa-shopping-cart" aria-hidden="true"></i>

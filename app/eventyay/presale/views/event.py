@@ -584,7 +584,11 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             if context['cart_redirect'].startswith('https:'):
                 context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
         else:
-            context['cart_redirect'] = self.request.path
+            context['cart_redirect'] = eventreverse(
+                self.request.event,
+                'presale:cart',
+                kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
+            )
 
         # Get event_name in language code
         event_name_data = self.request.event.name.data
