@@ -14,19 +14,29 @@ def test_redact_sensitive_data_substring():
         "JWT_SECRETS": "sensitive2",
         "user_password_hash": "sensitive3",
         "api_key_value": "sensitive4",
+        "clientSecret": "sensitive5",
+        "mysecretvalue": "sensitive6",
+        "dbPassword": "sensitive7",
+        "apiKey": "sensitive8",
+        "authToken": "sensitive9",
     }
     redacted = redact_sensitive_data(data)
     assert redacted["client_secret"] == "*****"
     assert redacted["JWT_SECRETS"] == "*****"
     assert redacted["user_password_hash"] == "*****"
     assert redacted["api_key_value"] == "*****"
+    assert redacted["clientSecret"] == "*****"
+    assert redacted["mysecretvalue"] == "*****"
+    assert redacted["dbPassword"] == "*****"
+    assert redacted["apiKey"] == "*****"
+    assert redacted["authToken"] == "*****"
 
 
 def test_redact_sensitive_data_nested():
     data = {
         "user": {
             "name": "John",
-            "secrets": {
+            "credentials": {
                 "api_key": "12345",
                 "nested": ["item1", {"password": "pwd"}],
             },
@@ -35,8 +45,8 @@ def test_redact_sensitive_data_nested():
     }
     redacted = redact_sensitive_data(data)
     assert redacted["user"]["name"] == "John"
-    assert redacted["user"]["secrets"]["api_key"] == "*****"
-    assert redacted["user"]["secrets"]["nested"][1]["password"] == "*****"
+    assert redacted["user"]["credentials"]["api_key"] == "*****"
+    assert redacted["user"]["credentials"]["nested"][1]["password"] == "*****"
     assert redacted["tags"] == ["tag1", "tag2"]
 
 

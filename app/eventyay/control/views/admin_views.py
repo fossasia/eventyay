@@ -81,6 +81,7 @@ def redact_sensitive_data(data, depth=0):
         for key, value in data.items():
             key_lower = str(key).lower()
             normalized = key_lower.replace("-", "_")
+            collapsed = "".join(ch for ch in normalized if ch.isalnum())
             tokens = [token for token in normalized.split("_") if token]
             has_sensitive_token = (
                 "password" in tokens
@@ -88,8 +89,14 @@ def redact_sensitive_data(data, depth=0):
                 or ("api" in tokens and "key" in tokens)
                 or ("auth" in tokens and "token" in tokens)
             )
+            has_sensitive_substring = (
+                "secret" in key_lower
+                or "password" in key_lower
+                or "apikey" in collapsed
+                or "authtoken" in collapsed
+            )
 
-            if key_lower in SENSITIVE_KEYS or has_sensitive_token:
+            if key_lower in SENSITIVE_KEYS or has_sensitive_token or has_sensitive_substring:
                 redacted[key] = "*****"
             else:
                 redacted[key] = redact_sensitive_data(value, depth + 1)
