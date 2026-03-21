@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-21 15:25+0000\n"
+"PO-Revision-Date: 2026-03-22 15:24+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Arabic <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ar/>\n"
@@ -247,10 +247,12 @@ msgid ""
 "You're currently not logged in, so your favourited talks will only be stored "
 "locally in your browser."
 msgstr ""
+"أنت غير مسجَّل الدخول حاليًا، لذا سيتم تخزين محاضراتك المفضلة محليًا فقط في "
+"المتصفح."
 
 #: agenda/views/schedule.py:310
 msgid "Your favourites could only be saved locally in your browser."
-msgstr ""
+msgstr "لا يمكن حفظ المفضلات إلا محليًا في المتصفح."
 
 #: agenda/views/speaker.py:37 agenda/views/speaker.py:65
 msgid "No published speakers."
@@ -10456,10 +10458,12 @@ msgid ""
 "because the invitation has expired, or because the proposal cannot be edited "
 "any more."
 msgstr ""
+"للأسف، لا يمكن قبول هذه الدعوة في الوقت الحالي. قد يكون ذلك لأن الدعوة انتهت "
+"صلاحيتها، أو لأن المقترح لم يعد قابلًا للتحرير."
 
 #: cfp/templates/cfp/event/invitation.html:21
 msgid "Please contact the conference organizers for more information."
-msgstr ""
+msgstr "يُرجى التواصل مع منظمي المؤتمر لمزيد من المعلومات."
 
 #: cfp/templates/cfp/event/invitation.html:27
 #, python-format
@@ -10515,7 +10519,7 @@ msgstr ""
 
 #: cfp/templates/cfp/event/recover.html:25
 msgid "Set your password to access your profile and proposals"
-msgstr ""
+msgstr "عيّن كلمة مرور للوصول إلى ملفك الشخصي ومقترحاتك"
 
 #: cfp/templates/cfp/event/submission_base.html:12
 #: orga/templates/orga/submission/content_edit.html:29
@@ -10563,7 +10567,7 @@ msgstr "قدّم المقترح!"
 
 #: cfp/templates/cfp/event/submission_base.html:82
 msgid "or save as draft for now"
-msgstr ""
+msgstr "أو احفظ كمسودة في الوقت الحالي"
 
 #: cfp/templates/cfp/event/submission_base.html:83
 msgid ""
@@ -10571,6 +10575,9 @@ msgid ""
 "not be able to see your proposal, though they will be able to send you "
 "reminder emails about the upcoming deadline."
 msgstr ""
+"يمكن حفظ المقترح كمسودة وإرساله لاحقًا. لن يتمكن المنظمون من رؤية المقترح، لكن "
+"سيتمكنون من إرسال رسائل تذكير عبر البريد الإلكتروني بشأن الموعد النهائي "
+"القادم."
 
 #: cfp/templates/cfp/event/submission_base.html:100
 msgid "You need to be logged in to submit a proposal"
@@ -10595,7 +10602,7 @@ msgstr "... المزيد عن نفسك:"
 
 #: cfp/templates/cfp/event/submission_user.html:9
 msgid "Sign in or register to save your draft"
-msgstr ""
+msgstr "تسجيل الدخول أو التسجيل لحفظ المسودة"
 
 #: cfp/templates/cfp/event/submission_user.html:18
 msgid ""
@@ -10603,6 +10610,8 @@ msgid ""
 "will be able to send you reminders about your pending proposal draft closer "
 "to the deadline."
 msgstr ""
+"لن يتمكن المنظمون من رؤية المسودة أو عنوان البريد الإلكتروني. سيتمكنون من "
+"إرسال تذكيرات بشأن مسودة المقترح المعلقة عند اقتراب الموعد النهائي."
 
 #: cfp/templates/cfp/event/user_mails.html:4
 #: cfp/templates/cfp/event/user_mails.html:7
@@ -12306,7 +12315,7 @@ msgstr "اللغة التركية"
 
 #: config/settings.py:921
 msgid "Ukrainian"
-msgstr ""
+msgstr "الأوكرانية"
 
 #: config/settings.py:929
 msgid "Vietnamese"
@@ -12322,7 +12331,7 @@ msgstr "الصينية (تايوان)"
 
 #: config/settings.py:1241
 msgid "User profile only"
-msgstr ""
+msgstr "ملف تعريف المستخدم فقط"
 
 #: config/settings.py:1242
 msgid "Read access"
@@ -30619,7 +30628,7 @@ msgstr "انقر \"اقترح عميل OAuth 2.0 جديد\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:70
 msgid "On the form enter"
-msgstr ""
+msgstr "في النموذج أدخِل"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:72
 msgid "an application name"
@@ -30631,7 +30640,7 @@ msgstr "وصف وصف"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:75
 msgid "Set Oauth \"callback\" URL to:"
-msgstr ""
+msgstr "عيّن عنوان URL \"callback\" لـ OAuth إلى:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:80
 msgid "Contact Email address"
@@ -30639,7 +30648,7 @@ msgstr "عنوان البريد الإلكتروني للتواصل"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
-msgstr ""
+msgstr "حدِّد \"Client is confidential\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:82
 msgid "Tick \"Authorization code\""
@@ -30647,27 +30656,29 @@ msgstr "ضع علامة على \"رمز التفويض\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:83
 msgid "Tick \"Refresh token\""
-msgstr ""
+msgstr "حدِّد \"Refresh token\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:84
 msgid "Choose \"Request authorization for specific permissions.\""
-msgstr ""
+msgstr "اختر \"Request authorization for specific permissions.\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:85
 msgid ""
 "In the section \"Applicable grants\" select \"Basic Rights\" and \"Access "
 "private information\""
 msgstr ""
+"في القسم \"Applicable grants\" حدِّد \"Basic Rights\" و\"Access private "
+"information\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:86
 msgid "Finally tick the box to accept the terms and submit."
-msgstr ""
+msgstr "أخيرًا حدِّد المربع للموافقة على الشروط ثم أرسِل."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:89
 msgid ""
 "On the next page copy the registered application will return the OAuth "
 "access information:"
-msgstr ""
+msgstr "في الصفحة التالية انسخ: سيُرجِع التطبيق المسجَّل معلومات وصول OAuth:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:91
 msgid "Client application key"
@@ -30682,20 +30693,24 @@ msgid ""
 "Add the client application key and client application secret to your "
 "Eventyay social auth settings"
 msgstr ""
+"أضِف مفتاح تطبيق العميل وسر تطبيق العميل إلى إعدادات المصادقة الاجتماعية في "
+"Eventyay"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:98
 msgid "After Approval"
-msgstr ""
+msgstr "بعد الموافقة"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:100
 msgid ""
 "Once approved, other users can log in to your Eventyay instance using their "
 "MediaWiki account."
 msgstr ""
+"بعد الموافقة، يمكن للمستخدمين الآخرين تسجيل الدخول إلى مثيل Eventyay باستخدام "
+"حساب MediaWiki الخاص بهم."
 
 #: plugins/socialauth/views.py:105
 msgid "Error while authorizing: no email address available."
-msgstr ""
+msgstr "خطأ أثناء التفويض: لا يتوفر عنوان بريد إلكتروني."
 
 #: plugins/statistics/apps.py:15
 msgid "This plugin shows you various statistics."
