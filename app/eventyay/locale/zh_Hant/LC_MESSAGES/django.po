@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-21 15:18+0000\n"
+"PO-Revision-Date: 2026-03-21 15:20+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hant/>\n"
@@ -1442,7 +1442,7 @@ msgstr "若關閉，只有在訂單標記為已付款後才可下載票券。"
 
 #: base/configurations/default_setting.py:1190
 msgid "Do not issue ticket before email address is validated"
-msgstr ""
+msgstr "在電子郵件地址驗證之前請勿開立票券"
 
 #: base/configurations/default_setting.py:1192
 msgid ""
@@ -1452,6 +1452,9 @@ msgid ""
 "from the page as soon as they clicked a link in the email. Does not affect "
 "orders performed through other sales channels."
 msgstr ""
+"若啟用，購買後將不會立即提供票券直接下載。票券將附加在付款確認電子郵件中（若"
+"檔案大小不過大），且參與者在點擊電子郵件中的連結後，即可從頁面下載票券。不影"
+"響透過其他銷售管道完成的訂單。"
 
 #: base/configurations/default_setting.py:1205
 msgid "Require user to be logged in to place an order"
@@ -1469,7 +1472,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:1219
 msgid "Show availability in event overviews"
-msgstr ""
+msgstr "在活動總覽中顯示可用狀態"
 
 #: base/configurations/default_setting.py:1221
 msgid ""
@@ -1477,6 +1480,8 @@ msgid ""
 "make for longer page loading times if you have lots of events and the shown "
 "status might be out of date for up to two minutes."
 msgstr ""
+"若勾選，活動列表將顯示活動是否已售罄。若您有大量活動，這可能會使頁面載入時間"
+"變長，且顯示的狀態可能會有最多兩分鐘的延遲。"
 
 #: base/configurations/default_setting.py:1235
 #: base/configurations/default_setting.py:1243 orga/forms/event.py:37
@@ -1489,26 +1494,26 @@ msgstr "清單"
 #: base/configurations/default_setting.py:1236
 #: base/configurations/default_setting.py:1244
 msgid "Week calendar"
-msgstr ""
+msgstr "週曆"
 
 #: base/configurations/default_setting.py:1237
 #: base/configurations/default_setting.py:1245
 msgid "Month calendar"
-msgstr ""
+msgstr "月曆"
 
 #: base/configurations/default_setting.py:1241
 msgid "Default overview style"
-msgstr ""
+msgstr "預設總覽樣式"
 
 #: base/configurations/default_setting.py:1248
 msgid ""
 "If your event series has more than 50 dates in the future, only the month or "
 "week calendar can be used."
-msgstr ""
+msgstr "若您的活動系列在未來有超過 50 個日期，則只能使用月曆或週曆。"
 
 #: base/configurations/default_setting.py:1259
 msgid "Hide all unavailable dates from calendar or list views"
-msgstr ""
+msgstr "在日曆或列表檢視中隱藏所有不可用日期"
 
 #: base/configurations/default_setting.py:1269
 #: base/configurations/default_setting.py:1278
@@ -1531,7 +1536,7 @@ msgstr "允許顧客修改其資訊"
 
 #: base/configurations/default_setting.py:1290
 msgid "Allow attendees to modify their information after they checked in."
-msgstr ""
+msgstr "允許參與者在完成報到後修改其資訊。"
 
 #: base/configurations/default_setting.py:1291
 msgid ""
@@ -1541,7 +1546,7 @@ msgstr "預設情況下，只要訂單中的任一張票券已被簽到，該訂
 
 #: base/configurations/default_setting.py:1301
 msgid "Last date of modifications"
-msgstr ""
+msgstr "可修改的最後日期"
 
 #: base/configurations/default_setting.py:1303
 msgid ""
@@ -1550,42 +1555,44 @@ msgid ""
 "order contains tickets for multiple event dates, the earliest date will be "
 "used."
 msgstr ""
+"使用者可修改其訂單詳細資料（例如參與者姓名或問題回答）的最後日期。若您使用活"
+"動系列功能且一筆訂單包含多個活動日期的票券，將以最早的日期為準。"
 
 #: base/configurations/default_setting.py:1315
 msgid "Customers can change the variation of the products they purchased"
-msgstr ""
+msgstr "顧客可以變更其所購買產品的規格變化"
 
 #: base/configurations/default_setting.py:1327
 #: base/configurations/default_setting.py:1348
 msgid ""
 "Only allow changes if the resulting price is higher or equal than the "
 "previous price."
-msgstr ""
+msgstr "僅在變更後的價格高於或等於先前價格時允許變更。"
 
 #: base/configurations/default_setting.py:1331
 #: base/configurations/default_setting.py:1352
 msgid ""
 "Only allow changes if the resulting price is higher than the previous price."
-msgstr ""
+msgstr "僅在變更後的價格高於先前價格時允許變更。"
 
 #: base/configurations/default_setting.py:1335
 #: base/configurations/default_setting.py:1356
 msgid ""
 "Only allow changes if the resulting price is equal to the previous price."
-msgstr ""
+msgstr "僅在變更後的價格等於先前價格時允許變更。"
 
 #: base/configurations/default_setting.py:1339
 #: base/configurations/default_setting.py:1360
 msgid "Allow changes regardless of price, even if this results in a refund."
-msgstr ""
+msgstr "允許不論價格皆可變更，即使這會導致退款。"
 
 #: base/configurations/default_setting.py:1344
 msgid "Requirement for changed prices"
-msgstr ""
+msgstr "變更後價格的要求"
 
 #: base/configurations/default_setting.py:1372
 msgid "Do not allow changes after"
-msgstr ""
+msgstr "在此之後不允許變更"
 
 #: base/configurations/default_setting.py:1381
 msgid "Customers can cancel their unpaid orders"
@@ -2648,12 +2655,12 @@ msgstr "最常見的德文稱謂"
 #: base/configurations/default_setting.py:2604
 msgctxt "person_name_salutation"
 msgid "Ms"
-msgstr ""
+msgstr "女士"
 
 #: base/configurations/default_setting.py:2605
 msgctxt "person_name_salutation"
 msgid "Mr"
-msgstr ""
+msgstr "先生"
 
 #: base/configurations/default_setting.py:2615
 #: base/configurations/default_setting.py:2633
@@ -2665,7 +2672,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2850
 #: base/configurations/default_setting.py:2871
 msgid "Given name"
-msgstr ""
+msgstr "名字"
 
 #: base/configurations/default_setting.py:2616
 #: base/configurations/default_setting.py:2634
@@ -2679,7 +2686,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2851
 #: base/configurations/default_setting.py:2872
 msgid "Family name"
-msgstr ""
+msgstr "姓氏"
 
 #: base/configurations/default_setting.py:2622
 #: base/configurations/default_setting.py:2647
@@ -2694,7 +2701,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2883
 msgctxt "person_name_sample"
 msgid "John"
-msgstr ""
+msgstr "約翰"
 
 #: base/configurations/default_setting.py:2623
 #: base/configurations/default_setting.py:2648
@@ -2708,7 +2715,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2884
 msgctxt "person_name_sample"
 msgid "Doe"
-msgstr ""
+msgstr "杜"
 
 #: base/configurations/default_setting.py:2632
 #: base/configurations/default_setting.py:2657
@@ -2717,7 +2724,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2870
 msgctxt "person_name"
 msgid "Title"
-msgstr ""
+msgstr "稱謂"
 
 #: base/configurations/default_setting.py:2646
 #: base/configurations/default_setting.py:2671
@@ -2731,33 +2738,33 @@ msgstr "博士"
 #: base/configurations/default_setting.py:2682
 #: base/configurations/default_setting.py:2708
 msgid "First name"
-msgstr ""
+msgstr "名字"
 
 #: base/configurations/default_setting.py:2683
 #: base/configurations/default_setting.py:2709
 msgid "Middle name"
-msgstr ""
+msgstr "中間名"
 
 #: base/configurations/default_setting.py:2790
 #: base/configurations/default_setting.py:2804
 msgctxt "person_name_sample"
 msgid "John Doe"
-msgstr ""
+msgstr "約翰·杜"
 
 #: base/configurations/default_setting.py:2799
 msgid "Calling name"
-msgstr ""
+msgstr "稱呼名"
 
 #: base/configurations/default_setting.py:2800
 #: base/configurations/default_setting.py:2814 base/models/auth.py:180
 #: base/models/orders.py:2487
 #: control/templates/pretixcontrol/admin/users/index.html:37
 msgid "Full name"
-msgstr ""
+msgstr "全名"
 
 #: base/configurations/default_setting.py:2815
 msgid "Latin transcription"
-msgstr ""
+msgstr "拉丁轉寫"
 
 #: base/configurations/default_setting.py:2829
 #: base/configurations/default_setting.py:2848
@@ -2776,7 +2783,7 @@ msgstr "先生"
 #: base/configurations/default_setting.py:2873
 msgctxt "person_name"
 msgid "Degree (after name)"
-msgstr ""
+msgstr "學位（姓名後）"
 
 #: base/configurations/default_setting.py:2885
 msgctxt "person_name_sample"
@@ -2796,29 +2803,29 @@ msgstr "預設"
 
 #: base/email.py:317
 msgid "Simple with logo"
-msgstr ""
+msgstr "簡潔版（含標誌）"
 
 #: base/email.py:650 base/email.py:759 base/email.py:782 base/email.py:788
 #: base/pdf.py:159 base/pdf.py:396 base/services/invoices.py:394
 #: control/views/event.py:927
 msgid "John Doe"
-msgstr ""
+msgstr "約翰·杜"
 
 #: base/email.py:656
 msgid "Sample Corporation"
-msgstr ""
+msgstr "示例公司"
 
 #: base/email.py:724
 msgid "Sample Admission Ticket"
-msgstr ""
+msgstr "示例入場券"
 
 #: base/email.py:764
 msgid "An individual text with a reason can be inserted here."
-msgstr ""
+msgstr "此處可插入附帶原因的個人文字。"
 
 #: base/email.py:770
 msgid "The amount has been charged to your card."
-msgstr ""
+msgstr "該金額已從您的卡片扣款。"
 
 #: base/email.py:776
 msgid "Please transfer money to this bank account: 9999-9999-9999-9999"
@@ -3879,20 +3886,20 @@ msgstr "等待兌換"
 #: control/templates/pretixcontrol/waitinglist/index.html:190
 #: control/views/waitinglist.py:260
 msgid "Voucher redeemed"
-msgstr ""
+msgstr "已兌換優惠券"
 
 #: base/exporters/waitinglist.py:55
 #: control/templates/pretixcontrol/waitinglist/index.html:108
 #: control/templates/pretixcontrol/waitinglist/index.html:192
 #: control/views/waitinglist.py:262
 msgid "Voucher expired"
-msgstr ""
+msgstr "優惠券已過期"
 
 #: base/exporters/waitinglist.py:88 base/models/product.py:282 base/pdf.py:81
 #: control/forms/event.py:1533
 #: control/templates/pretixcontrol/items/index.html:40
 msgid "Product name"
-msgstr ""
+msgstr "產品名稱"
 
 #: base/exporters/waitinglist.py:91 base/models/event.py:571 base/pdf.py:241
 #: control/forms/filter.py:803 control/forms/filter.py:804
@@ -3903,17 +3910,17 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/detail.html:49
 #: eventyay_common/templates/eventyay_common/events/index.html:55
 msgid "Event name"
-msgstr ""
+msgstr "活動名稱"
 
 #: base/exporters/waitinglist.py:92 base/orderimport.py:149
 #: control/templates/pretixcontrol/checkin/index.html:72
 msgctxt "subevents"
 msgid "Date"
-msgstr ""
+msgstr "日期"
 
 #: base/exporters/waitinglist.py:96 control/views/waitinglist.py:246
 msgid "Priority"
-msgstr ""
+msgstr "優先順序"
 
 #: base/exporters/waitinglist.py:98 base/models/vouchers.py:101
 #: base/models/vouchers.py:539
@@ -3927,7 +3934,7 @@ msgstr ""
 #: presale/templates/pretixpresale/event/index.html:336
 #: presale/templates/pretixpresale/event/index.html:340
 msgid "Voucher code"
-msgstr ""
+msgstr "優惠券代碼"
 
 #: base/forms/__init__.py:156
 msgid "Show secret key"
@@ -3946,29 +3953,29 @@ msgstr "密碼長度至少為 8 個字元，且必須包含字母、數字與特
 #: base/forms/auth.py:43 base/forms/auth.py:153
 #: presale/templates/pretixpresale/fragment_modals.html:97
 msgid "Keep me logged in"
-msgstr ""
+msgstr "保持登入狀態"
 
 #: base/forms/auth.py:46 base/forms/auth.py:242
 msgid "This combination of credentials is not known to our system."
-msgstr ""
+msgstr "系統中找不到這組憑證。"
 
 #: base/forms/auth.py:47 base/forms/user.py:24
 msgid "For security reasons, please wait 5 minutes before you try again."
-msgstr ""
+msgstr "基於安全原因，請等待 5 分鐘後再試。"
 
 #: base/forms/auth.py:48 base/forms/auth.py:243
 msgid "This account is inactive."
-msgstr ""
+msgstr "此帳戶未啟用。"
 
 #: base/forms/auth.py:131
 msgid ""
 "You already registered with that email address, please use the login form."
-msgstr ""
+msgstr "你已使用該電子郵件地址註冊，請使用登入表單。"
 
 #: base/forms/auth.py:132 base/forms/auth.py:190 base/forms/user.py:23
 #: control/forms/users.py:26
 msgid "Please enter the same password twice"
-msgstr ""
+msgstr "請輸入相同的密碼兩次"
 
 #: base/forms/auth.py:134 common/text/phrases.py:85
 msgid "Email address"
@@ -3976,30 +3983,30 @@ msgstr "電子郵件地址"
 
 #: base/forms/auth.py:145 base/forms/auth.py:193
 msgid "Repeat password"
-msgstr ""
+msgstr "重複輸入密碼"
 
 #: base/forms/questions.py:223
 msgid "Please enter a shorter name."
-msgstr ""
+msgstr "請輸入較短的名稱。"
 
 #: base/forms/questions.py:245
 msgctxt "phonenumber"
 msgid "International area code"
-msgstr ""
+msgstr "國際區碼"
 
 #: base/forms/questions.py:269
 msgctxt "phonenumber"
 msgid "Phone number (without international area code)"
-msgstr ""
+msgstr "電話號碼（不含國際區碼）"
 
 #: base/forms/questions.py:435 base/forms/questions.py:808
 msgid "Street and Number"
-msgstr ""
+msgstr "街道及門牌號碼"
 
 #: base/forms/questions.py:474 base/forms/questions.py:860
 msgctxt "address"
 msgid "Select state"
-msgstr ""
+msgstr "選擇州/省"
 
 #: base/forms/questions.py:747 base/forms/questions.py:779
 #: base/forms/questions.py:958 base/payment.py:71 control/forms/event.py:776
@@ -4007,7 +4014,7 @@ msgstr ""
 #: control/forms/event.py:1297 control/forms/page.py:73
 #: plugins/banktransfer/payment.py:437 plugins/banktransfer/payment.py:443
 msgid "This field is required."
-msgstr ""
+msgstr "此欄位為必填。"
 
 #: base/forms/questions.py:949
 msgid "You need to provide a company name."
@@ -4684,47 +4691,49 @@ msgstr "將產品價格設定為"
 
 #: base/models/choices.py:37
 msgid "Subtract from product price"
-msgstr ""
+msgstr "從商品價格中扣除"
 
 #: base/models/choices.py:38
 msgid "Reduce product price by (%)"
-msgstr ""
+msgstr "將商品價格降低（%）"
 
 #: base/models/devices.py:47 base/models/product.py:1174
 msgid "Internal identifier"
-msgstr ""
+msgstr "內部識別碼"
 
 #: base/models/devices.py:49 base/models/product.py:1176
 msgid ""
 "You can enter any value here to make it easier to match the data with other "
 "sources. If you do not input one, we will generate one automatically."
 msgstr ""
+"你可以在此輸入任何值，以便更容易將資料與其他來源進行匹配。如果你未輸入，我們"
+"將自動產生一個。"
 
 #: base/models/devices.py:69 base/models/product.py:1285
 msgid "This identifier is already used for a different question."
-msgstr ""
+msgstr "此識別碼已用於另一個問題。"
 
 #: base/models/devices.py:86
 #: control/templates/pretixcontrol/organizers/gates.html:16
 msgid "Gate"
-msgstr ""
+msgstr "入口"
 
 #: base/models/devices.py:100
 #: control/templates/pretixcontrol/organizers/devices.html:38
 msgid "Setup date"
-msgstr ""
+msgstr "設定日期"
 
 #: base/models/devices.py:102
 msgid "Initialization date"
-msgstr ""
+msgstr "初始化日期"
 
 #: base/models/event.py:247
 msgid "The end of the presale period has to be later than its start."
-msgstr ""
+msgstr "預售期間的結束必須晚於開始時間。"
 
 #: base/models/event.py:249
 msgid "The end of the event has to be later than its start."
-msgstr ""
+msgstr "活動的結束必須晚於開始時間。"
 
 #: base/models/event.py:577
 msgid ""
@@ -4734,6 +4743,9 @@ msgid ""
 "you can also choose to use a random value. This will be used in URLs, order "
 "codes, invoice numbers, and bank transfer references."
 msgstr ""
+"應簡短，只包含小寫字母、數字、點與連字號，且在你的活動之間必須是唯一的。我們"
+"建議使用某種縮寫或少於 10 個字元、容易記住的日期，但你也可以選擇使用隨機值。"
+"這將用於 URL、訂單代碼、發票號碼與銀行轉帳參考。"
 
 #: base/models/event.py:588 base/models/organizer.py:124
 msgid "The slug may only contain letters, numbers, dots and dashes."
@@ -4749,7 +4761,7 @@ msgstr "短名稱"
 
 #: base/models/event.py:594
 msgid "Shop is live"
-msgstr ""
+msgstr "商店已上線"
 
 #: base/models/event.py:595
 msgid "Visible on start page"
@@ -4769,28 +4781,28 @@ msgstr "討論頁面已發布"
 
 #: base/models/event.py:601
 msgid "Event currency"
-msgstr ""
+msgstr "活動幣別"
 
 #: base/models/event.py:606 base/models/event.py:2790 base/pdf.py:333
 #: control/forms/subevents.py:512
 #: control/templates/pretixcontrol/subevents/bulk.html:270
 msgid "Event end time"
-msgstr ""
+msgstr "活動結束時間"
 
 #: base/models/event.py:607 base/models/event.py:2791
 #: control/forms/subevents.py:517
 #: control/templates/pretixcontrol/subevents/bulk.html:274
 msgid "Admission time"
-msgstr ""
+msgstr "入場時間"
 
 #: base/models/event.py:610 base/models/event.py:2782
 msgid "Show in lists"
-msgstr ""
+msgstr "在清單中顯示"
 
 #: base/models/event.py:616 base/models/event.py:2795
 #: control/forms/subevents.py:78
 msgid "End of presale"
-msgstr ""
+msgstr "預售結束"
 
 #: base/models/event.py:618 base/models/event.py:2797
 #: control/forms/subevents.py:80
@@ -4798,16 +4810,18 @@ msgid ""
 "Optional. No products will be sold after this date. If you do not set this "
 "value, the presale will end after the end date of your event."
 msgstr ""
+"選填。此日期之後將不再販售任何商品。若你未設定此值，預售將在你的活動結束日期"
+"之後結束。"
 
 #: base/models/event.py:625 base/models/event.py:2804
 #: control/forms/subevents.py:72
 msgid "Start of presale"
-msgstr ""
+msgstr "預售開始"
 
 #: base/models/event.py:626 base/models/event.py:2805
 #: control/forms/subevents.py:73
 msgid "Optional. No products will be sold before this date."
-msgstr ""
+msgstr "選填。此日期之前將不會販售任何商品。"
 
 #: base/models/event.py:632 base/models/event.py:2811
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:42
@@ -5064,69 +5078,71 @@ msgstr "啟用"
 msgid ""
 "Only with this checkbox enabled, this date is visible in the frontend to "
 "users."
-msgstr ""
+msgstr "只有啟用此核取方塊時，使用者才會在前台看到此日期。"
 
 #: base/models/event.py:2783
 msgid ""
 "If selected, this event will show up publicly on the list of dates for your "
 "event."
-msgstr ""
+msgstr "若選取，此活動將會在你的活動日期清單中公開顯示。"
 
 #: base/models/event.py:2847
 msgid "Date in event series"
-msgstr ""
+msgstr "活動系列中的日期"
 
 #: base/models/event.py:2848
 msgid "Dates in event series"
-msgstr ""
+msgstr "活動系列中的日期"
 
 #: base/models/event.py:2949
 msgid "One or more variations do not belong to this event."
-msgstr ""
+msgstr "一或多個變體不屬於此活動。"
 
 #: base/models/event.py:3035 base/models/product.py:1671
 msgid "Can not contain spaces or special characters except underscores"
-msgstr ""
+msgstr "不得包含空格或特殊字元（底線除外）"
 
 #: base/models/event.py:3039 base/models/product.py:1675
 msgid "The property name may only contain letters, numbers and underscores."
-msgstr ""
+msgstr "屬性名稱只能包含字母、數字與底線。"
 
 #: base/models/event.py:3044
 msgid "Default value"
-msgstr ""
+msgstr "預設值"
 
 #: base/models/event.py:3047
 msgid "Can only be changed by organizer-level administrators"
-msgstr ""
+msgstr "僅能由主辦方層級的管理員變更"
 
 #: base/models/event.py:3051
 msgid "Required for events"
-msgstr ""
+msgstr "活動必填"
 
 #: base/models/event.py:3053
 msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
 msgstr ""
+"若勾選，只有在已設定該屬性時，活動才能上線。在活動系列中，為個別日期設定值一"
+"律是選填的"
 
 #: base/models/event.py:3060
 msgid "Valid values"
-msgstr ""
+msgstr "有效值"
 
 #: base/models/event.py:3061
 msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
-msgstr ""
+msgstr "若留空，任何值皆允許。否則，請每行輸入一個可能的值。"
 
 #: base/models/event.py:3067
 msgid "A property can either be required or have a default value, not both."
-msgstr ""
+msgstr "屬性只能設定為必填或有預設值，不能同時具備兩者。"
 
 #: base/models/event.py:3069
 msgid "You cannot set a default value that is not a valid value."
-msgstr ""
+msgstr "你不能設定不是有效值的預設值。"
 
 #: base/models/feedback.py:35
 msgid "Rating"
@@ -5134,17 +5150,17 @@ msgstr "評分"
 
 #: base/models/fields.py:12
 msgid "No value can contain the delimiter character."
-msgstr ""
+msgstr "任何值都不得包含分隔符字元。"
 
 #: base/models/giftcards.py:60
 msgid "The gift card code may only contain letters, numbers, dots and dashes."
-msgstr ""
+msgstr "禮品卡代碼只能包含字母、數字、點與破折號。"
 
 #: base/models/giftcards.py:69
 #: control/templates/pretixcontrol/organizers/giftcard.html:39
 msgctxt "giftcard"
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "特殊條款與條件"
 
 #: base/models/information.py:27
 #: orga/templates/orga/speaker/speakerinformation/list.html:41
@@ -5207,13 +5223,13 @@ msgstr "請盡量保持上傳檔案小巧，最好在 16 MB 以下。"
 #, python-format
 msgctxt "invoice"
 msgid "Tax ID: %s"
-msgstr ""
+msgstr "稅號：%s"
 
 #: base/models/invoices.py:145 base/services/invoices.py:113
 #, python-format
 msgctxt "invoice"
 msgid "VAT-ID: %s"
-msgstr ""
+msgstr "增值稅號：%s"
 
 #: base/models/log.py:163
 #, python-brace-format
@@ -6351,7 +6367,7 @@ msgstr "若勾選，向此票券新增附加項目為免費，即使該附加項
 
 #: base/models/product.py:965
 msgid "Allow the same product to be selected multiple times"
-msgstr ""
+msgstr "允許同一商品被多次選取"
 
 #: base/models/product.py:981
 msgid "The add-on's category must belong to the same event as the product."
@@ -6363,15 +6379,15 @@ msgstr "產品已經有此類別的附加項目。"
 
 #: base/models/product.py:991
 msgid "The minimum count needs to be equal to or greater than zero."
-msgstr ""
+msgstr "最小數量必須等於或大於零。"
 
 #: base/models/product.py:996
 msgid "The maximum count needs to be equal to or greater than zero."
-msgstr ""
+msgstr "最大數量必須等於或大於零。"
 
 #: base/models/product.py:1001
 msgid "The maximum count needs to be greater than the minimum count."
-msgstr ""
+msgstr "最大數量必須大於最小數量。"
 
 #: base/models/product.py:1025 control/forms/product.py:856
 #: control/templates/pretixcontrol/item/include_bundles.html:23
@@ -6381,7 +6397,7 @@ msgstr "組合商品"
 
 #: base/models/product.py:1031
 msgid "Bundled variation"
-msgstr ""
+msgstr "捆綁式變體"
 
 #: base/models/product.py:1036 base/models/product.py:1138
 #: base/models/question.py:46
@@ -6390,7 +6406,7 @@ msgstr "數字"
 
 #: base/models/product.py:1042
 msgid "Designated price part"
-msgstr ""
+msgstr "指定價格部分"
 
 #: base/models/product.py:1044
 msgid ""
@@ -6416,19 +6432,19 @@ msgstr "所選的變體不屬於此產品。"
 
 #: base/models/product.py:1077
 msgid "The count needs to be equal to or greater than zero."
-msgstr ""
+msgstr "數量必須等於或大於零。"
 
 #: base/models/product.py:1139
 msgid "Text (one line)"
-msgstr ""
+msgstr "文字（單行）"
 
 #: base/models/product.py:1140
 msgid "Multiline text"
-msgstr ""
+msgstr "多行文字"
 
 #: base/models/product.py:1141
 msgid "Confirm Checkbox"
-msgstr ""
+msgstr "確認核取方塊"
 
 #: base/models/product.py:1142 base/models/question.py:54
 msgid "Radio button (Choose one option)"
@@ -6445,7 +6461,7 @@ msgstr "檔案上傳"
 #: base/models/product.py:1146 base/reldate.py:163
 #: plugins/checkinlists/exporters.py:686
 msgid "Time"
-msgstr ""
+msgstr "時間"
 
 #: base/models/product.py:1147 base/models/question.py:51
 msgid "Date and time"
@@ -6453,11 +6469,11 @@ msgstr "日期與時間"
 
 #: base/models/product.py:1148
 msgid "Country code (ISO 3166-1 alpha-2)"
-msgstr ""
+msgstr "國家代碼（ISO 3166-1 alpha-2）"
 
 #: base/models/product.py:1150
 msgid "Text field"
-msgstr ""
+msgstr "文字欄位"
 
 #: base/models/product.py:1156 control/forms/product.py:51
 #: control/templates/pretixcontrol/items/question_edit.html:10
@@ -6477,11 +6493,11 @@ msgstr ""
 
 #: base/models/product.py:1181
 msgid "Help text"
-msgstr ""
+msgstr "說明文字"
 
 #: base/models/product.py:1182
 msgid "If the question needs to be explained or clarified, do it here!"
-msgstr ""
+msgstr "如果需要對問題進行說明或澄清，請在此處填寫！"
 
 #: base/models/product.py:1186 control/forms/product.py:81
 #: control/templates/pretixcontrol/boxoffice/payment.html:41
@@ -6497,15 +6513,15 @@ msgstr "必填欄位"
 
 #: base/models/product.py:1193
 msgid "This question will be asked to buyers of the selected products"
-msgstr ""
+msgstr "此問題將詢問所選商品的買家"
 
 #: base/models/product.py:1197
 msgid "Ask during check-in instead of in the ticket buying process"
-msgstr ""
+msgstr "在報到時詢問，而不是在購票流程中詢問"
 
 #: base/models/product.py:1198
 msgid "Not supported by all check-in apps for all question types."
-msgstr ""
+msgstr "並非所有報到應用程式都支援所有問題類型。"
 
 #: base/models/product.py:1202 control/forms/product.py:82
 msgid "Hidden field"
@@ -6526,7 +6542,7 @@ msgstr ""
 
 #: base/models/product.py:1211
 msgid "Print answer on invoices"
-msgstr ""
+msgstr "在發票上列印答案"
 
 #: base/models/product.py:1225 base/models/product.py:1239
 #: base/models/product.py:1251 base/models/question.py:205
@@ -6538,7 +6554,7 @@ msgstr "最小值"
 #: base/models/product.py:1240 base/models/product.py:1246
 #: base/models/product.py:1252 base/models/product.py:1258
 msgid "Currently not supported in our apps and during check-in"
-msgstr ""
+msgstr "目前在我們的應用程式以及報到時不支援"
 
 #: base/models/product.py:1233 base/models/product.py:1245
 #: base/models/product.py:1257 base/models/question.py:212
@@ -6548,87 +6564,87 @@ msgstr "最大值"
 
 #: base/models/product.py:1264 base/orderimport.py:686
 msgid "Question"
-msgstr ""
+msgstr "問題"
 
 #: base/models/product.py:1309
 msgid "An answer to this question is required to proceed."
-msgstr ""
+msgstr "必須回答此問題才能繼續。"
 
 #: base/models/product.py:1323 base/models/product.py:1343
 #: base/orderimport.py:696 base/orderimport.py:704
 msgid "Invalid option selected."
-msgstr ""
+msgstr "所選選項無效。"
 
 #: base/models/product.py:1353
 msgid "The number is to low."
-msgstr ""
+msgstr "數字太小。"
 
 #: base/models/product.py:1355
 msgid "The number is to high."
-msgstr ""
+msgstr "數字太大。"
 
 #: base/models/product.py:1358
 msgid "Invalid number input."
-msgstr ""
+msgstr "數字輸入無效。"
 
 #: base/models/product.py:1365 base/models/product.py:1389
 msgid "Please choose a later date."
-msgstr ""
+msgstr "請選擇較晚的日期。"
 
 #: base/models/product.py:1367 base/models/product.py:1391
 msgid "Please choose an earlier date."
-msgstr ""
+msgstr "請選擇較早的日期。"
 
 #: base/models/product.py:1370
 msgid "Invalid date input."
-msgstr ""
+msgstr "日期輸入無效。"
 
 #: base/models/product.py:1377
 msgid "Invalid time input."
-msgstr ""
+msgstr "時間輸入無效。"
 
 #: base/models/product.py:1386
 msgid "Invalid datetime input."
-msgstr ""
+msgstr "日期時間輸入無效。"
 
 #: base/models/product.py:1398
 msgid "Unknown country code."
-msgstr ""
+msgstr "未知的國家代碼。"
 
 #: base/models/product.py:1412
 #: control/templates/pretixcontrol/items/question.html:69
 msgid "Answer"
-msgstr ""
+msgstr "答案"
 
 #: base/models/product.py:1434
 #, python-brace-format
 msgid "The identifier \"{}\" is already used for a different option."
-msgstr ""
+msgstr "識別碼「{}」已用於其他選項。"
 
 #: base/models/product.py:1437
 msgid "Question option"
-msgstr ""
+msgstr "問題選項"
 
 #: base/models/product.py:1438
 msgid "Question options"
-msgstr ""
+msgstr "問題選項"
 
 #: base/models/product.py:1520 control/forms/event.py:1472
 #: control/templates/pretixcontrol/items/quotas.html:59
 msgid "Total capacity"
-msgstr ""
+msgstr "總容量"
 
 #: base/models/product.py:1523 control/forms/product.py:361
 msgid "Leave empty for an unlimited number of tickets."
-msgstr ""
+msgstr "若票券數量不設上限，請留空。"
 
 #: base/models/product.py:1527 control/forms/product.py:657
 msgid "Variations"
-msgstr ""
+msgstr "變體"
 
 #: base/models/product.py:1531
 msgid "Close this quota permanently once it is sold out"
-msgstr ""
+msgstr "售罄後永久關閉此配額"
 
 #: base/models/product.py:1533
 msgid ""
@@ -8221,28 +8237,30 @@ msgid ""
 "It should instruct the user on how to proceed with the payment. You can use "
 "the placeholders {order}, {amount}, {currency} and {amount_with_currency}."
 msgstr ""
+"此文字將顯示在待處理訂單的訂單確認頁面上。它應指示使用者如何繼續付款。您可以"
+"使用佔位符 {order}、{amount}、{currency} 和 {amount_with_currency}。"
 
 #: base/payment.py:1125
 msgid "Offsetting"
-msgstr ""
+msgstr "抵銷"
 
 #: base/payment.py:1139 control/views/orders.py:1069
 msgid "You entered an order that could not be found."
-msgstr ""
+msgstr "您輸入的訂單無法找到。"
 
 #: base/payment.py:1168
 #, python-format
 msgid "Balanced against orders: %s"
-msgstr ""
+msgstr "已與訂單抵銷：%s"
 
 #: base/payment.py:1189
 msgid "In test mode, only test cards will work."
-msgstr ""
+msgstr "在測試模式下，只有測試卡可使用。"
 
 #: base/payment.py:1251 base/payment.py:1339 base/payment.py:1395
 #: base/services/orders.py:969
 msgid "You cannot pay with gift cards when buying a gift card."
-msgstr ""
+msgstr "購買禮品卡時，您無法使用禮品卡付款。"
 
 #: base/payment.py:1259 base/payment.py:1345
 msgid "Please enter a gift card code."
@@ -8251,66 +8269,66 @@ msgstr "請輸入禮品卡代碼。"
 #: base/payment.py:1265 base/payment.py:1351 base/payment.py:1403
 #: base/services/orders.py:960
 msgid "This gift card does not support this currency."
-msgstr ""
+msgstr "此禮品卡不支援此幣別。"
 
 #: base/payment.py:1268 base/payment.py:1354 base/services/orders.py:962
 msgid "This gift card can only be used in test mode."
-msgstr ""
+msgstr "此禮品卡只能在測試模式下使用。"
 
 #: base/payment.py:1271 base/payment.py:1357 base/services/orders.py:964
 msgid "Only test gift cards can be used in test mode."
-msgstr ""
+msgstr "在測試模式下只能使用測試禮品卡。"
 
 #: base/payment.py:1274 base/payment.py:1360 base/payment.py:1409
 msgid "This gift card is no longer valid."
-msgstr ""
+msgstr "此禮品卡已不再有效。"
 
 #: base/payment.py:1277 base/payment.py:1363
 msgid "All credit on this gift card has been used."
-msgstr ""
+msgstr "此禮品卡上的所有餘額都已使用。"
 
 #: base/payment.py:1282
 msgid "This gift card is already used for your payment."
-msgstr ""
+msgstr "此禮品卡已用於您的付款。"
 
 #: base/payment.py:1304
 #, python-brace-format
 msgid ""
 "Your gift card has been applied, but {} still need to be paid. Please select "
 "a payment method."
-msgstr ""
+msgstr "您的禮品卡已套用，但仍需支付 {}。請選擇付款方式。"
 
 #: base/payment.py:1308
 msgid "Your gift card has been applied."
-msgstr ""
+msgstr "您的禮品卡已套用。"
 
 #: base/payment.py:1319 base/payment.py:1375
 msgid ""
 "You entered a voucher instead of a gift card. Vouchers can only be entered "
 "on the first page of the shop below the product selection."
-msgstr ""
+msgstr "您輸入的是抵用券而非禮品卡。抵用券只能在商店第一頁、產品選擇下方輸入。"
 
 #: base/payment.py:1324 base/payment.py:1380
 msgid "This gift card is not known."
-msgstr ""
+msgstr "此禮品卡未知。"
 
 #: base/payment.py:1329 base/payment.py:1385
 msgid ""
 "This gift card can not be redeemed since its code is not unique. Please "
 "contact the organizer of this event."
-msgstr ""
+msgstr "此禮品卡無法兌換，因其代碼不唯一。請聯絡此活動的主辦單位。"
 
 #: base/payment.py:1405 base/services/orders.py:966
 msgid "This gift card is not accepted by this event organizer."
-msgstr ""
+msgstr "此禮品卡不被此活動主辦單位接受。"
 
 #: base/payment.py:1407
 msgid "This gift card was used in the meantime. Please try again."
-msgstr ""
+msgstr "此禮品卡已在此期間被使用。請再試一次。"
 
 #: base/pdf.py:55
 msgid "Ticket code (barcode content)"
-msgstr ""
+msgstr "票券代碼（條碼內容）"
 
 #: base/pdf.py:73
 msgid "Order position number"
@@ -9462,64 +9480,64 @@ msgstr "最後付款日期不能早於預售結束日期。"
 
 #: base/shredder.py:47 base/shredder.py:50
 msgid "Your event needs to be over for at least 30 days to use this feature."
-msgstr ""
+msgstr "您的活動需要結束至少 30 天才能使用此功能。"
 
 #: base/shredder.py:52
 msgid "Your ticket shop needs to be offline to use this feature."
-msgstr ""
+msgstr "您的票券商店需要離線才能使用此功能。"
 
 #: base/shredder.py:142
 msgid "Phone numbers"
-msgstr ""
+msgstr "電話號碼"
 
 #: base/shredder.py:144
 msgid "This will remove all phone numbers from orders."
-msgstr ""
+msgstr "這將從訂單中移除所有電話號碼。"
 
 #: base/shredder.py:173
 msgid "E-mails"
-msgstr ""
+msgstr "電子郵件"
 
 #: base/shredder.py:176
 msgid ""
 "This will remove all e-mail addresses from orders and attendees, as well as "
 "logged email contents."
-msgstr ""
+msgstr "這將從訂單與參加者中移除所有電子郵件地址，以及已記錄的電子郵件內容。"
 
 #: base/shredder.py:233
 msgid ""
 "This will remove all names, email addresses, and phone numbers from the "
 "waiting list."
-msgstr ""
+msgstr "這將從候補名單中移除所有姓名、電子郵件地址與電話號碼。"
 
 #: base/shredder.py:268
 msgid "Attendee info"
-msgstr ""
+msgstr "參加者資訊"
 
 #: base/shredder.py:271
 msgid ""
 "This will remove all attendee names and postal addresses from order "
 "positions, as well as logged changes to them."
-msgstr ""
+msgstr "這將從訂單項目中移除所有參加者姓名與郵寄地址，以及對其所做的已記錄變更。"
 
 #: base/shredder.py:338
 msgid "Invoice addresses"
-msgstr ""
+msgstr "發票地址"
 
 #: base/shredder.py:341
 msgid ""
 "This will remove all invoice addresses from orders, as well as logged "
 "changes to them."
-msgstr ""
+msgstr "這將從訂單中移除所有發票地址，以及對其所做的已記錄變更。"
 
 #: base/shredder.py:372
 msgid "Question answers"
-msgstr ""
+msgstr "問題答案"
 
 #: base/shredder.py:374
 msgid ""
 "This will remove all answers to questions, as well as logged changes to them."
-msgstr ""
+msgstr "這將移除所有問題的所有答案，以及對其所做的已記錄變更。"
 
 #: base/shredder.py:411
 msgid ""
@@ -9527,14 +9545,16 @@ msgid ""
 "might contain personal data from the database. Invoice numbers and totals "
 "will be conserved."
 msgstr ""
+"這將移除所有發票 PDF，以及其可能包含個人資料的任何文字內容，從資料庫中刪除。"
+"發票號碼與總額將會保留。"
 
 #: base/shredder.py:439
 msgid "Cached ticket files"
-msgstr ""
+msgstr "快取的票券檔案"
 
 #: base/shredder.py:441
 msgid "This will remove all cached ticket files. No download will be offered."
-msgstr ""
+msgstr "這將移除所有快取的票券檔案。不會提供下載。"
 
 #: base/shredder.py:457
 msgid ""
@@ -9542,20 +9562,22 @@ msgid ""
 "method, all data will be removed or personal data only. No download will be "
 "offered."
 msgstr ""
+"這將移除與付款相關的資訊。視付款方式而定，將移除所有資料或僅移除個人資料。不"
+"會提供下載。"
 
 #: base/templates/400.html:4 base/templates/400.html:8
 msgid "Bad Request"
-msgstr ""
+msgstr "錯誤的請求"
 
 #: base/templates/400.html:9
 msgid "We were unable to parse your request."
-msgstr ""
+msgstr "我們無法剖析您的請求。"
 
 #: base/templates/400.html:12 base/templates/403.html:12
 #: base/templates/404.html:12 base/templates/500.html:22
 #: base/templates/csrffail.html:26
 msgid "Take a step back"
-msgstr ""
+msgstr "退一步"
 
 #: base/templates/400.html:13 base/templates/403.html:13
 #: base/templates/500.html:23
@@ -11876,11 +11898,11 @@ msgstr "僧伽羅語"
 
 #: config/settings.py:881
 msgid "Slovenian"
-msgstr ""
+msgstr "斯洛維尼亞語"
 
 #: config/settings.py:889
 msgid "Swedish"
-msgstr ""
+msgstr "瑞典語"
 
 #: config/settings.py:897
 msgid "Swahili"
@@ -11888,7 +11910,7 @@ msgstr "史瓦希利語"
 
 #: config/settings.py:905
 msgid "Thai"
-msgstr ""
+msgstr "泰語"
 
 #: config/settings.py:913
 msgid "Turkish"
@@ -11983,7 +12005,7 @@ msgstr "所有日期"
 
 #: control/forms/event.py:53
 msgid "Only allow registered accounts to get a ticket"
-msgstr ""
+msgstr "僅允許已註冊帳號取得票券"
 
 #: control/forms/event.py:80
 msgid "This is an event series"
@@ -12049,11 +12071,11 @@ msgstr ""
 
 #: control/forms/event.py:219
 msgid "Latitude, e.g. 40.7128"
-msgstr ""
+msgstr "緯度，例如 40.7128"
 
 #: control/forms/event.py:220
 msgid "Longitude, e.g. -74.0060"
-msgstr ""
+msgstr "經度，例如 -74.0060"
 
 #: control/forms/event.py:267
 msgid "Your default locale must be specified."
@@ -12395,7 +12417,7 @@ msgstr "您可以啟用 SSL 或 STARTTLS 其中一種安全功能，但不能兩
 
 #: control/forms/event.py:1243 control/forms/global_settings.py:443
 msgid "This field is required when using SendGrid as email vendor."
-msgstr ""
+msgstr "使用 SendGrid 作為電子郵件供應商時，此欄位為必填。"
 
 #: control/forms/event.py:1258
 msgid "Ticket code generator"
@@ -12719,55 +12741,55 @@ msgstr "預售尚未開始"
 #: control/templates/pretixcontrol/subevents/index.html:128
 #: eventyay_common/templates/eventyay_common/events/index.html:134
 msgid "Presale over"
-msgstr ""
+msgstr "預售結束"
 
 #: control/forms/filter.py:779 control/forms/filter.py:1788
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:73
 #: plugins/reports/exporters.py:682
 msgid "Date from"
-msgstr ""
+msgstr "開始日期"
 
 #: control/forms/filter.py:784 control/forms/filter.py:1793
 #: plugins/reports/exporters.py:690
 msgid "Date until"
-msgstr ""
+msgstr "結束日期"
 
 #: control/forms/filter.py:789 control/forms/subevents.py:440
 #: control/forms/subevents.py:474
 msgid "Weekday"
-msgstr ""
+msgstr "星期"
 
 #: control/forms/filter.py:791
 msgid "All days"
-msgstr ""
+msgstr "所有日子"
 
 #: control/forms/filter.py:792
 msgid "Monday"
-msgstr ""
+msgstr "星期一"
 
 #: control/forms/filter.py:793
 msgid "Tuesday"
-msgstr ""
+msgstr "星期二"
 
 #: control/forms/filter.py:794
 msgid "Wednesday"
-msgstr ""
+msgstr "星期三"
 
 #: control/forms/filter.py:795
 msgid "Thursday"
-msgstr ""
+msgstr "星期四"
 
 #: control/forms/filter.py:796
 msgid "Friday"
-msgstr ""
+msgstr "星期五"
 
 #: control/forms/filter.py:797
 msgid "Saturday"
-msgstr ""
+msgstr "星期六"
 
 #: control/forms/filter.py:798
 msgid "Sunday"
-msgstr ""
+msgstr "星期日"
 
 #: control/forms/filter.py:913 control/forms/filter.py:915
 msgid "Name or email"
@@ -12792,15 +12814,15 @@ msgstr "近期活動"
 
 #: control/forms/filter.py:935 control/forms/filter.py:1369
 msgid "Check-in status"
-msgstr ""
+msgstr "報到狀態"
 
 #: control/forms/filter.py:937 control/forms/filter.py:1371
 msgid "All attendees"
-msgstr ""
+msgstr "所有參加者"
 
 #: control/forms/filter.py:938
 msgid "Present"
-msgstr ""
+msgstr "出席"
 
 #: control/forms/filter.py:939
 #: control/templates/pretixcontrol/checkin/index.html:140
@@ -12812,12 +12834,12 @@ msgstr "已報到但已離場"
 #: control/templates/pretixcontrol/checkin/lists.html:80
 #: plugins/checkinlists/exporters.py:502
 msgid "Checked in"
-msgstr ""
+msgstr "已報到"
 
 #: control/forms/filter.py:941 control/forms/filter.py:1375
 #: control/templates/pretixcontrol/checkin/index.html:137
 msgid "Not checked in"
-msgstr ""
+msgstr "未報到"
 
 #: control/forms/filter.py:1003
 msgid "Title or speaker"
@@ -12854,105 +12876,105 @@ msgstr "已撤回"
 #: control/forms/filter.py:1119 control/forms/filter.py:1120
 #: control/forms/filter.py:1468 control/forms/filter.py:1469
 msgid "Search query"
-msgstr ""
+msgstr "搜尋查詢"
 
 #: control/forms/filter.py:1172
 msgid "Shop live"
-msgstr ""
+msgstr "商店已上線"
 
 #: control/forms/filter.py:1174
 msgid "Shop not live"
-msgstr ""
+msgstr "商店未上線"
 
 #: control/forms/filter.py:1177
 msgid "Single event running or in the future"
-msgstr ""
+msgstr "單一活動正在進行或即將舉行"
 
 #: control/forms/filter.py:1178
 msgid "Single event in the past"
-msgstr ""
+msgstr "單一活動已結束"
 
 #: control/forms/filter.py:1364 control/forms/filter.py:1365
 msgid "Search attendee…"
-msgstr ""
+msgstr "搜尋參加者…"
 
 #: control/forms/filter.py:1372
 msgctxt "checkin state"
 msgid "Checked in but left"
-msgstr ""
+msgstr "已報到但已離開"
 
 #: control/forms/filter.py:1373
 msgctxt "checkin state"
 msgid "Present"
-msgstr ""
+msgstr "出席"
 
 #: control/forms/filter.py:1459 control/forms/filter.py:1462
 #: control/templates/pretixcontrol/admin/users/index.html:42
 msgid "Administrator"
-msgstr ""
+msgstr "管理員"
 
 #: control/forms/filter.py:1463
 msgid "No administrator"
-msgstr ""
+msgstr "無管理員"
 
 #: control/forms/filter.py:1528
 msgid "Valid"
-msgstr ""
+msgstr "有效"
 
 #: control/forms/filter.py:1529
 msgid "Unredeemed"
-msgstr ""
+msgstr "未兌換"
 
 #: control/forms/filter.py:1530
 msgid "Redeemed at least once"
-msgstr ""
+msgstr "已兌換至少一次"
 
 #: control/forms/filter.py:1531
 msgid "Fully redeemed"
-msgstr ""
+msgstr "已完全兌換"
 
 #: control/forms/filter.py:1533
 msgid "Redeemed and checked in with ticket"
-msgstr ""
+msgstr "已用票券兌換並報到"
 
 #: control/forms/filter.py:1538
 msgid "Quota handling"
-msgstr ""
+msgstr "配額處理"
 
 #: control/forms/filter.py:1542
 msgid "Allow to ignore quota"
-msgstr ""
+msgstr "允許忽略配額"
 
 #: control/forms/filter.py:1547 control/forms/filter.py:1550
 msgid "Filter by tag"
-msgstr ""
+msgstr "依標籤篩選"
 
 #: control/forms/filter.py:1556 control/forms/filter.py:1557
 msgid "Search voucher"
-msgstr ""
+msgstr "搜尋抵用券"
 
 #: control/forms/filter.py:1601 control/forms/vouchers.py:106
 #: control/views/typeahead.py:543 control/views/typeahead.py:548
 #: control/views/vouchers.py:137
 #, python-brace-format
 msgid "Any product in quota \"{quota}\""
-msgstr ""
+msgstr "配額「{quota}」中的任何產品"
 
 #: control/forms/filter.py:1731
 msgid "Refund status"
-msgstr ""
+msgstr "退款狀態"
 
 #: control/forms/filter.py:1733
 msgid "All open refunds"
-msgstr ""
+msgstr "所有未完成的退款"
 
 #: control/forms/filter.py:1734
 msgid "All refunds"
-msgstr ""
+msgstr "所有退款"
 
 #: control/forms/filter.py:1779 plugins/reports/exporters.py:667
 msgid "Date filter"
-msgstr ""
+msgstr "日期篩選"
 
 #: control/forms/filter.py:1781 plugins/reports/exporters.py:669
 msgid "Filter by…"
@@ -12997,6 +13019,8 @@ msgid ""
 "before they can create events. When this option is enabled, no new event can "
 "be created until a valid billing method has been added."
 msgstr ""
+"帳務驗證可讓您要求主辦方在建立活動之前先設定帳務方式。啟用此選項後，在新增有"
+"效的帳務方式之前，將無法建立任何新活動。"
 
 #: control/forms/global_settings.py:66
 msgid "Additional footer text"
@@ -13050,52 +13074,52 @@ msgstr "系統電子郵件"
 
 #: control/forms/global_settings.py:213 control/forms/global_settings.py:266
 msgid "Publishable key (Live)"
-msgstr ""
+msgstr "可發布金鑰（正式）"
 
 #: control/forms/global_settings.py:216
 msgid "Live publishable key for organizer billing and platform fees."
-msgstr ""
+msgstr "用於主辦方帳務與平台費用的正式可發布金鑰。"
 
 #: control/forms/global_settings.py:222 control/forms/global_settings.py:275
 msgid "Secret key (Live)"
-msgstr ""
+msgstr "秘密金鑰（正式）"
 
 #: control/forms/global_settings.py:225
 msgid "Live secret key for organizer billing and platform fees."
-msgstr ""
+msgstr "用於主辦方帳務與平台費用的正式秘密金鑰。"
 
 #: control/forms/global_settings.py:231 control/forms/global_settings.py:284
 msgid "Publishable key (Test)"
-msgstr ""
+msgstr "可發布金鑰（測試）"
 
 #: control/forms/global_settings.py:234
 msgid "Test publishable key for organizer billing and platform fees."
-msgstr ""
+msgstr "用於主辦方帳務與平台費用的測試可發布金鑰。"
 
 #: control/forms/global_settings.py:240 control/forms/global_settings.py:293
 msgid "Secret key (Test)"
-msgstr ""
+msgstr "秘密金鑰（測試）"
 
 #: control/forms/global_settings.py:243
 msgid "Test secret key for organizer billing and platform fees."
-msgstr ""
+msgstr "用於主辦方帳務與平台費用的測試秘密金鑰。"
 
 #: control/forms/global_settings.py:249
 msgid "Webhook secret key"
-msgstr ""
+msgstr "Webhook 秘密金鑰"
 
 #: control/forms/global_settings.py:251
 msgid ""
 "Configure this endpoint in your Stripe dashboard to receive billing events."
-msgstr ""
+msgstr "請在您的 Stripe 儀表板中設定此端點以接收帳務事件。"
 
 #: control/forms/global_settings.py:260
 msgid "Stripe Connect client ID for ticket payments via the Stripe plugin."
-msgstr ""
+msgstr "透過 Stripe 外掛進行票券付款的 Stripe Connect 用戶端 ID。"
 
 #: control/forms/global_settings.py:269
 msgid "Live publishable key for ticket payments via the Stripe plugin."
-msgstr ""
+msgstr "透過 Stripe 外掛進行票券付款所用的正式可發布金鑰。"
 
 #: control/forms/global_settings.py:278
 msgid "Live secret key for ticket payments via the Stripe plugin."
@@ -13191,14 +13215,14 @@ msgstr ""
 #: control/templates/pretixcontrol/event/settings.html:27
 #: eventyay_common/templates/eventyay_common/event/settings.html:48
 msgid "Basics"
-msgstr ""
+msgstr "基本資料"
 
 #: control/forms/global_settings.py:391
 #: control/templates/pretixcontrol/organizers/edit.html:50
 #: eventyay_common/templates/eventyay_common/event/settings.html:161
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:94
 msgid "Localization"
-msgstr ""
+msgstr "在地化"
 
 #: control/forms/global_settings.py:399
 msgid "Payment Gateways"
@@ -13534,24 +13558,24 @@ msgstr "不做任何變更，維持訂單原狀。"
 #: control/forms/orders.py:582
 #, python-brace-format
 msgid "The refund amount needs to be positive and less than {}."
-msgstr ""
+msgstr "退款金額必須為正數且小於 {}。"
 
 #: control/forms/orders.py:588
 msgid "You need to specify an amount for a partial refund."
-msgstr ""
+msgstr "你需要為部分退款指定金額。"
 
 #: control/forms/orders.py:600
 msgid "Cancel all dates"
-msgstr ""
+msgstr "取消所有日期"
 
 #: control/forms/orders.py:622
 msgid "Automatically refund money if possible"
-msgstr ""
+msgstr "若可能則自動退款"
 
 #: control/forms/orders.py:624
 msgid ""
 "Create manual refund if the payment method does not support automatic refunds"
-msgstr ""
+msgstr "若付款方式不支援自動退款，則建立手動退款"
 
 #: control/forms/orders.py:629
 msgid ""
@@ -13560,28 +13584,30 @@ msgid ""
 "to refund some of the orders by offsetting with different orders or issuing "
 "gift cards."
 msgstr ""
+"若勾選，所有使用不支援自動退款之付款方式的付款都會加入你的手動退款待辦清單。"
+"若你想透過與其他訂單抵銷或發行禮品卡來為部分訂單退款，請勿勾選。"
 
 #: control/forms/orders.py:635
 msgid ""
 "Refund order value to a gift card instead instead of the original payment "
 "method"
-msgstr ""
+msgstr "將訂單金額退款至禮品卡，而非原始付款方式"
 
 #: control/forms/orders.py:641
 msgid "Gift card validity"
-msgstr ""
+msgstr "禮品卡有效期"
 
 #: control/forms/orders.py:661
 msgid "Keep a fixed cancellation fee per ticket"
-msgstr ""
+msgstr "每張票保留固定取消費"
 
 #: control/forms/orders.py:662
 msgid "Free tickets and add-on products are not counted"
-msgstr ""
+msgstr "免費票券與加購產品不計入"
 
 #: control/forms/orders.py:674
 msgid "Keep fees"
-msgstr ""
+msgstr "保留費用"
 
 #: control/forms/orders.py:678
 msgid ""
@@ -13590,19 +13616,21 @@ msgid ""
 "series is only partially canceled since it consists of tickets for multiple "
 "dates."
 msgstr ""
+"所選類型的費用將不予退款，而是加到取消費中。當活動系列中的訂單僅部分取消時，"
+"費用永不退款，因為該訂單包含多個日期的票券。"
 
 #: control/forms/orders.py:684
 msgid "Send information via email"
-msgstr ""
+msgstr "透過電子郵件寄送資訊"
 
 #: control/forms/orders.py:687
 msgid "Send information to waiting list"
-msgstr ""
+msgstr "寄送資訊給候補名單"
 
 #: control/forms/orders.py:709 control/forms/orders.py:753
 #, python-brace-format
 msgid "Canceled: {event}"
-msgstr ""
+msgstr "已取消：{event}"
 
 #: control/forms/orders.py:721
 #, python-brace-format
@@ -13621,6 +13649,19 @@ msgid ""
 "\n"
 "Your {event} team"
 msgstr ""
+"你好，\n"
+"\n"
+"我們很遺憾透過此電子郵件通知你，{event} 已被取消。\n"
+"\n"
+"我們將退款 {refund_amount} 至你的原始付款方式。\n"
+"\n"
+"你可以在此查看你訂單的目前狀態：\n"
+"\n"
+"{url}\n"
+"\n"
+"此致\n"
+"\n"
+"{event} 團隊"
 
 #: control/forms/orders.py:766
 #, python-brace-format
@@ -13635,21 +13676,30 @@ msgid ""
 "\n"
 "Your {event} team"
 msgstr ""
+"你好，\n"
+"\n"
+"我們很遺憾透過此電子郵件通知你，{event} 已被取消。\n"
+"\n"
+"因此你將不會從候補名單收到票券。\n"
+"\n"
+"此致\n"
+"\n"
+"{event} 團隊"
 
 #: control/forms/orders.py:805 plugins/sendmail/forms.py:118
 msgctxt "subevent"
 msgid "Please either select a specific date or a date range, not both."
-msgstr ""
+msgstr "請只選擇特定日期或日期範圍其一，不要同時選擇兩者。"
 
 #: control/forms/orders.py:812
 msgctxt "subevent"
 msgid "Please either select all dates or a date range, not both."
-msgstr ""
+msgstr "請只選擇所有日期或日期範圍其一，不要同時選擇兩者。"
 
 #: control/forms/orders.py:819 plugins/sendmail/forms.py:125
 msgctxt "subevent"
 msgid "If you set a date range, please set both a start and an end."
-msgstr ""
+msgstr "若你設定日期範圍，請同時設定開始與結束日期。"
 
 #: control/forms/orders.py:823
 msgid "Please confirm that you want to cancel ALL dates in this event series."
@@ -15675,19 +15725,19 @@ msgstr "刪除串流伺服器"
 
 #: control/templates/control/streaming_form.html:6
 msgid "Create or update streaming server"
-msgstr ""
+msgstr "建立或更新串流伺服器"
 
 #: control/templates/control/streamkey.html:6
 msgid "Stream key generator"
-msgstr ""
+msgstr "串流金鑰產生器"
 
 #: control/templates/control/streamkey.html:11
 msgid "Stream server"
-msgstr ""
+msgstr "串流伺服器"
 
 #: control/templates/control/streamkey.html:12
 msgid "Stream key"
-msgstr ""
+msgstr "串流金鑰"
 
 #: control/templates/control/streamkey.html:13
 msgid "HLS URL"
@@ -15699,11 +15749,11 @@ msgstr "產生"
 
 #: control/templates/control/systemlog_detail.html:5
 msgid "System log entry"
-msgstr ""
+msgstr "系統日誌項目"
 
 #: control/templates/control/systemlog_detail.html:8
 msgid "Metadata"
-msgstr ""
+msgstr "中繼資料"
 
 #: control/templates/control/systemlog_detail.html:14
 msgid "User Agent"
@@ -15718,19 +15768,19 @@ msgstr "追蹤"
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:29
 #: control/templates/pretixcontrol/checkin/index.html:86
 msgid "Timestamp"
-msgstr ""
+msgstr "時間戳記"
 
 #: control/templates/control/systemlog_detail.html:25
 msgid "Level"
-msgstr ""
+msgstr "等級"
 
 #: control/templates/control/systemlog_detail.html:38
 msgid "No trace entries."
-msgstr ""
+msgstr "沒有追蹤項目。"
 
 #: control/templates/control/systemlog_list.html:11
 msgid "Module"
-msgstr ""
+msgstr "模組"
 
 #: control/templates/control/systemlog_list.html:26
 #: control/templates/pretixcontrol/organizers/giftcard.html:23
@@ -15745,7 +15795,7 @@ msgstr "找不到日誌項目。"
 
 #: control/templates/control/systemlog_list.html:39
 msgid "first"
-msgstr ""
+msgstr "第一頁"
 
 #: control/templates/control/systemlog_list.html:40
 msgid "previous"
@@ -15758,11 +15808,11 @@ msgstr "第 %(current)s 頁，共 %(total)s 頁。"
 
 #: control/templates/control/systemlog_list.html:48
 msgid "next"
-msgstr ""
+msgstr "下一頁"
 
 #: control/templates/control/systemlog_list.html:49
 msgid "last"
-msgstr ""
+msgstr "最後一頁"
 
 #: control/templates/control/turn_delete.html:5
 msgid "Delete TURN server"
@@ -15770,7 +15820,7 @@ msgstr "刪除 TURN 伺服器"
 
 #: control/templates/control/turn_form.html:6
 msgid "Create or update TURN server"
-msgstr ""
+msgstr "建立或更新 TURN 伺服器"
 
 #: control/templates/control/turn_list.html:16
 msgid "Host name"
@@ -15790,7 +15840,7 @@ msgstr "更新使用者"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:15
 msgid "This is a list of all paid attendees and their check-in status."
-msgstr ""
+msgstr "這是一份所有付費參加者及其報到狀態的清單。"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:20
 #: control/templates/pretixcontrol/admin/events/index.html:26
@@ -15947,7 +15997,7 @@ msgstr "投稿"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:15
 msgid "This is a list of all talk submissions across events."
-msgstr ""
+msgstr "這是一份跨活動的所有演講投稿清單。"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:92
 msgid "Proposal State"
@@ -16112,16 +16162,16 @@ msgstr "執行於"
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:43
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:57
 msgid "Last run at"
-msgstr ""
+msgstr "上次執行於"
 
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:44
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:58
 msgid "Total run count"
-msgstr ""
+msgstr "總執行次數"
 
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:77
 msgid "No tasks found."
-msgstr ""
+msgstr "找不到任務。"
 
 #: control/templates/pretixcontrol/admin/update.html:5
 #: control/templates/pretixcontrol/admin/update.html:9
@@ -16199,23 +16249,23 @@ msgstr "更新檢查設定"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:4
 msgid "Staff session"
-msgstr ""
+msgstr "員工工作階段"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:6
 msgid "Session notes"
-msgstr ""
+msgstr "工作階段備註"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:17
 msgid "Audit log"
-msgstr ""
+msgstr "稽核記錄"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:30
 msgid "Method"
-msgstr ""
+msgstr "方法"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_edit.html:32
 msgid "On behalf of"
-msgstr ""
+msgstr "代表"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_start.html:8
 msgid ""
@@ -16223,50 +16273,52 @@ msgid ""
 "Everything you do in that session will be logged and you will later be asked "
 "to fill in a comment on what you did in your session for later reference."
 msgstr ""
+"要執行此動作，你需要啟動管理工作階段。你在該工作階段中所做的一切都會被記錄，"
+"之後你將被要求填寫一則備註，說明你在工作階段中做了什麼，以便日後參考。"
 
 #: control/templates/pretixcontrol/admin/user/staff_session_start.html:18
 msgid "Start session"
-msgstr ""
+msgstr "開始工作階段"
 
 #: control/templates/pretixcontrol/admin/users/anonymize.html:4
 #: control/templates/pretixcontrol/admin/users/anonymize.html:6
 msgid "Anonymize user"
-msgstr ""
+msgstr "匿名化使用者"
 
 #: control/templates/pretixcontrol/admin/users/anonymize.html:11
 msgid "Disable and anonymize user"
-msgstr ""
+msgstr "停用並匿名化使用者"
 
 #: control/templates/pretixcontrol/admin/users/create.html:4
 #: control/templates/pretixcontrol/admin/users/create.html:6
 msgid "Create user"
-msgstr ""
+msgstr "建立使用者"
 
 #: control/templates/pretixcontrol/admin/users/create.html:11
 #: control/templates/pretixcontrol/admin/users/form.html:26
 msgid "Base settings"
-msgstr ""
+msgstr "基本設定"
 
 #: control/templates/pretixcontrol/admin/users/create.html:18
 #: control/templates/pretixcontrol/admin/users/form.html:34
 msgid "Log-in settings"
-msgstr ""
+msgstr "登入設定"
 
 #: control/templates/pretixcontrol/admin/users/form.html:11
 msgid "Send password reset email"
-msgstr ""
+msgstr "傳送密碼重設電子郵件"
 
 #: control/templates/pretixcontrol/admin/users/form.html:16
 msgid "Impersonate user"
-msgstr ""
+msgstr "冒充使用者"
 
 #: control/templates/pretixcontrol/admin/users/form.html:18
 msgid "Anonymize"
-msgstr ""
+msgstr "匿名化"
 
 #: control/templates/pretixcontrol/admin/users/form.html:36
 msgid "Authentication backend"
-msgstr ""
+msgstr "驗證後端"
 
 #: control/templates/pretixcontrol/admin/users/form.html:50
 msgid "Team memberships"
@@ -16384,7 +16436,7 @@ msgstr "錯誤："
 #: eventyay_common/templates/eventyay_common/base.html:103
 #: orga/templates/orga/base.html:80
 msgid "Toggle sidebar"
-msgstr ""
+msgstr "切換側邊欄"
 
 #: control/templates/pretixcontrol/base.html:117
 #: control/templates/pretixcontrol/base.html:140
@@ -16426,7 +16478,7 @@ msgstr "票務儀表板"
 #: control/templates/pretixcontrol/base.html:277
 #: eventyay_common/templates/eventyay_common/base.html:230
 msgid "PRIVATE TEST MODE"
-msgstr ""
+msgstr "私人測試模式"
 
 #: control/templates/pretixcontrol/base.html:328
 #: eventyay_common/templates/eventyay_common/base.html:280
@@ -16608,7 +16660,7 @@ msgstr "找不到參加者記錄。"
 
 #: control/templates/pretixcontrol/checkin/index.html:69
 msgid "product"
-msgstr ""
+msgstr "產品"
 
 #: control/templates/pretixcontrol/checkin/index.html:101
 msgid "unpaid"
@@ -16843,6 +16895,20 @@ msgid ""
 "\n"
 "Your event team\n"
 msgstr ""
+"你好，\n"
+"\n"
+"你已被加入以下活動團隊：\n"
+"\n"
+"主辦方：%(organizer)s\n"
+"團隊：%(team)s\n"
+"\n"
+"點擊以下連結以檢視你的團隊儀表板：\n"
+"\n"
+"%(url)s\n"
+"\n"
+"敬上，\n"
+"\n"
+"你的活動團隊\n"
 
 #: control/templates/pretixcontrol/email/invitation.txt:15
 #, python-format
@@ -16864,6 +16930,22 @@ msgid ""
 "\n"
 "Your event team\n"
 msgstr ""
+"你好，\n"
+"\n"
+"你已被邀請加入以下活動團隊：\n"
+"\n"
+"主辦方：%(organizer)s\n"
+"團隊：%(team)s\n"
+"\n"
+"如果你想加入該團隊，只要點擊以下連結：\n"
+"\n"
+"%(url)s\n"
+"\n"
+"如果你不想加入，可以放心忽略或刪除此電子郵件。\n"
+"\n"
+"敬上，\n"
+"\n"
+"你的活動團隊\n"
 
 #: control/templates/pretixcontrol/email/security_notice.txt:1
 #, python-format
@@ -17439,12 +17521,12 @@ msgstr "此外掛回報了以下問題:"
 #: control/templates/pretixcontrol/event/plugins.html:72
 #: eventyay_common/templates/eventyay_common/event/plugins.html:72
 msgid "Incompatible"
-msgstr ""
+msgstr "不相容"
 
 #: control/templates/pretixcontrol/event/plugins.html:75
 #: eventyay_common/templates/eventyay_common/event/plugins.html:75
 msgid "Not available"
-msgstr ""
+msgstr "無法使用"
 
 #: control/templates/pretixcontrol/event/plugins.html:78
 #: eventyay_common/templates/eventyay_common/account/2fa-disable.html:33
@@ -17471,13 +17553,13 @@ msgstr "開啟"
 #: control/templates/pretixcontrol/event/settings_base.html:10
 #: eventyay_common/templates/eventyay_common/event/settings_base.html:10
 msgid "Congratulations!"
-msgstr ""
+msgstr "恭喜！"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:16
 #: control/templates/pretixcontrol/event/settings_base.html:12
 #: eventyay_common/templates/eventyay_common/event/settings_base.html:12
 msgid "You just created an event!"
-msgstr ""
+msgstr "你剛剛建立了一個活動！"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:19
 msgid ""
@@ -17485,32 +17567,34 @@ msgid ""
 "can use the navigation on the left to modify the settings of your event in "
 "much more detail."
 msgstr ""
+"你可以向下捲動並快速建立你的第一個票券產品，或是使用左側的導覽以更詳細地修改"
+"活動設定。"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:36
 msgid "Create ticket types"
-msgstr ""
+msgstr "建立票種"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:42
 msgid "Ticket name"
-msgstr ""
+msgstr "票券名稱"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:48
 msgid "Capacity (optional)"
-msgstr ""
+msgstr "容量（選填）"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:101
 msgid "Add a new ticket type"
-msgstr ""
+msgstr "新增票種"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:106
 msgid "Total capacity:"
-msgstr ""
+msgstr "總容量："
 
 #: control/templates/pretixcontrol/event/quick_setup.html:109
 msgid ""
 "You can set a limit on the total number of tickets sold for your event, "
 "regardless of the ticket type."
-msgstr ""
+msgstr "你可以為活動設定可售出票券總數的上限，不受票種影響。"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:118
 msgid ""
@@ -17519,6 +17603,9 @@ msgid ""
 "ticket types in more detail, you can later do so in the \"Products\" section "
 "in the navigation. Don't worry, you can change everything you input here."
 msgstr ""
+"如果你想使用更進階的功能，例如非入場產品、產品變體、自訂配額、加購產品，或想"
+"更詳細地修改票種，之後可以在導覽中的「產品」區段進行。別擔心，你在這裡輸入的"
+"所有內容都可以更改。"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:132
 #: control/templates/pretixcontrol/event/tickets.html:79
@@ -17528,7 +17615,7 @@ msgstr "訪客訂單"
 #: control/templates/pretixcontrol/event/quick_setup.html:141
 #: control/views/event.py:382
 msgid "Features"
-msgstr ""
+msgstr "功能"
 
 #: control/templates/pretixcontrol/event/quick_setup.html:143
 msgid ""
@@ -17536,6 +17623,8 @@ msgid ""
 "your event, but if you're in a hurry and want to get started quickly, here's "
 "a short version:"
 msgstr ""
+"我們建議你花點時間瀏覽活動的「設定」部分，但如果你趕時間並想快速開始，以下是"
+"簡短版本："
 
 #: control/templates/pretixcontrol/event/quick_setup.html:162
 msgid ""
@@ -17551,7 +17640,7 @@ msgstr ""
 msgid ""
 "After the setup, please go to the Payment area and set up the Stripe "
 "connection."
-msgstr ""
+msgstr "完成設定後，請前往付款區域並設定 Stripe 連線。"
 
 #: control/templates/pretixcontrol/event/settings.html:7
 #: control/templates/pretixcontrol/event/settings.html:16
@@ -17559,7 +17648,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:25
 #: eventyay_common/templates/eventyay_common/event/settings.html:7
 msgid "General settings"
-msgstr ""
+msgstr "一般設定"
 
 #: control/templates/pretixcontrol/event/settings.html:33
 #: control/templates/pretixcontrol/item/index.html:69
@@ -17567,7 +17656,7 @@ msgstr ""
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:75
 #: control/templates/pretixcontrol/subevents/detail.html:34
 msgid "Meta data"
-msgstr ""
+msgstr "中繼資料"
 
 #: control/templates/pretixcontrol/event/settings.html:52
 msgid "Order Modification"
@@ -18313,7 +18402,7 @@ msgstr "僅可使用憑證購買"
 
 #: control/templates/pretixcontrol/items/orderforms.html:33
 msgid "Customer data (once per order)"
-msgstr ""
+msgstr "顧客資料（每筆訂單一次）"
 
 #: control/templates/pretixcontrol/items/orderforms.html:44
 #: control/templates/pretixcontrol/items/orderforms.html:148
@@ -19151,7 +19240,7 @@ msgstr "此檔案由使用者上傳，可能包含病毒或其他惡意內容。
 
 #: control/templates/pretixcontrol/order/index.html:464
 msgid "UNSAFE"
-msgstr ""
+msgstr "不安全"
 
 #: control/templates/pretixcontrol/order/index.html:497
 #: control/templates/pretixcontrol/order/index.html:531
@@ -19159,7 +19248,7 @@ msgstr ""
 #: presale/templates/pretixpresale/event/fragment_cart.html:241
 #, python-format
 msgid "<strong>plus</strong> %(rate)s%% %(taxname)s"
-msgstr ""
+msgstr "<strong>加</strong> %(rate)s%% %(taxname)s"
 
 #: control/templates/pretixcontrol/order/index.html:507
 #: control/templates/pretixcontrol/order/index.html:541
@@ -19167,12 +19256,12 @@ msgstr ""
 #: presale/templates/pretixpresale/event/fragment_cart.html:251
 #, python-format
 msgid "incl. %(rate)s%% %(taxname)s"
-msgstr ""
+msgstr "包含 %(rate)s%% %(taxname)s"
 
 #: control/templates/pretixcontrol/order/index.html:562
 #: presale/templates/pretixpresale/event/fragment_cart.html:273
 msgid "Taxes"
-msgstr ""
+msgstr "稅金"
 
 #: control/templates/pretixcontrol/order/index.html:571
 #: control/templates/pretixcontrol/orders/overview.html:78
@@ -19181,25 +19270,25 @@ msgstr ""
 #: plugins/reports/exporters.py:597 plugins/reports/exporters.py:1009
 #: presale/templates/pretixpresale/event/fragment_cart.html:283
 msgid "Total"
-msgstr ""
+msgstr "總計"
 
 #: control/templates/pretixcontrol/order/index.html:581
 #: presale/templates/pretixpresale/event/order.html:205
 msgid "Successful payments"
-msgstr ""
+msgstr "成功付款"
 
 #: control/templates/pretixcontrol/order/index.html:590
 #: presale/templates/pretixpresale/event/order.html:214
 msgid "Pending total"
-msgstr ""
+msgstr "待處理總計"
 
 #: control/templates/pretixcontrol/order/index.html:606
 msgid "Payments"
-msgstr ""
+msgstr "付款"
 
 #: control/templates/pretixcontrol/order/index.html:616
 msgid "Confirmation date"
-msgstr ""
+msgstr "確認日期"
 
 #: control/templates/pretixcontrol/order/index.html:629
 msgid ""
@@ -19209,73 +19298,73 @@ msgstr "此付款由舊版 pretix 建立，可能無法提供準確資料。"
 
 #: control/templates/pretixcontrol/order/index.html:630
 msgid "MIGRATED"
-msgstr ""
+msgstr "已遷移"
 
 #: control/templates/pretixcontrol/order/index.html:648
 #: control/templates/pretixcontrol/order/pay_cancel.html:4
 #: control/templates/pretixcontrol/order/pay_cancel.html:8
 msgid "Cancel payment"
-msgstr ""
+msgstr "取消付款"
 
 #: control/templates/pretixcontrol/order/index.html:653
 msgid "Confirm as paid"
-msgstr ""
+msgstr "確認已付款"
 
 #: control/templates/pretixcontrol/order/index.html:696
 msgid "Create a refund"
-msgstr ""
+msgstr "建立退款"
 
 #: control/templates/pretixcontrol/order/index.html:717
 #: control/templates/pretixcontrol/orders/refunds.html:59
 msgid "Source"
-msgstr ""
+msgstr "來源"
 
 #: control/templates/pretixcontrol/order/index.html:750
 msgid "Cancel transfer"
-msgstr ""
+msgstr "取消轉帳"
 
 #: control/templates/pretixcontrol/order/index.html:755
 #: control/templates/pretixcontrol/orders/refunds.html:111
 msgid "Confirm as done"
-msgstr ""
+msgstr "確認完成"
 
 #: control/templates/pretixcontrol/order/index.html:762
 #: control/templates/pretixcontrol/orders/refunds.html:117
 msgid "Ignore"
-msgstr ""
+msgstr "忽略"
 
 #: control/templates/pretixcontrol/order/index.html:768
 #: control/templates/pretixcontrol/order/refund_process.html:58
 #: control/templates/pretixcontrol/orders/refunds.html:122
 msgid "Process refund"
-msgstr ""
+msgstr "處理退款"
 
 #: control/templates/pretixcontrol/order/index.html:816
 msgid "Change"
-msgstr ""
+msgstr "變更"
 
 #: control/templates/pretixcontrol/order/index.html:832
 #: presale/templates/pretixpresale/event/checkout_confirm.html:102
 #: presale/templates/pretixpresale/event/order.html:316
 msgid "ZIP code and city"
-msgstr ""
+msgstr "郵遞區號與城市"
 
 #: control/templates/pretixcontrol/order/index.html:845
 msgid "Valid EU VAT ID"
-msgstr ""
+msgstr "有效的歐盟增值稅 ID"
 
 #: control/templates/pretixcontrol/order/index.html:851
 msgid "Check"
-msgstr ""
+msgstr "檢查"
 
 #: control/templates/pretixcontrol/order/index.html:897
 msgid "Order history"
-msgstr ""
+msgstr "訂單歷史"
 
 #: control/templates/pretixcontrol/order/mail_history.html:4
 #: control/templates/pretixcontrol/order/mail_history.html:7
 msgid "Email history"
-msgstr ""
+msgstr "電子郵件歷史"
 
 #: control/templates/pretixcontrol/order/mail_history.html:33
 msgid ""
@@ -19286,38 +19375,38 @@ msgstr "此電子郵件是以舊版 pretix 發送，因此無法在此準確顯�
 #: control/templates/pretixcontrol/order/mail_history.html:39
 #: control/templates/pretixcontrol/order/mail_history.html:50
 msgid "Subject:"
-msgstr ""
+msgstr "主旨："
 
 #: control/templates/pretixcontrol/order/pay.html:5
 #: control/templates/pretixcontrol/order/pay.html:9
 msgid "Mark order as paid"
-msgstr ""
+msgstr "將訂單標記為已付款"
 
 #: control/templates/pretixcontrol/order/pay.html:20
 msgid "Do you really want to create a manual payment for this order?"
-msgstr ""
+msgstr "你確定要為此訂單建立手動付款嗎？"
 
 #: control/templates/pretixcontrol/order/pay.html:37
 msgid "Create payment"
-msgstr ""
+msgstr "建立付款"
 
 #: control/templates/pretixcontrol/order/pay_cancel.html:10
 msgid ""
 "Do you really want to cancel this payment? You cannot revert this action."
-msgstr ""
+msgstr "你確定要取消此付款嗎？你無法復原此操作。"
 
 #: control/templates/pretixcontrol/order/pay_cancel.html:25
 msgid "Yes, cancel payment"
-msgstr ""
+msgstr "是，取消付款"
 
 #: control/templates/pretixcontrol/order/pay_complete.html:5
 #: control/templates/pretixcontrol/order/pay_complete.html:9
 msgid "Mark payment as complete"
-msgstr ""
+msgstr "將付款標記為完成"
 
 #: control/templates/pretixcontrol/order/pay_complete.html:20
 msgid "Do you really want to mark this payment as complete?"
-msgstr ""
+msgstr "你確定要將此付款標記為完成嗎？"
 
 #: control/templates/pretixcontrol/order/reactivate.html:18
 msgid ""
@@ -19326,20 +19415,22 @@ msgid ""
 "products in the order are still available. If the order is pending payment, "
 "the expiry date will be reset."
 msgstr ""
+"重新啟用訂單會撤銷其取消狀態，並將其轉回待處理或已付款的訂單。只有在訂單中的"
+"所有商品仍然可用時才可能這麼做。若訂單為待付款狀態，到期日將會重設。"
 
 #: control/templates/pretixcontrol/order/reactivate.html:34
 msgid "Reactivate"
-msgstr ""
+msgstr "重新啟用"
 
 #: control/templates/pretixcontrol/order/refund_cancel.html:4
 #: control/templates/pretixcontrol/order/refund_cancel.html:8
 msgid "Cancel refund"
-msgstr ""
+msgstr "取消退款"
 
 #: control/templates/pretixcontrol/order/refund_cancel.html:10
 msgid ""
 "Do you really want to cancel this refund? You cannot revert this action."
-msgstr ""
+msgstr "你確定要取消此退款嗎？你無法復原此操作。"
 
 #: control/templates/pretixcontrol/order/refund_cancel.html:14
 msgid ""
@@ -19352,18 +19443,18 @@ msgstr ""
 
 #: control/templates/pretixcontrol/order/refund_cancel.html:32
 msgid "Yes, cancel refund"
-msgstr ""
+msgstr "是，取消退款"
 
 #: control/templates/pretixcontrol/order/refund_choose.html:6
 #: control/templates/pretixcontrol/order/refund_choose.html:10
 #: control/templates/pretixcontrol/order/refund_start.html:5
 #: control/templates/pretixcontrol/order/refund_start.html:9
 msgid "Refund order"
-msgstr ""
+msgstr "退款訂單"
 
 #: control/templates/pretixcontrol/order/refund_choose.html:22
 msgid "How should the refund be sent?"
-msgstr ""
+msgstr "退款應如何送出？"
 
 #: control/templates/pretixcontrol/order/refund_choose.html:24
 msgid ""
@@ -19372,6 +19463,9 @@ msgid ""
 "refunds will be created as pending refunds, you can then later mark them as "
 "done once you actually transferred the money back to the customer."
 msgstr ""
+"你選擇用於自動退款的任何付款將立即向相應的付款服務提供者傳達退款請求。手動退"
+"款將建立為待處理的退款，之後在你確實將款項退還給客戶後，即可將其標記為已完成"
+"。"
 
 #: control/templates/pretixcontrol/order/refund_choose.html:31
 msgid "Refund to original payment method"
@@ -19840,33 +19934,33 @@ msgstr "開啟您要連接的應用程式，並可選擇將其重設為原始狀
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:20
 msgid "Scan the following configuration code:"
-msgstr ""
+msgstr "掃描以下設定代碼："
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:22
 msgid ""
 "If your app/device does not support scanning a QR code, you can also enter "
 "the following information:"
-msgstr ""
+msgstr "如果您的應用程式／裝置不支援掃描 QR 碼，您也可以輸入以下資訊："
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:24
 msgid "System URL:"
-msgstr ""
+msgstr "系統 URL："
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:25
 msgid "Token:"
-msgstr ""
+msgstr "權杖："
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:31
 msgid "Device overview"
-msgstr ""
+msgstr "裝置概覽"
 
 #: control/templates/pretixcontrol/organizers/device_edit.html:6
 msgid "Device:"
-msgstr ""
+msgstr "裝置："
 
 #: control/templates/pretixcontrol/organizers/device_edit.html:8
 msgid "Connect a new device"
-msgstr ""
+msgstr "連線新裝置"
 
 #: control/templates/pretixcontrol/organizers/device_edit.html:24
 #: control/templates/pretixcontrol/vouchers/bulk.html:80
@@ -19877,36 +19971,36 @@ msgstr "進階設定"
 
 #: control/templates/pretixcontrol/organizers/device_edit.html:40
 msgid "Device history"
-msgstr ""
+msgstr "裝置歷史"
 
 #: control/templates/pretixcontrol/organizers/device_logs.html:4
 #: control/templates/pretixcontrol/organizers/device_logs.html:6
 msgid "Device logs"
-msgstr ""
+msgstr "裝置日誌"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:5
 msgid "Revoke device access:"
-msgstr ""
+msgstr "撤銷裝置存取權："
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:9
 msgid "Are you sure you want remove access for this device?"
-msgstr ""
+msgstr "您確定要移除此裝置的存取權嗎？"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:10
 msgid ""
 "All data of this device will stay available, but you can't use the device "
 "any more."
-msgstr ""
+msgstr "此裝置的所有資料將仍可使用，但您將無法再使用該裝置。"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:14
 msgid "All data uploaded by this device will stay available online."
-msgstr ""
+msgstr "此裝置上傳的所有資料將仍可在線上使用。"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:15
 msgid ""
 "If data (e.g. POS transactions or check-ins) has been created on this device "
 "and has not been uploaded, you will no longer be able to upload it."
-msgstr ""
+msgstr "如果資料（例如 POS 交易或簽到）已在此裝置上建立但尚未上傳，您將無法再上傳。"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:16
 msgid ""
@@ -19915,6 +20009,9 @@ msgid ""
 "data such as event metadata and POS transactions will persist until you "
 "uninstall or reset the software manually."
 msgstr ""
+"如果裝置軟體支援，個人資料（例如訂單）將在下一次同步嘗試時從裝置中刪除。非個"
+"人資料（例如活動中繼資料和 POS 交易）將持續保留，直到您手動解除安裝或重設該軟"
+"體。"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:24
 #: eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:28
@@ -19926,24 +20023,24 @@ msgstr "撤銷"
 msgid ""
 "This menu allows you to connect hardware devices such as box office "
 "terminals or scanning terminals to your account."
-msgstr ""
+msgstr "此選單可讓您將票房終端機或掃描終端機等硬體裝置連線至您的帳戶。"
 
 #: control/templates/pretixcontrol/organizers/devices.html:17
 msgid "You haven't connected any hardware devices yet."
-msgstr ""
+msgstr "您尚未連線任何硬體裝置。"
 
 #: control/templates/pretixcontrol/organizers/devices.html:23
 #: control/templates/pretixcontrol/organizers/devices.html:28
 msgid "Connect a device"
-msgstr ""
+msgstr "連線裝置"
 
 #: control/templates/pretixcontrol/organizers/devices.html:36
 msgid "Hardware model"
-msgstr ""
+msgstr "硬體型號"
 
 #: control/templates/pretixcontrol/organizers/devices.html:37
 msgid "Software"
-msgstr ""
+msgstr "軟體"
 
 #: control/templates/pretixcontrol/organizers/devices.html:67
 msgid "Not yet initialized"
@@ -20046,30 +20143,32 @@ msgstr "還原"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:86
 msgid "Manual transaction"
-msgstr ""
+msgstr "手動交易"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:119
 msgid "Gift card history"
-msgstr ""
+msgstr "禮品卡歷史記錄"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:8
 msgid "Issued gift cards"
-msgstr ""
+msgstr "已發行的禮品卡"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:13
 msgid ""
 "You haven't issued any gift cards yet. You can either set up a product in an "
 "event shop to sell gift cards, or you can manually issue gift cards."
 msgstr ""
+"你尚未發行任何禮品卡。你可以在活動商店中設定一個商品來販售禮品卡，或是手動發"
+"行禮品卡。"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:20
 #: control/templates/pretixcontrol/organizers/giftcards.html:40
 msgid "Manually issue a gift card"
-msgstr ""
+msgstr "手動發行禮品卡"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:96
 msgid "Accepted gift cards of other organizers"
-msgstr ""
+msgstr "接受其他主辦方的禮品卡"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:98
 msgid ""
@@ -20077,19 +20176,21 @@ msgid ""
 "ticket shops in this account will also accept gift codes issued through a "
 "different organizer account, and vice versa."
 msgstr ""
+"如果你可存取多個主辦方帳號，你可以設定此帳號中的售票商店也接受透過其他主辦方"
+"帳號發行的禮品代碼，反之亦然。"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:114
 msgid "You are currently not accepting gift cards from other organizers."
-msgstr ""
+msgstr "你目前未接受其他主辦方的禮品卡。"
 
 #: control/templates/pretixcontrol/organizers/logs.html:4
 #: control/templates/pretixcontrol/organizers/logs.html:6
 msgid "Organizer logs"
-msgstr ""
+msgstr "主辦方日誌"
 
 #: control/templates/pretixcontrol/organizers/properties.html:5
 msgid "Event metadata"
-msgstr ""
+msgstr "活動中繼資料"
 
 #: control/templates/pretixcontrol/organizers/properties.html:7
 msgid ""
@@ -20097,27 +20198,29 @@ msgid ""
 "can later set for your events and re-use in places like ticket layouts. This "
 "is an useful timesaver if you create lots and lots of events."
 msgstr ""
+"你可以在此定義一組中繼資料屬性（即變數），之後可為你的活動設定並在如票券版面"
+"等地方重複使用。若你建立大量活動，這會是很有用的省時方式。"
 
 #: control/templates/pretixcontrol/organizers/properties.html:15
 #: control/templates/pretixcontrol/organizers/property_edit.html:8
 msgid "Create a new property"
-msgstr ""
+msgstr "建立新屬性"
 
 #: control/templates/pretixcontrol/organizers/properties.html:20
 msgid "Property"
-msgstr ""
+msgstr "屬性"
 
 #: control/templates/pretixcontrol/organizers/property_delete.html:5
 msgid "Delete property:"
-msgstr ""
+msgstr "刪除屬性："
 
 #: control/templates/pretixcontrol/organizers/property_delete.html:8
 msgid "Are you sure you want to delete the property?"
-msgstr ""
+msgstr "你確定要刪除此屬性嗎？"
 
 #: control/templates/pretixcontrol/organizers/property_edit.html:6
 msgid "Property:"
-msgstr ""
+msgstr "屬性："
 
 #: control/templates/pretixcontrol/organizers/webhook_edit.html:6
 msgid "Modify webhook"
@@ -20370,80 +20473,80 @@ msgstr "旋轉 (°)"
 
 #: control/templates/pretixcontrol/pdf/index.html:340
 msgid "Style"
-msgstr ""
+msgstr "樣式"
 
 #: control/templates/pretixcontrol/pdf/index.html:342
 msgid "Dark"
-msgstr ""
+msgstr "深色"
 
 #: control/templates/pretixcontrol/pdf/index.html:343
 msgid "Light"
-msgstr ""
+msgstr "淺色"
 
 #: control/templates/pretixcontrol/pdf/index.html:349
 msgid "Image content"
-msgstr ""
+msgstr "圖片內容"
 
 #: control/templates/pretixcontrol/pdf/index.html:360
 msgid "Text content"
-msgstr ""
+msgstr "文字內容"
 
 #: control/templates/pretixcontrol/pdf/index.html:367
 msgid "Event attribute:"
-msgstr ""
+msgstr "活動屬性："
 
 #: control/templates/pretixcontrol/pdf/index.html:372
 msgid "Item attribute:"
-msgstr ""
+msgstr "項目屬性："
 
 #: control/templates/pretixcontrol/pdf/index.html:375
 msgid "Other…"
-msgstr ""
+msgstr "其他…"
 
 #: control/templates/pretixcontrol/pdf/index.html:385
 msgid "Add a new object"
-msgstr ""
+msgstr "新增新物件"
 
 #: control/templates/pretixcontrol/pdf/index.html:394
 msgid "Attendee QR Code"
-msgstr ""
+msgstr "出席者 QR 碼"
 
 #: control/templates/pretixcontrol/pdf/index.html:400
 msgid "QR code for Lead Scanning"
-msgstr ""
+msgstr "用於名單掃描的 QR 碼"
 
 #: control/templates/pretixcontrol/pdf/index.html:406
 msgid "eventyay Logo"
-msgstr ""
+msgstr "eventyay 標誌"
 
 #: control/templates/pretixcontrol/pdf/index.html:410
 msgid "Dynamic image"
-msgstr ""
+msgstr "動態圖片"
 
 #: control/templates/pretixcontrol/search/orders.html:102
 msgid ""
 "We couldn't find any orders that you have access to and that match your "
 "search query."
-msgstr ""
+msgstr "我們找不到任何你有權存取且符合你搜尋查詢的訂單。"
 
 #: control/templates/pretixcontrol/select2_widget.html:9
 msgid "Please enable JavaScript in your browser."
-msgstr ""
+msgstr "請在你的瀏覽器中啟用 JavaScript。"
 
 #: control/templates/pretixcontrol/shredder/download.html:5
 #: control/templates/pretixcontrol/shredder/download.html:8
 #: control/templates/pretixcontrol/shredder/index.html:5
 #: control/templates/pretixcontrol/shredder/index.html:8
 msgid "Data shredder"
-msgstr ""
+msgstr "資料粉碎機"
 
 #: control/templates/pretixcontrol/shredder/download.html:15
 msgid "Step 1: Download data"
-msgstr ""
+msgstr "步驟 1：下載資料"
 
 #: control/templates/pretixcontrol/shredder/download.html:17
 msgid "(Optional) Step 1: Download data"
-msgstr ""
+msgstr "（選用）步驟 1：下載資料"
 
 #: control/templates/pretixcontrol/shredder/download.html:20
 msgid ""
@@ -20451,10 +20554,12 @@ msgid ""
 "might be required to keep some of this data on file. You can therefore "
 "download the following file and store it in a safe place:"
 msgstr ""
+"你即將永久刪除伺服器上的資料，即使你可能被要求將其中部分資料存檔保存。因此，"
+"你可以下載以下檔案並將其存放在安全的地方："
 
 #: control/templates/pretixcontrol/shredder/download.html:29
 msgid "Download data"
-msgstr ""
+msgstr "下載資料"
 
 #: control/templates/pretixcontrol/shredder/download.html:34
 msgid "Step 2: Confirm deletion"
@@ -20783,18 +20888,18 @@ msgstr "停用所選"
 #: eventyay_common/templates/eventyay_common/orders/orders.html:6
 #: eventyay_common/templates/eventyay_common/orders/orders.html:9
 msgid "My Orders"
-msgstr ""
+msgstr "我的訂單"
 
 #: control/templates/pretixcontrol/user/orders.html:68
 msgid "You have not made any orders yet."
-msgstr ""
+msgstr "你尚未下過任何訂單。"
 
 #: control/templates/pretixcontrol/user/reauth.html:12
 #, python-format
 msgid ""
 "We just want to make sure it's really you. Please re-authenticate with "
 "'%(login_provider)s'."
-msgstr ""
+msgstr "我們只是想確認真的是你。請使用「%(login_provider)s」重新驗證。"
 
 #: control/templates/pretixcontrol/user/reauth.html:14
 msgid ""
@@ -21012,20 +21117,22 @@ msgid ""
 "waiting list in, you could sell tickets worth an additional "
 "<strong>%(amount)s</strong>."
 msgstr ""
+"如果你能在活動中騰出足夠的空間，讓候補名單上的所有人都能入場，你就可以額外售"
+"出價值 <strong>%(amount)s</strong> 的門票。"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:105
 msgid "Successfully redeemed"
-msgstr ""
+msgstr "兌換成功"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:153
 msgid "On the list since"
-msgstr ""
+msgstr "在名單上自"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:182
 msgid ""
 "This entry has a modified priority. The higher this number is, the earlier "
 "this person will be assigned a voucher."
-msgstr ""
+msgstr "此項目的優先順序已被修改。此數字越高，這個人就會越早被分配到憑證。"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:198
 #, python-format
@@ -21034,22 +21141,25 @@ msgid ""
 "                                    Waiting, product %(num)sx available\n"
 "                                "
 msgstr ""
+"\n"
+"                                    候補中，產品 %(num)sx 可用\n"
+"                                "
 
 #: control/templates/pretixcontrol/waitinglist/index.html:203
 msgid "Waiting, product unavailable"
-msgstr ""
+msgstr "候補中，產品不可用"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:213
 msgid "Send a voucher"
-msgstr ""
+msgstr "傳送憑證"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:220
 msgid "Move to the top of the list"
-msgstr ""
+msgstr "移到名單頂端"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:224
 msgid "Move to the end of the list"
-msgstr ""
+msgstr "移到名單末端"
 
 #: control/templates/registration/register.html:8
 msgid "New staff user"
@@ -21057,11 +21167,11 @@ msgstr "新增工作人員"
 
 #: control/templatetags/hierarkey_form.py:44
 msgid "Organizer-level settings"
-msgstr ""
+msgstr "主辦方層級設定"
 
 #: control/templatetags/hierarkey_form.py:44
 msgid "Site-level settings"
-msgstr ""
+msgstr "網站層級設定"
 
 #: control/templatetags/hierarkey_form.py:47
 msgid ""
@@ -21070,6 +21180,9 @@ msgid ""
 "go to the organizer settings to change them or decouple them from the "
 "organizer account to change them for this event individually."
 msgstr ""
+"這些設定目前設於主辦方層級。如此一來，你可以輕鬆地同時為你所有的活動變更它們"
+"。你可以前往主辦方設定進行變更，或將它們與主辦方帳號解除連結，以便針對此活動"
+"個別變更。"
 
 #: control/templatetags/hierarkey_form.py:53
 msgid ""
@@ -21078,30 +21191,33 @@ msgid ""
 "global settings to change them or decouple them from the global settings to "
 "change them for this event individually."
 msgstr ""
+"這些設定目前設於全域層級。如此一來，你可以輕鬆地同時為所有主辦方變更它們。你"
+"可以前往全域設定進行變更，或將它們與全域設定解除連結，以便針對此活動個別變更"
+"。"
 
 #: control/templatetags/hierarkey_form.py:57
 msgid "Change only for this event"
-msgstr ""
+msgstr "僅針對此活動變更"
 
 #: control/templatetags/hierarkey_form.py:59
 msgid "Change only for this organizer"
-msgstr ""
+msgstr "僅針對此主辦方變更"
 
 #: control/templatetags/hierarkey_form.py:60
 msgid "Change for all events"
-msgstr ""
+msgstr "針對所有活動變更"
 
 #: control/templatetags/hierarkey_form.py:60
 msgid "Change for all organizers"
-msgstr ""
+msgstr "針對所有主辦方變更"
 
 #: control/views/__init__.py:144
 msgid "That page number is not an integer"
-msgstr ""
+msgstr "該頁碼不是整數"
 
 #: control/views/__init__.py:146
 msgid "That page number is less than 1"
-msgstr ""
+msgstr "該頁碼小於 1"
 
 #: control/views/admin.py:119
 msgid "Invalid field."
@@ -21118,7 +21234,7 @@ msgstr "只有已發布且未處於測試模式的活動可以顯示在首頁。
 #: control/views/admin.py:466 control/views/admin.py:490
 #: control/views/vouchers.py:174 control/views/vouchers.py:231
 msgid "The requested voucher does not exist."
-msgstr ""
+msgstr "請求的憑證不存在。"
 
 #: control/views/admin.py:496 control/views/admin.py:508
 #: control/views/vouchers.py:180 control/views/vouchers.py:193
@@ -22426,7 +22542,7 @@ msgstr "通知"
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:19
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:70
 msgid "Two-factor authentication"
-msgstr ""
+msgstr "雙因素驗證"
 
 #: eventyay_common/navigation.py:282
 msgid "OAuth applications"
@@ -22558,22 +22674,22 @@ msgstr "您在登入帳戶時將不再需要第二個裝置。"
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:4
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:19
 msgid "Enable two-factor authentication"
-msgstr ""
+msgstr "啟用雙因素驗證"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:23
 msgid "Do you really want to enable two-factor authentication?"
-msgstr ""
+msgstr "你確定要啟用雙因素驗證嗎？"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:26
 msgid ""
 "You will no longer be able to log in without one of your configured devices."
-msgstr ""
+msgstr "你將無法在沒有任何一個已設定的裝置的情況下登入。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-enable.html:27
 msgid ""
 "Please make sure to print out or copy the emergency tokens and store them in "
 "a safe place."
-msgstr ""
+msgstr "請確保列印或複製緊急權杰並將其存放在安全的地方。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:21
 msgid ""
@@ -22582,51 +22698,54 @@ msgid ""
 "but also an additional token that is generated e.g. by an app on your "
 "smartphone or a hardware token generator and that changes on a regular basis."
 msgstr ""
+"雙因素驗證是一種為你的帳戶增加額外安全性的方式。如果你啟用它，登入時不僅需要"
+"密碼，還需要一個額外的驗證碼，例如由智慧型手機上的 App 或硬體驗證碼產生器生成"
+"，並會定期變更。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:30
 msgid "Obligatory usage of two-factor authentication"
-msgstr ""
+msgstr "強制使用雙因素驗證"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:34
 msgid "This system enforces the usage of two-factor authentication!"
-msgstr ""
+msgstr "此系統強制使用雙因素驗證！"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:37
 msgid "Please set up at least one device below."
-msgstr ""
+msgstr "請在下方設定至少一個裝置。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:39
 msgid "Please activate two-factor authentication using the button below."
-msgstr ""
+msgstr "請使用下方的按鈕啟用雙因素驗證。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:48
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:64
 msgid "Two-factor status"
-msgstr ""
+msgstr "雙因素狀態"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:57
 msgid "Two-factor authentication is currently enabled."
-msgstr ""
+msgstr "目前已啟用雙因素驗證。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:73
 msgid "Two-factor authentication is currently disabled."
-msgstr ""
+msgstr "目前已停用雙因素驗證。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:76
 msgid "To enable it, you need to configure at least one device below."
-msgstr ""
+msgstr "要啟用，你需要在下方設定至少一個裝置。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:83
 msgid "Registered devices"
-msgstr ""
+msgstr "已註冊的裝置"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:106
 msgid "Add a new device"
-msgstr ""
+msgstr "新增新裝置"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:113
 msgid "Emergency tokens"
-msgstr ""
+msgstr "緊急權杰"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:117
 msgid ""
@@ -22634,27 +22753,29 @@ msgid ""
 "log in. We recommend to store them in a safe place, e.g. printed out or in a "
 "password manager. Every token can be used at most once."
 msgstr ""
+"如果你失去對裝置的存取權，可以使用下列其中一個密鑰登入。我們建議將其存放在安"
+"全的地方，例如列印出來或存放在密碼管理器中。每個權杰最多僅能使用一次。"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:119
 msgid "Unused tokens:"
-msgstr ""
+msgstr "未使用的權杰："
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:127
 msgid "Generate new emergency tokens"
-msgstr ""
+msgstr "產生新的緊急權杰"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-regenemergency.html:4
 #: eventyay_common/templates/eventyay_common/account/2fa-regenemergency.html:19
 msgid "Regenerate emergency codes"
-msgstr ""
+msgstr "重新產生緊急代碼"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-regenemergency.html:23
 msgid "Do you really want to regenerate your emergency codes?"
-msgstr ""
+msgstr "你確定要重新產生你的緊急代碼嗎？"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-regenemergency.html:26
 msgid "The old codes will no longer work."
-msgstr ""
+msgstr "舊代碼將不再有效。"
 
 #: eventyay_common/templates/eventyay_common/account/authorized-app-revoke.html:22
 #, python-format
@@ -22744,13 +22865,13 @@ msgstr "帳戶設定"
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:83
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:85
 msgid "On"
-msgstr ""
+msgstr "開"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:39
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:83
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:84
 msgid "Off"
-msgstr ""
+msgstr "關"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:44
 msgid "Change notification settings"
@@ -22798,52 +22919,52 @@ msgstr "傳送密碼設定連結"
 
 #: eventyay_common/templates/eventyay_common/account/notification-flip-off.html:4
 msgid "Disable notifications"
-msgstr ""
+msgstr "停用通知"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:4
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:19
 msgid "Notification settings"
-msgstr ""
+msgstr "通知設定"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:29
 msgid "Notifications are turned on according to the settings below."
-msgstr ""
+msgstr "通知會依照以下設定開啟。"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:38
 msgid "All notifications are turned off globally."
-msgstr ""
+msgstr "所有通知已在全域範圍內關閉。"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:46
 msgid "Choose event"
-msgstr ""
+msgstr "選擇事件"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:50
 msgid "All my events"
-msgstr ""
+msgstr "我的所有事件"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:58
 msgid "Save your modifications before switching events."
-msgstr ""
+msgstr "切換事件前請先儲存你的修改。"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:65
 msgid "Choose notifications to get"
-msgstr ""
+msgstr "選擇要接收的通知"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:69
 msgid "Notification type"
-msgstr ""
+msgstr "通知類型"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:70
 msgid "E-Mail notification"
-msgstr ""
+msgstr "電子郵件通知"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:83
 msgid "Global"
-msgstr ""
+msgstr "全域"
 
 #: eventyay_common/templates/eventyay_common/account/notification-settings.html:88
 msgid "You have no permission to receive this notification"
-msgstr ""
+msgstr "你沒有權限接收此通知"
 
 #: eventyay_common/templates/eventyay_common/account/oauth-app-delete.html:4
 #: eventyay_common/templates/eventyay_common/account/oauth-app-delete.html:19
@@ -23648,17 +23769,17 @@ msgstr "影片權限"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:5
 msgid "Delete team:"
-msgstr ""
+msgstr "刪除團隊："
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:7
 msgid ""
 "You cannot delete the team because there would be no one left who could "
 "change team permissions afterwards."
-msgstr ""
+msgstr "你無法刪除團隊，因為之後將沒有人能更改團隊權限。"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:17
 msgid "Are you sure you want to delete the team?"
-msgstr ""
+msgstr "你確定要刪除此團隊嗎？"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:11
 msgid "You will be able to add team members in the next step."
@@ -23666,7 +23787,7 @@ msgstr "您可以在下一步新增團隊成員。"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:7
 msgid "Team:"
-msgstr ""
+msgstr "團隊："
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:44
 msgid "Are you sure you want to remove this member?"
@@ -28907,11 +29028,11 @@ msgstr "必須選取「web」銷售管道。"
 
 #: plugins/sendmail/forms.py:33
 msgid "Send email to"
-msgstr ""
+msgstr "傳送電子郵件至"
 
 #: plugins/sendmail/forms.py:38 plugins/sendmail/forms.py:561
 msgid "Attachment"
-msgstr ""
+msgstr "附件"
 
 #: plugins/sendmail/forms.py:64 plugins/sendmail/forms.py:569
 msgid ""
@@ -28919,76 +29040,78 @@ msgid ""
 "being sorted into spam folders. We recommend only using PDFs of no more than "
 "2 MB in size."
 msgstr ""
+"傳送附件會增加您的電子郵件無法送達或被分類至垃圾郵件資料夾的機率。我們建議僅"
+"使用大小不超過 2 MB 的 PDF。"
 
 #: plugins/sendmail/forms.py:71
 msgid "Only send to people who bought"
-msgstr ""
+msgstr "僅傳送給已購買的使用者"
 
 #: plugins/sendmail/forms.py:75
 msgid "Filter check-in status"
-msgstr ""
+msgstr "篩選報到狀態"
 
 #: plugins/sendmail/forms.py:79
 msgid "Send to customers not checked in"
-msgstr ""
+msgstr "傳送給尚未報到的顧客"
 
 #: plugins/sendmail/forms.py:82
 msgid "Only send to customers of"
-msgstr ""
+msgstr "僅傳送給以下項目的顧客"
 
 #: plugins/sendmail/forms.py:88
 msgctxt "subevent"
 msgid "Only send to customers of dates starting at or after"
-msgstr ""
+msgstr "僅傳送給日期開始於或晚於以下日期的顧客"
 
 #: plugins/sendmail/forms.py:93
 msgctxt "subevent"
 msgid "Only send to customers of dates starting before"
-msgstr ""
+msgstr "僅傳送給日期開始於以下日期之前的顧客"
 
 #: plugins/sendmail/forms.py:98
 msgctxt "subevent"
 msgid "Only send to customers with orders created after"
-msgstr ""
+msgstr "僅傳送給訂單建立於以下時間之後的顧客"
 
 #: plugins/sendmail/forms.py:103
 msgctxt "subevent"
 msgid "Only send to customers with orders created before"
-msgstr ""
+msgstr "僅傳送給訂單建立於以下時間之前的顧客"
 
 #: plugins/sendmail/forms.py:143
 msgid "Everyone who created a ticket order"
-msgstr ""
+msgstr "所有建立票券訂單的人"
 
 #: plugins/sendmail/forms.py:148
 msgid ""
 "Every attendee (falling back to the order contact when no attendee email "
 "address is given)"
-msgstr ""
+msgstr "每位參加者（若未提供參加者電子郵件地址，則改用訂單聯絡人）"
 
 #: plugins/sendmail/forms.py:152
 msgid "Both (all order contact addresses and all attendee email addresses)"
-msgstr ""
+msgstr "兩者皆是（所有訂單聯絡人地址與所有參加者電子郵件地址）"
 
 #: plugins/sendmail/forms.py:172
 msgid "payment pending (except unapproved)"
-msgstr ""
+msgstr "付款待處理（不含未核准）"
 
 #: plugins/sendmail/forms.py:173
 msgid "approval pending"
-msgstr ""
+msgstr "核准待處理"
 
 #: plugins/sendmail/forms.py:175
 msgid "pending with payment overdue"
-msgstr ""
+msgstr "待處理且付款逾期"
 
 #: plugins/sendmail/forms.py:177
 msgid "Send to customers with order status"
-msgstr ""
+msgstr "傳送給訂單狀態為以下的顧客"
 
 #: plugins/sendmail/forms.py:202 plugins/sendmail/forms.py:206
 msgid "Send to customers checked in on list"
-msgstr ""
+msgstr "傳送給在名單上已報到的顧客"
 
 #: plugins/sendmail/forms.py:434
 msgid "New attachment"
@@ -29030,7 +29153,7 @@ msgstr "傳送給這些團隊的成員"
 
 #: plugins/sendmail/signals.py:94
 msgid "Email was sent"
-msgstr ""
+msgstr "電子郵件已傳送"
 
 #: plugins/sendmail/signals.py:95
 msgid "The order received a mass email."
@@ -30862,11 +30985,11 @@ msgstr "您的禮品卡將可使用至 %(expiry_date)s。"
 
 #: presale/templates/pretixpresale/event/order_cancel.html:103
 msgid "I want the refund as a gift card for later purchases"
-msgstr ""
+msgstr "我想將退款作為禮品卡，用於日後購買"
 
 #: presale/templates/pretixpresale/event/order_cancel.html:109
 msgid "I want the refund to be sent to my original payment method"
-msgstr ""
+msgstr "我想將退款退回至我原本的付款方式"
 
 #: presale/templates/pretixpresale/event/order_cancel.html:124
 #: presale/templates/pretixpresale/event/order_cancel.html:154
@@ -30875,11 +30998,13 @@ msgid ""
 "method. Depending on the payment method, please allow for up to two weeks "
 "before this appears on your statement."
 msgstr ""
+"退款金額將自動退回至您原本的付款方式。視付款方式而定，請最多等待兩週，此款項"
+"才會出現在您的對帳單上。"
 
 #: presale/templates/pretixpresale/event/order_cancel.html:131
 #: presale/templates/pretixpresale/event/order_cancel.html:162
 msgid "The following payment methods will be used to refund the money to you:"
-msgstr ""
+msgstr "以下付款方式將用於將款項退還給您："
 
 #: presale/templates/pretixpresale/event/order_cancel.html:142
 #: presale/templates/pretixpresale/event/order_cancel.html:173
@@ -30889,78 +31014,80 @@ msgid ""
 "to initiate the transfer manually. Please be patient as this might take a "
 "bit longer."
 msgstr ""
+"使用您所採用的付款方式，退款金額<strong>無法自動退回給您</strong>。因此，活動"
+"主辦方需要手動發起轉帳。請耐心等候，因為這可能需要更長的時間。"
 
 #: presale/templates/pretixpresale/event/order_cancel.html:195
 msgid "Yes, request cancellation"
-msgstr ""
+msgstr "是，申請取消"
 
 #: presale/templates/pretixpresale/event/order_change.html:6
 #: presale/templates/pretixpresale/event/order_modify.html:6
 msgid "Modify order"
-msgstr ""
+msgstr "修改訂單"
 
 #: presale/templates/pretixpresale/event/order_change.html:75
 #: presale/templates/pretixpresale/event/order_modify.html:88
 msgid "Save changes"
-msgstr ""
+msgstr "儲存變更"
 
 #: presale/templates/pretixpresale/event/order_modify.html:9
 #, python-format
 msgid "Modify order: %(code)s"
-msgstr ""
+msgstr "修改訂單：%(code)s"
 
 #: presale/templates/pretixpresale/event/order_modify.html:19
 msgid ""
 "Modifying your invoice address will not automatically generate a new "
 "invoice. Please contact us if you need a new invoice."
-msgstr ""
+msgstr "修改您的發票地址不會自動產生新的發票。若您需要新的發票，請聯絡我們。"
 
 #: presale/templates/pretixpresale/event/order_pay.html:4
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:5
 msgid "Pay order"
-msgstr ""
+msgstr "支付訂單"
 
 #: presale/templates/pretixpresale/event/order_pay.html:7
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:8
 #, python-format
 msgid "Pay order: %(code)s"
-msgstr ""
+msgstr "支付訂單：%(code)s"
 
 #: presale/templates/pretixpresale/event/order_pay_change.html:5
 msgid "Change payment method"
-msgstr ""
+msgstr "變更付款方式"
 
 #: presale/templates/pretixpresale/event/order_pay_change.html:8
 #, python-format
 msgid "Choose payment method: %(code)s"
-msgstr ""
+msgstr "選擇付款方式：%(code)s"
 
 #: presale/templates/pretixpresale/event/order_pay_change.html:13
 msgid ""
 "Please note: If you change your payment method, your order total will change "
 "by the amount displayed to the right of each method."
-msgstr ""
+msgstr "請注意：如果您變更付款方式，您的訂單總金額將依各方式右側所顯示的金額而變動。"
 
 #: presale/templates/pretixpresale/event/order_pay_change.html:46
 msgid "There are no alternative payment providers available for this order."
-msgstr ""
+msgstr "此訂單沒有可用的替代付款服務提供者。"
 
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:16
 msgid "Please confirm the following payment details."
-msgstr ""
+msgstr "請確認以下付款明細。"
 
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:22
 #, python-format
 msgid "Total: %(total)s"
-msgstr ""
+msgstr "總計：%(total)s"
 
 #: presale/templates/pretixpresale/event/position.html:7
 msgid "Registration details"
-msgstr ""
+msgstr "報名資料"
 
 #: presale/templates/pretixpresale/event/position.html:10
 msgid "Your registration"
-msgstr ""
+msgstr "您的報名"
 
 #: presale/templates/pretixpresale/event/position.html:29
 msgid "Your items"
