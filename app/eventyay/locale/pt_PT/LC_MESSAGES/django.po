@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 15:04+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-03-21 14:25+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Portuguese (Portugal) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_PT/>\n"
 "Language: pt_PT\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -73,7 +73,7 @@ msgstr "Temos novas sessões!"
 #: agenda/templates/agenda/changelog_block.html:125
 #, python-format
 msgid "%(quote_open)s%(title)s%(quote_close)s by %(speakers)s"
-msgstr ""
+msgstr "%(quote_open)s%(title)s%(quote_close)s por %(speakers)s"
 
 #: agenda/templates/agenda/changelog_block.html:35
 msgid "We have a new session: "
@@ -170,7 +170,7 @@ msgstr "Lista de mudanças público"
 #: agenda/templates/agenda/schedule.html:29
 #, python-format
 msgid "Exports and subscriptions below are for version %(version)s."
-msgstr ""
+msgstr "As exportações e subscrições abaixo são para a versão %(version)s."
 
 #: agenda/templates/agenda/schedule.html:82
 #, python-format
@@ -257,10 +257,13 @@ msgid ""
 "You're currently not logged in, so your favourited talks will only be stored "
 "locally in your browser."
 msgstr ""
+"De momento não tem sessão iniciada, pelo que as suas palestras favoritas "
+"serão apenas guardadas localmente no seu navegador."
 
 #: agenda/views/schedule.py:310
 msgid "Your favourites could only be saved locally in your browser."
 msgstr ""
+"Os seus favoritos apenas puderam ser guardados localmente no seu navegador."
 
 #: agenda/views/speaker.py:37 agenda/views/speaker.py:65
 #, fuzzy
@@ -784,6 +787,8 @@ msgid ""
 "Ask for an email address per order. The order confirmation will be sent to "
 "this email address."
 msgstr ""
+"Pedir um endereço de e-mail por encomenda. A confirmação da encomenda será "
+"enviada para este endereço de e-mail."
 
 #: base/configurations/default_setting.py:202
 #, fuzzy
@@ -818,14 +823,16 @@ msgstr ""
 #: base/configurations/default_setting.py:223
 msgid "Add the Wikimedia ID for users authenticated via Wikimedia"
 msgstr ""
+"Adicionar o ID da Wikimedia para utilizadores autenticados através da "
+"Wikimedia"
 
 #: base/configurations/default_setting.py:232
 msgid "Ask for a phone number per order"
-msgstr ""
+msgstr "Pedir um número de telefone por encomenda"
 
 #: base/configurations/default_setting.py:241
 msgid "Require a phone number per order"
-msgstr ""
+msgstr "Exigir um número de telefone por encomenda"
 
 #: base/configurations/default_setting.py:251
 msgid "Ask for invoice address"
@@ -1167,6 +1174,8 @@ msgstr ""
 #: base/configurations/default_setting.py:630
 msgid "Hide \"payment pending\" state on attendee-facing pages"
 msgstr ""
+"Ocultar o estado \"pagamento pendente\" em páginas visíveis para os "
+"participantes"
 
 #: base/configurations/default_setting.py:632
 msgid ""
@@ -1174,6 +1183,10 @@ msgid ""
 "but no indication of missing payment will be visible on the ticket pages of "
 "attendees who did not buy the ticket themselves."
 msgstr ""
+"O painel de instruções de pagamento continuará a ser mostrado ao "
+"participante principal, mas não será visível qualquer indicação de pagamento "
+"em falta nas páginas de bilhetes dos participantes que não compraram o "
+"bilhete eles próprios."
 
 #: base/configurations/default_setting.py:649
 msgid "Accept late payments"
@@ -1432,7 +1445,7 @@ msgstr "Idiomas do conteúdo"
 
 #: base/configurations/default_setting.py:900 control/forms/event.py:77
 msgid "Users will be able to submit proposals in these languages."
-msgstr ""
+msgstr "Os utilizadores poderão submeter propostas nestes idiomas."
 
 #: base/configurations/default_setting.py:916 base/models/event.py:742
 #: control/forms/event.py:147
@@ -1441,7 +1454,7 @@ msgstr "Idioma padrão"
 
 #: base/configurations/default_setting.py:926
 msgid "Region"
-msgstr ""
+msgstr "Região"
 
 #: base/configurations/default_setting.py:928
 msgid ""
@@ -1450,6 +1463,11 @@ msgid ""
 "less priority than the language and is therefore mostly relevant for "
 "languages used in different regions globally (like English)."
 msgstr ""
+"Será utilizada para determinar a formatação de data e hora, bem como o país "
+"predefinido para moradas e números de telefone dos participantes. Para a "
+"formatação, isto tem menos prioridade do que o idioma e, por isso, é "
+"sobretudo relevante para idiomas usados em diferentes regiões a nível global "
+"(como o inglês)."
 
 #: base/configurations/default_setting.py:941
 msgid "Show event times and dates on the ticket shop"
@@ -1617,6 +1635,8 @@ msgid ""
 "If you ask for a phone number, explain why you do so and what you will use "
 "the phone number for."
 msgstr ""
+"Se pedir um número de telefone, explique por que o faz e para que irá usar o "
+"número de telefone."
 
 #: base/configurations/default_setting.py:1112
 msgid "Allow users to download tickets"
@@ -1708,7 +1728,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:1205
 msgid "Require user to be logged in to place an order"
-msgstr ""
+msgstr "Exigir que o utilizador inicie sessão para fazer uma encomenda"
 
 #: base/configurations/default_setting.py:1207 control/forms/event.py:55
 msgid ""
@@ -1717,6 +1737,11 @@ msgid ""
 "redirected to the login page. The \"Continue as a Guest\" option will not be "
 "available for attendees in this event."
 msgstr ""
+"Se esta opção estiver ativada, os utilizadores têm de iniciar sessão antes "
+"de concluírem uma encomenda. Quando um utilizador clicar em \"Finalizar "
+"compra\" sem ter iniciado sessão, será redirecionado para a página de início "
+"de sessão. A opção \"Continuar como convidado\" não estará disponível para "
+"os participantes neste evento."
 
 #: base/configurations/default_setting.py:1219
 msgid "Show availability in event overviews"
@@ -1765,11 +1790,12 @@ msgstr ""
 #: base/configurations/default_setting.py:1259
 msgid "Hide all unavailable dates from calendar or list views"
 msgstr ""
+"Ocultar todas as datas indisponíveis nas vistas de calendário ou de lista"
 
 #: base/configurations/default_setting.py:1269
 #: base/configurations/default_setting.py:1278
 msgid "No modifications after order was submitted"
-msgstr ""
+msgstr "Não permitir modificações após a encomenda ser submetida"
 
 #: base/configurations/default_setting.py:1270
 #: base/configurations/default_setting.py:1279
@@ -1782,6 +1808,7 @@ msgstr "Apenas encomendas pendentes ou pagas podem ser alteradas."
 #: base/configurations/default_setting.py:1280
 msgid "Both the attendee and the person who ordered can make changes"
 msgstr ""
+"Tanto o participante como a pessoa que fez a encomenda podem fazer alterações"
 
 #: base/configurations/default_setting.py:1275
 #, fuzzy
@@ -1793,12 +1820,16 @@ msgstr "Os clientes já não pode modificar as suas encomendas"
 #: base/configurations/default_setting.py:1290
 msgid "Allow attendees to modify their information after they checked in."
 msgstr ""
+"Permitir que os participantes modifiquem as suas informações depois de terem "
+"feito check-in."
 
 #: base/configurations/default_setting.py:1291
 msgid ""
 "By default, no more modifications are possible for an order as soon as one "
 "of the tickets in the order has been checked in."
 msgstr ""
+"Por predefinição, não são possíveis mais modificações a uma encomenda assim "
+"que um dos bilhetes na encomenda tiver sido validado na entrada."
 
 #: base/configurations/default_setting.py:1301
 msgid "Last date of modifications"
@@ -1942,7 +1973,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:1475
 msgid "Step size for reduction amount"
-msgstr ""
+msgstr "Tamanho do passo para o valor da redução"
 
 #: base/configurations/default_setting.py:1477
 msgid ""
@@ -1950,6 +1981,9 @@ msgid ""
 "set this to e.g. 10, they will only be able to choose values in increments "
 "of 10."
 msgstr ""
+"Por predefinição, os participantes podem escolher um valor arbitrário para "
+"si manter. Se definir isto, por exemplo, como 10, apenas poderão escolher "
+"valores em incrementos de 10."
 
 #: base/configurations/default_setting.py:1489
 msgid ""
@@ -2021,6 +2055,8 @@ msgid ""
 "Tickets will never be attached if they're larger than {size} to avoid email "
 "delivery problems."
 msgstr ""
+"Os bilhetes nunca serão anexados se forem maiores do que {size}, para evitar "
+"problemas de entrega de email."
 
 #: base/configurations/default_setting.py:1580
 msgid "Attach calendar files"
@@ -2615,7 +2651,7 @@ msgstr "Cor de fundo da página"
 
 #: base/configurations/default_setting.py:2087
 msgid "Scroll-over color"
-msgstr ""
+msgstr "Cor ao passar com o cursor"
 
 #: base/configurations/default_setting.py:2103
 msgid "Use round edges"
@@ -2643,6 +2679,11 @@ msgid ""
 "middle part remains visible on smaller screens. We recommend an image at "
 "least 1170 px wide and 120 px in height for best results."
 msgstr ""
+"Esta imagem aparece no topo de todas as páginas do evento, substituindo a "
+"cor ou o padrão predefinidos. Está centrada e não é esticada, garantindo que "
+"a parte central permanece visível em ecrãs mais pequenos. Recomendamos uma "
+"imagem com pelo menos 1170 px de largura e 120 px de altura para melhores "
+"resultados."
 
 #: base/configurations/default_setting.py:2148 base/models/event.py:719
 msgid "Logo"
@@ -2698,6 +2739,11 @@ msgid ""
 "middle part remains visible on smaller screens. We recommend an image 1140 "
 "px wide and 120 px in height (can be increased with the setting below)."
 msgstr ""
+"Esta imagem aparece no topo de todas as páginas do organizador, substituindo "
+"a cor ou o padrão predefinidos. Está centrada e não é esticada, garantindo "
+"que a parte central permanece visível em ecrãs mais pequenos. Recomendamos "
+"uma imagem com 1140 px de largura e 120 px de altura (pode ser aumentada com "
+"a definição abaixo)."
 
 #: base/configurations/default_setting.py:2218
 msgid "Social media image"
@@ -2817,6 +2863,8 @@ msgid ""
 "This message will be shown after an order has been created successfully. It "
 "will be shown in additionalto the default text."
 msgstr ""
+"Esta mensagem será mostrada depois de uma encomenda ser criada com sucesso. "
+"Será mostrada em adicional ao texto predefinido."
 
 #: base/configurations/default_setting.py:2354
 #, fuzzy
@@ -2972,7 +3020,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2497
 msgid "Privacy Policy URL"
-msgstr ""
+msgstr "URL da Política de Privacidade"
 
 #: base/configurations/default_setting.py:2499
 #, fuzzy
@@ -3006,11 +3054,11 @@ msgstr "Mostrar botão para copiar entrada do utilizador de outros produtos"
 
 #: base/configurations/default_setting.py:2537
 msgid "Start page header background image"
-msgstr ""
+msgstr "Imagem de fundo do cabeçalho da página inicial"
 
 #: base/configurations/default_setting.py:2540
 msgid "Displayed as the background image on the public start page."
-msgstr ""
+msgstr "Apresentada como imagem de fundo na página inicial pública."
 
 #: base/configurations/default_setting.py:2554
 #, fuzzy
@@ -3020,7 +3068,7 @@ msgstr "Padrão do cabeçalho da página principal"
 
 #: base/configurations/default_setting.py:2556
 msgid "Short text displayed on the public start page banner."
-msgstr ""
+msgstr "Texto curto apresentado no banner da página inicial pública."
 
 #: base/configurations/default_setting.py:2576
 msgid "Most common English titles"
@@ -3168,7 +3216,7 @@ msgstr "Exigir nome do cliente"
 #: base/configurations/default_setting.py:2885
 msgctxt "person_name_sample"
 msgid "MA"
-msgstr ""
+msgstr "MA"
 
 #: base/email.py:310 eventyay_common/views/event.py:286
 #: orga/templates/orga/cfp/submissiontype/list.html:57
@@ -3674,7 +3722,7 @@ msgstr "Montante a pagar"
 
 #: base/exporters/orderlist.py:83
 msgid "Show multiple choice answers grouped in one column"
-msgstr ""
+msgstr "Mostrar respostas de escolha múltipla agrupadas numa coluna"
 
 #: base/exporters/orderlist.py:94
 #, fuzzy
@@ -3699,6 +3747,8 @@ msgid ""
 "Only include orders including at least one ticket for a date on or after "
 "this date. Will also include other dates in case of mixed orders!"
 msgstr ""
+"Incluir apenas encomendas que incluam pelo menos um bilhete para uma data em "
+"ou após esta data. Também incluirá outras datas no caso de encomendas mistas!"
 
 #: base/exporters/orderlist.py:121
 #, fuzzy
@@ -3766,7 +3816,7 @@ msgstr "E-mail"
 
 #: base/exporters/orderlist.py:321
 msgid "Wikimedia username"
-msgstr ""
+msgstr "Nome de utilizador da Wikimedia"
 
 #: base/exporters/orderlist.py:324 base/exporters/orderlist.py:542
 #: base/exporters/orderlist.py:668 base/exporters/waitinglist.py:87
@@ -4357,6 +4407,8 @@ msgid ""
 "Password must be at least 8 characters and include a letter, a number, and a "
 "special character."
 msgstr ""
+"A palavra-passe deve ter, no mínimo, 8 caracteres e incluir uma letra, um "
+"número e um carácter especial."
 
 #: base/forms/auth.py:43 base/forms/auth.py:153
 #: presale/templates/pretixpresale/fragment_modals.html:97
@@ -4369,7 +4421,7 @@ msgstr "Esta combinação de credenciais não é conhecida pelo nosso sistema."
 
 #: base/forms/auth.py:47 base/forms/user.py:24
 msgid "For security reasons, please wait 5 minutes before you try again."
-msgstr ""
+msgstr "Por motivos de segurança, aguarde 5 minutos antes de tentar novamente."
 
 #: base/forms/auth.py:48 base/forms/auth.py:243
 msgid "This account is inactive."
@@ -4409,7 +4461,7 @@ msgstr "Referência interna"
 #: base/forms/questions.py:269
 msgctxt "phonenumber"
 msgid "Phone number (without international area code)"
-msgstr ""
+msgstr "Número de telefone (sem código de área internacional)"
 
 #: base/forms/questions.py:435 base/forms/questions.py:808
 msgid "Street and Number"
@@ -4873,6 +4925,9 @@ msgid ""
 "We recommend uploading an image at least 400px wide. A square image works "
 "best, as we display it in a circle in several places."
 msgstr ""
+"Recomendamos o carregamento de uma imagem com, pelo menos, 400 px de "
+"largura. Uma imagem quadrada funciona melhor, uma vez que a exibimos num "
+"círculo em vários locais."
 
 #: base/models/auth.py:254
 msgid "Retrieve profile picture via gravatar"
@@ -4897,6 +4952,8 @@ msgid ""
 "Please enter the name of the author or source of image and a link if "
 "applicable."
 msgstr ""
+"Introduza, por favor, o nome do autor ou da fonte da imagem e uma ligação, "
+"se aplicável."
 
 #: base/models/auth.py:269 orga/templates/orga/submission/speakers.html:47
 #, fuzzy
@@ -4909,6 +4966,8 @@ msgid ""
 "Please enter the name of the license of the photo and link to it if "
 "applicable."
 msgstr ""
+"Introduza, por favor, o nome da licença da fotografia e a ligação para a "
+"mesma, se aplicável."
 
 #: base/models/auth.py:297
 #: control/templates/pretixcontrol/admin/systemconfig.html:86
@@ -4982,10 +5041,19 @@ msgid ""
 "All the best,\n"
 "the eventyay team"
 msgstr ""
+"Olá {name},\n"
+"\n"
+"A palavra-passe da sua conta eventyay acabou de ser alterada.\n"
+"\n"
+"Se não alterou a sua palavra-passe, contacte imediatamente a administração "
+"do site.\n"
+"\n"
+"Cumprimentos,\n"
+"a equipa eventyay"
 
 #: base/models/auth.py:773
 msgid "[eventyay] Password changed"
-msgstr ""
+msgstr "[eventyay] Palavra-passe alterada"
 
 #: base/models/auth_token.py:65 base/models/event.py:898
 #: cfp/templates/cfp/index.html:4 cfp/templates/cfp/index.html:8
@@ -5242,7 +5310,7 @@ msgstr "Download ticket"
 
 #: base/models/event.py:598
 msgid "Talk pages are published"
-msgstr ""
+msgstr "As páginas de discussão são publicadas"
 
 #: base/models/event.py:601
 msgid "Event currency"
@@ -5347,7 +5415,7 @@ msgstr "Adicionar ao carrinho"
 
 #: base/models/event.py:673
 msgid "Create Video platform for Event."
-msgstr ""
+msgstr "Criar plataforma de Vídeo para o Evento."
 
 #: base/models/event.py:682
 msgid ""
@@ -5407,6 +5475,9 @@ msgid ""
 "When you upload a logo, the event name and date will not appear in the "
 "header. The logo scales to 140 px in height while maintaining aspect ratio."
 msgstr ""
+"Quando carrega um logótipo, o nome e a data do evento não aparecerão no "
+"cabeçalho. O logótipo é dimensionado para 140 px de altura, mantendo a "
+"proporção."
 
 #: base/models/event.py:745
 msgid "Featured sessions text"
@@ -5485,16 +5556,16 @@ msgstr "Precisa configurar pelo menos uma quota para vender qualquer coisa."
 
 #: base/models/event.py:1946
 msgid "You have unpaid invoices, please pay them before going live."
-msgstr ""
+msgstr "Tem faturas em atraso; por favor, pague-as antes de entrar em direto."
 
 #: base/models/event.py:1951
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
-msgstr ""
+msgstr "Tem de preencher o parâmetro meta \"{property}\"."
 
 #: base/models/event.py:1998
 msgid "You need to fill the billing information."
-msgstr ""
+msgstr "Tem de preencher os dados de faturação."
 
 #: base/models/event.py:2087
 msgid ""
@@ -5623,6 +5694,9 @@ msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
 msgstr ""
+"Se selecionado, um evento só pode entrar em direto se a propriedade estiver "
+"definida. Em séries de eventos, é sempre opcional definir um valor para "
+"datas individuais"
 
 #: base/models/event.py:3060
 #, fuzzy
@@ -5635,10 +5709,14 @@ msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
 msgstr ""
+"Se deixar isto em branco, qualquer valor é permitido. Caso contrário, "
+"introduza um valor possível por linha."
 
 #: base/models/event.py:3067
 msgid "A property can either be required or have a default value, not both."
 msgstr ""
+"Uma propriedade pode ser obrigatória ou ter um valor predefinido, mas não "
+"ambos."
 
 #: base/models/event.py:3069
 #, fuzzy
@@ -5785,7 +5863,7 @@ msgstr "A sua proposta: {submission_title}"
 
 #: base/models/mail.py:36
 msgid "New proposal (organiser notification)"
-msgstr ""
+msgstr "Nova proposta (notificação do organizador)"
 
 #: base/models/mail.py:37
 #, fuzzy
@@ -5801,11 +5879,11 @@ msgstr "Feed da proposta"
 
 #: base/models/mail.py:39
 msgid "Add a speaker to a proposal (new account)"
-msgstr ""
+msgstr "Adicionar um orador a uma proposta (nova conta)"
 
 #: base/models/mail.py:40
 msgid "Add a speaker to a proposal (existing account)"
-msgstr ""
+msgstr "Adicionar um orador a uma proposta (conta existente)"
 
 #: base/models/mail.py:41 orga/templates/orga/cfp/question/remind.html:21
 #: orga/templates/orga/includes/mail_template_role.html:9
@@ -5851,6 +5929,8 @@ msgid ""
 "- First missing field\n"
 "- Second missing field"
 msgstr ""
+"- Primeiro campo em falta\n"
+"- Segundo campo em falta"
 
 #: base/models/mail.py:232
 #, fuzzy
@@ -6098,6 +6178,8 @@ msgstr "Apenas reembolso"
 msgid ""
 "May be shown to the end user or used e.g. as part of a payment reference."
 msgstr ""
+"Pode ser apresentado ao utilizador final ou usado, por exemplo, como parte "
+"de uma referência de pagamento."
 
 #: base/models/orders.py:2058
 msgid "Payment fee"
@@ -6167,15 +6249,20 @@ msgid ""
 "There must be at least one team with the permission to change teams, as "
 "otherwise nobody can create new teams or grant permissions to existing teams."
 msgstr ""
+"Deve existir pelo menos uma equipa com permissão para alterar equipas, caso "
+"contrário ninguém poderá criar novas equipas ou conceder permissões a "
+"equipas existentes."
 
 #: base/models/organizer.py:58
 msgid "Nobody on your teams has the permission to create new events."
-msgstr ""
+msgstr "Ninguém nas suas equipas tem permissão para criar novos eventos."
 
 #: base/models/organizer.py:65
 msgid ""
 "Nobody on your teams has the permission to change organizer-level settings."
 msgstr ""
+"Ninguém nas suas equipas tem permissão para alterar definições ao nível de "
+"organizador."
 
 #: base/models/organizer.py:76
 #, python-brace-format
@@ -6183,6 +6270,8 @@ msgid ""
 "There must be at least one team with access to every event. Currently, "
 "nobody has access to {event_name}."
 msgstr ""
+"Deve existir, pelo menos, uma equipa com acesso a cada evento. Atualmente, "
+"ninguém tem acesso a {event_name}."
 
 #: base/models/organizer.py:86
 #, python-brace-format
@@ -6190,6 +6279,8 @@ msgid ""
 "Nobody on your teams has the permissions to change settings for the event "
 "{event_name}"
 msgstr ""
+"Ninguém nas suas equipas tem permissões para alterar as definições do evento "
+"{event_name}"
 
 #: base/models/organizer.py:115
 msgid ""
@@ -6293,6 +6384,9 @@ msgid ""
 "information about attendees. Users with \"can change orders\" can also "
 "perform check-ins."
 msgstr ""
+"Isto inclui a pesquisa de participantes, que pode ser usada para obter "
+"informações pessoais sobre os participantes. Os utilizadores com \"pode "
+"alterar encomendas\" também podem efetuar check-ins."
 
 #: base/models/organizer.py:378
 msgid "Can view vouchers"
@@ -6323,7 +6417,7 @@ msgstr "Equipas"
 
 #: base/models/organizer.py:426
 msgid "Reviewer Manager — can edit and manage submissions"
-msgstr ""
+msgstr "Gestor de Revisores — pode editar e gerir submissões"
 
 #: base/models/organizer.py:428
 msgid ""
@@ -6331,6 +6425,10 @@ msgid ""
 "waitlist), manage submission metadata, and oversee the review workflow. This "
 "provides full management permissions beyond standard reviewing."
 msgstr ""
+"Pode editar os detalhes da submissão, alterar os estados das propostas "
+"(aceitar/rejeitar/lista de espera), gerir os metadados da submissão e "
+"supervisionar o fluxo de trabalho de revisão. Isto fornece permissões de "
+"gestão completas para além da revisão padrão."
 
 #: base/models/organizer.py:435
 #, fuzzy
@@ -6343,6 +6441,8 @@ msgid ""
 "Can review and provide feedback on submissions but cannot edit details or "
 "change submission states."
 msgstr ""
+"Pode rever e fornecer feedback sobre as submissões, mas não pode editar os "
+"detalhes nem alterar os estados das submissões."
 
 #: base/models/organizer.py:441
 msgid "Always hide speaker names"
@@ -6378,15 +6478,15 @@ msgstr "Pode criar eventos"
 
 #: base/models/organizer.py:458
 msgid "Allows creating chat/video channels inside Eventyay Video."
-msgstr ""
+msgstr "Permite criar canais de chat/vídeo dentro do Eventyay Video."
 
 #: base/models/organizer.py:462
 msgid "Video: Can send direct messages"
-msgstr ""
+msgstr "Vídeo: Pode enviar mensagens diretas"
 
 #: base/models/organizer.py:463
 msgid "Grants permission to open new direct message conversations."
-msgstr ""
+msgstr "Concede permissão para abrir novas conversas de mensagens diretas."
 
 #: base/models/organizer.py:467
 #, fuzzy
@@ -6396,7 +6496,7 @@ msgstr "Pode criar eventos"
 
 #: base/models/organizer.py:468
 msgid "Allows posting announcements in the Eventyay Video interface."
-msgstr ""
+msgstr "Permite publicar anúncios na interface do Eventyay Video."
 
 #: base/models/organizer.py:472
 #, fuzzy
@@ -6406,15 +6506,16 @@ msgstr "Pode ver vouchers"
 
 #: base/models/organizer.py:473
 msgid "Allows access to the user directory in Eventyay Video."
-msgstr ""
+msgstr "Permite o acesso ao diretório de utilizadores no Eventyay Video."
 
 #: base/models/organizer.py:477
 msgid "Video: Can message, ban, and silence users"
-msgstr ""
+msgstr "Vídeo: Pode enviar mensagens, banir e silenciar utilizadores"
 
 #: base/models/organizer.py:478
 msgid "Allows moderating users (ban, silence, reactivate) in Eventyay Video."
 msgstr ""
+"Permite moderar utilizadores (banir, silenciar, reativar) no Eventyay Video."
 
 #: base/models/organizer.py:482
 #, fuzzy
@@ -6424,7 +6525,7 @@ msgstr "Os revisores podem escrever e editar críticas"
 
 #: base/models/organizer.py:483
 msgid "Allows editing and deleting rooms inside Eventyay Video."
-msgstr ""
+msgstr "Permite editar e eliminar salas dentro do Eventyay Video."
 
 #: base/models/organizer.py:487
 #, fuzzy
@@ -6434,7 +6535,7 @@ msgstr "Os revisores podem escrever e editar críticas"
 
 #: base/models/organizer.py:488
 msgid "Allows managing kiosk displays inside Eventyay Video."
-msgstr ""
+msgstr "Permite gerir ecrãs de quiosque dentro do Eventyay Video."
 
 #: base/models/organizer.py:492
 #, fuzzy
@@ -6444,7 +6545,7 @@ msgstr "Confirmações"
 
 #: base/models/organizer.py:493
 msgid "Allows editing the global Eventyay Video configuration."
-msgstr ""
+msgstr "Permite editar a configuração global do Eventyay Video."
 
 #: base/models/organizer.py:531
 #, python-brace-format
@@ -6490,12 +6591,12 @@ msgstr "Foi convidado para uma equipa da organização"
 #: base/models/organizer.py:682
 #: control/forms/organizer_forms/organizer_form.py:53
 msgid "Primary Contact Name"
-msgstr ""
+msgstr "Nome do contacto principal"
 
 #: base/models/organizer.py:687
 #: control/forms/organizer_forms/organizer_form.py:63
 msgid "Primary Contact Email"
-msgstr ""
+msgstr "E-mail do contacto principal"
 
 #: base/models/organizer.py:692
 #: control/forms/organizer_forms/organizer_form.py:74
@@ -6553,35 +6654,39 @@ msgstr "Data de configuração"
 #: base/models/page.py:9
 #: control/templates/pretixcontrol/admin/pages/index.html:29
 msgid "Page title"
-msgstr ""
+msgstr "Título da página"
 
 #: base/models/page.py:13 control/views/pages.py:64
 msgid "URL form"
-msgstr ""
+msgstr "Formulário de URL"
 
 #: base/models/page.py:15
 msgid ""
 "This will be used to generate the URL of the page. Please only use latin "
 "letters, numbers, dots and dashes. You cannot change this afterwards."
 msgstr ""
+"Isto será usado para gerar o URL da página. Utilize apenas letras latinas, "
+"números, pontos e hífens. Não poderá alterar isto posteriormente."
 
 #: base/models/page.py:20
 msgid "Show link on the website start page"
-msgstr ""
+msgstr "Mostrar ligação na página inicial do site"
 
 #: base/models/page.py:22
 msgid "Show in header menu on all pages"
-msgstr ""
+msgstr "Mostrar no menu do cabeçalho em todas as páginas"
 
 #: base/models/page.py:23
 msgid "Show in website footer menu on all pages"
-msgstr ""
+msgstr "Mostrar no menu do rodapé do site em todas as páginas"
 
 #: base/models/page.py:27
 msgid ""
 "Require the user to acknowledge this page before the sign up is created "
 "(e.g. for terms of service)."
 msgstr ""
+"Exigir que o utilizador reconheça esta página antes de a inscrição ser "
+"criada (por exemplo, para termos de serviço)."
 
 #: base/models/page.py:30
 #, fuzzy
@@ -7099,11 +7204,11 @@ msgstr "Confirmado"
 
 #: base/models/product.py:1142 base/models/question.py:54
 msgid "Radio button (Choose one option)"
-msgstr ""
+msgstr "Botão de opção (Escolher uma opção)"
 
 #: base/models/product.py:1143 base/models/question.py:55
 msgid "Checkbox (Choose one or several options)"
-msgstr ""
+msgstr "Caixa de seleção (Escolher uma ou várias opções)"
 
 #: base/models/product.py:1144 base/models/question.py:53
 msgid "File upload"
@@ -7143,6 +7248,10 @@ msgid ""
 "Unlike hidden questions (which are system-level), active controls visibility "
 "and can be toggled by event organizers."
 msgstr ""
+"As perguntas inativas não são mostradas aos clientes durante o checkout ou o "
+"check-in. Ao contrário das perguntas ocultas (que são ao nível do sistema), "
+"a opção ativo controla a visibilidade e pode ser alternada pelos "
+"organizadores do evento."
 
 #: base/models/product.py:1181
 msgid "Help text"
@@ -7177,6 +7286,8 @@ msgstr "Pergunte durante o check-in em vez de no processo de compra de bilhetes"
 #: base/models/product.py:1198
 msgid "Not supported by all check-in apps for all question types."
 msgstr ""
+"Não suportado por todas as aplicações de check-in para todos os tipos de "
+"pergunta."
 
 #: base/models/product.py:1202 control/forms/product.py:82
 #, fuzzy
@@ -7193,6 +7304,12 @@ msgid ""
 "not need to see, such as internal seat assignment, VIP status, or internal "
 "notes."
 msgstr ""
+"Este campo e o respetivo campo de entrada são invisíveis para os clientes na "
+"loja pública de bilhetes. Esta funcionalidade destina-se a utilização "
+"interna. Apenas os membros da equipa com sessão iniciada no painel de "
+"controlo podem ver e preencher este campo. O objetivo é tomar notas internas "
+"ou acompanhar informação que o cliente não precisa de ver, como atribuição "
+"interna de lugares, estado VIP ou notas internas."
 
 #: base/models/product.py:1211
 msgid "Print answer on invoices"
@@ -7621,7 +7738,7 @@ msgstr ""
 #: base/models/question.py:324
 #: orga/templates/orga/cfp/talkquestion/detail.html:76
 msgid "Response"
-msgstr ""
+msgstr "Resposta"
 
 #: base/models/review.py:33
 msgid "Leave empty to use this category for all tracks."
@@ -7641,7 +7758,7 @@ msgstr ""
 
 #: base/models/review.py:56
 msgid "You need to keep at least one non-independent score category!"
-msgstr ""
+msgstr "Tem de manter pelo menos uma categoria de pontuação não independente!"
 
 #: base/models/review.py:128
 msgid "What do you think?"
@@ -7786,7 +7903,7 @@ msgstr "A sala não está disponível no horário agendado."
 
 #: base/models/schedule.py:377
 msgid "Another session in the same room overlaps with this one."
-msgstr ""
+msgstr "Outra sessão na mesma sala sobrepõe-se a esta."
 
 #: base/models/schedule.py:403
 #, fuzzy, python-brace-format
@@ -8146,11 +8263,11 @@ msgstr ""
 #: base/models/submission.py:878
 #, python-brace-format
 msgid "{title_in_quotes} by {list_of_speakers}"
-msgstr ""
+msgstr "{title_in_quotes} por {list_of_speakers}"
 
 #: base/models/submission.py:1083
 msgid "List favourite talk"
-msgstr ""
+msgstr "Listar palestra favorita"
 
 #: base/models/tag.py:28 base/models/track.py:38
 #: orga/templates/orga/cfp/track/list.html:44
@@ -9453,7 +9570,7 @@ msgstr "Endereços de factura"
 
 #: base/pdf.py:416
 msgid "Sesame Street 42"
-msgstr ""
+msgstr "Rua Sésamo 42"
 
 #: base/pdf.py:425
 #, fuzzy
@@ -9495,7 +9612,7 @@ msgstr "Cidade do Endereço da Factura"
 
 #: base/pdf.py:456
 msgid "Atlantis"
-msgstr ""
+msgstr "Atlântida"
 
 #: base/pdf.py:465
 msgid "List of Add-Ons"
@@ -9958,12 +10075,16 @@ msgid ""
 "Only one ticket per user is allowed for a product in your cart. You already "
 "have a ticket."
 msgstr ""
+"Apenas é permitido um bilhete por utilizador para um produto no seu "
+"carrinho. Já tem um bilhete."
 
 #: base/services/cart.py:140
 msgid ""
 "Only one ticket per user is allowed for this product. Quantity has been "
 "adjusted to 1."
 msgstr ""
+"Apenas é permitido um bilhete por utilizador para este produto. A quantidade "
+"foi ajustada para 1."
 
 #: base/services/checkin.py:409
 msgid "This order position has been canceled."
@@ -10001,6 +10122,8 @@ msgid ""
 "Your data table is too big for a PDF page. Please reduce the amount of data "
 "you are exporting."
 msgstr ""
+"A sua tabela de dados é demasiado grande para uma página PDF. Reduza a "
+"quantidade de dados que está a exportar."
 
 #: base/services/export.py:65 base/services/export.py:136
 #, fuzzy, python-brace-format
@@ -10326,6 +10449,8 @@ msgid ""
 "Only one ticket per user is allowed for this product. You already have a "
 "ticket."
 msgstr ""
+"Apenas é permitido um bilhete por utilizador para este produto. Já tem um "
+"bilhete."
 
 #: base/services/orders.py:1318
 #, python-format
@@ -10513,6 +10638,12 @@ msgid ""
 "Best regards,\n"
 "Your eventyay team"
 msgstr ""
+"Olá!\n"
+"\n"
+"Está disponível uma atualização para a sua instalação do eventyay.\n"
+"Consulte o eventyay.com para mais informações.\n"
+"Com os melhores cumprimentos,\n"
+"A sua equipa do eventyay"
 
 #: base/services/update_check.py:110 base/services/update_check.py:117
 #, python-format
@@ -11346,7 +11477,7 @@ msgstr ""
 
 #: cfp/templates/cfp/event/recover.html:25
 msgid "Set your password to access your profile and proposals"
-msgstr ""
+msgstr "Defina a sua palavra-passe para aceder ao seu perfil e propostas"
 
 #: cfp/templates/cfp/event/submission_base.html:12
 #: orga/templates/orga/submission/content_edit.html:29
@@ -11365,7 +11496,7 @@ msgstr "Por favor, só fazer upload de ficheiros CSV."
 
 #: cfp/templates/cfp/event/submission_base.html:59
 msgid "(will be preserved if you don't upload a new file)"
-msgstr ""
+msgstr "(será preservado se não carregar um novo ficheiro)"
 
 #: cfp/templates/cfp/event/submission_base.html:71
 msgid "Save as draft"
@@ -11917,6 +12048,8 @@ msgid ""
 "The file you uploaded has a very large number of pixels, please upload a "
 "picture with smaller dimensions."
 msgstr ""
+"O ficheiro que carregou tem um número muito elevado de píxeis; carregue uma "
+"imagem com dimensões menores."
 
 #: common/image.py:65
 msgid ""
@@ -12296,7 +12429,7 @@ msgstr "Correio personalizado"
 
 #: common/log_display.py:273
 msgid "Response to custom field"
-msgstr ""
+msgstr "Resposta ao campo personalizado"
 
 #: common/log_display.py:276 orga/templates/orga/base.html:251
 #: orga/templates/orga/cfp/text.html:14 orga/templates/orga/cfp/text.html:19
@@ -12432,18 +12565,25 @@ msgid ""
 "Tickets and talk pages are in private test mode. Only event team members and "
 "system administrators can see them."
 msgstr ""
+"Os bilhetes e as páginas das palestras estão em modo de teste privado. "
+"Apenas os membros da equipa do evento e os administradores do sistema os "
+"podem ver."
 
 #: common/templates/common/base_public.html:110
 msgid ""
 "Tickets are in private test mode. Only event team members and system "
 "administrators can see them."
 msgstr ""
+"Os bilhetes estão em modo de teste privado. Apenas os membros da equipa do "
+"evento e os administradores do sistema os podem ver."
 
 #: common/templates/common/base_public.html:114
 msgid ""
 "Talk pages are in private test mode. Only event team members and system "
 "administrators can see them."
 msgstr ""
+"As páginas das palestras estão em modo de teste privado. Apenas os membros "
+"da equipa do evento e os administradores do sistema as podem ver."
 
 #: common/templates/common/forms/field.html:7
 #: control/templates/pretixcontrol/event/fragment_geodata.html:14
@@ -12479,6 +12619,8 @@ msgid ""
 "When enabled, event language follows your UI language whenever that language "
 "is available for this event."
 msgstr ""
+"Quando ativado, o idioma do evento segue o idioma da sua IU sempre que esse "
+"idioma estiver disponível para este evento."
 
 #: common/templates/common/fragment_header_user.html:41
 #, fuzzy
@@ -12558,7 +12700,7 @@ msgstr "Todos os oradores"
 #: common/templates/common/fragment_nav.html:58
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
 msgid "Call for Speakers (Closed)"
-msgstr ""
+msgstr "Convite para Oradores (Encerrado)"
 
 #: common/templates/common/fragment_nav.html:67
 #: common/templates/common/fragment_nav.html:71
@@ -12591,7 +12733,7 @@ msgstr "Painel de controle"
 #: eventyay_common/views/dashboards.py:386
 #: orga/templates/orga/event/live.html:15
 msgid "Talks"
-msgstr ""
+msgstr "Palestras"
 
 #: common/templates/common/fragment_profile_dropdown.html:31
 #, fuzzy
@@ -12632,12 +12774,12 @@ msgstr "Nenhum ficheiro fornecido"
 
 #: common/templates/common/question_answer.html:16
 msgid "No response"
-msgstr ""
+msgstr "Sem resposta"
 
 #: common/templates/common/redirect.html:7
 #: common/templates/common/redirect.html:13
 msgid "Redirect"
-msgstr ""
+msgstr "Redirecionar"
 
 #: common/templates/common/redirect.html:15
 #, python-format
@@ -12645,15 +12787,17 @@ msgid ""
 "The link you clicked on wants to redirect you to a destination on the "
 "website %(host)s."
 msgstr ""
+"A ligação em que clicou pretende redirecioná-lo para um destino no website %"
+"(host)s."
 
 #: common/templates/common/redirect.html:18
 msgid "Please only proceed if you trust this website to be safe."
-msgstr ""
+msgstr "Prossiga apenas se confiar que este website é seguro."
 
 #: common/templates/common/redirect.html:24
 #, python-format
 msgid "Proceed to %(host)s"
-msgstr ""
+msgstr "Prosseguir para %(host)s"
 
 #: common/templatetags/copyable.py:13
 #: control/templates/pretixcontrol/admin/pages/form.html:39
@@ -13099,15 +13243,15 @@ msgstr "Inglês"
 
 #: config/settings.py:606
 msgid "English (United States)"
-msgstr ""
+msgstr "Inglês (Estados Unidos)"
 
 #: config/settings.py:615
 msgid "English (United Kingdom)"
-msgstr ""
+msgstr "Inglês (Reino Unido)"
 
 #: config/settings.py:624
 msgid "English (Australia)"
-msgstr ""
+msgstr "Inglês (Austrália)"
 
 #: config/settings.py:633
 #, fuzzy
@@ -13135,11 +13279,11 @@ msgstr "Variação empacotada"
 
 #: config/settings.py:675
 msgid "Catalan"
-msgstr ""
+msgstr "Catalão"
 
 #: config/settings.py:683
 msgid "Czech"
-msgstr ""
+msgstr "Checo"
 
 #: config/settings.py:691
 msgid "Danish"
@@ -13170,11 +13314,11 @@ msgstr "Francês"
 
 #: config/settings.py:740
 msgid "Hungarian"
-msgstr ""
+msgstr "Húngaro"
 
 #: config/settings.py:748
 msgid "Indonesian"
-msgstr ""
+msgstr "Indonésio"
 
 #: config/settings.py:756
 msgid "Italian"
@@ -13186,7 +13330,7 @@ msgstr "Japonês"
 
 #: config/settings.py:773
 msgid "Korean"
-msgstr ""
+msgstr "Coreano"
 
 #: config/settings.py:781
 msgid "Latvian"
@@ -13194,11 +13338,11 @@ msgstr "Letão"
 
 #: config/settings.py:789
 msgid "Malay"
-msgstr ""
+msgstr "Malaio"
 
 #: config/settings.py:797
 msgid "Norwegian Bokmål"
-msgstr ""
+msgstr "Bokmål norueguês"
 
 #: config/settings.py:805
 msgid "Dutch"
@@ -13232,7 +13376,7 @@ msgstr "Português (Brasil)"
 
 #: config/settings.py:857
 msgid "Romanian"
-msgstr ""
+msgstr "Romeno"
 
 #: config/settings.py:865
 msgid "Russian"
@@ -13240,23 +13384,23 @@ msgstr "Russo"
 
 #: config/settings.py:873
 msgid "Sinhala"
-msgstr ""
+msgstr "Sinhala"
 
 #: config/settings.py:881
 msgid "Slovenian"
-msgstr ""
+msgstr "Esloveno"
 
 #: config/settings.py:889
 msgid "Swedish"
-msgstr ""
+msgstr "Sueco"
 
 #: config/settings.py:897
 msgid "Swahili"
-msgstr ""
+msgstr "Suaíli"
 
 #: config/settings.py:905
 msgid "Thai"
-msgstr ""
+msgstr "Tailandês"
 
 #: config/settings.py:913
 msgid "Turkish"
@@ -13264,15 +13408,15 @@ msgstr "Turco"
 
 #: config/settings.py:921
 msgid "Ukrainian"
-msgstr ""
+msgstr "Ucraniano"
 
 #: config/settings.py:929
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamita"
 
 #: config/settings.py:937
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "Chinês simplificado"
 
 #: config/settings.py:946
 msgid "Traditional Chinese (Taiwan)"
@@ -13347,6 +13491,8 @@ msgstr "Informações do organizador"
 #: control/forms/admin/vouchers.py:25
 msgid "The voucher will be valid for all events under the selected organizers."
 msgstr ""
+"O voucher será válido para todos os eventos sob os organizadores "
+"selecionados."
 
 #: control/forms/checkin.py:73 control/forms/filter.py:349
 #: control/forms/filter.py:376 control/forms/filter.py:1564
@@ -13364,7 +13510,7 @@ msgstr "Todas as datas"
 
 #: control/forms/event.py:53
 msgid "Only allow registered accounts to get a ticket"
-msgstr ""
+msgstr "Permitir apenas que contas registadas obtenham um bilhete"
 
 #: control/forms/event.py:80
 msgid "This is an event series"
@@ -13378,7 +13524,7 @@ msgstr "Mudar apenas para este evento"
 
 #: control/forms/event.py:85
 msgid "This will create a new Video platform for this event."
-msgstr ""
+msgstr "Isto irá criar uma nova plataforma de Vídeo para este evento."
 
 #: control/forms/event.py:139
 #, fuzzy
@@ -13438,11 +13584,11 @@ msgstr ""
 
 #: control/forms/event.py:219
 msgid "Latitude, e.g. 40.7128"
-msgstr ""
+msgstr "Latitude, p. ex. 40.7128"
 
 #: control/forms/event.py:220
 msgid "Longitude, e.g. -74.0060"
-msgstr ""
+msgstr "Longitude, p. ex. -74.0060"
 
 #: control/forms/event.py:267
 msgid "Your default locale must be specified."
@@ -13543,12 +13689,12 @@ msgstr "Não copie"
 
 #: control/forms/event.py:710 orga/forms/cfp.py:162 orga/forms/cfp.py:185
 msgid "Ask, but do not require input"
-msgstr ""
+msgstr "Perguntar, mas não exigir entrada"
 
 #: control/forms/event.py:711 orga/forms/cfp.py:152 orga/forms/cfp.py:163
 #: orga/forms/cfp.py:186
 msgid "Ask and require input"
-msgstr ""
+msgstr "Perguntar e exigir entrada"
 
 #: control/forms/event.py:747
 #, python-brace-format
@@ -13761,7 +13907,7 @@ msgstr ""
 
 #: control/forms/event.py:1141 control/forms/global_settings.py:140
 msgid "Sendgrid Token"
-msgstr ""
+msgstr "Token do Sendgrid"
 
 #: control/forms/event.py:1146 control/forms/global_settings.py:45
 #, fuzzy
@@ -13771,7 +13917,7 @@ msgstr "Enviar"
 
 #: control/forms/event.py:1146 control/forms/global_settings.py:45
 msgid "SMTP"
-msgstr ""
+msgstr "SMTP"
 
 #: control/forms/event.py:1149
 #, fuzzy
@@ -13831,7 +13977,7 @@ msgstr "Pode ativar segurança SSL ou STARTTLS, mas não ambos ao mesmo tempo."
 
 #: control/forms/event.py:1243 control/forms/global_settings.py:443
 msgid "This field is required when using SendGrid as email vendor."
-msgstr ""
+msgstr "Este campo é obrigatório ao usar o SendGrid como fornecedor de e-mail."
 
 #: control/forms/event.py:1258
 msgid "Ticket code generator"
@@ -14049,7 +14195,7 @@ msgstr "Cancelamento solicitado"
 
 #: control/forms/filter.py:177
 msgid "Fully canceled but invoice not canceled"
-msgstr ""
+msgstr "Totalmente cancelado, mas a fatura não foi cancelada"
 
 #: control/forms/filter.py:181
 #, fuzzy
@@ -14126,16 +14272,16 @@ msgstr "{product} - Qualquer variação"
 #: control/forms/filter.py:456 control/forms/orders.py:610
 msgctxt "subevent"
 msgid "All dates starting at or after"
-msgstr ""
+msgstr "Todas as datas a partir de"
 
 #: control/forms/filter.py:461 control/forms/orders.py:619
 msgctxt "subevent"
 msgid "All dates starting before"
-msgstr ""
+msgstr "Todas as datas anteriores a"
 
 #: control/forms/filter.py:466
 msgid "Order placed at or after"
-msgstr ""
+msgstr "Encomenda efetuada em ou após"
 
 #: control/forms/filter.py:471
 #, fuzzy
@@ -14159,7 +14305,7 @@ msgstr "Pagamentos e reembolsos da encomenda"
 #: control/forms/filter.py:565 control/forms/filter.py:570
 #: control/forms/filter.py:580
 msgid "Exact matches only"
-msgstr ""
+msgstr "Apenas correspondências exatas"
 
 #: control/forms/filter.py:577
 #: control/templates/pretixcontrol/order/change.html:177
@@ -14506,6 +14652,10 @@ msgid ""
 "before they can create events. When this option is enabled, no new event can "
 "be created until a valid billing method has been added."
 msgstr ""
+"A validação de faturamento permite-lhe exigir que os organizadores "
+"configurem um método de faturamento antes de poderem criar eventos. Quando "
+"esta opção está ativada, não é possível criar nenhum novo evento até que um "
+"método de faturamento válido tenha sido adicionado."
 
 #: control/forms/global_settings.py:66
 msgid "Additional footer text"
@@ -14570,6 +14720,8 @@ msgstr "Chave publicável"
 #: control/forms/global_settings.py:216
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr ""
+"Chave publicável de produção para faturamento do organizador e taxas da "
+"plataforma."
 
 #: control/forms/global_settings.py:222 control/forms/global_settings.py:275
 #, fuzzy
@@ -14580,6 +14732,8 @@ msgstr "Chave secreta"
 #: control/forms/global_settings.py:225
 msgid "Live secret key for organizer billing and platform fees."
 msgstr ""
+"Chave secreta de produção para faturamento do organizador e taxas da "
+"plataforma."
 
 #: control/forms/global_settings.py:231 control/forms/global_settings.py:284
 #, fuzzy
@@ -14590,6 +14744,8 @@ msgstr "Chave publicável"
 #: control/forms/global_settings.py:234
 msgid "Test publishable key for organizer billing and platform fees."
 msgstr ""
+"Chave publicável de teste para faturamento do organizador e taxas da "
+"plataforma."
 
 #: control/forms/global_settings.py:240 control/forms/global_settings.py:293
 #, fuzzy
@@ -14600,6 +14756,7 @@ msgstr "Chave secreta"
 #: control/forms/global_settings.py:243
 msgid "Test secret key for organizer billing and platform fees."
 msgstr ""
+"Chave secreta de teste para faturamento do organizador e taxas da plataforma."
 
 #: control/forms/global_settings.py:249
 #, fuzzy
@@ -14611,26 +14768,37 @@ msgstr "Stripe Connect: Chave secreta"
 msgid ""
 "Configure this endpoint in your Stripe dashboard to receive billing events."
 msgstr ""
+"Configure este endpoint no seu painel da Stripe para receber eventos de "
+"faturamento."
 
 #: control/forms/global_settings.py:260
 msgid "Stripe Connect client ID for ticket payments via the Stripe plugin."
 msgstr ""
+"ID de cliente do Stripe Connect para pagamentos de bilhetes através do "
+"plugin da Stripe."
 
 #: control/forms/global_settings.py:269
 msgid "Live publishable key for ticket payments via the Stripe plugin."
 msgstr ""
+"Chave publicável de produção para pagamentos de bilhetes através do plugin "
+"Stripe."
 
 #: control/forms/global_settings.py:278
 msgid "Live secret key for ticket payments via the Stripe plugin."
 msgstr ""
+"Chave secreta de produção para pagamentos de bilhetes através do plugin "
+"Stripe."
 
 #: control/forms/global_settings.py:287
 msgid "Test publishable key for ticket payments via the Stripe plugin."
 msgstr ""
+"Chave publicável de teste para pagamentos de bilhetes através do plugin "
+"Stripe."
 
 #: control/forms/global_settings.py:296
 msgid "Test secret key for ticket payments via the Stripe plugin."
 msgstr ""
+"Chave secreta de teste para pagamentos de bilhetes através do plugin Stripe."
 
 #: control/forms/global_settings.py:302
 #, fuzzy
@@ -14646,19 +14814,19 @@ msgstr "Percentagem do total da encomenda."
 
 #: control/forms/global_settings.py:313
 msgid "App fee minimum"
-msgstr ""
+msgstr "Taxa mínima da aplicação"
 
 #: control/forms/global_settings.py:317
 msgid "Minimum fee amount charged on ticket payments."
-msgstr ""
+msgstr "Valor mínimo da taxa cobrada nos pagamentos de bilhetes."
 
 #: control/forms/global_settings.py:324
 msgid "App fee maximum"
-msgstr ""
+msgstr "Taxa máxima da aplicação"
 
 #: control/forms/global_settings.py:328
 msgid "Maximum fee amount charged on ticket payments."
-msgstr ""
+msgstr "Valor máximo da taxa cobrada nos pagamentos de bilhetes."
 
 #: control/forms/global_settings.py:338
 #, fuzzy
@@ -14687,6 +14855,8 @@ msgid ""
 "PayPal API endpoint (e.g., https://api.paypal.com or https://"
 "api.sandbox.paypal.com)."
 msgstr ""
+"Endpoint da API do PayPal (p. ex., https://api.paypal.com ou https://"
+"api.sandbox.paypal.com)."
 
 #: control/forms/global_settings.py:360
 #, fuzzy
@@ -14696,27 +14866,32 @@ msgstr "Página do bilhete"
 
 #: control/forms/global_settings.py:364
 msgid "A percentage fee will be charged for each ticket sold."
-msgstr ""
+msgstr "Será cobrada uma taxa percentual por cada bilhete vendido."
 
 #: control/forms/global_settings.py:371
 msgid "All registered users can create organizers"
-msgstr ""
+msgstr "Todos os utilizadores registados podem criar organizadores"
 
 #: control/forms/global_settings.py:372
 msgid ""
 "If enabled, all registered users will be allowed to create organizers. "
 "System admins can always create organizers."
 msgstr ""
+"Se ativado, todos os utilizadores registados poderão criar organizadores. Os "
+"administradores do sistema podem sempre criar organizadores."
 
 #: control/forms/global_settings.py:379
 msgid "All accounts with payment information can create organizers"
-msgstr ""
+msgstr "Todas as contas com informações de pagamento podem criar organizadores"
 
 #: control/forms/global_settings.py:380
 msgid ""
 "If enabled, users with valid payment information on file will be allowed to "
 "create organizers. System admins can always create organizers."
 msgstr ""
+"Se ativado, os utilizadores com informações de pagamento válidas registadas "
+"poderão criar organizadores. Os administradores do sistema podem sempre "
+"criar organizadores."
 
 #: control/forms/global_settings.py:388
 #: control/templates/pretixcontrol/event/settings.html:27
@@ -14745,7 +14920,7 @@ msgstr "Segredo de bilhete"
 
 #: control/forms/global_settings.py:428
 msgid "Maps"
-msgstr ""
+msgstr "Mapas"
 
 #: control/forms/global_settings.py:453
 #, fuzzy
@@ -14803,6 +14978,10 @@ msgid ""
 "track version adoption and deployment patterns. No personal data is "
 "collected. Data is sent approximately once per day."
 msgstr ""
+"Enviar estatísticas de utilização anónimas (contagens agrupadas, informações "
+"de implementação) para ajudar a acompanhar a adoção de versões e os padrões "
+"de implementação. Não são recolhidos dados pessoais. Os dados são enviados "
+"aproximadamente uma vez por dia."
 
 #: control/forms/global_settings.py:482
 #, fuzzy
@@ -14813,14 +14992,16 @@ msgstr "Enviar todos"
 #: control/forms/global_settings.py:483
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
 msgstr ""
+"O URL para onde os dados de telemetria serão enviados (URL do Google Apps "
+"Script)."
 
 #: control/forms/global_settings.py:487
 msgid "Telemetry API key"
-msgstr ""
+msgstr "Chave de API de telemetria"
 
 #: control/forms/global_settings.py:488
 msgid "API key for authenticating with the telemetry receiver."
-msgstr ""
+msgstr "Chave de API para autenticação junto do recetor de telemetria."
 
 #: control/forms/global_settings.py:492
 #, fuzzy
@@ -14833,6 +15014,9 @@ msgid ""
 "Optional email address included in telemetry data to identify who maintains "
 "this instance. Only visible to those with access to the telemetry data sheet."
 msgstr ""
+"Endereço de e-mail opcional incluído nos dados de telemetria para "
+"identificar quem faz a manutenção desta instância. Apenas visível para quem "
+"tem acesso à folha de cálculo de dados de telemetria."
 
 #: control/forms/global_settings.py:507
 #, fuzzy
@@ -15289,6 +15473,8 @@ msgstr "Por favor, selecione uma variação específica deste produto."
 msgctxt "subevent"
 msgid "If you set a date range, please set both a start and an end."
 msgstr ""
+"Se definir um intervalo de datas, defina, por favor, tanto um início como um "
+"fim."
 
 #: control/forms/orders.py:823
 msgid "Please confirm that you want to cancel ALL dates in this event series."
@@ -15315,6 +15501,8 @@ msgid ""
 "Please provide your name or the name of the person responsible for this "
 "account in your organization."
 msgstr ""
+"Indique, por favor, o seu nome ou o nome da pessoa responsável por esta "
+"conta na sua organização."
 
 #: control/forms/organizer_forms/organizer_form.py:65
 msgid ""
@@ -15322,10 +15510,13 @@ msgid ""
 "contract and billing, as well as for important updates about your account "
 "and our services."
 msgstr ""
+"Usaremos este endereço de e-mail para toda a comunicação relacionada com o "
+"seu contrato e a faturação, bem como para atualizações importantes sobre a "
+"sua conta e os nossos serviços."
 
 #: control/forms/organizer_forms/organizer_form.py:75
 msgid "Enter your organization’s legal name."
-msgstr ""
+msgstr "Introduza a denominação social da sua organização."
 
 #: control/forms/organizer_forms/organizer_form.py:83
 #, fuzzy
@@ -15335,7 +15526,7 @@ msgstr "Endereço"
 
 #: control/forms/organizer_forms/organizer_form.py:91
 msgid "Apartment, suite, unit, etc. (optional)."
-msgstr ""
+msgstr "Apartamento, fração, unidade, etc. (opcional)."
 
 #: control/forms/organizer_forms/organizer_form.py:99
 #, fuzzy
@@ -15345,7 +15536,7 @@ msgstr "Titular da conta"
 
 #: control/forms/organizer_forms/organizer_form.py:107
 msgid "Enter your city."
-msgstr ""
+msgstr "Introduza a sua cidade."
 
 #: control/forms/organizer_forms/organizer_form.py:115
 #, fuzzy
@@ -15361,11 +15552,11 @@ msgstr "Língua selecionada"
 
 #: control/forms/organizer_forms/organizer_form.py:123
 msgid "Select your preferred language for all communication."
-msgstr ""
+msgstr "Selecione o seu idioma preferido para toda a comunicação."
 
 #: control/forms/organizer_forms/organizer_form.py:128
 msgid "Tax ID (e.g., VAT, GST)"
-msgstr ""
+msgstr "NIF (p. ex., IVA, GST)"
 
 #: control/forms/organizer_forms/organizer_form.py:130
 msgid ""
@@ -15373,6 +15564,9 @@ msgid ""
 "will need to charge VAT on our services and will not be able to issue "
 "reverse charge invoices."
 msgstr ""
+"Se estiver localizado na UE, forneça o seu número de IVA. Sem isso, teremos "
+"de cobrar IVA sobre os nossos serviços e não poderemos emitir faturas com "
+"inversão do sujeito passivo."
 
 #: control/forms/organizer_forms/organizer_form.py:140
 #, fuzzy
@@ -15383,7 +15577,7 @@ msgstr "Esse código de voucher não existe."
 #: control/forms/organizer_forms/organizer_form.py:167
 #, python-brace-format
 msgid "VAT number validation is not supported for {}"
-msgstr ""
+msgstr "A validação do número de IVA não é suportada para {}"
 
 #: control/forms/organizer_forms/organizer_form.py:200
 #, fuzzy, python-brace-format
@@ -15473,7 +15667,7 @@ msgstr "Tipos de evento"
 
 #: control/forms/page.py:82
 msgid "You already have a page on that URL."
-msgstr ""
+msgstr "Já tem uma página nesse URL."
 
 #: control/forms/product.py:113
 msgid "This field is required"
@@ -15587,6 +15781,8 @@ msgid ""
 "If enabled, each user (identified by email address) can only purchase one "
 "ticket of this product."
 msgstr ""
+"Se ativado, cada utilizador (identificado pelo endereço de e-mail) só pode "
+"comprar um bilhete deste produto."
 
 #: control/forms/product.py:559
 msgid "Shown independently of other products"
@@ -15645,7 +15841,7 @@ msgstr "Mudar"
 
 #: control/forms/server_management.py:232
 msgid "Server"
-msgstr ""
+msgstr "Servidor"
 
 #: control/forms/server_management.py:235
 #, fuzzy
@@ -15679,7 +15875,7 @@ msgstr "Valor atual"
 
 #: control/forms/subevents.py:116 control/forms/subevents.py:124
 msgid "Selection contains various values"
-msgstr ""
+msgstr "A seleção contém vários valores"
 
 #: control/forms/subevents.py:380
 msgid "Exclude these dates instead of adding them."
@@ -16228,6 +16424,8 @@ msgid ""
 "The email address has been confirmed to be working (the user clicked on a "
 "link in the email for the first time)."
 msgstr ""
+"O endereço de e-mail foi confirmado como funcional (o utilizador clicou pela "
+"primeira vez numa ligação no e-mail)."
 
 #: control/logdisplay.py:507
 #, fuzzy, python-brace-format
@@ -16512,6 +16710,8 @@ msgid ""
 "A repeated password reset has been denied, as the last request was less than "
 "24 hours ago."
 msgstr ""
+"Foi recusado um novo pedido de reposição de palavra-passe, uma vez que o "
+"último pedido foi feito há menos de 24 horas."
 
 #: control/logdisplay.py:600
 #, python-brace-format
@@ -16920,7 +17120,7 @@ msgstr "A questão foi removida."
 
 #: control/logdisplay.py:694
 msgid "User impersonation has started."
-msgstr ""
+msgstr "A personificação de utilizador foi iniciada."
 
 #: control/logdisplay.py:695
 #, fuzzy
@@ -17192,7 +17392,7 @@ msgstr "Sessões"
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:7
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:10
 msgid "Task management"
-msgstr ""
+msgstr "Gestão de tarefas"
 
 #: control/navigation.py:477
 #, fuzzy
@@ -17256,15 +17456,15 @@ msgstr "Meta informação"
 
 #: control/navigation.py:568 control/templates/control/bbb_list.html:6
 msgid "BBB servers"
-msgstr ""
+msgstr "Servidores BBB"
 
 #: control/navigation.py:573
 msgid "Move BBB room"
-msgstr ""
+msgstr "Mover sala BBB"
 
 #: control/navigation.py:578 control/templates/control/janus_list.html:5
 msgid "Janus servers"
-msgstr ""
+msgstr "Servidores Janus"
 
 #: control/navigation.py:583 control/templates/control/turn_list.html:5
 #, fuzzy
@@ -17292,11 +17492,11 @@ msgstr "Sistema"
 
 #: control/navigation.py:603
 msgid "Conftool posters"
-msgstr ""
+msgstr "Cartazes da Conftool"
 
 #: control/navigation.py:617
 msgid "Video Admin"
-msgstr ""
+msgstr "Admin de Vídeo"
 
 #: control/permissions.py:40 control/permissions.py:80
 #: control/permissions.py:115 control/permissions.py:135
@@ -17383,7 +17583,7 @@ msgstr "Nenhum servidor Redis foi configurado."
 
 #: control/templates/control/bbb_moveroom.html:6
 msgid "Move a BBB room to a new server"
-msgstr ""
+msgstr "Mover uma sala BBB para um novo servidor"
 
 #: control/templates/control/bbb_moveroom.html:11
 msgid ""
@@ -17395,6 +17595,13 @@ msgid ""
 "recommended to join the room yourself to be able to react to this. Use with "
 "caution."
 msgstr ""
+"Mover uma sala irá tentar expulsar toda a gente da sala. As pessoas têm de "
+"voltar a entrar recarregando a página. Se expulsar as pessoas falhar (p.ex., "
+"servidor em baixo), ainda assim irá prosseguir, mas pode criar uma sala "
+"\"dividida\", i.e., dois grupos de pessoas que pensam estar na mesma sala "
+"mas não estão. As gravações da sala deixarão de estar acessíveis através da "
+"interface mais tarde. Recomenda-se que entre na sala você mesmo para poder "
+"reagir a isto. Use com cuidado."
 
 #: control/templates/control/bbb_moveroom.html:14
 #, fuzzy
@@ -17404,7 +17611,7 @@ msgstr "Remover o filtro"
 
 #: control/templates/control/conftool_syncposters.html:6
 msgid "Sync conftool posters"
-msgstr ""
+msgstr "Sincronizar cartazes da Conftool"
 
 #: control/templates/control/conftool_syncposters.html:11
 #, fuzzy
@@ -17420,15 +17627,15 @@ msgstr "Falhou"
 
 #: control/templates/control/conftool_syncposters.html:15
 msgid "Task is running."
-msgstr ""
+msgstr "A tarefa está a ser executada."
 
 #: control/templates/control/conftool_syncposters.html:18
 msgid "Task is waiting to start."
-msgstr ""
+msgstr "A tarefa está a aguardar para iniciar."
 
 #: control/templates/control/conftool_syncposters.html:30
 msgid "Sync"
-msgstr ""
+msgstr "Sincronizar"
 
 #: control/templates/control/event_clear.html:5
 #, fuzzy
@@ -17439,10 +17646,11 @@ msgstr "Apagar evento"
 #: control/templates/control/event_clear.html:8
 msgid "Delete statistics, systemlog, chat messages, questions, …"
 msgstr ""
+"Eliminar estatísticas, registo do sistema, mensagens de chat, perguntas, …"
 
 #: control/templates/control/event_clear.html:9
 msgid "Delete user accounts and audit logs"
-msgstr ""
+msgstr "Eliminar contas de utilizador e registos de auditoria"
 
 #: control/templates/control/event_clear.html:10
 #, fuzzy
@@ -17475,18 +17683,20 @@ msgstr "Todos os participantes"
 #: control/templates/control/event_create.html:55
 #: control/templates/control/event_update.html:73
 msgid "Add planning"
-msgstr ""
+msgstr "Adicionar planeamento"
 
 #: control/templates/control/event_create.html:64
 #, python-format
 msgid "Clone \"%(n)s\""
-msgstr ""
+msgstr "Clonar \"%(n)s\""
 
 #: control/templates/control/event_list.html:8
 msgid ""
 "Overview of events managed by the Video Admin. Use the table actions to "
 "manage settings, generate admin tokens, or clear data."
 msgstr ""
+"Visão geral dos eventos geridos pelo Admin de Vídeo. Use as ações da tabela "
+"para gerir definições, gerar tokens de administrador ou limpar dados."
 
 #: control/templates/control/event_list.html:14
 #, fuzzy
@@ -17532,7 +17742,7 @@ msgstr "Atualizar comentário"
 
 #: control/templates/control/event_update.html:86
 msgid "JWT config"
-msgstr ""
+msgstr "Configuração de JWT"
 
 #: control/templates/control/index.html:5
 #, fuzzy
@@ -17542,7 +17752,7 @@ msgstr "Painel de controle"
 
 #: control/templates/control/index.html:6
 msgid "More insights coming soon."
-msgstr ""
+msgstr "Mais informações em breve."
 
 #: control/templates/control/janus_delete.html:5
 #, fuzzy
@@ -17588,7 +17798,7 @@ msgstr "Gerador de códigos de bilhete"
 
 #: control/templates/control/streamkey.html:11
 msgid "Stream server"
-msgstr ""
+msgstr "Servidor de transmissão"
 
 #: control/templates/control/streamkey.html:12
 #, fuzzy
@@ -17641,15 +17851,15 @@ msgstr "Timestamp"
 
 #: control/templates/control/systemlog_detail.html:25
 msgid "Level"
-msgstr ""
+msgstr "Nível"
 
 #: control/templates/control/systemlog_detail.html:38
 msgid "No trace entries."
-msgstr ""
+msgstr "Sem entradas de rastreio."
 
 #: control/templates/control/systemlog_list.html:11
 msgid "Module"
-msgstr ""
+msgstr "Módulo"
 
 #: control/templates/control/systemlog_list.html:26
 #: control/templates/pretixcontrol/organizers/giftcard.html:23
@@ -17685,7 +17895,7 @@ msgstr "Etapa %(current)s de %(total)s"
 
 #: control/templates/control/systemlog_list.html:48
 msgid "next"
-msgstr ""
+msgstr "seguinte"
 
 #: control/templates/control/systemlog_list.html:49
 #, fuzzy
@@ -17702,7 +17912,7 @@ msgstr "Apagar evento"
 
 #: control/templates/control/turn_form.html:6
 msgid "Create or update TURN server"
-msgstr ""
+msgstr "Criar ou atualizar servidor TURN"
 
 #: control/templates/control/turn_list.html:16
 #, fuzzy
@@ -17731,6 +17941,8 @@ msgstr "Criar utilizador"
 #: control/templates/pretixcontrol/admin/attendees/index.html:15
 msgid "This is a list of all paid attendees and their check-in status."
 msgstr ""
+"Esta é uma lista de todos os participantes pagos e o respetivo estado de "
+"check-in."
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:20
 #: control/templates/pretixcontrol/admin/events/index.html:26
@@ -17914,6 +18126,7 @@ msgstr "Sessões"
 #: control/templates/pretixcontrol/admin/submissions/index.html:15
 msgid "This is a list of all talk submissions across events."
 msgstr ""
+"Esta é uma lista de todas as submissões de palestras em todos os eventos."
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:92
 #, fuzzy
@@ -17944,7 +18157,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
-msgstr ""
+msgstr "A sua versão do eventyay é:"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:33
 #, fuzzy, python-format
@@ -18082,12 +18295,12 @@ msgstr "Blog eventyay (anúncios de lançamento, recursos)"
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:40
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:52
 msgid "Id"
-msgstr ""
+msgstr "ID"
 
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:42
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:56
 msgid "Run at"
-msgstr ""
+msgstr "Executar às"
 
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:43
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:57
@@ -18389,7 +18602,7 @@ msgstr "Erro:"
 #: eventyay_common/templates/eventyay_common/base.html:103
 #: orga/templates/orga/base.html:80
 msgid "Toggle sidebar"
-msgstr ""
+msgstr "Alternar barra lateral"
 
 #: control/templates/pretixcontrol/base.html:117
 #: control/templates/pretixcontrol/base.html:140
@@ -18484,6 +18697,7 @@ msgstr "Mostrar todas as encomendas em do modo de teste"
 #: eventyay_common/templates/eventyay_common/base.html:344
 msgid "The system automatically checks for updates in the background."
 msgstr ""
+"O sistema verifica automaticamente se existem atualizações em segundo plano."
 
 #: control/templates/pretixcontrol/base.html:400
 #: eventyay_common/templates/eventyay_common/base.html:353
@@ -19094,28 +19308,28 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/settings.html:21
 #: orga/templates/orga/event/component_link.html:5
 msgid "Home"
-msgstr ""
+msgstr "Início"
 
 #: control/templates/pretixcontrol/event/component_link.html:12
 #: eventyay_common/templates/eventyay_common/event/component_link.html:12
 #: eventyay_common/templates/eventyay_common/event/live.html:155
 #: orga/templates/orga/event/component_link.html:11
 msgid "Talk"
-msgstr ""
+msgstr "Conversa"
 
 #: control/templates/pretixcontrol/event/component_link.html:17
 #: eventyay_common/templates/eventyay_common/event/component_link.html:17
 #: eventyay_common/templates/eventyay_common/event/settings.html:34
 #: orga/templates/orga/event/component_link.html:15
 msgid "Access videos related to this event"
-msgstr ""
+msgstr "Aceda a vídeos relacionados com este evento"
 
 #: control/templates/pretixcontrol/event/component_link.html:18
 #: eventyay_common/templates/eventyay_common/event/component_link.html:18
 #: eventyay_common/templates/eventyay_common/event/settings.html:35
 #: orga/templates/orga/event/component_link.html:16
 msgid "Videos"
-msgstr ""
+msgstr "Vídeos"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:5
 #: control/templates/pretixcontrol/event/settings.html:254
@@ -19217,6 +19431,9 @@ msgid ""
 "To ensure audit compliance and maintain trust with financial authorities, "
 "deleting orders once they have been placed is not permitted."
 msgstr ""
+"Para garantir a conformidade com auditorias e manter a confiança das "
+"autoridades financeiras, não é permitido eliminar encomendas depois de terem "
+"sido efetuadas."
 
 #: control/templates/pretixcontrol/event/delete.html:45
 msgid ""
@@ -19246,7 +19463,7 @@ msgstr "Geocoding data © OpenStreetMap"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:4
 msgid "Failed to retrieve geo coordinates"
-msgstr ""
+msgstr "Falha ao obter coordenadas geográficas"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:5
 #, fuzzy
@@ -19451,6 +19668,8 @@ msgid ""
 "The ticket shop is not set up yet. You can still publish the event, but "
 "tickets will remain unavailable until you configure them."
 msgstr ""
+"A loja de bilhetes ainda não está configurada. Ainda pode publicar o evento, "
+"mas os bilhetes permanecerão indisponíveis até os configurar."
 
 #: control/templates/pretixcontrol/event/live.html:28
 #: eventyay_common/templates/eventyay_common/event/live.html:94
@@ -19463,6 +19682,8 @@ msgstr "Configurar o evento"
 #: eventyay_common/templates/eventyay_common/event/live.html:99
 msgid "Publish the event to enable ticket visibility on the presale page."
 msgstr ""
+"Publique o evento para ativar a visibilidade dos bilhetes na página de pré-"
+"venda."
 
 #: control/templates/pretixcontrol/event/live.html:37
 #: control/templates/pretixcontrol/event/live.html:69
@@ -19481,16 +19702,18 @@ msgid ""
 "Tickets are public on the presale page. Unpublish to hide them from the "
 "public."
 msgstr ""
+"Os bilhetes estão públicos na página de pré-venda. Anule a publicação para "
+"os ocultar do público."
 
 #: control/templates/pretixcontrol/event/live.html:49
 #: eventyay_common/templates/eventyay_common/event/live.html:115
 msgid "Unpublish Tickets"
-msgstr ""
+msgstr "Anular publicação dos bilhetes"
 
 #: control/templates/pretixcontrol/event/live.html:54
 #: eventyay_common/templates/eventyay_common/event/live.html:120
 msgid "Publish tickets to show them on the presale page."
-msgstr ""
+msgstr "Publique os bilhetes para os mostrar na página de pré-venda."
 
 #: control/templates/pretixcontrol/event/live.html:59
 #: eventyay_common/templates/eventyay_common/event/live.html:125
@@ -19761,12 +19984,18 @@ msgid ""
 "in the event settings. Events without paid tickets do not require a payment "
 "provider."
 msgstr ""
+"A eventyay suporta uma gama de fornecedores de pagamento. Os métodos de "
+"pagamento disponíveis estão listados abaixo, e fornecedores adicionais podem "
+"ser configurados mais tarde nas definições do evento. Eventos sem bilhetes "
+"pagos não requerem um fornecedor de pagamento."
 
 #: control/templates/pretixcontrol/event/quick_setup.html:181
 msgid ""
 "After the setup, please go to the Payment area and set up the Stripe "
 "connection."
 msgstr ""
+"Após a configuração, aceda à área de Pagamentos e configure a ligação ao "
+"Stripe."
 
 #: control/templates/pretixcontrol/event/settings.html:7
 #: control/templates/pretixcontrol/event/settings.html:16
@@ -20126,21 +20355,23 @@ msgstr "Mensagem do sistema"
 
 #: control/templates/pretixcontrol/global_settings.html:30
 msgid "Stripe — Organizer Billing"
-msgstr ""
+msgstr "Stripe — Faturação do Organizador"
 
 #: control/templates/pretixcontrol/global_settings.html:32
 msgid "This configuration is used for organizer billing and platform fees."
 msgstr ""
+"Esta configuração é utilizada para faturação do organizador e taxas da "
+"plataforma."
 
 #: control/templates/pretixcontrol/global_settings.html:36
 #: control/templates/pretixcontrol/global_settings.html:87
 msgid "Live Credentials"
-msgstr ""
+msgstr "Credenciais de Produção"
 
 #: control/templates/pretixcontrol/global_settings.html:47
 #: control/templates/pretixcontrol/global_settings.html:98
 msgid "Test Credentials"
-msgstr ""
+msgstr "Credenciais de Teste"
 
 #: control/templates/pretixcontrol/global_settings.html:58
 #: control/templates/pretixcontrol/organizers/webhooks.html:6
@@ -20149,11 +20380,13 @@ msgstr "Webhooks"
 
 #: control/templates/pretixcontrol/global_settings.html:70
 msgid "Stripe — Ticket Payments"
-msgstr ""
+msgstr "Stripe — Pagamentos de Bilhetes"
 
 #: control/templates/pretixcontrol/global_settings.html:72
 msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr ""
+"Esta configuração é utilizada para pagamentos de bilhetes através do plugin "
+"Stripe."
 
 #: control/templates/pretixcontrol/global_settings.html:76
 #, fuzzy
@@ -20170,6 +20403,7 @@ msgstr "Honorários"
 #: control/templates/pretixcontrol/global_settings.html:111
 msgid "Configure the application fees charged on ticket payments."
 msgstr ""
+"Configure as taxas da aplicação cobradas sobre os pagamentos de bilhetes."
 
 #: control/templates/pretixcontrol/global_settings.html:124
 msgid "PayPal"
@@ -20177,11 +20411,11 @@ msgstr "PayPal"
 
 #: control/templates/pretixcontrol/global_settings.html:126
 msgid "Configure PayPal payment processing."
-msgstr ""
+msgstr "Configurar o processamento de pagamentos PayPal."
 
 #: control/templates/pretixcontrol/global_sso.html:18
 msgid "Submit"
-msgstr ""
+msgstr "Submeter"
 
 #: control/templates/pretixcontrol/global_update.html:28
 #, fuzzy
@@ -20257,6 +20491,9 @@ msgid ""
 "your event. By default, the system will request attendee information and "
 "provide ticket downloads for these products."
 msgstr ""
+"Cada compra deste produto representa uma pessoa que tem permissão para "
+"entrar no seu evento. Por predefinição, o sistema irá solicitar informações "
+"do participante e disponibilizar downloads de bilhetes para estes produtos."
 
 #: control/templates/pretixcontrol/item/create.html:33
 #: control/templates/pretixcontrol/item/index.html:35
@@ -20266,6 +20503,10 @@ msgid ""
 "except if the add-on products or bundled products represent additional "
 "people (e.g. group bundles)."
 msgstr ""
+"Esta opção deve ser definida para a maioria das coisas a que chamaria um "
+"\"bilhete\". Para extras de produto ou pacotes, isto deve ser definido no "
+"bilhete principal, exceto se os produtos extra ou os produtos incluídos no "
+"pacote representarem pessoas adicionais (por exemplo, pacotes de grupo)."
 
 #: control/templates/pretixcontrol/item/create.html:44
 #: control/templates/pretixcontrol/item/index.html:46
@@ -20280,11 +20521,16 @@ msgid ""
 "the system will, by default, not request attendee information or provide "
 "ticket downloads."
 msgstr ""
+"Para produtos que não exigem a presença de uma pessoa, como uma T-shirt, o "
+"sistema, por predefinição, não solicitará informações do participante nem "
+"disponibilizará downloads de bilhetes."
 
 #: control/templates/pretixcontrol/item/create.html:51
 #: control/templates/pretixcontrol/item/index.html:54
 msgid "Examples: Merchandise, donations, gift cards, add-ons to a main ticket."
 msgstr ""
+"Exemplos: Merchandising, donativos, cartões-presente, extras para um bilhete "
+"principal."
 
 #: control/templates/pretixcontrol/item/create.html:69
 #, fuzzy
@@ -20304,6 +20550,8 @@ msgid ""
 "their name, price, quota, or description. All other settings need to be the "
 "same."
 msgstr ""
+"Este produto existe em múltiplas variações que diferem no nome, preço, quota "
+"ou descrição. Todas as outras definições têm de ser as mesmas."
 
 #: control/templates/pretixcontrol/item/create.html:84
 msgid ""
@@ -20311,6 +20559,9 @@ msgid ""
 "\"reduced\", merchandise with variations for different sizes, workshop add-"
 "on with variations for simultaneous workshops."
 msgstr ""
+"Exemplos: Categoria de bilhetes com variações para \"preço inteiro\" e "
+"\"reduzido\", merchandising com variações para diferentes tamanhos, extra de "
+"workshop com variações para workshops simultâneos."
 
 #: control/templates/pretixcontrol/item/create.html:97
 msgid "Quota settings"
@@ -20433,12 +20684,17 @@ msgid ""
 "your event. By default, pretix will only ask for attendee information and "
 "offer ticket downloads for these products."
 msgstr ""
+"Cada compra deste produto representa uma pessoa que está autorizada a entrar "
+"no seu evento. Por defeito, o pretix apenas pedirá informações do "
+"participante e disponibilizará downloads de bilhetes para estes produtos."
 
 #: control/templates/pretixcontrol/item/index.html:48
 msgid ""
 "A product that does not represent a person. By default, pretix will not ask "
 "for attendee information or offer ticket downloads."
 msgstr ""
+"Um produto que não representa uma pessoa. Por defeito, o pretix não pedirá "
+"informações do participante nem disponibilizará downloads de bilhetes."
 
 #: control/templates/pretixcontrol/item/index.html:95
 #: orga/templates/orga/cfp/forms.html:700 schedule/forms.py:18
@@ -20644,7 +20900,7 @@ msgstr "obrigatório"
 
 #: control/templates/pretixcontrol/items/orderforms.html:68
 msgid "Required status for E-mail"
-msgstr ""
+msgstr "Estado obrigatório para e-mail"
 
 #: control/templates/pretixcontrol/items/orderforms.html:79
 #, fuzzy
@@ -20838,6 +21094,9 @@ msgid ""
 "proceed. To allow the user to leave it unchecked, do not set the field as "
 "required."
 msgstr ""
+"Se uma Caixa de Confirmação estiver marcada como obrigatória, o utilizador "
+"tem de a assinalar para prosseguir. Para permitir que o utilizador a deixe "
+"desmarcada, não defina o campo como obrigatório."
 
 #: control/templates/pretixcontrol/items/question_edit.html:53
 msgid "Answer options"
@@ -21919,6 +22178,7 @@ msgstr ""
 #: control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
 msgstr ""
+"Uma vez que a encomenda já foi cancelada, isto não afetará o seu estado."
 
 #: control/templates/pretixcontrol/order/refund_process.html:36
 msgid "What should happen to the ticket order?"
@@ -22204,7 +22464,7 @@ msgstr "TOTALMENTE PAGO"
 
 #: control/templates/pretixcontrol/orders/index.html:181
 msgid "INVOICE NOT CANCELED"
-msgstr ""
+msgstr "FATURA NÃO CANCELADA"
 
 #: control/templates/pretixcontrol/orders/index.html:192
 msgid "Sum over all pages"
@@ -22509,7 +22769,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/organizers/edit.html:77
 msgid "Privacy"
-msgstr ""
+msgstr "Privacidade"
 
 #: control/templates/pretixcontrol/organizers/gate_delete.html:5
 msgid "Delete gate:"
@@ -22984,7 +23244,7 @@ msgstr "Log de eventos"
 
 #: control/templates/pretixcontrol/pdf/index.html:410
 msgid "Dynamic image"
-msgstr ""
+msgstr "Imagem dinâmica"
 
 #: control/templates/pretixcontrol/search/orders.html:102
 msgid ""
@@ -23224,7 +23484,7 @@ msgstr "em minutos"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:360
 msgid "Break between slots"
-msgstr ""
+msgstr "Intervalo entre faixas horárias"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:370
 #, fuzzy
@@ -23285,12 +23545,19 @@ msgid ""
 "new set of quotas to <strong>replace</strong> the quota setup of all "
 "selected dates."
 msgstr ""
+"Selecionou um conjunto de datas que atualmente têm configurações de quota "
+"diferentes. Por isso, não pode alterar as suas quotas em massa. Se quiser, "
+"pode configurar um novo conjunto de quotas para <strong>substituir</strong> "
+"a configuração de quotas de todas as datas selecionadas."
 
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:257
 msgid ""
 "You selected a set of dates that currently have different check-in list "
 "setups. You can therefore not change their check-in lists in bulk."
 msgstr ""
+"Selecionou um conjunto de datas que atualmente têm configurações de lista de "
+"check-in diferentes. Por isso, não pode alterar as suas listas de check-in "
+"em massa."
 
 #: control/templates/pretixcontrol/subevents/delete.html:4
 #: control/templates/pretixcontrol/subevents/delete.html:6
@@ -23349,7 +23616,7 @@ msgstr "Criar várias datas novas"
 
 #: control/templates/pretixcontrol/subevents/index.html:65
 msgid "select all rows for batch-operation"
-msgstr ""
+msgstr "selecionar todas as linhas para operação em lote"
 
 #: control/templates/pretixcontrol/subevents/index.html:72
 msgid "Begin"
@@ -23357,11 +23624,11 @@ msgstr "Início"
 
 #: control/templates/pretixcontrol/subevents/index.html:93
 msgid "Select all results on other pages as well"
-msgstr ""
+msgstr "Selecionar também todos os resultados noutras páginas"
 
 #: control/templates/pretixcontrol/subevents/index.html:104
 msgid "select row for batch-operation"
-msgstr ""
+msgstr "selecionar linha para operação em lote"
 
 #: control/templates/pretixcontrol/subevents/index.html:145
 msgctxt "subevent"
@@ -23628,6 +23895,8 @@ msgid ""
 "Currently, no vouchers will be sent since your event is not live or is not "
 "selling tickets."
 msgstr ""
+"Atualmente, não serão enviados quaisquer vouchers, uma vez que o seu evento "
+"não está ao vivo ou não está a vender bilhetes."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:48
 msgid ""
@@ -23782,6 +24051,8 @@ msgstr "Página não encontrada."
 #: control/views/admin.py:130
 msgid "Only published events without test mode can be shown on the start page."
 msgstr ""
+"Apenas eventos publicados sem modo de teste podem ser mostrados na página "
+"inicial."
 
 #: control/views/admin.py:466 control/views/admin.py:490
 #: control/views/vouchers.py:174 control/views/vouchers.py:231
@@ -23812,7 +24083,7 @@ msgstr "O pagamento foi criado com sucesso."
 #: control/views/admin_views.py:690 control/views/admin_views.py:709
 #: control/views/admin_views.py:729
 msgid "Ok!"
-msgstr ""
+msgstr "Ok!"
 
 #: control/views/admin_views.py:441
 #, fuzzy
@@ -23822,11 +24093,11 @@ msgstr "A regra de imposto foi apagada."
 
 #: control/views/admin_views.py:762
 msgid "No BBB session found for this room."
-msgstr ""
+msgstr "Não foi encontrada nenhuma sessão BBB para esta sala."
 
 #: control/views/admin_views.py:774
 msgid "Kicking all attendees did not work."
-msgstr ""
+msgstr "Não foi possível expulsar todos os participantes."
 
 #: control/views/admin_views.py:778
 #, fuzzy
@@ -24088,15 +24359,15 @@ msgstr "Pediu um tipo de saída de bilhete inválido."
 
 #: control/views/event.py:1129 eventyay_common/views/event.py:646
 msgid "Publish the event before publishing tickets."
-msgstr ""
+msgstr "Publique o evento antes de publicar os bilhetes."
 
 #: control/views/event.py:1132 eventyay_common/views/event.py:649
 msgid "Please set up ticketing before publishing tickets."
-msgstr ""
+msgstr "Configure primeiro a bilhética antes de publicar os bilhetes."
 
 #: control/views/event.py:1135 eventyay_common/views/event.py:652
 msgid "Please resolve the ticketing issues before publishing tickets."
-msgstr ""
+msgstr "Resolva os problemas de bilhética antes de publicar os bilhetes."
 
 #: control/views/event.py:1149 eventyay_common/views/event.py:666
 #, fuzzy
@@ -24113,6 +24384,8 @@ msgstr "Notificações foram ativadas."
 #: control/views/event.py:1170 eventyay_common/views/event.py:685
 msgid "Tickets must be published and set up before enabling test mode."
 msgstr ""
+"Os bilhetes têm de estar publicados e configurados antes de ativar o modo de "
+"teste."
 
 #: control/views/event.py:1192 eventyay_common/views/event.py:707
 msgid "Your shop is now in test mode!"
@@ -24133,6 +24406,8 @@ msgstr "Desativamos modo de teste para si. Vamos vender alguns bilhetes reais!"
 #: control/views/event.py:1227 eventyay_common/views/event.py:807
 msgid "Private test mode cannot be enabled while tickets are published."
 msgstr ""
+"O modo de teste privado não pode ser ativado enquanto os bilhetes estiverem "
+"publicados."
 
 #: control/views/event.py:1261 eventyay_common/views/event.py:839
 #, fuzzy
@@ -24210,6 +24485,14 @@ msgid ""
 "methods.\n"
 "                Save your changes to begin accepting payments."
 msgstr ""
+"Não foi possível guardar as suas alterações. Consulte abaixo os detalhes.\n"
+"\n"
+"                Para começar a aceitar encomendas, ative uma opção de "
+"pagamento.\n"
+"                ->Abra \"Plugins\" e ative um ou mais plugins de pagamento.\n"
+"                ->Depois, aceda ao separador \"Pagamentos\" para configurar "
+"os métodos escolhidos.\n"
+"                Guarde as suas alterações para começar a aceitar pagamentos."
 
 #: control/views/event.py:1867
 msgid ""
@@ -24904,7 +25187,7 @@ msgstr "O produto selecionado foi desactivado."
 
 #: control/views/product.py:1759
 msgid "Please correct the errors below."
-msgstr ""
+msgstr "Corrija os erros abaixo."
 
 #: control/views/shredder.py:151
 msgid "The selected data was deleted successfully."
@@ -25518,15 +25801,15 @@ msgstr "Endereços de email"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:10
 msgid "The following email addresses are associated with your account:"
-msgstr ""
+msgstr "Os seguintes endereços de e-mail estão associados à sua conta:"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:23
 msgid "Verified"
-msgstr ""
+msgstr "Verificado"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:25
 msgid "Unverified"
-msgstr ""
+msgstr "Não verificado"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:27
 #, fuzzy
@@ -25536,7 +25819,7 @@ msgstr "Cor primária"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:34
 msgid "Make Primary"
-msgstr ""
+msgstr "Tornar principal"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:35
 #, fuzzy
@@ -25830,7 +26113,7 @@ msgstr "Precisa selecionar um lugar específico."
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:125
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:87
 msgid "Ok"
-msgstr ""
+msgstr "Ok"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
 #, fuzzy
@@ -25847,6 +26130,12 @@ msgid ""
 "and the Video component supports engaging and interactive virtual events "
 "with integrated live interpretation."
 msgstr ""
+"O painel do evento fornece uma visão geral dos três componentes principais: "
+"Bilhetes, Palestras e Oradores, e Vídeo, permitindo uma gestão de eventos de "
+"ponta a ponta. A bilhética e o registo são tratados através do módulo "
+"Bilhetes, o conteúdo das sessões e as agendas são organizados através de "
+"Palestras e Oradores, e o componente Vídeo suporta eventos virtuais "
+"envolventes e interativos com interpretação ao vivo integrada."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:31
 msgid ""
@@ -25854,6 +26143,10 @@ msgid ""
 "premium access or Swag. Manage attendees and exhibitors, design custom "
 "badges, and streamline event marketing by sending targeted emails."
 msgstr ""
+"Configure a bilhética do evento e venda extras, como acesso premium ou "
+"merchandising. Faça a gestão de participantes e expositores, crie crachás "
+"personalizados e simplifique o marketing do evento ao enviar e-mails "
+"direcionados."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:34
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:50
@@ -25882,6 +26175,9 @@ msgid ""
 "speakers and build a schedule. Manage the submission and review process, and "
 "select speakers."
 msgstr ""
+"Configure o conteúdo do evento, crie chamadas para propostas e para oradores "
+"e elabore uma agenda. Gira o processo de submissão e revisão e selecione "
+"oradores."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:50
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:54
@@ -25894,7 +26190,7 @@ msgstr "Painel de controle"
 #: eventyay_common/templates/eventyay_common/event/live.html:334
 #: eventyay_common/views/dashboards.py:374
 msgid "Video"
-msgstr ""
+msgstr "Vídeo"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:67
 msgid ""
@@ -25902,6 +26198,9 @@ msgid ""
 "interpretation and chats. Offer virtual exhibitor booths with rich content "
 "and social media integration."
 msgstr ""
+"Configure transmissões de vídeo em direto, workshops online com "
+"interpretação de áudio ao vivo e chats. Ofereça stands virtuais para "
+"expositores com conteúdo rico e integração com redes sociais."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:71
 #, fuzzy
@@ -25927,7 +26226,7 @@ msgstr "Desativar modo de teste"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:30
 msgid "Set up ticketing before enabling test mode."
-msgstr ""
+msgstr "Configure a bilhética antes de ativar o modo de teste."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:34
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:43
@@ -25938,13 +26237,15 @@ msgstr "Ativar o modo de teste"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:39
 msgid "Tickets must be published before enabling test mode."
-msgstr ""
+msgstr "Os bilhetes têm de ser publicados antes de ativar o modo de teste."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:48
 msgid ""
 "Private test mode is currently enabled. Disable it to enable standard test "
 "mode."
 msgstr ""
+"O modo de teste privado está atualmente ativado. Desative-o para ativar o "
+"modo de teste padrão."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:57
 msgid "Your shop is currently in production mode."
@@ -26002,6 +26303,7 @@ msgstr "em modo de teste privado"
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:92
 msgid "Tickets are published. Private test mode cannot be enabled."
 msgstr ""
+"Os bilhetes estão publicados. Não é possível ativar o modo de teste privado."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:96
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:118
@@ -26016,6 +26318,8 @@ msgid ""
 "Private test mode is enabled for tickets. Only organizers, reviewers, and "
 "system administrators can view or purchase tickets."
 msgstr ""
+"O modo de teste privado está ativado para bilhetes. Apenas organizadores, "
+"revisores e administradores do sistema podem ver ou comprar bilhetes."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:108
 #, fuzzy
@@ -26028,12 +26332,16 @@ msgid ""
 "Test mode is currently enabled. Disable it to enable private test mode for "
 "tickets."
 msgstr ""
+"O modo de teste está atualmente ativado. Desative-o para ativar o modo de "
+"teste privado para bilhetes."
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:123
 msgid ""
 "Private test mode hides tickets from the public. Only organizers, reviewers, "
 "and system administrators can view or purchase tickets."
 msgstr ""
+"O modo de teste privado oculta os bilhetes do público. Apenas organizadores, "
+"revisores e administradores do sistema podem ver ou comprar bilhetes."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:8
 #, fuzzy
@@ -26052,6 +26360,8 @@ msgid ""
 "The event is online. Unpublish to hide it from the public and bring it "
 "offline."
 msgstr ""
+"O evento está online. Cancele a publicação para o ocultar do público e "
+"colocá-lo offline."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:29
 #, fuzzy
@@ -26062,6 +26372,8 @@ msgstr "Privado"
 #: eventyay_common/templates/eventyay_common/event/live.html:34
 msgid "Take the event live by publishing the event info page to the public."
 msgstr ""
+"Torne o evento público publicando a página de informações do evento para o "
+"público."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:39
 #, fuzzy
@@ -26088,7 +26400,7 @@ msgstr "Lista de mudanças público"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:73
 msgid "No public pages are available yet."
-msgstr ""
+msgstr "Ainda não há páginas públicas disponíveis."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:159
 #: orga/templates/orga/event/live.html:19
@@ -26124,6 +26436,8 @@ msgstr ""
 #: orga/templates/orga/event/live.html:44
 msgid "Publish the event to enable talk pages on the presale page."
 msgstr ""
+"Publique o evento para ativar as páginas das palestras na página de pré-"
+"venda."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:188
 #: eventyay_common/templates/eventyay_common/event/live.html:210
@@ -26140,6 +26454,8 @@ msgid ""
 "Talk pages are public on the presale page. Unpublish to hide Schedule, "
 "Sessions, Speakers, and Call for Speakers."
 msgstr ""
+"As páginas das palestras estão públicas na página de pré-venda. Cancele a "
+"publicação para ocultar Agenda, Sessões, Oradores e Chamada de Oradores."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:199
 #: orga/templates/orga/event/live.html:59
@@ -26154,6 +26470,8 @@ msgid ""
 "Publish talk pages to show Schedule, Sessions, Speakers, and Call for "
 "Speakers on the presale page."
 msgstr ""
+"Publique as páginas das palestras para mostrar Agenda, Sessões, Oradores e "
+"Chamada de Oradores na página de pré-venda."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:227
 #: orga/templates/orga/event/live.html:87
@@ -26161,6 +26479,8 @@ msgid ""
 "Talk pages are currently in test mode. Schedule and submission data can "
 "change and should not be treated as final."
 msgstr ""
+"As páginas das palestras estão atualmente em modo de teste. Os dados da "
+"agenda e das submissões podem mudar e não devem ser considerados finais."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:231
 #: orga/templates/orga/event/live.html:91
@@ -26173,6 +26493,8 @@ msgstr "Desativar modo de teste"
 #: orga/templates/orga/event/live.html:98
 msgid "Talk pages must be published to enable talk test mode."
 msgstr ""
+"As páginas das palestras têm de ser publicadas para ativar o modo de teste "
+"das palestras."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:242
 #: eventyay_common/templates/eventyay_common/event/live.html:251
@@ -26191,6 +26513,8 @@ msgid ""
 "Private test mode is currently enabled for talks. Disable it to enable talk "
 "test mode."
 msgstr ""
+"O modo de teste privado está atualmente ativado para palestras. Desative-o "
+"para ativar o modo de teste das palestras."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:256
 #: orga/templates/orga/event/live.html:116
@@ -26198,6 +26522,9 @@ msgid ""
 "Talk pages are currently in production mode. Enable talk test mode to "
 "preview schedules and submissions without treating them as final."
 msgstr ""
+"As páginas das palestras estão atualmente em modo de produção. Ative o modo "
+"de teste das palestras para pré-visualizar agendas e submissões sem as "
+"considerar finais."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:277
 #: orga/templates/orga/event/live.html:137
@@ -26226,6 +26553,9 @@ msgid ""
 "system administrators can access the schedule, sessions, speakers, and call "
 "for speakers."
 msgstr ""
+"O modo de teste privado está ativado para palestras. Apenas organizadores, "
+"revisores e administradores do sistema podem aceder à agenda, às sessões, "
+"aos oradores e à chamada de oradores."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:293
 #: orga/templates/orga/event/live.html:153
@@ -26240,6 +26570,8 @@ msgid ""
 "Test mode is currently enabled. Disable it to enable private test mode for "
 "talks."
 msgstr ""
+"O modo de teste está atualmente ativado. Desative-o para ativar o modo de "
+"teste privado para palestras."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:308
 #: orga/templates/orga/event/live.html:168
@@ -26247,6 +26579,8 @@ msgid ""
 "Talk test mode is currently enabled. Disable it to enable private test mode "
 "for talks."
 msgstr ""
+"O modo de teste das palestras está atualmente ativado. Desative-o para "
+"ativar o modo de teste privado para palestras."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:317
 #: orga/templates/orga/event/live.html:177
@@ -26254,6 +26588,8 @@ msgid ""
 "Private test mode hides talk pages from the public. Only organizers, "
 "reviewers, and system administrators can access them."
 msgstr ""
+"O modo de teste privado oculta as páginas das palestras do público. Apenas "
+"organizadores, revisores e administradores do sistema podem aceder-lhes."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:338
 #, fuzzy
@@ -26264,6 +26600,8 @@ msgstr "Participe do evento online"
 #: eventyay_common/templates/eventyay_common/event/live.html:342
 msgid "Control whether the Join Online Video link is visible on public pages."
 msgstr ""
+"Controlar se a ligação Participar no vídeo online está visível nas páginas "
+"públicas."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:349
 #, fuzzy
@@ -26303,20 +26641,27 @@ msgid ""
 "example link to your home page, your registration page, or your livestream "
 "here."
 msgstr ""
+"Estes links serão apresentados no topo de todas as suas páginas relacionadas "
+"com o horário, p. ex. o próprio horário, páginas de oradores, páginas de "
+"sessões, etc. Pode, por exemplo, adicionar aqui um link para a sua página "
+"inicial, para a sua página de inscrição ou para a sua transmissão em direto."
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:79
 msgid "Footer links"
-msgstr ""
+msgstr "Links do rodapé"
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:83
 msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
 msgstr ""
+"Estes links serão apresentados no rodapé de todas as suas páginas públicas. "
+"Pode, por exemplo, adicionar aqui um link para os seus termos de serviço, "
+"informações legais ou política de privacidade."
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:173
 msgid "Design"
-msgstr ""
+msgstr "Design"
 
 #: eventyay_common/templates/eventyay_common/events/create_base.html:29
 msgid ""
@@ -26472,6 +26817,8 @@ msgid ""
 "Edit permissions for existing teams. Click 'Edit' to expand the permissions "
 "form."
 msgstr ""
+"Editar permissões para equipas existentes. Clique em 'Editar' para expandir "
+"o formulário de permissões."
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:23
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:9
@@ -26557,7 +26904,7 @@ msgstr "Autenticação de dois fatores desativada"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:183
 msgid "No members yet."
-msgstr ""
+msgstr "Ainda não há membros."
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:192
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:55
@@ -26573,6 +26920,9 @@ msgid ""
 "Enter an email address to add a user. Existing eventyay accounts are added "
 "immediately; everyone else receives an invitation email."
 msgstr ""
+"Introduza um endereço de e-mail para adicionar um utilizador. As contas "
+"eventyay existentes são adicionadas imediatamente; todos os restantes "
+"recebem um e-mail de convite."
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:221
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:269
@@ -26595,6 +26945,8 @@ msgstr "Nenhuma exportação foi criada ainda."
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:284
 msgid "No teams exist yet. Click 'Create a team' to add your first team."
 msgstr ""
+"Ainda não existem equipas. Clique em 'Criar uma equipa' para adicionar a sua "
+"primeira equipa."
 
 #: eventyay_common/templates/eventyay_common/organizers/index.html:61
 #, fuzzy
@@ -26689,7 +27041,7 @@ msgstr "Temos novas sessões!"
 
 #: eventyay_common/views/account/basic.py:66
 msgid "We have emailed you a link to set your password."
-msgstr ""
+msgstr "Enviámos-lhe por e-mail uma ligação para definir a sua palavra-passe."
 
 #: eventyay_common/views/account/basic.py:154
 #, fuzzy
@@ -26712,12 +27064,17 @@ msgid ""
 "Your account was created via {provider} login and does not have a password "
 "yet. Send yourself a password setup link below."
 msgstr ""
+"A sua conta foi criada através do início de sessão {provider} e ainda não "
+"tem uma palavra-passe. Envie para si uma ligação de configuração de palavra-"
+"passe abaixo."
 
 #: eventyay_common/views/account/basic.py:333
 msgid ""
 "Your account does not have a password yet. Send yourself a password setup "
 "link below."
 msgstr ""
+"A sua conta ainda não tem uma palavra-passe. Envie para si uma ligação de "
+"configuração de palavra-passe abaixo."
 
 #: eventyay_common/views/account/email.py:28
 #, fuzzy
@@ -26927,6 +27284,8 @@ msgid ""
 "Unable to confirm %(email)s because it is already confirmed by a different "
 "account."
 msgstr ""
+"Não foi possível confirmar %(email)s porque já está confirmado por uma conta "
+"diferente."
 
 #: eventyay_common/views/custom.py:37
 #, fuzzy
@@ -26940,6 +27299,8 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
+"Esta ligação de confirmação de e-mail expirou ou é inválida. Por favor, %"
+"(email_action_link)s."
 
 #: eventyay_common/views/dashboards.py:273
 #, fuzzy
@@ -26949,11 +27310,11 @@ msgstr "Não tem permissão para clonar este evento."
 
 #: eventyay_common/views/dashboards.py:282 eventyay_common/views/event.py:877
 msgid "Video link is now visible on public pages."
-msgstr ""
+msgstr "A ligação de vídeo está agora visível nas páginas públicas."
 
 #: eventyay_common/views/dashboards.py:284 eventyay_common/views/event.py:879
 msgid "Video link is now hidden from public pages."
-msgstr ""
+msgstr "A ligação de vídeo está agora oculta nas páginas públicas."
 
 #: eventyay_common/views/dashboards.py:324
 #, fuzzy
@@ -26964,7 +27325,7 @@ msgstr "Nenhuma data"
 
 #: eventyay_common/views/event.py:574
 msgid "CFP"
-msgstr ""
+msgstr "CFP"
 
 #: eventyay_common/views/event.py:576
 #, fuzzy
@@ -26997,7 +27358,7 @@ msgstr "Ainda não configurou nenhuma pergunta."
 
 #: eventyay_common/views/event.py:627
 msgid "Please resolve the billing information before publishing the event."
-msgstr ""
+msgstr "Resolva as informações de faturização antes de publicar o evento."
 
 #: eventyay_common/views/event.py:634
 #, fuzzy
@@ -27013,11 +27374,11 @@ msgstr "A sua conta foi ativada."
 
 #: eventyay_common/views/event.py:741 orga/views/event.py:148
 msgid "Publish the event before publishing talks."
-msgstr ""
+msgstr "Publique o evento antes de publicar as palestras."
 
 #: eventyay_common/views/event.py:755 orga/views/event.py:162
 msgid "Talk pages are now published."
-msgstr ""
+msgstr "As páginas das palestras estão agora publicadas."
 
 #: eventyay_common/views/event.py:772 orga/views/event.py:178
 #, fuzzy
@@ -27029,6 +27390,8 @@ msgstr "As datas selecionadas foram ativadas."
 #: eventyay_common/views/event.py:777 orga/views/event.py:183
 msgid "Talk pages must be published before enabling talk test mode."
 msgstr ""
+"As páginas das palestras têm de ser publicadas antes de ativar o modo de "
+"teste de palestras."
 
 #: eventyay_common/views/event.py:797 orga/views/event.py:203
 #, fuzzy
@@ -27045,6 +27408,8 @@ msgstr "A bilheteira está em modo de produção."
 #: eventyay_common/views/event.py:844 orga/views/event.py:213
 msgid "Private test mode cannot be enabled while talks are published."
 msgstr ""
+"O modo de teste privado não pode ser ativado enquanto as palestras estiverem "
+"publicadas."
 
 #: eventyay_common/views/event.py:870 orga/views/event.py:239
 #, fuzzy
@@ -27079,7 +27444,7 @@ msgstr "As alterações não puderam ser guardadas."
 #: eventyay_common/views/organizer.py:391 eventyay_common/views/team.py:409
 #, python-format
 msgid "Changes to the team '%(team_name)s' have been saved."
-msgstr ""
+msgstr "As alterações à equipa '%(team_name)s' foram guardadas."
 
 #: eventyay_common/views/organizer.py:397 eventyay_common/views/team.py:417
 #, fuzzy
@@ -27160,7 +27525,7 @@ msgstr "A equipa foi apagada."
 
 #: eventyay_common/views/team.py:41
 msgid "Team management has moved into the unified organizer page."
-msgstr ""
+msgstr "A gestão de equipa foi movida para a página unificada do organizador."
 
 #: eventyay_common/views/team.py:337
 #, fuzzy
@@ -27178,11 +27543,11 @@ msgstr "Número de revisões"
 
 #: features/analytics/graphs/report.py:282
 msgid "Average time spent in room"
-msgstr ""
+msgstr "Tempo médio passado na sala"
 
 #: features/analytics/graphs/report.py:284
 msgid "Median time spent in room"
-msgstr ""
+msgstr "Tempo mediano passado na sala"
 
 #: features/analytics/graphs/report.py:291
 #, fuzzy
@@ -27192,11 +27557,11 @@ msgstr "Número de bilhetes"
 
 #: features/analytics/graphs/report.py:302
 msgid "Number of users who sent chat messages"
-msgstr ""
+msgstr "Número de utilizadores que enviaram mensagens no chat"
 
 #: features/analytics/graphs/report.py:397
 msgid "Unique viewers by session"
-msgstr ""
+msgstr "Visualizadores únicos por sessão"
 
 #: features/analytics/graphs/report.py:401
 #, fuzzy
@@ -27236,15 +27601,15 @@ msgstr "Endereço de contacto"
 
 #: features/analytics/graphs/report.py:479
 msgid "Sum"
-msgstr ""
+msgstr "Soma"
 
 #: features/analytics/graphs/report.py:507
 msgid "Report timeframe start"
-msgstr ""
+msgstr "Início do período do relatório"
 
 #: features/analytics/graphs/report.py:511
 msgid "Report timeframe end"
-msgstr ""
+msgstr "Fim do período do relatório"
 
 #: features/analytics/graphs/report.py:514
 #, fuzzy
@@ -27254,27 +27619,28 @@ msgstr "Número de encomendas"
 
 #: features/analytics/graphs/report.py:516
 msgid "Users with authenticated access (total)"
-msgstr ""
+msgstr "Utilizadores com acesso autenticado (total)"
 
 #: features/analytics/graphs/report.py:524
 msgid "Exhibitors (total)"
-msgstr ""
+msgstr "Expositores (total)"
 
 #: features/analytics/graphs/report.py:529
 msgid "Number of chat messages in streams and chat channels (in timeframe)"
 msgstr ""
+"Número de mensagens no chat em transmissões e canais de chat (no período)"
 
 #: features/analytics/graphs/report.py:542
 msgid "Number of direct message channels (total)"
-msgstr ""
+msgstr "Número de canais de mensagens diretas (total)"
 
 #: features/analytics/graphs/report.py:548
 msgid "Number of chat messages in direct messages (in timeframe)"
-msgstr ""
+msgstr "Número de mensagens no chat em mensagens diretas (no período)"
 
 #: features/analytics/graphs/report.py:560
 msgid "Number of 1:1 call attempts (in timeframe)"
-msgstr ""
+msgstr "Número de tentativas de chamadas 1:1 (no período)"
 
 #: features/live/templates/live/short_domain_invalid.html:4
 #: features/live/templates/live/short_domain_invalid.html:22
@@ -27806,11 +28172,13 @@ msgstr ""
 
 #: orga/forms/cfp.py:59
 msgid "Allow submitters to share their proposal publicly"
-msgstr ""
+msgstr "Permitir que os proponentes partilhem a sua proposta publicamente"
 
 #: orga/forms/cfp.py:60
 msgid "Allow submitters to share a secret link to their proposal with others."
 msgstr ""
+"Permitir que os proponentes partilhem uma ligação secreta para a sua "
+"proposta com outras pessoas."
 
 #: orga/forms/cfp.py:64
 msgid "Count text length in"
@@ -27835,13 +28203,15 @@ msgstr ""
 
 #: orga/forms/cfp.py:240
 msgid "Do not show Call for Speakers on the menu after the deadline"
-msgstr ""
+msgstr "Não mostrar o Call for Speakers no menu após o prazo"
 
 #: orga/forms/cfp.py:242
 msgid ""
 "If enabled, the Call for Speakers link will be hidden from navigation menus "
 "once the submission deadline has passed."
 msgstr ""
+"Se ativado, a ligação Call for Speakers será ocultada dos menus de navegação "
+"assim que o prazo de submissão tiver terminado."
 
 #: orga/forms/cfp.py:261 orga/templates/orga/cfp/question/_form.html:95
 #: orga/templates/orga/cfp/talkquestion/_form.html:95
@@ -28022,6 +28392,9 @@ msgid ""
 "Marking sessions as “featured” is a good way to show them before the first "
 "schedule release, or to highlight them once the schedule is visible."
 msgstr ""
+"Marcar sessões como “destacadas” é uma boa forma de as mostrar antes da "
+"primeira publicação do programa, ou de as destacar quando o programa estiver "
+"visível."
 
 #: orga/forms/event.py:78
 msgid "Enable anonymous feedback"
@@ -28118,6 +28491,8 @@ msgid ""
 "The password contains unsupported letters. Please only use characters A-Z, a-"
 "z, 0-9, and common special characters ({characters})."
 msgstr ""
+"A palavra-passe contém letras não suportadas. Por favor, utilize apenas "
+"caracteres A-Z, a-z, 0-9 e caracteres especiais comuns ({characters})."
 
 #: orga/forms/event.py:253
 msgid "You have to provide a sender address if you use a custom SMTP server."
@@ -28139,13 +28514,15 @@ msgstr ""
 
 #: orga/forms/event.py:304
 msgid "Enable submission comments"
-msgstr ""
+msgstr "Ativar comentários nas submissões"
 
 #: orga/forms/event.py:305
 msgid ""
 "Allow organizers and reviewers to comment on submissions, separate from "
 "reviews."
 msgstr ""
+"Permitir que organizadores e revisores comentem as submissões, separadamente "
+"das revisões."
 
 #: orga/forms/event.py:308
 msgid "Require a review score"
@@ -28317,6 +28694,8 @@ msgid ""
 "If you check this, the emails will be sent immediately, instead of being put "
 "in the outbox."
 msgstr ""
+"Se selecionar esta opção, os emails serão enviados imediatamente, em vez de "
+"serem colocados na caixa de saída."
 
 #: orga/forms/mails.py:201
 msgid "Recipient groups"
@@ -28488,11 +28867,11 @@ msgstr "Nomes de Oradores"
 
 #: orga/forms/schedule.py:114 orga/forms/schedule.py:129
 msgid "date"
-msgstr ""
+msgstr "data"
 
 #: orga/forms/schedule.py:119 orga/forms/schedule.py:134
 msgid "time"
-msgstr ""
+msgstr "hora"
 
 #: orga/forms/schedule.py:139
 msgid "Median score"
@@ -28615,7 +28994,7 @@ msgstr "Idiomas do conteúdo"
 
 #: orga/forms/submission.py:275
 msgid "The language in which the speaker will receive their invitation email."
-msgstr ""
+msgstr "O idioma em que o orador receberá o email de convite."
 
 #: orga/forms/submission.py:293
 #, fuzzy
@@ -28694,7 +29073,7 @@ msgstr "Conteúdo"
 
 #: orga/templates/orga/base.html:265 orga/views/cfp.py:134
 msgid "Forms"
-msgstr ""
+msgstr "Formulários"
 
 #: orga/templates/orga/base.html:273
 #: orga/templates/orga/speaker/speakerinformation/list.html:22
@@ -28852,11 +29231,11 @@ msgstr "Responda"
 
 #: orga/templates/orga/cfp/forms.html:94
 msgid "Title is always active"
-msgstr ""
+msgstr "O título está sempre ativo"
 
 #: orga/templates/orga/cfp/forms.html:95
 msgid "Title always active"
-msgstr ""
+msgstr "Título sempre ativo"
 
 #: orga/templates/orga/cfp/forms.html:106
 #, fuzzy
@@ -28917,7 +29296,7 @@ msgstr "Cliente"
 #: orga/templates/orga/cfp/forms.html:802
 #: orga/templates/orga/cfp/forms.html:891
 msgid "Toggle public state for"
-msgstr ""
+msgstr "Alternar estado público para"
 
 #: orga/templates/orga/cfp/forms.html:452
 #: orga/templates/orga/cfp/forms.html:804
@@ -28963,15 +29342,15 @@ msgstr "Nome completo"
 
 #: orga/templates/orga/cfp/forms.html:521
 msgid "Full Name is always active"
-msgstr ""
+msgstr "O Nome completo está sempre ativo"
 
 #: orga/templates/orga/cfp/forms.html:522
 msgid "Full Name always active"
-msgstr ""
+msgstr "Nome completo sempre ativo"
 
 #: orga/templates/orga/cfp/forms.html:535
 msgid "Full Name is always required and cannot be changed."
-msgstr ""
+msgstr "O Nome completo é sempre obrigatório e não pode ser alterado."
 
 #: orga/templates/orga/cfp/forms.html:626
 #, fuzzy
@@ -29238,7 +29617,7 @@ msgstr "Datas e localização"
 
 #: orga/templates/orga/cfp/text.html:58
 msgid "Some of your session types have different deadlines:"
-msgstr ""
+msgstr "Alguns dos seus tipos de sessão têm prazos diferentes:"
 
 #: orga/templates/orga/cfp/track/list.html:7 orga/views/cfp.py:725
 msgid "New track"
@@ -29301,6 +29680,8 @@ msgid ""
 "You are currently in the organizer area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
 msgstr ""
+"Encontra-se atualmente na área de organizador do eventyay. Para ver as suas "
+"propostas submetidas, aceda diretamente à página do evento:"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:13
 #: orga/templates/orga/speaker/form.html:30 orga/views/dashboard.py:297
@@ -29319,7 +29700,7 @@ msgstr "Privado"
 
 #: orga/templates/orga/includes/event_links_formset.html:47
 msgid "Add link"
-msgstr ""
+msgstr "Adicionar link"
 
 #: orga/templates/orga/includes/mail_template_role.html:3
 msgid "Accept email"
@@ -29354,7 +29735,7 @@ msgstr "%(count)s elemento"
 #: orga/templates/orga/includes/pagination.html:44
 msgctxt "Allows users to select how many lines/elements are shown in lists."
 msgid "Show per page:"
-msgstr ""
+msgstr "Mostrar por página:"
 
 #: orga/templates/orga/includes/review_filter_form.html:10
 msgid "Number of reviews"
@@ -29475,7 +29856,7 @@ msgstr ""
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:84
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:59
 msgid "Send to outbox"
-msgstr ""
+msgstr "Enviar para a caixa de saída"
 
 #: orga/templates/orga/mails/_placeholder_group.html:26
 #, fuzzy
@@ -29485,7 +29866,7 @@ msgstr "Atualização para o eventyay disponível"
 
 #: orga/templates/orga/mails/_placeholder_group.html:41
 msgid "e.g."
-msgstr ""
+msgstr "p. ex."
 
 #: orga/templates/orga/mails/compose_choice.html:9
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:11
@@ -29504,6 +29885,8 @@ msgid ""
 "Send an email to speakers, authors, submitters, based on their proposal "
 "status and other filters."
 msgstr ""
+"Enviar um email a oradores, autores e proponentes, com base no estado da sua "
+"proposta e noutros filtros."
 
 #: orga/templates/orga/mails/compose_choice.html:22
 #: orga/templates/orga/mails/compose_reviewer_mail_form.html:6
@@ -29514,7 +29897,7 @@ msgstr "Remover membro da equipa"
 
 #: orga/templates/orga/mails/compose_choice.html:25
 msgid "Send an email to your reviewers or other team members."
-msgstr ""
+msgstr "Enviar um email aos seus revisores ou a outros membros da equipa."
 
 #: orga/templates/orga/mails/compose_reviewer_mail_form.html:11
 msgid ""
@@ -29522,6 +29905,9 @@ msgid ""
 "are not placed in the outbox first. They also do not show up in the list of "
 "sent mails."
 msgstr ""
+"Os emails para revisores e outros membros da equipa são sempre enviados "
+"diretamente e não são colocados primeiro na caixa de saída. Também não "
+"aparecem na lista de emails enviados."
 
 #: orga/templates/orga/mails/compose_session_mail_form.html:16
 #, fuzzy, python-format
@@ -29532,7 +29918,7 @@ msgstr "Lista filtrada por respostas para a pergunta “%(question)s”."
 #: orga/templates/orga/mails/compose_session_mail_form.html:28
 #, python-format
 msgid "Recipients filtered by search “%(search)s”."
-msgstr ""
+msgstr "Destinatários filtrados pela pesquisa “%(search)s”."
 
 #: orga/templates/orga/mails/mailtemplate/list.html:11
 msgid "New custom template"
@@ -29630,7 +30016,7 @@ msgstr "Descartar tudo"
 
 #: orga/templates/orga/mails/outbox_list.html:41
 msgid "The current filters will be used when sending/discarding emails."
-msgstr ""
+msgstr "Os filtros atuais serão utilizados ao enviar/descartar emails."
 
 #: orga/templates/orga/mails/outbox_list.html:53
 #: orga/templates/orga/mails/outbox_list.html:58
@@ -29665,7 +30051,7 @@ msgstr "Classificar por título (Z-A)"
 #: orga/templates/orga/mails/outbox_list.html:96
 #: orga/templates/orga/mails/sent_list.html:67
 msgid "Contains an attachment"
-msgstr ""
+msgstr "Contém um anexo"
 
 #: orga/templates/orga/mails/send_draft_reminders.html:6
 #, fuzzy
@@ -29679,6 +30065,9 @@ msgid ""
 "These emails will be sent out immediately! They will not be saved to the "
 "outbox or logged first, to protect the privacy of the draft authors."
 msgstr ""
+"Estes emails serão enviados imediatamente! Não serão guardados na caixa de "
+"saída nem registados antes, para proteger a privacidade dos autores do "
+"rascunho."
 
 #: orga/templates/orga/mails/sent_list.html:9
 msgid "Sent emails"
@@ -29730,7 +30119,7 @@ msgstr "Propostas aceites"
 #: orga/templates/orga/review/dashboard.html:179
 #: orga/templates/orga/review/dashboard.html:190
 msgid "Sort (high-low)"
-msgstr ""
+msgstr "Ordenar (maior-menor)"
 
 #: orga/templates/orga/organizer/speaker_list.html:37
 #: orga/templates/orga/organizer/speaker_list.html:42
@@ -29738,7 +30127,7 @@ msgstr ""
 #: orga/templates/orga/review/dashboard.html:180
 #: orga/templates/orga/review/dashboard.html:191
 msgid "Sort (low-high)"
-msgstr ""
+msgstr "Ordenar (menor-maior)"
 
 #: orga/templates/orga/review/assignment-import.html:16
 #, python-format
@@ -29762,12 +30151,17 @@ msgid ""
 "more granular assignments, you can also assign reviewers to proposals "
 "individually."
 msgstr ""
+"Os revisores podem ser atribuídos a trilhas através de equipas de revisão. "
+"Se precisar de atribuições mais granulares, também pode atribuir revisores a "
+"propostas individualmente."
 
 #: orga/templates/orga/review/assignment.html:29
 msgid ""
 "As teams can belong to multiple events, teams are managed in your organizer "
 "settings."
 msgstr ""
+"Como as equipas podem pertencer a vários eventos, as equipas são geridas nas "
+"suas definições de organizador."
 
 #: orga/templates/orga/review/assignment.html:35
 msgid "New team"
@@ -30101,6 +30495,8 @@ msgid ""
 "This is done automatically on schedule release, but you can also trigger "
 "that action here."
 msgstr ""
+"Isto é feito automaticamente aquando da publicação do horário, mas também "
+"pode acionar essa ação aqui."
 
 #: orga/templates/orga/schedule/export.html:155
 msgid "Download ZIP"
@@ -30653,7 +31049,7 @@ msgstr "Link público secreto"
 
 #: orga/templates/orga/submission/comments.html:22
 msgid "No comments yet."
-msgstr ""
+msgstr "Ainda não há comentários."
 
 #: orga/templates/orga/submission/comments.html:64
 #, fuzzy
@@ -30719,7 +31115,7 @@ msgstr "Adicionar nova proposta"
 
 #: orga/templates/orga/submission/list.html:55
 msgid "RSS Feed (for feed readers)"
-msgstr ""
+msgstr "Feed RSS (para leitores de feeds)"
 
 #: orga/templates/orga/submission/list.html:98
 msgid ""
@@ -30790,7 +31186,7 @@ msgstr "Eliminar evento"
 
 #: orga/templates/orga/submission/speakers.html:33
 msgid "Avatar"
-msgstr ""
+msgstr "Avatar"
 
 #: orga/templates/orga/submission/speakers.html:35
 #, fuzzy
@@ -30806,7 +31202,7 @@ msgstr "E -mails"
 
 #: orga/templates/orga/submission/speakers.html:61
 msgid "Availabilities"
-msgstr ""
+msgstr "Disponibilidades"
 
 #: orga/templates/orga/submission/speakers.html:63
 #, fuzzy
@@ -30914,15 +31310,15 @@ msgstr "Versão"
 
 #: orga/templates/orga/user.html:76
 msgid "Last used"
-msgstr ""
+msgstr "Utilizado pela última vez"
 
 #: orga/templates/orga/user.html:77
 msgid "Created"
-msgstr ""
+msgstr "Criado"
 
 #: orga/templates/orga/user.html:94
 msgid "Updgrade"
-msgstr ""
+msgstr "Atualização"
 
 #: orga/templates/orga/user.html:123
 #, fuzzy
@@ -31110,6 +31506,7 @@ msgstr "A ordem das fases de revisão foi atualizada."
 #: orga/views/event.py:344
 msgid "All review phases except for the first one need a start date."
 msgstr ""
+"Todas as fases de revisão, exceto a primeira, precisam de uma data de início."
 
 #: orga/views/event.py:348
 #, python-brace-format
@@ -31117,6 +31514,8 @@ msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
 "review phases do not overlap, then save again."
 msgstr ""
+"As fases de revisão “{phase1}” e “{phase2}” sobrepõem-se. Certifique-se de "
+"que as fases de revisão não se sobrepõem e, em seguida, volte a guardar."
 
 #: orga/views/event.py:448
 msgid ""
@@ -31263,6 +31662,8 @@ msgid ""
 "The template has been saved - note that already pending emails that are "
 "based on this template will not be changed!"
 msgstr ""
+"O modelo foi guardado — note que os e-mails já pendentes que se baseiam "
+"neste modelo não serão alterados!"
 
 #: orga/views/mails.py:504
 #, fuzzy
@@ -31417,6 +31818,8 @@ msgstr "Precisa fornecer uma nova e única versão do cronograma!"
 #: orga/views/schedule.py:178
 msgid "Talks must be published or in private test mode to release a schedule."
 msgstr ""
+"As palestras têm de estar publicadas ou em modo de teste privado para "
+"publicar um horário."
 
 #: orga/views/schedule.py:187
 msgid "Nice, your schedule has been released!"
@@ -31475,6 +31878,8 @@ msgid ""
 "There may be pending emails for this proposal that are now incorrect or "
 "outdated."
 msgstr ""
+"Poderão existir e-mails pendentes para esta proposta que agora estão "
+"incorretos ou desatualizados."
 
 #: orga/views/submission.py:228
 msgid "The speaker has been removed from the proposal."
@@ -31518,7 +31923,7 @@ msgstr "Nova proposta para {event}: {title}"
 #: orga/views/submission.py:988
 #, python-brace-format
 msgid "Your comment on “{title}”"
-msgstr ""
+msgstr "O seu comentário sobre “{title}”"
 
 #: orga/views/submission.py:1001
 #, fuzzy
@@ -31551,7 +31956,7 @@ msgstr "Enviar todos"
 
 #: person/forms/auth_token.py:24
 msgid "Read and write all endpoints"
-msgstr ""
+msgstr "Ler e escrever em todos os endpoints"
 
 #: person/forms/auth_token.py:25
 #, fuzzy
@@ -31561,16 +31966,16 @@ msgstr "Permissões"
 
 #: person/forms/auth_token.py:27
 msgid "Choose a preset or configure detailed permissions below."
-msgstr ""
+msgstr "Escolha uma predefinição ou configure abaixo as permissões detalhadas."
 
 #: person/forms/auth_token.py:79
 #, python-brace-format
 msgid "Invalid permissions selected: {perms}"
-msgstr ""
+msgstr "Permissões inválidas selecionadas: {perms}"
 
 #: person/forms/profile.py:43
 msgid "There already exists an account for this email address."
-msgstr ""
+msgstr "Já existe uma conta para este endereço de e-mail."
 
 #: person/forms/profile.py:159
 msgid ""
@@ -31585,6 +31990,8 @@ msgid ""
 "The name you entered does not match the name on your account. Please update "
 "your account name in your profile before submitting."
 msgstr ""
+"O nome que introduziu não corresponde ao nome da sua conta. Atualize o nome "
+"da sua conta no seu perfil antes de submeter."
 
 #: person/forms/profile.py:328 person/forms/profile.py:372
 msgid "Non-accepted submitters"
@@ -31604,7 +32011,7 @@ msgstr "Não chegou"
 
 #: person/forms/user.py:29
 msgid "display name"
-msgstr ""
+msgstr "nome de exibição"
 
 #: person/forms/user.py:43
 msgid "Password (again)"
@@ -31949,6 +32356,8 @@ msgid ""
 "This text will be shown on the order confirmation page for pending orders in "
 "addition to the standard text."
 msgstr ""
+"Este texto será apresentado na página de confirmação de encomenda para "
+"encomendas pendentes, adicionalmente ao texto padrão."
 
 #: plugins/banktransfer/payment.py:185
 #, fuzzy
@@ -31964,6 +32373,11 @@ msgid ""
 "country codes such as \"GB\" if you never want to send refunds to IBANs from "
 "a specific country."
 msgstr ""
+"Coloque um IBAN ou prefixo de IBAN por linha. O sistema não tentará enviar "
+"reembolsos para nenhum destes IBANs. Útil, por exemplo, se receber muitos "
+"\"pagamentos reencaminhados\" por um prestador de serviços de pagamento de "
+"terceiros. Também pode listar códigos de país, como \"GB\", se nunca quiser "
+"enviar reembolsos para IBANs de um país específico."
 
 #: plugins/banktransfer/payment.py:236
 msgid "Please fill out your bank account details."
@@ -32047,7 +32461,7 @@ msgstr "A encomenda já foi cancelada."
 
 #: plugins/banktransfer/tasks.py:130
 msgid "Automatic split to multiple orders not possible."
-msgstr ""
+msgstr "Divisão automática em várias encomendas não é possível."
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/checkout_payment_form.html:4
 msgid ""
@@ -32565,6 +32979,8 @@ msgid ""
 "Please do not pick too many questions, as they may not fit within the PDF "
 "page width."
 msgstr ""
+"Por favor, não escolha demasiadas perguntas, pois podem não caber na largura "
+"da página do PDF."
 
 #. Translators: maximum 5 characters
 #: plugins/checkinlists/exporters.py:363
@@ -32829,7 +33245,7 @@ msgstr ""
 
 #: plugins/sendmail/forms.py:172
 msgid "payment pending (except unapproved)"
-msgstr ""
+msgstr "pagamento pendente (exceto não aprovado)"
 
 #: plugins/sendmail/forms.py:173
 #, fuzzy
@@ -32857,7 +33273,7 @@ msgstr "Anexo"
 
 #: plugins/sendmail/forms.py:435
 msgid "Upload a new file to replace the existing one."
-msgstr ""
+msgstr "Carregue um novo ficheiro para substituir o existente."
 
 #: plugins/sendmail/forms.py:440
 #, fuzzy
@@ -32868,20 +33284,27 @@ msgstr "Um endereço de e-mail ou vários endereços separados por vírgulas."
 #: plugins/sendmail/forms.py:456
 msgid "Any changes to the Reply-To field will apply only to this queued email."
 msgstr ""
+"Quaisquer alterações ao campo Reply-To aplicar-se-ão apenas a este email na "
+"fila."
 
 #: plugins/sendmail/forms.py:457
 msgid "Any changes to the BCC field will apply only to this queued email."
 msgstr ""
+"Quaisquer alterações ao campo BCC aplicar-se-ão apenas a este email na fila."
 
 #: plugins/sendmail/forms.py:524
 msgid "At least one recipient must remain. You cannot remove all recipients."
 msgstr ""
+"Pelo menos um destinatário tem de permanecer. Não pode remover todos os "
+"destinatários."
 
 #: plugins/sendmail/forms.py:529
 msgid ""
 "You cannot add new recipients or remove recipients. Only editing existing "
 "email addresses is allowed."
 msgstr ""
+"Não pode adicionar novos destinatários nem remover destinatários. Apenas é "
+"permitido editar endereços de email existentes."
 
 #: plugins/sendmail/forms.py:584
 #, fuzzy
@@ -32918,6 +33341,8 @@ msgid ""
 "Send an email to attendees, orders, ticket buyers, based on their order "
 "status and other filters."
 msgstr ""
+"Envie um email aos participantes, encomendas, compradores de bilhetes, com "
+"base no estado da encomenda e noutros filtros."
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:34
 #, fuzzy
@@ -32974,6 +33399,8 @@ msgid ""
 "These attachments will remain unless you remove them manually in file "
 "settings."
 msgstr ""
+"Estes anexos manter-se-ão, a menos que os remova manualmente nas definições "
+"de ficheiros."
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:11
 #, fuzzy, python-format
@@ -33047,7 +33474,7 @@ msgstr "Apagar equipa:"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:142
 msgid "Some emails failed to send:"
-msgstr ""
+msgstr "Alguns emails falharam o envio:"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:148
 #, fuzzy
@@ -33191,7 +33618,7 @@ msgstr "Não há propostas ou sessões que correspondam a esta seleção."
 
 #: plugins/socialauth/apps.py:9 plugins/socialauth/apps.py:12
 msgid "SocialAuth"
-msgstr ""
+msgstr "SocialAuth"
 
 #: plugins/socialauth/apps.py:13
 #, fuzzy
@@ -33225,27 +33652,31 @@ msgstr "Gerar novo segredo de aplicação"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
-msgstr ""
+msgstr "Configuração de Início de Sessão Social"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:4
 msgid ""
 "To enable social login for providers, you first need to create an OAuth "
 "application on the provider's website."
 msgstr ""
+"Para ativar o início de sessão social para os fornecedores, primeiro precisa "
+"de criar uma aplicação OAuth no site do fornecedor."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:6
 msgid ""
 "Note: When running tests on the server, the tickets component URL is "
 "typically"
 msgstr ""
+"Nota: Ao executar testes no servidor, o URL do componente de bilhetes é "
+"tipicamente"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:9
 msgid "Therefore, the complete callback URL should be"
-msgstr ""
+msgstr "Por isso, o URL de callback completo deve ser"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:12
 msgid "If you are running on localhost, the callback URL is"
-msgstr ""
+msgstr "Se estiver a executar em localhost, o URL de callback é"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:17
 #, fuzzy
@@ -33269,31 +33700,35 @@ msgstr "Integrações"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:23
 msgid "Follow the setup guide:"
-msgstr ""
+msgstr "Siga o guia de configuração:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:26
 #: plugins/socialauth/templates/socialauth/social_setup.html:42
 msgid "Set the callback URL to:"
-msgstr ""
+msgstr "Defina o URL de callback como:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:31
 #: plugins/socialauth/templates/socialauth/social_setup.html:47
 msgid "Add the client ID and client secret to admin settings"
 msgstr ""
+"Adicione o ID de cliente e o segredo de cliente às definições de "
+"administração"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:36
 msgid "II. GitHub OAuth Application"
-msgstr ""
+msgstr "II. Aplicação OAuth do GitHub"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:52
 msgid "III. MediaWiki OAuth Application"
-msgstr ""
+msgstr "III. Aplicação OAuth do MediaWiki"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:54
 msgid ""
 "To enable MediaWiki social login for your Eventyay instance, you need to "
 "register an OAuth application with MediaWiki."
 msgstr ""
+"Para ativar o início de sessão social do MediaWiki para a sua instância do "
+"Eventyay, precisa de registar uma aplicação OAuth no MediaWiki."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:57
 #, fuzzy
@@ -33303,11 +33738,12 @@ msgstr "Importar participantes"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
-msgstr ""
+msgstr "A aplicação OAuth tem de ser aprovada por um administrador do MediaWiki"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:60
 msgid "Until approved, only the application owner can log in"
 msgstr ""
+"Até ser aprovada, apenas o proprietário da aplicação pode iniciar sessão"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:63
 #, fuzzy
@@ -33323,11 +33759,11 @@ msgstr "Registar uma nova aplicação"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:68
 msgid "Click \"Propose new OAuth 2.0 client\""
-msgstr ""
+msgstr "Clique em \"Propor novo cliente OAuth 2.0\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:70
 msgid "On the form enter"
-msgstr ""
+msgstr "No formulário, introduza"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:72
 #, fuzzy
@@ -33343,7 +33779,7 @@ msgstr "Descrição do Produto"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:75
 msgid "Set Oauth \"callback\" URL to:"
-msgstr ""
+msgstr "Defina o URL de \"callback\" do Oauth para:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:80
 #, fuzzy
@@ -33353,7 +33789,7 @@ msgstr "Endereço de contato"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
-msgstr ""
+msgstr "Assinale \"O cliente é confidencial\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:82
 #, fuzzy
@@ -33363,27 +33799,31 @@ msgstr "Código de autorização"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:83
 msgid "Tick \"Refresh token\""
-msgstr ""
+msgstr "Assinale \"Token de atualização\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:84
 msgid "Choose \"Request authorization for specific permissions.\""
-msgstr ""
+msgstr "Escolha \"Solicitar autorização para permissões específicas.\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:85
 msgid ""
 "In the section \"Applicable grants\" select \"Basic Rights\" and \"Access "
 "private information\""
 msgstr ""
+"Na secção \"Concessões aplicáveis\", selecione \"Direitos básicos\" e "
+"\"Aceder a informações privadas\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:86
 msgid "Finally tick the box to accept the terms and submit."
-msgstr ""
+msgstr "Por fim, assinale a caixa para aceitar os termos e submeta."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:89
 msgid ""
 "On the next page copy the registered application will return the OAuth "
 "access information:"
 msgstr ""
+"Na página seguinte, copie a informação de acesso OAuth que a aplicação "
+"registada devolverá:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:91
 #, fuzzy
@@ -33402,20 +33842,24 @@ msgid ""
 "Add the client application key and client application secret to your "
 "Eventyay social auth settings"
 msgstr ""
+"Adicione a chave da aplicação cliente e o segredo da aplicação cliente às "
+"definições de autenticação social do seu Eventyay"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:98
 msgid "After Approval"
-msgstr ""
+msgstr "Após aprovação"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:100
 msgid ""
 "Once approved, other users can log in to your Eventyay instance using their "
 "MediaWiki account."
 msgstr ""
+"Uma vez aprovado, outros utilizadores podem iniciar sessão na sua instância "
+"Eventyay usando a sua conta MediaWiki."
 
 #: plugins/socialauth/views.py:105
 msgid "Error while authorizing: no email address available."
-msgstr ""
+msgstr "Erro ao autorizar: não há endereço de e-mail disponível."
 
 #: plugins/statistics/apps.py:15
 msgid "This plugin shows you various statistics."
@@ -33733,6 +34177,9 @@ msgid ""
 "Unfortunately, based on the invoice address you entered, we're not able to "
 "sell you the selected products for tax-related legal reasons."
 msgstr ""
+"Infelizmente, com base na morada de faturacão que introduziu, não podemos "
+"vender-lhe os produtos selecionados por motivos legais relacionados com "
+"impostos."
 
 #: presale/checkoutflowstep/questions_step.py:210
 msgid ""
@@ -33740,6 +34187,9 @@ msgid ""
 "rate to your purchase and the price of the products in your cart has changed "
 "accordingly."
 msgstr ""
+"Devido à morada de faturacão que introduziu, precisamos de aplicar uma taxa "
+"de imposto diferente à sua compra e o preço dos produtos no seu carrinho foi "
+"alterado em conformidade."
 
 #: presale/checkoutflowstep/questions_step.py:226
 #: presale/checkoutflowstep/questions_step.py:232
@@ -33812,7 +34262,7 @@ msgstr "Válido"
 #: presale/forms/renderers.py:39
 msgctxt "form"
 msgid "has errors"
-msgstr ""
+msgstr "tem erros"
 
 #: presale/forms/renderers.py:51
 #, fuzzy
@@ -33860,6 +34310,7 @@ msgid ""
 "You will be able to join this event with your browser right here when it "
 "starts."
 msgstr ""
+"Poderá juntar-se a este evento no seu navegador aqui mesmo quando começar."
 
 #: presale/templates/pretixpresale/event/base.html:48
 #, python-format
@@ -34005,7 +34456,7 @@ msgstr "Voltar"
 #: presale/templates/pretixpresale/event/checkout_base.html:7
 #, python-format
 msgid "Step %(current)s of %(total)s: %(label)s"
-msgstr ""
+msgstr "Passo %(current)s de %(total)s: %(label)s"
 
 #: presale/templates/pretixpresale/event/checkout_base.html:12
 #: presale/templates/pretixpresale/event/checkout_base.html:57
@@ -34261,7 +34712,7 @@ msgstr "Remove um"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:168
 msgid "quantity"
-msgstr ""
+msgstr "quantidade"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:172
 msgid "We're trying to reserve another one for you!"
@@ -34526,11 +34977,11 @@ msgstr "Ainda não está à venda"
 
 #: presale/templates/pretixpresale/event/index.html:36
 msgid "Your cart, general information, add products to your cart"
-msgstr ""
+msgstr "O seu carrinho, informações gerais, adicionar produtos ao seu carrinho"
 
 #: presale/templates/pretixpresale/event/index.html:36
 msgid "General information, add products to your cart"
-msgstr ""
+msgstr "Informações gerais, adicionar produtos ao seu carrinho"
 
 #: presale/templates/pretixpresale/event/index.html:63
 #, python-format
@@ -34551,6 +35002,7 @@ msgstr "Esvaziar Carrinho"
 #: presale/templates/pretixpresale/event/index.html:84
 msgid "Checkout (login required, opens login dialog)"
 msgstr ""
+"Finalizar compra (requer início de sessão, abre diálogo de início de sessão)"
 
 #: presale/templates/pretixpresale/event/index.html:119
 #, fuzzy
@@ -35011,6 +35463,8 @@ msgstr ""
 #: presale/templates/pretixpresale/event/order_cancel.html:162
 msgid "The following payment methods will be used to refund the money to you:"
 msgstr ""
+"Os seguintes métodos de pagamento serão utilizados para lhe reembolsar o "
+"dinheiro:"
 
 #: presale/templates/pretixpresale/event/order_cancel.html:142
 #: presale/templates/pretixpresale/event/order_cancel.html:173
@@ -35199,6 +35653,10 @@ msgid ""
 "your ticket confirmation email. On the tickets page there is also a link to "
 "join online sessions."
 msgstr ""
+"Este é um evento com bilhete. Se comprou um bilhete como utilizador "
+"convidado, não tem uma conta, mas pode na mesma aceder ao bilhete através da "
+"ligação secreta no e-mail de confirmação do bilhete. Na página dos bilhetes "
+"existe também uma ligação para aderir às sessões online."
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:12
 #: presale/templates/pretixpresale/fragment_modals.html:27
@@ -35206,11 +35664,13 @@ msgid ""
 "As a ticket holder please also check your email for the unique link to join "
 "online sessions."
 msgstr ""
+"Como titular do bilhete, verifique também o seu e-mail para obter a ligação "
+"única para aderir às sessões online."
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:16
 #: presale/templates/pretixpresale/fragment_modals.html:31
 msgid "Can't find your ticket?"
-msgstr ""
+msgstr "Não consegue encontrar o seu bilhete?"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:18
 #: presale/templates/pretixpresale/fragment_modals.html:33
@@ -35222,7 +35682,7 @@ msgstr "Enviar e-mails"
 #: presale/templates/pretixpresale/fragment_join_online_video.html:20
 #: presale/templates/pretixpresale/fragment_modals.html:35
 msgid "to receive it."
-msgstr ""
+msgstr "para o receber."
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:23
 #: presale/templates/pretixpresale/fragment_modals.html:38
@@ -35295,10 +35755,12 @@ msgid ""
 "If the process continues for an extended period, feel free to reach out to "
 "us."
 msgstr ""
+"Se o processo continuar durante um longo período, não hesite em contactar-"
+"nos."
 
 #: presale/templates/pretixpresale/fragment_modals.html:78
 msgid "Please log in to continue."
-msgstr ""
+msgstr "Inicie sessão para continuar."
 
 #: presale/templates/pretixpresale/fragment_modals.html:87
 #, fuzzy
@@ -35363,11 +35825,11 @@ msgstr "O pagamento falhou. Por favor, tente novamente."
 
 #: presale/templates/pretixpresale/fragment_modals.html:380
 msgid "Connection failed. Please check your network and try again."
-msgstr ""
+msgstr "Falha na ligação. Verifique a sua rede e tente novamente."
 
 #: presale/templates/pretixpresale/fragment_modals.html:397
 msgid "Please allow popups for this site to use SSO login."
-msgstr ""
+msgstr "Permita pop-ups para este site para utilizar o início de sessão SSO."
 
 #: presale/templates/pretixpresale/fragment_week_calendar.html:79
 #: presale/views/widget.py:390
@@ -35414,6 +35876,8 @@ msgid ""
 "Eventyay empowers communities and organizations to create, manage, and host "
 "events of all kinds — from conferences to online meetups."
 msgstr ""
+"A Eventyay capacita comunidades e organizações a criar, gerir e alojar "
+"eventos de todos os tipos — de conferências a encontros online."
 
 #: presale/templates/pretixpresale/index.html:20
 #, fuzzy
@@ -35603,6 +36067,7 @@ msgstr "Os produtos foram adicionados com êxito ao seu carrinho."
 #: presale/views/widget.py:328
 msgid "Tickets for this event cannot be purchased on this sales channel."
 msgstr ""
+"Os bilhetes para este evento não podem ser comprados neste canal de venda."
 
 #: presale/views/checkout.py:38
 msgid "Your cart is empty"
@@ -35714,6 +36179,10 @@ msgid ""
 "{number} hours. If the email did not arrive, please your check spam folder "
 "and also double check that you used the correct email address."
 msgstr ""
+"Se o endereço de e-mail que introduziu for válido e estiver associado a um "
+"bilhete, já lhe enviámos um e-mail com uma ligação para o seu bilhete nas "
+"últimas {number} horas. Se o e-mail não tiver chegado, verifique a sua pasta "
+"de spam e confirme também que utilizou o endereço de e-mail correto."
 
 #: presale/views/user.py:55
 #, python-brace-format
@@ -35786,7 +36255,7 @@ msgstr "Sem oradores"
 
 #: schedule/exporters.py:323
 msgid "iCal (full event)"
-msgstr ""
+msgstr "iCal (evento completo)"
 
 #: schedule/exporters.py:364
 #, fuzzy
@@ -35815,6 +36284,8 @@ msgid ""
 "If you set room availabilities, speakers will only be able to set their "
 "availability for when any room is available."
 msgstr ""
+"Se definir disponibilidades de salas, os oradores apenas poderão definir a "
+"sua disponibilidade quando houver alguma sala disponível."
 
 #: schedule/forms.py:110
 msgid "The submitted availability does not comply with the required format."
@@ -35847,7 +36318,7 @@ msgstr ""
 #: schedule/forms.py:204
 #, python-brace-format
 msgid "The current, automatically generated GUID is: {guid}."
-msgstr ""
+msgstr "O GUID atual, gerado automaticamente, é: {guid}."
 
 #: schedule/phrases.py:9
 msgctxt "Schedule/program of the conference"
