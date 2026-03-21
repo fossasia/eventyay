@@ -84,7 +84,7 @@ Endpoints
 
 .. versionchanged:: 1.15
 
-   The questions endpoint has been extended by the filter queries ``ask_during_checkin``, ``requred``, and
+   The questions endpoint has been extended by the filter queries ``ask_during_checkin``, ``required``, and
    ``identifier``.
 
 .. http:get:: /api/v1/organizers/(organizer)/events/(event)/questions/
@@ -161,7 +161,7 @@ Endpoints
    :query string ordering: Manually set the ordering of results. Valid fields to be used are ``id`` and ``position``.
                            Default: ``position``
    :query string identifier: Only return questions with the given identifier string
-   :query boolean ask_during_checkin: Only return questions that are or are not to be asked during check-in
+   :query boolean ask_during_checkin: Filter questions based on whether they should be asked during check-in
    :query boolean required: Only return questions that are or are not required to fill in
    :param organizer: The ``slug`` field of the organizer to fetch
    :param event: The ``slug`` field of the event to fetch
