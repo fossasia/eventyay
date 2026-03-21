@@ -20,6 +20,10 @@
 		aria-live="polite"
 	)
 		span {{ $t(joinErrorKey) }}
+		button.join-error-retry(
+			type="button",
+			@click="handleJoinErrorDismiss"
+		) {{ $t('MediaSource:join-error:retry:text') }}
 		button.join-error-dismiss(
 			type="button",
 			@click="joinErrorKey = null",
@@ -75,7 +79,7 @@ const autoplay = computed(() => store.getters.autoplay);
 
 const module = computed(() => {
 	if (!props.room) return null;
-	return props.room.modules.find((m) =>
+	return props.room?.modules?.find((m) =>
 		[
 			'livestream.native',
 			'livestream.youtube',
@@ -96,6 +100,13 @@ const shouldUseLivestream = computed(() => {
 	}
 	return true;
 });
+
+function handleJoinErrorDismiss() {
+	joinErrorKey.value = null;
+
+	// Retry joining automatically
+	initializeIframe(false);
+}
 
 // When stream schedules are enabled, the backend returns 404 (mapped to null) if
 // no stream is currently active. For iframe-based streams we show a full-size
@@ -272,10 +283,10 @@ function getJoinErrorKey(error) {
 }
 
 async function initializeIframe(mute) {
-	if (!module.value) return;
-	if (shouldUseLivestream.value) return;
 	joinErrorKey.value = null;
 	iframeError.value = null;
+	if (!module.value) return;
+	if (shouldUseLivestream.value) return;
 	if (iframeOffline.value) return;
 	try {
 		let iframeUrl;
@@ -614,7 +625,7 @@ iframe.iframe-media-source
 	color: $clr-danger
 	padding: 12px 16px
 	border-radius: 4px
-	z-index: 50
+	z-index: 102
 	max-width: 420px
 	text-align: center
 	display: flex
@@ -626,6 +637,18 @@ iframe.iframe-media-source
 		right: 8px
 		transform: none
 		max-width: calc(100% - 16px)
+	.join-error-retry
+		background: none
+		border: 1px solid $clr-danger
+		color: $clr-danger
+		cursor: pointer
+		font-size: 13px
+		border-radius: 3px
+		padding: 2px 8px
+		flex-shrink: 0
+		opacity: 0.8
+		&:hover
+			opacity: 1
 	.join-error-dismiss
 		background: none
 		border: none

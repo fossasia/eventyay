@@ -38,6 +38,7 @@ class PretalxFavButton extends HTMLElement {
     this._starFilled = starFilled
 
     const button = document.createElement('button')
+    button.type = 'button'
     button.className = 'btn btn-xs btn-link'
     const iconWrap = document.createElement('span')
     iconWrap.className = 'fav-icon'
