@@ -1,11 +1,12 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.db import connection
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
-from eventyay.base.models import BBBServer, Event, JanusServer, Organizer, TurnServer
+from eventyay.base.models import BBBServer, Event, JanusServer, Organizer, TurnServer, User
 from eventyay.control.views.admin_views import (
     BBBServerList,
     EventAdminToken,
@@ -60,6 +61,35 @@ class EventQuerysetOptimizationTest(TestCase):
             auth_secret="some-secret",
             event_exclusive=self.events[0],
         )
+        self.request_factory = RequestFactory()
+        self.staff_user = User.objects.create_user(
+            "staff@example.com",
+            "secret",
+            is_staff=True,
+            fullname="Staff User",
+        )
+
+    def _configured_event(self):
+        event = self.events[0]
+        event.config = {
+            "JWT_secrets": [
+                {
+                    "issuer": "any",
+                    "audience": "eventyay",
+                    "secret": "this-is-a-test-secret-with-more-than-thirty-two-chars",
+                }
+            ]
+        }
+        event.save(update_fields=["config"])
+        return event
+
+    def _call_admin_token_view(self, event):
+        request = self.request_factory.get("/admin/video/events/token/")
+        request.user = self.staff_user
+        view = EventAdminToken()
+        view.request = request
+        view.kwargs = {"pk": str(event.pk)}
+        return view.get(request)
 
     def _assert_no_n1_queries(self, queryset, relation_attr="organizer", attr_prop="slug", fetch_all=False):
         """
@@ -102,6 +132,29 @@ class EventQuerysetOptimizationTest(TestCase):
         view = EventAdminToken()
         queryset = view.get_queryset()
         self._assert_no_n1_queries(queryset, fetch_all=False)
+
+    def test_event_admin_token_preserves_domain_path(self):
+        event = self._configured_event()
+        event.domain = "example.com/myapp"
+        event.save(update_fields=["domain"])
+
+        response = self._call_admin_token_view(event)
+
+        assert response.status_code == 302
+        assert response["Location"].startswith("https://example.com/myapp#token=")
+
+    def test_event_admin_token_invalid_domain_falls_back_to_request_host(self):
+        event = self._configured_event()
+        event.domain = "https://evil.example.com/path"
+        event.save(update_fields=["domain"])
+
+        response = self._call_admin_token_view(event)
+
+        expected_scheme = "https" if not settings.DEBUG else "http"
+        assert response.status_code == 302
+        assert response["Location"].startswith(
+            f"{expected_scheme}://testserver{event.urls.video_base}#token="
+        )
 
     def test_event_clear_uses_select_related(self):
         view = EventClear()

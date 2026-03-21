@@ -42,6 +42,7 @@ from eventyay.base.models import (
 from eventyay.base.models.auth import User
 from eventyay.base.models.event import EventPlannedUsage as PlannedUsage
 from eventyay.base.models.log import LogEntry
+from eventyay.base.models.mixins import SENSITIVE_KEYS as LOG_MIXIN_SENSITIVE_KEYS
 from eventyay.base.services.bbb import get_url
 from eventyay.control.forms.server_management import (
     BBBMoveRoomForm,
@@ -64,7 +65,9 @@ from eventyay.features.importers.tasks import conftool_sync_posters
 logger = logging.getLogger(__name__)
 
 
-SENSITIVE_KEYS = frozenset({
+SHARED_SENSITIVE_MARKERS = frozenset(LOG_MIXIN_SENSITIVE_KEYS)
+
+SENSITIVE_KEYS = SHARED_SENSITIVE_MARKERS | frozenset({
     "secret", "room_create_key", "auth_secret", "token_secret",
     "jwt_secrets", "password", "new_password", "repeat_password",
     "venueless_secret", "auth_token", "api_key", "conftool_password",
@@ -83,6 +86,7 @@ def redact_sensitive_data(data, depth=0):
             normalized = key_lower.replace("-", "_")
             collapsed = "".join(ch for ch in normalized if ch.isalnum())
             tokens = [token for token in normalized.split("_") if token]
+            has_shared_marker = any(marker in normalized for marker in SHARED_SENSITIVE_MARKERS)
             has_sensitive_token = (
                 "password" in tokens
                 or "secret" in tokens
@@ -90,8 +94,7 @@ def redact_sensitive_data(data, depth=0):
                 or ("auth" in tokens and "token" in tokens)
             )
             has_sensitive_substring = (
-                "secret" in key_lower
-                or "password" in key_lower
+                has_shared_marker
                 or "apikey" in collapsed
                 or "authtoken" in collapsed
             )
@@ -315,9 +318,21 @@ class EventAdminToken(EventQuerysetMixin, AdminBase, DetailView):
 
         # Use the appropriate URL based on environment
         if event.domain:
-            # Hardened: Ensure event.domain doesn't contain a path and is a valid domain
-            domain = event.domain.split('/')[0]
-            video_url = f"https://{domain}#token={token}"
+            # Preserve valid path-based event domains while rejecting unsafe URL parts.
+            domain_value = event.domain.strip()
+            if "://" in domain_value or "?" in domain_value or "#" in domain_value:
+                logger.warning(
+                    "Invalid event domain '%s' for event %s; falling back to request host",
+                    domain_value,
+                    event.slug,
+                )
+                domain_value = ""
+
+            if domain_value:
+                video_url = f"https://{domain_value}#token={token}"
+            else:
+                scheme = 'https' if not settings.DEBUG else ('https' if request.is_secure() else 'http')
+                video_url = f"{scheme}://{request.get_host()}{event.urls.video_base}#token={token}"
         else:
             # For local development, use the current request's host
             scheme = 'https' if not settings.DEBUG else ('https' if request.is_secure() else 'http')
