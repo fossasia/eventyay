@@ -1,0 +1,329 @@
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//   FlatBuffers schema for WAMP v2 messages
+//   Copyright (c) typedef int GmbH and contributors
+//   Licensed under the MIT License (MIT)
+//
+//////////////////////////////////////////////////////////////////////////////
+
+include "types.fbs";
+
+namespace wamp.proto;
+
+
+// [Category 4: Both Payload and Forwarding] CALL message (message_type = 48): Client calls a procedure with application payload.
+table Call
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    // The WAMP or application URI of the procedure which should be called.
+    procedure: string (required, uri);
+
+    /// Positional values for application-defined call arguments.
+    args: [uint8];
+
+    /// Keyword values for application-defined call arguments.
+    kwargs: [uint8];
+
+    /// Alternative, transparent payload. If given, ``args`` and ``kwargs`` must be left unset.
+    payload: [uint8];
+
+    /// The specific scheme in use with Payload Passthru (PPT) mode for the application payload.
+    ppt_scheme: PPTScheme;
+
+    /// The specific serializer encoding the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_serializer: PPTSerializer;
+
+    /// The cryptographic algorithm ("cipher") encrypting the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_cipher: PPTCipher;
+
+    /// The identifier or reference to the encryption key that was used to encrypt the payload with the Payload Passthru (PPT) scheme and cipher in use.
+    ppt_keyid: string (ppt_keyid);
+
+    // If present, cancel the call after this duration in ms.
+    timeout: uint32;
+
+    // When set, indicates that the caller wants to receive progressive call results.
+    receive_progress: bool;
+
+    // Application provided transaction hash for router-side throttle/deduplicate.
+    transaction_hash: string;
+
+    // Caller WAMP session ID (optional).
+    caller: uint64;
+
+    // Caller WAMP session authentication ID (optional).
+    caller_authid: string (principal);
+
+    // Caller WAMP session authentication role (optional).
+    caller_authrole: string (principal);
+
+    // R2R-link message forwarding route that was taken.
+    forward_for: [Principal];
+}
+
+
+// [Category 3: Forwarding Only] CANCEL message (message_type = 49): Client cancels a pending call.
+table Cancel
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original CALL request.
+    request: uint64 (key);
+
+    // Specifies how to cancel the call.
+    mode: CancelMode = SKIP;
+
+    // R2R-link message forwarding route that was taken.
+    forward_for: [Principal];
+}
+
+
+// [Category 4: Both Payload and Forwarding] RESULT message (message_type = 50): Callee returns call result with application payload.
+table Result
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original CALL request.
+    request: uint64 (key);
+
+    /// Positional values for application-defined call result.
+    args: [uint8];
+
+    /// Keyword values for application-defined call result.
+    kwargs: [uint8];
+
+    /// Alternative, transparent payload. If given, ``args`` and ``kwargs`` must be left unset.
+    payload: [uint8];
+
+    /// The specific scheme in use with Payload Passthru (PPT) mode for the application payload.
+    ppt_scheme: PPTScheme;
+
+    /// The specific serializer encoding the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_serializer: PPTSerializer;
+
+    /// The cryptographic algorithm ("cipher") encrypting the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_cipher: PPTCipher;
+
+    /// The identifier or reference to the encryption key that was used to encrypt the payload with the Payload Passthru (PPT) scheme and cipher in use.
+    ppt_keyid: string (ppt_keyid);
+
+    // If true, this result is a progressive call result, and subsequent results (or a final error) will follow.
+    progress: bool;
+
+    // Callee WAMP session ID (optional).
+    callee: uint64;
+
+    // Callee WAMP session authentication ID (optional).
+    callee_authid: string (principal);
+
+    // Callee WAMP session authentication role (optional).
+    callee_authrole: string (principal);
+
+    // R2R-link message forwarding route that was taken.
+    forward_for: [Principal];
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] REGISTER message (message_type = 64): Callee registers a procedure.
+table Register
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    // The WAMP or application URI of the RPC endpoint provided.
+    procedure: string (required, uri_pattern);
+
+    // The procedure matching policy to be used for the registration.
+    match: Match = EXACT;
+
+    // The procedure invocation policy to be used for the registration.
+    invoke: InvocationPolicy;
+
+    // The (maximum) concurrency to be used for the registration.
+    concurrency: uint16;
+
+    // Force registration of procedure (kicking any existing registration).
+    force_reregister: bool;
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] REGISTERED message (message_type = 65): Router acknowledges registration.
+table Registered
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original ``REGISTER`` request.
+    request: uint64 (key);
+
+    // The registration ID for the registered procedure (or procedure pattern).
+    registration: uint64;
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] UNREGISTER message (message_type = 66): Callee unregisters a procedure.
+table Unregister
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original ``REGISTER`` request.
+    request: uint64 (key);
+
+    // The registration ID for the registration to unregister.
+    registration: uint64;
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] UNREGISTERED message (message_type = 67): Router acknowledges unregistration.
+table Unregistered
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original UNREGISTER request.
+    request: uint64 (key);
+
+    // If unregister was actively triggered by router, the ID of the registration revoked.
+    registration: uint64;
+
+    // The reason (an URI) for revocation.
+    reason: string (uri);
+}
+
+
+// [Category 4: Both Payload and Forwarding] INVOCATION message (message_type = 68): Router invokes registered procedure with application payload.
+table Invocation
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    // The registration ID of the endpoint to be invoked.
+    registration: uint64;
+
+    /// Positional values for application-defined call arguments.
+    args: [uint8];
+
+    /// Keyword values for application-defined call arguments.
+    kwargs: [uint8];
+
+    /// Alternative, transparent payload. If given, ``args`` and ``kwargs`` must be left unset.
+    payload: [uint8];
+
+    /// The specific scheme in use with Payload Passthru (PPT) mode for the application payload.
+    ppt_scheme: PPTScheme;
+
+    /// The specific serializer encoding the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_serializer: PPTSerializer;
+
+    /// The cryptographic algorithm ("cipher") encrypting the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_cipher: PPTCipher;
+
+    /// The identifier or reference to the encryption key that was used to encrypt the payload with the Payload Passthru (PPT) scheme and cipher in use.
+    ppt_keyid: string (ppt_keyid);
+
+    // For pattern-based registrations (not for exact matching registrations, the invocation MUST include the actual procedure being called.
+    procedure: string (uri);
+
+    // If present, let the callee automatically cancels the invocation after this ms.
+    timeout: uint32;
+
+    // Indicates if the callee should produce progressive results.
+    receive_progress: bool;
+
+    // Application provided transaction hash for router-side throttle/deduplicate.
+    transaction_hash: string;
+
+    // The WAMP session ID of the caller. Only filled if caller is disclosed.
+    caller: uint64;
+
+    // The WAMP authid of the caller. Only filled if caller is disclosed.
+    caller_authid: string (principal);
+
+    // The WAMP authrole of the caller. Only filled if caller is disclosed.
+    caller_authrole: string (principal);
+
+    // R2R-link message forwarding route that was taken.
+    forward_for: [Principal];
+}
+
+
+// [Category 3: Forwarding Only] INTERRUPT message (message_type = 69): Router interrupts a pending invocation.
+table Interrupt
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    // Specifies how to interrupt the invocation.
+    mode: CancelMode = KILL;
+
+    // The reason (an URI) for the invocation interrupt.
+    reason: string (uri);
+
+    // R2R-link message forwarding route that was taken.
+    forward_for: [Principal];
+}
+
+
+// [Category 4: Both Payload and Forwarding] YIELD message (message_type = 70): Callee yields invocation result with application payload.
+table Yield
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    /// Positional values for application-defined invocation result.
+    args: [uint8];
+
+    /// Keyword values for application-defined invocation result.
+    kwargs: [uint8];
+
+    /// Alternative, transparent payload. If given, ``args`` and ``kwargs`` must be left unset.
+    payload: [uint8];
+
+    /// The specific scheme in use with Payload Passthru (PPT) mode for the application payload.
+    ppt_scheme: PPTScheme;
+
+    /// The specific serializer encoding the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_serializer: PPTSerializer;
+
+    /// The cryptographic algorithm ("cipher") encrypting the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_cipher: PPTCipher;
+
+    /// The identifier or reference to the encryption key that was used to encrypt the payload with the Payload Passthru (PPT) scheme and cipher in use.
+    ppt_keyid: string (ppt_keyid);
+
+    // If true, this result is a progressive invocation result, and subsequent results (or a final error) will follow.
+    progress: bool;
+
+    // Callee WAMP session ID (optional).
+    callee: uint64;
+
+    // Callee WAMP session authentication ID (optional).
+    callee_authid: string (principal);
+
+    // Callee WAMP session authentication role (optional).
+    callee_authrole: string (principal);
+
+    // R2R-link message forwarding route that was taken.
+    forward_for: [Principal];
+}

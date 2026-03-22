@@ -1,0 +1,31 @@
+from allauth.socialaccount.providers.oauth.client import OAuth
+from allauth.socialaccount.providers.oauth.views import (
+    OAuthAdapter,
+    OAuthCallbackView,
+    OAuthLoginView,
+)
+
+
+class VimeoAPI(OAuth):
+    url = "https://vimeo.com/api/rest/v2?method=vimeo.people.getInfo"
+
+    def get_user_info(self):
+        url = self.url
+        data = self.query(url, params=dict(format="json")).json()
+        return data["person"]
+
+
+class VimeoOAuthAdapter(OAuthAdapter):
+    provider_id = "vimeo"
+    request_token_url = "https://vimeo.com/oauth/request_token"  # nosec
+    access_token_url = "https://vimeo.com/oauth/access_token"  # nosec
+    authorize_url = "https://vimeo.com/oauth/authorize"
+
+    def complete_login(self, request, app, token, response):
+        client = VimeoAPI(request, app.client_id, app.secret, self.request_token_url)
+        extra_data = client.get_user_info()
+        return self.get_provider().sociallogin_from_response(request, extra_data)
+
+
+oauth_login = OAuthLoginView.adapter_view(VimeoOAuthAdapter)
+oauth_callback = OAuthCallbackView.adapter_view(VimeoOAuthAdapter)

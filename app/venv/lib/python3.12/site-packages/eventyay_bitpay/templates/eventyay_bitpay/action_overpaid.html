@@ -1,0 +1,10 @@
+{% load i18n %}
+
+<p>
+    {% url "control:event.order" organizer=event.organizer.slug event=event.slug code=data.order as ourl %}
+    {% blocktrans trimmed with charge=data.charge bp_href="href='https://bitpay.com/dashboard/payments/"|add:data.charge|add:"' target='_blank'"|safe order="<a href='"|add:ourl|add:"'>"|add:data.order|add:"</a>"|safe %}
+        The BitPay invoice <a {{ bp_href }}>{{ charge }}</a> has succeeded, but the order {{ order }} is
+        expired and the product was sold out in the meantime. Therefore, the payment could not be accepted. Please
+        contact the user and refund the money via BitPay's interface.
+    {% endblocktrans %}
+</p>

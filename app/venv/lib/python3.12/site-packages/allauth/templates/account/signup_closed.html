@@ -1,0 +1,14 @@
+{% extends "account/base_entrance.html" %}
+{% load i18n %}
+{% load allauth %}
+{% block head_title %}
+    {% trans "Sign Up Closed" %}
+{% endblock head_title %}
+{% block content %}
+    {% element h1 %}
+        {% trans "Sign Up Closed" %}
+    {% endelement %}
+    {% element p %}
+        {% trans "We are sorry, but the sign up is currently closed." %}
+    {% endelement %}
+{% endblock content %}

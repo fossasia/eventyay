@@ -1,0 +1,53 @@
+label {
+    font-family: monospace;
+}
+
+input[type="text"], input[type="password"] {
+    box-shadow: 0 0 0px 1000px white inset !important;
+    padding: 6px;
+    border: 1px solid white !important;
+    border-bottom-color: lightgray !important;
+    outline: none;
+    transition: border-bottom-color .2s linear;
+}
+
+input[type="text"]:focus, input[type="password"]:focus {
+    border-bottom-color: dodgerblue !important;
+}
+
+h2 {
+    text-transform: uppercase;
+    font-family: monospace;
+    font-size: 25px;
+    display: block;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+input[type="submit"], input[type="button"] {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: monospace;
+    border: 1px solid white;
+    padding: 6px 29px;
+    background: black;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color .2s linear, color .2s linear, border-color .2s linear;
+}
+
+input[type="submit"]:hover, input[type="button"]:hover {
+    color: black;
+    background-color: white;
+    border-color: black;
+}
+
+.errorlist {
+    font-family: monospace;
+    color: darkred;
+    word-wrap: break-word;
+    max-width: 500px;
+}

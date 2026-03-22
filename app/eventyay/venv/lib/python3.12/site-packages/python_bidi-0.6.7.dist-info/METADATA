@@ -1,0 +1,160 @@
+Metadata-Version: 2.4
+Name: python-bidi
+Version: 0.6.7
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
+Classifier: Topic :: Text Processing
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Requires-Dist: pytest ; extra == 'dev'
+Provides-Extra: dev
+License-File: LICENSE-THIRD-PARTY.yml
+License-File: COPYING
+License-File: COPYING.LESSER
+License-File: AUTHORS.rst
+Summary: Python Bidi layout wrapping the Rust crate unicode-bidi
+Keywords: bidi,unicode,layout
+Author-email: Meir Kriheli <mkriheli@gmail.com>
+Description-Content-Type: text/x-rst; charset=UTF-8
+Project-URL: Homepage, https://github.com/MeirKriheli/python-bidi
+Project-URL: Repository, https://github.com/MeirKriheli/python-bidi
+Project-URL: Documentation, https://python-bidi.readthedocs.io/en/latest/
+Project-URL: Issues, https://github.com/MeirKriheli/python-bidi/issues
+Project-URL: Changelog, https://github.com/MeirKriheli/python-bidi/blob/master/CHANGELOG.rst
+
+===============================
+Python BiDi
+===============================
+
+`Bi-directional`_ (BiDi) layout for Python providing 2 implementations:
+
+* V5 of the algorithm implemented with Python.
+* Wrapper the `unicode-bidi`_ Rust crate.
+
+`Package documentation`_
+
+.. _Bi-directional: http://en.wikipedia.org/wiki/Bi-directional_text
+.. _unicode-bidi: https://crates.io/crates/unicode-bidi
+.. _Package documentation: http://python-bidi.readthedocs.org/en/latest/
+
+
+For the python implementation, and compatible with previous versions, use::
+
+    from bidi.algorithm import get_display
+
+
+For the newer Rust based one, which seems to implement higher version of
+the algorithm (albeit with some missing see #25), use the top level import::
+
+    from bidi import get_display
+
+
+API
+----
+
+The algorithm starts with a single entry point `get_display` (see above for selecting the implementaion).
+
+**Required arguments:**
+
+* ``str_or_bytes``: The string or bytes (i.e.: storage). If it's bytes
+  use the optional argument ``encoding`` to specify it's encoding.
+
+**Optional arguments:**
+
+* ``encoding``: If unicode_or_str is a string, specifies the encoding. The
+  algorithm uses unicodedata_ which requires unicode. This encoding will be
+  used to decode and encode back to string before returning
+  (default: "utf-8").
+
+* ``base_dir``:  ``'L'`` or ``'R'``, override the calculated base_level.
+
+* ``debug``: ``True`` to display the Unicode levels as seen by the algorithm
+  (default: ``False``).
+
+
+The Python implementaion adds one more optional argument:
+
+* ``upper_is_rtl``: True to treat upper case chars as strong 'R' for
+  debugging (default: False).
+
+
+It returns the display layout, either as ``str`` or ``encoding`` encoded ``bytes``
+(depending on the type of ``str_or_bytes'``).
+
+.. _unicodedata: http://docs.python.org/library/unicodedata.html
+
+Example::
+
+    >>> from bidi import get_display
+    >>> # keep as list with char per line to prevent browsers from changing display order
+    >>> HELLO_HEB = "".join([
+    ...     "ש",
+    ...     "ל",
+    ...     "ו",
+    ...     "ם"
+    ... ])
+    >>>
+    >>> HELLO_HEB_DISPLAY = "".join([
+    ...     "ם",
+    ...     "ו",
+    ...     "ל",
+    ...     "ש",
+    ... ])
+    >>>
+    >>> get_display(HELLO_HEB) == HELLO_HEB_DISPLAY
+    True
+
+
+CLI
+----
+
+``pybidi`` is a command line utility (calling  ``bidi.main``) for running the
+display algorithm. The script can get a string as a parameter or read text from
+`stdin`.
+
+Usage::
+
+    $ pybidi -h
+    usage: pybidi [-h] [-e ENCODING] [-u] [-d] [-b {L,R}] [-r] [-v]
+
+    options:
+    -h, --help            show this help message and exit
+    -e ENCODING, --encoding ENCODING
+                            Text encoding (default: utf-8)
+    -u, --upper-is-rtl    Treat upper case chars as strong 'R' for debugging (default: False), Ignored in Rust algo
+    -d, --debug           Output to stderr steps taken with the algorithm
+    -b {L,R}, --base-dir {L,R}
+                            Override base direction [L|R]
+    -r, --rust            Use the Rust unicode-bidi implemention instead of the Python one
+    -v, --version         show program's version number and exit
+
+
+Examples::
+
+    $ pybidi -u 'Your string here'
+    $ cat ~/Documents/example.txt | pybidi
+
+
+Installation
+-------------
+
+At the command line (assuming you're using some virtualenv)::
+
+    pip install python-bidi
+
+
+Running tests
+--------------
+
+To run the tests::
+
+    pip install nox
+    nox
+

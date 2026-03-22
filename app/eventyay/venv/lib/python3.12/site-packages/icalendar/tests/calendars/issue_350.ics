@@ -1,0 +1,36 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Podio API//EN//view-exporter//52593453
+METHOD:REQUEST
+X-WR-CALNAME:view52593586
+X-WR-TIMEZONE:Europe/Berlin
+CALSCALE:GREGORIAN
+X-COMMENT-USAGE:This calendar does not contain recurring events!
+X-COMMENT-GENERATOR:PHP Version 8.0.16 
+BEGIN:VEVENT
+STATUS:CONFIRMED
+SEQUENCE:0
+TRANSP:OPAQUE
+CLASS:PUBLIC
+UID:20055546456446
+SUMMARY:Termin 4353 und"so"
+DESCRIPTION;ALTREP="data:text/html,%3Cbody%3E%3Cp%3EToller%20%3Cstron
+	g%20class%3D%22text-bold%22%3ETermin%3C%2Fstrong%3E%20f%C3%BCr%3C%2Fp
+	%3E%3Cblockquote%3E%3Cp%3Emal%20%3Cem%20class%3D%22text-italic%22%3Ez
+	u%22gucken%22%3C%2Fem%3E%3C%2Fp%3E%3C%2Fblockquote%3E%3Cp%3E%3Cu%20cl
+	ass%3D%22text-underline%22%3Eund%3C%2Fu%3E%20%3Cdel%3Eso%3C%2Fdel%3E%
+	3Cbr%2F%3E%3C%2Fp%3E%3C%2Fbody%3E":Toller Termin fürmal zu\"gucken\"
+	und so
+X-ALT-DESC;FMTTYPE=text/html:<html><head></head><body><p>Toller <stro
+	ng class="text-bold">Termin</strong> für</p><blockquote><p>mal <em c
+	lass="text-italic">zu"gucken"</em></p></blockquote><p><u class="text-
+	underline">und</u> <del>so</del><br/></p></body></html>
+URL:https://podio.com/xxxxxxyyyyyy/zpodio-testgelande/apps/calen
+	dar/items/5
+LOCATION:online
+DTSTART:20220222T183000Z
+DTEND:20220222T193000Z
+DTSTAMP:20220220T142821Z
+END:VEVENT
+END:VCALENDAR
+X-COMMENT:Cached from 2022-02-20 14:28:21 - new at most every 1800sec.

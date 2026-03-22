@@ -1,0 +1,5 @@
+BEGIN:VEVENT
+REQUEST-STATUS:2.0;Success
+REQUEST-STATUS:3.7;Invalid calendar user;ATTENDEE:
+ mailto:jsmith@example.org
+END:VEVENT

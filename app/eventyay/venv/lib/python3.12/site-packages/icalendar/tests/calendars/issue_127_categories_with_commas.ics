@@ -1,0 +1,11 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Test//EN
+BEGIN:VEVENT
+UID:issue-127-test@example.com
+DTSTAMP:20140204T120000Z
+DTSTART:20140204T140000Z
+SUMMARY:Test Event with Categories Containing Commas
+CATEGORIES:Meeting\, John,Work\, Sarah,Project
+END:VEVENT
+END:VCALENDAR

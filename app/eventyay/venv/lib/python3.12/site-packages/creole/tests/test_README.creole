@@ -1,0 +1,7 @@
+= about =
+
+This is a test README file, used in python-creole unittests to test encoding problems.
+
+This file is encoded in UTF-8!
+
+German Umlaute: ä ö ü ß Ä Ö Ü

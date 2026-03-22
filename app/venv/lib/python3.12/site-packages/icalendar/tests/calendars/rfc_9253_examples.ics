@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//collective//icalendar//6.3.2.dev310//EN
+BEGIN:VEVENT
+DTSTAMP:20251028T092239Z
+DTSTART:20251028T092239Z
+UID:links-rfc-9253-section-8.2
+LINK;LINKREL=SOURCE;LABEL=Venue;VALUE=URI:
+ https://example.com/events
+LINK;LINKREL="https://example.com/linkrel/derivedFrom";
+ VALUE=URI:
+ https://example.com/tasks/01234567-abcd1234.ics
+LINK;LINKREL="https://example.com/linkrel/costStructure";
+ VALUE=XML-REFERENCE:
+ https://example.com/xmlDocs/bidFramework.xml
+ #xpointer(descendant::CostStruc/range-to(
+ following::CostStrucEND[1]))
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20251028T092239Z
+DTSTART:20251028T092239Z
+UID:links-rfc-9253-uid
+LINK;LINKREL=REFERENCE;VALUE=UID:
+ links-rfc-9253-section-8.2
+END:VEVENT
+END:VCALENDAR

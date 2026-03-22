@@ -1,0 +1,14 @@
+py-ubjson
+Copyright 2019 Iotic Labs Ltd
+
+Universal Binary JSON Specification
+Copyright 2015 ubjson.org
+
+Floating point related functions (python_funcs.c) and integer encode/decode logic
+Copyright (c) 2001-2016 Python Software Foundation
+
+six.py
+Copyright (c) 2010-2015 Benjamin Peterson
+
+ez_setup.py
+Copyright (c) Python Packaging Authority

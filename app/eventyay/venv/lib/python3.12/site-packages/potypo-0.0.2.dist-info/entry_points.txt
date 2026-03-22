@@ -1,0 +1,3 @@
+[console_scripts]
+potypo = potypo.__main__:main
+

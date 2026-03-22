@@ -1,0 +1,9 @@
+
+[
+    "vtodo",
+    [
+        ["percent-complete", {}, "integer", 95]
+    ],
+    [
+    ]
+]

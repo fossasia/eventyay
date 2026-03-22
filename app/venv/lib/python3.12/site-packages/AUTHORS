@@ -1,0 +1,31 @@
+
+INITIAL AUTHORS
+
+  The original creole markup parser and emitter are from the MoinMoin
+  project:
+    * 2007 MoinMoin:RadomirDopieralski (creole 0.5 implementation),
+    * 2007 MoinMoin:ThomasWaldmann (updates)
+
+
+PRIMARY AUTHORS are and/or have been (alphabetic order):
+
+* Diemer, Jens
+  Main Developer since the first code line.
+  ohloh.net profile: <http://www.ohloh.net/accounts/4179/>
+  Homepage: <http://www.jensdiemer.de/>
+
+
+CONTRIBUTORS are and/or have been:
+* Jürgen Gmach <https://github.com/jugmac00>
+* John Dupuy <https://github.com/JohnAD>
+* Julien Enselme <https://github.com/Jenselme>
+* Sepero <https://github.com/Sepero>
+* Vitja.Makarov <http://code.google.com/u/Vitja.Makarov/>
+* Betz Stefan alias 'encbladexp' <http://www.stefan-betz.net/>
+* Eric O'Connell <eric@zerominuszero.net>
+
+
+Special thanks to the python-forum.de guys, particularly:
+* EyDu
+* sma
+

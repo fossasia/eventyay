@@ -1,0 +1,22 @@
+{% extends "multifactor/base.html" %}
+
+{% block card_title %}Multi-Factor Authentication{% endblock %}
+
+{% block content %}
+<p class="has-text-centered">You are logged in but you need to verify one of your secondary factors to continue. Which factor would you like to authenticate with?</p>
+{% for link, label, factors in methods %}
+<a class="button is-primary is-large is-fullwidth is-multilayer" href="{% url link %}">
+	<strong>{{label}}</strong>
+	<small>{{factors}}</small>
+</a>
+{% endfor %}
+
+{% if fallbacks %}
+</div>
+<div class="card-footer">
+<a href="{% url 'multifactor:fallback_auth' %}" class="button is-100 button-ml is-light" title="Send a one-time-passcode to all your fallback factors.">
+	<strong>Request Fallback Token</strong>
+	<small>{{fallbacks|join:" + "}}</small>
+</a>
+{% endif %}
+{% endblock %}

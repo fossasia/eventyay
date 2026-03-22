@@ -1,0 +1,13 @@
+python_http_client-3.3.7.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+python_http_client-3.3.7.dist-info/LICENSE,sha256=0mVMU-p0cjEE7VTX1C85XTs1fK3MjJZGUsBZzaD_ltk,1097
+python_http_client-3.3.7.dist-info/METADATA,sha256=kmBVUArelQNw98cE6cVsJNPgwglnAuGgG7hpqv2zjHQ,6927
+python_http_client-3.3.7.dist-info/RECORD,,
+python_http_client-3.3.7.dist-info/WHEEL,sha256=G16H4A3IeoQmnOrYV4ueZGKSjhipXx8zc8nu9FGlvMA,92
+python_http_client-3.3.7.dist-info/top_level.txt,sha256=2JnUimcxRHkpXlcL22LcQStBT2-2f7uE6bN32da2nX0,19
+python_http_client/VERSION.txt,sha256=NsXZj-fjwhWofU16C2RJ7wdruDaXG5xgeQk9jUAPDpg,6
+python_http_client/__init__.py,sha256=fU3Hvupc6zEfI7tHmwTzPq5d6M_9SJ-zc455ROEa38E,604
+python_http_client/__pycache__/__init__.cpython-312.pyc,,
+python_http_client/__pycache__/client.cpython-312.pyc,,
+python_http_client/__pycache__/exceptions.cpython-312.pyc,,
+python_http_client/client.py,sha256=dkdI9Y86GzKmH3F-XRe8G2vWOXyB8erS3IaQuZpVJM0,9921
+python_http_client/exceptions.py,sha256=cP9hcA1kZMIrdHleSGcaoDyeJRX7bOFt_VCds-WV2Tk,1796

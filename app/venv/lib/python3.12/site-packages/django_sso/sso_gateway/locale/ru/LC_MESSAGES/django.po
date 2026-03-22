@@ -1,0 +1,164 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST Mr DAVIDhaker <me@davidhaker.ru>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-03-06 02:33+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Mr DAVIDhaker <me@davidhaker.ru>\n"
+"Language-Team: Mr DAVIDhaker <me@davidhaker.ru>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: __init__.py:58
+msgid "SSO settings variable must be dict"
+msgstr "Переменная SSO в настройках должна быть словарём"
+
+#: __init__.py:74
+msgid "The SSO[ADDITIONAL_FIELDS] setting variable must be list, set or tuple"
+msgstr "Переменная SSO[ADDITIONAL_FIELDS] должна иметь тип list, set или tuple"
+
+#: __init__.py:77
+msgid "The SSO[ADDITIONAL_FIELDS] members must be str"
+msgstr "Элементы в SSO[ADDITIONAL_FIELDS] должны быть строками"
+
+#: apps.py:19
+msgid "Single Sign-On"
+msgstr "Подсистема единого входа"
+
+#: forms.py:6
+msgid "Login/Email"
+msgstr "Логин/Почта"
+
+#: forms.py:7
+msgid "Password"
+msgstr "Пароль"
+
+#: models.py:27
+msgid "Name"
+msgstr "Имя"
+
+#: models.py:28
+msgid "Base url"
+msgstr "Базовая ссылка"
+
+#: models.py:29
+msgid "Enabled"
+msgstr "Активно"
+
+#: models.py:30 models.py:278
+msgid "Token"
+msgstr "Токен"
+
+#: models.py:267
+#, fuzzy
+#| msgid "Subordinated services"
+msgid "Subordinated service"
+msgstr "Подчинённые сервисы"
+
+#: models.py:268
+msgid "Subordinated services"
+msgstr "Подчинённые сервисы"
+
+#: models.py:276
+msgid "Service"
+msgstr "Сервис"
+
+#: models.py:277
+msgid "Created at"
+msgstr "Создан"
+
+#: models.py:279
+msgid "User identy"
+msgstr "Уникальный идентификатор пользователя"
+
+#: models.py:279
+msgid "E-Mail, login, etc."
+msgstr "E-Mail, логин и т.д."
+
+#: models.py:280
+msgid "Next url"
+msgstr "Базовая ссылка"
+
+#: models.py:280
+msgid "To go after success auth"
+msgstr "Для перехода после авторизации"
+
+#: models.py:281
+msgid "Request has been activated"
+msgstr "Запрос авторизации активирован"
+
+#: models.py:282
+msgid "Are used in external sso service"
+msgstr "Был применён во внешнем сервисе"
+
+#: models.py:285
+msgid "Authentication request"
+msgstr "Запрос авторизации"
+
+#: models.py:286
+msgid "Authentication requests"
+msgstr "Запросы авторизации"
+
+#: templates/django_sso/debug_update_event.html:5
+msgid "Django SSO: Debug update event"
+msgstr ""
+
+#: templates/django_sso/login.html:23 templates/django_sso/welcome.html:18
+msgid "Sign in"
+msgstr "Вход"
+
+#: templates/django_sso/login.html:26
+msgid "Log in"
+msgstr "Войти"
+
+#: templates/django_sso/welcome.html:9
+msgid "Y're welcome"
+msgstr "Добро пожаловать"
+
+#: templates/django_sso/welcome.html:13
+msgid "guest"
+msgstr "гость"
+
+#: templates/django_sso/welcome.html:22
+msgid "Sign out"
+msgstr "Выход"
+
+#: views.py:82 views.py:117 views.py:155 views.py:193
+msgid "\"token\" isn't set"
+msgstr "Поле \"token\" не заполненно"
+
+#: views.py:85
+msgid "\"next_url\" isn't set"
+msgstr "Поле \"next_url\" не заполненно"
+
+#: views.py:90 views.py:122 views.py:160
+msgid "Application token doesn't exist"
+msgstr "Токен приложения не существует"
+
+#: views.py:125 views.py:163
+#, fuzzy
+#| msgid "Authentication request token doesn't exist"
+msgid "Authentication request token doesn't set"
+msgstr "Токен запроса авторизации не существует"
+
+#: views.py:135 views.py:173
+msgid "Authentication request token doesn't exist"
+msgstr "Токен запроса авторизации не существует"
+
+#: views.py:196
+msgid "\"user_identy\" isn't set"
+msgstr "Поле \"token\" не заполненно"
+
+msgid "Failed to communicate with subordinated service"
+msgstr "Ошибка коммуникации с подчинённым сервисом"

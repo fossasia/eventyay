@@ -1,0 +1,26 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="{% static '/django_sso/index.css' %}">
+    </head>
+    <body>
+        <h2 style="display: block; text-align: center">
+            {% translate "Y're welcome" %},
+            {% if not user.is_anonymous %}
+                {{ user.username }}!
+            {% else %}
+                {% translate 'guest' %}!
+            {% endif %}
+        </h2>
+        {% if user.is_anonymous %}
+            <a href="{% url 'login' %}">
+                <input type="button" value="{% translate "Sign in" %}">
+            </a>
+        {% else %}
+            <form action="{% url "logout" %}" method="post">
+                <input type="submit" value="{% translate "Sign out" %}">
+            </form>
+        {% endif %}
+    </body>
+</html>

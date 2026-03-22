@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: btcpay-python
+Version: 1.3.0
+Summary: Accept bitcoin with BTCPay
+Home-page: https://github.com/btcpayserver/btcpay-python
+Author: UNKNOWN
+Author-email: UNKNOWN
+License: MIT
+Download-URL: https://github.com/btcpayserver/btcpay-python/archive/v1.3.0.tar.gz
+Keywords: bitcoin,payments,crypto
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Office/Business :: Financial
+Requires-Dist: requests
+Requires-Dist: ecdsa
+
+UNKNOWN
+
+

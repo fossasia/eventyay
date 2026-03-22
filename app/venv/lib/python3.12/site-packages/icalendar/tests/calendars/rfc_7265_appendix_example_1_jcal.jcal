@@ -1,0 +1,18 @@
+   ["vcalendar",
+     [
+       ["calscale", {}, "text", "GREGORIAN"],
+       ["prodid", {}, "text", "-//Example Inc.//Example Calendar//EN"],
+       ["version", {}, "text", "2.0"]
+     ],
+     [
+       ["vevent",
+         [
+           ["dtstamp", {}, "date-time", "2008-02-05T19:12:24Z"],
+           ["dtstart", {}, "date", "2008-10-06"],
+           ["summary", {}, "text", "Planning meeting"],
+           ["uid", {}, "text", "4088E990AD89CB3DBB484909"]
+         ],
+         []
+       ]
+     ]
+   ]

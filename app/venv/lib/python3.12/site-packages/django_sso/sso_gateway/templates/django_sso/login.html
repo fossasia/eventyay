@@ -1,0 +1,30 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            #container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 80vh;
+            }
+
+            form {
+                display: inline-block;
+                text-align: right;
+            }
+        </style>
+        <link rel="stylesheet" href="{% static '/django_sso/index.css' %}">
+    </head>
+    <body>
+        <div id="container">
+            <form action="{% url 'login' %}?{{ request.GET.urlencode }}" method="post">
+                <h2>{% translate "Sign in" %}</h2>
+                {{ form.as_p }}
+                <br>
+                <input type="submit" value="{% translate "Log in" %}">
+            </form>
+        </div>
+    </body>
+</html>

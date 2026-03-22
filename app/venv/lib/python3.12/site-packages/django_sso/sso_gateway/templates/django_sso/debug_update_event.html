@@ -1,0 +1,15 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{% translate "Django SSO: Debug update event" %}</title>
+        <link rel="stylesheet" href="{% static 'django_sso/debug_update_event.css' %}">
+    </head>
+    <body>
+        <section>
+            <pre>{{ event }}</pre>
+            <hr>
+
+        </section>
+    </body>
+</html>

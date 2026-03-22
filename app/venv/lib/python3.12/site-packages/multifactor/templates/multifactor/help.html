@@ -1,0 +1,22 @@
+{% extends "multifactor/base.html" %}
+{% load static %}
+
+{% block card_title %}Help with Multifactor{% endblock %}
+{% block container_class %}{% endblock %}
+
+{% block content %}
+
+<h4>What is multi-factor authentication?</h4>
+<p>Traditionally you have logged in with a username and password, maybe directly, maybe through a single sign-in portal. It's a tried and tested authentication system but it's weak. People pick bad passwords, enter them into the wrong places, write them down on paper, give them to the wrong people.</p>
+
+<p>Credentials are <strong>something you know</strong>. Multi-factor authentication adds different types of factor, like <strong>something you have</strong> (a USB security token, your phone), or <strong>something you are</strong> (fingerprint, voice scan, location). For somebody to break in, they would need your credentials <em>and</em> the (eg) Security USB key you keep on your keychain. It dramatically decreases the threat of phishing and data breaches.</p>
+
+<h4>What are fallback factors?</h4>
+<p>These are one-time-passcodes over transports like SMS or Email. They <em>are</em> secondary factors but they are usually weaker, more insecure and commonly more inconvenient than plugging in a USB key. They are however, a good defence from getting locked out when your primary factors aren't available.</p>
+<p>When you request to authenticate with a secondary factor, we send a the same OTP to all your devices. If you get a message like this and didn't request it, it could mean your main account is compromised.</p>
+
+<h4>What happens if I lose my factor or don't have access to it when I need it?</h4>
+<p><strong>Contact your system administrator immediately.</strong> They can deactivate or remove your active factors, allowing you to add another.</p>
+<p>We recommend you keep a backup secondary factor. Having a FIDO2 token is convenient (eg just leave your keys plugged in while you're at your computer) but having a TOTP authenticator will serve as a suitable backup if you misplace your keys. Additional factors can dilute over-all security.</p>
+
+{% endblock %}

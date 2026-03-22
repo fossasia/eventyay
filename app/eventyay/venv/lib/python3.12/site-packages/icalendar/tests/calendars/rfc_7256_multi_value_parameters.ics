@@ -1,0 +1,16 @@
+BEGIN:VCALENDAR
+BEGIN:VEVENT
+ATTENDEE;DELEGATED-TO="mailto:jdoe@example.com","mailto:jqpublic@example.com":mailto:jsmith@example.com
+ATTENDEE;DELEGATED-FROM="mailto:jsmith@example.com","mailto:jdoe@example.com":mailto:jdoe@example.com
+ATTENDEE;MEMBER="mailto:projectA@example.com","mailto:projectB@example.com":mailto:janedoe@example.com
+UID:list
+DESCRIPTION:These are all the parameters which might come as a list.
+END:VEVENT
+BEGIN:VEVENT
+ATTENDEE;DELEGATED-TO="mailto:jdoe@example.com":mailto:jsmith@example.com
+ATTENDEE;DELEGATED-FROM="mailto:jsmith@example.com":mailto:jdoe@example.com
+ATTENDEE;MEMBER="mailto:projectA@example.com":mailto:janedoe@example.com
+UID:single
+DESCRIPTION:These are all the parameters which might come as a list but here they only have one value.
+END:VEVENT
+END:VCALENDAR

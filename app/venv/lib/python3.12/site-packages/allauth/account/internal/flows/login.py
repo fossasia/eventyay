@@ -1,0 +1,145 @@
+import time
+from typing import Any
+
+from django.core import exceptions, validators
+from django.http import HttpRequest, HttpResponse
+
+from allauth import app_settings as allauth_settings
+from allauth.account import app_settings
+from allauth.account.adapter import get_adapter
+from allauth.account.app_settings import LoginMethod
+from allauth.account.models import Login
+from allauth.account.signals import authentication_step_completed
+from allauth.core.exceptions import ImmediateHttpResponse
+
+
+AUTHENTICATION_METHODS_SESSION_KEY = "account_authentication_methods"
+
+
+def record_authentication(request, user, method: str, **extra_data) -> None:
+    """Here we keep a log of all authentication methods used within the current
+    session.  Important to note is that having entries here does not imply that
+    a user is fully signed in. For example, consider a case where a user
+    authenticates using a password, but fails to complete the 2FA challenge.
+    Or, a user successfully signs in into an inactive account or one that still
+    needs verification. In such cases, ``request.user`` is still anonymous, yet,
+    we do have an entry here.
+
+    Example data::
+
+        {'method': 'password',
+         'at': 1701423602.7184925,
+         'username': 'john.doe'}
+
+        {'method': 'socialaccount',
+         'at': 1701423567.6368647,
+         'provider': 'amazon',
+         'uid': 'amzn1.account.K2LI23KL2LK2'}
+
+        {'method': 'mfa',
+         'at': 1701423602.6392953,
+         'id': 1,
+         'type': 'totp'}
+
+    """
+    methods = request.session.get(AUTHENTICATION_METHODS_SESSION_KEY, [])
+    data = {
+        "method": method,
+        "at": time.time(),
+    }
+    for k, v in extra_data.items():
+        if v is not None:
+            data[k] = v
+    methods.append(data)
+    request.session[AUTHENTICATION_METHODS_SESSION_KEY] = methods
+    authentication_step_completed.send(
+        sender=user.__class__, request=request, method=method, user=user, **extra_data
+    )
+
+
+def _get_login_hook_kwargs(login: Login) -> dict[str, Any]:
+    """
+    TODO: Just break backwards compatibility and pass only `login` to
+    `pre/post_login()`.
+    """
+    return dict(
+        email_verification=login.email_verification,
+        redirect_url=login.redirect_url,
+        signal_kwargs=login.signal_kwargs,
+        signup=login.signup,
+        email=login.email,
+    )
+
+
+def perform_password_login(
+    request: HttpRequest, credentials: dict[str, Any], login: Login
+) -> HttpResponse:
+    extra_data = {
+        field: credentials.get(field)
+        for field in ["email", "username"]
+        if credentials.get(field)
+    }
+    record_authentication(request, login.user, method="password", **extra_data)
+    return perform_login(request, login)
+
+
+def perform_login(request: HttpRequest, login: Login) -> HttpResponse:
+    adapter = get_adapter()
+    hook_kwargs = _get_login_hook_kwargs(login)
+    if login.user:
+        response = adapter.pre_login(request, login.user, **hook_kwargs)
+        if response:
+            return response
+    return resume_login(request, login)
+
+
+def resume_login(request: HttpRequest, login: Login) -> HttpResponse:
+    from allauth.account.stages import LoginStageController
+
+    adapter = get_adapter()
+    ctrl = LoginStageController(request, login)
+    try:
+        response = ctrl.handle()
+        if response:
+            return response
+        adapter.login(request, login.user)
+        hook_kwargs = _get_login_hook_kwargs(login)
+        response = adapter.post_login(request, login.user, **hook_kwargs)
+        if response:
+            return response
+    except ImmediateHttpResponse as e:
+        if allauth_settings.HEADLESS_ENABLED:
+            from allauth.headless.internal.restkit.response import APIResponse
+
+            if isinstance(e.response, APIResponse):
+                raise e
+        response = e.response
+    return response
+
+
+def is_login_rate_limited(request, login: Login) -> bool:
+    from allauth.account.internal.flows.email_verification import (
+        is_verification_rate_limited,
+    )
+
+    if is_verification_rate_limited(request, login):
+        return True
+    return False
+
+
+def derive_login_method(login: str) -> LoginMethod:
+    if len(app_settings.LOGIN_METHODS) == 1:
+        return next(iter(app_settings.LOGIN_METHODS))
+    if LoginMethod.EMAIL in app_settings.LOGIN_METHODS:
+        try:
+            validators.validate_email(login)
+            return LoginMethod.EMAIL
+        except exceptions.ValidationError:
+            pass
+    if LoginMethod.PHONE in app_settings.LOGIN_METHODS:
+        try:
+            get_adapter().phone_form_field(required=True).clean(login)
+            return LoginMethod.PHONE
+        except exceptions.ValidationError:
+            pass
+    return LoginMethod.USERNAME

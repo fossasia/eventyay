@@ -1,0 +1,6 @@
+BEGIN:VCALENDAR
+BEGIN:VEVENT
+SUMMARY:Event with bare string as argument for categories
+CATEGORIES:Lecture
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,11556 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-localflavor\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-06 12:54+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ar/ar_provinces.py:6
+msgid "Buenos Aires"
+msgstr ""
+
+#: ar/ar_provinces.py:7
+msgid "Catamarca"
+msgstr ""
+
+#: ar/ar_provinces.py:8
+msgid "Chaco"
+msgstr ""
+
+#: ar/ar_provinces.py:9
+msgid "Chubut"
+msgstr ""
+
+#: ar/ar_provinces.py:10
+msgid "Ciudad Autónoma de Buenos Aires"
+msgstr ""
+
+#: ar/ar_provinces.py:11
+msgid "Córdoba"
+msgstr ""
+
+#: ar/ar_provinces.py:12
+msgid "Corrientes"
+msgstr ""
+
+#: ar/ar_provinces.py:13
+msgid "Entre Ríos"
+msgstr ""
+
+#: ar/ar_provinces.py:14
+msgid "Formosa"
+msgstr ""
+
+#: ar/ar_provinces.py:15
+msgid "Jujuy"
+msgstr ""
+
+#: ar/ar_provinces.py:16
+msgid "La Pampa"
+msgstr ""
+
+#: ar/ar_provinces.py:17 es/es_provinces.py:30 es/es_regions.py:17
+msgid "La Rioja"
+msgstr ""
+
+#: ar/ar_provinces.py:18
+msgid "Mendoza"
+msgstr ""
+
+#: ar/ar_provinces.py:19
+msgid "Misiones"
+msgstr ""
+
+#: ar/ar_provinces.py:20
+msgid "Neuquén"
+msgstr ""
+
+#: ar/ar_provinces.py:21
+msgid "Río Negro"
+msgstr ""
+
+#: ar/ar_provinces.py:22
+msgid "Salta"
+msgstr ""
+
+#: ar/ar_provinces.py:23
+msgid "San Juan"
+msgstr ""
+
+#: ar/ar_provinces.py:24
+msgid "San Luis"
+msgstr ""
+
+#: ar/ar_provinces.py:25
+msgid "Santa Cruz"
+msgstr ""
+
+#: ar/ar_provinces.py:26
+msgid "Santa Fe"
+msgstr ""
+
+#: ar/ar_provinces.py:27
+msgid "Santiago del Estero"
+msgstr ""
+
+#: ar/ar_provinces.py:28
+msgid "Tierra del Fuego, Antártida e Islas del Atlántico Sur"
+msgstr ""
+
+#: ar/ar_provinces.py:29
+msgid "Tucumán"
+msgstr ""
+
+#: ar/forms.py:31
+msgid "Enter a postal code in the format NNNN or ANNNNAAA."
+msgstr ""
+
+#: ar/forms.py:55 pe/forms.py:21 pe/forms.py:49
+msgid "This field requires only numbers."
+msgstr ""
+
+#: ar/forms.py:56
+msgid "This field requires 7 or 8 digits."
+msgstr ""
+
+#: ar/forms.py:95
+msgid "Enter a valid CUIT in XX-XXXXXXXX-X or XXXXXXXXXXXX format."
+msgstr ""
+
+#: ar/forms.py:96
+msgid "Invalid CUIT."
+msgstr ""
+
+#: ar/forms.py:97
+msgid "Invalid legal type. Type must be 27, 20, 30, 23, 24, 33 or 34."
+msgstr ""
+
+#: ar/forms.py:153
+msgid "Enter a valid CBU in XXXXXXXXXXXXXXXXXXXXXX format."
+msgstr ""
+
+#: ar/forms.py:154 ar/forms.py:155
+msgid "CBU must be exactly 22 digits long."
+msgstr ""
+
+#: ar/forms.py:156
+msgid "Invalid CBU."
+msgstr ""
+
+#: at/at_states.py:5
+msgid "Burgenland"
+msgstr ""
+
+#: at/at_states.py:6
+msgid "Carinthia"
+msgstr ""
+
+#: at/at_states.py:7
+msgid "Lower Austria"
+msgstr ""
+
+#: at/at_states.py:8
+msgid "Upper Austria"
+msgstr ""
+
+#: at/at_states.py:9
+msgid "Salzburg"
+msgstr ""
+
+#: at/at_states.py:10
+msgid "Styria"
+msgstr ""
+
+#: at/at_states.py:11
+msgid "Tyrol"
+msgstr ""
+
+#: at/at_states.py:12
+msgid "Vorarlberg"
+msgstr ""
+
+#: at/at_states.py:13
+msgid "Vienna"
+msgstr ""
+
+#: at/forms.py:20 no/forms.py:22
+msgid "Enter a zip code in the format XXXX."
+msgstr ""
+
+#: at/forms.py:49
+msgid "Enter a valid Austrian Social Security Number in XXXX XXXXXX format."
+msgstr ""
+
+#: au/forms.py:19
+msgid "Enter a 4 digit postcode."
+msgstr ""
+
+#: au/models.py:16
+msgid "Australian State"
+msgstr ""
+
+#: au/models.py:36
+msgid "Australian Postcode"
+msgstr ""
+
+#: au/models.py:55
+msgid "Australian Business Number"
+msgstr ""
+
+#: au/models.py:85
+msgid "Australian Company Number"
+msgstr ""
+
+#: au/models.py:119
+msgid "Australian Tax File Number"
+msgstr ""
+
+#: au/validators.py:13
+msgid "Enter a valid ABN."
+msgstr ""
+
+#: au/validators.py:57
+msgid "Enter a valid ACN."
+msgstr ""
+
+#: au/validators.py:100
+msgid "Enter a valid TFN."
+msgstr ""
+
+#: be/be_provinces.py:5
+msgid "Antwerp"
+msgstr ""
+
+#: be/be_provinces.py:6
+msgid "Brussels"
+msgstr ""
+
+#: be/be_provinces.py:7
+msgid "East Flanders"
+msgstr ""
+
+#: be/be_provinces.py:8
+msgid "Flemish Brabant"
+msgstr ""
+
+#: be/be_provinces.py:9
+msgid "Hainaut"
+msgstr ""
+
+#: be/be_provinces.py:10
+msgid "Liege"
+msgstr ""
+
+#: be/be_provinces.py:11 nl/nl_provinces.py:10
+msgid "Limburg"
+msgstr ""
+
+#: be/be_provinces.py:12
+msgid "Luxembourg"
+msgstr ""
+
+#: be/be_provinces.py:13
+msgid "Namur"
+msgstr ""
+
+#: be/be_provinces.py:14
+msgid "Walloon Brabant"
+msgstr ""
+
+#: be/be_provinces.py:15
+msgid "West Flanders"
+msgstr ""
+
+#: be/be_regions.py:5
+msgid "Brussels Capital Region"
+msgstr ""
+
+#: be/be_regions.py:6
+msgid "Flemish Region"
+msgstr ""
+
+#: be/be_regions.py:7
+msgid "Wallonia"
+msgstr ""
+
+#: be/forms.py:23 ch/forms.py:30
+msgid "Enter a valid postal code in the range and format 1XXX - 9XXX."
+msgstr ""
+
+#: bg/validators.py:34
+msgid "The EGN is not valid"
+msgstr ""
+
+#: bg/validators.py:45
+msgid "EIK/BULSTAT is not valid"
+msgstr ""
+
+#: br/forms.py:45
+msgid ""
+"Select a valid brazilian state. That state is not one of the available "
+"states."
+msgstr ""
+
+#: br/forms.py:77 br/models.py:42 br/validators.py:79
+msgid "Invalid CPF number."
+msgstr ""
+
+#: br/forms.py:78 br/models.py:43
+msgid "This field requires at most 11 digits or 14 characters."
+msgstr ""
+
+#: br/forms.py:109 br/validators.py:41
+msgid "Invalid CNPJ number."
+msgstr ""
+
+#: br/forms.py:110
+msgid "This field requires at least 14 digits"
+msgstr ""
+
+#: br/forms.py:133
+msgid "Invalid Process number."
+msgstr ""
+
+#: br/models.py:17
+msgid "State of Brazil (two uppercase letters)"
+msgstr ""
+
+#: br/models.py:39
+msgid "CPF Document"
+msgstr ""
+
+#: br/models.py:67
+msgid "CNPJ Document"
+msgstr ""
+
+#: br/models.py:88 lk/models.py:34 np/models.py:33
+msgid "Postal Code"
+msgstr ""
+
+#: br/validators.py:26
+msgid "Enter a postal code in the format 00000-000."
+msgstr ""
+
+#: by/by_regions.py:4
+msgid "Brest Region"
+msgstr ""
+
+#: by/by_regions.py:5
+msgid "Vitebsk Region"
+msgstr ""
+
+#: by/by_regions.py:6
+msgid "Gomel Region"
+msgstr ""
+
+#: by/by_regions.py:7
+msgid "Grodno Region"
+msgstr ""
+
+#: by/by_regions.py:8
+msgid "Minsk Region"
+msgstr ""
+
+#: by/by_regions.py:9
+msgid "Mogilev Region"
+msgstr ""
+
+#: by/by_regions.py:10
+msgid "City of Minsk"
+msgstr ""
+
+#: by/forms.py:62 by/validators.py:6
+msgid "Passport number format is: XX1234567"
+msgstr ""
+
+#: by/forms.py:83 by/validators.py:12
+msgid "ID format is: 1234567X123XX1"
+msgstr ""
+
+#: by/forms.py:98
+msgid "Postal code format is: 123456"
+msgstr ""
+
+#: by/models.py:45
+msgid "Belarusian Regions (one integer value in the range 1-7)."
+msgstr ""
+
+#: by/models.py:61
+msgid "Belarusian passport number (2 letters followed by 7 digits)."
+msgstr ""
+
+#: by/models.py:82
+msgid "Belarusian passport ID number (14 letters and digits)."
+msgstr ""
+
+#: by/models.py:103
+msgid "Belarusian Postal code (6 digits)."
+msgstr ""
+
+#: ca/ca_provinces.py:6
+msgid "Alberta"
+msgstr ""
+
+#: ca/ca_provinces.py:7
+msgid "British Columbia"
+msgstr ""
+
+#: ca/ca_provinces.py:8
+msgid "Manitoba"
+msgstr ""
+
+#: ca/ca_provinces.py:9
+msgid "New Brunswick"
+msgstr ""
+
+#: ca/ca_provinces.py:10
+msgid "Newfoundland and Labrador"
+msgstr ""
+
+#: ca/ca_provinces.py:11
+msgid "Northwest Territories"
+msgstr ""
+
+#: ca/ca_provinces.py:12
+msgid "Nova Scotia"
+msgstr ""
+
+#: ca/ca_provinces.py:13
+msgid "Nunavut"
+msgstr ""
+
+#: ca/ca_provinces.py:14
+msgid "Ontario"
+msgstr ""
+
+#: ca/ca_provinces.py:15
+msgid "Prince Edward Island"
+msgstr ""
+
+#: ca/ca_provinces.py:16
+msgid "Quebec"
+msgstr ""
+
+#: ca/ca_provinces.py:17
+msgid "Saskatchewan"
+msgstr ""
+
+#: ca/ca_provinces.py:18
+msgid "Yukon"
+msgstr ""
+
+#: ca/forms.py:25
+msgid "Enter a postal code in the format XXX XXX."
+msgstr ""
+
+#: ca/forms.py:51
+msgid "Enter a Canadian province or territory."
+msgstr ""
+
+#: ca/forms.py:91
+msgid "Enter a valid Canadian Social Insurance number in XXX-XXX-XXX format."
+msgstr ""
+
+#: ca/models.py:18
+msgid "Canadian Province (two uppercase letters)"
+msgstr ""
+
+#: ca/models.py:40
+msgid "Canadian Postal Code"
+msgstr ""
+
+#: ca/models.py:61
+msgid "Canadian Social Insurance Number"
+msgstr ""
+
+#: ch/ch_states.py:5
+msgid "Aargau"
+msgstr ""
+
+#: ch/ch_states.py:6
+msgid "Appenzell Innerrhoden"
+msgstr ""
+
+#: ch/ch_states.py:7
+msgid "Appenzell Ausserrhoden"
+msgstr ""
+
+#: ch/ch_states.py:8
+msgid "Basel-Stadt"
+msgstr ""
+
+#: ch/ch_states.py:9
+msgid "Basel-Land"
+msgstr ""
+
+#: ch/ch_states.py:10
+msgid "Berne"
+msgstr ""
+
+#: ch/ch_states.py:11
+msgid "Fribourg"
+msgstr ""
+
+#: ch/ch_states.py:12
+msgid "Geneva"
+msgstr ""
+
+#: ch/ch_states.py:13
+msgid "Glarus"
+msgstr ""
+
+#: ch/ch_states.py:14
+msgid "Graubuenden"
+msgstr ""
+
+#: ch/ch_states.py:15
+msgid "Jura"
+msgstr ""
+
+#: ch/ch_states.py:16
+msgid "Lucerne"
+msgstr ""
+
+#: ch/ch_states.py:17
+msgid "Neuchatel"
+msgstr ""
+
+#: ch/ch_states.py:18
+msgid "Nidwalden"
+msgstr ""
+
+#: ch/ch_states.py:19
+msgid "Obwalden"
+msgstr ""
+
+#: ch/ch_states.py:20
+msgid "Schaffhausen"
+msgstr ""
+
+#: ch/ch_states.py:21
+msgid "Schwyz"
+msgstr ""
+
+#: ch/ch_states.py:22
+msgid "Solothurn"
+msgstr ""
+
+#: ch/ch_states.py:23
+msgid "St. Gallen"
+msgstr ""
+
+#: ch/ch_states.py:24
+msgid "Thurgau"
+msgstr ""
+
+#: ch/ch_states.py:25
+msgid "Ticino"
+msgstr ""
+
+#: ch/ch_states.py:26
+msgid "Uri"
+msgstr ""
+
+#: ch/ch_states.py:27
+msgid "Valais"
+msgstr ""
+
+#: ch/ch_states.py:28
+msgid "Vaud"
+msgstr ""
+
+#: ch/ch_states.py:29
+msgid "Zug"
+msgstr ""
+
+#: ch/ch_states.py:30
+msgid "Zurich"
+msgstr ""
+
+#: ch/forms.py:56
+msgid ""
+"Enter a valid Swiss identity or passport card number in X1234567<0 or "
+"1234567890 format."
+msgstr ""
+
+#: ch/forms.py:127
+msgid "Enter a valid Swiss Social Security number in 756.XXXX.XXXX.XX format."
+msgstr ""
+
+#: cl/forms.py:29
+msgid "Enter a valid Chilean RUT."
+msgstr ""
+
+#: cl/forms.py:30
+msgid "Enter a valid Chilean RUT. The format is XX.XXX.XXX-X."
+msgstr ""
+
+#: cl/forms.py:31
+msgid "The Chilean RUT is not valid."
+msgstr ""
+
+#: cn/forms.py:75
+msgid "Enter a post code in the format XXXXXX."
+msgstr ""
+
+#: cn/forms.py:98
+msgid "ID Card Number consists of 15 or 18 digits."
+msgstr ""
+
+#: cn/forms.py:99
+msgid "Invalid ID Card Number: Wrong checksum"
+msgstr ""
+
+#: cn/forms.py:100
+msgid "Invalid ID Card Number: Wrong birthdate"
+msgstr ""
+
+#: cn/forms.py:101
+msgid "Invalid ID Card Number: Wrong location code"
+msgstr ""
+
+#: co/forms.py:27
+msgid "Enter a valid NIT in XXXXXXXXXXX-Y or XXXXXXXXXXXY format."
+msgstr ""
+
+#: co/forms.py:28
+msgid "Invalid NIT."
+msgstr ""
+
+#: cu/choices.py:5
+msgid "Occidental"
+msgstr ""
+
+#: cu/choices.py:6 gh/gh_regions.py:17 lk/lk_provinces.py:17
+msgid "Central"
+msgstr ""
+
+#: cu/choices.py:7
+msgid "Oriental"
+msgstr ""
+
+#: cu/choices.py:25
+msgid "Pinar del Río"
+msgstr ""
+
+#: cu/choices.py:26
+msgid "Artemisa"
+msgstr ""
+
+#: cu/choices.py:27
+msgid "Mayabeque"
+msgstr ""
+
+#: cu/choices.py:28
+msgid "La Habana"
+msgstr ""
+
+#: cu/choices.py:29
+msgid "Matanzas"
+msgstr ""
+
+#: cu/choices.py:30
+msgid "Cienfuegos"
+msgstr ""
+
+#: cu/choices.py:31
+msgid "Villa Clara"
+msgstr ""
+
+#: cu/choices.py:32
+msgid "Sancti Spíritus"
+msgstr ""
+
+#: cu/choices.py:33
+msgid "Ciego de Ávila"
+msgstr ""
+
+#: cu/choices.py:34
+msgid "Camagüey"
+msgstr ""
+
+#: cu/choices.py:35
+msgid "Las Tunas"
+msgstr ""
+
+#: cu/choices.py:36
+msgid "Holguín"
+msgstr ""
+
+#: cu/choices.py:37
+msgid "Granma"
+msgstr ""
+
+#: cu/choices.py:38
+msgid "Santiago de Cuba"
+msgstr ""
+
+#: cu/choices.py:39
+msgid "Guantánamo"
+msgstr ""
+
+#: cu/choices.py:40
+msgid "Isla de la Juventud"
+msgstr ""
+
+#: cu/forms.py:20
+msgid "Enter a Cuban region."
+msgstr ""
+
+#: cu/forms.py:56
+msgid "Enter a Cuban province."
+msgstr ""
+
+#: cu/forms.py:93
+msgid "Enter a valid postal code in the format XXXXX."
+msgstr ""
+
+#: cu/forms.py:127
+msgid "Enter a valid identity card number in the format XXXXXXXXXXX."
+msgstr ""
+
+#: cu/models.py:18
+msgid "Cuban regions (three uppercase letters)"
+msgstr ""
+
+#: cu/models.py:40
+msgid "Cuban provinces (three uppercase letters)"
+msgstr ""
+
+#: cu/models.py:62
+msgid "Cuban postal code"
+msgstr ""
+
+#: cu/models.py:83
+msgid "Cuban identity card number"
+msgstr ""
+
+#: cu/validators.py:15
+msgid ""
+"Enter a valid date (yymmdd) for the first 6 digits of the Identity Card "
+"Number."
+msgstr ""
+
+#: cz/cz_regions.py:5
+msgid "Prague"
+msgstr ""
+
+#: cz/cz_regions.py:6
+msgid "Central Bohemian Region"
+msgstr ""
+
+#: cz/cz_regions.py:7
+msgid "South Bohemian Region"
+msgstr ""
+
+#: cz/cz_regions.py:8
+msgid "Pilsen Region"
+msgstr ""
+
+#: cz/cz_regions.py:9
+msgid "Carlsbad Region"
+msgstr ""
+
+#: cz/cz_regions.py:10
+msgid "Usti Region"
+msgstr ""
+
+#: cz/cz_regions.py:11
+msgid "Liberec Region"
+msgstr ""
+
+#: cz/cz_regions.py:12
+msgid "Hradec Region"
+msgstr ""
+
+#: cz/cz_regions.py:13
+msgid "Pardubice Region"
+msgstr ""
+
+#: cz/cz_regions.py:14
+msgid "Vysocina Region"
+msgstr ""
+
+#: cz/cz_regions.py:15
+msgid "South Moravian Region"
+msgstr ""
+
+#: cz/cz_regions.py:16
+msgid "Olomouc Region"
+msgstr ""
+
+#: cz/cz_regions.py:17
+msgid "Zlin Region"
+msgstr ""
+
+#: cz/cz_regions.py:18
+msgid "Moravian-Silesian Region"
+msgstr ""
+
+#: cz/forms.py:31 sk/forms.py:32
+msgid "Enter a postal code in the format XXXXX or XXX XX."
+msgstr ""
+
+#: cz/forms.py:53
+msgid "Enter a birth number in the format XXXXXX/XXXX or XXXXXXXXXX."
+msgstr ""
+
+#: cz/forms.py:54
+msgid "Enter a valid birth number."
+msgstr ""
+
+#: cz/forms.py:103
+msgid "Enter a valid IC number."
+msgstr ""
+
+#: de/de_states.py:5
+msgid "Baden-Wuerttemberg"
+msgstr ""
+
+#: de/de_states.py:6
+msgid "Bavaria"
+msgstr ""
+
+#: de/de_states.py:7
+msgid "Berlin"
+msgstr ""
+
+#: de/de_states.py:8
+msgid "Brandenburg"
+msgstr ""
+
+#: de/de_states.py:9
+msgid "Bremen"
+msgstr ""
+
+#: de/de_states.py:10
+msgid "Hamburg"
+msgstr ""
+
+#: de/de_states.py:11
+msgid "Hessen"
+msgstr ""
+
+#: de/de_states.py:12
+msgid "Mecklenburg-Western Pomerania"
+msgstr ""
+
+#: de/de_states.py:13
+msgid "Lower Saxony"
+msgstr ""
+
+#: de/de_states.py:14
+msgid "North Rhine-Westphalia"
+msgstr ""
+
+#: de/de_states.py:15
+msgid "Rhineland-Palatinate"
+msgstr ""
+
+#: de/de_states.py:16
+msgid "Saarland"
+msgstr ""
+
+#: de/de_states.py:17
+msgid "Saxony"
+msgstr ""
+
+#: de/de_states.py:18
+msgid "Saxony-Anhalt"
+msgstr ""
+
+#: de/de_states.py:19
+msgid "Schleswig-Holstein"
+msgstr ""
+
+#: de/de_states.py:20
+msgid "Thuringia"
+msgstr ""
+
+#: de/forms.py:24 ee/forms.py:24 fi/forms.py:20 fr/forms.py:27
+msgid "Enter a zip code in the format XXXXX."
+msgstr ""
+
+#: de/forms.py:51
+msgid ""
+"Enter a valid German identity card number in XXXXXXXXXXX-XXXXXXX-XXXXXXX-X "
+"format."
+msgstr ""
+
+#: dk/dk_municipalities.py:6 dk/dk_postalcodes.py:691
+msgid "Albertslund"
+msgstr ""
+
+#: dk/dk_municipalities.py:7 dk/dk_postalcodes.py:750
+msgid "Allerød"
+msgstr ""
+
+#: dk/dk_municipalities.py:8 dk/dk_postalcodes.py:706
+msgid "Ballerup"
+msgstr ""
+
+#: dk/dk_municipalities.py:9
+msgid "Bornholm"
+msgstr ""
+
+#: dk/dk_municipalities.py:10 dk/dk_postalcodes.py:689
+msgid "Brøndby"
+msgstr ""
+
+#: dk/dk_municipalities.py:11 dk/dk_postalcodes.py:710
+msgid "Dragør"
+msgstr ""
+
+#: dk/dk_municipalities.py:12
+msgid "Egedal"
+msgstr ""
+
+#: dk/dk_municipalities.py:13 dk/dk_postalcodes.py:752
+msgid "Fredensborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:14 dk/dk_postalcodes.py:680
+msgid "Frederiksberg"
+msgstr ""
+
+#: dk/dk_municipalities.py:15 dk/dk_postalcodes.py:758
+msgid "Frederikssund"
+msgstr ""
+
+#: dk/dk_municipalities.py:16
+msgid "Furesø"
+msgstr ""
+
+#: dk/dk_municipalities.py:17 dk/dk_postalcodes.py:712
+msgid "Gentofte"
+msgstr ""
+
+#: dk/dk_municipalities.py:18
+msgid "Gladsaxe"
+msgstr ""
+
+#: dk/dk_municipalities.py:19 dk/dk_postalcodes.py:688
+msgid "Glostrup"
+msgstr ""
+
+#: dk/dk_municipalities.py:20
+msgid "Gribskov"
+msgstr ""
+
+#: dk/dk_municipalities.py:21
+msgid "Halsnæs"
+msgstr ""
+
+#: dk/dk_municipalities.py:22 dk/dk_postalcodes.py:728
+msgid "Helsingør"
+msgstr ""
+
+#: dk/dk_municipalities.py:23 dk/dk_postalcodes.py:704
+msgid "Herlev"
+msgstr ""
+
+#: dk/dk_municipalities.py:24 dk/dk_postalcodes.py:749
+msgid "Hillerød"
+msgstr ""
+
+#: dk/dk_municipalities.py:25 dk/dk_postalcodes.py:696
+msgid "Hvidovre"
+msgstr ""
+
+#: dk/dk_municipalities.py:26
+msgid "Høje-Taastrup"
+msgstr ""
+
+#: dk/dk_municipalities.py:27 dk/dk_postalcodes.py:725
+msgid "Hørsholm"
+msgstr ""
+
+#: dk/dk_municipalities.py:28 dk/dk_postalcodes.py:694
+msgid "Ishøj"
+msgstr ""
+
+#: dk/dk_municipalities.py:29
+msgid "København"
+msgstr ""
+
+#: dk/dk_municipalities.py:30
+msgid "Lyngby-Taarbæk"
+msgstr ""
+
+#: dk/dk_municipalities.py:31
+msgid "Rudersdal"
+msgstr ""
+
+#: dk/dk_municipalities.py:32 dk/dk_postalcodes.py:690
+msgid "Rødovre"
+msgstr ""
+
+#: dk/dk_municipalities.py:33
+msgid "Tårnby"
+msgstr ""
+
+#: dk/dk_municipalities.py:34 dk/dk_postalcodes.py:692
+msgid "Vallensbæk"
+msgstr ""
+
+#: dk/dk_municipalities.py:40
+msgid "Favrskov"
+msgstr ""
+
+#: dk/dk_municipalities.py:41 dk/dk_postalcodes.py:1202
+msgid "Hedensted"
+msgstr ""
+
+#: dk/dk_municipalities.py:42 dk/dk_postalcodes.py:1094
+#: dk/dk_postalcodes.py:1095
+msgid "Herning"
+msgstr ""
+
+#: dk/dk_municipalities.py:43 dk/dk_postalcodes.py:1103
+msgid "Holstebro"
+msgstr ""
+
+#: dk/dk_municipalities.py:44 dk/dk_postalcodes.py:1200
+msgid "Horsens"
+msgstr ""
+
+#: dk/dk_municipalities.py:45
+msgid "Ikast-Brande"
+msgstr ""
+
+#: dk/dk_municipalities.py:46 dk/dk_postalcodes.py:1109
+msgid "Lemvig"
+msgstr ""
+
+#: dk/dk_municipalities.py:47
+msgid "Norddjurs"
+msgstr ""
+
+#: dk/dk_municipalities.py:48 dk/dk_postalcodes.py:1154
+msgid "Odder"
+msgstr ""
+
+#: dk/dk_municipalities.py:49
+msgid "Randers"
+msgstr ""
+
+#: dk/dk_municipalities.py:50
+msgid "Ringkøbing-Skjern"
+msgstr ""
+
+#: dk/dk_municipalities.py:51 dk/dk_postalcodes.py:1155
+msgid "Samsø"
+msgstr ""
+
+#: dk/dk_municipalities.py:52 dk/dk_postalcodes.py:1190
+msgid "Silkeborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:53 dk/dk_postalcodes.py:1197
+msgid "Skanderborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:54 dk/dk_postalcodes.py:1123
+msgid "Skive"
+msgstr ""
+
+#: dk/dk_municipalities.py:55 dk/dk_postalcodes.py:1108
+msgid "Struer"
+msgstr ""
+
+#: dk/dk_municipalities.py:56
+msgid "Syddjurs"
+msgstr ""
+
+#: dk/dk_municipalities.py:57 dk/dk_postalcodes.py:1216
+msgid "Viborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:58
+msgid "Aarhus"
+msgstr ""
+
+#: dk/dk_municipalities.py:64 dk/dk_postalcodes.py:1288
+msgid "Brønderslev"
+msgstr ""
+
+#: dk/dk_municipalities.py:65 dk/dk_postalcodes.py:1297
+msgid "Frederikshavn"
+msgstr ""
+
+#: dk/dk_municipalities.py:66 dk/dk_postalcodes.py:1292
+msgid "Hjørring"
+msgstr ""
+
+#: dk/dk_municipalities.py:67
+msgid "Jammerbugt"
+msgstr ""
+
+#: dk/dk_municipalities.py:68 dk/dk_postalcodes.py:1298
+msgid "Læsø"
+msgstr ""
+
+#: dk/dk_municipalities.py:69
+msgid "Mariagerfjord"
+msgstr ""
+
+#: dk/dk_municipalities.py:70
+msgid "Morsø"
+msgstr ""
+
+#: dk/dk_municipalities.py:71
+msgid "Rebild"
+msgstr ""
+
+#: dk/dk_municipalities.py:72 dk/dk_postalcodes.py:1114
+msgid "Thisted"
+msgstr ""
+
+#: dk/dk_municipalities.py:73
+msgid "Vesthimmerland"
+msgstr ""
+
+#: dk/dk_municipalities.py:74 dk/dk_postalcodes.py:1239
+#: dk/dk_postalcodes.py:1240 dk/dk_postalcodes.py:1241
+msgid "Aalborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:80 dk/dk_postalcodes.py:842
+msgid "Faxe"
+msgstr ""
+
+#: dk/dk_municipalities.py:81 dk/dk_postalcodes.py:699
+msgid "Greve"
+msgstr ""
+
+#: dk/dk_municipalities.py:82
+msgid "Guldborgsund"
+msgstr ""
+
+#: dk/dk_municipalities.py:83 dk/dk_postalcodes.py:805
+msgid "Holbæk"
+msgstr ""
+
+#: dk/dk_municipalities.py:84 dk/dk_postalcodes.py:814
+msgid "Kalundborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:85 dk/dk_postalcodes.py:837
+msgid "Køge"
+msgstr ""
+
+#: dk/dk_municipalities.py:86 dk/dk_postalcodes.py:807
+msgid "Lejre"
+msgstr ""
+
+#: dk/dk_municipalities.py:87
+msgid "Lolland"
+msgstr ""
+
+#: dk/dk_municipalities.py:88 dk/dk_postalcodes.py:855
+msgid "Næstved"
+msgstr ""
+
+#: dk/dk_municipalities.py:89
+msgid "Odsherred"
+msgstr ""
+
+#: dk/dk_municipalities.py:90 dk/dk_postalcodes.py:778 dk/dk_postalcodes.py:779
+msgid "Ringsted"
+msgstr ""
+
+#: dk/dk_municipalities.py:91 dk/dk_postalcodes.py:772
+msgid "Roskilde"
+msgstr ""
+
+#: dk/dk_municipalities.py:92 dk/dk_postalcodes.py:788
+msgid "Slagelse"
+msgstr ""
+
+#: dk/dk_municipalities.py:93
+msgid "Solrød"
+msgstr ""
+
+#: dk/dk_municipalities.py:94 dk/dk_postalcodes.py:786
+msgid "Sorø"
+msgstr ""
+
+#: dk/dk_municipalities.py:95
+msgid "Stevns"
+msgstr ""
+
+#: dk/dk_municipalities.py:96 dk/dk_postalcodes.py:861
+msgid "Vordingborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:102 dk/dk_postalcodes.py:942
+msgid "Assens"
+msgstr ""
+
+#: dk/dk_municipalities.py:103 dk/dk_postalcodes.py:1082
+msgid "Billund"
+msgstr ""
+
+#: dk/dk_municipalities.py:104 dk/dk_postalcodes.py:1026
+#: dk/dk_postalcodes.py:1027
+msgid "Esbjerg"
+msgstr ""
+
+#: dk/dk_municipalities.py:105 dk/dk_postalcodes.py:1031
+msgid "Fanø"
+msgstr ""
+
+#: dk/dk_municipalities.py:106 dk/dk_postalcodes.py:1065
+#: dk/dk_postalcodes.py:1066 dk/dk_postalcodes.py:1069
+msgid "Fredericia"
+msgstr ""
+
+#: dk/dk_municipalities.py:107
+msgid "Faaborg-Midtfyn"
+msgstr ""
+
+#: dk/dk_municipalities.py:108 dk/dk_postalcodes.py:986
+msgid "Haderslev"
+msgstr ""
+
+#: dk/dk_municipalities.py:109 dk/dk_postalcodes.py:913
+msgid "Kerteminde"
+msgstr ""
+
+#: dk/dk_municipalities.py:110 dk/dk_postalcodes.py:976
+msgid "Kolding"
+msgstr ""
+
+#: dk/dk_municipalities.py:111
+msgid "Langeland"
+msgstr ""
+
+#: dk/dk_municipalities.py:112 dk/dk_postalcodes.py:931
+msgid "Middelfart"
+msgstr ""
+
+#: dk/dk_municipalities.py:113
+msgid "Nordfyn"
+msgstr ""
+
+#: dk/dk_municipalities.py:114 dk/dk_postalcodes.py:955
+msgid "Nyborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:115
+msgid "Odense"
+msgstr ""
+
+#: dk/dk_municipalities.py:116 dk/dk_postalcodes.py:949
+msgid "Svendborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:117 dk/dk_postalcodes.py:1002
+msgid "Sønderborg"
+msgstr ""
+
+#: dk/dk_municipalities.py:118 dk/dk_postalcodes.py:992
+msgid "Tønder"
+msgstr ""
+
+#: dk/dk_municipalities.py:119 dk/dk_postalcodes.py:1040
+msgid "Varde"
+msgstr ""
+
+#: dk/dk_municipalities.py:120 dk/dk_postalcodes.py:1014
+msgid "Vejen"
+msgstr ""
+
+#: dk/dk_municipalities.py:121 dk/dk_postalcodes.py:1071
+msgid "Vejle"
+msgstr ""
+
+#: dk/dk_municipalities.py:122
+msgid "Ærø"
+msgstr ""
+
+#: dk/dk_municipalities.py:123 dk/dk_postalcodes.py:987
+msgid "Aabenraa"
+msgstr ""
+
+#: dk/dk_municipalities.py:128
+msgid "Region Hovedstaden"
+msgstr ""
+
+#: dk/dk_municipalities.py:129
+msgid "Region Midtjylland"
+msgstr ""
+
+#: dk/dk_municipalities.py:130
+msgid "Region Nordjylland"
+msgstr ""
+
+#: dk/dk_municipalities.py:131
+msgid "Region Sjælland"
+msgstr ""
+
+#: dk/dk_municipalities.py:132
+msgid "Region Syddanmark"
+msgstr ""
+
+#: dk/dk_postalcodes.py:7
+msgid "Scanning"
+msgstr ""
+
+#: dk/dk_postalcodes.py:8
+msgid "Facility"
+msgstr ""
+
+#: dk/dk_postalcodes.py:9
+msgid "Høje Taastrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:10 dk/dk_postalcodes.py:16 dk/dk_postalcodes.py:17
+#: dk/dk_postalcodes.py:23 dk/dk_postalcodes.py:25
+msgid "København C"
+msgstr ""
+
+#: dk/dk_postalcodes.py:11
+msgid "Sjælland USF P"
+msgstr ""
+
+#: dk/dk_postalcodes.py:12
+msgid "Sjælland USF B"
+msgstr ""
+
+#: dk/dk_postalcodes.py:13
+msgid "Udbetaling"
+msgstr ""
+
+#: dk/dk_postalcodes.py:14
+msgid "eBrevsprækken"
+msgstr ""
+
+#: dk/dk_postalcodes.py:15
+msgid "Kommuneservice"
+msgstr ""
+
+#: dk/dk_postalcodes.py:18 dk/dk_postalcodes.py:19 dk/dk_postalcodes.py:20
+msgid "Københavns Pakkecenter"
+msgstr ""
+
+#: dk/dk_postalcodes.py:21
+msgid "Københavns Pakke BRC"
+msgstr ""
+
+#: dk/dk_postalcodes.py:22
+msgid "Returprint BRC"
+msgstr ""
+
+#: dk/dk_postalcodes.py:24
+msgid "Internationalt Postcenter"
+msgstr ""
+
+#: dk/dk_postalcodes.py:26 dk/dk_postalcodes.py:27 dk/dk_postalcodes.py:28
+#: dk/dk_postalcodes.py:29 dk/dk_postalcodes.py:30 dk/dk_postalcodes.py:31
+#: dk/dk_postalcodes.py:32 dk/dk_postalcodes.py:33 dk/dk_postalcodes.py:34
+#: dk/dk_postalcodes.py:35 dk/dk_postalcodes.py:36 dk/dk_postalcodes.py:37
+#: dk/dk_postalcodes.py:38 dk/dk_postalcodes.py:39 dk/dk_postalcodes.py:40
+#: dk/dk_postalcodes.py:41 dk/dk_postalcodes.py:42 dk/dk_postalcodes.py:43
+#: dk/dk_postalcodes.py:44 dk/dk_postalcodes.py:45 dk/dk_postalcodes.py:46
+#: dk/dk_postalcodes.py:47 dk/dk_postalcodes.py:48 dk/dk_postalcodes.py:49
+#: dk/dk_postalcodes.py:50 dk/dk_postalcodes.py:51 dk/dk_postalcodes.py:52
+#: dk/dk_postalcodes.py:53 dk/dk_postalcodes.py:54 dk/dk_postalcodes.py:55
+#: dk/dk_postalcodes.py:56 dk/dk_postalcodes.py:57 dk/dk_postalcodes.py:58
+#: dk/dk_postalcodes.py:59 dk/dk_postalcodes.py:60 dk/dk_postalcodes.py:61
+#: dk/dk_postalcodes.py:62 dk/dk_postalcodes.py:63 dk/dk_postalcodes.py:64
+#: dk/dk_postalcodes.py:65 dk/dk_postalcodes.py:66 dk/dk_postalcodes.py:67
+#: dk/dk_postalcodes.py:68 dk/dk_postalcodes.py:69 dk/dk_postalcodes.py:70
+#: dk/dk_postalcodes.py:71 dk/dk_postalcodes.py:72 dk/dk_postalcodes.py:73
+#: dk/dk_postalcodes.py:74 dk/dk_postalcodes.py:75 dk/dk_postalcodes.py:76
+#: dk/dk_postalcodes.py:77 dk/dk_postalcodes.py:78 dk/dk_postalcodes.py:79
+#: dk/dk_postalcodes.py:80 dk/dk_postalcodes.py:81 dk/dk_postalcodes.py:82
+#: dk/dk_postalcodes.py:83 dk/dk_postalcodes.py:84 dk/dk_postalcodes.py:85
+#: dk/dk_postalcodes.py:86 dk/dk_postalcodes.py:87 dk/dk_postalcodes.py:88
+#: dk/dk_postalcodes.py:89 dk/dk_postalcodes.py:90 dk/dk_postalcodes.py:91
+#: dk/dk_postalcodes.py:92 dk/dk_postalcodes.py:93 dk/dk_postalcodes.py:94
+#: dk/dk_postalcodes.py:95 dk/dk_postalcodes.py:96 dk/dk_postalcodes.py:97
+#: dk/dk_postalcodes.py:98 dk/dk_postalcodes.py:99 dk/dk_postalcodes.py:100
+#: dk/dk_postalcodes.py:101 dk/dk_postalcodes.py:102 dk/dk_postalcodes.py:103
+#: dk/dk_postalcodes.py:104 dk/dk_postalcodes.py:105 dk/dk_postalcodes.py:106
+#: dk/dk_postalcodes.py:107 dk/dk_postalcodes.py:108 dk/dk_postalcodes.py:109
+#: dk/dk_postalcodes.py:110 dk/dk_postalcodes.py:111 dk/dk_postalcodes.py:112
+#: dk/dk_postalcodes.py:113 dk/dk_postalcodes.py:114 dk/dk_postalcodes.py:115
+#: dk/dk_postalcodes.py:116 dk/dk_postalcodes.py:117 dk/dk_postalcodes.py:118
+#: dk/dk_postalcodes.py:119 dk/dk_postalcodes.py:120 dk/dk_postalcodes.py:121
+#: dk/dk_postalcodes.py:122 dk/dk_postalcodes.py:123 dk/dk_postalcodes.py:124
+#: dk/dk_postalcodes.py:125 dk/dk_postalcodes.py:126 dk/dk_postalcodes.py:127
+#: dk/dk_postalcodes.py:128 dk/dk_postalcodes.py:129 dk/dk_postalcodes.py:130
+#: dk/dk_postalcodes.py:131 dk/dk_postalcodes.py:132 dk/dk_postalcodes.py:133
+#: dk/dk_postalcodes.py:134 dk/dk_postalcodes.py:135 dk/dk_postalcodes.py:136
+#: dk/dk_postalcodes.py:137 dk/dk_postalcodes.py:138 dk/dk_postalcodes.py:139
+#: dk/dk_postalcodes.py:140 dk/dk_postalcodes.py:141 dk/dk_postalcodes.py:142
+#: dk/dk_postalcodes.py:143 dk/dk_postalcodes.py:144 dk/dk_postalcodes.py:145
+#: dk/dk_postalcodes.py:146 dk/dk_postalcodes.py:147 dk/dk_postalcodes.py:148
+#: dk/dk_postalcodes.py:149 dk/dk_postalcodes.py:150 dk/dk_postalcodes.py:151
+#: dk/dk_postalcodes.py:152 dk/dk_postalcodes.py:153 dk/dk_postalcodes.py:154
+#: dk/dk_postalcodes.py:155 dk/dk_postalcodes.py:156 dk/dk_postalcodes.py:157
+#: dk/dk_postalcodes.py:158 dk/dk_postalcodes.py:159 dk/dk_postalcodes.py:160
+#: dk/dk_postalcodes.py:161 dk/dk_postalcodes.py:162 dk/dk_postalcodes.py:163
+#: dk/dk_postalcodes.py:164 dk/dk_postalcodes.py:165 dk/dk_postalcodes.py:166
+#: dk/dk_postalcodes.py:167 dk/dk_postalcodes.py:168 dk/dk_postalcodes.py:169
+#: dk/dk_postalcodes.py:170 dk/dk_postalcodes.py:171 dk/dk_postalcodes.py:172
+#: dk/dk_postalcodes.py:173 dk/dk_postalcodes.py:174 dk/dk_postalcodes.py:175
+#: dk/dk_postalcodes.py:176 dk/dk_postalcodes.py:177 dk/dk_postalcodes.py:178
+#: dk/dk_postalcodes.py:179 dk/dk_postalcodes.py:180 dk/dk_postalcodes.py:181
+#: dk/dk_postalcodes.py:182 dk/dk_postalcodes.py:183 dk/dk_postalcodes.py:184
+#: dk/dk_postalcodes.py:185 dk/dk_postalcodes.py:186 dk/dk_postalcodes.py:187
+#: dk/dk_postalcodes.py:188 dk/dk_postalcodes.py:189 dk/dk_postalcodes.py:190
+#: dk/dk_postalcodes.py:191 dk/dk_postalcodes.py:192 dk/dk_postalcodes.py:193
+#: dk/dk_postalcodes.py:194 dk/dk_postalcodes.py:195 dk/dk_postalcodes.py:196
+#: dk/dk_postalcodes.py:197 dk/dk_postalcodes.py:198 dk/dk_postalcodes.py:199
+#: dk/dk_postalcodes.py:200 dk/dk_postalcodes.py:201 dk/dk_postalcodes.py:202
+#: dk/dk_postalcodes.py:203 dk/dk_postalcodes.py:204 dk/dk_postalcodes.py:205
+#: dk/dk_postalcodes.py:206 dk/dk_postalcodes.py:207 dk/dk_postalcodes.py:208
+#: dk/dk_postalcodes.py:209 dk/dk_postalcodes.py:210 dk/dk_postalcodes.py:211
+#: dk/dk_postalcodes.py:212 dk/dk_postalcodes.py:213 dk/dk_postalcodes.py:214
+#: dk/dk_postalcodes.py:215 dk/dk_postalcodes.py:216 dk/dk_postalcodes.py:217
+#: dk/dk_postalcodes.py:218 dk/dk_postalcodes.py:219 dk/dk_postalcodes.py:220
+#: dk/dk_postalcodes.py:221 dk/dk_postalcodes.py:222 dk/dk_postalcodes.py:223
+#: dk/dk_postalcodes.py:224 dk/dk_postalcodes.py:225 dk/dk_postalcodes.py:226
+#: dk/dk_postalcodes.py:227 dk/dk_postalcodes.py:228 dk/dk_postalcodes.py:229
+#: dk/dk_postalcodes.py:230 dk/dk_postalcodes.py:231 dk/dk_postalcodes.py:232
+#: dk/dk_postalcodes.py:233 dk/dk_postalcodes.py:234 dk/dk_postalcodes.py:235
+#: dk/dk_postalcodes.py:236 dk/dk_postalcodes.py:237 dk/dk_postalcodes.py:238
+#: dk/dk_postalcodes.py:239 dk/dk_postalcodes.py:240 dk/dk_postalcodes.py:241
+#: dk/dk_postalcodes.py:242 dk/dk_postalcodes.py:243 dk/dk_postalcodes.py:244
+#: dk/dk_postalcodes.py:245 dk/dk_postalcodes.py:246 dk/dk_postalcodes.py:247
+#: dk/dk_postalcodes.py:248 dk/dk_postalcodes.py:249 dk/dk_postalcodes.py:250
+#: dk/dk_postalcodes.py:251 dk/dk_postalcodes.py:252 dk/dk_postalcodes.py:253
+#: dk/dk_postalcodes.py:254 dk/dk_postalcodes.py:255 dk/dk_postalcodes.py:256
+#: dk/dk_postalcodes.py:257 dk/dk_postalcodes.py:258 dk/dk_postalcodes.py:259
+#: dk/dk_postalcodes.py:260 dk/dk_postalcodes.py:261 dk/dk_postalcodes.py:262
+#: dk/dk_postalcodes.py:263 dk/dk_postalcodes.py:264 dk/dk_postalcodes.py:265
+#: dk/dk_postalcodes.py:266 dk/dk_postalcodes.py:267 dk/dk_postalcodes.py:268
+#: dk/dk_postalcodes.py:269 dk/dk_postalcodes.py:270 dk/dk_postalcodes.py:271
+#: dk/dk_postalcodes.py:272 dk/dk_postalcodes.py:273 dk/dk_postalcodes.py:274
+#: dk/dk_postalcodes.py:275 dk/dk_postalcodes.py:276 dk/dk_postalcodes.py:277
+#: dk/dk_postalcodes.py:278 dk/dk_postalcodes.py:279 dk/dk_postalcodes.py:280
+#: dk/dk_postalcodes.py:281 dk/dk_postalcodes.py:282 dk/dk_postalcodes.py:283
+#: dk/dk_postalcodes.py:284 dk/dk_postalcodes.py:285 dk/dk_postalcodes.py:286
+#: dk/dk_postalcodes.py:287 dk/dk_postalcodes.py:288 dk/dk_postalcodes.py:289
+#: dk/dk_postalcodes.py:290 dk/dk_postalcodes.py:291 dk/dk_postalcodes.py:292
+#: dk/dk_postalcodes.py:293 dk/dk_postalcodes.py:294 dk/dk_postalcodes.py:295
+#: dk/dk_postalcodes.py:296 dk/dk_postalcodes.py:297 dk/dk_postalcodes.py:298
+#: dk/dk_postalcodes.py:299 dk/dk_postalcodes.py:300 dk/dk_postalcodes.py:301
+#: dk/dk_postalcodes.py:302 dk/dk_postalcodes.py:303 dk/dk_postalcodes.py:304
+#: dk/dk_postalcodes.py:305 dk/dk_postalcodes.py:306 dk/dk_postalcodes.py:307
+#: dk/dk_postalcodes.py:308 dk/dk_postalcodes.py:309 dk/dk_postalcodes.py:310
+#: dk/dk_postalcodes.py:311 dk/dk_postalcodes.py:312 dk/dk_postalcodes.py:313
+#: dk/dk_postalcodes.py:314 dk/dk_postalcodes.py:315 dk/dk_postalcodes.py:316
+#: dk/dk_postalcodes.py:317 dk/dk_postalcodes.py:318 dk/dk_postalcodes.py:319
+#: dk/dk_postalcodes.py:320 dk/dk_postalcodes.py:321 dk/dk_postalcodes.py:322
+#: dk/dk_postalcodes.py:323 dk/dk_postalcodes.py:324 dk/dk_postalcodes.py:325
+#: dk/dk_postalcodes.py:326 dk/dk_postalcodes.py:327 dk/dk_postalcodes.py:328
+#: dk/dk_postalcodes.py:329 dk/dk_postalcodes.py:330 dk/dk_postalcodes.py:331
+#: dk/dk_postalcodes.py:332 dk/dk_postalcodes.py:333 dk/dk_postalcodes.py:334
+#: dk/dk_postalcodes.py:335 dk/dk_postalcodes.py:336 dk/dk_postalcodes.py:337
+#: dk/dk_postalcodes.py:338 dk/dk_postalcodes.py:339 dk/dk_postalcodes.py:340
+#: dk/dk_postalcodes.py:341 dk/dk_postalcodes.py:342 dk/dk_postalcodes.py:343
+#: dk/dk_postalcodes.py:344 dk/dk_postalcodes.py:345 dk/dk_postalcodes.py:346
+#: dk/dk_postalcodes.py:347 dk/dk_postalcodes.py:348 dk/dk_postalcodes.py:349
+#: dk/dk_postalcodes.py:350 dk/dk_postalcodes.py:351 dk/dk_postalcodes.py:352
+#: dk/dk_postalcodes.py:353 dk/dk_postalcodes.py:354 dk/dk_postalcodes.py:355
+#: dk/dk_postalcodes.py:356 dk/dk_postalcodes.py:357 dk/dk_postalcodes.py:358
+#: dk/dk_postalcodes.py:359 dk/dk_postalcodes.py:360 dk/dk_postalcodes.py:361
+#: dk/dk_postalcodes.py:362 dk/dk_postalcodes.py:363 dk/dk_postalcodes.py:364
+#: dk/dk_postalcodes.py:365 dk/dk_postalcodes.py:366 dk/dk_postalcodes.py:367
+#: dk/dk_postalcodes.py:368 dk/dk_postalcodes.py:369 dk/dk_postalcodes.py:370
+#: dk/dk_postalcodes.py:371 dk/dk_postalcodes.py:372 dk/dk_postalcodes.py:373
+#: dk/dk_postalcodes.py:374
+msgid "København K"
+msgstr ""
+
+#: dk/dk_postalcodes.py:375 dk/dk_postalcodes.py:376 dk/dk_postalcodes.py:377
+#: dk/dk_postalcodes.py:378 dk/dk_postalcodes.py:379 dk/dk_postalcodes.py:380
+#: dk/dk_postalcodes.py:381 dk/dk_postalcodes.py:382 dk/dk_postalcodes.py:383
+#: dk/dk_postalcodes.py:384 dk/dk_postalcodes.py:385 dk/dk_postalcodes.py:388
+#: dk/dk_postalcodes.py:389 dk/dk_postalcodes.py:390 dk/dk_postalcodes.py:391
+#: dk/dk_postalcodes.py:392 dk/dk_postalcodes.py:393 dk/dk_postalcodes.py:394
+#: dk/dk_postalcodes.py:395 dk/dk_postalcodes.py:396 dk/dk_postalcodes.py:397
+#: dk/dk_postalcodes.py:398 dk/dk_postalcodes.py:399 dk/dk_postalcodes.py:400
+#: dk/dk_postalcodes.py:401 dk/dk_postalcodes.py:402 dk/dk_postalcodes.py:403
+#: dk/dk_postalcodes.py:404 dk/dk_postalcodes.py:405 dk/dk_postalcodes.py:406
+#: dk/dk_postalcodes.py:407 dk/dk_postalcodes.py:408 dk/dk_postalcodes.py:409
+#: dk/dk_postalcodes.py:410 dk/dk_postalcodes.py:411 dk/dk_postalcodes.py:412
+#: dk/dk_postalcodes.py:413 dk/dk_postalcodes.py:414 dk/dk_postalcodes.py:415
+#: dk/dk_postalcodes.py:416 dk/dk_postalcodes.py:417 dk/dk_postalcodes.py:418
+#: dk/dk_postalcodes.py:419 dk/dk_postalcodes.py:420 dk/dk_postalcodes.py:421
+#: dk/dk_postalcodes.py:422 dk/dk_postalcodes.py:423 dk/dk_postalcodes.py:424
+#: dk/dk_postalcodes.py:425 dk/dk_postalcodes.py:426 dk/dk_postalcodes.py:427
+#: dk/dk_postalcodes.py:428 dk/dk_postalcodes.py:429 dk/dk_postalcodes.py:430
+#: dk/dk_postalcodes.py:431 dk/dk_postalcodes.py:432 dk/dk_postalcodes.py:433
+#: dk/dk_postalcodes.py:434 dk/dk_postalcodes.py:435 dk/dk_postalcodes.py:436
+#: dk/dk_postalcodes.py:437 dk/dk_postalcodes.py:438 dk/dk_postalcodes.py:439
+#: dk/dk_postalcodes.py:440 dk/dk_postalcodes.py:441 dk/dk_postalcodes.py:442
+#: dk/dk_postalcodes.py:443 dk/dk_postalcodes.py:444 dk/dk_postalcodes.py:445
+#: dk/dk_postalcodes.py:446 dk/dk_postalcodes.py:447 dk/dk_postalcodes.py:448
+#: dk/dk_postalcodes.py:449 dk/dk_postalcodes.py:450 dk/dk_postalcodes.py:451
+#: dk/dk_postalcodes.py:452 dk/dk_postalcodes.py:453 dk/dk_postalcodes.py:454
+#: dk/dk_postalcodes.py:455 dk/dk_postalcodes.py:456 dk/dk_postalcodes.py:457
+#: dk/dk_postalcodes.py:458 dk/dk_postalcodes.py:459 dk/dk_postalcodes.py:460
+#: dk/dk_postalcodes.py:461 dk/dk_postalcodes.py:462 dk/dk_postalcodes.py:463
+#: dk/dk_postalcodes.py:464 dk/dk_postalcodes.py:465 dk/dk_postalcodes.py:466
+#: dk/dk_postalcodes.py:467 dk/dk_postalcodes.py:468 dk/dk_postalcodes.py:469
+#: dk/dk_postalcodes.py:470 dk/dk_postalcodes.py:471 dk/dk_postalcodes.py:472
+#: dk/dk_postalcodes.py:473 dk/dk_postalcodes.py:474 dk/dk_postalcodes.py:475
+#: dk/dk_postalcodes.py:476 dk/dk_postalcodes.py:477 dk/dk_postalcodes.py:478
+#: dk/dk_postalcodes.py:479 dk/dk_postalcodes.py:480 dk/dk_postalcodes.py:481
+#: dk/dk_postalcodes.py:482 dk/dk_postalcodes.py:483 dk/dk_postalcodes.py:484
+#: dk/dk_postalcodes.py:485 dk/dk_postalcodes.py:486 dk/dk_postalcodes.py:487
+#: dk/dk_postalcodes.py:488 dk/dk_postalcodes.py:489 dk/dk_postalcodes.py:490
+#: dk/dk_postalcodes.py:491 dk/dk_postalcodes.py:492 dk/dk_postalcodes.py:493
+#: dk/dk_postalcodes.py:494 dk/dk_postalcodes.py:495 dk/dk_postalcodes.py:496
+#: dk/dk_postalcodes.py:497 dk/dk_postalcodes.py:498 dk/dk_postalcodes.py:499
+#: dk/dk_postalcodes.py:500 dk/dk_postalcodes.py:501 dk/dk_postalcodes.py:502
+#: dk/dk_postalcodes.py:503 dk/dk_postalcodes.py:504 dk/dk_postalcodes.py:505
+#: dk/dk_postalcodes.py:506 dk/dk_postalcodes.py:507 dk/dk_postalcodes.py:508
+#: dk/dk_postalcodes.py:509 dk/dk_postalcodes.py:510 dk/dk_postalcodes.py:511
+#: dk/dk_postalcodes.py:512 dk/dk_postalcodes.py:513 dk/dk_postalcodes.py:514
+#: dk/dk_postalcodes.py:515 dk/dk_postalcodes.py:516 dk/dk_postalcodes.py:517
+#: dk/dk_postalcodes.py:518 dk/dk_postalcodes.py:519 dk/dk_postalcodes.py:520
+#: dk/dk_postalcodes.py:521 dk/dk_postalcodes.py:522 dk/dk_postalcodes.py:523
+#: dk/dk_postalcodes.py:524 dk/dk_postalcodes.py:525 dk/dk_postalcodes.py:526
+#: dk/dk_postalcodes.py:527 dk/dk_postalcodes.py:528 dk/dk_postalcodes.py:529
+#: dk/dk_postalcodes.py:530 dk/dk_postalcodes.py:531 dk/dk_postalcodes.py:532
+#: dk/dk_postalcodes.py:533 dk/dk_postalcodes.py:534 dk/dk_postalcodes.py:535
+#: dk/dk_postalcodes.py:536 dk/dk_postalcodes.py:537 dk/dk_postalcodes.py:538
+#: dk/dk_postalcodes.py:539 dk/dk_postalcodes.py:540 dk/dk_postalcodes.py:541
+#: dk/dk_postalcodes.py:542 dk/dk_postalcodes.py:543 dk/dk_postalcodes.py:544
+#: dk/dk_postalcodes.py:545 dk/dk_postalcodes.py:546 dk/dk_postalcodes.py:547
+#: dk/dk_postalcodes.py:548 dk/dk_postalcodes.py:549 dk/dk_postalcodes.py:550
+#: dk/dk_postalcodes.py:551 dk/dk_postalcodes.py:552 dk/dk_postalcodes.py:553
+#: dk/dk_postalcodes.py:554 dk/dk_postalcodes.py:555 dk/dk_postalcodes.py:556
+#: dk/dk_postalcodes.py:557 dk/dk_postalcodes.py:558 dk/dk_postalcodes.py:559
+#: dk/dk_postalcodes.py:560 dk/dk_postalcodes.py:561 dk/dk_postalcodes.py:562
+#: dk/dk_postalcodes.py:563 dk/dk_postalcodes.py:564 dk/dk_postalcodes.py:565
+#: dk/dk_postalcodes.py:566 dk/dk_postalcodes.py:567 dk/dk_postalcodes.py:568
+#: dk/dk_postalcodes.py:569 dk/dk_postalcodes.py:570 dk/dk_postalcodes.py:571
+#: dk/dk_postalcodes.py:572
+msgid "København V"
+msgstr ""
+
+#: dk/dk_postalcodes.py:386
+msgid "Returpost"
+msgstr ""
+
+#: dk/dk_postalcodes.py:387
+msgid "Centraltastning"
+msgstr ""
+
+#: dk/dk_postalcodes.py:573 dk/dk_postalcodes.py:574 dk/dk_postalcodes.py:575
+#: dk/dk_postalcodes.py:576 dk/dk_postalcodes.py:577 dk/dk_postalcodes.py:578
+#: dk/dk_postalcodes.py:579 dk/dk_postalcodes.py:580 dk/dk_postalcodes.py:581
+#: dk/dk_postalcodes.py:582 dk/dk_postalcodes.py:583 dk/dk_postalcodes.py:584
+#: dk/dk_postalcodes.py:585 dk/dk_postalcodes.py:586 dk/dk_postalcodes.py:587
+#: dk/dk_postalcodes.py:588 dk/dk_postalcodes.py:589 dk/dk_postalcodes.py:590
+#: dk/dk_postalcodes.py:591 dk/dk_postalcodes.py:592 dk/dk_postalcodes.py:593
+#: dk/dk_postalcodes.py:594 dk/dk_postalcodes.py:595 dk/dk_postalcodes.py:596
+#: dk/dk_postalcodes.py:597 dk/dk_postalcodes.py:598 dk/dk_postalcodes.py:599
+#: dk/dk_postalcodes.py:600 dk/dk_postalcodes.py:601 dk/dk_postalcodes.py:602
+#: dk/dk_postalcodes.py:603 dk/dk_postalcodes.py:604 dk/dk_postalcodes.py:605
+#: dk/dk_postalcodes.py:606 dk/dk_postalcodes.py:607 dk/dk_postalcodes.py:608
+#: dk/dk_postalcodes.py:609 dk/dk_postalcodes.py:610 dk/dk_postalcodes.py:611
+#: dk/dk_postalcodes.py:612 dk/dk_postalcodes.py:613 dk/dk_postalcodes.py:614
+#: dk/dk_postalcodes.py:615 dk/dk_postalcodes.py:616 dk/dk_postalcodes.py:617
+#: dk/dk_postalcodes.py:618 dk/dk_postalcodes.py:619 dk/dk_postalcodes.py:620
+#: dk/dk_postalcodes.py:621 dk/dk_postalcodes.py:622 dk/dk_postalcodes.py:623
+#: dk/dk_postalcodes.py:624 dk/dk_postalcodes.py:625 dk/dk_postalcodes.py:626
+#: dk/dk_postalcodes.py:627 dk/dk_postalcodes.py:628 dk/dk_postalcodes.py:629
+#: dk/dk_postalcodes.py:630 dk/dk_postalcodes.py:631 dk/dk_postalcodes.py:632
+#: dk/dk_postalcodes.py:633 dk/dk_postalcodes.py:634 dk/dk_postalcodes.py:635
+#: dk/dk_postalcodes.py:636 dk/dk_postalcodes.py:637 dk/dk_postalcodes.py:638
+#: dk/dk_postalcodes.py:639 dk/dk_postalcodes.py:640 dk/dk_postalcodes.py:641
+#: dk/dk_postalcodes.py:642 dk/dk_postalcodes.py:643 dk/dk_postalcodes.py:644
+#: dk/dk_postalcodes.py:645 dk/dk_postalcodes.py:646 dk/dk_postalcodes.py:647
+#: dk/dk_postalcodes.py:648 dk/dk_postalcodes.py:649 dk/dk_postalcodes.py:650
+#: dk/dk_postalcodes.py:651 dk/dk_postalcodes.py:652 dk/dk_postalcodes.py:653
+#: dk/dk_postalcodes.py:654 dk/dk_postalcodes.py:655 dk/dk_postalcodes.py:656
+#: dk/dk_postalcodes.py:657 dk/dk_postalcodes.py:658 dk/dk_postalcodes.py:659
+#: dk/dk_postalcodes.py:660 dk/dk_postalcodes.py:661 dk/dk_postalcodes.py:662
+#: dk/dk_postalcodes.py:663 dk/dk_postalcodes.py:664 dk/dk_postalcodes.py:665
+#: dk/dk_postalcodes.py:666 dk/dk_postalcodes.py:667 dk/dk_postalcodes.py:668
+#: dk/dk_postalcodes.py:669 dk/dk_postalcodes.py:670 dk/dk_postalcodes.py:671
+#: dk/dk_postalcodes.py:672 dk/dk_postalcodes.py:673 dk/dk_postalcodes.py:674
+#: dk/dk_postalcodes.py:675 dk/dk_postalcodes.py:676 dk/dk_postalcodes.py:677
+#: dk/dk_postalcodes.py:678 dk/dk_postalcodes.py:679
+msgid "Frederiksberg C"
+msgstr ""
+
+#: dk/dk_postalcodes.py:681
+msgid "København Ø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:682
+msgid "Nordhavn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:683
+msgid "København N"
+msgstr ""
+
+#: dk/dk_postalcodes.py:684
+msgid "København S"
+msgstr ""
+
+#: dk/dk_postalcodes.py:685
+msgid "København NV"
+msgstr ""
+
+#: dk/dk_postalcodes.py:686
+msgid "København SV"
+msgstr ""
+
+#: dk/dk_postalcodes.py:687
+msgid "Valby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:693
+msgid "Taastrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:695
+msgid "Hedehusene"
+msgstr ""
+
+#: dk/dk_postalcodes.py:697
+msgid "Brøndby Strand"
+msgstr ""
+
+#: dk/dk_postalcodes.py:698
+msgid "Vallensbæk Strand"
+msgstr ""
+
+#: dk/dk_postalcodes.py:700
+msgid "Solrød Strand"
+msgstr ""
+
+#: dk/dk_postalcodes.py:701
+msgid "Karlslunde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:702
+msgid "Brønshøj"
+msgstr ""
+
+#: dk/dk_postalcodes.py:703
+msgid "Vanløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:705
+msgid "Skovlunde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:707
+msgid "Måløv"
+msgstr ""
+
+#: dk/dk_postalcodes.py:708
+msgid "Smørum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:709
+msgid "Kastrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:711
+msgid "Kongens Lyngby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:713
+msgid "Virum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:714
+msgid "Holte"
+msgstr ""
+
+#: dk/dk_postalcodes.py:715
+msgid "Nærum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:716
+msgid "Søborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:717
+msgid "Dyssegård"
+msgstr ""
+
+#: dk/dk_postalcodes.py:718
+msgid "Bagsværd"
+msgstr ""
+
+#: dk/dk_postalcodes.py:719
+msgid "Hellerup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:720
+msgid "Charlottenlund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:721
+msgid "Klampenborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:722
+msgid "Skodsborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:723
+msgid "Vedbæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:724
+msgid "Rungsted Kyst"
+msgstr ""
+
+#: dk/dk_postalcodes.py:726
+msgid "Kokkedal"
+msgstr ""
+
+#: dk/dk_postalcodes.py:727
+msgid "Nivå"
+msgstr ""
+
+#: dk/dk_postalcodes.py:729
+msgid "Humlebæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:730
+msgid "Espergærde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:731
+msgid "Snekkersten"
+msgstr ""
+
+#: dk/dk_postalcodes.py:732
+msgid "Tikøb"
+msgstr ""
+
+#: dk/dk_postalcodes.py:733
+msgid "Hornbæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:734
+msgid "Dronningmølle"
+msgstr ""
+
+#: dk/dk_postalcodes.py:735
+msgid "Ålsgårde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:736
+msgid "Hellebæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:737
+msgid "Helsinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:738
+msgid "Vejby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:739
+msgid "Tisvildeleje"
+msgstr ""
+
+#: dk/dk_postalcodes.py:740
+msgid "Græsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:741
+msgid "Gilleleje"
+msgstr ""
+
+#: dk/dk_postalcodes.py:742
+msgid "Frederiksværk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:743
+msgid "Ølsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:744
+msgid "Skævinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:745
+msgid "Gørløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:746
+msgid "Liseleje"
+msgstr ""
+
+#: dk/dk_postalcodes.py:747
+msgid "Melby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:748
+msgid "Hundested"
+msgstr ""
+
+#: dk/dk_postalcodes.py:751
+msgid "Birkerød"
+msgstr ""
+
+#: dk/dk_postalcodes.py:753
+msgid "Kvistgård"
+msgstr ""
+
+#: dk/dk_postalcodes.py:754
+msgid "Værløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:755
+msgid "Farum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:756
+msgid "Lynge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:757
+msgid "Slangerup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:759
+msgid "Jægerspris"
+msgstr ""
+
+#: dk/dk_postalcodes.py:760
+msgid "Ølstykke"
+msgstr ""
+
+#: dk/dk_postalcodes.py:761
+msgid "Stenløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:762
+msgid "Veksø Sjælland"
+msgstr ""
+
+#: dk/dk_postalcodes.py:763
+msgid "Rønne"
+msgstr ""
+
+#: dk/dk_postalcodes.py:764
+msgid "Aakirkeby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:765
+msgid "Nexø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:766
+msgid "Svaneke"
+msgstr ""
+
+#: dk/dk_postalcodes.py:767
+msgid "Østermarie"
+msgstr ""
+
+#: dk/dk_postalcodes.py:768
+msgid "Gudhjem"
+msgstr ""
+
+#: dk/dk_postalcodes.py:769
+msgid "Allinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:770
+msgid "Klemensker"
+msgstr ""
+
+#: dk/dk_postalcodes.py:771
+msgid "Hasle"
+msgstr ""
+
+#: dk/dk_postalcodes.py:773
+msgid "Tune"
+msgstr ""
+
+#: dk/dk_postalcodes.py:774
+msgid "Jyllinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:775
+msgid "Skibby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:776
+msgid "Kirke Såby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:777
+msgid "Kirke Hyllinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:780
+msgid "Viby Sjælland"
+msgstr ""
+
+#: dk/dk_postalcodes.py:781
+msgid "Borup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:782
+msgid "Herlufmagle"
+msgstr ""
+
+#: dk/dk_postalcodes.py:783
+msgid "Glumsø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:784
+msgid "Fjenneslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:785
+msgid "Jystrup Midtsj"
+msgstr ""
+
+#: dk/dk_postalcodes.py:787
+msgid "Munke Bjergby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:789
+msgid "Korsør"
+msgstr ""
+
+#: dk/dk_postalcodes.py:790
+msgid "Skælskør"
+msgstr ""
+
+#: dk/dk_postalcodes.py:791
+msgid "Vemmelev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:792
+msgid "Boeslunde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:793
+msgid "Rude"
+msgstr ""
+
+#: dk/dk_postalcodes.py:794
+msgid "Agersø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:795
+msgid "Omø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:796
+msgid "Fuglebjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:797
+msgid "Dalmose"
+msgstr ""
+
+#: dk/dk_postalcodes.py:798
+msgid "Sandved"
+msgstr ""
+
+#: dk/dk_postalcodes.py:799
+msgid "Høng"
+msgstr ""
+
+#: dk/dk_postalcodes.py:800
+msgid "Gørlev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:801
+msgid "Ruds Vedby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:802
+msgid "Dianalund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:803
+msgid "Stenlille"
+msgstr ""
+
+#: dk/dk_postalcodes.py:804
+msgid "Nyrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:806
+msgid "Orø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:808
+msgid "Hvalsø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:809
+msgid "Tølløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:810
+msgid "Ugerløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:811
+msgid "Kirke Eskilstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:812
+msgid "Store Merløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:813
+msgid "Vipperød"
+msgstr ""
+
+#: dk/dk_postalcodes.py:815
+msgid "Regstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:816
+msgid "Mørkøv"
+msgstr ""
+
+#: dk/dk_postalcodes.py:817
+msgid "Jyderup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:818
+msgid "Snertinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:819
+msgid "Svebølle"
+msgstr ""
+
+#: dk/dk_postalcodes.py:820
+msgid "Store Fuglede"
+msgstr ""
+
+#: dk/dk_postalcodes.py:821
+msgid "Jerslev Sjælland"
+msgstr ""
+
+#: dk/dk_postalcodes.py:822
+msgid "Nykøbing Sj"
+msgstr ""
+
+#: dk/dk_postalcodes.py:823
+msgid "Svinninge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:824
+msgid "Gislinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:825
+msgid "Hørve"
+msgstr ""
+
+#: dk/dk_postalcodes.py:826
+msgid "Fårevejle"
+msgstr ""
+
+#: dk/dk_postalcodes.py:827
+msgid "Asnæs"
+msgstr ""
+
+#: dk/dk_postalcodes.py:828
+msgid "Vig"
+msgstr ""
+
+#: dk/dk_postalcodes.py:829
+msgid "Grevinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:830
+msgid "Nørre Asmindrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:831
+msgid "Højby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:832
+msgid "Rørvig"
+msgstr ""
+
+#: dk/dk_postalcodes.py:833
+msgid "Sjællands Odde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:834
+msgid "Føllenslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:835
+msgid "Sejerø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:836
+msgid "Eskebjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:838
+msgid "Gadstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:839
+msgid "Havdrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:840
+msgid "Lille Skensved"
+msgstr ""
+
+#: dk/dk_postalcodes.py:841
+msgid "Bjæverskov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:843
+msgid "Hårlev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:844
+msgid "Karise"
+msgstr ""
+
+#: dk/dk_postalcodes.py:845
+msgid "Faxe Ladeplads"
+msgstr ""
+
+#: dk/dk_postalcodes.py:846
+msgid "Store Heddinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:847
+msgid "Strøby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:848
+msgid "Klippinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:849
+msgid "Rødvig Stevns"
+msgstr ""
+
+#: dk/dk_postalcodes.py:850
+msgid "Herfølge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:851
+msgid "Tureby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:852
+msgid "Rønnede"
+msgstr ""
+
+#: dk/dk_postalcodes.py:853
+msgid "Holmegaard"
+msgstr ""
+
+#: dk/dk_postalcodes.py:854
+msgid "Haslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:856
+msgid "Præstø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:857
+msgid "Tappernøje"
+msgstr ""
+
+#: dk/dk_postalcodes.py:858
+msgid "Mern"
+msgstr ""
+
+#: dk/dk_postalcodes.py:859
+msgid "Karrebæksminde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:860
+msgid "Lundby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:862
+msgid "Kalvehave"
+msgstr ""
+
+#: dk/dk_postalcodes.py:863
+msgid "Langebæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:864
+msgid "Stensved"
+msgstr ""
+
+#: dk/dk_postalcodes.py:865
+msgid "Stege"
+msgstr ""
+
+#: dk/dk_postalcodes.py:866
+msgid "Borre"
+msgstr ""
+
+#: dk/dk_postalcodes.py:867
+msgid "Askeby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:868
+msgid "Bogø By"
+msgstr ""
+
+#: dk/dk_postalcodes.py:869
+msgid "Nykøbing F"
+msgstr ""
+
+#: dk/dk_postalcodes.py:870
+msgid "Nørre Alslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:871
+msgid "Stubbekøbing"
+msgstr ""
+
+#: dk/dk_postalcodes.py:872
+msgid "Guldborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:873
+msgid "Eskilstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:874
+msgid "Horbelev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:875
+msgid "Idestrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:876
+msgid "Væggerløse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:877
+msgid "Gedser"
+msgstr ""
+
+#: dk/dk_postalcodes.py:878
+msgid "Nysted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:879
+msgid "Toreby L"
+msgstr ""
+
+#: dk/dk_postalcodes.py:880
+msgid "Kettinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:881
+msgid "Øster Ulslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:882
+msgid "Errindlev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:883
+msgid "Nakskov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:884
+msgid "Harpelunde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:885
+msgid "Horslunde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:886
+msgid "Søllested"
+msgstr ""
+
+#: dk/dk_postalcodes.py:887
+msgid "Maribo"
+msgstr ""
+
+#: dk/dk_postalcodes.py:888
+msgid "Bandholm"
+msgstr ""
+
+#: dk/dk_postalcodes.py:889
+msgid "Askø og Lilleø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:890
+msgid "Torrig L"
+msgstr ""
+
+#: dk/dk_postalcodes.py:891
+msgid "Fejø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:892
+msgid "Femø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:893
+msgid "Nørreballe"
+msgstr ""
+
+#: dk/dk_postalcodes.py:894
+msgid "Stokkemarke"
+msgstr ""
+
+#: dk/dk_postalcodes.py:895
+msgid "Vesterborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:896
+msgid "Holeby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:897
+msgid "Rødby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:898
+msgid "Dannemare"
+msgstr ""
+
+#: dk/dk_postalcodes.py:899
+msgid "Sakskøbing"
+msgstr ""
+
+#: dk/dk_postalcodes.py:900
+msgid "Midtsjælland USF P"
+msgstr ""
+
+#: dk/dk_postalcodes.py:901 dk/dk_postalcodes.py:902 dk/dk_postalcodes.py:903
+msgid "Odense C"
+msgstr ""
+
+#: dk/dk_postalcodes.py:904
+msgid "Odense V"
+msgstr ""
+
+#: dk/dk_postalcodes.py:905
+msgid "Odense NV"
+msgstr ""
+
+#: dk/dk_postalcodes.py:906
+msgid "Odense SØ"
+msgstr ""
+
+#: dk/dk_postalcodes.py:907
+msgid "Odense M"
+msgstr ""
+
+#: dk/dk_postalcodes.py:908
+msgid "Odense NØ"
+msgstr ""
+
+#: dk/dk_postalcodes.py:909
+msgid "Odense SV"
+msgstr ""
+
+#: dk/dk_postalcodes.py:910
+msgid "Odense S"
+msgstr ""
+
+#: dk/dk_postalcodes.py:911
+msgid "Odense N"
+msgstr ""
+
+#: dk/dk_postalcodes.py:912
+msgid "Marslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:914
+msgid "Agedrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:915
+msgid "Munkebo"
+msgstr ""
+
+#: dk/dk_postalcodes.py:916
+msgid "Rynkeby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:917
+msgid "Mesinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:918
+msgid "Dalby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:919
+msgid "Martofte"
+msgstr ""
+
+#: dk/dk_postalcodes.py:920
+msgid "Bogense"
+msgstr ""
+
+#: dk/dk_postalcodes.py:921
+msgid "Otterup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:922
+msgid "Morud"
+msgstr ""
+
+#: dk/dk_postalcodes.py:923
+msgid "Harndrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:924
+msgid "Brenderup Fyn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:925
+msgid "Asperup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:926
+msgid "Søndersø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:927
+msgid "Veflinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:928
+msgid "Skamby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:929
+msgid "Blommenslyst"
+msgstr ""
+
+#: dk/dk_postalcodes.py:930
+msgid "Vissenbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:932
+msgid "Ullerslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:933
+msgid "Langeskov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:934
+msgid "Aarup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:935
+msgid "Nørre Aaby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:936
+msgid "Gelsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:937
+msgid "Ejby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:938
+msgid "Faaborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:939
+msgid "Lyø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:940
+msgid "Avernakø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:941
+msgid "Bjørnø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:943
+msgid "Glamsbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:944
+msgid "Ebberup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:945
+msgid "Millinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:946
+msgid "Broby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:947
+msgid "Haarby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:948
+msgid "Tommerup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:950
+msgid "Ringe"
+msgstr ""
+
+#: dk/dk_postalcodes.py:951
+msgid "Vester Skerninge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:952
+msgid "Stenstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:953
+msgid "Kværndrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:954
+msgid "Årslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:956
+msgid "Ørbæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:957
+msgid "Gislev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:958
+msgid "Ryslinge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:959
+msgid "Ferritslev Fyn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:960
+msgid "Frørup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:961
+msgid "Hesselager"
+msgstr ""
+
+#: dk/dk_postalcodes.py:962
+msgid "Skårup Fyn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:963
+msgid "Vejstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:964
+msgid "Oure"
+msgstr ""
+
+#: dk/dk_postalcodes.py:965
+msgid "Gudme"
+msgstr ""
+
+#: dk/dk_postalcodes.py:966
+msgid "Gudbjerg Sydfyn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:967
+msgid "Rudkøbing"
+msgstr ""
+
+#: dk/dk_postalcodes.py:968
+msgid "Humble"
+msgstr ""
+
+#: dk/dk_postalcodes.py:969
+msgid "Bagenkop"
+msgstr ""
+
+#: dk/dk_postalcodes.py:970
+msgid "Strynø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:971
+msgid "Tranekær"
+msgstr ""
+
+#: dk/dk_postalcodes.py:972
+msgid "Marstal"
+msgstr ""
+
+#: dk/dk_postalcodes.py:973
+msgid "Birkholm"
+msgstr ""
+
+#: dk/dk_postalcodes.py:974
+msgid "Ærøskøbing"
+msgstr ""
+
+#: dk/dk_postalcodes.py:975
+msgid "Søby Ærø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:977
+msgid "Egtved"
+msgstr ""
+
+#: dk/dk_postalcodes.py:978
+msgid "Almind"
+msgstr ""
+
+#: dk/dk_postalcodes.py:979
+msgid "Viuf"
+msgstr ""
+
+#: dk/dk_postalcodes.py:980
+msgid "Jordrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:981
+msgid "Christiansfeld"
+msgstr ""
+
+#: dk/dk_postalcodes.py:982
+msgid "Bjert"
+msgstr ""
+
+#: dk/dk_postalcodes.py:983
+msgid "Sønder Stenderup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:984
+msgid "Sjølund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:985
+msgid "Hejls"
+msgstr ""
+
+#: dk/dk_postalcodes.py:988
+msgid "Barsø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:989
+msgid "Rødekro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:990
+msgid "Løgumkloster"
+msgstr ""
+
+#: dk/dk_postalcodes.py:991
+msgid "Bredebro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:993
+msgid "Højer"
+msgstr ""
+
+#: dk/dk_postalcodes.py:994
+msgid "Gråsten"
+msgstr ""
+
+#: dk/dk_postalcodes.py:995
+msgid "Broager"
+msgstr ""
+
+#: dk/dk_postalcodes.py:996
+msgid "Egernsund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:997
+msgid "Padborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:998
+msgid "Kruså"
+msgstr ""
+
+#: dk/dk_postalcodes.py:999
+msgid "Tinglev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1000
+msgid "Bylderup-Bov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1001
+msgid "Bolderslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1003
+msgid "Nordborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1004
+msgid "Augustenborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1005
+msgid "Sydals"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1006
+msgid "Vojens"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1007
+msgid "Gram"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1008
+msgid "Toftlund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1009
+msgid "Agerskov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1010
+msgid "Branderup J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1011
+msgid "Bevtoft"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1012
+msgid "Sommersted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1013
+msgid "Vamdrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1015
+msgid "Gesten"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1016
+msgid "Bække"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1017
+msgid "Vorbasse"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1018
+msgid "Rødding"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1019
+msgid "Lunderskov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1020
+msgid "Brørup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1021
+msgid "Lintrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1022
+msgid "Holsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1023
+msgid "Hovborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1024
+msgid "Føvling"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1025
+msgid "Gørding"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1028
+msgid "Esbjerg Ø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1029
+msgid "Esbjerg V"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1030
+msgid "Esbjerg N"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1032
+msgid "Tjæreborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1033
+msgid "Bramming"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1034
+msgid "Glejbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1035
+msgid "Agerbæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1036
+msgid "Ribe"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1037
+msgid "Gredstedbro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1038
+msgid "Skærbæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1039
+msgid "Rømø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1041
+msgid "Årre"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1042
+msgid "Ansager"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1043
+msgid "Nørre Nebel"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1044
+msgid "Oksbøl"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1045
+msgid "Janderup Vestj"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1046
+msgid "Billum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1047
+msgid "Vejers Strand"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1048
+msgid "Henne"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1049
+msgid "Outrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1050
+msgid "Blåvand"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1051
+msgid "Tistrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1052
+msgid "Ølgod"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1053
+msgid "Tarm"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1054
+msgid "Hemmet"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1055
+msgid "Skjern"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1056
+msgid "Videbæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1057
+msgid "Kibæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1058
+msgid "Lem St"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1059
+msgid "Ringkøbing"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1060
+msgid "Hvide Sande"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1061
+msgid "Spjald"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1062
+msgid "Ørnhøj"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1063
+msgid "Tim"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1064
+msgid "Ulfborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1067
+msgid "Taulov Pakkecenter"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1068
+msgid "Pakker TLP"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1070
+msgid "Børkop"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1072
+msgid "Vejle Øst"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1073
+msgid "Juelsminde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1074
+msgid "Stouby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1075
+msgid "Barrit"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1076
+msgid "Tørring"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1077
+msgid "Uldum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1078
+msgid "Vonge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1079
+msgid "Bredsten"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1080
+msgid "Randbøl"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1081
+msgid "Vandel"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1083
+msgid "Grindsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1084
+msgid "Hejnsvig"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1085
+msgid "Sønder Omme"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1086
+msgid "Stakroge"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1087
+msgid "Sønder Felding"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1088
+msgid "Jelling"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1089
+msgid "Gadbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1090
+msgid "Give"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1091
+msgid "Brande"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1092
+msgid "Ejstrupholm"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1093
+msgid "Hampen"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1096
+msgid "Ikast"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1097
+msgid "Bording"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1098
+msgid "Engesvang"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1099
+msgid "Sunds"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1100
+msgid "Karup J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1101
+msgid "Vildbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1102
+msgid "Aulum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1104
+msgid "Haderup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1105
+msgid "Sørvad"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1106
+msgid "Hjerm"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1107
+msgid "Vemb"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1110
+msgid "Bøvlingbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1111
+msgid "Bækmarksbro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1112
+msgid "Harboøre"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1113
+msgid "Thyborøn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1115
+msgid "Hanstholm"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1116
+msgid "Frøstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1117
+msgid "Vesløs"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1118
+msgid "Snedsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1119
+msgid "Bedsted Thy"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1120
+msgid "Hurup Thy"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1121
+msgid "Vestervig"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1122
+msgid "Thyholm"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1124
+msgid "Vinderup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1125
+msgid "Højslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1126
+msgid "Stoholm Jyll"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1127
+msgid "Spøttrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1128
+msgid "Roslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1129
+msgid "Fur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1130
+msgid "Nykøbing M"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1131
+msgid "Erslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1132
+msgid "Karby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1133
+msgid "Redsted M"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1134
+msgid "Vils"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1135
+msgid "Øster Assels"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1136
+msgid "Sydjylland/Fyn USF P"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1137
+msgid "Sydjylland/Fyn USF B"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1138 dk/dk_postalcodes.py:1305
+msgid "Fakturaservice"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1139 dk/dk_postalcodes.py:1306
+msgid "Fakturascanning"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1140
+msgid "Statsservice"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1141
+msgid "Kommunepost"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1142 dk/dk_postalcodes.py:1143
+msgid "Aarhus C"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1144
+msgid "Aarhus N"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1145
+msgid "Aarhus V"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1146
+msgid "Brabrand"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1147 dk/dk_postalcodes.py:1150
+msgid "Risskov Ø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1148
+msgid "Åbyhøj"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1149
+msgid "Risskov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1151
+msgid "Egå"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1152
+msgid "Viby J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1153
+msgid "Højbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1156
+msgid "Tranbjerg J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1157
+msgid "Mårslet"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1158
+msgid "Beder"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1159
+msgid "Malling"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1160
+msgid "Hundslund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1161
+msgid "Solbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1162
+msgid "Hasselager"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1163
+msgid "Hørning"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1164
+msgid "Hadsten"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1165
+msgid "Trige"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1166
+msgid "Tilst"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1167
+msgid "Hinnerup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1168
+msgid "Ebeltoft"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1169
+msgid "Rønde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1170
+msgid "Knebel"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1171
+msgid "Balle"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1172
+msgid "Hammel"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1173
+msgid "Harlev J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1174
+msgid "Galten"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1175
+msgid "Sabro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1176
+msgid "Sporup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1177
+msgid "Grenaa"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1178
+msgid "Lystrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1179
+msgid "Hjortshøj"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1180
+msgid "Skødstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1181
+msgid "Hornslet"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1182
+msgid "Mørke"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1183
+msgid "Ryomgård"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1184
+msgid "Kolind"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1185
+msgid "Trustrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1186
+msgid "Nimtofte"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1187
+msgid "Glesborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1188
+msgid "Ørum Djurs"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1189
+msgid "Anholt"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1191
+msgid "Kjellerup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1192
+msgid "Lemming"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1193
+msgid "Sorring"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1194
+msgid "Ans By"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1195
+msgid "Them"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1196
+msgid "Bryrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1198
+msgid "Låsby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1199
+msgid "Ry"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1201
+msgid "Daugård"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1203
+msgid "Løsning"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1204
+msgid "Hovedgård"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1205
+msgid "Brædstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1206
+msgid "Gedved"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1207
+msgid "Østbirk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1208
+msgid "Flemming"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1209
+msgid "Rask Mølle"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1210
+msgid "Klovborg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1211
+msgid "Nørre Snede"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1212
+msgid "Stenderup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1213
+msgid "Hornsyld"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1214
+msgid "Endelave"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1215
+msgid "Tunø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1217
+msgid "Tjele"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1218
+msgid "Løgstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1219
+msgid "Skals"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1220
+msgid "Rødkærsbro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1221
+msgid "Bjerringbro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1222
+msgid "Ulstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1223
+msgid "Langå"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1224
+msgid "Thorsø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1225
+msgid "Fårvang"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1226
+msgid "Gjern"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1227
+msgid "Randers C"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1228
+msgid "Randers NV"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1229
+msgid "Randers NØ"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1230
+msgid "Randers SV"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1231
+msgid "Ørsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1232
+msgid "Randers SØ"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1233
+msgid "Allingåbro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1234
+msgid "Auning"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1235
+msgid "Havndal"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1236
+msgid "Spentrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1237
+msgid "Gjerlev J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1238
+msgid "Fårup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1242
+msgid "Aalborg SV"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1243
+msgid "Aalborg SØ"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1244
+msgid "Aalborg Øst"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1245
+msgid "Svenstrup J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1246
+msgid "Nibe"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1247
+msgid "Gistrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1248
+msgid "Klarup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1249
+msgid "Storvorde"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1250
+msgid "Kongerslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1251
+msgid "Sæby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1252
+msgid "Vodskov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1253
+msgid "Hjallerup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1254
+msgid "Dronninglund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1255
+msgid "Asaa"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1256
+msgid "Dybvad"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1257
+msgid "Gandrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1258
+msgid "Hals"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1259
+msgid "Vestbjerg"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1260
+msgid "Sulsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1261
+msgid "Tylstrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1262
+msgid "Nørresundby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1263
+msgid "Vadum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1264
+msgid "Aabybro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1265
+msgid "Brovst"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1266
+msgid "Løkken"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1267
+msgid "Pandrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1268
+msgid "Blokhus"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1269
+msgid "Saltum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1270
+msgid "Hobro"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1271
+msgid "Arden"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1272
+msgid "Skørping"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1273
+msgid "Støvring"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1274
+msgid "Suldrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1275
+msgid "Mariager"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1276
+msgid "Hadsund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1277
+msgid "Bælum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1278
+msgid "Terndrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1279
+msgid "Aars"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1280
+msgid "Nørager"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1281
+msgid "Aalestrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1282
+msgid "Gedsted"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1283
+msgid "Møldrup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1284
+msgid "Farsø"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1285
+msgid "Løgstør"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1286
+msgid "Ranum"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1287
+msgid "Fjerritslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1289
+msgid "Jerslev J"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1290
+msgid "Østervrå"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1291
+msgid "Vrå"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1293
+msgid "Tårs"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1294
+msgid "Hirtshals"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1295
+msgid "Sindal"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1296
+msgid "Bindslev"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1299
+msgid "Strandby"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1300
+msgid "Jerup"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1301
+msgid "Ålbæk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1302
+msgid "Skagen"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1303
+msgid "Jylland USF P"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1304
+msgid "Jylland USF B"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1307
+msgid "Borgerservice"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1308
+msgid "Santa Claus/Julemanden"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1309
+msgid "Nuuk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1310
+msgid "Nuussuaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1311
+msgid "Kangerlussuaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1312
+msgid "Sisimiut"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1313
+msgid "Maniitsoq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1314
+msgid "Tasiilaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1315
+msgid "Kulusuk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1316
+msgid "Alluitsup Paa"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1317
+msgid "Qaqortoq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1318
+msgid "Narsaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1319
+msgid "Nanortalik"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1320
+msgid "Narsarsuaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1321
+msgid "Ikerasassuaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1322
+msgid "Kangilinnguit"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1323
+msgid "Arsuk"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1324
+msgid "Paamiut"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1325
+msgid "Aasiaat"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1326
+msgid "Qasigiannguit"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1327
+msgid "Ilulissat"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1328
+msgid "Qeqertarsuaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1329
+msgid "Kangaatsiaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1330
+msgid "Uummannaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1331
+msgid "Upernavik"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1332
+msgid "Qaarsut"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1333
+msgid "Pituffik"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1334
+msgid "Qaanaaq"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1335
+msgid "Station Nord"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1336
+msgid "Ittoqqortoormiit"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1337
+msgid "Mestersvig"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1338
+msgid "Danmarkshavn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1339
+msgid "Constable Pynt"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1340
+msgid "Slædepatrulje Sirius"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1341 dk/dk_postalcodes.py:1342
+msgid "Tórshavn"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1343 dk/dk_postalcodes.py:1344
+msgid "Argir"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1345
+msgid "Kirkjubøur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1346
+msgid "Velbastadur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1347
+msgid "\"Sydradalur, Streymoy\""
+msgstr ""
+
+#: dk/dk_postalcodes.py:1348
+msgid "Nordradalur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1349
+msgid "Kaldbak"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1350
+msgid "Kaldbaksbotnur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1351
+msgid "Sund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1352
+msgid "Hvitanes"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1353
+msgid "Hoyvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1354 dk/dk_postalcodes.py:1355
+msgid "Sandur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1356
+msgid "Skálavík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1357
+msgid "Húsavík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1358
+msgid "Dalur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1359
+msgid "Skarvanes"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1360
+msgid "Skopun"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1361
+msgid "Skúvoy"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1362
+msgid "Nólsoy"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1363
+msgid "Hestur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1364
+msgid "Koltur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1365
+msgid "Stóra Dimun"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1366
+msgid "Stykkid"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1367
+msgid "Leynar"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1368
+msgid "Skællingur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1369
+msgid "Kvívík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1370 dk/dk_postalcodes.py:1371
+msgid "Vestmanna"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1372
+msgid "Válur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1373
+msgid "Sandavágur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1374 dk/dk_postalcodes.py:1375
+msgid "Midvágur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1376
+msgid "Sørvágur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1377
+msgid "Vatnsoyrar"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1378
+msgid "Bøur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1379
+msgid "Gásadalur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1380
+msgid "Mykines"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1381 dk/dk_postalcodes.py:1382
+msgid "Oyrarbakki"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1383
+msgid "Kollafjørdur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1384
+msgid "Oyrareingir"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1385
+msgid "Signabøur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1386
+msgid "Hósvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1387
+msgid "Hvalvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1388
+msgid "Streymnes"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1389
+msgid "Saksun"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1390
+msgid "Nesvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1391
+msgid "Langasandur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1392
+msgid "Haldarsvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1393
+msgid "Tjørnuvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1394
+msgid "Oyri"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1395
+msgid "Nordskáli"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1396
+msgid "Svináir"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1397
+msgid "Ljósá"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1398
+msgid "Eidi"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1399
+msgid "Funningur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1400
+msgid "Gjógv"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1401
+msgid "Funningsfjørdur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1402
+msgid "Elduvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1403
+msgid "Skáli"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1404
+msgid "Skálafjørdur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1405
+msgid "Strendur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1406
+msgid "Innan Glyvur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1407
+msgid "Kolbanargjógv"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1408
+msgid "Morskranes"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1409
+msgid "Selatrad"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1410 dk/dk_postalcodes.py:1414
+msgid "Gøta"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1411
+msgid "Gøtugjógv"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1412
+msgid "Nordragøta"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1413
+msgid "Sydrugøta"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1415
+msgid "Leirvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1416 dk/dk_postalcodes.py:1417
+msgid "Fuglafjørdur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1418 dk/dk_postalcodes.py:1419
+msgid "Saltangará"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1420
+msgid "Runavík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1421
+msgid "Glyvrar"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1422
+msgid "Lambareidi"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1423
+msgid "Lambi"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1424
+msgid "Rituvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1425
+msgid "Æduvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1426
+msgid "Toftir"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1427
+msgid "\"Nes, Eysturoy\""
+msgstr ""
+
+#: dk/dk_postalcodes.py:1428
+msgid "Saltnes"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1429
+msgid "Søldarfjørdur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1430
+msgid "Skipanes"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1431
+msgid "Gøtueidi"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1432
+msgid "Oyndarfjørdur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1433
+msgid "Hellur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1434 dk/dk_postalcodes.py:1435
+msgid "Klaksvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1436
+msgid "Nordoyri"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1437
+msgid "Ánir"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1438
+msgid "Árnafjørdur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1439
+msgid "Norddepil"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1440
+msgid "Depil"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1441
+msgid "Nordtoftir"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1442
+msgid "Múli"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1443
+msgid "Hvannasund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1444
+msgid "Vidareidi"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1445
+msgid "Svinoy"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1446
+msgid "Kirkja"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1447
+msgid "Hattarvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1448
+msgid "Kunoy"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1449
+msgid "Haraldssund"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1450
+msgid "\"Sydradalur, Kalsoy\""
+msgstr ""
+
+#: dk/dk_postalcodes.py:1451
+msgid "Húsar"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1452
+msgid "Mikladalur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1453
+msgid "Trøllanes"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1454 dk/dk_postalcodes.py:1455
+msgid "Tvøroyri"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1456
+msgid "Frodba"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1457
+msgid "Trongisvágur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1458
+msgid "Øravík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1459
+msgid "Hvalba"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1460
+msgid "Sandvík"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1461
+msgid "Fámjin"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1462 dk/dk_postalcodes.py:1463
+msgid "Vágur"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1464
+msgid "\"Nes, Vágur\""
+msgstr ""
+
+#: dk/dk_postalcodes.py:1465
+msgid "Lopra"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1466
+msgid "Akrar"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1467
+msgid "Vikarbyrgi"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1468
+msgid "Porkeri"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1469
+msgid "Hov"
+msgstr ""
+
+#: dk/dk_postalcodes.py:1470
+msgid "Sumba"
+msgstr ""
+
+#: dk/forms.py:13
+msgid "Enter a postal code in the format XXXX."
+msgstr ""
+
+#: ec/models.py:14
+msgid "Ecuadorian province"
+msgstr ""
+
+#: ee/ee_counties.py:6
+msgid "Harju County"
+msgstr ""
+
+#: ee/ee_counties.py:7
+msgid "Hiiu County"
+msgstr ""
+
+#: ee/ee_counties.py:8
+msgid "Ida-Viru County"
+msgstr ""
+
+#: ee/ee_counties.py:9
+msgid "Jõgeva County"
+msgstr ""
+
+#: ee/ee_counties.py:10
+msgid "Järva County"
+msgstr ""
+
+#: ee/ee_counties.py:11
+msgid "Lääne County"
+msgstr ""
+
+#: ee/ee_counties.py:12
+msgid "Lääne-Viru County"
+msgstr ""
+
+#: ee/ee_counties.py:13
+msgid "Põlva County"
+msgstr ""
+
+#: ee/ee_counties.py:14
+msgid "Pärnu County"
+msgstr ""
+
+#: ee/ee_counties.py:15
+msgid "Rapla County"
+msgstr ""
+
+#: ee/ee_counties.py:16
+msgid "Saare County"
+msgstr ""
+
+#: ee/ee_counties.py:17
+msgid "Tartu County"
+msgstr ""
+
+#: ee/ee_counties.py:18
+msgid "Valga County"
+msgstr ""
+
+#: ee/ee_counties.py:19
+msgid "Viljandi County"
+msgstr ""
+
+#: ee/ee_counties.py:20
+msgid "Võru County"
+msgstr ""
+
+#: ee/forms.py:45
+msgid "Enter an 11-digit Estonian personal identification code."
+msgstr ""
+
+#: ee/forms.py:46
+msgid "Enter a valid Estonian personal identification code."
+msgstr ""
+
+#: ee/forms.py:99
+msgid "Enter an 8-digit Estonian business registry code."
+msgstr ""
+
+#: ee/forms.py:100
+msgid "Enter a valid Estonian business registry code."
+msgstr ""
+
+#: eg/choices.py:8
+msgid "Dakahlia"
+msgstr ""
+
+#: eg/choices.py:9
+msgid "Red Sea"
+msgstr ""
+
+#: eg/choices.py:10
+msgid "Beheira"
+msgstr ""
+
+#: eg/choices.py:11
+msgid "Faiyum"
+msgstr ""
+
+#: eg/choices.py:12
+msgid "Gharbia"
+msgstr ""
+
+#: eg/choices.py:13
+msgid "Alexandria"
+msgstr ""
+
+#: eg/choices.py:14
+msgid "Ismailia"
+msgstr ""
+
+#: eg/choices.py:15
+msgid "Giza"
+msgstr ""
+
+#: eg/choices.py:16
+msgid "Monufia"
+msgstr ""
+
+#: eg/choices.py:17
+msgid "Minya"
+msgstr ""
+
+#: eg/choices.py:18
+msgid "Cairo"
+msgstr ""
+
+#: eg/choices.py:19
+msgid "Qalyubia"
+msgstr ""
+
+#: eg/choices.py:20
+msgid "Luxor"
+msgstr ""
+
+#: eg/choices.py:21
+msgid "New Valley"
+msgstr ""
+
+#: eg/choices.py:22
+msgid "Suez"
+msgstr ""
+
+#: eg/choices.py:23
+msgid "Al Sharqia"
+msgstr ""
+
+#: eg/choices.py:24
+msgid "Aswan"
+msgstr ""
+
+#: eg/choices.py:25
+msgid "Asyut"
+msgstr ""
+
+#: eg/choices.py:26
+msgid "Beni Suef"
+msgstr ""
+
+#: eg/choices.py:27
+msgid "Port Said"
+msgstr ""
+
+#: eg/choices.py:28
+msgid "Damietta"
+msgstr ""
+
+#: eg/choices.py:29
+msgid "South Sinai"
+msgstr ""
+
+#: eg/choices.py:30
+msgid "Kafr el-Sheikh"
+msgstr ""
+
+#: eg/choices.py:31
+msgid "Matrouh"
+msgstr ""
+
+#: eg/choices.py:32
+msgid "Qena"
+msgstr ""
+
+#: eg/choices.py:33
+msgid "North Sinai"
+msgstr ""
+
+#: eg/choices.py:34
+msgid "Sohag"
+msgstr ""
+
+#: eg/forms.py:26
+msgid "Enter a valid Egyptian National ID number"
+msgstr ""
+
+#: es/es_provinces.py:5
+msgid "Araba"
+msgstr ""
+
+#: es/es_provinces.py:6
+msgid "Albacete"
+msgstr ""
+
+#: es/es_provinces.py:7
+msgid "Alacant"
+msgstr ""
+
+#: es/es_provinces.py:8
+msgid "Almeria"
+msgstr ""
+
+#: es/es_provinces.py:9
+msgid "Avila"
+msgstr ""
+
+#: es/es_provinces.py:10
+msgid "Badajoz"
+msgstr ""
+
+#: es/es_provinces.py:11
+msgid "Illes Balears"
+msgstr ""
+
+#: es/es_provinces.py:12
+msgid "Barcelona"
+msgstr ""
+
+#: es/es_provinces.py:13
+msgid "Burgos"
+msgstr ""
+
+#: es/es_provinces.py:14
+msgid "Caceres"
+msgstr ""
+
+#: es/es_provinces.py:15
+msgid "Cadiz"
+msgstr ""
+
+#: es/es_provinces.py:16
+msgid "Castello"
+msgstr ""
+
+#: es/es_provinces.py:17
+msgid "Ciudad Real"
+msgstr ""
+
+#: es/es_provinces.py:18
+msgid "Cordoba"
+msgstr ""
+
+#: es/es_provinces.py:19
+msgid "A Coruna"
+msgstr ""
+
+#: es/es_provinces.py:20
+msgid "Cuenca"
+msgstr ""
+
+#: es/es_provinces.py:21
+msgid "Girona"
+msgstr ""
+
+#: es/es_provinces.py:22 kw/kw_areas.py:17
+msgid "Granada"
+msgstr ""
+
+#: es/es_provinces.py:23
+msgid "Guadalajara"
+msgstr ""
+
+#: es/es_provinces.py:24
+msgid "Guipuzkoa"
+msgstr ""
+
+#: es/es_provinces.py:25
+msgid "Huelva"
+msgstr ""
+
+#: es/es_provinces.py:26
+msgid "Huesca"
+msgstr ""
+
+#: es/es_provinces.py:27
+msgid "Jaen"
+msgstr ""
+
+#: es/es_provinces.py:28
+msgid "Leon"
+msgstr ""
+
+#: es/es_provinces.py:29
+msgid "Lleida"
+msgstr ""
+
+#: es/es_provinces.py:31
+msgid "Lugo"
+msgstr ""
+
+#: es/es_provinces.py:32 es/es_regions.py:18
+msgid "Madrid"
+msgstr ""
+
+#: es/es_provinces.py:33
+msgid "Malaga"
+msgstr ""
+
+#: es/es_provinces.py:34
+msgid "Murcia"
+msgstr ""
+
+#: es/es_provinces.py:35
+msgid "Navarre"
+msgstr ""
+
+#: es/es_provinces.py:36
+msgid "Ourense"
+msgstr ""
+
+#: es/es_provinces.py:37
+msgid "Asturias"
+msgstr ""
+
+#: es/es_provinces.py:38
+msgid "Palencia"
+msgstr ""
+
+#: es/es_provinces.py:39
+msgid "Las Palmas"
+msgstr ""
+
+#: es/es_provinces.py:40
+msgid "Pontevedra"
+msgstr ""
+
+#: es/es_provinces.py:41
+msgid "Salamanca"
+msgstr ""
+
+#: es/es_provinces.py:42
+msgid "Santa Cruz de Tenerife"
+msgstr ""
+
+#: es/es_provinces.py:43 es/es_regions.py:11
+msgid "Cantabria"
+msgstr ""
+
+#: es/es_provinces.py:44
+msgid "Segovia"
+msgstr ""
+
+#: es/es_provinces.py:45
+msgid "Seville"
+msgstr ""
+
+#: es/es_provinces.py:46
+msgid "Soria"
+msgstr ""
+
+#: es/es_provinces.py:47
+msgid "Tarragona"
+msgstr ""
+
+#: es/es_provinces.py:48
+msgid "Teruel"
+msgstr ""
+
+#: es/es_provinces.py:49
+msgid "Toledo"
+msgstr ""
+
+#: es/es_provinces.py:50
+msgid "Valencia"
+msgstr ""
+
+#: es/es_provinces.py:51
+msgid "Valladolid"
+msgstr ""
+
+#: es/es_provinces.py:52
+msgid "Bizkaia"
+msgstr ""
+
+#: es/es_provinces.py:53
+msgid "Zamora"
+msgstr ""
+
+#: es/es_provinces.py:54
+msgid "Zaragoza"
+msgstr ""
+
+#: es/es_provinces.py:55
+msgid "Ceuta"
+msgstr ""
+
+#: es/es_provinces.py:56
+msgid "Melilla"
+msgstr ""
+
+#: es/es_regions.py:5
+msgid "Andalusia"
+msgstr ""
+
+#: es/es_regions.py:6
+msgid "Aragon"
+msgstr ""
+
+#: es/es_regions.py:7
+msgid "Principality of Asturias"
+msgstr ""
+
+#: es/es_regions.py:8
+msgid "Balearic Islands"
+msgstr ""
+
+#: es/es_regions.py:9
+msgid "Basque Country"
+msgstr ""
+
+#: es/es_regions.py:10
+msgid "Canary Islands"
+msgstr ""
+
+#: es/es_regions.py:12
+msgid "Castile-La Mancha"
+msgstr ""
+
+#: es/es_regions.py:13
+msgid "Castile and Leon"
+msgstr ""
+
+#: es/es_regions.py:14
+msgid "Catalonia"
+msgstr ""
+
+#: es/es_regions.py:15
+msgid "Extremadura"
+msgstr ""
+
+#: es/es_regions.py:16
+msgid "Galicia"
+msgstr ""
+
+#: es/es_regions.py:19
+msgid "Region of Murcia"
+msgstr ""
+
+#: es/es_regions.py:20
+msgid "Foral Community of Navarre"
+msgstr ""
+
+#: es/es_regions.py:21
+msgid "Valencian Community"
+msgstr ""
+
+#: es/es_regions.py:22
+msgid "Autonomous city of Ceuta"
+msgstr ""
+
+#: es/es_regions.py:23
+msgid "Autonomous city of Mellila"
+msgstr ""
+
+#: es/forms.py:22
+msgid "Enter a valid postal code in the range and format 01XXX - 52XXX."
+msgstr ""
+
+#: es/forms.py:55
+msgid "Please enter a valid NIF, NIE, or CIF."
+msgstr ""
+
+#: es/forms.py:56
+msgid "Please enter a valid NIF or NIE."
+msgstr ""
+
+#: es/forms.py:57
+msgid "Invalid checksum for NIF."
+msgstr ""
+
+#: es/forms.py:58
+msgid "Invalid checksum for NIE."
+msgstr ""
+
+#: es/forms.py:59
+msgid "Invalid checksum for CIF."
+msgstr ""
+
+#: es/forms.py:144
+msgid ""
+"Please enter a valid bank account number in format XXXX-XXXX-XX-XXXXXXXXXX."
+msgstr ""
+
+#: es/forms.py:145
+msgid "Invalid checksum for bank account number."
+msgstr ""
+
+#: es/models.py:17
+msgid "Spain postal code (five numbers)"
+msgstr ""
+
+#: es/models.py:37
+msgid "Identification National Document"
+msgstr ""
+
+#: fi/forms.py:38
+msgid "Enter a valid Finnish social security number."
+msgstr ""
+
+#: fr/forms.py:31
+msgid "Zip code"
+msgstr ""
+
+#: fr/forms.py:77
+msgid "Select Department"
+msgstr ""
+
+#: fr/forms.py:87 ma/forms.py:75
+msgid "Select Region"
+msgstr ""
+
+#: fr/forms.py:105
+msgid "Enter a valid French National Identification number."
+msgstr ""
+
+#: fr/forms.py:198
+msgid "Enter a valid French SIREN number."
+msgstr ""
+
+#: fr/forms.py:243
+msgid "Enter a valid French SIRET number."
+msgstr ""
+
+#: fr/forms.py:288
+msgid "Enter a valid French RNA number."
+msgstr ""
+
+#: fr/models.py:12
+msgid "SIREN Number"
+msgstr ""
+
+#: fr/models.py:32
+msgid "SIRET Number"
+msgstr ""
+
+#: fr/models.py:52
+msgid "RNA Number"
+msgstr ""
+
+#: gb/forms.py:23
+msgid "Enter a valid postcode."
+msgstr ""
+
+#: gb/gb_regions.py:20
+msgid "Bath and North East Somerset"
+msgstr ""
+
+#: gb/gb_regions.py:21
+msgid "Bedford"
+msgstr ""
+
+#: gb/gb_regions.py:22
+msgid "Berkshire"
+msgstr ""
+
+#: gb/gb_regions.py:23
+msgid "Blackburn with Darwen"
+msgstr ""
+
+#: gb/gb_regions.py:24
+msgid "Blackpool"
+msgstr ""
+
+#: gb/gb_regions.py:25
+msgid "Bournemouth"
+msgstr ""
+
+#: gb/gb_regions.py:26
+msgid "Brighton & Hove"
+msgstr ""
+
+#: gb/gb_regions.py:27
+msgid "Bristol"
+msgstr ""
+
+#: gb/gb_regions.py:28
+msgid "Buckinghamshire"
+msgstr ""
+
+#: gb/gb_regions.py:29
+msgid "Cambridgeshire"
+msgstr ""
+
+#: gb/gb_regions.py:30
+msgid "Central Bedfordshire"
+msgstr ""
+
+#: gb/gb_regions.py:31
+msgid "Cheshire East"
+msgstr ""
+
+#: gb/gb_regions.py:32
+msgid "Cheshire West and Chester"
+msgstr ""
+
+#: gb/gb_regions.py:33
+msgid "Cornwall"
+msgstr ""
+
+#: gb/gb_regions.py:34
+msgid "Cumbria"
+msgstr ""
+
+#: gb/gb_regions.py:35
+msgid "Darlington"
+msgstr ""
+
+#: gb/gb_regions.py:36
+msgid "Derby"
+msgstr ""
+
+#: gb/gb_regions.py:37
+msgid "Derbyshire"
+msgstr ""
+
+#: gb/gb_regions.py:38
+msgid "Devon"
+msgstr ""
+
+#: gb/gb_regions.py:39
+msgid "Dorset"
+msgstr ""
+
+#: gb/gb_regions.py:40
+msgid "Durham"
+msgstr ""
+
+#: gb/gb_regions.py:41
+msgid "East Riding of Yorkshire"
+msgstr ""
+
+#: gb/gb_regions.py:42
+msgid "East Sussex"
+msgstr ""
+
+#: gb/gb_regions.py:43
+msgid "Essex"
+msgstr ""
+
+#: gb/gb_regions.py:44
+msgid "Gloucestershire"
+msgstr ""
+
+#: gb/gb_regions.py:45
+msgid "Greater Manchester"
+msgstr ""
+
+#: gb/gb_regions.py:46
+msgid "Halton"
+msgstr ""
+
+#: gb/gb_regions.py:47
+msgid "Hampshire"
+msgstr ""
+
+#: gb/gb_regions.py:48
+msgid "Hartlepool"
+msgstr ""
+
+#: gb/gb_regions.py:49
+msgid "Herefordshire"
+msgstr ""
+
+#: gb/gb_regions.py:50
+msgid "Hertfordshire"
+msgstr ""
+
+#: gb/gb_regions.py:51
+msgid "Isle of Wight"
+msgstr ""
+
+#: gb/gb_regions.py:52
+msgid "Kent"
+msgstr ""
+
+#: gb/gb_regions.py:53
+msgid "Kingston upon Hull"
+msgstr ""
+
+#: gb/gb_regions.py:54
+msgid "Lancashire"
+msgstr ""
+
+#: gb/gb_regions.py:55
+msgid "Leicester"
+msgstr ""
+
+#: gb/gb_regions.py:56
+msgid "Leicestershire"
+msgstr ""
+
+#: gb/gb_regions.py:57
+msgid "Lincolnshire"
+msgstr ""
+
+#: gb/gb_regions.py:58
+msgid "London"
+msgstr ""
+
+#: gb/gb_regions.py:59
+msgid "Luton"
+msgstr ""
+
+#: gb/gb_regions.py:60
+msgid "Medway"
+msgstr ""
+
+#: gb/gb_regions.py:61
+msgid "Merseyside"
+msgstr ""
+
+#: gb/gb_regions.py:62
+msgid "Middlesbrough"
+msgstr ""
+
+#: gb/gb_regions.py:63
+msgid "Milton Keynes"
+msgstr ""
+
+#: gb/gb_regions.py:64
+msgid "Norfolk"
+msgstr ""
+
+#: gb/gb_regions.py:65
+msgid "North East Lincolnshire"
+msgstr ""
+
+#: gb/gb_regions.py:66
+msgid "North Lincolnshire"
+msgstr ""
+
+#: gb/gb_regions.py:67
+msgid "North Somerset"
+msgstr ""
+
+#: gb/gb_regions.py:68
+msgid "North Yorkshire"
+msgstr ""
+
+#: gb/gb_regions.py:69
+msgid "Northamptonshire"
+msgstr ""
+
+#: gb/gb_regions.py:70
+msgid "Northumberland"
+msgstr ""
+
+#: gb/gb_regions.py:71
+msgid "Nottingham"
+msgstr ""
+
+#: gb/gb_regions.py:72
+msgid "Nottinghamshire"
+msgstr ""
+
+#: gb/gb_regions.py:73
+msgid "Oxfordshire"
+msgstr ""
+
+#: gb/gb_regions.py:74
+msgid "Peterborough"
+msgstr ""
+
+#: gb/gb_regions.py:75
+msgid "Plymouth"
+msgstr ""
+
+#: gb/gb_regions.py:76
+msgid "Poole"
+msgstr ""
+
+#: gb/gb_regions.py:77
+msgid "Portsmouth"
+msgstr ""
+
+#: gb/gb_regions.py:78
+msgid "Redcar and Cleveland"
+msgstr ""
+
+#: gb/gb_regions.py:79
+msgid "Rutland"
+msgstr ""
+
+#: gb/gb_regions.py:80
+msgid "Shropshire"
+msgstr ""
+
+#: gb/gb_regions.py:81
+msgid "Somerset"
+msgstr ""
+
+#: gb/gb_regions.py:82
+msgid "South Gloucestershire"
+msgstr ""
+
+#: gb/gb_regions.py:83
+msgid "South Yorkshire"
+msgstr ""
+
+#: gb/gb_regions.py:84
+msgid "Southampton"
+msgstr ""
+
+#: gb/gb_regions.py:85
+msgid "Southend-on-Sea"
+msgstr ""
+
+#: gb/gb_regions.py:86
+msgid "Staffordshire"
+msgstr ""
+
+#: gb/gb_regions.py:87
+msgid "Stockton-on-Tees"
+msgstr ""
+
+#: gb/gb_regions.py:88
+msgid "Stoke-on-Trent"
+msgstr ""
+
+#: gb/gb_regions.py:89
+msgid "Suffolk"
+msgstr ""
+
+#: gb/gb_regions.py:90
+msgid "Surrey"
+msgstr ""
+
+#: gb/gb_regions.py:91
+msgid "Swindon"
+msgstr ""
+
+#: gb/gb_regions.py:92
+msgid "Telford and Wrekin"
+msgstr ""
+
+#: gb/gb_regions.py:93
+msgid "Thurrock"
+msgstr ""
+
+#: gb/gb_regions.py:94
+msgid "Torbay"
+msgstr ""
+
+#: gb/gb_regions.py:95
+msgid "Tyne and Wear"
+msgstr ""
+
+#: gb/gb_regions.py:96
+msgid "Warrington"
+msgstr ""
+
+#: gb/gb_regions.py:97
+msgid "Warwickshire"
+msgstr ""
+
+#: gb/gb_regions.py:98
+msgid "West Midlands"
+msgstr ""
+
+#: gb/gb_regions.py:99
+msgid "West Sussex"
+msgstr ""
+
+#: gb/gb_regions.py:100
+msgid "West Yorkshire"
+msgstr ""
+
+#: gb/gb_regions.py:101
+msgid "Wiltshire"
+msgstr ""
+
+#: gb/gb_regions.py:102
+msgid "Worcestershire"
+msgstr ""
+
+#: gb/gb_regions.py:103
+msgid "York"
+msgstr ""
+
+#: gb/gb_regions.py:111
+msgid "Antrim"
+msgstr ""
+
+#: gb/gb_regions.py:112
+msgid "Armagh"
+msgstr ""
+
+#: gb/gb_regions.py:113
+msgid "Down"
+msgstr ""
+
+#: gb/gb_regions.py:114
+msgid "Fermanagh"
+msgstr ""
+
+#: gb/gb_regions.py:115
+msgid "Londonderry"
+msgstr ""
+
+#: gb/gb_regions.py:116
+msgid "Tyrone"
+msgstr ""
+
+#: gb/gb_regions.py:124
+msgid "Blaenau Gwent"
+msgstr ""
+
+#: gb/gb_regions.py:125
+msgid "Bridgend"
+msgstr ""
+
+#: gb/gb_regions.py:126
+msgid "Caerphilly"
+msgstr ""
+
+#: gb/gb_regions.py:127
+msgid "Cardiff"
+msgstr ""
+
+#: gb/gb_regions.py:128
+msgid "Carmarthenshire"
+msgstr ""
+
+#: gb/gb_regions.py:129
+msgid "Ceredigion"
+msgstr ""
+
+#: gb/gb_regions.py:130
+msgid "Conwy"
+msgstr ""
+
+#: gb/gb_regions.py:131
+msgid "Denbighshire"
+msgstr ""
+
+#: gb/gb_regions.py:132
+msgid "Flintshire"
+msgstr ""
+
+#: gb/gb_regions.py:133
+msgid "Gwynedd"
+msgstr ""
+
+#: gb/gb_regions.py:134
+msgid "Isle of Anglesey"
+msgstr ""
+
+#: gb/gb_regions.py:135
+msgid "Merthyr Tydfil"
+msgstr ""
+
+#: gb/gb_regions.py:136
+msgid "Monmouthshire"
+msgstr ""
+
+#: gb/gb_regions.py:137
+msgid "Neath Port Talbot"
+msgstr ""
+
+#: gb/gb_regions.py:138
+msgid "Newport"
+msgstr ""
+
+#: gb/gb_regions.py:139
+msgid "Pembrokeshire"
+msgstr ""
+
+#: gb/gb_regions.py:140
+msgid "Powys"
+msgstr ""
+
+#: gb/gb_regions.py:141
+msgid "Rhondda Cynon Taf"
+msgstr ""
+
+#: gb/gb_regions.py:142
+msgid "Swansea"
+msgstr ""
+
+#: gb/gb_regions.py:143
+msgid "Torfaen"
+msgstr ""
+
+#: gb/gb_regions.py:144
+msgid "Vale of Glamorgan"
+msgstr ""
+
+#: gb/gb_regions.py:145
+msgid "Wrexham"
+msgstr ""
+
+#: gb/gb_regions.py:152
+msgid "Aberdeen City"
+msgstr ""
+
+#: gb/gb_regions.py:153
+msgid "Aberdeenshire"
+msgstr ""
+
+#: gb/gb_regions.py:154
+msgid "Angus"
+msgstr ""
+
+#: gb/gb_regions.py:155
+msgid "Argyll and Bute"
+msgstr ""
+
+#: gb/gb_regions.py:156
+msgid "Clackmannanshire"
+msgstr ""
+
+#: gb/gb_regions.py:157
+msgid "Dumfries and Galloway"
+msgstr ""
+
+#: gb/gb_regions.py:158
+msgid "Dundee City"
+msgstr ""
+
+#: gb/gb_regions.py:159
+msgid "East Ayrshire"
+msgstr ""
+
+#: gb/gb_regions.py:160
+msgid "East Dunbartonshire"
+msgstr ""
+
+#: gb/gb_regions.py:161
+msgid "East Lothian"
+msgstr ""
+
+#: gb/gb_regions.py:162
+msgid "East Renfrewshire"
+msgstr ""
+
+#: gb/gb_regions.py:163
+msgid "Edinburgh, City of"
+msgstr ""
+
+#: gb/gb_regions.py:164
+msgid "Falkirk"
+msgstr ""
+
+#: gb/gb_regions.py:165
+msgid "Fife"
+msgstr ""
+
+#: gb/gb_regions.py:166
+msgid "Glasgow City"
+msgstr ""
+
+#: gb/gb_regions.py:167
+msgid "Highland"
+msgstr ""
+
+#: gb/gb_regions.py:168
+msgid "Inverclyde"
+msgstr ""
+
+#: gb/gb_regions.py:169
+msgid "Midlothian"
+msgstr ""
+
+#: gb/gb_regions.py:170
+msgid "Moray"
+msgstr ""
+
+#: gb/gb_regions.py:171
+msgid "North Ayrshire"
+msgstr ""
+
+#: gb/gb_regions.py:172
+msgid "North Lanarkshire"
+msgstr ""
+
+#: gb/gb_regions.py:173
+msgid "Perth and Kinross"
+msgstr ""
+
+#: gb/gb_regions.py:174
+msgid "Renfrewshire"
+msgstr ""
+
+#: gb/gb_regions.py:175
+msgid "Scottish Borders"
+msgstr ""
+
+#: gb/gb_regions.py:176
+msgid "South Ayrshire"
+msgstr ""
+
+#: gb/gb_regions.py:177
+msgid "South Lanarkshire"
+msgstr ""
+
+#: gb/gb_regions.py:178
+msgid "Stirling"
+msgstr ""
+
+#: gb/gb_regions.py:179
+msgid "West Dunbartonshire"
+msgstr ""
+
+#: gb/gb_regions.py:180
+msgid "West Lothian"
+msgstr ""
+
+#: gb/gb_regions.py:181
+msgid "Na h-Eileanan Siar"
+msgstr ""
+
+#: gb/gb_regions.py:182
+msgid "Orkney Islands"
+msgstr ""
+
+#: gb/gb_regions.py:183
+msgid "Shetland Islands"
+msgstr ""
+
+#: gb/gb_regions.py:189
+msgid "England"
+msgstr ""
+
+#: gb/gb_regions.py:190
+msgid "Northern Ireland"
+msgstr ""
+
+#: gb/gb_regions.py:191
+msgid "Wales"
+msgstr ""
+
+#: gb/gb_regions.py:192
+msgid "Scotland"
+msgstr ""
+
+#: generic/models.py:37
+msgid "An International Bank Account Number"
+msgstr ""
+
+#: generic/models.py:79
+msgid "Business Identifier Code"
+msgstr ""
+
+#: generic/validators.py:182
+#, python-format
+msgid "%(character)s is not a valid character for IBAN."
+msgstr ""
+
+#: generic/validators.py:206
+#, python-format
+msgid "%(country_code)s IBANs must contain %(number)s characters."
+msgstr ""
+
+#: generic/validators.py:213
+#, python-format
+msgid "%(country_code)s is not a valid country code for IBAN."
+msgstr ""
+
+#: generic/validators.py:219
+#, python-format
+msgid "%(country_code)s IBANs are not allowed in this field."
+msgstr ""
+
+#: generic/validators.py:225 generic/validators.py:231
+msgid "Not a valid IBAN."
+msgstr ""
+
+#: generic/validators.py:257
+msgid "BIC codes have either 8 or 11 characters."
+msgstr ""
+
+#: generic/validators.py:261
+msgid "BIC codes only contain alphabet letters and digits."
+msgstr ""
+
+#: generic/validators.py:267
+#, python-format
+msgid "%(institution_code)s is not a valid institution code."
+msgstr ""
+
+#: generic/validators.py:276 generic/validators.py:374
+#, python-format
+msgid "%(country_code)s is not a valid country code."
+msgstr ""
+
+#: generic/validators.py:285
+#, python-format
+msgid "%(location_code)s is not a valid location code."
+msgstr ""
+
+#: generic/validators.py:299
+msgid "Not a valid EAN code."
+msgstr ""
+
+#: generic/validators.py:375
+#, python-format
+msgid "%(vatin)s is not a valid VAT identification number."
+msgstr ""
+
+#: gh/gh_regions.py:13
+msgid "Ahafo"
+msgstr ""
+
+#: gh/gh_regions.py:14
+msgid "Ashanti"
+msgstr ""
+
+#: gh/gh_regions.py:15
+msgid "Bono East"
+msgstr ""
+
+#: gh/gh_regions.py:16
+msgid "Brong Ahafo"
+msgstr ""
+
+#: gh/gh_regions.py:18 lk/lk_provinces.py:18
+msgid "Eastern"
+msgstr ""
+
+#: gh/gh_regions.py:19
+msgid "Greater Accra"
+msgstr ""
+
+#: gh/gh_regions.py:20
+msgid "North East"
+msgstr ""
+
+#: gh/gh_regions.py:21 lk/lk_provinces.py:21
+msgid "Northern"
+msgstr ""
+
+#: gh/gh_regions.py:22
+msgid "Oti"
+msgstr ""
+
+#: gh/gh_regions.py:23
+msgid "Savannah"
+msgstr ""
+
+#: gh/gh_regions.py:24
+msgid "Upper East"
+msgstr ""
+
+#: gh/gh_regions.py:25
+msgid "Upper West"
+msgstr ""
+
+#: gh/gh_regions.py:26 lk/lk_provinces.py:25
+msgid "Western"
+msgstr ""
+
+#: gh/gh_regions.py:27
+msgid "Western North"
+msgstr ""
+
+#: gh/gh_regions.py:28
+msgid "Volta"
+msgstr ""
+
+#: gr/forms.py:19
+msgid "Enter a valid 5-digit greek postal code."
+msgstr ""
+
+#: gr/forms.py:35
+msgid "Enter a valid greek tax number (9 digits)."
+msgstr ""
+
+#: gr/forms.py:75
+msgid "Enter a valid greek social security number (AMKA - 11 digits)."
+msgstr ""
+
+#: hr/forms.py:54
+msgid "Enter a valid 13 digit JMBG"
+msgstr ""
+
+#: hr/forms.py:55
+msgid "Error in date segment"
+msgstr ""
+
+#: hr/forms.py:100
+msgid "Enter a valid 11 digit OIB"
+msgstr ""
+
+#: hr/forms.py:134 id_/forms.py:80
+msgid "Enter a valid vehicle license plate number"
+msgstr ""
+
+#: hr/forms.py:135
+msgid "Enter a valid location code"
+msgstr ""
+
+#: hr/forms.py:136
+msgid "Number part cannot be zero"
+msgstr ""
+
+#: hr/forms.py:173
+msgid "Enter a valid 5 digit postal code"
+msgstr ""
+
+#: hr/forms.py:201
+msgid "Enter a valid 19 digit JMBAG starting with 601983"
+msgstr ""
+
+#: hr/forms.py:202
+msgid "Card issue number cannot be zero"
+msgstr ""
+
+#: hr/hr_choices.py:6
+msgid "Grad Zagreb"
+msgstr ""
+
+#: hr/hr_choices.py:7
+msgid "Bjelovarsko-bilogorska županija"
+msgstr ""
+
+#: hr/hr_choices.py:8
+msgid "Brodsko-posavska županija"
+msgstr ""
+
+#: hr/hr_choices.py:9
+msgid "Dubrovačko-neretvanska županija"
+msgstr ""
+
+#: hr/hr_choices.py:10
+msgid "Istarska županija"
+msgstr ""
+
+#: hr/hr_choices.py:11
+msgid "Karlovačka županija"
+msgstr ""
+
+#: hr/hr_choices.py:12
+msgid "Koprivničko-križevačka županija"
+msgstr ""
+
+#: hr/hr_choices.py:13
+msgid "Krapinsko-zagorska županija"
+msgstr ""
+
+#: hr/hr_choices.py:14
+msgid "Ličko-senjska županija"
+msgstr ""
+
+#: hr/hr_choices.py:15
+msgid "Međimurska županija"
+msgstr ""
+
+#: hr/hr_choices.py:16
+msgid "Osječko-baranjska županija"
+msgstr ""
+
+#: hr/hr_choices.py:17
+msgid "Požeško-slavonska županija"
+msgstr ""
+
+#: hr/hr_choices.py:18
+msgid "Primorsko-goranska županija"
+msgstr ""
+
+#: hr/hr_choices.py:19
+msgid "Sisačko-moslavačka županija"
+msgstr ""
+
+#: hr/hr_choices.py:20
+msgid "Splitsko-dalmatinska županija"
+msgstr ""
+
+#: hr/hr_choices.py:21
+msgid "Šibensko-kninska županija"
+msgstr ""
+
+#: hr/hr_choices.py:22
+msgid "Varaždinska županija"
+msgstr ""
+
+#: hr/hr_choices.py:23
+msgid "Virovitičko-podravska županija"
+msgstr ""
+
+#: hr/hr_choices.py:24
+msgid "Vukovarsko-srijemska županija"
+msgstr ""
+
+#: hr/hr_choices.py:25
+msgid "Zadarska županija"
+msgstr ""
+
+#: hr/hr_choices.py:26
+msgid "Zagrebačka županija"
+msgstr ""
+
+#: hu/hu_counties.py:5
+msgid "Bács-Kiskun"
+msgstr ""
+
+#: hu/hu_counties.py:6
+msgid "Baranya"
+msgstr ""
+
+#: hu/hu_counties.py:7
+msgid "Békés"
+msgstr ""
+
+#: hu/hu_counties.py:8
+msgid "Borsod-Abaúj-Zemplén"
+msgstr ""
+
+#: hu/hu_counties.py:9
+msgid "Csongrád"
+msgstr ""
+
+#: hu/hu_counties.py:10
+msgid "Fejér"
+msgstr ""
+
+#: hu/hu_counties.py:11
+msgid "Győr-Moson-Sopron"
+msgstr ""
+
+#: hu/hu_counties.py:12
+msgid "Hajdú-Bihar"
+msgstr ""
+
+#: hu/hu_counties.py:13
+msgid "Heves"
+msgstr ""
+
+#: hu/hu_counties.py:14
+msgid "Jász-Nagykun-Szolnok"
+msgstr ""
+
+#: hu/hu_counties.py:15
+msgid "Komárom-Esztergom"
+msgstr ""
+
+#: hu/hu_counties.py:16
+msgid "Nógrád"
+msgstr ""
+
+#: hu/hu_counties.py:17
+msgid "Pest"
+msgstr ""
+
+#: hu/hu_counties.py:18
+msgid "Somogy"
+msgstr ""
+
+#: hu/hu_counties.py:19
+msgid "Szabolcs-Szatmár-Bereg"
+msgstr ""
+
+#: hu/hu_counties.py:20
+msgid "Tolna"
+msgstr ""
+
+#: hu/hu_counties.py:21
+msgid "Vas"
+msgstr ""
+
+#: hu/hu_counties.py:22
+msgid "Veszprém"
+msgstr ""
+
+#: hu/hu_counties.py:23
+msgid "Zala"
+msgstr ""
+
+#: id_/forms.py:27
+msgid "Enter a valid post code"
+msgstr ""
+
+#: id_/forms.py:166
+msgid "Enter a valid NIK/KTP number"
+msgstr ""
+
+#: id_/id_choices.py:7
+msgid "Aceh"
+msgstr ""
+
+#: id_/id_choices.py:8 id_/id_choices.py:73
+msgid "Bali"
+msgstr ""
+
+#: id_/id_choices.py:9 id_/id_choices.py:45
+msgid "Banten"
+msgstr ""
+
+#: id_/id_choices.py:10 id_/id_choices.py:54
+msgid "Bengkulu"
+msgstr ""
+
+#: id_/id_choices.py:11 id_/id_choices.py:47
+msgid "Yogyakarta"
+msgstr ""
+
+#: id_/id_choices.py:12 id_/id_choices.py:51
+msgid "Jakarta"
+msgstr ""
+
+#: id_/id_choices.py:13 id_/id_choices.py:75
+msgid "Gorontalo"
+msgstr ""
+
+#: id_/id_choices.py:14 id_/id_choices.py:57
+msgid "Jambi"
+msgstr ""
+
+#: id_/id_choices.py:15
+msgid "Jawa Barat"
+msgstr ""
+
+#: id_/id_choices.py:16
+msgid "Jawa Tengah"
+msgstr ""
+
+#: id_/id_choices.py:17
+msgid "Jawa Timur"
+msgstr ""
+
+#: id_/id_choices.py:18 id_/id_choices.py:88
+msgid "Kalimantan Barat"
+msgstr ""
+
+#: id_/id_choices.py:19 id_/id_choices.py:66
+msgid "Kalimantan Selatan"
+msgstr ""
+
+#: id_/id_choices.py:20 id_/id_choices.py:89
+msgid "Kalimantan Tengah"
+msgstr ""
+
+#: id_/id_choices.py:21 id_/id_choices.py:90
+msgid "Kalimantan Timur"
+msgstr ""
+
+#: id_/id_choices.py:22
+msgid "Kalimantan Utara"
+msgstr ""
+
+#: id_/id_choices.py:23
+msgid "Kepulauan Bangka-Belitung"
+msgstr ""
+
+#: id_/id_choices.py:24 id_/id_choices.py:62
+msgid "Kepulauan Riau"
+msgstr ""
+
+#: id_/id_choices.py:25 id_/id_choices.py:55
+msgid "Lampung"
+msgstr ""
+
+#: id_/id_choices.py:26 id_/id_choices.py:70
+msgid "Maluku"
+msgstr ""
+
+#: id_/id_choices.py:27 id_/id_choices.py:71
+msgid "Maluku Utara"
+msgstr ""
+
+#: id_/id_choices.py:28
+msgid "Nusa Tenggara Barat"
+msgstr ""
+
+#: id_/id_choices.py:29
+msgid "Nusa Tenggara Timur"
+msgstr ""
+
+#: id_/id_choices.py:30
+msgid "Papua"
+msgstr ""
+
+#: id_/id_choices.py:31
+msgid "Papua Barat"
+msgstr ""
+
+#: id_/id_choices.py:32 id_/id_choices.py:60
+msgid "Riau"
+msgstr ""
+
+#: id_/id_choices.py:33 id_/id_choices.py:68
+msgid "Sulawesi Barat"
+msgstr ""
+
+#: id_/id_choices.py:34 id_/id_choices.py:69
+msgid "Sulawesi Selatan"
+msgstr ""
+
+#: id_/id_choices.py:35 id_/id_choices.py:76
+msgid "Sulawesi Tengah"
+msgstr ""
+
+#: id_/id_choices.py:36 id_/id_choices.py:79
+msgid "Sulawesi Tenggara"
+msgstr ""
+
+#: id_/id_choices.py:37
+msgid "Sulawesi Utara"
+msgstr ""
+
+#: id_/id_choices.py:38 id_/id_choices.py:52
+msgid "Sumatera Barat"
+msgstr ""
+
+#: id_/id_choices.py:39 id_/id_choices.py:56
+msgid "Sumatera Selatan"
+msgstr ""
+
+#: id_/id_choices.py:40 id_/id_choices.py:58
+msgid "Sumatera Utara"
+msgstr ""
+
+#: id_/id_choices.py:46
+msgid "Magelang"
+msgstr ""
+
+#: id_/id_choices.py:48
+msgid "Surakarta - Solo"
+msgstr ""
+
+#: id_/id_choices.py:49
+msgid "Madiun"
+msgstr ""
+
+#: id_/id_choices.py:50
+msgid "Kediri"
+msgstr ""
+
+#: id_/id_choices.py:53
+msgid "Tapanuli"
+msgstr ""
+
+#: id_/id_choices.py:59
+msgid "Nanggroe Aceh Darussalam"
+msgstr ""
+
+#: id_/id_choices.py:61
+msgid "Kepulauan Bangka Belitung"
+msgstr ""
+
+#: id_/id_choices.py:63
+msgid "Corps Consulate"
+msgstr ""
+
+#: id_/id_choices.py:64
+msgid "Corps Diplomatic"
+msgstr ""
+
+#: id_/id_choices.py:65
+msgid "Bandung"
+msgstr ""
+
+#: id_/id_choices.py:67
+msgid "Sulawesi Utara Daratan"
+msgstr ""
+
+#: id_/id_choices.py:72
+msgid "NTT - Timor"
+msgstr ""
+
+#: id_/id_choices.py:74
+msgid "Sulawesi Utara Kepulauan"
+msgstr ""
+
+#: id_/id_choices.py:77
+msgid "NTB - Lombok"
+msgstr ""
+
+#: id_/id_choices.py:78
+msgid "Papua dan Papua Barat"
+msgstr ""
+
+#: id_/id_choices.py:80
+msgid "Cirebon"
+msgstr ""
+
+#: id_/id_choices.py:81
+msgid "NTB - Sumbawa"
+msgstr ""
+
+#: id_/id_choices.py:82
+msgid "NTT - Flores"
+msgstr ""
+
+#: id_/id_choices.py:83
+msgid "NTT - Sumba"
+msgstr ""
+
+#: id_/id_choices.py:84
+msgid "Bogor"
+msgstr ""
+
+#: id_/id_choices.py:85
+msgid "Pekalongan"
+msgstr ""
+
+#: id_/id_choices.py:86
+msgid "Semarang"
+msgstr ""
+
+#: id_/id_choices.py:87
+msgid "Pati"
+msgstr ""
+
+#: id_/id_choices.py:91
+msgid "Surabaya"
+msgstr ""
+
+#: id_/id_choices.py:92
+msgid "Madura"
+msgstr ""
+
+#: id_/id_choices.py:93
+msgid "Malang"
+msgstr ""
+
+#: id_/id_choices.py:94
+msgid "Jember"
+msgstr ""
+
+#: id_/id_choices.py:95
+msgid "Banyumas"
+msgstr ""
+
+#: id_/id_choices.py:96
+msgid "Federal Government"
+msgstr ""
+
+#: id_/id_choices.py:97
+msgid "Bojonegoro"
+msgstr ""
+
+#: id_/id_choices.py:98
+msgid "Purwakarta"
+msgstr ""
+
+#: id_/id_choices.py:99
+msgid "Sidoarjo"
+msgstr ""
+
+#: id_/id_choices.py:100
+msgid "Garut"
+msgstr ""
+
+#: ie/forms.py:28
+msgid "Enter a valid Eircode."
+msgstr ""
+
+#: ie/ie_counties.py:5
+msgid "Carlow"
+msgstr ""
+
+#: ie/ie_counties.py:6
+msgid "Cavan"
+msgstr ""
+
+#: ie/ie_counties.py:7
+msgid "Clare"
+msgstr ""
+
+#: ie/ie_counties.py:8
+msgid "Cork"
+msgstr ""
+
+#: ie/ie_counties.py:9
+msgid "Donegal"
+msgstr ""
+
+#: ie/ie_counties.py:10
+msgid "Dublin"
+msgstr ""
+
+#: ie/ie_counties.py:11
+msgid "Galway"
+msgstr ""
+
+#: ie/ie_counties.py:12
+msgid "Kerry"
+msgstr ""
+
+#: ie/ie_counties.py:13
+msgid "Kildare"
+msgstr ""
+
+#: ie/ie_counties.py:14
+msgid "Kilkenny"
+msgstr ""
+
+#: ie/ie_counties.py:15
+msgid "Laois"
+msgstr ""
+
+#: ie/ie_counties.py:16
+msgid "Leitrim"
+msgstr ""
+
+#: ie/ie_counties.py:17
+msgid "Limerick"
+msgstr ""
+
+#: ie/ie_counties.py:18
+msgid "Longford"
+msgstr ""
+
+#: ie/ie_counties.py:19
+msgid "Louth"
+msgstr ""
+
+#: ie/ie_counties.py:20
+msgid "Mayo"
+msgstr ""
+
+#: ie/ie_counties.py:21
+msgid "Meath"
+msgstr ""
+
+#: ie/ie_counties.py:22
+msgid "Monaghan"
+msgstr ""
+
+#: ie/ie_counties.py:23
+msgid "Offaly"
+msgstr ""
+
+#: ie/ie_counties.py:24
+msgid "Roscommon"
+msgstr ""
+
+#: ie/ie_counties.py:25
+msgid "Sligo"
+msgstr ""
+
+#: ie/ie_counties.py:26
+msgid "Tipperary"
+msgstr ""
+
+#: ie/ie_counties.py:27
+msgid "Waterford"
+msgstr ""
+
+#: ie/ie_counties.py:28
+msgid "Westmeath"
+msgstr ""
+
+#: ie/ie_counties.py:29
+msgid "Wexford"
+msgstr ""
+
+#: ie/ie_counties.py:30
+msgid "Wicklow"
+msgstr ""
+
+#: il/forms.py:20
+msgid "Enter a postal code in the format XXXXXXX (or XXXXX) - digits only"
+msgstr ""
+
+#: il/forms.py:51 ir/forms.py:68
+msgid "Enter a valid ID number."
+msgstr ""
+
+#: in_/forms.py:19
+msgid "Enter a zip code in the format XXXXXX or XXX XXX."
+msgstr ""
+
+#: in_/forms.py:49
+msgid "Enter an Indian state or territory."
+msgstr ""
+
+#: in_/forms.py:86
+msgid ""
+"Enter a valid Aadhaar number in XXXX XXXX XXXX or XXXX-XXXX-XXXX format."
+msgstr ""
+
+#: in_/forms.py:163 in_/validators.py:11
+msgid "Please enter a valid Indian PAN card number."
+msgstr ""
+
+#: in_/models.py:16
+msgid "Indian state (two uppercase letters)"
+msgstr ""
+
+#: in_/models.py:36
+msgid "PAN Card number field"
+msgstr ""
+
+#: ir/forms.py:39
+msgid "Enter a postal code in the format XXXXXXXXXX - digits only"
+msgstr ""
+
+#: ir/ir_provinces.py:6
+msgid "Alborz"
+msgstr ""
+
+#: ir/ir_provinces.py:7
+msgid "Ardabil"
+msgstr ""
+
+#: ir/ir_provinces.py:8
+msgid "Azerbaijan East"
+msgstr ""
+
+#: ir/ir_provinces.py:9
+msgid "Azerbaijan Wast"
+msgstr ""
+
+#: ir/ir_provinces.py:10
+msgid "Bushehr"
+msgstr ""
+
+#: ir/ir_provinces.py:11
+msgid "Chahar Mahaal and Bakhtiari"
+msgstr ""
+
+#: ir/ir_provinces.py:12
+msgid "Fars"
+msgstr ""
+
+#: ir/ir_provinces.py:13
+msgid "Gilan"
+msgstr ""
+
+#: ir/ir_provinces.py:14
+msgid "Golestan"
+msgstr ""
+
+#: ir/ir_provinces.py:15
+msgid "Hamadan"
+msgstr ""
+
+#: ir/ir_provinces.py:16
+msgid "Hormozgan"
+msgstr ""
+
+#: ir/ir_provinces.py:17 np/np_districts.py:101
+msgid "Ilam"
+msgstr ""
+
+#: ir/ir_provinces.py:18
+msgid "Isfahan"
+msgstr ""
+
+#: ir/ir_provinces.py:19
+msgid "Kerman"
+msgstr ""
+
+#: ir/ir_provinces.py:20
+msgid "Kermanshah"
+msgstr ""
+
+#: ir/ir_provinces.py:21
+msgid "Khorasan North"
+msgstr ""
+
+#: ir/ir_provinces.py:22
+msgid "Khorasan Razavi"
+msgstr ""
+
+#: ir/ir_provinces.py:23
+msgid "Khorasan South"
+msgstr ""
+
+#: ir/ir_provinces.py:24
+msgid "Khuzestan"
+msgstr ""
+
+#: ir/ir_provinces.py:25
+msgid "Kohgiluyeh and Boyer-Ahmad"
+msgstr ""
+
+#: ir/ir_provinces.py:26
+msgid "Kurdistan"
+msgstr ""
+
+#: ir/ir_provinces.py:27
+msgid "Lorestan"
+msgstr ""
+
+#: ir/ir_provinces.py:28
+msgid "Markazi"
+msgstr ""
+
+#: ir/ir_provinces.py:29
+msgid "Mazandaran"
+msgstr ""
+
+#: ir/ir_provinces.py:30
+msgid "Qazvin"
+msgstr ""
+
+#: ir/ir_provinces.py:31
+msgid "Qom"
+msgstr ""
+
+#: ir/ir_provinces.py:32
+msgid "Semnan"
+msgstr ""
+
+#: ir/ir_provinces.py:33
+msgid "Sistan and Baluchestan"
+msgstr ""
+
+#: ir/ir_provinces.py:34
+msgid "Tehran"
+msgstr ""
+
+#: ir/ir_provinces.py:35
+msgid "Yazd"
+msgstr ""
+
+#: ir/ir_provinces.py:36
+msgid "Zanjan"
+msgstr ""
+
+#: is_/forms.py:19
+msgid ""
+"Enter a valid Icelandic identification number. The format is XXXXXX-XXXX."
+msgstr ""
+
+#: is_/forms.py:20
+msgid "The Icelandic identification number is not valid."
+msgstr ""
+
+#: it/forms.py:21 nl/validators.py:13
+msgid "Enter a valid zip code."
+msgstr ""
+
+#: it/forms.py:65
+msgid "Enter a valid Tax code."
+msgstr ""
+
+#: it/forms.py:96 ua/forms.py:31
+msgid "Enter a valid VAT number."
+msgstr ""
+
+#: it/util.py:46 it/util.py:59
+msgid "Check digit does not match."
+msgstr ""
+
+#: jp/forms.py:17
+msgid "Enter a postal code in the format XXXXXXX or XXX-XXXX."
+msgstr ""
+
+#: jp/jp_prefectures.py:12 jp/jp_prefectures.py:64
+msgid "Hokkaido"
+msgstr ""
+
+#: jp/jp_prefectures.py:13 jp/jp_prefectures.py:65
+msgid "Aomori"
+msgstr ""
+
+#: jp/jp_prefectures.py:14 jp/jp_prefectures.py:66
+msgid "Iwate"
+msgstr ""
+
+#: jp/jp_prefectures.py:15 jp/jp_prefectures.py:67
+msgid "Miyagi"
+msgstr ""
+
+#: jp/jp_prefectures.py:16 jp/jp_prefectures.py:68
+msgid "Akita"
+msgstr ""
+
+#: jp/jp_prefectures.py:17 jp/jp_prefectures.py:69
+msgid "Yamagata"
+msgstr ""
+
+#: jp/jp_prefectures.py:18 jp/jp_prefectures.py:70
+msgid "Fukushima"
+msgstr ""
+
+#: jp/jp_prefectures.py:19 jp/jp_prefectures.py:71
+msgid "Ibaraki"
+msgstr ""
+
+#: jp/jp_prefectures.py:20 jp/jp_prefectures.py:72
+msgid "Tochigi"
+msgstr ""
+
+#: jp/jp_prefectures.py:21 jp/jp_prefectures.py:73
+msgid "Gunma"
+msgstr ""
+
+#: jp/jp_prefectures.py:22 jp/jp_prefectures.py:74
+msgid "Saitama"
+msgstr ""
+
+#: jp/jp_prefectures.py:23 jp/jp_prefectures.py:75
+msgid "Chiba"
+msgstr ""
+
+#: jp/jp_prefectures.py:24 jp/jp_prefectures.py:76
+msgid "Tokyo"
+msgstr ""
+
+#: jp/jp_prefectures.py:25 jp/jp_prefectures.py:77
+msgid "Kanagawa"
+msgstr ""
+
+#: jp/jp_prefectures.py:26 jp/jp_prefectures.py:78
+msgid "Niigata"
+msgstr ""
+
+#: jp/jp_prefectures.py:27 jp/jp_prefectures.py:79
+msgid "Toyama"
+msgstr ""
+
+#: jp/jp_prefectures.py:28 jp/jp_prefectures.py:80
+msgid "Ishikawa"
+msgstr ""
+
+#: jp/jp_prefectures.py:29 jp/jp_prefectures.py:81
+msgid "Fukui"
+msgstr ""
+
+#: jp/jp_prefectures.py:30 jp/jp_prefectures.py:82
+msgid "Yamanashi"
+msgstr ""
+
+#: jp/jp_prefectures.py:31 jp/jp_prefectures.py:83
+msgid "Nagano"
+msgstr ""
+
+#: jp/jp_prefectures.py:32 jp/jp_prefectures.py:84
+msgid "Gifu"
+msgstr ""
+
+#: jp/jp_prefectures.py:33 jp/jp_prefectures.py:85
+msgid "Shizuoka"
+msgstr ""
+
+#: jp/jp_prefectures.py:34 jp/jp_prefectures.py:86
+msgid "Aichi"
+msgstr ""
+
+#: jp/jp_prefectures.py:35 jp/jp_prefectures.py:87
+msgid "Mie"
+msgstr ""
+
+#: jp/jp_prefectures.py:36 jp/jp_prefectures.py:88
+msgid "Shiga"
+msgstr ""
+
+#: jp/jp_prefectures.py:37 jp/jp_prefectures.py:89
+msgid "Kyoto"
+msgstr ""
+
+#: jp/jp_prefectures.py:38 jp/jp_prefectures.py:90
+msgid "Osaka"
+msgstr ""
+
+#: jp/jp_prefectures.py:39 jp/jp_prefectures.py:91
+msgid "Hyogo"
+msgstr ""
+
+#: jp/jp_prefectures.py:40 jp/jp_prefectures.py:92
+msgid "Nara"
+msgstr ""
+
+#: jp/jp_prefectures.py:41 jp/jp_prefectures.py:93
+msgid "Wakayama"
+msgstr ""
+
+#: jp/jp_prefectures.py:42 jp/jp_prefectures.py:94
+msgid "Tottori"
+msgstr ""
+
+#: jp/jp_prefectures.py:43 jp/jp_prefectures.py:95
+msgid "Shimane"
+msgstr ""
+
+#: jp/jp_prefectures.py:44 jp/jp_prefectures.py:96
+msgid "Okayama"
+msgstr ""
+
+#: jp/jp_prefectures.py:45 jp/jp_prefectures.py:97
+msgid "Hiroshima"
+msgstr ""
+
+#: jp/jp_prefectures.py:46 jp/jp_prefectures.py:98
+msgid "Yamaguchi"
+msgstr ""
+
+#: jp/jp_prefectures.py:47 jp/jp_prefectures.py:99
+msgid "Tokushima"
+msgstr ""
+
+#: jp/jp_prefectures.py:48 jp/jp_prefectures.py:100
+msgid "Kagawa"
+msgstr ""
+
+#: jp/jp_prefectures.py:49 jp/jp_prefectures.py:101
+msgid "Ehime"
+msgstr ""
+
+#: jp/jp_prefectures.py:50 jp/jp_prefectures.py:102
+msgid "Kochi"
+msgstr ""
+
+#: jp/jp_prefectures.py:51 jp/jp_prefectures.py:103
+msgid "Fukuoka"
+msgstr ""
+
+#: jp/jp_prefectures.py:52 jp/jp_prefectures.py:104
+msgid "Saga"
+msgstr ""
+
+#: jp/jp_prefectures.py:53 jp/jp_prefectures.py:105
+msgid "Nagasaki"
+msgstr ""
+
+#: jp/jp_prefectures.py:54 jp/jp_prefectures.py:106
+msgid "Kumamoto"
+msgstr ""
+
+#: jp/jp_prefectures.py:55 jp/jp_prefectures.py:107
+msgid "Oita"
+msgstr ""
+
+#: jp/jp_prefectures.py:56 jp/jp_prefectures.py:108
+msgid "Miyazaki"
+msgstr ""
+
+#: jp/jp_prefectures.py:57 jp/jp_prefectures.py:109
+msgid "Kagoshima"
+msgstr ""
+
+#: jp/jp_prefectures.py:58 jp/jp_prefectures.py:110
+msgid "Okinawa"
+msgstr ""
+
+#: kw/forms.py:47
+msgid "Enter a valid Kuwaiti Civil ID number"
+msgstr ""
+
+#: kw/kw_areas.py:7 kw/kw_areas.py:22
+msgid "Kuwait City"
+msgstr ""
+
+#: kw/kw_areas.py:9
+msgid "Abdullah Al-Salem"
+msgstr ""
+
+#: kw/kw_areas.py:10
+msgid "Adailiya"
+msgstr ""
+
+#: kw/kw_areas.py:11
+msgid "Bneid Al Qar"
+msgstr ""
+
+#: kw/kw_areas.py:12
+msgid "Daiya"
+msgstr ""
+
+#: kw/kw_areas.py:13
+msgid "Dasma"
+msgstr ""
+
+#: kw/kw_areas.py:14
+msgid "Dasman"
+msgstr ""
+
+#: kw/kw_areas.py:15
+msgid "Doha"
+msgstr ""
+
+#: kw/kw_areas.py:16
+msgid "Faiha"
+msgstr ""
+
+#: kw/kw_areas.py:18
+msgid "Jaber Al Ahmad"
+msgstr ""
+
+#: kw/kw_areas.py:19
+msgid "Jibla"
+msgstr ""
+
+#: kw/kw_areas.py:20
+msgid "Kaifan"
+msgstr ""
+
+#: kw/kw_areas.py:21
+msgid "Khaldiya"
+msgstr ""
+
+#: kw/kw_areas.py:23
+msgid "Kuwait Free Trade Zone"
+msgstr ""
+
+#: kw/kw_areas.py:24
+msgid "Mansouriya"
+msgstr ""
+
+#: kw/kw_areas.py:25
+msgid "Mirqab"
+msgstr ""
+
+#: kw/kw_areas.py:26
+msgid "Mubarekiya Camps"
+msgstr ""
+
+#: kw/kw_areas.py:27
+msgid "Nahdha"
+msgstr ""
+
+#: kw/kw_areas.py:28
+msgid "North West Al-Sulaibikhat"
+msgstr ""
+
+#: kw/kw_areas.py:29
+msgid "Nuzha"
+msgstr ""
+
+#: kw/kw_areas.py:30
+msgid "Qadsiya"
+msgstr ""
+
+#: kw/kw_areas.py:31
+msgid "Qairawan"
+msgstr ""
+
+#: kw/kw_areas.py:32
+msgid "Qortuba"
+msgstr ""
+
+#: kw/kw_areas.py:33
+msgid "Rawda"
+msgstr ""
+
+#: kw/kw_areas.py:34
+msgid "Salhiya"
+msgstr ""
+
+#: kw/kw_areas.py:35
+msgid "Shamiya"
+msgstr ""
+
+#: kw/kw_areas.py:36
+msgid "Sharq"
+msgstr ""
+
+#: kw/kw_areas.py:37
+msgid "Shuwaikh Administrative"
+msgstr ""
+
+#: kw/kw_areas.py:38
+msgid "Shuwaikh Industrial"
+msgstr ""
+
+#: kw/kw_areas.py:39
+msgid "Shuwaikh Residential"
+msgstr ""
+
+#: kw/kw_areas.py:40
+msgid "Sulaibikhat"
+msgstr ""
+
+#: kw/kw_areas.py:41
+msgid "Surra"
+msgstr ""
+
+#: kw/kw_areas.py:42
+msgid "Yarmouk"
+msgstr ""
+
+#: kw/kw_areas.py:44 kw/kw_areas.py:55
+msgid "Farwaniya"
+msgstr ""
+
+#: kw/kw_areas.py:46
+msgid "Abbasiya"
+msgstr ""
+
+#: kw/kw_areas.py:47
+msgid "Abdullah Al Mubarak Al Sabah"
+msgstr ""
+
+#: kw/kw_areas.py:48
+msgid "Abraq Khaitan"
+msgstr ""
+
+#: kw/kw_areas.py:49
+msgid "Al-Dajeej"
+msgstr ""
+
+#: kw/kw_areas.py:50
+msgid "Al-Shadadiya"
+msgstr ""
+
+#: kw/kw_areas.py:51
+msgid "Andalous"
+msgstr ""
+
+#: kw/kw_areas.py:52
+msgid "Ardiya"
+msgstr ""
+
+#: kw/kw_areas.py:53
+msgid "Ardiya Small Industrial"
+msgstr ""
+
+#: kw/kw_areas.py:54
+msgid "Ardiya Storage Zone"
+msgstr ""
+
+#: kw/kw_areas.py:56
+msgid "Firdous"
+msgstr ""
+
+#: kw/kw_areas.py:57
+msgid "Ishbiliya"
+msgstr ""
+
+#: kw/kw_areas.py:58
+msgid "Jeleeb Al-Shuyoukh"
+msgstr ""
+
+#: kw/kw_areas.py:59
+msgid "Khaitan"
+msgstr ""
+
+#: kw/kw_areas.py:60
+msgid "Omariya"
+msgstr ""
+
+#: kw/kw_areas.py:61
+msgid "Rabia"
+msgstr ""
+
+#: kw/kw_areas.py:62
+msgid "Rai"
+msgstr ""
+
+#: kw/kw_areas.py:63
+msgid "Rehab"
+msgstr ""
+
+#: kw/kw_areas.py:64
+msgid "Rigai"
+msgstr ""
+
+#: kw/kw_areas.py:65
+msgid "Sabah Al Nasser"
+msgstr ""
+
+#: kw/kw_areas.py:66
+msgid "South Khaitan - Exhibits"
+msgstr ""
+
+#: kw/kw_areas.py:68 kw/kw_governorates.py:14
+msgid "Mubarak Al Kabir"
+msgstr ""
+
+#: kw/kw_areas.py:70
+msgid "Abu Al Hasaniya"
+msgstr ""
+
+#: kw/kw_areas.py:71
+msgid "Abu Fatira"
+msgstr ""
+
+#: kw/kw_areas.py:72
+msgid "Adan"
+msgstr ""
+
+#: kw/kw_areas.py:73
+msgid "Al-Masayel"
+msgstr ""
+
+#: kw/kw_areas.py:74
+msgid "Coast Strip B"
+msgstr ""
+
+#: kw/kw_areas.py:75
+msgid "Fnaitees"
+msgstr ""
+
+#: kw/kw_areas.py:76
+msgid "Messila"
+msgstr ""
+
+#: kw/kw_areas.py:77
+msgid "Mubarak Al Kabeer"
+msgstr ""
+
+#: kw/kw_areas.py:78
+msgid "Qurain"
+msgstr ""
+
+#: kw/kw_areas.py:79
+msgid "Qusor"
+msgstr ""
+
+#: kw/kw_areas.py:80
+msgid "Sabah Al Salem"
+msgstr ""
+
+#: kw/kw_areas.py:81
+msgid "Sabhan Industrial Area"
+msgstr ""
+
+#: kw/kw_areas.py:82
+msgid "South Wista"
+msgstr ""
+
+#: kw/kw_areas.py:83
+msgid "West Abu Fatira Small Industrial"
+msgstr ""
+
+#: kw/kw_areas.py:85 kw/kw_areas.py:91
+msgid "Hawally"
+msgstr ""
+
+#: kw/kw_areas.py:87
+msgid "Al-Siddeeq"
+msgstr ""
+
+#: kw/kw_areas.py:88
+msgid "Anjafa"
+msgstr ""
+
+#: kw/kw_areas.py:89
+msgid "Bayan"
+msgstr ""
+
+#: kw/kw_areas.py:90
+msgid "Hateen"
+msgstr ""
+
+#: kw/kw_areas.py:92
+msgid "Jabriya"
+msgstr ""
+
+#: kw/kw_areas.py:93
+msgid "Maidan Hawally"
+msgstr ""
+
+#: kw/kw_areas.py:94
+msgid "Mishref"
+msgstr ""
+
+#: kw/kw_areas.py:95
+msgid "Mubarak Al-Abdullah"
+msgstr ""
+
+#: kw/kw_areas.py:96
+msgid "Rumaithiya"
+msgstr ""
+
+#: kw/kw_areas.py:97
+msgid "Al-Salam"
+msgstr ""
+
+#: kw/kw_areas.py:98
+msgid "Salmiya"
+msgstr ""
+
+#: kw/kw_areas.py:99
+msgid "Salwa"
+msgstr ""
+
+#: kw/kw_areas.py:100
+msgid "Shaab"
+msgstr ""
+
+#: kw/kw_areas.py:101
+msgid "Shuhada"
+msgstr ""
+
+#: kw/kw_areas.py:102
+msgid "Zahra"
+msgstr ""
+
+#: kw/kw_areas.py:104 kw/kw_areas.py:107 kw/kw_governorates.py:9
+msgid "Ahmadi"
+msgstr ""
+
+#: kw/kw_areas.py:106
+msgid "Abu Halifa"
+msgstr ""
+
+#: kw/kw_areas.py:108
+msgid "Al Khiran"
+msgstr ""
+
+#: kw/kw_areas.py:109
+msgid "Al Wafrah"
+msgstr ""
+
+#: kw/kw_areas.py:111
+msgid "Al-Nuwaiseeb"
+msgstr ""
+
+#: kw/kw_areas.py:112
+msgid "Al-Riqqa"
+msgstr ""
+
+#: kw/kw_areas.py:113
+msgid "Ali Sabah Al Salem"
+msgstr ""
+
+#: kw/kw_areas.py:114
+msgid "Assabahiyah"
+msgstr ""
+
+#: kw/kw_areas.py:115
+msgid "Bnaider"
+msgstr ""
+
+#: kw/kw_areas.py:116
+msgid "Dahar"
+msgstr ""
+
+#: kw/kw_areas.py:117
+msgid "Eqaila"
+msgstr ""
+
+#: kw/kw_areas.py:118
+msgid "Fahad Al Ahmad"
+msgstr ""
+
+#: kw/kw_areas.py:119
+msgid "Fahaheel"
+msgstr ""
+
+#: kw/kw_areas.py:120
+msgid "Fintas"
+msgstr ""
+
+#: kw/kw_areas.py:121
+msgid "Hadiya"
+msgstr ""
+
+#: kw/kw_areas.py:122
+msgid "Jaber Al Ali"
+msgstr ""
+
+#: kw/kw_areas.py:123
+msgid "Mahboula"
+msgstr ""
+
+#: kw/kw_areas.py:124
+msgid "Mangaf"
+msgstr ""
+
+#: kw/kw_areas.py:125
+msgid "Sabah Al Ahmad"
+msgstr ""
+
+#: kw/kw_areas.py:126
+msgid "Al Dubaiya"
+msgstr ""
+
+#: kw/kw_areas.py:127
+msgid "Mina Abdullah"
+msgstr ""
+
+#: kw/kw_areas.py:128
+msgid "Shuaiba Block 1"
+msgstr ""
+
+#: kw/kw_areas.py:129
+msgid "West Industrial Shuaiba"
+msgstr ""
+
+#: kw/kw_areas.py:130
+msgid "Zour"
+msgstr ""
+
+#: kw/kw_areas.py:133 kw/kw_areas.py:137 kw/kw_governorates.py:11
+msgid "Jahra"
+msgstr ""
+
+#: kw/kw_areas.py:134
+msgid "Al Sulaibiya Industrial 1"
+msgstr ""
+
+#: kw/kw_areas.py:135
+msgid "Al Sulaibiya Industrial 2"
+msgstr ""
+
+#: kw/kw_areas.py:136
+msgid "Amgarah Industrial Area"
+msgstr ""
+
+#: kw/kw_areas.py:138
+msgid "Naeem"
+msgstr ""
+
+#: kw/kw_areas.py:139
+msgid "Naseem"
+msgstr ""
+
+#: kw/kw_areas.py:140
+msgid "Oyoun"
+msgstr ""
+
+#: kw/kw_areas.py:141
+msgid "Qasr"
+msgstr ""
+
+#: kw/kw_areas.py:142
+msgid "Saad Al Abdullah"
+msgstr ""
+
+#: kw/kw_areas.py:143
+msgid "Sulaibiya"
+msgstr ""
+
+#: kw/kw_areas.py:144
+msgid "Taima'"
+msgstr ""
+
+#: kw/kw_areas.py:145
+msgid "Waha"
+msgstr ""
+
+#: kw/kw_governorates.py:10
+msgid "Farwaniyah"
+msgstr ""
+
+#: kw/kw_governorates.py:12
+msgid "Capital"
+msgstr ""
+
+#: kw/kw_governorates.py:13
+msgid "Hawalli"
+msgstr ""
+
+#: lk/forms.py:21 lk/models.py:19
+msgid "Enter a postal code in format NNNNN"
+msgstr ""
+
+#: lk/lk_districts.py:18
+msgid "Kandy"
+msgstr ""
+
+#: lk/lk_districts.py:19
+msgid "Matale"
+msgstr ""
+
+#: lk/lk_districts.py:20
+msgid "Nuwara Eliya"
+msgstr ""
+
+#: lk/lk_districts.py:25
+msgid "Anuradhapura"
+msgstr ""
+
+#: lk/lk_districts.py:26
+msgid "Polonnaruwa"
+msgstr ""
+
+#: lk/lk_districts.py:31
+msgid "Jaffna"
+msgstr ""
+
+#: lk/lk_districts.py:32
+msgid "Kilinochchi"
+msgstr ""
+
+#: lk/lk_districts.py:33
+msgid "Mannar"
+msgstr ""
+
+#: lk/lk_districts.py:34
+msgid "Vavuniya"
+msgstr ""
+
+#: lk/lk_districts.py:35
+msgid "Mullativu"
+msgstr ""
+
+#: lk/lk_districts.py:36
+msgid "Alambil"
+msgstr ""
+
+#: lk/lk_districts.py:41
+msgid "Ampara"
+msgstr ""
+
+#: lk/lk_districts.py:42
+msgid "Batticaloa"
+msgstr ""
+
+#: lk/lk_districts.py:43
+msgid "Trincomalee"
+msgstr ""
+
+#: lk/lk_districts.py:48
+msgid "Kurunagala"
+msgstr ""
+
+#: lk/lk_districts.py:49
+msgid "Puttalam"
+msgstr ""
+
+#: lk/lk_districts.py:54
+msgid "Galle"
+msgstr ""
+
+#: lk/lk_districts.py:55
+msgid "Hambanthota"
+msgstr ""
+
+#: lk/lk_districts.py:56
+msgid "Mathara"
+msgstr ""
+
+#: lk/lk_districts.py:61
+msgid "Badulla"
+msgstr ""
+
+#: lk/lk_districts.py:62
+msgid "Monaragala"
+msgstr ""
+
+#: lk/lk_districts.py:67
+msgid "Kegalle"
+msgstr ""
+
+#: lk/lk_districts.py:68
+msgid "Rathnapura"
+msgstr ""
+
+#: lk/lk_districts.py:73
+msgid "Colombo"
+msgstr ""
+
+#: lk/lk_districts.py:74
+msgid "Gampaha"
+msgstr ""
+
+#: lk/lk_districts.py:75
+msgid "Kaluthara"
+msgstr ""
+
+#: lk/lk_provinces.py:19
+msgid "North Central"
+msgstr ""
+
+#: lk/lk_provinces.py:20
+msgid "North Western"
+msgstr ""
+
+#: lk/lk_provinces.py:22
+msgid "Sabaragamuwa"
+msgstr ""
+
+#: lk/lk_provinces.py:23
+msgid "Southern"
+msgstr ""
+
+#: lk/lk_provinces.py:24
+msgid "Uva"
+msgstr ""
+
+#: lt/forms.py:38
+msgid "ID Code consists of exactly 11 decimal digits."
+msgstr ""
+
+#: lt/forms.py:39
+msgid "Wrong ID Code checksum."
+msgstr ""
+
+#: lt/forms.py:40
+msgid "ID Code contains invalid date."
+msgstr ""
+
+#: lt/forms.py:99
+msgid "Enter a postal code in the format XXXXX or LT-XXXXX."
+msgstr ""
+
+#: lt/lt_choices.py:5
+msgid "Alytus"
+msgstr ""
+
+#: lt/lt_choices.py:6
+msgid "Kaunas"
+msgstr ""
+
+#: lt/lt_choices.py:7
+msgid "Klaipėda"
+msgstr ""
+
+#: lt/lt_choices.py:8 lt/lt_choices.py:43
+msgid "Marijampolė"
+msgstr ""
+
+#: lt/lt_choices.py:9
+msgid "Panevėžys"
+msgstr ""
+
+#: lt/lt_choices.py:10
+msgid "Šiauliai"
+msgstr ""
+
+#: lt/lt_choices.py:11
+msgid "Tauragė"
+msgstr ""
+
+#: lt/lt_choices.py:12
+msgid "Telšiai"
+msgstr ""
+
+#: lt/lt_choices.py:13
+msgid "Utena"
+msgstr ""
+
+#: lt/lt_choices.py:14
+msgid "Vilnius"
+msgstr ""
+
+#: lt/lt_choices.py:19
+msgid "Akmenė district"
+msgstr ""
+
+#: lt/lt_choices.py:20
+msgid "Alytus city"
+msgstr ""
+
+#: lt/lt_choices.py:21
+msgid "Alytus district"
+msgstr ""
+
+#: lt/lt_choices.py:22
+msgid "Anykščiai district"
+msgstr ""
+
+#: lt/lt_choices.py:23
+msgid "Birštonas"
+msgstr ""
+
+#: lt/lt_choices.py:24
+msgid "Biržai district"
+msgstr ""
+
+#: lt/lt_choices.py:25
+msgid "Druskininkai"
+msgstr ""
+
+#: lt/lt_choices.py:26
+msgid "Elektrėnai"
+msgstr ""
+
+#: lt/lt_choices.py:27
+msgid "Ignalina district"
+msgstr ""
+
+#: lt/lt_choices.py:28
+msgid "Jonava district"
+msgstr ""
+
+#: lt/lt_choices.py:29
+msgid "Joniškis district"
+msgstr ""
+
+#: lt/lt_choices.py:30
+msgid "Jurbarkas district"
+msgstr ""
+
+#: lt/lt_choices.py:31
+msgid "Kaišiadorys district"
+msgstr ""
+
+#: lt/lt_choices.py:32
+msgid "Kalvarija"
+msgstr ""
+
+#: lt/lt_choices.py:33
+msgid "Kaunas city"
+msgstr ""
+
+#: lt/lt_choices.py:34
+msgid "Kaunas district"
+msgstr ""
+
+#: lt/lt_choices.py:35
+msgid "Kazlų Rūda"
+msgstr ""
+
+#: lt/lt_choices.py:36
+msgid "Kėdainiai district"
+msgstr ""
+
+#: lt/lt_choices.py:37
+msgid "Kelmė district"
+msgstr ""
+
+#: lt/lt_choices.py:38
+msgid "Klaipėda city"
+msgstr ""
+
+#: lt/lt_choices.py:39
+msgid "Klaipėda district"
+msgstr ""
+
+#: lt/lt_choices.py:40
+msgid "Kretinga district"
+msgstr ""
+
+#: lt/lt_choices.py:41
+msgid "Kupiškis district"
+msgstr ""
+
+#: lt/lt_choices.py:42
+msgid "Lazdijai district"
+msgstr ""
+
+#: lt/lt_choices.py:44
+msgid "Mažeikiai district"
+msgstr ""
+
+#: lt/lt_choices.py:45
+msgid "Molėtai district"
+msgstr ""
+
+#: lt/lt_choices.py:46
+msgid "Neringa"
+msgstr ""
+
+#: lt/lt_choices.py:47
+msgid "Pagėgiai"
+msgstr ""
+
+#: lt/lt_choices.py:48
+msgid "Pakruojis district"
+msgstr ""
+
+#: lt/lt_choices.py:49
+msgid "Palanga city"
+msgstr ""
+
+#: lt/lt_choices.py:50
+msgid "Panevėžys city"
+msgstr ""
+
+#: lt/lt_choices.py:51
+msgid "Panevėžys district"
+msgstr ""
+
+#: lt/lt_choices.py:52
+msgid "Pasvalys district"
+msgstr ""
+
+#: lt/lt_choices.py:53
+msgid "Plungė district"
+msgstr ""
+
+#: lt/lt_choices.py:54
+msgid "Prienai district"
+msgstr ""
+
+#: lt/lt_choices.py:55
+msgid "Radviliškis district"
+msgstr ""
+
+#: lt/lt_choices.py:56
+msgid "Raseiniai district"
+msgstr ""
+
+#: lt/lt_choices.py:57
+msgid "Rietavas"
+msgstr ""
+
+#: lt/lt_choices.py:58
+msgid "Rokiškis district"
+msgstr ""
+
+#: lt/lt_choices.py:59
+msgid "Skuodas district"
+msgstr ""
+
+#: lt/lt_choices.py:60
+msgid "Šakiai district"
+msgstr ""
+
+#: lt/lt_choices.py:61
+msgid "Šalčininkai district"
+msgstr ""
+
+#: lt/lt_choices.py:62
+msgid "Šiauliai city"
+msgstr ""
+
+#: lt/lt_choices.py:63
+msgid "Šiauliai district"
+msgstr ""
+
+#: lt/lt_choices.py:64
+msgid "Šilalė district"
+msgstr ""
+
+#: lt/lt_choices.py:65
+msgid "Šilutė district"
+msgstr ""
+
+#: lt/lt_choices.py:66
+msgid "Širvintos district"
+msgstr ""
+
+#: lt/lt_choices.py:67
+msgid "Švenčionys district"
+msgstr ""
+
+#: lt/lt_choices.py:68
+msgid "Tauragė district"
+msgstr ""
+
+#: lt/lt_choices.py:69
+msgid "Telšiai district"
+msgstr ""
+
+#: lt/lt_choices.py:70
+msgid "Trakai district"
+msgstr ""
+
+#: lt/lt_choices.py:71
+msgid "Ukmergė district"
+msgstr ""
+
+#: lt/lt_choices.py:72
+msgid "Utena district"
+msgstr ""
+
+#: lt/lt_choices.py:73
+msgid "Varėna district"
+msgstr ""
+
+#: lt/lt_choices.py:74
+msgid "Vilkaviškis district"
+msgstr ""
+
+#: lt/lt_choices.py:75
+msgid "Vilnius city"
+msgstr ""
+
+#: lt/lt_choices.py:76
+msgid "Vilnius district"
+msgstr ""
+
+#: lt/lt_choices.py:77
+msgid "Visaginas"
+msgstr ""
+
+#: lt/lt_choices.py:78
+msgid "Zarasai district"
+msgstr ""
+
+#: lv/forms.py:25
+msgid "Enter a postal code in the format XXXX or LV-XXXX."
+msgstr ""
+
+#: lv/forms.py:52
+msgid "Enter a Latvian personal code in format XXXXXX-XXXXX."
+msgstr ""
+
+#: lv/forms.py:53
+msgid "Enter a valid Latvian personal code."
+msgstr ""
+
+#: lv/lv_choices.py:7
+msgid "Daugavpils"
+msgstr ""
+
+#: lv/lv_choices.py:8
+msgid "Jelgava"
+msgstr ""
+
+#: lv/lv_choices.py:9
+msgid "Jūrmala"
+msgstr ""
+
+#: lv/lv_choices.py:10
+msgid "Liepāja"
+msgstr ""
+
+#: lv/lv_choices.py:11
+msgid "Rēzekne"
+msgstr ""
+
+#: lv/lv_choices.py:12
+msgid "Riga"
+msgstr ""
+
+#: lv/lv_choices.py:13
+msgid "Ventspils"
+msgstr ""
+
+#: lv/lv_choices.py:15
+msgid "Aizkraukle municipality"
+msgstr ""
+
+#: lv/lv_choices.py:16
+msgid "Alūksne municipality"
+msgstr ""
+
+#: lv/lv_choices.py:17
+msgid "Ādaži municipality"
+msgstr ""
+
+#: lv/lv_choices.py:18
+msgid "Balvi municipality"
+msgstr ""
+
+#: lv/lv_choices.py:19
+msgid "Bauska municipality"
+msgstr ""
+
+#: lv/lv_choices.py:20
+msgid "Cēsis municipality"
+msgstr ""
+
+#: lv/lv_choices.py:21
+msgid "Dobele municipality"
+msgstr ""
+
+#: lv/lv_choices.py:22
+msgid "Gulbene municipality"
+msgstr ""
+
+#: lv/lv_choices.py:23
+msgid "Jelgava municipality"
+msgstr ""
+
+#: lv/lv_choices.py:24
+msgid "Jēkabpils municipality"
+msgstr ""
+
+#: lv/lv_choices.py:25
+msgid "Krāslava municipality"
+msgstr ""
+
+#: lv/lv_choices.py:26
+msgid "Kuldīga municipality"
+msgstr ""
+
+#: lv/lv_choices.py:27
+msgid "Ķekava municipality"
+msgstr ""
+
+#: lv/lv_choices.py:28
+msgid "Limbaži municipality"
+msgstr ""
+
+#: lv/lv_choices.py:29
+msgid "Līvāni municipality"
+msgstr ""
+
+#: lv/lv_choices.py:30
+msgid "Ludza municipality"
+msgstr ""
+
+#: lv/lv_choices.py:31
+msgid "Madona municipality"
+msgstr ""
+
+#: lv/lv_choices.py:32
+msgid "Mārupe municipality"
+msgstr ""
+
+#: lv/lv_choices.py:33
+msgid "Ogre municipality"
+msgstr ""
+
+#: lv/lv_choices.py:34
+msgid "Olaine municipality"
+msgstr ""
+
+#: lv/lv_choices.py:35
+msgid "Preiļi municipality"
+msgstr ""
+
+#: lv/lv_choices.py:36
+msgid "Rēzekne municipality"
+msgstr ""
+
+#: lv/lv_choices.py:37
+msgid "Ropaži municipality"
+msgstr ""
+
+#: lv/lv_choices.py:38
+msgid "Salaspils municipality"
+msgstr ""
+
+#: lv/lv_choices.py:39
+msgid "Saldus municipality"
+msgstr ""
+
+#: lv/lv_choices.py:40
+msgid "Saulkrasti municipality"
+msgstr ""
+
+#: lv/lv_choices.py:41
+msgid "Sigulda municipality"
+msgstr ""
+
+#: lv/lv_choices.py:42
+msgid "Smiltene municipality"
+msgstr ""
+
+#: lv/lv_choices.py:43
+msgid "Talsi municipality"
+msgstr ""
+
+#: lv/lv_choices.py:44
+msgid "Tukums municipality"
+msgstr ""
+
+#: lv/lv_choices.py:45
+msgid "Valka municipality"
+msgstr ""
+
+#: lv/lv_choices.py:46
+msgid "Varakļāni municipality"
+msgstr ""
+
+#: lv/lv_choices.py:47
+msgid "Ventspils municipality"
+msgstr ""
+
+#: lv/lv_choices.py:48
+msgid "Augšdaugava municipality"
+msgstr ""
+
+#: lv/lv_choices.py:49
+msgid "Dienvidkurzeme municipality"
+msgstr ""
+
+#: lv/lv_choices.py:50
+msgid "Valmiera municipality"
+msgstr ""
+
+#: ma/forms.py:19 tr/forms.py:18
+msgid "Enter a postal code in the format XXXXX."
+msgstr ""
+
+#: ma/forms.py:23
+msgid "Postal code"
+msgstr ""
+
+#: ma/forms.py:61
+msgid "Select Province"
+msgstr ""
+
+#: ma/forms.py:91
+msgid "Enter a valid Moroccan CIN number."
+msgstr ""
+
+#: ma/forms.py:96
+msgid "CIN Number"
+msgstr ""
+
+#: ma/ma_provinces.py:6
+msgid "Al Hoceima"
+msgstr ""
+
+#: ma/ma_provinces.py:7
+msgid "Larache"
+msgstr ""
+
+#: ma/ma_provinces.py:8
+msgid "M’Diq - Fnideq"
+msgstr ""
+
+#: ma/ma_provinces.py:9
+msgid "Tetouan"
+msgstr ""
+
+#: ma/ma_provinces.py:10
+msgid "Chefchaouene"
+msgstr ""
+
+#: ma/ma_provinces.py:11
+msgid "Tanger - Assilah"
+msgstr ""
+
+#: ma/ma_provinces.py:12
+msgid "Fahs - Anjra"
+msgstr ""
+
+#: ma/ma_provinces.py:13
+msgid "Ouezzane"
+msgstr ""
+
+#: ma/ma_provinces.py:14
+msgid "Driouch"
+msgstr ""
+
+#: ma/ma_provinces.py:15
+msgid "Nador"
+msgstr ""
+
+#: ma/ma_provinces.py:16
+msgid "Berkan"
+msgstr ""
+
+#: ma/ma_provinces.py:17
+msgid "Taourirt"
+msgstr ""
+
+#: ma/ma_provinces.py:18
+msgid "Jerada"
+msgstr ""
+
+#: ma/ma_provinces.py:19
+msgid "Guercif"
+msgstr ""
+
+#: ma/ma_provinces.py:20
+msgid "Feguig"
+msgstr ""
+
+#: ma/ma_provinces.py:21
+msgid "Oujda - Angad"
+msgstr ""
+
+#: ma/ma_provinces.py:22
+msgid "El Hajeb"
+msgstr ""
+
+#: ma/ma_provinces.py:23
+msgid "Ifrane"
+msgstr ""
+
+#: ma/ma_provinces.py:24
+msgid "Boulemane"
+msgstr ""
+
+#: ma/ma_provinces.py:25
+msgid "Taza"
+msgstr ""
+
+#: ma/ma_provinces.py:26
+msgid "Taounate"
+msgstr ""
+
+#: ma/ma_provinces.py:27
+msgid "Sefrou"
+msgstr ""
+
+#: ma/ma_provinces.py:28
+msgid "Fès"
+msgstr ""
+
+#: ma/ma_provinces.py:29
+msgid "Meknès"
+msgstr ""
+
+#: ma/ma_provinces.py:30
+msgid "Moulay Yacoub"
+msgstr ""
+
+#: ma/ma_provinces.py:31
+msgid "Khémisset"
+msgstr ""
+
+#: ma/ma_provinces.py:32
+msgid "Rabat"
+msgstr ""
+
+#: ma/ma_provinces.py:33
+msgid "Skhirate - Temara"
+msgstr ""
+
+#: ma/ma_provinces.py:34
+msgid "Kénitra"
+msgstr ""
+
+#: ma/ma_provinces.py:35
+msgid "Salé"
+msgstr ""
+
+#: ma/ma_provinces.py:36
+msgid "Sidi Slimane"
+msgstr ""
+
+#: ma/ma_provinces.py:37
+msgid "Sidi Kacem"
+msgstr ""
+
+#: ma/ma_provinces.py:38
+msgid "Casablanca"
+msgstr ""
+
+#: ma/ma_provinces.py:39
+msgid "Mohamedia"
+msgstr ""
+
+#: ma/ma_provinces.py:40
+msgid "Nouaceur"
+msgstr ""
+
+#: ma/ma_provinces.py:41
+msgid "Mediouna"
+msgstr ""
+
+#: ma/ma_provinces.py:42
+msgid "Benslimane"
+msgstr ""
+
+#: ma/ma_provinces.py:43
+msgid "Berrachid"
+msgstr ""
+
+#: ma/ma_provinces.py:44
+msgid "El Jadida"
+msgstr ""
+
+#: ma/ma_provinces.py:45
+msgid "Sidi Bennour"
+msgstr ""
+
+#: ma/ma_provinces.py:46
+msgid "Settat"
+msgstr ""
+
+#: ma/ma_provinces.py:47
+msgid "Azilal"
+msgstr ""
+
+#: ma/ma_provinces.py:48
+msgid "Fquih Ben Saleh"
+msgstr ""
+
+#: ma/ma_provinces.py:49
+msgid "Beni Mellal"
+msgstr ""
+
+#: ma/ma_provinces.py:50
+msgid "Khouribga"
+msgstr ""
+
+#: ma/ma_provinces.py:51
+msgid "Khénifra"
+msgstr ""
+
+#: ma/ma_provinces.py:52
+msgid "Safi"
+msgstr ""
+
+#: ma/ma_provinces.py:53
+msgid "Al Haouz"
+msgstr ""
+
+#: ma/ma_provinces.py:54
+msgid "Rhamna"
+msgstr ""
+
+#: ma/ma_provinces.py:55
+msgid "Essaouira"
+msgstr ""
+
+#: ma/ma_provinces.py:56
+msgid "Youssoufia"
+msgstr ""
+
+#: ma/ma_provinces.py:57
+msgid "Marrakech"
+msgstr ""
+
+#: ma/ma_provinces.py:58
+msgid "Chichaoua"
+msgstr ""
+
+#: ma/ma_provinces.py:59
+msgid "El Kelaa Des Sraghna"
+msgstr ""
+
+#: ma/ma_provinces.py:60
+msgid "Agadir - Idda Outanane"
+msgstr ""
+
+#: ma/ma_provinces.py:61
+msgid "Inezgane - Ait Melloul"
+msgstr ""
+
+#: ma/ma_provinces.py:62
+msgid "Chtouka - Ait Baha"
+msgstr ""
+
+#: ma/ma_provinces.py:63
+msgid "Tiznit"
+msgstr ""
+
+#: ma/ma_provinces.py:64
+msgid "Tata"
+msgstr ""
+
+#: ma/ma_provinces.py:65
+msgid "Taroudant"
+msgstr ""
+
+#: ma/ma_provinces.py:66
+msgid "Errachidia"
+msgstr ""
+
+#: ma/ma_provinces.py:67
+msgid "Tinghir"
+msgstr ""
+
+#: ma/ma_provinces.py:68
+msgid "Zagoura"
+msgstr ""
+
+#: ma/ma_provinces.py:69
+msgid "Midelt"
+msgstr ""
+
+#: ma/ma_provinces.py:70
+msgid "Ouarzazate"
+msgstr ""
+
+#: ma/ma_provinces.py:71
+msgid "Es -Semara"
+msgstr ""
+
+#: ma/ma_provinces.py:72
+msgid "Laayoune"
+msgstr ""
+
+#: ma/ma_provinces.py:73
+msgid "Boujdour"
+msgstr ""
+
+#: ma/ma_provinces.py:74
+msgid "Terfaya"
+msgstr ""
+
+#: ma/ma_provinces.py:75
+msgid "Aousserd"
+msgstr ""
+
+#: ma/ma_provinces.py:76
+msgid "Oued Eddahab"
+msgstr ""
+
+#: ma/ma_provinces.py:77
+msgid "Assa - Zag"
+msgstr ""
+
+#: ma/ma_provinces.py:78
+msgid "Sidi Ifni"
+msgstr ""
+
+#: ma/ma_provinces.py:79
+msgid "Tantan"
+msgstr ""
+
+#: ma/ma_provinces.py:80
+msgid "Guelmim"
+msgstr ""
+
+#: ma/ma_regions.py:6
+msgid "Tanger-Tétouan-Al Hoceïma"
+msgstr ""
+
+#: ma/ma_regions.py:7
+msgid "L’Oriental"
+msgstr ""
+
+#: ma/ma_regions.py:8
+msgid "Fès-Meknès"
+msgstr ""
+
+#: ma/ma_regions.py:9
+msgid "Rabat-Salé-Kénitra"
+msgstr ""
+
+#: ma/ma_regions.py:10
+msgid "Béni Mellal-Khénifra"
+msgstr ""
+
+#: ma/ma_regions.py:11
+msgid "Casablanca-Settat"
+msgstr ""
+
+#: ma/ma_regions.py:12
+msgid "Marrakech-Safi"
+msgstr ""
+
+#: ma/ma_regions.py:13
+msgid "Drâa-Tafilalet"
+msgstr ""
+
+#: ma/ma_regions.py:14
+msgid "Souss-Massa"
+msgstr ""
+
+#: ma/ma_regions.py:15
+msgid "Guelmim-Oued Noun"
+msgstr ""
+
+#: ma/ma_regions.py:16
+msgid "Laâyoune-Sakia El Hamra"
+msgstr ""
+
+#: ma/ma_regions.py:17
+msgid "Dakhla-Oued Ed Dahab"
+msgstr ""
+
+#: md/choices.py:4
+msgid "Întreprindere Individuală"
+msgstr ""
+
+#: md/choices.py:5
+msgid "Societate pe acţiuni"
+msgstr ""
+
+#: md/choices.py:6
+msgid "Societate în nume colectiv"
+msgstr ""
+
+#: md/choices.py:7
+msgid "Societatea în comandită"
+msgstr ""
+
+#: md/choices.py:8
+msgid "Cooperativa de producţie"
+msgstr ""
+
+#: md/choices.py:9
+msgid "Cooperativa de întreprinzători"
+msgstr ""
+
+#: md/choices.py:10
+msgid "Societate cu răspundere limitată"
+msgstr ""
+
+#: md/choices.py:11
+msgid "Gospodăria ţărănească"
+msgstr ""
+
+#: md/choices.py:15
+msgid "Diplomatic Corps"
+msgstr ""
+
+#: md/choices.py:16
+msgid "Service Staff"
+msgstr ""
+
+#: md/choices.py:17
+msgid "Consular Staff"
+msgstr ""
+
+#: md/choices.py:18
+msgid "Administrative body"
+msgstr ""
+
+#: md/choices.py:22
+msgid "Ministry of Internal Affairs"
+msgstr ""
+
+#: md/choices.py:23
+msgid "Carabinieri Subdivision"
+msgstr ""
+
+#: md/choices.py:24
+msgid "Military Forces"
+msgstr ""
+
+#: md/choices.py:25
+msgid "Border Control"
+msgstr ""
+
+#: md/choices.py:29
+msgid "Parliament"
+msgstr ""
+
+#: md/choices.py:30
+msgid "Government"
+msgstr ""
+
+#: md/choices.py:31
+msgid "Chancellery"
+msgstr ""
+
+#: md/choices.py:35
+msgid "Anenii Noi"
+msgstr ""
+
+#: md/choices.py:36 md/choices.py:76
+msgid "Tighina"
+msgstr ""
+
+#: md/choices.py:37
+msgid "Bălți"
+msgstr ""
+
+#: md/choices.py:38
+msgid "Briceni"
+msgstr ""
+
+#: md/choices.py:39
+msgid "Basarabeasca"
+msgstr ""
+
+#: md/choices.py:40 md/choices.py:62
+msgid "Chișinău"
+msgstr ""
+
+#: md/choices.py:41
+msgid "Camenca"
+msgstr ""
+
+#: md/choices.py:42
+msgid "Ceadîr-Lunga"
+msgstr ""
+
+#: md/choices.py:43
+msgid "Cahul"
+msgstr ""
+
+#: md/choices.py:44
+msgid "Călărași"
+msgstr ""
+
+#: md/choices.py:45
+msgid "Cimișlia"
+msgstr ""
+
+#: md/choices.py:46
+msgid "Căinari"
+msgstr ""
+
+#: md/choices.py:47
+msgid "Comrat"
+msgstr ""
+
+#: md/choices.py:48
+msgid "Criuleni"
+msgstr ""
+
+#: md/choices.py:49
+msgid "Căușeni"
+msgstr ""
+
+#: md/choices.py:50
+msgid "Cantemir"
+msgstr ""
+
+#: md/choices.py:51
+msgid "Dubăsari"
+msgstr ""
+
+#: md/choices.py:52
+msgid "Dondușeni"
+msgstr ""
+
+#: md/choices.py:53
+msgid "Drochia"
+msgstr ""
+
+#: md/choices.py:54
+msgid "Edineț"
+msgstr ""
+
+#: md/choices.py:55
+msgid "Fălești"
+msgstr ""
+
+#: md/choices.py:56
+msgid "Florești"
+msgstr ""
+
+#: md/choices.py:57
+msgid "Gagauzia"
+msgstr ""
+
+#: md/choices.py:58
+msgid "Glodeni"
+msgstr ""
+
+#: md/choices.py:59
+msgid "Grigoriopol"
+msgstr ""
+
+#: md/choices.py:60
+msgid "Hîncești"
+msgstr ""
+
+#: md/choices.py:61
+msgid "Ialoveni"
+msgstr ""
+
+#: md/choices.py:63
+msgid "Leova"
+msgstr ""
+
+#: md/choices.py:64
+msgid "Nisporeni"
+msgstr ""
+
+#: md/choices.py:65
+msgid "Ocnița"
+msgstr ""
+
+#: md/choices.py:66
+msgid "Orhei"
+msgstr ""
+
+#: md/choices.py:67
+msgid "Rîbnița"
+msgstr ""
+
+#: md/choices.py:68
+msgid "Rîșcani"
+msgstr ""
+
+#: md/choices.py:69
+msgid "Rezina"
+msgstr ""
+
+#: md/choices.py:70
+msgid "Șoldănești"
+msgstr ""
+
+#: md/choices.py:71
+msgid "Sîngerei"
+msgstr ""
+
+#: md/choices.py:72
+msgid "Slobozia"
+msgstr ""
+
+#: md/choices.py:73
+msgid "Soroca"
+msgstr ""
+
+#: md/choices.py:74
+msgid "Strășeni"
+msgstr ""
+
+#: md/choices.py:75
+msgid "Ștefan Vodă"
+msgstr ""
+
+#: md/choices.py:77
+msgid "Taraclia"
+msgstr ""
+
+#: md/choices.py:78
+msgid "Telenești"
+msgstr ""
+
+#: md/choices.py:79
+msgid "Ungheni"
+msgstr ""
+
+#: md/choices.py:80
+msgid "Vulcănești"
+msgstr ""
+
+#: md/models.py:14
+msgid "Moldavian identity number"
+msgstr ""
+
+#: md/models.py:29
+msgid "Moldavian license plate number"
+msgstr ""
+
+#: md/models.py:44
+msgid "Moldavian company types"
+msgstr ""
+
+#: md/validators.py:18
+msgid "Enter a valid IDNO number."
+msgstr ""
+
+#: md/validators.py:31
+msgid "Enter a valid license plate."
+msgstr ""
+
+#: mk/forms.py:18
+msgid ""
+"Identity card numbers must contain either 4 to 7 digits or an uppercase "
+"letter and 7 digits."
+msgstr ""
+
+#: mk/forms.py:57 si/forms.py:21
+msgid "This field should contain exactly 13 digits."
+msgstr ""
+
+#: mk/forms.py:58
+msgid "The first 7 digits of the UMCN must represent a valid past date."
+msgstr ""
+
+#: mk/forms.py:59
+msgid "The UMCN is not valid."
+msgstr ""
+
+#: mk/mk_choices.py:5
+msgid "Aerodrom"
+msgstr ""
+
+#: mk/mk_choices.py:6
+msgid "Aračinovo"
+msgstr ""
+
+#: mk/mk_choices.py:7
+msgid "Berovo"
+msgstr ""
+
+#: mk/mk_choices.py:8
+msgid "Bitola"
+msgstr ""
+
+#: mk/mk_choices.py:9
+msgid "Bogdanci"
+msgstr ""
+
+#: mk/mk_choices.py:10
+msgid "Bogovinje"
+msgstr ""
+
+#: mk/mk_choices.py:11
+msgid "Bosilovo"
+msgstr ""
+
+#: mk/mk_choices.py:12
+msgid "Brvenica"
+msgstr ""
+
+#: mk/mk_choices.py:13
+msgid "Butel"
+msgstr ""
+
+#: mk/mk_choices.py:14
+msgid "Valandovo"
+msgstr ""
+
+#: mk/mk_choices.py:15
+msgid "Vasilevo"
+msgstr ""
+
+#: mk/mk_choices.py:16
+msgid "Vevčani"
+msgstr ""
+
+#: mk/mk_choices.py:17
+msgid "Veles"
+msgstr ""
+
+#: mk/mk_choices.py:18
+msgid "Vinica"
+msgstr ""
+
+#: mk/mk_choices.py:19
+msgid "Vraneštica"
+msgstr ""
+
+#: mk/mk_choices.py:20
+msgid "Vrapčište"
+msgstr ""
+
+#: mk/mk_choices.py:21
+msgid "Gazi Baba"
+msgstr ""
+
+#: mk/mk_choices.py:22
+msgid "Gevgelija"
+msgstr ""
+
+#: mk/mk_choices.py:23
+msgid "Gostivar"
+msgstr ""
+
+#: mk/mk_choices.py:24
+msgid "Gradsko"
+msgstr ""
+
+#: mk/mk_choices.py:25
+msgid "Debar"
+msgstr ""
+
+#: mk/mk_choices.py:26
+msgid "Debarca"
+msgstr ""
+
+#: mk/mk_choices.py:27
+msgid "Delčevo"
+msgstr ""
+
+#: mk/mk_choices.py:28
+msgid "Demir Kapija"
+msgstr ""
+
+#: mk/mk_choices.py:29
+msgid "Demir Hisar"
+msgstr ""
+
+#: mk/mk_choices.py:30
+msgid "Dolneni"
+msgstr ""
+
+#: mk/mk_choices.py:31
+msgid "Drugovo"
+msgstr ""
+
+#: mk/mk_choices.py:32
+msgid "Gjorče Petrov"
+msgstr ""
+
+#: mk/mk_choices.py:33
+msgid "Želino"
+msgstr ""
+
+#: mk/mk_choices.py:34
+msgid "Zajas"
+msgstr ""
+
+#: mk/mk_choices.py:35
+msgid "Zelenikovo"
+msgstr ""
+
+#: mk/mk_choices.py:36
+msgid "Zrnovci"
+msgstr ""
+
+#: mk/mk_choices.py:37
+msgid "Ilinden"
+msgstr ""
+
+#: mk/mk_choices.py:38
+msgid "Jegunovce"
+msgstr ""
+
+#: mk/mk_choices.py:39
+msgid "Kavadarci"
+msgstr ""
+
+#: mk/mk_choices.py:40
+msgid "Karbinci"
+msgstr ""
+
+#: mk/mk_choices.py:41
+msgid "Karpoš"
+msgstr ""
+
+#: mk/mk_choices.py:42
+msgid "Kisela Voda"
+msgstr ""
+
+#: mk/mk_choices.py:43
+msgid "Kičevo"
+msgstr ""
+
+#: mk/mk_choices.py:44
+msgid "Konče"
+msgstr ""
+
+#: mk/mk_choices.py:45
+msgid "Koćani"
+msgstr ""
+
+#: mk/mk_choices.py:46
+msgid "Kratovo"
+msgstr ""
+
+#: mk/mk_choices.py:47
+msgid "Kriva Palanka"
+msgstr ""
+
+#: mk/mk_choices.py:48
+msgid "Krivogaštani"
+msgstr ""
+
+#: mk/mk_choices.py:49
+msgid "Kruševo"
+msgstr ""
+
+#: mk/mk_choices.py:50
+msgid "Kumanovo"
+msgstr ""
+
+#: mk/mk_choices.py:51
+msgid "Lipkovo"
+msgstr ""
+
+#: mk/mk_choices.py:52
+msgid "Lozovo"
+msgstr ""
+
+#: mk/mk_choices.py:53
+msgid "Mavrovo i Rostuša"
+msgstr ""
+
+#: mk/mk_choices.py:54
+msgid "Makedonska Kamenica"
+msgstr ""
+
+#: mk/mk_choices.py:55
+msgid "Makedonski Brod"
+msgstr ""
+
+#: mk/mk_choices.py:56
+msgid "Mogila"
+msgstr ""
+
+#: mk/mk_choices.py:57
+msgid "Negotino"
+msgstr ""
+
+#: mk/mk_choices.py:58
+msgid "Novaci"
+msgstr ""
+
+#: mk/mk_choices.py:59
+msgid "Novo Selo"
+msgstr ""
+
+#: mk/mk_choices.py:60
+msgid "Oslomej"
+msgstr ""
+
+#: mk/mk_choices.py:61
+msgid "Ohrid"
+msgstr ""
+
+#: mk/mk_choices.py:62
+msgid "Petrovec"
+msgstr ""
+
+#: mk/mk_choices.py:63
+msgid "Pehčevo"
+msgstr ""
+
+#: mk/mk_choices.py:64
+msgid "Plasnica"
+msgstr ""
+
+#: mk/mk_choices.py:65
+msgid "Prilep"
+msgstr ""
+
+#: mk/mk_choices.py:66
+msgid "Probištip"
+msgstr ""
+
+#: mk/mk_choices.py:67
+msgid "Radoviš"
+msgstr ""
+
+#: mk/mk_choices.py:68
+msgid "Rankovce"
+msgstr ""
+
+#: mk/mk_choices.py:69
+msgid "Resen"
+msgstr ""
+
+#: mk/mk_choices.py:70
+msgid "Rosoman"
+msgstr ""
+
+#: mk/mk_choices.py:71
+msgid "Saraj"
+msgstr ""
+
+#: mk/mk_choices.py:72
+msgid "Sveti Nikole"
+msgstr ""
+
+#: mk/mk_choices.py:73
+msgid "Sopište"
+msgstr ""
+
+#: mk/mk_choices.py:74
+msgid "Star Dojran"
+msgstr ""
+
+#: mk/mk_choices.py:75
+msgid "Staro Nagoričane"
+msgstr ""
+
+#: mk/mk_choices.py:76
+msgid "Struga"
+msgstr ""
+
+#: mk/mk_choices.py:77
+msgid "Strumica"
+msgstr ""
+
+#: mk/mk_choices.py:78
+msgid "Studeničani"
+msgstr ""
+
+#: mk/mk_choices.py:79
+msgid "Tearce"
+msgstr ""
+
+#: mk/mk_choices.py:80
+msgid "Tetovo"
+msgstr ""
+
+#: mk/mk_choices.py:81
+msgid "Centar"
+msgstr ""
+
+#: mk/mk_choices.py:82
+msgid "Centar-Župa"
+msgstr ""
+
+#: mk/mk_choices.py:83
+msgid "Čair"
+msgstr ""
+
+#: mk/mk_choices.py:84
+msgid "Čaška"
+msgstr ""
+
+#: mk/mk_choices.py:85
+msgid "Češinovo-Obleševo"
+msgstr ""
+
+#: mk/mk_choices.py:86
+msgid "Čučer-Sandevo"
+msgstr ""
+
+#: mk/mk_choices.py:87
+msgid "Štip"
+msgstr ""
+
+#: mk/mk_choices.py:88
+msgid "Šuto Orizari"
+msgstr ""
+
+#: mk/models.py:16
+msgid "Macedonian identity card number"
+msgstr ""
+
+#: mk/models.py:35
+msgid "A Macedonian municipality (2 character code)"
+msgstr ""
+
+#: mk/models.py:63
+msgid "Unique master citizen number (13 digits)"
+msgstr ""
+
+#: mt/forms.py:15
+msgid "Enter a valid postal code in format AAA 0000."
+msgstr ""
+
+#: mx/forms.py:58
+msgid "Enter a valid zip code in the format XXXXX."
+msgstr ""
+
+#: mx/forms.py:102
+msgid "Enter a valid RFC."
+msgstr ""
+
+#: mx/forms.py:103
+msgid "Invalid checksum for RFC."
+msgstr ""
+
+#: mx/forms.py:175
+msgid "Enter a valid CLABE."
+msgstr ""
+
+#: mx/forms.py:176
+msgid "Invalid checksum for CLABE."
+msgstr ""
+
+#: mx/forms.py:231
+msgid "Enter a valid CURP."
+msgstr ""
+
+#: mx/forms.py:232
+msgid "Invalid checksum for CURP."
+msgstr ""
+
+#: mx/forms.py:293
+msgid "Enter a valid Social Security Number."
+msgstr ""
+
+#: mx/forms.py:294
+msgid "Invalid checksum for Social Security Number."
+msgstr ""
+
+#: mx/models.py:15
+msgid "Mexico state (three or four uppercase letters)"
+msgstr ""
+
+#: mx/models.py:31
+msgid "Mexico zip code"
+msgstr ""
+
+#: mx/models.py:46
+msgid "Mexican RFC"
+msgstr ""
+
+#: mx/models.py:65
+msgid "Mexican CLABE"
+msgstr ""
+
+#: mx/models.py:80
+msgid "Mexican CURP"
+msgstr ""
+
+#: mx/models.py:99
+msgid "Mexican Social Security Number"
+msgstr ""
+
+#: mx/mx_states.py:5
+msgid "Aguascalientes"
+msgstr ""
+
+#: mx/mx_states.py:6
+msgid "Baja California"
+msgstr ""
+
+#: mx/mx_states.py:7
+msgid "Baja California Sur"
+msgstr ""
+
+#: mx/mx_states.py:8
+msgid "Campeche"
+msgstr ""
+
+#: mx/mx_states.py:9
+msgid "Ciudad de México"
+msgstr ""
+
+#: mx/mx_states.py:10
+msgid "Chihuahua"
+msgstr ""
+
+#: mx/mx_states.py:11
+msgid "Chiapas"
+msgstr ""
+
+#: mx/mx_states.py:12
+msgid "Coahuila"
+msgstr ""
+
+#: mx/mx_states.py:13
+msgid "Colima"
+msgstr ""
+
+#: mx/mx_states.py:14
+msgid "Durango"
+msgstr ""
+
+#: mx/mx_states.py:15
+msgid "Guerrero"
+msgstr ""
+
+#: mx/mx_states.py:16
+msgid "Guanajuato"
+msgstr ""
+
+#: mx/mx_states.py:17
+msgid "Hidalgo"
+msgstr ""
+
+#: mx/mx_states.py:18
+msgid "Jalisco"
+msgstr ""
+
+#: mx/mx_states.py:19
+msgid "Estado de México"
+msgstr ""
+
+#: mx/mx_states.py:20
+msgid "Michoacán"
+msgstr ""
+
+#: mx/mx_states.py:21
+msgid "Morelos"
+msgstr ""
+
+#: mx/mx_states.py:22
+msgid "Nayarit"
+msgstr ""
+
+#: mx/mx_states.py:23
+msgid "Nuevo León"
+msgstr ""
+
+#: mx/mx_states.py:24
+msgid "Oaxaca"
+msgstr ""
+
+#: mx/mx_states.py:25
+msgid "Puebla"
+msgstr ""
+
+#: mx/mx_states.py:26
+msgid "Querétaro"
+msgstr ""
+
+#: mx/mx_states.py:27
+msgid "Quintana Roo"
+msgstr ""
+
+#: mx/mx_states.py:28
+msgid "Sinaloa"
+msgstr ""
+
+#: mx/mx_states.py:29
+msgid "San Luis Potosí"
+msgstr ""
+
+#: mx/mx_states.py:30
+msgid "Sonora"
+msgstr ""
+
+#: mx/mx_states.py:31
+msgid "Tabasco"
+msgstr ""
+
+#: mx/mx_states.py:32
+msgid "Tamaulipas"
+msgstr ""
+
+#: mx/mx_states.py:33
+msgid "Tlaxcala"
+msgstr ""
+
+#: mx/mx_states.py:34
+msgid "Veracruz"
+msgstr ""
+
+#: mx/mx_states.py:35
+msgid "Yucatán"
+msgstr ""
+
+#: mx/mx_states.py:36
+msgid "Zacatecas"
+msgstr ""
+
+#: my/forms.py:18
+msgid "Invalid MyKad number."
+msgstr ""
+
+#: nl/models.py:18
+msgid "Dutch zipcode"
+msgstr ""
+
+#: nl/models.py:47
+msgid "Dutch province"
+msgstr ""
+
+#: nl/models.py:71
+msgid "Dutch social security number (BSN)"
+msgstr ""
+
+#: nl/models.py:94
+msgid "Dutch license plate"
+msgstr ""
+
+#: nl/nl_provinces.py:5
+msgid "Drenthe"
+msgstr ""
+
+#: nl/nl_provinces.py:6
+msgid "Flevoland"
+msgstr ""
+
+#: nl/nl_provinces.py:7
+msgid "Fryslân"
+msgstr ""
+
+#: nl/nl_provinces.py:8
+msgid "Gelderland"
+msgstr ""
+
+#: nl/nl_provinces.py:9
+msgid "Groningen"
+msgstr ""
+
+#: nl/nl_provinces.py:11
+msgid "Noord-Brabant"
+msgstr ""
+
+#: nl/nl_provinces.py:12
+msgid "Noord-Holland"
+msgstr ""
+
+#: nl/nl_provinces.py:13
+msgid "Overijssel"
+msgstr ""
+
+#: nl/nl_provinces.py:14
+msgid "Utrecht"
+msgstr ""
+
+#: nl/nl_provinces.py:15
+msgid "Zeeland"
+msgstr ""
+
+#: nl/nl_provinces.py:16
+msgid "Zuid-Holland"
+msgstr ""
+
+#: nl/validators.py:32
+msgid "Enter a valid BSN."
+msgstr ""
+
+#: nl/validators.py:62
+msgid "Enter a valid license plate"
+msgstr ""
+
+#: no/forms.py:41
+msgid "Enter a valid Norwegian social security number."
+msgstr ""
+
+#: no/forms.py:117
+msgid "Enter a valid Norwegian bank account number."
+msgstr ""
+
+#: no/forms.py:118
+msgid "Invalid control digit. Enter a valid Norwegian bank account number."
+msgstr ""
+
+#: no/forms.py:119
+msgid "Invalid length. Norwegian bank account numbers are 11 digits long."
+msgstr ""
+
+#: np/forms.py:21 np/models.py:20
+msgid "Enter a postal code in format XXXXX"
+msgstr ""
+
+#: np/np_districts.py:15
+msgid "Bhaktapur"
+msgstr ""
+
+#: np/np_districts.py:16
+msgid "Dhading"
+msgstr ""
+
+#: np/np_districts.py:17
+msgid "Kathmandu"
+msgstr ""
+
+#: np/np_districts.py:18
+msgid "Kavrepalanchok"
+msgstr ""
+
+#: np/np_districts.py:19
+msgid "Lalitpur"
+msgstr ""
+
+#: np/np_districts.py:20
+msgid "Nuwakot"
+msgstr ""
+
+#: np/np_districts.py:21
+msgid "Rasuwa"
+msgstr ""
+
+#: np/np_districts.py:22
+msgid "Sindhupalchok"
+msgstr ""
+
+#: np/np_districts.py:27
+msgid "Banke"
+msgstr ""
+
+#: np/np_districts.py:28
+msgid "Bardiya"
+msgstr ""
+
+#: np/np_districts.py:29
+msgid "Dailekh"
+msgstr ""
+
+#: np/np_districts.py:30
+msgid "Jajarkot"
+msgstr ""
+
+#: np/np_districts.py:31
+msgid "Surkhet"
+msgstr ""
+
+#: np/np_districts.py:36
+msgid "Baglung"
+msgstr ""
+
+#: np/np_districts.py:37
+msgid "Mustang"
+msgstr ""
+
+#: np/np_districts.py:38
+msgid "Myagdi"
+msgstr ""
+
+#: np/np_districts.py:39
+msgid "Parbat"
+msgstr ""
+
+#: np/np_districts.py:44
+msgid "Gorkha"
+msgstr ""
+
+#: np/np_districts.py:45
+msgid "Kaski"
+msgstr ""
+
+#: np/np_districts.py:46
+msgid "Lamjung"
+msgstr ""
+
+#: np/np_districts.py:47
+msgid "Manang"
+msgstr ""
+
+#: np/np_districts.py:48
+msgid "Syangja"
+msgstr ""
+
+#: np/np_districts.py:49
+msgid "Tanahu"
+msgstr ""
+
+#: np/np_districts.py:54
+msgid "Dhanusa"
+msgstr ""
+
+#: np/np_districts.py:55
+msgid "Dholkha"
+msgstr ""
+
+#: np/np_districts.py:56
+msgid "Mahottari"
+msgstr ""
+
+#: np/np_districts.py:57
+msgid "Ramechhap"
+msgstr ""
+
+#: np/np_districts.py:58
+msgid "Sarlahi"
+msgstr ""
+
+#: np/np_districts.py:59
+msgid "Sindhuli"
+msgstr ""
+
+#: np/np_districts.py:64
+msgid "Dolpa"
+msgstr ""
+
+#: np/np_districts.py:65
+msgid "Humla"
+msgstr ""
+
+#: np/np_districts.py:66
+msgid "Jumla"
+msgstr ""
+
+#: np/np_districts.py:67
+msgid "Kalikot"
+msgstr ""
+
+#: np/np_districts.py:68
+msgid "Mugu"
+msgstr ""
+
+#: np/np_districts.py:73
+msgid "Bhojpur"
+msgstr ""
+
+#: np/np_districts.py:74
+msgid "Dhankuta"
+msgstr ""
+
+#: np/np_districts.py:75
+msgid "Morang"
+msgstr ""
+
+#: np/np_districts.py:76
+msgid "Sankhuwasabha"
+msgstr ""
+
+#: np/np_districts.py:77
+msgid "Sunsari"
+msgstr ""
+
+#: np/np_districts.py:78
+msgid "Terhathum"
+msgstr ""
+
+#: np/np_districts.py:83
+msgid "Arghakhanchi"
+msgstr ""
+
+#: np/np_districts.py:84
+msgid "Gulmi"
+msgstr ""
+
+#: np/np_districts.py:85
+msgid "Kapilvastu"
+msgstr ""
+
+#: np/np_districts.py:86
+msgid "Nawalparasi"
+msgstr ""
+
+#: np/np_districts.py:87
+msgid "Palpa"
+msgstr ""
+
+#: np/np_districts.py:88
+msgid "Rupandehi"
+msgstr ""
+
+#: np/np_districts.py:93
+msgid "Baitadi"
+msgstr ""
+
+#: np/np_districts.py:94
+msgid "Dadeldhura"
+msgstr ""
+
+#: np/np_districts.py:95
+msgid "Darchula"
+msgstr ""
+
+#: np/np_districts.py:96
+msgid "Kanchanpur"
+msgstr ""
+
+#: np/np_districts.py:102
+msgid "Jhapa"
+msgstr ""
+
+#: np/np_districts.py:103
+msgid "Panchthar"
+msgstr ""
+
+#: np/np_districts.py:104
+msgid "Taplejung"
+msgstr ""
+
+#: np/np_districts.py:109
+msgid "Bara"
+msgstr ""
+
+#: np/np_districts.py:110
+msgid "Chitwan"
+msgstr ""
+
+#: np/np_districts.py:111
+msgid "Makwanpur"
+msgstr ""
+
+#: np/np_districts.py:112
+msgid "Parsa"
+msgstr ""
+
+#: np/np_districts.py:113
+msgid "Rautahat"
+msgstr ""
+
+#: np/np_districts.py:118
+msgid "Dang Deukhuri"
+msgstr ""
+
+#: np/np_districts.py:119
+msgid "Pyuthan"
+msgstr ""
+
+#: np/np_districts.py:120
+msgid "Rolpa"
+msgstr ""
+
+#: np/np_districts.py:121
+msgid "Rukum"
+msgstr ""
+
+#: np/np_districts.py:122
+msgid "Salyan"
+msgstr ""
+
+#: np/np_districts.py:127
+msgid "Khotang"
+msgstr ""
+
+#: np/np_districts.py:128
+msgid "Okhaldhunga"
+msgstr ""
+
+#: np/np_districts.py:129
+msgid "Saptari"
+msgstr ""
+
+#: np/np_districts.py:130
+msgid "Siraha"
+msgstr ""
+
+#: np/np_districts.py:131
+msgid "Solukhumbu"
+msgstr ""
+
+#: np/np_districts.py:132
+msgid "Udayapur"
+msgstr ""
+
+#: np/np_districts.py:137
+msgid "Achham"
+msgstr ""
+
+#: np/np_districts.py:138
+msgid "Bajhang"
+msgstr ""
+
+#: np/np_districts.py:139
+msgid "Bajura"
+msgstr ""
+
+#: np/np_districts.py:140
+msgid "Doti"
+msgstr ""
+
+#: np/np_districts.py:141
+msgid "Kailali"
+msgstr ""
+
+#: np/np_provinces.py:17 np/np_zones.py:19
+msgid "Bagmati"
+msgstr ""
+
+#: np/np_provinces.py:18 np/np_zones.py:22
+msgid "Gandaki"
+msgstr ""
+
+#: np/np_provinces.py:19 np/np_zones.py:24
+msgid "Karnali"
+msgstr ""
+
+#: np/np_provinces.py:20 np/np_zones.py:26
+msgid "Lumbini"
+msgstr ""
+
+#: np/np_provinces.py:21 np/np_zones.py:25
+msgid "Koshi"
+msgstr ""
+
+#: np/np_provinces.py:22
+msgid "Madhesh"
+msgstr ""
+
+#: np/np_provinces.py:23
+msgid "Sudurpaschim"
+msgstr ""
+
+#: np/np_zones.py:20
+msgid "Bheri"
+msgstr ""
+
+#: np/np_zones.py:21
+msgid "Dhawalagiri"
+msgstr ""
+
+#: np/np_zones.py:23
+msgid "Janakpur"
+msgstr ""
+
+#: np/np_zones.py:27
+msgid "Mahakali"
+msgstr ""
+
+#: np/np_zones.py:28
+msgid "Mechi"
+msgstr ""
+
+#: np/np_zones.py:29
+msgid "Narayani"
+msgstr ""
+
+#: np/np_zones.py:30
+msgid "Rapti"
+msgstr ""
+
+#: np/np_zones.py:31
+msgid "Sagarmatha"
+msgstr ""
+
+#: np/np_zones.py:32
+msgid "Seti"
+msgstr ""
+
+#: nz/forms.py:47
+msgid "Invalid post code."
+msgstr ""
+
+#: nz/forms.py:78
+msgid "Invalid bank account number."
+msgstr ""
+
+#: nz/nz_councils.py:28
+msgid "Far North District"
+msgstr ""
+
+#: nz/nz_councils.py:29
+msgid "Whangarei District"
+msgstr ""
+
+#: nz/nz_councils.py:30
+msgid "Kaipara District"
+msgstr ""
+
+#: nz/nz_councils.py:31 nz/nz_provinces.py:17 nz/nz_regions.py:13
+msgid "Auckland"
+msgstr ""
+
+#: nz/nz_councils.py:32
+msgid "Thames-Coromandel District"
+msgstr ""
+
+#: nz/nz_councils.py:33
+msgid "Hauraki District"
+msgstr ""
+
+#: nz/nz_councils.py:34
+msgid "Waikato District"
+msgstr ""
+
+#: nz/nz_councils.py:35
+msgid "Matamata-Piako District"
+msgstr ""
+
+#: nz/nz_councils.py:36
+msgid "Hamilton"
+msgstr ""
+
+#: nz/nz_councils.py:37
+msgid "Waipa District"
+msgstr ""
+
+#: nz/nz_councils.py:38
+msgid "South Waikato District"
+msgstr ""
+
+#: nz/nz_councils.py:39
+msgid "Otorohanga District"
+msgstr ""
+
+#: nz/nz_councils.py:40
+msgid "Waitomo District"
+msgstr ""
+
+#: nz/nz_councils.py:41
+msgid "Taupo District"
+msgstr ""
+
+#: nz/nz_councils.py:42
+msgid "Western Bay of Plenty District"
+msgstr ""
+
+#: nz/nz_councils.py:43
+msgid "Tauranga"
+msgstr ""
+
+#: nz/nz_councils.py:44
+msgid "Opotiki District"
+msgstr ""
+
+#: nz/nz_councils.py:45
+msgid "Whakatane District"
+msgstr ""
+
+#: nz/nz_councils.py:46
+msgid "Rotorua District"
+msgstr ""
+
+#: nz/nz_councils.py:47
+msgid "Kawerau District"
+msgstr ""
+
+#: nz/nz_councils.py:48
+msgid "Gisborne District"
+msgstr ""
+
+#: nz/nz_councils.py:49
+msgid "Wairoa District"
+msgstr ""
+
+#: nz/nz_councils.py:50
+msgid "Hastings District"
+msgstr ""
+
+#: nz/nz_councils.py:51
+msgid "Napier"
+msgstr ""
+
+#: nz/nz_councils.py:52
+msgid "Central Hawke's Bay District"
+msgstr ""
+
+#: nz/nz_councils.py:53
+msgid "New Plymouth District"
+msgstr ""
+
+#: nz/nz_councils.py:54
+msgid "Stratford District"
+msgstr ""
+
+#: nz/nz_councils.py:55
+msgid "South Taranaki District"
+msgstr ""
+
+#: nz/nz_councils.py:56
+msgid "Ruapehu District"
+msgstr ""
+
+#: nz/nz_councils.py:57
+msgid "Rangitikei District"
+msgstr ""
+
+#: nz/nz_councils.py:58
+msgid "Wanganui District"
+msgstr ""
+
+#: nz/nz_councils.py:59
+msgid "Manawatu District"
+msgstr ""
+
+#: nz/nz_councils.py:60
+msgid "Palmerston North"
+msgstr ""
+
+#: nz/nz_councils.py:61
+msgid "Tararua District"
+msgstr ""
+
+#: nz/nz_councils.py:62
+msgid "Horowhenua District"
+msgstr ""
+
+#: nz/nz_councils.py:63
+msgid "Masterton District"
+msgstr ""
+
+#: nz/nz_councils.py:64
+msgid "Kapiti Coast District"
+msgstr ""
+
+#: nz/nz_councils.py:65
+msgid "Carterton District"
+msgstr ""
+
+#: nz/nz_councils.py:66
+msgid "South Wairarapa District"
+msgstr ""
+
+#: nz/nz_councils.py:67
+msgid "Upper Hutt"
+msgstr ""
+
+#: nz/nz_councils.py:68
+msgid "Porirua"
+msgstr ""
+
+#: nz/nz_councils.py:69
+msgid "Hutt"
+msgstr ""
+
+#: nz/nz_councils.py:70 nz/nz_provinces.py:20 nz/nz_regions.py:20
+msgid "Wellington"
+msgstr ""
+
+#: nz/nz_councils.py:76
+msgid "Tasman District"
+msgstr ""
+
+#: nz/nz_councils.py:77 nz/nz_provinces.py:22 nz/nz_regions.py:22
+msgid "Nelson"
+msgstr ""
+
+#: nz/nz_councils.py:78
+msgid "Marlborough District"
+msgstr ""
+
+#: nz/nz_councils.py:79
+msgid "Buller District"
+msgstr ""
+
+#: nz/nz_councils.py:80
+msgid "Grey District"
+msgstr ""
+
+#: nz/nz_councils.py:81
+msgid "Westland District"
+msgstr ""
+
+#: nz/nz_councils.py:82
+msgid "Kaikoura District"
+msgstr ""
+
+#: nz/nz_councils.py:83
+msgid "Hurunui District"
+msgstr ""
+
+#: nz/nz_councils.py:84
+msgid "Selwyn District"
+msgstr ""
+
+#: nz/nz_councils.py:85
+msgid "Waimakariri District"
+msgstr ""
+
+#: nz/nz_councils.py:86
+msgid "Christchurch"
+msgstr ""
+
+#: nz/nz_councils.py:87
+msgid "Ashburton District"
+msgstr ""
+
+#: nz/nz_councils.py:88
+msgid "Mackenzie District"
+msgstr ""
+
+#: nz/nz_councils.py:89
+msgid "Timaru District"
+msgstr ""
+
+#: nz/nz_councils.py:90
+msgid "Waimate District"
+msgstr ""
+
+#: nz/nz_councils.py:91
+msgid "Waitaki District"
+msgstr ""
+
+#: nz/nz_councils.py:92
+msgid "Queenstown-Lakes District"
+msgstr ""
+
+#: nz/nz_councils.py:93
+msgid "Central Otago District"
+msgstr ""
+
+#: nz/nz_councils.py:94
+msgid "Dunedin"
+msgstr ""
+
+#: nz/nz_councils.py:95
+msgid "Clutha District"
+msgstr ""
+
+#: nz/nz_councils.py:96
+msgid "Southland District"
+msgstr ""
+
+#: nz/nz_councils.py:97
+msgid "Gore District"
+msgstr ""
+
+#: nz/nz_councils.py:98
+msgid "Invercargill"
+msgstr ""
+
+#: nz/nz_provinces.py:18 nz/nz_regions.py:18
+msgid "Taranaki"
+msgstr ""
+
+#: nz/nz_provinces.py:19 nz/nz_regions.py:17
+msgid "Hawke's Bay"
+msgstr ""
+
+#: nz/nz_provinces.py:21 nz/nz_regions.py:23
+msgid "Marlborough"
+msgstr ""
+
+#: nz/nz_provinces.py:23 nz/nz_regions.py:25
+msgid "Canterbury"
+msgstr ""
+
+#: nz/nz_provinces.py:24
+msgid "South Canterbury"
+msgstr ""
+
+#: nz/nz_provinces.py:25
+msgid "Westland"
+msgstr ""
+
+#: nz/nz_provinces.py:26 nz/nz_regions.py:26
+msgid "Otago"
+msgstr ""
+
+#: nz/nz_provinces.py:27 nz/nz_regions.py:27
+msgid "Southland"
+msgstr ""
+
+#: nz/nz_provinces.py:28
+msgid "Chatham Islands"
+msgstr ""
+
+#: nz/nz_regions.py:12
+msgid "Northland"
+msgstr ""
+
+#: nz/nz_regions.py:14
+msgid "Waikato"
+msgstr ""
+
+#: nz/nz_regions.py:15
+msgid "Bay of Plenty"
+msgstr ""
+
+#: nz/nz_regions.py:16
+msgid "Gisborne"
+msgstr ""
+
+#: nz/nz_regions.py:19
+msgid "Manawatu-Wanganui"
+msgstr ""
+
+#: nz/nz_regions.py:21
+msgid "Tasman"
+msgstr ""
+
+#: nz/nz_regions.py:24
+msgid "West Coast"
+msgstr ""
+
+#: pe/forms.py:22
+msgid "This field requires 8 digits."
+msgstr ""
+
+#: pe/forms.py:50
+msgid "This field requires 11 digits."
+msgstr ""
+
+#: pk/forms.py:21
+msgid "Enter a 5 digit postcode."
+msgstr ""
+
+#: pk/models.py:15
+msgid "Pakistani State"
+msgstr ""
+
+#: pk/models.py:35
+msgid "Pakistani Postcode"
+msgstr ""
+
+#: pk/pk_states.py:6
+msgid "Azad Jammu & Kashmir"
+msgstr ""
+
+#: pk/pk_states.py:7
+msgid "Balochistan"
+msgstr ""
+
+#: pk/pk_states.py:8
+msgid "Federally Administered Tribal Areas"
+msgstr ""
+
+#: pk/pk_states.py:9
+msgid "Gilgit-Baltistan"
+msgstr ""
+
+#: pk/pk_states.py:10
+msgid "Islamabad"
+msgstr ""
+
+#: pk/pk_states.py:11
+msgid "Khyber Pakhtunkhwa"
+msgstr ""
+
+#: pk/pk_states.py:12
+msgid "Punjab"
+msgstr ""
+
+#: pk/pk_states.py:13
+msgid "Sindh"
+msgstr ""
+
+#: pl/forms.py:43
+msgid "National Identification Number consists of 11 digits."
+msgstr ""
+
+#: pl/forms.py:44
+msgid "Wrong checksum for the National Identification Number."
+msgstr ""
+
+#: pl/forms.py:45
+msgid "The National Identification Number contains an invalid birth date."
+msgstr ""
+
+#: pl/forms.py:101
+msgid "National ID Card Number consists of 3 letters and 6 digits."
+msgstr ""
+
+#: pl/forms.py:102
+msgid "Wrong checksum for the National ID Card Number."
+msgstr ""
+
+#: pl/forms.py:151
+msgid ""
+"Enter a tax number field (NIP) in the format XXX-XXX-XX-XX, XXX-XX-XX-XXX or "
+"XXXXXXXXXX."
+msgstr ""
+
+#: pl/forms.py:152
+msgid "Wrong checksum for the Tax Number (NIP)."
+msgstr ""
+
+#: pl/forms.py:190
+msgid "National Business Register Number (REGON) consists of 9 or 14 digits."
+msgstr ""
+
+#: pl/forms.py:191
+msgid "Wrong checksum for the National Business Register Number (REGON)."
+msgstr ""
+
+#: pl/forms.py:237
+msgid "Enter a postal code in the format XX-XXX."
+msgstr ""
+
+#: pl/pl_voivodeships.py:5
+msgid "Lower Silesian"
+msgstr ""
+
+#: pl/pl_voivodeships.py:6
+msgid "Kuyavian-Pomeranian"
+msgstr ""
+
+#: pl/pl_voivodeships.py:7
+msgid "Lublin"
+msgstr ""
+
+#: pl/pl_voivodeships.py:8
+msgid "Lubusz"
+msgstr ""
+
+#: pl/pl_voivodeships.py:9
+msgid "Lodz"
+msgstr ""
+
+#: pl/pl_voivodeships.py:10
+msgid "Lesser Poland"
+msgstr ""
+
+#: pl/pl_voivodeships.py:11
+msgid "Masovian"
+msgstr ""
+
+#: pl/pl_voivodeships.py:12
+msgid "Opole"
+msgstr ""
+
+#: pl/pl_voivodeships.py:13
+msgid "Subcarpathian"
+msgstr ""
+
+#: pl/pl_voivodeships.py:14
+msgid "Podlasie"
+msgstr ""
+
+#: pl/pl_voivodeships.py:15
+msgid "Pomeranian"
+msgstr ""
+
+#: pl/pl_voivodeships.py:16
+msgid "Silesian"
+msgstr ""
+
+#: pl/pl_voivodeships.py:17
+msgid "Swietokrzyskie"
+msgstr ""
+
+#: pl/pl_voivodeships.py:18
+msgid "Warmian-Masurian"
+msgstr ""
+
+#: pl/pl_voivodeships.py:19
+msgid "Greater Poland"
+msgstr ""
+
+#: pl/pl_voivodeships.py:20
+msgid "West Pomeranian"
+msgstr ""
+
+#: pt/forms.py:33
+msgid "The specified value is not a valid Citizen Card number."
+msgstr ""
+
+#: pt/forms.py:34
+msgid ""
+"Citizen Card numbers have the format XXXXXXXXXYYX or XXXXXXXX-XYYX (where X "
+"is a digit and Y is an alphanumeric character)."
+msgstr ""
+
+#: pt/forms.py:90
+msgid "The specified number is not a valid Social Security number."
+msgstr ""
+
+#: pt/forms.py:91
+msgid ""
+"Social Security numbers must be in the format XYYYYYYYYYY (where X is either "
+"1 or 2 and Y is any other digit)."
+msgstr ""
+
+#: pt/forms.py:128
+msgid ""
+"Zip codes must be in the format XYYY-YYY (where X is a digit between 1 and 9 "
+"and Y is any other digit)."
+msgstr ""
+
+#: pt/pt_regions.py:5
+msgid "Aveiro"
+msgstr ""
+
+#: pt/pt_regions.py:6 tn/tn_governorates.py:7
+msgid "Beja"
+msgstr ""
+
+#: pt/pt_regions.py:7
+msgid "Braga"
+msgstr ""
+
+#: pt/pt_regions.py:8
+msgid "Bragança"
+msgstr ""
+
+#: pt/pt_regions.py:9
+msgid "Castelo Branco"
+msgstr ""
+
+#: pt/pt_regions.py:10
+msgid "Coimbra"
+msgstr ""
+
+#: pt/pt_regions.py:11
+msgid "Évora"
+msgstr ""
+
+#: pt/pt_regions.py:12
+msgid "Faro"
+msgstr ""
+
+#: pt/pt_regions.py:13
+msgid "Guarda"
+msgstr ""
+
+#: pt/pt_regions.py:14
+msgid "Leiria"
+msgstr ""
+
+#: pt/pt_regions.py:15
+msgid "Lisboa"
+msgstr ""
+
+#: pt/pt_regions.py:16
+msgid "Portalegre"
+msgstr ""
+
+#: pt/pt_regions.py:17
+msgid "Porto"
+msgstr ""
+
+#: pt/pt_regions.py:18
+msgid "Santarém"
+msgstr ""
+
+#: pt/pt_regions.py:19
+msgid "Setúbal"
+msgstr ""
+
+#: pt/pt_regions.py:20
+msgid "Viana do Castelo"
+msgstr ""
+
+#: pt/pt_regions.py:21
+msgid "Vila Real"
+msgstr ""
+
+#: pt/pt_regions.py:22
+msgid "Viseu"
+msgstr ""
+
+#: pt/pt_regions.py:23
+msgid "Região Autónoma da Madeira"
+msgstr ""
+
+#: pt/pt_regions.py:24
+msgid "Região Autónoma dos Açores"
+msgstr ""
+
+#: ro/forms.py:18
+msgid "Enter a valid CIF."
+msgstr ""
+
+#: ro/forms.py:71
+msgid "Enter a valid CNP."
+msgstr ""
+
+#: ro/forms.py:176
+msgid "Enter a valid postal code in the format XXXXXX"
+msgstr ""
+
+#: ru/forms.py:30
+msgid "Enter a postal code in the format XXXXXX."
+msgstr ""
+
+#: ru/forms.py:45
+msgid "Enter a passport number in the format XXXX XXXXXX."
+msgstr ""
+
+#: ru/forms.py:60
+msgid "Enter a passport number in the format XX XXXXXXX."
+msgstr ""
+
+#: ru/ru_regions.py:5
+msgid "Central Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:6
+msgid "South Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:7
+msgid "North-West Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:8
+msgid "Far-East Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:9
+msgid "Siberian Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:10
+msgid "Ural Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:11
+msgid "Privolzhsky Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:12
+msgid "North-Caucasian Federal County"
+msgstr ""
+
+#: ru/ru_regions.py:17
+msgid "Moskva"
+msgstr ""
+
+#: ru/ru_regions.py:18
+msgid "Saint-Peterburg"
+msgstr ""
+
+#: ru/ru_regions.py:19
+msgid "Moskovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:20
+msgid "Adygeya, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:21
+msgid "Bashkortostan, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:22
+msgid "Buryatia, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:23
+msgid "Altay, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:24
+msgid "Dagestan, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:25
+msgid "Ingushskaya Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:26
+msgid "Kabardino-Balkarskaya Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:27
+msgid "Kalmykia, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:28
+msgid "Karachaevo-Cherkesskaya Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:29
+msgid "Karelia, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:30
+msgid "Komi, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:31
+msgid "Mariy Ehl, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:32
+msgid "Mordovia, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:33
+msgid "Sakha, Respublika (Yakutiya)"
+msgstr ""
+
+#: ru/ru_regions.py:34
+msgid "Severnaya Osetia, Respublika (Alania)"
+msgstr ""
+
+#: ru/ru_regions.py:35
+msgid "Tatarstan, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:36
+msgid "Tyva, Respublika (Tuva)"
+msgstr ""
+
+#: ru/ru_regions.py:37
+msgid "Udmurtskaya Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:38
+msgid "Khakassiya, Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:39
+msgid "Chechenskaya Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:40
+msgid "Chuvashskaya Respublika"
+msgstr ""
+
+#: ru/ru_regions.py:41
+msgid "Altayskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:42
+msgid "Zabaykalskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:43
+msgid "Kamchatskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:44
+msgid "Krasnodarskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:45
+msgid "Krasnoyarskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:46
+msgid "Permskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:47
+msgid "Primorskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:48
+msgid "Stavropol'siyy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:49
+msgid "Khabarovskiy Kray"
+msgstr ""
+
+#: ru/ru_regions.py:50
+msgid "Amurskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:51
+msgid "Arkhangel'skaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:52
+msgid "Astrakhanskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:53
+msgid "Belgorodskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:54
+msgid "Bryanskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:55
+msgid "Vladimirskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:56
+msgid "Volgogradskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:57
+msgid "Vologodskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:58
+msgid "Voronezhskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:59
+msgid "Ivanovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:60
+msgid "Irkutskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:61
+msgid "Kaliningradskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:62
+msgid "Kaluzhskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:63
+msgid "Kemerovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:64
+msgid "Kirovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:65
+msgid "Kostromskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:66
+msgid "Kurganskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:67
+msgid "Kurskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:68
+msgid "Leningradskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:69
+msgid "Lipeckaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:70
+msgid "Magadanskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:71
+msgid "Murmanskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:72
+msgid "Nizhegorodskaja oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:73
+msgid "Novgorodskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:74
+msgid "Novosibirskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:75
+msgid "Omskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:76
+msgid "Orenburgskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:77
+msgid "Orlovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:78
+msgid "Penzenskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:79
+msgid "Pskovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:80
+msgid "Rostovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:81
+msgid "Rjazanskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:82
+msgid "Samarskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:83
+msgid "Saratovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:84
+msgid "Sakhalinskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:85
+msgid "Sverdlovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:86
+msgid "Smolenskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:87
+msgid "Tambovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:88
+msgid "Tverskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:89
+msgid "Tomskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:90
+msgid "Tul'skaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:91
+msgid "Tyumenskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:92
+msgid "Ul'ianovskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:93
+msgid "Chelyabinskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:94
+msgid "Yaroslavskaya oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:95
+msgid "Evreyskaya avtonomnaja oblast'"
+msgstr ""
+
+#: ru/ru_regions.py:96
+msgid "Neneckiy autonomnyy okrug"
+msgstr ""
+
+#: ru/ru_regions.py:97
+msgid "Khanty-Mansiyskiy avtonomnyy okrug - Yugra"
+msgstr ""
+
+#: ru/ru_regions.py:98
+msgid "Chukotskiy avtonomnyy okrug"
+msgstr ""
+
+#: ru/ru_regions.py:99
+msgid "Yamalo-Neneckiy avtonomnyy okrug"
+msgstr ""
+
+#: se/forms.py:47
+msgid "Enter a valid Swedish organisation number."
+msgstr ""
+
+#: se/forms.py:111
+msgid "Enter a valid Swedish personal identity number."
+msgstr ""
+
+#: se/forms.py:112
+msgid "Co-ordination numbers are not allowed."
+msgstr ""
+
+#: se/forms.py:167
+msgid "Enter a Swedish postal code in the format XXXXX."
+msgstr ""
+
+#: se/se_counties.py:6
+msgid "Stockholm"
+msgstr ""
+
+#: se/se_counties.py:7
+msgid "Västerbotten"
+msgstr ""
+
+#: se/se_counties.py:8
+msgid "Norrbotten"
+msgstr ""
+
+#: se/se_counties.py:9
+msgid "Uppsala"
+msgstr ""
+
+#: se/se_counties.py:10
+msgid "Södermanland"
+msgstr ""
+
+#: se/se_counties.py:11
+msgid "Östergötland"
+msgstr ""
+
+#: se/se_counties.py:12
+msgid "Jönköping"
+msgstr ""
+
+#: se/se_counties.py:13
+msgid "Kronoberg"
+msgstr ""
+
+#: se/se_counties.py:14
+msgid "Kalmar"
+msgstr ""
+
+#: se/se_counties.py:15
+msgid "Gotland"
+msgstr ""
+
+#: se/se_counties.py:16
+msgid "Blekinge"
+msgstr ""
+
+#: se/se_counties.py:17
+msgid "Skåne"
+msgstr ""
+
+#: se/se_counties.py:18
+msgid "Halland"
+msgstr ""
+
+#: se/se_counties.py:19
+msgid "Västra Götaland"
+msgstr ""
+
+#: se/se_counties.py:20
+msgid "Värmland"
+msgstr ""
+
+#: se/se_counties.py:21
+msgid "Örebro"
+msgstr ""
+
+#: se/se_counties.py:22
+msgid "Västmanland"
+msgstr ""
+
+#: se/se_counties.py:23
+msgid "Dalarna"
+msgstr ""
+
+#: se/se_counties.py:24
+msgid "Gävleborg"
+msgstr ""
+
+#: se/se_counties.py:25
+msgid "Västernorrland"
+msgstr ""
+
+#: se/se_counties.py:26
+msgid "Jämtland"
+msgstr ""
+
+#: sg/forms.py:24
+msgid "Enter a 6-digit postal code."
+msgstr ""
+
+#: sg/forms.py:51
+msgid "Invalid NRIC/FIN."
+msgstr ""
+
+#: si/forms.py:22
+msgid "The first 7 digits of the EMSO must represent a valid past date."
+msgstr ""
+
+#: si/forms.py:23
+msgid "The EMSO is not valid."
+msgstr ""
+
+#: si/forms.py:88
+msgid "Enter a valid tax number in form SIXXXXXXXX"
+msgstr ""
+
+#: sk/sk_districts.py:5
+msgid "Banska Bystrica"
+msgstr ""
+
+#: sk/sk_districts.py:6
+msgid "Banska Stiavnica"
+msgstr ""
+
+#: sk/sk_districts.py:7
+msgid "Bardejov"
+msgstr ""
+
+#: sk/sk_districts.py:8
+msgid "Banovce nad Bebravou"
+msgstr ""
+
+#: sk/sk_districts.py:9
+msgid "Brezno"
+msgstr ""
+
+#: sk/sk_districts.py:10
+msgid "Bratislava I"
+msgstr ""
+
+#: sk/sk_districts.py:11
+msgid "Bratislava II"
+msgstr ""
+
+#: sk/sk_districts.py:12
+msgid "Bratislava III"
+msgstr ""
+
+#: sk/sk_districts.py:13
+msgid "Bratislava IV"
+msgstr ""
+
+#: sk/sk_districts.py:14
+msgid "Bratislava V"
+msgstr ""
+
+#: sk/sk_districts.py:15
+msgid "Bytca"
+msgstr ""
+
+#: sk/sk_districts.py:16
+msgid "Cadca"
+msgstr ""
+
+#: sk/sk_districts.py:17
+msgid "Detva"
+msgstr ""
+
+#: sk/sk_districts.py:18
+msgid "Dolny Kubin"
+msgstr ""
+
+#: sk/sk_districts.py:19
+msgid "Dunajska Streda"
+msgstr ""
+
+#: sk/sk_districts.py:20
+msgid "Galanta"
+msgstr ""
+
+#: sk/sk_districts.py:21
+msgid "Gelnica"
+msgstr ""
+
+#: sk/sk_districts.py:22
+msgid "Hlohovec"
+msgstr ""
+
+#: sk/sk_districts.py:23
+msgid "Humenne"
+msgstr ""
+
+#: sk/sk_districts.py:24
+msgid "Ilava"
+msgstr ""
+
+#: sk/sk_districts.py:25
+msgid "Kezmarok"
+msgstr ""
+
+#: sk/sk_districts.py:26
+msgid "Komarno"
+msgstr ""
+
+#: sk/sk_districts.py:27
+msgid "Kosice I"
+msgstr ""
+
+#: sk/sk_districts.py:28
+msgid "Kosice II"
+msgstr ""
+
+#: sk/sk_districts.py:29
+msgid "Kosice III"
+msgstr ""
+
+#: sk/sk_districts.py:30
+msgid "Kosice IV"
+msgstr ""
+
+#: sk/sk_districts.py:31
+msgid "Kosice - okolie"
+msgstr ""
+
+#: sk/sk_districts.py:32
+msgid "Krupina"
+msgstr ""
+
+#: sk/sk_districts.py:33
+msgid "Kysucke Nove Mesto"
+msgstr ""
+
+#: sk/sk_districts.py:34
+msgid "Levice"
+msgstr ""
+
+#: sk/sk_districts.py:35
+msgid "Levoca"
+msgstr ""
+
+#: sk/sk_districts.py:36
+msgid "Liptovsky Mikulas"
+msgstr ""
+
+#: sk/sk_districts.py:37
+msgid "Lucenec"
+msgstr ""
+
+#: sk/sk_districts.py:38
+msgid "Malacky"
+msgstr ""
+
+#: sk/sk_districts.py:39
+msgid "Martin"
+msgstr ""
+
+#: sk/sk_districts.py:40
+msgid "Medzilaborce"
+msgstr ""
+
+#: sk/sk_districts.py:41
+msgid "Michalovce"
+msgstr ""
+
+#: sk/sk_districts.py:42
+msgid "Myjava"
+msgstr ""
+
+#: sk/sk_districts.py:43
+msgid "Namestovo"
+msgstr ""
+
+#: sk/sk_districts.py:44
+msgid "Nitra"
+msgstr ""
+
+#: sk/sk_districts.py:45
+msgid "Nove Mesto nad Vahom"
+msgstr ""
+
+#: sk/sk_districts.py:46
+msgid "Nove Zamky"
+msgstr ""
+
+#: sk/sk_districts.py:47
+msgid "Partizanske"
+msgstr ""
+
+#: sk/sk_districts.py:48
+msgid "Pezinok"
+msgstr ""
+
+#: sk/sk_districts.py:49
+msgid "Piestany"
+msgstr ""
+
+#: sk/sk_districts.py:50
+msgid "Poltar"
+msgstr ""
+
+#: sk/sk_districts.py:51
+msgid "Poprad"
+msgstr ""
+
+#: sk/sk_districts.py:52
+msgid "Povazska Bystrica"
+msgstr ""
+
+#: sk/sk_districts.py:53
+msgid "Presov"
+msgstr ""
+
+#: sk/sk_districts.py:54
+msgid "Prievidza"
+msgstr ""
+
+#: sk/sk_districts.py:55
+msgid "Puchov"
+msgstr ""
+
+#: sk/sk_districts.py:56
+msgid "Revuca"
+msgstr ""
+
+#: sk/sk_districts.py:57
+msgid "Rimavska Sobota"
+msgstr ""
+
+#: sk/sk_districts.py:58
+msgid "Roznava"
+msgstr ""
+
+#: sk/sk_districts.py:59
+msgid "Ruzomberok"
+msgstr ""
+
+#: sk/sk_districts.py:60
+msgid "Sabinov"
+msgstr ""
+
+#: sk/sk_districts.py:61
+msgid "Senec"
+msgstr ""
+
+#: sk/sk_districts.py:62
+msgid "Senica"
+msgstr ""
+
+#: sk/sk_districts.py:63
+msgid "Skalica"
+msgstr ""
+
+#: sk/sk_districts.py:64
+msgid "Snina"
+msgstr ""
+
+#: sk/sk_districts.py:65
+msgid "Sobrance"
+msgstr ""
+
+#: sk/sk_districts.py:66
+msgid "Spisska Nova Ves"
+msgstr ""
+
+#: sk/sk_districts.py:67
+msgid "Stara Lubovna"
+msgstr ""
+
+#: sk/sk_districts.py:68
+msgid "Stropkov"
+msgstr ""
+
+#: sk/sk_districts.py:69
+msgid "Svidnik"
+msgstr ""
+
+#: sk/sk_districts.py:70
+msgid "Sala"
+msgstr ""
+
+#: sk/sk_districts.py:71
+msgid "Topolcany"
+msgstr ""
+
+#: sk/sk_districts.py:72
+msgid "Trebisov"
+msgstr ""
+
+#: sk/sk_districts.py:73
+msgid "Trencin"
+msgstr ""
+
+#: sk/sk_districts.py:74
+msgid "Trnava"
+msgstr ""
+
+#: sk/sk_districts.py:75
+msgid "Turcianske Teplice"
+msgstr ""
+
+#: sk/sk_districts.py:76
+msgid "Tvrdosin"
+msgstr ""
+
+#: sk/sk_districts.py:77
+msgid "Velky Krtis"
+msgstr ""
+
+#: sk/sk_districts.py:78
+msgid "Vranov nad Toplou"
+msgstr ""
+
+#: sk/sk_districts.py:79
+msgid "Zlate Moravce"
+msgstr ""
+
+#: sk/sk_districts.py:80
+msgid "Zvolen"
+msgstr ""
+
+#: sk/sk_districts.py:81
+msgid "Zarnovica"
+msgstr ""
+
+#: sk/sk_districts.py:82
+msgid "Ziar nad Hronom"
+msgstr ""
+
+#: sk/sk_districts.py:83
+msgid "Zilina"
+msgstr ""
+
+#: sk/sk_regions.py:5
+msgid "Banska Bystrica region"
+msgstr ""
+
+#: sk/sk_regions.py:6
+msgid "Bratislava region"
+msgstr ""
+
+#: sk/sk_regions.py:7
+msgid "Kosice region"
+msgstr ""
+
+#: sk/sk_regions.py:8
+msgid "Nitra region"
+msgstr ""
+
+#: sk/sk_regions.py:9
+msgid "Presov region"
+msgstr ""
+
+#: sk/sk_regions.py:10
+msgid "Trencin region"
+msgstr ""
+
+#: sk/sk_regions.py:11
+msgid "Trnava region"
+msgstr ""
+
+#: sk/sk_regions.py:12
+msgid "Zilina region"
+msgstr ""
+
+#: tn/tn_governorates.py:6
+msgid "Ariana"
+msgstr ""
+
+#: tn/tn_governorates.py:8
+msgid "Ben Arous"
+msgstr ""
+
+#: tn/tn_governorates.py:9
+msgid "Bizert"
+msgstr ""
+
+#: tn/tn_governorates.py:10
+msgid "Gabes"
+msgstr ""
+
+#: tn/tn_governorates.py:11
+msgid "Gafsa"
+msgstr ""
+
+#: tn/tn_governorates.py:12
+msgid "Jendouba"
+msgstr ""
+
+#: tn/tn_governorates.py:13
+msgid "Kairouan"
+msgstr ""
+
+#: tn/tn_governorates.py:14
+msgid "Kasserine"
+msgstr ""
+
+#: tn/tn_governorates.py:15
+msgid "Kebili"
+msgstr ""
+
+#: tn/tn_governorates.py:16
+msgid "Kef"
+msgstr ""
+
+#: tn/tn_governorates.py:17
+msgid "Mahdia"
+msgstr ""
+
+#: tn/tn_governorates.py:18
+msgid "Manouba"
+msgstr ""
+
+#: tn/tn_governorates.py:19
+msgid "Medenine"
+msgstr ""
+
+#: tn/tn_governorates.py:20
+msgid "Monastir"
+msgstr ""
+
+#: tn/tn_governorates.py:21
+msgid "Nabeul"
+msgstr ""
+
+#: tn/tn_governorates.py:22
+msgid "Sfax"
+msgstr ""
+
+#: tn/tn_governorates.py:23
+msgid "Sidi Bouzid"
+msgstr ""
+
+#: tn/tn_governorates.py:24
+msgid "Siliana"
+msgstr ""
+
+#: tn/tn_governorates.py:25
+msgid "Sousse"
+msgstr ""
+
+#: tn/tn_governorates.py:26
+msgid "Tataouine"
+msgstr ""
+
+#: tn/tn_governorates.py:27
+msgid "Tozeur"
+msgstr ""
+
+#: tn/tn_governorates.py:28
+msgid "Tunis"
+msgstr ""
+
+#: tn/tn_governorates.py:29
+msgid "Zaghouan"
+msgstr ""
+
+#: tr/forms.py:55
+msgid "Enter a valid Turkish Identification number."
+msgstr ""
+
+#: tr/forms.py:56
+msgid "Turkish Identification number must be 11 digits."
+msgstr ""
+
+#: ua/forms.py:57
+msgid "Enter a valid postal code."
+msgstr ""
+
+#: ua/models.py:18
+msgid "Ukrainian region"
+msgstr ""
+
+#: ua/models.py:41
+msgid "Ukrainian VAT number"
+msgstr ""
+
+#: ua/models.py:59
+msgid "Ukrainian postal code"
+msgstr ""
+
+#: ua/ua_regions.py:6
+msgid "Cherkasy Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:7
+msgid "Chernihiv Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:8
+msgid "Chernivtsi Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:9
+msgid "Dnipropetrovsk Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:10
+msgid "Donetsk Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:11
+msgid "Ivano-Frankivsk Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:12
+msgid "Kharkiv Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:13
+msgid "Kherson Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:14
+msgid "Khmelnytskyi Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:15
+msgid "Kirovohrad Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:16
+msgid "Kyiv Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:17
+msgid "Luhansk Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:18
+msgid "Lviv Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:19
+msgid "Mykolaiv Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:20
+msgid "Odessa Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:21
+msgid "Poltava Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:22
+msgid "Rivne Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:23
+msgid "Sumy Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:24
+msgid "Ternopil Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:25
+msgid "Vinnytsia Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:26
+msgid "Volyn Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:27
+msgid "Zakarpattia Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:28
+msgid "Zaporizhia Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:29
+msgid "Zhytomyr Oblast"
+msgstr ""
+
+#: ua/ua_regions.py:30
+msgid "Autonomous Republic of Crimea"
+msgstr ""
+
+#: ua/ua_regions.py:31
+msgid "Kyiv"
+msgstr ""
+
+#: ua/ua_regions.py:32
+msgid "Sevastopol"
+msgstr ""
+
+#: us/forms.py:29
+msgid "Enter a zip code in the format XXXXX or XXXXX-XXXX."
+msgstr ""
+
+#: us/forms.py:61
+msgid "Enter a valid U.S. Social Security number in XXX-XX-XXXX format."
+msgstr ""
+
+#: us/forms.py:97
+msgid "Enter a U.S. state or territory."
+msgstr ""
+
+#: us/models.py:16
+msgid "U.S. state (two uppercase letters)"
+msgstr ""
+
+#: us/models.py:41
+msgid "U.S. postal code (two uppercase letters)"
+msgstr ""
+
+#: us/models.py:69
+msgid "U.S. ZIP code"
+msgstr ""
+
+#: us/models.py:90
+msgid "Social security number"
+msgstr ""
+
+#: us/us_states.py:21
+msgid "Alabama"
+msgstr ""
+
+#: us/us_states.py:22
+msgid "Arizona"
+msgstr ""
+
+#: us/us_states.py:23
+msgid "Arkansas"
+msgstr ""
+
+#: us/us_states.py:24
+msgid "California"
+msgstr ""
+
+#: us/us_states.py:25
+msgid "Colorado"
+msgstr ""
+
+#: us/us_states.py:26
+msgid "Connecticut"
+msgstr ""
+
+#: us/us_states.py:27
+msgid "Delaware"
+msgstr ""
+
+#: us/us_states.py:28
+msgid "District of Columbia"
+msgstr ""
+
+#: us/us_states.py:29
+msgid "Florida"
+msgstr ""
+
+#: us/us_states.py:30
+msgctxt "US state"
+msgid "Georgia"
+msgstr ""
+
+#: us/us_states.py:31
+msgid "Idaho"
+msgstr ""
+
+#: us/us_states.py:32
+msgid "Illinois"
+msgstr ""
+
+#: us/us_states.py:33
+msgid "Indiana"
+msgstr ""
+
+#: us/us_states.py:34
+msgid "Iowa"
+msgstr ""
+
+#: us/us_states.py:35
+msgid "Kansas"
+msgstr ""
+
+#: us/us_states.py:36
+msgid "Kentucky"
+msgstr ""
+
+#: us/us_states.py:37
+msgid "Louisiana"
+msgstr ""
+
+#: us/us_states.py:38
+msgid "Maine"
+msgstr ""
+
+#: us/us_states.py:39
+msgid "Maryland"
+msgstr ""
+
+#: us/us_states.py:40
+msgid "Massachusetts"
+msgstr ""
+
+#: us/us_states.py:41
+msgid "Michigan"
+msgstr ""
+
+#: us/us_states.py:42
+msgid "Minnesota"
+msgstr ""
+
+#: us/us_states.py:43
+msgid "Mississippi"
+msgstr ""
+
+#: us/us_states.py:44
+msgid "Missouri"
+msgstr ""
+
+#: us/us_states.py:45
+msgid "Montana"
+msgstr ""
+
+#: us/us_states.py:46
+msgid "Nebraska"
+msgstr ""
+
+#: us/us_states.py:47
+msgid "Nevada"
+msgstr ""
+
+#: us/us_states.py:48
+msgid "New Hampshire"
+msgstr ""
+
+#: us/us_states.py:49
+msgid "New Jersey"
+msgstr ""
+
+#: us/us_states.py:50
+msgid "New Mexico"
+msgstr ""
+
+#: us/us_states.py:51
+msgid "New York"
+msgstr ""
+
+#: us/us_states.py:52
+msgid "North Carolina"
+msgstr ""
+
+#: us/us_states.py:53
+msgid "North Dakota"
+msgstr ""
+
+#: us/us_states.py:54
+msgid "Ohio"
+msgstr ""
+
+#: us/us_states.py:55
+msgid "Oklahoma"
+msgstr ""
+
+#: us/us_states.py:56
+msgid "Oregon"
+msgstr ""
+
+#: us/us_states.py:57
+msgid "Pennsylvania"
+msgstr ""
+
+#: us/us_states.py:58
+msgid "Rhode Island"
+msgstr ""
+
+#: us/us_states.py:59
+msgid "South Carolina"
+msgstr ""
+
+#: us/us_states.py:60
+msgid "South Dakota"
+msgstr ""
+
+#: us/us_states.py:61
+msgid "Tennessee"
+msgstr ""
+
+#: us/us_states.py:62
+msgid "Texas"
+msgstr ""
+
+#: us/us_states.py:63
+msgid "Utah"
+msgstr ""
+
+#: us/us_states.py:64
+msgid "Vermont"
+msgstr ""
+
+#: us/us_states.py:65
+msgid "Virginia"
+msgstr ""
+
+#: us/us_states.py:66
+msgid "Washington"
+msgstr ""
+
+#: us/us_states.py:67
+msgid "West Virginia"
+msgstr ""
+
+#: us/us_states.py:68
+msgid "Wisconsin"
+msgstr ""
+
+#: us/us_states.py:69
+msgid "Wyoming"
+msgstr ""
+
+#: us/us_states.py:74
+msgid "Alaska"
+msgstr ""
+
+#: us/us_states.py:75
+msgid "Hawaii"
+msgstr ""
+
+#: us/us_states.py:80
+msgid "American Samoa"
+msgstr ""
+
+#: us/us_states.py:81
+msgid "Guam"
+msgstr ""
+
+#: us/us_states.py:82
+msgid "Northern Mariana Islands"
+msgstr ""
+
+#: us/us_states.py:83
+msgid "Puerto Rico"
+msgstr ""
+
+#: us/us_states.py:84
+msgid "Virgin Islands"
+msgstr ""
+
+#: us/us_states.py:90
+msgid "Armed Forces Americas"
+msgstr ""
+
+#: us/us_states.py:91
+msgid "Armed Forces Europe"
+msgstr ""
+
+#: us/us_states.py:92
+msgid "Armed Forces Pacific"
+msgstr ""
+
+#: us/us_states.py:98
+msgid "Federated States of Micronesia"
+msgstr ""
+
+#: us/us_states.py:99
+msgid "Marshall Islands"
+msgstr ""
+
+#: us/us_states.py:100
+msgid "Palau"
+msgstr ""
+
+#: us/us_states.py:106
+msgid "Commonwealth of the Northern Mariana Islands"
+msgstr ""
+
+#: us/us_states.py:107
+msgid "Panama Canal Zone"
+msgstr ""
+
+#: us/us_states.py:108
+msgid "Philippine Islands"
+msgstr ""
+
+#: us/us_states.py:110
+msgid "Trust Territory of the Pacific Islands"
+msgstr ""
+
+#: uy/forms.py:22
+msgid "Enter a valid CI number in X.XXX.XXX-X,XXXXXXX-X or XXXXXXXX format."
+msgstr ""
+
+#: uy/forms.py:24
+msgid "Enter a valid CI number."
+msgstr ""
+
+#: ve/ve_region.py:6
+msgid "Región Capital"
+msgstr ""
+
+#: ve/ve_region.py:7
+msgid "Región Central"
+msgstr ""
+
+#: ve/ve_region.py:8
+msgid "Región de los Llanos"
+msgstr ""
+
+#: ve/ve_region.py:9
+msgid "Región Centro Occidental"
+msgstr ""
+
+#: ve/ve_region.py:10
+msgid "Región Zuliana"
+msgstr ""
+
+#: ve/ve_region.py:11
+msgid "Región de los Andes"
+msgstr ""
+
+#: ve/ve_region.py:12
+msgid "Región Nor-Oriental"
+msgstr ""
+
+#: ve/ve_region.py:13
+msgid "Región Insular"
+msgstr ""
+
+#: ve/ve_region.py:14
+msgid "Región Guayana"
+msgstr ""
+
+#: ve/ve_region.py:15
+msgid "Región Sur Occidental"
+msgstr ""
+
+#: ve/ve_states.py:6
+msgid "Amazonas"
+msgstr ""
+
+#: ve/ve_states.py:7
+msgid "Anzoátegui"
+msgstr ""
+
+#: ve/ve_states.py:8
+msgid "Apure"
+msgstr ""
+
+#: ve/ve_states.py:9
+msgid "Aragua"
+msgstr ""
+
+#: ve/ve_states.py:10
+msgid "Barinas"
+msgstr ""
+
+#: ve/ve_states.py:11
+msgid "Bolívar"
+msgstr ""
+
+#: ve/ve_states.py:12
+msgid "Carabobo"
+msgstr ""
+
+#: ve/ve_states.py:13
+msgid "Cojedes"
+msgstr ""
+
+#: ve/ve_states.py:14
+msgid "Delta Amacuro"
+msgstr ""
+
+#: ve/ve_states.py:15
+msgid "Dependencias Federales"
+msgstr ""
+
+#: ve/ve_states.py:16
+msgid "Distrito Capital"
+msgstr ""
+
+#: ve/ve_states.py:17
+msgid "Falcón"
+msgstr ""
+
+#: ve/ve_states.py:18
+msgid "Guárico"
+msgstr ""
+
+#: ve/ve_states.py:19
+msgid "Lara"
+msgstr ""
+
+#: ve/ve_states.py:20
+msgid "Mérida"
+msgstr ""
+
+#: ve/ve_states.py:21
+msgid "Miranda"
+msgstr ""
+
+#: ve/ve_states.py:22
+msgid "Monagas"
+msgstr ""
+
+#: ve/ve_states.py:23
+msgid "Nueva Esparta"
+msgstr ""
+
+#: ve/ve_states.py:24
+msgid "Portuguesa"
+msgstr ""
+
+#: ve/ve_states.py:25
+msgid "Sucre"
+msgstr ""
+
+#: ve/ve_states.py:26
+msgid "Táchira"
+msgstr ""
+
+#: ve/ve_states.py:27
+msgid "Trujillo"
+msgstr ""
+
+#: ve/ve_states.py:28
+msgid "Vargas"
+msgstr ""
+
+#: ve/ve_states.py:29
+msgid "Yaracuy"
+msgstr ""
+
+#: ve/ve_states.py:30
+msgid "Zulia"
+msgstr ""
+
+#: za/forms.py:22
+msgid "Enter a valid South African ID number"
+msgstr ""
+
+#: za/forms.py:63
+msgid "Enter a valid South African postal code"
+msgstr ""
+
+#: za/za_provinces.py:5
+msgid "Eastern Cape"
+msgstr ""
+
+#: za/za_provinces.py:6
+msgid "Free State"
+msgstr ""
+
+#: za/za_provinces.py:7
+msgid "Gauteng"
+msgstr ""
+
+#: za/za_provinces.py:8
+msgid "KwaZulu-Natal"
+msgstr ""
+
+#: za/za_provinces.py:9
+msgid "Limpopo"
+msgstr ""
+
+#: za/za_provinces.py:10
+msgid "Mpumalanga"
+msgstr ""
+
+#: za/za_provinces.py:11
+msgid "Northern Cape"
+msgstr ""
+
+#: za/za_provinces.py:12
+msgid "North West"
+msgstr ""
+
+#: za/za_provinces.py:13
+msgid "Western Cape"
+msgstr ""

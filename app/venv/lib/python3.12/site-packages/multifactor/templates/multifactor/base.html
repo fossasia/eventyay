@@ -1,0 +1,38 @@
+<!DOCTYPE html>{% load static %}
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<title>{% block title %}Multi-Factor Verification{% endblock %}</title>
+
+	<link href="{% static 'multifactor/multifactor.css' %}" rel="stylesheet">
+</head>
+
+<body class="columns"><div class="column {% block container_class %}curt{% endblock %}">
+
+	{% for message in messages %}
+	<div class="card-content notification is-{{message.tags}}">
+		{{ message }}
+	</div>
+	{% endfor %}
+
+	{% block page %}
+	<div class="card" id="card">
+		<div class="card-header">
+			{% include "multifactor/brand.html" %}
+			<h1 class="">{% block card_title %}{% endblock %}</h1>
+		</div>
+		<div class="card-content" id="content">
+			{% block content %}{% endblock %}
+		</div>
+	</div>
+	{% endblock page %}
+
+	<script src="{%static 'multifactor/multifactor.js' %}"></script>
+	{% block head %}
+	{% endblock %}
+</div></body>
+</html>

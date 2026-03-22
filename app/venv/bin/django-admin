@@ -1,0 +1,6 @@
+#!/Users/ashishkhedkar/eventyay/app/venv/bin/python3.12
+import sys
+from django.core.management import execute_from_command_line
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(execute_from_command_line())

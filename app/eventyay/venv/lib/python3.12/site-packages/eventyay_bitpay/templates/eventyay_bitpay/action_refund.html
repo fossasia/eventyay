@@ -1,0 +1,9 @@
+{% load i18n %}
+
+<p>
+    {% url "control:event.order" organizer=event.organizer.slug event=event.slug code=data.order as ourl %}
+    {% blocktrans trimmed with charge=data.charge bp_href="href='https://bitpay.com/dashboard/payments/"|add:data.invoice|add:"' target='_blank'"|safe order="<a href='"|add:ourl|add:"'>"|add:data.order|add:"</a>"|safe %}
+        BitPay reported that the invoice <a {{ bp_href }}>{{ charge }}</a> has been failed or refunded.
+        Do you want to mark the matching order ({{ order }}) as refunded?
+    {% endblocktrans %}
+</p>

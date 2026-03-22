@@ -1,0 +1,60 @@
+{% extends "multifactor/base.html" %}{% load static %}
+
+{% block card_title %}FIDO2 Security Key{% endblock %}
+
+{% block content %}
+<div id="authtype" class="automatic">
+	<p class="has-text-centered ">Follow your browser's instructions to continue.</p>
+	<button type="button" class="button is-100 is-primary" onclick="authenticate()">Click here to Start</button>
+</div>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+
+{% block fido_scripting %}
+<script type="module">
+import {
+	create,
+	parseCreationOptionsFromJSON,
+} from '{% static 'multifactor/js/webauthn-json.browser-ponyfill.js'%}'
+
+function authenticate() {
+	fetch("{% url 'multifactor:fido2_register' %}")
+	.then((response) => {
+		if(response.ok)
+			return response.json()
+		throw new Error('Error getting registration data!')
+	})
+	.then((json) => {
+		const options = parseCreationOptionsFromJSON(json)
+		return create(options)
+	})
+	.then((response) => {
+		return fetch("{% url 'multifactor:fido2_register' %}", {
+			method: 'POST',
+			headers: {'Content-Type': 'application/json'},
+			body: JSON.stringify(response)
+		})
+	}, (error) => {
+		let el = document.getElementById('authtype')
+		el.classList.add('manual')
+		el.classList.remove('automatic')
+		return Promise.reject(error)
+	})
+	.then((response) => response.json())
+	.then((res) => {
+		if (res["status"] =='OK')
+			window.location.href = "{% url 'multifactor:home' %}"
+		else
+			display_error("<p>"+res["message"]+"</p><p><a href='javascript:void(0)' onclick='authenticate()'>try again</a> or <a href='{% url 'multifactor:home' %}'>Go to Multifactor Dashboard</a></p>")
+	}, (reason) => {
+		display_error("<p>"+reason+"</p><p><a href='javascript:void(0)' onclick='authenticate()'>Try again</a> or <a href='{% url 'multifactor:home' %}'>Go to Multifactor Dashboard</a></p>")
+	})
+}
+window.authenticate = authenticate
+
+setTimeout(authenticate, 500)
+</script>
+{% endblock fido_scripting %}
+{% endblock %}

@@ -1,0 +1,9 @@
+section {
+    margin: auto;
+    max-width: 1000px;
+    padding: 8px;
+}
+
+pre {
+    font-size: 20px;
+}

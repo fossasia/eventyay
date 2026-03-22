@@ -1,0 +1,6 @@
+#!/Users/ashishkhedkar/eventyay/app/eventyay/venv/bin/python3.12
+import sys
+from creole.cmdline import cli_html2textile
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(cli_html2textile())

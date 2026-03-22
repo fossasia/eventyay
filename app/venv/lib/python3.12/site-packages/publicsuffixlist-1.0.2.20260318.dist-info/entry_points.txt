@@ -1,0 +1,2 @@
+[console_scripts]
+publicsuffixlist-download = publicsuffixlist.update:updatePSL

@@ -1,0 +1,19 @@
+{% extends "multifactor/base.html" %}
+{% load static %}
+
+{% block card_title %}Rename {{object.get_key_type_display}}{% endblock %}
+
+{% block content %}
+
+<p>This step is completely optional. Give your {{object.get_key_type_display}} a better name to help you distinguish it from your other keys.</p>
+
+<form action="" method="POST">
+	{% csrf_token %}
+
+	<div class="field"><div class="control">
+		<input class="input is-primary has-text-centered is-large" type="text" name="{{form.name.name}}" placeholder="e.g Keyring USB" autocomplete="off" value="{{form.name.value|default:''}}" autofocus>
+	</div></div>
+
+	<button type="submit" class="button is-primary is-large is-fullwidth">Update</button>
+</form>
+{% endblock %}

@@ -1,0 +1,78 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-04-23 18:58+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Mr DAVIDhaker <me@davidhaker.ru>\n"
+"Language-Team: Mr DAVIDhaker <me@davidhaker.ru>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n"
+"%100>=11 && n%100<=14)? 2 : 3);\n"
+
+#: apps.py:33
+#, python-brace-format
+msgid ""
+"In SSO[EVENT_ACCEPTOR_CLASS] declared module has no class named {class_name}"
+msgstr ""
+
+#: apps.py:45
+msgid ""
+"Can't import sso event acceptor class from SSO[EVENT_ACCEPTOR_CLASS] variable"
+msgstr ""
+
+#: templates/django_sso/deauthentication_error.html:5
+#: templates/django_sso/deauthentication_error.html:91
+msgid "SSO deauthorization error"
+msgstr "Внутренняя ошибка авторизации"
+
+#: templates/django_sso/redirect_to_sso.html:8
+msgid "Click here to continue authorization"
+msgstr "Нажмите здесь для авторизации"
+
+#: templates/django_sso/token_request_error.html:5
+msgid "SSO token obtain error"
+msgstr "Ошибка получения токена SSO"
+
+#: templates/django_sso/token_request_error.html:7
+msgid "Internal authorization error"
+msgstr "Внутренняя ошибка авторизации"
+
+#: templates/django_sso/token_request_error.html:11
+msgid ""
+"This message shows because Django in DEBUG mode. Make DEBUG=False to disable "
+"it"
+msgstr ""
+"Это сообщение отображается, потому что включёт режим отладки Django. "
+"Установите DEBUG=False, чтобы скрыть это сообщение"
+
+#: templates/django_sso/token_validation_error.html:5
+#: templates/django_sso/token_validation_error.html:91
+msgid "SSO token validation error"
+msgstr "Ошибка получения токена SSO"
+
+#: views.py:76
+msgid "Local user for SSO does not exist"
+msgstr "Локальный пользователь для SSO не найден"
+
+#: views.py:124
+msgid "Token not provided or incorrect"
+msgstr "Токен не указан, или некорректный"
+
+#: views.py:128
+msgid "Event type field not set"
+msgstr "Поле с типом события не задано"
+
+#: views.py:134
+msgid "Incorrect event type name"
+msgstr "Некорректный запрос"

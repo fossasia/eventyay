@@ -1,0 +1,12 @@
+{% load i18n %}
+
+<b style="color: red">
+    {% if debug %}
+        {% translate "SSO token obtain error" %}: {{ error }}
+    {% else %}
+        {% translate "Internal authorization error" %}
+    {% endif %}
+</b>
+<p style="color: gray">
+    {% translate "This message shows because Django in DEBUG mode. Make DEBUG=False to disable it" %}
+</p>

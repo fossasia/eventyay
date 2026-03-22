@@ -1,0 +1,8546 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Translators:
+# Jannis Leidel <jannis@leidel.info>, 2011
+# Jiří Podhorecký <jirka.p@volny.cz>, 2024
+# Jiří Podhorecký <jirka.p@volny.cz>, 2022
+# Jirka Vejrazka <Jirka.Vejrazka@gmail.com>, 2011
+# Jiří Podhorecký <jirka.p@volny.cz>, 2020
+# Václav Řehák, 2020
+# Vláďa Macek <macek@sandbox.cz>, 2011-2013
+msgid ""
+msgstr ""
+"Project-Id-Version: django-localflavor\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-06 12:54+0200\n"
+"PO-Revision-Date: 2013-05-29 13:57+0000\n"
+"Last-Translator: Jiří Podhorecký <jirka.p@volny.cz>, 2024\n"
+"Language-Team: Czech (http://app.transifex.com/django/django-localflavor/"
+"language/cs/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: cs\n"
+"Plural-Forms: nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n "
+"<= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;\n"
+
+msgid "Buenos Aires"
+msgstr "Buenos Aires"
+
+msgid "Catamarca"
+msgstr "Catamarca"
+
+msgid "Chaco"
+msgstr "Chaco"
+
+msgid "Chubut"
+msgstr "Chubut"
+
+msgid "Ciudad Autónoma de Buenos Aires"
+msgstr "Autonomní město Buenos Aires"
+
+msgid "Córdoba"
+msgstr "Córdoba"
+
+msgid "Corrientes"
+msgstr "Corrientes"
+
+msgid "Entre Ríos"
+msgstr "Entre Ríos"
+
+msgid "Formosa"
+msgstr "Formosa"
+
+msgid "Jujuy"
+msgstr "Jujuy"
+
+msgid "La Pampa"
+msgstr "La Pampa"
+
+msgid "La Rioja"
+msgstr "La Rioja"
+
+msgid "Mendoza"
+msgstr "Mendoza"
+
+msgid "Misiones"
+msgstr "Misiones"
+
+msgid "Neuquén"
+msgstr "Neuquén"
+
+msgid "Río Negro"
+msgstr "Río Negro"
+
+msgid "Salta"
+msgstr "Salta"
+
+msgid "San Juan"
+msgstr "San Juan"
+
+msgid "San Luis"
+msgstr "San Luis"
+
+msgid "Santa Cruz"
+msgstr "Santa Cruz"
+
+msgid "Santa Fe"
+msgstr "Santa Fe"
+
+msgid "Santiago del Estero"
+msgstr "Santiago del Estero"
+
+msgid "Tierra del Fuego, Antártida e Islas del Atlántico Sur"
+msgstr "Tierra del Fuego, Antarktida a Jižní Atlantik"
+
+msgid "Tucumán"
+msgstr "Tucumán"
+
+msgid "Enter a postal code in the format NNNN or ANNNNAAA."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru NNNN nebo ANNNNAAA."
+
+msgid "This field requires only numbers."
+msgstr "Pole smí obsahovat pouze číslice."
+
+msgid "This field requires 7 or 8 digits."
+msgstr "Pole smí obsahovat jen 7 nebo 8 číslic."
+
+msgid "Enter a valid CUIT in XX-XXXXXXXX-X or XXXXXXXXXXXX format."
+msgstr ""
+"Zadejte platné identifikační číslo CUIT ve tvaru XX-XXXXXXXX-X nebo "
+"XXXXXXXXXXXX"
+
+msgid "Invalid CUIT."
+msgstr "Neplatné CUIT"
+
+msgid "Invalid legal type. Type must be 27, 20, 30, 23, 24, 33 or 34."
+msgstr "Neplatný právní typ. Typ musí být 27, 20, 30, 23, 24, 33 nebo 34."
+
+msgid "Enter a valid CBU in XXXXXXXXXXXXXXXXXXXXXX format."
+msgstr "Zadejte platné CBU ve formátu XXXXXXXXXXXXXXXXXXXXXXX."
+
+msgid "CBU must be exactly 22 digits long."
+msgstr "CBU musí být přesně 22 číslic dlouhé."
+
+msgid "Invalid CBU."
+msgstr "Neplatné CBU."
+
+msgid "Burgenland"
+msgstr "Hradsko"
+
+msgid "Carinthia"
+msgstr "Korutany"
+
+msgid "Lower Austria"
+msgstr "Dolní Rakousko"
+
+msgid "Upper Austria"
+msgstr "Horní Rakousko"
+
+msgid "Salzburg"
+msgstr "Salcbursko"
+
+msgid "Styria"
+msgstr "Štýrsko"
+
+msgid "Tyrol"
+msgstr "Tyrolsko"
+
+msgid "Vorarlberg"
+msgstr "Vorarlbersko"
+
+msgid "Vienna"
+msgstr "Vídeň"
+
+msgid "Enter a zip code in the format XXXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXX."
+
+msgid "Enter a valid Austrian Social Security Number in XXXX XXXXXX format."
+msgstr "Zadejte platné rodné číslo (ASSN) ve tvaru XXXX XXXXXX."
+
+msgid "Enter a 4 digit postcode."
+msgstr "Zadejte čtyřmístné poštovní číslo."
+
+msgid "Australian State"
+msgstr "Australský stát"
+
+msgid "Australian Postcode"
+msgstr "Australské poštovní číslo"
+
+msgid "Australian Business Number"
+msgstr "Australian Business Number"
+
+msgid "Australian Company Number"
+msgstr "Australian Company Number"
+
+msgid "Australian Tax File Number"
+msgstr "Australian Tax File Number"
+
+msgid "Enter a valid ABN."
+msgstr "Zadejte platné ABN."
+
+msgid "Enter a valid ACN."
+msgstr "Zadejte platné ACN."
+
+msgid "Enter a valid TFN."
+msgstr "Zadejte platné TFN."
+
+msgid "Antwerp"
+msgstr "Antverpy"
+
+msgid "Brussels"
+msgstr "Brusel"
+
+msgid "East Flanders"
+msgstr "Východní Flandry"
+
+msgid "Flemish Brabant"
+msgstr "Vlámský Brabant"
+
+msgid "Hainaut"
+msgstr "Henegavsko"
+
+msgid "Liege"
+msgstr "Lutych"
+
+msgid "Limburg"
+msgstr "Limburk"
+
+msgid "Luxembourg"
+msgstr "Lucembursko"
+
+msgid "Namur"
+msgstr "Namur"
+
+msgid "Walloon Brabant"
+msgstr "Valonský Brabant"
+
+msgid "West Flanders"
+msgstr "Západní Flandry"
+
+msgid "Brussels Capital Region"
+msgstr "Brusel-hlavní město"
+
+msgid "Flemish Region"
+msgstr "Vlámský region"
+
+msgid "Wallonia"
+msgstr "Valonsko"
+
+msgid "Enter a valid postal code in the range and format 1XXX - 9XXX."
+msgstr "Vložte platné poštovní směrovací číslo v rozsahu a tvaru 1XXX - 9XXX."
+
+msgid "The EGN is not valid"
+msgstr "EGN není platné."
+
+msgid "EIK/BULSTAT is not valid"
+msgstr "EIK/BULSTAT není platné"
+
+msgid ""
+"Select a valid brazilian state. That state is not one of the available "
+"states."
+msgstr "Neplatný brazilský stát. Vyberte jeden z nabízených států."
+
+msgid "Invalid CPF number."
+msgstr "Neplatné číslo CPF."
+
+msgid "This field requires at most 11 digits or 14 characters."
+msgstr "Pole smí obsahovat nejvýše 11 číslic nebo 14 znaků."
+
+msgid "Invalid CNPJ number."
+msgstr "Neplatné číslo CNPJ."
+
+msgid "This field requires at least 14 digits"
+msgstr "Pole smí obsahovat nejméně 14 číslic."
+
+msgid "Invalid Process number."
+msgstr "Invalid Process number."
+
+msgid "State of Brazil (two uppercase letters)"
+msgstr "Stát Brazílie (dvě velká písmena)"
+
+msgid "CPF Document"
+msgstr "CPF Dokument"
+
+msgid "CNPJ Document"
+msgstr "CNPJ Dokument"
+
+msgid "Postal Code"
+msgstr "PSČ"
+
+msgid "Enter a postal code in the format 00000-000."
+msgstr "Zadejte poštovní směrovací číslo ve formátu 00000-000"
+
+msgid "Brest Region"
+msgstr "Brest Region"
+
+msgid "Vitebsk Region"
+msgstr "Vitebsk Region"
+
+msgid "Gomel Region"
+msgstr "Gomel Region"
+
+msgid "Grodno Region"
+msgstr "Grodno Region"
+
+msgid "Minsk Region"
+msgstr "Minsk Region"
+
+msgid "Mogilev Region"
+msgstr "Mogilev Region"
+
+msgid "City of Minsk"
+msgstr "Město Minsk"
+
+msgid "Passport number format is: XX1234567"
+msgstr "Formát čísla pasu je: XX1234567"
+
+msgid "ID format is: 1234567X123XX1"
+msgstr "Formát ID je: 1234567X123XX1"
+
+msgid "Postal code format is: 123456"
+msgstr "Formát poštovního směrovacího čísla je: 123456"
+
+msgid "Belarusian Regions (one integer value in the range 1-7)."
+msgstr "Běloruské regiony (jedna celočíselná hodnota v rozsahu 1-7)."
+
+msgid "Belarusian passport number (2 letters followed by 7 digits)."
+msgstr ""
+
+msgid "Belarusian passport ID number (14 letters and digits)."
+msgstr "Identifikační číslo běloruského pasu (14 písmen a číslic)."
+
+msgid "Belarusian Postal code (6 digits)."
+msgstr "Běloruské poštovní směrovací číslo (6 číslic)."
+
+msgid "Alberta"
+msgstr "Alberta"
+
+msgid "British Columbia"
+msgstr "Britská Kolumbie"
+
+msgid "Manitoba"
+msgstr "Manitoba"
+
+msgid "New Brunswick"
+msgstr "New Brunswick"
+
+msgid "Newfoundland and Labrador"
+msgstr "Newfoundland a Labrador"
+
+msgid "Northwest Territories"
+msgstr "Severozápadní teritoria"
+
+msgid "Nova Scotia"
+msgstr "Nova Scotia"
+
+msgid "Nunavut"
+msgstr "Nunavut"
+
+msgid "Ontario"
+msgstr "Ontario"
+
+msgid "Prince Edward Island"
+msgstr "Ostrov prince Edwarda"
+
+msgid "Quebec"
+msgstr "Quebec"
+
+msgid "Saskatchewan"
+msgstr "Saskatchewan"
+
+msgid "Yukon"
+msgstr "Yukon"
+
+msgid "Enter a postal code in the format XXX XXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXX XXX."
+
+msgid "Enter a Canadian province or territory."
+msgstr "Zadejte kanadskou provincii nebo teritorium"
+
+msgid "Enter a valid Canadian Social Insurance number in XXX-XXX-XXX format."
+msgstr ""
+"Zadejte platné kanadské číslo soc. pojištění (SID) ve tvaru XXX-XXX-XXX."
+
+msgid "Canadian Province (two uppercase letters)"
+msgstr "Provincie Kanady (dvě velká písmena)"
+
+msgid "Canadian Postal Code"
+msgstr "Kanadské poštovní směrovací číslo"
+
+msgid "Canadian Social Insurance Number"
+msgstr "Číslo sociálního pojištění v Kanadě"
+
+msgid "Aargau"
+msgstr "Aargau"
+
+msgid "Appenzell Innerrhoden"
+msgstr "Appenzell Innerrhoden"
+
+msgid "Appenzell Ausserrhoden"
+msgstr "Appenzell Ausserrhoden"
+
+msgid "Basel-Stadt"
+msgstr "Basilej - město"
+
+msgid "Basel-Land"
+msgstr "Basilej - okolí"
+
+msgid "Berne"
+msgstr "Bern"
+
+msgid "Fribourg"
+msgstr "Fribourg"
+
+msgid "Geneva"
+msgstr "Ženeva"
+
+msgid "Glarus"
+msgstr "Glarus"
+
+msgid "Graubuenden"
+msgstr "Graubuenden"
+
+msgid "Jura"
+msgstr "Jura"
+
+msgid "Lucerne"
+msgstr "Lucern"
+
+msgid "Neuchatel"
+msgstr "Neuchatel"
+
+msgid "Nidwalden"
+msgstr "Nidwalden"
+
+msgid "Obwalden"
+msgstr "Obwalden"
+
+msgid "Schaffhausen"
+msgstr "Schaffhausen"
+
+msgid "Schwyz"
+msgstr "Schwyz"
+
+msgid "Solothurn"
+msgstr "Solothurn"
+
+msgid "St. Gallen"
+msgstr "St. Gallen"
+
+msgid "Thurgau"
+msgstr "Thurgau"
+
+msgid "Ticino"
+msgstr "Ticino"
+
+msgid "Uri"
+msgstr "Uri"
+
+msgid "Valais"
+msgstr "Valais"
+
+msgid "Vaud"
+msgstr "Vaud"
+
+msgid "Zug"
+msgstr "Zug"
+
+msgid "Zurich"
+msgstr "Curych"
+
+msgid ""
+"Enter a valid Swiss identity or passport card number in X1234567<0 or "
+"1234567890 format."
+msgstr ""
+"Zadejte platné číslo švýcarského průkazu nebo pasu ve tvaru X1234567<0 nebo "
+"1234567890."
+
+msgid "Enter a valid Swiss Social Security number in 756.XXXX.XXXX.XX format."
+msgstr ""
+"Zadejte platné číslo švýcarského sociálního zabezpečení ve formátu 756.XXXX."
+"XXXX.XX."
+
+msgid "Enter a valid Chilean RUT."
+msgstr "Zadejte platné chilské RUT."
+
+msgid "Enter a valid Chilean RUT. The format is XX.XXX.XXX-X."
+msgstr "Zadejte platné chilské RUT ve tvaru XX.XXX.XXX-X."
+
+msgid "The Chilean RUT is not valid."
+msgstr "Neplatné RUT."
+
+msgid "Enter a post code in the format XXXXXX."
+msgstr "Zadejte poštovní číslo ve tvaru XXXXXX."
+
+msgid "ID Card Number consists of 15 or 18 digits."
+msgstr "Číslo identifikačního průkazu má 15 nebo 18 číslic."
+
+msgid "Invalid ID Card Number: Wrong checksum"
+msgstr "Neplatné číslo identifikačního průkazu: Špatný kontrolní součet"
+
+msgid "Invalid ID Card Number: Wrong birthdate"
+msgstr "Neplatné číslo identifikačního průkazu: Špatné datum narození"
+
+msgid "Invalid ID Card Number: Wrong location code"
+msgstr "Neplatné číslo identifikačního průkazu: Špatný kód oblasti"
+
+msgid "Enter a valid NIT in XXXXXXXXXXX-Y or XXXXXXXXXXXY format."
+msgstr "Zadejte platný NIT ve formátu XXXXXXXXXXX-Y nebo XXXXXXXXXXXY."
+
+msgid "Invalid NIT."
+msgstr "Neplatné NIT."
+
+msgid "Occidental"
+msgstr "Západní"
+
+msgid "Central"
+msgstr "Střední"
+
+msgid "Oriental"
+msgstr "Orientální"
+
+msgid "Pinar del Río"
+msgstr "Pinar del Río"
+
+msgid "Artemisa"
+msgstr "Artemisa"
+
+msgid "Mayabeque"
+msgstr "Mayabeque"
+
+msgid "La Habana"
+msgstr "Havana"
+
+msgid "Matanzas"
+msgstr "Matanzas"
+
+msgid "Cienfuegos"
+msgstr "Cienfuegos"
+
+msgid "Villa Clara"
+msgstr "Villa Clara"
+
+msgid "Sancti Spíritus"
+msgstr "Sancti Spíritus"
+
+msgid "Ciego de Ávila"
+msgstr "Ciego de Ávila"
+
+msgid "Camagüey"
+msgstr "Camagüey"
+
+msgid "Las Tunas"
+msgstr "Las Tunas"
+
+msgid "Holguín"
+msgstr "Holguín"
+
+msgid "Granma"
+msgstr "Granma"
+
+msgid "Santiago de Cuba"
+msgstr "Santiago de Cuba"
+
+msgid "Guantánamo"
+msgstr "Guantánamo"
+
+msgid "Isla de la Juventud"
+msgstr "Isla de la Juventud"
+
+msgid "Enter a Cuban region."
+msgstr "Zadejte kubánský region."
+
+msgid "Enter a Cuban province."
+msgstr "Zadejte kubánskou provincii. "
+
+msgid "Enter a valid postal code in the format XXXXX."
+msgstr "Zadejte platné poštovní směrovací číslo ve formátu XXXXX."
+
+msgid "Enter a valid identity card number in the format XXXXXXXXXXX."
+msgstr "Zadejte platné číslo průkazu totožnosti ve formátu XXXXXXXXXXX."
+
+msgid "Cuban regions (three uppercase letters)"
+msgstr "Kubánské regiony (tři velká písmena)"
+
+msgid "Cuban provinces (three uppercase letters)"
+msgstr "Kubánské provincie (tři velká písmena)"
+
+msgid "Cuban postal code"
+msgstr "Kubánské poštovní směrovací číslo"
+
+msgid "Cuban identity card number"
+msgstr "Číslo kubánského občanského průkazu"
+
+msgid ""
+"Enter a valid date (yymmdd) for the first 6 digits of the Identity Card "
+"Number."
+msgstr ""
+"Zadejte platné datum (yymmdd) pro prvních 6 číslic čísla identifikační karty."
+
+msgid "Prague"
+msgstr "Praha"
+
+msgid "Central Bohemian Region"
+msgstr "Středočeský kraj"
+
+msgid "South Bohemian Region"
+msgstr "Jihočeský kraj"
+
+msgid "Pilsen Region"
+msgstr "Plzeňský kraj"
+
+msgid "Carlsbad Region"
+msgstr "Karlovarský kraj"
+
+msgid "Usti Region"
+msgstr "Ústecký kraj"
+
+msgid "Liberec Region"
+msgstr "Liberecký kraj"
+
+msgid "Hradec Region"
+msgstr "Královéhradecký kraj"
+
+msgid "Pardubice Region"
+msgstr "Pardubický kraj"
+
+msgid "Vysocina Region"
+msgstr "Kraj Vysočina"
+
+msgid "South Moravian Region"
+msgstr "Jihomoravský kraj"
+
+msgid "Olomouc Region"
+msgstr "Olomoucký kraj"
+
+msgid "Zlin Region"
+msgstr "Zlínský kraj"
+
+msgid "Moravian-Silesian Region"
+msgstr "Moravskoslezský kraj"
+
+msgid "Enter a postal code in the format XXXXX or XXX XX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXXX nebo XXX XX."
+
+msgid "Enter a birth number in the format XXXXXX/XXXX or XXXXXXXXXX."
+msgstr "Zadejte rodné číslo ve tvaru XXXXXX/XXXX nebo XXXXXXXXXX."
+
+msgid "Enter a valid birth number."
+msgstr "Zadejte platné rodné číslo."
+
+msgid "Enter a valid IC number."
+msgstr "Zadejte platné IČ."
+
+msgid "Baden-Wuerttemberg"
+msgstr "Bádensko-Württembersko"
+
+msgid "Bavaria"
+msgstr "Bavorsko"
+
+msgid "Berlin"
+msgstr "Berlín"
+
+msgid "Brandenburg"
+msgstr "Braniborsko"
+
+msgid "Bremen"
+msgstr "Brémy"
+
+msgid "Hamburg"
+msgstr "Hamburk"
+
+msgid "Hessen"
+msgstr "Hesensko"
+
+msgid "Mecklenburg-Western Pomerania"
+msgstr "Meklenbursko-Přední Pomořansko"
+
+msgid "Lower Saxony"
+msgstr "Dolní Sasko"
+
+msgid "North Rhine-Westphalia"
+msgstr "Severní Porýní-Vestfálsko"
+
+msgid "Rhineland-Palatinate"
+msgstr "Porýní-Falc"
+
+msgid "Saarland"
+msgstr "Sársko"
+
+msgid "Saxony"
+msgstr "Sasko"
+
+msgid "Saxony-Anhalt"
+msgstr "Sasko-Anhaltsko"
+
+msgid "Schleswig-Holstein"
+msgstr "Šlesvicko-Holštýnsko"
+
+msgid "Thuringia"
+msgstr "Durynsko"
+
+msgid "Enter a zip code in the format XXXXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXXX."
+
+msgid ""
+"Enter a valid German identity card number in XXXXXXXXXXX-XXXXXXX-XXXXXXX-X "
+"format."
+msgstr ""
+"Zadejte platné německé identifikační číslo ve tvaru XXXXXXXXXXX-XXXXXXX-"
+"XXXXXXX-X."
+
+msgid "Albertslund"
+msgstr "Albertslund"
+
+msgid "Allerød"
+msgstr "Allerød"
+
+msgid "Ballerup"
+msgstr "Ballerup"
+
+msgid "Bornholm"
+msgstr "Bornholm"
+
+msgid "Brøndby"
+msgstr "Brøndby"
+
+msgid "Dragør"
+msgstr "Dragør"
+
+msgid "Egedal"
+msgstr "Egedal"
+
+msgid "Fredensborg"
+msgstr "Fredensborg"
+
+msgid "Frederiksberg"
+msgstr "Frederiksberg"
+
+msgid "Frederikssund"
+msgstr "Frederikssund"
+
+msgid "Furesø"
+msgstr "Furesø"
+
+msgid "Gentofte"
+msgstr "Gentofte"
+
+msgid "Gladsaxe"
+msgstr "Gladsaxe"
+
+msgid "Glostrup"
+msgstr "Glostrup"
+
+msgid "Gribskov"
+msgstr "Gribskov"
+
+msgid "Halsnæs"
+msgstr "Halsnæs"
+
+msgid "Helsingør"
+msgstr "Helsingør"
+
+msgid "Herlev"
+msgstr "Herlev"
+
+msgid "Hillerød"
+msgstr "Hillerød"
+
+msgid "Hvidovre"
+msgstr "Hvidovre"
+
+msgid "Høje-Taastrup"
+msgstr "Høje-Taastrup"
+
+msgid "Hørsholm"
+msgstr "Hørsholm"
+
+msgid "Ishøj"
+msgstr "Ishøj"
+
+msgid "København"
+msgstr "Kodaň"
+
+msgid "Lyngby-Taarbæk"
+msgstr "Lyngby-Taarbæk"
+
+msgid "Rudersdal"
+msgstr "Rudersdal"
+
+msgid "Rødovre"
+msgstr "Rødovre"
+
+msgid "Tårnby"
+msgstr "Tårnby"
+
+msgid "Vallensbæk"
+msgstr "Vallensbæk"
+
+msgid "Favrskov"
+msgstr "Favrskov"
+
+msgid "Hedensted"
+msgstr "Hedensted"
+
+msgid "Herning"
+msgstr "Herning"
+
+msgid "Holstebro"
+msgstr "Holstebro"
+
+msgid "Horsens"
+msgstr "Horsens"
+
+msgid "Ikast-Brande"
+msgstr "Ikast-Brande"
+
+msgid "Lemvig"
+msgstr "Lemvig"
+
+msgid "Norddjurs"
+msgstr "Norddjurs"
+
+msgid "Odder"
+msgstr "Odder"
+
+msgid "Randers"
+msgstr "Randers"
+
+msgid "Ringkøbing-Skjern"
+msgstr "Ringkøbing-Skjern"
+
+msgid "Samsø"
+msgstr "Samsø"
+
+msgid "Silkeborg"
+msgstr "Silkeborg"
+
+msgid "Skanderborg"
+msgstr "Skanderborg"
+
+msgid "Skive"
+msgstr "Skive"
+
+msgid "Struer"
+msgstr "Struer"
+
+msgid "Syddjurs"
+msgstr "Syddjurs"
+
+msgid "Viborg"
+msgstr "Viborg"
+
+msgid "Aarhus"
+msgstr "Aarhus"
+
+msgid "Brønderslev"
+msgstr "Brønderslev"
+
+msgid "Frederikshavn"
+msgstr "Frederikshavn"
+
+msgid "Hjørring"
+msgstr "Hjørring"
+
+msgid "Jammerbugt"
+msgstr "Jammerbugt"
+
+msgid "Læsø"
+msgstr "Læsø"
+
+msgid "Mariagerfjord"
+msgstr "Mariagerfjord"
+
+msgid "Morsø"
+msgstr "Morsø"
+
+msgid "Rebild"
+msgstr "Rebild"
+
+msgid "Thisted"
+msgstr "Thisted"
+
+msgid "Vesthimmerland"
+msgstr "Vesthimmerland"
+
+msgid "Aalborg"
+msgstr "Aalborg"
+
+msgid "Faxe"
+msgstr "Faxe"
+
+msgid "Greve"
+msgstr "Greve"
+
+msgid "Guldborgsund"
+msgstr "Guldborgsund"
+
+msgid "Holbæk"
+msgstr "Holbæk"
+
+msgid "Kalundborg"
+msgstr "Kalundborg"
+
+msgid "Køge"
+msgstr "Køge"
+
+msgid "Lejre"
+msgstr "Lejre"
+
+msgid "Lolland"
+msgstr "Lolland"
+
+msgid "Næstved"
+msgstr "Næstved"
+
+msgid "Odsherred"
+msgstr "Odsherred"
+
+msgid "Ringsted"
+msgstr "Ringsted"
+
+msgid "Roskilde"
+msgstr "Roskilde"
+
+msgid "Slagelse"
+msgstr "Slagelse"
+
+msgid "Solrød"
+msgstr "Solrød"
+
+msgid "Sorø"
+msgstr "Sorø"
+
+msgid "Stevns"
+msgstr "Stevns"
+
+msgid "Vordingborg"
+msgstr "Vordingborg"
+
+msgid "Assens"
+msgstr "Assens"
+
+msgid "Billund"
+msgstr "Billund"
+
+msgid "Esbjerg"
+msgstr "Esbjerg"
+
+msgid "Fanø"
+msgstr "Fanø"
+
+msgid "Fredericia"
+msgstr "Fredericia"
+
+msgid "Faaborg-Midtfyn"
+msgstr "Faaborg-Midtfyn"
+
+msgid "Haderslev"
+msgstr "Haderslev"
+
+msgid "Kerteminde"
+msgstr "Kerteminde"
+
+msgid "Kolding"
+msgstr "Kolding"
+
+msgid "Langeland"
+msgstr "Langeland"
+
+msgid "Middelfart"
+msgstr "Middelfart"
+
+msgid "Nordfyn"
+msgstr "Nordfyn"
+
+msgid "Nyborg"
+msgstr "Nyborg"
+
+msgid "Odense"
+msgstr "Odense"
+
+msgid "Svendborg"
+msgstr "Svendborg"
+
+msgid "Sønderborg"
+msgstr "Sønderborg"
+
+msgid "Tønder"
+msgstr "Tønder"
+
+msgid "Varde"
+msgstr "Varde"
+
+msgid "Vejen"
+msgstr "Vejen"
+
+msgid "Vejle"
+msgstr "Vejle"
+
+msgid "Ærø"
+msgstr "Ærø"
+
+msgid "Aabenraa"
+msgstr "Aabenraa"
+
+msgid "Region Hovedstaden"
+msgstr "Region Hovedstaden"
+
+msgid "Region Midtjylland"
+msgstr "Region Midtjylland"
+
+msgid "Region Nordjylland"
+msgstr "Region Nordjylland"
+
+msgid "Region Sjælland"
+msgstr "Region Sjælland"
+
+msgid "Region Syddanmark"
+msgstr "Region Syddanmark"
+
+msgid "Scanning"
+msgstr "Snímání"
+
+msgid "Facility"
+msgstr "Zařízení"
+
+msgid "Høje Taastrup"
+msgstr "Høje Taastrup"
+
+msgid "København C"
+msgstr "Kodaň C"
+
+msgid "Sjælland USF P"
+msgstr "Sjælland USF P"
+
+msgid "Sjælland USF B"
+msgstr "Sjælland USF B"
+
+msgid "Udbetaling"
+msgstr "Udbetaling"
+
+msgid "eBrevsprækken"
+msgstr "eBrevsprækken"
+
+msgid "Kommuneservice"
+msgstr "Obecní služba"
+
+msgid "Københavns Pakkecenter"
+msgstr "Kodaňské balíkové středisko"
+
+msgid "Københavns Pakke BRC"
+msgstr "Kodaňský balíček BRC"
+
+msgid "Returprint BRC"
+msgstr "Returprint BRC"
+
+msgid "Internationalt Postcenter"
+msgstr "Mezinárodní poštovní středisko"
+
+msgid "København K"
+msgstr "Kodaň K"
+
+msgid "København V"
+msgstr "Kodaň V"
+
+msgid "Returpost"
+msgstr "Returpost"
+
+msgid "Centraltastning"
+msgstr "Centraltastning"
+
+msgid "Frederiksberg C"
+msgstr "Frederiksberg C"
+
+msgid "København Ø"
+msgstr "Kodaň Ø"
+
+msgid "Nordhavn"
+msgstr "Nordhavn"
+
+msgid "København N"
+msgstr "Kodaň N"
+
+msgid "København S"
+msgstr "Kodaň S"
+
+msgid "København NV"
+msgstr "Kodaň NV"
+
+msgid "København SV"
+msgstr "Kodaň SV"
+
+msgid "Valby"
+msgstr "Valby"
+
+msgid "Taastrup"
+msgstr "Taastrup"
+
+msgid "Hedehusene"
+msgstr "Hedehusene"
+
+msgid "Brøndby Strand"
+msgstr "Brøndby Strand"
+
+msgid "Vallensbæk Strand"
+msgstr "Vallensbæk Strand"
+
+msgid "Solrød Strand"
+msgstr "Solrød Strand"
+
+msgid "Karlslunde"
+msgstr "Karlslunde"
+
+msgid "Brønshøj"
+msgstr "Brønshøj"
+
+msgid "Vanløse"
+msgstr "Vanløse"
+
+msgid "Skovlunde"
+msgstr "Skovlunde"
+
+msgid "Måløv"
+msgstr "Måløv"
+
+msgid "Smørum"
+msgstr "Smørum"
+
+msgid "Kastrup"
+msgstr "Kastrup"
+
+msgid "Kongens Lyngby"
+msgstr "Kongens Lyngby"
+
+msgid "Virum"
+msgstr "Virum"
+
+msgid "Holte"
+msgstr "Holte"
+
+msgid "Nærum"
+msgstr "Nærum"
+
+msgid "Søborg"
+msgstr "Søborg"
+
+msgid "Dyssegård"
+msgstr "Dyssegård"
+
+msgid "Bagsværd"
+msgstr "Bagsværd"
+
+msgid "Hellerup"
+msgstr "Hellerup"
+
+msgid "Charlottenlund"
+msgstr "Charlottenlund"
+
+msgid "Klampenborg"
+msgstr "Klampenborg"
+
+msgid "Skodsborg"
+msgstr "Skodsborg"
+
+msgid "Vedbæk"
+msgstr "Vedbæk"
+
+msgid "Rungsted Kyst"
+msgstr "Rungsted Kyst"
+
+msgid "Kokkedal"
+msgstr "Kokkedal"
+
+msgid "Nivå"
+msgstr "Nivå"
+
+msgid "Humlebæk"
+msgstr "Humlebæk"
+
+msgid "Espergærde"
+msgstr "Espergærde"
+
+msgid "Snekkersten"
+msgstr "Snekkersten"
+
+msgid "Tikøb"
+msgstr "Tikøb"
+
+msgid "Hornbæk"
+msgstr "Hornbæk"
+
+msgid "Dronningmølle"
+msgstr "Dronningmølle"
+
+msgid "Ålsgårde"
+msgstr "Ålsgårde"
+
+msgid "Hellebæk"
+msgstr "Hellebæk"
+
+msgid "Helsinge"
+msgstr "Helsinge"
+
+msgid "Vejby"
+msgstr "Vejby"
+
+msgid "Tisvildeleje"
+msgstr "Tisvildeleje"
+
+msgid "Græsted"
+msgstr "Græsted"
+
+msgid "Gilleleje"
+msgstr "Gilleleje"
+
+msgid "Frederiksværk"
+msgstr "Frederiksværk"
+
+msgid "Ølsted"
+msgstr "Ølsted"
+
+msgid "Skævinge"
+msgstr "Skævinge"
+
+msgid "Gørløse"
+msgstr "Gørløse"
+
+msgid "Liseleje"
+msgstr "Liseleje"
+
+msgid "Melby"
+msgstr "Melby"
+
+msgid "Hundested"
+msgstr "Hundested"
+
+msgid "Birkerød"
+msgstr "Birkerød"
+
+msgid "Kvistgård"
+msgstr "Kvistgård"
+
+msgid "Værløse"
+msgstr "Værløse"
+
+msgid "Farum"
+msgstr "Farum"
+
+msgid "Lynge"
+msgstr "Lynge"
+
+msgid "Slangerup"
+msgstr "Slangerup"
+
+msgid "Jægerspris"
+msgstr "Jægerspris"
+
+msgid "Ølstykke"
+msgstr "Ølstykke"
+
+msgid "Stenløse"
+msgstr "Stenløse"
+
+msgid "Veksø Sjælland"
+msgstr "Veksø Sjælland"
+
+msgid "Rønne"
+msgstr "Rønne"
+
+msgid "Aakirkeby"
+msgstr "Aakirkeby"
+
+msgid "Nexø"
+msgstr "Nexø"
+
+msgid "Svaneke"
+msgstr "Svaneke"
+
+msgid "Østermarie"
+msgstr "Østermarie"
+
+msgid "Gudhjem"
+msgstr "Gudhjem"
+
+msgid "Allinge"
+msgstr "Allinge"
+
+msgid "Klemensker"
+msgstr "Klemensker"
+
+msgid "Hasle"
+msgstr "Hasle"
+
+msgid "Tune"
+msgstr "Tune"
+
+msgid "Jyllinge"
+msgstr "Jyllinge"
+
+msgid "Skibby"
+msgstr "Skibby"
+
+msgid "Kirke Såby"
+msgstr "Kirke Såby"
+
+msgid "Kirke Hyllinge"
+msgstr "Kirke Hyllinge"
+
+msgid "Viby Sjælland"
+msgstr "Viby Sjælland"
+
+msgid "Borup"
+msgstr "Borup"
+
+msgid "Herlufmagle"
+msgstr "Herlufmagle"
+
+msgid "Glumsø"
+msgstr "Glumsø"
+
+msgid "Fjenneslev"
+msgstr "Fjenneslev"
+
+msgid "Jystrup Midtsj"
+msgstr "Jystrup Midtsj"
+
+msgid "Munke Bjergby"
+msgstr "Munke Bjergby"
+
+msgid "Korsør"
+msgstr "Korsør"
+
+msgid "Skælskør"
+msgstr "Skælskør"
+
+msgid "Vemmelev"
+msgstr "Vemmelev"
+
+msgid "Boeslunde"
+msgstr "Boeslunde"
+
+msgid "Rude"
+msgstr "Rude"
+
+msgid "Agersø"
+msgstr "Agersø"
+
+msgid "Omø"
+msgstr "Omø"
+
+msgid "Fuglebjerg"
+msgstr "Fuglebjerg"
+
+msgid "Dalmose"
+msgstr "Dalmose"
+
+msgid "Sandved"
+msgstr "Sandved"
+
+msgid "Høng"
+msgstr "Høng"
+
+msgid "Gørlev"
+msgstr "Gørlev"
+
+msgid "Ruds Vedby"
+msgstr "Ruds Vedby"
+
+msgid "Dianalund"
+msgstr "Dianalund"
+
+msgid "Stenlille"
+msgstr "Stenlille"
+
+msgid "Nyrup"
+msgstr "Nyrup"
+
+msgid "Orø"
+msgstr "Orø"
+
+msgid "Hvalsø"
+msgstr "Hvalsø"
+
+msgid "Tølløse"
+msgstr "Tølløse"
+
+msgid "Ugerløse"
+msgstr "Ugerløse"
+
+msgid "Kirke Eskilstrup"
+msgstr "Kirke Eskilstrup"
+
+msgid "Store Merløse"
+msgstr "Store Merløse"
+
+msgid "Vipperød"
+msgstr "Vipperød"
+
+msgid "Regstrup"
+msgstr "Regstrup"
+
+msgid "Mørkøv"
+msgstr "Mørkøv"
+
+msgid "Jyderup"
+msgstr "Jyderup"
+
+msgid "Snertinge"
+msgstr "Snertinge"
+
+msgid "Svebølle"
+msgstr "Svebølle"
+
+msgid "Store Fuglede"
+msgstr "Store Fuglede"
+
+msgid "Jerslev Sjælland"
+msgstr "Jerslev Sjælland"
+
+msgid "Nykøbing Sj"
+msgstr "Nykøbing Sj"
+
+msgid "Svinninge"
+msgstr "Svinninge"
+
+msgid "Gislinge"
+msgstr "Gislinge"
+
+msgid "Hørve"
+msgstr "Hørve"
+
+msgid "Fårevejle"
+msgstr "Fårevejle"
+
+msgid "Asnæs"
+msgstr "Asnæs"
+
+msgid "Vig"
+msgstr "Vig"
+
+msgid "Grevinge"
+msgstr "Grevinge"
+
+msgid "Nørre Asmindrup"
+msgstr "Nørre Asmindrup"
+
+msgid "Højby"
+msgstr "Højby"
+
+msgid "Rørvig"
+msgstr "Rørvig"
+
+msgid "Sjællands Odde"
+msgstr "Sjællands Odde"
+
+msgid "Føllenslev"
+msgstr "Føllenslev"
+
+msgid "Sejerø"
+msgstr "Sejerø"
+
+msgid "Eskebjerg"
+msgstr "Eskebjerg"
+
+msgid "Gadstrup"
+msgstr "Gadstrup"
+
+msgid "Havdrup"
+msgstr "Havdrup"
+
+msgid "Lille Skensved"
+msgstr "Lille Skensved"
+
+msgid "Bjæverskov"
+msgstr "Bjæverskov"
+
+msgid "Hårlev"
+msgstr "Hårlev"
+
+msgid "Karise"
+msgstr "Karise"
+
+msgid "Faxe Ladeplads"
+msgstr "Faxe Ladeplads"
+
+msgid "Store Heddinge"
+msgstr "Store Heddinge"
+
+msgid "Strøby"
+msgstr "Strøby"
+
+msgid "Klippinge"
+msgstr "Klippinge"
+
+msgid "Rødvig Stevns"
+msgstr "Rødvig Stevns"
+
+msgid "Herfølge"
+msgstr "Herfølge"
+
+msgid "Tureby"
+msgstr "Tureby"
+
+msgid "Rønnede"
+msgstr "Rønnede"
+
+msgid "Holmegaard"
+msgstr "Holmegaard"
+
+msgid "Haslev"
+msgstr "Haslev"
+
+msgid "Præstø"
+msgstr "Præstø"
+
+msgid "Tappernøje"
+msgstr "Tappernøje"
+
+msgid "Mern"
+msgstr "Mern"
+
+msgid "Karrebæksminde"
+msgstr "Karrebæksminde"
+
+msgid "Lundby"
+msgstr "Lundby"
+
+msgid "Kalvehave"
+msgstr "Kalvehave"
+
+msgid "Langebæk"
+msgstr "Langebæk"
+
+msgid "Stensved"
+msgstr "Stensved"
+
+msgid "Stege"
+msgstr "Stege"
+
+msgid "Borre"
+msgstr "Borre"
+
+msgid "Askeby"
+msgstr "Askeby"
+
+msgid "Bogø By"
+msgstr "Bogø By"
+
+msgid "Nykøbing F"
+msgstr "Nykøbing F"
+
+msgid "Nørre Alslev"
+msgstr "Nørre Alslev"
+
+msgid "Stubbekøbing"
+msgstr "Stubbekøbing"
+
+msgid "Guldborg"
+msgstr "Guldborg"
+
+msgid "Eskilstrup"
+msgstr "Eskilstrup"
+
+msgid "Horbelev"
+msgstr "Horbelev"
+
+msgid "Idestrup"
+msgstr "Idestrup"
+
+msgid "Væggerløse"
+msgstr "Væggerløse"
+
+msgid "Gedser"
+msgstr "Gedser"
+
+msgid "Nysted"
+msgstr "Nysted"
+
+msgid "Toreby L"
+msgstr "Toreby L"
+
+msgid "Kettinge"
+msgstr "Kettinge"
+
+msgid "Øster Ulslev"
+msgstr "Øster Ulslev"
+
+msgid "Errindlev"
+msgstr "Errindlev"
+
+msgid "Nakskov"
+msgstr "Nakskov"
+
+msgid "Harpelunde"
+msgstr "Harpelunde"
+
+msgid "Horslunde"
+msgstr "Horslunde"
+
+msgid "Søllested"
+msgstr "Søllested"
+
+msgid "Maribo"
+msgstr "Maribo"
+
+msgid "Bandholm"
+msgstr "Bandholm"
+
+msgid "Askø og Lilleø"
+msgstr "Askø og Lilleø"
+
+msgid "Torrig L"
+msgstr "Torrig L"
+
+msgid "Fejø"
+msgstr "Fejø"
+
+msgid "Femø"
+msgstr "Femø"
+
+msgid "Nørreballe"
+msgstr "Nørreballe"
+
+msgid "Stokkemarke"
+msgstr "Stokkemarke"
+
+msgid "Vesterborg"
+msgstr "Vesterborg"
+
+msgid "Holeby"
+msgstr "Holeby"
+
+msgid "Rødby"
+msgstr "Rødby"
+
+msgid "Dannemare"
+msgstr "Dannemare"
+
+msgid "Sakskøbing"
+msgstr "Sakskøbing"
+
+msgid "Midtsjælland USF P"
+msgstr "Midtsjælland USF P"
+
+msgid "Odense C"
+msgstr "Odense C"
+
+msgid "Odense V"
+msgstr "Odense V"
+
+msgid "Odense NV"
+msgstr "Odense NV"
+
+msgid "Odense SØ"
+msgstr "Odense SØ"
+
+msgid "Odense M"
+msgstr "Odense M"
+
+msgid "Odense NØ"
+msgstr "Odense NØ"
+
+msgid "Odense SV"
+msgstr "Odense SV"
+
+msgid "Odense S"
+msgstr "Odense S"
+
+msgid "Odense N"
+msgstr "Odense N"
+
+msgid "Marslev"
+msgstr "Marslev"
+
+msgid "Agedrup"
+msgstr "Agedrup"
+
+msgid "Munkebo"
+msgstr "Munkebo"
+
+msgid "Rynkeby"
+msgstr "Rynkeby"
+
+msgid "Mesinge"
+msgstr "Mesinge"
+
+msgid "Dalby"
+msgstr "Dalby"
+
+msgid "Martofte"
+msgstr "Martofte"
+
+msgid "Bogense"
+msgstr "Bogense"
+
+msgid "Otterup"
+msgstr "Otterup"
+
+msgid "Morud"
+msgstr "Morud"
+
+msgid "Harndrup"
+msgstr "Harndrup"
+
+msgid "Brenderup Fyn"
+msgstr "Brenderup Fyn"
+
+msgid "Asperup"
+msgstr "Asperup"
+
+msgid "Søndersø"
+msgstr "Søndersø"
+
+msgid "Veflinge"
+msgstr "Veflinge"
+
+msgid "Skamby"
+msgstr "Skamby"
+
+msgid "Blommenslyst"
+msgstr "Blommenslyst"
+
+msgid "Vissenbjerg"
+msgstr "Vissenbjerg"
+
+msgid "Ullerslev"
+msgstr "Ullerslev"
+
+msgid "Langeskov"
+msgstr "Langeskov"
+
+msgid "Aarup"
+msgstr "Aarup"
+
+msgid "Nørre Aaby"
+msgstr "Nørre Aaby"
+
+msgid "Gelsted"
+msgstr "Gelsted"
+
+msgid "Ejby"
+msgstr "Ejby"
+
+msgid "Faaborg"
+msgstr "Faaborg"
+
+msgid "Lyø"
+msgstr "Lyø"
+
+msgid "Avernakø"
+msgstr "Avernakø"
+
+msgid "Bjørnø"
+msgstr "Bjørnø"
+
+msgid "Glamsbjerg"
+msgstr "Glamsbjerg"
+
+msgid "Ebberup"
+msgstr "Ebberup"
+
+msgid "Millinge"
+msgstr "Millinge"
+
+msgid "Broby"
+msgstr "Broby"
+
+msgid "Haarby"
+msgstr "Haarby"
+
+msgid "Tommerup"
+msgstr "Tommerup"
+
+msgid "Ringe"
+msgstr "Ringe"
+
+msgid "Vester Skerninge"
+msgstr "Vester Skerninge"
+
+msgid "Stenstrup"
+msgstr "Stenstrup"
+
+msgid "Kværndrup"
+msgstr "Kværndrup"
+
+msgid "Årslev"
+msgstr "Årslev"
+
+msgid "Ørbæk"
+msgstr "Ørbæk"
+
+msgid "Gislev"
+msgstr "Gislev"
+
+msgid "Ryslinge"
+msgstr "Ryslinge"
+
+msgid "Ferritslev Fyn"
+msgstr "Ferritslev Fyn"
+
+msgid "Frørup"
+msgstr "Frørup"
+
+msgid "Hesselager"
+msgstr "Hesselager"
+
+msgid "Skårup Fyn"
+msgstr "Skårup Fyn"
+
+msgid "Vejstrup"
+msgstr "Vejstrup"
+
+msgid "Oure"
+msgstr "Oure"
+
+msgid "Gudme"
+msgstr "Gudme"
+
+msgid "Gudbjerg Sydfyn"
+msgstr "Gudbjerg Sydfyn"
+
+msgid "Rudkøbing"
+msgstr "Rudkøbing"
+
+msgid "Humble"
+msgstr "Humble"
+
+msgid "Bagenkop"
+msgstr "Bagenkop"
+
+msgid "Strynø"
+msgstr "Strynø"
+
+msgid "Tranekær"
+msgstr "Tranekær"
+
+msgid "Marstal"
+msgstr "Marstal"
+
+msgid "Birkholm"
+msgstr "Birkholm"
+
+msgid "Ærøskøbing"
+msgstr "Ærøskøbing"
+
+msgid "Søby Ærø"
+msgstr "Søby Ærø"
+
+msgid "Egtved"
+msgstr "Egtved"
+
+msgid "Almind"
+msgstr "Almind"
+
+msgid "Viuf"
+msgstr "Viuf"
+
+msgid "Jordrup"
+msgstr "Jordrup"
+
+msgid "Christiansfeld"
+msgstr "Christiansfeld"
+
+msgid "Bjert"
+msgstr "Bjert"
+
+msgid "Sønder Stenderup"
+msgstr "Sønder Stenderup"
+
+msgid "Sjølund"
+msgstr "Sjølund"
+
+msgid "Hejls"
+msgstr "Hejls"
+
+msgid "Barsø"
+msgstr "Barsø"
+
+msgid "Rødekro"
+msgstr "Rødekro"
+
+msgid "Løgumkloster"
+msgstr "Løgumkloster"
+
+msgid "Bredebro"
+msgstr "Bredebro"
+
+msgid "Højer"
+msgstr "Højer"
+
+msgid "Gråsten"
+msgstr "Gråsten"
+
+msgid "Broager"
+msgstr "Broager"
+
+msgid "Egernsund"
+msgstr "Egernsund"
+
+msgid "Padborg"
+msgstr "Padborg"
+
+msgid "Kruså"
+msgstr "Kruså"
+
+msgid "Tinglev"
+msgstr "Tinglev"
+
+msgid "Bylderup-Bov"
+msgstr "Bylderup-Bov"
+
+msgid "Bolderslev"
+msgstr "Bolderslev"
+
+msgid "Nordborg"
+msgstr "Nordborg"
+
+msgid "Augustenborg"
+msgstr "Augustenborg"
+
+msgid "Sydals"
+msgstr "Sydals"
+
+msgid "Vojens"
+msgstr "Vojens"
+
+msgid "Gram"
+msgstr "Gram"
+
+msgid "Toftlund"
+msgstr "Toftlund"
+
+msgid "Agerskov"
+msgstr "Agerskov"
+
+msgid "Branderup J"
+msgstr "Branderup J"
+
+msgid "Bevtoft"
+msgstr "Bevtoft"
+
+msgid "Sommersted"
+msgstr "Sommersted"
+
+msgid "Vamdrup"
+msgstr "Vamdrup"
+
+msgid "Gesten"
+msgstr "Gesten"
+
+msgid "Bække"
+msgstr "Bække"
+
+msgid "Vorbasse"
+msgstr "Vorbasse"
+
+msgid "Rødding"
+msgstr "Rødding"
+
+msgid "Lunderskov"
+msgstr "Lunderskov"
+
+msgid "Brørup"
+msgstr "Brørup"
+
+msgid "Lintrup"
+msgstr "Lintrup"
+
+msgid "Holsted"
+msgstr "Holsted"
+
+msgid "Hovborg"
+msgstr "Hovborg"
+
+msgid "Føvling"
+msgstr "Føvling"
+
+msgid "Gørding"
+msgstr "Gørding"
+
+msgid "Esbjerg Ø"
+msgstr "Esbjerg Ø"
+
+msgid "Esbjerg V"
+msgstr "Esbjerg V"
+
+msgid "Esbjerg N"
+msgstr "Esbjerg N"
+
+msgid "Tjæreborg"
+msgstr "Tjæreborg"
+
+msgid "Bramming"
+msgstr "Bramming"
+
+msgid "Glejbjerg"
+msgstr "Glejbjerg"
+
+msgid "Agerbæk"
+msgstr "Agerbæk"
+
+msgid "Ribe"
+msgstr "Ribe"
+
+msgid "Gredstedbro"
+msgstr "Gredstedbro"
+
+msgid "Skærbæk"
+msgstr "Skærbæk"
+
+msgid "Rømø"
+msgstr "Rømø"
+
+msgid "Årre"
+msgstr "Årre"
+
+msgid "Ansager"
+msgstr "Ansager"
+
+msgid "Nørre Nebel"
+msgstr "Nørre Nebel"
+
+msgid "Oksbøl"
+msgstr "Oksbøl"
+
+msgid "Janderup Vestj"
+msgstr "Janderup Vestj"
+
+msgid "Billum"
+msgstr "Billum"
+
+msgid "Vejers Strand"
+msgstr "Vejers Strand"
+
+msgid "Henne"
+msgstr "Henne"
+
+msgid "Outrup"
+msgstr "Outrup"
+
+msgid "Blåvand"
+msgstr "Blåvand"
+
+msgid "Tistrup"
+msgstr "Tistrup"
+
+msgid "Ølgod"
+msgstr "Ølgod"
+
+msgid "Tarm"
+msgstr "Tarm"
+
+msgid "Hemmet"
+msgstr "Hemmet"
+
+msgid "Skjern"
+msgstr "Skjern"
+
+msgid "Videbæk"
+msgstr "Videbæk"
+
+msgid "Kibæk"
+msgstr "Kibæk"
+
+msgid "Lem St"
+msgstr "Lem St"
+
+msgid "Ringkøbing"
+msgstr "Ringkøbing"
+
+msgid "Hvide Sande"
+msgstr "Hvide Sande"
+
+msgid "Spjald"
+msgstr "Spjald"
+
+msgid "Ørnhøj"
+msgstr "Ørnhøj"
+
+msgid "Tim"
+msgstr "Tim"
+
+msgid "Ulfborg"
+msgstr "Ulfborg"
+
+msgid "Taulov Pakkecenter"
+msgstr "Taulov Pakkecenter"
+
+msgid "Pakker TLP"
+msgstr "Pakker TLP"
+
+msgid "Børkop"
+msgstr "Børkop"
+
+msgid "Vejle Øst"
+msgstr "Vejle Øst"
+
+msgid "Juelsminde"
+msgstr "Juelsminde"
+
+msgid "Stouby"
+msgstr "Stouby"
+
+msgid "Barrit"
+msgstr "Barrit"
+
+msgid "Tørring"
+msgstr "Tørring"
+
+msgid "Uldum"
+msgstr "Uldum"
+
+msgid "Vonge"
+msgstr "Vonge"
+
+msgid "Bredsten"
+msgstr "Bredsten"
+
+msgid "Randbøl"
+msgstr "Randbøl"
+
+msgid "Vandel"
+msgstr "Vandel"
+
+msgid "Grindsted"
+msgstr "Grindsted"
+
+msgid "Hejnsvig"
+msgstr "Hejnsvig"
+
+msgid "Sønder Omme"
+msgstr "Sønder Omme"
+
+msgid "Stakroge"
+msgstr "Stakroge"
+
+msgid "Sønder Felding"
+msgstr "Sønder Felding"
+
+msgid "Jelling"
+msgstr "Jelling"
+
+msgid "Gadbjerg"
+msgstr "Gadbjerg"
+
+msgid "Give"
+msgstr "Give"
+
+msgid "Brande"
+msgstr "Brande"
+
+msgid "Ejstrupholm"
+msgstr "Ejstrupholm"
+
+msgid "Hampen"
+msgstr "Hampen"
+
+msgid "Ikast"
+msgstr "Ikast"
+
+msgid "Bording"
+msgstr "Bording"
+
+msgid "Engesvang"
+msgstr "Engesvang"
+
+msgid "Sunds"
+msgstr "Sunds"
+
+msgid "Karup J"
+msgstr "Karup J"
+
+msgid "Vildbjerg"
+msgstr "Vildbjerg"
+
+msgid "Aulum"
+msgstr "Aulum"
+
+msgid "Haderup"
+msgstr "Haderup"
+
+msgid "Sørvad"
+msgstr "Sørvad"
+
+msgid "Hjerm"
+msgstr "Hjerm"
+
+msgid "Vemb"
+msgstr "Vemb"
+
+msgid "Bøvlingbjerg"
+msgstr "Bøvlingbjerg"
+
+msgid "Bækmarksbro"
+msgstr "Bækmarksbro"
+
+msgid "Harboøre"
+msgstr "Harboøre"
+
+msgid "Thyborøn"
+msgstr "Thyborøn"
+
+msgid "Hanstholm"
+msgstr "Hanstholm"
+
+msgid "Frøstrup"
+msgstr "Frøstrup"
+
+msgid "Vesløs"
+msgstr "Vesløs"
+
+msgid "Snedsted"
+msgstr "Snedsted"
+
+msgid "Bedsted Thy"
+msgstr "Bedsted Thy"
+
+msgid "Hurup Thy"
+msgstr "Hurup Thy"
+
+msgid "Vestervig"
+msgstr "Vestervig"
+
+msgid "Thyholm"
+msgstr "Thyholm"
+
+msgid "Vinderup"
+msgstr "Vinderup"
+
+msgid "Højslev"
+msgstr "Højslev"
+
+msgid "Stoholm Jyll"
+msgstr "Stoholm Jyll"
+
+msgid "Spøttrup"
+msgstr "Spøttrup"
+
+msgid "Roslev"
+msgstr "Roslev"
+
+msgid "Fur"
+msgstr "Fur"
+
+msgid "Nykøbing M"
+msgstr "Nykøbing M"
+
+msgid "Erslev"
+msgstr "Erslev"
+
+msgid "Karby"
+msgstr "Karby"
+
+msgid "Redsted M"
+msgstr "Redsted M"
+
+msgid "Vils"
+msgstr "Vils"
+
+msgid "Øster Assels"
+msgstr "Øster Assels"
+
+msgid "Sydjylland/Fyn USF P"
+msgstr "Sydjylland/Fyn USF P"
+
+msgid "Sydjylland/Fyn USF B"
+msgstr "Sydjylland/Fyn USF B"
+
+msgid "Fakturaservice"
+msgstr "Fakturaservice"
+
+msgid "Fakturascanning"
+msgstr "Fakturascanning"
+
+msgid "Statsservice"
+msgstr "Statistická služba"
+
+msgid "Kommunepost"
+msgstr "Kommunepost"
+
+msgid "Aarhus C"
+msgstr "Aarhus C"
+
+msgid "Aarhus N"
+msgstr "Aarhus N"
+
+msgid "Aarhus V"
+msgstr "Aarhus V"
+
+msgid "Brabrand"
+msgstr "Brabrand"
+
+msgid "Risskov Ø"
+msgstr "Risskov Ø"
+
+msgid "Åbyhøj"
+msgstr "Åbyhøj"
+
+msgid "Risskov"
+msgstr "Risskov"
+
+msgid "Egå"
+msgstr "Egå"
+
+msgid "Viby J"
+msgstr "Viby J"
+
+msgid "Højbjerg"
+msgstr "Højbjerg"
+
+msgid "Tranbjerg J"
+msgstr "Tranbjerg J"
+
+msgid "Mårslet"
+msgstr "Mårslet"
+
+msgid "Beder"
+msgstr "Beder"
+
+msgid "Malling"
+msgstr "Malling"
+
+msgid "Hundslund"
+msgstr "Hundslund"
+
+msgid "Solbjerg"
+msgstr "Solbjerg"
+
+msgid "Hasselager"
+msgstr "Hasselager"
+
+msgid "Hørning"
+msgstr "Hørning"
+
+msgid "Hadsten"
+msgstr "Hadsten"
+
+msgid "Trige"
+msgstr "Trige"
+
+msgid "Tilst"
+msgstr "Tilst"
+
+msgid "Hinnerup"
+msgstr "Hinnerup"
+
+msgid "Ebeltoft"
+msgstr "Ebeltoft"
+
+msgid "Rønde"
+msgstr "Rønde"
+
+msgid "Knebel"
+msgstr "Knebel"
+
+msgid "Balle"
+msgstr "Balle"
+
+msgid "Hammel"
+msgstr "Hammel"
+
+msgid "Harlev J"
+msgstr "Harlev J"
+
+msgid "Galten"
+msgstr "Galten"
+
+msgid "Sabro"
+msgstr "Sabro"
+
+msgid "Sporup"
+msgstr "Sporup"
+
+msgid "Grenaa"
+msgstr "Grenaa"
+
+msgid "Lystrup"
+msgstr "Lystrup"
+
+msgid "Hjortshøj"
+msgstr "Hjortshøj"
+
+msgid "Skødstrup"
+msgstr "Skødstrup"
+
+msgid "Hornslet"
+msgstr "Hornslet"
+
+msgid "Mørke"
+msgstr "Mørke"
+
+msgid "Ryomgård"
+msgstr "Ryomgård"
+
+msgid "Kolind"
+msgstr "Kolind"
+
+msgid "Trustrup"
+msgstr "Trustrup"
+
+msgid "Nimtofte"
+msgstr "Nimtofte"
+
+msgid "Glesborg"
+msgstr "Glesborg"
+
+msgid "Ørum Djurs"
+msgstr "Ørum Djurs"
+
+msgid "Anholt"
+msgstr "Anholt"
+
+msgid "Kjellerup"
+msgstr "Kjellerup"
+
+msgid "Lemming"
+msgstr "Lemming"
+
+msgid "Sorring"
+msgstr "Sorring"
+
+msgid "Ans By"
+msgstr "Ans By"
+
+msgid "Them"
+msgstr "Them"
+
+msgid "Bryrup"
+msgstr "Bryrup"
+
+msgid "Låsby"
+msgstr "Låsby"
+
+msgid "Ry"
+msgstr "Ry"
+
+msgid "Daugård"
+msgstr "Daugård"
+
+msgid "Løsning"
+msgstr "Løsning"
+
+msgid "Hovedgård"
+msgstr "Hovedgård"
+
+msgid "Brædstrup"
+msgstr "Brædstrup"
+
+msgid "Gedved"
+msgstr "Gedved"
+
+msgid "Østbirk"
+msgstr "Østbirk"
+
+msgid "Flemming"
+msgstr "Flemming"
+
+msgid "Rask Mølle"
+msgstr "Rask Mølle"
+
+msgid "Klovborg"
+msgstr "Klovborg"
+
+msgid "Nørre Snede"
+msgstr "Nørre Snede"
+
+msgid "Stenderup"
+msgstr "Stenderup"
+
+msgid "Hornsyld"
+msgstr "Hornsyld"
+
+msgid "Endelave"
+msgstr "Endelave"
+
+msgid "Tunø"
+msgstr "Tunø"
+
+msgid "Tjele"
+msgstr "Tjele"
+
+msgid "Løgstrup"
+msgstr "Løgstrup"
+
+msgid "Skals"
+msgstr "Skals"
+
+msgid "Rødkærsbro"
+msgstr "Rødkærsbro"
+
+msgid "Bjerringbro"
+msgstr "Bjerringbro"
+
+msgid "Ulstrup"
+msgstr "Ulstrup"
+
+msgid "Langå"
+msgstr "Langå"
+
+msgid "Thorsø"
+msgstr "Thorsø"
+
+msgid "Fårvang"
+msgstr "Fårvang"
+
+msgid "Gjern"
+msgstr "Gjern"
+
+msgid "Randers C"
+msgstr "Randers C"
+
+msgid "Randers NV"
+msgstr "Randers NV"
+
+msgid "Randers NØ"
+msgstr "Randers NØ"
+
+msgid "Randers SV"
+msgstr "Randers SV"
+
+msgid "Ørsted"
+msgstr "Ørsted"
+
+msgid "Randers SØ"
+msgstr "Randers SØ"
+
+msgid "Allingåbro"
+msgstr "Allingåbro"
+
+msgid "Auning"
+msgstr "Auning"
+
+msgid "Havndal"
+msgstr "Havndal"
+
+msgid "Spentrup"
+msgstr "Spentrup"
+
+msgid "Gjerlev J"
+msgstr "Gjerlev J"
+
+msgid "Fårup"
+msgstr "Fårup"
+
+msgid "Aalborg SV"
+msgstr "Aalborg SV"
+
+msgid "Aalborg SØ"
+msgstr "Aalborg SØ"
+
+msgid "Aalborg Øst"
+msgstr "Aalborg Øst"
+
+msgid "Svenstrup J"
+msgstr "Svenstrup J"
+
+msgid "Nibe"
+msgstr "Nibe"
+
+msgid "Gistrup"
+msgstr "Gistrup"
+
+msgid "Klarup"
+msgstr "Klarup"
+
+msgid "Storvorde"
+msgstr "Storvorde"
+
+msgid "Kongerslev"
+msgstr "Kongerslev"
+
+msgid "Sæby"
+msgstr "Sæby"
+
+msgid "Vodskov"
+msgstr "Vodskov"
+
+msgid "Hjallerup"
+msgstr "Hjallerup"
+
+msgid "Dronninglund"
+msgstr "Dronninglund"
+
+msgid "Asaa"
+msgstr "Asaa"
+
+msgid "Dybvad"
+msgstr "Dybvad"
+
+msgid "Gandrup"
+msgstr "Gandrup"
+
+msgid "Hals"
+msgstr "Hals"
+
+msgid "Vestbjerg"
+msgstr "Vestbjerg"
+
+msgid "Sulsted"
+msgstr "Sulsted"
+
+msgid "Tylstrup"
+msgstr "Tylstrup"
+
+msgid "Nørresundby"
+msgstr "Nørresundby"
+
+msgid "Vadum"
+msgstr "Vadum"
+
+msgid "Aabybro"
+msgstr "Aabybro"
+
+msgid "Brovst"
+msgstr "Brovst"
+
+msgid "Løkken"
+msgstr "Løkken"
+
+msgid "Pandrup"
+msgstr "Pandrup"
+
+msgid "Blokhus"
+msgstr "Blokhus"
+
+msgid "Saltum"
+msgstr "Saltum"
+
+msgid "Hobro"
+msgstr "Hobro"
+
+msgid "Arden"
+msgstr "Arden"
+
+msgid "Skørping"
+msgstr "Skørping"
+
+msgid "Støvring"
+msgstr "Støvring"
+
+msgid "Suldrup"
+msgstr "Suldrup"
+
+msgid "Mariager"
+msgstr "Mariager"
+
+msgid "Hadsund"
+msgstr "Hadsund"
+
+msgid "Bælum"
+msgstr "Bælum"
+
+msgid "Terndrup"
+msgstr "Terndrup"
+
+msgid "Aars"
+msgstr "Aars"
+
+msgid "Nørager"
+msgstr "Nørager"
+
+msgid "Aalestrup"
+msgstr "Aalestrup"
+
+msgid "Gedsted"
+msgstr "Gedsted"
+
+msgid "Møldrup"
+msgstr "Møldrup"
+
+msgid "Farsø"
+msgstr "Farsø"
+
+msgid "Løgstør"
+msgstr "Løgstør"
+
+msgid "Ranum"
+msgstr "Ranum"
+
+msgid "Fjerritslev"
+msgstr "Fjerritslev"
+
+msgid "Jerslev J"
+msgstr "Jerslev J"
+
+msgid "Østervrå"
+msgstr "Østervrå"
+
+msgid "Vrå"
+msgstr "Vrå"
+
+msgid "Tårs"
+msgstr "Tårs"
+
+msgid "Hirtshals"
+msgstr "Hirtshals"
+
+msgid "Sindal"
+msgstr "Sindal"
+
+msgid "Bindslev"
+msgstr "Bindslev"
+
+msgid "Strandby"
+msgstr "Strandby"
+
+msgid "Jerup"
+msgstr "Jerup"
+
+msgid "Ålbæk"
+msgstr "Ålbæk"
+
+msgid "Skagen"
+msgstr "Skagen"
+
+msgid "Jylland USF P"
+msgstr "Jylland USF P"
+
+msgid "Jylland USF B"
+msgstr "Jylland USF B"
+
+msgid "Borgerservice"
+msgstr "Borgerservice"
+
+msgid "Santa Claus/Julemanden"
+msgstr "Santa Claus/Julemanden"
+
+msgid "Nuuk"
+msgstr "Nuuk"
+
+msgid "Nuussuaq"
+msgstr "Nuussuaq"
+
+msgid "Kangerlussuaq"
+msgstr "Kangerlussuaq"
+
+msgid "Sisimiut"
+msgstr "Sisimiut"
+
+msgid "Maniitsoq"
+msgstr "Maniitsoq"
+
+msgid "Tasiilaq"
+msgstr "Tasiilaq"
+
+msgid "Kulusuk"
+msgstr "Kulusuk"
+
+msgid "Alluitsup Paa"
+msgstr "Alluitsup Paa"
+
+msgid "Qaqortoq"
+msgstr "Qaqortoq"
+
+msgid "Narsaq"
+msgstr "Narsaq"
+
+msgid "Nanortalik"
+msgstr "Nanortalik"
+
+msgid "Narsarsuaq"
+msgstr "Narsarsuaq"
+
+msgid "Ikerasassuaq"
+msgstr "Ikerasassuaq"
+
+msgid "Kangilinnguit"
+msgstr "Kangilinnguit"
+
+msgid "Arsuk"
+msgstr "Arsuk"
+
+msgid "Paamiut"
+msgstr "Paamiut"
+
+msgid "Aasiaat"
+msgstr "Aasiaat"
+
+msgid "Qasigiannguit"
+msgstr "Qasigiannguit"
+
+msgid "Ilulissat"
+msgstr "Ilulissat"
+
+msgid "Qeqertarsuaq"
+msgstr "Qeqertarsuaq"
+
+msgid "Kangaatsiaq"
+msgstr "Kangaatsiaq"
+
+msgid "Uummannaq"
+msgstr "Uummannaq"
+
+msgid "Upernavik"
+msgstr "Upernavik"
+
+msgid "Qaarsut"
+msgstr "Qaarsut"
+
+msgid "Pituffik"
+msgstr "Pituffik"
+
+msgid "Qaanaaq"
+msgstr "Qaanaaq"
+
+msgid "Station Nord"
+msgstr "Station Nord"
+
+msgid "Ittoqqortoormiit"
+msgstr "Ittoqqortoormiit"
+
+msgid "Mestersvig"
+msgstr "Mestersvig"
+
+msgid "Danmarkshavn"
+msgstr "Danmarkshavn"
+
+msgid "Constable Pynt"
+msgstr "Constable Pynt"
+
+msgid "Slædepatrulje Sirius"
+msgstr "Slædepatrulje Sirius"
+
+msgid "Tórshavn"
+msgstr "Tórshavn"
+
+msgid "Argir"
+msgstr "Argir"
+
+msgid "Kirkjubøur"
+msgstr "Kirkjubøur"
+
+msgid "Velbastadur"
+msgstr "Velbastadur"
+
+msgid "\"Sydradalur, Streymoy\""
+msgstr "\"Sydradalur, Streymoy\""
+
+msgid "Nordradalur"
+msgstr "Nordradalur"
+
+msgid "Kaldbak"
+msgstr "Kaldbak"
+
+msgid "Kaldbaksbotnur"
+msgstr "Kaldbaksbotnur"
+
+msgid "Sund"
+msgstr "Sund"
+
+msgid "Hvitanes"
+msgstr "Hvitanes"
+
+msgid "Hoyvík"
+msgstr "Hoyvík"
+
+msgid "Sandur"
+msgstr "Sandur"
+
+msgid "Skálavík"
+msgstr "Skálavík"
+
+msgid "Húsavík"
+msgstr "Húsavík"
+
+msgid "Dalur"
+msgstr "Dalur"
+
+msgid "Skarvanes"
+msgstr "Skarvanes"
+
+msgid "Skopun"
+msgstr "Skopun"
+
+msgid "Skúvoy"
+msgstr "Skúvoy"
+
+msgid "Nólsoy"
+msgstr "Nólsoy"
+
+msgid "Hestur"
+msgstr "Hestur"
+
+msgid "Koltur"
+msgstr "Koltur"
+
+msgid "Stóra Dimun"
+msgstr "Stóra Dimun"
+
+msgid "Stykkid"
+msgstr "Stykkid"
+
+msgid "Leynar"
+msgstr "Leynar"
+
+msgid "Skællingur"
+msgstr "Skællingur"
+
+msgid "Kvívík"
+msgstr "Kvívík"
+
+msgid "Vestmanna"
+msgstr "Vestmanna"
+
+msgid "Válur"
+msgstr "Válur"
+
+msgid "Sandavágur"
+msgstr "Sandavágur"
+
+msgid "Midvágur"
+msgstr "Midvágur"
+
+msgid "Sørvágur"
+msgstr "Sørvágur"
+
+msgid "Vatnsoyrar"
+msgstr "Vatnsoyrar"
+
+msgid "Bøur"
+msgstr "Bøur"
+
+msgid "Gásadalur"
+msgstr "Gásadalur"
+
+msgid "Mykines"
+msgstr "Mykines"
+
+msgid "Oyrarbakki"
+msgstr "Oyrarbakki"
+
+msgid "Kollafjørdur"
+msgstr "Kollafjørdur"
+
+msgid "Oyrareingir"
+msgstr "Oyrareingir"
+
+msgid "Signabøur"
+msgstr "Signabøur"
+
+msgid "Hósvík"
+msgstr "Hósvík"
+
+msgid "Hvalvík"
+msgstr "Hvalvík"
+
+msgid "Streymnes"
+msgstr "Streymnes"
+
+msgid "Saksun"
+msgstr "Saksun"
+
+msgid "Nesvík"
+msgstr "Nesvík"
+
+msgid "Langasandur"
+msgstr "Langasandur"
+
+msgid "Haldarsvík"
+msgstr "Haldarsvík"
+
+msgid "Tjørnuvík"
+msgstr "Tjørnuvík"
+
+msgid "Oyri"
+msgstr "Oyri"
+
+msgid "Nordskáli"
+msgstr "Nordskáli"
+
+msgid "Svináir"
+msgstr "Svináir"
+
+msgid "Ljósá"
+msgstr "Ljósá"
+
+msgid "Eidi"
+msgstr "Eidi"
+
+msgid "Funningur"
+msgstr "Funningur"
+
+msgid "Gjógv"
+msgstr "Gjógv"
+
+msgid "Funningsfjørdur"
+msgstr "Funningsfjørdur"
+
+msgid "Elduvík"
+msgstr "Elduvík"
+
+msgid "Skáli"
+msgstr "Skáli"
+
+msgid "Skálafjørdur"
+msgstr "Skálafjørdur"
+
+msgid "Strendur"
+msgstr "Strendur"
+
+msgid "Innan Glyvur"
+msgstr "Innan Glyvur"
+
+msgid "Kolbanargjógv"
+msgstr "Kolbanargjógv"
+
+msgid "Morskranes"
+msgstr "Morskranes"
+
+msgid "Selatrad"
+msgstr "Selatrad"
+
+msgid "Gøta"
+msgstr "Gøta"
+
+msgid "Gøtugjógv"
+msgstr "Gøtugjógv"
+
+msgid "Nordragøta"
+msgstr "Nordragøta"
+
+msgid "Sydrugøta"
+msgstr "Sydrugøta"
+
+msgid "Leirvík"
+msgstr "Leirvík"
+
+msgid "Fuglafjørdur"
+msgstr "Fuglafjørdur"
+
+msgid "Saltangará"
+msgstr "Saltangará"
+
+msgid "Runavík"
+msgstr "Runavík"
+
+msgid "Glyvrar"
+msgstr "Glyvrar"
+
+msgid "Lambareidi"
+msgstr "Lambareidi"
+
+msgid "Lambi"
+msgstr "Lambi"
+
+msgid "Rituvík"
+msgstr "Rituvík"
+
+msgid "Æduvík"
+msgstr "Æduvík"
+
+msgid "Toftir"
+msgstr "Toftir"
+
+msgid "\"Nes, Eysturoy\""
+msgstr "\"Nes, Eysturoy\""
+
+msgid "Saltnes"
+msgstr "Saltnes"
+
+msgid "Søldarfjørdur"
+msgstr "Søldarfjørdur"
+
+msgid "Skipanes"
+msgstr "Skipanes"
+
+msgid "Gøtueidi"
+msgstr "Gøtueidi"
+
+msgid "Oyndarfjørdur"
+msgstr "Oyndarfjørdur"
+
+msgid "Hellur"
+msgstr "Hellur"
+
+msgid "Klaksvík"
+msgstr "Klaksvík"
+
+msgid "Nordoyri"
+msgstr "Nordoyri"
+
+msgid "Ánir"
+msgstr "Ánir"
+
+msgid "Árnafjørdur"
+msgstr "Árnafjørdur"
+
+msgid "Norddepil"
+msgstr "Norddepil"
+
+msgid "Depil"
+msgstr "Depil"
+
+msgid "Nordtoftir"
+msgstr "Nordtoftir"
+
+msgid "Múli"
+msgstr "Múli"
+
+msgid "Hvannasund"
+msgstr "Hvannasund"
+
+msgid "Vidareidi"
+msgstr "Vidareidi"
+
+msgid "Svinoy"
+msgstr "Svinoy"
+
+msgid "Kirkja"
+msgstr "Kirkja"
+
+msgid "Hattarvík"
+msgstr "Hattarvík"
+
+msgid "Kunoy"
+msgstr "Kunoy"
+
+msgid "Haraldssund"
+msgstr "Haraldssund"
+
+msgid "\"Sydradalur, Kalsoy\""
+msgstr "\"Sydradalur, Kalsoy\""
+
+msgid "Húsar"
+msgstr "Húsar"
+
+msgid "Mikladalur"
+msgstr "Mikladalur"
+
+msgid "Trøllanes"
+msgstr "Trøllanes"
+
+msgid "Tvøroyri"
+msgstr "Tvøroyri"
+
+msgid "Frodba"
+msgstr "Frodba"
+
+msgid "Trongisvágur"
+msgstr "Trongisvágur"
+
+msgid "Øravík"
+msgstr "Øravík"
+
+msgid "Hvalba"
+msgstr "Hvalba"
+
+msgid "Sandvík"
+msgstr "Sandvík"
+
+msgid "Fámjin"
+msgstr "Fámjin"
+
+msgid "Vágur"
+msgstr "Vágur"
+
+msgid "\"Nes, Vágur\""
+msgstr "\"Nes, Vágur\""
+
+msgid "Lopra"
+msgstr "Lopra"
+
+msgid "Akrar"
+msgstr "Akrar"
+
+msgid "Vikarbyrgi"
+msgstr "Vikarbyrgi"
+
+msgid "Porkeri"
+msgstr "Porkeri"
+
+msgid "Hov"
+msgstr "Hov"
+
+msgid "Sumba"
+msgstr "Sumba"
+
+msgid "Enter a postal code in the format XXXX."
+msgstr "Zadejte poštovní směrovací číslo ve formátu XXXX."
+
+msgid "Ecuadorian province"
+msgstr "Ekvádorská provincie"
+
+msgid "Harju County"
+msgstr "Kraj Harju"
+
+msgid "Hiiu County"
+msgstr "Kraj Hiiu"
+
+msgid "Ida-Viru County"
+msgstr "Kraj Ida-Viru"
+
+msgid "Jõgeva County"
+msgstr "Kraj Jõgeva"
+
+msgid "Järva County"
+msgstr "Kraj Järva"
+
+msgid "Lääne County"
+msgstr "Kraj Lääne"
+
+msgid "Lääne-Viru County"
+msgstr "Kraj Lääne-Viru"
+
+msgid "Põlva County"
+msgstr "Kraj Põlva"
+
+msgid "Pärnu County"
+msgstr "Kraj Pärnu"
+
+msgid "Rapla County"
+msgstr "Kraj Rapla"
+
+msgid "Saare County"
+msgstr "Kraj Saare"
+
+msgid "Tartu County"
+msgstr "Kraj Tartu"
+
+msgid "Valga County"
+msgstr "Kraj Valga"
+
+msgid "Viljandi County"
+msgstr "Kraj Viljandi"
+
+msgid "Võru County"
+msgstr "Kraj Võru"
+
+msgid "Enter an 11-digit Estonian personal identification code."
+msgstr "Zadejte 11místný estonský osobní identifikační kód."
+
+msgid "Enter a valid Estonian personal identification code."
+msgstr "Zadejte platný estonský osobní identifikační kód."
+
+msgid "Enter an 8-digit Estonian business registry code."
+msgstr "Zadejte osmimístný kód estonského obchodního registru."
+
+msgid "Enter a valid Estonian business registry code."
+msgstr "Zadejte platný kód estonského obchodního registru."
+
+msgid "Dakahlia"
+msgstr "Dakahlia"
+
+msgid "Red Sea"
+msgstr "Rudé Moře"
+
+msgid "Beheira"
+msgstr "Beheira"
+
+msgid "Faiyum"
+msgstr "Faiyum"
+
+msgid "Gharbia"
+msgstr "Gharbia"
+
+msgid "Alexandria"
+msgstr "Alexandrie"
+
+msgid "Ismailia"
+msgstr "Ismailia"
+
+msgid "Giza"
+msgstr "Gíza"
+
+msgid "Monufia"
+msgstr "Monufia"
+
+msgid "Minya"
+msgstr "Minya"
+
+msgid "Cairo"
+msgstr "Káhira"
+
+msgid "Qalyubia"
+msgstr "Qalyubia"
+
+msgid "Luxor"
+msgstr "Luxor"
+
+msgid "New Valley"
+msgstr "Nové Údolí"
+
+msgid "Suez"
+msgstr "Suez"
+
+msgid "Al Sharqia"
+msgstr "Al Sharqia"
+
+msgid "Aswan"
+msgstr "Aswan"
+
+msgid "Asyut"
+msgstr "Asyut"
+
+msgid "Beni Suef"
+msgstr "Beni Suef"
+
+msgid "Port Said"
+msgstr "Port Said"
+
+msgid "Damietta"
+msgstr "Damietta"
+
+msgid "South Sinai"
+msgstr "South Sinai"
+
+msgid "Kafr el-Sheikh"
+msgstr "Kafr el-Sheikh"
+
+msgid "Matrouh"
+msgstr "Matrouh"
+
+msgid "Qena"
+msgstr "Qena"
+
+msgid "North Sinai"
+msgstr "Severní Sinaj"
+
+msgid "Sohag"
+msgstr "Sohag"
+
+msgid "Enter a valid Egyptian National ID number"
+msgstr "Zadejte platné egyptské národní identifikační číslo"
+
+msgid "Araba"
+msgstr "Araba"
+
+msgid "Albacete"
+msgstr "Albacete"
+
+msgid "Alacant"
+msgstr "Alacant"
+
+msgid "Almeria"
+msgstr "Almería"
+
+msgid "Avila"
+msgstr "Ávila"
+
+msgid "Badajoz"
+msgstr "Badajoz"
+
+msgid "Illes Balears"
+msgstr "Baleáry"
+
+msgid "Barcelona"
+msgstr "Barcelona"
+
+msgid "Burgos"
+msgstr "Burgos"
+
+msgid "Caceres"
+msgstr "Caceres"
+
+msgid "Cadiz"
+msgstr "Cádiz"
+
+msgid "Castello"
+msgstr "Castellón"
+
+msgid "Ciudad Real"
+msgstr "Ciudad Real"
+
+msgid "Cordoba"
+msgstr "Córdoba"
+
+msgid "A Coruna"
+msgstr "A Coruña"
+
+msgid "Cuenca"
+msgstr "Cuenca"
+
+msgid "Girona"
+msgstr "Girona"
+
+msgid "Granada"
+msgstr "Granada"
+
+msgid "Guadalajara"
+msgstr "Guadalajara"
+
+msgid "Guipuzkoa"
+msgstr "Guipúzcoa"
+
+msgid "Huelva"
+msgstr "Huelva"
+
+msgid "Huesca"
+msgstr "Huesca"
+
+msgid "Jaen"
+msgstr "Jaén"
+
+msgid "Leon"
+msgstr "León"
+
+msgid "Lleida"
+msgstr "Lérida"
+
+msgid "Lugo"
+msgstr "Lugo"
+
+msgid "Madrid"
+msgstr "Madrid"
+
+msgid "Malaga"
+msgstr "Málaga"
+
+msgid "Murcia"
+msgstr "Murcie"
+
+msgid "Navarre"
+msgstr "Navarra"
+
+msgid "Ourense"
+msgstr "Orense"
+
+msgid "Asturias"
+msgstr "Asturie"
+
+msgid "Palencia"
+msgstr "Palencia"
+
+msgid "Las Palmas"
+msgstr "Las Palmas"
+
+msgid "Pontevedra"
+msgstr "Pontevedra"
+
+msgid "Salamanca"
+msgstr "Salamanca"
+
+msgid "Santa Cruz de Tenerife"
+msgstr "Santa Cruz de Tenerife"
+
+msgid "Cantabria"
+msgstr "Kantábrie"
+
+msgid "Segovia"
+msgstr "Segovia"
+
+msgid "Seville"
+msgstr "Sevilla"
+
+msgid "Soria"
+msgstr "Soria"
+
+msgid "Tarragona"
+msgstr "Tarragona"
+
+msgid "Teruel"
+msgstr "Teruel"
+
+msgid "Toledo"
+msgstr "Toledo"
+
+msgid "Valencia"
+msgstr "Valencie"
+
+msgid "Valladolid"
+msgstr "Valladolid"
+
+msgid "Bizkaia"
+msgstr "Biskajsko"
+
+msgid "Zamora"
+msgstr "Zamora"
+
+msgid "Zaragoza"
+msgstr "Zaragoza"
+
+msgid "Ceuta"
+msgstr "Ceuta"
+
+msgid "Melilla"
+msgstr "Melilla"
+
+msgid "Andalusia"
+msgstr "Andalusie"
+
+msgid "Aragon"
+msgstr "Aragonie"
+
+msgid "Principality of Asturias"
+msgstr "Asturské knížectví"
+
+msgid "Balearic Islands"
+msgstr "Baleáry"
+
+msgid "Basque Country"
+msgstr "Baskicko"
+
+msgid "Canary Islands"
+msgstr "Kanárské ostrovy"
+
+msgid "Castile-La Mancha"
+msgstr "Kastilie-La Mancha"
+
+msgid "Castile and Leon"
+msgstr "Kastilie a León"
+
+msgid "Catalonia"
+msgstr "Katalánsko"
+
+msgid "Extremadura"
+msgstr "Extremadura"
+
+msgid "Galicia"
+msgstr "Galicie"
+
+msgid "Region of Murcia"
+msgstr "Murcie"
+
+msgid "Foral Community of Navarre"
+msgstr "Navarra"
+
+msgid "Valencian Community"
+msgstr "Valencie"
+
+msgid "Autonomous city of Ceuta"
+msgstr "Autonomní město Ceuta"
+
+msgid "Autonomous city of Mellila"
+msgstr "Autonomní město Mellila"
+
+msgid "Enter a valid postal code in the range and format 01XXX - 52XXX."
+msgstr "Zadejte platné poštovní směrovací číslo ve tvaru 01XXX - 52XXX."
+
+msgid "Please enter a valid NIF, NIE, or CIF."
+msgstr "Zadejte platné hodnoty NIF, NIE nebo CIF."
+
+msgid "Please enter a valid NIF or NIE."
+msgstr "Zadejte platné hodnoty NIF nebo NIE."
+
+msgid "Invalid checksum for NIF."
+msgstr "Neplatný kontrolní součet pro NIF."
+
+msgid "Invalid checksum for NIE."
+msgstr "Neplatný kontrolní součet pro NIE."
+
+msgid "Invalid checksum for CIF."
+msgstr "Neplatný kontrolní součet pro CIF."
+
+msgid ""
+"Please enter a valid bank account number in format XXXX-XXXX-XX-XXXXXXXXXX."
+msgstr "Zadejte platné číslo bankovního účtu ve tvaru XXXX-XXXX-XX-XXXXXXXXXX."
+
+msgid "Invalid checksum for bank account number."
+msgstr "Neplatný kontrolní součet pro číslo bankovního účtu."
+
+msgid "Spain postal code (five numbers)"
+msgstr "Poštovní směrovací číslo Španělska (pět čísel)"
+
+msgid "Identification National Document"
+msgstr "Identifikační národní dokument"
+
+msgid "Enter a valid Finnish social security number."
+msgstr "Zadejte platné finské rodné číslo."
+
+msgid "Zip code"
+msgstr "PSČ"
+
+msgid "Select Department"
+msgstr "Vyberte department"
+
+msgid "Select Region"
+msgstr "Vyberte oblast"
+
+msgid "Enter a valid French National Identification number."
+msgstr "Zadejte platné francouzské národní identifikační číslo."
+
+msgid "Enter a valid French SIREN number."
+msgstr "Zadejte platné francouzské číslo SIREN."
+
+msgid "Enter a valid French SIRET number."
+msgstr "Zadejte platné francouzské číslo SIRET."
+
+msgid "Enter a valid French RNA number."
+msgstr "Zadejte platné francouzské číslo RNA."
+
+msgid "SIREN Number"
+msgstr "SIREN Číslo"
+
+msgid "SIRET Number"
+msgstr "SIRET Číslo"
+
+msgid "RNA Number"
+msgstr "RNA číslo"
+
+msgid "Enter a valid postcode."
+msgstr "Zadejte platné poštovní směrovací číslo."
+
+msgid "Bath and North East Somerset"
+msgstr "Bath a North East Somerset"
+
+msgid "Bedford"
+msgstr "Bedford"
+
+msgid "Berkshire"
+msgstr "Berkshire"
+
+msgid "Blackburn with Darwen"
+msgstr "Blackburn with Darwen"
+
+msgid "Blackpool"
+msgstr "Blackpool"
+
+msgid "Bournemouth"
+msgstr "Bournemouth"
+
+msgid "Brighton & Hove"
+msgstr "Brighton & Hove"
+
+msgid "Bristol"
+msgstr "Bristol"
+
+msgid "Buckinghamshire"
+msgstr "Buckinghamshire"
+
+msgid "Cambridgeshire"
+msgstr "Cambridgeshire"
+
+msgid "Central Bedfordshire"
+msgstr "Střední Bedfordshire"
+
+msgid "Cheshire East"
+msgstr "Východní Cheshire"
+
+msgid "Cheshire West and Chester"
+msgstr "Západní Cheshire  a Chester"
+
+msgid "Cornwall"
+msgstr "Cornwall"
+
+msgid "Cumbria"
+msgstr "Cumbria"
+
+msgid "Darlington"
+msgstr "Darlington"
+
+msgid "Derby"
+msgstr "Derby"
+
+msgid "Derbyshire"
+msgstr "Derbyshire"
+
+msgid "Devon"
+msgstr "Devon"
+
+msgid "Dorset"
+msgstr "Dorset"
+
+msgid "Durham"
+msgstr "Durham"
+
+msgid "East Riding of Yorkshire"
+msgstr "East Riding of Yorkshire"
+
+msgid "East Sussex"
+msgstr "East Sussex"
+
+msgid "Essex"
+msgstr "Essex"
+
+msgid "Gloucestershire"
+msgstr "Gloucestershire"
+
+msgid "Greater Manchester"
+msgstr "Velký Manchester"
+
+msgid "Halton"
+msgstr "Halton"
+
+msgid "Hampshire"
+msgstr "Hampshire"
+
+msgid "Hartlepool"
+msgstr "Hartlepool"
+
+msgid "Herefordshire"
+msgstr "Herefordshire"
+
+msgid "Hertfordshire"
+msgstr "Hertfordshire"
+
+msgid "Isle of Wight"
+msgstr "Isle of Wight"
+
+msgid "Kent"
+msgstr "Kent"
+
+msgid "Kingston upon Hull"
+msgstr "Kingston upon Hull"
+
+msgid "Lancashire"
+msgstr "Lancashire"
+
+msgid "Leicester"
+msgstr "Leicester"
+
+msgid "Leicestershire"
+msgstr "Leicestershire"
+
+msgid "Lincolnshire"
+msgstr "Lincolnshire"
+
+msgid "London"
+msgstr "Londýn"
+
+msgid "Luton"
+msgstr "Luton"
+
+msgid "Medway"
+msgstr "Medway"
+
+msgid "Merseyside"
+msgstr "Merseyside"
+
+msgid "Middlesbrough"
+msgstr "Middlesbrough"
+
+msgid "Milton Keynes"
+msgstr "Milton Keynes"
+
+msgid "Norfolk"
+msgstr "Norfolk"
+
+msgid "North East Lincolnshire"
+msgstr "Severovýchodní Lincolnshire"
+
+msgid "North Lincolnshire"
+msgstr "Severní  Lincolnshire"
+
+msgid "North Somerset"
+msgstr "Severní  Somerset"
+
+msgid "North Yorkshire"
+msgstr "North Yorkshire"
+
+msgid "Northamptonshire"
+msgstr "Northamptonshire"
+
+msgid "Northumberland"
+msgstr "Northumberland"
+
+msgid "Nottingham"
+msgstr "Nottingham"
+
+msgid "Nottinghamshire"
+msgstr "Nottinghamshire"
+
+msgid "Oxfordshire"
+msgstr "Oxfordshire"
+
+msgid "Peterborough"
+msgstr "Peterborough"
+
+msgid "Plymouth"
+msgstr "Plymouth"
+
+msgid "Poole"
+msgstr "Poole"
+
+msgid "Portsmouth"
+msgstr "Portsmouth"
+
+msgid "Redcar and Cleveland"
+msgstr "Redcar a Cleveland"
+
+msgid "Rutland"
+msgstr "Rutland"
+
+msgid "Shropshire"
+msgstr "Shropshire"
+
+msgid "Somerset"
+msgstr "Somerset"
+
+msgid "South Gloucestershire"
+msgstr "Jižní Gloucestershire"
+
+msgid "South Yorkshire"
+msgstr "South Yorkshire"
+
+msgid "Southampton"
+msgstr "Southampton"
+
+msgid "Southend-on-Sea"
+msgstr "Southend-on-Sea"
+
+msgid "Staffordshire"
+msgstr "Staffordshire"
+
+msgid "Stockton-on-Tees"
+msgstr "Stockton-on-Tees"
+
+msgid "Stoke-on-Trent"
+msgstr "Stoke-on-Trent"
+
+msgid "Suffolk"
+msgstr "Suffolk"
+
+msgid "Surrey"
+msgstr "Surrey"
+
+msgid "Swindon"
+msgstr "Swindon"
+
+msgid "Telford and Wrekin"
+msgstr "Telford a Wrekin"
+
+msgid "Thurrock"
+msgstr "Thurrock"
+
+msgid "Torbay"
+msgstr "Torbay"
+
+msgid "Tyne and Wear"
+msgstr "Tyne a Wear"
+
+msgid "Warrington"
+msgstr "Warrington"
+
+msgid "Warwickshire"
+msgstr "Warwickshire"
+
+msgid "West Midlands"
+msgstr "West Midlands"
+
+msgid "West Sussex"
+msgstr "West Sussex"
+
+msgid "West Yorkshire"
+msgstr "West Yorkshire"
+
+msgid "Wiltshire"
+msgstr "Wiltshire"
+
+msgid "Worcestershire"
+msgstr "Worcestershire"
+
+msgid "York"
+msgstr "York"
+
+msgid "Antrim"
+msgstr "Antrim"
+
+msgid "Armagh"
+msgstr "Armagh"
+
+msgid "Down"
+msgstr "Down"
+
+msgid "Fermanagh"
+msgstr "Fermanagh"
+
+msgid "Londonderry"
+msgstr "Londonderry"
+
+msgid "Tyrone"
+msgstr "Tyrone"
+
+msgid "Blaenau Gwent"
+msgstr "Blaenau Gwent"
+
+msgid "Bridgend"
+msgstr "Bridgend"
+
+msgid "Caerphilly"
+msgstr "Caerphilly"
+
+msgid "Cardiff"
+msgstr "Cardiff"
+
+msgid "Carmarthenshire"
+msgstr "Carmarthenshire"
+
+msgid "Ceredigion"
+msgstr "Ceredigion"
+
+msgid "Conwy"
+msgstr "Conwy"
+
+msgid "Denbighshire"
+msgstr "Denbighshire"
+
+msgid "Flintshire"
+msgstr "Flintshire"
+
+msgid "Gwynedd"
+msgstr "Gwynedd"
+
+msgid "Isle of Anglesey"
+msgstr "Isle of Anglesey"
+
+msgid "Merthyr Tydfil"
+msgstr "Merthyr Tydfil"
+
+msgid "Monmouthshire"
+msgstr "Monmouthshire"
+
+msgid "Neath Port Talbot"
+msgstr "Neath Port Talbot"
+
+msgid "Newport"
+msgstr "Newport"
+
+msgid "Pembrokeshire"
+msgstr "Pembrokeshire"
+
+msgid "Powys"
+msgstr "Powys"
+
+msgid "Rhondda Cynon Taf"
+msgstr "Rhondda Cynon Taf"
+
+msgid "Swansea"
+msgstr "Swansea"
+
+msgid "Torfaen"
+msgstr "Torfaen"
+
+msgid "Vale of Glamorgan"
+msgstr "Vale of Glamorgan"
+
+msgid "Wrexham"
+msgstr "Wrexham"
+
+msgid "Aberdeen City"
+msgstr "Aberdeen Město"
+
+msgid "Aberdeenshire"
+msgstr "Aberdeenshire"
+
+msgid "Angus"
+msgstr "Angus"
+
+msgid "Argyll and Bute"
+msgstr "Argyll a Bute"
+
+msgid "Clackmannanshire"
+msgstr "Clackmannanshire"
+
+msgid "Dumfries and Galloway"
+msgstr "Dumfries a Galloway"
+
+msgid "Dundee City"
+msgstr "Dundee Město"
+
+msgid "East Ayrshire"
+msgstr "Východní Ayrshire"
+
+msgid "East Dunbartonshire"
+msgstr "Východní Dunbartonshire"
+
+msgid "East Lothian"
+msgstr "Východní Lothian"
+
+msgid "East Renfrewshire"
+msgstr "Východní Renfrewshire"
+
+msgid "Edinburgh, City of"
+msgstr "Edinburgh, Město"
+
+msgid "Falkirk"
+msgstr "Falkirk"
+
+msgid "Fife"
+msgstr "Fife"
+
+msgid "Glasgow City"
+msgstr "Glasgow City"
+
+msgid "Highland"
+msgstr "Highland"
+
+msgid "Inverclyde"
+msgstr "Inverclyde"
+
+msgid "Midlothian"
+msgstr "Midlothian"
+
+msgid "Moray"
+msgstr "Moray"
+
+msgid "North Ayrshire"
+msgstr "Severní Ayrshire"
+
+msgid "North Lanarkshire"
+msgstr "Severní Lanarkshire"
+
+msgid "Perth and Kinross"
+msgstr "Perth a Kinross"
+
+msgid "Renfrewshire"
+msgstr "Renfrewshire"
+
+msgid "Scottish Borders"
+msgstr "Skotské pohraničí"
+
+msgid "South Ayrshire"
+msgstr "Jižní  Ayrshire"
+
+msgid "South Lanarkshire"
+msgstr "Jižní Lanarkshire"
+
+msgid "Stirling"
+msgstr "Stirling"
+
+msgid "West Dunbartonshire"
+msgstr "Západní Dunbartonshire"
+
+msgid "West Lothian"
+msgstr "Západní Lothian"
+
+msgid "Na h-Eileanan Siar"
+msgstr "Na h-Eileanan Siar"
+
+msgid "Orkney Islands"
+msgstr "Orkneje"
+
+msgid "Shetland Islands"
+msgstr "Shetlandy"
+
+msgid "England"
+msgstr "Anglie"
+
+msgid "Northern Ireland"
+msgstr "Severní Irsko"
+
+msgid "Wales"
+msgstr "Wales"
+
+msgid "Scotland"
+msgstr "Skotsko"
+
+msgid "An International Bank Account Number"
+msgstr "Mezinárodní číslo bankovního účtu"
+
+msgid "Business Identifier Code"
+msgstr "Obchodní identifikační kód"
+
+#, python-format
+msgid "%(character)s is not a valid character for IBAN."
+msgstr "%(character)s není platným znakem pro IBAN."
+
+#, python-format
+msgid "%(country_code)s IBANs must contain %(number)s characters."
+msgstr "%(country_code)s IBANy musí obsahovat %(number)s znaků."
+
+#, python-format
+msgid "%(country_code)s is not a valid country code for IBAN."
+msgstr "%(country_code)s není platný kód země pro IBAN."
+
+#, python-format
+msgid "%(country_code)s IBANs are not allowed in this field."
+msgstr "%(country_code)s IBAN nejsou v tomto poli povoleny."
+
+msgid "Not a valid IBAN."
+msgstr "Neplatný IBAN."
+
+msgid "BIC codes have either 8 or 11 characters."
+msgstr "Kódy BIC mají 8 nebo 11 znaků."
+
+msgid "BIC codes only contain alphabet letters and digits."
+msgstr "Kódy BIC se skládají pouze z písmen a číslic."
+
+#, python-format
+msgid "%(institution_code)s is not a valid institution code."
+msgstr "%(institution_code)s is not a valid institution code."
+
+#, python-format
+msgid "%(country_code)s is not a valid country code."
+msgstr "%(country_code)s není platný kód země."
+
+#, python-format
+msgid "%(location_code)s is not a valid location code."
+msgstr "%(location_code)snení platný kód polohy."
+
+msgid "Not a valid EAN code."
+msgstr "Není platný kód EAN."
+
+#, python-format
+msgid "%(vatin)s is not a valid VAT identification number."
+msgstr "%(vatin)s není platné identifikační číslo pro DPH."
+
+msgid "Ahafo"
+msgstr "Ahafo"
+
+msgid "Ashanti"
+msgstr "Ashanti"
+
+msgid "Bono East"
+msgstr "Východní Bono"
+
+msgid "Brong Ahafo"
+msgstr "Brong Ahafo"
+
+msgid "Eastern"
+msgstr "Východní"
+
+msgid "Greater Accra"
+msgstr "Greater Accra"
+
+msgid "North East"
+msgstr "Severovýchodní"
+
+msgid "Northern"
+msgstr "Severní"
+
+msgid "Oti"
+msgstr "Oti"
+
+msgid "Savannah"
+msgstr "Savannah"
+
+msgid "Upper East"
+msgstr "Horní východní"
+
+msgid "Upper West"
+msgstr "Horní západní "
+
+msgid "Western"
+msgstr "Západní"
+
+msgid "Western North"
+msgstr "Severozápadní "
+
+msgid "Volta"
+msgstr "Volta"
+
+msgid "Enter a valid 5-digit greek postal code."
+msgstr "Zadejte platné pětimístné řecké směrovací číslo."
+
+msgid "Enter a valid greek tax number (9 digits)."
+msgstr "Zadejte platné řecké daňové číslo (9 číslic)."
+
+msgid "Enter a valid greek social security number (AMKA - 11 digits)."
+msgstr "Zadejte platné řecké číslo sociálního zabezpečení (AMKA - 11 číslic)."
+
+msgid "Enter a valid 13 digit JMBG"
+msgstr "Zadejte platné JMBG o 13 číslicích."
+
+msgid "Error in date segment"
+msgstr "Chybný segment data"
+
+msgid "Enter a valid 11 digit OIB"
+msgstr "Zadejte jedenáctimístné číslo OIB"
+
+msgid "Enter a valid vehicle license plate number"
+msgstr "Vložte platné číslo poznávací značky vozu"
+
+msgid "Enter a valid location code"
+msgstr "Zadejte platný kód oblasti"
+
+msgid "Number part cannot be zero"
+msgstr "Číselná část nesmí být nulová."
+
+msgid "Enter a valid 5 digit postal code"
+msgstr "Zadejte platné pětimístné poštovní směrovací číslo."
+
+msgid "Enter a valid 19 digit JMBAG starting with 601983"
+msgstr "Zadejte platné 19imístné JMBAG začínající na 601983."
+
+msgid "Card issue number cannot be zero"
+msgstr "Číslo vydání karty nemůže být nula"
+
+msgid "Grad Zagreb"
+msgstr "Grad Zagreb"
+
+msgid "Bjelovarsko-bilogorska županija"
+msgstr "Bjelovarsko-bilogorská župa"
+
+msgid "Brodsko-posavska županija"
+msgstr "Brodsko-posávská župa"
+
+msgid "Dubrovačko-neretvanska županija"
+msgstr "Dubrovnicko-neretvanská župa"
+
+msgid "Istarska županija"
+msgstr "Istrijská župa"
+
+msgid "Karlovačka županija"
+msgstr "Karlovacká župa"
+
+msgid "Koprivničko-križevačka županija"
+msgstr "Koprivnicko-križevecká župa"
+
+msgid "Krapinsko-zagorska županija"
+msgstr "Krapinsko-zagorská župa"
+
+msgid "Ličko-senjska županija"
+msgstr "Licko-senjská župa"
+
+msgid "Međimurska županija"
+msgstr "Mezimuřská župa"
+
+msgid "Osječko-baranjska županija"
+msgstr "Osijecko-baranjská župa"
+
+msgid "Požeško-slavonska županija"
+msgstr "Požežsko-slavonská župa"
+
+msgid "Primorsko-goranska županija"
+msgstr "Přímořsko-gorskokotarská župa"
+
+msgid "Sisačko-moslavačka županija"
+msgstr "Sisacko-moslavinská župa"
+
+msgid "Splitsko-dalmatinska županija"
+msgstr "Splitsko-dalmatská župa"
+
+msgid "Šibensko-kninska županija"
+msgstr "Šibenicko-kninská župa"
+
+msgid "Varaždinska županija"
+msgstr "Varaždinská župa"
+
+msgid "Virovitičko-podravska županija"
+msgstr "Viroviticko-podrávská župa"
+
+msgid "Vukovarsko-srijemska županija"
+msgstr "Vukovarsko-sremská župa"
+
+msgid "Zadarska županija"
+msgstr "Zadarská župa"
+
+msgid "Zagrebačka županija"
+msgstr "Záhřebská župa"
+
+msgid "Bács-Kiskun"
+msgstr "Bács-Kiskun"
+
+msgid "Baranya"
+msgstr "Baranya"
+
+msgid "Békés"
+msgstr "Békés"
+
+msgid "Borsod-Abaúj-Zemplén"
+msgstr "Borsod-Abaúj-Zemplén"
+
+msgid "Csongrád"
+msgstr "Csongrád"
+
+msgid "Fejér"
+msgstr "Fejér"
+
+msgid "Győr-Moson-Sopron"
+msgstr "Győr-Moson-Sopron"
+
+msgid "Hajdú-Bihar"
+msgstr "Hajdú-Bihar"
+
+msgid "Heves"
+msgstr "Heves"
+
+msgid "Jász-Nagykun-Szolnok"
+msgstr "Jász-Nagykun-Szolnok"
+
+msgid "Komárom-Esztergom"
+msgstr "Komárom-Esztergom"
+
+msgid "Nógrád"
+msgstr "Nógrád"
+
+msgid "Pest"
+msgstr "Pest"
+
+msgid "Somogy"
+msgstr "Somogy"
+
+msgid "Szabolcs-Szatmár-Bereg"
+msgstr "Szabolcs-Szatmár-Bereg"
+
+msgid "Tolna"
+msgstr "Tolna"
+
+msgid "Vas"
+msgstr "Vas"
+
+msgid "Veszprém"
+msgstr "Veszprém"
+
+msgid "Zala"
+msgstr "Zala"
+
+msgid "Enter a valid post code"
+msgstr "Zadejte platné poštovní směrovací číslo."
+
+msgid "Enter a valid NIK/KTP number"
+msgstr "Vložte platné číslo NIK/KTP"
+
+msgid "Aceh"
+msgstr "Aceh"
+
+msgid "Bali"
+msgstr "Bali"
+
+msgid "Banten"
+msgstr "Banten"
+
+msgid "Bengkulu"
+msgstr "Bengkulu"
+
+msgid "Yogyakarta"
+msgstr "Yogyakarta"
+
+msgid "Jakarta"
+msgstr "Jakarta"
+
+msgid "Gorontalo"
+msgstr "Gorontalo"
+
+msgid "Jambi"
+msgstr "Jambi"
+
+msgid "Jawa Barat"
+msgstr "Jawa Barat"
+
+msgid "Jawa Tengah"
+msgstr "Jawa Tengah"
+
+msgid "Jawa Timur"
+msgstr "Jawa Timur"
+
+msgid "Kalimantan Barat"
+msgstr "Kalimantan Barat"
+
+msgid "Kalimantan Selatan"
+msgstr "Kalimantan Selatan"
+
+msgid "Kalimantan Tengah"
+msgstr "Kalimantan Tengah"
+
+msgid "Kalimantan Timur"
+msgstr "Kalimantan Timur"
+
+msgid "Kalimantan Utara"
+msgstr "Kalimantan Utara"
+
+msgid "Kepulauan Bangka-Belitung"
+msgstr "Kepulauan Bangka-Belitung"
+
+msgid "Kepulauan Riau"
+msgstr "Kepulauan Riau"
+
+msgid "Lampung"
+msgstr "Lampung"
+
+msgid "Maluku"
+msgstr "Maluku"
+
+msgid "Maluku Utara"
+msgstr "Maluku Utara"
+
+msgid "Nusa Tenggara Barat"
+msgstr "Nusa Tenggara Barat"
+
+msgid "Nusa Tenggara Timur"
+msgstr "Nusa Tenggara Timur"
+
+msgid "Papua"
+msgstr "Papua"
+
+msgid "Papua Barat"
+msgstr "Papua Barat"
+
+msgid "Riau"
+msgstr "Riau"
+
+msgid "Sulawesi Barat"
+msgstr "Sulawesi Barat"
+
+msgid "Sulawesi Selatan"
+msgstr "Sulawesi Selatan"
+
+msgid "Sulawesi Tengah"
+msgstr "Sulawesi Tengah"
+
+msgid "Sulawesi Tenggara"
+msgstr "Sulawesi Tenggara"
+
+msgid "Sulawesi Utara"
+msgstr "Sulawesi Utara"
+
+msgid "Sumatera Barat"
+msgstr "Sumatera Barat"
+
+msgid "Sumatera Selatan"
+msgstr "Sumatera Selatan"
+
+msgid "Sumatera Utara"
+msgstr "Sumatera Utara"
+
+msgid "Magelang"
+msgstr "Magelang"
+
+msgid "Surakarta - Solo"
+msgstr "Surakarta - Solo"
+
+msgid "Madiun"
+msgstr "Madiun"
+
+msgid "Kediri"
+msgstr "Kediri"
+
+msgid "Tapanuli"
+msgstr "Tapanuli"
+
+msgid "Nanggroe Aceh Darussalam"
+msgstr "Nanggroe Aceh Darussalam"
+
+msgid "Kepulauan Bangka Belitung"
+msgstr "Kepulauan Bangka Belitung"
+
+msgid "Corps Consulate"
+msgstr "Corps Consulate"
+
+msgid "Corps Diplomatic"
+msgstr "Corps Diplomatic"
+
+msgid "Bandung"
+msgstr "Bandung"
+
+msgid "Sulawesi Utara Daratan"
+msgstr "Sulawesi Utara Daratan"
+
+msgid "NTT - Timor"
+msgstr "NTT - Timor"
+
+msgid "Sulawesi Utara Kepulauan"
+msgstr "Sulawesi Utara Kepulauan"
+
+msgid "NTB - Lombok"
+msgstr "NTB - Lombok"
+
+msgid "Papua dan Papua Barat"
+msgstr "Papua dan Papua Barat"
+
+msgid "Cirebon"
+msgstr "Cirebon"
+
+msgid "NTB - Sumbawa"
+msgstr "NTB - Sumbawa"
+
+msgid "NTT - Flores"
+msgstr "NTT - Flores"
+
+msgid "NTT - Sumba"
+msgstr "NTT - Sumba"
+
+msgid "Bogor"
+msgstr "Bogor"
+
+msgid "Pekalongan"
+msgstr "Pekalongan"
+
+msgid "Semarang"
+msgstr "Semarang"
+
+msgid "Pati"
+msgstr "Pati"
+
+msgid "Surabaya"
+msgstr "Surabaya"
+
+msgid "Madura"
+msgstr "Madura"
+
+msgid "Malang"
+msgstr "Malang"
+
+msgid "Jember"
+msgstr "Jember"
+
+msgid "Banyumas"
+msgstr "Banyumas"
+
+msgid "Federal Government"
+msgstr "Federální vláda"
+
+msgid "Bojonegoro"
+msgstr "Bojonegoro"
+
+msgid "Purwakarta"
+msgstr "Purwakarta"
+
+msgid "Sidoarjo"
+msgstr "Sidoarjo"
+
+msgid "Garut"
+msgstr "Garut"
+
+msgid "Enter a valid Eircode."
+msgstr "Zadejte platný Eircode."
+
+msgid "Carlow"
+msgstr "Carlow"
+
+msgid "Cavan"
+msgstr "Cavan"
+
+msgid "Clare"
+msgstr "Clare"
+
+msgid "Cork"
+msgstr "Cork"
+
+msgid "Donegal"
+msgstr "Donegal"
+
+msgid "Dublin"
+msgstr "Dublin"
+
+msgid "Galway"
+msgstr "Galway"
+
+msgid "Kerry"
+msgstr "Kerry"
+
+msgid "Kildare"
+msgstr "Kildare"
+
+msgid "Kilkenny"
+msgstr "Kilkenny"
+
+msgid "Laois"
+msgstr "Laois"
+
+msgid "Leitrim"
+msgstr "Leitrim"
+
+msgid "Limerick"
+msgstr "Limerick"
+
+msgid "Longford"
+msgstr "Longford"
+
+msgid "Louth"
+msgstr "Louth"
+
+msgid "Mayo"
+msgstr "Mayo"
+
+msgid "Meath"
+msgstr "Meath"
+
+msgid "Monaghan"
+msgstr "Monaghan"
+
+msgid "Offaly"
+msgstr "Offaly"
+
+msgid "Roscommon"
+msgstr "Roscommon"
+
+msgid "Sligo"
+msgstr "Sligo"
+
+msgid "Tipperary"
+msgstr "Tipperary"
+
+msgid "Waterford"
+msgstr "Waterford"
+
+msgid "Westmeath"
+msgstr "Westmeath"
+
+msgid "Wexford"
+msgstr "Wexford"
+
+msgid "Wicklow"
+msgstr "Wicklow"
+
+msgid "Enter a postal code in the format XXXXXXX (or XXXXX) - digits only"
+msgstr ""
+"Zadejte poštovní směrovací číslo ve tvaru XXXXXXX (or XXXXX) - pouze číslice."
+
+msgid "Enter a valid ID number."
+msgstr "Vložte platné číslo ID"
+
+msgid "Enter a zip code in the format XXXXXX or XXX XXX."
+msgstr "Zadejte kód ZIP ve tvaru XXXXXX nebo XXX XXX."
+
+msgid "Enter an Indian state or territory."
+msgstr "Zadejte indický stát nebo teritorium."
+
+msgid ""
+"Enter a valid Aadhaar number in XXXX XXXX XXXX or XXXX-XXXX-XXXX format."
+msgstr ""
+"Zadejte platné číslo Aadhaar ve formátu XXXX XXXX XXXX nebo XXXX-XXXX-XXXX."
+
+msgid "Please enter a valid Indian PAN card number."
+msgstr "Zadejte prosím platné indické číslo karty PAN."
+
+msgid "Indian state (two uppercase letters)"
+msgstr "Indický stát (dvě velká písmena)"
+
+msgid "PAN Card number field"
+msgstr "Pole pro číslo karty PAN"
+
+msgid "Enter a postal code in the format XXXXXXXXXX - digits only"
+msgstr "Zadejte poštovní směrovací číslo ve formátu XXXXXXXXXX - pouze číslice"
+
+msgid "Alborz"
+msgstr "Alborz"
+
+msgid "Ardabil"
+msgstr "Ardabil"
+
+msgid "Azerbaijan East"
+msgstr "Ázerbájdžán východ"
+
+msgid "Azerbaijan Wast"
+msgstr "Ázerbájdžán západ"
+
+msgid "Bushehr"
+msgstr "Bushehr"
+
+msgid "Chahar Mahaal and Bakhtiari"
+msgstr "Chahar Mahaal and Bakhtiari"
+
+msgid "Fars"
+msgstr "Fars"
+
+msgid "Gilan"
+msgstr "Gilan"
+
+msgid "Golestan"
+msgstr "Golestan"
+
+msgid "Hamadan"
+msgstr "Hamadan"
+
+msgid "Hormozgan"
+msgstr "Hormozgan"
+
+msgid "Ilam"
+msgstr "Ilam"
+
+msgid "Isfahan"
+msgstr "Isfahan"
+
+msgid "Kerman"
+msgstr "Kerman"
+
+msgid "Kermanshah"
+msgstr "Kermanshah"
+
+msgid "Khorasan North"
+msgstr "Khorasan sever"
+
+msgid "Khorasan Razavi"
+msgstr "Khorasan Razavi"
+
+msgid "Khorasan South"
+msgstr "Khorasan jih"
+
+msgid "Khuzestan"
+msgstr "Khuzestan"
+
+msgid "Kohgiluyeh and Boyer-Ahmad"
+msgstr "Kohgiluyeh a Boyer-Ahmad"
+
+msgid "Kurdistan"
+msgstr "Kurdistán"
+
+msgid "Lorestan"
+msgstr "Lorestán"
+
+msgid "Markazi"
+msgstr "Markazi"
+
+msgid "Mazandaran"
+msgstr "Mazandaran"
+
+msgid "Qazvin"
+msgstr "Qazvin"
+
+msgid "Qom"
+msgstr "Qom"
+
+msgid "Semnan"
+msgstr "Semnan"
+
+msgid "Sistan and Baluchestan"
+msgstr "Sistán a Balúčisán"
+
+msgid "Tehran"
+msgstr "Teherán"
+
+msgid "Yazd"
+msgstr "Yazd"
+
+msgid "Zanjan"
+msgstr "Zanjan"
+
+msgid ""
+"Enter a valid Icelandic identification number. The format is XXXXXX-XXXX."
+msgstr "Zadejte platné islandské identifikační číslo ve tvaru XXXXXX-XXXX."
+
+msgid "The Icelandic identification number is not valid."
+msgstr "Neplatné islandské identifikační číslo."
+
+msgid "Enter a valid zip code."
+msgstr "Zadejte platné poštovní směrovací číslo."
+
+msgid "Enter a valid Tax code."
+msgstr "Zadejte platný daňový kód."
+
+msgid "Enter a valid VAT number."
+msgstr "Zadejte platné daňové identifikační číslo."
+
+msgid "Check digit does not match."
+msgstr "Kontrolní číslice se neshoduje."
+
+msgid "Enter a postal code in the format XXXXXXX or XXX-XXXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXXXXX nebo XXX-XXXX."
+
+msgid "Hokkaido"
+msgstr "Hokkaidó"
+
+msgid "Aomori"
+msgstr "Aomori"
+
+msgid "Iwate"
+msgstr "Iwate"
+
+msgid "Miyagi"
+msgstr "Mijagi"
+
+msgid "Akita"
+msgstr "Akita"
+
+msgid "Yamagata"
+msgstr "Jamagata"
+
+msgid "Fukushima"
+msgstr "Fukušima"
+
+msgid "Ibaraki"
+msgstr "Ibaraki"
+
+msgid "Tochigi"
+msgstr "Točigi"
+
+msgid "Gunma"
+msgstr "Gunma"
+
+msgid "Saitama"
+msgstr "Saitama"
+
+msgid "Chiba"
+msgstr "Čiba"
+
+msgid "Tokyo"
+msgstr "Tokio"
+
+msgid "Kanagawa"
+msgstr "Kanagawa"
+
+msgid "Niigata"
+msgstr "Niigata"
+
+msgid "Toyama"
+msgstr "Tojama"
+
+msgid "Ishikawa"
+msgstr "Išikawa"
+
+msgid "Fukui"
+msgstr "Fukui"
+
+msgid "Yamanashi"
+msgstr "Jamanaši"
+
+msgid "Nagano"
+msgstr "Nagano"
+
+msgid "Gifu"
+msgstr "Gifu"
+
+msgid "Shizuoka"
+msgstr "Šizuoka"
+
+msgid "Aichi"
+msgstr "Aiči"
+
+msgid "Mie"
+msgstr "Mie"
+
+msgid "Shiga"
+msgstr "Šiga"
+
+msgid "Kyoto"
+msgstr "Kjóto"
+
+msgid "Osaka"
+msgstr "Ósaka"
+
+msgid "Hyogo"
+msgstr "Hjógo"
+
+msgid "Nara"
+msgstr "Nara"
+
+msgid "Wakayama"
+msgstr "Wakajama"
+
+msgid "Tottori"
+msgstr "Tottori"
+
+msgid "Shimane"
+msgstr "Šimane"
+
+msgid "Okayama"
+msgstr "Okajama"
+
+msgid "Hiroshima"
+msgstr "Hirošima"
+
+msgid "Yamaguchi"
+msgstr "Jamaguči"
+
+msgid "Tokushima"
+msgstr "Tokušima"
+
+msgid "Kagawa"
+msgstr "Kagawa"
+
+msgid "Ehime"
+msgstr "Ehime"
+
+msgid "Kochi"
+msgstr "Kóči"
+
+msgid "Fukuoka"
+msgstr "Fukuoka"
+
+msgid "Saga"
+msgstr "Saga"
+
+msgid "Nagasaki"
+msgstr "Nagasaki"
+
+msgid "Kumamoto"
+msgstr "Kumamoto"
+
+msgid "Oita"
+msgstr "Óita"
+
+msgid "Miyazaki"
+msgstr "Mijazaki"
+
+msgid "Kagoshima"
+msgstr "Kagošima"
+
+msgid "Okinawa"
+msgstr "Okinawa"
+
+msgid "Enter a valid Kuwaiti Civil ID number"
+msgstr "Vložte platné kuvajtské občanské identifikační číslo"
+
+msgid "Kuwait City"
+msgstr "Kuwait City"
+
+msgid "Abdullah Al-Salem"
+msgstr "Abdullah Al-Salem"
+
+msgid "Adailiya"
+msgstr "Adailiya"
+
+msgid "Bneid Al Qar"
+msgstr "Bneid Al Qar"
+
+msgid "Daiya"
+msgstr "Daiya"
+
+msgid "Dasma"
+msgstr "Dasma"
+
+msgid "Dasman"
+msgstr "Dasman"
+
+msgid "Doha"
+msgstr "Doha"
+
+msgid "Faiha"
+msgstr "Faiha"
+
+msgid "Jaber Al Ahmad"
+msgstr "Jaber Al Ahmad"
+
+msgid "Jibla"
+msgstr "Jibla"
+
+msgid "Kaifan"
+msgstr "Kaifan"
+
+msgid "Khaldiya"
+msgstr "Khaldiya"
+
+msgid "Kuwait Free Trade Zone"
+msgstr "Kuvajtská zóna volného obchodu"
+
+msgid "Mansouriya"
+msgstr "Mansouriya"
+
+msgid "Mirqab"
+msgstr "Mirqab"
+
+msgid "Mubarekiya Camps"
+msgstr "Mubarekiya Camps"
+
+msgid "Nahdha"
+msgstr "Nahdha"
+
+msgid "North West Al-Sulaibikhat"
+msgstr "Severozápadní Al-Sulaibikhat"
+
+msgid "Nuzha"
+msgstr "Nuzha"
+
+msgid "Qadsiya"
+msgstr "Qadsiya"
+
+msgid "Qairawan"
+msgstr "Qairawan"
+
+msgid "Qortuba"
+msgstr "Qortuba"
+
+msgid "Rawda"
+msgstr "Rawda"
+
+msgid "Salhiya"
+msgstr "Salhiya"
+
+msgid "Shamiya"
+msgstr "Shamiya"
+
+msgid "Sharq"
+msgstr "Sharq"
+
+msgid "Shuwaikh Administrative"
+msgstr "Shuwaikh Administrativní oblast"
+
+msgid "Shuwaikh Industrial"
+msgstr "Shuwaikh Industrial"
+
+msgid "Shuwaikh Residential"
+msgstr "Shuwaikh Residential"
+
+msgid "Sulaibikhat"
+msgstr "Sulaibikhat"
+
+msgid "Surra"
+msgstr "Surra"
+
+msgid "Yarmouk"
+msgstr "Yarmouk"
+
+msgid "Farwaniya"
+msgstr "Farwaniya"
+
+msgid "Abbasiya"
+msgstr "Abbasiya"
+
+msgid "Abdullah Al Mubarak Al Sabah"
+msgstr "Abdullah Al Mubarak Al Sabah"
+
+msgid "Abraq Khaitan"
+msgstr "Abraq Khaitan"
+
+msgid "Al-Dajeej"
+msgstr "Al-Dajeej"
+
+msgid "Al-Shadadiya"
+msgstr "Al-Shadadiya"
+
+msgid "Andalous"
+msgstr "Andalúsie"
+
+msgid "Ardiya"
+msgstr "Ardiya"
+
+msgid "Ardiya Small Industrial"
+msgstr "Ardiya Small Industrial"
+
+msgid "Ardiya Storage Zone"
+msgstr "Ardiya Storage Zone"
+
+msgid "Firdous"
+msgstr "Firdous"
+
+msgid "Ishbiliya"
+msgstr "Ishbiliya"
+
+msgid "Jeleeb Al-Shuyoukh"
+msgstr "Jeleeb Al-Shuyoukh"
+
+msgid "Khaitan"
+msgstr "Khaitan"
+
+msgid "Omariya"
+msgstr "Omariya"
+
+msgid "Rabia"
+msgstr "Rabia"
+
+msgid "Rai"
+msgstr "Rai"
+
+msgid "Rehab"
+msgstr "Rehab"
+
+msgid "Rigai"
+msgstr "Rigai"
+
+msgid "Sabah Al Nasser"
+msgstr "Sabah Al Nasser"
+
+msgid "South Khaitan - Exhibits"
+msgstr "Jižní Khaitan - exponáty"
+
+msgid "Mubarak Al Kabir"
+msgstr "Mubarak Al Kabir"
+
+msgid "Abu Al Hasaniya"
+msgstr "Abu Al Hasaniya"
+
+msgid "Abu Fatira"
+msgstr "Abu Fatira"
+
+msgid "Adan"
+msgstr "Adan"
+
+msgid "Al-Masayel"
+msgstr "Al-Masayel"
+
+msgid "Coast Strip B"
+msgstr "Pobřežní pás B"
+
+msgid "Fnaitees"
+msgstr "Fnaitees"
+
+msgid "Messila"
+msgstr "Messila"
+
+msgid "Mubarak Al Kabeer"
+msgstr "Mubarak Al Kabeer"
+
+msgid "Qurain"
+msgstr "Qurain"
+
+msgid "Qusor"
+msgstr "Qusor"
+
+msgid "Sabah Al Salem"
+msgstr "Sabah Al Salem"
+
+msgid "Sabhan Industrial Area"
+msgstr "Průmyslová zóna Sabhan"
+
+msgid "South Wista"
+msgstr "Jižní  Wista"
+
+msgid "West Abu Fatira Small Industrial"
+msgstr "West Abu Fatira Small Industrial"
+
+msgid "Hawally"
+msgstr "Hawally"
+
+msgid "Al-Siddeeq"
+msgstr "Al-Siddeeq"
+
+msgid "Anjafa"
+msgstr "Anjafa"
+
+msgid "Bayan"
+msgstr "Bayan"
+
+msgid "Hateen"
+msgstr "Hateen"
+
+msgid "Jabriya"
+msgstr "Jabriya"
+
+msgid "Maidan Hawally"
+msgstr "Maidan Hawally"
+
+msgid "Mishref"
+msgstr "Mishref"
+
+msgid "Mubarak Al-Abdullah"
+msgstr "Mubarak Al-Abdullah"
+
+msgid "Rumaithiya"
+msgstr "Rumaithiya"
+
+msgid "Al-Salam"
+msgstr "Al-Salam"
+
+msgid "Salmiya"
+msgstr "Salmiya"
+
+msgid "Salwa"
+msgstr "Salwa"
+
+msgid "Shaab"
+msgstr "Shaab"
+
+msgid "Shuhada"
+msgstr "Shuhada"
+
+msgid "Zahra"
+msgstr "Zahra"
+
+msgid "Ahmadi"
+msgstr "Ahmadi"
+
+msgid "Abu Halifa"
+msgstr "Abu Halifa"
+
+msgid "Al Khiran"
+msgstr "Al Khiran"
+
+msgid "Al Wafrah"
+msgstr "Al Wafrah"
+
+msgid "Al-Nuwaiseeb"
+msgstr "Al-Nuwaiseeb"
+
+msgid "Al-Riqqa"
+msgstr "Al-Riqqa"
+
+msgid "Ali Sabah Al Salem"
+msgstr "Ali Sabah Al Salem"
+
+msgid "Assabahiyah"
+msgstr "Assabahiyah"
+
+msgid "Bnaider"
+msgstr "Bnaider"
+
+msgid "Dahar"
+msgstr "Dahar"
+
+msgid "Eqaila"
+msgstr "Eqaila"
+
+msgid "Fahad Al Ahmad"
+msgstr "Fahad Al Ahmad"
+
+msgid "Fahaheel"
+msgstr "Fahaheel"
+
+msgid "Fintas"
+msgstr "Fintas"
+
+msgid "Hadiya"
+msgstr "Hadiya"
+
+msgid "Jaber Al Ali"
+msgstr "Jaber Al Ali"
+
+msgid "Mahboula"
+msgstr "Mahboula"
+
+msgid "Mangaf"
+msgstr "Mangaf"
+
+msgid "Sabah Al Ahmad"
+msgstr "Sabah Al Ahmad"
+
+msgid "Al Dubaiya"
+msgstr "Al Dubaiya"
+
+msgid "Mina Abdullah"
+msgstr "Mina Abdullah"
+
+msgid "Shuaiba Block 1"
+msgstr "Shuaiba Block 1"
+
+msgid "West Industrial Shuaiba"
+msgstr "West Industrial Shuaiba"
+
+msgid "Zour"
+msgstr "Zour"
+
+msgid "Jahra"
+msgstr "Jahra"
+
+msgid "Al Sulaibiya Industrial 1"
+msgstr "Al Sulaibiya Industrial 1"
+
+msgid "Al Sulaibiya Industrial 2"
+msgstr "Al Sulaibiya Industrial 2"
+
+msgid "Amgarah Industrial Area"
+msgstr "Amgarah Industrial Area"
+
+msgid "Naeem"
+msgstr "Naeem"
+
+msgid "Naseem"
+msgstr "Naseem"
+
+msgid "Oyoun"
+msgstr "Oyoun"
+
+msgid "Qasr"
+msgstr "Qasr"
+
+msgid "Saad Al Abdullah"
+msgstr "Saad Al Abdullah"
+
+msgid "Sulaibiya"
+msgstr "Sulaibiya"
+
+msgid "Taima'"
+msgstr "Taima'"
+
+msgid "Waha"
+msgstr "Waha"
+
+msgid "Farwaniyah"
+msgstr "Farwaniyah"
+
+msgid "Capital"
+msgstr "Capital"
+
+msgid "Hawalli"
+msgstr "Hawalli"
+
+msgid "Enter a postal code in format NNNNN"
+msgstr ""
+
+msgid "Kandy"
+msgstr ""
+
+msgid "Matale"
+msgstr ""
+
+msgid "Nuwara Eliya"
+msgstr ""
+
+msgid "Anuradhapura"
+msgstr ""
+
+msgid "Polonnaruwa"
+msgstr ""
+
+msgid "Jaffna"
+msgstr ""
+
+msgid "Kilinochchi"
+msgstr ""
+
+msgid "Mannar"
+msgstr ""
+
+msgid "Vavuniya"
+msgstr ""
+
+msgid "Mullativu"
+msgstr ""
+
+msgid "Alambil"
+msgstr ""
+
+msgid "Ampara"
+msgstr ""
+
+msgid "Batticaloa"
+msgstr ""
+
+msgid "Trincomalee"
+msgstr ""
+
+msgid "Kurunagala"
+msgstr ""
+
+msgid "Puttalam"
+msgstr ""
+
+msgid "Galle"
+msgstr ""
+
+msgid "Hambanthota"
+msgstr ""
+
+msgid "Mathara"
+msgstr ""
+
+msgid "Badulla"
+msgstr ""
+
+msgid "Monaragala"
+msgstr ""
+
+msgid "Kegalle"
+msgstr ""
+
+msgid "Rathnapura"
+msgstr ""
+
+msgid "Colombo"
+msgstr ""
+
+msgid "Gampaha"
+msgstr ""
+
+msgid "Kaluthara"
+msgstr ""
+
+msgid "North Central"
+msgstr ""
+
+msgid "North Western"
+msgstr ""
+
+msgid "Sabaragamuwa"
+msgstr ""
+
+msgid "Southern"
+msgstr ""
+
+msgid "Uva"
+msgstr ""
+
+msgid "ID Code consists of exactly 11 decimal digits."
+msgstr "ID kód tvoří přesně 11 číslic."
+
+msgid "Wrong ID Code checksum."
+msgstr "Špatný kontrolní součet ID kódu."
+
+msgid "ID Code contains invalid date."
+msgstr "ID kód obsahuje neplatné datum."
+
+msgid "Enter a postal code in the format XXXXX or LT-XXXXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXXX nebo LT-XXXXX."
+
+msgid "Alytus"
+msgstr "Alytus"
+
+msgid "Kaunas"
+msgstr "Kaunas"
+
+msgid "Klaipėda"
+msgstr "Klaipėda"
+
+msgid "Marijampolė"
+msgstr "Marijampolė"
+
+msgid "Panevėžys"
+msgstr "Panevėžys"
+
+msgid "Šiauliai"
+msgstr "Šiauliai"
+
+msgid "Tauragė"
+msgstr "Tauragė"
+
+msgid "Telšiai"
+msgstr "Telšiai"
+
+msgid "Utena"
+msgstr "Utena"
+
+msgid "Vilnius"
+msgstr "Vilnius"
+
+msgid "Akmenė district"
+msgstr "Kraj Akmenė"
+
+msgid "Alytus city"
+msgstr "Město Alytus"
+
+msgid "Alytus district"
+msgstr "Kraj Alytus"
+
+msgid "Anykščiai district"
+msgstr "Kraj Anykščiai"
+
+msgid "Birštonas"
+msgstr "Birštonas"
+
+msgid "Biržai district"
+msgstr "Kraj Biržai"
+
+msgid "Druskininkai"
+msgstr "Druskininkai"
+
+msgid "Elektrėnai"
+msgstr "Elektrėnai"
+
+msgid "Ignalina district"
+msgstr "Kraj Ignalina"
+
+msgid "Jonava district"
+msgstr "Kraj Jonava"
+
+msgid "Joniškis district"
+msgstr "Kraj Joniškis"
+
+msgid "Jurbarkas district"
+msgstr "Kraj Jurbarkas"
+
+msgid "Kaišiadorys district"
+msgstr "Kraj Kaišiadorys"
+
+msgid "Kalvarija"
+msgstr "Kalvarija"
+
+msgid "Kaunas city"
+msgstr "Město Kaunas"
+
+msgid "Kaunas district"
+msgstr "Kraj Kaunas"
+
+msgid "Kazlų Rūda"
+msgstr "Kazlų Rūda"
+
+msgid "Kėdainiai district"
+msgstr "Kraj Kėdainiai"
+
+msgid "Kelmė district"
+msgstr "Kraj Kelmé"
+
+msgid "Klaipėda city"
+msgstr "Město Klaipéda"
+
+msgid "Klaipėda district"
+msgstr "Kraj Klaipėda"
+
+msgid "Kretinga district"
+msgstr "Kraj Kretinga"
+
+msgid "Kupiškis district"
+msgstr "Kraj Kupiškis"
+
+msgid "Lazdijai district"
+msgstr "Kraj Lazdijai"
+
+msgid "Mažeikiai district"
+msgstr "Mažeikiai district"
+
+msgid "Molėtai district"
+msgstr "Kraj Molėtai"
+
+msgid "Neringa"
+msgstr "Neringa"
+
+msgid "Pagėgiai"
+msgstr "Pagėgiai"
+
+msgid "Pakruojis district"
+msgstr "Kraj Pakruojis"
+
+msgid "Palanga city"
+msgstr "Město Palanga"
+
+msgid "Panevėžys city"
+msgstr "Město Panevėžys"
+
+msgid "Panevėžys district"
+msgstr "Kraj Panevėžys"
+
+msgid "Pasvalys district"
+msgstr "Kraj Pasvalys"
+
+msgid "Plungė district"
+msgstr "Kraj Plungė"
+
+msgid "Prienai district"
+msgstr "Kraj Prienai"
+
+msgid "Radviliškis district"
+msgstr "Kraj Radviliškis"
+
+msgid "Raseiniai district"
+msgstr "Kraj Raseiniai"
+
+msgid "Rietavas"
+msgstr "Rietavas"
+
+msgid "Rokiškis district"
+msgstr "Kraj Rokiškis"
+
+msgid "Skuodas district"
+msgstr "Kraj Skuodas"
+
+msgid "Šakiai district"
+msgstr "Kraj Šakiai"
+
+msgid "Šalčininkai district"
+msgstr "Kraj Šalčininkai"
+
+msgid "Šiauliai city"
+msgstr "Město Šiauliai"
+
+msgid "Šiauliai district"
+msgstr "Kraj Šiauliai"
+
+msgid "Šilalė district"
+msgstr "Kraj Šilalė"
+
+msgid "Šilutė district"
+msgstr "Kraj Šilutė"
+
+msgid "Širvintos district"
+msgstr "Kraj Širvintos"
+
+msgid "Švenčionys district"
+msgstr "Kraj Širvintos"
+
+msgid "Tauragė district"
+msgstr "Kraj Tauragė"
+
+msgid "Telšiai district"
+msgstr "Kraj Telšiai"
+
+msgid "Trakai district"
+msgstr "Kraj Trakai"
+
+msgid "Ukmergė district"
+msgstr "Kraj Ukmergė"
+
+msgid "Utena district"
+msgstr "Kraj Utena"
+
+msgid "Varėna district"
+msgstr "Kraj Varėna"
+
+msgid "Vilkaviškis district"
+msgstr "Kraj Vilkaviškis"
+
+msgid "Vilnius city"
+msgstr "Město Vilnius"
+
+msgid "Vilnius district"
+msgstr "Kraj Vilnius"
+
+msgid "Visaginas"
+msgstr "Visaginas"
+
+msgid "Zarasai district"
+msgstr "Kraj Zarasai"
+
+msgid "Enter a postal code in the format XXXX or LV-XXXX."
+msgstr "Zadejte poštovní směrovací číslo ve formátu XXXX nebo LV-XXXX."
+
+msgid "Enter a Latvian personal code in format XXXXXX-XXXXX."
+msgstr "Zadejte lotyšský osobní kód ve formátu XXXXXX-XXXXX."
+
+msgid "Enter a valid Latvian personal code."
+msgstr "Zadejte platný lotyšský osobní kód."
+
+msgid "Daugavpils"
+msgstr "Daugavpils"
+
+msgid "Jelgava"
+msgstr "Jelgava"
+
+msgid "Jūrmala"
+msgstr "Jūrmala"
+
+msgid "Liepāja"
+msgstr "Liepāja"
+
+msgid "Rēzekne"
+msgstr "Rēzekne"
+
+msgid "Riga"
+msgstr "Riga"
+
+msgid "Ventspils"
+msgstr "Ventspils"
+
+msgid "Aizkraukle municipality"
+msgstr "obec Aizkraukle "
+
+msgid "Alūksne municipality"
+msgstr "obec Alūksne"
+
+msgid "Ādaži municipality"
+msgstr "obec Ādaži"
+
+msgid "Balvi municipality"
+msgstr "obec Balvi"
+
+msgid "Bauska municipality"
+msgstr "obec Bauska"
+
+msgid "Cēsis municipality"
+msgstr "obec Cēsis"
+
+msgid "Dobele municipality"
+msgstr "obec Dobele"
+
+msgid "Gulbene municipality"
+msgstr "obec Gulbene"
+
+msgid "Jelgava municipality"
+msgstr "obec Jelgava"
+
+msgid "Jēkabpils municipality"
+msgstr "obec Jēkabpils"
+
+msgid "Krāslava municipality"
+msgstr "obec Krāslava"
+
+msgid "Kuldīga municipality"
+msgstr "obec Kuldīga"
+
+msgid "Ķekava municipality"
+msgstr "obec Ķekava"
+
+msgid "Limbaži municipality"
+msgstr "obec Limbaži"
+
+msgid "Līvāni municipality"
+msgstr "obec Līvāni"
+
+msgid "Ludza municipality"
+msgstr "obec Ludza"
+
+msgid "Madona municipality"
+msgstr "obec Madona"
+
+msgid "Mārupe municipality"
+msgstr "obec Mārupe"
+
+msgid "Ogre municipality"
+msgstr "obec Ogre"
+
+msgid "Olaine municipality"
+msgstr "obec Olaine"
+
+msgid "Preiļi municipality"
+msgstr "obec Preiļi"
+
+msgid "Rēzekne municipality"
+msgstr "obec Rēzekne"
+
+msgid "Ropaži municipality"
+msgstr "obec Ropaži"
+
+msgid "Salaspils municipality"
+msgstr "obec Salaspils"
+
+msgid "Saldus municipality"
+msgstr "obec Saldus"
+
+msgid "Saulkrasti municipality"
+msgstr "obec Saulkrasti"
+
+msgid "Sigulda municipality"
+msgstr "obec Sigulda"
+
+msgid "Smiltene municipality"
+msgstr "obec Smiltene"
+
+msgid "Talsi municipality"
+msgstr "obec Talsi"
+
+msgid "Tukums municipality"
+msgstr "obec Tukums"
+
+msgid "Valka municipality"
+msgstr "obec Valka"
+
+msgid "Varakļāni municipality"
+msgstr "obec Varakļāni"
+
+msgid "Ventspils municipality"
+msgstr "obec Ventspils"
+
+msgid "Augšdaugava municipality"
+msgstr ""
+
+msgid "Dienvidkurzeme municipality"
+msgstr ""
+
+msgid "Valmiera municipality"
+msgstr ""
+
+msgid "Enter a postal code in the format XXXXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXXX."
+
+msgid "Postal code"
+msgstr "Poštovní směrovací číslo"
+
+msgid "Select Province"
+msgstr "Vyberte provincii"
+
+msgid "Enter a valid Moroccan CIN number."
+msgstr ""
+
+msgid "CIN Number"
+msgstr ""
+
+msgid "Al Hoceima"
+msgstr "Al Hoceima"
+
+msgid "Larache"
+msgstr "Larache"
+
+msgid "M’Diq - Fnideq"
+msgstr "M’Diq - Fnideq"
+
+msgid "Tetouan"
+msgstr "Tetouan"
+
+msgid "Chefchaouene"
+msgstr "Chefchaouene"
+
+msgid "Tanger - Assilah"
+msgstr "Tanger - Assilah"
+
+msgid "Fahs - Anjra"
+msgstr "Fahs - Anjra"
+
+msgid "Ouezzane"
+msgstr "Ouezzane"
+
+msgid "Driouch"
+msgstr "Driouch"
+
+msgid "Nador"
+msgstr "Nador"
+
+msgid "Berkan"
+msgstr "Berkan"
+
+msgid "Taourirt"
+msgstr "Taourirt"
+
+msgid "Jerada"
+msgstr "Jerada"
+
+msgid "Guercif"
+msgstr "Guercif"
+
+msgid "Feguig"
+msgstr "Feguig"
+
+msgid "Oujda - Angad"
+msgstr "Oujda - Angad"
+
+msgid "El Hajeb"
+msgstr "El Hajeb"
+
+msgid "Ifrane"
+msgstr "Ifrane"
+
+msgid "Boulemane"
+msgstr "Boulemane"
+
+msgid "Taza"
+msgstr "Taza"
+
+msgid "Taounate"
+msgstr "Taounate"
+
+msgid "Sefrou"
+msgstr "Sefrou"
+
+msgid "Fès"
+msgstr "Fès"
+
+msgid "Meknès"
+msgstr "Meknès"
+
+msgid "Moulay Yacoub"
+msgstr "Moulay Yacoub"
+
+msgid "Khémisset"
+msgstr "Khémisset"
+
+msgid "Rabat"
+msgstr "Rabat"
+
+msgid "Skhirate - Temara"
+msgstr "Skhirate - Temara"
+
+msgid "Kénitra"
+msgstr "Kénitra"
+
+msgid "Salé"
+msgstr "Salé"
+
+msgid "Sidi Slimane"
+msgstr "Sidi Slimane"
+
+msgid "Sidi Kacem"
+msgstr "Sidi Kacem"
+
+msgid "Casablanca"
+msgstr "Casablanca"
+
+msgid "Mohamedia"
+msgstr "Mohamedia"
+
+msgid "Nouaceur"
+msgstr "Nouaceur"
+
+msgid "Mediouna"
+msgstr "Medína"
+
+msgid "Benslimane"
+msgstr "Benslimane"
+
+msgid "Berrachid"
+msgstr "Berrachid"
+
+msgid "El Jadida"
+msgstr "El Jadida"
+
+msgid "Sidi Bennour"
+msgstr "Sidi Bennour"
+
+msgid "Settat"
+msgstr "Settat"
+
+msgid "Azilal"
+msgstr "Azilal"
+
+msgid "Fquih Ben Saleh"
+msgstr "Fquih Ben Saleh"
+
+msgid "Beni Mellal"
+msgstr "Beni Mellal"
+
+msgid "Khouribga"
+msgstr "Khouribga"
+
+msgid "Khénifra"
+msgstr "Khénifra"
+
+msgid "Safi"
+msgstr "Safi"
+
+msgid "Al Haouz"
+msgstr "Al Haouz"
+
+msgid "Rhamna"
+msgstr "Rhamna"
+
+msgid "Essaouira"
+msgstr "Essaouira"
+
+msgid "Youssoufia"
+msgstr "Youssoufia"
+
+msgid "Marrakech"
+msgstr "Marakéš"
+
+msgid "Chichaoua"
+msgstr "Chichaoua"
+
+msgid "El Kelaa Des Sraghna"
+msgstr "El Kelaa Des Sraghna"
+
+msgid "Agadir - Idda Outanane"
+msgstr "Agadir - Idda Outanane"
+
+msgid "Inezgane - Ait Melloul"
+msgstr "Inezgane - Ait Melloul"
+
+msgid "Chtouka - Ait Baha"
+msgstr "Chtouka - Ait Baha"
+
+msgid "Tiznit"
+msgstr "Tiznit"
+
+msgid "Tata"
+msgstr "Tata"
+
+msgid "Taroudant"
+msgstr "Taroudant"
+
+msgid "Errachidia"
+msgstr "Errachidia"
+
+msgid "Tinghir"
+msgstr "Tinghir"
+
+msgid "Zagoura"
+msgstr "Zagoura"
+
+msgid "Midelt"
+msgstr "Midelt"
+
+msgid "Ouarzazate"
+msgstr "Ouarzazate"
+
+msgid "Es -Semara"
+msgstr "Es -Semara"
+
+msgid "Laayoune"
+msgstr "Laayoune"
+
+msgid "Boujdour"
+msgstr "Boujdour"
+
+msgid "Terfaya"
+msgstr "Terfaya"
+
+msgid "Aousserd"
+msgstr "Aousserd"
+
+msgid "Oued Eddahab"
+msgstr "Oued Eddahab"
+
+msgid "Assa - Zag"
+msgstr "Assa - Zag"
+
+msgid "Sidi Ifni"
+msgstr "Sidi Ifni"
+
+msgid "Tantan"
+msgstr "Tantan"
+
+msgid "Guelmim"
+msgstr "Guelmim"
+
+msgid "Tanger-Tétouan-Al Hoceïma"
+msgstr "Tanger-Tétouan-Al Hoceïma"
+
+msgid "L’Oriental"
+msgstr "L’Oriental"
+
+msgid "Fès-Meknès"
+msgstr "Fès-Meknès"
+
+msgid "Rabat-Salé-Kénitra"
+msgstr "Rabat-Salé-Kénitra"
+
+msgid "Béni Mellal-Khénifra"
+msgstr "Béni Mellal-Khénifra"
+
+msgid "Casablanca-Settat"
+msgstr "Casablanca-Settat"
+
+msgid "Marrakech-Safi"
+msgstr "Marakéš-Safi"
+
+msgid "Drâa-Tafilalet"
+msgstr "Drâa-Tafilalet"
+
+msgid "Souss-Massa"
+msgstr "Souss-Massa"
+
+msgid "Guelmim-Oued Noun"
+msgstr "Guelmim-Oued Noun"
+
+msgid "Laâyoune-Sakia El Hamra"
+msgstr "Laâyoune-Sakia El Hamra"
+
+msgid "Dakhla-Oued Ed Dahab"
+msgstr "Dakhla-Oued Ed Dahab"
+
+msgid "Întreprindere Individuală"
+msgstr "Soukromý podnik"
+
+msgid "Societate pe acţiuni"
+msgstr "Korporace"
+
+msgid "Societate în nume colectiv"
+msgstr "Spolek"
+
+msgid "Societatea în comandită"
+msgstr "Komanditní společnost"
+
+msgid "Cooperativa de producţie"
+msgstr "Výrobní družstvo"
+
+msgid "Cooperativa de întreprinzători"
+msgstr "Sdružení podnikatelů"
+
+msgid "Societate cu răspundere limitată"
+msgstr "Společnost s ručením omezeným"
+
+msgid "Gospodăria ţărănească"
+msgstr "Rolnická domácnost"
+
+msgid "Diplomatic Corps"
+msgstr "Diplomatický sbor"
+
+msgid "Service Staff"
+msgstr "Servisní personál"
+
+msgid "Consular Staff"
+msgstr "Konzulární štáb"
+
+msgid "Administrative body"
+msgstr "Správní orgán"
+
+msgid "Ministry of Internal Affairs"
+msgstr "ministerstvo vnitra"
+
+msgid "Carabinieri Subdivision"
+msgstr "Četnické oddělení"
+
+msgid "Military Forces"
+msgstr "Vojenské síly"
+
+msgid "Border Control"
+msgstr "Hraniční kontrola"
+
+msgid "Parliament"
+msgstr "Parlament"
+
+msgid "Government"
+msgstr "Vláda"
+
+msgid "Chancellery"
+msgstr "Kancléřství"
+
+msgid "Anenii Noi"
+msgstr "Anenii Noi"
+
+msgid "Tighina"
+msgstr "Tighina"
+
+msgid "Bălți"
+msgstr "Bălți"
+
+msgid "Briceni"
+msgstr "Briceni"
+
+msgid "Basarabeasca"
+msgstr "Basarabeasca"
+
+msgid "Chișinău"
+msgstr "Chișinău"
+
+msgid "Camenca"
+msgstr "Camenca"
+
+msgid "Ceadîr-Lunga"
+msgstr "Ceadîr-Lunga"
+
+msgid "Cahul"
+msgstr "Cahul"
+
+msgid "Călărași"
+msgstr "Călărași"
+
+msgid "Cimișlia"
+msgstr "Cimișlia"
+
+msgid "Căinari"
+msgstr "Căinari"
+
+msgid "Comrat"
+msgstr "Comrat"
+
+msgid "Criuleni"
+msgstr "Criuleni"
+
+msgid "Căușeni"
+msgstr "Căușeni"
+
+msgid "Cantemir"
+msgstr "Cantemir"
+
+msgid "Dubăsari"
+msgstr "Dubăsari"
+
+msgid "Dondușeni"
+msgstr "Dondușeni"
+
+msgid "Drochia"
+msgstr "Drochia"
+
+msgid "Edineț"
+msgstr "Edineț"
+
+msgid "Fălești"
+msgstr "Fălești"
+
+msgid "Florești"
+msgstr "Florești"
+
+msgid "Gagauzia"
+msgstr "Gagauzia"
+
+msgid "Glodeni"
+msgstr "Glodeni"
+
+msgid "Grigoriopol"
+msgstr "Grigoriopol"
+
+msgid "Hîncești"
+msgstr "Hîncești"
+
+msgid "Ialoveni"
+msgstr "Ialoveni"
+
+msgid "Leova"
+msgstr "Leova"
+
+msgid "Nisporeni"
+msgstr "Nisporeni"
+
+msgid "Ocnița"
+msgstr "Ocnița"
+
+msgid "Orhei"
+msgstr "Orhei"
+
+msgid "Rîbnița"
+msgstr "Rîbnița"
+
+msgid "Rîșcani"
+msgstr "Rîșcani"
+
+msgid "Rezina"
+msgstr "Rezina"
+
+msgid "Șoldănești"
+msgstr "Șoldănești"
+
+msgid "Sîngerei"
+msgstr "Sîngerei"
+
+msgid "Slobozia"
+msgstr "Slobozia"
+
+msgid "Soroca"
+msgstr "Soroca"
+
+msgid "Strășeni"
+msgstr "Strășeni"
+
+msgid "Ștefan Vodă"
+msgstr "Ștefan Vodă"
+
+msgid "Taraclia"
+msgstr "Taraclia"
+
+msgid "Telenești"
+msgstr "Telenești"
+
+msgid "Ungheni"
+msgstr "Ungheni"
+
+msgid "Vulcănești"
+msgstr "Vulcănești"
+
+msgid "Moldavian identity number"
+msgstr "Moldavské identifikační číslo"
+
+msgid "Moldavian license plate number"
+msgstr "Moldavské registrační číslo"
+
+msgid "Moldavian company types"
+msgstr "Moldavské typy společností"
+
+msgid "Enter a valid IDNO number."
+msgstr "Zadejte platné IDNO číslo."
+
+msgid "Enter a valid license plate."
+msgstr "Zadejte platnou poznávací značku."
+
+msgid ""
+"Identity card numbers must contain either 4 to 7 digits or an uppercase "
+"letter and 7 digits."
+msgstr ""
+"Číslo identifikačního průkazu musí buď obsahovat 4 či 7 číslic nebo z velké "
+"písmo a 7 číslic."
+
+msgid "This field should contain exactly 13 digits."
+msgstr "Toto pole by mělo obsahovat přesně 13 číslic."
+
+msgid "The first 7 digits of the UMCN must represent a valid past date."
+msgstr "Prvních 7 číslic UMCN musí být platné uplynulé datum."
+
+msgid "The UMCN is not valid."
+msgstr "UMCN je neplatné."
+
+msgid "Aerodrom"
+msgstr "Aerodrom"
+
+msgid "Aračinovo"
+msgstr "Aračinovo"
+
+msgid "Berovo"
+msgstr "Berovo"
+
+msgid "Bitola"
+msgstr "Bitola"
+
+msgid "Bogdanci"
+msgstr "Bogdanci"
+
+msgid "Bogovinje"
+msgstr "Bogovinje"
+
+msgid "Bosilovo"
+msgstr "Bosilovo"
+
+msgid "Brvenica"
+msgstr "Brvenica"
+
+msgid "Butel"
+msgstr "Butel"
+
+msgid "Valandovo"
+msgstr "Valandovo"
+
+msgid "Vasilevo"
+msgstr "Vasilevo"
+
+msgid "Vevčani"
+msgstr "Vevčani"
+
+msgid "Veles"
+msgstr "Veles"
+
+msgid "Vinica"
+msgstr "Vinica"
+
+msgid "Vraneštica"
+msgstr "Vraneštica"
+
+msgid "Vrapčište"
+msgstr "Vrapčište"
+
+msgid "Gazi Baba"
+msgstr "Gazi Baba"
+
+msgid "Gevgelija"
+msgstr "Gevgelija"
+
+msgid "Gostivar"
+msgstr "Gostivar"
+
+msgid "Gradsko"
+msgstr "Gradsko"
+
+msgid "Debar"
+msgstr "Debar"
+
+msgid "Debarca"
+msgstr "Debarca"
+
+msgid "Delčevo"
+msgstr "Delčevo"
+
+msgid "Demir Kapija"
+msgstr "Demir Kapija"
+
+msgid "Demir Hisar"
+msgstr "Demir Hisar"
+
+msgid "Dolneni"
+msgstr "Dolneni"
+
+msgid "Drugovo"
+msgstr "Drugovo"
+
+msgid "Gjorče Petrov"
+msgstr "Gjorče Petrov"
+
+msgid "Želino"
+msgstr "Želino"
+
+msgid "Zajas"
+msgstr "Zajas"
+
+msgid "Zelenikovo"
+msgstr "Zelenikovo"
+
+msgid "Zrnovci"
+msgstr "Zrnovci"
+
+msgid "Ilinden"
+msgstr "Ilinden"
+
+msgid "Jegunovce"
+msgstr "Jegunovce"
+
+msgid "Kavadarci"
+msgstr "Kavadarci"
+
+msgid "Karbinci"
+msgstr "Karbinci"
+
+msgid "Karpoš"
+msgstr "Karpoš"
+
+msgid "Kisela Voda"
+msgstr "Kisela Voda"
+
+msgid "Kičevo"
+msgstr "Kičevo"
+
+msgid "Konče"
+msgstr "Konče"
+
+msgid "Koćani"
+msgstr "Koćani"
+
+msgid "Kratovo"
+msgstr "Kratovo"
+
+msgid "Kriva Palanka"
+msgstr "Kriva Palanka"
+
+msgid "Krivogaštani"
+msgstr "Krivogaštani"
+
+msgid "Kruševo"
+msgstr "Kruševo"
+
+msgid "Kumanovo"
+msgstr "Kumanovo"
+
+msgid "Lipkovo"
+msgstr "Lipkovo"
+
+msgid "Lozovo"
+msgstr "Lozovo"
+
+msgid "Mavrovo i Rostuša"
+msgstr "Mavrovo a Rostuša"
+
+msgid "Makedonska Kamenica"
+msgstr "Makedonska Kamenica"
+
+msgid "Makedonski Brod"
+msgstr "Makedonski Brod"
+
+msgid "Mogila"
+msgstr "Mogila"
+
+msgid "Negotino"
+msgstr "Negotino"
+
+msgid "Novaci"
+msgstr "Novaci"
+
+msgid "Novo Selo"
+msgstr "Novo Selo"
+
+msgid "Oslomej"
+msgstr "Oslomej"
+
+msgid "Ohrid"
+msgstr "Ohrid"
+
+msgid "Petrovec"
+msgstr "Petrovec"
+
+msgid "Pehčevo"
+msgstr "Pehčevo"
+
+msgid "Plasnica"
+msgstr "Plasnica"
+
+msgid "Prilep"
+msgstr "Prilep"
+
+msgid "Probištip"
+msgstr "Probištip"
+
+msgid "Radoviš"
+msgstr "Radoviš"
+
+msgid "Rankovce"
+msgstr "Rankovce"
+
+msgid "Resen"
+msgstr "Resen"
+
+msgid "Rosoman"
+msgstr "Rosoman"
+
+msgid "Saraj"
+msgstr "Saraj"
+
+msgid "Sveti Nikole"
+msgstr "Sveti Nikole"
+
+msgid "Sopište"
+msgstr "Sopište"
+
+msgid "Star Dojran"
+msgstr "Star Dojran"
+
+msgid "Staro Nagoričane"
+msgstr "Staro Nagoričane"
+
+msgid "Struga"
+msgstr "Struga"
+
+msgid "Strumica"
+msgstr "Strumica"
+
+msgid "Studeničani"
+msgstr "Studeničani"
+
+msgid "Tearce"
+msgstr "Tearce"
+
+msgid "Tetovo"
+msgstr "Tetovo"
+
+msgid "Centar"
+msgstr "Centar"
+
+msgid "Centar-Župa"
+msgstr "Centar-Župa"
+
+msgid "Čair"
+msgstr "Čair"
+
+msgid "Čaška"
+msgstr "Čaška"
+
+msgid "Češinovo-Obleševo"
+msgstr "Češinovo-Obleševo"
+
+msgid "Čučer-Sandevo"
+msgstr "Čučer-Sandevo"
+
+msgid "Štip"
+msgstr "Štip"
+
+msgid "Šuto Orizari"
+msgstr "Šuto Orizari"
+
+msgid "Macedonian identity card number"
+msgstr "Číslo makedonského identifikačního průkazu"
+
+msgid "A Macedonian municipality (2 character code)"
+msgstr "Makedonská obec (dvoupísmenný kód)"
+
+msgid "Unique master citizen number (13 digits)"
+msgstr "Rodné číslo (13 číslic)"
+
+msgid "Enter a valid postal code in format AAA 0000."
+msgstr "Zadejte platný poštovní kód ve formátu AAA 0000."
+
+msgid "Enter a valid zip code in the format XXXXX."
+msgstr "Zadejte platné PSČ ve tvaru XXXXX."
+
+msgid "Enter a valid RFC."
+msgstr "Zadejte platné RFC."
+
+msgid "Invalid checksum for RFC."
+msgstr "Neplatný kontrolní součet RFC."
+
+msgid "Enter a valid CLABE."
+msgstr "Zadejte platnou CLABE."
+
+msgid "Invalid checksum for CLABE."
+msgstr "Neplatný kontrolní součet pro CLABE."
+
+msgid "Enter a valid CURP."
+msgstr "Zadejte platný CURP."
+
+msgid "Invalid checksum for CURP."
+msgstr "Neplatný kontrolní součet CURP."
+
+msgid "Enter a valid Social Security Number."
+msgstr "Zadejte platné číslo sociálního pojištění."
+
+msgid "Invalid checksum for Social Security Number."
+msgstr "Neplatný kontrolní součet čísla sociálního pojištění."
+
+msgid "Mexico state (three or four uppercase letters)"
+msgstr "stát Mexiko (tři nebo čtyři velká písmena)"
+
+msgid "Mexico zip code"
+msgstr "Mexické PSČ"
+
+msgid "Mexican RFC"
+msgstr "Mexické RFC"
+
+msgid "Mexican CLABE"
+msgstr "Mexická CLABE"
+
+msgid "Mexican CURP"
+msgstr "Mexický CURP"
+
+msgid "Mexican Social Security Number"
+msgstr "Mexické číslo sociálního pojištění"
+
+msgid "Aguascalientes"
+msgstr "Aguascalientes"
+
+msgid "Baja California"
+msgstr "Baja California"
+
+msgid "Baja California Sur"
+msgstr "Baja California Sur"
+
+msgid "Campeche"
+msgstr "Campeche"
+
+msgid "Ciudad de México"
+msgstr "Mexiko City"
+
+msgid "Chihuahua"
+msgstr "Chihuahua"
+
+msgid "Chiapas"
+msgstr "Chiapas"
+
+msgid "Coahuila"
+msgstr "Coahuila"
+
+msgid "Colima"
+msgstr "Colima"
+
+msgid "Durango"
+msgstr "Durango"
+
+msgid "Guerrero"
+msgstr "Guerrero"
+
+msgid "Guanajuato"
+msgstr "Guanajuato"
+
+msgid "Hidalgo"
+msgstr "Hidalgo"
+
+msgid "Jalisco"
+msgstr "Jalisco"
+
+msgid "Estado de México"
+msgstr "México"
+
+msgid "Michoacán"
+msgstr "Michoacán"
+
+msgid "Morelos"
+msgstr "Morelos"
+
+msgid "Nayarit"
+msgstr "Nayarit"
+
+msgid "Nuevo León"
+msgstr "Nuevo León"
+
+msgid "Oaxaca"
+msgstr "Oaxaca"
+
+msgid "Puebla"
+msgstr "Puebla"
+
+msgid "Querétaro"
+msgstr "Querétaro"
+
+msgid "Quintana Roo"
+msgstr "Quintana Roo"
+
+msgid "Sinaloa"
+msgstr "Sinaloa"
+
+msgid "San Luis Potosí"
+msgstr "San Luis Potosí"
+
+msgid "Sonora"
+msgstr "Sonora"
+
+msgid "Tabasco"
+msgstr "Tabasco"
+
+msgid "Tamaulipas"
+msgstr "Tamaulipas"
+
+msgid "Tlaxcala"
+msgstr "Tlaxcala"
+
+msgid "Veracruz"
+msgstr "Veracruz"
+
+msgid "Yucatán"
+msgstr "Yucatán"
+
+msgid "Zacatecas"
+msgstr "Zacatecas"
+
+msgid "Invalid MyKad number."
+msgstr "Neplatné číslo MyKad."
+
+msgid "Dutch zipcode"
+msgstr "Holandské PSČ"
+
+msgid "Dutch province"
+msgstr "Holandská provincie"
+
+msgid "Dutch social security number (BSN)"
+msgstr "Nizozemské číslo sociálního zabezpečení (BSN)"
+
+msgid "Dutch license plate"
+msgstr "Holandská poznávací značka"
+
+msgid "Drenthe"
+msgstr "Drenthe"
+
+msgid "Flevoland"
+msgstr "Flevoland"
+
+msgid "Fryslân"
+msgstr "Fryslân"
+
+msgid "Gelderland"
+msgstr "Gelderland"
+
+msgid "Groningen"
+msgstr "Groningen"
+
+msgid "Noord-Brabant"
+msgstr "Severní Brabantsko"
+
+msgid "Noord-Holland"
+msgstr "Severní Holandsko"
+
+msgid "Overijssel"
+msgstr "Overijssel"
+
+msgid "Utrecht"
+msgstr "Utrecht"
+
+msgid "Zeeland"
+msgstr "Zeeland"
+
+msgid "Zuid-Holland"
+msgstr "Jižní Holandsko"
+
+msgid "Enter a valid BSN."
+msgstr "Zadejte platný kód BSN."
+
+msgid "Enter a valid license plate"
+msgstr "Zadejte platnou poznávací značku"
+
+msgid "Enter a valid Norwegian social security number."
+msgstr "Zadejte platné norské číslo sociálního pojištěni (SSN)."
+
+msgid "Enter a valid Norwegian bank account number."
+msgstr "Zadejte platné číslo norského bankovního účtu."
+
+msgid "Invalid control digit. Enter a valid Norwegian bank account number."
+msgstr ""
+"Neplatná kontrolní číslice. Zadejte platné číslo norského bankovního účtu."
+
+msgid "Invalid length. Norwegian bank account numbers are 11 digits long."
+msgstr "Neplatná délka. Čísla norských bankovních účtů jsou dlouhá 11 číslic."
+
+msgid "Enter a postal code in format XXXXX"
+msgstr "Zadejte PSČ ve formátu XXXXX"
+
+msgid "Bhaktapur"
+msgstr "Bhaktapur"
+
+msgid "Dhading"
+msgstr "Dhading"
+
+msgid "Kathmandu"
+msgstr "Kathmandu"
+
+msgid "Kavrepalanchok"
+msgstr "Kavrepalanchok"
+
+msgid "Lalitpur"
+msgstr "Lalitpur"
+
+msgid "Nuwakot"
+msgstr "Nuwakot"
+
+msgid "Rasuwa"
+msgstr "Rasuwa"
+
+msgid "Sindhupalchok"
+msgstr "Sindhupalchok"
+
+msgid "Banke"
+msgstr "Banke"
+
+msgid "Bardiya"
+msgstr "Bardiya"
+
+msgid "Dailekh"
+msgstr "Dailekh"
+
+msgid "Jajarkot"
+msgstr "Jajarkot"
+
+msgid "Surkhet"
+msgstr "Surkhet"
+
+msgid "Baglung"
+msgstr "Baglung"
+
+msgid "Mustang"
+msgstr "Mustang"
+
+msgid "Myagdi"
+msgstr "Myagdi"
+
+msgid "Parbat"
+msgstr "Parbat"
+
+msgid "Gorkha"
+msgstr "Gorkha"
+
+msgid "Kaski"
+msgstr "Kaski"
+
+msgid "Lamjung"
+msgstr "Lamjung"
+
+msgid "Manang"
+msgstr "Manang"
+
+msgid "Syangja"
+msgstr "Syangja"
+
+msgid "Tanahu"
+msgstr "Tanahu"
+
+msgid "Dhanusa"
+msgstr "Dhanusa"
+
+msgid "Dholkha"
+msgstr "Dholkha"
+
+msgid "Mahottari"
+msgstr "Mahottari"
+
+msgid "Ramechhap"
+msgstr "Ramechhap"
+
+msgid "Sarlahi"
+msgstr "Sarlahi"
+
+msgid "Sindhuli"
+msgstr "Sindhuli"
+
+msgid "Dolpa"
+msgstr "Dolpa"
+
+msgid "Humla"
+msgstr "Humla"
+
+msgid "Jumla"
+msgstr "Jumla"
+
+msgid "Kalikot"
+msgstr "Kalikot"
+
+msgid "Mugu"
+msgstr "Mugu"
+
+msgid "Bhojpur"
+msgstr "Bhojpur"
+
+msgid "Dhankuta"
+msgstr "Dhankuta"
+
+msgid "Morang"
+msgstr "Morang"
+
+msgid "Sankhuwasabha"
+msgstr "Sankhuwasabha"
+
+msgid "Sunsari"
+msgstr "Sunsari"
+
+msgid "Terhathum"
+msgstr "Terhathum"
+
+msgid "Arghakhanchi"
+msgstr "Arghakhanchi"
+
+msgid "Gulmi"
+msgstr "Gulmi"
+
+msgid "Kapilvastu"
+msgstr "Kapilvastu"
+
+msgid "Nawalparasi"
+msgstr "Nawalparasi"
+
+msgid "Palpa"
+msgstr "Palpa"
+
+msgid "Rupandehi"
+msgstr "Rupandehi"
+
+msgid "Baitadi"
+msgstr "Baitadi"
+
+msgid "Dadeldhura"
+msgstr "Dadeldhura"
+
+msgid "Darchula"
+msgstr "Darchula"
+
+msgid "Kanchanpur"
+msgstr "Kanchanpur"
+
+msgid "Jhapa"
+msgstr "Jhapa"
+
+msgid "Panchthar"
+msgstr "Panchthar"
+
+msgid "Taplejung"
+msgstr "Taplejung"
+
+msgid "Bara"
+msgstr "Bara"
+
+msgid "Chitwan"
+msgstr "Chitwan"
+
+msgid "Makwanpur"
+msgstr "Makwanpur"
+
+msgid "Parsa"
+msgstr "Parsa"
+
+msgid "Rautahat"
+msgstr "Rautahat"
+
+msgid "Dang Deukhuri"
+msgstr "Dang Deukhuri"
+
+msgid "Pyuthan"
+msgstr "Pyuthan"
+
+msgid "Rolpa"
+msgstr "Rolpa"
+
+msgid "Rukum"
+msgstr "Rukum"
+
+msgid "Salyan"
+msgstr "Salyan"
+
+msgid "Khotang"
+msgstr "Khotang"
+
+msgid "Okhaldhunga"
+msgstr "Okhaldhunga"
+
+msgid "Saptari"
+msgstr "Saptari"
+
+msgid "Siraha"
+msgstr "Siraha"
+
+msgid "Solukhumbu"
+msgstr "Solukhumbu"
+
+msgid "Udayapur"
+msgstr "Udayapur"
+
+msgid "Achham"
+msgstr "Achham"
+
+msgid "Bajhang"
+msgstr "Bajhang"
+
+msgid "Bajura"
+msgstr "Bajura"
+
+msgid "Doti"
+msgstr "Doti"
+
+msgid "Kailali"
+msgstr "Kailali"
+
+msgid "Bagmati"
+msgstr "Bagmati"
+
+msgid "Gandaki"
+msgstr "Gandaki"
+
+msgid "Karnali"
+msgstr "Karnali"
+
+msgid "Lumbini"
+msgstr "Lumbini"
+
+msgid "Koshi"
+msgstr "Koshi"
+
+msgid "Madhesh"
+msgstr ""
+
+msgid "Sudurpaschim"
+msgstr "Sudurpaschim"
+
+msgid "Bheri"
+msgstr "Bheri"
+
+msgid "Dhawalagiri"
+msgstr "Dhawalagiri"
+
+msgid "Janakpur"
+msgstr "Janakpur"
+
+msgid "Mahakali"
+msgstr "Mahakali"
+
+msgid "Mechi"
+msgstr "Mechi"
+
+msgid "Narayani"
+msgstr "Narayani"
+
+msgid "Rapti"
+msgstr "Rapti"
+
+msgid "Sagarmatha"
+msgstr "Sagarmatha"
+
+msgid "Seti"
+msgstr "Seti"
+
+msgid "Invalid post code."
+msgstr "Neplatné poštovní směrovací číslo."
+
+msgid "Invalid bank account number."
+msgstr "Neplatné číslo bankovního účtu."
+
+msgid "Far North District"
+msgstr "Okres Dálný Sever"
+
+msgid "Whangarei District"
+msgstr "Okres Whangarei"
+
+msgid "Kaipara District"
+msgstr "Okres Kaipara"
+
+msgid "Auckland"
+msgstr "Auckland"
+
+msgid "Thames-Coromandel District"
+msgstr "Okres Temže-Coromandel"
+
+msgid "Hauraki District"
+msgstr "Okres Hauraki"
+
+msgid "Waikato District"
+msgstr "Okres Waikato"
+
+msgid "Matamata-Piako District"
+msgstr "Okres Matamata-Piako"
+
+msgid "Hamilton"
+msgstr "Hamilton"
+
+msgid "Waipa District"
+msgstr "Okres Waipa"
+
+msgid "South Waikato District"
+msgstr "Okres Jižní Waikato"
+
+msgid "Otorohanga District"
+msgstr "Okres Otorohanga"
+
+msgid "Waitomo District"
+msgstr "Okres Waitomo"
+
+msgid "Taupo District"
+msgstr "okres Taupo"
+
+msgid "Western Bay of Plenty District"
+msgstr "okres Western Bay of Plenty"
+
+msgid "Tauranga"
+msgstr "Tauranga"
+
+msgid "Opotiki District"
+msgstr "okres Opotiki"
+
+msgid "Whakatane District"
+msgstr "okres Whakatane"
+
+msgid "Rotorua District"
+msgstr "Okres Rotorua"
+
+msgid "Kawerau District"
+msgstr "okres Kawerau"
+
+msgid "Gisborne District"
+msgstr "okres Gisborne"
+
+msgid "Wairoa District"
+msgstr "okres Wairoa"
+
+msgid "Hastings District"
+msgstr "okres Hastings"
+
+msgid "Napier"
+msgstr "Napier"
+
+msgid "Central Hawke's Bay District"
+msgstr "okres Central Hawke's Bay"
+
+msgid "New Plymouth District"
+msgstr "okres New Plymouth"
+
+msgid "Stratford District"
+msgstr "okres Stratford"
+
+msgid "South Taranaki District"
+msgstr "okres South Taranaki"
+
+msgid "Ruapehu District"
+msgstr "okres Ruapehu"
+
+msgid "Rangitikei District"
+msgstr "okres Rangitikei"
+
+msgid "Wanganui District"
+msgstr "okres Wanganui"
+
+msgid "Manawatu District"
+msgstr "okres Manawatu"
+
+msgid "Palmerston North"
+msgstr "Severní Palmerston"
+
+msgid "Tararua District"
+msgstr "okres Tararua"
+
+msgid "Horowhenua District"
+msgstr "okres Horowhenua"
+
+msgid "Masterton District"
+msgstr "okres Masterton"
+
+msgid "Kapiti Coast District"
+msgstr "okres Kapiti Coast"
+
+msgid "Carterton District"
+msgstr "okres Carterton"
+
+msgid "South Wairarapa District"
+msgstr "okres South Wairarapa"
+
+msgid "Upper Hutt"
+msgstr "Upper Hutt"
+
+msgid "Porirua"
+msgstr "Porirua"
+
+msgid "Hutt"
+msgstr "Hutt"
+
+msgid "Wellington"
+msgstr "Wellington"
+
+msgid "Tasman District"
+msgstr "okres Tasman"
+
+msgid "Nelson"
+msgstr "Nelson"
+
+msgid "Marlborough District"
+msgstr "okres Marlborough"
+
+msgid "Buller District"
+msgstr "okres Buller"
+
+msgid "Grey District"
+msgstr "okres Grey "
+
+msgid "Westland District"
+msgstr "okres Westland"
+
+msgid "Kaikoura District"
+msgstr "okres Kaikoura"
+
+msgid "Hurunui District"
+msgstr "okres Hurunui"
+
+msgid "Selwyn District"
+msgstr "Okres Selwyn"
+
+msgid "Waimakariri District"
+msgstr "Okres Waimakariri"
+
+msgid "Christchurch"
+msgstr "Christchurch"
+
+msgid "Ashburton District"
+msgstr "Okres Ashburton"
+
+msgid "Mackenzie District"
+msgstr "Okres Mackenzie"
+
+msgid "Timaru District"
+msgstr "Okres Timaru"
+
+msgid "Waimate District"
+msgstr "Okres Waimate"
+
+msgid "Waitaki District"
+msgstr "Okres Waitaki"
+
+msgid "Queenstown-Lakes District"
+msgstr "okres Queenstown-Lakes"
+
+msgid "Central Otago District"
+msgstr "Okres Střední Otago"
+
+msgid "Dunedin"
+msgstr "Dunedin"
+
+msgid "Clutha District"
+msgstr "Okres Clutha"
+
+msgid "Southland District"
+msgstr "Okres Southland"
+
+msgid "Gore District"
+msgstr "Okres Gore"
+
+msgid "Invercargill"
+msgstr "Invercargill"
+
+msgid "Taranaki"
+msgstr "Taranaki"
+
+msgid "Hawke's Bay"
+msgstr "Hawke's Bay"
+
+msgid "Marlborough"
+msgstr "Marlborough"
+
+msgid "Canterbury"
+msgstr "Canterbury"
+
+msgid "South Canterbury"
+msgstr "Jižní  Canterbury"
+
+msgid "Westland"
+msgstr "Westland"
+
+msgid "Otago"
+msgstr "Otago"
+
+msgid "Southland"
+msgstr "Southland"
+
+msgid "Chatham Islands"
+msgstr "Chathamské ostrovy"
+
+msgid "Northland"
+msgstr "Northland"
+
+msgid "Waikato"
+msgstr "Waikato"
+
+msgid "Bay of Plenty"
+msgstr "Bay of Plenty"
+
+msgid "Gisborne"
+msgstr "Gisborne"
+
+msgid "Manawatu-Wanganui"
+msgstr "Manawatu-Wanganui"
+
+msgid "Tasman"
+msgstr "Tasmánie"
+
+msgid "West Coast"
+msgstr "Západní pobřeží"
+
+msgid "This field requires 8 digits."
+msgstr "Pole musí obsahovat 8 číslic."
+
+msgid "This field requires 11 digits."
+msgstr "Pole musí obsahovat 11 číslic."
+
+msgid "Enter a 5 digit postcode."
+msgstr "Zadejte 5místné PSČ."
+
+msgid "Pakistani State"
+msgstr "Pákistánský stát"
+
+msgid "Pakistani Postcode"
+msgstr "Pákistánské PSČ"
+
+msgid "Azad Jammu & Kashmir"
+msgstr "Azad Jammu a Kašmír"
+
+msgid "Balochistan"
+msgstr "Balúčistán"
+
+msgid "Federally Administered Tribal Areas"
+msgstr "Federálně spravované kmenové oblasti"
+
+msgid "Gilgit-Baltistan"
+msgstr "Gilgit-Baltistán"
+
+msgid "Islamabad"
+msgstr "Islamabad"
+
+msgid "Khyber Pakhtunkhwa"
+msgstr "Khyber Pakhtunkhwa"
+
+msgid "Punjab"
+msgstr "Paňdžáb"
+
+msgid "Sindh"
+msgstr "Sindh"
+
+msgid "National Identification Number consists of 11 digits."
+msgstr "Národní identifikační číslo obsahuje 11 číslic."
+
+msgid "Wrong checksum for the National Identification Number."
+msgstr "Neplatný kontrolní součet pro Národní identifikační číslo."
+
+msgid "The National Identification Number contains an invalid birth date."
+msgstr "Národní identifikační číslo obsahuje neplatné datum narození."
+
+msgid "National ID Card Number consists of 3 letters and 6 digits."
+msgstr "Číslo národního identifikačního průkazu (3 písmena a 6 číslic)"
+
+msgid "Wrong checksum for the National ID Card Number."
+msgstr "Špatný kontrolní součet čísla národního identifikačního průkazu."
+
+msgid ""
+"Enter a tax number field (NIP) in the format XXX-XXX-XX-XX, XXX-XX-XX-XXX or "
+"XXXXXXXXXX."
+msgstr ""
+"Zadejte pole daňového čísla (NIP) ve tvaru XXX-XXX-XX-XX, XXX-XX-XX-XXX nebo "
+"XXXXXXXXXX."
+
+msgid "Wrong checksum for the Tax Number (NIP)."
+msgstr "Neplatný kontrolní součet pro daňové identifikační číslo."
+
+msgid "National Business Register Number (REGON) consists of 9 or 14 digits."
+msgstr "Identifikační číslo podnikatele (REGON) obsahuje 9 až 14 číslic."
+
+msgid "Wrong checksum for the National Business Register Number (REGON)."
+msgstr "Neplatný kontrolní součet pro identifikační číslo podnikatele (REGON)."
+
+msgid "Enter a postal code in the format XX-XXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XX-XXX."
+
+msgid "Lower Silesian"
+msgstr "Dolnoslezské vojvodství"
+
+msgid "Kuyavian-Pomeranian"
+msgstr "Kujavsko-pomořské vojvodství"
+
+msgid "Lublin"
+msgstr "Lublinské vojvodství"
+
+msgid "Lubusz"
+msgstr "Lubušské vojvodství"
+
+msgid "Lodz"
+msgstr "Lodžské vojvodství"
+
+msgid "Lesser Poland"
+msgstr "Malopolské vojvodství"
+
+msgid "Masovian"
+msgstr "Mazovské vojvodství"
+
+msgid "Opole"
+msgstr "Opolské vojvodství"
+
+msgid "Subcarpathian"
+msgstr "Podkarpatské vojvodství"
+
+msgid "Podlasie"
+msgstr "Podleské vojvodství"
+
+msgid "Pomeranian"
+msgstr "Pomořské vojvodství"
+
+msgid "Silesian"
+msgstr "Slezské vojvodství"
+
+msgid "Swietokrzyskie"
+msgstr "Svatokřížské vojvodství"
+
+msgid "Warmian-Masurian"
+msgstr "Varmijsko-mazurské vojvodství"
+
+msgid "Greater Poland"
+msgstr "Velkopolské vojvodství"
+
+msgid "West Pomeranian"
+msgstr "Západopomořanské vojvodství"
+
+msgid "The specified value is not a valid Citizen Card number."
+msgstr "Zadaná hodnota není platné číslo občanské karty."
+
+msgid ""
+"Citizen Card numbers have the format XXXXXXXXXYYX or XXXXXXXX-XYYX (where X "
+"is a digit and Y is an alphanumeric character)."
+msgstr ""
+"Čísla občanských karet mají tvar XXXXXXXXXYYX nebo XXXXXXXX-XYYX (kde X je "
+"číslice a Y je písmeno nebo číslo)."
+
+msgid "The specified number is not a valid Social Security number."
+msgstr "Zadané číslo není platné číslo sociálního pojištění."
+
+msgid ""
+"Social Security numbers must be in the format XYYYYYYYYYY (where X is either "
+"1 or 2 and Y is any other digit)."
+msgstr ""
+"Čísla sociálního pojištění musejí být ve tvaru XYYYYYYYYYY (kde X je 1 nebo "
+"2 a Y je nějaké jiné číslo)."
+
+msgid ""
+"Zip codes must be in the format XYYY-YYY (where X is a digit between 1 and 9 "
+"and Y is any other digit)."
+msgstr ""
+"Poštovní směrovací čísla musejí být ve tvaru XYYY-YYY (kde X je číslo mezi 1 "
+"a 9 a Y je jakékoli jiné číslo)."
+
+msgid "Aveiro"
+msgstr "Aveiro"
+
+msgid "Beja"
+msgstr "Beja"
+
+msgid "Braga"
+msgstr "Braga"
+
+msgid "Bragança"
+msgstr "Bragança"
+
+msgid "Castelo Branco"
+msgstr "Castelo Branco"
+
+msgid "Coimbra"
+msgstr "Coimbra"
+
+msgid "Évora"
+msgstr "Évora"
+
+msgid "Faro"
+msgstr "Faro"
+
+msgid "Guarda"
+msgstr "Guarda"
+
+msgid "Leiria"
+msgstr "Leiria"
+
+msgid "Lisboa"
+msgstr "Lisboa"
+
+msgid "Portalegre"
+msgstr "Portalegre"
+
+msgid "Porto"
+msgstr "Porto"
+
+msgid "Santarém"
+msgstr "Santarém"
+
+msgid "Setúbal"
+msgstr "Setúbal"
+
+msgid "Viana do Castelo"
+msgstr "Viana do Castelo"
+
+msgid "Vila Real"
+msgstr "Vila Real"
+
+msgid "Viseu"
+msgstr "Viseu"
+
+msgid "Região Autónoma da Madeira"
+msgstr "Região Autónoma da Madeira"
+
+msgid "Região Autónoma dos Açores"
+msgstr "Região Autónoma dos Açores"
+
+msgid "Enter a valid CIF."
+msgstr "Zadejte platné CIF."
+
+msgid "Enter a valid CNP."
+msgstr "Zadejte platné CNP."
+
+msgid "Enter a valid postal code in the format XXXXXX"
+msgstr "Zadejte platné poštovní směrovací číslo ve tvaru XXXXXX."
+
+msgid "Enter a postal code in the format XXXXXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXXXX."
+
+msgid "Enter a passport number in the format XXXX XXXXXX."
+msgstr "Zadejte číslo pasu ve tvaru XXXX XXXXXX."
+
+msgid "Enter a passport number in the format XX XXXXXXX."
+msgstr "Zadejte číslo pasu ve tvaru XX XXXXXXX."
+
+msgid "Central Federal County"
+msgstr "Centrální federální okruh"
+
+msgid "South Federal County"
+msgstr "Jižní federální okruh"
+
+msgid "North-West Federal County"
+msgstr "Severozápadní federální okruh"
+
+msgid "Far-East Federal County"
+msgstr "Dálněvýchodní federální okruh"
+
+msgid "Siberian Federal County"
+msgstr "Sibiřský federální okruh"
+
+msgid "Ural Federal County"
+msgstr "Uralský federální okruh"
+
+msgid "Privolzhsky Federal County"
+msgstr "Povolžský federální okruh"
+
+msgid "North-Caucasian Federal County"
+msgstr "Severokavkazský federální okruh"
+
+msgid "Moskva"
+msgstr "Moskva"
+
+msgid "Saint-Peterburg"
+msgstr "Petrohrad"
+
+msgid "Moskovskaya oblast'"
+msgstr "Moskevská oblast"
+
+msgid "Adygeya, Respublika"
+msgstr "Adygejsko"
+
+msgid "Bashkortostan, Respublika"
+msgstr "Baškortostán"
+
+msgid "Buryatia, Respublika"
+msgstr "Burjatsko"
+
+msgid "Altay, Respublika"
+msgstr "Republika Altaj"
+
+msgid "Dagestan, Respublika"
+msgstr "Dagestán"
+
+msgid "Ingushskaya Respublika"
+msgstr "Ingušsko"
+
+msgid "Kabardino-Balkarskaya Respublika"
+msgstr "Kabardsko-Balkarsko"
+
+msgid "Kalmykia, Respublika"
+msgstr "Kalmycko"
+
+msgid "Karachaevo-Cherkesskaya Respublika"
+msgstr "Karačajevsko-Čerkesko"
+
+msgid "Karelia, Respublika"
+msgstr "Republika Karélie"
+
+msgid "Komi, Respublika"
+msgstr "Republika Komi"
+
+msgid "Mariy Ehl, Respublika"
+msgstr "Marij El"
+
+msgid "Mordovia, Respublika"
+msgstr "Mordovia, republika"
+
+msgid "Sakha, Respublika (Yakutiya)"
+msgstr "Sakha, Republika (Jakutsko)"
+
+msgid "Severnaya Osetia, Respublika (Alania)"
+msgstr "Severní Osetie (Alanie)"
+
+msgid "Tatarstan, Respublika"
+msgstr "Tatarstán"
+
+msgid "Tyva, Respublika (Tuva)"
+msgstr "Tuva"
+
+msgid "Udmurtskaya Respublika"
+msgstr "Udmurtsko"
+
+msgid "Khakassiya, Respublika"
+msgstr "Chakasie"
+
+msgid "Chechenskaya Respublika"
+msgstr "Čečensko"
+
+msgid "Chuvashskaya Respublika"
+msgstr "Čuvašsko"
+
+msgid "Altayskiy Kray"
+msgstr "Altajský kraj"
+
+msgid "Zabaykalskiy Kray"
+msgstr "Zabajkalský kraj"
+
+msgid "Kamchatskiy Kray"
+msgstr "Kamčatský kraj"
+
+msgid "Krasnodarskiy Kray"
+msgstr "Krasnodarský kraj"
+
+msgid "Krasnoyarskiy Kray"
+msgstr "Krasnojarský kraj"
+
+msgid "Permskiy Kray"
+msgstr "Permský kraj"
+
+msgid "Primorskiy Kray"
+msgstr "Přímořský kraj"
+
+msgid "Stavropol'siyy Kray"
+msgstr "Stavropolský kraj"
+
+msgid "Khabarovskiy Kray"
+msgstr "Chabarovský kraj"
+
+msgid "Amurskaya oblast'"
+msgstr "Amurská oblast"
+
+msgid "Arkhangel'skaya oblast'"
+msgstr "Archangelská oblast"
+
+msgid "Astrakhanskaya oblast'"
+msgstr "Astrachaňská oblast"
+
+msgid "Belgorodskaya oblast'"
+msgstr "Belgorodská oblast"
+
+msgid "Bryanskaya oblast'"
+msgstr "Brjanská oblast"
+
+msgid "Vladimirskaya oblast'"
+msgstr "Vladimirská oblast"
+
+msgid "Volgogradskaya oblast'"
+msgstr "Volgogradská oblast"
+
+msgid "Vologodskaya oblast'"
+msgstr "Vologdská oblast"
+
+msgid "Voronezhskaya oblast'"
+msgstr "Voroněžská oblast"
+
+msgid "Ivanovskaya oblast'"
+msgstr "Ivanovská oblast"
+
+msgid "Irkutskaya oblast'"
+msgstr "Irkutská oblast"
+
+msgid "Kaliningradskaya oblast'"
+msgstr "Kaliningradská oblast"
+
+msgid "Kaluzhskaya oblast'"
+msgstr "Kalužská oblast"
+
+msgid "Kemerovskaya oblast'"
+msgstr "Kemerovská oblast"
+
+msgid "Kirovskaya oblast'"
+msgstr "Kirovská oblast"
+
+msgid "Kostromskaya oblast'"
+msgstr "Kostromská oblast"
+
+msgid "Kurganskaya oblast'"
+msgstr "Kurganská oblast"
+
+msgid "Kurskaya oblast'"
+msgstr "Kurská oblast"
+
+msgid "Leningradskaya oblast'"
+msgstr "Leningradská oblast"
+
+msgid "Lipeckaya oblast'"
+msgstr "Lipecká oblast"
+
+msgid "Magadanskaya oblast'"
+msgstr "Magadanská oblast"
+
+msgid "Murmanskaya oblast'"
+msgstr "Murmanská oblast"
+
+msgid "Nizhegorodskaja oblast'"
+msgstr "Nižněnovgorodská oblast"
+
+msgid "Novgorodskaya oblast'"
+msgstr "Novgorodská oblast"
+
+msgid "Novosibirskaya oblast'"
+msgstr "Novosibirská oblast"
+
+msgid "Omskaya oblast'"
+msgstr "Omská oblast"
+
+msgid "Orenburgskaya oblast'"
+msgstr "Orenburská oblast"
+
+msgid "Orlovskaya oblast'"
+msgstr "Orelská oblast"
+
+msgid "Penzenskaya oblast'"
+msgstr "Penzenská oblast"
+
+msgid "Pskovskaya oblast'"
+msgstr "Pskovská oblast"
+
+msgid "Rostovskaya oblast'"
+msgstr "Rostovská oblast"
+
+msgid "Rjazanskaya oblast'"
+msgstr "Rjazaňská oblast"
+
+msgid "Samarskaya oblast'"
+msgstr "Sachalinská oblast"
+
+msgid "Saratovskaya oblast'"
+msgstr "Saratovská oblast"
+
+msgid "Sakhalinskaya oblast'"
+msgstr "Sachalinská oblast"
+
+msgid "Sverdlovskaya oblast'"
+msgstr "Sverdlovská oblast"
+
+msgid "Smolenskaya oblast'"
+msgstr "Smolenská oblast"
+
+msgid "Tambovskaya oblast'"
+msgstr "Tambovská oblast"
+
+msgid "Tverskaya oblast'"
+msgstr "Tverská oblast"
+
+msgid "Tomskaya oblast'"
+msgstr "Tomská oblast"
+
+msgid "Tul'skaya oblast'"
+msgstr "Tomská oblast"
+
+msgid "Tyumenskaya oblast'"
+msgstr "Ťumenská oblast"
+
+msgid "Ul'ianovskaya oblast'"
+msgstr "Uljanovská oblast"
+
+msgid "Chelyabinskaya oblast'"
+msgstr "Čeljabinská oblast"
+
+msgid "Yaroslavskaya oblast'"
+msgstr "Jaroslavská oblast"
+
+msgid "Evreyskaya avtonomnaja oblast'"
+msgstr "Židovská autonomní oblast"
+
+msgid "Neneckiy autonomnyy okrug"
+msgstr "Něnecký autonomní okruh"
+
+msgid "Khanty-Mansiyskiy avtonomnyy okrug - Yugra"
+msgstr "Chantymansijský autonomní okruh - Jugra"
+
+msgid "Chukotskiy avtonomnyy okrug"
+msgstr "Čukotský autonomní okruh"
+
+msgid "Yamalo-Neneckiy avtonomnyy okrug"
+msgstr "Jamalskoněnecký autonomní okruh"
+
+msgid "Enter a valid Swedish organisation number."
+msgstr "Vložte platné číslo švédské organizace."
+
+msgid "Enter a valid Swedish personal identity number."
+msgstr "Vložte platné švédské osobní identifikační číslo."
+
+msgid "Co-ordination numbers are not allowed."
+msgstr "Koordinační čísla nejsou povolena."
+
+msgid "Enter a Swedish postal code in the format XXXXX."
+msgstr "Vložte švédské poštovní směrovací číslo ve tvaru XXXXX."
+
+msgid "Stockholm"
+msgstr "Stockholm"
+
+msgid "Västerbotten"
+msgstr "Västerbotten"
+
+msgid "Norrbotten"
+msgstr "Norrbotten"
+
+msgid "Uppsala"
+msgstr "Uppsala"
+
+msgid "Södermanland"
+msgstr "Södermanland"
+
+msgid "Östergötland"
+msgstr "Östergötland"
+
+msgid "Jönköping"
+msgstr "Jönköping"
+
+msgid "Kronoberg"
+msgstr "Kronoberg"
+
+msgid "Kalmar"
+msgstr "Kalmar"
+
+msgid "Gotland"
+msgstr "Gotland"
+
+msgid "Blekinge"
+msgstr "Blekinge"
+
+msgid "Skåne"
+msgstr "Skåne"
+
+msgid "Halland"
+msgstr "Halland"
+
+msgid "Västra Götaland"
+msgstr "Västra Götaland"
+
+msgid "Värmland"
+msgstr "Värmland"
+
+msgid "Örebro"
+msgstr "Örebro"
+
+msgid "Västmanland"
+msgstr "Västmanland"
+
+msgid "Dalarna"
+msgstr "Dalarna"
+
+msgid "Gävleborg"
+msgstr "Gävleborg"
+
+msgid "Västernorrland"
+msgstr "Västernorrland"
+
+msgid "Jämtland"
+msgstr "Jämtland"
+
+msgid "Enter a 6-digit postal code."
+msgstr "Zadejte 6-místné poštovní směrovací číslo."
+
+msgid "Invalid NRIC/FIN."
+msgstr "Neplatné NRIC/FIN."
+
+msgid "The first 7 digits of the EMSO must represent a valid past date."
+msgstr "Prvních 7 číslic EMSO musí představovat datum uplynulého dne."
+
+msgid "The EMSO is not valid."
+msgstr "EMSO je neplatné."
+
+msgid "Enter a valid tax number in form SIXXXXXXXX"
+msgstr "Zadejte platné daňové číslo ve tvaru SIXXXXXXXX."
+
+msgid "Banska Bystrica"
+msgstr "Banská Bystrica"
+
+msgid "Banska Stiavnica"
+msgstr "Banská Štiavnica"
+
+msgid "Bardejov"
+msgstr "Bardejov"
+
+msgid "Banovce nad Bebravou"
+msgstr "Bánovce nad Bebravou"
+
+msgid "Brezno"
+msgstr "Brezno"
+
+msgid "Bratislava I"
+msgstr "Bratislava I"
+
+msgid "Bratislava II"
+msgstr "Bratislava II"
+
+msgid "Bratislava III"
+msgstr "Bratislava III"
+
+msgid "Bratislava IV"
+msgstr "Bratislava IV"
+
+msgid "Bratislava V"
+msgstr "Bratislava V"
+
+msgid "Bytca"
+msgstr "Bytča"
+
+msgid "Cadca"
+msgstr "Čadca"
+
+msgid "Detva"
+msgstr "Detva"
+
+msgid "Dolny Kubin"
+msgstr "Dolný Kubín"
+
+msgid "Dunajska Streda"
+msgstr "Dunajská Streda"
+
+msgid "Galanta"
+msgstr "Galanta"
+
+msgid "Gelnica"
+msgstr "Gelnica"
+
+msgid "Hlohovec"
+msgstr "Hlohovec"
+
+msgid "Humenne"
+msgstr "Humenné"
+
+msgid "Ilava"
+msgstr "Ilava"
+
+msgid "Kezmarok"
+msgstr "Kežmarok"
+
+msgid "Komarno"
+msgstr "Komárno"
+
+msgid "Kosice I"
+msgstr "Košice I"
+
+msgid "Kosice II"
+msgstr "Košice II"
+
+msgid "Kosice III"
+msgstr "Košice III"
+
+msgid "Kosice IV"
+msgstr "Košice IV"
+
+msgid "Kosice - okolie"
+msgstr "Košice-okolie"
+
+msgid "Krupina"
+msgstr "Krupina"
+
+msgid "Kysucke Nove Mesto"
+msgstr "Kysucké Nové Mesto"
+
+msgid "Levice"
+msgstr "Levice"
+
+msgid "Levoca"
+msgstr "Levoča"
+
+msgid "Liptovsky Mikulas"
+msgstr "Liptovský Mikuláš"
+
+msgid "Lucenec"
+msgstr "Lučenec"
+
+msgid "Malacky"
+msgstr "Malacky"
+
+msgid "Martin"
+msgstr "Martin"
+
+msgid "Medzilaborce"
+msgstr "Medzilaborce"
+
+msgid "Michalovce"
+msgstr "Michalovce"
+
+msgid "Myjava"
+msgstr "Myjava"
+
+msgid "Namestovo"
+msgstr "Námestovo"
+
+msgid "Nitra"
+msgstr "Nitra"
+
+msgid "Nove Mesto nad Vahom"
+msgstr "Nové Mesto nad Váhom"
+
+msgid "Nove Zamky"
+msgstr "Nové Zámky"
+
+msgid "Partizanske"
+msgstr "Partizánske"
+
+msgid "Pezinok"
+msgstr "Pezinok"
+
+msgid "Piestany"
+msgstr "Piešťany"
+
+msgid "Poltar"
+msgstr "Poltár"
+
+msgid "Poprad"
+msgstr "Poprad"
+
+msgid "Povazska Bystrica"
+msgstr "Považská Bystrica"
+
+msgid "Presov"
+msgstr "Prešov"
+
+msgid "Prievidza"
+msgstr "Prievidza"
+
+msgid "Puchov"
+msgstr "Púchov"
+
+msgid "Revuca"
+msgstr "Revúca"
+
+msgid "Rimavska Sobota"
+msgstr "Rimavská Sobota"
+
+msgid "Roznava"
+msgstr "Rožňava"
+
+msgid "Ruzomberok"
+msgstr "Ružomberok"
+
+msgid "Sabinov"
+msgstr "Sabinov"
+
+msgid "Senec"
+msgstr "Senec"
+
+msgid "Senica"
+msgstr "Senica"
+
+msgid "Skalica"
+msgstr "Skalica"
+
+msgid "Snina"
+msgstr "Snina"
+
+msgid "Sobrance"
+msgstr "Sobrance"
+
+msgid "Spisska Nova Ves"
+msgstr "Spišská Nová Ves"
+
+msgid "Stara Lubovna"
+msgstr "Stará Ľubovňa"
+
+msgid "Stropkov"
+msgstr "Stropkov"
+
+msgid "Svidnik"
+msgstr "Svidník"
+
+msgid "Sala"
+msgstr "Šaľa"
+
+msgid "Topolcany"
+msgstr "Topoľčany"
+
+msgid "Trebisov"
+msgstr "Trebišov"
+
+msgid "Trencin"
+msgstr "Trenčín"
+
+msgid "Trnava"
+msgstr "Trnava"
+
+msgid "Turcianske Teplice"
+msgstr "Turčianske Teplice"
+
+msgid "Tvrdosin"
+msgstr "Tvrdošín"
+
+msgid "Velky Krtis"
+msgstr "Veľký Krtíš"
+
+msgid "Vranov nad Toplou"
+msgstr "Vranov nad Topľou"
+
+msgid "Zlate Moravce"
+msgstr "Zlaté Moravce"
+
+msgid "Zvolen"
+msgstr "Zvolen"
+
+msgid "Zarnovica"
+msgstr "Žarnovica"
+
+msgid "Ziar nad Hronom"
+msgstr "Žiar nad Hronom"
+
+msgid "Zilina"
+msgstr "Žilina"
+
+msgid "Banska Bystrica region"
+msgstr "Banskobystrický kraj"
+
+msgid "Bratislava region"
+msgstr "Bratislavský kraj"
+
+msgid "Kosice region"
+msgstr "Košický kraj"
+
+msgid "Nitra region"
+msgstr "Nitranský kraj"
+
+msgid "Presov region"
+msgstr "Prešovský kraj"
+
+msgid "Trencin region"
+msgstr "Trenčínský kraj"
+
+msgid "Trnava region"
+msgstr "Trnavský kraj"
+
+msgid "Zilina region"
+msgstr "Žilinský kraj"
+
+msgid "Ariana"
+msgstr "Ariana"
+
+msgid "Ben Arous"
+msgstr "Ben Arous"
+
+msgid "Bizert"
+msgstr "Bizert"
+
+msgid "Gabes"
+msgstr "Gabes"
+
+msgid "Gafsa"
+msgstr "Gafsa"
+
+msgid "Jendouba"
+msgstr "Jendouba"
+
+msgid "Kairouan"
+msgstr "Kairouan"
+
+msgid "Kasserine"
+msgstr "Kasserine"
+
+msgid "Kebili"
+msgstr "Kebili"
+
+msgid "Kef"
+msgstr "Kef"
+
+msgid "Mahdia"
+msgstr "Mahdia"
+
+msgid "Manouba"
+msgstr "Manouba"
+
+msgid "Medenine"
+msgstr "Medenine"
+
+msgid "Monastir"
+msgstr "Monastir"
+
+msgid "Nabeul"
+msgstr "Nabeul"
+
+msgid "Sfax"
+msgstr "Sfax"
+
+msgid "Sidi Bouzid"
+msgstr "Sidi Bouzid"
+
+msgid "Siliana"
+msgstr "Siliana"
+
+msgid "Sousse"
+msgstr "Sousse"
+
+msgid "Tataouine"
+msgstr "Tataouine"
+
+msgid "Tozeur"
+msgstr "Tozeur"
+
+msgid "Tunis"
+msgstr "Tunis"
+
+msgid "Zaghouan"
+msgstr "Zaghouan"
+
+msgid "Enter a valid Turkish Identification number."
+msgstr "Vložte platné Turecké Identifikační číslo."
+
+msgid "Turkish Identification number must be 11 digits."
+msgstr "Turecké Identifikační číslo musí obsahovat 11 číslic."
+
+msgid "Enter a valid postal code."
+msgstr "Zadejte platný poštovní kód."
+
+msgid "Ukrainian region"
+msgstr "Ukrajinský region"
+
+msgid "Ukrainian VAT number"
+msgstr "Ukrajinské DIČ"
+
+msgid "Ukrainian postal code"
+msgstr "Ukrajinské poštovní směrovací číslo"
+
+msgid "Cherkasy Oblast"
+msgstr "Čerkasy kraj"
+
+msgid "Chernihiv Oblast"
+msgstr "Černičevská oblast"
+
+msgid "Chernivtsi Oblast"
+msgstr "Černivci kraj"
+
+msgid "Dnipropetrovsk Oblast"
+msgstr "Dněpropetrovská oblast"
+
+msgid "Donetsk Oblast"
+msgstr "Doněcká oblast"
+
+msgid "Ivano-Frankivsk Oblast"
+msgstr "Ivano-Frankivský kraj"
+
+msgid "Kharkiv Oblast"
+msgstr "Charkovská oblast"
+
+msgid "Kherson Oblast"
+msgstr "Khersonský kraj"
+
+msgid "Khmelnytskyi Oblast"
+msgstr "Chmelnyckyj kraj"
+
+msgid "Kirovohrad Oblast"
+msgstr "Kirovohradská oblast"
+
+msgid "Kyiv Oblast"
+msgstr ""
+
+msgid "Luhansk Oblast"
+msgstr "Luhanská oblast"
+
+msgid "Lviv Oblast"
+msgstr "Lvovská oblast"
+
+msgid "Mykolaiv Oblast"
+msgstr "Mykolaivská oblast"
+
+msgid "Odessa Oblast"
+msgstr "Oděsská oblast"
+
+msgid "Poltava Oblast"
+msgstr "Poltavská oblast"
+
+msgid "Rivne Oblast"
+msgstr "Rivne kraj"
+
+msgid "Sumy Oblast"
+msgstr "Sumy kraj"
+
+msgid "Ternopil Oblast"
+msgstr "Černobylská oblat"
+
+msgid "Vinnytsia Oblast"
+msgstr "Vinnycká oblast"
+
+msgid "Volyn Oblast"
+msgstr "Volyňská oblast"
+
+msgid "Zakarpattia Oblast"
+msgstr "Zakarpatská oblast"
+
+msgid "Zaporizhia Oblast"
+msgstr "Záporožská oblast"
+
+msgid "Zhytomyr Oblast"
+msgstr "Žitomírská oblast"
+
+msgid "Autonomous Republic of Crimea"
+msgstr "Krymská autonomní republika"
+
+msgid "Kyiv"
+msgstr ""
+
+msgid "Sevastopol"
+msgstr "Sevastopol"
+
+msgid "Enter a zip code in the format XXXXX or XXXXX-XXXX."
+msgstr "Zadejte poštovní směrovací číslo ve tvaru XXXXX nebo XXXXX-XXXX."
+
+msgid "Enter a valid U.S. Social Security number in XXX-XX-XXXX format."
+msgstr "Zadejte platné osobní číslo (U.S. SSN) ve tvaru XXX-XX-XXXX."
+
+msgid "Enter a U.S. state or territory."
+msgstr "Vložte stát USA nebo teritorium."
+
+msgid "U.S. state (two uppercase letters)"
+msgstr "Stát v USA (dvě velká písmena)"
+
+msgid "U.S. postal code (two uppercase letters)"
+msgstr "Poštovní směrovací číslo v USA (dvě velká písmena)"
+
+msgid "U.S. ZIP code"
+msgstr "PSČ USA"
+
+msgid "Social security number"
+msgstr "Číslo sociálního zabezpečení"
+
+msgid "Alabama"
+msgstr "Alabama"
+
+msgid "Arizona"
+msgstr "Arizona"
+
+msgid "Arkansas"
+msgstr "Arkansas"
+
+msgid "California"
+msgstr "Kalifornie"
+
+msgid "Colorado"
+msgstr "Colorado"
+
+msgid "Connecticut"
+msgstr "Connecticut"
+
+msgid "Delaware"
+msgstr "Delaware"
+
+msgid "District of Columbia"
+msgstr "District of Columbia"
+
+msgid "Florida"
+msgstr "Florida"
+
+msgctxt "US state"
+msgid "Georgia"
+msgstr "Georgia"
+
+msgid "Idaho"
+msgstr "Idaho"
+
+msgid "Illinois"
+msgstr "Illinois"
+
+msgid "Indiana"
+msgstr "Indiana"
+
+msgid "Iowa"
+msgstr "Iowa"
+
+msgid "Kansas"
+msgstr "Kansas"
+
+msgid "Kentucky"
+msgstr "Kentucky"
+
+msgid "Louisiana"
+msgstr "Louisiana"
+
+msgid "Maine"
+msgstr "Maine"
+
+msgid "Maryland"
+msgstr "Maryland"
+
+msgid "Massachusetts"
+msgstr "Massachusetts"
+
+msgid "Michigan"
+msgstr "Michigan"
+
+msgid "Minnesota"
+msgstr "Minnesota"
+
+msgid "Mississippi"
+msgstr "Mississippi"
+
+msgid "Missouri"
+msgstr "Missouri"
+
+msgid "Montana"
+msgstr "Montana"
+
+msgid "Nebraska"
+msgstr "Nebraska"
+
+msgid "Nevada"
+msgstr "Nevada"
+
+msgid "New Hampshire"
+msgstr "New Hampshire"
+
+msgid "New Jersey"
+msgstr "New Jersey"
+
+msgid "New Mexico"
+msgstr "Nové Mexiko"
+
+msgid "New York"
+msgstr "New York"
+
+msgid "North Carolina"
+msgstr "Severní Karolína"
+
+msgid "North Dakota"
+msgstr "Severní Dakota"
+
+msgid "Ohio"
+msgstr "Ohio"
+
+msgid "Oklahoma"
+msgstr "Oklahoma"
+
+msgid "Oregon"
+msgstr "Oregon"
+
+msgid "Pennsylvania"
+msgstr "Pennsylvania"
+
+msgid "Rhode Island"
+msgstr "Rhode Island"
+
+msgid "South Carolina"
+msgstr "Jižní Karolína"
+
+msgid "South Dakota"
+msgstr "Jižní Dakota"
+
+msgid "Tennessee"
+msgstr "Tennessee"
+
+msgid "Texas"
+msgstr "Texas"
+
+msgid "Utah"
+msgstr "Utah"
+
+msgid "Vermont"
+msgstr "Vermont"
+
+msgid "Virginia"
+msgstr "Virginia"
+
+msgid "Washington"
+msgstr "Washington"
+
+msgid "West Virginia"
+msgstr "Západní Virginia"
+
+msgid "Wisconsin"
+msgstr "Wisconsin"
+
+msgid "Wyoming"
+msgstr "Wyoming"
+
+msgid "Alaska"
+msgstr "Aljaška"
+
+msgid "Hawaii"
+msgstr "Havaj"
+
+msgid "American Samoa"
+msgstr "Americká Samoa"
+
+msgid "Guam"
+msgstr "Guam"
+
+msgid "Northern Mariana Islands"
+msgstr "Severní Mariany"
+
+msgid "Puerto Rico"
+msgstr "Portoriko"
+
+msgid "Virgin Islands"
+msgstr "Panenské Ostrovy"
+
+msgid "Armed Forces Americas"
+msgstr "Ozbrojené síly Americas"
+
+msgid "Armed Forces Europe"
+msgstr "Evropské ozbrojené síly"
+
+msgid "Armed Forces Pacific"
+msgstr "Ozbrojené síly Tichomoří"
+
+msgid "Federated States of Micronesia"
+msgstr "Mikronézské federativní státy"
+
+msgid "Marshall Islands"
+msgstr "Marshallovy ostrovy"
+
+msgid "Palau"
+msgstr "Palau"
+
+msgid "Commonwealth of the Northern Mariana Islands"
+msgstr "Společenství ostrovů Severní Mariany"
+
+msgid "Panama Canal Zone"
+msgstr "Zóna Panamského průplavu"
+
+msgid "Philippine Islands"
+msgstr "Filipínské ostrovy"
+
+msgid "Trust Territory of the Pacific Islands"
+msgstr "Důvěryhodné území tichomořských ostrovů"
+
+msgid "Enter a valid CI number in X.XXX.XXX-X,XXXXXXX-X or XXXXXXXX format."
+msgstr "Vložte platné číslo CI ve tvaru X.XXX.XXX-X,XXXXXXX-X nebo XXXXXXXX."
+
+msgid "Enter a valid CI number."
+msgstr "Vložte platné číslo CI."
+
+msgid "Región Capital"
+msgstr "Region hlavního města"
+
+msgid "Región Central"
+msgstr "Centrální region"
+
+msgid "Región de los Llanos"
+msgstr "Rovinatý region"
+
+msgid "Región Centro Occidental"
+msgstr "Středozápadní region"
+
+msgid "Región Zuliana"
+msgstr "Región Zuliana"
+
+msgid "Región de los Andes"
+msgstr "Región de los Andes"
+
+msgid "Región Nor-Oriental"
+msgstr "Región Nor-Oriental"
+
+msgid "Región Insular"
+msgstr "Ostrovní region"
+
+msgid "Región Guayana"
+msgstr " Guayanský region"
+
+msgid "Región Sur Occidental"
+msgstr "Jihozápadní region"
+
+msgid "Amazonas"
+msgstr "Amazonka"
+
+msgid "Anzoátegui"
+msgstr "Anzoátegui"
+
+msgid "Apure"
+msgstr "Apure"
+
+msgid "Aragua"
+msgstr "Aragua"
+
+msgid "Barinas"
+msgstr "Barinas"
+
+msgid "Bolívar"
+msgstr "Bolívar"
+
+msgid "Carabobo"
+msgstr "Carabobo"
+
+msgid "Cojedes"
+msgstr "Cojedes"
+
+msgid "Delta Amacuro"
+msgstr "Delta Amacuro"
+
+msgid "Dependencias Federales"
+msgstr "Federální závislosti"
+
+msgid "Distrito Capital"
+msgstr "Hlavní město"
+
+msgid "Falcón"
+msgstr "Falcón"
+
+msgid "Guárico"
+msgstr "Guárico"
+
+msgid "Lara"
+msgstr "Lara"
+
+msgid "Mérida"
+msgstr "Mérida"
+
+msgid "Miranda"
+msgstr "Miranda"
+
+msgid "Monagas"
+msgstr "Monagas"
+
+msgid "Nueva Esparta"
+msgstr "Nueva Esparta"
+
+msgid "Portuguesa"
+msgstr "Portuguesa"
+
+msgid "Sucre"
+msgstr "Sucre"
+
+msgid "Táchira"
+msgstr "Táchira"
+
+msgid "Trujillo"
+msgstr "Trujillo"
+
+msgid "Vargas"
+msgstr "Vargas"
+
+msgid "Yaracuy"
+msgstr "Yaracuy"
+
+msgid "Zulia"
+msgstr "Zulia"
+
+msgid "Enter a valid South African ID number"
+msgstr "Zadejte platné jihoafrické identifikační číslo"
+
+msgid "Enter a valid South African postal code"
+msgstr "Zadejte platné jihoafrické poštovní směrovací číslo"
+
+msgid "Eastern Cape"
+msgstr "Východní Kapsko"
+
+msgid "Free State"
+msgstr "Svobodný stát"
+
+msgid "Gauteng"
+msgstr "Gauteng"
+
+msgid "KwaZulu-Natal"
+msgstr "KwaZulu-Natal"
+
+msgid "Limpopo"
+msgstr "Limpopo"
+
+msgid "Mpumalanga"
+msgstr "Mpumalanga"
+
+msgid "Northern Cape"
+msgstr "Severní Kapsko"
+
+msgid "North West"
+msgstr "Severozápadní provincie"
+
+msgid "Western Cape"
+msgstr "Západní Kapsko"

@@ -1,0 +1,66 @@
+{% extends "multifactor/base.html" %}
+{% load static %}
+
+{% block card_title %}Multi-Factor Verification{% endblock %}
+{% block container_class %}{% endblock %}
+
+{% block content %}
+{% if can_edit %}
+<a class="button home-add is-light" href="{% url 'multifactor:add' %}">Add New Factor ➕</a>
+{% endif %}
+
+<p>To keep your account secure, you can add one or more secondary authentication factors. These are commonly USB keys, or codes acquired through a secure mechanism like an authenticator. </p>
+
+<table class="table is-striped">
+	<tbody>
+		{% for factor in factors %}
+		<tr>
+			<td>
+				<h3><a href="{% url 'multifactor:rename' factor.pk %}" title="Click to rename">
+					{{ factor.display_name }}
+				</a></h3>
+				<p>Added {{ factor.added_on.date }}. {% if factor.last_used %}Used {{factor.last_used|timesince}} ago.{% else %}Never used.{% endif %}</p>
+			</td>
+			<td>
+				{% if factor.id in authed_kids %}
+					<a class="button disabled" href="#" title="Unlocked">🔓</a>
+				{% elif factor.enabled %}
+					<a class="button is-light" href="{% url factor.auth_url %}" title="Locked, click to authenticate">🔒</a>
+				{% endif %}
+				{% if can_edit %}
+				<form action="{% url 'multifactor:action' 'toggle_factor' factor.pk %}" method="POST">
+					{% csrf_token %}
+					<button type="submit" name="kid" value="{{factor.pk}}" class="button is-toggle is-toggled-{{factor.enabled|yesno:'on,off'}}">{{factor.enabled|yesno:'Enabled,Disabled'}}</button>
+				</form>
+				<form action="{% url 'multifactor:action' 'delete_factor' factor.pk %}" method="POST">
+					{% csrf_token %}
+					<button type="submit" name="kid" value="{{factor.pk}}" class="button is-danger delete-button"><span>Delete</span></button>
+				</form>
+				{% endif %}
+			</td>
+		</tr>
+		{% endfor %}
+		<tr>
+			<td>
+				<strong>Fallback verification factors</strong>
+				<p>Consider turning these off for higher security.</p>
+			</td>
+			<td>
+				{% csrf_token %}
+				{% for fb_name, fb_enabled, fb_destination in available_fallbacks %}
+				<form method="POST" action="{% url 'multifactor:action' 'toggle_fallback' fb_name %}">
+					{% csrf_token %}
+					<button type="submit" class="button button-ml  is-toggle is-toggled-{{fb_enabled|yesno:'on,off'}}" title="{{fb_name}} fallback {{ fb_enabled|yesno:'enabled,disabled' }}, click to toggle." {% if not can_edit %} disabled{% endif %}>
+						<span>{{fb_name}} {{ fb_enabled|yesno:'✔,✗' }}</span>
+						<small class="d-block">{{fb_destination}}</small>
+					</button>
+				</form>
+				{% endfor %}
+			</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+
+
+{% block head %}{% endblock %}

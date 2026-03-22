@@ -1,0 +1,83 @@
+{% extends "account/base_manage_email.html" %}
+{% load static allauth i18n %}
+{% block head_title %}
+    {% trans "Email Addresses" %}
+{% endblock head_title %}
+{% block content %}
+    {% element h1 %}
+        {% trans "Email Addresses" %}
+    {% endelement %}
+    {% if emailaddresses %}
+        {% element p %}
+            {% trans 'The following email addresses are associated with your account:' %}
+        {% endelement %}
+        {% url 'account_email' as email_url %}
+        {% element form form=form action=email_url method="post" tags="email,list" %}
+            {% slot body %}
+                {% csrf_token %}
+                {% for radio in emailaddress_radios %}
+                    {% with emailaddress=radio.emailaddress %}
+                        {% element field type="radio" checked=radio.checked name="email" value=emailaddress.email id=radio.id %}
+                            {% slot label %}
+                                {{ emailaddress.email }}
+                                {% if emailaddress.verified %}
+                                    {% element badge tags="success,email,verified" %}
+                                        {% translate "Verified" %}
+                                    {% endelement %}
+                                {% else %}
+                                    {% element badge tags="warning,email,unverified" %}
+                                        {% translate "Unverified" %}
+                                    {% endelement %}
+                                {% endif %}
+                                {% if emailaddress.primary %}
+                                    {% element badge tags="email,primary" %}
+                                        {% translate "Primary" %}
+                                    {% endelement %}
+                                {% endif %}
+                            {% endslot %}
+                        {% endelement %}
+                    {% endwith %}
+                {% endfor %}
+            {% endslot %}
+            {% slot actions %}
+                {% element button type="submit" name="action_primary" %}
+                    {% trans 'Make Primary' %}
+                {% endelement %}
+                {% element button tags="secondary" type="submit" name="action_send" %}
+                    {% trans 'Re-send Verification' %}
+                {% endelement %}
+                {% element button tags="danger,delete" type="submit" name="action_remove" %}
+                    {% trans 'Remove' %}
+                {% endelement %}
+            {% endslot %}
+        {% endelement %}
+    {% else %}
+        {% include "account/snippets/warn_no_email.html" %}
+    {% endif %}
+    {% if can_add_email %}
+        {% element h2 %}
+            {% trans "Add Email Address" %}
+        {% endelement %}
+        {% url 'account_email' as action_url %}
+        {% element form form=form method="post" action=action_url tags="email,add" %}
+            {% slot body %}
+                {% csrf_token %}
+                {% element fields form=form %}
+                {% endelement %}
+            {% endslot %}
+            {% slot actions %}
+                {% element button name="action_add" type="submit" %}
+                    {% trans "Add Email" %}
+                {% endelement %}
+            {% endslot %}
+        {% endelement %}
+    {% endif %}
+{% endblock content %}
+{% block extra_body %}
+    <script src="{% static 'account/js/account.js' %}"></script>
+    <script src="{% static 'account/js/onload.js' %}"></script>
+    <script data-allauth-onload="allauth.account.forms.manageEmailForm" type="application/json">{
+    "i18n": {"confirmDelete": "{% trans 'Do you really want to remove the selected email address?' %}"}
+}
+    </script>
+{% endblock extra_body %}

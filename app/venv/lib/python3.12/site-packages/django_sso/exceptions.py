@@ -1,0 +1,2 @@
+class SSOException(Exception):
+    pass

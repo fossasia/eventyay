@@ -1,0 +1,120 @@
+Metadata-Version: 2.4
+Name: channels
+Version: 4.3.2
+Summary: Brings async, event-driven capabilities to Django.
+Home-page: http://github.com/django/channels
+Author: Django Software Foundation
+Author-email: foundation@djangoproject.com
+License: BSD
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Framework :: Django
+Classifier: Framework :: Django :: 4.2
+Classifier: Framework :: Django :: 5.1
+Classifier: Framework :: Django :: 5.2
+Classifier: Framework :: Django :: 6.0
+Classifier: Topic :: Internet :: WWW/HTTP
+Requires-Python: >=3.9
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+Requires-Dist: Django>=4.2
+Requires-Dist: asgiref<4,>=3.9.0
+Provides-Extra: tests
+Requires-Dist: async-timeout; extra == "tests"
+Requires-Dist: coverage~=4.5; extra == "tests"
+Requires-Dist: pytest; extra == "tests"
+Requires-Dist: pytest-django; extra == "tests"
+Requires-Dist: pytest-asyncio; extra == "tests"
+Requires-Dist: selenium; extra == "tests"
+Provides-Extra: daphne
+Requires-Dist: daphne>=4.0.0; extra == "daphne"
+Provides-Extra: types
+Requires-Dist: types-channels; extra == "types"
+Dynamic: license-file
+
+Django Channels
+===============
+
+.. image:: https://github.com/django/channels/workflows/Tests/badge.svg?branch=master
+    :target: https://github.com/django/channels/actions
+
+.. image:: https://readthedocs.org/projects/channels/badge/?version=latest
+    :target: https://channels.readthedocs.io/en/latest/?badge=latest
+
+.. image:: https://img.shields.io/pypi/v/channels.svg
+    :target: https://pypi.python.org/pypi/channels
+
+.. image:: https://img.shields.io/pypi/l/channels.svg
+    :target: https://pypi.python.org/pypi/channels
+
+Channels augments Django to bring WebSocket, long-poll HTTP,
+task offloading and other async support to your code, using familiar Django
+design patterns and a flexible underlying framework that lets you not only
+customize behaviours but also write support for your own protocols and needs.
+
+Documentation, installation and getting started instructions are at
+https://channels.readthedocs.io
+
+Channels is an official Django Project and as such has a deprecation policy.
+Details about what's deprecated or pending deprecation for each release is in
+the `release notes <https://channels.readthedocs.io/en/latest/releases/index.html>`_.
+
+Support can be obtained through several locations - see our
+`support docs <https://channels.readthedocs.io/en/latest/support.html>`_ for more.
+
+You can install channels from PyPI as the ``channels`` package.
+See our `installation <https://channels.readthedocs.io/en/latest/installation.html>`_
+and `tutorial <https://channels.readthedocs.io/en/latest/tutorial/index.html>`_ docs for more.
+
+Dependencies
+------------
+
+All Channels projects currently support Python 3.9 and up. ``channels`` is
+compatible with Django 4.2+.
+
+
+Contributing
+------------
+
+To learn more about contributing, please `read our contributing docs <https://channels.readthedocs.io/en/latest/contributing.html>`_.
+
+
+Maintenance and Security
+------------------------
+
+To report security issues, please contact security@djangoproject.com. For GPG
+signatures and more security process information, see
+https://docs.djangoproject.com/en/dev/internals/security/.
+
+To report bugs or request new features, please open a new GitHub issue. For
+larger discussions, please post to the
+`django-developers mailing list <https://groups.google.com/d/forum/django-developers>`_.
+
+Maintenance is overseen by Carlton Gibson with help from others. It is a
+best-effort basis - we unfortunately can only dedicate guaranteed time to fixing
+security holes.
+
+If you are interested in joining the maintenance team, please
+`read more about contributing <https://channels.readthedocs.io/en/latest/contributing.html>`_
+and get in touch!
+
+
+Other Projects
+--------------
+
+The Channels project is made up of several packages; the others are:
+
+* `Daphne <https://github.com/django/daphne/>`_, the HTTP and Websocket termination server
+* `channels_redis <https://github.com/django/channels_redis/>`_, the Redis channel backend
+* `asgiref <https://github.com/django/asgiref/>`_, the base ASGI library/memory backend

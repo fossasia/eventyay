@@ -1,0 +1,28 @@
+from allauth.socialaccount.adapter import get_adapter
+from allauth.socialaccount.providers.oauth2.views import (
+    OAuth2Adapter,
+    OAuth2CallbackView,
+    OAuth2LoginView,
+)
+
+from .client import UntappdOAuth2Client
+
+
+class UntappdOAuth2Adapter(OAuth2Adapter):
+    client_class = UntappdOAuth2Client
+    provider_id = "untappd"
+    access_token_url = "https://untappd.com/oauth/authorize/"  # nosec
+    access_token_method = "GET"  # nosec
+    authorize_url = "https://untappd.com/oauth/authenticate/"
+    user_info_url = "https://api.untappd.com/v4/user/info/"
+
+    def complete_login(self, request, app, token, **kwargs):
+        with get_adapter().get_requests_session() as sess:
+            resp = sess.get(self.user_info_url, params={"access_token": token.token})
+            extra_data = resp.json()
+            # TODO: get and store the email from the user info json
+        return self.get_provider().sociallogin_from_response(request, extra_data)
+
+
+oauth2_login = OAuth2LoginView.adapter_view(UntappdOAuth2Adapter)
+oauth2_callback = OAuth2CallbackView.adapter_view(UntappdOAuth2Adapter)

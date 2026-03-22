@@ -1,0 +1,41 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-03 14:46+0200\n"
+"PO-Revision-Date: 2024-05-03 14:47+0200\n"
+"Last-Translator: Johannes Maron <johannes@maron.family>\n"
+"Language-Team: \n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: contrib/admin/admin.py:64
+msgid "impersonate user"
+msgstr "権限借用ユーザー"
+
+#: contrib/admin/templates/hijack/contrib/admin/button.html:7
+msgctxt "verb"
+msgid "impersonate"
+msgstr "権限借用"
+
+#: contrib/admin/templates/hijack/contrib/admin/button.html:9
+#, python-format
+msgid "impersonate %(username)s"
+msgstr "%(username)sを権限借用"
+
+#: templates/hijack/notification.html:8
+#, python-format
+msgid "You are currently working on behalf of <em>%(user)s</em>."
+msgstr "現在、あなたは<em>%(user)s</em>の代理として作業しています。"
+
+#: templates/hijack/notification.html:16
+msgid "hide warning"
+msgstr "非表示警告"
+
+#: templates/hijack/notification.html:19
+msgid "stop impersonating"
+msgstr "なりすましをやめる"

@@ -1,0 +1,65 @@
+.djhj {
+  /* stylelint-disable-next-line */
+  --system-font:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+
+  .djhj-notification {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    border-radius: 0.5rem;
+    padding: 1rem 1rem 0;
+    margin: 1rem;
+    max-width: 540px;
+    box-shadow: 0 0 0.5em rgba(0 0 0 / 30%);
+    font-family: var(--system-font);
+    font-size: initial;
+    background: light-dark(whitesmoke, #333);
+    color: light-dark(#111, white);
+  }
+
+  .djhj-message,
+  .djhj-actions {
+    padding: 0 0 1rem;
+    width: 100%;
+  }
+
+  .djhj-message {
+    flex: 1 1 auto;
+    font-family: var(--system-font);
+    font-size: initial;
+
+    em {
+      font-weight: 500;
+    }
+  }
+
+  .djhj-actions {
+    display: flex;
+    flex: 0 1 auto;
+    text-align: center;
+    justify-content: flex-end;
+  }
+
+  .djhj-button {
+    appearance: none;
+    border: none;
+    background-color: transparent;
+    font-weight: 500;
+    padding: 0.5em;
+    cursor: pointer;
+    font-family: var(--system-font);
+    font-size: initial;
+
+    &::first-letter {
+      text-transform: capitalize;
+    }
+  }
+}

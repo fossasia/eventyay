@@ -1,0 +1,203 @@
+Metadata-Version: 2.4
+Name: django-oauth-toolkit
+Version: 3.2.0
+Summary: OAuth2 Provider for Django
+Author: Federico Frenguelli, Massimiliano Pippi
+Author-email: synasius@gmail.com
+License: Copyright (c) 2013, Massimiliano Pippi, Federico Frenguelli and contributors
+        All rights reserved.
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+        
+        1. Redistributions of source code must retain the above copyright notice, this
+           list of conditions and the following disclaimer.
+        2. Redistributions in binary form must reproduce the above copyright notice,
+           this list of conditions and the following disclaimer in the documentation
+           and/or other materials provided with the distribution.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+        ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+        WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+        ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+        (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+        LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+        (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+        SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+        
+        The views and conclusions contained in the software and documentation are those
+        of the authors and should not be interpreted as representing official policies,
+        either expressed or implied, of the FreeBSD Project.
+        
+Project-URL: Homepage, https://django-oauth-toolkit.readthedocs.io/
+Project-URL: Repository, https://github.com/django-oauth/django-oauth-toolkit
+Keywords: django,oauth,oauth2,oauthlib
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Web Environment
+Classifier: Framework :: Django
+Classifier: Framework :: Django :: 4.2
+Classifier: Framework :: Django :: 5.0
+Classifier: Framework :: Django :: 5.1
+Classifier: Framework :: Django :: 5.2
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Internet :: WWW/HTTP
+Requires-Python: >=3.8
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+License-File: AUTHORS
+Requires-Dist: django>=4.2
+Requires-Dist: requests>=2.13.0
+Requires-Dist: oauthlib>=3.3.0
+Requires-Dist: jwcrypto>=1.5.0
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: m2r; extra == "dev"
+Requires-Dist: sphinx-rtd-theme; extra == "dev"
+Dynamic: license-file
+
+Django OAuth Toolkit
+====================
+
+*OAuth2 goodies for the Djangonauts!*
+
+.. image:: https://badge.fury.io/py/django-oauth-toolkit.svg
+    :target: http://badge.fury.io/py/django-oauth-toolkit
+
+.. image:: https://github.com/django-oauth/django-oauth-toolkit/workflows/Test/badge.svg
+   :target: https://github.com/django-oauth/django-oauth-toolkit/actions
+   :alt: GitHub Actions
+
+.. image:: https://codecov.io/gh/django-oauth/django-oauth-toolkit/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/django-oauth/django-oauth-toolkit
+   :alt: Coverage
+
+.. image:: https://img.shields.io/pypi/pyversions/django-oauth-toolkit.svg
+   :target: https://pypi.org/project/django-oauth-toolkit/
+   :alt: Supported Python versions
+
+.. image:: https://img.shields.io/pypi/djversions/django-oauth-toolkit.svg
+   :target: https://pypi.org/project/django-oauth-toolkit/
+   :alt: Supported Django versions
+
+If you are facing one or more of the following:
+ * Your Django app exposes a web API you want to protect with OAuth2 authentication,
+ * You need to implement an OAuth2 authorization server to provide tokens management for your infrastructure,
+
+Django OAuth Toolkit can help you providing out of the box all the endpoints, data and logic needed to add OAuth2
+capabilities to your Django projects. Django OAuth Toolkit makes extensive use of the excellent
+`OAuthLib <https://github.com/idan/oauthlib>`_, so that everything is
+`rfc-compliant <https://rfc-editor.org/rfc/rfc6749.html>`_.
+
+Reporting security issues
+-------------------------
+
+Please report any security issues to the Django OAuth security team at <django-oauth-security@googlegroups.com>. Do not file an issue on the tracker.
+
+Requirements
+------------
+
+* Python 3.8, 3.9, 3.10, 3.11, 3.12, 3.13 or 3.14
+* Django 4.2, 5.0, 5.1 or 5.2
+* oauthlib 3.2.2+
+
+Installation
+------------
+
+Install with pip::
+
+    pip install django-oauth-toolkit
+
+Add ``oauth2_provider`` to your ``INSTALLED_APPS``
+
+.. code-block:: python
+
+    INSTALLED_APPS = (
+        ...
+        'oauth2_provider',
+    )
+
+
+If you need an OAuth2 provider you'll want to add the following to your ``urls.py``.
+
+.. code-block:: python
+
+    from oauth2_provider import urls as oauth2_urls
+
+    urlpatterns = [
+        ...
+        path('o/', include(oauth2_urls)),
+    ]
+
+Changelog
+---------
+
+See `CHANGELOG.md <https://github.com/django-oauth/django-oauth-toolkit/blob/master/CHANGELOG.md>`_.
+
+
+Documentation
+--------------
+
+The `full documentation <https://django-oauth-toolkit.readthedocs.io/>`_ is on *Read the Docs*.
+
+License
+-------
+
+django-oauth-toolkit is released under the terms of the **BSD license**. Full details in ``LICENSE`` file.
+
+Help Wanted
+-----------
+
+We need help maintaining and enhancing django-oauth-toolkit (DOT).
+
+Join the team
+~~~~~~~~~~~~~
+
+There are no barriers to participation. Anyone can open an issue, pr, or review a pull request. Please
+dive in!
+
+How you can help
+~~~~~~~~~~~~~~~~
+
+See our
+`contributing <https://django-oauth-toolkit.readthedocs.io/en/latest/contributing.html>`__
+info and the open
+`issues <https://github.com/django-oauth/django-oauth-toolkit/issues>`__ and
+`PRs <https://github.com/django-oauth/django-oauth-toolkit/pulls>`__,
+especially those labeled
+`help-wanted <https://github.com/django-oauth/django-oauth-toolkit/labels/help-wanted>`__.
+
+Discussions
+~~~~~~~~~~~
+Have questions or want to discuss the project?
+See `the discussions <https://github.com/django-oauth/django-oauth-toolkit/discussions>`__.
+
+
+Submit PRs and Perform Reviews
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PR submissions and reviews are always appreciated! Since we require an
+independent review of any PR before it can be merged, having your second
+set of eyes looking at PRs is extremely valuable.
+
+
+Become a Maintainer
+~~~~~~~~~~~~~~~~~~~~~
+
+If you are interested in stepping up to be a Maintainer, please open an issue. For maintainers we're
+looking for a positive attitude, attentiveness to the specifications, strong coding and
+communication skills, and a willingness to work with others. Maintainers are responsible for
+merging pull requests, managing issues, creating releases, and ensuring the overall health of the
+project.

@@ -1,0 +1,8660 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Translators:
+# Chang-Gun Kim <kiravspace@gmail.com>, 2015
+# DONGHO JEONG <nearermg@gmail.com>, 2020
+# Jaehong Kim <mixe@korea.com>, 2011
+# Jannis Leidel <jannis@leidel.info>, 2011
+# Jay Oh <theanswer.jay@gmail.com>, 2016,2020
+# LEE Hwanyong <hwan@ajou.ac.kr>, 2023
+# Seoyoung Chung <chungseo@usc.edu>, 2021
+msgid ""
+msgstr ""
+"Project-Id-Version: django-localflavor\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-04-07 15:31+0200\n"
+"PO-Revision-Date: 2013-05-29 13:57+0000\n"
+"Last-Translator: LEE Hwanyong <hwan@ajou.ac.kr>, 2023\n"
+"Language-Team: Korean (http://app.transifex.com/django/django-localflavor/"
+"language/ko/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ko\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Buenos Aires"
+msgstr "Buenos Aires"
+
+msgid "Catamarca"
+msgstr "Catamarca"
+
+msgid "Chaco"
+msgstr "Chaco"
+
+msgid "Chubut"
+msgstr "Chubut"
+
+msgid "Ciudad Autónoma de Buenos Aires"
+msgstr "Ciudad Autónoma de Buenos Aires"
+
+msgid "Córdoba"
+msgstr "Córdoba"
+
+msgid "Corrientes"
+msgstr "Corrientes"
+
+msgid "Entre Ríos"
+msgstr "Entre Ríos"
+
+msgid "Formosa"
+msgstr "Formosa"
+
+msgid "Jujuy"
+msgstr "Jujuy"
+
+msgid "La Pampa"
+msgstr "La Pampa"
+
+msgid "La Rioja"
+msgstr "La Rioja"
+
+msgid "Mendoza"
+msgstr "Mendoza"
+
+msgid "Misiones"
+msgstr "Misiones"
+
+msgid "Neuquén"
+msgstr "Neuquén"
+
+msgid "Río Negro"
+msgstr "Río Negro"
+
+msgid "Salta"
+msgstr "Salta"
+
+msgid "San Juan"
+msgstr "San Juan"
+
+msgid "San Luis"
+msgstr "San Luis"
+
+msgid "Santa Cruz"
+msgstr "산타 크루즈"
+
+msgid "Santa Fe"
+msgstr "Santa Fe"
+
+msgid "Santiago del Estero"
+msgstr "Santiago del Estero"
+
+msgid "Tierra del Fuego, Antártida e Islas del Atlántico Sur"
+msgstr "Tierra del Fuego, Antártida e Islas del Atlántico Sur"
+
+msgid "Tucumán"
+msgstr "Tucumán"
+
+msgid "Enter a postal code in the format NNNN or ANNNNAAA."
+msgstr "우편번호를 입력하세요.(NNNN 또는 ANNNNAAA)"
+
+msgid "This field requires only numbers."
+msgstr "숫자만 입력해야 합니다."
+
+msgid "This field requires 7 or 8 digits."
+msgstr "7개 또는 8개의 숫자만 허용됩니다."
+
+msgid "Enter a valid CUIT in XX-XXXXXXXX-X or XXXXXXXXXXXX format."
+msgstr "CUIT를 입력하세요.(XX-XXXXXXXX-X 또는 XXXXXXXXXXXX 형식)"
+
+msgid "Invalid CUIT."
+msgstr "부적절한 CUIT"
+
+msgid "Invalid legal type. Type must be 27, 20, 30, 23, 24, 33 or 34."
+msgstr ""
+"유형이 잘못 되었습니다. 유형은 27, 20, 30, 23, 24, 33, 34 중 하나이어야 합니"
+"다. "
+
+msgid "Enter a valid CBU in XXXXXXXXXXXXXXXXXXXXXX format."
+msgstr "올바른 CBU를 XXXXXXXXXXXXXXXXXXXXXX 형식으로 입력하세요."
+
+msgid "CBU must be exactly 22 digits long."
+msgstr "CBU는 정확히 22자리여야 합니다."
+
+msgid "Invalid CBU."
+msgstr "CBU가 유효하지 않습니다."
+
+msgid "Burgenland"
+msgstr "Burgenland"
+
+msgid "Carinthia"
+msgstr "Carinthia"
+
+msgid "Lower Austria"
+msgstr "Lower Austria"
+
+msgid "Upper Austria"
+msgstr "Upper Austria"
+
+msgid "Salzburg"
+msgstr "Salzburg"
+
+msgid "Styria"
+msgstr "Styria"
+
+msgid "Tyrol"
+msgstr "Tyrol"
+
+msgid "Vorarlberg"
+msgstr "Vorarlberg"
+
+msgid "Vienna"
+msgstr "Vienna"
+
+msgid "Enter a zip code in the format XXXX."
+msgstr "우편번호를 입력하세요. (XXXX 형식)"
+
+msgid "Enter a valid Austrian Social Security Number in XXXX XXXXXX format."
+msgstr "올바른 오스트리아 사회보장번호(XXXX XXXXX 형식)를 입력하세요."
+
+msgid "Enter a 4 digit postcode."
+msgstr "4자리 우편번호를 입력하세요."
+
+msgid "Australian State"
+msgstr "호주 주"
+
+msgid "Australian Postcode"
+msgstr "호주 우편 번호"
+
+msgid "Australian Business Number"
+msgstr "Australian Business Number"
+
+msgid "Australian Company Number"
+msgstr "Australian Company Number"
+
+msgid "Australian Tax File Number"
+msgstr "Australian Tax File Number"
+
+msgid "Enter a valid ABN."
+msgstr "올바른 ABN을 입력하세요."
+
+msgid "Enter a valid ACN."
+msgstr "올바른 ACN을 입력하세요."
+
+msgid "Enter a valid TFN."
+msgstr "올바른 TFN을 입력하세요."
+
+msgid "Antwerp"
+msgstr "Antwerp"
+
+msgid "Brussels"
+msgstr "Brussels"
+
+msgid "East Flanders"
+msgstr "East Flanders"
+
+msgid "Flemish Brabant"
+msgstr "Flemish Brabant"
+
+msgid "Hainaut"
+msgstr "Hainaut"
+
+msgid "Liege"
+msgstr "Liege"
+
+msgid "Limburg"
+msgstr "Limburg"
+
+msgid "Luxembourg"
+msgstr "Luxembourg"
+
+msgid "Namur"
+msgstr "Namur"
+
+msgid "Walloon Brabant"
+msgstr "Walloon Brabant"
+
+msgid "West Flanders"
+msgstr "West Flanders"
+
+msgid "Brussels Capital Region"
+msgstr "Brussels Capital Region"
+
+msgid "Flemish Region"
+msgstr "Flemish Region"
+
+msgid "Wallonia"
+msgstr "Wallonia"
+
+msgid "Enter a valid postal code in the range and format 1XXX - 9XXX."
+msgstr "우편번호를 1XXX-9XXX 형식으로 입력하세요."
+
+msgid "The EGN is not valid"
+msgstr "EGN이 올바르지 않습니다."
+
+msgid "EIK/BULSTAT is not valid"
+msgstr "EIK/BULSTAT 이 올바르지 않습니다."
+
+msgid ""
+"Select a valid brazilian state. That state is not one of the available "
+"states."
+msgstr "올바르게 선택해 주세요. 선택하신 것이 선택가능항목에 없습니다."
+
+msgid "Invalid CPF number."
+msgstr "CPF 값이 올바르지 않습니다."
+
+msgid "This field requires at most 11 digits or 14 characters."
+msgstr "최대 11자 또는 14자 이하로 입력해 주세요."
+
+msgid "Invalid CNPJ number."
+msgstr "올바른 CNPJ 번호를 입력하세요."
+
+msgid "This field requires at least 14 digits"
+msgstr "이 항목은 최소한 14개의 숫자를 입력해야 합니다."
+
+msgid "Invalid Process number."
+msgstr "프로세스 번호가 올바르지 않습니다."
+
+msgid "State of Brazil (two uppercase letters)"
+msgstr "브라질 주 (두개의 대문자로)"
+
+msgid "CPF Document"
+msgstr "CPF 문서"
+
+msgid "CNPJ Document"
+msgstr "CNPJ 문서"
+
+msgid "Postal Code"
+msgstr "우편 번호"
+
+msgid "Enter a postal code in the format 00000-000."
+msgstr "우편번호를 00000-000 형식으로 입력하세요"
+
+msgid "Brest Region"
+msgstr ""
+
+msgid "Vitebsk Region"
+msgstr ""
+
+msgid "Gomel Region"
+msgstr ""
+
+msgid "Grodno Region"
+msgstr ""
+
+msgid "Minsk Region"
+msgstr ""
+
+msgid "Mogilev Region"
+msgstr ""
+
+msgid "City of Minsk"
+msgstr ""
+
+msgid "Passport number format is: XX1234567"
+msgstr ""
+
+msgid "ID format is: 1234567X123XX1"
+msgstr ""
+
+msgid "Postal code format is: 123456"
+msgstr ""
+
+msgid "Belarusian Regions (one integer value in the range 1-7)."
+msgstr ""
+
+msgid "Belarusian passport number (2 letters followed by 7 digits"
+msgstr ""
+
+msgid "Belarusian passport ID number (14 letters and digits)."
+msgstr ""
+
+msgid "Belarusian Postal code (6 digits)."
+msgstr ""
+
+msgid "Alberta"
+msgstr "Alberta"
+
+msgid "British Columbia"
+msgstr "British Columbia"
+
+msgid "Manitoba"
+msgstr "Manitoba"
+
+msgid "New Brunswick"
+msgstr "New Brunswick"
+
+msgid "Newfoundland and Labrador"
+msgstr "Newfoundland and Labrador"
+
+msgid "Northwest Territories"
+msgstr "Northwest Territories"
+
+msgid "Nova Scotia"
+msgstr "Nova Scotia"
+
+msgid "Nunavut"
+msgstr "Nunavut"
+
+msgid "Ontario"
+msgstr "Ontario"
+
+msgid "Prince Edward Island"
+msgstr "Prince Edward Island"
+
+msgid "Quebec"
+msgstr "Quebec"
+
+msgid "Saskatchewan"
+msgstr "Saskatchewan"
+
+msgid "Yukon"
+msgstr "Yukon"
+
+msgid "Enter a postal code in the format XXX XXX."
+msgstr "우편번호를 입력하세요.(XXX XXX 형식)"
+
+msgid "Enter a Canadian province or territory."
+msgstr "캐나다 주명 혹은 지역명을 입력하세요."
+
+msgid "Enter a valid Canadian Social Insurance number in XXX-XXX-XXX format."
+msgstr "올바른 캐나다 사회보장번호(XXX-XXX-XXX 형식)를 입력하세요."
+
+msgid "Canadian Province (two uppercase letters)"
+msgstr ""
+
+msgid "Canadian Postal Code"
+msgstr ""
+
+msgid "Canadian Social Insurance Number"
+msgstr ""
+
+msgid "Aargau"
+msgstr "Aargau"
+
+msgid "Appenzell Innerrhoden"
+msgstr "Appenzell Innerrhoden"
+
+msgid "Appenzell Ausserrhoden"
+msgstr "Appenzell Ausserrhoden"
+
+msgid "Basel-Stadt"
+msgstr "Basel-Stadt"
+
+msgid "Basel-Land"
+msgstr "Basel-Land"
+
+msgid "Berne"
+msgstr "Berne"
+
+msgid "Fribourg"
+msgstr "Fribourg"
+
+msgid "Geneva"
+msgstr "Geneva"
+
+msgid "Glarus"
+msgstr "Glarus"
+
+msgid "Graubuenden"
+msgstr "Graubuenden"
+
+msgid "Jura"
+msgstr "Jura"
+
+msgid "Lucerne"
+msgstr "Lucerne"
+
+msgid "Neuchatel"
+msgstr "Neuchatel"
+
+msgid "Nidwalden"
+msgstr "Nidwalden"
+
+msgid "Obwalden"
+msgstr "Obwalden"
+
+msgid "Schaffhausen"
+msgstr "Schaffhausen"
+
+msgid "Schwyz"
+msgstr "Schwyz"
+
+msgid "Solothurn"
+msgstr "Solothurn"
+
+msgid "St. Gallen"
+msgstr "St. Gallen"
+
+msgid "Thurgau"
+msgstr "Thurgau"
+
+msgid "Ticino"
+msgstr "Ticino"
+
+msgid "Uri"
+msgstr "Uri"
+
+msgid "Valais"
+msgstr "Valais"
+
+msgid "Vaud"
+msgstr "Vaud"
+
+msgid "Zug"
+msgstr "Zug"
+
+msgid "Zurich"
+msgstr "Zurich"
+
+msgid ""
+"Enter a valid Swiss identity or passport card number in X1234567<0 or "
+"1234567890 format."
+msgstr ""
+"정확한 스위스 주민번호 혹은 여권 카드 번호를 X1234567<0 또는 1234567890 형식"
+"으로 입력하세요."
+
+msgid "Enter a valid Swiss Social Security number in 756.XXXX.XXXX.XX format."
+msgstr "유효한 스위스 사회보장 번호를 756.XXXX.XXXX.XX 형식으로 입력하세요. "
+
+msgid "Enter a valid Chilean RUT."
+msgstr "올바른 칠레 RUT를 입력하세요."
+
+msgid "Enter a valid Chilean RUT. The format is XX.XXX.XXX-X."
+msgstr "올바른 칠레 RUT 번호 XX.XXX.XXX-X 형식으로 입력하세요."
+
+msgid "The Chilean RUT is not valid."
+msgstr "칠레 RUT 값이 올바르지 않습니다."
+
+msgid "Enter a post code in the format XXXXXX."
+msgstr "우편 번호를 XXXXXX  형식으로 입력하세요."
+
+msgid "ID Card Number consists of 15 or 18 digits."
+msgstr "ID 카드 번호는 15나 18 자리로 구성됩니다."
+
+msgid "Invalid ID Card Number: Wrong checksum"
+msgstr "올바르지 않은 ID 카드 번호 : 잘못된 체크썸"
+
+msgid "Invalid ID Card Number: Wrong birthdate"
+msgstr "올바르지 않은 ID 카드 번호 : 잘못된 생년일"
+
+msgid "Invalid ID Card Number: Wrong location code"
+msgstr "올바르지 않은 ID 카드 번호 : 잘못된 지역 코드"
+
+msgid "Enter a valid NIT in XXXXXXXXXXX-Y or XXXXXXXXXXXY format."
+msgstr "유효한 NIT 번호를 XXXXXXXXXXX-Y 또는 XXXXXXXXXXXY 형식으로 입력하세요."
+
+msgid "Invalid NIT."
+msgstr "NIT가 유효하지 않습니다."
+
+msgid "Occidental"
+msgstr "Occidental"
+
+msgid "Central"
+msgstr "Central"
+
+msgid "Oriental"
+msgstr "Oriental"
+
+msgid "Pinar del Río"
+msgstr "Pinar del Río"
+
+msgid "Artemisa"
+msgstr "Artemisa"
+
+msgid "Mayabeque"
+msgstr "Mayabeque"
+
+msgid "La Habana"
+msgstr "La Habana"
+
+msgid "Matanzas"
+msgstr "Matanzas"
+
+msgid "Cienfuegos"
+msgstr "Cienfuegos"
+
+msgid "Villa Clara"
+msgstr "Villa Clara"
+
+msgid "Sancti Spíritus"
+msgstr "Sancti Spíritus"
+
+msgid "Ciego de Ávila"
+msgstr "Ciego de Ávila"
+
+msgid "Camagüey"
+msgstr "Camagüey"
+
+msgid "Las Tunas"
+msgstr "Las Tunas"
+
+msgid "Holguín"
+msgstr "Holguín"
+
+msgid "Granma"
+msgstr "Granma"
+
+msgid "Santiago de Cuba"
+msgstr "Santiago de Cuba"
+
+msgid "Guantánamo"
+msgstr "Guantánamo"
+
+msgid "Isla de la Juventud"
+msgstr "Isla de la Juventud"
+
+msgid "Enter a Cuban region."
+msgstr "쿠바 내의 지역명을 입력하세요."
+
+msgid "Enter a Cuban province."
+msgstr "쿠바 주 명을 입력하세요."
+
+msgid "Enter a valid postal code in the format XXXXX."
+msgstr "유효한 우편번호를 XXXXX  형식으로 입력하세요."
+
+msgid "Enter a valid identity card number in the format XXXXXXXXXXX."
+msgstr "유효한 신분증 번호를 XXXXXXXXXXX 형식으로 입력하세요."
+
+msgid "Cuban regions (three uppercase letters)"
+msgstr "구바 지역 (대문자 3글자)"
+
+msgid "Cuban provinces (three uppercase letters)"
+msgstr "쿠바 주 (대문자 3글자)"
+
+msgid "Cuban postal code"
+msgstr "쿠바 우편번호"
+
+msgid "Cuban identity card number"
+msgstr "쿠바 주민카드 번호"
+
+msgid ""
+"Enter a valid date (yymmdd) for the first 6 digits of the Identity Card "
+"Number."
+msgstr "유효한 형식 (yymmdd)으로 신분증 번호의 6자리를 입력하세요."
+
+msgid "Prague"
+msgstr "Prague"
+
+msgid "Central Bohemian Region"
+msgstr "Central Bohemian Region"
+
+msgid "South Bohemian Region"
+msgstr "South Bohemian Region"
+
+msgid "Pilsen Region"
+msgstr "Pilsen Region"
+
+msgid "Carlsbad Region"
+msgstr "Carlsbad Region"
+
+msgid "Usti Region"
+msgstr "Usti Region"
+
+msgid "Liberec Region"
+msgstr "Liberec Region"
+
+msgid "Hradec Region"
+msgstr "Hradec Region"
+
+msgid "Pardubice Region"
+msgstr "Pardubice Region"
+
+msgid "Vysocina Region"
+msgstr "Vysocina Region"
+
+msgid "South Moravian Region"
+msgstr "South Moravian Region"
+
+msgid "Olomouc Region"
+msgstr "Olomouc Region"
+
+msgid "Zlin Region"
+msgstr "Zlin Region"
+
+msgid "Moravian-Silesian Region"
+msgstr "Moravian-Silesian Region"
+
+msgid "Enter a postal code in the format XXXXX or XXX XX."
+msgstr "우편번호를 입력하세요. (XXXXX 또는 XXX XX 형식)"
+
+msgid "Enter a birth number in the format XXXXXX/XXXX or XXXXXXXXXX."
+msgstr "생년월일을 입력하세요. (XXXXXX/XXXX 또는 XXXXXXXXXX 형식)"
+
+msgid "Enter a valid birth number."
+msgstr "올바른 생년월일을 입력하세요."
+
+msgid "Enter a valid IC number."
+msgstr "올바른 IC 번호를 입력하세요."
+
+msgid "Baden-Wuerttemberg"
+msgstr "바덴-뷔르템베르크 주"
+
+msgid "Bavaria"
+msgstr "Bavaria"
+
+msgid "Berlin"
+msgstr "Berlin"
+
+msgid "Brandenburg"
+msgstr "Brandenburg"
+
+msgid "Bremen"
+msgstr "Bremen"
+
+msgid "Hamburg"
+msgstr "Hamburg"
+
+msgid "Hessen"
+msgstr "Hessen"
+
+msgid "Mecklenburg-Western Pomerania"
+msgstr "Mecklenburg-Western Pomerania"
+
+msgid "Lower Saxony"
+msgstr "Lower Saxony"
+
+msgid "North Rhine-Westphalia"
+msgstr "North Rhine-Westphalia"
+
+msgid "Rhineland-Palatinate"
+msgstr "Rhineland-Palatinate"
+
+msgid "Saarland"
+msgstr "Saarland"
+
+msgid "Saxony"
+msgstr "Saxony"
+
+msgid "Saxony-Anhalt"
+msgstr "Saxony-Anhalt"
+
+msgid "Schleswig-Holstein"
+msgstr "Schleswig-Holstein"
+
+msgid "Thuringia"
+msgstr "Thuringia"
+
+msgid "Enter a zip code in the format XXXXX."
+msgstr "우편번호를 입력하세요. (XXXXX 형식)"
+
+msgid ""
+"Enter a valid German identity card number in XXXXXXXXXXX-XXXXXXX-XXXXXXX-X "
+"format."
+msgstr "올바른 독일 주민번호(XXXXXXXXXXX-XXXXXXX-XXXXXXX-X 형식)를 입력하세요."
+
+msgid "Albertslund"
+msgstr "Albertslund"
+
+msgid "Allerød"
+msgstr "Allerød"
+
+msgid "Ballerup"
+msgstr "Ballerup"
+
+msgid "Bornholm"
+msgstr "Bornholm"
+
+msgid "Brøndby"
+msgstr "Brøndby"
+
+msgid "Dragør"
+msgstr "Dragør"
+
+msgid "Egedal"
+msgstr "Egedal"
+
+msgid "Fredensborg"
+msgstr "Fredensborg"
+
+msgid "Frederiksberg"
+msgstr "Frederiksberg"
+
+msgid "Frederikssund"
+msgstr "Frederikssund"
+
+msgid "Furesø"
+msgstr "Furesø"
+
+msgid "Gentofte"
+msgstr "Gentofte"
+
+msgid "Gladsaxe"
+msgstr "Gladsaxe"
+
+msgid "Glostrup"
+msgstr "Glostrup"
+
+msgid "Gribskov"
+msgstr "Gribskov"
+
+msgid "Halsnæs"
+msgstr "Halsnæs"
+
+msgid "Helsingør"
+msgstr "Helsingør"
+
+msgid "Herlev"
+msgstr "Herlev"
+
+msgid "Hillerød"
+msgstr "Hillerød"
+
+msgid "Hvidovre"
+msgstr "Hvidovre"
+
+msgid "Høje-Taastrup"
+msgstr "Høje-Taastrup"
+
+msgid "Hørsholm"
+msgstr "Hørsholm"
+
+msgid "Ishøj"
+msgstr "Ishøj"
+
+msgid "København"
+msgstr "København"
+
+msgid "Lyngby-Taarbæk"
+msgstr "Lyngby-Taarbæk"
+
+msgid "Rudersdal"
+msgstr "Rudersdal"
+
+msgid "Rødovre"
+msgstr "Rødovre"
+
+msgid "Tårnby"
+msgstr "Tårnby"
+
+msgid "Vallensbæk"
+msgstr "Vallensbæk"
+
+msgid "Favrskov"
+msgstr "Favrskov"
+
+msgid "Hedensted"
+msgstr "Hedensted"
+
+msgid "Herning"
+msgstr "Herning"
+
+msgid "Holstebro"
+msgstr "Holstebro"
+
+msgid "Horsens"
+msgstr "Horsens"
+
+msgid "Ikast-Brande"
+msgstr "Ikast-Brande"
+
+msgid "Lemvig"
+msgstr "Lemvig"
+
+msgid "Norddjurs"
+msgstr "Norddjurs"
+
+msgid "Odder"
+msgstr "Odder"
+
+msgid "Randers"
+msgstr "Randers"
+
+msgid "Ringkøbing-Skjern"
+msgstr "Ringkøbing-Skjern"
+
+msgid "Samsø"
+msgstr "Samsø"
+
+msgid "Silkeborg"
+msgstr "Silkeborg"
+
+msgid "Skanderborg"
+msgstr "Skanderborg"
+
+msgid "Skive"
+msgstr "Skive"
+
+msgid "Struer"
+msgstr "Struer"
+
+msgid "Syddjurs"
+msgstr "Syddjurs"
+
+msgid "Viborg"
+msgstr "Viborg"
+
+msgid "Aarhus"
+msgstr "Aarhus"
+
+msgid "Brønderslev"
+msgstr "Brønderslev"
+
+msgid "Frederikshavn"
+msgstr "Frederikshavn"
+
+msgid "Hjørring"
+msgstr "Hjørring"
+
+msgid "Jammerbugt"
+msgstr "Jammerbugt"
+
+msgid "Læsø"
+msgstr "Læsø"
+
+msgid "Mariagerfjord"
+msgstr "Mariagerfjord"
+
+msgid "Morsø"
+msgstr "Morsø"
+
+msgid "Rebild"
+msgstr "Rebild"
+
+msgid "Thisted"
+msgstr "Thisted"
+
+msgid "Vesthimmerland"
+msgstr "Vesthimmerland"
+
+msgid "Aalborg"
+msgstr "Aalborg"
+
+msgid "Faxe"
+msgstr "Faxe"
+
+msgid "Greve"
+msgstr "Greve"
+
+msgid "Guldborgsund"
+msgstr "Guldborgsund"
+
+msgid "Holbæk"
+msgstr "Holbæk"
+
+msgid "Kalundborg"
+msgstr "Kalundborg"
+
+msgid "Køge"
+msgstr "Køge"
+
+msgid "Lejre"
+msgstr "Lejre"
+
+msgid "Lolland"
+msgstr "Lolland"
+
+msgid "Næstved"
+msgstr "Næstved"
+
+msgid "Odsherred"
+msgstr "Odsherred"
+
+msgid "Ringsted"
+msgstr "Ringsted"
+
+msgid "Roskilde"
+msgstr "Roskilde"
+
+msgid "Slagelse"
+msgstr "Slagelse"
+
+msgid "Solrød"
+msgstr "Solrød"
+
+msgid "Sorø"
+msgstr "Sorø"
+
+msgid "Stevns"
+msgstr "Stevns"
+
+msgid "Vordingborg"
+msgstr "Vordingborg"
+
+msgid "Assens"
+msgstr "Assens"
+
+msgid "Billund"
+msgstr "Billund"
+
+msgid "Esbjerg"
+msgstr "Esbjerg"
+
+msgid "Fanø"
+msgstr "Fanø"
+
+msgid "Fredericia"
+msgstr "Fredericia"
+
+msgid "Faaborg-Midtfyn"
+msgstr "Faaborg-Midtfyn"
+
+msgid "Haderslev"
+msgstr "Haderslev"
+
+msgid "Kerteminde"
+msgstr "Kerteminde"
+
+msgid "Kolding"
+msgstr "Kolding"
+
+msgid "Langeland"
+msgstr "Langeland"
+
+msgid "Middelfart"
+msgstr "Middelfart"
+
+msgid "Nordfyn"
+msgstr "Nordfyn"
+
+msgid "Nyborg"
+msgstr "Nyborg"
+
+msgid "Odense"
+msgstr "Odense"
+
+msgid "Svendborg"
+msgstr "Svendborg"
+
+msgid "Sønderborg"
+msgstr "Sønderborg"
+
+msgid "Tønder"
+msgstr "Tønder"
+
+msgid "Varde"
+msgstr "Varde"
+
+msgid "Vejen"
+msgstr "Vejen"
+
+msgid "Vejle"
+msgstr "Vejle"
+
+msgid "Ærø"
+msgstr "Ærø"
+
+msgid "Aabenraa"
+msgstr "Aabenraa"
+
+msgid "Region Hovedstaden"
+msgstr "Region Hovedstaden"
+
+msgid "Region Midtjylland"
+msgstr "Region Midtjylland"
+
+msgid "Region Nordjylland"
+msgstr "Region Nordjylland"
+
+msgid "Region Sjælland"
+msgstr "Region Sjælland"
+
+msgid "Region Syddanmark"
+msgstr "Region Syddanmark"
+
+msgid "Scanning"
+msgstr "Scanning"
+
+msgid "Facility"
+msgstr "Facility"
+
+msgid "Høje Taastrup"
+msgstr "Høje Taastrup"
+
+msgid "København C"
+msgstr "København C"
+
+msgid "Sjælland USF P"
+msgstr "Sjælland USF P"
+
+msgid "Sjælland USF B"
+msgstr "Sjælland USF B"
+
+msgid "Udbetaling"
+msgstr "Udbetaling"
+
+msgid "eBrevsprækken"
+msgstr "eBrevsprækken"
+
+msgid "Kommuneservice"
+msgstr "Kommuneservice"
+
+msgid "Københavns Pakkecenter"
+msgstr "Københavns Pakkecenter"
+
+msgid "Københavns Pakke BRC"
+msgstr "Københavns Pakke BRC"
+
+msgid "Returprint BRC"
+msgstr "Returprint BRC"
+
+msgid "Internationalt Postcenter"
+msgstr "Internationalt Postcenter"
+
+msgid "København K"
+msgstr "København K"
+
+msgid "København V"
+msgstr "København V"
+
+msgid "Returpost"
+msgstr "Returpost"
+
+msgid "Centraltastning"
+msgstr "Centraltastning"
+
+msgid "Frederiksberg C"
+msgstr "Frederiksberg C"
+
+msgid "København Ø"
+msgstr "København Ø"
+
+msgid "Nordhavn"
+msgstr "Nordhavn"
+
+msgid "København N"
+msgstr "København N"
+
+msgid "København S"
+msgstr "København S"
+
+msgid "København NV"
+msgstr "København NV"
+
+msgid "København SV"
+msgstr "København SV"
+
+msgid "Valby"
+msgstr "Valby"
+
+msgid "Taastrup"
+msgstr "Taastrup"
+
+msgid "Hedehusene"
+msgstr "Hedehusene"
+
+msgid "Brøndby Strand"
+msgstr "Brøndby Strand"
+
+msgid "Vallensbæk Strand"
+msgstr "Vallensbæk Strand"
+
+msgid "Solrød Strand"
+msgstr "Solrød Strand"
+
+msgid "Karlslunde"
+msgstr "Karlslunde"
+
+msgid "Brønshøj"
+msgstr "Brønshøj"
+
+msgid "Vanløse"
+msgstr "Vanløse"
+
+msgid "Skovlunde"
+msgstr "Skovlunde"
+
+msgid "Måløv"
+msgstr "Måløv"
+
+msgid "Smørum"
+msgstr "Smørum"
+
+msgid "Kastrup"
+msgstr "Kastrup"
+
+msgid "Kongens Lyngby"
+msgstr "Kongens Lyngby"
+
+msgid "Virum"
+msgstr "Virum"
+
+msgid "Holte"
+msgstr "Holte"
+
+msgid "Nærum"
+msgstr "Nærum"
+
+msgid "Søborg"
+msgstr "Søborg"
+
+msgid "Dyssegård"
+msgstr "Dyssegård"
+
+msgid "Bagsværd"
+msgstr "Bagsværd"
+
+msgid "Hellerup"
+msgstr "Hellerup"
+
+msgid "Charlottenlund"
+msgstr "Charlottenlund"
+
+msgid "Klampenborg"
+msgstr "Klampenborg"
+
+msgid "Skodsborg"
+msgstr "Skodsborg"
+
+msgid "Vedbæk"
+msgstr "Vedbæk"
+
+msgid "Rungsted Kyst"
+msgstr "Rungsted Kyst"
+
+msgid "Kokkedal"
+msgstr "Kokkedal"
+
+msgid "Nivå"
+msgstr "Nivå"
+
+msgid "Humlebæk"
+msgstr "Humlebæk"
+
+msgid "Espergærde"
+msgstr "Espergærde"
+
+msgid "Snekkersten"
+msgstr "Snekkersten"
+
+msgid "Tikøb"
+msgstr "Tikøb"
+
+msgid "Hornbæk"
+msgstr "Hornbæk"
+
+msgid "Dronningmølle"
+msgstr "Dronningmølle"
+
+msgid "Ålsgårde"
+msgstr "Ålsgårde"
+
+msgid "Hellebæk"
+msgstr "Hellebæk"
+
+msgid "Helsinge"
+msgstr "Helsinge"
+
+msgid "Vejby"
+msgstr "Vejby"
+
+msgid "Tisvildeleje"
+msgstr "Tisvildeleje"
+
+msgid "Græsted"
+msgstr "Græsted"
+
+msgid "Gilleleje"
+msgstr "Gilleleje"
+
+msgid "Frederiksværk"
+msgstr "Frederiksværk"
+
+msgid "Ølsted"
+msgstr "Ølsted"
+
+msgid "Skævinge"
+msgstr "Skævinge"
+
+msgid "Gørløse"
+msgstr "Gørløse"
+
+msgid "Liseleje"
+msgstr "Liseleje"
+
+msgid "Melby"
+msgstr "Melby"
+
+msgid "Hundested"
+msgstr "Hundested"
+
+msgid "Birkerød"
+msgstr "Birkerød"
+
+msgid "Kvistgård"
+msgstr "Kvistgård"
+
+msgid "Værløse"
+msgstr "Værløse"
+
+msgid "Farum"
+msgstr "Farum"
+
+msgid "Lynge"
+msgstr "Lynge"
+
+msgid "Slangerup"
+msgstr "Slangerup"
+
+msgid "Jægerspris"
+msgstr "Jægerspris"
+
+msgid "Ølstykke"
+msgstr "Ølstykke"
+
+msgid "Stenløse"
+msgstr "Stenløse"
+
+msgid "Veksø Sjælland"
+msgstr "Veksø Sjælland"
+
+msgid "Rønne"
+msgstr "Rønne"
+
+msgid "Aakirkeby"
+msgstr "Aakirkeby"
+
+msgid "Nexø"
+msgstr "Nexø"
+
+msgid "Svaneke"
+msgstr "Svaneke"
+
+msgid "Østermarie"
+msgstr "Østermarie"
+
+msgid "Gudhjem"
+msgstr "Gudhjem"
+
+msgid "Allinge"
+msgstr "Allinge"
+
+msgid "Klemensker"
+msgstr "Klemensker"
+
+msgid "Hasle"
+msgstr "Hasle"
+
+msgid "Tune"
+msgstr "Tune"
+
+msgid "Jyllinge"
+msgstr "Jyllinge"
+
+msgid "Skibby"
+msgstr "Skibby"
+
+msgid "Kirke Såby"
+msgstr "Kirke Såby"
+
+msgid "Kirke Hyllinge"
+msgstr "Kirke Hyllinge"
+
+msgid "Viby Sjælland"
+msgstr "Viby Sjælland"
+
+msgid "Borup"
+msgstr "Borup"
+
+msgid "Herlufmagle"
+msgstr "Herlufmagle"
+
+msgid "Glumsø"
+msgstr "Glumsø"
+
+msgid "Fjenneslev"
+msgstr "Fjenneslev"
+
+msgid "Jystrup Midtsj"
+msgstr "Jystrup Midtsj"
+
+msgid "Munke Bjergby"
+msgstr "Munke Bjergby"
+
+msgid "Korsør"
+msgstr "Korsør"
+
+msgid "Skælskør"
+msgstr "Skælskør"
+
+msgid "Vemmelev"
+msgstr "Vemmelev"
+
+msgid "Boeslunde"
+msgstr "Boeslunde"
+
+msgid "Rude"
+msgstr "Rude"
+
+msgid "Agersø"
+msgstr "Agersø"
+
+msgid "Omø"
+msgstr "Omø"
+
+msgid "Fuglebjerg"
+msgstr "Fuglebjerg"
+
+msgid "Dalmose"
+msgstr "Dalmose"
+
+msgid "Sandved"
+msgstr "Sandved"
+
+msgid "Høng"
+msgstr "Høng"
+
+msgid "Gørlev"
+msgstr "Gørlev"
+
+msgid "Ruds Vedby"
+msgstr "Ruds Vedby"
+
+msgid "Dianalund"
+msgstr "Dianalund"
+
+msgid "Stenlille"
+msgstr "Stenlille"
+
+msgid "Nyrup"
+msgstr "Nyrup"
+
+msgid "Orø"
+msgstr "Orø"
+
+msgid "Hvalsø"
+msgstr "Hvalsø"
+
+msgid "Tølløse"
+msgstr "Tølløse"
+
+msgid "Ugerløse"
+msgstr "Ugerløse"
+
+msgid "Kirke Eskilstrup"
+msgstr "Kirke Eskilstrup"
+
+msgid "Store Merløse"
+msgstr "Store Merløse"
+
+msgid "Vipperød"
+msgstr "Vipperød"
+
+msgid "Regstrup"
+msgstr "Regstrup"
+
+msgid "Mørkøv"
+msgstr "Mørkøv"
+
+msgid "Jyderup"
+msgstr "Jyderup"
+
+msgid "Snertinge"
+msgstr "Snertinge"
+
+msgid "Svebølle"
+msgstr "Svebølle"
+
+msgid "Store Fuglede"
+msgstr "Store Fuglede"
+
+msgid "Jerslev Sjælland"
+msgstr "Jerslev Sjælland"
+
+msgid "Nykøbing Sj"
+msgstr "Nykøbing Sj"
+
+msgid "Svinninge"
+msgstr "Svinninge"
+
+msgid "Gislinge"
+msgstr "Gislinge"
+
+msgid "Hørve"
+msgstr "Hørve"
+
+msgid "Fårevejle"
+msgstr "Fårevejle"
+
+msgid "Asnæs"
+msgstr "Asnæs"
+
+msgid "Vig"
+msgstr "Vig"
+
+msgid "Grevinge"
+msgstr "Grevinge"
+
+msgid "Nørre Asmindrup"
+msgstr "Nørre Asmindrup"
+
+msgid "Højby"
+msgstr "Højby"
+
+msgid "Rørvig"
+msgstr "Rørvig"
+
+msgid "Sjællands Odde"
+msgstr "Sjællands Odde"
+
+msgid "Føllenslev"
+msgstr "Føllenslev"
+
+msgid "Sejerø"
+msgstr "Sejerø"
+
+msgid "Eskebjerg"
+msgstr "Eskebjerg"
+
+msgid "Gadstrup"
+msgstr "Gadstrup"
+
+msgid "Havdrup"
+msgstr "Havdrup"
+
+msgid "Lille Skensved"
+msgstr "Lille Skensved"
+
+msgid "Bjæverskov"
+msgstr "Bjæverskov"
+
+msgid "Hårlev"
+msgstr ""
+
+msgid "Karise"
+msgstr ""
+
+msgid "Faxe Ladeplads"
+msgstr ""
+
+msgid "Store Heddinge"
+msgstr ""
+
+msgid "Strøby"
+msgstr ""
+
+msgid "Klippinge"
+msgstr ""
+
+msgid "Rødvig Stevns"
+msgstr ""
+
+msgid "Herfølge"
+msgstr ""
+
+msgid "Tureby"
+msgstr ""
+
+msgid "Rønnede"
+msgstr ""
+
+msgid "Holmegaard"
+msgstr ""
+
+msgid "Haslev"
+msgstr ""
+
+msgid "Præstø"
+msgstr ""
+
+msgid "Tappernøje"
+msgstr ""
+
+msgid "Mern"
+msgstr ""
+
+msgid "Karrebæksminde"
+msgstr ""
+
+msgid "Lundby"
+msgstr ""
+
+msgid "Kalvehave"
+msgstr ""
+
+msgid "Langebæk"
+msgstr ""
+
+msgid "Stensved"
+msgstr ""
+
+msgid "Stege"
+msgstr ""
+
+msgid "Borre"
+msgstr ""
+
+msgid "Askeby"
+msgstr ""
+
+msgid "Bogø By"
+msgstr ""
+
+msgid "Nykøbing F"
+msgstr ""
+
+msgid "Nørre Alslev"
+msgstr ""
+
+msgid "Stubbekøbing"
+msgstr ""
+
+msgid "Guldborg"
+msgstr ""
+
+msgid "Eskilstrup"
+msgstr ""
+
+msgid "Horbelev"
+msgstr ""
+
+msgid "Idestrup"
+msgstr ""
+
+msgid "Væggerløse"
+msgstr ""
+
+msgid "Gedser"
+msgstr ""
+
+msgid "Nysted"
+msgstr ""
+
+msgid "Toreby L"
+msgstr ""
+
+msgid "Kettinge"
+msgstr ""
+
+msgid "Øster Ulslev"
+msgstr ""
+
+msgid "Errindlev"
+msgstr ""
+
+msgid "Nakskov"
+msgstr ""
+
+msgid "Harpelunde"
+msgstr ""
+
+msgid "Horslunde"
+msgstr ""
+
+msgid "Søllested"
+msgstr ""
+
+msgid "Maribo"
+msgstr ""
+
+msgid "Bandholm"
+msgstr ""
+
+msgid "Askø og Lilleø"
+msgstr ""
+
+msgid "Torrig L"
+msgstr ""
+
+msgid "Fejø"
+msgstr ""
+
+msgid "Femø"
+msgstr ""
+
+msgid "Nørreballe"
+msgstr ""
+
+msgid "Stokkemarke"
+msgstr ""
+
+msgid "Vesterborg"
+msgstr ""
+
+msgid "Holeby"
+msgstr ""
+
+msgid "Rødby"
+msgstr ""
+
+msgid "Dannemare"
+msgstr ""
+
+msgid "Sakskøbing"
+msgstr ""
+
+msgid "Midtsjælland USF P"
+msgstr ""
+
+msgid "Odense C"
+msgstr ""
+
+msgid "Odense V"
+msgstr ""
+
+msgid "Odense NV"
+msgstr ""
+
+msgid "Odense SØ"
+msgstr ""
+
+msgid "Odense M"
+msgstr ""
+
+msgid "Odense NØ"
+msgstr ""
+
+msgid "Odense SV"
+msgstr ""
+
+msgid "Odense S"
+msgstr ""
+
+msgid "Odense N"
+msgstr ""
+
+msgid "Marslev"
+msgstr ""
+
+msgid "Agedrup"
+msgstr ""
+
+msgid "Munkebo"
+msgstr ""
+
+msgid "Rynkeby"
+msgstr ""
+
+msgid "Mesinge"
+msgstr ""
+
+msgid "Dalby"
+msgstr ""
+
+msgid "Martofte"
+msgstr ""
+
+msgid "Bogense"
+msgstr ""
+
+msgid "Otterup"
+msgstr ""
+
+msgid "Morud"
+msgstr ""
+
+msgid "Harndrup"
+msgstr ""
+
+msgid "Brenderup Fyn"
+msgstr ""
+
+msgid "Asperup"
+msgstr ""
+
+msgid "Søndersø"
+msgstr ""
+
+msgid "Veflinge"
+msgstr ""
+
+msgid "Skamby"
+msgstr ""
+
+msgid "Blommenslyst"
+msgstr ""
+
+msgid "Vissenbjerg"
+msgstr ""
+
+msgid "Ullerslev"
+msgstr ""
+
+msgid "Langeskov"
+msgstr ""
+
+msgid "Aarup"
+msgstr ""
+
+msgid "Nørre Aaby"
+msgstr ""
+
+msgid "Gelsted"
+msgstr ""
+
+msgid "Ejby"
+msgstr ""
+
+msgid "Faaborg"
+msgstr ""
+
+msgid "Lyø"
+msgstr ""
+
+msgid "Avernakø"
+msgstr ""
+
+msgid "Bjørnø"
+msgstr ""
+
+msgid "Glamsbjerg"
+msgstr ""
+
+msgid "Ebberup"
+msgstr ""
+
+msgid "Millinge"
+msgstr ""
+
+msgid "Broby"
+msgstr ""
+
+msgid "Haarby"
+msgstr ""
+
+msgid "Tommerup"
+msgstr ""
+
+msgid "Ringe"
+msgstr ""
+
+msgid "Vester Skerninge"
+msgstr ""
+
+msgid "Stenstrup"
+msgstr ""
+
+msgid "Kværndrup"
+msgstr ""
+
+msgid "Årslev"
+msgstr ""
+
+msgid "Ørbæk"
+msgstr ""
+
+msgid "Gislev"
+msgstr ""
+
+msgid "Ryslinge"
+msgstr ""
+
+msgid "Ferritslev Fyn"
+msgstr ""
+
+msgid "Frørup"
+msgstr ""
+
+msgid "Hesselager"
+msgstr ""
+
+msgid "Skårup Fyn"
+msgstr ""
+
+msgid "Vejstrup"
+msgstr ""
+
+msgid "Oure"
+msgstr ""
+
+msgid "Gudme"
+msgstr ""
+
+msgid "Gudbjerg Sydfyn"
+msgstr ""
+
+msgid "Rudkøbing"
+msgstr ""
+
+msgid "Humble"
+msgstr ""
+
+msgid "Bagenkop"
+msgstr ""
+
+msgid "Strynø"
+msgstr ""
+
+msgid "Tranekær"
+msgstr ""
+
+msgid "Marstal"
+msgstr ""
+
+msgid "Birkholm"
+msgstr ""
+
+msgid "Ærøskøbing"
+msgstr ""
+
+msgid "Søby Ærø"
+msgstr ""
+
+msgid "Egtved"
+msgstr ""
+
+msgid "Almind"
+msgstr ""
+
+msgid "Viuf"
+msgstr ""
+
+msgid "Jordrup"
+msgstr ""
+
+msgid "Christiansfeld"
+msgstr ""
+
+msgid "Bjert"
+msgstr ""
+
+msgid "Sønder Stenderup"
+msgstr ""
+
+msgid "Sjølund"
+msgstr ""
+
+msgid "Hejls"
+msgstr ""
+
+msgid "Barsø"
+msgstr ""
+
+msgid "Rødekro"
+msgstr ""
+
+msgid "Løgumkloster"
+msgstr ""
+
+msgid "Bredebro"
+msgstr ""
+
+msgid "Højer"
+msgstr ""
+
+msgid "Gråsten"
+msgstr ""
+
+msgid "Broager"
+msgstr ""
+
+msgid "Egernsund"
+msgstr ""
+
+msgid "Padborg"
+msgstr ""
+
+msgid "Kruså"
+msgstr ""
+
+msgid "Tinglev"
+msgstr ""
+
+msgid "Bylderup-Bov"
+msgstr ""
+
+msgid "Bolderslev"
+msgstr ""
+
+msgid "Nordborg"
+msgstr ""
+
+msgid "Augustenborg"
+msgstr ""
+
+msgid "Sydals"
+msgstr ""
+
+msgid "Vojens"
+msgstr ""
+
+msgid "Gram"
+msgstr ""
+
+msgid "Toftlund"
+msgstr ""
+
+msgid "Agerskov"
+msgstr ""
+
+msgid "Branderup J"
+msgstr ""
+
+msgid "Bevtoft"
+msgstr ""
+
+msgid "Sommersted"
+msgstr ""
+
+msgid "Vamdrup"
+msgstr ""
+
+msgid "Gesten"
+msgstr ""
+
+msgid "Bække"
+msgstr ""
+
+msgid "Vorbasse"
+msgstr ""
+
+msgid "Rødding"
+msgstr ""
+
+msgid "Lunderskov"
+msgstr ""
+
+msgid "Brørup"
+msgstr ""
+
+msgid "Lintrup"
+msgstr ""
+
+msgid "Holsted"
+msgstr ""
+
+msgid "Hovborg"
+msgstr ""
+
+msgid "Føvling"
+msgstr ""
+
+msgid "Gørding"
+msgstr ""
+
+msgid "Esbjerg Ø"
+msgstr ""
+
+msgid "Esbjerg V"
+msgstr ""
+
+msgid "Esbjerg N"
+msgstr ""
+
+msgid "Tjæreborg"
+msgstr ""
+
+msgid "Bramming"
+msgstr ""
+
+msgid "Glejbjerg"
+msgstr ""
+
+msgid "Agerbæk"
+msgstr ""
+
+msgid "Ribe"
+msgstr ""
+
+msgid "Gredstedbro"
+msgstr ""
+
+msgid "Skærbæk"
+msgstr ""
+
+msgid "Rømø"
+msgstr ""
+
+msgid "Årre"
+msgstr ""
+
+msgid "Ansager"
+msgstr ""
+
+msgid "Nørre Nebel"
+msgstr ""
+
+msgid "Oksbøl"
+msgstr ""
+
+msgid "Janderup Vestj"
+msgstr ""
+
+msgid "Billum"
+msgstr ""
+
+msgid "Vejers Strand"
+msgstr ""
+
+msgid "Henne"
+msgstr ""
+
+msgid "Outrup"
+msgstr ""
+
+msgid "Blåvand"
+msgstr ""
+
+msgid "Tistrup"
+msgstr ""
+
+msgid "Ølgod"
+msgstr ""
+
+msgid "Tarm"
+msgstr ""
+
+msgid "Hemmet"
+msgstr ""
+
+msgid "Skjern"
+msgstr ""
+
+msgid "Videbæk"
+msgstr ""
+
+msgid "Kibæk"
+msgstr ""
+
+msgid "Lem St"
+msgstr ""
+
+msgid "Ringkøbing"
+msgstr ""
+
+msgid "Hvide Sande"
+msgstr ""
+
+msgid "Spjald"
+msgstr ""
+
+msgid "Ørnhøj"
+msgstr ""
+
+msgid "Tim"
+msgstr ""
+
+msgid "Ulfborg"
+msgstr ""
+
+msgid "Taulov Pakkecenter"
+msgstr "Taulov Pakkecenter"
+
+msgid "Pakker TLP"
+msgstr ""
+
+msgid "Børkop"
+msgstr ""
+
+msgid "Vejle Øst"
+msgstr ""
+
+msgid "Juelsminde"
+msgstr ""
+
+msgid "Stouby"
+msgstr ""
+
+msgid "Barrit"
+msgstr ""
+
+msgid "Tørring"
+msgstr ""
+
+msgid "Uldum"
+msgstr ""
+
+msgid "Vonge"
+msgstr ""
+
+msgid "Bredsten"
+msgstr ""
+
+msgid "Randbøl"
+msgstr ""
+
+msgid "Vandel"
+msgstr ""
+
+msgid "Grindsted"
+msgstr ""
+
+msgid "Hejnsvig"
+msgstr ""
+
+msgid "Sønder Omme"
+msgstr ""
+
+msgid "Stakroge"
+msgstr ""
+
+msgid "Sønder Felding"
+msgstr ""
+
+msgid "Jelling"
+msgstr ""
+
+msgid "Gadbjerg"
+msgstr ""
+
+msgid "Give"
+msgstr ""
+
+msgid "Brande"
+msgstr ""
+
+msgid "Ejstrupholm"
+msgstr ""
+
+msgid "Hampen"
+msgstr ""
+
+msgid "Ikast"
+msgstr ""
+
+msgid "Bording"
+msgstr ""
+
+msgid "Engesvang"
+msgstr ""
+
+msgid "Sunds"
+msgstr ""
+
+msgid "Karup J"
+msgstr ""
+
+msgid "Vildbjerg"
+msgstr ""
+
+msgid "Aulum"
+msgstr ""
+
+msgid "Haderup"
+msgstr ""
+
+msgid "Sørvad"
+msgstr ""
+
+msgid "Hjerm"
+msgstr ""
+
+msgid "Vemb"
+msgstr ""
+
+msgid "Bøvlingbjerg"
+msgstr ""
+
+msgid "Bækmarksbro"
+msgstr ""
+
+msgid "Harboøre"
+msgstr ""
+
+msgid "Thyborøn"
+msgstr ""
+
+msgid "Hanstholm"
+msgstr ""
+
+msgid "Frøstrup"
+msgstr ""
+
+msgid "Vesløs"
+msgstr ""
+
+msgid "Snedsted"
+msgstr ""
+
+msgid "Bedsted Thy"
+msgstr ""
+
+msgid "Hurup Thy"
+msgstr ""
+
+msgid "Vestervig"
+msgstr ""
+
+msgid "Thyholm"
+msgstr ""
+
+msgid "Vinderup"
+msgstr ""
+
+msgid "Højslev"
+msgstr ""
+
+msgid "Stoholm Jyll"
+msgstr ""
+
+msgid "Spøttrup"
+msgstr ""
+
+msgid "Roslev"
+msgstr ""
+
+msgid "Fur"
+msgstr ""
+
+msgid "Nykøbing M"
+msgstr ""
+
+msgid "Erslev"
+msgstr ""
+
+msgid "Karby"
+msgstr ""
+
+msgid "Redsted M"
+msgstr ""
+
+msgid "Vils"
+msgstr ""
+
+msgid "Øster Assels"
+msgstr ""
+
+msgid "Sydjylland/Fyn USF P"
+msgstr ""
+
+msgid "Sydjylland/Fyn USF B"
+msgstr ""
+
+msgid "Fakturaservice"
+msgstr ""
+
+msgid "Fakturascanning"
+msgstr ""
+
+msgid "Statsservice"
+msgstr ""
+
+msgid "Kommunepost"
+msgstr ""
+
+msgid "Aarhus C"
+msgstr ""
+
+msgid "Aarhus N"
+msgstr ""
+
+msgid "Aarhus V"
+msgstr ""
+
+msgid "Brabrand"
+msgstr ""
+
+msgid "Risskov Ø"
+msgstr ""
+
+msgid "Åbyhøj"
+msgstr ""
+
+msgid "Risskov"
+msgstr ""
+
+msgid "Egå"
+msgstr ""
+
+msgid "Viby J"
+msgstr ""
+
+msgid "Højbjerg"
+msgstr ""
+
+msgid "Tranbjerg J"
+msgstr ""
+
+msgid "Mårslet"
+msgstr ""
+
+msgid "Beder"
+msgstr ""
+
+msgid "Malling"
+msgstr ""
+
+msgid "Hundslund"
+msgstr ""
+
+msgid "Solbjerg"
+msgstr ""
+
+msgid "Hasselager"
+msgstr ""
+
+msgid "Hørning"
+msgstr ""
+
+msgid "Hadsten"
+msgstr ""
+
+msgid "Trige"
+msgstr ""
+
+msgid "Tilst"
+msgstr ""
+
+msgid "Hinnerup"
+msgstr ""
+
+msgid "Ebeltoft"
+msgstr ""
+
+msgid "Rønde"
+msgstr ""
+
+msgid "Knebel"
+msgstr ""
+
+msgid "Balle"
+msgstr ""
+
+msgid "Hammel"
+msgstr ""
+
+msgid "Harlev J"
+msgstr ""
+
+msgid "Galten"
+msgstr ""
+
+msgid "Sabro"
+msgstr ""
+
+msgid "Sporup"
+msgstr ""
+
+msgid "Grenaa"
+msgstr ""
+
+msgid "Lystrup"
+msgstr ""
+
+msgid "Hjortshøj"
+msgstr ""
+
+msgid "Skødstrup"
+msgstr ""
+
+msgid "Hornslet"
+msgstr ""
+
+msgid "Mørke"
+msgstr ""
+
+msgid "Ryomgård"
+msgstr ""
+
+msgid "Kolind"
+msgstr ""
+
+msgid "Trustrup"
+msgstr ""
+
+msgid "Nimtofte"
+msgstr ""
+
+msgid "Glesborg"
+msgstr ""
+
+msgid "Ørum Djurs"
+msgstr ""
+
+msgid "Anholt"
+msgstr ""
+
+msgid "Kjellerup"
+msgstr ""
+
+msgid "Lemming"
+msgstr ""
+
+msgid "Sorring"
+msgstr ""
+
+msgid "Ans By"
+msgstr ""
+
+msgid "Them"
+msgstr ""
+
+msgid "Bryrup"
+msgstr ""
+
+msgid "Låsby"
+msgstr ""
+
+msgid "Ry"
+msgstr ""
+
+msgid "Daugård"
+msgstr ""
+
+msgid "Løsning"
+msgstr ""
+
+msgid "Hovedgård"
+msgstr ""
+
+msgid "Brædstrup"
+msgstr ""
+
+msgid "Gedved"
+msgstr ""
+
+msgid "Østbirk"
+msgstr ""
+
+msgid "Flemming"
+msgstr ""
+
+msgid "Rask Mølle"
+msgstr ""
+
+msgid "Klovborg"
+msgstr ""
+
+msgid "Nørre Snede"
+msgstr ""
+
+msgid "Stenderup"
+msgstr ""
+
+msgid "Hornsyld"
+msgstr ""
+
+msgid "Endelave"
+msgstr ""
+
+msgid "Tunø"
+msgstr ""
+
+msgid "Tjele"
+msgstr ""
+
+msgid "Løgstrup"
+msgstr ""
+
+msgid "Skals"
+msgstr ""
+
+msgid "Rødkærsbro"
+msgstr ""
+
+msgid "Bjerringbro"
+msgstr ""
+
+msgid "Ulstrup"
+msgstr ""
+
+msgid "Langå"
+msgstr ""
+
+msgid "Thorsø"
+msgstr ""
+
+msgid "Fårvang"
+msgstr ""
+
+msgid "Gjern"
+msgstr ""
+
+msgid "Randers C"
+msgstr ""
+
+msgid "Randers NV"
+msgstr ""
+
+msgid "Randers NØ"
+msgstr ""
+
+msgid "Randers SV"
+msgstr ""
+
+msgid "Ørsted"
+msgstr ""
+
+msgid "Randers SØ"
+msgstr ""
+
+msgid "Allingåbro"
+msgstr ""
+
+msgid "Auning"
+msgstr ""
+
+msgid "Havndal"
+msgstr ""
+
+msgid "Spentrup"
+msgstr ""
+
+msgid "Gjerlev J"
+msgstr ""
+
+msgid "Fårup"
+msgstr ""
+
+msgid "Aalborg SV"
+msgstr ""
+
+msgid "Aalborg SØ"
+msgstr ""
+
+msgid "Aalborg Øst"
+msgstr ""
+
+msgid "Svenstrup J"
+msgstr ""
+
+msgid "Nibe"
+msgstr ""
+
+msgid "Gistrup"
+msgstr ""
+
+msgid "Klarup"
+msgstr ""
+
+msgid "Storvorde"
+msgstr ""
+
+msgid "Kongerslev"
+msgstr ""
+
+msgid "Sæby"
+msgstr ""
+
+msgid "Vodskov"
+msgstr ""
+
+msgid "Hjallerup"
+msgstr ""
+
+msgid "Dronninglund"
+msgstr ""
+
+msgid "Asaa"
+msgstr ""
+
+msgid "Dybvad"
+msgstr ""
+
+msgid "Gandrup"
+msgstr ""
+
+msgid "Hals"
+msgstr ""
+
+msgid "Vestbjerg"
+msgstr ""
+
+msgid "Sulsted"
+msgstr ""
+
+msgid "Tylstrup"
+msgstr ""
+
+msgid "Nørresundby"
+msgstr ""
+
+msgid "Vadum"
+msgstr ""
+
+msgid "Aabybro"
+msgstr ""
+
+msgid "Brovst"
+msgstr ""
+
+msgid "Løkken"
+msgstr ""
+
+msgid "Pandrup"
+msgstr ""
+
+msgid "Blokhus"
+msgstr ""
+
+msgid "Saltum"
+msgstr ""
+
+msgid "Hobro"
+msgstr ""
+
+msgid "Arden"
+msgstr ""
+
+msgid "Skørping"
+msgstr ""
+
+msgid "Støvring"
+msgstr ""
+
+msgid "Suldrup"
+msgstr ""
+
+msgid "Mariager"
+msgstr ""
+
+msgid "Hadsund"
+msgstr ""
+
+msgid "Bælum"
+msgstr ""
+
+msgid "Terndrup"
+msgstr ""
+
+msgid "Aars"
+msgstr ""
+
+msgid "Nørager"
+msgstr ""
+
+msgid "Aalestrup"
+msgstr ""
+
+msgid "Gedsted"
+msgstr ""
+
+msgid "Møldrup"
+msgstr ""
+
+msgid "Farsø"
+msgstr ""
+
+msgid "Løgstør"
+msgstr ""
+
+msgid "Ranum"
+msgstr ""
+
+msgid "Fjerritslev"
+msgstr ""
+
+msgid "Jerslev J"
+msgstr ""
+
+msgid "Østervrå"
+msgstr ""
+
+msgid "Vrå"
+msgstr ""
+
+msgid "Tårs"
+msgstr ""
+
+msgid "Hirtshals"
+msgstr ""
+
+msgid "Sindal"
+msgstr ""
+
+msgid "Bindslev"
+msgstr ""
+
+msgid "Strandby"
+msgstr ""
+
+msgid "Jerup"
+msgstr ""
+
+msgid "Ålbæk"
+msgstr ""
+
+msgid "Skagen"
+msgstr ""
+
+msgid "Jylland USF P"
+msgstr ""
+
+msgid "Jylland USF B"
+msgstr ""
+
+msgid "Borgerservice"
+msgstr ""
+
+msgid "Santa Claus/Julemanden"
+msgstr ""
+
+msgid "Nuuk"
+msgstr ""
+
+msgid "Nuussuaq"
+msgstr ""
+
+msgid "Kangerlussuaq"
+msgstr ""
+
+msgid "Sisimiut"
+msgstr ""
+
+msgid "Maniitsoq"
+msgstr ""
+
+msgid "Tasiilaq"
+msgstr ""
+
+msgid "Kulusuk"
+msgstr ""
+
+msgid "Alluitsup Paa"
+msgstr ""
+
+msgid "Qaqortoq"
+msgstr ""
+
+msgid "Narsaq"
+msgstr ""
+
+msgid "Nanortalik"
+msgstr ""
+
+msgid "Narsarsuaq"
+msgstr ""
+
+msgid "Ikerasassuaq"
+msgstr ""
+
+msgid "Kangilinnguit"
+msgstr ""
+
+msgid "Arsuk"
+msgstr ""
+
+msgid "Paamiut"
+msgstr ""
+
+msgid "Aasiaat"
+msgstr ""
+
+msgid "Qasigiannguit"
+msgstr ""
+
+msgid "Ilulissat"
+msgstr ""
+
+msgid "Qeqertarsuaq"
+msgstr ""
+
+msgid "Kangaatsiaq"
+msgstr ""
+
+msgid "Uummannaq"
+msgstr ""
+
+msgid "Upernavik"
+msgstr ""
+
+msgid "Qaarsut"
+msgstr ""
+
+msgid "Pituffik"
+msgstr ""
+
+msgid "Qaanaaq"
+msgstr ""
+
+msgid "Station Nord"
+msgstr ""
+
+msgid "Ittoqqortoormiit"
+msgstr ""
+
+msgid "Mestersvig"
+msgstr ""
+
+msgid "Danmarkshavn"
+msgstr ""
+
+msgid "Constable Pynt"
+msgstr ""
+
+msgid "Slædepatrulje Sirius"
+msgstr ""
+
+msgid "Tórshavn"
+msgstr ""
+
+msgid "Argir"
+msgstr ""
+
+msgid "Kirkjubøur"
+msgstr ""
+
+msgid "Velbastadur"
+msgstr ""
+
+msgid "\"Sydradalur, Streymoy\""
+msgstr ""
+
+msgid "Nordradalur"
+msgstr ""
+
+msgid "Kaldbak"
+msgstr ""
+
+msgid "Kaldbaksbotnur"
+msgstr ""
+
+msgid "Sund"
+msgstr ""
+
+msgid "Hvitanes"
+msgstr ""
+
+msgid "Hoyvík"
+msgstr ""
+
+msgid "Sandur"
+msgstr ""
+
+msgid "Skálavík"
+msgstr ""
+
+msgid "Húsavík"
+msgstr ""
+
+msgid "Dalur"
+msgstr ""
+
+msgid "Skarvanes"
+msgstr ""
+
+msgid "Skopun"
+msgstr ""
+
+msgid "Skúvoy"
+msgstr ""
+
+msgid "Nólsoy"
+msgstr ""
+
+msgid "Hestur"
+msgstr ""
+
+msgid "Koltur"
+msgstr ""
+
+msgid "Stóra Dimun"
+msgstr ""
+
+msgid "Stykkid"
+msgstr ""
+
+msgid "Leynar"
+msgstr ""
+
+msgid "Skællingur"
+msgstr ""
+
+msgid "Kvívík"
+msgstr ""
+
+msgid "Vestmanna"
+msgstr ""
+
+msgid "Válur"
+msgstr ""
+
+msgid "Sandavágur"
+msgstr ""
+
+msgid "Midvágur"
+msgstr ""
+
+msgid "Sørvágur"
+msgstr ""
+
+msgid "Vatnsoyrar"
+msgstr ""
+
+msgid "Bøur"
+msgstr ""
+
+msgid "Gásadalur"
+msgstr ""
+
+msgid "Mykines"
+msgstr ""
+
+msgid "Oyrarbakki"
+msgstr ""
+
+msgid "Kollafjørdur"
+msgstr ""
+
+msgid "Oyrareingir"
+msgstr ""
+
+msgid "Signabøur"
+msgstr ""
+
+msgid "Hósvík"
+msgstr ""
+
+msgid "Hvalvík"
+msgstr ""
+
+msgid "Streymnes"
+msgstr ""
+
+msgid "Saksun"
+msgstr ""
+
+msgid "Nesvík"
+msgstr ""
+
+msgid "Langasandur"
+msgstr ""
+
+msgid "Haldarsvík"
+msgstr ""
+
+msgid "Tjørnuvík"
+msgstr ""
+
+msgid "Oyri"
+msgstr ""
+
+msgid "Nordskáli"
+msgstr ""
+
+msgid "Svináir"
+msgstr ""
+
+msgid "Ljósá"
+msgstr ""
+
+msgid "Eidi"
+msgstr ""
+
+msgid "Funningur"
+msgstr ""
+
+msgid "Gjógv"
+msgstr ""
+
+msgid "Funningsfjørdur"
+msgstr ""
+
+msgid "Elduvík"
+msgstr ""
+
+msgid "Skáli"
+msgstr ""
+
+msgid "Skálafjørdur"
+msgstr ""
+
+msgid "Strendur"
+msgstr ""
+
+msgid "Innan Glyvur"
+msgstr ""
+
+msgid "Kolbanargjógv"
+msgstr ""
+
+msgid "Morskranes"
+msgstr ""
+
+msgid "Selatrad"
+msgstr ""
+
+msgid "Gøta"
+msgstr ""
+
+msgid "Gøtugjógv"
+msgstr ""
+
+msgid "Nordragøta"
+msgstr ""
+
+msgid "Sydrugøta"
+msgstr ""
+
+msgid "Leirvík"
+msgstr ""
+
+msgid "Fuglafjørdur"
+msgstr ""
+
+msgid "Saltangará"
+msgstr ""
+
+msgid "Runavík"
+msgstr ""
+
+msgid "Glyvrar"
+msgstr ""
+
+msgid "Lambareidi"
+msgstr ""
+
+msgid "Lambi"
+msgstr ""
+
+msgid "Rituvík"
+msgstr ""
+
+msgid "Æduvík"
+msgstr ""
+
+msgid "Toftir"
+msgstr ""
+
+msgid "\"Nes, Eysturoy\""
+msgstr ""
+
+msgid "Saltnes"
+msgstr ""
+
+msgid "Søldarfjørdur"
+msgstr ""
+
+msgid "Skipanes"
+msgstr ""
+
+msgid "Gøtueidi"
+msgstr ""
+
+msgid "Oyndarfjørdur"
+msgstr ""
+
+msgid "Hellur"
+msgstr ""
+
+msgid "Klaksvík"
+msgstr ""
+
+msgid "Nordoyri"
+msgstr ""
+
+msgid "Ánir"
+msgstr ""
+
+msgid "Árnafjørdur"
+msgstr ""
+
+msgid "Norddepil"
+msgstr ""
+
+msgid "Depil"
+msgstr ""
+
+msgid "Nordtoftir"
+msgstr ""
+
+msgid "Múli"
+msgstr ""
+
+msgid "Hvannasund"
+msgstr ""
+
+msgid "Vidareidi"
+msgstr ""
+
+msgid "Svinoy"
+msgstr ""
+
+msgid "Kirkja"
+msgstr ""
+
+msgid "Hattarvík"
+msgstr ""
+
+msgid "Kunoy"
+msgstr ""
+
+msgid "Haraldssund"
+msgstr ""
+
+msgid "\"Sydradalur, Kalsoy\""
+msgstr ""
+
+msgid "Húsar"
+msgstr ""
+
+msgid "Mikladalur"
+msgstr ""
+
+msgid "Trøllanes"
+msgstr ""
+
+msgid "Tvøroyri"
+msgstr ""
+
+msgid "Frodba"
+msgstr ""
+
+msgid "Trongisvágur"
+msgstr ""
+
+msgid "Øravík"
+msgstr ""
+
+msgid "Hvalba"
+msgstr ""
+
+msgid "Sandvík"
+msgstr ""
+
+msgid "Fámjin"
+msgstr ""
+
+msgid "Vágur"
+msgstr ""
+
+msgid "\"Nes, Vágur\""
+msgstr ""
+
+msgid "Lopra"
+msgstr ""
+
+msgid "Akrar"
+msgstr ""
+
+msgid "Vikarbyrgi"
+msgstr ""
+
+msgid "Porkeri"
+msgstr ""
+
+msgid "Hov"
+msgstr ""
+
+msgid "Sumba"
+msgstr ""
+
+msgid "Enter a postal code in the format XXXX."
+msgstr "우편 번호를 XXXX형식으로 입력하세요."
+
+msgid "Ecuadorian province"
+msgstr ""
+
+msgid "Harju County"
+msgstr ""
+
+msgid "Hiiu County"
+msgstr ""
+
+msgid "Ida-Viru County"
+msgstr ""
+
+msgid "Jõgeva County"
+msgstr ""
+
+msgid "Järva County"
+msgstr ""
+
+msgid "Lääne County"
+msgstr ""
+
+msgid "Lääne-Viru County"
+msgstr ""
+
+msgid "Põlva County"
+msgstr ""
+
+msgid "Pärnu County"
+msgstr ""
+
+msgid "Rapla County"
+msgstr ""
+
+msgid "Saare County"
+msgstr ""
+
+msgid "Tartu County"
+msgstr ""
+
+msgid "Valga County"
+msgstr ""
+
+msgid "Viljandi County"
+msgstr ""
+
+msgid "Võru County"
+msgstr ""
+
+msgid "Enter an 11-digit Estonian personal identification code."
+msgstr "11자리의 에스토니아 주민 번호를 입력하세요."
+
+msgid "Enter a valid Estonian personal identification code."
+msgstr "유요한 에스토니아 주민번호를 입력하세요."
+
+msgid "Enter an 8-digit Estonian business registry code."
+msgstr "8자리의 에스토니아 사업자 번호를 입력하세요"
+
+msgid "Enter a valid Estonian business registry code."
+msgstr "유효한 에스토니아 사업자 번호를 입력하세요."
+
+msgid "Dakahlia"
+msgstr ""
+
+msgid "Red Sea"
+msgstr ""
+
+msgid "Beheira"
+msgstr ""
+
+msgid "Faiyum"
+msgstr ""
+
+msgid "Gharbia"
+msgstr ""
+
+msgid "Alexandria"
+msgstr ""
+
+msgid "Ismailia"
+msgstr ""
+
+msgid "Giza"
+msgstr ""
+
+msgid "Monufia"
+msgstr ""
+
+msgid "Minya"
+msgstr ""
+
+msgid "Cairo"
+msgstr ""
+
+msgid "Qalyubia"
+msgstr ""
+
+msgid "Luxor"
+msgstr ""
+
+msgid "New Valley"
+msgstr ""
+
+msgid "Suez"
+msgstr ""
+
+msgid "Al Sharqia"
+msgstr ""
+
+msgid "Aswan"
+msgstr ""
+
+msgid "Asyut"
+msgstr ""
+
+msgid "Beni Suef"
+msgstr ""
+
+msgid "Port Said"
+msgstr ""
+
+msgid "Damietta"
+msgstr ""
+
+msgid "South Sinai"
+msgstr ""
+
+msgid "Kafr el-Sheikh"
+msgstr ""
+
+msgid "Matrouh"
+msgstr ""
+
+msgid "Qena"
+msgstr ""
+
+msgid "North Sinai"
+msgstr ""
+
+msgid "Sohag"
+msgstr ""
+
+msgid "Enter a valid Egyptian National ID number"
+msgstr "유요한 이집트 국가 등록 번호를 입력하세요."
+
+msgid "Araba"
+msgstr ""
+
+msgid "Albacete"
+msgstr "Albacete"
+
+msgid "Alacant"
+msgstr "Alacant"
+
+msgid "Almeria"
+msgstr "Almeria"
+
+msgid "Avila"
+msgstr "Avila"
+
+msgid "Badajoz"
+msgstr "Badajoz"
+
+msgid "Illes Balears"
+msgstr "Illes Balears"
+
+msgid "Barcelona"
+msgstr "Barcelona"
+
+msgid "Burgos"
+msgstr "Burgos"
+
+msgid "Caceres"
+msgstr "Caceres"
+
+msgid "Cadiz"
+msgstr "Cadiz"
+
+msgid "Castello"
+msgstr "Castello"
+
+msgid "Ciudad Real"
+msgstr "Ciudad Real"
+
+msgid "Cordoba"
+msgstr "Cordoba"
+
+msgid "A Coruna"
+msgstr "A Coruna"
+
+msgid "Cuenca"
+msgstr "Cuenca"
+
+msgid "Girona"
+msgstr "Girona"
+
+msgid "Granada"
+msgstr "Granada"
+
+msgid "Guadalajara"
+msgstr "Guadalajara"
+
+msgid "Guipuzkoa"
+msgstr "Guipuzkoa"
+
+msgid "Huelva"
+msgstr "Huelva"
+
+msgid "Huesca"
+msgstr "Huesca"
+
+msgid "Jaen"
+msgstr "Jaen"
+
+msgid "Leon"
+msgstr "Leon"
+
+msgid "Lleida"
+msgstr "Lleida"
+
+msgid "Lugo"
+msgstr "Lugo"
+
+msgid "Madrid"
+msgstr "Madrid"
+
+msgid "Malaga"
+msgstr "Malaga"
+
+msgid "Murcia"
+msgstr "Murcia"
+
+msgid "Navarre"
+msgstr "Navarre"
+
+msgid "Ourense"
+msgstr "Ourense"
+
+msgid "Asturias"
+msgstr "Asturias"
+
+msgid "Palencia"
+msgstr "Palencia"
+
+msgid "Las Palmas"
+msgstr "Las Palmas"
+
+msgid "Pontevedra"
+msgstr "Pontevedra"
+
+msgid "Salamanca"
+msgstr "Salamanca"
+
+msgid "Santa Cruz de Tenerife"
+msgstr "Santa Cruz de Tenerife"
+
+msgid "Cantabria"
+msgstr "Cantabria"
+
+msgid "Segovia"
+msgstr "Segovia"
+
+msgid "Seville"
+msgstr "Seville"
+
+msgid "Soria"
+msgstr "Soria"
+
+msgid "Tarragona"
+msgstr "Tarragona"
+
+msgid "Teruel"
+msgstr "Teruel"
+
+msgid "Toledo"
+msgstr "Toledo"
+
+msgid "Valencia"
+msgstr "Valencia"
+
+msgid "Valladolid"
+msgstr "Valladolid"
+
+msgid "Bizkaia"
+msgstr "Bizkaia"
+
+msgid "Zamora"
+msgstr "Zamora"
+
+msgid "Zaragoza"
+msgstr "Zaragoza"
+
+msgid "Ceuta"
+msgstr "Ceuta"
+
+msgid "Melilla"
+msgstr "Melilla"
+
+msgid "Andalusia"
+msgstr "Andalusia"
+
+msgid "Aragon"
+msgstr "Aragon"
+
+msgid "Principality of Asturias"
+msgstr "Principality of Asturias"
+
+msgid "Balearic Islands"
+msgstr "Balearic Islands"
+
+msgid "Basque Country"
+msgstr "Basque Country"
+
+msgid "Canary Islands"
+msgstr "Canary Islands"
+
+msgid "Castile-La Mancha"
+msgstr "Castile-La Mancha"
+
+msgid "Castile and Leon"
+msgstr "Castile and Leon"
+
+msgid "Catalonia"
+msgstr "Catalonia"
+
+msgid "Extremadura"
+msgstr "Extremadura"
+
+msgid "Galicia"
+msgstr "Galicia"
+
+msgid "Region of Murcia"
+msgstr "Region of Murcia"
+
+msgid "Foral Community of Navarre"
+msgstr "Foral Community of Navarre"
+
+msgid "Valencian Community"
+msgstr "Valencian Community"
+
+msgid "Autonomous city of Ceuta"
+msgstr "Autonomous city of Ceuta"
+
+msgid "Autonomous city of Mellila"
+msgstr ""
+
+msgid "Enter a valid postal code in the range and format 01XXX - 52XXX."
+msgstr "우편번호를 입력하세요. (01XXX - 52XXX 형식)"
+
+msgid "Please enter a valid NIF, NIE, or CIF."
+msgstr "올바른 NIF, NIE 또는 CIF를 입력하세요."
+
+msgid "Please enter a valid NIF or NIE."
+msgstr "올바른 NIF 또는 NIE를 입력하세요."
+
+msgid "Invalid checksum for NIF."
+msgstr "NIF의 체크섬이 틀립니다."
+
+msgid "Invalid checksum for NIE."
+msgstr "NIE의 체크섬이 틀립니다."
+
+msgid "Invalid checksum for CIF."
+msgstr "CIF의 체크섬이 틀립니다."
+
+msgid ""
+"Please enter a valid bank account number in format XXXX-XXXX-XX-XXXXXXXXXX."
+msgstr "올바른 계좌번호를 입력하세요. (XXXX-XXXX-XX-XXXXXXXXXX 형식)"
+
+msgid "Invalid checksum for bank account number."
+msgstr "계좌번호의 체크섬이 틀립니다."
+
+msgid "Spain postal code (five numbers)"
+msgstr "스페인 우편 번호 (5자리 숫자)"
+
+msgid "Identification National Document"
+msgstr "국가 주민등록 문서"
+
+msgid "Enter a valid Finnish social security number."
+msgstr "올바른 핀란드 사회보장 번호를 입력하세요."
+
+msgid "Zip code"
+msgstr "우편번호 "
+
+msgid "Select Department"
+msgstr "부서 선택"
+
+msgid "Select Region"
+msgstr "지역 선택"
+
+msgid "Enter a valid French National Identification number."
+msgstr "유효한 프랑스 국가 등록 번호를 입력하세요."
+
+msgid "Enter a valid French SIREN number."
+msgstr "유효한 프랑스 SIREN 번호를 입력하세요."
+
+msgid "Enter a valid French SIRET number."
+msgstr "유효한 프랑스 SIRET 번호를 입력하세요."
+
+msgid "Enter a valid French RNA number."
+msgstr ""
+
+msgid "SIREN Number"
+msgstr "SIREN 번호"
+
+msgid "SIRET Number"
+msgstr "SIRET 번호"
+
+msgid "RNA Number"
+msgstr ""
+
+msgid "Enter a valid postcode."
+msgstr "올바른 우편번호를 입력하세요."
+
+msgid "Bath and North East Somerset"
+msgstr ""
+
+msgid "Bedford"
+msgstr ""
+
+msgid "Berkshire"
+msgstr ""
+
+msgid "Blackburn with Darwen"
+msgstr ""
+
+msgid "Blackpool"
+msgstr ""
+
+msgid "Bournemouth"
+msgstr ""
+
+msgid "Brighton & Hove"
+msgstr ""
+
+msgid "Bristol"
+msgstr "브리스톨"
+
+msgid "Buckinghamshire"
+msgstr "버킹엄셔 주"
+
+msgid "Cambridgeshire"
+msgstr ""
+
+msgid "Central Bedfordshire"
+msgstr ""
+
+msgid "Cheshire East"
+msgstr ""
+
+msgid "Cheshire West and Chester"
+msgstr ""
+
+msgid "Cornwall"
+msgstr ""
+
+msgid "Cumbria"
+msgstr "컴브리아 주"
+
+msgid "Darlington"
+msgstr ""
+
+msgid "Derby"
+msgstr ""
+
+msgid "Derbyshire"
+msgstr "더비셔 주"
+
+msgid "Devon"
+msgstr "데번 주"
+
+msgid "Dorset"
+msgstr "Dorest 주"
+
+msgid "Durham"
+msgstr ""
+
+msgid "East Riding of Yorkshire"
+msgstr ""
+
+msgid "East Sussex"
+msgstr "이스트 서섹스 주"
+
+msgid "Essex"
+msgstr "에섹스 주"
+
+msgid "Gloucestershire"
+msgstr "글로스터셔 주"
+
+msgid "Greater Manchester"
+msgstr "그레이터 멘체스터 주"
+
+msgid "Halton"
+msgstr ""
+
+msgid "Hampshire"
+msgstr "햄프셔 주"
+
+msgid "Hartlepool"
+msgstr ""
+
+msgid "Herefordshire"
+msgstr ""
+
+msgid "Hertfordshire"
+msgstr "허트퍼드셔 주"
+
+msgid "Isle of Wight"
+msgstr ""
+
+msgid "Kent"
+msgstr "켄트 주"
+
+msgid "Kingston upon Hull"
+msgstr ""
+
+msgid "Lancashire"
+msgstr "랭커셔 주"
+
+msgid "Leicester"
+msgstr ""
+
+msgid "Leicestershire"
+msgstr "레스터셔 주"
+
+msgid "Lincolnshire"
+msgstr "링컨셔 주"
+
+msgid "London"
+msgstr "런던"
+
+msgid "Luton"
+msgstr ""
+
+msgid "Medway"
+msgstr ""
+
+msgid "Merseyside"
+msgstr "머시사이드 주"
+
+msgid "Middlesbrough"
+msgstr ""
+
+msgid "Milton Keynes"
+msgstr ""
+
+msgid "Norfolk"
+msgstr "노퍽 주"
+
+msgid "North East Lincolnshire"
+msgstr ""
+
+msgid "North Lincolnshire"
+msgstr ""
+
+msgid "North Somerset"
+msgstr ""
+
+msgid "North Yorkshire"
+msgstr "노스요크셔 주"
+
+msgid "Northamptonshire"
+msgstr "노스햄프턴 주"
+
+msgid "Northumberland"
+msgstr "노섬벌랜드 주"
+
+msgid "Nottingham"
+msgstr ""
+
+msgid "Nottinghamshire"
+msgstr "노팅험셔 주"
+
+msgid "Oxfordshire"
+msgstr "옥스포드셔 주"
+
+msgid "Peterborough"
+msgstr ""
+
+msgid "Plymouth"
+msgstr ""
+
+msgid "Poole"
+msgstr ""
+
+msgid "Portsmouth"
+msgstr ""
+
+msgid "Redcar and Cleveland"
+msgstr ""
+
+msgid "Rutland"
+msgstr ""
+
+msgid "Shropshire"
+msgstr "시롭셔 주"
+
+msgid "Somerset"
+msgstr "서머셋 주"
+
+msgid "South Gloucestershire"
+msgstr ""
+
+msgid "South Yorkshire"
+msgstr "사우스요크셔 주"
+
+msgid "Southampton"
+msgstr ""
+
+msgid "Southend-on-Sea"
+msgstr ""
+
+msgid "Staffordshire"
+msgstr "스태포드셔 주"
+
+msgid "Stockton-on-Tees"
+msgstr ""
+
+msgid "Stoke-on-Trent"
+msgstr ""
+
+msgid "Suffolk"
+msgstr "서퍽 주"
+
+msgid "Surrey"
+msgstr "서리 주"
+
+msgid "Swindon"
+msgstr ""
+
+msgid "Telford and Wrekin"
+msgstr ""
+
+msgid "Thurrock"
+msgstr ""
+
+msgid "Torbay"
+msgstr ""
+
+msgid "Tyne and Wear"
+msgstr "타인-웨어 주"
+
+msgid "Warrington"
+msgstr ""
+
+msgid "Warwickshire"
+msgstr "워릭셔 주"
+
+msgid "West Midlands"
+msgstr "웨스트미들랜즈"
+
+msgid "West Sussex"
+msgstr "웨스트서섹스 주"
+
+msgid "West Yorkshire"
+msgstr "웨스트요크셔 주"
+
+msgid "Wiltshire"
+msgstr "윌트셔 주"
+
+msgid "Worcestershire"
+msgstr "우스터셔 주"
+
+msgid "York"
+msgstr ""
+
+msgid "Antrim"
+msgstr ""
+
+msgid "Armagh"
+msgstr ""
+
+msgid "Down"
+msgstr ""
+
+msgid "Fermanagh"
+msgstr ""
+
+msgid "Londonderry"
+msgstr ""
+
+msgid "Tyrone"
+msgstr ""
+
+msgid "Blaenau Gwent"
+msgstr ""
+
+msgid "Bridgend"
+msgstr ""
+
+msgid "Caerphilly"
+msgstr ""
+
+msgid "Cardiff"
+msgstr ""
+
+msgid "Carmarthenshire"
+msgstr ""
+
+msgid "Ceredigion"
+msgstr ""
+
+msgid "Conwy"
+msgstr ""
+
+msgid "Denbighshire"
+msgstr ""
+
+msgid "Flintshire"
+msgstr ""
+
+msgid "Gwynedd"
+msgstr "귀네드 주"
+
+msgid "Isle of Anglesey"
+msgstr ""
+
+msgid "Merthyr Tydfil"
+msgstr ""
+
+msgid "Monmouthshire"
+msgstr ""
+
+msgid "Neath Port Talbot"
+msgstr ""
+
+msgid "Newport"
+msgstr ""
+
+msgid "Pembrokeshire"
+msgstr ""
+
+msgid "Powys"
+msgstr "포이스 주"
+
+msgid "Rhondda Cynon Taf"
+msgstr ""
+
+msgid "Swansea"
+msgstr ""
+
+msgid "Torfaen"
+msgstr ""
+
+msgid "Vale of Glamorgan"
+msgstr ""
+
+msgid "Wrexham"
+msgstr ""
+
+msgid "Aberdeen City"
+msgstr ""
+
+msgid "Aberdeenshire"
+msgstr ""
+
+msgid "Angus"
+msgstr ""
+
+msgid "Argyll and Bute"
+msgstr ""
+
+msgid "Clackmannanshire"
+msgstr ""
+
+msgid "Dumfries and Galloway"
+msgstr "덤프리스갤러웨이 주"
+
+msgid "Dundee City"
+msgstr ""
+
+msgid "East Ayrshire"
+msgstr ""
+
+msgid "East Dunbartonshire"
+msgstr ""
+
+msgid "East Lothian"
+msgstr ""
+
+msgid "East Renfrewshire"
+msgstr ""
+
+msgid "Edinburgh, City of"
+msgstr ""
+
+msgid "Falkirk"
+msgstr ""
+
+msgid "Fife"
+msgstr "파이프 주"
+
+msgid "Glasgow City"
+msgstr ""
+
+msgid "Highland"
+msgstr "하이랜드 주"
+
+msgid "Inverclyde"
+msgstr ""
+
+msgid "Midlothian"
+msgstr ""
+
+msgid "Moray"
+msgstr ""
+
+msgid "North Ayrshire"
+msgstr ""
+
+msgid "North Lanarkshire"
+msgstr ""
+
+msgid "Perth and Kinross"
+msgstr ""
+
+msgid "Renfrewshire"
+msgstr ""
+
+msgid "Scottish Borders"
+msgstr ""
+
+msgid "South Ayrshire"
+msgstr ""
+
+msgid "South Lanarkshire"
+msgstr ""
+
+msgid "Stirling"
+msgstr ""
+
+msgid "West Dunbartonshire"
+msgstr ""
+
+msgid "West Lothian"
+msgstr ""
+
+msgid "Na h-Eileanan Siar"
+msgstr ""
+
+msgid "Orkney Islands"
+msgstr "오크니 제도"
+
+msgid "Shetland Islands"
+msgstr "셰틀랜드 제도"
+
+msgid "England"
+msgstr "잉글랜드 주"
+
+msgid "Northern Ireland"
+msgstr "노던아일랜드 주"
+
+msgid "Wales"
+msgstr "웨일즈 주"
+
+msgid "Scotland"
+msgstr "스코틀랜드 주"
+
+msgid "An International Bank Account Number"
+msgstr ""
+
+msgid "Business Identifier Code"
+msgstr " 사업자 코드"
+
+#, python-format
+msgid "%(character)s is not a valid character for IBAN."
+msgstr ""
+
+#, python-format
+msgid "%(country_code)s IBANs must contain %(number)s characters."
+msgstr "%(country_code)s IBAN에는 반드시 %(number)s 문자가 포함됩니다."
+
+#, python-format
+msgid "%(country_code)s is not a valid country code for IBAN."
+msgstr "%(country_code)s는 유효한 IBAN 국가코드가 아닙니다."
+
+#, python-format
+msgid "%(country_code)s IBANs are not allowed in this field."
+msgstr "%(country_code)s IBAN 이 필드를 허용하지 않습니다."
+
+msgid "Not a valid IBAN."
+msgstr ""
+
+msgid "BIC codes have either 8 or 11 characters."
+msgstr "BIC 코드는 8자리 혹은 11자리 글자입니다."
+
+msgid "BIC codes only contain alphabet letters and digits."
+msgstr "BIC 코드에는 알파벳과 숫자만 허용됩니다."
+
+#, python-format
+msgid "%(institution_code)s is not a valid institution code."
+msgstr "%(institution_code)s 는 유효한 기관 코드가 아닙니다."
+
+#, python-format
+msgid "%(country_code)s is not a valid country code."
+msgstr "%(country_code)s 는 유효한 국가 코드가 아닙니다."
+
+#, python-format
+msgid "%(location_code)s is not a valid location code."
+msgstr "%(location_code)s 는 유효한 지역코드가 아닙니다."
+
+msgid "Not a valid EAN code."
+msgstr "유효한 EAN 코드가 아닙니다."
+
+#, python-format
+msgid "%(vatin)s is not a valid VAT identification number."
+msgstr ""
+
+msgid "Ahafo"
+msgstr ""
+
+msgid "Ashanti"
+msgstr ""
+
+msgid "Bono East"
+msgstr ""
+
+msgid "Brong Ahafo"
+msgstr ""
+
+msgid "Eastern"
+msgstr ""
+
+msgid "Greater Accra"
+msgstr ""
+
+msgid "North East"
+msgstr ""
+
+msgid "Northern"
+msgstr ""
+
+msgid "Oti"
+msgstr ""
+
+msgid "Savannah"
+msgstr ""
+
+msgid "Upper East"
+msgstr ""
+
+msgid "Upper West"
+msgstr ""
+
+msgid "Western"
+msgstr ""
+
+msgid "Western North"
+msgstr ""
+
+msgid "Volta"
+msgstr ""
+
+msgid "Enter a valid 5-digit greek postal code."
+msgstr "유효한 5자리의 그리스 우편번호를 입력하세요."
+
+msgid "Enter a valid greek tax number (9 digits)."
+msgstr "유요한 그리스 납세 번호를 입력하세요 (9자리)"
+
+msgid "Enter a valid greek social security number (AMKA - 11 digits)."
+msgstr "유효한 그리스 사회보장번호 (AMKA - 11자리)를 입력하세요."
+
+msgid "Enter a valid 13 digit JMBG"
+msgstr "유효한 13자리 JMBG 번호를 입력하세요."
+
+msgid "Error in date segment"
+msgstr ""
+
+msgid "Enter a valid 11 digit OIB"
+msgstr "유효한 11자리 OIB번호를 입력하세요."
+
+msgid "Enter a valid vehicle license plate number"
+msgstr "올바른 차량 등록 번호를 입력하세요."
+
+msgid "Enter a valid location code"
+msgstr "유효한 지역 코드를 입력하세요."
+
+msgid "Number part cannot be zero"
+msgstr ""
+
+msgid "Enter a valid 5 digit postal code"
+msgstr "5자리의 우편번호를 입력하세요."
+
+msgid "Enter a valid 19 digit JMBAG starting with 601983"
+msgstr "601983으로 시작하는 유효한 JMBAG 문자열을 입력하세요."
+
+msgid "Card issue number cannot be zero"
+msgstr ""
+
+msgid "Grad Zagreb"
+msgstr ""
+
+msgid "Bjelovarsko-bilogorska županija"
+msgstr ""
+
+msgid "Brodsko-posavska županija"
+msgstr ""
+
+msgid "Dubrovačko-neretvanska županija"
+msgstr ""
+
+msgid "Istarska županija"
+msgstr ""
+
+msgid "Karlovačka županija"
+msgstr ""
+
+msgid "Koprivničko-križevačka županija"
+msgstr ""
+
+msgid "Krapinsko-zagorska županija"
+msgstr ""
+
+msgid "Ličko-senjska županija"
+msgstr ""
+
+msgid "Međimurska županija"
+msgstr ""
+
+msgid "Osječko-baranjska županija"
+msgstr ""
+
+msgid "Požeško-slavonska županija"
+msgstr ""
+
+msgid "Primorsko-goranska županija"
+msgstr ""
+
+msgid "Sisačko-moslavačka županija"
+msgstr ""
+
+msgid "Splitsko-dalmatinska županija"
+msgstr ""
+
+msgid "Šibensko-kninska županija"
+msgstr ""
+
+msgid "Varaždinska županija"
+msgstr ""
+
+msgid "Virovitičko-podravska županija"
+msgstr ""
+
+msgid "Vukovarsko-srijemska županija"
+msgstr ""
+
+msgid "Zadarska županija"
+msgstr ""
+
+msgid "Zagrebačka županija"
+msgstr ""
+
+msgid "Bács-Kiskun"
+msgstr ""
+
+msgid "Baranya"
+msgstr ""
+
+msgid "Békés"
+msgstr ""
+
+msgid "Borsod-Abaúj-Zemplén"
+msgstr ""
+
+msgid "Csongrád"
+msgstr ""
+
+msgid "Fejér"
+msgstr ""
+
+msgid "Győr-Moson-Sopron"
+msgstr ""
+
+msgid "Hajdú-Bihar"
+msgstr ""
+
+msgid "Heves"
+msgstr ""
+
+msgid "Jász-Nagykun-Szolnok"
+msgstr ""
+
+msgid "Komárom-Esztergom"
+msgstr ""
+
+msgid "Nógrád"
+msgstr ""
+
+msgid "Pest"
+msgstr ""
+
+msgid "Somogy"
+msgstr ""
+
+msgid "Szabolcs-Szatmár-Bereg"
+msgstr ""
+
+msgid "Tolna"
+msgstr ""
+
+msgid "Vas"
+msgstr ""
+
+msgid "Veszprém"
+msgstr ""
+
+msgid "Zala"
+msgstr ""
+
+msgid "Enter a valid post code"
+msgstr "올바른 우편번호를 입력하세요."
+
+msgid "Enter a valid NIK/KTP number"
+msgstr "올바른 NIK/KTP 번호를 입력하세요."
+
+msgid "Aceh"
+msgstr "Aceh"
+
+msgid "Bali"
+msgstr "Bali"
+
+msgid "Banten"
+msgstr "Banten"
+
+msgid "Bengkulu"
+msgstr "Bengkulu"
+
+msgid "Yogyakarta"
+msgstr "Yogyakarta"
+
+msgid "Jakarta"
+msgstr "Jakarta"
+
+msgid "Gorontalo"
+msgstr "Gorontalo"
+
+msgid "Jambi"
+msgstr "Jambi"
+
+msgid "Jawa Barat"
+msgstr "Jawa Barat"
+
+msgid "Jawa Tengah"
+msgstr "Jawa Tengah"
+
+msgid "Jawa Timur"
+msgstr "Jawa Timur"
+
+msgid "Kalimantan Barat"
+msgstr "Kalimantan Barat"
+
+msgid "Kalimantan Selatan"
+msgstr "Kalimantan Selatan"
+
+msgid "Kalimantan Tengah"
+msgstr "Kalimantan Tengah"
+
+msgid "Kalimantan Timur"
+msgstr "Kalimantan Timur"
+
+msgid "Kalimantan Utara"
+msgstr ""
+
+msgid "Kepulauan Bangka-Belitung"
+msgstr "Kepulauan Bangka-Belitung"
+
+msgid "Kepulauan Riau"
+msgstr "Kepulauan Riau"
+
+msgid "Lampung"
+msgstr "Lampung"
+
+msgid "Maluku"
+msgstr "Maluku"
+
+msgid "Maluku Utara"
+msgstr "Maluku Utara"
+
+msgid "Nusa Tenggara Barat"
+msgstr "Nusa Tenggara Barat"
+
+msgid "Nusa Tenggara Timur"
+msgstr "Nusa Tenggara Timur"
+
+msgid "Papua"
+msgstr "Papua"
+
+msgid "Papua Barat"
+msgstr "Papua Barat"
+
+msgid "Riau"
+msgstr "Riau"
+
+msgid "Sulawesi Barat"
+msgstr "Sulawesi Barat"
+
+msgid "Sulawesi Selatan"
+msgstr "Sulawesi Selatan"
+
+msgid "Sulawesi Tengah"
+msgstr "Sulawesi Tengah"
+
+msgid "Sulawesi Tenggara"
+msgstr "Sulawesi Tenggara"
+
+msgid "Sulawesi Utara"
+msgstr "Sulawesi Utara"
+
+msgid "Sumatera Barat"
+msgstr "Sumatera Barat"
+
+msgid "Sumatera Selatan"
+msgstr "Sumatera Selatan"
+
+msgid "Sumatera Utara"
+msgstr "Sumatera Utara"
+
+msgid "Magelang"
+msgstr ""
+
+msgid "Surakarta - Solo"
+msgstr "Surakarta - Solo"
+
+msgid "Madiun"
+msgstr ""
+
+msgid "Kediri"
+msgstr ""
+
+msgid "Tapanuli"
+msgstr ""
+
+msgid "Nanggroe Aceh Darussalam"
+msgstr "Nanggroe Aceh Darussalam"
+
+msgid "Kepulauan Bangka Belitung"
+msgstr ""
+
+msgid "Corps Consulate"
+msgstr "Corps Consulate"
+
+msgid "Corps Diplomatic"
+msgstr "Corps Diplomatic"
+
+msgid "Bandung"
+msgstr "Bandung"
+
+msgid "Sulawesi Utara Daratan"
+msgstr "Sulawesi Utara Daratan"
+
+msgid "NTT - Timor"
+msgstr "NTT - Timor"
+
+msgid "Sulawesi Utara Kepulauan"
+msgstr "Sulawesi Utara Kepulauan"
+
+msgid "NTB - Lombok"
+msgstr "NTB - Lombok"
+
+msgid "Papua dan Papua Barat"
+msgstr "Papua dan Papua Barat"
+
+msgid "Cirebon"
+msgstr ""
+
+msgid "NTB - Sumbawa"
+msgstr ""
+
+msgid "NTT - Flores"
+msgstr "NTT - Flores"
+
+msgid "NTT - Sumba"
+msgstr ""
+
+msgid "Bogor"
+msgstr "Bogor"
+
+msgid "Pekalongan"
+msgstr ""
+
+msgid "Semarang"
+msgstr "Semarang"
+
+msgid "Pati"
+msgstr ""
+
+msgid "Surabaya"
+msgstr "Surabaya"
+
+msgid "Madura"
+msgstr ""
+
+msgid "Malang"
+msgstr ""
+
+msgid "Jember"
+msgstr ""
+
+msgid "Banyumas"
+msgstr ""
+
+msgid "Federal Government"
+msgstr "연방 정부"
+
+msgid "Bojonegoro"
+msgstr ""
+
+msgid "Purwakarta"
+msgstr ""
+
+msgid "Sidoarjo"
+msgstr ""
+
+msgid "Garut"
+msgstr ""
+
+msgid "Enter a valid Eircode."
+msgstr "유효한 Eircode를 입력하세요."
+
+msgid "Carlow"
+msgstr ""
+
+msgid "Cavan"
+msgstr "Cavan"
+
+msgid "Clare"
+msgstr "Clare"
+
+msgid "Cork"
+msgstr "Cork"
+
+msgid "Donegal"
+msgstr "Donegal"
+
+msgid "Dublin"
+msgstr "Dublin"
+
+msgid "Galway"
+msgstr "Galway"
+
+msgid "Kerry"
+msgstr "Kerry"
+
+msgid "Kildare"
+msgstr "Kildare"
+
+msgid "Kilkenny"
+msgstr "Kilkenny"
+
+msgid "Laois"
+msgstr "Laois"
+
+msgid "Leitrim"
+msgstr "Leitrim"
+
+msgid "Limerick"
+msgstr ""
+
+msgid "Longford"
+msgstr "Longford"
+
+msgid "Louth"
+msgstr "Louth"
+
+msgid "Mayo"
+msgstr "Mayo"
+
+msgid "Meath"
+msgstr "Meath"
+
+msgid "Monaghan"
+msgstr "Monaghan"
+
+msgid "Offaly"
+msgstr "Offaly"
+
+msgid "Roscommon"
+msgstr "Roscommon"
+
+msgid "Sligo"
+msgstr "Sligo"
+
+msgid "Tipperary"
+msgstr ""
+
+msgid "Waterford"
+msgstr "Waterford"
+
+msgid "Westmeath"
+msgstr ""
+
+msgid "Wexford"
+msgstr "Wexford"
+
+msgid "Wicklow"
+msgstr "Wicklow"
+
+msgid "Enter a postal code in the format XXXXXXX (or XXXXX) - digits only"
+msgstr "XXXXXXX (또는 XXXXX)으로 되어 있는 우편번호의 숫자만 입력하세요. "
+
+msgid "Enter a valid ID number."
+msgstr "올바른 ID 번호를 입력하세요."
+
+msgid "Enter a zip code in the format XXXXXX or XXX XXX."
+msgstr "우편번호를 XXXXXX 또는 XXX XXX 형식으로 입력하세요."
+
+msgid "Enter an Indian state or territory."
+msgstr "인도의 주명 혹은 지역명을 입력하세요."
+
+msgid ""
+"Enter a valid Aadhaar number in XXXX XXXX XXXX or XXXX-XXXX-XXXX format."
+msgstr "XXXX XXXX XXXX 또는 XXXX-XXXX-XXXX 형식으로 Aadhaar 번호를 입력하세요."
+
+msgid "Please enter a valid Indian PAN card number."
+msgstr ""
+
+msgid "Indian state (two uppercase letters)"
+msgstr ""
+
+msgid "PAN Card number field"
+msgstr ""
+
+msgid "Enter a postal code in the format XXXXXXXXXX - digits only"
+msgstr "XXXXXXXXXX 형식의 우편번호의 숫자만 입력하세요."
+
+msgid "Alborz"
+msgstr ""
+
+msgid "Ardabil"
+msgstr ""
+
+msgid "Azerbaijan East"
+msgstr ""
+
+msgid "Azerbaijan Wast"
+msgstr ""
+
+msgid "Bushehr"
+msgstr ""
+
+msgid "Chahar Mahaal and Bakhtiari"
+msgstr ""
+
+msgid "Fars"
+msgstr ""
+
+msgid "Gilan"
+msgstr ""
+
+msgid "Golestan"
+msgstr ""
+
+msgid "Hamadan"
+msgstr ""
+
+msgid "Hormozgan"
+msgstr ""
+
+msgid "Ilam"
+msgstr ""
+
+msgid "Isfahan"
+msgstr ""
+
+msgid "Kerman"
+msgstr ""
+
+msgid "Kermanshah"
+msgstr ""
+
+msgid "Khorasan North"
+msgstr ""
+
+msgid "Khorasan Razavi"
+msgstr ""
+
+msgid "Khorasan South"
+msgstr ""
+
+msgid "Khuzestan"
+msgstr ""
+
+msgid "Kohgiluyeh and Boyer-Ahmad"
+msgstr ""
+
+msgid "Kurdistan"
+msgstr ""
+
+msgid "Lorestan"
+msgstr ""
+
+msgid "Markazi"
+msgstr ""
+
+msgid "Mazandaran"
+msgstr ""
+
+msgid "Qazvin"
+msgstr ""
+
+msgid "Qom"
+msgstr ""
+
+msgid "Semnan"
+msgstr ""
+
+msgid "Sistan and Baluchestan"
+msgstr ""
+
+msgid "Tehran"
+msgstr ""
+
+msgid "Yazd"
+msgstr ""
+
+msgid "Zanjan"
+msgstr ""
+
+msgid ""
+"Enter a valid Icelandic identification number. The format is XXXXXX-XXXX."
+msgstr "올바른 아이슬란드 주민번호를 입력하세요. (XXXXXX-XXXX 형식)"
+
+msgid "The Icelandic identification number is not valid."
+msgstr "아이슬란드 주민번호가 올바르지 않습니다."
+
+msgid "Enter a valid zip code."
+msgstr "올바른 우편번호를 입력하세요."
+
+msgid "Enter a valid Tax code."
+msgstr "유효한 납세 번호를 입력하세요."
+
+msgid "Enter a valid VAT number."
+msgstr "올바른 VAT 번호를 입력하세요."
+
+msgid "Check digit does not match."
+msgstr ""
+
+msgid "Enter a postal code in the format XXXXXXX or XXX-XXXX."
+msgstr "우편번호를 입력하세요. (XXXXXXX or XXX-XXXX 형식)"
+
+msgid "Hokkaido"
+msgstr "홋카이도"
+
+msgid "Aomori"
+msgstr "아오모리 현"
+
+msgid "Iwate"
+msgstr "이와테 현"
+
+msgid "Miyagi"
+msgstr "미야기 현"
+
+msgid "Akita"
+msgstr "아키타 현"
+
+msgid "Yamagata"
+msgstr "야마가타 현"
+
+msgid "Fukushima"
+msgstr "후쿠시마 현"
+
+msgid "Ibaraki"
+msgstr "이바라키 현"
+
+msgid "Tochigi"
+msgstr "도치기 현"
+
+msgid "Gunma"
+msgstr "군마 현"
+
+msgid "Saitama"
+msgstr "사이타마 현"
+
+msgid "Chiba"
+msgstr "지바 현"
+
+msgid "Tokyo"
+msgstr "도쿄 도"
+
+msgid "Kanagawa"
+msgstr "카나가와 현"
+
+msgid "Niigata"
+msgstr "니가타 현"
+
+msgid "Toyama"
+msgstr "도야마 현"
+
+msgid "Ishikawa"
+msgstr "이시카와 현"
+
+msgid "Fukui"
+msgstr "후쿠이 현"
+
+msgid "Yamanashi"
+msgstr "야마나시 현"
+
+msgid "Nagano"
+msgstr "나가노 현"
+
+msgid "Gifu"
+msgstr "기후 현"
+
+msgid "Shizuoka"
+msgstr "시즈오카 현"
+
+msgid "Aichi"
+msgstr "아이치 현"
+
+msgid "Mie"
+msgstr "미에 현"
+
+msgid "Shiga"
+msgstr "시가 현"
+
+msgid "Kyoto"
+msgstr "교토 부"
+
+msgid "Osaka"
+msgstr "오사카 부"
+
+msgid "Hyogo"
+msgstr "효고 현"
+
+msgid "Nara"
+msgstr "나라 현"
+
+msgid "Wakayama"
+msgstr "와카야마 현"
+
+msgid "Tottori"
+msgstr "돗토리 현"
+
+msgid "Shimane"
+msgstr "시마네 현"
+
+msgid "Okayama"
+msgstr "아카야마 현"
+
+msgid "Hiroshima"
+msgstr "히로시마 현"
+
+msgid "Yamaguchi"
+msgstr "야마구치 현"
+
+msgid "Tokushima"
+msgstr "도구시마 현"
+
+msgid "Kagawa"
+msgstr "카가와 현"
+
+msgid "Ehime"
+msgstr "에히메 현"
+
+msgid "Kochi"
+msgstr "고치 현"
+
+msgid "Fukuoka"
+msgstr "후쿠오카 현"
+
+msgid "Saga"
+msgstr "사가 현"
+
+msgid "Nagasaki"
+msgstr "나가사키 현"
+
+msgid "Kumamoto"
+msgstr "구마모토 현"
+
+msgid "Oita"
+msgstr "오이타 현"
+
+msgid "Miyazaki"
+msgstr "미야자키 현"
+
+msgid "Kagoshima"
+msgstr "가고시마 현"
+
+msgid "Okinawa"
+msgstr "오키나와 현"
+
+msgid "Enter a valid Kuwaiti Civil ID number"
+msgstr "올바른 쿠웨이트 주민번호를 입력하세요."
+
+msgid "Kuwait City"
+msgstr ""
+
+msgid "Abdullah Al-Salem"
+msgstr ""
+
+msgid "Adailiya"
+msgstr ""
+
+msgid "Bneid Al Qar"
+msgstr ""
+
+msgid "Daiya"
+msgstr ""
+
+msgid "Dasma"
+msgstr ""
+
+msgid "Dasman"
+msgstr ""
+
+msgid "Doha"
+msgstr ""
+
+msgid "Faiha"
+msgstr ""
+
+msgid "Jaber Al Ahmad"
+msgstr ""
+
+msgid "Jibla"
+msgstr ""
+
+msgid "Kaifan"
+msgstr ""
+
+msgid "Khaldiya"
+msgstr ""
+
+msgid "Kuwait Free Trade Zone"
+msgstr ""
+
+msgid "Mansouriya"
+msgstr ""
+
+msgid "Mirqab"
+msgstr ""
+
+msgid "Mubarekiya Camps"
+msgstr ""
+
+msgid "Nahdha"
+msgstr ""
+
+msgid "North West Al-Sulaibikhat"
+msgstr ""
+
+msgid "Nuzha"
+msgstr ""
+
+msgid "Qadsiya"
+msgstr ""
+
+msgid "Qairawan"
+msgstr ""
+
+msgid "Qortuba"
+msgstr ""
+
+msgid "Rawda"
+msgstr ""
+
+msgid "Salhiya"
+msgstr ""
+
+msgid "Shamiya"
+msgstr ""
+
+msgid "Sharq"
+msgstr ""
+
+msgid "Shuwaikh Administrative"
+msgstr ""
+
+msgid "Shuwaikh Industrial"
+msgstr ""
+
+msgid "Shuwaikh Residential"
+msgstr ""
+
+msgid "Sulaibikhat"
+msgstr ""
+
+msgid "Surra"
+msgstr ""
+
+msgid "Yarmouk"
+msgstr ""
+
+msgid "Farwaniya"
+msgstr ""
+
+msgid "Abbasiya"
+msgstr ""
+
+msgid "Abdullah Al Mubarak Al Sabah"
+msgstr ""
+
+msgid "Abraq Khaitan"
+msgstr ""
+
+msgid "Al-Dajeej"
+msgstr ""
+
+msgid "Al-Shadadiya"
+msgstr ""
+
+msgid "Andalous"
+msgstr ""
+
+msgid "Ardiya"
+msgstr ""
+
+msgid "Ardiya Small Industrial"
+msgstr ""
+
+msgid "Ardiya Storage Zone"
+msgstr ""
+
+msgid "Firdous"
+msgstr ""
+
+msgid "Ishbiliya"
+msgstr ""
+
+msgid "Jeleeb Al-Shuyoukh"
+msgstr ""
+
+msgid "Khaitan"
+msgstr ""
+
+msgid "Omariya"
+msgstr ""
+
+msgid "Rabia"
+msgstr ""
+
+msgid "Rai"
+msgstr ""
+
+msgid "Rehab"
+msgstr ""
+
+msgid "Rigai"
+msgstr ""
+
+msgid "Sabah Al Nasser"
+msgstr ""
+
+msgid "South Khaitan - Exhibits"
+msgstr ""
+
+msgid "Mubarak Al Kabir"
+msgstr ""
+
+msgid "Abu Al Hasaniya"
+msgstr ""
+
+msgid "Abu Fatira"
+msgstr ""
+
+msgid "Adan"
+msgstr ""
+
+msgid "Al-Masayel"
+msgstr ""
+
+msgid "Coast Strip B"
+msgstr ""
+
+msgid "Fnaitees"
+msgstr ""
+
+msgid "Messila"
+msgstr ""
+
+msgid "Mubarak Al Kabeer"
+msgstr ""
+
+msgid "Qurain"
+msgstr ""
+
+msgid "Qusor"
+msgstr ""
+
+msgid "Sabah Al Salem"
+msgstr ""
+
+msgid "Sabhan Industrial Area"
+msgstr ""
+
+msgid "South Wista"
+msgstr ""
+
+msgid "West Abu Fatira Small Industrial"
+msgstr ""
+
+msgid "Hawally"
+msgstr ""
+
+msgid "Al-Siddeeq"
+msgstr ""
+
+msgid "Anjafa"
+msgstr ""
+
+msgid "Bayan"
+msgstr ""
+
+msgid "Hateen"
+msgstr ""
+
+msgid "Jabriya"
+msgstr ""
+
+msgid "Maidan Hawally"
+msgstr ""
+
+msgid "Mishref"
+msgstr ""
+
+msgid "Mubarak Al-Abdullah"
+msgstr ""
+
+msgid "Rumaithiya"
+msgstr ""
+
+msgid "Al-Salam"
+msgstr ""
+
+msgid "Salmiya"
+msgstr ""
+
+msgid "Salwa"
+msgstr ""
+
+msgid "Shaab"
+msgstr ""
+
+msgid "Shuhada"
+msgstr ""
+
+msgid "Zahra"
+msgstr ""
+
+msgid "Ahmadi"
+msgstr ""
+
+msgid "Abu Halifa"
+msgstr ""
+
+msgid "Al Khiran"
+msgstr ""
+
+msgid "Al Wafrah"
+msgstr ""
+
+msgid "Al-Nuwaiseeb"
+msgstr ""
+
+msgid "Al-Riqqa"
+msgstr ""
+
+msgid "Ali Sabah Al Salem"
+msgstr ""
+
+msgid "Assabahiyah"
+msgstr ""
+
+msgid "Bnaider"
+msgstr ""
+
+msgid "Dahar"
+msgstr ""
+
+msgid "Eqaila"
+msgstr ""
+
+msgid "Fahad Al Ahmad"
+msgstr ""
+
+msgid "Fahaheel"
+msgstr ""
+
+msgid "Fintas"
+msgstr ""
+
+msgid "Hadiya"
+msgstr ""
+
+msgid "Jaber Al Ali"
+msgstr ""
+
+msgid "Mahboula"
+msgstr ""
+
+msgid "Mangaf"
+msgstr ""
+
+msgid "Sabah Al Ahmad"
+msgstr ""
+
+msgid "Al Dubaiya"
+msgstr ""
+
+msgid "Mina Abdullah"
+msgstr ""
+
+msgid "Shuaiba Block 1"
+msgstr ""
+
+msgid "West Industrial Shuaiba"
+msgstr ""
+
+msgid "Zour"
+msgstr ""
+
+msgid "Jahra"
+msgstr ""
+
+msgid "Al Sulaibiya Industrial 1"
+msgstr ""
+
+msgid "Al Sulaibiya Industrial 2"
+msgstr ""
+
+msgid "Amgarah Industrial Area"
+msgstr ""
+
+msgid "Naeem"
+msgstr ""
+
+msgid "Naseem"
+msgstr ""
+
+msgid "Oyoun"
+msgstr ""
+
+msgid "Qasr"
+msgstr ""
+
+msgid "Saad Al Abdullah"
+msgstr ""
+
+msgid "Sulaibiya"
+msgstr ""
+
+msgid "Taima'"
+msgstr ""
+
+msgid "Waha"
+msgstr ""
+
+msgid "Farwaniyah"
+msgstr ""
+
+msgid "Capital"
+msgstr ""
+
+msgid "Hawalli"
+msgstr ""
+
+msgid "ID Code consists of exactly 11 decimal digits."
+msgstr "ID 코드는 정확히 11자리 숫자 입니다."
+
+msgid "Wrong ID Code checksum."
+msgstr "ID Code 첵크섬이 잘못되었습니다."
+
+msgid "ID Code contains invalid date."
+msgstr "ID Code가 잘못된 날짜를 포함하고 있습니다."
+
+msgid "Enter a postal code in the format XXXXX or LT-XXXXX."
+msgstr "유효한 우편번호를 XXXXX  또는 LT-XXXXX 형식으로 입력하세요."
+
+msgid "Alytus"
+msgstr ""
+
+msgid "Kaunas"
+msgstr ""
+
+msgid "Klaipėda"
+msgstr ""
+
+msgid "Marijampolė"
+msgstr ""
+
+msgid "Panevėžys"
+msgstr ""
+
+msgid "Šiauliai"
+msgstr ""
+
+msgid "Tauragė"
+msgstr ""
+
+msgid "Telšiai"
+msgstr ""
+
+msgid "Utena"
+msgstr ""
+
+msgid "Vilnius"
+msgstr ""
+
+msgid "Akmenė district"
+msgstr ""
+
+msgid "Alytus city"
+msgstr ""
+
+msgid "Alytus district"
+msgstr ""
+
+msgid "Anykščiai district"
+msgstr ""
+
+msgid "Birštonas"
+msgstr ""
+
+msgid "Biržai district"
+msgstr ""
+
+msgid "Druskininkai"
+msgstr ""
+
+msgid "Elektrėnai"
+msgstr ""
+
+msgid "Ignalina district"
+msgstr ""
+
+msgid "Jonava district"
+msgstr ""
+
+msgid "Joniškis district"
+msgstr ""
+
+msgid "Jurbarkas district"
+msgstr ""
+
+msgid "Kaišiadorys district"
+msgstr ""
+
+msgid "Kalvarija"
+msgstr ""
+
+msgid "Kaunas city"
+msgstr ""
+
+msgid "Kaunas district"
+msgstr ""
+
+msgid "Kazlų Rūda"
+msgstr ""
+
+msgid "Kėdainiai district"
+msgstr ""
+
+msgid "Kelmė district"
+msgstr ""
+
+msgid "Klaipėda city"
+msgstr ""
+
+msgid "Klaipėda district"
+msgstr ""
+
+msgid "Kretinga district"
+msgstr ""
+
+msgid "Kupiškis district"
+msgstr ""
+
+msgid "Lazdijai district"
+msgstr ""
+
+msgid "Mažeikiai district"
+msgstr ""
+
+msgid "Molėtai district"
+msgstr ""
+
+msgid "Neringa"
+msgstr ""
+
+msgid "Pagėgiai"
+msgstr ""
+
+msgid "Pakruojis district"
+msgstr ""
+
+msgid "Palanga city"
+msgstr ""
+
+msgid "Panevėžys city"
+msgstr ""
+
+msgid "Panevėžys district"
+msgstr ""
+
+msgid "Pasvalys district"
+msgstr ""
+
+msgid "Plungė district"
+msgstr ""
+
+msgid "Prienai district"
+msgstr ""
+
+msgid "Radviliškis district"
+msgstr ""
+
+msgid "Raseiniai district"
+msgstr ""
+
+msgid "Rietavas"
+msgstr ""
+
+msgid "Rokiškis district"
+msgstr ""
+
+msgid "Skuodas district"
+msgstr ""
+
+msgid "Šakiai district"
+msgstr ""
+
+msgid "Šalčininkai district"
+msgstr ""
+
+msgid "Šiauliai city"
+msgstr ""
+
+msgid "Šiauliai district"
+msgstr ""
+
+msgid "Šilalė district"
+msgstr ""
+
+msgid "Šilutė district"
+msgstr ""
+
+msgid "Širvintos district"
+msgstr ""
+
+msgid "Švenčionys district"
+msgstr ""
+
+msgid "Tauragė district"
+msgstr ""
+
+msgid "Telšiai district"
+msgstr ""
+
+msgid "Trakai district"
+msgstr ""
+
+msgid "Ukmergė district"
+msgstr ""
+
+msgid "Utena district"
+msgstr ""
+
+msgid "Varėna district"
+msgstr ""
+
+msgid "Vilkaviškis district"
+msgstr ""
+
+msgid "Vilnius city"
+msgstr ""
+
+msgid "Vilnius district"
+msgstr ""
+
+msgid "Visaginas"
+msgstr ""
+
+msgid "Zarasai district"
+msgstr ""
+
+msgid "Enter a postal code in the format XXXX or LV-XXXX."
+msgstr "우편번호를 XXXX 또는 LV-XXXX 형식으로 입력하세요."
+
+msgid "Enter a Latvian personal code in format XXXXXX-XXXXX."
+msgstr "라트비아 주민 코드를 XXXXXX-XXXXX 형식으로 입력하세요."
+
+msgid "Enter a valid Latvian personal code."
+msgstr "유효한 라트비아 주민 코드를 입력하세요."
+
+msgid "Daugavpils"
+msgstr ""
+
+msgid "Jelgava"
+msgstr ""
+
+msgid "Jēkabpils"
+msgstr ""
+
+msgid "Jūrmala"
+msgstr ""
+
+msgid "Liepāja"
+msgstr ""
+
+msgid "Rēzekne"
+msgstr ""
+
+msgid "Riga"
+msgstr ""
+
+msgid "Valmiera"
+msgstr ""
+
+msgid "Ventspils"
+msgstr ""
+
+msgid "Aglona municipality"
+msgstr ""
+
+msgid "Aizkraukle municipality"
+msgstr ""
+
+msgid "Aizpute municipality"
+msgstr ""
+
+msgid "Aknīste municipality"
+msgstr ""
+
+msgid "Aloja municipality"
+msgstr ""
+
+msgid "Alsunga municipality"
+msgstr ""
+
+msgid "Alūksne municipality"
+msgstr ""
+
+msgid "Amata municipality"
+msgstr ""
+
+msgid "Ape municipality"
+msgstr ""
+
+msgid "Auce municipality"
+msgstr ""
+
+msgid "Ādaži municipality"
+msgstr ""
+
+msgid "Babīte municipality"
+msgstr ""
+
+msgid "Baldone municipality"
+msgstr ""
+
+msgid "Baltinava municipality"
+msgstr ""
+
+msgid "Balvi municipality"
+msgstr ""
+
+msgid "Bauska municipality"
+msgstr ""
+
+msgid "Beverīna municipality"
+msgstr ""
+
+msgid "Brocēni municipality"
+msgstr ""
+
+msgid "Burtnieki municipality"
+msgstr ""
+
+msgid "Carnikava municipality"
+msgstr ""
+
+msgid "Cesvaine municipality"
+msgstr ""
+
+msgid "Cēsis municipality"
+msgstr ""
+
+msgid "Cibla municipality"
+msgstr ""
+
+msgid "Dagda municipality"
+msgstr ""
+
+msgid "Daugavpils municipality"
+msgstr ""
+
+msgid "Dobele municipality"
+msgstr ""
+
+msgid "Dundaga municipality"
+msgstr ""
+
+msgid "Durbe municipality"
+msgstr ""
+
+msgid "Engure municipality"
+msgstr ""
+
+msgid "Ērgļi municipality"
+msgstr ""
+
+msgid "Garkalne municipality"
+msgstr ""
+
+msgid "Grobiņa municipality"
+msgstr ""
+
+msgid "Gulbene municipality"
+msgstr ""
+
+msgid "Iecava municipality"
+msgstr ""
+
+msgid "Ikšķile municipality"
+msgstr ""
+
+msgid "Ilūkste municipality"
+msgstr ""
+
+msgid "Inčukalns municipality"
+msgstr ""
+
+msgid "Jaunjelgava municipality"
+msgstr ""
+
+msgid "Jaunpiebalga municipality"
+msgstr ""
+
+msgid "Jaunpils municipality"
+msgstr ""
+
+msgid "Jelgava municipality"
+msgstr ""
+
+msgid "Jēkabpils municipality"
+msgstr ""
+
+msgid "Kandava municipality"
+msgstr ""
+
+msgid "Kārsava municipality"
+msgstr ""
+
+msgid "Kocēni municipality"
+msgstr ""
+
+msgid "Koknese municipality"
+msgstr ""
+
+msgid "Krāslava municipality"
+msgstr ""
+
+msgid "Krimulda municipality"
+msgstr ""
+
+msgid "Krustpils municipality"
+msgstr ""
+
+msgid "Kuldīga municipality"
+msgstr ""
+
+msgid "Ķegums municipality"
+msgstr ""
+
+msgid "Ķekava municipality"
+msgstr ""
+
+msgid "Lielvārde municipality"
+msgstr ""
+
+msgid "Limbaži municipality"
+msgstr ""
+
+msgid "Līgatne municipality"
+msgstr ""
+
+msgid "Līvāni municipality"
+msgstr ""
+
+msgid "Lubāna municipality"
+msgstr ""
+
+msgid "Ludza municipality"
+msgstr ""
+
+msgid "Madona municipality"
+msgstr ""
+
+msgid "Mazsalaca municipality"
+msgstr ""
+
+msgid "Mālpils municipality"
+msgstr ""
+
+msgid "Mārupe municipality"
+msgstr ""
+
+msgid "Mērsrags municipality"
+msgstr ""
+
+msgid "Naukšēni municipality"
+msgstr ""
+
+msgid "Nereta municipality"
+msgstr ""
+
+msgid "Nīca municipality"
+msgstr ""
+
+msgid "Ogre municipality"
+msgstr ""
+
+msgid "Olaine municipality"
+msgstr ""
+
+msgid "Ozolnieki municipality"
+msgstr ""
+
+msgid "Pārgauja municipality"
+msgstr ""
+
+msgid "Pāvilosta municipality"
+msgstr ""
+
+msgid "Pļaviņas municipality"
+msgstr ""
+
+msgid "Preiļi municipality"
+msgstr ""
+
+msgid "Priekule municipality"
+msgstr ""
+
+msgid "Priekuļi municipality"
+msgstr ""
+
+msgid "Rauna municipality"
+msgstr ""
+
+msgid "Rēzekne municipality"
+msgstr ""
+
+msgid "Riebiņi municipality"
+msgstr ""
+
+msgid "Roja municipality"
+msgstr ""
+
+msgid "Ropaži municipality"
+msgstr ""
+
+msgid "Rucava municipality"
+msgstr ""
+
+msgid "Rugāji municipality"
+msgstr ""
+
+msgid "Rundāle municipality"
+msgstr ""
+
+msgid "Rūjiena municipality"
+msgstr ""
+
+msgid "Sala municipality"
+msgstr ""
+
+msgid "Salacgrīva municipality"
+msgstr ""
+
+msgid "Salaspils municipality"
+msgstr ""
+
+msgid "Saldus municipality"
+msgstr ""
+
+msgid "Saulkrasti municipality"
+msgstr ""
+
+msgid "Sēja municipality"
+msgstr ""
+
+msgid "Sigulda municipality"
+msgstr ""
+
+msgid "Skrīveri municipality"
+msgstr ""
+
+msgid "Skrunda municipality"
+msgstr ""
+
+msgid "Smiltene municipality"
+msgstr ""
+
+msgid "Stopiņi municipality"
+msgstr ""
+
+msgid "Strenči municipality"
+msgstr ""
+
+msgid "Talsi municipality"
+msgstr ""
+
+msgid "Tērvete municipality"
+msgstr ""
+
+msgid "Tukums municipality"
+msgstr ""
+
+msgid "Vaiņode municipality"
+msgstr ""
+
+msgid "Valka municipality"
+msgstr ""
+
+msgid "Varakļāni municipality"
+msgstr ""
+
+msgid "Vārkava municipality"
+msgstr ""
+
+msgid "Vecpiebalga municipality"
+msgstr ""
+
+msgid "Vecumnieki municipality"
+msgstr ""
+
+msgid "Ventspils municipality"
+msgstr ""
+
+msgid "Viesīte municipality"
+msgstr ""
+
+msgid "Viļaka municipality"
+msgstr ""
+
+msgid "Viļāni municipality"
+msgstr ""
+
+msgid "Zilupe municipality"
+msgstr ""
+
+msgid "Enter a postal code in the format XXXXX."
+msgstr "XXXXX형식의 우편 번호를 입력하세요."
+
+msgid "Postal code"
+msgstr "우편번호"
+
+msgid "Select Province"
+msgstr ""
+
+msgid "Al Hoceima"
+msgstr ""
+
+msgid "Larache"
+msgstr ""
+
+msgid "M’Diq - Fnideq"
+msgstr ""
+
+msgid "Tetouan"
+msgstr ""
+
+msgid "Chefchaouene"
+msgstr ""
+
+msgid "Tanger - Assilah"
+msgstr ""
+
+msgid "Fahs - Anjra"
+msgstr ""
+
+msgid "Ouezzane"
+msgstr ""
+
+msgid "Driouch"
+msgstr ""
+
+msgid "Nador"
+msgstr ""
+
+msgid "Berkan"
+msgstr ""
+
+msgid "Taourirt"
+msgstr ""
+
+msgid "Jerada"
+msgstr ""
+
+msgid "Guercif"
+msgstr ""
+
+msgid "Feguig"
+msgstr ""
+
+msgid "Oujda - Angad"
+msgstr ""
+
+msgid "El Hajeb"
+msgstr ""
+
+msgid "Ifrane"
+msgstr ""
+
+msgid "Boulemane"
+msgstr ""
+
+msgid "Taza"
+msgstr ""
+
+msgid "Taounate"
+msgstr ""
+
+msgid "Sefrou"
+msgstr ""
+
+msgid "Fès"
+msgstr ""
+
+msgid "Meknès"
+msgstr ""
+
+msgid "Moulay Yacoub"
+msgstr ""
+
+msgid "Khémisset"
+msgstr ""
+
+msgid "Rabat"
+msgstr ""
+
+msgid "Skhirate - Temara"
+msgstr ""
+
+msgid "Kénitra"
+msgstr ""
+
+msgid "Salé"
+msgstr ""
+
+msgid "Sidi Slimane"
+msgstr ""
+
+msgid "Sidi Kacem"
+msgstr ""
+
+msgid "Casablanca"
+msgstr ""
+
+msgid "Mohamedia"
+msgstr ""
+
+msgid "Nouaceur"
+msgstr ""
+
+msgid "Mediouna"
+msgstr ""
+
+msgid "Benslimane"
+msgstr ""
+
+msgid "Berrachid"
+msgstr ""
+
+msgid "El Jadida"
+msgstr ""
+
+msgid "Sidi Bennour"
+msgstr ""
+
+msgid "Settat"
+msgstr ""
+
+msgid "Azilal"
+msgstr ""
+
+msgid "Fquih Ben Saleh"
+msgstr ""
+
+msgid "Beni Mellal"
+msgstr ""
+
+msgid "Khouribga"
+msgstr ""
+
+msgid "Khénifra"
+msgstr ""
+
+msgid "Safi"
+msgstr ""
+
+msgid "Al Haouz"
+msgstr ""
+
+msgid "Rhamna"
+msgstr ""
+
+msgid "Essaouira"
+msgstr ""
+
+msgid "Youssoufia"
+msgstr ""
+
+msgid "Marrakech"
+msgstr ""
+
+msgid "Chichaoua"
+msgstr ""
+
+msgid "El Kelaa Des Sraghna"
+msgstr ""
+
+msgid "Agadir - Idda Outanane"
+msgstr ""
+
+msgid "Inezgane - Ait Melloul"
+msgstr ""
+
+msgid "Chtouka - Ait Baha"
+msgstr ""
+
+msgid "Tiznit"
+msgstr ""
+
+msgid "Tata"
+msgstr ""
+
+msgid "Taroudant"
+msgstr ""
+
+msgid "Errachidia"
+msgstr ""
+
+msgid "Tinghir"
+msgstr ""
+
+msgid "Zagoura"
+msgstr ""
+
+msgid "Midelt"
+msgstr ""
+
+msgid "Ouarzazate"
+msgstr ""
+
+msgid "Es -Semara"
+msgstr ""
+
+msgid "Laayoune"
+msgstr ""
+
+msgid "Boujdour"
+msgstr ""
+
+msgid "Terfaya"
+msgstr ""
+
+msgid "Aousserd"
+msgstr ""
+
+msgid "Oued Eddahab"
+msgstr ""
+
+msgid "Assa - Zag"
+msgstr ""
+
+msgid "Sidi Ifni"
+msgstr ""
+
+msgid "Tantan"
+msgstr ""
+
+msgid "Guelmim"
+msgstr ""
+
+msgid "Tanger-Tétouan-Al Hoceïma"
+msgstr ""
+
+msgid "L’Oriental"
+msgstr ""
+
+msgid "Fès-Meknès"
+msgstr ""
+
+msgid "Rabat-Salé-Kénitra"
+msgstr ""
+
+msgid "Béni Mellal-Khénifra"
+msgstr ""
+
+msgid "Casablanca-Settat"
+msgstr ""
+
+msgid "Marrakech-Safi"
+msgstr ""
+
+msgid "Drâa-Tafilalet"
+msgstr ""
+
+msgid "Souss-Massa"
+msgstr ""
+
+msgid "Guelmim-Oued Noun"
+msgstr ""
+
+msgid "Laâyoune-Sakia El Hamra"
+msgstr ""
+
+msgid "Dakhla-Oued Ed Dahab"
+msgstr ""
+
+msgid "Întreprindere Individuală"
+msgstr ""
+
+msgid "Societate pe acţiuni"
+msgstr ""
+
+msgid "Societate în nume colectiv"
+msgstr ""
+
+msgid "Societatea în comandită"
+msgstr ""
+
+msgid "Cooperativa de producţie"
+msgstr ""
+
+msgid "Cooperativa de întreprinzători"
+msgstr ""
+
+msgid "Societate cu răspundere limitată"
+msgstr ""
+
+msgid "Gospodăria ţărănească"
+msgstr ""
+
+msgid "Diplomatic Corps"
+msgstr ""
+
+msgid "Service Staff"
+msgstr ""
+
+msgid "Consular Staff"
+msgstr ""
+
+msgid "Administrative body"
+msgstr ""
+
+msgid "Ministry of Internal Affairs"
+msgstr ""
+
+msgid "Carabinieri Subdivision"
+msgstr ""
+
+msgid "Military Forces"
+msgstr ""
+
+msgid "Border Control"
+msgstr ""
+
+msgid "Parliament"
+msgstr ""
+
+msgid "Government"
+msgstr ""
+
+msgid "Chancellery"
+msgstr ""
+
+msgid "Anenii Noi"
+msgstr ""
+
+msgid "Tighina"
+msgstr ""
+
+msgid "Bălți"
+msgstr ""
+
+msgid "Briceni"
+msgstr ""
+
+msgid "Basarabeasca"
+msgstr ""
+
+msgid "Chișinău"
+msgstr ""
+
+msgid "Camenca"
+msgstr ""
+
+msgid "Ceadîr-Lunga"
+msgstr ""
+
+msgid "Cahul"
+msgstr ""
+
+msgid "Călărași"
+msgstr ""
+
+msgid "Cimișlia"
+msgstr ""
+
+msgid "Căinari"
+msgstr ""
+
+msgid "Comrat"
+msgstr ""
+
+msgid "Criuleni"
+msgstr ""
+
+msgid "Căușeni"
+msgstr ""
+
+msgid "Cantemir"
+msgstr ""
+
+msgid "Dubăsari"
+msgstr ""
+
+msgid "Dondușeni"
+msgstr ""
+
+msgid "Drochia"
+msgstr ""
+
+msgid "Edineț"
+msgstr ""
+
+msgid "Fălești"
+msgstr ""
+
+msgid "Florești"
+msgstr ""
+
+msgid "Gagauzia"
+msgstr ""
+
+msgid "Glodeni"
+msgstr ""
+
+msgid "Grigoriopol"
+msgstr ""
+
+msgid "Hîncești"
+msgstr ""
+
+msgid "Ialoveni"
+msgstr ""
+
+msgid "Leova"
+msgstr ""
+
+msgid "Nisporeni"
+msgstr ""
+
+msgid "Ocnița"
+msgstr ""
+
+msgid "Orhei"
+msgstr ""
+
+msgid "Rîbnița"
+msgstr ""
+
+msgid "Rîșcani"
+msgstr ""
+
+msgid "Rezina"
+msgstr ""
+
+msgid "Șoldănești"
+msgstr ""
+
+msgid "Sîngerei"
+msgstr ""
+
+msgid "Slobozia"
+msgstr ""
+
+msgid "Soroca"
+msgstr ""
+
+msgid "Strășeni"
+msgstr ""
+
+msgid "Ștefan Vodă"
+msgstr ""
+
+msgid "Taraclia"
+msgstr ""
+
+msgid "Telenești"
+msgstr ""
+
+msgid "Ungheni"
+msgstr ""
+
+msgid "Vulcănești"
+msgstr ""
+
+msgid "Moldavian identity number"
+msgstr ""
+
+msgid "Moldavian license plate number"
+msgstr ""
+
+msgid "Moldavian company types"
+msgstr ""
+
+msgid "Enter a valid IDNO number."
+msgstr "유효한 IDNO 번호를 입력하세요."
+
+msgid "Enter a valid license plate."
+msgstr "유효한 번호판 번호를 입력하세요."
+
+msgid ""
+"Identity card numbers must contain either 4 to 7 digits or an uppercase "
+"letter and 7 digits."
+msgstr ""
+
+msgid "This field should contain exactly 13 digits."
+msgstr ""
+
+msgid "The first 7 digits of the UMCN must represent a valid past date."
+msgstr ""
+
+msgid "The UMCN is not valid."
+msgstr ""
+
+msgid "Aerodrom"
+msgstr ""
+
+msgid "Aračinovo"
+msgstr ""
+
+msgid "Berovo"
+msgstr ""
+
+msgid "Bitola"
+msgstr ""
+
+msgid "Bogdanci"
+msgstr ""
+
+msgid "Bogovinje"
+msgstr ""
+
+msgid "Bosilovo"
+msgstr ""
+
+msgid "Brvenica"
+msgstr ""
+
+msgid "Butel"
+msgstr ""
+
+msgid "Valandovo"
+msgstr ""
+
+msgid "Vasilevo"
+msgstr ""
+
+msgid "Vevčani"
+msgstr ""
+
+msgid "Veles"
+msgstr ""
+
+msgid "Vinica"
+msgstr ""
+
+msgid "Vraneštica"
+msgstr ""
+
+msgid "Vrapčište"
+msgstr ""
+
+msgid "Gazi Baba"
+msgstr ""
+
+msgid "Gevgelija"
+msgstr ""
+
+msgid "Gostivar"
+msgstr ""
+
+msgid "Gradsko"
+msgstr ""
+
+msgid "Debar"
+msgstr ""
+
+msgid "Debarca"
+msgstr ""
+
+msgid "Delčevo"
+msgstr ""
+
+msgid "Demir Kapija"
+msgstr ""
+
+msgid "Demir Hisar"
+msgstr ""
+
+msgid "Dolneni"
+msgstr ""
+
+msgid "Drugovo"
+msgstr ""
+
+msgid "Gjorče Petrov"
+msgstr ""
+
+msgid "Želino"
+msgstr ""
+
+msgid "Zajas"
+msgstr ""
+
+msgid "Zelenikovo"
+msgstr ""
+
+msgid "Zrnovci"
+msgstr ""
+
+msgid "Ilinden"
+msgstr ""
+
+msgid "Jegunovce"
+msgstr ""
+
+msgid "Kavadarci"
+msgstr ""
+
+msgid "Karbinci"
+msgstr ""
+
+msgid "Karpoš"
+msgstr ""
+
+msgid "Kisela Voda"
+msgstr ""
+
+msgid "Kičevo"
+msgstr ""
+
+msgid "Konče"
+msgstr ""
+
+msgid "Koćani"
+msgstr ""
+
+msgid "Kratovo"
+msgstr ""
+
+msgid "Kriva Palanka"
+msgstr ""
+
+msgid "Krivogaštani"
+msgstr ""
+
+msgid "Kruševo"
+msgstr ""
+
+msgid "Kumanovo"
+msgstr ""
+
+msgid "Lipkovo"
+msgstr ""
+
+msgid "Lozovo"
+msgstr ""
+
+msgid "Mavrovo i Rostuša"
+msgstr ""
+
+msgid "Makedonska Kamenica"
+msgstr ""
+
+msgid "Makedonski Brod"
+msgstr ""
+
+msgid "Mogila"
+msgstr ""
+
+msgid "Negotino"
+msgstr ""
+
+msgid "Novaci"
+msgstr ""
+
+msgid "Novo Selo"
+msgstr ""
+
+msgid "Oslomej"
+msgstr ""
+
+msgid "Ohrid"
+msgstr ""
+
+msgid "Petrovec"
+msgstr ""
+
+msgid "Pehčevo"
+msgstr ""
+
+msgid "Plasnica"
+msgstr ""
+
+msgid "Prilep"
+msgstr ""
+
+msgid "Probištip"
+msgstr ""
+
+msgid "Radoviš"
+msgstr ""
+
+msgid "Rankovce"
+msgstr ""
+
+msgid "Resen"
+msgstr ""
+
+msgid "Rosoman"
+msgstr ""
+
+msgid "Saraj"
+msgstr ""
+
+msgid "Sveti Nikole"
+msgstr ""
+
+msgid "Sopište"
+msgstr ""
+
+msgid "Star Dojran"
+msgstr ""
+
+msgid "Staro Nagoričane"
+msgstr ""
+
+msgid "Struga"
+msgstr ""
+
+msgid "Strumica"
+msgstr ""
+
+msgid "Studeničani"
+msgstr ""
+
+msgid "Tearce"
+msgstr ""
+
+msgid "Tetovo"
+msgstr ""
+
+msgid "Centar"
+msgstr ""
+
+msgid "Centar-Župa"
+msgstr ""
+
+msgid "Čair"
+msgstr ""
+
+msgid "Čaška"
+msgstr ""
+
+msgid "Češinovo-Obleševo"
+msgstr ""
+
+msgid "Čučer-Sandevo"
+msgstr ""
+
+msgid "Štip"
+msgstr ""
+
+msgid "Šuto Orizari"
+msgstr ""
+
+msgid "Macedonian identity card number"
+msgstr ""
+
+msgid "A Macedonian municipality (2 character code)"
+msgstr "마케도니아 지역 코드 (2 글자)"
+
+msgid "Unique master citizen number (13 digits)"
+msgstr ""
+
+msgid "Enter a valid postal code in format AAA 0000."
+msgstr "유효한 우편 번호를 AAA 0000 형식으로 입력하세요."
+
+msgid "Enter a valid zip code in the format XXXXX."
+msgstr "유효한 우편번호를 XXXXX 형식으로 입력하세요."
+
+msgid "Enter a valid RFC."
+msgstr "유효한 RFC 를 입력하세요."
+
+msgid "Invalid checksum for RFC."
+msgstr ""
+
+msgid "Enter a valid CLABE."
+msgstr "유효한 CLABE를 입력하세요."
+
+msgid "Invalid checksum for CLABE."
+msgstr ""
+
+msgid "Enter a valid CURP."
+msgstr "유효한 CURR을 입력하세요."
+
+msgid "Invalid checksum for CURP."
+msgstr ""
+
+msgid "Enter a valid Social Security Number."
+msgstr "유효한 사회보장번호를 입력하세요."
+
+msgid "Invalid checksum for Social Security Number."
+msgstr ""
+
+msgid "Mexico state (three or four uppercase letters)"
+msgstr ""
+
+msgid "Mexico zip code"
+msgstr "멕시코 우편번호"
+
+msgid "Mexican RFC"
+msgstr ""
+
+msgid "Mexican CLABE"
+msgstr ""
+
+msgid "Mexican CURP"
+msgstr ""
+
+msgid "Mexican Social Security Number"
+msgstr ""
+
+msgid "Aguascalientes"
+msgstr "아과스칼리엔테스 주"
+
+msgid "Baja California"
+msgstr "바하칼리포르니아 주"
+
+msgid "Baja California Sur"
+msgstr "바하칼리포르니아수르 주"
+
+msgid "Campeche"
+msgstr "캄페체 주"
+
+msgid "Ciudad de México"
+msgstr ""
+
+msgid "Chihuahua"
+msgstr "치와와 주"
+
+msgid "Chiapas"
+msgstr "치아파스 주"
+
+msgid "Coahuila"
+msgstr "코아우일라 주"
+
+msgid "Colima"
+msgstr "콜리마 주"
+
+msgid "Durango"
+msgstr "두랑고 주"
+
+msgid "Guerrero"
+msgstr "게레로 주"
+
+msgid "Guanajuato"
+msgstr "과나후아토 주"
+
+msgid "Hidalgo"
+msgstr "이달고 주"
+
+msgid "Jalisco"
+msgstr "할리스코 주"
+
+msgid "Estado de México"
+msgstr "멕시코 주"
+
+msgid "Michoacán"
+msgstr "미초아칸 주"
+
+msgid "Morelos"
+msgstr "모렐로스 주"
+
+msgid "Nayarit"
+msgstr "나야리트 주"
+
+msgid "Nuevo León"
+msgstr "누에보레온 주"
+
+msgid "Oaxaca"
+msgstr "오아하카 주"
+
+msgid "Puebla"
+msgstr "푸에블라 주"
+
+msgid "Querétaro"
+msgstr "케레타로 주"
+
+msgid "Quintana Roo"
+msgstr "킨타나로오 주"
+
+msgid "Sinaloa"
+msgstr "시날로아 주"
+
+msgid "San Luis Potosí"
+msgstr "산루이스포토시 주"
+
+msgid "Sonora"
+msgstr "소노라 주"
+
+msgid "Tabasco"
+msgstr "타바스코 주"
+
+msgid "Tamaulipas"
+msgstr "타마울리파스 주"
+
+msgid "Tlaxcala"
+msgstr "틀락스칼라 주"
+
+msgid "Veracruz"
+msgstr "베라크루스 주"
+
+msgid "Yucatán"
+msgstr "유카탄 주"
+
+msgid "Zacatecas"
+msgstr "사카테카스 주"
+
+msgid "Invalid MyKad number."
+msgstr ""
+
+msgid "Dutch zipcode"
+msgstr "네델란드 우편번호"
+
+msgid "Dutch province"
+msgstr ""
+
+msgid "Dutch social security number (BSN)"
+msgstr ""
+
+msgid "Dutch license plate"
+msgstr ""
+
+msgid "Drenthe"
+msgstr "드렌터 주"
+
+msgid "Flevoland"
+msgstr "플레볼란트 주"
+
+msgid "Fryslân"
+msgstr ""
+
+msgid "Gelderland"
+msgstr "힐데를란트 주"
+
+msgid "Groningen"
+msgstr "흐로닝언 주"
+
+msgid "Noord-Brabant"
+msgstr "노르트브라반트 주"
+
+msgid "Noord-Holland"
+msgstr "노르트홀란트 주"
+
+msgid "Overijssel"
+msgstr "오버레이셜 주"
+
+msgid "Utrecht"
+msgstr "위트레흐트 주"
+
+msgid "Zeeland"
+msgstr "제일란트 주"
+
+msgid "Zuid-Holland"
+msgstr "자위트홀란트 주"
+
+msgid "Enter a valid BSN."
+msgstr "유효한 BSN을 입력하세요."
+
+msgid "Enter a valid license plate"
+msgstr "유효한 자동차 번호판 번호를 입력하세요."
+
+msgid "Enter a valid Norwegian social security number."
+msgstr "올바른 노르웨이 사회보장번호를 입력해 주세요."
+
+msgid "Enter a valid Norwegian bank account number."
+msgstr "유효한 노르웨의 은행 계좌 번호를 입력하세요."
+
+msgid "Invalid control digit. Enter a valid Norwegian bank account number."
+msgstr "번호가 잘못되었습니다. 유효한 노르웨이 은행 계좌번호를 입력하세요."
+
+msgid "Invalid length. Norwegian bank account numbers are 11 digits long."
+msgstr ""
+
+msgid "Enter a postal code in format XXXXX"
+msgstr ""
+
+msgid "Bhaktapur"
+msgstr ""
+
+msgid "Dhading"
+msgstr ""
+
+msgid "Kathmandu"
+msgstr ""
+
+msgid "Kavrepalanchok"
+msgstr ""
+
+msgid "Lalitpur"
+msgstr ""
+
+msgid "Nuwakot"
+msgstr ""
+
+msgid "Rasuwa"
+msgstr ""
+
+msgid "Sindhupalchok"
+msgstr ""
+
+msgid "Banke"
+msgstr ""
+
+msgid "Bardiya"
+msgstr ""
+
+msgid "Dailekh"
+msgstr ""
+
+msgid "Jajarkot"
+msgstr ""
+
+msgid "Surkhet"
+msgstr ""
+
+msgid "Baglung"
+msgstr ""
+
+msgid "Mustang"
+msgstr ""
+
+msgid "Myagdi"
+msgstr ""
+
+msgid "Parbat"
+msgstr ""
+
+msgid "Gorkha"
+msgstr ""
+
+msgid "Kaski"
+msgstr ""
+
+msgid "Lamjung"
+msgstr ""
+
+msgid "Manang"
+msgstr ""
+
+msgid "Syangja"
+msgstr ""
+
+msgid "Tanahu"
+msgstr ""
+
+msgid "Dhanusa"
+msgstr ""
+
+msgid "Dholkha"
+msgstr ""
+
+msgid "Mahottari"
+msgstr ""
+
+msgid "Ramechhap"
+msgstr ""
+
+msgid "Sarlahi"
+msgstr ""
+
+msgid "Sindhuli"
+msgstr ""
+
+msgid "Dolpa"
+msgstr ""
+
+msgid "Humla"
+msgstr ""
+
+msgid "Jumla"
+msgstr ""
+
+msgid "Kalikot"
+msgstr ""
+
+msgid "Mugu"
+msgstr ""
+
+msgid "Bhojpur"
+msgstr ""
+
+msgid "Dhankuta"
+msgstr ""
+
+msgid "Morang"
+msgstr ""
+
+msgid "Sankhuwasabha"
+msgstr ""
+
+msgid "Sunsari"
+msgstr ""
+
+msgid "Terhathum"
+msgstr ""
+
+msgid "Arghakhanchi"
+msgstr ""
+
+msgid "Gulmi"
+msgstr ""
+
+msgid "Kapilvastu"
+msgstr ""
+
+msgid "Nawalparasi"
+msgstr ""
+
+msgid "Palpa"
+msgstr ""
+
+msgid "Rupandehi"
+msgstr ""
+
+msgid "Baitadi"
+msgstr ""
+
+msgid "Dadeldhura"
+msgstr ""
+
+msgid "Darchula"
+msgstr ""
+
+msgid "Kanchanpur"
+msgstr ""
+
+msgid "Jhapa"
+msgstr ""
+
+msgid "Panchthar"
+msgstr ""
+
+msgid "Taplejung"
+msgstr ""
+
+msgid "Bara"
+msgstr ""
+
+msgid "Chitwan"
+msgstr ""
+
+msgid "Makwanpur"
+msgstr ""
+
+msgid "Parsa"
+msgstr ""
+
+msgid "Rautahat"
+msgstr ""
+
+msgid "Dang Deukhuri"
+msgstr ""
+
+msgid "Pyuthan"
+msgstr ""
+
+msgid "Rolpa"
+msgstr ""
+
+msgid "Rukum"
+msgstr ""
+
+msgid "Salyan"
+msgstr ""
+
+msgid "Khotang"
+msgstr ""
+
+msgid "Okhaldhunga"
+msgstr ""
+
+msgid "Saptari"
+msgstr ""
+
+msgid "Siraha"
+msgstr ""
+
+msgid "Solukhumbu"
+msgstr ""
+
+msgid "Udayapur"
+msgstr ""
+
+msgid "Achham"
+msgstr ""
+
+msgid "Bajhang"
+msgstr ""
+
+msgid "Bajura"
+msgstr ""
+
+msgid "Doti"
+msgstr ""
+
+msgid "Kailali"
+msgstr ""
+
+msgid "Bagmati"
+msgstr ""
+
+msgid "Gandaki"
+msgstr ""
+
+msgid "Karnali"
+msgstr ""
+
+msgid "Lumbini"
+msgstr ""
+
+msgid "Province 1"
+msgstr ""
+
+msgid "Province 2"
+msgstr ""
+
+msgid "Sudurpaschim"
+msgstr ""
+
+msgid "Bheri"
+msgstr ""
+
+msgid "Dhawalagiri"
+msgstr ""
+
+msgid "Janakpur"
+msgstr ""
+
+msgid "Koshi"
+msgstr ""
+
+msgid "Mahakali"
+msgstr ""
+
+msgid "Mechi"
+msgstr ""
+
+msgid "Narayani"
+msgstr ""
+
+msgid "Rapti"
+msgstr ""
+
+msgid "Sagarmatha"
+msgstr ""
+
+msgid "Seti"
+msgstr ""
+
+msgid "Invalid post code."
+msgstr "잘못된 우편번호"
+
+msgid "Invalid bank account number."
+msgstr ""
+
+msgid "Far North District"
+msgstr ""
+
+msgid "Whangarei District"
+msgstr ""
+
+msgid "Kaipara District"
+msgstr ""
+
+msgid "Auckland"
+msgstr ""
+
+msgid "Thames-Coromandel District"
+msgstr ""
+
+msgid "Hauraki District"
+msgstr ""
+
+msgid "Waikato District"
+msgstr ""
+
+msgid "Matamata-Piako District"
+msgstr ""
+
+msgid "Hamilton"
+msgstr ""
+
+msgid "Waipa District"
+msgstr ""
+
+msgid "South Waikato District"
+msgstr ""
+
+msgid "Otorohanga District"
+msgstr ""
+
+msgid "Waitomo District"
+msgstr ""
+
+msgid "Taupo District"
+msgstr ""
+
+msgid "Western Bay of Plenty District"
+msgstr ""
+
+msgid "Tauranga"
+msgstr ""
+
+msgid "Opotiki District"
+msgstr ""
+
+msgid "Whakatane District"
+msgstr ""
+
+msgid "Rotorua District"
+msgstr ""
+
+msgid "Kawerau District"
+msgstr ""
+
+msgid "Gisborne District"
+msgstr ""
+
+msgid "Wairoa District"
+msgstr ""
+
+msgid "Hastings District"
+msgstr ""
+
+msgid "Napier"
+msgstr ""
+
+msgid "Central Hawke's Bay District"
+msgstr ""
+
+msgid "New Plymouth District"
+msgstr ""
+
+msgid "Stratford District"
+msgstr ""
+
+msgid "South Taranaki District"
+msgstr ""
+
+msgid "Ruapehu District"
+msgstr ""
+
+msgid "Rangitikei District"
+msgstr ""
+
+msgid "Wanganui District"
+msgstr ""
+
+msgid "Manawatu District"
+msgstr ""
+
+msgid "Palmerston North"
+msgstr ""
+
+msgid "Tararua District"
+msgstr ""
+
+msgid "Horowhenua District"
+msgstr ""
+
+msgid "Masterton District"
+msgstr ""
+
+msgid "Kapiti Coast District"
+msgstr ""
+
+msgid "Carterton District"
+msgstr ""
+
+msgid "South Wairarapa District"
+msgstr ""
+
+msgid "Upper Hutt"
+msgstr ""
+
+msgid "Porirua"
+msgstr ""
+
+msgid "Hutt"
+msgstr ""
+
+msgid "Wellington"
+msgstr ""
+
+msgid "Tasman District"
+msgstr ""
+
+msgid "Nelson"
+msgstr ""
+
+msgid "Marlborough District"
+msgstr ""
+
+msgid "Buller District"
+msgstr ""
+
+msgid "Grey District"
+msgstr ""
+
+msgid "Westland District"
+msgstr ""
+
+msgid "Kaikoura District"
+msgstr ""
+
+msgid "Hurunui District"
+msgstr ""
+
+msgid "Selwyn District"
+msgstr ""
+
+msgid "Waimakariri District"
+msgstr ""
+
+msgid "Christchurch"
+msgstr ""
+
+msgid "Ashburton District"
+msgstr ""
+
+msgid "Mackenzie District"
+msgstr ""
+
+msgid "Timaru District"
+msgstr ""
+
+msgid "Waimate District"
+msgstr ""
+
+msgid "Waitaki District"
+msgstr ""
+
+msgid "Queenstown-Lakes District"
+msgstr ""
+
+msgid "Central Otago District"
+msgstr ""
+
+msgid "Dunedin"
+msgstr ""
+
+msgid "Clutha District"
+msgstr ""
+
+msgid "Southland District"
+msgstr ""
+
+msgid "Gore District"
+msgstr ""
+
+msgid "Invercargill"
+msgstr ""
+
+msgid "Taranaki"
+msgstr ""
+
+msgid "Hawke's Bay"
+msgstr ""
+
+msgid "Marlborough"
+msgstr ""
+
+msgid "Canterbury"
+msgstr ""
+
+msgid "South Canterbury"
+msgstr ""
+
+msgid "Westland"
+msgstr ""
+
+msgid "Otago"
+msgstr ""
+
+msgid "Southland"
+msgstr ""
+
+msgid "Chatham Islands"
+msgstr ""
+
+msgid "Northland"
+msgstr ""
+
+msgid "Waikato"
+msgstr ""
+
+msgid "Bay of Plenty"
+msgstr ""
+
+msgid "Gisborne"
+msgstr ""
+
+msgid "Manawatu-Wanganui"
+msgstr ""
+
+msgid "Tasman"
+msgstr ""
+
+msgid "West Coast"
+msgstr ""
+
+msgid "This field requires 8 digits."
+msgstr "이 항목은 8자리 숫자로 필요합니다."
+
+msgid "This field requires 11 digits."
+msgstr "이 항목은 11자리 숫자가 필요합니다."
+
+msgid "Enter a 5 digit postcode."
+msgstr "5자리의 우편번호를 입력하세요."
+
+msgid "Pakistani State"
+msgstr ""
+
+msgid "Pakistani Postcode"
+msgstr "파키스탄 우편번호"
+
+msgid "Azad Jammu & Kashmir"
+msgstr ""
+
+msgid "Balochistan"
+msgstr ""
+
+msgid "Federally Administered Tribal Areas"
+msgstr ""
+
+msgid "Gilgit-Baltistan"
+msgstr ""
+
+msgid "Islamabad"
+msgstr ""
+
+msgid "Khyber Pakhtunkhwa"
+msgstr ""
+
+msgid "Punjab"
+msgstr ""
+
+msgid "Sindh"
+msgstr ""
+
+msgid "National Identification Number consists of 11 digits."
+msgstr "주민번호는 11자리 숫자로 구성됩니다."
+
+msgid "Wrong checksum for the National Identification Number."
+msgstr "주민번호 체크섬이 올바르지 않습니다."
+
+msgid "The National Identification Number contains an invalid birth date."
+msgstr ""
+
+msgid "National ID Card Number consists of 3 letters and 6 digits."
+msgstr ""
+
+msgid "Wrong checksum for the National ID Card Number."
+msgstr ""
+
+msgid ""
+"Enter a tax number field (NIP) in the format XXX-XXX-XX-XX, XXX-XX-XX-XXX or "
+"XXXXXXXXXX."
+msgstr ""
+"납세자 번호(NIP)를 XXX-XXX-XX-XX, XXX-XX-XX-XXX 또는 XXXXXXXXXX 형식으로 입력"
+"하세요."
+
+msgid "Wrong checksum for the Tax Number (NIP)."
+msgstr "Tax 번호(NIP)의 체크섬이 올바르지 않습니다."
+
+msgid "National Business Register Number (REGON) consists of 9 or 14 digits."
+msgstr "사업자 등록번호(REGON)은 9자리 또는 14자리의 숫자로 구성됩니다."
+
+msgid "Wrong checksum for the National Business Register Number (REGON)."
+msgstr "사업자 등록번호(REGON)의 체크섬이 올바르지 않습니다."
+
+msgid "Enter a postal code in the format XX-XXX."
+msgstr "우편번호를 입력하세요. (XX-XXX 형식)"
+
+msgid "Lower Silesian"
+msgstr ""
+
+msgid "Kuyavian-Pomeranian"
+msgstr ""
+
+msgid "Lublin"
+msgstr ""
+
+msgid "Lubusz"
+msgstr ""
+
+msgid "Lodz"
+msgstr ""
+
+msgid "Lesser Poland"
+msgstr ""
+
+msgid "Masovian"
+msgstr ""
+
+msgid "Opole"
+msgstr ""
+
+msgid "Subcarpathian"
+msgstr ""
+
+msgid "Podlasie"
+msgstr ""
+
+msgid "Pomeranian"
+msgstr ""
+
+msgid "Silesian"
+msgstr ""
+
+msgid "Swietokrzyskie"
+msgstr ""
+
+msgid "Warmian-Masurian"
+msgstr ""
+
+msgid "Greater Poland"
+msgstr ""
+
+msgid "West Pomeranian"
+msgstr ""
+
+msgid "The specified value is not a valid Citizen Card number."
+msgstr ""
+
+msgid ""
+"Citizen Card numbers have the format XXXXXXXXXYYX or XXXXXXXX-XYYX (where X "
+"is a digit and Y is an alphanumeric character)."
+msgstr ""
+
+msgid "The specified number is not a valid Social Security number."
+msgstr ""
+
+msgid ""
+"Social Security numbers must be in the format XYYYYYYYYYY (where X is either "
+"1 or 2 and Y is any other digit)."
+msgstr ""
+
+msgid ""
+"Zip codes must be in the format XYYY-YYY (where X is a digit between 1 and 9 "
+"and Y is any other digit)."
+msgstr ""
+"우편번호는 반드시 XYYY-YYY (X는 0이 아닌 숫자, Y는 모든 숫자) 형식이어야 합니"
+"다."
+
+msgid "Aveiro"
+msgstr ""
+
+msgid "Beja"
+msgstr ""
+
+msgid "Braga"
+msgstr ""
+
+msgid "Bragança"
+msgstr ""
+
+msgid "Castelo Branco"
+msgstr ""
+
+msgid "Coimbra"
+msgstr ""
+
+msgid "Évora"
+msgstr ""
+
+msgid "Faro"
+msgstr ""
+
+msgid "Guarda"
+msgstr ""
+
+msgid "Leiria"
+msgstr ""
+
+msgid "Lisboa"
+msgstr ""
+
+msgid "Portalegre"
+msgstr ""
+
+msgid "Porto"
+msgstr ""
+
+msgid "Santarém"
+msgstr ""
+
+msgid "Setúbal"
+msgstr ""
+
+msgid "Viana do Castelo"
+msgstr ""
+
+msgid "Vila Real"
+msgstr ""
+
+msgid "Viseu"
+msgstr ""
+
+msgid "Região Autónoma da Madeira"
+msgstr ""
+
+msgid "Região Autónoma dos Açores"
+msgstr ""
+
+msgid "Enter a valid CIF."
+msgstr "올바른 CIF를 입력하세요."
+
+msgid "Enter a valid CNP."
+msgstr "올바른 CNP를 입력하세요."
+
+msgid "Enter a valid postal code in the format XXXXXX"
+msgstr "올바른 우편번호를 입력하세요. (XXXXXX 형식)"
+
+msgid "Enter a postal code in the format XXXXXX."
+msgstr "우편 번호를 XXXXXX 형식으로 입력하세요."
+
+msgid "Enter a passport number in the format XXXX XXXXXX."
+msgstr "여권번호를 XXXX XXXXXX 형식으로 입력하세요."
+
+msgid "Enter a passport number in the format XX XXXXXXX."
+msgstr "여권번호를 XX XXXXXXX 형식으로 입력하세요."
+
+msgid "Central Federal County"
+msgstr ""
+
+msgid "South Federal County"
+msgstr ""
+
+msgid "North-West Federal County"
+msgstr ""
+
+msgid "Far-East Federal County"
+msgstr ""
+
+msgid "Siberian Federal County"
+msgstr ""
+
+msgid "Ural Federal County"
+msgstr ""
+
+msgid "Privolzhsky Federal County"
+msgstr ""
+
+msgid "North-Caucasian Federal County"
+msgstr ""
+
+msgid "Moskva"
+msgstr ""
+
+msgid "Saint-Peterburg"
+msgstr ""
+
+msgid "Moskovskaya oblast'"
+msgstr ""
+
+msgid "Adygeya, Respublika"
+msgstr ""
+
+msgid "Bashkortostan, Respublika"
+msgstr ""
+
+msgid "Buryatia, Respublika"
+msgstr ""
+
+msgid "Altay, Respublika"
+msgstr ""
+
+msgid "Dagestan, Respublika"
+msgstr ""
+
+msgid "Ingushskaya Respublika"
+msgstr ""
+
+msgid "Kabardino-Balkarskaya Respublika"
+msgstr ""
+
+msgid "Kalmykia, Respublika"
+msgstr ""
+
+msgid "Karachaevo-Cherkesskaya Respublika"
+msgstr ""
+
+msgid "Karelia, Respublika"
+msgstr ""
+
+msgid "Komi, Respublika"
+msgstr ""
+
+msgid "Mariy Ehl, Respublika"
+msgstr ""
+
+msgid "Mordovia, Respublika"
+msgstr ""
+
+msgid "Sakha, Respublika (Yakutiya)"
+msgstr ""
+
+msgid "Severnaya Osetia, Respublika (Alania)"
+msgstr ""
+
+msgid "Tatarstan, Respublika"
+msgstr ""
+
+msgid "Tyva, Respublika (Tuva)"
+msgstr ""
+
+msgid "Udmurtskaya Respublika"
+msgstr ""
+
+msgid "Khakassiya, Respublika"
+msgstr ""
+
+msgid "Chechenskaya Respublika"
+msgstr ""
+
+msgid "Chuvashskaya Respublika"
+msgstr ""
+
+msgid "Altayskiy Kray"
+msgstr ""
+
+msgid "Zabaykalskiy Kray"
+msgstr ""
+
+msgid "Kamchatskiy Kray"
+msgstr ""
+
+msgid "Krasnodarskiy Kray"
+msgstr ""
+
+msgid "Krasnoyarskiy Kray"
+msgstr ""
+
+msgid "Permskiy Kray"
+msgstr ""
+
+msgid "Primorskiy Kray"
+msgstr ""
+
+msgid "Stavropol'siyy Kray"
+msgstr ""
+
+msgid "Khabarovskiy Kray"
+msgstr ""
+
+msgid "Amurskaya oblast'"
+msgstr ""
+
+msgid "Arkhangel'skaya oblast'"
+msgstr ""
+
+msgid "Astrakhanskaya oblast'"
+msgstr ""
+
+msgid "Belgorodskaya oblast'"
+msgstr ""
+
+msgid "Bryanskaya oblast'"
+msgstr ""
+
+msgid "Vladimirskaya oblast'"
+msgstr ""
+
+msgid "Volgogradskaya oblast'"
+msgstr ""
+
+msgid "Vologodskaya oblast'"
+msgstr ""
+
+msgid "Voronezhskaya oblast'"
+msgstr ""
+
+msgid "Ivanovskaya oblast'"
+msgstr ""
+
+msgid "Irkutskaya oblast'"
+msgstr ""
+
+msgid "Kaliningradskaya oblast'"
+msgstr ""
+
+msgid "Kaluzhskaya oblast'"
+msgstr ""
+
+msgid "Kemerovskaya oblast'"
+msgstr ""
+
+msgid "Kirovskaya oblast'"
+msgstr ""
+
+msgid "Kostromskaya oblast'"
+msgstr ""
+
+msgid "Kurganskaya oblast'"
+msgstr ""
+
+msgid "Kurskaya oblast'"
+msgstr ""
+
+msgid "Leningradskaya oblast'"
+msgstr ""
+
+msgid "Lipeckaya oblast'"
+msgstr ""
+
+msgid "Magadanskaya oblast'"
+msgstr ""
+
+msgid "Murmanskaya oblast'"
+msgstr ""
+
+msgid "Nizhegorodskaja oblast'"
+msgstr ""
+
+msgid "Novgorodskaya oblast'"
+msgstr ""
+
+msgid "Novosibirskaya oblast'"
+msgstr ""
+
+msgid "Omskaya oblast'"
+msgstr ""
+
+msgid "Orenburgskaya oblast'"
+msgstr ""
+
+msgid "Orlovskaya oblast'"
+msgstr ""
+
+msgid "Penzenskaya oblast'"
+msgstr ""
+
+msgid "Pskovskaya oblast'"
+msgstr ""
+
+msgid "Rostovskaya oblast'"
+msgstr ""
+
+msgid "Rjazanskaya oblast'"
+msgstr ""
+
+msgid "Samarskaya oblast'"
+msgstr ""
+
+msgid "Saratovskaya oblast'"
+msgstr ""
+
+msgid "Sakhalinskaya oblast'"
+msgstr ""
+
+msgid "Sverdlovskaya oblast'"
+msgstr ""
+
+msgid "Smolenskaya oblast'"
+msgstr ""
+
+msgid "Tambovskaya oblast'"
+msgstr ""
+
+msgid "Tverskaya oblast'"
+msgstr ""
+
+msgid "Tomskaya oblast'"
+msgstr ""
+
+msgid "Tul'skaya oblast'"
+msgstr ""
+
+msgid "Tyumenskaya oblast'"
+msgstr ""
+
+msgid "Ul'ianovskaya oblast'"
+msgstr ""
+
+msgid "Chelyabinskaya oblast'"
+msgstr ""
+
+msgid "Yaroslavskaya oblast'"
+msgstr ""
+
+msgid "Evreyskaya avtonomnaja oblast'"
+msgstr ""
+
+msgid "Neneckiy autonomnyy okrug"
+msgstr ""
+
+msgid "Khanty-Mansiyskiy avtonomnyy okrug - Yugra"
+msgstr ""
+
+msgid "Chukotskiy avtonomnyy okrug"
+msgstr ""
+
+msgid "Yamalo-Neneckiy avtonomnyy okrug"
+msgstr ""
+
+msgid "Enter a valid Swedish organisation number."
+msgstr "올바른 스웨덴 기관 번호를 입력하세요."
+
+msgid "Enter a valid Swedish personal identity number."
+msgstr "올바른 스웨덴 주민번호를 입력하세요."
+
+msgid "Co-ordination numbers are not allowed."
+msgstr "조율 번호는 사용할 수 없습니다."
+
+msgid "Enter a Swedish postal code in the format XXXXX."
+msgstr "올바른 스웨덴 우편번호를 입력하세요. (XXXXX 형식)"
+
+msgid "Stockholm"
+msgstr "스톡홀름"
+
+msgid "Västerbotten"
+msgstr ""
+
+msgid "Norrbotten"
+msgstr "노르보텐"
+
+msgid "Uppsala"
+msgstr "웁살라"
+
+msgid "Södermanland"
+msgstr ""
+
+msgid "Östergötland"
+msgstr ""
+
+msgid "Jönköping"
+msgstr ""
+
+msgid "Kronoberg"
+msgstr ""
+
+msgid "Kalmar"
+msgstr "칼마르"
+
+msgid "Gotland"
+msgstr "고틀랜드"
+
+msgid "Blekinge"
+msgstr "블레킹예"
+
+msgid "Skåne"
+msgstr "스코네"
+
+msgid "Halland"
+msgstr ""
+
+msgid "Västra Götaland"
+msgstr "베스 Götaland"
+
+msgid "Värmland"
+msgstr ""
+
+msgid "Örebro"
+msgstr "외레브로"
+
+msgid "Västmanland"
+msgstr ""
+
+msgid "Dalarna"
+msgstr "달라르나"
+
+msgid "Gävleborg"
+msgstr ""
+
+msgid "Västernorrland"
+msgstr ""
+
+msgid "Jämtland"
+msgstr ""
+
+msgid "Enter a 6-digit postal code."
+msgstr "6자리의 우편번호를 입력하세요."
+
+msgid "Invalid NRIC/FIN."
+msgstr ""
+
+msgid "The first 7 digits of the EMSO must represent a valid past date."
+msgstr ""
+
+msgid "The EMSO is not valid."
+msgstr ""
+
+msgid "Enter a valid tax number in form SIXXXXXXXX"
+msgstr "유효한 납세 번호를 SIXXXXXXXX 형식으로 입력하세요."
+
+msgid "Banska Bystrica"
+msgstr ""
+
+msgid "Banska Stiavnica"
+msgstr ""
+
+msgid "Bardejov"
+msgstr ""
+
+msgid "Banovce nad Bebravou"
+msgstr ""
+
+msgid "Brezno"
+msgstr ""
+
+msgid "Bratislava I"
+msgstr ""
+
+msgid "Bratislava II"
+msgstr ""
+
+msgid "Bratislava III"
+msgstr ""
+
+msgid "Bratislava IV"
+msgstr ""
+
+msgid "Bratislava V"
+msgstr ""
+
+msgid "Bytca"
+msgstr ""
+
+msgid "Cadca"
+msgstr ""
+
+msgid "Detva"
+msgstr ""
+
+msgid "Dolny Kubin"
+msgstr ""
+
+msgid "Dunajska Streda"
+msgstr ""
+
+msgid "Galanta"
+msgstr ""
+
+msgid "Gelnica"
+msgstr ""
+
+msgid "Hlohovec"
+msgstr ""
+
+msgid "Humenne"
+msgstr ""
+
+msgid "Ilava"
+msgstr ""
+
+msgid "Kezmarok"
+msgstr ""
+
+msgid "Komarno"
+msgstr ""
+
+msgid "Kosice I"
+msgstr ""
+
+msgid "Kosice II"
+msgstr ""
+
+msgid "Kosice III"
+msgstr ""
+
+msgid "Kosice IV"
+msgstr ""
+
+msgid "Kosice - okolie"
+msgstr ""
+
+msgid "Krupina"
+msgstr ""
+
+msgid "Kysucke Nove Mesto"
+msgstr ""
+
+msgid "Levice"
+msgstr ""
+
+msgid "Levoca"
+msgstr ""
+
+msgid "Liptovsky Mikulas"
+msgstr ""
+
+msgid "Lucenec"
+msgstr ""
+
+msgid "Malacky"
+msgstr ""
+
+msgid "Martin"
+msgstr ""
+
+msgid "Medzilaborce"
+msgstr ""
+
+msgid "Michalovce"
+msgstr ""
+
+msgid "Myjava"
+msgstr ""
+
+msgid "Namestovo"
+msgstr ""
+
+msgid "Nitra"
+msgstr ""
+
+msgid "Nove Mesto nad Vahom"
+msgstr ""
+
+msgid "Nove Zamky"
+msgstr ""
+
+msgid "Partizanske"
+msgstr ""
+
+msgid "Pezinok"
+msgstr ""
+
+msgid "Piestany"
+msgstr ""
+
+msgid "Poltar"
+msgstr ""
+
+msgid "Poprad"
+msgstr ""
+
+msgid "Povazska Bystrica"
+msgstr ""
+
+msgid "Presov"
+msgstr ""
+
+msgid "Prievidza"
+msgstr ""
+
+msgid "Puchov"
+msgstr ""
+
+msgid "Revuca"
+msgstr ""
+
+msgid "Rimavska Sobota"
+msgstr ""
+
+msgid "Roznava"
+msgstr ""
+
+msgid "Ruzomberok"
+msgstr ""
+
+msgid "Sabinov"
+msgstr ""
+
+msgid "Senec"
+msgstr ""
+
+msgid "Senica"
+msgstr ""
+
+msgid "Skalica"
+msgstr ""
+
+msgid "Snina"
+msgstr "Shina"
+
+msgid "Sobrance"
+msgstr ""
+
+msgid "Spisska Nova Ves"
+msgstr ""
+
+msgid "Stara Lubovna"
+msgstr ""
+
+msgid "Stropkov"
+msgstr ""
+
+msgid "Svidnik"
+msgstr ""
+
+msgid "Sala"
+msgstr ""
+
+msgid "Topolcany"
+msgstr ""
+
+msgid "Trebisov"
+msgstr ""
+
+msgid "Trencin"
+msgstr ""
+
+msgid "Trnava"
+msgstr ""
+
+msgid "Turcianske Teplice"
+msgstr ""
+
+msgid "Tvrdosin"
+msgstr ""
+
+msgid "Velky Krtis"
+msgstr ""
+
+msgid "Vranov nad Toplou"
+msgstr ""
+
+msgid "Zlate Moravce"
+msgstr ""
+
+msgid "Zvolen"
+msgstr ""
+
+msgid "Zarnovica"
+msgstr ""
+
+msgid "Ziar nad Hronom"
+msgstr ""
+
+msgid "Zilina"
+msgstr ""
+
+msgid "Banska Bystrica region"
+msgstr ""
+
+msgid "Bratislava region"
+msgstr ""
+
+msgid "Kosice region"
+msgstr ""
+
+msgid "Nitra region"
+msgstr ""
+
+msgid "Presov region"
+msgstr ""
+
+msgid "Trencin region"
+msgstr ""
+
+msgid "Trnava region"
+msgstr ""
+
+msgid "Zilina region"
+msgstr ""
+
+msgid "Ariana"
+msgstr ""
+
+msgid "Ben Arous"
+msgstr ""
+
+msgid "Bizert"
+msgstr ""
+
+msgid "Gabes"
+msgstr ""
+
+msgid "Gafsa"
+msgstr ""
+
+msgid "Jendouba"
+msgstr ""
+
+msgid "Kairouan"
+msgstr ""
+
+msgid "Kasserine"
+msgstr ""
+
+msgid "Kebili"
+msgstr ""
+
+msgid "Kef"
+msgstr ""
+
+msgid "Mahdia"
+msgstr ""
+
+msgid "Manouba"
+msgstr ""
+
+msgid "Medenine"
+msgstr ""
+
+msgid "Monastir"
+msgstr ""
+
+msgid "Nabeul"
+msgstr ""
+
+msgid "Sfax"
+msgstr ""
+
+msgid "Sidi Bouzid"
+msgstr ""
+
+msgid "Siliana"
+msgstr ""
+
+msgid "Sousse"
+msgstr ""
+
+msgid "Tataouine"
+msgstr ""
+
+msgid "Tozeur"
+msgstr ""
+
+msgid "Tunis"
+msgstr ""
+
+msgid "Zaghouan"
+msgstr ""
+
+msgid "Enter a valid Turkish Identification number."
+msgstr "올바른 터키계 ID 번호를 입력하세요."
+
+msgid "Turkish Identification number must be 11 digits."
+msgstr "터키계 식별 번호는 11 자리 숫자입니다."
+
+msgid "Enter a valid postal code."
+msgstr "유효한 우편번호를 입력하세요."
+
+msgid "Ukrainian region"
+msgstr ""
+
+msgid "Ukrainian VAT number"
+msgstr ""
+
+msgid "Ukrainian postal code"
+msgstr "우크라이나 우편번호"
+
+msgid "Cherkasy Oblast"
+msgstr ""
+
+msgid "Chernihiv Oblast"
+msgstr ""
+
+msgid "Chernivtsi Oblast"
+msgstr ""
+
+msgid "Dnipropetrovsk Oblast"
+msgstr ""
+
+msgid "Donetsk Oblast"
+msgstr ""
+
+msgid "Ivano-Frankivsk Oblast"
+msgstr ""
+
+msgid "Kharkiv Oblast"
+msgstr ""
+
+msgid "Kherson Oblast"
+msgstr ""
+
+msgid "Khmelnytskyi Oblast"
+msgstr ""
+
+msgid "Kirovohrad Oblast"
+msgstr ""
+
+msgid "Kiev Oblast"
+msgstr ""
+
+msgid "Luhansk Oblast"
+msgstr ""
+
+msgid "Lviv Oblast"
+msgstr ""
+
+msgid "Mykolaiv Oblast"
+msgstr ""
+
+msgid "Odessa Oblast"
+msgstr ""
+
+msgid "Poltava Oblast"
+msgstr ""
+
+msgid "Rivne Oblast"
+msgstr ""
+
+msgid "Sumy Oblast"
+msgstr ""
+
+msgid "Ternopil Oblast"
+msgstr ""
+
+msgid "Vinnytsia Oblast"
+msgstr ""
+
+msgid "Volyn Oblast"
+msgstr ""
+
+msgid "Zakarpattia Oblast"
+msgstr ""
+
+msgid "Zaporizhia Oblast"
+msgstr ""
+
+msgid "Zhytomyr Oblast"
+msgstr ""
+
+msgid "Autonomous Republic of Crimea"
+msgstr ""
+
+msgid "Kiev"
+msgstr ""
+
+msgid "Sevastopol"
+msgstr ""
+
+msgid "Enter a zip code in the format XXXXX or XXXXX-XXXX."
+msgstr "우편번호를 입력하세요. (XXXXX 또는 XXXXX-XXXX 형식)"
+
+msgid "Enter a valid U.S. Social Security number in XXX-XX-XXXX format."
+msgstr "올바른 미국 사회보장번호를 입력하세요. (XXX-XX-XXXX 형식)"
+
+msgid "Enter a U.S. state or territory."
+msgstr "미국 주나 지역을 입력하세요."
+
+msgid "U.S. state (two uppercase letters)"
+msgstr "미국의 주 (두개의 대문자로)"
+
+msgid "U.S. postal code (two uppercase letters)"
+msgstr "미국 우편번호 (대문자 약어 2자)"
+
+msgid "U.S. ZIP code"
+msgstr "미국 우편번호"
+
+msgid "Social security number"
+msgstr ""
+
+msgid "Alabama"
+msgstr ""
+
+msgid "Arizona"
+msgstr ""
+
+msgid "Arkansas"
+msgstr ""
+
+msgid "California"
+msgstr ""
+
+msgid "Colorado"
+msgstr ""
+
+msgid "Connecticut"
+msgstr ""
+
+msgid "Delaware"
+msgstr ""
+
+msgid "District of Columbia"
+msgstr ""
+
+msgid "Florida"
+msgstr ""
+
+msgctxt "US state"
+msgid "Georgia"
+msgstr ""
+
+msgid "Idaho"
+msgstr ""
+
+msgid "Illinois"
+msgstr ""
+
+msgid "Indiana"
+msgstr ""
+
+msgid "Iowa"
+msgstr ""
+
+msgid "Kansas"
+msgstr ""
+
+msgid "Kentucky"
+msgstr ""
+
+msgid "Louisiana"
+msgstr ""
+
+msgid "Maine"
+msgstr ""
+
+msgid "Maryland"
+msgstr ""
+
+msgid "Massachusetts"
+msgstr ""
+
+msgid "Michigan"
+msgstr ""
+
+msgid "Minnesota"
+msgstr ""
+
+msgid "Mississippi"
+msgstr ""
+
+msgid "Missouri"
+msgstr ""
+
+msgid "Montana"
+msgstr ""
+
+msgid "Nebraska"
+msgstr ""
+
+msgid "Nevada"
+msgstr ""
+
+msgid "New Hampshire"
+msgstr ""
+
+msgid "New Jersey"
+msgstr ""
+
+msgid "New Mexico"
+msgstr ""
+
+msgid "New York"
+msgstr ""
+
+msgid "North Carolina"
+msgstr ""
+
+msgid "North Dakota"
+msgstr ""
+
+msgid "Ohio"
+msgstr ""
+
+msgid "Oklahoma"
+msgstr ""
+
+msgid "Oregon"
+msgstr ""
+
+msgid "Pennsylvania"
+msgstr ""
+
+msgid "Rhode Island"
+msgstr ""
+
+msgid "South Carolina"
+msgstr ""
+
+msgid "South Dakota"
+msgstr ""
+
+msgid "Tennessee"
+msgstr ""
+
+msgid "Texas"
+msgstr ""
+
+msgid "Utah"
+msgstr ""
+
+msgid "Vermont"
+msgstr ""
+
+msgid "Virginia"
+msgstr "버지니아"
+
+msgid "Washington"
+msgstr "워싱턴"
+
+msgid "West Virginia"
+msgstr ""
+
+msgid "Wisconsin"
+msgstr "위스콘신"
+
+msgid "Wyoming"
+msgstr "와이오밍"
+
+msgid "Alaska"
+msgstr "알래스카"
+
+msgid "Hawaii"
+msgstr "하와이"
+
+msgid "American Samoa"
+msgstr "미국령 사모아"
+
+msgid "Guam"
+msgstr "괌"
+
+msgid "Northern Mariana Islands"
+msgstr ""
+
+msgid "Puerto Rico"
+msgstr "푸에르토리코"
+
+msgid "Virgin Islands"
+msgstr ""
+
+msgid "Armed Forces Americas"
+msgstr ""
+
+msgid "Armed Forces Europe"
+msgstr ""
+
+msgid "Armed Forces Pacific"
+msgstr ""
+
+msgid "Federated States of Micronesia"
+msgstr ""
+
+msgid "Marshall Islands"
+msgstr ""
+
+msgid "Palau"
+msgstr "팔라우"
+
+msgid "Commonwealth of the Northern Mariana Islands"
+msgstr ""
+
+msgid "Panama Canal Zone"
+msgstr ""
+
+msgid "Philippine Islands"
+msgstr ""
+
+msgid "Trust Territory of the Pacific Islands"
+msgstr ""
+
+msgid "Enter a valid CI number in X.XXX.XXX-X,XXXXXXX-X or XXXXXXXX format."
+msgstr ""
+"올바른 CI 번호를 입력하세요. (X.XXX.XXX-X, XXXXXXX-X 또는 XXXXXXXX 형식)"
+
+msgid "Enter a valid CI number."
+msgstr "올바른 CI 번호를 입력하세요."
+
+msgid "Región Capital"
+msgstr ""
+
+msgid "Región Central"
+msgstr ""
+
+msgid "Región de los Llanos"
+msgstr ""
+
+msgid "Región Centro Occidental"
+msgstr ""
+
+msgid "Región Zuliana"
+msgstr ""
+
+msgid "Región de los Andes"
+msgstr ""
+
+msgid "Región Nor-Oriental"
+msgstr ""
+
+msgid "Región Insular"
+msgstr ""
+
+msgid "Región Guayana"
+msgstr ""
+
+msgid "Región Sur Occidental"
+msgstr ""
+
+msgid "Amazonas"
+msgstr ""
+
+msgid "Anzoátegui"
+msgstr ""
+
+msgid "Apure"
+msgstr ""
+
+msgid "Aragua"
+msgstr ""
+
+msgid "Barinas"
+msgstr ""
+
+msgid "Bolívar"
+msgstr ""
+
+msgid "Carabobo"
+msgstr ""
+
+msgid "Cojedes"
+msgstr ""
+
+msgid "Delta Amacuro"
+msgstr ""
+
+msgid "Dependencias Federales"
+msgstr ""
+
+msgid "Distrito Capital"
+msgstr ""
+
+msgid "Falcón"
+msgstr ""
+
+msgid "Guárico"
+msgstr ""
+
+msgid "Lara"
+msgstr ""
+
+msgid "Mérida"
+msgstr ""
+
+msgid "Miranda"
+msgstr ""
+
+msgid "Monagas"
+msgstr ""
+
+msgid "Nueva Esparta"
+msgstr ""
+
+msgid "Portuguesa"
+msgstr ""
+
+msgid "Sucre"
+msgstr ""
+
+msgid "Táchira"
+msgstr ""
+
+msgid "Trujillo"
+msgstr ""
+
+msgid "Vargas"
+msgstr ""
+
+msgid "Yaracuy"
+msgstr ""
+
+msgid "Zulia"
+msgstr ""
+
+msgid "Enter a valid South African ID number"
+msgstr "올바른 남아프리카 주민번호를 입력하세요."
+
+msgid "Enter a valid South African postal code"
+msgstr "올바른 남아프리카 우편번호를 입력하세요."
+
+msgid "Eastern Cape"
+msgstr "Eastern Cape"
+
+msgid "Free State"
+msgstr "Free State"
+
+msgid "Gauteng"
+msgstr "Gauteng"
+
+msgid "KwaZulu-Natal"
+msgstr "KwaZulu-Natal"
+
+msgid "Limpopo"
+msgstr "Limpopo"
+
+msgid "Mpumalanga"
+msgstr "Mpumalanga"
+
+msgid "Northern Cape"
+msgstr "Northern Cape"
+
+msgid "North West"
+msgstr "North West"
+
+msgid "Western Cape"
+msgstr "Western Cape"

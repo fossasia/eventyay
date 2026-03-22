@@ -1,0 +1,81 @@
+{% extends "usersessions/base_manage.html" %}
+{% load allauth %}
+{% load i18n %}
+{% load humanize %}
+{% block head_title %}
+    {% trans "Sessions" %}
+{% endblock head_title %}
+{% block content %}
+    {% element h1 tags="usersessions,list" %}
+        {% trans "Sessions" %}
+    {% endelement %}
+    {% if session_count > 1 %}
+        {% url 'usersessions_list' as action_url %}
+    {% else %}
+        {% url 'account_logout' as action_url %}
+    {% endif %}
+    {% element form action=action_url method="post" tags="sessions" no_visible_fields=True %}
+        {% slot body %}
+            {% csrf_token %}
+            {% element table tags="sessions" %}
+                {% element thead %}
+                    {% element tr %}
+                        {% element th %}
+                            {% translate "Started At" %}
+                        {% endelement %}
+                        {% element th %}
+                            {% translate "IP Address" %}
+                        {% endelement %}
+                        {% element th %}
+                            {% translate "Browser" %}
+                        {% endelement %}
+                        {% if show_last_seen_at %}
+                            {% element th %}
+                                {% translate "Last seen at" %}
+                            {% endelement %}
+                        {% endif %}
+                    {% endelement %}
+                {% endelement %}
+                {% element tbody %}
+                    {% for session in sessions %}
+                        {% element tr %}
+                            {% element td %}
+                                <span title="{{ session.created_at }}">{{ session.created_at|naturaltime }}</span>
+                            {% endelement %}
+                            {% element td %}
+                                {{ session.ip }}
+                            {% endelement %}
+                            {% element td %}
+                                {{ session.user_agent }}
+                            {% endelement %}
+                            {% if show_last_seen_at %}
+                                {% element td %}
+                                    <span title="{{ session.last_seen_at }}">{{ session.last_seen_at|naturaltime }}</span>
+                                {% endelement %}
+                            {% endif %}
+                            {% element td %}
+                                {% if session.is_current %}
+                                    {% element badge tags="session,current" %}
+                                        {% translate "Current" %}
+                                    {% endelement %}
+                                {% else %}
+                                {% endif %}
+                            {% endelement %}
+                        {% endelement %}
+                    {% endfor %}
+                {% endelement %}
+            {% endelement %}
+        {% endslot %}
+        {% slot actions %}
+            {% if session_count > 1 %}
+                {% element button type="submit" %}
+                    {% translate "Sign Out Other Sessions" %}
+                {% endelement %}
+            {% else %}
+                {% element button type="submit" %}
+                    {% translate "Sign Out" %}
+                {% endelement %}
+            {% endif %}
+        {% endslot %}
+    {% endelement %}
+{% endblock content %}

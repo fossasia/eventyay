@@ -1,0 +1,1986 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Nikoloz Naskidashvili <nikoloz2005@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-05 08:42-0600\n"
+"PO-Revision-Date: 2025-10-20 04:54+0000\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <https://hosted.weblate.org/projects/allauth/django-"
+"allauth/ka/>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.14-dev\n"
+
+#: account/adapter.py:61
+msgid "This account is currently inactive."
+msgstr "ეს ანგარიში ამჟამად გაუქმებულია."
+
+#: account/adapter.py:63
+msgid "You cannot remove your primary email address."
+msgstr "თქვენ არ შეგიძლიათ წაშალოთ თქვენი ძირითადი ელ. ფოსტის მისამართი."
+
+#: account/adapter.py:66
+msgid "This email address is already associated with this account."
+msgstr "ეს ელ.ფოსტის მისამართი უკვე დაკავშირებულია ამ ანგარიშთან."
+
+#: account/adapter.py:69
+msgid "The email address and/or password you specified are not correct."
+msgstr "თქვენს მიერ მითითებული ელ. ფოსტა ან პაროლი არასწორია."
+
+#: account/adapter.py:72
+msgid "The phone number and/or password you specified are not correct."
+msgstr "თქვენს მიერ მითითებული ტელეფონის ნომერი ან პაროლი არასწორია."
+
+#: account/adapter.py:74
+msgid "A user is already registered with this email address."
+msgstr "მომხმარებელი ამ ელ. ფოსტით უკვე დარეგისტრირებულია."
+
+#: account/adapter.py:75
+msgid "Please type your current password."
+msgstr "გთხოვთ აკრიფეთ მიმდინარე პაროლი."
+
+#: account/adapter.py:76 mfa/adapter.py:40
+msgid "Incorrect code."
+msgstr "არასწორი კოდი."
+
+#: account/adapter.py:77
+msgid "Incorrect password."
+msgstr "არასწორი პაროლი."
+
+#: account/adapter.py:78
+msgid "Invalid or expired key."
+msgstr "არასწორი, ან ვადაამოწურული გასაღები."
+
+#: account/adapter.py:79
+msgid "Invalid login."
+msgstr "არასწორი შესვლის მცდელობა."
+
+#: account/adapter.py:80
+msgid "The password reset token was invalid."
+msgstr "პაროლის აღდგენის კოდი არასწორია."
+
+#: account/adapter.py:81
+#, python-format
+msgid "You cannot add more than %d email addresses."
+msgstr "თქვენ არ შეგიძლიათ დაამატოთ %d- ზე მეტი ელექტრონული ფოსტის მისამართი."
+
+#: account/adapter.py:82
+msgid "A user is already registered with this phone number."
+msgstr "მომხმარებელი ამ ტელეფონის ნომრით უკვე დარეგისტრირებულია."
+
+#: account/adapter.py:84
+msgid "Too many failed login attempts. Try again later."
+msgstr "შესვლის ძალიან ბევრი წარუმატებელი მცდელობა. მოგვიანებით სცადეთ."
+
+#: account/adapter.py:86
+msgid "The email address is not assigned to any user account."
+msgstr ""
+"ეს ელექტრონული ფოსტის მისამართი არ არის მიბმული რომელიმე მომხმარებლის "
+"ანგარიშზე."
+
+#: account/adapter.py:87
+msgid "The phone number is not assigned to any user account."
+msgstr "ეს ტელეფონის ნომერი არ არის მიბმული რომელიმე მომხმარებლის ანგარიშზე."
+
+#: account/adapter.py:88
+#: templates/account/messages/unverified_primary_email.txt:2
+msgid "Your primary email address must be verified."
+msgstr "თქვენი ძირითადი ელფოსტის მისამართი გადამოწმებული უნდა იყოს."
+
+#: account/adapter.py:90
+msgid "Username can not be used. Please use other username."
+msgstr ""
+"ამ მომხმარებლის სახელის გამოყენება შეუძლებელია. გთხოვთ გამოიყენოთ სხვა."
+
+#: account/adapter.py:93
+msgid "The username and/or password you specified are not correct."
+msgstr "თქვენს მიერ მითითებული მომხმარებლის სახელი ან პაროლი არასწორია."
+
+#: account/adapter.py:98
+msgid "Please select only one."
+msgstr "გთხოვთ აირჩიოთ მხოლოდ ერთი."
+
+#: account/adapter.py:99
+msgid "The new value must be different from the current one."
+msgstr "ახალი მნიშვნელობა მიმდინარესგან განსხვავებული უნდა იყოს."
+
+#: account/adapter.py:100
+msgid "Be patient, you are sending too many requests."
+msgstr "მოითმინეთ, თქვენ ძალიან ბევრ მოთხოვნას აგზავნით."
+
+#: account/adapter.py:826
+msgid "Use your password"
+msgstr "გამოიყენეთ თქვენი პაროლი"
+
+#: account/adapter.py:835
+msgid "Use authenticator app or code"
+msgstr "გამოიყენეთ ავთენტიფიკატორის აპლიკაცია ან კოდი"
+
+#: account/adapter.py:842 templates/mfa/authenticate.html:41
+#: templates/mfa/webauthn/reauthenticate.html:15
+msgid "Use a security key"
+msgstr "გამოიყენეთ უსაფრთხოების გასაღები"
+
+#: account/admin.py:30
+#, python-brace-format
+msgid "Marked {email} as verified."
+msgstr "{email} დაინიშნა, როგორც გადამოწმებული."
+
+#: account/admin.py:36
+#, python-brace-format
+msgid "Failed to mark {email} as verified."
+msgstr "{email}-ის გადამოწმებულად დანიშვნა ჩავარდა."
+
+#: account/admin.py:42
+msgid "Mark selected email addresses as verified"
+msgstr "არჩეული ელ. ფოსტის მისამართების გადამოწმებულად მონიშვნა"
+
+#: account/apps.py:11
+msgid "Accounts"
+msgstr "მომხმარებლის ანგარიშები"
+
+#: account/fields.py:12 account/forms.py:299 idp/oidc/forms.py:43
+msgid "Email"
+msgstr "ელ. ფოსტა"
+
+#: account/fields.py:19
+msgid "Email address"
+msgstr "ელ. ფოსტა"
+
+#: account/fields.py:62
+msgid "Enter a phone number including country code (e.g. +1 for the US)."
+msgstr "შეიყვანეთ ტელეფონის ნომერი ქვეყნის კოდის ჩათვლით (მაგ. +1 აშშ-სთვის)."
+
+#: account/fields.py:68 account/fields.py:72 account/forms.py:325
+msgid "Phone"
+msgstr "ტელეფონი"
+
+#: account/forms.py:61 account/forms.py:524
+msgid "You must type the same password each time."
+msgstr "თქვენ უნდა აკრიფოთ ერთი და იგივე პაროლი ყოველ ჯერზე."
+
+#: account/forms.py:66 account/forms.py:451 account/forms.py:610
+#: account/forms.py:696
+msgid "Password"
+msgstr "პაროლი"
+
+#: account/forms.py:67
+msgid "Remember Me"
+msgstr "დამიმახსოვრე"
+
+#: account/forms.py:79 account/forms.py:82 account/forms.py:265
+#: account/forms.py:268 account/forms.py:311
+msgid "Username"
+msgstr "მომხმარებლის სახელი"
+
+#: account/forms.py:96
+msgctxt "field label"
+msgid "Login"
+msgstr "შესვლა"
+
+#: account/forms.py:115
+msgid "Username, email or phone"
+msgstr "მომხმარებლის სახელი, ელ. ფოსტა ან ტელეფონი"
+
+#: account/forms.py:117
+msgid "Username or email"
+msgstr "მომხმარებლის სახელი ან ელ. ფოსტა"
+
+#: account/forms.py:119
+msgid "Username or phone"
+msgstr "მომხმარებლის სახელი ან ტელეფონი"
+
+#: account/forms.py:121
+msgid "Email or phone"
+msgstr "ელ. ფოსტა ან ტელეფონი"
+
+#: account/forms.py:144
+msgid "Forgot your password?"
+msgstr "დაგავიწყდათ პაროლი?"
+
+#: account/forms.py:287
+msgid "Email (again)"
+msgstr "ელ. ფოსტა (გაამეორეთ)"
+
+#: account/forms.py:292
+msgid "Email address confirmation"
+msgstr "ელ. ფოსტის დადასტურება"
+
+#: account/forms.py:302
+msgid "Email (optional)"
+msgstr "ელ. ფოსტა (არ არის აუცილებელი)"
+
+#: account/forms.py:314
+msgid "Username (optional)"
+msgstr "მომხმარებლის სახელი (არასავალდებულო)"
+
+#: account/forms.py:388
+msgid "You must type the same email each time."
+msgstr "თქვენ უნდა ჩაწეროთ ერთი და იგივე ელ. ფოსტა ყოველ ჯერზე."
+
+#: account/forms.py:458 account/forms.py:611
+msgid "Password (again)"
+msgstr "პაროლი (გაამეორეთ)"
+
+#: account/forms.py:591
+msgid "Current Password"
+msgstr "მიმდინარე პაროლი"
+
+#: account/forms.py:593 account/forms.py:649
+msgid "New Password"
+msgstr "ახალი პაროლი"
+
+#: account/forms.py:594 account/forms.py:650
+msgid "New Password (again)"
+msgstr "ახალი პაროლი (გაამეორეთ)"
+
+#: account/forms.py:767 account/forms.py:769 idp/oidc/forms.py:51
+#: idp/oidc/forms.py:54 mfa/base/forms.py:12 mfa/base/forms.py:14
+#: mfa/totp/forms.py:13
+#: templates/idp/oidc/device_authorization_confirm_form.html:16
+msgid "Code"
+msgstr "კოდი"
+
+#: account/models.py:23
+msgid "user"
+msgstr "მომხმარებელი"
+
+#: account/models.py:29 account/models.py:37 account/models.py:139
+msgid "email address"
+msgstr "ელ. ფოსტა"
+
+#: account/models.py:31
+msgid "verified"
+msgstr "დადასტურებული"
+
+#: account/models.py:32
+msgid "primary"
+msgstr "პირველადი"
+
+#: account/models.py:38
+msgid "email addresses"
+msgstr "ელ. ფოსტის ანგარიშები"
+
+#: account/models.py:142
+msgid "created"
+msgstr "შექმნილი"
+
+#: account/models.py:143
+msgid "sent"
+msgstr "გაგზავნილი"
+
+#: account/models.py:144 socialaccount/models.py:70
+msgid "key"
+msgstr "გასაღები"
+
+#: account/models.py:149
+msgid "email confirmation"
+msgstr "ელ. ფოსტის დადასტურება"
+
+#: account/models.py:150
+msgid "email confirmations"
+msgstr "ელ. ფოსტის დადასტურებები"
+
+#: headless/apps.py:7
+msgid "Headless"
+msgstr "Headless"
+
+#: idp/oidc/adapter.py:30
+msgid "View your user ID"
+msgstr "თქვენი მომხმარებლის ID-ს ნახვა"
+
+#: idp/oidc/adapter.py:31
+msgid "View your email address"
+msgstr "თქვენი ელ. ფოსტის მისამართის ნახვა"
+
+#: idp/oidc/adapter.py:32
+msgid "View your basic profile information"
+msgstr "თქვენი ძირითადი პროფილის ინფორმაციის ნახვა"
+
+#: idp/oidc/forms.py:31
+msgid "Grant permissions"
+msgstr "ნებართვების მინიჭება"
+
+#: idp/oidc/internal/clientkit.py:22
+msgid "Wildcards are not allowed unless 'Allow URI wildcards' is enabled."
+msgstr ""
+"ბუნებრივი ნიშნები (*) დაშვებული არ არის, თუ 'URI ბუნებრივი ნიშნების დაშვება' "
+"ჩართული არ არის."
+
+#: idp/oidc/internal/clientkit.py:27
+msgid ""
+"URI '{}' contains more than one wildcard (*). Only one wildcard per URI is "
+"allowed."
+msgstr ""
+"URI '{}' შეიცავს ერთზე მეტ ბუნებრივ ნიშანს (*). თითო URI-ში მხოლოდ ერთი "
+"ბუნებრივი ნიშანი (*) არის დაშვებული."
+
+#: idp/oidc/internal/clientkit.py:39
+msgid "Wildcards are only allowed in the hostname portion of the URI."
+msgstr "ბუნებრივი ნიშნები (*) მხოლოდ URI-ის ჰოსტის ნაწილში არის დაშვებული."
+
+#: idp/oidc/models.py:37
+msgid "Authorization code"
+msgstr "ავტორიზაციის კოდი"
+
+#: idp/oidc/models.py:38
+msgid "Device code"
+msgstr "მოწყობილობის კოდი"
+
+#: idp/oidc/models.py:39
+msgid "Client credentials"
+msgstr "კლიენტის სერთიფიკატები"
+
+#: idp/oidc/models.py:40
+msgid "Refresh token"
+msgstr "განახლების ტოკენი"
+
+#: idp/oidc/models.py:43
+msgid "Confidential"
+msgstr "კონფიდენციალური"
+
+#: idp/oidc/models.py:44
+msgid "Public"
+msgstr "საჯარო"
+
+#: idp/oidc/models.py:58
+msgid ""
+"The scope(s) the client is allowed to request. Provide one value per line, "
+"e.g.: openid(ENTER)profile(ENTER)email(ENTER)"
+msgstr ""
+"სფერო(ები), რომელთა მოთხოვნის უფლება აქვს კლიენტს. მიუთითეთ ერთი მნიშვნელობა "
+"თითო სტრიქონზე, მაგ.: openid(ENTER)profile(ENTER)email(ENTER)"
+
+#: idp/oidc/models.py:64
+msgid ""
+"In case the client does not specify any scope, these default scopes are "
+"used. Provide one value per line, e.g.: "
+"openid(ENTER)profile(ENTER)email(ENTER)"
+msgstr ""
+"თუ კლიენტი არ მიუთითებს სფეროს, გამოიყენება ეს ნაგულისხმევი სფეროები. "
+"მიუთითეთ ერთი მნიშვნელობა თითო სტრიქონზე, მაგ.: "
+"openid(ENTER)profile(ENTER)email(ENTER)"
+
+#: idp/oidc/models.py:75
+msgid ""
+"A list of allowed grant types. Provide one value per line, e.g.: "
+"authorization_code(ENTER)client_credentials(ENTER)refresh_token(ENTER)"
+msgstr ""
+"დაშვებული გრანტის ტიპების სია. მიუთითეთ ერთი მნიშვნელობა თითო სტრიქონზე, "
+"მაგ.: authorization_code(ENTER)client_credentials(ENTER)refresh_token(ENTER)"
+
+#: idp/oidc/models.py:86
+msgid "A list of allowed origins for cross-origin requests, one per line."
+msgstr "ქროს-ორიჯინ მოთხოვნებისთვის დაშვებული წარმოშობის სია, თითო სტრიქონზე."
+
+#: idp/oidc/models.py:94
+msgid ""
+"Allow wildcards (*) in redirect URIs and CORS origins. When enabled, URIs "
+"can contain a single asterisk to match subdomains."
+msgstr ""
+"ბუნებრივი ნიშნების (*) დაშვება გადამისამართების URI-ებსა და CORS "
+"წარმოშობებში. ჩართვისას, URI-ები შეიძლება შეიცავდეს ერთ ვარსკვლავს (*) "
+"ქვედომენების შესატყვისად."
+
+#: idp/oidc/models.py:102
+msgid ""
+"A list of allowed response types. Provide one value per line, e.g.: "
+"code(ENTER)id_token token(ENTER)"
+msgstr ""
+"დაშვებული პასუხის ტიპების სია. მიუთითეთ ერთი მნიშვნელობა თითო სტრიქონზე, "
+"მაგ.: code(ENTER)id_token token(ENTER)"
+
+#: idp/oidc/models.py:115
+msgid "client"
+msgstr "კლიენტი"
+
+#: idp/oidc/models.py:116
+msgid "clients"
+msgstr "კლიენტები"
+
+#: mfa/adapter.py:32
+msgid ""
+"You cannot add an email address to an account protected by two-factor "
+"authentication."
+msgstr ""
+"თქვენ არ შეგიძლიათ ელ. ფოსტის მისამართის დამატება ორფაქტორიანი "
+"ავთენტიფიკაციით დაცულ ანგარიშზე."
+
+#: mfa/adapter.py:35
+msgid "You cannot deactivate two-factor authentication."
+msgstr "თქვენ არ შეგიძლიათ ორფაქტორიანი ავთენტიფიკაციის გამორთვა."
+
+#: mfa/adapter.py:38
+msgid ""
+"You cannot generate recovery codes without having two-factor authentication "
+"enabled."
+msgstr ""
+"თქვენ არ შეგიძლიათ აღდგენის კოდების გენერირება ორფაქტორიანი ავთენტიფიკაციის "
+"ჩართვის გარეშე."
+
+#: mfa/adapter.py:42
+msgid ""
+"You cannot activate two-factor authentication until you have verified your "
+"email address."
+msgstr ""
+"თქვენ ვერ ჩართავთ ორფაქტორიან ავთენტიფიკაციას, სანამ არ დაადასტურებთ თქვენს "
+"ელ. ფოსტის მისამართს."
+
+#: mfa/adapter.py:141
+msgid "Master key"
+msgstr "მთავარი გასაღები"
+
+#: mfa/adapter.py:143
+msgid "Backup key"
+msgstr "სარეზერვო გასაღები"
+
+#: mfa/adapter.py:144
+#, python-brace-format
+msgid "Key nr. {number}"
+msgstr "გასაღები №{number}"
+
+#: mfa/apps.py:9
+msgid "MFA"
+msgstr "MFA"
+
+#: mfa/models.py:24
+msgid "Recovery codes"
+msgstr "აღდგენის კოდები"
+
+#: mfa/models.py:25
+msgid "TOTP Authenticator"
+msgstr "TOTP ავთენტიფიკატორი"
+
+#: mfa/models.py:26
+msgid "WebAuthn"
+msgstr "WebAuthn"
+
+#: mfa/totp/forms.py:11
+msgid "Authenticator code"
+msgstr "ავთენტიფიკატორის კოდი"
+
+#: mfa/webauthn/forms.py:56
+msgid "Passwordless"
+msgstr "უპაროლო"
+
+#: mfa/webauthn/forms.py:59
+msgid ""
+"Enabling passwordless operation allows you to sign in using just this key, "
+"but imposes additional requirements such as biometrics or PIN protection."
+msgstr ""
+"უპაროლო რეჟიმის ჩართვა საშუალებას გაძლევთ შეხვიდეთ მხოლოდ ამ გასაღების "
+"გამოყენებით, მაგრამ მოითხოვს დამატებით პირობებს, როგორიცაა ბიომეტრიკა ან PIN-"
+"კოდით დაცვა."
+
+#: socialaccount/adapter.py:30
+#, python-format
+msgid ""
+"An account already exists with this email address. Please sign in to that "
+"account first, then connect your %s account."
+msgstr ""
+"ანგარიში ამ ელ. ფოსტის მისამართით უკვე არსებობს. გთხოვთ, ჯერ შეხვიდეთ იმ "
+"ანგარიშში, შემდეგ კი დააკავშიროთ თქვენი %s ანგარიში."
+
+#: socialaccount/adapter.py:34
+msgid "Invalid token."
+msgstr "არასწორი კოდი."
+
+#: socialaccount/adapter.py:35
+msgid "Your account has no password set up."
+msgstr "თქვენს ანგარიშს არ აქვს პაროლი დაყენებული."
+
+#: socialaccount/adapter.py:36
+msgid "Your account has no verified email address."
+msgstr "თქვენს ანგარიშს არ აქვს დადასტურებული ელ. ფოსტა."
+
+#: socialaccount/adapter.py:38
+msgid "You cannot disconnect your last remaining third-party account."
+msgstr "თქენს უკანასკნელ მესამე პირების მიერ დამატებულ ანგარიშს ვერ გათიშავთ."
+
+#: socialaccount/adapter.py:41
+#: templates/socialaccount/messages/account_connected_other.txt:2
+msgid "The third-party account is already connected to a different account."
+msgstr "მესამე მხარის ანგარიში უკვე მიბმულია სხვა ანგარიშთან."
+
+#: socialaccount/apps.py:9
+msgid "Social Accounts"
+msgstr "სოციალური ანგარიშები"
+
+#: socialaccount/models.py:45 socialaccount/models.py:98
+msgid "provider"
+msgstr "პროვაიდერი"
+
+#: socialaccount/models.py:53
+msgid "provider ID"
+msgstr "პროვაიდერის ID"
+
+#: socialaccount/models.py:57
+msgid "name"
+msgstr "სახელი"
+
+#: socialaccount/models.py:59
+msgid "client id"
+msgstr "კლიენტის id"
+
+#: socialaccount/models.py:61
+msgid "App ID, or consumer key"
+msgstr "აპლიკაციის ID ან მომხმარებლის კოდი"
+
+#: socialaccount/models.py:64
+msgid "secret key"
+msgstr "საიდუმლო კოდი"
+
+#: socialaccount/models.py:67
+msgid "API secret, client secret, or consumer secret"
+msgstr ""
+"API-ს საიდუმლო კოდი, კლიენტის საიდუმლო კოდი ან მომხმარებლის საიდუმლო კოდი"
+
+#: socialaccount/models.py:70 templates/mfa/webauthn/authenticator_list.html:18
+msgid "Key"
+msgstr "გასაღები"
+
+#: socialaccount/models.py:82
+msgid "social application"
+msgstr "სოციალური აპლიკაცია"
+
+#: socialaccount/models.py:83
+msgid "social applications"
+msgstr "სოციალური აპლიკაციები"
+
+#: socialaccount/models.py:118
+msgid "uid"
+msgstr "uid"
+
+#: socialaccount/models.py:120
+msgid "last login"
+msgstr "ბოლო შესვლის თარიღი"
+
+#: socialaccount/models.py:121
+msgid "date joined"
+msgstr "ანგარიშის შექმნის თარიღი"
+
+#: socialaccount/models.py:122
+msgid "extra data"
+msgstr "სხვა მონაცემები"
+
+#: socialaccount/models.py:126
+msgid "social account"
+msgstr "სოციალური ანგარიში"
+
+#: socialaccount/models.py:127
+msgid "social accounts"
+msgstr "სოციალური ანგარიშები"
+
+#: socialaccount/models.py:161
+msgid "token"
+msgstr "კოდი"
+
+#: socialaccount/models.py:162
+msgid "\"oauth_token\" (OAuth1) or access token (OAuth2)"
+msgstr "\"oauth_token\" (OAuth1) ან access token (OAuth2)"
+
+#: socialaccount/models.py:166
+msgid "token secret"
+msgstr "საიდუმლო კოდი"
+
+#: socialaccount/models.py:167
+msgid "\"oauth_token_secret\" (OAuth1) or refresh token (OAuth2)"
+msgstr "\"oauth_token_secret\" (OAuth1) ან refresh token (OAuth2)"
+
+#: socialaccount/models.py:170
+msgid "expires at"
+msgstr "ვადა გაუსვლის თარიღი"
+
+#: socialaccount/models.py:175
+msgid "social application token"
+msgstr "სოციალური ანგარიშის კოდი"
+
+#: socialaccount/models.py:176
+msgid "social application tokens"
+msgstr "სოციალური ანგარიშების კოდი"
+
+#: socialaccount/providers/douban/views.py:35
+msgid "Invalid profile data"
+msgstr "პროფილის მონაცემები არასწორია"
+
+#: socialaccount/providers/dummy/templates/dummy/authenticate_form.html:16
+msgid "Login"
+msgstr "შესვლა"
+
+#: socialaccount/providers/dummy/templates/dummy/authenticate_form.html:19
+#: templates/account/base_confirm_code.html:48
+#: templates/account/base_confirm_code.html:52
+#: templates/account/password_reset_from_key.html:33
+#: templates/idp/oidc/authorization_form.html:26
+#: templates/mfa/authenticate.html:28 templates/mfa/authenticate.html:44
+#: templates/mfa/trust.html:29 templates/mfa/webauthn/signup_form.html:26
+msgid "Cancel"
+msgstr "გაუქმება"
+
+#: socialaccount/providers/oauth/client.py:86
+#, python-format
+msgid ""
+"Invalid response while obtaining request token from \"%s\". Response was: %s."
+msgstr "არასწორი პასუხი მოთხოვნის მიღებისას \"%s\"-დან. მიღებულია პასუხი: %s."
+
+#: socialaccount/providers/oauth/client.py:121
+#: socialaccount/providers/pocket/client.py:81
+#, python-format
+msgid "Invalid response while obtaining access token from \"%s\"."
+msgstr "არასწორი პასუხი მოთხოვნის წვდომის კოდის მიღებისას \"%s\"-დან."
+
+#: socialaccount/providers/oauth/client.py:142
+#, python-format
+msgid "No request token saved for \"%s\"."
+msgstr "მოთხოვნის კოდი არ არის შენახული \"%s\" -სთვის."
+
+#: socialaccount/providers/oauth/client.py:193
+#, python-format
+msgid "No access token saved for \"%s\"."
+msgstr "მოთხოვნის წვდომის კოდი არ არის შენახული \"%s\" -სთვის."
+
+#: socialaccount/providers/oauth/client.py:215
+#, python-format
+msgid "No access to private resources at \"%s\"."
+msgstr "\"%s\" - ზე კერძო რესურსებზე წვდომა არ არის."
+
+#: socialaccount/providers/pocket/client.py:39
+#, python-format
+msgid "Invalid response while obtaining request token from \"%s\"."
+msgstr "არასწორი პასუხი კოდის მიღებისას \"%s\"-დან."
+
+#: templates/account/account_inactive.html:5
+#: templates/account/account_inactive.html:9
+msgid "Account Inactive"
+msgstr "ანგარიში გაუქმებულია"
+
+#: templates/account/account_inactive.html:12
+msgid "This account is inactive."
+msgstr "ეს ანგარიში გაუქმებულია."
+
+#: templates/account/base_confirm_code.html:27
+#, python-format
+msgid ""
+"We've sent a code to %(recipient)s. The code expires shortly, so please "
+"enter it soon."
+msgstr ""
+"ჩვენ გამოგიგზავნეთ კოდი %(recipient)s-ზე. კოდს მალე ვადა გაუვა, ამიტომ "
+"გთხოვთ შეიყვანოთ დროულად."
+
+#: templates/account/base_confirm_code.html:39
+#: templates/account/email_confirm.html:24
+#: templates/account/reauthenticate.html:18
+#: templates/idp/oidc/device_authorization_confirm_form.html:26
+#: templates/mfa/reauthenticate.html:18
+msgid "Confirm"
+msgstr "დადასტურება"
+
+#: templates/account/base_confirm_code.html:43
+msgid "Request new code"
+msgstr "ახალი კოდის მოთხოვნა"
+
+#: templates/account/base_reauthenticate.html:5
+#: templates/account/base_reauthenticate.html:9
+msgid "Confirm Access"
+msgstr "წვდომის დადასტურება"
+
+#: templates/account/base_reauthenticate.html:12
+msgid "Please reauthenticate to safeguard your account."
+msgstr "გთხოვთ ხელახლა გაიაროთ ავთენტიფიკაცია თქვენი ანგარიშის დასაცავად."
+
+#: templates/account/base_reauthenticate.html:19
+#: templates/mfa/authenticate.html:37
+msgid "Alternative options"
+msgstr "ალტერნატიული ვარიანტები"
+
+#: templates/account/confirm_email_verification_code.html:5
+msgid "Email Verification"
+msgstr "ელ. ფოსტის ვერიფიკაცია"
+
+#: templates/account/confirm_email_verification_code.html:8
+msgid "Enter Email Verification Code"
+msgstr "შეიყვანეთ ელ. ფოსტის ვერიფიკაციის კოდი"
+
+#: templates/account/confirm_email_verification_code.html:16
+msgid "Use a different email address"
+msgstr "გამოიყენეთ სხვა ელ. ფოსტის მისამართი"
+
+#: templates/account/confirm_login_code.html:5 templates/account/login.html:5
+#: templates/account/login.html:9 templates/account/login.html:31
+#: templates/account/request_login_code.html:5
+#: templates/allauth/layouts/base.html:68 templates/mfa/authenticate.html:6
+#: templates/mfa/authenticate.html:24 templates/openid/login.html:5
+#: templates/openid/login.html:9 templates/openid/login.html:20
+#: templates/socialaccount/login.html:5
+#: templates/socialaccount/login_redirect.html:5
+msgid "Sign In"
+msgstr "შესვლა"
+
+#: templates/account/confirm_login_code.html:8
+msgid "Enter Sign-In Code"
+msgstr "შეიყვანეთ შესვლის კოდი"
+
+#: templates/account/confirm_password_reset_code.html:5
+#: templates/account/email/password_reset_subject.txt:3
+#: templates/account/password_reset.html:4
+#: templates/account/password_reset.html:8
+#: templates/account/password_reset_done.html:6
+#: templates/account/password_reset_done.html:10
+msgid "Password Reset"
+msgstr "პაროლის შეცვლა"
+
+#: templates/account/confirm_password_reset_code.html:8
+msgid "Enter Password Reset Code"
+msgstr "შეიყვანეთ პაროლის აღდგენის კოდი"
+
+#: templates/account/confirm_phone_verification_code.html:5
+msgid "Phone Verification"
+msgstr "ტელეფონის ვერიფიკაცია"
+
+#: templates/account/confirm_phone_verification_code.html:8
+msgid "Enter Phone Verification Code"
+msgstr "შეიყვანეთ ტელეფონის ვერიფიკაციის კოდი"
+
+#: templates/account/confirm_phone_verification_code.html:15
+msgid "Use a different phone number"
+msgstr "გამოიყენეთ სხვა ტელეფონის ნომერი"
+
+#: templates/account/email.html:4 templates/account/email.html:8
+msgid "Email Addresses"
+msgstr "ელ. ფოსტის მისამართები"
+
+#: templates/account/email.html:12
+msgid "The following email addresses are associated with your account:"
+msgstr "შემდეგი ელ.ფოსტის მისამართები ასოცირდება თქვენს ანგარიშთან:"
+
+#: templates/account/email.html:25
+msgid "Verified"
+msgstr "დადასტურებული"
+
+#: templates/account/email.html:29
+msgid "Unverified"
+msgstr "არ არის დადასტურებელი"
+
+#: templates/account/email.html:34
+msgid "Primary"
+msgstr "პირველადი"
+
+#: templates/account/email.html:44
+msgid "Make Primary"
+msgstr "გახადე პირველადი"
+
+#: templates/account/email.html:47 templates/account/email_change.html:37
+#: templates/account/phone_change.html:24
+msgid "Re-send Verification"
+msgstr "ვერიფიკაციის თავიდან გაგზავნა"
+
+#: templates/account/email.html:50
+#: templates/mfa/webauthn/authenticator_confirm_delete.html:16
+#: templates/mfa/webauthn/authenticator_list.html:60
+#: templates/socialaccount/connections.html:40
+msgid "Remove"
+msgstr "წაშლა"
+
+#: templates/account/email.html:59
+msgid "Add Email Address"
+msgstr "ელ. ფოსტის მისამართის დამატება"
+
+#: templates/account/email.html:70
+msgid "Add Email"
+msgstr "ელ. ფოსტის დამატება"
+
+#: templates/account/email.html:80
+msgid "Do you really want to remove the selected email address?"
+msgstr "ნამდვილად გსურთ წაშალოთ არჩეული ელ.ფოსტის მისამართი?"
+
+#: templates/account/email/account_already_exists_message.txt:4
+#, python-format
+msgid ""
+"You are receiving this email because you or someone else tried to signup for "
+"an\n"
+"account using email address:\n"
+"\n"
+"%(email)s\n"
+"\n"
+"However, an account using that email address already exists.  In case you "
+"have\n"
+"forgotten about this, please use the password forgotten procedure to "
+"recover\n"
+"your account:\n"
+"\n"
+"%(password_reset_url)s"
+msgstr ""
+"თქვენ იღებთ ამ ელ. წერილს, რადგან თქვენ ან სხვა ვიღაცამ სცადა რეგისტრაცია\n"
+"შემდეგი ელ. ფოსტის მისამართით:\n"
+"\n"
+"%(email)s\n"
+"\n"
+"თუმცა, ამ ელ. ფოსტის მისამართით ანგარიში უკვე არსებობს. თუ\n"
+"დაგავიწყდათ, გთხოვთ გამოიყენოთ პაროლის აღდგენის პროცედურა\n"
+"თქვენი ანგარიშის აღსადგენად:\n"
+"\n"
+"%(password_reset_url)s"
+
+#: templates/account/email/account_already_exists_subject.txt:3
+msgid "Account Already Exists"
+msgstr "ანგარიში უკვე არსებობს"
+
+#: templates/account/email/base_message.txt:1
+#, python-format
+msgid "Hello from %(site_name)s!"
+msgstr "მოგესალმებით %(site_name)s!-დან!"
+
+#: templates/account/email/base_message.txt:5
+#, python-format
+msgid ""
+"Thank you for using %(site_name)s!\n"
+"%(site_domain)s"
+msgstr ""
+"მადლობა რომ იყენებ %(site_name)s!\n"
+"%(site_domain)s"
+
+#: templates/account/email/base_notification.txt:5
+msgid ""
+"You are receiving this mail because the following change was made to your "
+"account:"
+msgstr ""
+"თქვენ იღებთ ამ ელ. წერილს, რადგან თქვენს ანგარიშში შემდეგი ცვლილება "
+"განხორციელდა:"
+
+#: templates/account/email/base_notification.txt:10
+#, python-format
+msgid ""
+"If you do not recognize this change then please take proper security "
+"precautions immediately. The change to your account originates from:\n"
+"\n"
+"- IP address: %(ip)s\n"
+"- Browser: %(user_agent)s\n"
+"- Date: %(timestamp)s"
+msgstr ""
+"თუ ეს ცვლილება არ გეცნობათ, გთხოვთ დაუყოვნებლივ მიიღოთ შესაბამისი "
+"უსაფრთხოების ზომები. ცვლილება თქვენს ანგარიშზე განხორციელდა:\n"
+"\n"
+"- IP მისამართი: %(ip)s\n"
+"- ბრაუზერი: %(user_agent)s\n"
+"- თარიღი: %(timestamp)s"
+
+#: templates/account/email/email_changed_message.txt:4
+#, python-format
+msgid "Your email has been changed from %(from_email)s to %(to_email)s."
+msgstr "თქვენი ელ. ფოსტა შეიცვალა %(from_email)s-დან %(to_email)s-ზე."
+
+#: templates/account/email/email_changed_subject.txt:3
+msgid "Email Changed"
+msgstr "ელ. ფოსტა შეიცვალა"
+
+#: templates/account/email/email_confirm_message.txt:4
+msgid "Your email has been confirmed."
+msgstr "თქვენი ელ. ფოსტა დადასტურებულია."
+
+#: templates/account/email/email_confirm_subject.txt:3
+msgid "Email Confirmation"
+msgstr "ელ. ფოსტის დადასტურება"
+
+#: templates/account/email/email_confirmation_message.txt:5
+#, python-format
+msgid ""
+"You're receiving this email because user %(user_display)s has given your "
+"email address to register an account on %(site_domain)s."
+msgstr ""
+"თქვენ იღებთ ამ ელ. წერილს რადგან მომხმარებემა - %(user_display)s მიუთითა "
+"თქვენი ელ.ფოსტის ანგარიში რომ დარეგისტრირდეს შემდეგ საიტზე - %(site_domain)s."
+
+#: templates/account/email/email_confirmation_message.txt:7
+msgid ""
+"Your email verification code is listed below. Please enter it in your open "
+"browser window."
+msgstr ""
+"თქვენი ელ. ფოსტის ვერიფიკაციის კოდი მოცემულია ქვემოთ. გთხოვთ შეიყვანოთ ის "
+"თქვენს ღია ბრაუზერის ფანჯარაში."
+
+#: templates/account/email/email_confirmation_message.txt:9
+#, python-format
+msgid "To confirm this is correct, go to %(activate_url)s"
+msgstr "იმის დასადასტურებლად, რომ ეს სწორია, გადადით %(activate_url)s"
+
+#: templates/account/email/email_confirmation_subject.txt:3
+msgid "Please Confirm Your Email Address"
+msgstr "გთხოვთ დაადასტუროთ თქვენი ელ. ფოსტა"
+
+#: templates/account/email/email_deleted_message.txt:4
+#, python-format
+msgid "Email address %(deleted_email)s has been removed from your account."
+msgstr "ელ. ფოსტის მისამართი %(deleted_email)s წაშლილია თქვენი ანგარიშიდან."
+
+#: templates/account/email/email_deleted_subject.txt:3
+msgid "Email Removed"
+msgstr "ელ. ფოსტა წაშლილია"
+
+#: templates/account/email/login_code_message.txt:5
+msgid ""
+"Your sign-in code is listed below. Please enter it in your open browser "
+"window."
+msgstr ""
+"თქვენი შესვლის კოდი მოცემულია ქვემოთ. გთხოვთ შეიყვანოთ ის თქვენს ღია "
+"ბრაუზერის ფანჯარაში."
+
+#: templates/account/email/login_code_message.txt:9
+#: templates/account/email/password_reset_code_message.txt:9
+#: templates/account/email/unknown_account_message.txt:6
+msgid "This mail can be safely ignored if you did not initiate this action."
+msgstr ""
+"თქვენ შეგიძლიათ უსაფრთხოდ უგულებელყოთ ეს წერილი, თუ ეს მოქმედება თქვენი "
+"ინიცირებული არ იყო."
+
+#: templates/account/email/login_code_subject.txt:3
+msgid "Sign-In Code"
+msgstr "შესვლის კოდი"
+
+#: templates/account/email/password_changed_message.txt:4
+msgid "Your password has been changed."
+msgstr "თქვენი პაროლი შეიცვალა."
+
+#: templates/account/email/password_changed_subject.txt:3
+msgid "Password Changed"
+msgstr "პაროლი შეიცვალა"
+
+#: templates/account/email/password_reset_code_message.txt:5
+msgid ""
+"Your password reset code is listed below. Please enter it in your open "
+"browser window."
+msgstr ""
+"თქვენი პაროლის აღდგენის კოდი მოცემულია ქვემოთ. გთხოვთ შეიყვანოთ ის თქვენს "
+"ღია ბრაუზერის ფანჯარაში."
+
+#: templates/account/email/password_reset_code_subject.txt:3
+msgid "Password Reset Code"
+msgstr "პაროლის აღდგენის კოდი"
+
+#: templates/account/email/password_reset_key_message.txt:4
+msgid ""
+"You're receiving this email because you or someone else has requested a "
+"password reset for your user account.\n"
+"It can be safely ignored if you did not request a password reset. Click the "
+"link below to reset your password."
+msgstr ""
+"თქვენ იღებთ ამ ელ. წერილს, რადგან თქვენ ან სხვა ვიღაცამ მოითხოვა პაროლის "
+"აღდგენა თქვენს ანგარიშზე.\n"
+"თქვენ შეგიძლიათ უბრალოდ უგულებელყოთ ეს ელ. წერილი, თუ ეს თქვენი მოთხოვნა არ "
+"იყო. დააჭირეთ ქვემოთ მოცემულ ბმულს პაროლის აღსადგენად."
+
+#: templates/account/email/password_reset_key_message.txt:9
+#, python-format
+msgid "In case you forgot, your username is %(username)s."
+msgstr "თუ თქვენ დაგავიწყდათ, თქვენი მომხმარებლის სახელია: %(username)s."
+
+#: templates/account/email/password_reset_key_subject.txt:3
+msgid "Password Reset Email"
+msgstr "პაროლის აღდგენის ელ. წერილი"
+
+#: templates/account/email/password_reset_message.txt:4
+msgid "Your password has been reset."
+msgstr "თქვენი პაროლი ჩამოიყარა."
+
+#: templates/account/email/password_set_message.txt:4
+msgid "Your password has been set."
+msgstr "თქვენი პაროლი დაყენებულია."
+
+#: templates/account/email/password_set_subject.txt:3
+msgid "Password Set"
+msgstr "პაროლი დაყენებულია"
+
+#: templates/account/email/unknown_account_message.txt:4
+#, python-format
+msgid ""
+"You are receiving this email because you, or someone else, tried to access "
+"an account with email %(email)s. However, we do not have any record of such "
+"an account in our database."
+msgstr ""
+"თქვენ იღებთ ამ ელ. წერილს, რადგან თქვენ ან სხვა ვიღაცამ სცადა ანგარიშზე "
+"წვდომა ელ. ფოსტით %(email)s. თუმცა, ჩვენს მონაცემთა ბაზაში ასეთი ანგარიშის "
+"ჩანაწერი არ მოიძებნა."
+
+#: templates/account/email/unknown_account_message.txt:8
+msgid "If it was you, you can sign up for an account using the link below."
+msgstr ""
+"თუ ეს თქვენ იყავით, შეგიძლიათ დარეგისტრირდეთ ქვემოთ მოცემული ბმულის "
+"გამოყენებით."
+
+#: templates/account/email/unknown_account_subject.txt:3
+msgid "Unknown Account"
+msgstr "უცნობი ანგარიში"
+
+#: templates/account/email_change.html:5 templates/account/email_change.html:9
+msgid "Email Address"
+msgstr "ელ. ფოსტის მისამართი"
+
+#: templates/account/email_change.html:21
+#: templates/account/email_change.html:29
+msgid "Current email"
+msgstr "მიმდინარე ელ. ფოსტა"
+
+#: templates/account/email_change.html:31
+msgid "Changing to"
+msgstr "იცვლება"
+
+#: templates/account/email_change.html:35
+msgid "Your email address is still pending verification."
+msgstr "თქვენი ელფოსტის მისამართი ჯერ კიდევ ითხოვს გადამოწმებას."
+
+#: templates/account/email_change.html:41
+msgid "Cancel Change"
+msgstr "ცვლილების გაუქმება"
+
+#: templates/account/email_change.html:49
+#: templates/account/phone_change.html:32
+msgid "Change to"
+msgstr "შეცვლა"
+
+#: templates/account/email_change.html:55
+#: templates/allauth/layouts/base.html:31
+msgid "Change Email"
+msgstr "ელ. ფოსტის შეცვლა"
+
+#: templates/account/email_confirm.html:6
+#: templates/account/email_confirm.html:10
+msgid "Confirm Email Address"
+msgstr "დაადასტურეთ ელ. ფოსტა"
+
+#: templates/account/email_confirm.html:16
+#, python-format
+msgid ""
+"Please confirm that <a href=\"mailto:%(email)s\">%(email)s</a> is an email "
+"address for user %(user_display)s."
+msgstr ""
+"გთხოვთ დაადასტუროთ, რომ <a href=\"mailto:%(email)s\">%(email)s</a> არის ელ. "
+"ფოსტის მისამართი მომხმარებლისთვის %(user_display)s."
+
+#: templates/account/email_confirm.html:30
+#: templates/account/messages/email_confirmation_failed.txt:2
+#, python-format
+msgid ""
+"Unable to confirm %(email)s because it is already confirmed by a different "
+"account."
+msgstr ""
+"ელფოსტის %(email)s დადასტურება შეუძლებელია, რადგან ის უკვე დადასტურებულია "
+"სხვა ანგარიშისთვის."
+
+#: templates/account/email_confirm.html:36
+#, python-format
+msgid ""
+"This email confirmation link expired or is invalid. Please <a "
+"href=\"%(email_url)s\">issue a new email confirmation request</a>."
+msgstr ""
+"ეს ელ. ფოსტის დადასტურების ბმული ვადაგასულია ან არასწორია. გთხოვთ <a "
+"href=\"%(email_url)s\">გააკეთოთ ახალი ელ. ფოსტის დადასტურების მოთხოვნა</a>."
+
+#: templates/account/login.html:19
+#, python-format
+msgid ""
+"If you have not created an account yet, then please %(link)ssign "
+"up%(end_link)s first."
+msgstr ""
+"თუ არ გაქვთ შექმნილი ანგარიში, მაშინ გთხოვთ "
+"%(link)sდარეგისტრირდით%(end_link)s."
+
+#: templates/account/login.html:42
+msgid "Sign in with a passkey"
+msgstr "შესვლა გასაღებით (passkey)"
+
+#: templates/account/login.html:47 templates/account/request_login_code.html:9
+msgid "Send me a sign-in code"
+msgstr "გამომიგზავნეთ შესვლის კოდი"
+
+#: templates/account/logout.html:4 templates/account/logout.html:8
+#: templates/account/logout.html:21 templates/allauth/layouts/base.html:61
+#: templates/idp/oidc/logout.html:4 templates/idp/oidc/logout.html:8
+#: templates/idp/oidc/logout.html:21
+#: templates/usersessions/usersession_list.html:76
+msgid "Sign Out"
+msgstr "გასვლა"
+
+#: templates/account/logout.html:11 templates/idp/oidc/logout.html:11
+msgid "Are you sure you want to sign out?"
+msgstr "დარწმუნებული ხარ, რომ გინდა გასვლა?"
+
+#: templates/account/messages/cannot_delete_primary_email.txt:2
+#, python-format
+msgid "You cannot remove your primary email address (%(email)s)."
+msgstr "შენ არ შეგიძლია წაშალო შენი პირველადი ელ. ფოსტა (%(email)s)."
+
+#: templates/account/messages/email_confirmation_sent.txt:2
+#, python-format
+msgid "Confirmation email sent to %(email)s."
+msgstr "ელ. ფოსტის დადასტურების წერილი გაგზავნილია %(email)s მისამართით."
+
+#: templates/account/messages/email_confirmed.txt:2
+#, python-format
+msgid "You have confirmed %(email)s."
+msgstr "თქვენ დაადასტურეთ %(email)s."
+
+#: templates/account/messages/email_deleted.txt:2
+#, python-format
+msgid "Removed email address %(email)s."
+msgstr "ელ. ფოსტა %(email)s წაშლილია."
+
+#: templates/account/messages/logged_in.txt:4
+#, python-format
+msgid "Successfully signed in as %(name)s."
+msgstr "თქვენ წარმატებით შეხვედით %(name)s-ად."
+
+#: templates/account/messages/logged_out.txt:2
+msgid "You have signed out."
+msgstr "თქვენ წარმატებით გახვედით თქვენი ანგარიშიდან."
+
+#: templates/account/messages/login_code_sent.txt:2
+#, python-format
+msgid "A sign-in code has been sent to %(recipient)s."
+msgstr "შესვლის კოდი გაგზავნილია %(recipient)s-ზე."
+
+#: templates/account/messages/password_changed.txt:2
+msgid "Password successfully changed."
+msgstr "პაროლი წარმატებით შეცვლილია."
+
+#: templates/account/messages/password_set.txt:2
+msgid "Password successfully set."
+msgstr "პაროლი წარმატებით დაყენებულია."
+
+#: templates/account/messages/phone_verification_sent.txt:2
+#, python-format
+msgid "A verification code has been sent to %(phone)s."
+msgstr "ვერიფიკაციის კოდი გაგზავნილია %(phone)s-ზე."
+
+#: templates/account/messages/phone_verified.txt:2
+#, python-format
+msgid "You have verified phone number %(phone)s."
+msgstr "თქვენ დაადასტურეთ ტელეფონის ნომერი %(phone)s."
+
+#: templates/account/messages/primary_email_set.txt:2
+msgid "Primary email address set."
+msgstr "ძირითადი ელფოსტის მისამართი დაყენებულია."
+
+#: templates/account/password_change.html:4
+#: templates/account/password_change.html:8
+#: templates/account/password_change.html:20
+#: templates/account/password_reset_from_key.html:5
+#: templates/account/password_reset_from_key.html:12
+#: templates/account/password_reset_from_key.html:30
+#: templates/account/password_reset_from_key_done.html:5
+#: templates/account/password_reset_from_key_done.html:9
+#: templates/allauth/layouts/base.html:37
+msgid "Change Password"
+msgstr "პაროლის შეცვლა"
+
+#: templates/account/password_change.html:22
+msgid "Forgot Password?"
+msgstr "დაგავიწყდა პაროლი?"
+
+#: templates/account/password_reset.html:14
+msgid ""
+"Forgotten your password? Enter your email address below, and we'll send you "
+"an email allowing you to reset it."
+msgstr ""
+"დაგავიწყდათ პაროლი? შეიყვანეთ თქვენი ელ. ფოსტის მისამართი ქვემოთ და ჩვენ "
+"გამოგიგზავნით ელ. წერილს პაროლის აღსადგენად."
+
+#: templates/account/password_reset.html:26
+msgid "Reset My Password"
+msgstr "ჩემი პაროლის შეცვლა"
+
+#: templates/account/password_reset.html:31
+msgid "Please contact us if you have any trouble resetting your password."
+msgstr "გთხოვთ დაგვიკავშირდით თუ გაქვთ პრობლემა პაროლის შეცვლასთან."
+
+#: templates/account/password_reset_done.html:16
+msgid ""
+"We have sent you an email. If you have not received it please check your "
+"spam folder. Otherwise contact us if you do not receive it in a few minutes."
+msgstr ""
+"ჩვენ ელფოსტა გამოგიგზავნეთ. თუ არ მიგიღიათ, შეამოწმეთ თქვენი სპამის "
+"საქაღალდე. დაგვიკავშირდით, თუ ელფოსტას რამდენიმე წუთში არ მიიღებთ."
+
+#: templates/account/password_reset_from_key.html:10
+msgid "Bad Token"
+msgstr "შეცდომა, ცუდი კოდი"
+
+#: templates/account/password_reset_from_key.html:18
+#, python-format
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used.  Please request a <a href=\"%(passwd_reset_url)s\">new password reset</"
+"a>."
+msgstr ""
+"პაროლის აღდგენის ლინკი არასწორია, ალბათ იმის გამო რომ უკვე გამოყენებული "
+"იქნა. გთხოვთ მოითხოვეთ <a href=\"%(passwd_reset_url)s\">პაროლის შეცვლა "
+"თავიდან</a>."
+
+#: templates/account/password_reset_from_key_done.html:12
+msgid "Your password is now changed."
+msgstr "თქვენი პაროლი ახლა შეცვლილია."
+
+#: templates/account/password_set.html:5 templates/account/password_set.html:9
+#: templates/account/password_set.html:21
+msgid "Set Password"
+msgstr "პაროლის დაყენება"
+
+#: templates/account/phone_change.html:5 templates/account/phone_change.html:9
+msgid "Change Phone"
+msgstr "ტელეფონის შეცვლა"
+
+#: templates/account/phone_change.html:18
+msgid "Current phone"
+msgstr "მიმდინარე ტელეფონი"
+
+#: templates/account/phone_change.html:22
+msgid "Your phone number is still pending verification."
+msgstr "თქვენი ტელეფონის ნომერი ჯერ კიდევ ითხოვს ვერიფიკაციას."
+
+#: templates/account/phone_change.html:38
+msgctxt "action"
+msgid "Change Phone"
+msgstr "ტელეფონის შეცვლა"
+
+#: templates/account/reauthenticate.html:6
+msgid "Enter your password:"
+msgstr "შეიყვანეთ თქვენი პაროლი:"
+
+#: templates/account/request_login_code.html:12
+msgid "You will receive a special code for a password-free sign-in."
+msgstr "თქვენ მიიღებთ სპეციალურ კოდს უპაროლო შესვლისთვის."
+
+#: templates/account/request_login_code.html:24
+msgid "Request Code"
+msgstr "კოდის მოთხოვნა"
+
+#: templates/account/request_login_code.html:30
+msgid "Other sign-in options"
+msgstr "სხვა შესვლის ვარიანტები"
+
+#: templates/account/signup.html:4 templates/account/signup_by_passkey.html:4
+#: templates/socialaccount/signup.html:5
+msgid "Signup"
+msgstr "რეგისტრაცია"
+
+#: templates/account/signup.html:8 templates/account/signup.html:30
+#: templates/account/signup_by_passkey.html:29
+#: templates/allauth/layouts/base.html:74 templates/socialaccount/signup.html:9
+#: templates/socialaccount/signup.html:25
+msgid "Sign Up"
+msgstr "რეგისტრაცია"
+
+#: templates/account/signup.html:17 templates/account/signup_by_passkey.html:17
+#, python-format
+msgid "Already have an account? Then please %(link)ssign in%(end_link)s."
+msgstr "უკვე გაქვს ანგარიში? %(link)sშესვლა%(end_link)s."
+
+#: templates/account/signup.html:39
+msgid "Sign up using a passkey"
+msgstr "რეგისტრაცია გასაღებით (passkey)"
+
+#: templates/account/signup_by_passkey.html:8
+msgid "Passkey Sign Up"
+msgstr "რეგისტრაცია გასაღებით (Passkey)"
+
+#: templates/account/signup_by_passkey.html:36
+msgid "Other options"
+msgstr "სხვა ვარიანტები"
+
+#: templates/account/signup_closed.html:5
+#: templates/account/signup_closed.html:9
+msgid "Sign Up Closed"
+msgstr "რეგისტრაცია დროებით გაუქმებულია"
+
+#: templates/account/signup_closed.html:12
+msgid "We are sorry, but the sign up is currently closed."
+msgstr "ბოდიში, რეგისტრაცია დროებით გაუქმებულია."
+
+#: templates/account/snippets/already_logged_in.html:7
+msgid "Note"
+msgstr "შენიშვნა"
+
+#: templates/account/snippets/already_logged_in.html:7
+#, python-format
+msgid "You are already logged in as %(user_display)s."
+msgstr "თქვენ უკვე შესული ხართ როგორც %(user_display)s."
+
+#: templates/account/snippets/warn_no_email.html:3
+msgid "Warning:"
+msgstr "გაფრთხილება:"
+
+#: templates/account/snippets/warn_no_email.html:3
+msgid ""
+"You currently do not have any email address set up. You should really add an "
+"email address so you can receive notifications, reset your password, etc."
+msgstr ""
+"თქვენ ამჟამად არ გაქვთ ელ. ფოსტის მისამართი დაყენებული. რეკომენდირებულია "
+"დაამატოთ ელ. ფოსტის მისამართი, რათა მიიღოთ შეტყობინებები, აღადგინოთ პაროლი "
+"და ა.შ."
+
+#: templates/account/verification_sent.html:5
+#: templates/account/verification_sent.html:9
+#: templates/account/verified_email_required.html:5
+#: templates/account/verified_email_required.html:9
+msgid "Verify Your Email Address"
+msgstr "დაადასტურეთ თქვენი ელ. ფოსტა"
+
+#: templates/account/verification_sent.html:12
+msgid ""
+"We have sent an email to you for verification. Follow the link provided to "
+"finalize the signup process. If you do not see the verification email in "
+"your main inbox, check your spam folder. Please contact us if you do not "
+"receive the verification email within a few minutes."
+msgstr ""
+"ჩვენ გამოგიგზავნეთ ელ. წერილი ვერიფიკაციისთვის. მიჰყევით მასში მოცემულ "
+"ბმულს, რომ დაასრულოთ რეგისტრაცია. თუ ვერ ხედავთ ვერიფიკაციის ელ. წერილს "
+"თქვენს ძირითად საფოსტო ყუთში, შეამოწმეთ სპამის საქაღალდე. გთხოვთ "
+"დაგვიკავშირდით, თუ ვერიფიკაციის ელ. წერილს რამდენიმე წუთში არ მიიღებთ."
+
+#: templates/account/verified_email_required.html:13
+msgid ""
+"This part of the site requires us to verify that\n"
+"you are who you claim to be. For this purpose, we require that you\n"
+"verify ownership of your email address. "
+msgstr ""
+"საიტის ეს ნაწილი ითხოვს იმის დადასტურებას, რომ\n"
+"თქვენ ხართ ის, ვინც აცხადებთ, რომ ხართ. ამისთვის ჩვენ ვითხოვთ\n"
+"თქვენი ელ. ფოსტის მისამართის საკუთრების დადასტურებას. "
+
+#: templates/account/verified_email_required.html:18
+msgid ""
+"We have sent an email to you for\n"
+"verification. Please click on the link inside that email. If you do not see "
+"the verification email in your main inbox, check your spam folder. "
+"Otherwise\n"
+"contact us if you do not receive it within a few minutes."
+msgstr ""
+"ჩვენ გამოგიგზავნეთ ელ. წერილი\n"
+"ვერიფიკაციისთვის. გთხოვთ დააჭიროთ მასში მოცემულ ბმულს. თუ ვერ ხედავთ "
+"ვერიფიკაციის ელ. წერილს თქვენს ძირითად საფოსტო ყუთში, შეამოწმეთ სპამის "
+"საქაღალდე. წინააღმდეგ შემთხვევაში\n"
+"დაგვიკავშირდით, თუ მას რამდენიმე წუთში არ მიიღებთ."
+
+#: templates/account/verified_email_required.html:23
+#, python-format
+msgid ""
+"<strong>Note:</strong> you can still <a href=\"%(email_url)s\">change your "
+"email address</a>."
+msgstr ""
+"<strong>შენიშვნა:</strong> თქვენ ჯერ კიდევ შეგიძლიათ <a "
+"href=\"%(email_url)s\">შეცვალოთ ელ. ფოსტის მისამართი</a>."
+
+#: templates/allauth/layouts/base.html:18
+msgid "Messages:"
+msgstr "შეტყობინებები:"
+
+#: templates/allauth/layouts/base.html:25
+msgid "Menu:"
+msgstr "მენიუ:"
+
+#: templates/allauth/layouts/base.html:43
+#: templates/socialaccount/connections.html:5
+#: templates/socialaccount/connections.html:9
+msgid "Account Connections"
+msgstr "ანგარიშის კავშირები"
+
+#: templates/allauth/layouts/base.html:49 templates/mfa/authenticate.html:10
+#: templates/mfa/index.html:5 templates/mfa/index.html:9
+msgid "Two-Factor Authentication"
+msgstr "ორფაქტორიანი ავთენტიფიკაცია"
+
+#: templates/allauth/layouts/base.html:55
+#: templates/usersessions/usersession_list.html:6
+#: templates/usersessions/usersession_list.html:10
+msgid "Sessions"
+msgstr "სესიები"
+
+#: templates/idp/oidc/authorization_form.html:5
+#: templates/idp/oidc/authorization_form.html:9
+#: templates/idp/oidc/authorization_form.html:23
+#: templates/idp/oidc/device_authorization_code_form.html:5
+#: templates/idp/oidc/device_authorization_confirm_form.html:5
+#: templates/idp/oidc/device_authorization_confirmed.html:5
+#: templates/idp/oidc/device_authorization_denied.html:5
+msgid "Authorize"
+msgstr "ავტორიზაცია"
+
+#: templates/idp/oidc/authorization_form.html:12
+#, python-format
+msgid "%(client_name)s wants to access your %(site_name)s account."
+msgstr "%(client_name)s სურს წვდომა თქვენს %(site_name)s ანგარიშზე."
+
+#: templates/idp/oidc/device_authorization_code_form.html:9
+msgid "Enter Device Code"
+msgstr "შეიყვანეთ მოწყობილობის კოდი"
+
+#: templates/idp/oidc/device_authorization_code_form.html:12
+msgid "Enter the code displayed on your device."
+msgstr "შეიყვანეთ თქვენს მოწყობილობაზე ნაჩვენები კოდი."
+
+#: templates/idp/oidc/device_authorization_code_form.html:21
+#: templates/socialaccount/login.html:27
+#: templates/socialaccount/login_redirect.html:10
+msgid "Continue"
+msgstr "გაგრძელება"
+
+#: templates/idp/oidc/device_authorization_confirm_form.html:9
+msgid "Confirm Device"
+msgstr "მოწყობილობის დადასტურება"
+
+#: templates/idp/oidc/device_authorization_confirm_form.html:12
+#, python-format
+msgid ""
+"Please confirm the code shown on your %(client_name)s to authorize this "
+"device."
+msgstr ""
+"გთხოვთ დაადასტუროთ %(client_name)s-ზე ნაჩვენები კოდი ამ მოწყობილობის "
+"ავტორიზაციისთვის."
+
+#: templates/idp/oidc/device_authorization_confirm_form.html:29
+msgid "Deny"
+msgstr "უარყოფა"
+
+#: templates/idp/oidc/device_authorization_confirmed.html:9
+msgid "Device Authorized"
+msgstr "მოწყობილობა ავტორიზებულია"
+
+#: templates/idp/oidc/device_authorization_confirmed.html:12
+#, python-format
+msgid "You successfully authorized your %(client_name)s device."
+msgstr "თქვენ წარმატებით გაიარეთ %(client_name)s მოწყობილობის ავტორიზაცია."
+
+#: templates/idp/oidc/device_authorization_denied.html:9
+msgid "Device Denied"
+msgstr "მოწყობილობა უარყოფილია"
+
+#: templates/idp/oidc/device_authorization_denied.html:12
+#, python-format
+msgid "Authorization for your %(client_name)s device has been denied."
+msgstr "თქვენი %(client_name)s მოწყობილობის ავტორიზაცია უარყოფილია."
+
+#: templates/idp/oidc/error.html:5 templates/idp/oidc/error.html:9
+msgid "Error"
+msgstr "შეცდომა"
+
+#: templates/idp/oidc/logout.html:24
+msgid "Stay Signed In"
+msgstr "დარჩი შესული"
+
+#: templates/mfa/authenticate.html:13
+msgid ""
+"Your account is protected by two-factor authentication. Please enter an "
+"authenticator code:"
+msgstr ""
+"თქვენი ანგარიში დაცულია ორფაქტორიანი ავთენტიფიკაციით. გთხოვთ შეიყვანოთ "
+"ავთენტიფიკატორის კოდი:"
+
+#: templates/mfa/email/recovery_codes_generated_message.txt:4
+msgid ""
+"A new set of Two-Factor Authentication recovery codes has been generated."
+msgstr ""
+"ორფაქტორიანი ავთენტიფიკაციის აღდგენის კოდების ახალი ნაკრები გენერირებულია."
+
+#: templates/mfa/email/recovery_codes_generated_subject.txt:3
+msgid "New Recovery Codes Generated"
+msgstr "ახალი აღდგენის კოდები გენერირებულია"
+
+#: templates/mfa/email/totp_activated_message.txt:4
+#: templates/mfa/messages/totp_activated.txt:2
+msgid "Authenticator app activated."
+msgstr "ავთენტიფიკატორის აპლიკაცია გააქტიურებულია."
+
+#: templates/mfa/email/totp_activated_subject.txt:3
+msgid "Authenticator App Activated"
+msgstr "ავთენტიფიკატორის აპლიკაცია გააქტიურებულია"
+
+#: templates/mfa/email/totp_deactivated_message.txt:4
+#: templates/mfa/messages/totp_deactivated.txt:2
+msgid "Authenticator app deactivated."
+msgstr "ავთენტიფიკატორის აპლიკაცია გამორთულია."
+
+#: templates/mfa/email/totp_deactivated_subject.txt:3
+msgid "Authenticator App Deactivated"
+msgstr "ავთენტიფიკატორის აპლიკაცია გამორთულია"
+
+#: templates/mfa/email/webauthn_added_message.txt:4
+msgid "A new security key has been added."
+msgstr "ახალი უსაფრთხოების გასაღები დამატებულია."
+
+#: templates/mfa/email/webauthn_added_subject.txt:3
+msgid "Security Key Added"
+msgstr "უსაფრთხოების გასაღები დამატებულია"
+
+#: templates/mfa/email/webauthn_removed_message.txt:4
+msgid "A security key has been removed."
+msgstr "უსაფრთხოების გასაღები წაშლილია."
+
+#: templates/mfa/email/webauthn_removed_subject.txt:3
+msgid "Security Key Removed"
+msgstr "უსაფრთხოების გასაღები წაშლილია"
+
+#: templates/mfa/index.html:14 templates/mfa/totp/base.html:4
+msgid "Authenticator App"
+msgstr "ავთენტიფიკატორის აპლიკაცია"
+
+#: templates/mfa/index.html:19
+msgid "Authentication using an authenticator app is active."
+msgstr "ავთენტიფიკატორის აპლიკაციით ავთენტიფიკაცია აქტიურია."
+
+#: templates/mfa/index.html:23
+msgid "An authenticator app is not active."
+msgstr "ავთენტიფიკატორის აპლიკაცია არ არის აქტიური."
+
+#: templates/mfa/index.html:32 templates/mfa/totp/deactivate_form.html:24
+msgid "Deactivate"
+msgstr "გამორთვა"
+
+#: templates/mfa/index.html:36 templates/mfa/totp/activate_form.html:32
+msgid "Activate"
+msgstr "გააქტიურება"
+
+#: templates/mfa/index.html:45 templates/mfa/webauthn/authenticator_list.html:8
+#: templates/mfa/webauthn/base.html:4
+msgid "Security Keys"
+msgstr "უსაფრთხოების გასაღებები"
+
+#: templates/mfa/index.html:50
+#, python-format
+msgid "You have added %(count)s security key."
+msgid_plural "You have added %(count)s security keys."
+msgstr[0] "თქვენ დაამატეთ %(count)s უსაფრთხოების გასაღები."
+msgstr[1] "თქვენ დაამატეთ %(count)s უსაფრთხოების გასაღები."
+
+#: templates/mfa/index.html:54
+#: templates/mfa/webauthn/authenticator_list.html:12
+msgid "No security keys have been added."
+msgstr "უსაფრთხოების გასაღებები არ არის დამატებული."
+
+#: templates/mfa/index.html:62
+msgid "Manage"
+msgstr "მართვა"
+
+#: templates/mfa/index.html:67 templates/mfa/webauthn/add_form.html:18
+#: templates/mfa/webauthn/authenticator_list.html:70
+msgid "Add"
+msgstr "დამატება"
+
+#: templates/mfa/index.html:77 templates/mfa/recovery_codes/base.html:4
+#: templates/mfa/recovery_codes/generate.html:6
+#: templates/mfa/recovery_codes/index.html:6
+msgid "Recovery Codes"
+msgstr "აღდგენის კოდები"
+
+#: templates/mfa/index.html:82 templates/mfa/recovery_codes/index.html:9
+#, python-format
+msgid ""
+"There is %(unused_count)s out of %(total_count)s recovery codes available."
+msgid_plural ""
+"There are %(unused_count)s out of %(total_count)s recovery codes available."
+msgstr[0] "ხელმისაწვდომია %(unused_count)s აღდგენის კოდი %(total_count)s-დან."
+msgstr[1] "ხელმისაწვდომია %(unused_count)s აღდგენის კოდი %(total_count)s-დან."
+
+#: templates/mfa/index.html:86
+msgid "No recovery codes set up."
+msgstr "აღდგენის კოდები არ არის დაყენებული."
+
+#: templates/mfa/index.html:96
+msgid "View"
+msgstr "ნახვა"
+
+#: templates/mfa/index.html:102
+msgid "Download"
+msgstr "ჩამოტვირთვა"
+
+#: templates/mfa/index.html:110 templates/mfa/recovery_codes/generate.html:29
+msgid "Generate"
+msgstr "გენერირება"
+
+#: templates/mfa/messages/recovery_codes_generated.txt:2
+msgid "A new set of recovery codes has been generated."
+msgstr "აღდგენის კოდების ახალი ნაკრები გენერირებულია."
+
+#: templates/mfa/messages/webauthn_added.txt:2
+msgid "Security key added."
+msgstr "უსაფრთხოების გასაღები დამატებულია."
+
+#: templates/mfa/messages/webauthn_removed.txt:2
+msgid "Security key removed."
+msgstr "უსაფრთხოების გასაღები წაშლილია."
+
+#: templates/mfa/reauthenticate.html:6
+msgid "Enter an authenticator code:"
+msgstr "შეიყვანეთ ავთენტიკაციის კოდი:"
+
+#: templates/mfa/recovery_codes/generate.html:9
+msgid "You are about to generate a new set of recovery codes for your account."
+msgstr ""
+"თქვენ აპირებთ თქვენი ანგარიშისთვის აღდგენის კოდების ახალი ნაკრების "
+"გენერირებას."
+
+#: templates/mfa/recovery_codes/generate.html:11
+msgid "This action will invalidate your existing codes."
+msgstr "ეს მოქმედება გააუქმებს თქვენს არსებულ კოდებს."
+
+#: templates/mfa/recovery_codes/generate.html:13
+msgid "Are you sure?"
+msgstr "დარწმუნებული ხართ?"
+
+#: templates/mfa/recovery_codes/index.html:13
+msgid "Unused codes"
+msgstr "გამოუყენებელი კოდები"
+
+#: templates/mfa/recovery_codes/index.html:25
+msgid "Download codes"
+msgstr "კოდების ჩამოტვირთვა"
+
+#: templates/mfa/recovery_codes/index.html:30
+msgid "Generate new codes"
+msgstr "ახალი კოდების გენერირება"
+
+#: templates/mfa/totp/activate_form.html:4
+#: templates/mfa/totp/activate_form.html:8
+msgid "Activate Authenticator App"
+msgstr "ავთენტიფიკატორის აპლიკაციის გააქტიურება"
+
+#: templates/mfa/totp/activate_form.html:11
+msgid ""
+"To protect your account with two-factor authentication, scan the QR code "
+"below with your authenticator app. Then, input the verification code "
+"generated by the app below."
+msgstr ""
+"თქვენი ანგარიშის ორფაქტორიანი ავთენტიფიკაციით დასაცავად, დაასკანირეთ ქვემოთ "
+"მოცემული QR კოდი თქვენი ავთენტიფიკატორის აპლიკაციით. შემდეგ, შეიყვანეთ "
+"აპლიკაციის მიერ გენერირებული ვერიფიკაციის კოდი ქვემოთ."
+
+#: templates/mfa/totp/activate_form.html:21
+msgid "Authenticator secret"
+msgstr "ავთენტიფიკატორის საიდუმლო კოდი"
+
+#: templates/mfa/totp/activate_form.html:24
+msgid ""
+"You can store this secret and use it to reinstall your authenticator app at "
+"a later time."
+msgstr ""
+"თქვენ შეგიძლიათ შეინახოთ ეს საიდუმლო კოდი და გამოიყენოთ ის ავთენტიფიკატორის "
+"აპლიკაციის მოგვიანებით ხელახლა ინსტალაციისთვის."
+
+#: templates/mfa/totp/deactivate_form.html:5
+#: templates/mfa/totp/deactivate_form.html:9
+msgid "Deactivate Authenticator App"
+msgstr "ავთენტიფიკატორის აპლიკაციის გამორთვა"
+
+#: templates/mfa/totp/deactivate_form.html:12
+msgid ""
+"You are about to deactivate authenticator app based authentication. Are you "
+"sure?"
+msgstr ""
+"თქვენ აპირებთ ავთენტიფიკატორის აპლიკაციაზე დაფუძნებული ავთენტიფიკაციის "
+"გამორთვას. დარწმუნებული ხართ?"
+
+#: templates/mfa/trust.html:4 templates/mfa/trust.html:8
+msgid "Trust this Browser?"
+msgstr "ენდობით ამ ბრაუზერს?"
+
+#: templates/mfa/trust.html:11
+msgid ""
+"If you choose to trust this browser, you will not be asked for a "
+"verification code the next time you sign in."
+msgstr ""
+"თუ ამ ბრაუზერს ენდობით, შემდეგ შესვლისას ვერიფიკაციის კოდი აღარ მოგეთხოვებათ."
+
+#: templates/mfa/trust.html:23
+#, python-format
+msgid "Trust for %(period)s"
+msgstr "ენდობა %(period)s-ის განმავლობაში"
+
+#: templates/mfa/trust.html:26
+msgid "Don't Trust"
+msgstr "არ ვენდობი"
+
+#: templates/mfa/webauthn/add_form.html:7
+msgid "Add Security Key"
+msgstr "უსაფრთხოების გასაღების დამატება"
+
+#: templates/mfa/webauthn/authenticator_confirm_delete.html:6
+msgid "Remove Security Key"
+msgstr "უსაფრთხოების გასაღების წაშლა"
+
+#: templates/mfa/webauthn/authenticator_confirm_delete.html:9
+msgid "Are you sure you want to remove this security key?"
+msgstr "დარწმუნებული ხართ, რომ გინდათ ამ უსაფრთხოების გასაღების წაშლა?"
+
+#: templates/mfa/webauthn/authenticator_list.html:21
+msgid "Usage"
+msgstr "გამოყენება"
+
+#: templates/mfa/webauthn/authenticator_list.html:33
+msgid "Passkey"
+msgstr "გასაღები (Passkey)"
+
+#: templates/mfa/webauthn/authenticator_list.html:37
+msgid "Security key"
+msgstr "უსაფრთხოების გასაღები"
+
+#: templates/mfa/webauthn/authenticator_list.html:40
+msgid "This key does not indicate whether it is a passkey."
+msgstr "ეს გასაღები არ მიუთითებს, არის თუ არა ის passkey."
+
+#: templates/mfa/webauthn/authenticator_list.html:41
+msgid "Unspecified"
+msgstr "დაუზუსტებელი"
+
+#: templates/mfa/webauthn/authenticator_list.html:46
+#, python-format
+msgid "Added on %(created_at)s"
+msgstr "დამატებულია %(created_at)s"
+
+#: templates/mfa/webauthn/authenticator_list.html:48
+#, python-format
+msgid "Last used %(last_used)s"
+msgstr "ბოლოს გამოყენებული %(last_used)s"
+
+#: templates/mfa/webauthn/authenticator_list.html:56
+msgid "Edit"
+msgstr "რედაქტირება"
+
+#: templates/mfa/webauthn/edit_form.html:7
+msgid "Edit Security Key"
+msgstr "უსაფრთხოების გასაღების რედაქტირება"
+
+#: templates/mfa/webauthn/edit_form.html:18
+msgid "Save"
+msgstr "შენახვა"
+
+#: templates/mfa/webauthn/signup_form.html:7
+msgid "Create Passkey"
+msgstr "გასაღების (Passkey) შექმნა"
+
+#: templates/mfa/webauthn/signup_form.html:10
+msgid ""
+"You are about to create a passkey for your account. As you can add "
+"additional keys later on, you can use a descriptive name to tell the keys "
+"apart."
+msgstr ""
+"თქვენ აპირებთ თქვენი ანგარიშისთვის გასაღების (passkey) შექმნას. რადგან "
+"მოგვიანებით დამატებითი გასაღებების დამატებაც შეგიძლიათ, შეგიძლიათ აღწერითი "
+"სახელი გამოიყენოთ მათ გასარჩევად."
+
+#: templates/mfa/webauthn/signup_form.html:21
+msgid "Create"
+msgstr "შექმნა"
+
+#: templates/mfa/webauthn/snippets/scripts.html:2
+msgid "This functionality requires JavaScript."
+msgstr "ეს ფუნქცია მოითხოვს JavaScript-ს."
+
+#: templates/socialaccount/authentication_error.html:5
+#: templates/socialaccount/authentication_error.html:9
+msgid "Third-Party Login Failure"
+msgstr "მესამე მხარის ანგარიშით შესვლის შეცდომა"
+
+#: templates/socialaccount/authentication_error.html:12
+msgid ""
+"An error occurred while attempting to login via your third-party account."
+msgstr "დაფიქსირდა შეცდომა მესამე მხარის ანგარიშით შესვლის მცდელობისას."
+
+#: templates/socialaccount/connections.html:13
+msgid ""
+"You can sign in to your account using any of the following third-party "
+"accounts:"
+msgstr ""
+"თქვენ შეგიძლიათ შეხვიდეთ თქვენს ანგარიშში რომელიმე შემდეგი მესამე მხარის "
+"ანგარიშის გამოყენებით:"
+
+#: templates/socialaccount/connections.html:46
+msgid "You currently have no third-party accounts connected to this account."
+msgstr ""
+"თქვენ ამჟამად არ გაქვთ ამ ანგარიშთან დაკავშირებული მესამე მხარის ანგარიშები."
+
+#: templates/socialaccount/connections.html:50
+msgid "Add a Third-Party Account"
+msgstr "მესამე მხარის ანგარიშის დამატება"
+
+#: templates/socialaccount/email/account_connected_message.txt:4
+#, python-format
+msgid ""
+"A third-party account from %(provider)s has been connected to your account."
+msgstr ""
+"%(provider)s-ის მესამე მხარის ანგარიში დაკავშირებულია თქვენს ანგარიშთან."
+
+#: templates/socialaccount/email/account_connected_subject.txt:3
+msgid "Third-Party Account Connected"
+msgstr "მესამე მხარის ანგარიში დაკავშირებულია"
+
+#: templates/socialaccount/email/account_disconnected_message.txt:4
+#, python-format
+msgid ""
+"A third-party account from %(provider)s has been disconnected from your "
+"account."
+msgstr "%(provider)s-ის მესამე მხარის ანგარიში გათიშულია თქვენი ანგარიშიდან."
+
+#: templates/socialaccount/email/account_disconnected_subject.txt:3
+msgid "Third-Party Account Disconnected"
+msgstr "მესამე მხარის ანგარიში გათიშულია"
+
+#: templates/socialaccount/login.html:10
+#, python-format
+msgid "Connect %(provider)s"
+msgstr "%(provider)s ანგარიშის დაკავშირება"
+
+#: templates/socialaccount/login.html:13
+#, python-format
+msgid "You are about to connect a new third-party account from %(provider)s."
+msgstr ""
+"თქვენ აპირებთ %(provider)s-ის ახალი მესამე მხარის ანგარიშის დაკავშირებას."
+
+#: templates/socialaccount/login.html:17
+#, python-format
+msgid "Sign In Via %(provider)s"
+msgstr "შესვლა %(provider)s ანგარიშით"
+
+#: templates/socialaccount/login.html:20
+#, python-format
+msgid "You are about to sign in using a third-party account from %(provider)s."
+msgstr "თქვენ აპირებთ შესვლას %(provider)s-ის მესამე მხარის ანგარიშით."
+
+#: templates/socialaccount/login_cancelled.html:5
+#: templates/socialaccount/login_cancelled.html:9
+msgid "Login Cancelled"
+msgstr "შესვლა გაუქმებულია"
+
+#: templates/socialaccount/login_cancelled.html:13
+#, python-format
+msgid ""
+"You decided to cancel logging in to our site using one of your existing "
+"accounts. If this was a mistake, please proceed to <a "
+"href=\"%(login_url)s\">sign in</a>."
+msgstr ""
+"თქვენ გადაწყვიტეთ გააუქმოთ შესვლა ჩვენს საიტზე თქვენი ერთ-ერთი არსებული "
+"ანგარიშის გამოყენებით. თუ ეს შეცდომა იყო, გთხოვთ <a "
+"href=\"%(login_url)s\">ხელახლა შედით</a>."
+
+#: templates/socialaccount/messages/account_connected.txt:2
+msgid "The third-party account has been connected."
+msgstr "მესამე მხარის ანგარიში დაკავშირებულია."
+
+#: templates/socialaccount/messages/account_disconnected.txt:2
+msgid "The third-party account has been disconnected."
+msgstr "მესამე მხარის ანგარიში გათიშულია."
+
+#: templates/socialaccount/signup.html:12
+#, python-format
+msgid ""
+"You are about to use your %(provider_name)s account to login to\n"
+"%(site_name)s. As a final step, please complete the following form:"
+msgstr ""
+"თქვენ აპირებთ გამოიყენოთ თქვენი %(provider_name)s ანგარიში შესასვლელად\n"
+"%(site_name)s-ზე. როგორც საბოლოო ნაბიჯი, გთხოვთ შეავსეთ ეს ფორმა:"
+
+#: templates/socialaccount/snippets/login.html:10
+msgid "Or use a third-party"
+msgstr "ან გამოიყენეთ მესამე მხარე"
+
+#: templates/usersessions/messages/sessions_logged_out.txt:2
+msgid "Signed out of all other sessions."
+msgstr "ყველა სხვა სესიიდან გასვლა შესრულებულია."
+
+#: templates/usersessions/usersession_list.html:24
+msgid "Started At"
+msgstr "დაწყებულია"
+
+#: templates/usersessions/usersession_list.html:27
+msgid "IP Address"
+msgstr "IP მისამართი"
+
+#: templates/usersessions/usersession_list.html:30
+msgid "Browser"
+msgstr "ბრაუზერი"
+
+#: templates/usersessions/usersession_list.html:34
+msgid "Last seen at"
+msgstr "ბოლოს ნანახი"
+
+#: templates/usersessions/usersession_list.html:59
+msgid "Current"
+msgstr "მიმდინარე"
+
+#: templates/usersessions/usersession_list.html:72
+msgid "Sign Out Other Sessions"
+msgstr "სხვა სესიებიდან გასვლა"
+
+#: usersessions/apps.py:9
+msgid "User Sessions"
+msgstr "მომხმარებლის სესიები"
+
+#: usersessions/models.py:94
+msgid "session key"
+msgstr "სესიის გასაღები"
+
+#, fuzzy
+#~ msgid "Account Connection"
+#~ msgstr "ანგარიშის კავშირები"
+
+#, python-brace-format
+#~ msgid "Password must be a minimum of {0} characters."
+#~ msgstr "პაროლი უნდა შეიცავდეს მინიმუმ {0} სიმბოლოს."
+
+#, fuzzy, python-format
+#~ msgid ""
+#~ "You are receiving this email because you or someone else has requested a\n"
+#~ "password for your user account. However, we do not have any record of a "
+#~ "user\n"
+#~ "with email %(email)s in our database.\n"
+#~ "\n"
+#~ "This mail can be safely ignored if you did not request a password reset.\n"
+#~ "\n"
+#~ "If it was you, you can sign up for an account using the link below."
+#~ msgstr ""
+#~ "თქვენ იღებთ ამ ელ. წერილს რადგან თქვენ ან სხვა ვიღაცამ მოითხოვა პაროლის "
+#~ "შეცვლა თქვენს ანგარიშზე.\n"
+#~ "თქვენ შეგიძლიათ უბრალოდ დააიგნოროთ ეს ელ. წერილი თუ ეს თქვენი მოთხოვნა არ "
+#~ "იყო. დააჭირეთ ქვემოთ მოცემულ ლინკს პაროლის აღსადგენად."
+
+#, fuzzy
+#~ msgid "The following email address is associated with your account:"
+#~ msgstr "შემდეგი ელ.ფოსტის მისამართები ასოცირდება თქვენს ანგარიშთან:"
+
+#, fuzzy
+#~ msgid "Change Email Address"
+#~ msgstr "დაადასტურეთ ელ. ფოსტა"
+
+#, python-format
+#~ msgid ""
+#~ "Please sign in with one\n"
+#~ "of your existing third party accounts. Or, <a "
+#~ "href=\"%(signup_url)s\">sign up</a>\n"
+#~ "for a %(site_name)s account and sign in below:"
+#~ msgstr ""
+#~ "გთხოვთ შედით რომელიმე\n"
+#~ "სოციალური ანგარიშით. ან, %(link)sდარეგისტრირდით %(end_link)s\n"
+#~ "ან შედით %(site_name)s საიტზე"
+
+#~ msgid "or"
+#~ msgstr "ან"
+
+#~ msgid "change password"
+#~ msgstr "პაროლის შეცვლა"
+
+#~ msgid "OpenID Sign In"
+#~ msgstr "OpenID-ით შესვლა"
+
+#~ msgid "This email address is already associated with another account."
+#~ msgstr "ეს ელ.ფოსტის მისამართი უკვე დაკავშირებულია სხვა ანგარიშთან."
+
+#~ msgid ""
+#~ "We have sent you an e-mail. Please contact us if you do not receive it "
+#~ "within a few minutes."
+#~ msgstr ""
+#~ "ჩვენ გამოგიგზავნეთ ელ. წერილი. გთხოვთ დაგვიკავშირდით თუ არ მიიღებთ "
+#~ "რამდენიმე წუთში."

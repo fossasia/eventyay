@@ -1,0 +1,3 @@
+[console_scripts]
+flatc = autobahn._flatc:main
+wamp = autobahn.__main__:_main

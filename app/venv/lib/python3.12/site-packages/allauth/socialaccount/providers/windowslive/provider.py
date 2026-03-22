@@ -1,0 +1,39 @@
+from allauth.socialaccount.providers.base import ProviderAccount
+from allauth.socialaccount.providers.oauth2.provider import OAuth2Provider
+from allauth.socialaccount.providers.windowslive.views import WindowsLiveOAuth2Adapter
+
+
+class WindowsLiveAccount(ProviderAccount):
+    def to_str(self):
+        email = self.account.extra_data.get("emails", {}).get("preferred")
+        if email:
+            return email
+        return super().to_str()
+
+
+class WindowsLiveProvider(OAuth2Provider):
+    id = "windowslive"
+    name = "Live"
+    account_class = WindowsLiveAccount
+    oauth2_adapter_class = WindowsLiveOAuth2Adapter
+
+    def get_default_scope(self):
+        return ["wl.basic", "wl.emails"]
+
+    def extract_uid(self, data):
+        return str(data["id"])
+
+    def extract_common_fields(self, data):
+        try:
+            email = data.get("emails").get("preferred")
+        except AttributeError:
+            email = None
+
+        return dict(
+            email=email,
+            last_name=data.get("last_name"),
+            first_name=data.get("first_name"),
+        )
+
+
+provider_classes = [WindowsLiveProvider]

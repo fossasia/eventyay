@@ -1,0 +1,19 @@
+{% extends "multifactor/base.html" %}
+
+{% block card_title %}Fallback One Time Password{% endblock %}
+
+{% block content %}
+<p>A fallback one-time-password has been sent to you via {{succeeded}}. Copy this code into the box below and click verify.</p>
+
+<form action="" method="POST">
+	{% csrf_token %}
+
+	<div class="field"><div class="control">
+		<input class="input is-primary has-text-centered is-large" type="text" maxlength="8" size="8"  name="otp" placeholder="e.g 12345678" autocomplete="off"  inputmode="numeric" pattern="[0-9]+" autofocus>
+	</div></div>
+
+	<button type="submit" class="button is-primary is-large is-fullwidth">Verify</button>
+</form>
+{% endblock %}
+
+{% block head %}{% endblock %}

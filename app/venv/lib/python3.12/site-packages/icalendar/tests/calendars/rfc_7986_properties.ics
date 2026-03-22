@@ -1,0 +1,9 @@
+BEGIN:VCALENDAR
+LAST-MODIFIED:20161029T121229Z
+REFRESH-INTERVAL:PT3H
+NAME:RFC 7986 calendar
+DESCRIPTION:We want a lot of RFC 7986 parameters in here!
+COLOR:black
+UID:5FC53010-1267-4F8E-BC28-1D7AE55A7C99
+SOURCE:https://github.com/collective/icalendar/tree/main/src/icalendar/tests/calendars/rfc_7986_properties.ics
+END:VCALENDAR

@@ -1,0 +1,181 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-03-21 15:17+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pretix_bitpay/__init__.py:10 pretix_bitpay/__init__.py:13
+#: pretix_bitpay/payment.py:32
+msgid "BitPay"
+msgstr ""
+
+#: pretix_bitpay/__init__.py:17
+msgid "Receive Crypto payments via BitPay-compatible payment providers."
+msgstr ""
+
+#: pretix_bitpay/payment.py:36
+msgid "Crypto"
+msgstr ""
+
+#: pretix_bitpay/payment.py:54
+msgid ""
+"To accept payments via BitPay, you will need an account at BitPay. By "
+"clicking on the following button, you can connect pretix to your BitPay "
+"account. A BitPay site will open in a new tab. Return to this page and "
+"refresh it after you authorized the token at BitPay."
+msgstr ""
+
+#: pretix_bitpay/payment.py:61
+msgid "Connect with BitPay"
+msgstr ""
+
+#: pretix_bitpay/payment.py:66
+msgid "Connect with test.bitpay.com"
+msgstr ""
+
+#: pretix_bitpay/payment.py:67
+msgid ""
+"Alternatively, you can connect with a third-party provider using a BitPay-"
+"compatible API. Enter the URL here you want to connect to."
+msgstr ""
+
+#: pretix_bitpay/payment.py:73
+msgid "Start pairing"
+msgstr ""
+
+#: pretix_bitpay/payment.py:83
+msgid "Disconnect from BitPay"
+msgstr ""
+
+#: pretix_bitpay/payment.py:94
+msgid "API URL"
+msgstr ""
+
+#: pretix_bitpay/payment.py:98
+msgid "Payment method name"
+msgstr ""
+
+#: pretix_bitpay/payment.py:101
+msgid ""
+"Since you can accept a variety of different Crypto coins with BitPay and "
+"BitPay-compatible services, you can set the name of the payment method here "
+"to reflect the coins you are actually accepting."
+msgstr ""
+
+#: pretix_bitpay/payment.py:142
+msgid ""
+"The BitPay plugin is operating in test mode. No money will actually be "
+"transferred."
+msgstr ""
+
+#: pretix_bitpay/payment.py:171 pretix_bitpay/payment.py:215
+msgid ""
+"We had trouble communicating with BitPay. Please try again and get in touch "
+"with us if this problem persists."
+msgstr ""
+
+#: pretix_bitpay/payment.py:224
+msgid "BitPay reported an error: {}"
+msgstr ""
+
+#: pretix_bitpay/payment.py:231
+msgid ""
+"We had trouble communicating with BitPay. Please try again and contact "
+"support if the problem persists."
+msgstr ""
+
+#: pretix_bitpay/signals.py:25
+msgid "BitPay reported an event: {}"
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/action_overpaid.html:5
+#, python-format
+msgid ""
+"The BitPay invoice <a %(bp_href)s>%(charge)s</a> has succeeded, but the "
+"order %(order)s is expired and the product was sold out in the meantime. "
+"Therefore, the payment could not be accepted. Please contact the user and "
+"refund the money via BitPay's interface."
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/action_refund.html:5
+#, python-format
+msgid ""
+"BitPay reported that the invoice <a %(bp_href)s>%(charge)s</a> has been "
+"failed or refunded. Do you want to mark the matching order (%(order)s) as "
+"refunded?"
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/checkout_payment_confirm.html:3
+#: pretix_bitpay/templates/pretix_bitpay/checkout_payment_form.html:2
+msgid ""
+"After you submitted your order, we will redirect you to a payment partner to "
+"complete your payment. You will then be redirected back here to get your "
+"tickets."
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/control.html:6
+msgid "Invoice ID"
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/control.html:8
+msgid "Status"
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/control.html:14
+msgid "Error message"
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/control_refund.html:5
+msgid ""
+"Note that BitPay will create a \"refund request\" and the user will get an "
+"email with instructions on how to retrieve the refund. pretix, however, will "
+"mark the ticket as refunded immediately."
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/pending.html:3
+msgid ""
+"We're waiting for an answer from the payment provider regarding your "
+"payment. Please contact us if this takes more than a few hours."
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/redirect.html:17
+msgid "The payment process has started in a new window."
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/redirect.html:20
+msgid "The window to enter your payment data was not opened or was closed?"
+msgstr ""
+
+#: pretix_bitpay/templates/pretix_bitpay/redirect.html:24
+msgid "Click here in order to open the window."
+msgstr ""
+
+#: pretix_bitpay/views.py:125
+msgid "Your BitPay account has been disconnected."
+msgstr ""
+
+#: pretix_bitpay/views.py:175
+msgid ""
+"Sorry, there was an error in the payment process. Please check the link in "
+"your emails to continue."
+msgstr ""
+
+#: pretix_bitpay/views.py:190
+msgid "You are already connected to BitPay."
+msgstr ""
+
+#: pretix_bitpay/views.py:216 pretix_bitpay/views.py:225
+msgid "Communication with BitPay was not successful."
+msgstr ""

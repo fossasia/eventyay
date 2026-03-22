@@ -1,0 +1,78 @@
+root_name: python-bidi
+third_party_libraries:
+    - package_name: cfg-if
+      package_version: 1.0.0
+      repository: https://github.com/alexcrichton/cfg-if
+      license: MIT/Apache-2.0
+    - package_name: heck
+      package_version: 0.5.0
+      repository: https://github.com/withoutboats/heck
+      license: MIT OR Apache-2.0
+    - package_name: indoc
+      package_version: 2.0.5
+      repository: https://github.com/dtolnay/indoc
+      license: MIT OR Apache-2.0
+    - package_name: libc
+      package_version: 0.2.155
+      repository: https://github.com/rust-lang/libc
+      license: MIT OR Apache-2.0
+    - package_name: memoffset
+      package_version: 0.9.1
+      repository: https://github.com/Gilnaa/memoffset
+      license: MIT
+    - package_name: once_cell
+      package_version: 1.19.0
+      repository: https://github.com/matklad/once_cell
+      license: MIT OR Apache-2.0
+    - package_name: portable-atomic
+      package_version: 1.6.0
+      repository: https://github.com/taiki-e/portable-atomic
+      license: Apache-2.0 OR MIT
+    - package_name: proc-macro2
+      package_version: 1.0.86
+      repository: https://github.com/dtolnay/proc-macro2
+      license: MIT OR Apache-2.0
+    - package_name: pyo3
+      package_version: 0.22.1
+      repository: https://github.com/pyo3/pyo3
+      license: MIT OR Apache-2.0
+    - package_name: pyo3-build-config
+      package_version: 0.22.1
+      repository: https://github.com/pyo3/pyo3
+      license: MIT OR Apache-2.0
+    - package_name: pyo3-ffi
+      package_version: 0.22.1
+      repository: https://github.com/pyo3/pyo3
+      license: MIT OR Apache-2.0
+    - package_name: pyo3-macros
+      package_version: 0.22.1
+      repository: https://github.com/pyo3/pyo3
+      license: MIT OR Apache-2.0
+    - package_name: pyo3-macros-backend
+      package_version: 0.22.1
+      repository: https://github.com/pyo3/pyo3
+      license: MIT OR Apache-2.0
+    - package_name: quote
+      package_version: 1.0.36
+      repository: https://github.com/dtolnay/quote
+      license: MIT OR Apache-2.0
+    - package_name: syn
+      package_version: 2.0.70
+      repository: https://github.com/dtolnay/syn
+      license: MIT OR Apache-2.0
+    - package_name: target-lexicon
+      package_version: 0.12.15
+      repository: https://github.com/bytecodealliance/target-lexicon
+      license: Apache-2.0 WITH LLVM-exception
+    - package_name: unicode-bidi
+      package_version: 0.3.15
+      repository: https://github.com/servo/unicode-bidi
+      license: MIT OR Apache-2.0
+    - package_name: unicode-ident
+      package_version: 1.0.12
+      repository: https://github.com/dtolnay/unicode-ident
+      license: (MIT OR Apache-2.0) AND Unicode-DFS-2016
+    - package_name: unindent
+      package_version: 0.2.3
+      repository: https://github.com/dtolnay/indoc
+      license: MIT OR Apache-2.0

@@ -1,0 +1,13 @@
+{% include "mfa/webauthn/snippets/scripts.html" %}
+<form id="mfa_login" action="{% url 'mfa_login_webauthn' %}" method="post">
+    {% csrf_token %}
+    {{ redirect_field }}
+    <input type="hidden" name="credential" id="mfa_credential">
+</form>
+<script data-allauth-onload="allauth.webauthn.forms.loginForm" type="application/json">{
+    "ids": {
+        "login": "passkey_login",
+        "credential": "mfa_credential"
+    }
+}
+</script>

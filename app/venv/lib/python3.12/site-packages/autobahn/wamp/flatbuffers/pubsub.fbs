@@ -1,0 +1,232 @@
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//   FlatBuffers schema for WAMP v2 messages
+//   Copyright (c) typedef int GmbH and contributors
+//   Licensed under the MIT License (MIT)
+//
+//////////////////////////////////////////////////////////////////////////////
+
+include "types.fbs";
+
+namespace wamp.proto;
+
+
+// [Category 1: Neither Payload nor Forwarding] SUBSCRIBE message (message_type = 32): Client subscribes to a topic.
+table Subscribe
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    // The WAMP or application URI of the PubSub topic the event should be published to.
+    topic: string (required, uri_pattern);
+
+    // The topic matching method to be used for the subscription.
+    match: Match = EXACT;
+
+    // Whether the client wants the retained message we may have along with the subscription.
+    get_retained: bool;
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] SUBSCRIBED message (message_type = 33): Router acknowledges subscription.
+table Subscribed
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original SUBSCRIBE request.
+    request: uint64 (key);
+
+    // The subscription ID for the subscribed topic (or topic pattern).
+    subscription: uint64;
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] UNSUBSCRIBE message (message_type = 34): Client unsubscribes from a topic.
+table Unsubscribe
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    // The subscription ID for the subscription to unsubscribe from.
+    subscription: uint64;
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] UNSUBSCRIBED message (message_type = 35): Router acknowledges unsubscription.
+table Unsubscribed
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original UNSUBSCRIBE request or 0 if the router triggered the unsubscribe ("router subscription revocation signaling").
+    request: uint64 (key);
+
+    // If unsubscribe was actively triggered by router, the ID of the subscription revoked.
+    subscription: uint64;
+
+    // The reason (an URI) for an active (router initiated) revocation.
+    reason: string (uri);
+}
+
+
+// [Category 4: Both Payload and Forwarding] PUBLISH message (message_type = 16): Client publishes an event with application payload.
+table Publish
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The WAMP request ID of this request.
+    request: uint64 (key);
+
+    // The WAMP or application URI of the PubSub topic the event should be published to.
+    topic: string (required, uri);
+
+    /// Positional values for application-defined event payload.
+    args: [uint8];
+
+    /// Keyword values for application-defined event payload.
+    kwargs: [uint8];
+
+    /// Alternative, transparent payload. If given, ``args`` and ``kwargs`` must be left unset.
+    payload: [uint8];
+
+    /// The specific scheme in use with Payload Passthru (PPT) mode for the application payload.
+    ppt_scheme: PPTScheme;
+
+    /// The specific serializer encoding the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_serializer: PPTSerializer;
+
+    /// The cryptographic algorithm ("cipher") encrypting the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_cipher: PPTCipher;
+
+    /// The identifier or reference to the encryption key that was used to encrypt the payload with the Payload Passthru (PPT) scheme and cipher in use.
+    ppt_keyid: string (ppt_keyid);
+
+    // If true, acknowledge the publication with a success or error response.
+    acknowledge: bool;
+
+    // If true, exclude the publisher from receiving the event, even if he is subscribed (and eligible).
+    exclude_me: bool = true;
+
+    // List of WAMP session IDs to exclude from receiving this event.
+    exclude: [uint64];
+
+    // List of WAMP authids to exclude from receiving this event.
+    exclude_authid: [string] (principal);
+
+    // List of WAMP authroles to exclude from receiving this event.
+    exclude_authrole: [string] (principal);
+
+    // List of WAMP session IDs eligible to receive this event.
+    eligible: [uint64];
+
+    // List of WAMP authids eligible to receive this event.
+    eligible_authid: [string] (principal);
+
+    // List of WAMP authroles eligible to receive this event.
+    eligible_authrole: [string] (principal);
+
+    // If true, request the broker retain this event.
+    retain: bool;
+
+    // Application provided transaction hash for router-side throttle/deduplicate.
+    transaction_hash: string;
+
+    // When this message is forwarded in router-to-router traffic, the route of the message in tuples of (session, authid, authrole) beginning with the publisher session followed by a series of router-link sessions.
+    forward_for: [Principal];
+}
+
+
+// [Category 1: Neither Payload nor Forwarding] PUBLISHED message (message_type = 17): Router acknowledges publication.
+table Published
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The request ID of the original PUBLISH request.
+    request: uint64 (key);
+
+    // The publication ID for the published event.
+    publication: uint64;
+}
+
+
+// [Category 4: Both Payload and Forwarding] EVENT message (message_type = 36): Router dispatches event to subscriber with application payload.
+table Event
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The subscription ID this event is dispatched under.
+    subscription: uint64;
+
+    // The publication ID of the dispatched event.
+    publication: uint64;
+
+    /// Positional values for application-defined event payload.
+    args: [uint8];
+
+    /// Keyword values for application-defined event payload.
+    kwargs: [uint8];
+
+    /// Alternative, transparent payload. If given, ``args`` and ``kwargs`` must be left unset.
+    payload: [uint8];
+
+    /// The specific scheme in use with Payload Passthru (PPT) mode for the application payload.
+    ppt_scheme: PPTScheme;
+
+    /// The specific serializer encoding the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_serializer: PPTSerializer;
+
+    /// The cryptographic algorithm ("cipher") encrypting the application payload with the Payload Passthru (PPT) scheme in use.
+    ppt_cipher: PPTCipher;
+
+    /// The identifier or reference to the encryption key that was used to encrypt the payload with the Payload Passthru (PPT) scheme and cipher in use.
+    ppt_keyid: string (ppt_keyid);
+
+    // The WAMP session ID of the pubisher. Only filled when the publisher is disclosed.
+    publisher: uint64;
+
+    // The WAMP authrole of the publisher. Only filled when publisher is disclosed.
+    publisher_authid: string (principal);
+
+    // The WAMP authrole of the publisher. Only filled when publisher is disclosed.
+    publisher_authrole: string (principal);
+
+    // For pattern-based subscriptions, the event MUST contain the actual topic published to.
+    topic: string (uri);
+
+    // Whether the message was retained by the broker on the topic, rather than just published.
+    retained: bool;
+
+    // Application provided transaction hash for router-side throttle/deduplicate.
+    transaction_hash: string;
+
+    // Hint to request acknowledgement of the reception of this Event by a subscriber.
+    acknowledge: bool;
+
+    // When this message is forwarded in router-to-router traffic, the route of the message in tuples of (session, authid, authrole) beginning with the publisher session followed by a series of router-link sessions.
+    forward_for: [Principal];
+}
+
+
+// [Category 3: Forwarding Only] EVENT_RECEIVED message (message_type = 37): Acknowledgment from subscriber to publisher for QoS level 2 ("exactly once delivery") and survey mode.
+table EventReceived
+{
+    // The WAMP session ID on the node this session is (directly) attached to.
+    session: uint64;
+
+    // The publication ID of the event that was received, and that is acknowledged.
+    publication: uint64;
+
+    // When this message is forwarded in router-to-router traffic, the route of the acknowledgment message. This is the reversed forward_for from the originating EVENT message, so the acknowledgment travels back through the same router mesh path.
+    forward_for: [Principal];
+}
