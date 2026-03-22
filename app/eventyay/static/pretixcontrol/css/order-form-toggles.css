@@ -361,3 +361,21 @@ select.required-status-dropdown[data-current="optional"] {
 .attendee-data-explanation {
     margin-top: 3em;
 }
+
+/* Fix #2882 - Horizontal scrollbar for long questions */
+.order-form-option-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.order-form-option-table tbody th {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 0;
+}
+
+@media (max-width: 1280px) {
+    .order-form-option-table col.field-col {
+        max-width: 250px;
+    }
+}
