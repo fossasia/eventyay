@@ -302,7 +302,6 @@ class FormFlowStep(TemplateFlowStep):
         self.request = request
         form = self.get_form()
         action = request.POST.get('action', 'submit')
-        is_draft_mode = request.GET.get('draft') == '1'
 
         # For "back" action, only save data if form is valid
         if action == 'back':
@@ -314,23 +313,23 @@ class FormFlowStep(TemplateFlowStep):
             prev_url = self.get_prev_url(request)
             return redirect(prev_url) if prev_url else redirect(request.path)
 
-        # For "submit" action in draft mode (i.e. "Continue" while in draft mode),
-        # allow advancing to the next step even if required fields are missing.
-        # Save whatever partial data is currently valid.
-        if action == 'submit' and is_draft_mode:
+        # For "submit" action (Continue button), always allow advancing to the next step,
+        # even if required fields are missing. Save whatever partial data is valid.
+        # Full validation is enforced at the end by wizard.done() before the final submission.
+        if action == 'submit':
             if form.is_valid():
                 self.set_data(form.cleaned_data)
                 self.set_files(form.files)
             else:
-                # Save partial data: cleaned_data contains fields that passed validation
-                if form.cleaned_data:
+                # Save partial data: cleaned_data contains only the fields that passed validation
+                if hasattr(form, 'cleaned_data') and form.cleaned_data:
                     self.set_data(form.cleaned_data)
                 if form.files:
                     self.set_files(form.files)
             next_url = self.get_next_url(request)
             return redirect(next_url) if next_url else None
 
-        # For "submit" and "draft" actions, validate as before
+        # For "draft" action, validate as before (but with relaxed rules via not_strict)
         if not form.is_valid():
             warning_messages = getattr(form, 'warning_messages', None) or []
             for warning in filter(None, warning_messages):
@@ -341,19 +340,17 @@ class FormFlowStep(TemplateFlowStep):
                 for key, values in form.errors.items()
             )
             if error_message:
-                if action == 'draft':
-                    messages.error(
-                        self.request,
-                        _(
-                            'Your draft could not be saved because there are errors in your submission. '
-                            'Your current inputs on this step have been kept; please review and fix the errors below.'
-                        ),
-                    )
-                    self.set_data(form.cleaned_data)  # Keep valid input in the session even if the form is invalid
-                    if form.files:
-                        self.set_files(form.files)
-                    return self.get(request)
-                messages.error(self.request, error_message)
+                messages.error(
+                    self.request,
+                    _(
+                        'Your draft could not be saved because there are errors in your submission. '
+                        'Your current inputs on this step have been kept; please review and fix the errors below.'
+                    ),
+                )
+                if hasattr(form, 'cleaned_data') and form.cleaned_data:
+                    self.set_data(form.cleaned_data)  # Keep valid input in the session
+                if form.files:
+                    self.set_files(form.files)
             return self.get(request)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
