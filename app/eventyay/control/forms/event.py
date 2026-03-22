@@ -57,6 +57,19 @@ REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
     'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
     'The "Continue as a Guest" option will not be available for attendees in this event.'
 )
+ORGANIZER_EMAIL_DEFAULT = Event._meta.get_field('email').default
+ORGANIZER_EMAIL_PLACEHOLDER = _('name@example.org')
+
+
+def apply_organizer_email_placeholder(field):
+    field.widget.attrs['placeholder'] = ORGANIZER_EMAIL_PLACEHOLDER
+
+
+def clean_organizer_email(email):
+    cleaned_email = email.strip()
+    if not cleaned_email or cleaned_email == ORGANIZER_EMAIL_DEFAULT:
+        raise forms.ValidationError(_('Please provide a valid organizer email address.'))
+    return cleaned_email
 
 
 class EventWizardFoundationForm(forms.Form):
@@ -226,6 +239,11 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['email'].required = True
         self.fields['email'].label = _('Organizer email address')
         self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        email_initial = self.initial.get('email', self.fields['email'].initial)
+        if email_initial == ORGANIZER_EMAIL_DEFAULT:
+            self.initial['email'] = ''
+            self.fields['email'].initial = ''
+        apply_organizer_email_placeholder(self.fields['email'])
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -289,11 +307,7 @@ class EventWizardBasicsForm(I18nModelForm):
         return slug.lower()
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        default_email = Event._meta.get_field('email').default
-        if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
-        return email
+        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
     @staticmethod
     def has_control_rights(user, organizer):
@@ -394,13 +408,10 @@ class EventWizardDisplayForm(forms.Form):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
+        apply_organizer_email_placeholder(self.fields['email'])
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        default_email = Event._meta.get_field('email').default
-        if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
-        return email
+        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
 
 class EventWizardInitialForm(forms.Form):
