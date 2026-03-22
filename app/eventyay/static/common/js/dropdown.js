@@ -17,8 +17,11 @@ const scrollActiveItemsIntoView = function(dropdown) {
         const activeItem = container.querySelector('.dropdown-item.active');
         if (!activeItem) return;
 
-        activeItem.scrollIntoView({ block: 'start' });
-        container.scrollTop = Math.max(0, container.scrollTop - LANGUAGE_SCROLL_PADDING);
+        const containerRect = container.getBoundingClientRect();
+        const itemRect = activeItem.getBoundingClientRect();
+        const itemTopInContainer = itemRect.top - containerRect.top + container.scrollTop;
+        const desiredScrollTop = Math.max(0, itemTopInContainer - LANGUAGE_SCROLL_PADDING);
+        container.scrollTop = desiredScrollTop;
     });
 };
 
