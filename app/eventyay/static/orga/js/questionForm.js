@@ -2,7 +2,7 @@ const question_page_toggle_view = () => {
     const variant = document.querySelector("#id_variant").value
     setVisibility(
         "#answer-options",
-        variant === "choices" || variant === "multiple_choice",
+        variant === "choices" || variant === "multiple_choice" || variant === "select",
     )
     setVisibility(
         "#alert-required-boolean",

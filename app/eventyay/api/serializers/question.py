@@ -54,6 +54,7 @@ class AnswerOptionCreateSerializer(AnswerOptionSerializer):
                 variant__in=[
                     TalkQuestionVariant.CHOICES,
                     TalkQuestionVariant.MULTIPLE,
+                    TalkQuestionVariant.SELECT,
                 ]
             )
         else:
@@ -256,12 +257,16 @@ class AnswerCreateSerializer(AnswerSerializer):
     def validate(self, data):
         question = self.get_with_fallback(data, "question")
 
-        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+        if question.variant in (
+            TalkQuestionVariant.CHOICES,
+            TalkQuestionVariant.MULTIPLE,
+            TalkQuestionVariant.SELECT,
+        ):
             options = self.get_with_fallback(data, "options")
             if not options:
                 raise exceptions.ValidationError(
                     {
-                        "options": "This field is required for choice or multiple-choice question."
+                        "options": "This field is required for choice, select, or multiple-choice questions."
                     }
                 )
             for option in options:
@@ -271,6 +276,10 @@ class AnswerCreateSerializer(AnswerSerializer):
                             "options": f"Option {option.pk} does not belong to question {question.pk}."
                         }
                     )
+            if question.variant == TalkQuestionVariant.SELECT and len(options) > 1:
+                raise exceptions.ValidationError(
+                    {"options": "Only one option may be selected for select questions."}
+                )
 
         target = question.target
         submission = self.get_with_fallback(data, "submission")

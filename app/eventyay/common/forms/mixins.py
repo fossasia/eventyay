@@ -373,6 +373,21 @@ class QuestionFieldsMixin:
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
             return field
+        if question.variant == TalkQuestionVariant.SELECT:
+            choices = question.options.all()
+            field = EventLocalizedModelChoiceField(
+                queryset=choices,
+                label=label_text,
+                required=question.required,
+                empty_label='' if not question.required else None,
+                initial=(initial_object.options.first() if initial_object else question.default_answer),
+                disabled=read_only,
+                help_text=help_text,
+                widget=forms.Select(attrs={'class': 'enhanced'}),
+            )
+            field.original_help_text = original_help_text
+            field.widget.attrs['placeholder'] = ''  # XSS
+            return field
         if question.variant == TalkQuestionVariant.MULTIPLE:
             choices = question.options.all()
             field = EventLocalizedModelMultipleChoiceField(

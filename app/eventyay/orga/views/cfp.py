@@ -459,7 +459,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
             ).aggregate(models.Max('position'))['position__max']
             form.instance.position = (max_position or -1) + 1
         
-        if form.cleaned_data.get('variant') in ('choices', 'multiple_choice'):
+        if form.cleaned_data.get('variant') in ('choices', 'multiple_choice', 'select'):
             changed_options = [form.changed_data for form in self.formset if form.has_changed()]
             if form.cleaned_data.get('options') and changed_options:
                 messages.error(
@@ -492,6 +492,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         if form.cleaned_data.get('variant') in (
             'choices',
             'multiple_choice',
+            'select',
         ) and not form.cleaned_data.get('options'):
             formset = self.save_formset(self.instance)
             if not formset:

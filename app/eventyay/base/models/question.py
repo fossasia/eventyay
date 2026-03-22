@@ -42,6 +42,7 @@ class TalkQuestionVariant(Choices):
     FILE = 'file'
     CHOICES = 'choices'
     MULTIPLE = 'multiple_choice'
+    SELECT = 'select'
     COUNTRY = 'country'
 
     valid_choices = [
@@ -55,6 +56,7 @@ class TalkQuestionVariant(Choices):
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
+        (SELECT, _('Select (one option)')),
         (COUNTRY, _('Country List')),
     ]
 
@@ -105,7 +107,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
     the opportunity to get all the information they need.
 
     :param variant: Can be any of 'number', 'string', 'text', 'boolean',
-        'file', 'choices', 'multiple_choice', or 'country'. Defined in the
+        'file', 'choices', 'multiple_choice', 'select', or 'country'. Defined in the
         ``TalkQuestionVariant`` class.
     :param target: Can be any of 'submission', 'speaker', or 'reviewer'.
         Defined in the ``TalkQuestionTarget`` class.
@@ -437,7 +439,7 @@ class Answer(PretalxModel):
             return ''
         if self.question.variant == 'file':
             return self.answer_file.url if self.answer_file else ''
-        if self.question.variant in ('choices', 'multiple_choice'):
+        if self.question.variant in ('choices', 'multiple_choice', 'select'):
             return ', '.join(str(option.answer) for option in self.options.all())
         if self.question.variant == TalkQuestionVariant.COUNTRY:
             return get_country_name(self.answer) or self.answer or ''
