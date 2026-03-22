@@ -1,4 +1,6 @@
-from eventyay.control.views.admin_views import redact_sensitive_data
+import json
+
+from eventyay.control.views.admin_views import redact_sensitive_data, serialize_log_data
 
 
 def test_redact_sensitive_data_simple():
@@ -58,3 +60,16 @@ def test_redact_sensitive_data_non_dict():
     redacted = redact_sensitive_data(data_list)
     assert redacted[0] == "a"
     assert redacted[2]["secret"] == "*****"
+
+
+def test_serialize_log_data_redacts_and_returns_json_text():
+    payload = {
+        "clientSecret": "hidden",
+        "nested": {"password": "pwd", "visible": "ok"},
+    }
+    serialized = serialize_log_data(payload)
+    parsed = json.loads(serialized)
+
+    assert parsed["clientSecret"] == "*****"
+    assert parsed["nested"]["password"] == "*****"
+    assert parsed["nested"]["visible"] == "ok"

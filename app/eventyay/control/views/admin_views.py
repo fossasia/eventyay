@@ -60,6 +60,7 @@ from eventyay.control.forms.server_management import (
 )
 from eventyay.control.tasks import clear_event_data
 from eventyay.features.importers.tasks import conftool_sync_posters
+from eventyay.helpers.json import CustomJSONEncoder
 
 
 logger = logging.getLogger(__name__)
@@ -109,6 +110,11 @@ def redact_sensitive_data(data, depth=0):
     return data
 
 
+def serialize_log_data(data):
+    payload = redact_sensitive_data(data or {})
+    return json.dumps(payload, cls=CustomJSONEncoder, sort_keys=True)
+
+
 class EventQuerysetMixin:
     def get_queryset(self):
         return super().get_queryset().select_related("organizer")
@@ -144,7 +150,7 @@ class UserUpdate(SuperuserBase, UpdateView):
             content_object=self.object,
             user=self.request.user,
             action_type="user.changed",
-            data={"changed_keys": form.changed_data},
+            data=serialize_log_data({"changed_keys": form.changed_data}),
         )
         return super().form_valid(form)
 
@@ -188,7 +194,7 @@ class ProfileView(AdminBase, FormView):
             content_object=self.request.user,
             user=self.request.user,
             action_type="profile.changed",
-            data={"changed_keys": form.changed_data},
+            data=serialize_log_data({"changed_keys": form.changed_data}),
         )
         form.save()
         update_session_auth_hash(self.request, self.request.user)
@@ -313,7 +319,7 @@ class EventAdminToken(EventQuerysetMixin, AdminBase, DetailView):
             content_object=event,
             user=self.request.user,
             action_type="event.adminaccess",
-            data={},
+            data=serialize_log_data({}),
         )
 
         # Use the appropriate URL based on environment
@@ -442,7 +448,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="event.created",
-            data=redact_sensitive_data({
+            data=serialize_log_data({
                 "copy_from": self.copy_from.pk if self.copy_from else None,
                 **form.cleaned_data,
             }),
@@ -482,7 +488,7 @@ class EventUpdate(FormsetMixin, EventQuerysetMixin, AdminBase, UpdateView):
             content_object=self.get_object(),
             user=self.request.user,
             action_type="event.updated",
-            data=redact_sensitive_data(form.cleaned_data),
+            data=serialize_log_data(form.cleaned_data),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -506,7 +512,7 @@ class EventClear(EventQuerysetMixin, AdminBase, DetailView):
             content_object=self.get_object(),
             user=self.request.user,
             action_type="event.cleared",
-            data={},
+            data=serialize_log_data({}),
         )
         clear_event_data.apply_async(kwargs={"event": self.get_object().pk})
         messages.success(request, _("The data will soon be deleted."))
@@ -532,7 +538,7 @@ class BBBServerCreate(EventExclusiveQuerysetMixin, AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="bbbserver.created",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -551,7 +557,7 @@ class BBBServerUpdate(EventExclusiveQuerysetMixin, AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="bbbserver.updated",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -569,7 +575,7 @@ class BBBServerDelete(EventExclusiveQuerysetMixin, AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="bbbserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
@@ -596,7 +602,7 @@ class JanusServerCreate(EventExclusiveQuerysetMixin, AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="janusserver.created",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -615,7 +621,7 @@ class JanusServerUpdate(EventExclusiveQuerysetMixin, AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="janusserver.updated",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -633,7 +639,7 @@ class JanusServerDelete(EventExclusiveQuerysetMixin, AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="janusserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
@@ -660,7 +666,7 @@ class TurnServerCreate(EventExclusiveQuerysetMixin, AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="turnserver.created",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -679,7 +685,7 @@ class TurnServerUpdate(EventExclusiveQuerysetMixin, AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="turnserver.updated",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -697,7 +703,7 @@ class TurnServerDelete(EventExclusiveQuerysetMixin, AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="turnserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
@@ -756,7 +762,7 @@ class StreamingServerCreate(AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="streamingserver.created",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -775,7 +781,7 @@ class StreamingServerUpdate(AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="streamingserver.updated",
-            data=redact_sensitive_data({k: str(v) for k, v in form.cleaned_data.items()}),
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -793,7 +799,7 @@ class StreamingServerDelete(AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="streamingserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
