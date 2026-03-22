@@ -1,8 +1,0 @@
-{% extends parent_template %}
-{% load compress %}
-
-{% block js %}{% spaceless %}
-    {% compress js %}
-        {{ block.super }}
-    {% endcompress %}
-{% endspaceless %}{% endblock %}

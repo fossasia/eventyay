@@ -1,6 +1,0 @@
-#!/Users/ashishkhedkar/eventyay/app/venv/bin/python3.12
-import sys
-from xmlschema.cli import validate
-if __name__ == '__main__':
-    sys.argv[0] = sys.argv[0].removesuffix('.exe')
-    sys.exit(validate())

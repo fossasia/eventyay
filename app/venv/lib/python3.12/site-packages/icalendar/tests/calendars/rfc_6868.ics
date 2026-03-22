@@ -1,6 +1,0 @@
-BEGIN:VCALENDAR
-X-PARAM;NEWLINE=^n;ALL=^^^'^n;UNKNOWN=^a^ ^asd:asd
-BEGIN:VEVENT
-ATTENDEE;CN=George Herman ^'Babe^' Ruth:mailto:babe@example.com
-END:VEVENT
-END:VCALENDAR
