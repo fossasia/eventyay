@@ -502,14 +502,8 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     def events(self):
         if self.all_events:
             return self.organizer.events.all()
-        # Lazy sync: ensure Talk-only teams have events synced when accessed
-        # This handles cases where teams exist but haven't been saved since implementation
-        # Only sync once per instance to avoid performance issues
-        if self.pk and not self.all_events and not getattr(self, '_events_synced', False):
-            from eventyay.base.services.team_event_sync import is_talk_only_team
-            if is_talk_only_team(self):
-                self.sync_events_for_talk_only()
-                self._events_synced = True
+        # Talk-only limit_events updates run on save, after migrations, and when new events
+        # are created—not here—to avoid DB writes on every read across requests.
         return self.limit_events.all()
 
     def sync_events_for_talk_only(self):

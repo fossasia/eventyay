@@ -54,6 +54,25 @@ from ..utils import EventCreatedFor, get_subevent
 
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
+# Distinct from ``None`` (staff: all events) for :func:`widgets_for_event_qs` default handling.
+_UNSET_CAN_VIEW_ORDERS_IDS = object()
+
+
+def _can_view_orders_event_ids_for_user(request: HttpRequest) -> Optional[frozenset[int]]:
+    """
+    Event PKs where the user may view orders (``can_view_orders`` on an applicable team).
+
+    Returns ``None`` when the user has a staff session (same as ``has_event_permission``:
+    all events). Otherwise returns a frozenset for O(1) membership checks on widgets.
+    """
+    if request.user.has_active_staff_session(request.session.session_key):
+        return None
+    return frozenset(
+        request.user.get_events_with_permission('can_view_orders', request=request).values_list(
+            'pk', flat=True
+        )
+    )
+
 
 def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
     subevent = get_subevent(request)
@@ -389,14 +408,22 @@ class EventWidgetGenerator:
         """
 
     @staticmethod
-    def generate_ticket_button(event: Event, request: HttpRequest) -> str:
+    def generate_ticket_button(
+        event: Event,
+        request: HttpRequest,
+        can_view_orders_event_ids: Optional[frozenset[int]],
+    ) -> str:
         """
         Generate a ticket button based on user permissions.
         Shows permission modal if user doesn't have can_view_orders permission.
+
+        ``can_view_orders_event_ids`` is from :func:`_can_view_orders_event_ids_for_user`:
+        ``None`` means staff (all events); otherwise membership in the set grants access.
         """
-        can_view_orders = request.user.has_event_permission(
-            event.organizer, event, 'can_view_orders', request=request
-        )
+        if can_view_orders_event_ids is None:
+            can_view_orders = True
+        else:
+            can_view_orders = event.pk in can_view_orders_event_ids
         if can_view_orders:
             ticket_url = reverse(
                 'control:event.index',
@@ -409,7 +436,13 @@ class EventWidgetGenerator:
             return f'<a href="#" class="component tickets-permission-link" data-event-slug="{event.slug}" data-organizer-slug="{event.organizer.slug}">{_("Tickets")}</a>'
 
     @classmethod
-    def generate_widget(cls, event: Event, request: HttpRequest, lazy: bool = False) -> Dict[str, Any]:
+    def generate_widget(
+        cls,
+        event: Event,
+        request: HttpRequest,
+        lazy: bool = False,
+        can_view_orders_event_ids: Optional[frozenset[int]] = None,
+    ) -> Dict[str, Any]:
         """
         Generate a complete widget for an event.
         """
@@ -442,7 +475,7 @@ class EventWidgetGenerator:
                         'event': event.slug,
                     },
                 ),
-                ticket_button=cls.generate_ticket_button(event, request),
+                ticket_button=cls.generate_ticket_button(event, request, can_view_orders_event_ids),
                 video_button=cls.generate_video_button(event),
                 talk_button=cls.generate_talk_button(event),
             )
@@ -457,14 +490,34 @@ class EventWidgetGenerator:
 
 
 def widgets_for_event_qs(
-    request: HttpRequest, qs: QuerySet[Event], nmax: int, lazy: bool = False
+    request: HttpRequest,
+    qs: QuerySet[Event],
+    nmax: int,
+    lazy: bool = False,
+    can_view_orders_event_ids: Any = _UNSET_CAN_VIEW_ORDERS_IDS,
 ) -> List[Dict[str, Any]]:
     """
     Generate event widgets for dashboard display.
+
+    When ``lazy`` is False, pass ``can_view_orders_event_ids`` from
+    :func:`_can_view_orders_event_ids_for_user` once per HTTP request so each widget
+    does not call ``has_event_permission`` (avoids N+1 DB access for teams).
     """
     events = EventWidgetGenerator.get_event_query(qs, nmax, lazy)
 
-    return [EventWidgetGenerator.generate_widget(event, request, lazy) for event in events]
+    effective_ticket_ids: Optional[frozenset[int]] = None
+    if not lazy:
+        if can_view_orders_event_ids is _UNSET_CAN_VIEW_ORDERS_IDS:
+            effective_ticket_ids = _can_view_orders_event_ids_for_user(request)
+        else:
+            effective_ticket_ids = can_view_orders_event_ids
+
+    return [
+        EventWidgetGenerator.generate_widget(
+            event, request, lazy, can_view_orders_event_ids=effective_ticket_ids
+        )
+        for event in events
+    ]
 
 
 def annotated_event_query(request: HttpRequest, lazy: bool = False) -> QuerySet[Event]:
@@ -560,6 +613,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
 
 
 def user_index_widgets_lazy(request: HttpRequest) -> JsonResponse:
+    can_view_orders_event_ids = _can_view_orders_event_ids_for_user(request)
     widgets = []
     widgets += widgets_for_event_qs(
         request,
@@ -573,6 +627,7 @@ def user_index_widgets_lazy(request: HttpRequest) -> JsonResponse:
         )
         .order_by('date_from', 'order_to', 'pk'),
         7,
+        can_view_orders_event_ids=can_view_orders_event_ids,
     )
     widgets += widgets_for_event_qs(
         request,
@@ -585,10 +640,12 @@ def user_index_widgets_lazy(request: HttpRequest) -> JsonResponse:
         )
         .order_by('-order_to', 'pk'),
         8,
+        can_view_orders_event_ids=can_view_orders_event_ids,
     )
     widgets += widgets_for_event_qs(
         request,
         annotated_event_query(request).filter(has_subevents=True).order_by('-order_to', 'pk'),
         8,
+        can_view_orders_event_ids=can_view_orders_event_ids,
     )
     return JsonResponse({'widgets': widgets})

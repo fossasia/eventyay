@@ -998,18 +998,22 @@ class Event(
         Automatically add this event to Talk-only teams' limit_events
         so events appear in the dashboard for Talk-only users.
         """
-        from eventyay.base.services.team_event_sync import sync_events_to_talk_only_team
-        
-        # Sync to all Talk-only teams for this organizer
+        from eventyay.base.services.team_event_sync import (
+            is_talk_only_team,
+            sync_events_to_talk_only_team,
+        )
+
+        # Sync to Talk-only teams for this organizer (not every limited team)
         with scopes_disabled():
             from eventyay.base.models.organizer import Team
-            talk_only_teams = Team.objects.filter(
+            limited_teams = Team.objects.filter(
                 organizer=self.organizer,
-                all_events=False
+                all_events=False,
             )
-            
-            for team in talk_only_teams:
-                # Check if team is Talk-only and add this event
+
+            for team in limited_teams:
+                if not is_talk_only_team(team):
+                    continue
                 sync_events_to_talk_only_team(team, events=[self])
 
     def get_plugins(self):

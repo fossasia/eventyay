@@ -1,0 +1,15 @@
+{% load i18n %}
+<div class="tickets-permission-modal" id="tickets-permission-modal" aria-hidden="true">
+  <div class="tickets-permission-modal__dialog">
+    <div class="tickets-permission-modal__icon-wrap">
+      <i class="fa fa-lock tickets-permission-modal__icon"></i>
+    </div>
+    <h3 class="tickets-permission-modal__title">{% trans "Permission Required" %}</h3>
+    <p class="tickets-permission-modal__text">
+      {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
+    </p>
+    <button type="button" class="tickets-permission-modal__ok" id="tickets-modal-ok-btn">
+      {% trans "Ok" %}
+    </button>
+  </div>
+</div>

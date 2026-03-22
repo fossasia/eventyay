@@ -8,6 +8,7 @@ from django_scopes.forms import SafeModelMultipleChoiceField
 
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.track import Track
+from eventyay.base.services.team_event_sync import is_talk_only_permission_mapping
 from eventyay.control.forms.event import SafeEventMultipleChoiceField
 
 
@@ -138,22 +139,8 @@ class TeamForm(forms.ModelForm):
         all_events = data.get("all_events")
         limit_events = data.get("limit_events")
         
-        # Check if this is a Talk-only team (has Talk permissions but no Ticket/Settings permissions)
-        has_talk_perms = bool(data.get("can_change_submissions") or data.get("is_reviewer"))
-        has_ticket_perms = bool(
-            data.get("can_view_orders") or
-            data.get("can_change_orders") or
-            data.get("can_change_items") or
-            data.get("can_view_vouchers") or
-            data.get("can_change_vouchers") or
-            data.get("can_checkin_orders")
-        )
-        has_settings_perms = bool(
-            data.get("can_change_event_settings") or
-            data.get("can_change_organizer_settings")
-        )
-        is_talk_only = has_talk_perms and not has_ticket_perms and not has_settings_perms
-        
+        is_talk_only = is_talk_only_permission_mapping(data)
+
         # For Talk-only teams, allow creating without events (they'll be auto-synced)
         # For other teams, require events to be selected
         if not all_events and not limit_events and not is_talk_only:

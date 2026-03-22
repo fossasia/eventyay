@@ -9,37 +9,36 @@ logger = logging.getLogger(__name__)
 def sync_existing_talk_only_teams(sender, **kwargs):
     """
     Automatically sync events to existing Talk-only teams after migrations.
-    
+
     This ensures that existing Talk-only teams created before this implementation
     get their events synced automatically during deployment, without requiring
     manual script execution.
-    
+
     This runs automatically after migrations complete, ensuring all existing
     Talk-only teams have events in their limit_events so they appear in dashboards.
     """
     # Only run if migrations are complete and database is ready
     try:
         from django.db import connection
-        from django.core.management import get_commands
-        
+
         # Check if database is ready
         connection.ensure_connection()
-        
-        # Only sync if we're not in a management command that might conflict
-        # (e.g., during migrations, collectstatic, etc.)
+
+        # post_migrate only fires after ``migrate`` applies migrations; do not skip
+        # ``migrate`` or this hook would never run. Skip other commands where the
+        # signal is not expected but argv might still trigger this code path.
         import sys
         if len(sys.argv) > 1:
             command = sys.argv[1]
-            # Skip syncing during certain commands to avoid conflicts
-            skip_commands = ['migrate', 'makemigrations', 'collectstatic', 'test', 'shell']
+            skip_commands = ['makemigrations', 'collectstatic', 'test', 'shell']
             if command in skip_commands:
                 return
-        
+
         from eventyay.base.services.team_event_sync import sync_all_talk_only_teams
-        
+
         # Sync all Talk-only teams automatically
         results = sync_all_talk_only_teams()
-        
+
         if results['teams_synced'] > 0:
             logger.info(
                 f"Automatically synced {results['teams_synced']} Talk-only team(s), "
@@ -77,7 +76,7 @@ class EventyayBaseConfig(AppConfig):
             from eventyay.config.sentry import initialize
 
             initialize()
-        
+
         # Connect post_migrate signal to automatically sync existing Talk-only teams
         # This runs automatically after migrations complete, ensuring existing teams
         # are synced without manual script execution
