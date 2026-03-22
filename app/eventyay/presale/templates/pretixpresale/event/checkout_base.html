@@ -13,7 +13,7 @@
 {% endblock %}
 {% block content %}
 <aside aria-label="{% trans "Your cart" %}">
-    <details class="panel panel-default cart" {% if "open_cart" in request.GET %}open{% endif %}>
+    <details class="panel panel-default cart" {% if "open_cart" in request.GET or not has_prev %}open{% endif %}>
         <summary class="panel-heading">
             <h3 class="panel-title">
                 <span>
