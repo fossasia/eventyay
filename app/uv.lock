@@ -2350,11 +2350,11 @@ wheels = [
 
 [[package]]
 name = "phonenumberslite"
-version = "9.0.25"
+version = "9.0.26"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fb/9a/5e4906de6fd3e97b406cda0b4cce867001763902d4f9adba41f5bba919b3/phonenumberslite-9.0.25.tar.gz", hash = "sha256:403191df8dbc7af3c08f8835f0ed00f8115f7f548c615c42cf5f37a7604dadfc", size = 288484, upload-time = "2026-02-26T10:24:23.054Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/7d/83054d0569997ce520fc0facc4591bd421c231a5e7a74879cad87227e936/phonenumberslite-9.0.26.tar.gz", hash = "sha256:0c0d882ec499533bd016c667f0f3c41c34fbf3a1cf2b33460c87ed68d804f362", size = 288740, upload-time = "2026-03-13T11:34:02.291Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/d7/c8db068cd352861a3a15d4ece878f2141770cf1031e77c6dbc798b8f1a05/phonenumberslite-9.0.25-py2.py3-none-any.whl", hash = "sha256:a47afda274d951ac5e509d46beb5b5a67a58ab2683a5ad54c19ad61737f24191", size = 472742, upload-time = "2026-02-26T10:24:21.79Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/d8/67957b95d4405ea1961926f992f5e14fd86af710adab1fc25fdeec3ea550/phonenumberslite-9.0.26-py2.py3-none-any.whl", hash = "sha256:53be71549c4441d1c930b2f130ac64548c83585508197b8d64d64aa3973f32d7", size = 473316, upload-time = "2026-03-13T11:34:00.576Z" },
 ]
 
 [[package]]
