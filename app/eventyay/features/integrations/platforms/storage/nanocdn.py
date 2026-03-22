@@ -9,9 +9,10 @@ from django.core.exceptions import SuspiciousFileOperation
 from django.core.files import File
 from django.core.files.storage import Storage
 
+from eventyay.utils.http import safe_get, safe_put, safe_delete
+
 """
-This file contains a Django storage backend for the minimal CDN used by the eventyay SaaS service. The architecture
-of the CDN is described at https://behind.pretix.eu/2018/03/20/high-available-cdn/
+This file contains a Django storage backend for the minimal CDN used by the eventyay SaaS service.
 """
 
 
@@ -86,7 +87,7 @@ class NanoCDNStorage(Storage):
         return NanoCDNFile(name, self, mode)
 
     def _read(self, name):
-        resp = requests.get(urllib.parse.urljoin(self.base_url, name), stream=True)
+        resp = safe_get(urllib.parse.urljoin(self.base_url, name), stream=True)
         if resp.status_code == 404:
             raise FileNotFoundError()
         resp.raise_for_status()
@@ -113,10 +114,11 @@ class NanoCDNStorage(Storage):
             )
         else:
             name = os.path.join(
-                os.path.dirname(name), os.path.basename(name) + "." + sha1[:14]
+                os.path.dirname(name),
+                os.path.basename(name) + "." + sha1.hexdigest()[:14],
             )
 
-        resp = requests.put(
+        resp = safe_put(
             urllib.parse.urljoin(self.base_url, os.path.join("upload", name)),
             data=content,
             allow_redirects=False,
@@ -141,23 +143,29 @@ class NanoCDNStorage(Storage):
     def delete(self, name):
         if isinstance(name, NanoCDNFile):
             name = name.name
-        resp = requests.delete(urllib.parse.urljoin(self.base_url, name))
+        resp = safe_delete(urllib.parse.urljoin(self.base_url, name))
         if resp.status_code == 404:
-            return resp  # That is fine
+            return resp
         resp.raise_for_status()
         return resp
 
     def exists(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = requests.head(
+            urllib.parse.urljoin(self.base_url, name),
+            timeout=30
+        )
         if resp.status_code == 404:
             return False
         resp.raise_for_status()
         return True
 
     def size(self, name):
-        resp = requests.head(urllib.parse.urljoin(self.base_url, name))
+        resp = requests.head(
+            urllib.parse.urljoin(self.base_url, name),
+            timeout=30
+        )
         resp.raise_for_status()
-        return resp["Content-Length"]
+        return resp.headers["Content-Length"]
 
     def url(self, name):
         return urllib.parse.urljoin(settings.MEDIA_URL, name)
