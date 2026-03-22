@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 
 import requests
+from eventyay.utils.http import safe_post
 from celery.exceptions import MaxRetriesExceededError
 from django.db.models import Exists, OuterRef, Q
 from django.conf import settings
@@ -313,7 +314,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = safe_post(webhook.target_url, json=payload, allow_redirects=False)
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
