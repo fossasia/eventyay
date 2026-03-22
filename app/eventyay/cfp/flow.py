@@ -302,6 +302,7 @@ class FormFlowStep(TemplateFlowStep):
         self.request = request
         form = self.get_form()
         action = request.POST.get('action', 'submit')
+        is_draft_mode = request.GET.get('draft') == '1'
 
         # For "back" action, only save data if form is valid
         if action == 'back':
@@ -312,6 +313,22 @@ class FormFlowStep(TemplateFlowStep):
                 self.set_files(form.files)
             prev_url = self.get_prev_url(request)
             return redirect(prev_url) if prev_url else redirect(request.path)
+
+        # For "submit" action in draft mode (i.e. "Continue" while in draft mode),
+        # allow advancing to the next step even if required fields are missing.
+        # Save whatever partial data is currently valid.
+        if action == 'submit' and is_draft_mode:
+            if form.is_valid():
+                self.set_data(form.cleaned_data)
+                self.set_files(form.files)
+            else:
+                # Save partial data: cleaned_data contains fields that passed validation
+                if form.cleaned_data:
+                    self.set_data(form.cleaned_data)
+                if form.files:
+                    self.set_files(form.files)
+            next_url = self.get_next_url(request)
+            return redirect(next_url) if next_url else None
 
         # For "submit" and "draft" actions, validate as before
         if not form.is_valid():

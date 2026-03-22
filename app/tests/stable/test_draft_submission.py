@@ -163,3 +163,33 @@ class TestDraftSubmission:
             submission = Submission.all_objects.filter(title="Draft with missing requirements").first()
             assert submission is not None
             assert submission.state == SubmissionStates.DRAFT
+
+    @pytest.mark.django_db
+    def test_continue_in_draft_mode_advances_to_next_step(self, event, client, user, cfp_setup):
+        """Verify that clicking Continue in draft mode advances to the next step,
+        even when required fields (like abstract) are missing."""
+        client.force_login(user)
+        submission_type = cfp_setup.pk
+
+        # Start wizard
+        response, current_url = self.perform_init_wizard(client, event=event)
+
+        # Simulate "Continue" with ?draft=1 active and missing required 'abstract'
+        draft_url = current_url + ('&' if '?' in current_url else '?') + 'draft=1'
+        data = {
+            "title": "Draft Navigation Test",
+            "action": "submit",  # "Continue" button
+            "content_locale": "en",
+            "submission_type": submission_type,
+            "abstract": "",  # Missing required field
+        }
+        response = client.post(draft_url, data=data, follow=False)
+
+        # Should redirect forward (either next step or submissions page), not re-render the same page
+        assert response.status_code in (301, 302), (
+            f"Expected a redirect when pressing Continue in draft mode, got {response.status_code}"
+        )
+        redirect_location = response.get('Location', '')
+        assert current_url not in redirect_location or 'draft' in redirect_location, (
+            "Should have moved away from the current step when pressing Continue in draft mode"
+        )

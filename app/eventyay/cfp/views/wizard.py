@@ -74,6 +74,12 @@ class SubmitWizard(EventPageMixin, View):
             # When clicking Back, the step's POST handler has already saved the data
             # Now redirect to the previous step
             return result
+        # When "Continue" is clicked on the last step in draft mode, result is None
+        # (no next URL). Fall through to done(draft=True) to save the submission.
+        is_draft_mode = request.GET.get('draft') == '1'
+        action = request.POST.get('action', 'submit')
+        if request.method == 'POST' and action == 'submit' and is_draft_mode and result is None:
+            return self.done(request, draft=True)
         if request.method == 'GET' or (step.get_next_applicable(request) or not step.is_completed(request)):
             if result and (csp_change := step.get_csp_update(request)):
                 result._csp_update = csp_change
