@@ -285,6 +285,9 @@ class EventWizardDisplayForm(forms.Form):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
+        if self.initial.get('email') == Event._meta.get_field('email').default:
+            self.initial['email'] = ''
+        self.fields['email'].widget.attrs['placeholder'] = _('organizer@example.org')
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip()
