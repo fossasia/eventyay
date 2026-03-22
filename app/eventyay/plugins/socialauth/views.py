@@ -38,7 +38,11 @@ class OAuthLoginView(View):
         gs = GlobalSettingsObject()
         login_providers = gs.settings.get('login_providers', as_type=dict) or {}
         known_providers = frozenset(LoginProviders.model_fields.keys())
-        if provider not in known_providers or provider not in login_providers or not login_providers[provider].get('state'):
+        if (
+            provider not in known_providers
+            or provider not in login_providers
+            or not login_providers[provider].get('state')
+        ):
             messages.error(request, _('This login method is not available.'))
             return redirect('eventyay_common:auth.login')
         provider_config = login_providers[provider]
@@ -85,7 +89,8 @@ class OAuthReturnView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         try:
             user = self.get_or_create_user(request)
-            
+            keep_logged_in = request.session.pop('socialauth_keep_logged_in', False)
+
             # Check for OAuth2 params first (Talk module integration)
             oauth2_params = request.session.pop('oauth2_params', {})
             if oauth2_params:
@@ -96,20 +101,19 @@ class OAuthReturnView(View):
                     # OAuth2 flow takes precedence - redirect to authorization endpoint
                     # Clean up socialauth_next_url to prevent it from being used later
                     request.session.pop('socialauth_next_url', None)
-                    response = process_login_and_set_cookie(request, user, False)
+                    response = process_login_and_set_cookie(request, user, keep_logged_in)
                     redirect_response = redirect(f'{auth_url}?{query_string}')
                     redirect_response.cookies.update(response.cookies)
                     return redirect_response
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
-            
+
             # Retrieve and re-validate the stored 'next' URL from session
             # Re-validation provides defense against session tampering
             next_url = request.session.pop('socialauth_next_url', None)
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
                 request.session['socialauth_next_url'] = next_url
 
-            keep_logged_in = request.session.pop('socialauth_keep_logged_in', False)
             response = process_login_and_set_cookie(request, user, keep_logged_in)
             return response
         except AttributeError as e:
@@ -187,10 +191,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         context['login_providers'] = login_providers
         context['any_preferred'] = any(
-            p.get('state', False) and p.get('is_preferred', False)
-            for p in login_providers.values()
+            p.get('state', False) and p.get('is_preferred', False) for p in login_providers.values()
         )
-        context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip("/")
+        context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip('/')
         return context
 
     def post(self, request, *args, **kwargs):
@@ -277,5 +280,6 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                             'secret': secret,
                         },
                     )
+
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')
