@@ -34,12 +34,13 @@ class PretalxFavButton extends HTMLElement {
 
     const starOutline = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2zm0 3.34L9.86 9.88l-4.58.67 3.32 3.24-.78 4.58L12 16.1l4.18 2.27-.78-4.58 3.32-3.24-4.58-.67L12 5.34z"/></svg>'
     const starFilled = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>'
-    this._starOutline = starOutline
-    this._starFilled = starFilled
 
     this.innerHTML =
       '<button class="btn btn-xs btn-link">' +
-      '<span class="fav-icon">' + starOutline + '</span>' +
+      '<span class="fav-icon">' +
+      '<span class="fav-star-outline" aria-hidden="true">' + starOutline + '</span>' +
+      '<span class="fav-star-filled" aria-hidden="true" hidden>' + starFilled + '</span>' +
+      '</span>' +
       '</button>'
     this._button = this.querySelector('button')
     this._iconWrap = this.querySelector('.fav-icon')
@@ -82,7 +83,11 @@ class PretalxFavButton extends HTMLElement {
   }
 
   _render () {
-    this._iconWrap.innerHTML = this._isFaved ? this._starFilled : this._starOutline
+    const outline = this._iconWrap.querySelector('.fav-star-outline')
+    const filled = this._iconWrap.querySelector('.fav-star-filled')
+    if (!outline || !filled) return
+    outline.hidden = this._isFaved
+    filled.hidden = !this._isFaved
   }
 
   _spin () {
