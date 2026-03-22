@@ -42,6 +42,11 @@ def test_preferred_provider_renders_before_email_form(client, preferred_login_pr
 
     assert response.status_code == 200
     assert response.text.index('Login with Github') < response.text.index("id='login-form'")
+    assert 'login-option-primary' in response.text
+    assert 'login-options-secondary-group' in response.text
+    assert 'login-separator-label' in response.text
+    assert 'or use the following:' not in response.text
+    assert response.text.count('login-option-secondary') == 2
 
 
 @pytest.mark.django_db
