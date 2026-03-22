@@ -114,9 +114,12 @@ class CartMixin:
             for r, response in sorted(responses, key=lambda r: str(r[0])):
                 if response:
                     for key, value in response.items():
+                        answer = data.get('question_form_data', {}).get(key)
+                        if hasattr(value, 'get_display_value'):
+                            answer = value.get_display_value(answer)
                         pos_additional_fields[cp.pk].append(
                             {
-                                'answer': data.get('question_form_data', {}).get(key),
+                                'answer': answer,
                                 'question': value.label,
                             }
                         )

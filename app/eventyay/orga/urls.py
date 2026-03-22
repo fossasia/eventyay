@@ -17,6 +17,7 @@ from eventyay.orga.views import (
     typeahead,
 )
 
+
 app_name = 'orga'
 urlpatterns = [
     path("", RedirectView.as_view(url="event", permanent=False), name="base"),
@@ -332,6 +333,11 @@ urlpatterns = [
                                 'toggle-arrived',
                                 speaker.SpeakerToggleArrived.as_view(),
                                 name='speakers.arrived',
+                            ),
+                            path(
+                                'toggle-featured',
+                                speaker.SpeakerToggleFeatured.as_view(),
+                                name='speakers.featured',
                             ),
                         ]
                     ),

@@ -167,7 +167,7 @@ DEFAULT_VARIABLES = OrderedDict(
             'attendee_job_title',
             {
                 'label': _('Attendee job title'),
-                'editor_sample': _('Sample company'),
+                'editor_sample': _('Sample job title'),
                 'evaluate': lambda op, order, ev: op.job_title or (op.addon_to.job_title if op.addon_to else ''),
             },
         ),
@@ -667,7 +667,7 @@ def variables_from_questions(sender, *args, **kwargs):
             continue
         d['question_{}'.format(q.pk)] = {
             'label': _('Question: {question}').format(question=q.question),
-            'editor_sample': _('<Answer: {question}>').format(question=q.question),
+            'editor_sample': str(q.question),
             'evaluate': partial(get_answer, question_id=q.pk),
         }
     return d

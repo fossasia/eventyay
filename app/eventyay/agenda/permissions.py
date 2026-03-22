@@ -104,3 +104,9 @@ rules.add_perm(
     "agenda.view_widget",
     is_agenda_visible | is_widget_always_visible | can_change_submissions,
 )
+# Used by the favourites REST API and agenda utility views to gate access
+# to schedule data.  Matches the predicate used for agenda.view_schedule.
+rules.add_perm(
+    "base.list_schedule",
+    is_agenda_visible | can_change_submissions,
+)
