@@ -94,7 +94,8 @@ class EventQuerysetOptimizationTest(TestCase):
     def _assert_no_n1_queries(self, queryset, relation_attr="organizer", attr_prop="slug", fetch_all=False):
         """
         Helper to verify that accessing related fields on queryset results
-        does not cause N+1 queries by asserting an explicit SQL JOIN exists.
+        does not cause N+1 queries and that select_related is configured
+        for the expected relation.
         """
         with CaptureQueriesContext(connection) as context:
             if fetch_all:
@@ -118,10 +119,21 @@ class EventQuerysetOptimizationTest(TestCase):
             f"Expected constant bounded queries, got {len(context)}. Possible N+1 issue!",
         )
 
-        # Issue 9: Enforce a structural JOIN to prove select_related is working
-        if len(context) > 0:
-            sql_log = "\n".join(q["sql"].upper() for q in context)
-            self.assertIn(" JOIN ", sql_log, f"Validation failure: No SQL JOIN generated for {relation_attr}.")
+        # Verify select_related for the specific relation, avoiding generic JOIN checks.
+        select_related_map = getattr(queryset.query, "select_related", None)
+        if select_related_map is True:
+            return
+        if isinstance(select_related_map, dict):
+            self.assertIn(
+                relation_attr,
+                select_related_map,
+                f"Expected queryset to select_related('{relation_attr}'), but it was not configured.",
+            )
+            return
+        self.fail(
+            f"Expected queryset to use select_related for '{relation_attr}', "
+            f"but select_related is {select_related_map!r}."
+        )
 
     def test_event_update_uses_select_related(self):
         view = EventUpdate()
