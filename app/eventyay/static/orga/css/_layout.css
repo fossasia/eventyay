@@ -802,23 +802,25 @@ details.submission-state-dropdown {
     width: auto;
   }
 
-  thead th:nth-child(2),
-  thead th:nth-child(3),
-  thead th:nth-child(6) {
-    width: 90px;
-  }
+  @media (min-width: 768px) {
+    thead th:nth-child(2),
+    thead th:nth-child(3),
+    thead th:nth-child(6) {
+      width: 90px;
+    }
 
-  thead th:nth-child(4),
-  thead th:nth-child(5) {
-    width: 130px;
-  }
+    thead th:nth-child(4),
+    thead th:nth-child(5) {
+      width: 130px;
+    }
 
-  thead th:nth-child(7) {
-    width: 80px;
-  }
+    thead th:nth-child(7) {
+      width: 80px;
+    }
 
-  thead th:last-child {
-    width: 110px;
+    thead th:last-child {
+      width: 110px;
+    }
   }
 
   tbody th {

@@ -91,7 +91,7 @@
                         <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
                     </span></div>
                 </dialog>
-                <div class="table-responsive-sm">
+                <div class="table-responsive-always">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -495,7 +495,7 @@
                     </table>
                 </div>
                 <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                    <div class="col-md-12 d-flex justify-content-end">
                         <a href="{{ create_url }}?target=submission" class="btn btn-success btn-sm">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
@@ -516,7 +516,7 @@
                         {% translate "Select which information should be requested and/or required from speakers." %}
                     </span></div>
                 </dialog>
-                <div class="table-responsive-sm">
+                <div class="table-responsive-always">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -847,7 +847,7 @@
                     </table>
                 </div>
                 <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                    <div class="col-md-12 d-flex justify-content-end">
                         <a href="{{ create_url }}?target=speaker" class="btn btn-success btn-sm">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
@@ -859,7 +859,7 @@
                     {% translate "Reviewer Information" %}
                 </div></legend>
                 {% if custom_reviewer_fields %}
-                <div class="table-responsive-sm">
+                <div class="table-responsive-always">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -937,7 +937,7 @@
                 </div>
                 {% endif %}
                 <div class="row mb-3">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                    <div class="col-md-12 d-flex justify-content-end">
                         <a href="{{ create_url }}?target=reviewer" class="btn btn-success btn-sm">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
