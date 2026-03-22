@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-16 06:16+0000\n"
+"PO-Revision-Date: 2026-03-21 17:17+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -2729,7 +2729,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2529
 msgid "Show button to copy user input from other products"
-msgstr ""
+msgstr "他製品からユーザー入力をコピーするボタンを表示"
 
 #: base/configurations/default_setting.py:2537
 msgid "Start page header background image"
@@ -2749,21 +2749,21 @@ msgstr "公開スタートページのバナーに表示される短いテキス
 
 #: base/configurations/default_setting.py:2576
 msgid "Most common English titles"
-msgstr ""
+msgstr "英語の一般的な敬称"
 
 #: base/configurations/default_setting.py:2592
 msgid "Most common German titles"
-msgstr ""
+msgstr "ドイツ語の一般的な敬称"
 
 #: base/configurations/default_setting.py:2604
 msgctxt "person_name_salutation"
 msgid "Ms"
-msgstr ""
+msgstr "Ms"
 
 #: base/configurations/default_setting.py:2605
 msgctxt "person_name_salutation"
 msgid "Mr"
-msgstr ""
+msgstr "Mr"
 
 #: base/configurations/default_setting.py:2615
 #: base/configurations/default_setting.py:2633
@@ -2775,7 +2775,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2850
 #: base/configurations/default_setting.py:2871
 msgid "Given name"
-msgstr ""
+msgstr "名"
 
 #: base/configurations/default_setting.py:2616
 #: base/configurations/default_setting.py:2634
@@ -2789,7 +2789,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2851
 #: base/configurations/default_setting.py:2872
 msgid "Family name"
-msgstr ""
+msgstr "姓"
 
 #: base/configurations/default_setting.py:2622
 #: base/configurations/default_setting.py:2647
@@ -2804,7 +2804,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2883
 msgctxt "person_name_sample"
 msgid "John"
-msgstr ""
+msgstr "John"
 
 #: base/configurations/default_setting.py:2623
 #: base/configurations/default_setting.py:2648
@@ -2818,7 +2818,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2884
 msgctxt "person_name_sample"
 msgid "Doe"
-msgstr ""
+msgstr "Doe"
 
 #: base/configurations/default_setting.py:2632
 #: base/configurations/default_setting.py:2657
@@ -2827,7 +2827,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2870
 msgctxt "person_name"
 msgid "Title"
-msgstr ""
+msgstr "敬称"
 
 #: base/configurations/default_setting.py:2646
 #: base/configurations/default_setting.py:2671
@@ -2836,57 +2836,57 @@ msgstr ""
 #: base/configurations/default_setting.py:2882
 msgctxt "person_name_sample"
 msgid "Dr"
-msgstr ""
+msgstr "Dr"
 
 #: base/configurations/default_setting.py:2682
 #: base/configurations/default_setting.py:2708
 msgid "First name"
-msgstr ""
+msgstr "名"
 
 #: base/configurations/default_setting.py:2683
 #: base/configurations/default_setting.py:2709
 msgid "Middle name"
-msgstr ""
+msgstr "ミドルネーム"
 
 #: base/configurations/default_setting.py:2790
 #: base/configurations/default_setting.py:2804
 msgctxt "person_name_sample"
 msgid "John Doe"
-msgstr ""
+msgstr "John Doe"
 
 #: base/configurations/default_setting.py:2799
 msgid "Calling name"
-msgstr ""
+msgstr "呼び名"
 
 #: base/configurations/default_setting.py:2800
 #: base/configurations/default_setting.py:2814 base/models/auth.py:180
 #: base/models/orders.py:2487
 #: control/templates/pretixcontrol/admin/users/index.html:37
 msgid "Full name"
-msgstr ""
+msgstr "氏名"
 
 #: base/configurations/default_setting.py:2815
 msgid "Latin transcription"
-msgstr ""
+msgstr "ラテン文字表記"
 
 #: base/configurations/default_setting.py:2829
 #: base/configurations/default_setting.py:2848
 #: base/configurations/default_setting.py:2869
 msgctxt "person_name"
 msgid "Salutation"
-msgstr ""
+msgstr "敬称"
 
 #: base/configurations/default_setting.py:2837
 #: base/configurations/default_setting.py:2857
 #: base/configurations/default_setting.py:2881
 msgctxt "person_name_sample"
 msgid "Mr"
-msgstr ""
+msgstr "Mr"
 
 #: base/configurations/default_setting.py:2873
 msgctxt "person_name"
 msgid "Degree (after name)"
-msgstr ""
+msgstr "学位（名前の後）"
 
 #: base/configurations/default_setting.py:2885
 msgctxt "person_name_sample"
@@ -3893,9 +3893,8 @@ msgstr "テストモード"
 #: control/templates/pretixcontrol/checkin/lists.html:125
 #: control/templates/pretixcontrol/organizers/devices.html:75
 #: control/templates/pretixcontrol/organizers/webhooks.html:51
-#, fuzzy
 msgid "All"
-msgstr "全て"
+msgstr "すべて"
 
 #: base/exporters/orderlist.py:1114 control/forms/filter.py:1103
 msgid "Live"
@@ -4298,12 +4297,12 @@ msgstr "元の請求書の日付"
 #: base/invoice.py:405 base/invoice.py:959
 msgctxt "invoice"
 msgid "Invoice date"
-msgstr ""
+msgstr "請求日"
 
 #: base/invoice.py:421
 msgctxt "invoice"
 msgid "Event"
-msgstr ""
+msgstr "イベント"
 
 #: base/invoice.py:445
 #, python-brace-format
@@ -4312,6 +4311,8 @@ msgid ""
 "{from_date}\n"
 "until {to_date}"
 msgstr ""
+"{from_date}\n"
+"{to_date}まで"
 
 #: base/invoice.py:473
 #: control/templates/pretixcontrol/admin/attendees/index.html:129
@@ -4329,85 +4330,85 @@ msgstr ""
 #: presale/templates/pretixpresale/event/order.html:68
 #: presale/templates/pretixpresale/event/position.html:14
 msgid "TEST MODE"
-msgstr ""
+msgstr "テストモード"
 
 #: base/invoice.py:478 base/services/mail.py:448
 #, python-brace-format
 msgctxt "invoice"
 msgid "Invoice {num}"
-msgstr ""
+msgstr "請求書 {num}"
 
 #: base/invoice.py:545
 #, python-brace-format
 msgctxt "invoice"
 msgid "Customer reference: {reference}"
-msgstr ""
+msgstr "顧客参照: {reference}"
 
 #: base/invoice.py:557
 msgctxt "invoice"
 msgid "Customer VAT ID"
-msgstr ""
+msgstr "顧客VAT番号"
 
 #: base/invoice.py:567
 msgctxt "invoice"
 msgid "Beneficiary"
-msgstr ""
+msgstr "受取人"
 
 #: base/invoice.py:587
 msgctxt "invoice"
 msgid "Tax Invoice"
-msgstr ""
+msgstr "税務請求書"
 
 #: base/invoice.py:589
 msgctxt "invoice"
 msgid "Invoice"
-msgstr ""
+msgstr "請求書"
 
 #: base/invoice.py:592 control/templates/pretixcontrol/order/index.html:224
 #: presale/templates/pretixpresale/event/order.html:239
 msgctxt "invoice"
 msgid "Cancellation"
-msgstr ""
+msgstr "キャンセル"
 
 #: base/invoice.py:614 base/invoice.py:624
 msgctxt "invoice"
 msgid "Description"
-msgstr ""
+msgstr "説明"
 
 #: base/invoice.py:615 base/invoice.py:625
 msgctxt "invoice"
 msgid "Qty"
-msgstr ""
+msgstr "数量"
 
 #: base/invoice.py:616 base/invoice.py:722
 msgctxt "invoice"
 msgid "Tax rate"
-msgstr ""
+msgstr "税率"
 
 #: base/invoice.py:617
 msgctxt "invoice"
 msgid "Net"
-msgstr ""
+msgstr "税抜"
 
 #: base/invoice.py:618
 msgctxt "invoice"
 msgid "Gross"
-msgstr ""
+msgstr "税込"
 
 #: base/invoice.py:626
 msgctxt "invoice"
 msgid "Amount"
-msgstr ""
+msgstr "金額"
 
 #: base/invoice.py:657 base/invoice.py:668
 msgctxt "invoice"
 msgid "Invoice total"
-msgstr ""
+msgstr "請求書合計"
 
 #: base/invoice.py:683
 msgctxt "invoice"
 msgid "Received payments"
-msgstr ""
+msgstr "受領済み支払い"
 
 #: base/invoice.py:688
 msgctxt "invoice"
@@ -4696,10 +4697,8 @@ msgid "Events"
 msgstr "イベント"
 
 #: base/models/auth_token.py:69
-#, fuzzy
-#| msgid "version"
 msgid "API version"
-msgstr "バージョン"
+msgstr "APIバージョン"
 
 #: base/models/billing.py:20 base/models/orders.py:166
 #: orga/templates/orga/review/dashboard.html:279
@@ -5328,22 +5327,16 @@ msgid "Limit to tracks"
 msgstr "トラックに限定"
 
 #: base/models/information.py:37
-#, fuzzy
-#| msgid "Leave empty to use the default address: {}"
 msgid "Leave empty to show this information to all tracks."
-msgstr "デフォルトのアドレスを使用するには空のままにします。{}"
+msgstr "空欄の場合、この情報はすべてのトラックに表示されます。"
 
 #: base/models/information.py:41
-#, fuzzy
-#| msgid "No proposals yet"
 msgid "Limit to proposal types"
-msgstr "投稿がありません"
+msgstr "提案タイプに制限する"
 
 #: base/models/information.py:43
-#, fuzzy
-#| msgid "Leave empty to use the default address: {}"
 msgid "Leave empty to show this information for all proposal types."
-msgstr "デフォルトのアドレスを使用するには空のままにします。{}"
+msgstr "空欄の場合、この情報はすべての提案タイプに表示されます。"
 
 #: base/models/information.py:45 base/models/mail.py:82 base/models/mail.py:328
 #: common/text/phrases.py:111
@@ -5695,27 +5688,27 @@ msgstr "配送中"
 #: base/models/orders.py:1911
 msgctxt "refund_state"
 msgid "done"
-msgstr ""
+msgstr "完了"
 
 #: base/models/orders.py:1912
 msgctxt "refund_state"
 msgid "failed"
-msgstr ""
+msgstr "失敗"
 
 #: base/models/orders.py:1914
 msgctxt "refund_state"
 msgid "canceled"
-msgstr ""
+msgstr "キャンセル済み"
 
 #: base/models/orders.py:1922
 msgctxt "refund_source"
 msgid "Organizer"
-msgstr ""
+msgstr "主催者"
 
 #: base/models/orders.py:1923
 msgctxt "refund_source"
 msgid "Customer"
-msgstr ""
+msgstr "顧客"
 
 #: base/models/orders.py:1924
 msgctxt "refund_source"
@@ -5893,17 +5886,20 @@ msgstr "チームと権限の変更が可能"
 
 #: base/models/organizer.py:358
 msgid "Can change organizer settings"
-msgstr ""
+msgstr "主催者設定を変更可能"
 
 #: base/models/organizer.py:360
 msgid ""
 "Someone with this setting can get access to most data of all of your events, "
 "i.e. via privacy reports, so be careful who you add to this team!"
 msgstr ""
+"この設定があるユーザーは、プライバシーレポートなどを通じて、すべてのイベント"
+"のほとんどのデータにアクセスできる可能性があります。チームに追加する相手は慎"
+"重に選んでください。"
 
 #: base/models/organizer.py:364
 msgid "Can manage gift cards"
-msgstr ""
+msgstr "ギフトカードを管理可能"
 
 #: base/models/organizer.py:366
 msgid "Can change event settings"
@@ -5911,19 +5907,19 @@ msgstr "イベント設定の変更が可能"
 
 #: base/models/organizer.py:367
 msgid "Can change product settings"
-msgstr ""
+msgstr "商品設定を変更可能"
 
 #: base/models/organizer.py:368
 msgid "Can view orders"
-msgstr ""
+msgstr "注文を閲覧可能"
 
 #: base/models/organizer.py:369
 msgid "Can change orders"
-msgstr ""
+msgstr "注文を変更可能"
 
 #: base/models/organizer.py:372
 msgid "Can perform check-ins"
-msgstr ""
+msgstr "チェックインを実行可能"
 
 #: base/models/organizer.py:374
 msgid ""
@@ -5931,19 +5927,22 @@ msgid ""
 "information about attendees. Users with \"can change orders\" can also "
 "perform check-ins."
 msgstr ""
+"これには参加者の検索が含まれ、参加者の個人情報を取得するために使用される可能"
+"性があります。「注文を変更可能」の権限を持つユーザーは、チェックインも実行で"
+"きます。"
 
 #: base/models/organizer.py:378
 msgid "Can view vouchers"
-msgstr ""
+msgstr "バウチャーを閲覧可能"
 
 #: base/models/organizer.py:379
 msgid "Can change vouchers"
-msgstr ""
+msgstr "バウチャーを変更可能"
 
 #: base/models/organizer.py:382
 #, python-format
 msgid "%(name)s on %(object)s"
-msgstr ""
+msgstr "%(object)s の %(name)s"
 
 #: base/models/organizer.py:418
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:7
@@ -6073,7 +6072,7 @@ msgstr "Eventyay Videoのグローバル設定を編集できる。"
 #: base/models/organizer.py:531
 #, python-brace-format
 msgid "Invite to team '{team}' for '{email}'"
-msgstr ""
+msgstr "「{email}」のチーム「{team}」に招待"
 
 #: base/models/organizer.py:548
 #, python-brace-format
@@ -6103,17 +6102,17 @@ msgstr "運営チームに招待されました"
 #: base/models/organizer.py:682
 #: control/forms/organizer_forms/organizer_form.py:53
 msgid "Primary Contact Name"
-msgstr ""
+msgstr "主連絡先名"
 
 #: base/models/organizer.py:687
 #: control/forms/organizer_forms/organizer_form.py:63
 msgid "Primary Contact Email"
-msgstr ""
+msgstr "主連絡先メールアドレス"
 
 #: base/models/organizer.py:692
 #: control/forms/organizer_forms/organizer_form.py:74
 msgid "Company or Organization Name"
-msgstr ""
+msgstr "会社名または組織名"
 
 #: base/models/organizer.py:697
 #: control/forms/organizer_forms/organizer_form.py:82
@@ -7248,26 +7247,23 @@ msgid "This text will be shown in the public changelog and the RSS feed."
 msgstr "このテキストは公開の変更ログとRSSフィードで表示されます。"
 
 #: base/models/schedule.py:356
-#, fuzzy, python-brace-format
-#| msgid "The room is not available at the scheduled time."
+#, python-brace-format
 msgid "Room {room_name} is not available at the scheduled time."
-msgstr "予定された時間は部屋が使えません。"
+msgstr "部屋 {room_name} は予定時刻に利用できません。"
 
 #: base/models/schedule.py:377
 msgid "Another session in the same room overlaps with this one."
 msgstr "同じ部屋の別のセッションがこのセッションと重なっています。"
 
 #: base/models/schedule.py:403
-#, fuzzy, python-brace-format
-#| msgid "A speaker is not available at the scheduled time."
+#, python-brace-format
 msgid "{speaker} is not available at the scheduled time."
-msgstr "予定された時間は発表者の都合がつかない時間児です。"
+msgstr "{speaker} は予定時刻に利用できません。"
 
 #: base/models/schedule.py:428
-#, fuzzy, python-brace-format
-#| msgid "A speaker is holding another session at the scheduled time."
+#, python-brace-format
 msgid "{speaker} is scheduled for another session at the same time."
-msgstr "予定された時間に発表者が別の講演を行っています。"
+msgstr "{speaker} は同時刻に別のセッションに割り当てられています。"
 
 #: base/models/seating.py:25
 msgid "Your layout file is not a valid JSON file."
@@ -7386,11 +7382,8 @@ msgstr ""
 "不足している点があれば、eventyay.com のウェブサイトからご連絡ください。\n"
 
 #: base/models/slot.py:47 orga/views/schedule.py:514
-#, fuzzy
-#| msgctxt "Room information"
-#| msgid "Room"
 msgid "Room"
-msgstr "Raum"
+msgstr "部屋"
 
 #: base/models/slot.py:48
 msgid "The room this talk is scheduled in, if any"
@@ -25152,106 +25145,76 @@ msgid "The event’s short form, used in URLs"
 msgstr "URLで使われるイベントの短縮名"
 
 #: mail/context.py:120
-#, fuzzy
-#| msgid "The event’s full name."
 msgid "The event’s public base URL"
-msgstr "イベントのフルネーム"
+msgstr "イベントの公開ベースURL"
 
 #: mail/context.py:127
-#, fuzzy
-#| msgid "The event’s full name."
 msgid "The event’s public schedule URL"
-msgstr "イベントのフルネーム"
+msgstr "イベントの公開スケジュールURL"
 
 #: mail/context.py:134
-#, fuzzy
-#| msgid "The event was made public."
 msgid "The event’s public CfP URL"
-msgstr "イベントが公開されました。"
+msgstr "イベントの公開CfP URL"
 
 #: mail/context.py:141
-#, fuzzy
-#| msgid "The name(s) of all speakers in this submission."
 msgid "URL to a user’s list of proposals"
-msgstr "この提案における全ての登壇者の名前"
+msgstr "ユーザーの提案一覧へのURL"
 
 #: mail/context.py:152
-#, fuzzy
-#| msgid "Text and deadline"
 msgid "The general CfP deadline"
-msgstr "テキストと締切"
+msgstr "一般CfPの締切"
 
 #: mail/context.py:159
-#, fuzzy
-#| msgid "The proposal was unconfirmed."
 msgid "The proposal’s unique ID"
-msgstr "この提案は未確定です。"
+msgstr "提案の一意のID"
 
 #: mail/context.py:166
-#, fuzzy
-#| msgid "The proposal was deleted."
 msgid "The proposal’s public URL"
-msgstr "提案が削除されました。"
+msgstr "提案の公開URL"
 
 #: mail/context.py:173
-#, fuzzy
-#| msgid "The speaker was already part of the proposal."
 msgid "The speaker’s edit page for the proposal"
-msgstr "発表者はすでに投稿に参加しています。"
+msgstr "提案のスピーカー編集ページ"
 
 #: mail/context.py:180
 msgid "Link to confirm a proposal after it has been accepted."
 msgstr "受付後の投稿を確認するためのリンク"
 
 #: mail/context.py:187
-#, fuzzy
-#| msgid "Withdraw proposal"
 msgid "Link to withdraw the proposal"
-msgstr "提案を撤回する"
+msgstr "提案を取り下げるリンク"
 
 #: mail/context.py:193
-#, fuzzy
-#| msgid "Proposal title"
 msgid "This Is a Proposal Title"
-msgstr "投稿タイトル"
+msgstr "これは提案タイトルです"
 
 #: mail/context.py:194
-#, fuzzy
-#| msgid "Proposal title"
 msgid "The proposal’s title"
-msgstr "投稿タイトル"
+msgstr "提案のタイトル"
 
 #: mail/context.py:201
 msgid "The name(s) of all speakers in this proposal."
 msgstr "この提案における全ての登壇者の名前"
 
 #: mail/context.py:207
-#, fuzzy
-#| msgid "Session Type"
 msgid "Session Type A"
-msgstr "提案タイプ"
+msgstr "セッションタイプA"
 
 #: mail/context.py:208
-#, fuzzy
-#| msgid "Proposals by session type"
 msgid "The proposal’s session type"
-msgstr "投稿タイプで投稿を並び替え"
+msgstr "提案のセッションタイプ"
 
 #: mail/context.py:214
-#, fuzzy
-#| msgid "Track"
 msgid "Track A"
-msgstr "トラック"
+msgstr "トラックA"
 
 #: mail/context.py:215
 msgid "The track the proposal belongs to"
 msgstr "提案が該当するトラック"
 
 #: mail/context.py:222
-#, fuzzy
-#| msgid "Default duration in minutes"
 msgid "The session’s duration in minutes"
-msgstr "標準の待ち時間（分）"
+msgstr "セッションの所要時間（分）"
 
 #: mail/context.py:228
 msgid ""
@@ -25268,34 +25231,24 @@ msgstr ""
 "二回目のレビュー：強い批判を含みます！"
 
 #: mail/context.py:229
-#, fuzzy
-#| msgid "You have reviewed this proposal"
 msgid "All review texts for this proposal"
-msgstr "この投稿は既にレビュー済みです"
+msgstr "この提案のすべてのレビュー本文"
 
 #: mail/context.py:236
-#, fuzzy
-#| msgid "This session’s header image"
 msgid "The session’s start date"
-msgstr "講演のヘッダーイメージ"
+msgstr "セッションの開始日"
 
 #: mail/context.py:243
-#, fuzzy
-#| msgid "This session’s header image"
 msgid "The session’s start time"
-msgstr "講演のヘッダーイメージ"
+msgstr "セッションの開始時刻"
 
 #: mail/context.py:250
-#, fuzzy
-#| msgid "This session’s header image"
 msgid "The session’s end date"
-msgstr "講演のヘッダーイメージ"
+msgstr "セッションの終了日"
 
 #: mail/context.py:257
-#, fuzzy
-#| msgid "This session’s header image"
 msgid "The session’s end time"
-msgstr "講演のヘッダーイメージ"
+msgstr "セッションの終了時刻"
 
 #: mail/context.py:263
 msgid "Room 101"
@@ -28748,36 +28701,28 @@ msgid "{count} emails were generated and placed in the outbox."
 msgstr "{count} 個のメールアドレスが生成され、送信箱に置かれました。"
 
 #: orga/views/review.py:679
-#, fuzzy
-#| msgid "Active reviewers"
 msgid "Assign reviewer teams"
-msgstr "活動中のレビュアー"
+msgstr "レビューチームを割り当てる"
 
 #: orga/views/review.py:680
-#, fuzzy
-#| msgid "Active reviewers"
 msgid "Assign reviewers individually"
-msgstr "活動中のレビュアー"
+msgstr "レビュー担当者を個別に割り当てる"
 
 #: orga/views/review.py:714
 msgid "The reviewers were assigned successfully."
 msgstr "レビュアーを正常に割り当てました。"
 
 #: orga/views/review.py:726 orga/views/schedule.py:91 orga/views/speaker.py:279
-#, fuzzy
-#| msgid "Export"
 msgid "CSV/JSON exports"
-msgstr "エクスポート"
+msgstr "CSV/JSONエクスポート"
 
 #: orga/views/review.py:739 orga/views/schedule.py:99 orga/views/speaker.py:287
 msgid "No data to be exported"
 msgstr "エクスポートするデータがありません"
 
 #: orga/views/schedule.py:92 orga/views/speaker.py:280
-#, fuzzy
-#| msgid "Speakers"
 msgid "More exports"
-msgstr "登壇者"
+msgstr "その他のエクスポート"
 
 #: orga/views/schedule.py:112
 msgid "A new export is being generated and will be available soon."
@@ -28844,11 +28789,8 @@ msgstr ""
 "す: ."
 
 #: orga/views/speaker.py:259
-#, fuzzy
-#| msgid "Speaker Information Note"
-#| msgid_plural "Speaker Information Notes"
 msgid "Speaker Information Notes"
-msgstr "講演者への情報"
+msgstr "登壇者情報メモ"
 
 #: orga/views/submission.py:167
 msgid ""
@@ -28911,16 +28853,13 @@ msgid "Your comment on “{title}”"
 msgstr "あなたのコメント “{title}”"
 
 #: orga/views/submission.py:1001
-#, fuzzy
-#| msgid "The track has been deleted."
 msgid "The comment has been deleted."
-msgstr "トラックが削除されました。"
+msgstr "コメントは削除されました。"
 
 #: orga/views/submission.py:1026
-#, fuzzy, python-brace-format
-#| msgid "New {event} proposal: {title}"
+#, python-brace-format
 msgid "Changed {count} proposal states."
-msgstr "新しいイベント {event} への投稿: {title}"
+msgstr "{count}件の提案ステータスを変更しました。"
 
 #: person/exporters.py:16
 msgid "Speaker CSV"
@@ -28935,20 +28874,16 @@ msgid "Password (current)"
 msgstr "パスワード（現在）"
 
 #: person/forms/auth_token.py:23
-#, fuzzy
-#| msgid "Send all"
 msgid "Read all endpoints"
-msgstr "全て送る"
+msgstr "すべてのエンドポイントを読み取る"
 
 #: person/forms/auth_token.py:24
 msgid "Read and write all endpoints"
 msgstr "すべてのエンドポイントを読み書きする"
 
 #: person/forms/auth_token.py:25
-#, fuzzy
-#| msgid "Permissions"
 msgid "Customize permissions and endpoints"
-msgstr "権限"
+msgstr "権限とエンドポイントをカスタマイズする"
 
 #: person/forms/auth_token.py:27
 msgid "Choose a preset or configure detailed permissions below."
@@ -28982,16 +28917,12 @@ msgid "Non-accepted submitters"
 msgstr "承認されていない投稿者"
 
 #: person/forms/profile.py:336
-#, fuzzy
-#| msgid "Mark speaker as arrived"
 msgid "Marked as arrived"
-msgstr "講演者が到着済み"
+msgstr "到着済みにする"
 
 #: person/forms/profile.py:337
-#, fuzzy
-#| msgid "Not arrived"
 msgid "Not yet arrived"
-msgstr "未達"
+msgstr "未到着"
 
 #: person/forms/user.py:29
 msgid "display name"
@@ -30117,51 +30048,53 @@ msgstr "開始日が指定日以降の顧客のみに送信"
 #: plugins/sendmail/forms.py:93
 msgctxt "subevent"
 msgid "Only send to customers of dates starting before"
-msgstr ""
+msgstr "次の日付より前に開始する日付の顧客にのみ送信"
 
 #: plugins/sendmail/forms.py:98
 msgctxt "subevent"
 msgid "Only send to customers with orders created after"
-msgstr ""
+msgstr "次の日付より後に作成された注文の顧客にのみ送信"
 
 #: plugins/sendmail/forms.py:103
 msgctxt "subevent"
 msgid "Only send to customers with orders created before"
-msgstr ""
+msgstr "次の日付より前に作成された注文の顧客にのみ送信"
 
 #: plugins/sendmail/forms.py:143
 msgid "Everyone who created a ticket order"
-msgstr ""
+msgstr "チケット注文を作成した全員"
 
 #: plugins/sendmail/forms.py:148
 msgid ""
 "Every attendee (falling back to the order contact when no attendee email "
 "address is given)"
 msgstr ""
+"すべての参加者（参加者のメールアドレスが指定されていない場合は注文連絡先を使"
+"用）"
 
 #: plugins/sendmail/forms.py:152
 msgid "Both (all order contact addresses and all attendee email addresses)"
-msgstr ""
+msgstr "両方（すべての注文連絡先アドレスとすべての参加者メールアドレス）"
 
 #: plugins/sendmail/forms.py:172
 msgid "payment pending (except unapproved)"
-msgstr ""
+msgstr "支払い保留（未承認を除く）"
 
 #: plugins/sendmail/forms.py:173
 msgid "approval pending"
-msgstr ""
+msgstr "承認待ち"
 
 #: plugins/sendmail/forms.py:175
 msgid "pending with payment overdue"
-msgstr ""
+msgstr "支払い期限切れの保留"
 
 #: plugins/sendmail/forms.py:177
 msgid "Send to customers with order status"
-msgstr ""
+msgstr "注文ステータスが次の顧客に送信"
 
 #: plugins/sendmail/forms.py:202 plugins/sendmail/forms.py:206
 msgid "Send to customers checked in on list"
-msgstr ""
+msgstr "リストでチェックイン済みの顧客に送信"
 
 #: plugins/sendmail/forms.py:434
 msgid "New attachment"
@@ -30205,15 +30138,15 @@ msgstr "これらのチームのメンバーに送信"
 
 #: plugins/sendmail/signals.py:94
 msgid "Email was sent"
-msgstr ""
+msgstr "メールを送信しました"
 
 #: plugins/sendmail/signals.py:95
 msgid "The order received a mass email."
-msgstr ""
+msgstr "注文に一斉メールが送信されました。"
 
 #: plugins/sendmail/signals.py:96
 msgid "A ticket holder of this order received a mass email."
-msgstr ""
+msgstr "この注文のチケット保持者に一斉メールが送信されました。"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:21
 msgid "Attendees, Orders, Tickets"
@@ -30372,7 +30305,7 @@ msgstr "メールをキューに登録できませんでした。詳細は以下
 
 #: plugins/sendmail/views.py:114
 msgid "There are no orders matching this selection."
-msgstr ""
+msgstr "この選択に一致する注文はありません。"
 
 #: plugins/sendmail/views.py:174 plugins/sendmail/views.py:630
 msgid "Your email has been sent to the outbox."
@@ -30426,7 +30359,7 @@ msgstr "選択したチームに有効な受信者がいません。"
 
 #: plugins/socialauth/apps.py:9 plugins/socialauth/apps.py:12
 msgid "SocialAuth"
-msgstr ""
+msgstr "SocialAuth"
 
 #: plugins/socialauth/apps.py:13
 msgid "the eventyay team"
@@ -30434,19 +30367,19 @@ msgstr "eventyayチーム"
 
 #: plugins/socialauth/apps.py:16
 msgid "This plugin allows you to login via social networks"
-msgstr ""
+msgstr "このプラグインにより、ソーシャルネットワーク経由でログインできます"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:25
 msgid "Social login providers"
-msgstr ""
+msgstr "ソーシャルログインプロバイダー"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:54
 msgid "Client Application Key"
-msgstr ""
+msgstr "クライアントアプリケーションキー"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:66
 msgid "Client Application Secret"
-msgstr ""
+msgstr "クライアントアプリケーションシークレット"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -32789,10 +32722,8 @@ msgid "iCal (full event)"
 msgstr "iCal (イベント全体)"
 
 #: schedule/exporters.py:364
-#, fuzzy
-#| msgid "Welcome to our list of featured sessions!"
 msgid "iCal (your starred sessions)"
-msgstr "注目の講演ページへようこそ！"
+msgstr "iCal（スター付きセッション）"
 
 #: schedule/forms.py:20
 msgid ""
