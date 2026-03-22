@@ -79,4 +79,6 @@ app/eventyay/data
 
 # AI history
 *.aider.*
+venv/
+app/venv/
 
