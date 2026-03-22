@@ -104,6 +104,12 @@ function async_task_callback(data, jqXHR, status) {
                 history.replaceState({}, "pretix", async_task_old_url);
             }
         }
+        // If we pushed a waiting state earlier, restore the original
+        // URL before navigating to the redirect target so the browser's
+        // back/forward history behaves as expected.
+        if (location.href.indexOf("async_id") !== -1) {
+            history.replaceState({}, "pretix", async_task_old_url);
+        }
         location.href = data.redirect;
         return;
     }
