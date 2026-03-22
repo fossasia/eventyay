@@ -116,31 +116,34 @@ html.rtl {
     margin-right: 15px;
     margin-left: 0;
   }
-
+  // langdropdown
   .dropdown .dropdown-content-se {
     right: 20px;
     left: auto;
   }
-  .dropdown .dropdown-content-sw .dropdown-content-w {
-    right: auto;
-    left: 165px;
-  }  
+  // maindropdown
+  .dropdown .dropdown-content-sw {
+    right: 0;
+    left: auto;
+  } 
+  // subdropdown
+  .dropdown .dropdown-content-w {
+    margin-left: 5px;
+    right:auto;
+    left: 100%;
+  }
 
   .dropdown .dropdown-content-w::after {
     top: 11px;
     right: auto;
-    left: -15px;
+    left: -14px;
     border-color: transparent;
     border-right-color: #fff;
   }
 
-  details.dropdown .dropdown-content-w::before {
-    top: 10px;
-    right: -16px;
-    left: auto;
-    border-color: transparent;
-    border-left-color: transparent;
-}
+  .dropdown .dropdown-content-w::before {
+    content: none;
+  }
 }
 
 @media (min-width: $screen-sm-min) {
