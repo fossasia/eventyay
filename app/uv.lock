@@ -1047,15 +1047,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/82/50/fb310c9479d082655
 
 [[package]]
 name = "django-statici18n"
-version = "2.6.0"
+version = "2.7.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "django-appconf" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d4/49/5ee0aa96bf35945f338f625da8f5b659c7e873ff880b831980d3d50619b1/django_statici18n-2.6.0.tar.gz", hash = "sha256:87ed5adb15d6b32d20f438df76f39f16cc5804f452a8785bebc64729ff08cfb4", size = 7907, upload-time = "2024-11-28T08:56:28.046Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/09/4608304c76b16b7b7320b6caeb0733056ce982e3e850fe8e0ecd570ffc6c/django_statici18n-2.7.1.tar.gz", hash = "sha256:2b875b350a0e4df20836a3661152610676179d59af84dfaeba2478f74d41f955", size = 7934, upload-time = "2026-03-15T12:23:24.004Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/ed/293a0bab322a19c554dff18bb216c003c3f7489794abb4c58ab97f2b71f8/django_statici18n-2.6.0-py2.py3-none-any.whl", hash = "sha256:1bedd5cbffc2cf1772808995fb818756592fc9cd88b79547b6a25a747b23087d", size = 9266, upload-time = "2024-11-28T08:56:26.375Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/f6/0d4e3f5397545e5e80801bdfa03a05f47a1e86de836e096ef9cfa9822fe0/django_statici18n-2.7.1-py2.py3-none-any.whl", hash = "sha256:6e35ceca642563a449cf542f13535f986211352563af05979e1bec1b8e34db11", size = 9372, upload-time = "2026-03-15T12:23:22.828Z" },
 ]
 
 [[package]]
@@ -1835,14 +1835,14 @@ wheels = [
 
 [[package]]
 name = "importlib-metadata"
-version = "8.7.1"
+version = "9.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "zipp" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/49/3b30cad09e7771a4982d9975a8cbf64f00d4a1ececb53297f1d9a7be1b10/importlib_metadata-8.7.1.tar.gz", hash = "sha256:49fef1ae6440c182052f407c8d34a68f72efc36db9ca90dc0113398f2fdde8bb", size = 57107, upload-time = "2025-12-21T10:00:19.278Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/01/15bb152d77b21318514a96f43af312635eb2500c96b55398d020c93d86ea/importlib_metadata-9.0.0.tar.gz", hash = "sha256:a4f57ab599e6a2e3016d7595cfd72eb4661a5106e787a95bcc90c7105b831efc", size = 56405, upload-time = "2026-03-20T06:42:56.999Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/5e/f8e9a1d23b9c20a551a8a02ea3637b4642e22c2626e3a13a9a29cdea99eb/importlib_metadata-8.7.1-py3-none-any.whl", hash = "sha256:5a1f80bf1daa489495071efbb095d75a634cf28a8bc299581244063b53176151", size = 27865, upload-time = "2025-12-21T10:00:18.329Z" },
+    { url = "https://files.pythonhosted.org/packages/38/3d/2d244233ac4f76e38533cfcb2991c9eb4c7bf688ae0a036d30725b8faafe/importlib_metadata-9.0.0-py3-none-any.whl", hash = "sha256:2d21d1cc5a017bd0559e36150c21c830ab1dc304dedd1b7ea85d20f45ef3edd7", size = 27789, upload-time = "2026-03-20T06:42:55.665Z" },
 ]
 
 [[package]]
