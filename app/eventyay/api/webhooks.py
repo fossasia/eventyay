@@ -313,12 +313,12 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
         t = time.time()
 
         try:
-            try:
-                resp = safe_post(
-                    webhook.target_url,
-                    json=payload,
-                    allow_redirects=False
-                )
+             resp = safe_post(
+                webhook.target_url,
+                json=payload,
+                allow_redirects=False
+             ) 
+            
             except requests.RequestException as e:
                 raise RequestException(e)
                 WebHookCall.objects.create(
