@@ -1,37 +1,32 @@
-import requests
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT = 30
 
-def safe_get(url, **kwargs):
+
+def _safe_request(method, url, **kwargs):
+    kwargs.setdefault("timeout", DEFAULT_TIMEOUT)
+
     try:
-        return requests.get(url, timeout=DEFAULT_TIMEOUT, **kwargs)
+        return requests.request(method, url, **kwargs)
     except requests.RequestException as e:
-        logger.error(f"GET request failed: {url} | Error: {e}")
+        logger.error(f"{method.upper()} request failed: {url} | Error: {e}")
         raise
+
+
+def safe_get(url, **kwargs):
+    return _safe_request("get", url, **kwargs)
 
 
 def safe_post(url, **kwargs):
-    try:
-        return requests.post(url, timeout=DEFAULT_TIMEOUT, **kwargs)
-    except requests.RequestException as e:
-        logger.error(f"POST request failed: {url} | Error: {e}")
-        raise
+    return _safe_request("post", url, **kwargs)
 
 
 def safe_put(url, **kwargs):
-    try:
-        return requests.put(url, timeout=DEFAULT_TIMEOUT, **kwargs)
-    except requests.RequestException as e:
-        logger.error(f"PUT request failed: {url} | Error: {e}")
-        raise
+    return _safe_request("put", url, **kwargs)
 
 
 def safe_delete(url, **kwargs):
-    try:
-        return requests.delete(url, timeout=DEFAULT_TIMEOUT, **kwargs)
-    except requests.RequestException as e:
-        logger.error(f"DELETE request failed: {url} | Error: {e}")
-        raise
+    return _safe_request("delete", url, **kwargs)
