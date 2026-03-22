@@ -298,29 +298,29 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
     with scopes_disabled():
         webhook = WebHook.objects.get(id=webhook_id)
+
     with scope(organizer=webhook.organizer):
         logentry = LogEntry.all.get(id=logentry_id)
         types = get_all_webhook_events()
         event_type = types.get(action_type)
+
         if not event_type or not webhook.enabled:
-            return  # Ignore, e.g. plugin not installed
+            return
 
         payload = event_type.build_payload(logentry)
         if payload is None:
-            # Content object deleted?
             return
 
         t = time.time()
 
         try:
-             resp = safe_post(
-                webhook.target_url,
-                json=payload,
-                allow_redirects=False
-             ) 
-            
-            except requests.RequestException as e:
-                raise RequestException(e)
+            try:
+                resp = safe_post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False
+                )
+
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -332,13 +332,15 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
                     success=200 <= resp.status_code <= 299,
                 )
+
                 if resp.status_code == 410:
                     webhook.enabled = False
                     webhook.save()
                 elif resp.status_code > 299:
                     raise self.retry(
                         countdown=2 ** (self.request.retries * 2)
-                    )  # max is 2 ** (8*2) = 65536 seconds = ~18 hours
+                    )
+
             except RequestException as e:
                 WebHookCall.objects.create(
                     webhook=webhook,
@@ -350,8 +352,10 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
                 )
+
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
-                )  # max is 2 ** (8*2) = 65536 seconds = ~18 hours
+                )
+
         except MaxRetriesExceededError:
             pass
