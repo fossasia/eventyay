@@ -161,7 +161,7 @@ class ActionView(View):
             if '-' in code:
                 trans.order = self.order_qs().get(
                     code=code.rsplit('-', 1)[1],
-                    event__slug__iexact=code.rsplit('-', 1)[0],
+                    event__name__iexact=code.rsplit('-', 1)[0],
                 )
             else:
                 trans.order = self.order_qs().get(code=code.rsplit('-', 1)[-1])
@@ -219,7 +219,7 @@ class ActionView(View):
             ):
                 return self._retry(trans)
 
-            return JsonResponse({'status': 'error', 'message': 'Unknown action'})
+        return JsonResponse({'status': 'error', 'message': 'Unknown action'})
 
     def get(self, request, *args, **kwargs):
         u = request.GET.get('query', '')
@@ -227,7 +227,7 @@ class ActionView(View):
             return JsonResponse({'results': []})
 
         if '-' in u:
-            code = Q(event__slug__icontains=u.split('-')[0]) & Q(code__icontains=Order.normalize_code(u.split('-')[1]))
+            code = Q(event__name__icontains=u.split('-')[0]) & Q(code__icontains=Order.normalize_code(u.split('-')[1]))
         else:
             code = Q(code__icontains=Order.normalize_code(u))
         qs = (
@@ -257,7 +257,7 @@ class ActionView(View):
             {
                 'results': [
                     {
-                        'code': o.event.slug.upper() + '-' + o.code,
+                        'code': str(o.event.name).upper() + '-' + o.code,
                         'status': o.get_status_display(),
                         'total': money_filter(o.total, o.event.currency),
                     }
