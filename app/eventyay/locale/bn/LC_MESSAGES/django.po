@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:20+0000\n"
+"PO-Revision-Date: 2026-03-23 15:11+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Bengali <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/bn/>\n"
@@ -32624,92 +32624,97 @@ msgid ""
 "If you set room availabilities, speakers will only be able to set their "
 "availability for when any room is available."
 msgstr ""
+"রুমের উপলব্ধতা সেট করা হলে, যেকোনো রুম উপলব্ধ থাকা সময়েই কেবল বক্তারা তাদের উপলব্ধতা সেট "
+"করতে পারবেন।"
 
 #: schedule/forms.py:110
 msgid "The submitted availability does not comply with the required format."
-msgstr ""
+msgstr "জমা দেওয়া উপলব্ধতা প্রয়োজনীয় ফরম্যাটের সাথে সামঞ্জস্যপূর্ণ নয়।"
 
 #: schedule/forms.py:124
 msgid "The submitted availability contains an invalid date."
-msgstr ""
+msgstr "জমা দেওয়া উপলব্ধতায় একটি অবৈধ তারিখ রয়েছে।"
 
 #: schedule/forms.py:139
 msgid "Please fill in your availability!"
-msgstr ""
+msgstr "অনুগ্রহ করে উপলব্ধতা পূরণ করুন!"
 
 #: schedule/forms.py:195
 msgid "Room I"
-msgstr ""
+msgstr "রুম I"
 
 #: schedule/forms.py:197
 msgid ""
 "Description, e.g.: Our main meeting place, Room I, enter from the right."
 msgstr ""
+"বিবরণ, যেমন: আমাদের প্রধান মিটিং স্থান, রুম I, ডান দিক থেকে প্রবেশ করুন।"
 
 #: schedule/forms.py:200
 msgid "Information for speakers, e.g.: Projector has only HDMI input."
-msgstr ""
+msgstr "বক্তাদের জন্য তথ্য, যেমন: প্রজেক্টরে শুধুমাত্র HDMI ইনপুট রয়েছে।"
 
 #: schedule/forms.py:204
 #, python-brace-format
 msgid "The current, automatically generated GUID is: {guid}."
-msgstr ""
+msgstr "বর্তমান, স্বয়ংক্রিয়ভাবে তৈরি GUID হলো: {guid}।"
 
 #: schedule/phrases.py:9
 msgctxt "Schedule/program of the conference"
 msgid "Schedule"
-msgstr ""
+msgstr "সময়সূচি"
 
 #: schedule/phrases.py:22
 msgid ""
 "You are currently viewing the editable schedule version, which is unreleased "
 "and may change at any time."
 msgstr ""
+"বর্তমানে সম্পাদনাযোগ্য সময়সূচির সংস্করণ দেখা হচ্ছে, যা প্রকাশিত নয় এবং যেকোনো সময় "
+"পরিবর্তিত হতে পারে।"
 
 #: schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
-msgstr ""
+msgstr "বর্তমানে সময়সূচির একটি পুরোনো সংস্করণ দেখা হচ্ছে।"
 
 #: schedule/phrases.py:25
 #, python-format
 msgid "You can find the current version <a href=\"%(current_url)s\">here</a>."
-msgstr ""
+msgstr "বর্তমান সংস্করণ <a href=\"%(current_url)s\">এখানে</a> পাওয়া যাবে।"
 
 #. Translators: “tz” is a full timezone name like “Europe/Berlin”
 #: schedule/phrases.py:28
 #, python-format
 msgid "All times in %(tz)s"
-msgstr ""
+msgstr "%(tz)s-এর সব সময়"
 
 #: schedule/phrases.py:30
 msgid "There has been no feedback for this session yet."
-msgstr ""
+msgstr "এই সেশনের জন্য এখনও কোনো প্রতিক্রিয়া নেই।"
 
 #: schedule/templates/schedule/speaker_notification.txt:2
 #, python-format
 msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
-msgstr ""
+msgstr "- সেশন “ %(title)s ” অনুষ্ঠিত হবে %(location)s-এ %(start)s-এ"
 
 #: schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
-msgstr ""
+msgstr "- সেশন “ %(title)s ” সরানো হয়েছে %(location)s-এ %(start)s-এ"
 
 #: submission/exporters.py:18 submission/exporters.py:63
 msgid "Custom fields data"
-msgstr ""
+msgstr "কাস্টম ফিল্ডের ডেটা"
 
 #: submission/exporters.py:18
 msgid "speakers"
-msgstr ""
+msgstr "বক্তারা"
 
 #: submission/exporters.py:63
 msgid "submissions"
-msgstr ""
+msgstr "জমাকরণ"
 
 #: submission/forms/feedback.py:18
 msgid "All speakers"
-msgstr ""
+msgstr "সব বক্তা"
 
 #: submission/forms/resource.py:28
 msgid "Please either provide a link or upload a file, you cannot do both!"
