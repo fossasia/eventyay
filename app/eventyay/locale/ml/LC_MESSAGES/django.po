@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:22+0000\n"
+"PO-Revision-Date: 2026-03-23 15:17+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Malayalam <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ml/>\n"
@@ -24976,89 +24976,94 @@ msgstr "ഷെഡ്യൂള്‍ / സെഷനുകള്‍ / സ്പീ
 
 #: eventyay_common/views/event.py:583 orga/views/event.py:105
 msgid "The CfP doesn’t have a full text yet."
-msgstr ""
+msgstr "CfP-ന് ഇപ്പോഴും പൂർണ്ണ ടെക്സ്റ്റ് ഇല്ല."
 
 #: eventyay_common/views/event.py:595 orga/views/event.py:118
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
 msgstr ""
+"സമർപ്പിക്കുന്നവർക്ക് അവരുടെ നിർദ്ദേശങ്ങൾക്ക് ട്രാക്കുകൾ തിരഞ്ഞെടുക്കാൻ അനുവദിക്കണമെന്നുണ്ടെങ്കിലും, "
+"തിരഞ്ഞെടുക്കാൻ ട്രാക്കുകൾ നൽകുന്നില്ല. കുറഞ്ഞത് ഒരു ട്രാക്ക് ചേർക്കുക!"
 
 #: eventyay_common/views/event.py:603 orga/views/event.py:126
 msgid "You have configured only one session type so far."
-msgstr ""
+msgstr "ഇതുവരെ ഒരു സെഷൻ തരം മാത്രമാണ് കോൺഫിഗർ ചെയ്തിരിക്കുന്നത്."
 
 #: eventyay_common/views/event.py:610
 #: orga/templates/orga/cfp/talkquestion/list.html:127 orga/views/event.py:133
 msgid "You have configured no custom fields yet."
-msgstr ""
+msgstr "ഇതുവരെ ഇഷ്ടാനുസൃത ഫീൽഡുകൾ ഒന്നും കോൺഫിഗർ ചെയ്തിട്ടില്ല."
 
 #: eventyay_common/views/event.py:627
 msgid "Please resolve the billing information before publishing the event."
-msgstr ""
+msgstr "ഇവന്റ് പ്രസിദ്ധീകരിക്കുന്നതിന് മുമ്പ് ബില്ലിംഗ് വിവരങ്ങൾ പരിഹരിക്കുക."
 
 #: eventyay_common/views/event.py:634
 msgid "Your event is now online."
-msgstr ""
+msgstr "ഇവന്റ് ഇപ്പോൾ ഓൺലൈനിലാണ്."
 
 #: eventyay_common/views/event.py:642
 msgid "Your event has been unpublished."
-msgstr ""
+msgstr "ഇവന്റ് പ്രസിദ്ധീകരണം പിൻവലിച്ചു."
 
 #: eventyay_common/views/event.py:741 orga/views/event.py:148
 msgid "Publish the event before publishing talks."
-msgstr ""
+msgstr "ടോകുകൾ പ്രസിദ്ധീകരിക്കുന്നതിന് മുമ്പ് ഇവന്റ് പ്രസിദ്ധീകരിക്കുക."
 
 #: eventyay_common/views/event.py:755 orga/views/event.py:162
 msgid "Talk pages are now published."
-msgstr ""
+msgstr "ടോക് പേജുകൾ ഇപ്പോൾ പ്രസിദ്ധീകരിച്ചിട്ടുണ്ട്."
 
 #: eventyay_common/views/event.py:772 orga/views/event.py:178
 msgid "Talk pages have been unpublished."
-msgstr ""
+msgstr "ടോക് പേജുകളുടെ പ്രസിദ്ധീകരണം പിൻവലിച്ചു."
 
 #: eventyay_common/views/event.py:777 orga/views/event.py:183
 msgid "Talk pages must be published before enabling talk test mode."
 msgstr ""
+"ടോക് ടെസ്റ്റ് മോഡ് പ്രവർത്തനക്ഷമമാക്കുന്നതിന് മുമ്പ് ടോക് പേജുകൾ പ്രസിദ്ധീകരിക്കണം."
 
 #: eventyay_common/views/event.py:797 orga/views/event.py:203
 msgid "Talk pages are now in test mode!"
-msgstr ""
+msgstr "ടോക് പേജുകൾ ഇപ്പോൾ ടെസ്റ്റ് മോഡിലാണ്!"
 
 #: eventyay_common/views/event.py:803 orga/views/event.py:209
 msgid "Talk pages are now in production mode."
-msgstr ""
+msgstr "ടോക് പേജുകൾ ഇപ്പോൾ പ്രൊഡക്ഷൻ മോഡിലാണ്."
 
 #: eventyay_common/views/event.py:844 orga/views/event.py:213
 msgid "Private test mode cannot be enabled while talks are published."
 msgstr ""
+"ടോകുകൾ പ്രസിദ്ധീകരിച്ചിരിക്കുമ്പോൾ സ്വകാര്യ ടെസ്റ്റ് മോഡ് പ്രവർത്തനക്ഷമമാക്കാനാകില്ല."
 
 #: eventyay_common/views/event.py:870 orga/views/event.py:239
 msgid "Private test mode is now enabled for talks."
-msgstr ""
+msgstr "ടോകുകൾക്കായി സ്വകാര്യ ടെസ്റ്റ് മോഡ് ഇപ്പോൾ പ്രവർത്തനക്ഷമമാക്കി."
 
 #: eventyay_common/views/event.py:870 orga/views/event.py:239
 msgid "Private test mode is now disabled for talks."
-msgstr ""
+msgstr "ടോകുകൾക്കായി സ്വകാര്യ ടെസ്റ്റ് മോഡ് ഇപ്പോൾ പ്രവർത്തനരഹിതമാക്കി."
 
 #: eventyay_common/views/organizer.py:72
 msgid "New organizer is created."
-msgstr ""
+msgstr "പുതിയ സംഘാടകൻ സൃഷ്ടിച്ചു."
 
 #: eventyay_common/views/organizer.py:355 eventyay_common/views/team.py:312
 msgid "The team has been created. You can now add members to the team."
-msgstr ""
+msgstr "ടീം സൃഷ്ടിച്ചു. ഇപ്പോൾ ടീമിലേക്ക് അംഗങ്ങളെ ചേർക്കാം."
 
 #: eventyay_common/views/organizer.py:361
 msgid ""
 "Something went wrong, your changes could not be saved. Please see below for "
 "details."
 msgstr ""
+"ഏതോ പിശക് സംഭവിച്ചു; മാറ്റങ്ങൾ സംരക്ഷിക്കാനായില്ല. വിശദാംശങ്ങൾക്ക് താഴെ കാണുക."
 
 #: eventyay_common/views/organizer.py:391 eventyay_common/views/team.py:409
 #, python-format
 msgid "Changes to the team '%(team_name)s' have been saved."
-msgstr ""
+msgstr "ടീം '%(team_name)s' ലേക്കുള്ള മാറ്റങ്ങൾ സംരക്ഷിച്ചു."
 
 #: eventyay_common/views/organizer.py:397 eventyay_common/views/team.py:417
 msgid "Something went wrong, your changes could not be saved."
@@ -25697,36 +25702,40 @@ msgstr "വാക്കുകൾ"
 
 #: orga/forms/cfp.py:235
 msgid "Display deadline publicly"
-msgstr ""
+msgstr "ഡെഡ്‌ലൈൻ പൊതുവെ പ്രദർശിപ്പിക്കുക"
 
 #: orga/forms/cfp.py:237
 msgid "Show the time and date the CfP ends to potential speakers."
-msgstr ""
+msgstr "സാധ്യതയുള്ള അവതാരകർക്ക് CfP അവസാനിക്കുന്ന സമയം, തീയതി എന്നിവ കാണിക്കുക."
 
 #: orga/forms/cfp.py:240
 msgid "Do not show Call for Speakers on the menu after the deadline"
-msgstr ""
+msgstr "ഡെഡ്‌ലൈൻ കഴിഞ്ഞ ശേഷം മെനുവിൽ Call for Speakers കാണിക്കരുത്"
 
 #: orga/forms/cfp.py:242
 msgid ""
 "If enabled, the Call for Speakers link will be hidden from navigation menus "
 "once the submission deadline has passed."
 msgstr ""
+"സജീവമാക്കിയാൽ, സമർപ്പണ ഡെഡ്‌ലൈൻ കഴിഞ്ഞാൽ Call for Speakers ലിങ്ക് നാവിഗേഷൻ മെനുകളിൽ നിന്ന് "
+"മറയ്ക്കും."
 
 #: orga/forms/cfp.py:261 orga/templates/orga/cfp/question/_form.html:95
 #: orga/templates/orga/cfp/talkquestion/_form.html:95
 msgid "Upload options"
-msgstr ""
+msgstr "അപ്‌ലോഡ് ഓപ്ഷനുകൾ"
 
 #: orga/forms/cfp.py:263
 msgid ""
 "You can upload options here, one option per line. To use multiple languages, "
 "please upload a JSON file with a list of options:"
 msgstr ""
+"ഇവിടെ ഓപ്ഷനുകൾ അപ്‌ലോഡ് ചെയ്യാം, ഓരോ വരിയിലും ഒരു ഓപ്ഷൻ വീതം. ഒന്നിലധികം ഭാഷകൾ "
+"ഉപയോഗിക്കാൻ, ഓപ്ഷനുകളുടെ പട്ടിക അടങ്ങിയ ഒരു JSON ഫയൽ അപ്‌ലോഡ് ചെയ്യുക:"
 
 #: orga/forms/cfp.py:271
 msgid "Replace existing options"
-msgstr ""
+msgstr "നിലവിലുള്ള ഓപ്ഷനുകൾ മാറ്റിസ്ഥാപിക്കുക"
 
 #: orga/forms/cfp.py:273
 msgid ""
@@ -25735,44 +25744,47 @@ msgid ""
 "you do not check this, the uploaded options will be added to the existing "
 "ones, without adding duplicates."
 msgstr ""
+"പുതിയ ഓപ്ഷനുകൾ അപ്‌ലോഡ് ചെയ്‌താൽ, നിലവിലുള്ളവ മാറ്റിസ്ഥാപിക്കണോ? ശ്രദ്ധിക്കുക: ഇത് ഈ കസ്റ്റം "
+"ഫീൽഡിലേക്കുള്ള നിലവിലുള്ള എല്ലാ മറുപടികളും DELETE ചെയ്യും! ഇത് തിരഞ്ഞെടുക്കാത്ത പക്ഷം, അപ്‌ലോഡ് "
+"ചെയ്ത ഓപ്ഷനുകൾ പകർപ്പുകൾ ചേർക്കാതെ നിലവിലുള്ളവയിലേക്ക് ചേർക്കും."
 
 #: orga/forms/cfp.py:310
 msgid "Could not read file."
-msgstr ""
+msgstr "ഫയൽ വായിക്കാനായില്ല."
 
 #: orga/forms/cfp.py:315
 msgid "JSON file does not contain a list."
-msgstr ""
+msgstr "JSON ഫയലിൽ ഒരു പട്ടിക ഉൾപ്പെട്ടിട്ടില്ല."
 
 #: orga/forms/cfp.py:317
 msgid "JSON file does not contain a list of objects."
-msgstr ""
+msgstr "JSON ഫയലിൽ ഒബ്‌ജെക്ടുകളുടെ പട്ടിക ഉൾപ്പെട്ടിട്ടില്ല."
 
 #: orga/forms/cfp.py:329
 msgid "Please select a deadline after which the field should become mandatory."
-msgstr ""
+msgstr "ഫീൽഡ് നിർബന്ധമാകേണ്ട ഡെഡ്‌ലൈൻ തിരഞ്ഞെടുക്കുക."
 
 #: orga/forms/cfp.py:338
 msgid "You cannot replace options without uploading new ones."
-msgstr ""
+msgstr "പുതിയ ഓപ്ഷനുകൾ അപ്‌ലോഡ് ചെയ്യാതെ ഓപ്ഷനുകൾ മാറ്റിസ്ഥാപിക്കാൻ കഴിയില്ല."
 
 #: orga/forms/cfp.py:440
 msgid "You already have a session type by this name!"
-msgstr ""
+msgstr "ഈ പേരിൽ ഇതിനകം ഒരു സെഷൻ തരം ഉണ്ട്!"
 
 #: orga/forms/cfp.py:465
 #, python-brace-format
 msgid "You can create an access code <a href=\"{url}\">here</a>."
-msgstr ""
+msgstr "<a href=\"{url}\">ഇവിടെ</a> ഒരു ആക്‌സസ് കോഡ് സൃഷ്ടിക്കാം."
 
 #: orga/forms/cfp.py:474
 msgid "You already have a track by this name!"
-msgstr ""
+msgstr "ഈ പേരിൽ ഇതിനകം ഒരു ട്രാക്ക് ഉണ്ട്!"
 
 #: orga/forms/cfp.py:526
 #, python-brace-format
 msgid "Access code for the {event} CfP"
-msgstr ""
+msgstr "{event} CfP-ക്കുള്ള ആക്‌സസ് കോഡ്"
 
 #: orga/forms/cfp.py:530
 #, python-brace-format
@@ -25781,15 +25793,18 @@ msgid ""
 "\n"
 "This is an access code for the {event} CfP."
 msgstr ""
+"ഹായ്!\n"
+"\n"
+"ഇത് {event} CfP-ക്കുള്ള ഒരു ആക്‌സസ് കോഡാണ്."
 
 #: orga/forms/cfp.py:540
 #, python-brace-format
 msgid "It will allow you to submit a proposal to the “{track}” track."
-msgstr ""
+msgstr "“{track}” ട്രാക്കിലേക്ക് ഒരു പ്രൊപ്പോസൽ സമർപ്പിക്കാൻ ഇത് അനുവദിക്കും."
 
 #: orga/forms/cfp.py:547
 msgid "It will allow you to submit a proposal to our CfP."
-msgstr ""
+msgstr "ഞങ്ങളുടെ CfP-യിലേക്ക് ഒരു പ്രൊപ്പോസൽ സമർപ്പിക്കാൻ ഇത് അനുവദിക്കും."
 
 #: orga/forms/cfp.py:551
 #, python-brace-format
