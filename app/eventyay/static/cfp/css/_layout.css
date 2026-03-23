@@ -245,6 +245,8 @@ header {
   display: inline-flex;
   border-radius: 14px;
   background: transparent;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .event-hero-text {
@@ -403,6 +405,13 @@ footer {
 
   .event-hero {
     margin: 0.5rem 0 2rem;
+  }
+
+  .event-hero-overlay {
+    display: flex;
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
   .event-brand {
