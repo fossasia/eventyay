@@ -657,7 +657,7 @@ export default {
 			gap: 18px
 
 		.featured-speaker-column
-			width: 320px
+			width: 370px
 			max-width: 100%
 
 		.featured-speaker-card
