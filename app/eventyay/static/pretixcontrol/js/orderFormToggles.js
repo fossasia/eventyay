@@ -47,8 +47,7 @@ async function updateQuestionField(questionId, field, value) {
         throw new Error('CSRF token not found');
     }
     
-    const baseUrl = window.location.pathname.replace(/\/orderforms\/?$/, '');
-    const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
+    const toggleUrl = `${questionId}/toggle/`;
     
     const response = await fetch(toggleUrl, {
         method: 'POST',
