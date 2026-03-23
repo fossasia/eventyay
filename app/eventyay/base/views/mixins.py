@@ -97,6 +97,15 @@ class BaseQuestionsViewMixin:
                             if 'disabled' in overrides[question_name]:
                                 question_field.disabled = overrides[question_name]['disabled']
 
+            form.regular_fields = []
+            form.badge_option_fields = []
+            for field_name in form.fields:
+                bound_field = form[field_name]
+                if getattr(bound_field.field, 'badge_option', False):
+                    form.badge_option_fields.append(bound_field)
+                else:
+                    form.regular_fields.append(bound_field)
+
             if len(form.fields) > 0:
                 formlist.append(form)
         return formlist
