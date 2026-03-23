@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:18+0000\n"
+"PO-Revision-Date: 2026-03-23 15:17+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Marathi <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/mr/>\n"
@@ -25443,7 +25443,7 @@ msgstr ""
 
 #: orga/forms/cfp.py:65
 msgid "Words"
-msgstr ""
+msgstr "शब्द"
 
 #: orga/forms/cfp.py:235
 msgid "Display deadline publicly"
@@ -26719,90 +26719,92 @@ msgstr "कार्यक्रम इतिहास"
 
 #: orga/templates/orga/event/live.html:5 orga/templates/orga/event/live.html:10
 msgid "Talk component status"
-msgstr ""
+msgstr "टॉक घटक स्थिती"
 
 #: orga/templates/orga/event_list.html:49
 msgid ""
 "You are currently in the organizer area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
 msgstr ""
+"सध्या eventyay च्या आयोजक विभागात आहात. सबमिट केलेले प्रस्ताव पाहण्यासाठी थेट कार्यक्रम "
+"पृष्ठावर जा:"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:13
 #: orga/templates/orga/speaker/form.html:30 orga/views/dashboard.py:297
 msgid "proposal"
 msgid_plural "proposals"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "प्रस्ताव"
+msgstr[1] "प्रस्ताव"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:19
 msgid "No proposals yet"
-msgstr ""
+msgstr "अद्याप कोणतेही प्रस्ताव नाहीत"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:26
 msgid "Not public"
-msgstr ""
+msgstr "सार्वजनिक नाही"
 
 #: orga/templates/orga/includes/event_links_formset.html:47
 msgid "Add link"
-msgstr ""
+msgstr "लिंक जोडा"
 
 #: orga/templates/orga/includes/mail_template_role.html:3
 msgid "Accept email"
-msgstr ""
+msgstr "ईमेल स्वीकारा"
 
 #: orga/templates/orga/includes/mail_template_role.html:5
 msgid "Reject email"
-msgstr ""
+msgstr "ईमेल नाकारा"
 
 #: orga/templates/orga/includes/mail_template_role.html:7
 msgid "Schedule update"
-msgstr ""
+msgstr "वेळापत्रक अद्यतन"
 
 #: orga/templates/orga/includes/mark_speakers_arrived.html:7
 #: orga/templates/orga/speaker/list.html:63
 msgid "Mark speaker as not arrived"
-msgstr ""
+msgstr "वक्त्याला आलेले नाही म्हणून चिन्हांकित करा"
 
 #: orga/templates/orga/includes/mark_speakers_arrived.html:9
 #: orga/templates/orga/speaker/list.html:65
 msgid "Mark speaker as arrived"
-msgstr ""
+msgstr "वक्त्याला आलेले म्हणून चिन्हांकित करा"
 
 #: orga/templates/orga/includes/pagination.html:33
 #, python-format
 msgctxt "Shown at the bottom of lists, always > 1 elements."
 msgid "%(count)s elements"
-msgstr ""
+msgstr "%(count)s घटक"
 
 #: orga/templates/orga/includes/pagination.html:44
 msgctxt "Allows users to select how many lines/elements are shown in lists."
 msgid "Show per page:"
-msgstr ""
+msgstr "प्रति पृष्ठ दाखवा:"
 
 #: orga/templates/orga/includes/review_filter_form.html:10
 msgid "Number of reviews"
-msgstr ""
+msgstr "पुनरावलोकनांची संख्या"
 
 #: orga/templates/orga/includes/submission_filter_form.html:26
 #: orga/templates/orga/speaker/list.html:27
 #, python-format
 msgid "List filtered by responses to custom field “%(question)s”."
-msgstr ""
+msgstr "सानुकूल फील्ड “%(question)s” वरील प्रतिसादांनुसार यादी फिल्टर केली आहे."
 
 #: orga/templates/orga/invitation.html:4
 msgid "Invitation"
-msgstr ""
+msgstr "आमंत्रण"
 
 #: orga/templates/orga/invitation.html:7
 #, python-format
 msgid "Invitation to the %(organizer)s team “%(name)s”"
-msgstr ""
+msgstr "%(organizer)s संघासाठी “%(name)s” आमंत्रण"
 
 #: orga/templates/orga/invitation.html:15
 #: orga/templates/orga/invitation.html:34
 #, python-format
 msgid "You have been invited to join the organizer team %(name)s."
-msgstr ""
+msgstr "आयोजक संघ %(name)s मध्ये सामील होण्यासाठी आमंत्रण आले आहे."
 
 #: orga/templates/orga/invitation.html:20
 #, python-format
@@ -26811,6 +26813,8 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
+"जर <a href=\"%(domain)s\">%(domain)s</a> वर वक्ता किंवा आयोजक म्हणून आधीपासून खाते "
+"असेल, तर आता लॉग इन करा. अन्यथा, संघात सामील होण्यासाठी नवीन खाते तयार करा!"
 
 #: orga/templates/orga/invitation.html:37
 #, python-format
@@ -26821,6 +26825,10 @@ msgid ""
 "in with the other account. </p><p> If you believe to have received this "
 "invitation by mistake, please contact the organizer directly."
 msgstr ""
+"सध्या सक्रिय असलेल्या खात्याने आमंत्रण स्वीकारण्यासाठी, कृपया खालील बटण वापरा. वेगळ्या "
+"खात्याने आमंत्रण स्वीकारायचे असल्यास, <a href=\"/orga/logout/?next=%(link)s\">लॉग "
+"आउट</a> करून दुसऱ्या खात्याने लॉग इन करा. </p><p> हे आमंत्रण चुकून मिळाले असल्यास, कृपया "
+"आयोजकाशी थेट संपर्क साधा."
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"

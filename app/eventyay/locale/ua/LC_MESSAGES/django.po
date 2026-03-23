@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:20+0000\n"
-"Last-Translator: Oleksandr Polieno <polyenoom@gmail.com>\n"
+"PO-Revision-Date: 2026-03-23 15:11+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Ukrainian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/uk/>\n"
 "Language: ua\n"
@@ -2871,6 +2871,7 @@ msgstr "Текст заголовка початкової сторінки"
 #: base/configurations/default_setting.py:2556
 msgid "Short text displayed on the public start page banner."
 msgstr ""
+"Короткий текст, що відображається на банері публічної стартової сторінки."
 
 #: base/configurations/default_setting.py:2576
 msgid "Most common English titles"
@@ -3607,7 +3608,7 @@ msgstr "Електронна пошта"
 
 #: base/exporters/orderlist.py:321
 msgid "Wikimedia username"
-msgstr ""
+msgstr "Ім’я користувача Wikimedia"
 
 #: base/exporters/orderlist.py:324 base/exporters/orderlist.py:542
 #: base/exporters/orderlist.py:668 base/exporters/waitinglist.py:87
@@ -4174,17 +4175,19 @@ msgstr "Код ваучера"
 
 #: base/forms/__init__.py:156
 msgid "Show secret key"
-msgstr ""
+msgstr "Показати секретний ключ"
 
 #: base/forms/__init__.py:157
 msgid "Hide secret key"
-msgstr ""
+msgstr "Приховати секретний ключ"
 
 #: base/forms/auth.py:17
 msgid ""
 "Password must be at least 8 characters and include a letter, a number, and a "
 "special character."
 msgstr ""
+"Пароль має містити щонайменше 8 символів і включати літеру, цифру та "
+"спеціальний символ."
 
 #: base/forms/auth.py:43 base/forms/auth.py:153
 #: presale/templates/pretixpresale/fragment_modals.html:97
@@ -4384,7 +4387,7 @@ msgstr "Сторінка %d з %d"
 #: base/invoice.py:272
 msgctxt "invoice"
 msgid "Classic renderer (pretix 1.0)"
-msgstr ""
+msgstr "Класичний рендерер (pretix 1.0)"
 
 #: base/invoice.py:326
 msgctxt "invoice"
