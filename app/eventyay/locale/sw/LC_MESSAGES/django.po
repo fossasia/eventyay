@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-20 21:44+0000\n"
+"PO-Revision-Date: 2026-03-22 15:22+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Swahili <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sw/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16.1-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -7158,10 +7158,8 @@ msgid "Session Types"
 msgstr "Aina za Vikao"
 
 #: base/models/question.py:168 orga/forms/cfp.py:284
-#, fuzzy
-#| msgid "We have some questions"
 msgid "Custom question"
-msgstr "Tuna baadhi ya maswali"
+msgstr "Swali maalum"
 
 #: base/models/question.py:173
 msgid "help text"
@@ -10469,15 +10467,11 @@ msgstr ""
 "tuanze, hii haitachukua muda mrefu."
 
 #: cfp/flow.py:485
-#, fuzzy
-#| msgid ""
-#| "There was an error when logging in. Please contact the organiser for "
-#| "further help."
 msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
 msgstr ""
-"Kulikuwa na hitilafu wakati wa kuingia. Tafadhali wasiliana na mwandaaji kwa "
+"Hitilafu ilitokea wakati wa kuingia. Tafadhali wasiliana na mwandalizi kwa "
 "usaidizi zaidi."
 
 #: cfp/flow.py:491 common/templates/common/base.html:151
@@ -11674,10 +11668,8 @@ msgstr "Kiolezo cha barua pepe"
 
 #: common/log_display.py:287 common/templates/common/base.html:142
 #: common/templates/common/fragment_header_user.html:92
-#, fuzzy
-#| msgid "Speaker email"
 msgid "Speaker profile"
-msgstr "Barua pepe ya msemaji"
+msgstr "Wasifu wa mzungumzaji"
 
 #: common/templates/400.html:18
 msgid ""
@@ -11746,10 +11738,8 @@ msgstr "Barua pepe za tukio"
 
 #: common/templates/common/base.html:157
 #: common/templates/common/fragment_header_user.html:107
-#, fuzzy
-#| msgid "Go To Organiser Area"
 msgid "Organizer area"
-msgstr "Nenda kwenye Eneo la Mratibu"
+msgstr "Eneo la mwandalizi"
 
 #: common/templates/common/base.html:165
 #: common/templates/common/fragment_header_user.html:115
@@ -11942,10 +11932,8 @@ msgid "Talks"
 msgstr "Mada"
 
 #: common/templates/common/fragment_profile_dropdown.html:31
-#, fuzzy
-#| msgid "Questions"
 msgid "My sessions"
-msgstr "Maswali"
+msgstr "Vipindi vyangu"
 
 #: common/templates/common/fragment_profile_dropdown.html:34
 #: control/forms/filter.py:1171 eventyay_common/navigation.py:42
@@ -12765,10 +12753,8 @@ msgid "Your default locale must be specified."
 msgstr "Lugha chaguo-msingi lazima ibainishwe."
 
 #: control/forms/event.py:291 control/forms/event.py:398 event/forms.py:293
-#, fuzzy
-#| msgid "Please provide a valid email address."
 msgid "Please provide a valid organizer email address."
-msgstr "Tafadhali toa barua pepe halali."
+msgstr "Tafadhali toa anwani halali ya barua pepe ya mwandalizi."
 
 #: control/forms/event.py:360 event/forms.py:316
 msgid "Copy configuration from"
@@ -13513,10 +13499,8 @@ msgid "Sunday"
 msgstr "Jumapili"
 
 #: control/forms/filter.py:913 control/forms/filter.py:915
-#, fuzzy
-#| msgid "Speaker email"
 msgid "Name or email"
-msgstr "Barua pepe ya msemaji"
+msgstr "Jina au barua pepe"
 
 #: control/forms/filter.py:925
 msgid "Event filter"
@@ -13573,36 +13557,28 @@ msgid "Title, speaker name or email"
 msgstr "Kichwa, jina la mzungumzaji au barua pepe"
 
 #: control/forms/filter.py:1017
-#, fuzzy
-#| msgid "Create proposal"
 msgid "All proposals"
-msgstr "Tengeneza pendekezo"
+msgstr "Mapendekezo yote"
 
 #: control/forms/filter.py:1018
 msgid "Submitted"
 msgstr "Imewasilishwa"
 
 #: control/forms/filter.py:1019
-#, fuzzy
-#| msgid "accepted"
 msgid "Accepted"
-msgstr "limekubalika"
+msgstr "Yamekubaliwa"
 
 #: control/forms/filter.py:1020
 msgid "Rejected"
 msgstr "Imekataliwa"
 
 #: control/forms/filter.py:1021
-#, fuzzy
-#| msgid "confirmed"
 msgid "Confirmed"
-msgstr "imethibitishwa"
+msgstr "Yamethibitishwa"
 
 #: control/forms/filter.py:1022
-#, fuzzy
-#| msgid "withdrawn"
 msgid "Withdrawn"
-msgstr "imeondolewa"
+msgstr "Yameondolewa"
 
 #: control/forms/filter.py:1119 control/forms/filter.py:1120
 #: control/forms/filter.py:1468 control/forms/filter.py:1469
@@ -15947,10 +15923,8 @@ msgid "The property has been deleted."
 msgstr "Sifa imefutwa."
 
 #: control/logdisplay.py:677
-#, fuzzy
-#| msgid "Your proposal has been withdrawn."
 msgid "The property has been changed."
-msgstr "Pendekezo lako limeondolewa."
+msgstr "Sifa imebadilishwa."
 
 #: control/logdisplay.py:678
 msgid "The badge layout has been deleted."
@@ -16578,10 +16552,8 @@ msgid "Create or update Janus server"
 msgstr "Unda au sasisha seva ya Janus"
 
 #: control/templates/control/profile.html:5
-#, fuzzy
-#| msgid "Your Profile"
 msgid "Change your profile"
-msgstr "Wasifu wako"
+msgstr "Badilisha wasifu"
 
 #: control/templates/control/profile.html:11
 msgid "MFA settings"
@@ -16872,10 +16844,8 @@ msgid "This is a list of all talk submissions across events."
 msgstr "Hii ni orodha ya mapendekezo yote ya mawasilisho katika matukio yote."
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:92
-#, fuzzy
-#| msgid "Proposals are closed"
 msgid "Proposal State"
-msgstr "Mapendekezo yamefungwa"
+msgstr "Hali ya pendekezo"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:157
 msgid "There are no submissions to show."
@@ -23459,7 +23429,7 @@ msgstr "Bidhaa iliyochaguliwa imezimwa."
 
 #: control/views/product.py:1759
 msgid "Please correct the errors below."
-msgstr ""
+msgstr "Tafadhali sahihisha makosa yaliyo hapa chini."
 
 #: control/views/shredder.py:151
 msgid "The selected data was deleted successfully."
@@ -23741,15 +23711,13 @@ msgstr "Tangaza tarehe ya tukio linalofuata?"
 
 #: eventyay_common/forms/filters.py:38
 msgid "Search by session name"
-msgstr ""
+msgstr "Tafuta kwa jina la kipindi"
 
 #: eventyay_common/navigation.py:36
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:6
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:9
-#, fuzzy
-#| msgid "Questions"
 msgid "My Sessions"
-msgstr "Maswali"
+msgstr "Vipindi vyangu"
 
 #: eventyay_common/navigation.py:198 eventyay_common/navigation.py:206
 msgid "Devices"
@@ -23769,7 +23737,7 @@ msgstr "Uthibitishaji wa vipengele viwili"
 
 #: eventyay_common/navigation.py:282
 msgid "OAuth applications"
-msgstr ""
+msgstr "Programu za OAuth"
 
 #: eventyay_common/navigation.py:288
 #: orga/templates/orga/event/dashboard.html:119
@@ -23824,7 +23792,7 @@ msgstr "Tumia chaguo la \"toa ufunguo\" kwenye programu yako ya uthibitishaji."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:65
 msgid "In \"Account name\", type your login name for pretix."
-msgstr ""
+msgstr "Katika \"Jina la akaunti\", andika jina la kuingia kwa pretix."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:68
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
@@ -23875,7 +23843,7 @@ msgstr "Je, una uhakika unataka kufuta kifaa cha uthibitishaji \"%(device)s\"?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 msgid "You will no longer be able to use this device to log in to pretix."
-msgstr ""
+msgstr "Hutaweza tena kutumia kifaa hiki kuingia kwenye pretix."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:27
 msgid ""
@@ -24017,6 +23985,7 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
+"Je, unataka kufuta ruhusa ya programu %(application)s kufikia akaunti yako?"
 
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -24040,31 +24009,31 @@ msgstr "Hakuna programu zilizo na ufikiaji wa akaunti yako ya eventyay."
 #: eventyay_common/templates/eventyay_common/account/email-management.html:4
 #: eventyay_common/templates/eventyay_common/account/email-management.html:7
 msgid "Email Addresses"
-msgstr ""
+msgstr "Anwani za Barua pepe"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:10
 msgid "The following email addresses are associated with your account:"
-msgstr ""
+msgstr "Anwani zifuatazo za barua pepe zimehusishwa na akaunti yako:"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:23
 msgid "Verified"
-msgstr ""
+msgstr "Imethibitishwa"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:25
 msgid "Unverified"
-msgstr ""
+msgstr "Haijathibitishwa"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:27
 msgid "Primary"
-msgstr ""
+msgstr "Msingi"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:34
 msgid "Make Primary"
-msgstr ""
+msgstr "Weka kama Msingi"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:35
 msgid "Re-send Verification"
-msgstr ""
+msgstr "Tuma tena uthibitisho"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:36
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:176
@@ -24080,17 +24049,15 @@ msgstr "Ondoa"
 #: eventyay_common/templates/eventyay_common/account/email-management.html:41
 msgid ""
 "You currently do not have any email addresses associated with your account."
-msgstr ""
+msgstr "Kwa sasa hakuna anwani za barua pepe zilizohusishwa na akaunti yako."
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:44
 msgid "Add Email Address"
-msgstr ""
+msgstr "Ongeza Anwani ya Barua pepe"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:51
-#, fuzzy
-#| msgid "Your Emails"
 msgid "Add Email"
-msgstr "Barua pepe zako"
+msgstr "Ongeza Barua pepe"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:4
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:20
@@ -24120,11 +24087,11 @@ msgstr "Mipangilio ya kuingia"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:55
 msgid "Email Address"
-msgstr ""
+msgstr "Anwani ya Barua pepe"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:60
 msgid "Manage email addresses"
-msgstr ""
+msgstr "Dhibiti anwani za barua pepe"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:75
 msgid "Change two-factor settings"
@@ -24147,11 +24114,11 @@ msgstr "Onyesha historia ya akaunti"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:112
 msgid "Set your password"
-msgstr ""
+msgstr "Weka nenosiri lako"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:120
 msgid "Send password setup link"
-msgstr ""
+msgstr "Tuma kiungo cha kuweka nenosiri"
 
 #: eventyay_common/templates/eventyay_common/account/notification-flip-off.html:4
 msgid "Disable notifications"
@@ -24315,7 +24282,7 @@ msgstr "Unda akaunti mpya"
 
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:35
 msgid "You have no upcoming events"
-msgstr ""
+msgstr "Huna matukio yajayo"
 
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:123
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:85
@@ -24950,10 +24917,8 @@ msgid "Create a new team"
 msgstr "Unda timu mpya"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:33
-#, fuzzy
-#| msgid "Create proposal"
 msgid "Create team"
-msgstr "Tengeneza pendekezo"
+msgstr "Unda timu"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:51
 #, python-format
@@ -25123,10 +25088,8 @@ msgid "Team history"
 msgstr "Historia ya timu"
 
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:82
-#, fuzzy
-#| msgid "We have some questions"
 msgid "You have no sessions."
-msgstr "Tuna baadhi ya maswali"
+msgstr "Huna vipindi."
 
 #: eventyay_common/views/account/basic.py:66
 msgid "We have emailed you a link to set your password."
@@ -25163,10 +25126,8 @@ msgstr ""
 "chini."
 
 #: eventyay_common/views/account/email.py:28
-#, fuzzy
-#| msgid "Please provide a valid email address."
 msgid "Please select an email address first."
-msgstr "Tafadhali toa barua pepe halali."
+msgstr "Tafadhali chagua anwani ya barua pepe kwanza."
 
 #: eventyay_common/views/account/oauth.py:67
 msgid "Access for the selected application has been revoked."
@@ -27730,12 +27691,10 @@ msgid "Copy to draft"
 msgstr "Nakili kwenda kwenye rasimu"
 
 #: orga/templates/orga/mails/outbox_list.html:10
-#, fuzzy
-#| msgid "Speaker email"
 msgid "pending email"
 msgid_plural "pending emails"
-msgstr[0] "Barua pepe ya msemaji"
-msgstr[1] "Barua pepe ya msemaji"
+msgstr[0] "barua pepe inayosubiri"
+msgstr[1] "barua pepe zinazongoja"
 
 #: orga/templates/orga/mails/outbox_list.html:27
 msgid "Send all on this page"
@@ -27998,10 +27957,8 @@ msgid "You don’t have reviewer permissions for this event."
 msgstr "Huna ruhusa za mkaguzi kwa tukio hili."
 
 #: orga/templates/orga/review/dashboard.html:50
-#, fuzzy
-#| msgid "Create proposal"
 msgid "Review Proposals"
-msgstr "Tengeneza pendekezo"
+msgstr "Kagua Mapendekezo"
 
 #: orga/templates/orga/review/dashboard.html:57
 msgid "Columns"
@@ -29137,15 +29094,11 @@ msgstr ""
 "haitatumika."
 
 #: orga/views/event.py:492
-#, fuzzy
-#| msgid ""
-#| "There was an error when logging in. Please contact the organiser for "
-#| "further help."
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
 msgstr ""
-"Kulikuwa na hitilafu wakati wa kuingia. Tafadhali wasiliana na mwandaaji kwa "
+"Kulikuwa na tatizo na uthibitishaji. Tafadhali wasiliana na mwandaaji kwa "
 "usaidizi zaidi."
 
 #: orga/views/event.py:506
@@ -33083,10 +33036,8 @@ msgid "Don't have an account?"
 msgstr "Huna akaunti?"
 
 #: presale/templates/pretixpresale/fragment_modals.html:123
-#, fuzzy
-#| msgid "Create proposal"
 msgid "Create one"
-msgstr "Tengeneza pendekezo"
+msgstr "Unda moja"
 
 #: presale/templates/pretixpresale/fragment_modals.html:325
 msgid "Logging in..."
@@ -33609,10 +33560,8 @@ msgid "speakers"
 msgstr "wazungumzaji"
 
 #: submission/exporters.py:63
-#, fuzzy
-#| msgid "Questions"
 msgid "submissions"
-msgstr "Maswali"
+msgstr "mawasilisho"
 
 #: submission/forms/feedback.py:18
 msgid "All speakers"
