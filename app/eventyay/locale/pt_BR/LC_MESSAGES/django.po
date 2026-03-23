@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-21 17:33+0000\n"
+"PO-Revision-Date: 2026-03-22 14:49+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_BR/>\n"
@@ -13089,105 +13089,103 @@ msgid ""
 "All mail related to your event will be sent over your specified email "
 "gateway."
 msgstr ""
+"Todos os e-mails relacionados ao evento serão enviados pelo gateway de e-"
+"mail especificado."
 
 #: control/forms/event.py:1141 control/forms/global_settings.py:140
 msgid "Sendgrid Token"
-msgstr ""
+msgstr "Token do SendGrid"
 
 #: control/forms/event.py:1146 control/forms/global_settings.py:45
 msgid "SendGrid"
-msgstr ""
+msgstr "SendGrid"
 
 #: control/forms/event.py:1146 control/forms/global_settings.py:45
 msgid "SMTP"
-msgstr ""
+msgstr "SMTP"
 
 #: control/forms/event.py:1149
-#, fuzzy
-#| msgid "Email address"
 msgid "Email vendor"
-msgstr "E-mail"
+msgstr "Fornecedor de e-mail"
 
 #: control/forms/event.py:1155 control/forms/global_settings.py:147
 #: orga/forms/event.py:200
 msgid "Hostname"
-msgstr ""
+msgstr "Nome do host"
 
 #: control/forms/event.py:1160 control/forms/global_settings.py:155
 #: control/templates/pretixcontrol/admin/systemconfig.html:83
 #: orga/forms/event.py:201
 msgid "Port"
-msgstr ""
+msgstr "Porta"
 
 #: control/forms/event.py:1165 control/forms/global_settings.py:163
 #: orga/forms/event.py:202
 msgid "Username"
-msgstr ""
+msgstr "Nome de usuário"
 
 #: control/forms/event.py:1179 control/forms/global_settings.py:183
 #: orga/forms/event.py:224
 msgid "Use STARTTLS"
-msgstr ""
+msgstr "Usar STARTTLS"
 
 #: control/forms/event.py:1180 control/forms/global_settings.py:184
 #: orga/forms/event.py:225
 msgid "Commonly enabled on port 587."
-msgstr ""
+msgstr "Normalmente ativado na porta 587."
 
 #: control/forms/event.py:1183 control/forms/global_settings.py:191
 #: orga/forms/event.py:228
 msgid "Use SSL"
-msgstr ""
+msgstr "Usar SSL"
 
 #: control/forms/event.py:1183 control/forms/global_settings.py:192
 #: orga/forms/event.py:228
 msgid "Commonly enabled on port 465."
-msgstr ""
+msgstr "Normalmente ativado na porta 465."
 
 #: control/forms/event.py:1208 control/forms/orders.py:510
 #: control/forms/orders.py:693 control/forms/vouchers.py:295
 #: plugins/sendmail/forms.py:132 plugins/sendmail/forms.py:416
 #: plugins/sendmail/forms.py:508
-#, fuzzy, python-brace-format
-#| msgid "Invalid placeholder(s): %(value)s"
+#, python-brace-format
 msgid "Available placeholders: {list}"
-msgstr "Valores padrão inválido(s): %(value)s"
+msgstr "Placeholders disponíveis: {list}"
 
 #: control/forms/event.py:1238 orga/forms/event.py:258
 msgid ""
 "You can activate either SSL or STARTTLS security, but not both at the same "
 "time."
 msgstr ""
+"É possível ativar a segurança SSL ou STARTTLS, mas não ambas ao mesmo tempo."
 
 #: control/forms/event.py:1243 control/forms/global_settings.py:443
 msgid "This field is required when using SendGrid as email vendor."
 msgstr "Este campo é obrigatório ao usar o SendGrid como fornecedor de e-mail."
 
 #: control/forms/event.py:1258
-#, fuzzy
-#| msgid "Ticket design"
 msgid "Ticket code generator"
-msgstr "Design de bilhetes"
+msgstr "Gerador de código de ingresso"
 
 #: control/forms/event.py:1259
 msgid "For advanced users, usually does not need to be changed."
-msgstr ""
+msgstr "Para usuários avançados; geralmente não é necessário alterar."
 
 #: control/forms/event.py:1321
 msgid "Any country"
-msgstr ""
+msgstr "Qualquer país"
 
 #: control/forms/event.py:1321
 msgid "European Union"
-msgstr ""
+msgstr "União Europeia"
 
 #: control/forms/event.py:1330
 msgid "Any customer"
-msgstr ""
+msgstr "Qualquer cliente"
 
 #: control/forms/event.py:1331
 msgid "Individual"
-msgstr ""
+msgstr "Pessoa física"
 
 #: control/forms/event.py:1332
 msgid "Business"
@@ -15704,55 +15702,55 @@ msgstr "O voucher foi criado e enviado para uma pessoa na lista de espera."
 
 #: control/logdisplay.py:606
 msgid "The voucher has been changed."
-msgstr ""
+msgstr "O voucher foi alterado."
 
 #: control/logdisplay.py:607
 msgid "The voucher has been deleted."
-msgstr ""
+msgstr "O voucher foi excluído."
 
 #: control/logdisplay.py:608
 #, python-brace-format
 msgid "The voucher has been redeemed in order {order_code}."
-msgstr ""
+msgstr "O voucher foi resgatado no pedido {order_code}."
 
 #: control/logdisplay.py:609
 msgid "The product has been created."
-msgstr ""
+msgstr "O produto foi criado."
 
 #: control/logdisplay.py:610
 msgid "The product has been changed."
-msgstr ""
+msgstr "O produto foi alterado."
 
 #: control/logdisplay.py:611
 msgid "The product has been deleted."
-msgstr ""
+msgstr "O produto foi excluído."
 
 #: control/logdisplay.py:612
 #, python-brace-format
 msgid "The variation \"{value}\" has been created."
-msgstr ""
+msgstr "A variação “{value}” foi criada."
 
 #: control/logdisplay.py:613
 #, python-brace-format
 msgid "The variation \"{value}\" has been deleted."
-msgstr ""
+msgstr "A variação “{value}” foi excluída."
 
 #: control/logdisplay.py:614
 #, python-brace-format
 msgid "The variation \"{value}\" has been changed."
-msgstr ""
+msgstr "A variação “{value}” foi alterada."
 
 #: control/logdisplay.py:615
 msgid "An add-on has been added to this product."
-msgstr ""
+msgstr "Um complemento foi adicionado a este produto."
 
 #: control/logdisplay.py:616
 msgid "An add-on has been removed from this product."
-msgstr ""
+msgstr "Um complemento foi removido deste produto."
 
 #: control/logdisplay.py:617
 msgid "An add-on has been changed on this product."
-msgstr ""
+msgstr "Um complemento foi alterado neste produto."
 
 #: control/logdisplay.py:618
 msgid "A bundled product has been added to this product."
@@ -15768,35 +15766,31 @@ msgstr "Um produto agrupado foi alterado neste produto."
 
 #: control/logdisplay.py:621
 msgid "The quota has been added."
-msgstr ""
+msgstr "A cota foi adicionada."
 
 #: control/logdisplay.py:622
 msgid "The quota has been deleted."
-msgstr ""
+msgstr "A cota foi excluída."
 
 #: control/logdisplay.py:623
 msgid "The quota has been changed."
-msgstr ""
+msgstr "A cota foi alterada."
 
 #: control/logdisplay.py:624
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "The quota has closed."
-msgstr "Seu carrinho foi atualizado."
+msgstr "A cota foi encerrada."
 
 #: control/logdisplay.py:625 control/views/product.py:1060
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "The quota has been re-opened."
-msgstr "Seu carrinho foi atualizado."
+msgstr "A cota foi reaberta."
 
 #: control/logdisplay.py:626
 msgid "The category has been added."
-msgstr ""
+msgstr "A categoria foi adicionada."
 
 #: control/logdisplay.py:627
 msgid "The category has been deleted."
-msgstr ""
+msgstr "A categoria foi excluída."
 
 #: control/logdisplay.py:628
 msgid "The tax rule has been added."
@@ -16042,7 +16036,7 @@ msgstr "A pergunta foi alterada."
 
 #: control/logdisplay.py:690
 msgid "The question has been deleted."
-msgstr ""
+msgstr "A pergunta foi excluída."
 
 #: control/logdisplay.py:691
 msgid "A new answer option has been created."
@@ -22963,61 +22957,44 @@ msgstr "Somente pedidos criados no modo de teste podem ser excluídos."
 
 #: control/views/orders.py:662
 msgid "The order has been denied and is therefore now canceled."
-msgstr ""
+msgstr "O pedido foi negado e, portanto, foi cancelado."
 
 #: control/views/orders.py:711
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "This payment has been canceled."
-msgstr "Seu carrinho foi atualizado."
+msgstr "Este pagamento foi cancelado."
 
 #: control/views/orders.py:713
-#, fuzzy
-#| msgid "This product will not be sold after the given date."
 msgid "This payment can not be canceled at the moment."
-msgstr "Este produto não será vendido após a data indicada."
+msgstr "No momento, não é possível cancelar este pagamento."
 
 #: control/views/orders.py:750
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "The refund has been canceled."
-msgstr "Seu carrinho foi atualizado."
+msgstr "O reembolso foi cancelado."
 
 #: control/views/orders.py:752
-#, fuzzy
-#| msgid "This product will not be sold after the given date."
 msgid "This refund can not be canceled at the moment."
-msgstr "Este produto não será vendido após a data indicada."
+msgstr "No momento, não é possível cancelar este reembolso."
 
 #: control/views/orders.py:791
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "The refund has been processed."
-msgstr "Seu carrinho foi atualizado."
+msgstr "O reembolso foi processado."
 
 #: control/views/orders.py:793 control/views/orders.py:826
-#, fuzzy
-#| msgid "This product will not be sold after the given date."
 msgid "This refund can not be processed at the moment."
-msgstr "Este produto não será vendido após a data indicada."
+msgstr "No momento, não é possível processar este reembolso."
 
 #: control/views/orders.py:824
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "The refund has been marked as done."
-msgstr "Seu carrinho foi atualizado."
+msgstr "O reembolso foi marcado como concluído."
 
 #: control/views/orders.py:859
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "The request has been removed. If you want, you can now inform the user."
-msgstr "Seu carrinho foi atualizado."
+msgstr ""
+"A solicitação foi removida. Se desejar, agora é possível informar o usuário."
 
 #: control/views/orders.py:874
-#, fuzzy
-#| msgid "Cancellation fee"
 msgid "Your cancellation request"
-msgstr "Taxa de cancelamento"
+msgstr "Sua solicitação de cancelamento"
 
 #: control/views/orders.py:876
 #, python-brace-format
@@ -23029,36 +23006,43 @@ msgid ""
 "\n"
 "Your {event} team"
 msgstr ""
+"Olá,\n"
+"\n"
+"infelizmente, não foi possível atender à solicitação e cancelar o pedido.\n"
+"\n"
+"Equipe {event}"
 
 #: control/views/orders.py:937
 msgid ""
 "The payment has been marked as complete, but we were unable to send a "
 "confirmation mail."
 msgstr ""
+"O pagamento foi marcado como concluído, mas não foi possível enviar um e-"
+"mail de confirmação."
 
 #: control/views/orders.py:940
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid "The payment has been marked as complete."
-msgstr "Seu carrinho foi atualizado."
+msgstr "O pagamento foi marcado como concluído."
 
 #: control/views/orders.py:942
-#, fuzzy
-#| msgid "This product will not be sold after the given date."
 msgid "This payment can not be confirmed at the moment."
-msgstr "Este produto não será vendido após a data indicada."
+msgstr "No momento, não é possível confirmar este pagamento."
 
 #: control/views/orders.py:1124
 msgid ""
 "You can not refund more than the amount of a payment that is not yet "
 "refunded."
 msgstr ""
+"Não é possível reembolsar um valor maior do que o valor de um pagamento que "
+"ainda não foi reembolsado."
 
 #: control/views/orders.py:1131
 msgid ""
 "You selected a partial refund for a payment method that only supports full "
 "refunds."
 msgstr ""
+"Foi selecionado um reembolso parcial para um método de pagamento que aceita "
+"apenas reembolsos integrais."
 
 #: control/views/orders.py:1170
 #, python-brace-format
@@ -23066,11 +23050,13 @@ msgid ""
 "One of the refunds failed to be processed. You should retry to refund in a "
 "different way. The error message was: {}"
 msgstr ""
+"Um dos reembolsos falhou ao ser processado. Tente reembolsar de outra forma. "
+"A mensagem de erro foi: {}"
 
 #: control/views/orders.py:1180
 #, python-brace-format
 msgid "A refund of {} has been processed."
-msgstr ""
+msgstr "Um reembolso de {} foi processado."
 
 #: control/views/orders.py:1188
 #, python-brace-format
@@ -23078,13 +23064,15 @@ msgid ""
 "A refund of {} has been saved, but not yet fully executed. You can mark it "
 "as complete below."
 msgstr ""
+"Um reembolso de {} foi salvo, mas ainda não foi totalmente executado. "
+"Abaixo, é possível marcá-lo como concluído."
 
 #: control/views/orders.py:1213
-#, fuzzy
-#| msgid "Your cart has been updated."
 msgid ""
 "A new gift card was created. You can now send the user their gift card code."
-msgstr "Seu carrinho foi atualizado."
+msgstr ""
+"Um novo vale-presente foi criado. Agora é possível enviar ao usuário o "
+"código do vale-presente."
 
 #: control/views/orders.py:1228
 msgid "Your gift card code"
