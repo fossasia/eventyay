@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:14+0000\n"
+"PO-Revision-Date: 2026-03-23 15:19+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Telugu <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "te/>\n"
@@ -25213,10 +25213,20 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"హాయ్!\n"
+"\n"
+"కొత్త షెడ్యూల్ వెర్షన్‌ను విడుదల చేశాం, దీన్ని తెలియజేయాలనుకున్నాం:\n"
+"\n"
+"{speaker_schedule_new}\n"
+"\n"
+"కలుసుకోవడానికి ఎదురుచూస్తున్నాం. మీ సెషన్ లేదా కేటాయించిన స్లాట్‌లో ఏదైనా సమస్య ఉంటే దయచేసి మమ్మల్ని "
+"సంప్రదించండి.\n"
+"\n"
+"{event_name} నిర్వాహకులు"
 
 #: mail/default_templates.py:68
 msgid "We have some questions about your proposal"
-msgstr ""
+msgstr "ప్రతిపాదన గురించి కొన్ని ప్రశ్నలు ఉన్నాయి"
 
 #: mail/default_templates.py:71
 #, python-brace-format
@@ -25234,11 +25244,23 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"హాయ్!\n"
+"\n"
+"మీ గురించి మరియు మీ ప్రతిపాదన గురించి కొన్ని స్పష్టత అవసరమైన ప్రశ్నలు ఉన్నాయి. వీటికి సమాధానాలు ఇవ్వమని "
+"కోరుతున్నాం:\n"
+"\n"
+"{questions}\n"
+"\n"
+"వాటికి {url} వద్ద సమాధానాలు ఇవ్వవచ్చు.\n"
+"\n"
+"మీకూడా ఏవైనా ప్రశ్నలు ఉంటే సంకోచించకుండా మమ్మల్ని సంప్రదించండి!\n"
+"\n"
+"{event_name} నిర్వాహకులు"
 
 #: mail/default_templates.py:86
 #, python-brace-format
 msgid "New proposal: {proposal_title}"
-msgstr ""
+msgstr "కొత్త ప్రతిపాదన: {proposal_title}"
 
 #: mail/default_templates.py:89
 #, python-brace-format
@@ -25254,11 +25276,21 @@ msgid ""
 "All the best,\n"
 "your {event_name} CfP system.\n"
 msgstr ""
+"హాయ్,\n"
+"\n"
+"మీ ఈవెంట్ {event_name} కోసం కొత్త ప్రతిపాదన అందింది:\n"
+"{speakers} నుండి \"{submission_title}\".\n"
+"వివరాలు ఇక్కడ చూడవచ్చు\n"
+"\n"
+"{event_url}\n"
+"\n"
+"శుభాకాంక్షలతో,\n"
+"మీ {event_name} CfP వ్యవస్థ.\n"
 
 #: mail/default_templates.py:103
 #, python-brace-format
 msgid "You have been added to a proposal for {event_name}"
-msgstr ""
+msgstr "{event_name} కోసం ఒక ప్రతిపాదనకు జోడించబడ్డారు"
 
 #: mail/default_templates.py:107
 #, python-brace-format
@@ -25277,6 +25309,16 @@ msgid ""
 "\n"
 "The {event} orga crew"
 msgstr ""
+"హాయ్!\n"
+"\n"
+"{event_name} యొక్క “ {proposal_title} ” అనే శీర్షిక గల ప్రతిపాదనకు జోడించబడ్డారు.\n"
+"మీ కోసం ఖాతా సృష్టించబడింది – ఖాతా పాస్‌వర్డ్ సెట్ చేయడానికి దయచేసి ఈ లింక్‌ను అనుసరించండి.\n"
+"\n"
+"{invitation_link}\n"
+"\n"
+"తర్వాత, వినియోగదారు ప్రొఫైల్‌ను సవరించి ప్రతిపాదన స్థితిని చూడవచ్చు.\n"
+"\n"
+"{event} ఆర్గా బృందం"
 
 #: mail/default_templates.py:121
 #, python-brace-format
@@ -25292,56 +25334,66 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"హాయ్!\n"
+"\n"
+"{event_name} యొక్క “ {proposal_title} ” అనే శీర్షిక గల ప్రతిపాదనకు జోడించబడ్డారు.\n"
+"వినియోగదారు ప్రొఫైల్‌ను సవరించి ప్రతిపాదన స్థితిని చూడడానికి దయచేసి ఈ లింక్‌ను అనుసరించండి:\n"
+"\n"
+"{proposal_url}\n"
+"\n"
+"{event_name} నిర్వాహకులు"
 
 #: multidomain/models.py:21
 msgid "Known domain"
-msgstr ""
+msgstr "తెలిసిన డొమైన్"
 
 #: multidomain/models.py:22
 msgid "Known domains"
-msgstr ""
+msgstr "తెలిసిన డొమైన్లు"
 
 #: orga/forms/cfp.py:42
 msgid "Use tracks"
-msgstr ""
+msgstr "ట్రాక్‌లను ఉపయోగించు"
 
 #: orga/forms/cfp.py:44
 msgid "Do you organise your sessions by tracks?"
-msgstr ""
+msgstr "సెషన్లను ట్రాక్‌ల ద్వారా నిర్వహించాలా?"
 
 #: orga/forms/cfp.py:49
 msgid "Can sessions be held multiple times?"
-msgstr ""
+msgstr "సెషన్లు అనేకసార్లు నిర్వహించవచ్చా?"
 
 #: orga/forms/cfp.py:52
 msgid "Send mail on new proposal"
-msgstr ""
+msgstr "కొత్త ప్రతిపాదనపై మెయిల్ పంపు"
 
 #: orga/forms/cfp.py:54
 msgid ""
 "If this setting is checked, you will receive an email to the organizer "
 "address for every received proposal."
 msgstr ""
+"ఈ సెట్టింగ్‌ను ఎంచుకుంటే, అందిన ప్రతి ప్రతిపాదనకు నిర్వాహక చిరునామాకు ఒక ఇమెయిల్ అందుతుంది."
 
 #: orga/forms/cfp.py:59
 msgid "Allow submitters to share their proposal publicly"
-msgstr ""
+msgstr "సబ్మిట్ చేసినవారు తమ ప్రతిపాదనను పబ్లిక్‌గా పంచుకోవడానికి అనుమతించు"
 
 #: orga/forms/cfp.py:60
 msgid "Allow submitters to share a secret link to their proposal with others."
 msgstr ""
+"సబ్మిట్ చేసినవారు తమ ప్రతిపాదనకు సీక్రెట్ లింక్‌ను ఇతరులతో పంచుకోవడానికి అనుమతించు."
 
 #: orga/forms/cfp.py:64
 msgid "Count text length in"
-msgstr ""
+msgstr "పాఠ్య పొడవును లెక్కించు"
 
 #: orga/forms/cfp.py:65
 msgid "Characters"
-msgstr ""
+msgstr "అక్షరాలు"
 
 #: orga/forms/cfp.py:65
 msgid "Words"
-msgstr ""
+msgstr "పదాలు"
 
 #: orga/forms/cfp.py:235
 msgid "Display deadline publicly"
@@ -26610,90 +26662,93 @@ msgstr "ఈవెంట్ చరిత్ర"
 
 #: orga/templates/orga/event/live.html:5 orga/templates/orga/event/live.html:10
 msgid "Talk component status"
-msgstr ""
+msgstr "టాక్ భాగం స్థితి"
 
 #: orga/templates/orga/event_list.html:49
 msgid ""
 "You are currently in the organizer area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
 msgstr ""
+"ప్రస్తుతం eventyay నిర్వాహక ప్రాంతంలో ఉంది. సమర్పించిన ప్రతిపాదనలను చూడాలంటే, దయచేసి నేరుగా ఈవెంట్ "
+"పేజీకి వెళ్లండి:"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:13
 #: orga/templates/orga/speaker/form.html:30 orga/views/dashboard.py:297
 msgid "proposal"
 msgid_plural "proposals"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "ప్రతిపాదన"
+msgstr[1] "ప్రతిపాదనలు"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:19
 msgid "No proposals yet"
-msgstr ""
+msgstr "ఇంకా ప్రతిపాదనలు లేవు"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:26
 msgid "Not public"
-msgstr ""
+msgstr "ప్రజలకు కనిపించదు"
 
 #: orga/templates/orga/includes/event_links_formset.html:47
 msgid "Add link"
-msgstr ""
+msgstr "లింక్ జోడించండి"
 
 #: orga/templates/orga/includes/mail_template_role.html:3
 msgid "Accept email"
-msgstr ""
+msgstr "ఇమెయిల్ ఆమోదించండి"
 
 #: orga/templates/orga/includes/mail_template_role.html:5
 msgid "Reject email"
-msgstr ""
+msgstr "ఇమెయిల్ తిరస్కరించండి"
 
 #: orga/templates/orga/includes/mail_template_role.html:7
 msgid "Schedule update"
-msgstr ""
+msgstr "షెడ్యూల్ నవీకరణ"
 
 #: orga/templates/orga/includes/mark_speakers_arrived.html:7
 #: orga/templates/orga/speaker/list.html:63
 msgid "Mark speaker as not arrived"
-msgstr ""
+msgstr "వక్త ఇంకా రాలేదని గుర్తించండి"
 
 #: orga/templates/orga/includes/mark_speakers_arrived.html:9
 #: orga/templates/orga/speaker/list.html:65
 msgid "Mark speaker as arrived"
-msgstr ""
+msgstr "వక్త వచ్చాడని గుర్తించండి"
 
 #: orga/templates/orga/includes/pagination.html:33
 #, python-format
 msgctxt "Shown at the bottom of lists, always > 1 elements."
 msgid "%(count)s elements"
-msgstr ""
+msgstr "%(count)s అంశాలు"
 
 #: orga/templates/orga/includes/pagination.html:44
 msgctxt "Allows users to select how many lines/elements are shown in lists."
 msgid "Show per page:"
-msgstr ""
+msgstr "ప్రతి పేజీకి చూపించండి:"
 
 #: orga/templates/orga/includes/review_filter_form.html:10
 msgid "Number of reviews"
-msgstr ""
+msgstr "సమీక్షల సంఖ్య"
 
 #: orga/templates/orga/includes/submission_filter_form.html:26
 #: orga/templates/orga/speaker/list.html:27
 #, python-format
 msgid "List filtered by responses to custom field “%(question)s”."
 msgstr ""
+"అనుకూల ఫీల్డ్ “%(question)s”కి ఇచ్చిన ప్రతిస్పందనల ఆధారంగా జాబితా ఫిల్టర్ చేయబడింది."
 
 #: orga/templates/orga/invitation.html:4
 msgid "Invitation"
-msgstr ""
+msgstr "ఆహ్వానం"
 
 #: orga/templates/orga/invitation.html:7
 #, python-format
 msgid "Invitation to the %(organizer)s team “%(name)s”"
-msgstr ""
+msgstr "%(organizer)s బృందం “%(name)s”కి ఆహ్వానం"
 
 #: orga/templates/orga/invitation.html:15
 #: orga/templates/orga/invitation.html:34
 #, python-format
 msgid "You have been invited to join the organizer team %(name)s."
-msgstr ""
+msgstr "నిర్వాహక బృందం %(name)sలో చేరేందుకు ఆహ్వానించబడింది."
 
 #: orga/templates/orga/invitation.html:20
 #, python-format
@@ -26702,6 +26757,8 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
+"ఇప్పటికే <a href=\"%(domain)s\">%(domain)s</a>లో—వక్తగా లేదా నిర్వాహకుడిగా—ఖాతా ఉంటే, ఇప్పుడే "
+"లాగిన్ చేయండి. లేకపోతే, బృందంలో చేరేందుకు కొత్త ఖాతా సృష్టించండి!"
 
 #: orga/templates/orga/invitation.html:37
 #, python-format
@@ -26712,6 +26769,10 @@ msgid ""
 "in with the other account. </p><p> If you believe to have received this "
 "invitation by mistake, please contact the organizer directly."
 msgstr ""
+"ప్రస్తుతం క్రియాశీలంగా ఉన్న ఖాతాతో ఆహ్వానాన్ని ఆమోదించడానికి, దయచేసి క్రింది బటన్‌ను ఉపయోగించండి. వేరే ఖాతాతో "
+"ఆహ్వానాన్ని ఆమోదించాలంటే, <a href=\"/orga/logout/?next=%(link)s\">లాగ్ అవుట్ చేయండి</a> "
+"మరియు మరో ఖాతాతో లాగిన్ చేయండి. </p><p> ఈ ఆహ్వానం పొరపాటున అందిందని అనుకుంటే, దయచేసి నిర్వాహకుడిని "
+"నేరుగా సంప్రదించండి."
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"
