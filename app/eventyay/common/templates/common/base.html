@@ -72,6 +72,10 @@
                 {# we’re not lazy-loading the header image, even though it can be large, because it’s a bit jarring to see it flash in 100ms after the page load #}
                 <img src="{{ request.event.visible_header_image_url }}" id="header-image" alt="{{ request.event.name }}">
             {% endif %}
+            <div style="display:flex; justify-content:flex-end; padding:10px; background:#2185d0; color:white; gap:15px;">
+                {% include "common/fragment_language_switch.html" %}
+                 {% include "common/fragment_header_user.html" %}
+</div>
         </div>
         {% if request.event and not request.event.is_public and not is_html_export %}
             <div id="event-nonpublic" class="d-print-none">
@@ -92,90 +96,9 @@
                         </a>
                     </div>
                     <div class="header-row-right">
-                        {% if request.event and request.event.locales|length > 1 and not is_html_export %}
-                            {% if request.event.locales|length > 3 %}
-                                <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
-                                    <summary>
-                                        {% for l, name in request.event.named_locales %}
-                                            {% if l|lower == request.LANGUAGE_CODE|lower %}{{ name }}{% endif %}
-                                        {% endfor %}
-                                        <i class="fa fa-caret-down ml-1"></i>
-                                    </summary>
-                                    <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-                                        {% for l, name in request.event.named_locales %}
-                                            {% cfp_locale_switch_url l as locale_switch_url %}
-                                            <a href="{{ locale_switch_url }}"
-                                               class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}" role="menuitem" tabindex="-1">{{ name }}</a>
-                                        {% endfor %}
-                                    </div>
-                                </details>
-                            {% else %}
-                                <div class="locales-inline">
-                                    {% for l, name in request.event.named_locales %}
-                                        {% cfp_locale_switch_url l as locale_switch_url %}
-                                        <a href="{{ locale_switch_url }}"
-                                           class="locale-link {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}">
-                                            {{ name }}
-                                        </a>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        {% endif %}
-                        {% block header_right %}{% endblock header_right %}
-                        {% if request.event and request.user.is_authenticated and not is_html_export %}
-                            <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
-                                {% is_event_organiser request.user request request.event as can_see_orga_area %}
-                                <summary>
-                                    {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
-                                </summary>
-                                <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-                                    <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-shopping-cart mr-2 mb-1"></i>
-                                        {% translate "My orders" %}
-                                    </a>
-                                    <a href="{% url "cfp:event.user.submissions"  organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
-                                        {% translate "My proposals" %}
-                                    </a>
-                                    <a href="{{ request.event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-address-card-o mr-2 mb-1"></i>
-                                        {% translate "Speaker profile" %}
-                                    </a>
-                                    <a href="{{ request.event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-envelope mr-2 mb-1"></i>
-                                        {% translate "Event emails" %}
-                                    </a>
-                                    <hr>
-                                    <a href="{% url "eventyay_common:account.general"%}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-user mr-2 mb-1"></i>
-                                        {% translate "Account" %}
-                                    </a>
-                                    {% if can_see_orga_area %}
-                                        <hr>
-                                        <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                            <i class="fa fa-gears mr-2 mb-1"></i>
-                                            {% translate "Organizer area" %}
-                                        </a>
-                                    {% endif %}
-                                    <hr>
-                                    <form action="{% url 'common:auth.logout' %}" method="post">
-                                        {% csrf_token %}
-                                        <button class="dropdown-item" role="menuitem" type="submit" tabindex="-1">
-                                            <i class="fa fa-sign-out mr-2 mb-1 ml-1"></i>
-                                            {% translate "Logout" %}
-                                        </button>
-                                    </form>
-                                </div>
-                            </details>
-                        {% elif not subheader_login_link_disabled and not is_html_export %}
-                            {% if request.event %}
-                                <a href="{{ request.event.urls.login }}?next={{ request.path|urlencode }}">login</a>
-                            {% else %}
-                                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">login</a>
-                            {% endif %}
-                        {% endif %}
+                         {% block header_right %}{% endblock header_right %}
+                         {# moved language + user dropdown to global navbar #}
                     </div>
-                </h1>
                 <div class="header-wrapper">
                     <div id="header-tabs">
                         {% block header_tabs %}{% endblock header_tabs %}
