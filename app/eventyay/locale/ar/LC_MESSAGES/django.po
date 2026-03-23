@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-15 10:24+0000\n"
+"PO-Revision-Date: 2026-03-21 15:25+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Arabic <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ar/>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -154,10 +154,8 @@ msgid "You can’t give feedback for this session at this time."
 msgstr "لايمكنك مشاركة ملاحظاتك لهذه الجلسة في الوقت الحالي."
 
 #: agenda/templates/agenda/schedule.html:23
-#, fuzzy
-#| msgid "Public changelog"
 msgid "Changelog"
-msgstr "التغييرات العامة"
+msgstr "سجل التغييرات"
 
 #: agenda/templates/agenda/schedule.html:29
 #, python-format
@@ -203,28 +201,22 @@ msgstr "الصورة الشخصية للمتحدث"
 
 #: agenda/templates/agenda/speaker.html:61
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
 msgid "Session"
 msgid_plural "Sessions"
-msgstr[0] "حصة"
-msgstr[1] "حصة"
-msgstr[2] "حصة"
-msgstr[3] "حصة"
-msgstr[4] "حصة"
-msgstr[5] "حصة"
+msgstr[0] "الجلسات"
+msgstr[1] "جلسة"
+msgstr[2] "الجلسات"
+msgstr[3] "الجلسات"
+msgstr[4] ""
+msgstr[5] "الجلسات"
 
 #: agenda/templates/agenda/talk.html:45
-#, fuzzy
-#| msgid "Don’t record this session."
 msgid "Favourite this session"
-msgstr "لاتقم بتسجل هذه الجلسة."
+msgstr "أضف هذه الجلسة إلى المفضلة"
 
 #: agenda/templates/agenda/talk.html:46
-#, fuzzy
-#| msgid "Submit sessions for your speakers"
 msgid "Remove this session from your favourites"
-msgstr "إرسال الجلسات للمتحدثين"
+msgstr "أزل هذه الجلسة من المفضلة"
 
 #: agenda/templates/agenda/talk.html:96
 msgid "This session’s header image"
@@ -1409,58 +1401,40 @@ msgstr ""
 "القائمة."
 
 #: base/configurations/default_setting.py:1056
-#, fuzzy
-#| msgid "Ask for attendee names"
 msgid "Ask for a name"
-msgstr "اسأل عن أسماء الحضور"
+msgstr "اطلب اسمًا"
 
 #: base/configurations/default_setting.py:1057
-#, fuzzy
-#| msgid "An entry has been changed on the waiting list."
 msgid "Ask for a name when signing up to the waiting list."
-msgstr "تم تغيير دخول على قائمة الانتظار."
+msgstr "اطلب اسمًا عند التسجيل في قائمة الانتظار."
 
 #: base/configurations/default_setting.py:1066
-#, fuzzy
-#| msgid "Require customer name"
 msgid "Require name"
-msgstr "تتطلب اسم العميل"
+msgstr "اشترط الاسم"
 
 #: base/configurations/default_setting.py:1067
-#, fuzzy
-#| msgid "An entry has been changed on the waiting list."
 msgid "Require a name when signing up to the waiting list.."
-msgstr "تم تغيير دخول على قائمة الانتظار."
+msgstr "اشترط اسمًا عند التسجيل في قائمة الانتظار.."
 
 #: base/configurations/default_setting.py:1077
-#, fuzzy
-#| msgid "Ask for attendee names"
 msgid "Ask for a phone number"
-msgstr "اسأل عن أسماء الحضور"
+msgstr "اطلب رقم هاتف"
 
 #: base/configurations/default_setting.py:1078
-#, fuzzy
-#| msgid "An entry has been changed on the waiting list."
 msgid "Ask for a phone number when signing up to the waiting list."
-msgstr "تم تغيير دخول على قائمة الانتظار."
+msgstr "اطلب رقم هاتف عند التسجيل في قائمة الانتظار."
 
 #: base/configurations/default_setting.py:1087
-#, fuzzy
-#| msgid "Phone number"
 msgid "Require phone number"
-msgstr "رقم الهاتف"
+msgstr "اشترط رقم الهاتف"
 
 #: base/configurations/default_setting.py:1088
-#, fuzzy
-#| msgid "An entry has been changed on the waiting list."
 msgid "Require a phone number when signing up to the waiting list.."
-msgstr "تم تغيير دخول على قائمة الانتظار."
+msgstr "اشترط رقم هاتف عند التسجيل في قائمة الانتظار.."
 
 #: base/configurations/default_setting.py:1098
-#, fuzzy
-#| msgid "Voucher explanation"
 msgid "Phone number explanation"
-msgstr "تفسير قسيمة"
+msgstr "شرح رقم الهاتف"
 
 #: base/configurations/default_setting.py:1102
 msgid ""
@@ -1469,10 +1443,8 @@ msgid ""
 msgstr "إذا طلبت رقم هاتف، اشرح لماذا تطلبه ولأي غرض ستستخدمه."
 
 #: base/configurations/default_setting.py:1112
-#, fuzzy
-#| msgid "Reminder to download tickets"
 msgid "Allow users to download tickets"
-msgstr "تذكير تذاكر تحميل"
+msgstr "اسمح للمستخدمين بتنزيل التذاكر"
 
 #: base/configurations/default_setting.py:1113
 msgid "If this is off, nobody can download a ticket."
@@ -1493,10 +1465,8 @@ msgstr ""
 "إذا واحد على الأقل من موعد فعاليات المؤتمر يسمح بذلك."
 
 #: base/configurations/default_setting.py:1136
-#, fuzzy
-#| msgid "Generate tickets for non-admission products"
 msgid "Generate tickets for add-on products"
-msgstr "توليد تذاكر للمنتجات عدم قبول"
+msgstr "أنشئ تذاكر للمنتجات الإضافية"
 
 #: base/configurations/default_setting.py:1138
 msgid ""
@@ -1508,10 +1478,8 @@ msgstr ""
 "الإضافية. مع هذا الخيار، يتم إصدار تذكرة منفصلة لكل منتج إضافي أيضًا."
 
 #: base/configurations/default_setting.py:1155
-#, fuzzy
-#| msgid "Generate tickets for non-admission products"
 msgid "Generate tickets for all products"
-msgstr "توليد تذاكر للمنتجات عدم قبول"
+msgstr "أنشئ تذاكر لجميع المنتجات"
 
 #: base/configurations/default_setting.py:1157
 msgid ""
@@ -1523,10 +1491,8 @@ msgstr ""
 "إعدادات المنتج. يمكنك أيضًا إيقاف إصدار التذاكر لكل منتج على حدة."
 
 #: base/configurations/default_setting.py:1174
-#, fuzzy
-#| msgid "Generate tickets for non-admission products"
 msgid "Generate tickets for pending orders"
-msgstr "توليد تذاكر للمنتجات عدم قبول"
+msgstr "أنشئ تذاكر للطلبات المعلّقة"
 
 #: base/configurations/default_setting.py:1175
 msgid ""
@@ -1591,17 +1557,13 @@ msgstr "قائمة"
 
 #: base/configurations/default_setting.py:1236
 #: base/configurations/default_setting.py:1244
-#, fuzzy
-#| msgid "Calendar"
 msgid "Week calendar"
-msgstr "التقويم"
+msgstr "تقويم أسبوعي"
 
 #: base/configurations/default_setting.py:1237
 #: base/configurations/default_setting.py:1245
-#, fuzzy
-#| msgid "Calendar"
 msgid "Month calendar"
-msgstr "التقويم"
+msgstr "تقويم شهري"
 
 #: base/configurations/default_setting.py:1241
 msgid "Default overview style"
@@ -1664,10 +1626,8 @@ msgstr ""
 "الأحداث متعددة، سيتم استخدام أقرب وقت ممكن."
 
 #: base/configurations/default_setting.py:1315
-#, fuzzy
-#| msgid "Customers can cancel their paid orders"
 msgid "Customers can change the variation of the products they purchased"
-msgstr "يمكن للعملاء إلغاء أوامر أموالها المدفوعة"
+msgstr "يمكن للعملاء تغيير خيار تنويع المنتجات التي اشتروها"
 
 #: base/configurations/default_setting.py:1327
 #: base/configurations/default_setting.py:1348
@@ -1695,16 +1655,12 @@ msgid "Allow changes regardless of price, even if this results in a refund."
 msgstr "السماح بالتغييرات بغض النظر عن السعر، حتى لو أدى ذلك إلى استرداد مبلغ."
 
 #: base/configurations/default_setting.py:1344
-#, fuzzy
-#| msgid "Require email addresses per ticket"
 msgid "Requirement for changed prices"
-msgstr "تتطلب عناوين البريد الإلكتروني للتذكرة الواحدة"
+msgstr "متطلبات الأسعار المُعدَّلة"
 
 #: base/configurations/default_setting.py:1372
-#, fuzzy
-#| msgid "Do not allow cancellations after"
 msgid "Do not allow changes after"
-msgstr "لا تسمح إلغاء بعد"
+msgstr "لا تسمح بإجراء تغييرات بعد"
 
 #: base/configurations/default_setting.py:1381
 msgid "Customers can cancel their unpaid orders"
@@ -1758,10 +1714,8 @@ msgstr ""
 "شريط التمرير أدناه لطلب استرداد أقل. شكرًا لك!"
 
 #: base/configurations/default_setting.py:1456
-#, fuzzy
-#| msgid "Voucher explanation"
 msgid "Voluntary lower refund explanation"
-msgstr "تفسير قسيمة"
+msgstr "شرح الاسترداد الطوعي الأقل"
 
 #: base/configurations/default_setting.py:1460
 msgid ""
@@ -1809,10 +1763,8 @@ msgstr ""
 
 #: base/configurations/default_setting.py:1505
 #: base/configurations/default_setting.py:1517
-#, fuzzy
-#| msgid "Manually issue a gift card"
 msgid "All refunds are issued as gift cards"
-msgstr "يدويا إصدار بطاقة هدية"
+msgstr "تُصدر جميع المبالغ المستردة على شكل بطاقات هدايا"
 
 #: base/configurations/default_setting.py:1510
 #: control/templates/pretixcontrol/order/index.html:131
@@ -10490,10 +10442,8 @@ msgid "Proposals are closed"
 msgstr "تم إغلاق الطلبات(المقترحات)"
 
 #: cfp/templates/cfp/event/index.html:36
-#, fuzzy
-#| msgid "Organiser area"
 msgid "Go To Organiser Area"
-msgstr "ساحة المنظمين"
+msgstr "اذهب إلى منطقة المنظم"
 
 #: cfp/templates/cfp/event/invitation.html:7
 #: cfp/templates/cfp/event/invitation.html:10
@@ -10524,10 +10474,8 @@ msgid "Abstract:"
 msgstr "الملخص:"
 
 #: cfp/templates/cfp/event/invitation.html:45
-#, fuzzy
-#| msgid "Accept invitation?"
 msgid "Accept invitation"
-msgstr "قبل الدعوة؟"
+msgstr "اقبل الدعوة"
 
 #: cfp/templates/cfp/event/login.html:5
 #: common/templates/common/fragment_header_user.html:122
@@ -10587,10 +10535,8 @@ msgid "(will be preserved if you don't upload a new file)"
 msgstr "(سيتم الاحتفاظ بها إذا لم تقم بتحميل ملف جديد)"
 
 #: cfp/templates/cfp/event/submission_base.html:71
-#, fuzzy
-#| msgid "Current draft"
 msgid "Save as draft"
-msgstr "المسودة الحالية"
+msgstr "حفظ كمسودة"
 
 #: cfp/templates/cfp/event/submission_base.html:76
 #: control/templates/pretixcontrol/order/refund_start.html:56
@@ -10612,10 +10558,8 @@ msgid "Continue"
 msgstr "استمر"
 
 #: cfp/templates/cfp/event/submission_base.html:78
-#, fuzzy
-#| msgid "Submit a proposal"
 msgid "Submit proposal!"
-msgstr "تقديم مقترحك"
+msgstr "قدّم المقترح!"
 
 #: cfp/templates/cfp/event/submission_base.html:82
 msgid "or save as draft for now"
@@ -19106,29 +19050,21 @@ msgid "Postal addresses"
 msgstr "العناوين البريدية"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Require a business addresses"
 msgid "Required status for Postal addresses"
-msgstr "تتطلب عناوين الأعمال"
+msgstr "الحالة المطلوبة للعناوين البريدية"
 
 #: control/templates/pretixcontrol/items/orderforms.html:321
-#, fuzzy
-#| msgid "Active languages"
 msgid "Active status for"
-msgstr "اللغات النشطة"
+msgstr "الحالة النشطة لـ"
 
 #: control/templates/pretixcontrol/items/orderforms.html:333
-#, fuzzy
-#| msgid "Refund status"
 msgid "Required status for"
-msgstr "حالة إعادة الأموال"
+msgstr "الحالة المطلوبة لـ"
 
 #: control/templates/pretixcontrol/items/orderforms.html:375
 #: control/templates/pretixcontrol/items/questions.html:22
-#, fuzzy
-#| msgid "Create a new tax rule"
 msgid "Create a new custom field"
-msgstr "إنشاء قاعدة ضريبية جديدة"
+msgstr "إنشاء حقل مخصص جديد"
 
 #: control/templates/pretixcontrol/items/orderforms.html:378
 #: control/templates/pretixcontrol/items/questions.html:24
@@ -19136,10 +19072,8 @@ msgid "Create a text field"
 msgstr "إنشاء حقل نصي"
 
 #: control/templates/pretixcontrol/items/orderforms.html:388
-#, fuzzy
-#| msgid "Quota settings"
 msgid "Form settings"
-msgstr "ضبط الحصص"
+msgstr "إعدادات النموذج"
 
 #: control/templates/pretixcontrol/items/question.html:6
 #: control/templates/pretixcontrol/items/question.html:9
@@ -19212,10 +19146,9 @@ msgstr ""
 
 #: control/templates/pretixcontrol/items/question_edit.html:8
 #: control/templates/pretixcontrol/items/question_edit.html:18
-#, fuzzy, python-format
-#| msgid "Question: %(name)s"
+#, python-format
 msgid "Custom Field: %(name)s"
-msgstr "سؤال: %(name)s"
+msgstr "حقل مخصص: %(name)s"
 
 #: control/templates/pretixcontrol/items/question_edit.html:35
 msgid ""
@@ -19250,53 +19183,38 @@ msgid "Add a new option"
 msgstr "إضافة خيار جديد"
 
 #: control/templates/pretixcontrol/items/question_edit.html:133
-#, fuzzy
-#| msgid "Send out reminders"
 msgid "Custom field dependency"
-msgstr "إرسال تذكير"
+msgstr "اعتمادية الحقل المخصص"
 
 #: control/templates/pretixcontrol/items/questions.html:4
 #: control/templates/pretixcontrol/items/questions.html:9
-#, fuzzy
-#| msgid "E-mail address verified"
 msgid "Custom Fields"
-msgstr "عنوان البريد الإلكتروني التحقق منها"
+msgstr "الحقول المخصصة"
 
 #: control/templates/pretixcontrol/items/questions.html:15
-#, fuzzy
-#| msgid ""
-#| "Questions allow your attendees to fill in additional data about their "
-#| "ticket. If you provide food, one example might be to ask your users about "
-#| "dietary requirements."
 msgid ""
 "Custom Fields allow your attendees to fill in additional data about their "
 "ticket. If you provide food, one example might be to ask your users about "
 "dietary requirements."
 msgstr ""
-"أسئلة تسمح الحضور لملء بيانات إضافية عن تذاكرهم. إذا كنت توفير الغذاء، قد "
-"يكون مثال واحد أن يسأل المستخدمين حول المتطلبات الغذائية."
+"تتيح الحقول المخصصة للحضور إدخال بيانات إضافية حول تذكرتهم. إذا كنت تقدم "
+"طعامًا، فقد يكون أحد الأمثلة هو سؤال المستخدمين عن المتطلبات الغذائية."
 
 #: control/templates/pretixcontrol/items/questions.html:64
-#, fuzzy
-#| msgid "New custom template"
 msgid "System custom field"
-msgstr "نموذج مخصص جديد"
+msgstr "حقل مخصص للنظام"
 
 #: control/templates/pretixcontrol/items/questions.html:69
-#, fuzzy
-#| msgid "Require customer name"
 msgid "Required custom field"
-msgstr "تتطلب اسم العميل"
+msgstr "حقل مخصص مطلوب"
 
 #: control/templates/pretixcontrol/items/questions.html:74
 msgid "Ask during check-in"
 msgstr "طرح خلال التسجيل في مكتب الاستقبال"
 
 #: control/templates/pretixcontrol/items/questions.html:80
-#, fuzzy
-#| msgid "New custom template"
 msgid "Hidden custom field"
-msgstr "نموذج مخصص جديد"
+msgstr "حقل مخصص مخفي"
 
 #: control/templates/pretixcontrol/items/questions.html:93
 msgid "All admission products"
@@ -19968,16 +19886,11 @@ msgid "Confirmation date"
 msgstr "تاريخ تأكيدا"
 
 #: control/templates/pretixcontrol/order/index.html:629
-#, fuzzy
-#| msgid ""
-#| "This payment was created with an older version of eventyay, therefore "
-#| "accurate data might not be available."
 msgid ""
 "This payment was created with an older version of pretix, therefore accurate "
 "data might not be available."
 msgstr ""
-"تم إنشاء هذا المبلغ مع نسخة قديمة من eventyay، وبالتالي قد لا تكون البيانات "
-"دقيقة المتاحة."
+"تم إنشاء هذه الدفعة بإصدار أقدم من pretix، ولذلك قد لا تتوفر بيانات دقيقة."
 
 #: control/templates/pretixcontrol/order/index.html:630
 msgid "MIGRATED"
@@ -20050,16 +19963,12 @@ msgid "Email history"
 msgstr "تاريخ البريد الإلكتروني"
 
 #: control/templates/pretixcontrol/order/mail_history.html:33
-#, fuzzy
-#| msgid ""
-#| "This email has been sent with an older version of eventyay. We are "
-#| "therefore not able to display it here accurately."
 msgid ""
 "This email has been sent with an older version of pretix. We are therefore "
 "not able to display it here accurately."
 msgstr ""
-"وقد تم إرسال هذا البريد الإلكتروني مع نسخة قديمة من eventyay. وبالتالي نحن "
-"لسنا قادرين على عرضه هنا بدقة."
+"تم إرسال هذا البريد الإلكتروني بإصدار أقدم من pretix. لذلك لا يمكننا عرضه هنا "
+"بدقة."
 
 #: control/templates/pretixcontrol/order/mail_history.html:39
 #: control/templates/pretixcontrol/order/mail_history.html:50
@@ -20123,20 +20032,14 @@ msgid ""
 msgstr "هل تريد حقا أن يلغي هذا المبلغ؟ لا يمكنك العودة هذا الإجراء."
 
 #: control/templates/pretixcontrol/order/refund_cancel.html:14
-#, fuzzy
-#| msgid ""
-#| "If the money is already on the way back, this will not stop the money, it "
-#| "will just mark this transfer as aborted in eventyay. This will also not "
-#| "reactivate the order, it will just allow you to choose a new refund "
-#| "method."
 msgid ""
 "If the money is already on the way back, this will not stop the money, it "
 "will just mark this transfer as aborted in pretix. This will also not "
 "reactivate the order, it will just allow you to choose a new refund method."
 msgstr ""
-"إذا كان المال هو بالفعل على الطريق الى الوراء، وهذا لن يوقف المال، وسوف فقط "
-"بمناسبة هذا النقل كما أجهضت في eventyay. هذا أيضا لن تنشيط النظام، وسوف تسمح "
-"فقط لك لاختيار طريقة استرداد جديد."
+"إذا كان المال قد بدأ بالفعل في طريقه للعودة، فلن يوقف هذا المال، بل سيضع "
+"علامة على هذا التحويل على أنه مُجهَض في pretix. كما لن يعيد هذا تفعيل الطلب، بل "
+"سيسمح لك فقط باختيار طريقة استرداد جديدة."
 
 #: control/templates/pretixcontrol/order/refund_cancel.html:32
 msgid "Yes, cancel refund"
@@ -20636,22 +20539,16 @@ msgid "Connect to device:"
 msgstr "اتصال الجهاز:"
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:11
-#, fuzzy
-#| msgid ""
-#| "Download an app that is compatible with eventyay. For example, our check-"
-#| "in app <strong>eventyay</strong> is available on all major platforms."
 msgid ""
 "Download an app that is compatible with eventyay. For example, our check-in "
 "app <strong>eventyay Check-in</strong> is available on all major platforms."
 msgstr ""
-"تحميل التطبيق متوافق مع eventyay. على سبيل المثال، لدينا الاختيار في التطبيق "
-"على eventyay متاح في جميع المنصات الرئيسية."
+"قم بتنزيل تطبيق متوافق مع eventyay. على سبيل المثال، يتوفر تطبيق تسجيل "
+"الدخول لدينا <strong>eventyay Check-in</strong> على جميع المنصات الرئيسية."
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:14
-#, fuzzy
-#| msgid "Download eventyay"
 msgid "Download eventyay Check-in"
-msgstr "تحميل eventyay"
+msgstr "تنزيل eventyay Check-in"
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:18
 msgid ""
@@ -21762,10 +21659,8 @@ msgid "All vouchers"
 msgstr "جميع القسائم"
 
 #: control/templates/pretixcontrol/vouchers/index.html:24
-#, fuzzy
-#| msgid "Voucher tags"
 msgid "Voucher Tags"
-msgstr "علامات قسيمة"
+msgstr "وسوم القسائم"
 
 #: control/templates/pretixcontrol/vouchers/index.html:31
 msgid ""
@@ -21936,10 +21831,8 @@ msgid "Move to the end of the list"
 msgstr "الانتقال إلى نهاية القائمة"
 
 #: control/templates/registration/register.html:8
-#, fuzzy
-#| msgid "Notify user"
 msgid "New staff user"
-msgstr "إبلاغ المستخدم"
+msgstr "مستخدم موظف جديد"
 
 #: control/templatetags/hierarkey_form.py:44
 msgid "Organizer-level settings"
@@ -21997,10 +21890,8 @@ msgid "That page number is less than 1"
 msgstr "أن رقم الصفحة هو أقل من 1"
 
 #: control/views/admin.py:119
-#, fuzzy
-#| msgid "invalid item"
 msgid "Invalid field."
-msgstr "البند غير صالح"
+msgstr "حقل غير صالح."
 
 #: control/views/admin.py:121
 msgid "Event not found."
@@ -30611,8 +30502,6 @@ msgid "SocialAuth"
 msgstr "SocialAuth"
 
 #: plugins/socialauth/apps.py:13
-#, fuzzy
-#| msgid "the development team"
 msgid "the eventyay team"
 msgstr "فريق eventyay"
 
@@ -30733,36 +30622,28 @@ msgid "On the form enter"
 msgstr ""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:72
-#, fuzzy
-#| msgid "Application name"
 msgid "an application name"
 msgstr "اسم التطبيق"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:73
-#, fuzzy
-#| msgid "Product description"
 msgid "an description description"
-msgstr "وصف المنتج"
+msgstr "وصف وصف"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:75
 msgid "Set Oauth \"callback\" URL to:"
 msgstr ""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:80
-#, fuzzy
-#| msgid "Contact address"
 msgid "Contact Email address"
-msgstr "عنوان الإتصال"
+msgstr "عنوان البريد الإلكتروني للتواصل"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
 msgstr ""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:82
-#, fuzzy
-#| msgid "Transaction Code"
 msgid "Tick \"Authorization code\""
-msgstr "كود المعاملة"
+msgstr "ضع علامة على \"رمز التفويض\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:83
 msgid "Tick \"Refresh token\""
@@ -30789,16 +30670,12 @@ msgid ""
 msgstr ""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:91
-#, fuzzy
-#| msgid "Disable application"
 msgid "Client application key"
-msgstr "تطبيق تعطيل"
+msgstr "مفتاح تطبيق العميل"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:92
-#, fuzzy
-#| msgid "Generate new application secret"
 msgid "Client application secret"
-msgstr "توليد سر التطبيق الجديد"
+msgstr "سر تطبيق العميل"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:95
 msgid ""
@@ -30856,16 +30733,12 @@ msgstr ""
 "الدفع الأخير."
 
 #: plugins/statistics/templates/pretixplugins/statistics/index.html:74
-#, fuzzy
-#| msgid "Overview"
 msgid "Seating Overview"
-msgstr "نظرة عامة"
+msgstr "نظرة عامة على المقاعد"
 
 #: plugins/statistics/templates/pretixplugins/statistics/index.html:81
-#, fuzzy
-#| msgid "Sold out"
 msgid "Sold Seats"
-msgstr "بيعت كلها"
+msgstr "المقاعد المباعة"
 
 #: plugins/statistics/templates/pretixplugins/statistics/index.html:87
 msgid "Blocked Seats"
