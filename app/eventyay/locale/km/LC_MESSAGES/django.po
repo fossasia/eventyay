@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 14:26+0000\n"
+"PO-Revision-Date: 2026-03-23 15:11+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Khmer (Central) <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/km/>\n"
@@ -20628,56 +20628,60 @@ msgstr "បញ្ជីខាងក្រោមបង្ហាញច្រកច
 #: control/templates/pretixcontrol/organizers/giftcard_edit.html:6
 #, python-format
 msgid "Gift card: %(card)s"
-msgstr ""
+msgstr "ការដែកាដូន្យាះ៖ %(card)s"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:36
 msgid "Expire date"
-msgstr ""
+msgstr "កាលបរិច្ឆេទផុតកំណត់"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:43
 msgid "Issued through sale"
-msgstr ""
+msgstr "ចេញផ្សារតាមរយៈការលក់"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:55
 msgid "Transactions"
-msgstr ""
+msgstr "ប្រតិបត្តិការ"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:80
 msgid ""
 "Create a payment on the respective order that cancels out with this "
 "transaction. The order will then likely be overpaid."
 msgstr ""
+"បង្កើតការបង់ប្រាក់លើការបញ្ជាទិញដូរដែលពាក់ព័ន្ធ ួាដើម្បីកាំបាត់ប្រតិបត្តិការនេះ។ ការបញ្ជាទិញដូរដែល"
+"នេះនឹងទំនោងជាបង់លើស។"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:82
 msgid "Revert"
-msgstr ""
+msgstr "ត្រឡប់"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:86
 msgid "Manual transaction"
-msgstr ""
+msgstr "ប្រតិបត្តិការដោយដៃ"
 
 #: control/templates/pretixcontrol/organizers/giftcard.html:119
 msgid "Gift card history"
-msgstr ""
+msgstr "ប្រវត្តិការដែកាដូន្យាះ"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:8
 msgid "Issued gift cards"
-msgstr ""
+msgstr "ការដែកាដូន្យាះដែលបានចេញ"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:13
 msgid ""
 "You haven't issued any gift cards yet. You can either set up a product in an "
 "event shop to sell gift cards, or you can manually issue gift cards."
 msgstr ""
+"មិនទាន់បានចេញការដែកាដូន្យាះហើយទេ។ អាចកំណត់រៀបចំផលិតផលមួយនៅក្នុងហាន់ដែលព្រឹត្តិការណ៍ ដើម្បីលក់ការ"
+"ដែកាដូន្យាះ ឬ អាចចេញការដែកាដូន្យាះដោយដៃ។"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:20
 #: control/templates/pretixcontrol/organizers/giftcards.html:40
 msgid "Manually issue a gift card"
-msgstr ""
+msgstr "ចេញការដែកាដូន្យាះដោយដៃ"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:96
 msgid "Accepted gift cards of other organizers"
-msgstr ""
+msgstr "ការដែកាដូន្យាះដែលទទួលយកពីអ្នករៀបចំផ្សេង៑"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:98
 msgid ""
@@ -20685,19 +20689,21 @@ msgid ""
 "ticket shops in this account will also accept gift codes issued through a "
 "different organizer account, and vice versa."
 msgstr ""
+"បើមានការអាចចូលដៅគណនីអ្នករៀបចំជាច្រើន អាចកំណត់រៅបការណ៍តាមរយៈការកំណត់រៅបចំនេះ ដើម្បីឱ្យហាន់លក់សំ"
+"បុត្រក្នុងគណនីនេះ ទទួលយកកូដាដូន្យាះដែលបានចេញពីគណនីអ្នករៀបចំផ្សេង ហើយបញ្ជំាគ្នា ផ្សេងទៀត។"
 
 #: control/templates/pretixcontrol/organizers/giftcards.html:114
 msgid "You are currently not accepting gift cards from other organizers."
-msgstr ""
+msgstr "បច្ចុប្បន្នមិនទទួលយកការដែកាដូន្យាះពីអ្នករៀបចំផ្សេង៑។"
 
 #: control/templates/pretixcontrol/organizers/logs.html:4
 #: control/templates/pretixcontrol/organizers/logs.html:6
 msgid "Organizer logs"
-msgstr ""
+msgstr "កំណត់ហេតុអ្នករៀបចំ"
 
 #: control/templates/pretixcontrol/organizers/properties.html:5
 msgid "Event metadata"
-msgstr ""
+msgstr "ទិន្នន័យមេតាដាតាព្រឹត្តិការណ៍"
 
 #: control/templates/pretixcontrol/organizers/properties.html:7
 msgid ""
@@ -20705,19 +20711,22 @@ msgid ""
 "can later set for your events and re-use in places like ticket layouts. This "
 "is an useful timesaver if you create lots and lots of events."
 msgstr ""
+"អាចកំណត់នៅទីនេះនូវសៅគុណលក្ខណៈមេតាដាតាមួយចំនួន (៧. អ័ញ្ជើញំ) ដែលអាចកំណត់សម្រាប់ព្រឹត្តិការណ៍នាពេលក្"
+"រោយ ហើយយកទៅប្រើឡើងវិញក្នុងទីកន្លែងដូចជាប្លង់សំបុត្រ។ វាជាការសន្សំសំចៃពេលមួយដែលមានប្រយោជន៍ បើបង្"
+"កើតព្រឹត្តិការណ៍ជាច្រើន។"
 
 #: control/templates/pretixcontrol/organizers/properties.html:15
 #: control/templates/pretixcontrol/organizers/property_edit.html:8
 msgid "Create a new property"
-msgstr ""
+msgstr "បង្កើតកុណលក្ខណៈថ្មី"
 
 #: control/templates/pretixcontrol/organizers/properties.html:20
 msgid "Property"
-msgstr ""
+msgstr "កុណលក្ខណៈ"
 
 #: control/templates/pretixcontrol/organizers/property_delete.html:5
 msgid "Delete property:"
-msgstr ""
+msgstr "លុបកុណលក្ខណៈ៖"
 
 #: control/templates/pretixcontrol/organizers/property_delete.html:8
 msgid "Are you sure you want to delete the property?"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:11+0000\n"
+"PO-Revision-Date: 2026-03-23 15:19+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Hungarian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/hu/>\n"
@@ -20160,7 +20160,7 @@ msgstr "E-mail-előzmények megtekintése"
 
 #: control/templates/pretixcontrol/order/index.html:89
 msgid "Expire order"
-msgstr ""
+msgstr "Rendelés lejáratása"
 
 #: control/templates/pretixcontrol/order/index.html:90
 msgid ""
@@ -20168,55 +20168,56 @@ msgid ""
 "orders automatically. To free quota capacity, you can mark it as expired "
 "manually."
 msgstr ""
+"A rendelés fizetési határideje lejárt, de a beállítások szerint a rendelések "
+"nem járnak le automatikusan. A kvótakapacitás felszabadításához a rendelést "
+"manuálisan lejártnak lehet jelölni."
 
 #: control/templates/pretixcontrol/order/index.html:105
 msgid "Refund for overpayment"
-msgstr ""
+msgstr "Visszatérítés túlfizetés esetén"
 
 #: control/templates/pretixcontrol/order/index.html:107
 #, python-format
 msgid "This order is currently overpaid by %(amount)s."
-msgstr ""
+msgstr "A rendelés jelenleg %(amount)s összeggel túlfizetett."
 
 #: control/templates/pretixcontrol/order/index.html:111
 #, python-format
 msgid "Initiate a refund of %(amount)s"
-msgstr ""
+msgstr "%(amount)s összegű visszatérítés indítása"
 
 #: control/templates/pretixcontrol/order/index.html:125
-#, fuzzy
-#| msgid "Past events"
 msgid "Cancellation request"
-msgstr "Elmúlt események"
+msgstr "Lemondási kérelem"
 
 #: control/templates/pretixcontrol/order/index.html:129
 msgid "The customer asked you to cancel the order with the following settings:"
-msgstr ""
+msgstr "Ügyfél a rendelés lemondását kérte a következő beállításokkal:"
 
 #: control/templates/pretixcontrol/order/index.html:136
 msgid "Original payment method"
-msgstr ""
+msgstr "Eredeti fizetési mód"
 
 #: control/templates/pretixcontrol/order/index.html:145
 msgid "Delete request"
-msgstr ""
+msgstr "Törlési kérelem"
 
 #: control/templates/pretixcontrol/order/index.html:158
 #: presale/templates/pretixpresale/event/order.html:22
 msgid "Order details"
-msgstr ""
+msgstr "Rendelés részletei"
 
 #: control/templates/pretixcontrol/order/index.html:168
-#, fuzzy
-#| msgid "Past events"
 msgid "Cancellation date"
-msgstr "Elmúlt események"
+msgstr "Lemondás dátuma"
 
 #: control/templates/pretixcontrol/order/index.html:190
 msgid ""
 "We know that this email address works because the user clicked a link we "
 "sent them."
 msgstr ""
+"Ismert, hogy ez az e-mail-cím működik, mert a felhasználó rákattintott egy "
+"általunk küldött linkre."
 
 #: control/templates/pretixcontrol/order/index.html:204
 #: control/templates/pretixcontrol/order/index.html:413
@@ -20227,38 +20228,41 @@ msgstr "Hivatkozás újraküldése"
 #: control/templates/pretixcontrol/order/index.html:231
 msgid "Rebuild the invoice with updated data but the same invoice number."
 msgstr ""
+"Építse újra a számlát frissített adatokkal, de ugyanazzal a számlaszámmal."
 
 #: control/templates/pretixcontrol/order/index.html:232
 #: eventyay_common/templates/eventyay_common/account/2fa-regenemergency.html:33
 msgid "Regenerate"
-msgstr ""
+msgstr "Újragenerálás"
 
 #: control/templates/pretixcontrol/order/index.html:242
 msgid ""
 "Generate a cancellation document for this invoice and create a new invoice "
 "with a new invoice number."
 msgstr ""
+"Hozzon létre sztornó bizonylatot ehhez a számlához, és állítson ki egy új "
+"számlát új számlaszámmal."
 
 #: control/templates/pretixcontrol/order/index.html:245
 msgid "Generate cancellation"
-msgstr ""
+msgstr "Sztornózás generálása"
 
 #: control/templates/pretixcontrol/order/index.html:247
 msgid "Cancel and reissue"
-msgstr ""
+msgstr "Stornózás és újra kiállítás"
 
 #: control/templates/pretixcontrol/order/index.html:263
 #: control/templates/pretixcontrol/order/index.html:275
 msgid "Generate invoice"
-msgstr ""
+msgstr "Számla generálása"
 
 #: control/templates/pretixcontrol/order/index.html:288
 msgid "Change answers"
-msgstr ""
+msgstr "Válaszok módosítása"
 
 #: control/templates/pretixcontrol/order/index.html:293
 msgid "Change products"
-msgstr ""
+msgstr "Termékek módosítása"
 
 #: control/templates/pretixcontrol/order/index.html:298
 #: presale/templates/pretixpresale/event/order.html:197
@@ -26921,43 +26925,46 @@ msgid "The language in which the speaker will receive their invitation email."
 msgstr "Az a nyelv, amelyen az előadó megkapja a meghívó e-mailt."
 
 #: orga/forms/submission.py:293
-#, fuzzy
-#| msgid "Event list"
 msgid "Please provide an email address."
-msgstr "Eseménylista"
+msgstr "Adjon meg egy e-mail-címet."
 
 #: orga/phrases.py:7
-#, fuzzy
-#| msgid "The subevent does not belong to this event."
 msgid "The event end cannot be before the start."
-msgstr "Az eseményhez nem tartozik részesemény."
+msgstr "Az esemény vége nem lehet a kezdés előtt."
 
 #: orga/phrases.py:9
 msgid "Frontpage header pattern"
-msgstr ""
+msgstr "Kezdőlap fejléc–minta"
 
 #: orga/phrases.py:11
 msgid ""
 "Choose how the frontpage header banner will be styled. Pattern source: <a "
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
+"Válassza ki, hogyan legyen formázva a kezdőlapi fejléc–banner. Minta "
+"forrása: <a href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC "
+"BY 4.0."
 
 #: orga/phrases.py:13
 msgid "Schedule display format"
-msgstr ""
+msgstr "Ütemezés megjelenítési formátuma"
 
 #: orga/phrases.py:14
 msgid "The unique ID of a proposal is used in the proposal URL and in exports"
 msgstr ""
+"A javaslat egyedi azonosítója a javaslat URL-jében és az exportálásokban "
+"használatos"
 
 #: orga/phrases.py:15
 msgid "The password was reset and the user was notified."
-msgstr ""
+msgstr "A jelszó vissza lett állítva, és a felhasználó értesítést kapott."
 
 #: orga/phrases.py:16
 msgid ""
 "The password reset email could not be sent, so the password was not reset."
 msgstr ""
+"A jelszó-visszaállítási e-mailt nem sikerült elküldeni, ezért a jelszó nem "
+"lett visszaállítva."
 
 #: orga/phrases.py:18
 #, python-brace-format
@@ -26965,20 +26972,20 @@ msgid ""
 "{count} emails have been saved to the outbox – you can make individual "
 "changes there or just send them all."
 msgstr ""
+"{count} e-mail mentésre került a kimenő levelek közé – ott egyenként "
+"módosíthatók, vagy egyszerre mind elküldhető."
 
 #: orga/templates/orga/base.html:164
 msgid "You’re using eventyay as a superuser. This is not recommended."
-msgstr ""
+msgstr "A eventyayt szuperfelhasználóként használja. Ez nem ajánlott."
 
 #: orga/templates/orga/base.html:168
 msgid "Please click here to switch to an administrator account."
-msgstr ""
+msgstr "Kattintson ide az adminisztrátori fiókra való átváltáshoz."
 
 #: orga/templates/orga/base.html:192
-#, fuzzy
-#| msgid "Ticket design"
 msgid "Talk dashboard"
-msgstr "Jegy design"
+msgstr "Előadás-vezérlőpult"
 
 #: orga/templates/orga/base.html:259
 #: orga/templates/orga/mails/_mail_editor.html:31
@@ -26986,25 +26993,21 @@ msgstr "Jegy design"
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:57
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:32
 msgid "Content"
-msgstr ""
+msgstr "Tartalom"
 
 #: orga/templates/orga/base.html:265 orga/views/cfp.py:134
 msgid "Forms"
-msgstr ""
+msgstr "Űrlapok"
 
 #: orga/templates/orga/base.html:273
 #: orga/templates/orga/speaker/speakerinformation/list.html:22
 #: orga/views/cfp.py:679 submission/forms/submission.py:244
-#, fuzzy
-#| msgid "Sessions"
 msgid "Session types"
-msgstr "Munkamenetek"
+msgstr "Szekciótípusok"
 
 #: orga/templates/orga/base.html:276 orga/views/cfp.py:755
-#, fuzzy
-#| msgid "Ticket design"
 msgid "Access codes"
-msgstr "Jegy design"
+msgstr "Hozzáférési kódok"
 
 #: orga/templates/orga/base.html:329
 #: orga/templates/orga/submission/stats.html:18 plugins/statistics/apps.py:9
@@ -27020,19 +27023,19 @@ msgstr "Statisztika"
 #: orga/templates/orga/review/assignment.html:8
 #: orga/templates/orga/review/assignment.html:15
 msgid "Assign reviewers"
-msgstr ""
+msgstr "Bírálók hozzárendelése"
 
 #: orga/templates/orga/base.html:362
 msgid "Export reviews"
-msgstr ""
+msgstr "Értékelések exportálása"
 
 #: orga/templates/orga/base.html:391 orga/views/schedule.py:517
 msgid "Rooms"
-msgstr ""
+msgstr "Termek"
 
 #: orga/templates/orga/base.html:404 plugins/sendmail/signals.py:16
 msgid "Message center"
-msgstr ""
+msgstr "Üzenetközpont"
 
 #: orga/templates/orga/base.html:414 plugins/sendmail/signals.py:28
 msgid "Outbox"
