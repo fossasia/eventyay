@@ -11670,12 +11670,12 @@ msgstr "{number} ដង"
 #: common/text/css.py:117
 #, python-brace-format
 msgid "“{value}” is not allowed as attribute of “{key}”"
-msgstr "មិនអនុញ្ញាតឱ្យប្រើ “[-X1X-]” ជាគុណលក្ខណៈនៃ “[-X42X-]”"
+msgstr "មិនអនុញ្ញាតឱ្យប្រើ “{value}” ជាគុណលក្ខណៈនៃ “{key}”"
 
 #: common/text/css.py:120
 #, python-brace-format
 msgid "You are not allowed to include “{key}” keys in your CSS."
-msgstr "មិនអនុញ្ញាតឱ្យបញ្ចូលសោ “[-X32X-]” ក្នុង CSS របស់អ្នក។"
+msgstr "មិនអនុញ្ញាតឱ្យបញ្ចូលសោ “{key}” ក្នុង CSS របស់អ្នក។"
 
 #: common/text/daterange.py:56 helpers/daterange.py:39
 #, python-brace-format
