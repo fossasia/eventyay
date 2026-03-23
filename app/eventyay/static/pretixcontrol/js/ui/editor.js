@@ -832,14 +832,19 @@ var editor = {
     },
 
     _source_save: function () {
+        var input = $("#source-textarea").val().trim();
+        var parsed;
         try {
-            var input = $("#source-textarea").val().trim();
-            var parsed = JSON.parse(input);
-            editor.load(parsed);
-            $("#source-container").hide();
+            parsed = JSON.parse(input);
         } catch (e) {
-            alert(gettext('Invalid JSON format. Please correct the design JSON and try again.'));
+            if (e instanceof SyntaxError) {
+                alert(gettext('Invalid JSON format. Please correct the design JSON and try again.'));
+                return;
+            }
+            throw e;
         }
+        editor.load(parsed);
+        $("#source-container").hide();
     },
 
     _create_empty_background: function () {
