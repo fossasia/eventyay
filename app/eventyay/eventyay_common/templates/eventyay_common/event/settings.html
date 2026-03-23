@@ -62,8 +62,18 @@
                     <span class="optional">{% trans "Optional" %}</span>
                 </label>
                 <div class="col-md-9">
-                    {% bootstrap_field sform.menu_label_tickets layout="control" %}
-                    {% bootstrap_field sform.menu_label_join_video layout="control" %}
+                    <div style="margin-bottom: 15px;">
+                        <label>{{ sform.menu_label_tickets.label }}</label>
+                        <div class="form-control-wrapper">
+                            {% bootstrap_field sform.menu_label_tickets layout="inline" form_group_class="" %}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label>{{ sform.menu_label_join_video.label }}</label>
+                        <div class="form-control-wrapper">
+                            {% bootstrap_field sform.menu_label_join_video layout="inline" form_group_class="" %}
+                        </div>
+                    </div>
                     <div class="help-block text-muted">
                         {% blocktranslate trimmed %}
                             These fields accept translated labels for your Tickets and Join Live Event menu items.
