@@ -63,15 +63,15 @@
                 </label>
                 <div class="col-md-9">
                     <div style="margin-bottom: 15px;">
-                        <label>{{ sform.menu_label_tickets.label }}</label>
+                        <label for="{{ sform.menu_label_tickets.id_for_label }}">{{ sform.menu_label_tickets.label }}</label>
                         <div class="form-control-wrapper">
-                            {% bootstrap_field sform.menu_label_tickets layout="inline" form_group_class="" %}
+                            {% bootstrap_field sform.menu_label_tickets layout="inline" form_group_class="" show_label=False %}
                         </div>
                     </div>
                     <div style="margin-bottom: 15px;">
-                        <label>{{ sform.menu_label_join_video.label }}</label>
+                        <label for="{{ sform.menu_label_join_video.id_for_label }}">{{ sform.menu_label_join_video.label }}</label>
                         <div class="form-control-wrapper">
-                            {% bootstrap_field sform.menu_label_join_video layout="inline" form_group_class="" %}
+                            {% bootstrap_field sform.menu_label_join_video layout="inline" form_group_class="" show_label=False %}
                         </div>
                     </div>
                     <div class="help-block text-muted">
