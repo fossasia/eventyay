@@ -245,14 +245,16 @@ class AnswerCreateSerializer(AnswerSerializer):
         request = self.context.get("request")
         if not request or not getattr(request, "event", None):
             return
-        self.fields["question"].queryset = questions_for_user(
-            self.request, request.event, request.user
-        )
+        event_questions = questions_for_user(self.request, request.event, request.user)
+        self.fields["question"].queryset = event_questions
         self.fields["submission"].queryset = request.event.submissions.all()
         self.fields["person"].queryset = User.objects.filter(
             submissions__event=request.event
         )
         self.fields["review"].queryset = request.event.reviews.all()
+        self.fields["options"].queryset = AnswerOption.objects.filter(
+            question__in=event_questions
+        )
 
     def validate(self, data):
         question = self.get_with_fallback(data, "question")

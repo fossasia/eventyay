@@ -115,7 +115,11 @@ class AnswerOptionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         questions = questions_for_user(self.request, self.event, self.request.user)
         queryset = AnswerOption.objects.filter(
             question__in=questions,
-            question__variant__in=[TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE],
+            question__variant__in=[
+                TalkQuestionVariant.CHOICES,
+                TalkQuestionVariant.MULTIPLE,
+                TalkQuestionVariant.SELECT,
+            ],
         ).select_related("question", "question__event")
         for field in self.check_expanded_fields(
             "question.tracks", "question.submission_types"
@@ -232,4 +236,7 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             person=serializer.validated_data.get("person"),
             defaults={"answer": serializer.validated_data["answer"]},
         )
+        options = serializer.validated_data.get("options")
+        if options is not None:
+            answer.options.set(options)
         return answer
