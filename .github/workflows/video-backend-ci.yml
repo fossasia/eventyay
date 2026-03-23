@@ -88,7 +88,7 @@ jobs:
       - name: Set up PostgreSQL
         run: |
           sudo systemctl start postgresql
-          sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay';"
+          sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
           sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
 
       - name: Start Redis
@@ -135,7 +135,7 @@ jobs:
       - name: Set up PostgreSQL
         run: |
           sudo systemctl start postgresql
-          sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay';"
+          sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
           sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
 
       - name: Start Redis
@@ -162,15 +162,18 @@ jobs:
           echo $! > server.pid
 
       - name: Wait for server and verify healthcheck
+        # Use `localhost` (not 127.0.0.1) so MultiDomainMiddleware accepts the
+        # request: it compares the Host header against SITE_URL which defaults
+        # to http://localhost:8000.
         run: |
           for _ in {1..30}; do
-            if curl -fsS http://127.0.0.1:8000/healthcheck/ >/dev/null 2>&1; then
+            if curl -fsS http://localhost:8000/healthcheck/ >/dev/null 2>&1; then
               echo "Server is healthy"
               break
             fi
             sleep 2
           done
-          response=$(curl -sS -w "\n%{http_code}" http://127.0.0.1:8000/healthcheck/)
+          response=$(curl -sS -w "\n%{http_code}" http://localhost:8000/healthcheck/)
           status_code=$(echo "$response" | tail -n1)
           if [ "$status_code" != "200" ]; then
             echo "Healthcheck failed with status: $status_code"
