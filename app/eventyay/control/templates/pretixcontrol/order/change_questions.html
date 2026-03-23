@@ -52,7 +52,32 @@
                                     {# Add-Ons #}
                                     <legend>+ {{ form.pos.item }}</legend>
                                 {% endif %}
-                                {% bootstrap_form form layout="control" %}
+                                {% for field in form.regular_fields %}
+                                    {% bootstrap_field field layout="control" %}
+                                {% endfor %}
+
+                                {% if form.badge_option_fields %}
+                                    <div class="panel panel-default badge-options-panel">
+                                        <div class="panel-heading">
+                                            <h5 class="panel-title"><strong>{% trans "Badge Options" %}</strong></h5>
+                                        </div>
+                                        <div class="panel-body">
+                                            <p>{% trans "Please select all fields you'd like to appear on your event badge." %}</p>
+                                            {% for field in form.badge_option_fields %}
+                                                {% if field.errors %}
+                                                    {% for error in field.errors %}
+                                                        <p class="help-block text-danger">{{ error }}</p>
+                                                    {% endfor %}
+                                                {% endif %}
+                                                {% for checkbox in field %}
+                                                    <div class="checkbox">
+                                                        <label>{{ checkbox.tag }} {{ checkbox.choice_label }}</label>
+                                                    </div>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </div>

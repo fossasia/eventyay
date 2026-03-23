@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-17 13:56+0000\n"
+"PO-Revision-Date: 2026-03-21 17:02+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hans/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.16.1-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -3739,10 +3739,8 @@ msgid "Infinite"
 msgstr "无限"
 
 #: base/exporters/orderlist.py:1040
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Gift card redemptions"
-msgstr "兑现"
+msgstr "礼品卡兑换"
 
 #: base/exporters/orderlist.py:1064 base/exporters/orderlist.py:1175
 #: base/models/giftcards.py:56
@@ -3757,23 +3755,17 @@ msgstr "礼品卡代码"
 
 #: base/exporters/orderlist.py:1066
 #: control/templates/pretixcontrol/giftcards/payment.html:10
-#, fuzzy
-#| msgid "Voucher details"
 msgid "Issuer"
-msgstr "优惠券详情"
+msgstr "发行方"
 
 #: base/exporters/orderlist.py:1094
 #: control/templates/pretixcontrol/organizers/edit.html:72
-#, fuzzy
-#| msgid "Gift card"
 msgid "Gift cards"
 msgstr "礼品卡"
 
 #: base/exporters/orderlist.py:1103
-#, fuzzy
-#| msgid "Show variants"
 msgid "Show value at"
-msgstr "显示变量"
+msgstr "显示面值于"
 
 #: base/exporters/orderlist.py:1110 base/exporters/orderlist.py:1113
 #: control/forms/filter.py:202 control/forms/filter.py:1099
@@ -3802,19 +3794,14 @@ msgid "All"
 msgstr "所有"
 
 #: base/exporters/orderlist.py:1114 control/forms/filter.py:1103
-#, fuzzy
-#| msgctxt "stripe"
-#| msgid "Live"
 msgid "Live"
-msgstr "现场直播"
+msgstr "直播"
 
 #: base/exporters/orderlist.py:1126 control/forms/filter.py:1108
 #: control/forms/filter.py:1111
 #: control/templates/pretixcontrol/pdf/index.html:351
-#, fuzzy
-#| msgid "Empty tag"
 msgid "Empty"
-msgstr "空标签"
+msgstr "清空"
 
 #: base/exporters/orderlist.py:1127 control/forms/filter.py:1112
 msgid "Valid and with value"
@@ -3863,28 +3850,20 @@ msgstr "货币"
 #: control/templates/pretixcontrol/order/change.html:299
 #: control/templates/pretixcontrol/organizers/giftcard.html:32
 #: control/templates/pretixcontrol/organizers/giftcards.html:55
-#, fuzzy
-#| msgid "Current issues"
 msgid "Current value"
-msgstr "当前的问题"
+msgstr "当前价值"
 
 #: base/exporters/orderlist.py:1182
-#, fuzzy
-#| msgid "Free order"
 msgid "Created in order"
-msgstr "免费订单"
+msgstr "在订单中创建"
 
 #: base/exporters/orderlist.py:1183
-#, fuzzy
-#| msgid "Invoice number prefix"
 msgid "Last invoice number of order"
-msgstr "发票号码前缀"
+msgstr "订单的最新发票编号"
 
 #: base/exporters/orderlist.py:1184
-#, fuzzy
-#| msgid "Show overpaid orders"
 msgid "Last invoice date of order"
-msgstr "显示超额支付的订单"
+msgstr "订单的最新发票日期"
 
 #: base/exporters/waitinglist.py:26
 #: control/templates/pretixcontrol/waitinglist/index.html:94
@@ -3940,8 +3919,6 @@ msgstr "活动名称"
 
 #: base/exporters/waitinglist.py:92 base/orderimport.py:149
 #: control/templates/pretixcontrol/checkin/index.html:72
-#, fuzzy
-#| msgid "Date"
 msgctxt "subevents"
 msgid "Date"
 msgstr "日期"
@@ -4014,17 +3991,13 @@ msgid "Repeat password"
 msgstr "再次输入密码"
 
 #: base/forms/questions.py:223
-#, fuzzy
-#| msgid "Please enter your name."
 msgid "Please enter a shorter name."
-msgstr "请输入您的姓名。"
+msgstr "请输入更短的名称。"
 
 #: base/forms/questions.py:245
-#, fuzzy
-#| msgid "Internal reference"
 msgctxt "phonenumber"
 msgid "International area code"
-msgstr "内部参考"
+msgstr "国际区号"
 
 #: base/forms/questions.py:269
 msgctxt "phonenumber"
@@ -4269,11 +4242,9 @@ msgid "Beneficiary"
 msgstr "受益人"
 
 #: base/invoice.py:587
-#, fuzzy
-#| msgid "Invoice"
 msgctxt "invoice"
 msgid "Tax Invoice"
-msgstr "发票"
+msgstr "税务发票"
 
 #: base/invoice.py:589
 msgctxt "invoice"
@@ -4322,18 +4293,14 @@ msgid "Invoice total"
 msgstr "发票总额"
 
 #: base/invoice.py:683
-#, fuzzy
-#| msgid "Ignored payments"
 msgctxt "invoice"
 msgid "Received payments"
-msgstr "忽略的付款"
+msgstr "已收款项"
 
 #: base/invoice.py:688
-#, fuzzy
-#| msgid "Invalid payments"
 msgctxt "invoice"
 msgid "Outstanding payments"
-msgstr "无效付款"
+msgstr "未结款项"
 
 #: base/invoice.py:723
 msgctxt "invoice"
@@ -4372,10 +4339,8 @@ msgid ""
 msgstr "使用转换率为1：{rate}由欧洲中央银行发布{date}，发票总额于{total}。"
 
 #: base/invoice.py:839
-#, fuzzy
-#| msgid "Modern Invoice Renderer (pretix 2.7)"
 msgid "Modern Invoice Renderer"
-msgstr "现代发票渲染器（eventyay 2.7）"
+msgstr "现代发票渲染器"
 
 #: base/models/access_code.py:22 orga/views/cfp.py:752
 msgid "Access code"
@@ -4664,23 +4629,16 @@ msgid "Include pending orders"
 msgstr "包括未决定的订单"
 
 #: base/models/checkin.py:29
-#, fuzzy
-#| msgid ""
-#| "With this option, people will be able to check in even if the order have "
-#| "not been paid."
 msgid ""
 "With this option, people will be able to check in even if the order has not "
 "been paid."
-msgstr "使用此选项，即使订单尚未付款，人们也可以办理签到手续。"
+msgstr "启用此选项后，即使订单尚未付款，也可进行签到。"
 
 #: base/models/checkin.py:33
 #: control/templates/pretixcontrol/organizers/gates.html:5
 #: eventyay_common/navigation.py:214
-#, fuzzy
-#| msgctxt "subevent"
-#| msgid "Dates"
 msgid "Gates"
-msgstr "日期"
+msgstr "闸机"
 
 #: base/models/checkin.py:36
 msgid ""
@@ -4693,10 +4651,8 @@ msgid "Allow re-entering after an exit scan"
 msgstr "允许扫描退出后重新入场"
 
 #: base/models/checkin.py:42
-#, fuzzy
-#| msgid "Ask for email addresses per ticket"
 msgid "Allow multiple entries per ticket"
-msgstr "询问每张票的电子邮件地址"
+msgstr "允许每张票多次入场"
 
 #: base/models/checkin.py:43
 msgid ""
@@ -12877,42 +12833,28 @@ msgid "Title, speaker name or email"
 msgstr "标题、演讲者姓名或电子邮件"
 
 #: control/forms/filter.py:1017
-#, fuzzy
-#| msgid "My proposals"
 msgid "All proposals"
-msgstr "我的提议"
+msgstr "所有提案"
 
 #: control/forms/filter.py:1018
-#, fuzzy
-#| msgid "Submitter"
-#| msgid_plural "Submitters"
 msgid "Submitted"
-msgstr "提交者"
+msgstr "已提交"
 
 #: control/forms/filter.py:1019
-#, fuzzy
-#| msgid "accepted"
 msgid "Accepted"
-msgstr "接受"
+msgstr "已接受"
 
 #: control/forms/filter.py:1020
-#, fuzzy
-#| msgid "rejected"
 msgid "Rejected"
-msgstr "拒绝"
+msgstr "已拒绝"
 
 #: control/forms/filter.py:1021
-#, fuzzy
-#| msgctxt "payment_state"
-#| msgid "confirmed"
 msgid "Confirmed"
-msgstr "确认"
+msgstr "已确认"
 
 #: control/forms/filter.py:1022
-#, fuzzy
-#| msgid "Withdraw"
 msgid "Withdrawn"
-msgstr "取回"
+msgstr "已撤回"
 
 #: control/forms/filter.py:1119 control/forms/filter.py:1120
 #: control/forms/filter.py:1468 control/forms/filter.py:1469
@@ -13051,10 +12993,8 @@ msgid "Disabled"
 msgstr "禁用"
 
 #: control/forms/global_settings.py:54 control/forms/global_settings.py:425
-#, fuzzy
-#| msgid "Invitation"
 msgid "Billing validation"
-msgstr "邀请"
+msgstr "账单验证"
 
 #: control/forms/global_settings.py:56
 msgid ""
@@ -13116,50 +13056,40 @@ msgid "System Email"
 msgstr "系统邮箱"
 
 #: control/forms/global_settings.py:213 control/forms/global_settings.py:266
-#, fuzzy
-#| msgid "Publishable key"
 msgid "Publishable key (Live)"
-msgstr "可发布的密钥"
+msgstr "可发布密钥（正式）"
 
 #: control/forms/global_settings.py:216
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr "用于主办方结算与平台费用的实时公钥。"
 
 #: control/forms/global_settings.py:222 control/forms/global_settings.py:275
-#, fuzzy
-#| msgid "Secret key"
 msgid "Secret key (Live)"
-msgstr "密钥"
+msgstr "密钥（正式）"
 
 #: control/forms/global_settings.py:225
 msgid "Live secret key for organizer billing and platform fees."
 msgstr "用于主办方结算与平台费用的实时私钥。"
 
 #: control/forms/global_settings.py:231 control/forms/global_settings.py:284
-#, fuzzy
-#| msgid "Publishable key"
 msgid "Publishable key (Test)"
-msgstr "可发布的密钥"
+msgstr "可发布密钥（测试）"
 
 #: control/forms/global_settings.py:234
 msgid "Test publishable key for organizer billing and platform fees."
 msgstr "用于主办方结算与平台费用的测试公钥。"
 
 #: control/forms/global_settings.py:240 control/forms/global_settings.py:293
-#, fuzzy
-#| msgid "Secret key"
 msgid "Secret key (Test)"
-msgstr "密钥"
+msgstr "密钥（测试）"
 
 #: control/forms/global_settings.py:243
 msgid "Test secret key for organizer billing and platform fees."
 msgstr "用于主办方结算与平台费用的测试私钥。"
 
 #: control/forms/global_settings.py:249
-#, fuzzy
-#| msgid "Stripe Connect: Secret key"
 msgid "Webhook secret key"
-msgstr "Stripe连接：密钥"
+msgstr "Webhook 密钥"
 
 #: control/forms/global_settings.py:251
 msgid ""
@@ -13187,16 +13117,12 @@ msgid "Test secret key for ticket payments via the Stripe plugin."
 msgstr "通过 Stripe 插件进行门票支付的测试私钥。"
 
 #: control/forms/global_settings.py:302
-#, fuzzy
-#| msgid "Ticket name"
 msgid "App fee percentage"
-msgstr "票证名称"
+msgstr "应用费率百分比"
 
 #: control/forms/global_settings.py:306
-#, fuzzy
-#| msgid "Percentage of the order total."
 msgid "Percentage fee charged on ticket payments."
-msgstr "订单总数的百分比。"
+msgstr "对门票付款收取的百分比费用。"
 
 #: control/forms/global_settings.py:313
 msgid "App fee minimum"
@@ -13215,26 +13141,20 @@ msgid "Maximum fee amount charged on ticket payments."
 msgstr "在门票支付时收取的最高费用金额。"
 
 #: control/forms/global_settings.py:338
-#, fuzzy
-#| msgid "PayPal Connect: Client ID"
 msgid "PayPal Connect client ID for payment processing."
-msgstr "PayPal连接:客户端ID"
+msgstr "用于支付处理的 PayPal Connect 客户端 ID。"
 
 #: control/forms/global_settings.py:344
 msgid "Secret key"
 msgstr "密钥"
 
 #: control/forms/global_settings.py:346
-#, fuzzy
-#| msgid "PayPal Connect: Secret key"
 msgid "PayPal Connect secret key for payment processing."
-msgstr "PayPal连接：密钥"
+msgstr "用于支付处理的 PayPal Connect 密钥。"
 
 #: control/forms/global_settings.py:352
-#, fuzzy
-#| msgid "Endpoint"
 msgid "API Endpoint"
-msgstr "端点"
+msgstr "API 端点"
 
 #: control/forms/global_settings.py:354
 msgid ""
@@ -13288,16 +13208,12 @@ msgid "Localization"
 msgstr "本地化"
 
 #: control/forms/global_settings.py:399
-#, fuzzy
-#| msgid "Payment date"
 msgid "Payment Gateways"
-msgstr "付款日期"
+msgstr "支付网关"
 
 #: control/forms/global_settings.py:422
-#, fuzzy
-#| msgid "Ticket secret:"
 msgid "Ticket fee"
-msgstr "门票密钥："
+msgstr "门票费用"
 
 #: control/forms/global_settings.py:428
 msgid "Maps"
@@ -13331,10 +13247,8 @@ msgstr ""
 "eventyay.com，邮件将由此服务器本地发送。"
 
 #: control/forms/global_settings.py:473
-#, fuzzy
-#| msgid "Enable test mode"
 msgid "Enable telemetry"
-msgstr "启用测试模式"
+msgstr "启用遥测"
 
 #: control/forms/global_settings.py:475
 msgid ""
@@ -13346,10 +13260,8 @@ msgstr ""
 "收集个人数据。数据大约每天发送一次。"
 
 #: control/forms/global_settings.py:482
-#, fuzzy
-#| msgid "Send all"
 msgid "Telemetry endpoint"
-msgstr "发送全部"
+msgstr "遥测端点"
 
 #: control/forms/global_settings.py:483
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
@@ -13364,10 +13276,8 @@ msgid "API key for authenticating with the telemetry receiver."
 msgstr "用于与遥测接收器进行身份验证的 API 密钥。"
 
 #: control/forms/global_settings.py:492
-#, fuzzy
-#| msgid "Bancontact"
 msgid "Maintainer contact"
-msgstr "Bancontact"
+msgstr "维护者联系方式"
 
 #: control/forms/global_settings.py:494
 msgid ""
@@ -13882,17 +13792,12 @@ msgid "Favicon"
 msgstr "网站图标"
 
 #: control/forms/organizer_forms/organizer_settings_form.py:52
-#, fuzzy
-#| msgid ""
-#| "If you provide a favicon, we will show it instead of the default eventyay "
-#| "icon. We recommend a size of at least 200x200px to accommodate most "
-#| "devices."
 msgid ""
 "If you provide a favicon, we will show it instead of the default pretix "
 "icon. We recommend a size of at least 200x200px to accommodate most devices."
 msgstr ""
-"如果您提供favicon，我们将显示它而不是默认的eventyay图标。 我们建议尺寸至少为"
-"200x200px，以适应大多数设备。"
+"如果提供网站图标，将显示该图标而不是默认的 pretix 图标。建议尺寸至少为 "
+"200x200px，以适配大多数设备。"
 
 #: control/forms/organizer_forms/organizer_update_form.py:32
 #: eventyay_common/forms/event.py:102
@@ -17754,8 +17659,6 @@ msgstr "更改现有订单"
 #: control/templates/pretixcontrol/event/settings.html:61
 #: eventyay_common/templates/eventyay_common/event/settings.html:169
 #: orga/views/event.py:79
-#, fuzzy
-#| msgid "Text"
 msgid "Texts"
 msgstr "文本"
 
@@ -17764,26 +17667,18 @@ msgid "Confirmation text"
 msgstr "确认文本"
 
 #: control/templates/pretixcontrol/event/settings.html:71
-#, fuzzy
-#| msgid ""
-#| "This text needs to be confirmed by the user before a purchase is "
-#| "possible. You could for example link your terms of service here. If you "
-#| "use the Pages feature to publish your terms of service, you don't need "
-#| "this setting since you can configure it there."
 msgid ""
 "These texts need to be confirmed by the user before a purchase is possible. "
 "You could for example link your terms of service here. If you use the Pages "
 "feature to publish your terms of service, you don't need this setting since "
 "you can configure it there."
 msgstr ""
-"此文本需要用户确认才能进行购买。例如，您可以在此处链接您的服务条款。 如果您使"
-"用“页面”功能发布服务条款，则不需要此设置，因为您可以在此处进行配置。"
+"这些文本需要在购买前由用户确认。例如，可在此处链接服务条款。如果使用“页面”功"
+"能发布服务条款，则无需此设置，因为可在该处进行配置。"
 
 #: control/templates/pretixcontrol/event/settings.html:128
-#, fuzzy
-#| msgid "Confirmation text"
 msgid "Add confirmation text"
-msgstr "确认文本"
+msgstr "添加确认文本"
 
 #: control/templates/pretixcontrol/event/settings.html:151
 msgid "Display"
@@ -17794,10 +17689,8 @@ msgid "Cart"
 msgstr "购物车"
 
 #: control/templates/pretixcontrol/event/settings.html:186
-#, fuzzy
-#| msgid "Event date"
 msgid "Item metadata"
-msgstr "活动日期"
+msgstr "项目元数据"
 
 #: control/templates/pretixcontrol/event/settings.html:188
 msgid ""
@@ -17892,10 +17785,8 @@ msgstr "添加新规则"
 
 #: control/templates/pretixcontrol/event/tax_edit.html:151
 #: control/templates/pretixcontrol/organizers/edit.html:86
-#, fuzzy
-#| msgid "Change"
 msgid "Change history"
-msgstr "更改"
+msgstr "更改历史记录"
 
 #: control/templates/pretixcontrol/event/tax_index.html:16
 msgid "You haven't created any tax rules yet."
@@ -17916,10 +17807,8 @@ msgid "Ticket download"
 msgstr "票证下载"
 
 #: control/templates/pretixcontrol/event/tickets.html:18
-#, fuzzy
-#| msgid "Global settings"
 msgid "Download settings"
-msgstr "全局设置"
+msgstr "下载设置"
 
 #: control/templates/pretixcontrol/event/tickets.html:21
 msgid ""
@@ -17928,47 +17817,33 @@ msgid ""
 msgstr "您激活了票证下载但未启用输出提供程序。 确保启用插件并激活输出提供程序。"
 
 #: control/templates/pretixcontrol/event/tickets.html:35
-#, fuzzy
-#| msgid "Download date"
 msgid "Download formats"
-msgstr "下载日期"
+msgstr "下载格式"
 
 #: control/templates/pretixcontrol/event/tickets.html:63
-#, fuzzy, python-format
-#| msgid ""
-#| "There are no ticket outputs available. Please go to the plugin settings "
-#| "and activate one or more ticket output plugins."
+#, python-format
 msgid ""
 "There are no ticket outputs available. Please go to the <a "
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
-msgstr "没有可用的票证输出。 请转到插件设置并激活一个或多个票证输出插件。"
+msgstr ""
+"没有可用的票券输出。请前往<a %(plugin_settings_href)s>插件设置</a>并启用一个"
+"或多个票券输出插件。"
 
 #: control/templates/pretixcontrol/event/tickets.html:71
-#, fuzzy
-#| msgid "Download ticket"
 msgid "Download time"
-msgstr "下载门票"
+msgstr "下载时间"
 
 #: control/templates/pretixcontrol/event/tickets.html:75
-#, fuzzy
-#| msgid "Ticket code"
 msgid "Ticket codes"
-msgstr "门票码"
+msgstr "票券代码"
 
 #: control/templates/pretixcontrol/event/widget.html:17
-#, fuzzy
-#| msgid ""
-#| "The pretix widget is a way to embed your ticket shop into your event "
-#| "website. This way, your visitors can buy their ticket right away without "
-#| "leaving your website."
 msgid ""
 "A widget allows you to embed your ticket shop directly into your event "
 "website. This enables your visitors to purchase tickets instantly without "
 "leaving your site."
-msgstr ""
-"eventyay小部件是一种将票务商店嵌入您的活动网站的方法。 这样，您的访问者可以在"
-"不离开您的网站的情况下立即买票。"
+msgstr "小组件允许将票务商店直接嵌入活动网站，使访客无需离开网站即可立即购票。"
 
 #: control/templates/pretixcontrol/event/widget.html:23
 msgid ""
@@ -18123,16 +17998,12 @@ msgid "Submit"
 msgstr "提交"
 
 #: control/templates/pretixcontrol/global_update.html:28
-#, fuzzy
-#| msgid "The eventyay.com server returned an error code."
 msgid "The eventyay server returned an error code."
-msgstr "eventyay.com服务器返回错误代码。"
+msgstr "eventyay 服务器返回了错误代码。"
 
 #: control/templates/pretixcontrol/global_update.html:30
-#, fuzzy
-#| msgid "The eventyay.com server could not be reached."
 msgid "The eventyay server could not be reached."
-msgstr "无法访问eventyay.com服务器。"
+msgstr "无法连接到 eventyay 服务器。"
 
 #: control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay_common/templates/eventyay_common/includes/logs.html:51
@@ -18166,28 +18037,20 @@ msgid ""
 msgstr "此产品目前尚未出售，因为您在下面配置它应该只在特定时间范围内可用。"
 
 #: control/templates/pretixcontrol/item/base.html:36
-#, fuzzy
-#| msgid ""
-#| "This product is currently not being sold since you configured below that "
-#| "it should only be available in a certain timeframe."
 msgid ""
 "This product is currently not being shown since you configured below that it "
 "should only be visible if a certain other quota is already sold out."
-msgstr "此产品目前尚未出售，因为您在下面配置它应该只在特定时间范围内可用。"
+msgstr "此产品当前未显示，因为在下方配置为仅当某个其他配额已售罄时才可见。"
 
 #: control/templates/pretixcontrol/item/create.html:19
 #: control/templates/pretixcontrol/item/index.html:21
-#, fuzzy
-#| msgid "Product name"
 msgid "Product type"
-msgstr "产品名称"
+msgstr "产品类型"
 
 #: control/templates/pretixcontrol/item/create.html:25
 #: control/templates/pretixcontrol/item/index.html:27
-#, fuzzy
-#| msgid "All products"
 msgid "Admission product"
-msgstr "所有产品"
+msgstr "入场类产品"
 
 #: control/templates/pretixcontrol/item/create.html:27
 msgid ""
@@ -18211,10 +18074,8 @@ msgstr ""
 
 #: control/templates/pretixcontrol/item/create.html:44
 #: control/templates/pretixcontrol/item/index.html:46
-#, fuzzy
-#| msgid "All products"
 msgid "Non-admission product"
-msgstr "所有产品"
+msgstr "非入场类产品"
 
 #: control/templates/pretixcontrol/item/create.html:46
 msgid ""
@@ -18231,16 +18092,12 @@ msgid "Examples: Merchandise, donations, gift cards, add-ons to a main ticket."
 msgstr "例如：商品、捐赠、礼品卡、主票的附加产品。"
 
 #: control/templates/pretixcontrol/item/create.html:69
-#, fuzzy
-#| msgid "Product with variations"
 msgid "Product without variations"
-msgstr "产品有变量"
+msgstr "无规格产品"
 
 #: control/templates/pretixcontrol/item/create.html:76
-#, fuzzy
-#| msgid "Product with variations"
 msgid "Product with multiple variations"
-msgstr "产品有变量"
+msgstr "多规格产品"
 
 #: control/templates/pretixcontrol/item/create.html:78
 msgid ""
@@ -21327,20 +21184,16 @@ msgid "Change only for this event"
 msgstr "仅为此活动更改"
 
 #: control/templatetags/hierarkey_form.py:59
-#, fuzzy
-#| msgid "Change only for this event"
 msgid "Change only for this organizer"
-msgstr "仅为此活动更改"
+msgstr "仅为此组织者更改"
 
 #: control/templatetags/hierarkey_form.py:60
 msgid "Change for all events"
 msgstr "更改所有活动"
 
 #: control/templatetags/hierarkey_form.py:60
-#, fuzzy
-#| msgid "Change for all events"
 msgid "Change for all organizers"
-msgstr "更改所有活动"
+msgstr "为所有组织者更改"
 
 #: control/views/__init__.py:144
 msgid "That page number is not an integer"
@@ -21514,10 +21367,9 @@ msgid "not yet public"
 msgstr "尚未公开"
 
 #: control/views/dashboards.py:346
-#, fuzzy, python-brace-format
-#| msgid "Checked in – {list}"
+#, python-brace-format
 msgid "Present – {list}"
-msgstr "已签入-{list}"
+msgstr "当前 – {list}"
 
 #: control/views/dashboards.py:373
 msgid "Get started with ticketing"
@@ -21575,28 +21427,20 @@ msgid ""
 msgstr "你的修改已被保存。 请注意，您的更改可能需要很短的时间才能生效。"
 
 #: control/views/event.py:384
-#, fuzzy
-#| msgid "Invoice information"
 msgid "Integrations"
-msgstr "发票信息"
+msgstr "集成"
 
 #: control/views/event.py:385
-#, fuzzy
-#| msgid "Customer actions"
 msgid "Customizations"
-msgstr "客户的行为"
+msgstr "自定义"
 
 #: control/views/event.py:386
-#, fuzzy
-#| msgid "Export format"
 msgid "Output and export formats"
-msgstr "导出格式"
+msgstr "输出和导出格式"
 
 #: control/views/event.py:387
-#, fuzzy
-#| msgid "Features"
 msgid "API features"
-msgstr "特征"
+msgstr "API 功能"
 
 #: control/views/event.py:393 control/views/event.py:394
 msgid "Other"
@@ -21786,10 +21630,8 @@ msgid "Your changes have not been saved, see below for errors."
 msgstr "您的更改尚未保存，请参阅下面的错误。"
 
 #: control/views/orderimport.py:39
-#, fuzzy
-#| msgid "Please only upload PDF files."
 msgid "Please only upload CSV files."
-msgstr "请仅上传PDF文件。"
+msgstr "请仅上传 CSV 文件。"
 
 #: control/views/orderimport.py:54
 #, python-brace-format
@@ -21797,10 +21639,8 @@ msgid "Please do not upload files larger than {size:.0f} MB."
 msgstr "请不要上传大于 {size:.0f} MB 的文件。"
 
 #: control/views/orderimport.py:129
-#, fuzzy
-#| msgid "The last update check was not successful."
 msgid "The import was successful."
-msgstr "上次更新检查未成功。"
+msgstr "导入成功。"
 
 #: control/views/orderimport.py:144
 msgid "We've been unable to parse the uploaded file as a CSV file."
@@ -21868,32 +21708,15 @@ msgid "The refund has been marked as done."
 msgstr "退款已标记为已完成。"
 
 #: control/views/orders.py:859
-#, fuzzy
-#| msgid "The device has been verified and can now be used."
 msgid "The request has been removed. If you want, you can now inform the user."
-msgstr "该设备已经过验证，现在可以使用。"
+msgstr "请求已移除。如有需要，现在可通知用户。"
 
 #: control/views/orders.py:874
-#, fuzzy
-#| msgid "Cancellation fee"
 msgid "Your cancellation request"
-msgstr "取消费用"
+msgstr "取消请求"
 
 #: control/views/orders.py:876
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hello,\n"
-#| "\n"
-#| "unfortunately, we denied your order request for {event}.\n"
-#| "\n"
-#| "{comment}\n"
-#| "\n"
-#| "You can view the details of your order here:\n"
-#| "\n"
-#| "{url}\n"
-#| "\n"
-#| "Best regards,\n"
-#| "Your {event} team"
+#, python-brace-format
 msgid ""
 "Hello,\n"
 "\n"
@@ -21902,18 +21725,11 @@ msgid ""
 "\n"
 "Your {event} team"
 msgstr ""
-"您好，\n"
+"你好，\n"
 "\n"
-"很抱歉，我们拒绝了你对{event}的订单请求。\n"
+"很遗憾，无法满足请求并取消订单。\n"
 "\n"
-"{comment}\n"
-"\n"
-"您可以在以下位置查看订单的详细信息：\n"
-"\n"
-"{url}\n"
-"\n"
-"致敬，\n"
-"您的{event}团队"
+"{event} 团队"
 
 #: control/views/orders.py:937
 msgid ""
@@ -21961,15 +21777,11 @@ msgid ""
 msgstr "{}的退款已保存，但尚未完全执行。 您可以在下面将其标记为完成。"
 
 #: control/views/orders.py:1213
-#, fuzzy
-#| msgid "The device has been verified and can now be used."
 msgid ""
 "A new gift card was created. You can now send the user their gift card code."
-msgstr "该设备已经过验证，现在可以使用。"
+msgstr "已创建新的礼品卡。现在可向用户发送礼品卡代码。"
 
 #: control/views/orders.py:1228
-#, fuzzy
-#| msgid "Gift card code"
 msgid "Your gift card code"
 msgstr "礼品卡代码"
 
@@ -22084,10 +21896,8 @@ msgid "This action is only allowed for pending orders."
 msgstr "此操作仅适于用待处理订单。"
 
 #: control/views/orders.py:1797
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This action is only allowed for canceled orders."
-msgstr "此操作仅适于用待处理订单。"
+msgstr "此操作仅允许用于已取消的订单。"
 
 #: control/views/orders.py:1828
 msgid "This action is only allowed for pending or paid orders."
@@ -22156,10 +21966,8 @@ msgid "There was a problem processing your input. See below for error details."
 msgstr "处理您的输入时出现问题。请参阅下面的错误详细信息。"
 
 #: control/views/orders.py:2659
-#, fuzzy
-#| msgid "The order has been canceled."
 msgid "All orders have been canceled."
-msgstr "订单已取消。"
+msgstr "所有订单均已取消。"
 
 #: control/views/orders.py:2662
 #, python-brace-format
@@ -22169,10 +21977,8 @@ msgid ""
 msgstr "订单已被取消。{count} 个订单出现错误，请检查所有未取消的订单。"
 
 #: control/views/orders.py:2690
-#, fuzzy
-#| msgid "The password you entered was invalid, please try again."
 msgid "Your input was not valid."
-msgstr "您输入的密码无效，请重试。"
+msgstr "输入无效。"
 
 #: control/views/organizer.py:38
 msgid "Token name"
@@ -22333,10 +22139,8 @@ msgid "Some of the provided question ids are invalid."
 msgstr "部分提供的问题 ID 无效。"
 
 #: control/views/product.py:370
-#, fuzzy
-#| msgid "The question has been deleted."
 msgid "Not all questions have been selected."
-msgstr "该问题已被删除。"
+msgstr "并非所有问题都已选中。"
 
 #: control/views/product.py:407 control/views/product.py:672
 #: control/views/product.py:695
@@ -22360,10 +22164,8 @@ msgid "The new quota has been created."
 msgstr "已创建新配额。"
 
 #: control/views/product.py:942
-#, fuzzy
-#| msgid "First scanned: %(date)s"
 msgid "Exit scans"
-msgstr "首次扫描：%(date)s"
+msgstr "离场扫描"
 
 #: control/views/product.py:950
 msgid "Vouchers and waiting list reservations"
@@ -22387,10 +22189,8 @@ msgid "The requested quota does not exist."
 msgstr "请求的配额不存在。"
 
 #: control/views/product.py:1082
-#, fuzzy
-#| msgid "The order has been denied and is therefore now canceled."
 msgid "The quota has been re-opened and will not close again."
-msgstr "该订单已被拒绝，因此现已取消。"
+msgstr "配额已重新开放，且不会再次关闭。"
 
 #: control/views/product.py:1209
 msgid "The selected quota has been deleted."
@@ -23456,10 +23256,8 @@ msgid ""
 msgstr "票务已启用私有测试模式。只有组织者、审核者和系统管理员可以查看或购买票务。"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:108
-#, fuzzy
-#| msgid "in private test mode"
 msgid "Disable private test mode for tickets"
-msgstr "在私有测试模式下"
+msgstr "为票务禁用私密测试模式"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_ticket_modes.html:114
 msgid ""
@@ -23476,16 +23274,12 @@ msgstr ""
 "票务。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:8
-#, fuzzy
-#| msgid "Event start"
 msgid "Event status"
-msgstr "活动开始"
+msgstr "活动状态"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:18
-#, fuzzy
-#| msgid "Shop visibility"
 msgid "Event visibility"
-msgstr "商店知名度"
+msgstr "活动可见性"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:23
 msgid ""
@@ -23494,35 +23288,25 @@ msgid ""
 msgstr "该活动为线上活动。取消发布可将其从公开页面隐藏并下线。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:29
-#, fuzzy
-#| msgid "Not public"
 msgid "Unpublish Event"
-msgstr "不公开"
+msgstr "取消发布活动"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:34
 msgid "Take the event live by publishing the event info page to the public."
 msgstr "发布活动信息页以上线活动。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:39
-#, fuzzy
-#| msgid ""
-#| "To publish your ticket shop, you first need to resolve the following "
-#| "issues:"
 msgid "To publish your event, you first need to resolve the following issues:"
-msgstr "要发布您的售票点，首先需要解决以下问题："
+msgstr "要发布活动，需先解决以下问题："
 
 #: eventyay_common/templates/eventyay_common/event/live.html:49
 #: eventyay_common/templates/eventyay_common/event/live.html:57
-#, fuzzy
-#| msgid "Publish answers"
 msgid "Publish Event"
-msgstr "发布答案"
+msgstr "发布活动"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:64
-#, fuzzy
-#| msgid "Public changelog"
 msgid "Public pages"
-msgstr "公共变更日志"
+msgstr "公开页面"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:73
 msgid "No public pages are available yet."
@@ -23530,17 +23314,13 @@ msgstr "当前还没有公开页面。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:159
 #: orga/templates/orga/event/live.html:19
-#, fuzzy
-#| msgid "Two-factor status"
 msgid "Talk status"
-msgstr "双因素状态"
+msgstr "议程状态"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:163
 #: orga/templates/orga/event/live.html:23
-#, fuzzy
-#| msgid "Your event may not be ready for release yet!"
 msgid "Your talk component may not be ready for release yet!"
-msgstr "你的活动可能还没有准备好发布！"
+msgstr "议程组件可能尚未准备好发布！"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:167
 #: eventyay_common/templates/eventyay_common/event/live.html:177
@@ -23551,11 +23331,9 @@ msgstr "修复"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:173
 #: orga/templates/orga/event/live.html:33
-#, fuzzy
-#| msgid "There may be easy ways to improve your event before its release!"
 msgid ""
 "There may be easy ways to improve your talk component before its release!"
-msgstr "在发布之前，可能有简单的方法可以改进您的活动！"
+msgstr "在发布前可能有一些简单方法可改进议程组件！"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:184
 #: orga/templates/orga/event/live.html:44
@@ -23566,10 +23344,8 @@ msgstr "发布活动以在预售页面启用演讲页面。"
 #: eventyay_common/templates/eventyay_common/event/live.html:210
 #: orga/templates/orga/event/live.html:48
 #: orga/templates/orga/event/live.html:70
-#, fuzzy
-#| msgid "Publish answers"
 msgid "Publish Talks"
-msgstr "发布答案"
+msgstr "发布议程"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:193
 #: orga/templates/orga/event/live.html:53
@@ -23580,10 +23356,8 @@ msgstr "演讲页面已在预售页面公开。取消发布可隐藏日程、场
 
 #: eventyay_common/templates/eventyay_common/event/live.html:199
 #: orga/templates/orga/event/live.html:59
-#, fuzzy
-#| msgid "Publish answers"
 msgid "Unpublish Talks"
-msgstr "发布答案"
+msgstr "取消发布议程"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:204
 #: orga/templates/orga/event/live.html:64
@@ -23601,10 +23375,8 @@ msgstr "讲座页面当前处于测试模式。日程和提交数据可能会变
 
 #: eventyay_common/templates/eventyay_common/event/live.html:231
 #: orga/templates/orga/event/live.html:91
-#, fuzzy
-#| msgid "Disable test mode"
 msgid "Disable talk test mode"
-msgstr "禁用测试模式"
+msgstr "禁用议程测试模式"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:238
 #: orga/templates/orga/event/live.html:98
@@ -23617,10 +23389,8 @@ msgstr "必须发布讲座页面才能启用讲座测试模式。"
 #: orga/templates/orga/event/live.html:102
 #: orga/templates/orga/event/live.html:111
 #: orga/templates/orga/event/live.html:122
-#, fuzzy
-#| msgid "Enable test mode"
 msgid "Enable talk test mode"
-msgstr "启用测试模式"
+msgstr "启用议程测试模式"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:247
 #: orga/templates/orga/event/live.html:107
@@ -23640,10 +23410,8 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/event/live.html:277
 #: orga/templates/orga/event/live.html:137
-#, fuzzy
-#| msgid "Only orders created in test mode can be deleted."
 msgid "Talk pages are published. Private test mode cannot be enabled."
-msgstr "只能删除在测试模式下创建的订单。"
+msgstr "议程页面已发布。无法启用私密测试模式。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:281
 #: eventyay_common/templates/eventyay_common/event/live.html:303
@@ -23653,10 +23421,8 @@ msgstr "只能删除在测试模式下创建的订单。"
 #: orga/templates/orga/event/live.html:163
 #: orga/templates/orga/event/live.html:172
 #: orga/templates/orga/event/live.html:183
-#, fuzzy
-#| msgid "in private test mode"
 msgid "Enable private test mode for talks"
-msgstr "在私有测试模式下"
+msgstr "为议程启用私密测试模式"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:287
 #: orga/templates/orga/event/live.html:147
@@ -23670,10 +23436,8 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/event/live.html:293
 #: orga/templates/orga/event/live.html:153
-#, fuzzy
-#| msgid "in private test mode"
 msgid "Disable private test mode for talks"
-msgstr "在私有测试模式下"
+msgstr "为议程禁用私密测试模式"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:299
 #: orga/templates/orga/event/live.html:159
@@ -23697,26 +23461,20 @@ msgid ""
 msgstr "私有测试模式会将讲座页面对公众隐藏。只有组织者、评审和系统管理员可以访问。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:338
-#, fuzzy
-#| msgid "Join online event"
 msgid "Join Online Video visibility"
-msgstr "加入在线活动"
+msgstr "加入在线视频可见性"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:342
 msgid "Control whether the Join Online Video link is visible on public pages."
 msgstr "控制 Join Online Video 链接是否在公共页面可见。"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:349
-#, fuzzy
-#| msgid "Header image"
 msgid "Hide video link"
-msgstr "标题图片 (Biaoti tupian)"
+msgstr "隐藏视频链接"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:351
-#, fuzzy
-#| msgid "Show in lists"
 msgid "Show video link"
-msgstr "在列表中显示"
+msgstr "显示视频链接"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:357
 msgid "The video module is not enabled for this event."
@@ -23797,9 +23555,6 @@ msgid "Getting in touch"
 msgstr "联系我们"
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:50
-#, fuzzy
-#| msgctxt "webhooks"
-#| msgid "Event types"
 msgid "Event type"
 msgstr "活动类型"
 
