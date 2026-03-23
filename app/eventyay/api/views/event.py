@@ -607,6 +607,13 @@ class CreateEventView(APIView):
 
 
 class UserFavouriteView(APIView):
+    """DEPRECATED: Use per-submission favourite API instead.
+
+    /api/v1/events/{event}/submissions/favourites/ (GET)
+    /api/v1/events/{event}/submissions/{code}/favourite/ (POST/DELETE)
+    /api/v1/events/{event}/submissions/favourites/merge/ (POST)
+    """
+
     permission_classes = []
 
     @staticmethod
@@ -615,6 +622,13 @@ class UserFavouriteView(APIView):
         Handle POST requests to add talks to the user's favourite list.
         Being called by eventyay-talk, authenticate by bearer token.
         """
+        import warnings
+
+        warnings.warn(
+            "UserFavouriteView is deprecated, use per-submission favourite API",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         try:
             talk_list = json.loads(request.body.decode())
             user_code = UserFavouriteView.get_uid_from_token(

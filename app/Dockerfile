@@ -66,18 +66,18 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && apt-get install --no-install-recommends -y \
     netcat-traditional \
     nodejs \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 
-# copy entrypoint.sh
-COPY ./entrypoint.sh .
+# Copy application code from builder (includes .venv and entrypoint.sh)
+COPY --from=builder /usr/src/app /usr/src/app
+
+# Normalize line endings and set executable bit AFTER the bulk copy
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
-
-# Copy application code from builder (includes .venv)
-COPY --from=builder /usr/src/app /usr/src/app
 
 # Expose virtual env
 ENV VIRTUAL_ENV=/usr/src/app/.venv

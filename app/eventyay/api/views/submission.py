@@ -423,6 +423,52 @@ def favourite_view(request, event, code):
     return Response({})
 
 
+@extend_schema(
+    summary="Merge local favourites with server-side favourites",
+    description=(
+        "Accepts a list of submission codes the client collected while "
+        "unauthenticated (localStorage). Returns the full merged list of "
+        "favourite codes for this user + event."
+    ),
+    request=list[str],
+    responses={
+        status.HTTP_200_OK: list[str],
+    },
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@authentication_classes((SessionAuthentication, TokenAuthentication))
+def favourites_merge_view(request, event):
+    if not request.user.has_perm("base.list_schedule", request.event):
+        raise PermissionDenied()
+
+    local_codes = request.data
+    if not isinstance(local_codes, list):
+        return Response(
+            {"detail": "Expected a JSON array of submission codes."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    existing = set(
+        Submission.objects.filter(
+            favourites__user=request.user, event=request.event
+        ).values_list("code", flat=True)
+    )
+
+    eligible = submissions_for_user(request.event, request.user).filter(
+        code__in=[c for c in local_codes if c not in existing]
+    )
+    for sub in eligible:
+        sub.add_favourite(request.user)
+
+    merged = list(
+        Submission.objects.filter(
+            favourites__user=request.user, event=request.event
+        ).values_list("code", flat=True)
+    )
+    return Response(merged)
+
+
 @extend_schema_view(
     list=extend_schema(summary="List tags", parameters=[build_search_docs("tag")]),
     retrieve=extend_schema(summary="Show Tags"),
@@ -442,7 +488,8 @@ class TagViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
 
 class SubmissionFavouriteDeprecatedView(View):
-    """
+    """DEPRECATED: Use /submissions/favourites/ and /submissions/{code}/favourite/ instead.
+
     A view for handling user's favourite talks.
 
     - GET: Retrieve the list of favourite talks for the authenticated user.
@@ -451,6 +498,14 @@ class SubmissionFavouriteDeprecatedView(View):
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
+        import warnings
+
+        warnings.warn(
+            "SubmissionFavouriteDeprecatedView is deprecated, "
+            "use /submissions/favourites/ and /submissions/{code}/favourite/",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs) -> JsonResponse:
@@ -466,7 +521,7 @@ class SubmissionFavouriteDeprecatedView(View):
             # As user not have any favourite talk yet
             return JsonResponse([], safe=False)
         except Exception as e:
-            logger.error(f"unexpected error happened: {str(e)}")
+            logger.error("unexpected error happened: %s", e)
             return JsonResponse(
                 {"error": str(e)},
                 safe=False,
@@ -495,20 +550,9 @@ class SubmissionFavouriteDeprecatedView(View):
             serializer = SubmissionFavouriteDeprecatedSerializer(data=data)
             if serializer.is_valid():
                 fav_talks = serializer.save(user_id, talk_list_valid)
-                # call to video for update favourite talks
-                token = SubmissionFavouriteDeprecatedView.get_user_video_token(
-                    request.user.code, request.event.venueless_settings
-                )
-                video_url = request.event.venueless_settings.url + "favourite-talk/"
-                header = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {token}",
-                }
-                requests.post(
-                    video_url, data=json.dumps(talk_list_valid), headers=header
-                )
+                # Legacy video sync removed — video app now uses the same REST API
             else:
-                logger.error(f"Validation error: {serializer.errors}")
+                logger.error("Validation error: %s", serializer.errors)
                 return JsonResponse(
                     {"error": serializer.errors},
                     safe=False,
@@ -525,12 +569,12 @@ class SubmissionFavouriteDeprecatedView(View):
                 "user_not_logged_in", safe=False, status=status.HTTP_400_BAD_REQUEST
             )
         except IntegrityError as e:
-            logger.error(f"Integrity error: {str(e)}")
+            logger.error("Integrity error: %s", e)
             return JsonResponse(
                 {"error": str(e)}, safe=False, status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
+            logger.error("Unexpected error: %s", e)
             return JsonResponse(
                 {"error": str(e)},
                 safe=False,
