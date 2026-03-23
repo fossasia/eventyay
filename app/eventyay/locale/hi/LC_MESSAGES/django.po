@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-20 03:09+0000\n"
+"PO-Revision-Date: 2026-03-21 14:12+0000\n"
 "Last-Translator: Arnav Angarkar <arnav.angarkar20@gmail.com>\n"
 "Language-Team: Hindi <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "hi/>\n"
@@ -26867,7 +26867,7 @@ msgstr ""
 #: orga/templates/orga/cfp/talkquestion/detail.html:78
 #, python-format
 msgid "%%"
-msgstr ""
+msgstr "%%"
 
 #: orga/templates/orga/cfp/talkquestion/list.html:54
 msgid "Target"
@@ -26910,15 +26910,15 @@ msgstr ""
 
 #: orga/templates/orga/cfp/text.html:39
 msgid "Dates and location"
-msgstr ""
+msgstr "तिथियाँ और स्थान"
 
 #: orga/templates/orga/cfp/text.html:58
 msgid "Some of your session types have different deadlines:"
-msgstr ""
+msgstr "आपके कुछ सत्र प्रकारों की समय-सीमाएँ अलग-अलग हैं:"
 
 #: orga/templates/orga/cfp/track/list.html:7 orga/views/cfp.py:725
 msgid "New track"
-msgstr ""
+msgstr "नया ट्रैक"
 
 #: orga/templates/orga/cfp/track/list.html:32
 msgid ""
@@ -26927,6 +26927,9 @@ msgid ""
 "themselves. Track colors are helpful to help attendees navigate your "
 "schedule."
 msgstr ""
+"ट्रैक का उपयोग आपके सत्रों को श्रेणियों में व्यवस्थित करने के लिए किया जाता है। आप CfP "
+"सेटिंग्स का उपयोग करके यह निर्धारित कर सकते हैं कि क्या वक्ता अपने सत्र के लिए स्वयं ट्रैक चुन "
+"सकते हैं। ट्रैक के रंग प्रतिभागियों को आपके कार्यक्रम में आसानी से नेविगेट करने में मदद करते हैं।"
 
 #: orga/templates/orga/event/dashboard.html:21
 msgid ""
@@ -26934,23 +26937,25 @@ msgid ""
 "settings, set up your Call for Papers with session types and custom fields, "
 "and you’re ready to go!"
 msgstr ""
+"आपका इवेंट बन चुका है और आप शुरू करने के लिए तैयार हैं! इवेंट सेटिंग्स देखें, सत्र प्रकारों और "
+"कस्टम फ़ील्ड्स के साथ अपना Call for Papers सेट करें, और आप तैयार हैं!"
 
 #: orga/templates/orga/event/dashboard.html:69
 msgid "Your talk component is currently"
-msgstr ""
+msgstr "आपका टॉक कंपोनेंट वर्तमान में"
 
 #: orga/templates/orga/event/dashboard.html:79
 msgid "not live"
-msgstr ""
+msgstr "लाइव नहीं है"
 
 #: orga/templates/orga/event/dashboard.html:123
 msgid "Full history"
-msgstr ""
+msgstr "पूर्ण इतिहास"
 
 #: orga/templates/orga/event/history.html:5
 #: orga/templates/orga/event/history.html:8
 msgid "Event History"
-msgstr ""
+msgstr "इवेंट इतिहास"
 
 #: orga/templates/orga/event/live.html:5 orga/templates/orga/event/live.html:10
 msgid "Talk component status"
