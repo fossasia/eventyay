@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-21 17:01+0000\n"
+"PO-Revision-Date: 2026-03-22 14:49+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Sinhala <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/si/>\n"
@@ -25809,93 +25809,99 @@ msgstr ""
 
 #: orga/forms/event.py:353
 msgid "Show the widget even if the schedule is not public"
-msgstr ""
+msgstr "කාලසටහන සාර්වජනික නොවුණත් විජට් එක පෙන්වන්න"
 
 #: orga/forms/event.py:355
 msgid ""
 "Set to allow external pages to show the schedule widget, even if the "
 "schedule is not shown here using eventyay."
 msgstr ""
+"eventyay භාවිතයෙන් මෙහි කාලසටහන නොපෙන්වුණත්, බාහිර පිටු වලට කාලසටහන් විජට් එක පෙන්වීමට අවසර "
+"දීමට සැකසන්න."
 
 #: orga/forms/event.py:371
 msgid "Limit days"
-msgstr ""
+msgstr "දින සීමා කරන්න"
 
 #: orga/forms/event.py:375
 msgid ""
 "You can limit the days shown in the widget. Leave empty to show all days."
-msgstr ""
+msgstr "විජට් එකේ පෙන්වන දින සීමා කළ හැක. සියලුම දින පෙන්වීමට හිස්ව තබන්න."
 
 #: orga/forms/event.py:380
 msgid "Widget language"
-msgstr ""
+msgstr "විජට් භාෂාව"
 
 #: orga/forms/event.py:405
 msgid "The end of a phase has to be after its start."
-msgstr ""
+msgstr "අදියරක් අවසන් වන වේලාව එහි ආරම්භයෙන් පසු විය යුතුය."
 
 #: orga/forms/export.py:18
 msgid "A CSV export can be opened directly in Excel and similar applications."
-msgstr ""
+msgstr "CSV අපනයනයක් Excel සහ සමාන යෙදුම් වලින් සෘජුවම විවෘත කළ හැක."
 
 #: orga/forms/export.py:20
 msgid "CSV export"
-msgstr ""
+msgstr "CSV අපනයනය"
 
 #: orga/forms/export.py:21
 msgid "JSON export"
-msgstr ""
+msgstr "JSON අපනයනය"
 
 #: orga/forms/export.py:28
 msgid "Data delimiter"
-msgstr ""
+msgstr "දත්ත වෙන්කිරීමේ අක්ෂරය"
 
 #: orga/forms/export.py:30
 msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
+"එකම සෛලයක ඇතුළත දත්ත වෙන් කිරීමට (උදාහරණයක් ලෙස, එක සැසියක කථිකයන් කිහිපදෙනෙකු/එක කථිකයෙකු "
+"සඳහා සැසි කිහිපයක්) කෙසේද අවශ්‍ය?"
 
 #: orga/forms/export.py:33
 msgid "Comma"
-msgstr ""
+msgstr "කොමා"
 
 #: orga/forms/export.py:34
 msgid "Newline"
-msgstr ""
+msgstr "නව පේළිය"
 
 #: orga/forms/mails.py:69 orga/forms/mails.py:86
 msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
 msgstr ""
+"අවලංගු ඊමේල් සැකිල්ලක්! කිසිම තැනක අමතර { හෝ } නොමැති බවත්, {} බ්ලොක් තුළ ඉඩ නොමැති බවත් "
+"පරීක්ෂා කරන්න."
 
 #: orga/forms/mails.py:76 orga/forms/mails.py:93
 msgid "Unknown placeholder!"
-msgstr ""
+msgstr "නොදන්නා ප්ලේස්හෝල්ඩර් එකක්!"
 
 #: orga/forms/mails.py:109
 #, python-brace-format
 msgid "You have an empty link in your email, labeled “{text}”!"
-msgstr ""
+msgstr "ලේබලය “{text}” ලෙස ඇති, ඊමේල් එකේ හිස් සබැඳියක් ඇත!"
 
 #: orga/forms/mails.py:160
 msgid "An email needs to have at least one recipient."
-msgstr ""
+msgstr "ඊමේල් එකකට අවම වශයෙන් එක් ලබන්නෙකු තිබිය යුතුය."
 
 #: orga/forms/mails.py:188
 msgid "Send immediately"
-msgstr ""
+msgstr "වහාම යවන්න"
 
 #: orga/forms/mails.py:190
 msgid ""
 "If you check this, the emails will be sent immediately, instead of being put "
 "in the outbox."
-msgstr ""
+msgstr "මෙය තෝරාගත් නම්, ඊමේල් outbox එකට දමනවා වෙනුවට වහාම යවනු ලැබේ."
 
 #: orga/forms/mails.py:201
 msgid "Recipient groups"
-msgstr ""
+msgstr "ලබන්නා කණ්ඩායම්"
 
 #: orga/forms/mails.py:218
 msgid "Reviewers"
