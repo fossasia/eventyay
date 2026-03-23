@@ -28,9 +28,10 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     ):
         # Replicate the behavior of previous `eventyay_common.views.auth.register()` view.
         request.session[KEY_LAST_FORCE_LOGIN] = int(time.time())
-        request.session[KEY_LONG_SESSION] = (
-            settings.EVENTYAY_LONG_SESSIONS and not request.session.get_expire_at_browser_close()
-        )
+        # LoginForm only includes this field when long sessions are enabled; keep this in sync
+        # with base/forms/auth.py.
+        keep_logged_in = settings.EVENTYAY_LONG_SESSIONS and bool(request.POST.get('keep_logged_in'))
+        request.session[KEY_LONG_SESSION] = keep_logged_in
         return super().post_login(
             request,
             user,
