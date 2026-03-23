@@ -25396,8 +25396,8 @@ msgstr[1] "%(count)s événements"
 #, python-format
 msgid "%(count)s invite pending"
 msgid_plural "%(count)s invites pending"
-msgstr[0] "%(count)s invitations en attente%(count)s invitations en attente"
-msgstr[1] ""
+msgstr[0] "%(count)s invitation en attente"
+msgstr[1] "%(count)s invitations en attente"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:95
 msgid "Team permissions"

@@ -32241,9 +32241,9 @@ msgstr "цена"
 #, python-format
 msgid "One product"
 msgid_plural "%(num)s products"
-msgstr[0] "Один продукт"
-msgstr[1] "Дополнительные продукты"
-msgstr[2] "Много продуктов"
+msgstr[0] "%(num)s продукт"
+msgstr[1] "%(num)s продукта"
+msgstr[2] "%(num)s продуктов"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:299
 #, python-format

@@ -19064,7 +19064,7 @@ msgstr "Vai tiešām vēlaties dzēst produktu <strong>%(item)s</strong>?"
 msgid "That will cause %(count)s voucher to be unusable."
 msgid_plural "That will cause %(count)s voucher to be unusable."
 msgstr[0] "Tas izraisīs to, ka kupons %(count)s vairs nebūs izmantojams."
-msgstr[1] ""
+msgstr[1] "Tas izraisīs to, ka kupons %(count)s vairs nebūs izmantojams."
 msgstr[2] "Tas izraisīs to, ka kupons %(count)s vairs nebūs izmantojams."
 
 #: control/templates/pretixcontrol/item/delete.html:29
@@ -20808,7 +20808,7 @@ msgstr "Summa visās lapās"
 msgid "1 order"
 msgid_plural "%(s)s orders"
 msgstr[0] "%(s)s pasūtījumi"
-msgstr[1] ""
+msgstr[1] "%(s)s pasūtījumi"
 msgstr[2] "%(s)s pasūtījumi"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
@@ -22491,7 +22491,7 @@ msgstr "Drīz"
 msgid "{num} order"
 msgid_plural "{num} orders"
 msgstr[0] "{num} pasūtījumi"
-msgstr[1] ""
+msgstr[1] "{num} pasūtījumi"
 msgstr[2] "{num} pasūtījumi"
 
 #: control/views/event.py:232
@@ -24851,7 +24851,7 @@ msgstr "Izveidot komandu"
 msgid "%(count)s member"
 msgid_plural "%(count)s members"
 msgstr[0] "%(count)s dalībnieki"
-msgstr[1] ""
+msgstr[1] "%(count)s dalībnieki"
 msgstr[2] "%(count)s dalībnieki"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:65
@@ -24859,7 +24859,7 @@ msgstr[2] "%(count)s dalībnieki"
 msgid "%(count)s event"
 msgid_plural "%(count)s events"
 msgstr[0] "%(count)s pasākumi"
-msgstr[1] ""
+msgstr[1] "%(count)s pasākumi"
 msgstr[2] "%(count)s pasākumi"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:78
@@ -24867,7 +24867,7 @@ msgstr[2] "%(count)s pasākumi"
 msgid "%(count)s invite pending"
 msgid_plural "%(count)s invites pending"
 msgstr[0] "Gaida %(count)s uzaicinājumus"
-msgstr[1] ""
+msgstr[1] "Gaida %(count)s uzaicinājumus"
 msgstr[2] "Gaida %(count)s uzaicinājumus"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:95
@@ -27829,7 +27829,7 @@ msgstr "Recenzijas"
 msgid "Or review the missing proposal here."
 msgid_plural "Or review the missing %(count)s proposals one-by-one."
 msgstr[0] "Vai arī pārskatiet trūkstošos %(count)s priekšlikumus pa vienam."
-msgstr[1] ""
+msgstr[1] "Vai arī pārskatiet trūkstošos %(count)s priekšlikumus pa vienam."
 msgstr[2] "Vai arī pārskatiet trūkstošos %(count)s priekšlikumus pa vienam."
 
 #: orga/templates/orga/review/bulk.html:31
@@ -27847,7 +27847,7 @@ msgstr "Izskatās, ka jums vēl nav neviena priekšlikuma."
 msgid "%(count)s proposal is waiting for your review."
 msgid_plural "%(count)s proposals are waiting for your review."
 msgstr[0] "%(count)s priekšlikumi gaida jūsu vērtējumu."
-msgstr[1] ""
+msgstr[1] "%(count)s priekšlikumi gaida jūsu vērtējumu."
 msgstr[2] "%(count)s priekšlikumi gaida jūsu vērtējumu."
 
 #: orga/templates/orga/review/dashboard.html:35
@@ -28161,6 +28161,9 @@ msgstr[0] ""
 "pastus </strong> un ievietot tos izsūtnē, lai informētu runātājus par viņu "
 "sesiju laikiem."
 msgstr[1] ""
+"Publicējot šo jauno grafiku, var izveidot <strong>%(count)s paziņojumu e-"
+"pastus </strong> un ievietot tos izsūtnē, lai informētu runātājus par viņu "
+"sesiju laikiem."
 msgstr[2] ""
 "Publicējot šo jauno grafiku, var izveidot <strong>%(count)s paziņojumu e-"
 "pastus </strong> un ievietot tos izsūtnē, lai informētu runātājus par viņu "
@@ -28186,7 +28189,9 @@ msgid ""
 msgid_plural ""
 "%(count)s sessions are still <strong>unconfirmed</strong> and will not show "
 "up on the public schedule."
-msgstr[0] ""
+msgstr[1] ""
+"%(count)s sesijas joprojām ir <strong>neapstiprinātas</strong> un netiks "
+"rādītas publiskajā grafikā."
 "%(count)s sesijas joprojām ir <strong>neapstiprinātas</strong> un netiks "
 "rādītas publiskajā grafikā."
 msgstr[1] ""
@@ -28198,7 +28203,7 @@ msgstr[2] ""
 msgid "See all unconfirmed sessions."
 msgstr "Skatīt visas neapstiprinātās sesijas."
 
-#: orga/templates/orga/schedule/release.html:69
+msgstr[1] "%(count)s sesijas vēl <strong>nav ieplānotas</strong>."
 #, python-format
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
@@ -28207,7 +28212,7 @@ msgstr[1] ""
 msgstr[2] "%(count)s sesijas vēl <strong>nav ieplānotas</strong>."
 
 #: orga/templates/orga/schedule/release.html:76
-#, python-format
+msgstr[1] "%(count)s sesijām vēl <strong>nav piešķirta tēma</strong>."
 msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
@@ -29069,7 +29074,7 @@ msgstr "E-pasts ir nosūtīts."
 msgid "{count} mails have been sent."
 msgstr "Nosūtīti {count} e-pasti."
 
-#: orga/views/mails.py:212 plugins/sendmail/views.py:398
+msgstr[1] "Vai tiešām vēlaties iztīrīt {count} e-pastus?"
 #, python-brace-format
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
@@ -29085,7 +29090,7 @@ msgstr ""
 "Šis e-pasts vai nu neeksistē, vai arī to nevar atmest, jo tas jau ir "
 "nosūtīts."
 
-#: orga/views/mails.py:235
+msgstr[1] "Atmesti {count} e-pasti."
 #, python-brace-format
 msgid "The mail has been discarded."
 msgid_plural "{count} mails have been discarded."
@@ -30180,7 +30185,9 @@ msgid ""
 "You are trying to download a refund export from %(date)s with one order and "
 "a total of %(sum)s."
 msgid_plural ""
-"You are trying to download a refund export from %(date)s with %(cnt)s order "
+msgstr[1] ""
+"Jūs mēģināt lejupielādēt atmaksu eksportu no %(date)s ar %(cnt)s pasūtījumu "
+"un kopējo summu %(sum)s."
 "and a total of %(sum)s."
 msgstr[0] ""
 "Jūs mēģināt lejupielādēt atmaksu eksportu no %(date)s ar %(cnt)s pasūtījumu "
@@ -30908,7 +30915,7 @@ msgstr "Šis e-pasts jau ir nosūtīts, un to nevar dzēst."
 
 #: plugins/sendmail/views.py:414
 msgid "The mail and its related data have been deleted."
-msgstr "E-pasts un ar to saistītie dati ir dzēsti."
+msgstr[1] "Vai tiešām vēlaties neatgriezeniski dzēst {count} e-pastus?"
 
 #: plugins/sendmail/views.py:433
 #, python-brace-format
@@ -30916,7 +30923,7 @@ msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] "Vai tiešām vēlaties neatgriezeniski dzēst {count} e-pastus?"
 msgstr[1] ""
-msgstr[2] "Vai tiešām vēlaties neatgriezeniski dzēst {count} e-pastus?"
+msgstr[1] "Izmesti {count} e-pasti."
 
 #: plugins/sendmail/views.py:449
 #, python-brace-format
@@ -31602,7 +31609,7 @@ msgstr ""
 
 #: presale/templates/pretixpresale/event/checkout_addons.html:14
 msgid "We're now trying to book these add-ons for you!"
-msgstr "Šobrīd veicam šo papildinājumu rezervēšanu priekš jums!"
+msgstr[1] "Jums jāizvēlas %(min_count)s opcijas šajā kategorijā."
 
 #: presale/templates/pretixpresale/event/checkout_addons.html:47
 #, python-format
@@ -31972,7 +31979,7 @@ msgstr "Pievienot vēl vienu"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:204
 msgid "price"
-msgstr "cena"
+msgstr[1] "%(num)s produkti"
 
 #: presale/templates/pretixpresale/event/fragment_cart.html:285
 #, python-format
