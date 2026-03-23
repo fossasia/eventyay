@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:16+0000\n"
+"PO-Revision-Date: 2026-03-23 15:17+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Urdu <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ur/>\n"
@@ -2238,6 +2238,15 @@ msgid ""
 "Best regards,\n"
 "Your {event} team"
 msgstr ""
+"سلام،\n"
+"\n"
+"{event} کے لیے آپ کا آرڈر {code} منسوخ کر دیا گیا ہے۔\n"
+"\n"
+"آرڈر کی تفصیلات یہاں دیکھی جا سکتی ہیں:\n"
+"{url}\n"
+"\n"
+"نیک تمنائیں،\n"
+"آپ کی {event} ٹیم"
 
 #: base/configurations/default_setting.py:1868
 #, python-brace-format
@@ -2256,6 +2265,19 @@ msgid ""
 "Best regards,\n"
 "Your {event} team"
 msgstr ""
+"سلام،\n"
+"\n"
+"{event} کے لیے آپ کا آرڈر منظور کر لیا گیا ہے اور ایونٹ میں خوش آمدید کہنا "
+"خوشی کی بات ہوگی۔\n"
+"\n"
+"براہِ کرم {expire_date} سے پہلے اپنے آرڈر کی ادائیگی کر کے آگے بڑھیں۔\n"
+"\n"
+"ادائیگی کا طریقہ منتخب کریں اور ادائیگی یہاں کریں:\n"
+"\n"
+"{url}\n"
+"\n"
+"نیک تمنائیں،\n"
+"آپ کی {event} ٹیم"
 
 #: base/configurations/default_setting.py:1888
 #, python-brace-format
@@ -2271,6 +2293,17 @@ msgid ""
 "Best regards,\n"
 "Your {event} team"
 msgstr ""
+"سلام،\n"
+"\n"
+"{event} کے لیے آپ کا آرڈر منظور کر لیا گیا ہے اور ایونٹ میں خوش آمدید کہنا "
+"خوشی کی بات ہوگی۔ چونکہ صرف مفت مصنوعات آرڈر کی گئی ہیں، اس لیے ادائیگی "
+"درکار نہیں۔\n"
+"\n"
+"آرڈر کی تفصیلات تبدیل کریں اور آرڈر کی صورتِ حال یہاں دیکھیں:\n"
+"{url}\n"
+"\n"
+"نیک تمنائیں،\n"
+"آپ کی {event} ٹیم"
 
 #: base/configurations/default_setting.py:1905
 #, python-brace-format
@@ -2288,6 +2321,18 @@ msgid ""
 "Best regards,\n"
 "Your {event} team"
 msgstr ""
+"سلام،\n"
+"\n"
+"بدقسمتی سے، {event} کے لیے آپ کی آرڈر درخواست منظور نہیں کی گئی۔\n"
+"\n"
+"{comment}\n"
+"\n"
+"آرڈر کی تفصیلات یہاں دیکھی جا سکتی ہیں:\n"
+"\n"
+"{url}\n"
+"\n"
+"نیک تمنائیں،\n"
+"آپ کی {event} ٹیم"
 
 #: base/configurations/default_setting.py:1924
 #, python-brace-format
@@ -2300,6 +2345,13 @@ msgid ""
 "Best regards,\n"
 "Your {event} team"
 msgstr ""
+"سلام،\n"
+"\n"
+"آرڈر کی تفصیلات تبدیل کریں اور آرڈر کی صورتِ حال یہاں دیکھیں:\n"
+"{url}\n"
+"\n"
+"نیک تمنائیں،\n"
+"آپ کی {event} ٹیم"
 
 #: base/configurations/default_setting.py:1940
 #, python-brace-format
@@ -2314,6 +2366,15 @@ msgid ""
 "    Best regards,\n"
 "    Your {event} team"
 msgstr ""
+"سلام {attendee_name}،\n"
+"\n"
+"    {event} کے لیے رجسٹریشن ہو چکی ہے۔\n"
+"\n"
+"    اگر اب تک نہیں کیا تو ٹکٹ یہاں سے ڈاؤن لوڈ کیا جا سکتا ہے:\n"
+"    {url}\n"
+"\n"
+"    نیک تمنائیں،\n"
+"    آپ کی {event} ٹیم"
 
 #: base/configurations/default_setting.py:1956
 #, python-brace-format
@@ -2328,6 +2389,15 @@ msgid ""
 "Best regards,\n"
 "Your {event} team"
 msgstr ""
+"سلام،\n"
+"\n"
+"{event} کے لیے ٹکٹ خریدا گیا ہے۔\n"
+"\n"
+"اگر اب تک نہیں کیا تو ٹکٹ یہاں سے ڈاؤن لوڈ کیا جا سکتا ہے:\n"
+"{url}\n"
+"\n"
+"نیک تمنائیں،\n"
+"آپ کی {event} ٹیم"
 
 #: base/configurations/default_setting.py:1984
 #: base/configurations/default_setting.py:1993
@@ -2340,54 +2410,54 @@ msgstr ""
 #: base/configurations/default_setting.py:2082
 #: base/configurations/default_setting.py:2091
 msgid "Please enter the hexadecimal code of a color, e.g. #990000."
-msgstr ""
+msgstr "براہِ کرم رنگ کا ہیکساڈیسیمل کوڈ درج کریں، مثلاً #990000۔"
 
 #: base/configurations/default_setting.py:1989
 msgid "Primary color"
-msgstr ""
+msgstr "بنیادی رنگ"
 
 #: base/configurations/default_setting.py:2013
 msgid "Accent color for success"
-msgstr ""
+msgstr "کامیابی کے لیے ایکسنٹ رنگ"
 
 #: base/configurations/default_setting.py:2014
 msgid "We strongly suggest to use a shade of green."
-msgstr ""
+msgstr "سبز رنگ کے کسی شیڈ کے استعمال کی سختی سے تجویز دی جاتی ہے۔"
 
 #: base/configurations/default_setting.py:2038
 msgid "Accent color for errors"
-msgstr ""
+msgstr "خرابیوں کے لیے ایکسنٹ رنگ"
 
 #: base/configurations/default_setting.py:2039
 msgid "We strongly suggest to use a shade of red."
-msgstr ""
+msgstr "سرخ رنگ کے کسی شیڈ کے استعمال کی سختی سے تجویز دی جاتی ہے۔"
 
 #: base/configurations/default_setting.py:2063
 msgid "Page background color"
-msgstr ""
+msgstr "صفحے کے پس منظر کا رنگ"
 
 #: base/configurations/default_setting.py:2087
 msgid "Scroll-over color"
-msgstr ""
+msgstr "اسکرول کرنے پر رنگ"
 
 #: base/configurations/default_setting.py:2103
 msgid "Use round edges"
-msgstr ""
+msgstr "گول کنارے استعمال کریں"
 
 #: base/configurations/default_setting.py:2113
 #: control/templates/pretixcontrol/pdf/index.html:317
 msgid "Font"
-msgstr ""
+msgstr "فونٹ"
 
 #: base/configurations/default_setting.py:2114
 msgid "Only respected by modern browsers."
-msgstr ""
+msgstr "صرف جدید براؤزرز میں لاگو ہوتا ہے۔"
 
 #: base/configurations/default_setting.py:2128
 #: base/configurations/default_setting.py:2188 base/models/event.py:729
 #: control/forms/organizer_forms/organizer_settings_form.py:35
 msgid "Header image"
-msgstr ""
+msgstr "ہیڈر تصویر"
 
 #: base/configurations/default_setting.py:2132 base/models/event.py:731
 msgid ""
@@ -2396,6 +2466,10 @@ msgid ""
 "middle part remains visible on smaller screens. We recommend an image at "
 "least 1170 px wide and 120 px in height for best results."
 msgstr ""
+"یہ تصویر تمام ایونٹ صفحات کے اوپر ظاہر ہوتی ہے اور ڈیفالٹ رنگ یا پیٹرن کی "
+"جگہ لیتی ہے۔ یہ درمیان میں سیدھ میں ہوتی ہے اور پھیلائی نہیں جاتی، تاکہ چھوٹی "
+"اسکرینوں پر درمیانی حصہ نظر آتا رہے۔ بہترین نتائج کے لیے کم از کم 1170 px "
+"چوڑائی اور 120 px اونچائی والی تصویر تجویز کی جاتی ہے۔"
 
 #: base/configurations/default_setting.py:2148 base/models/event.py:719
 msgid "Logo"
@@ -10359,25 +10433,30 @@ msgid ""
 "gives us a way to contact you, it also gives you the possibility to edit "
 "your proposal or to view its current state."
 msgstr ""
+"اپنی تجویز بنانے کے لیے اس صفحے پر ایک اکاؤنٹ درکار ہے۔ اس سے نہ صرف رابطہ "
+"کرنے کا طریقہ ملتا ہے بلکہ تجویز میں ترمیم کرنے یا اس کی موجودہ حالت دیکھنے "
+"کی سہولت بھی ملتی ہے۔"
 
 #: cfp/flow.py:543
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:36
 msgid "Profile"
-msgstr ""
+msgstr "پروفائل"
 
 #: cfp/flow.py:547
 msgid "Tell us something about yourself!"
-msgstr ""
+msgstr "اپنے بارے میں کچھ بتائیں!"
 
 #: cfp/flow.py:552
 msgid ""
 "This information will be publicly displayed next to your session - you can "
 "always edit for as long as proposals are still open."
 msgstr ""
+"یہ معلومات سیشن کے ساتھ عوامی طور پر دکھائی جائیں گی — جب تک تجاویز کھلی ہیں"
+"، کسی بھی وقت ترمیم کی جا سکتی ہے۔"
 
 #: cfp/phrases.py:7
 msgid "Go to CfP"
-msgstr ""
+msgstr "CfP پر جائیں"
 
 #: cfp/phrases.py:10
 msgid ""
@@ -10386,55 +10465,64 @@ msgid ""
 "instructions. If you don’t see the email within the next minutes, check your "
 "spam inbox!"
 msgstr ""
+"اگر اس ای میل پتے کے ساتھ کوئی صارف موجود ہو (جس نے گزشتہ 24 گھنٹوں میں پاس "
+"ورڈ ری سیٹ کی درخواست نہ کی ہو)، تو مزید ہدایات پر مشتمل ای میل بھیجی جائے گی"
+"۔ اگر اگلے چند منٹوں میں ای میل نظر نہ آئے تو اسپام فولڈر چیک کریں!"
 
 #: cfp/phrases.py:14
 msgid ""
 "This link was not valid. Make sure you copied the complete URL from the "
 "email and that the email is no more than 24 hours old."
 msgstr ""
+"یہ لنک درست نہیں تھا۔ یقینی بنائیں کہ ای میل سے مکمل URL کاپی کیا گیا ہے اور "
+"ای میل 24 گھنٹے سے زیادہ پرانی نہیں ہے۔"
 
 #: cfp/phrases.py:17
 msgid "Awesome! You can now log in using your new password."
-msgstr ""
+msgstr "بہترین! اب نئے پاس ورڈ کے ساتھ لاگ اِن کیا جا سکتا ہے۔"
 
 #: cfp/phrases.py:19
 msgid "Your proposal has been withdrawn."
-msgstr ""
+msgstr "تجویز واپس لے لی گئی ہے۔"
 
 #: cfp/phrases.py:21
 msgid ""
 "Your proposal can’t be withdrawn at this time – please contact us if you "
 "need to withdraw your proposal!"
 msgstr ""
+"اس وقت تجویز واپس نہیں لی جا سکتی — اگر تجویز واپس لینی ہو تو براہِ کرم رابطہ "
+"کریں!"
 
 #: cfp/phrases.py:23
 msgid "Your session has been confirmed – we’re looking forward to seeing you!"
-msgstr ""
+msgstr "سیشن کی تصدیق ہو گئی ہے — ملاقات کے منتظر ہیں!"
 
 #: cfp/phrases.py:24
 msgid ""
 "This proposal has already been confirmed – we’re looking forward to seeing "
 "you!"
-msgstr ""
+msgstr "اس تجویز کی پہلے ہی تصدیق ہو چکی ہے — ملاقات کے منتظر ہیں!"
 
 #: cfp/phrases.py:26
 msgid ""
 "This proposal cannot be confirmed at this time – please contact us if you "
 "think this is an error."
 msgstr ""
+"اس وقت اس تجویز کی تصدیق نہیں کی جا سکتی — اگر لگتا ہے کہ یہ غلطی ہے تو براہِ "
+"کرم رابطہ کریں۔"
 
 #: cfp/phrases.py:28
 msgid "This proposal cannot be edited anymore."
-msgstr ""
+msgstr "اب اس تجویز میں مزید ترمیم نہیں کی جا سکتی۔"
 
 #: cfp/phrases.py:30 cfp/phrases.py:53
 msgid "Speaker email"
-msgstr ""
+msgstr "مقرر کا ای میل"
 
 #: cfp/phrases.py:31 cfp/phrases.py:54
 #, python-brace-format
 msgid "{speaker} invites you to join their session!"
-msgstr ""
+msgstr "{speaker} سیشن میں شامل ہونے کی دعوت دیتا ہے!"
 
 #: cfp/phrases.py:33 cfp/phrases.py:56
 #, python-brace-format
@@ -10452,18 +10540,30 @@ msgid ""
 "I’m looking forward to it!\n"
 "{speaker}"
 msgstr ""
+"سلام!\n"
+"\n"
+"آپ کو سیشن میں مقرر کے طور پر مدعو کرنا چاہتا ہوں\n"
+"\n"
+"  “{title}”\n"
+"\n"
+"بمقام {event}۔ شامل ہونے کے لیے یہ لنک استعمال کریں:\n"
+"\n"
+"  {url}\n"
+"\n"
+"منتظر ہوں!\n"
+"{speaker}"
 
 #: cfp/phrases.py:46
 msgid "Please provide a valid email address."
-msgstr ""
+msgstr "براہِ کرم ایک درست ای میل پتہ فراہم کریں۔"
 
 #: cfp/phrases.py:47
 msgid "The invitation was sent!"
-msgstr ""
+msgstr "دعوت بھیج دی گئی!"
 
 #: cfp/phrases.py:48
 msgid "You are now part of this proposal! Please fill in your profile below."
-msgstr ""
+msgstr "اب آپ اس تجویز کا حصہ ہیں! براہِ کرم نیچے اپنا پروفائل پُر کریں۔"
 
 #: cfp/phrases.py:51
 msgid ""
@@ -12049,17 +12149,19 @@ msgstr "حذف کریں"
 #: plugins/sendmail/templates/pretixplugins/sendmail/delete_confirmation.html:11
 #: plugins/sendmail/templates/pretixplugins/sendmail/purge_confirmation.html:5
 msgid "Confirm deletion"
-msgstr ""
+msgstr "حذف کی تصدیق کریں"
 
 #: common/text/phrases.py:61
 msgid ""
 "Please make sure that this is the item you want to delete. This action "
 "cannot be undone!"
 msgstr ""
+"براہ کرم یقینی بنائیں کہ یہی وہ آئٹم ہے جسے حذف کرنا ہے۔ یہ کارروائی واپس "
+"نہیں لی جا سکتی!"
 
 #: common/text/phrases.py:62
 msgid "The item has been deleted."
-msgstr ""
+msgstr "آئٹم حذف کر دیا گیا ہے۔"
 
 #: common/text/phrases.py:64
 #: control/templates/pretixcontrol/event/plugins.html:18
@@ -12089,76 +12191,77 @@ msgstr ""
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:20
 #: plugins/ticketoutputpdf/views.py:147
 msgid "Your changes have been saved."
-msgstr ""
+msgstr "تبدیلیاں محفوظ کر دی گئی ہیں۔"
 
 #: common/text/phrases.py:65 presale/views/event.py:831
 #: presale/views/event.py:839 presale/views/event.py:842
 #: presale/views/event.py:862
 msgid "Please go back and try again."
-msgstr ""
+msgstr "براہ کرم واپس جائیں اور دوبارہ کوشش کریں۔"
 
 #. Translators: This is an established term in the context of software development.
 #: common/text/phrases.py:68
 msgid "Bad request."
-msgstr ""
+msgstr "غلط درخواست۔"
 
 #: common/text/phrases.py:70
 msgid "We had trouble saving your input – Please see below for details."
-msgstr ""
+msgstr "ان پٹ محفوظ کرنے میں مسئلہ پیش آیا — تفصیلات کے لیے نیچے دیکھیں۔"
 
 #: common/text/phrases.py:71 control/views/checkin.py:127
 #: eventyay_common/views/event.py:457 eventyay_common/views/event.py:472
 msgid "You do not have permission to perform this action."
-msgstr ""
+msgstr "یہ کارروائی انجام دینے کی اجازت نہیں ہے۔"
 
 #: common/text/phrases.py:73
 msgid "Permission denied."
-msgstr ""
+msgstr "اجازت مسترد کر دی گئی۔"
 
 #: common/text/phrases.py:74
 msgid "Sorry, you do not have the required permissions to access this page."
-msgstr ""
+msgstr "معذرت، اس صفحے تک رسائی کے لیے مطلوبہ اجازتیں موجود نہیں ہیں۔"
 
 #: common/text/phrases.py:75
 msgid "Page not found."
-msgstr ""
+msgstr "صفحہ نہیں ملا۔"
 
 #: common/text/phrases.py:77
 msgid "This page does not exist."
-msgstr ""
+msgstr "یہ صفحہ موجود نہیں ہے۔"
 
 #: common/text/phrases.py:78
 msgid "Huh, I could have sworn there was something here."
-msgstr ""
+msgstr "لگتا ہے یہاں کچھ ہونا چاہیے تھا۔"
 
 #: common/text/phrases.py:80
 msgid "This page is no more."
-msgstr ""
+msgstr "یہ صفحہ اب موجود نہیں ہے۔"
 
 #: common/text/phrases.py:81
 msgid "This page has ceased to be."
-msgstr ""
+msgstr "یہ صفحہ اب موجود نہیں ہے۔"
 
 #: common/text/phrases.py:82
 msgid "Huh."
-msgstr ""
+msgstr "لگتا ہے۔"
 
 #: common/text/phrases.py:87
 msgid "New password (again)"
-msgstr ""
+msgstr "نیا پاس ورڈ (دوبارہ)"
 
 #: common/text/phrases.py:88
 msgid "You entered two different passwords. Please enter the same one twice!"
 msgstr ""
+"دو مختلف پاس ورڈ درج کیے گئے ہیں۔ براہ کرم ایک ہی پاس ورڈ دو بار درج کریں!"
 
 #: common/text/phrases.py:89
 msgctxt "noun / heading"
 msgid "Reset password"
-msgstr ""
+msgstr "پاس ورڈ ری سیٹ کریں"
 
 #: common/text/phrases.py:90
 msgid "Forgot your password?"
-msgstr ""
+msgstr "پاس ورڈ بھول گئے؟"
 
 #: common/text/phrases.py:91
 msgid "Let me set a new one!"
