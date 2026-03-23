@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-21 17:05+0000\n"
+"PO-Revision-Date: 2026-03-23 15:17+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Gujarati <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/gu/>\n"
@@ -24658,16 +24658,17 @@ msgid ""
 "You cannot accept the invitation for \"{}\" as you already are part of this "
 "team."
 msgstr ""
+"તમે પહેલેથી જ આ ટીમનો ભાગ હોવાથી \"{}\" માટેનું આમંત્રણ સ્વીકારી શકતા નથી."
 
 #: eventyay_common/views/auth.py:260
 #, python-brace-format
 msgid "You are now part of the team \"{}\"."
-msgstr ""
+msgstr "તમે હવે ટીમ \"{}\" ના ભાગ છો."
 
 #: eventyay_common/views/auth.py:298
 #, python-brace-format
 msgid "Welcome to eventyay! You are now part of the team \"{}\"."
-msgstr ""
+msgstr "eventyay માં આપનું સ્વાગત છે! તમે હવે ટીમ \"{}\" ના ભાગ છો."
 
 #: eventyay_common/views/auth.py:343
 msgid ""
@@ -24675,12 +24676,15 @@ msgid ""
 "mail containing further instructions. Please note that we will send at most "
 "one email every 24 hours."
 msgstr ""
+"જો સરનામું માન્ય ખાતા સાથે નોંધાયેલું હશે, તો વધુ સૂચનાઓ ધરાવતો ઇમેલ મોકલ્યો હશે. કૃપા કરીને "
+"નોંધો કે દર 24 કલાકે વધુમાં વધુ એક ઇમેલ મોકલવામાં આવશે."
 
 #: eventyay_common/views/auth.py:348
 msgid ""
 "If the address is registered to valid account, then we have sent you an e-"
 "mail containing further instructions."
 msgstr ""
+"જો સરનામું માન્ય ખાતા સાથે નોંધાયેલું હશે, તો વધુ સૂચનાઓ ધરાવતો ઇમેલ મોકલ્યો હશે."
 
 #: eventyay_common/views/auth.py:371
 msgid ""
@@ -24688,27 +24692,31 @@ msgid ""
 "address into your address bar. Please note that the link is only valid for "
 "three days and that the link can only be used once."
 msgstr ""
+"અમાન્ય લિંક પર ક્લિક કરાયું છે. કૃપા કરીને સરનામા પટ્ટીમાં સંપૂર્ણ વેબ સરનામું નકલ કરાયું છે કે "
+"કેમ તે તપાસો. કૃપા કરીને નોંધો કે લિંક માત્ર ત્રણ દિવસ માટે માન્ય છે અને લિંક ફક્ત એકવાર જ "
+"ઉપયોગ કરી શકાય છે."
 
 #: eventyay_common/views/auth.py:375
 msgid "We were unable to find the user you requested a new password for."
-msgstr ""
+msgstr "નવા પાસવર્ડ માટે વિનંતી કરેલા વપરાશકર્તાને શોધી શકાયા નથી."
 
 #: eventyay_common/views/auth.py:408
 msgid "You can now login using your new password."
-msgstr ""
+msgstr "હવે નવા પાસવર્ડ વડે લૉગિન કરી શકાય છે."
 
 #: eventyay_common/views/auth.py:455
 msgid "Please try again."
-msgstr ""
+msgstr "કૃપા કરીને ફરી પ્રયાસ કરો."
 
 #: eventyay_common/views/auth.py:524
 msgid "Invalid code, please try again."
-msgstr ""
+msgstr "અમાન્ય કોડ, કૃપા કરીને ફરી પ્રયાસ કરો."
 
 #: eventyay_common/views/custom.py:26
 #, python-format
 msgid "Please confirm that %(email)s is an email address for user %(user)s."
 msgstr ""
+"કૃપા કરીને પુષ્ટિ કરો કે %(email)s વપરાશકર્તા %(user)s માટેનું ઇમેલ સરનામું છે."
 
 #: eventyay_common/views/custom.py:29
 #, python-format
@@ -24716,10 +24724,11 @@ msgid ""
 "Unable to confirm %(email)s because it is already confirmed by a different "
 "account."
 msgstr ""
+"%(email)s ની પુષ્ટિ કરી શકાતી નથી કારણ કે તે પહેલેથી જ બીજા ખાતા દ્વારા પુષ્ટિ થયેલ છે."
 
 #: eventyay_common/views/custom.py:37
 msgid "issue a new email confirmation request"
-msgstr ""
+msgstr "નવું ઇમેલ પુષ્ટિકરણ વિનંતી જારી કરો"
 
 #: eventyay_common/views/custom.py:40
 #, python-format
@@ -24727,30 +24736,32 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
+"આ ઇમેલ પુષ્ટિકરણ લિંકની મુદત સમાપ્ત થઈ ગઈ છે અથવા અમાન્ય છે. કૃપા કરીને %"
+"(email_action_link)s."
 
 #: eventyay_common/views/dashboards.py:273
 msgid "You do not have permission to change event settings."
-msgstr ""
+msgstr "ઇવેન્ટ સેટિંગ્સ બદલવાની પરવાનગી નથી."
 
 #: eventyay_common/views/dashboards.py:282 eventyay_common/views/event.py:877
 msgid "Video link is now visible on public pages."
-msgstr ""
+msgstr "વિડિયો લિંક હવે જાહેર પૃષ્ઠો પર દૃશ્યમાન છે."
 
 #: eventyay_common/views/dashboards.py:284 eventyay_common/views/event.py:879
 msgid "Video link is now hidden from public pages."
-msgstr ""
+msgstr "વિડિયો લિંક હવે જાહેર પૃષ્ઠોથી છુપાવવામાં આવી છે."
 
 #: eventyay_common/views/dashboards.py:324
 msgid "No dates"
-msgstr ""
+msgstr "તારીખો નથી"
 
 #: eventyay_common/views/event.py:574
 msgid "CFP"
-msgstr ""
+msgstr "CFP"
 
 #: eventyay_common/views/event.py:576
 msgid "Schedule / Sessions / Speakers"
-msgstr ""
+msgstr "સમયપત્રક / સત્રો / વક્તાઓ"
 
 #: eventyay_common/views/event.py:583 orga/views/event.py:105
 msgid "The CfP doesn’t have a full text yet."
@@ -25289,10 +25300,20 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"નમસ્તે!\n"
+"\n"
+"અમે શેડ્યૂલનું નવું વર્ઝન જાહેર કર્યું છે, અને તમને જાણ કરવી હતી:\n"
+"\n"
+"{speaker_schedule_new}\n"
+"\n"
+"તમને મળવાની રાહ જોઈ રહ્યા છીએ, અને તમારી સેશન અથવા સોંપેલા સ્લોટમાં કોઈ સમસ્યા હોય તો "
+"કૃપા કરીને અમારો સંપર્ક કરો.\n"
+"\n"
+"{event_name} આયોજકો"
 
 #: mail/default_templates.py:68
 msgid "We have some questions about your proposal"
-msgstr ""
+msgstr "પ્રસ્તાવ વિશે કેટલાક પ્રશ્નો છે"
 
 #: mail/default_templates.py:71
 #, python-brace-format
@@ -25310,11 +25331,23 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"નમસ્તે!\n"
+"\n"
+"તમારા વિશે અને તમારા પ્રસ્તાવ વિશે અમને કેટલાક ખુલ્લા પ્રશ્નો છે, જેનો જવાબ આપવાનું વિનંતી "
+"છે:\n"
+"\n"
+"{questions}\n"
+"\n"
+"તેમના જવાબ {url} પર આપી શકાય છે.\n"
+"\n"
+"જો તમને પણ કોઈ પ્રશ્ન હોય તો નિઃસંકોચ અમારો સંપર્ક કરો!\n"
+"\n"
+"{event_name} આયોજકો"
 
 #: mail/default_templates.py:86
 #, python-brace-format
 msgid "New proposal: {proposal_title}"
-msgstr ""
+msgstr "નવો પ્રસ્તાવ: {proposal_title}"
 
 #: mail/default_templates.py:89
 #, python-brace-format
@@ -25330,11 +25363,21 @@ msgid ""
 "All the best,\n"
 "your {event_name} CfP system.\n"
 msgstr ""
+"નમસ્તે,\n"
+"\n"
+"ઇવેન્ટ {event_name} માટે નવો પ્રસ્તાવ પ્રાપ્ત થયો છે:\n"
+"\"{submission_title}\" દ્વારા {speakers}.\n"
+"વિગતો અહીં જોઈ શકાય છે\n"
+"\n"
+"{event_url}\n"
+"\n"
+"શુભેચ્છાઓ,\n"
+"{event_name} CfP સિસ્ટમ.\n"
 
 #: mail/default_templates.py:103
 #, python-brace-format
 msgid "You have been added to a proposal for {event_name}"
-msgstr ""
+msgstr "{event_name} માટેના પ્રસ્તાવમાં ઉમેર્યા ગયા છો"
 
 #: mail/default_templates.py:107
 #, python-brace-format
@@ -25353,6 +25396,17 @@ msgid ""
 "\n"
 "The {event} orga crew"
 msgstr ""
+"નમસ્તે!\n"
+"\n"
+"{event_name}ના “{proposal_title}” શીર્ષકવાળા પ્રસ્તાવમાં ઉમેર્યા ગયા છો.\n"
+"તમારા માટે એક એકાઉન્ટ બનાવવામાં આવ્યું છે – કૃપા કરીને એકાઉન્ટનો પાસવર્ડ સેટ કરવા માટે આ "
+"લિંક અનુસરો.\n"
+"\n"
+"{invitation_link}\n"
+"\n"
+"ત્યારબાદ, યુઝર પ્રોફાઇલ સંપાદિત કરી શકાય છે અને પ્રસ્તાવની સ્થિતિ જોઈ શકાય છે.\n"
+"\n"
+"{event} ઓર્ગા ક્રૂ"
 
 #: mail/default_templates.py:121
 #, python-brace-format
@@ -25368,56 +25422,65 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"નમસ્તે!\n"
+"\n"
+"{event_name}ના “{proposal_title}” શીર્ષકવાળા પ્રસ્તાવમાં ઉમેર્યા ગયા છો.\n"
+"યુઝર પ્રોફાઇલ સંપાદિત કરવા અને પ્રસ્તાવની સ્થિતિ જોવા માટે કૃપા કરીને આ લિંક અનુસરો:\n"
+"\n"
+"{proposal_url}\n"
+"\n"
+"{event_name} આયોજકો"
 
 #: multidomain/models.py:21
 msgid "Known domain"
-msgstr ""
+msgstr "જાણીતું ડોમેઇન"
 
 #: multidomain/models.py:22
 msgid "Known domains"
-msgstr ""
+msgstr "જાણીતાં ડોમેઇનો"
 
 #: orga/forms/cfp.py:42
 msgid "Use tracks"
-msgstr ""
+msgstr "ટ્રૅક્સ વાપરો"
 
 #: orga/forms/cfp.py:44
 msgid "Do you organise your sessions by tracks?"
-msgstr ""
+msgstr "સેશનોને ટ્રૅક્સ પ્રમાણે ગોઠવવા છે?"
 
 #: orga/forms/cfp.py:49
 msgid "Can sessions be held multiple times?"
-msgstr ""
+msgstr "શું સેશનો અનેક વખત યોજી શકાય?"
 
 #: orga/forms/cfp.py:52
 msgid "Send mail on new proposal"
-msgstr ""
+msgstr "નવા પ્રસ્તાવ પર ઇમેઇલ મોકલો"
 
 #: orga/forms/cfp.py:54
 msgid ""
 "If this setting is checked, you will receive an email to the organizer "
 "address for every received proposal."
 msgstr ""
+"આ સેટિંગ સક્રિય હોય તો મળતા દરેક પ્રસ્તાવ માટે આયોજકના સરનામે ઇમેઇલ મળશે."
 
 #: orga/forms/cfp.py:59
 msgid "Allow submitters to share their proposal publicly"
-msgstr ""
+msgstr "સબમિટરને પ્રસ્તાવ જાહેરમાં શેર કરવાની મંજૂરી આપો"
 
 #: orga/forms/cfp.py:60
 msgid "Allow submitters to share a secret link to their proposal with others."
-msgstr ""
+msgstr "સબમિટરને તેમના પ્રસ્તાવની ગુપ્ત લિંક અન્ય સાથે શેર કરવાની મંજૂરી આપો."
 
 #: orga/forms/cfp.py:64
 msgid "Count text length in"
-msgstr ""
+msgstr "ટેક્સ્ટની લંબાઈ ગણો"
 
 #: orga/forms/cfp.py:65
 msgid "Characters"
-msgstr ""
+msgstr "અક્ષરો"
 
 #: orga/forms/cfp.py:65
 msgid "Words"
-msgstr ""
+msgstr "શબ્દો"
 
 #: orga/forms/cfp.py:235
 msgid "Display deadline publicly"
