@@ -83,13 +83,15 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y gettext redis-server
+          sudo apt-get install -y gettext redis-server postgresql postgresql-client
 
       - name: Set up PostgreSQL
         run: |
           sudo systemctl start postgresql
-          sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
-          sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
+          sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname = 'eventyay';" | grep -q 1 || \
+            sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
+          sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = 'eventyay-db';" | grep -q 1 || \
+            sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
 
       - name: Start Redis
         run: sudo systemctl start redis-server
@@ -130,13 +132,15 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y gettext redis-server curl
+          sudo apt-get install -y gettext redis-server postgresql postgresql-client curl
 
       - name: Set up PostgreSQL
         run: |
           sudo systemctl start postgresql
-          sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
-          sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
+          sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname = 'eventyay';" | grep -q 1 || \
+            sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
+          sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = 'eventyay-db';" | grep -q 1 || \
+            sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
 
       - name: Start Redis
         run: sudo systemctl start redis-server
