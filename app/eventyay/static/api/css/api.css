@@ -49,3 +49,11 @@ a.js-tooltip,
   font-size: 14px;
   border-radius: var(--size-border-radius);
 }
+/* Fix navbar overlapping modal */
+.modal.show {
+  z-index: 1055;
+}
+
+.modal-backdrop.show {
+  z-index: 1050;
+}
