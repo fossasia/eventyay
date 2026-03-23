@@ -1138,3 +1138,7 @@ pl-0 {
     margin: 5mm;
   }
 }
+.log-display-wrap {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}

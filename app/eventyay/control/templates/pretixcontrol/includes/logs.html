@@ -8,8 +8,8 @@
                 {% if log.user %}
                     {% if log.user.is_staff %}
                         <span class="fa fa-id-card fa-danger fa-fw"
-                                data-toggle="tooltip"
-                                title="{% trans "This change was performed by a system administrator." %}">
+                              data-toggle="tooltip"
+                              title="{% trans "This change was performed by a system administrator." %}">
                         </span>
                     {% else %}
                         <span class="fa fa-user fa-fw"></span>
@@ -34,16 +34,17 @@
                 {% endif %}
             </p>
 
-            
-            <p style="word-break: break-word; overflow-wrap: anywhere;">
-    {{ log.display }}
-    {% if staff_session %}
-        <a href="" class="btn btn-default btn-xs" data-expandlogs data-id="{{ log.pk }}">
-            <span class="fa-eye fa fa-fw"></span>
-            {% trans "Inspect" %}
-        </a>
-    {% endif %}
-</p>
+            <p>
+                <span class="log-display-wrap">
+                    {{ log.display }}
+                </span>
+                {% if staff_session %}
+                    <a href="" class="btn btn-default btn-xs" data-expandlogs data-id="{{ log.pk }}">
+                        <span class="fa-eye fa fa-fw"></span>
+                        {% trans "Inspect" %}
+                    </a>
+                {% endif %}
+            </p>
         </li>
     {% endfor %}
     {% if obj.all_logentries_link and obj.top_logentries_has_more %}
