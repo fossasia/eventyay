@@ -23896,7 +23896,7 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:68
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
-msgstr "У «Секрет»/«Ключ оа43аунту» введіть наступний код:"
+msgstr "У «Секрет»/«Ключ акаунту» введіть наступний код:"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:73
 msgid "copy"
