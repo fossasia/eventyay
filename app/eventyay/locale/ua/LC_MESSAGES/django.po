@@ -23879,7 +23879,7 @@ msgstr "Blackberry (Посилання через Google)"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:52
 msgid "Add a new account to the app by scanning the following barcode:"
-msgstr "Додайте ноа43ий оа43аунт до проа43рами, сканувавши наступний штрихкод:"
+msgstr "Додайте новий обліковий запис до застосунку, сканувавши наступний штрихкод:"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:56
 msgid "Can't scan the barcode?"
