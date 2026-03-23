@@ -4,12 +4,16 @@ from allauth.account.adapter import DefaultAccountAdapter
 from django.conf import settings
 from django.http import HttpRequest
 
+from eventyay.base.auth import get_auth_backends
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request: HttpRequest) -> bool:
-        return settings.EVENTYAY_REGISTRATION and super().is_open_for_signup(request)
+        # This is another "auth backend" by pretix terminology,
+        # not the same as Django ones.
+        pretix_auth_backends = get_auth_backends()
+        return settings.EVENTYAY_REGISTRATION and 'native' in pretix_auth_backends
 
     def post_login(
         self,

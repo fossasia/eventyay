@@ -656,6 +656,7 @@ def encoder_linelength(msg):
 # - ssl.SSLError
 def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -> MIMEImage | None:
     if image_src.startswith('data:image/'):
+        # Let ValueError bubble up here.
         image_type, image_content = image_src.split(',', 1)
         image_type = re.findall(r'data:image/(\w+);base64', image_type)[0]
         mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
