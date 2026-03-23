@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:00+0000\n"
+"PO-Revision-Date: 2026-03-23 15:11+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Romanian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ro/>\n"
@@ -5558,23 +5558,23 @@ msgstr "ID TVA: %s"
 #: base/models/log.py:163
 #, python-brace-format
 msgid "Order {val}"
-msgstr ""
+msgstr "Comanda {val}"
 
 #: base/models/log.py:176
 #, python-brace-format
 msgid "Voucher {val}…"
-msgstr ""
+msgstr "Voucher {val}…"
 
 #: base/models/log.py:189
 #, python-brace-format
 msgid "Product {val}"
-msgstr ""
+msgstr "Produs {val}"
 
 #: base/models/log.py:202
 #, python-brace-format
 msgctxt "subevent"
 msgid "Date {val}"
-msgstr ""
+msgstr "Dată {val}"
 
 #: base/models/log.py:215
 #, python-brace-format
@@ -7016,46 +7016,46 @@ msgstr "Introducere de oră nevalidă."
 
 #: base/models/product.py:1386
 msgid "Invalid datetime input."
-msgstr ""
+msgstr "Dată și oră introduse nevalide."
 
 #: base/models/product.py:1398
 msgid "Unknown country code."
-msgstr ""
+msgstr "Cod de țară necunoscut."
 
 #: base/models/product.py:1412
 #: control/templates/pretixcontrol/items/question.html:69
 msgid "Answer"
-msgstr ""
+msgstr "Răspuns"
 
 #: base/models/product.py:1434
 #, python-brace-format
 msgid "The identifier \"{}\" is already used for a different option."
-msgstr ""
+msgstr "Identificatorul „{}” este deja utilizat pentru o altă opțiune."
 
 #: base/models/product.py:1437
 msgid "Question option"
-msgstr ""
+msgstr "Opțiune de întrebare"
 
 #: base/models/product.py:1438
 msgid "Question options"
-msgstr ""
+msgstr "Opțiuni de întrebare"
 
 #: base/models/product.py:1520 control/forms/event.py:1472
 #: control/templates/pretixcontrol/items/quotas.html:59
 msgid "Total capacity"
-msgstr ""
+msgstr "Capacitate totală"
 
 #: base/models/product.py:1523 control/forms/product.py:361
 msgid "Leave empty for an unlimited number of tickets."
-msgstr ""
+msgstr "Lăsați necompletat pentru un număr nelimitat de bilete."
 
 #: base/models/product.py:1527 control/forms/product.py:657
 msgid "Variations"
-msgstr ""
+msgstr "Variante"
 
 #: base/models/product.py:1531
 msgid "Close this quota permanently once it is sold out"
-msgstr ""
+msgstr "Închideți definitiv această cotă odată ce este epuizată"
 
 #: base/models/product.py:1533
 msgid ""
@@ -7063,10 +7063,13 @@ msgid ""
 "sold, even if tickets become available again through cancellations or "
 "expiring orders. Of course, you can always re-open it manually."
 msgstr ""
+"Dacă activați această opțiune, după ce cota se epuizează o dată, nu se vor "
+"mai vinde bilete, chiar dacă biletele devin din nou disponibile prin anulări "
+"sau comenzi expirate. Desigur, poate fi redeschisă oricând manual."
 
 #: base/models/product.py:1542
 msgid "Allow to sell more tickets once people have checked out"
-msgstr ""
+msgstr "Permite vânzarea de bilete suplimentare după ce participanții ies"
 
 #: base/models/product.py:1544
 msgid ""
@@ -7077,12 +7080,19 @@ msgid ""
 "are ignored if they are set to \"Allow re-entering after an exit scan\" to "
 "prevent accidental overbooking."
 msgstr ""
+"Cu această opțiune, cota va fi eliberată imediat ce participanții sunt "
+"scanați la o ieșire a evenimentului. Acest lucru se va întâmpla doar dacă au "
+"fost scanați atât la o intrare, cât și la o ieșire, iar scanarea la ieșire "
+"este cea mai recentă. Nu contează pe ce listă de check-in s-a efectuat "
+"oricare dintre scanări, însă listele de check-in sunt ignorate dacă sunt "
+"setate la „Permite re-intrarea după o scanare la ieșire”, pentru a preveni "
+"suprarezervarea accidentală."
 
 #: base/models/product.py:1556 base/models/vouchers.py:177
 #: control/templates/pretixcontrol/items/quota_edit.html:8
 #: control/templates/pretixcontrol/items/quota_edit.html:18
 msgid "Quota"
-msgstr ""
+msgstr "Cotă"
 
 #: base/models/product.py:1557 control/navigation.py:163
 #: control/templates/pretixcontrol/items/quotas.html:4
@@ -7091,7 +7101,7 @@ msgstr ""
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:168
 #: control/templates/pretixcontrol/subevents/detail.html:58
 msgid "Quotas"
-msgstr ""
+msgstr "Cote"
 
 #: base/models/product.py:1629
 msgid ""
@@ -7109,7 +7119,7 @@ msgstr ""
 
 #: base/models/product.py:1646 base/models/waitinglist.py:180
 msgid "Subevent cannot be null for event series."
-msgstr ""
+msgstr "Subevenimentul nu poate fi nul pentru seriile de evenimente."
 
 #: base/models/profile.py:38 orga/forms/speaker.py:40
 #: orga/templates/orga/cfp/forms.html:552
@@ -9540,26 +9550,31 @@ msgstr "Această poziție a comenzii a fost anulată."
 #: base/services/checkin.py:430
 msgid "This order position has an invalid product for this check-in list."
 msgstr ""
+"Această poziție de comandă are un produs nevalid pentru această listă de "
+"check-in."
 
 #: base/services/checkin.py:435
 msgid "This order position has an invalid date for this check-in list."
 msgstr ""
+"Această poziție de comandă are o dată nevalidă pentru această listă de check-"
+"in."
 
 #: base/services/checkin.py:443
 msgid "This order is not marked as paid."
-msgstr ""
+msgstr "Această comandă nu este marcată ca plătită."
 
 #: base/services/checkin.py:446
 msgid "You need to answer questions to complete this check-in."
 msgstr ""
+"Este necesar să se răspundă la întrebări pentru a finaliza acest check-in."
 
 #: base/services/checkin.py:455
 msgid "This entry is not permitted due to custom rules."
-msgstr ""
+msgstr "Această intrare nu este permisă din cauza regulilor personalizate."
 
 #: base/services/checkin.py:503
 msgid "This ticket has already been redeemed."
-msgstr ""
+msgstr "Acest bilet a fost deja utilizat."
 
 #: base/services/export.py:57 base/services/export.py:129
 msgid ""
@@ -9580,13 +9595,13 @@ msgstr ""
 
 #: base/services/export.py:69 base/services/export.py:140
 msgid "Your export did not contain any data."
-msgstr ""
+msgstr "Exportul nu a conținut date."
 
 #: base/services/invoices.py:73
 #, python-brace-format
 msgctxt "invoice"
 msgid "Please complete your payment before {expire_date}."
-msgstr ""
+msgstr "Finalizați plata înainte de {expire_date}."
 
 #: base/services/invoices.py:86
 #, python-brace-format
@@ -9598,39 +9613,44 @@ msgid ""
 "{i.zipcode} {i.city} {state}\n"
 "{country}"
 msgstr ""
+"{i.company}\n"
+"{i.name}\n"
+"{i.street}\n"
+"{i.zipcode} {i.city} {state}\n"
+"{country}"
 
 #: base/services/invoices.py:173
 #, python-brace-format
 msgctxt "invoice"
 msgid "Attendee: {name}"
-msgstr ""
+msgstr "Participant: {name}"
 
 #: base/services/invoices.py:188 plugins/reports/exporters.py:306
 #, python-brace-format
 msgctxt "subevent"
 msgid "Date: {}"
-msgstr ""
+msgstr "Data: {}"
 
 #: base/services/invoices.py:388
 msgid "A payment provider specific text might appear here."
-msgstr ""
+msgstr "Aici poate apărea un text specific furnizorului de plată."
 
 #: base/services/invoices.py:395
 msgid "214th Example Street"
-msgstr ""
+msgstr "Strada Exemplu 214"
 
 #: base/services/invoices.py:396
 msgid "012345"
-msgstr ""
+msgstr "012345"
 
 #: base/services/invoices.py:415
 #, python-brace-format
 msgid "Sample product {}"
-msgstr ""
+msgstr "Produs de exemplu {}"
 
 #: base/services/invoices.py:423
 msgid "Sample product A"
-msgstr ""
+msgstr "Produs de exemplu A"
 
 #: base/services/mail.py:217
 #, python-brace-format
@@ -9638,6 +9658,8 @@ msgid ""
 "You are receiving this email because someone placed an order for {event} for "
 "you."
 msgstr ""
+"Primiți acest e-mail deoarece cineva a plasat o comandă pentru {event} "
+"pentru dumneavoastră."
 
 #: base/services/mail.py:221 base/services/mail.py:242
 #, python-brace-format
@@ -9645,11 +9667,13 @@ msgid ""
 "You can view your order details at the following URL:\n"
 "{orderurl}."
 msgstr ""
+"Detaliile comenzii pot fi vizualizate la următorul URL:\n"
+"{orderurl}."
 
 #: base/services/mail.py:237
 #, python-brace-format
 msgid "You are receiving this email because you placed an order for {event}."
-msgstr ""
+msgstr "Primiți acest e-mail deoarece ați plasat o comandă pentru {event}."
 
 #: base/services/orderimport.py:91
 #, python-brace-format
@@ -9657,6 +9681,8 @@ msgid ""
 "Error while importing value \"{value}\" for column \"{column}\" in line "
 "\"{line}\": {message}"
 msgstr ""
+"Eroare la importarea valorii „{value}” pentru coloana „{column}” în linia „"
+"{line}”: {message}"
 
 #: base/services/orderimport.py:126
 #, python-brace-format
@@ -18012,72 +18038,80 @@ msgid ""
 "Therefore, currently only specific changes (such as changing the variation "
 "of a product) are possible. More options might be added later."
 msgstr ""
+"Permiterea utilizatorilor să își schimbe comanda este o funcționalitate în "
+"curs de dezvoltare. Prin urmare, în prezent sunt posibile doar modificări "
+"specifice (cum ar fi schimbarea variantei unui produs). Este posibil ca mai "
+"multe opțiuni să fie adăugate ulterior."
 
 #: control/templates/pretixcontrol/event/component_link.html:5
 #: eventyay_common/templates/eventyay_common/event/component_link.html:5
 #: eventyay_common/templates/eventyay_common/event/settings.html:21
 #: orga/templates/orga/event/component_link.html:5
 msgid "Home"
-msgstr ""
+msgstr "Acasă"
 
 #: control/templates/pretixcontrol/event/component_link.html:12
 #: eventyay_common/templates/eventyay_common/event/component_link.html:12
 #: eventyay_common/templates/eventyay_common/event/live.html:155
 #: orga/templates/orga/event/component_link.html:11
 msgid "Talk"
-msgstr ""
+msgstr "Prezentare"
 
 #: control/templates/pretixcontrol/event/component_link.html:17
 #: eventyay_common/templates/eventyay_common/event/component_link.html:17
 #: eventyay_common/templates/eventyay_common/event/settings.html:34
 #: orga/templates/orga/event/component_link.html:15
 msgid "Access videos related to this event"
-msgstr ""
+msgstr "Accesează videoclipuri asociate acestui eveniment"
 
 #: control/templates/pretixcontrol/event/component_link.html:18
 #: eventyay_common/templates/eventyay_common/event/component_link.html:18
 #: eventyay_common/templates/eventyay_common/event/settings.html:35
 #: orga/templates/orga/event/component_link.html:16
 msgid "Videos"
-msgstr ""
+msgstr "Videoclipuri"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:5
 #: control/templates/pretixcontrol/event/settings.html:254
 #: eventyay_common/templates/eventyay_common/event/live.html:368
 msgid "Cancel or delete event"
-msgstr ""
+msgstr "Anulează sau șterge evenimentul"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:9
 #: control/templates/pretixcontrol/event/dangerzone.html:25
 #: control/templates/pretixcontrol/event/delete.html:59
 msgid "Go offline"
-msgstr ""
+msgstr "Treci offline"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:13
 msgid ""
 "You can take your event offline. Nobody except your team will be able to see "
 "or access it any more."
 msgstr ""
+"Evenimentul poate fi trecut offline. Nimeni, în afara echipei, nu va mai "
+"putea să îl vadă sau să îl acceseze."
 
 #: control/templates/pretixcontrol/event/dangerzone.html:34
 #: control/templates/pretixcontrol/event/dangerzone.html:47
 #: control/templates/pretixcontrol/orders/cancel.html:5
 #: control/templates/pretixcontrol/orders/cancel.html:7
 msgid "Cancel event"
-msgstr ""
+msgstr "Anulează evenimentul"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:38
 msgid ""
 "If you need to call off your event you want to cancel and refund all "
 "tickets, you can do so through this option."
 msgstr ""
+"Dacă este necesară anularea evenimentului și rambursarea tuturor biletelor, "
+"acest lucru se poate face prin această opțiune."
 
 #: control/templates/pretixcontrol/event/dangerzone.html:55
 #: control/templates/pretixcontrol/event/dangerzone.html:68
 #: control/templates/pretixcontrol/event/delete.html:55
 #: control/templates/pretixcontrol/event/delete.html:69
 msgid "Delete personal data"
-msgstr ""
+msgstr "Șterge datele cu caracter personal"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:59
 msgid ""
@@ -18085,30 +18119,40 @@ msgid ""
 "event and only retain the financial information such as the number and type "
 "of tickets sold."
 msgstr ""
+"Datele cu caracter personal, cum ar fi numele și adresele de e-mail, pot fi "
+"eliminate din eveniment, păstrând doar informațiile financiare, cum ar fi "
+"numărul și tipul biletelor vândute."
 
 #: control/templates/pretixcontrol/event/dangerzone.html:76
 #: control/templates/pretixcontrol/event/dangerzone.html:89
 #: control/templates/pretixcontrol/event/delete.html:5
 msgid "Delete event"
-msgstr ""
+msgstr "Șterge evenimentul"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:80
 msgid ""
 "You can delete your event completely only as long as it does not contain any "
 "undeletable data, such as orders not performed in test mode."
 msgstr ""
+"Evenimentul poate fi șters complet doar atâta timp cât nu conține date care "
+"nu pot fi șterse, cum ar fi comenzile care nu au fost efectuate în modul de "
+"test."
 
 #: control/templates/pretixcontrol/event/delete.html:9
 msgid ""
 "This operation will destroy your event including all configuration, "
 "products, quotas, questions, vouchers, lists, etc."
 msgstr ""
+"Această operațiune va distruge evenimentul, inclusiv toate configurările, "
+"produsele, cotele, întrebările, voucherele, listele etc."
 
 #: control/templates/pretixcontrol/event/delete.html:15
 #: control/templates/pretixcontrol/organizers/delete.html:16
 msgid ""
 "This operation is irreversible and there is no way to bring your data back."
 msgstr ""
+"Această operațiune este ireversibilă și nu există nicio modalitate de a "
+"recupera datele."
 
 #: control/templates/pretixcontrol/event/delete.html:22
 #, python-format
@@ -18116,22 +18160,30 @@ msgid ""
 "To confirm you really want this, please type out the event's short name "
 "(\"%(slug)s\") here:"
 msgstr ""
+"Pentru a confirma că se dorește cu adevărat acest lucru, introduceți aici "
+"numele scurt al evenimentului (\"%(slug)s\"):"
 
 #: control/templates/pretixcontrol/event/delete.html:36
 msgid "Your event can not be deleted as it already contains orders."
-msgstr ""
+msgstr "Evenimentul nu poate fi șters deoarece conține deja comenzi."
 
 #: control/templates/pretixcontrol/event/delete.html:39
 msgid ""
 "To ensure audit compliance and maintain trust with financial authorities, "
 "deleting orders once they have been placed is not permitted."
 msgstr ""
+"Pentru a asigura conformitatea cu cerințele de audit și pentru a menține "
+"încrederea autorităților financiare, ștergerea comenzilor după plasare nu "
+"este permisă."
 
 #: control/templates/pretixcontrol/event/delete.html:45
 msgid ""
 "You can instead take your shop offline. This will hide it from everyone "
 "except from the organizer teams you configured to have access to the event."
 msgstr ""
+"Magazinul poate fi trecut offline. Acest lucru îl va ascunde pentru toată "
+"lumea, cu excepția echipelor de organizatori configurate să aibă acces la "
+"eveniment."
 
 #: control/templates/pretixcontrol/event/delete.html:65
 msgid ""
@@ -19471,11 +19523,11 @@ msgstr "Disponibil doar ca parte a unui pachet"
 
 #: control/templates/pretixcontrol/items/index.html:108
 msgid "Only visible with a voucher"
-msgstr ""
+msgstr "Vizibil numai cu un voucher"
 
 #: control/templates/pretixcontrol/items/index.html:111
 msgid "Can only be bought using a voucher"
-msgstr ""
+msgstr "Poate fi cumpărat numai folosind un voucher"
 
 #: control/templates/pretixcontrol/items/orderforms.html:33
 msgid "Customer data (once per order)"
@@ -19583,12 +19635,12 @@ msgstr "Setări formular"
 #: control/templates/pretixcontrol/items/question.html:9
 #, python-format
 msgid "Question: %(name)s"
-msgstr ""
+msgstr "Întrebare: %(name)s"
 
 #: control/templates/pretixcontrol/items/question.html:13
 #: control/templates/pretixcontrol/items/question.html:55
 msgid "Edit question"
-msgstr ""
+msgstr "Editare întrebare"
 
 #: control/templates/pretixcontrol/items/question.html:21
 #: control/templates/pretixcontrol/orders/fragment_order_status.html:25
@@ -19597,7 +19649,7 @@ msgstr ""
 #: plugins/checkinlists/exporters.py:510 plugins/reports/exporters.py:334
 #: presale/templates/pretixpresale/event/fragment_order_status.html:19
 msgid "Paid"
-msgstr ""
+msgstr "Plătit"
 
 #: control/templates/pretixcontrol/items/question.html:27
 #: control/templates/pretixcontrol/orders/fragment_order_status.html:35
@@ -19606,45 +19658,48 @@ msgstr ""
 #: plugins/reports/exporters.py:311
 #: presale/templates/pretixpresale/event/fragment_order_status.html:24
 msgid "Canceled"
-msgstr ""
+msgstr "Anulat"
 
 #: control/templates/pretixcontrol/items/question.html:45
 msgid "No matching answers found."
-msgstr ""
+msgstr "Nu au fost găsite răspunsuri corespunzătoare."
 
 #: control/templates/pretixcontrol/items/question.html:51
 msgid "You need to assign the question to a product to collect answers."
 msgstr ""
+"Este necesară asocierea întrebării cu un produs pentru a colecta răspunsuri."
 
 #: control/templates/pretixcontrol/items/question.html:70
 #: orga/templates/orga/cfp/talkquestion/detail.html:77
 msgid "Count"
-msgstr ""
+msgstr "Număr"
 
 #: control/templates/pretixcontrol/items/question.html:71
 msgid "Percentage"
-msgstr ""
+msgstr "Procent"
 
 #: control/templates/pretixcontrol/items/question.html:94
 msgid "Question history"
-msgstr ""
+msgstr "Istoric întrebare"
 
 #: control/templates/pretixcontrol/items/question_delete.html:4
 #: control/templates/pretixcontrol/items/question_delete.html:6
 msgid "Delete question"
-msgstr ""
+msgstr "Ștergere întrebare"
 
 #: control/templates/pretixcontrol/items/question_delete.html:9
 #, python-format
 msgid ""
 "Are you sure you want to delete the question <strong>%(question)s</strong>?"
-msgstr ""
+msgstr "Sigur se dorește ștergerea întrebării <strong>%(question)s</strong>?"
 
 #: control/templates/pretixcontrol/items/question_delete.html:11
 msgid ""
 "All answers to the question given by the buyers of the following products "
 "will be <strong>lost</strong>."
 msgstr ""
+"Toate răspunsurile la întrebare oferite de cumpărătorii următoarelor produse "
+"vor fi <strong>pierdute</strong>."
 
 #: control/templates/pretixcontrol/items/question_edit.html:8
 #: control/templates/pretixcontrol/items/question_edit.html:18
@@ -19658,29 +19713,33 @@ msgid ""
 "proceed. To allow the user to leave it unchecked, do not set the field as "
 "required."
 msgstr ""
+"Dacă o casetă de confirmare este marcată ca obligatorie, utilizatorul "
+"trebuie să o bifeze pentru a continua. Pentru a permite utilizatorului să o "
+"lase nebifată, nu setați câmpul ca obligatoriu."
 
 #: control/templates/pretixcontrol/items/question_edit.html:53
 msgid "Answer options"
-msgstr ""
+msgstr "Opțiuni de răspuns"
 
 #: control/templates/pretixcontrol/items/question_edit.html:55
 msgid "Only applicable if you choose 'Choose one/multiple from a list' above."
 msgstr ""
+"Se aplică numai dacă se alege „Alege una/mai multe dintr-o listă” de mai sus."
 
 #: control/templates/pretixcontrol/items/question_edit.html:71
 #, python-format
 msgid "Answer option %(id)s"
-msgstr ""
+msgstr "Opțiune de răspuns %(id)s"
 
 #: control/templates/pretixcontrol/items/question_edit.html:102
 msgid "New answer option"
-msgstr ""
+msgstr "Opțiune de răspuns nouă"
 
 #: control/templates/pretixcontrol/items/question_edit.html:121
 #: orga/templates/orga/cfp/question/_form.html:153
 #: orga/templates/orga/cfp/talkquestion/_form.html:159
 msgid "Add a new option"
-msgstr ""
+msgstr "Adăugare opțiune nouă"
 
 #: control/templates/pretixcontrol/items/question_edit.html:133
 msgid "Custom field dependency"
@@ -22370,6 +22429,8 @@ msgid ""
 "This entry has a modified priority. The higher this number is, the earlier "
 "this person will be assigned a voucher."
 msgstr ""
+"Această înregistrare are o prioritate modificată. Cu cât acest număr este "
+"mai mare, cu atât mai devreme va fi alocat acestui participant un voucher."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:198
 #, python-format
@@ -22378,22 +22439,26 @@ msgid ""
 "                                    Waiting, product %(num)sx available\n"
 "                                "
 msgstr ""
+"\n"
+"                                    În așteptare, produs disponibil %(num)"
+"sx\n"
+"                                "
 
 #: control/templates/pretixcontrol/waitinglist/index.html:203
 msgid "Waiting, product unavailable"
-msgstr ""
+msgstr "În așteptare, produs indisponibil"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:213
 msgid "Send a voucher"
-msgstr ""
+msgstr "Trimite un voucher"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:220
 msgid "Move to the top of the list"
-msgstr ""
+msgstr "Mută în partea de sus a listei"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:224
 msgid "Move to the end of the list"
-msgstr ""
+msgstr "Mută la sfârșitul listei"
 
 #: control/templates/registration/register.html:8
 msgid "New staff user"
@@ -22401,11 +22466,11 @@ msgstr "Utilizator personal nou"
 
 #: control/templatetags/hierarkey_form.py:44
 msgid "Organizer-level settings"
-msgstr ""
+msgstr "Setări la nivel de organizator"
 
 #: control/templatetags/hierarkey_form.py:44
 msgid "Site-level settings"
-msgstr ""
+msgstr "Setări la nivel de site"
 
 #: control/templatetags/hierarkey_form.py:47
 msgid ""
@@ -22414,6 +22479,10 @@ msgid ""
 "go to the organizer settings to change them or decouple them from the "
 "organizer account to change them for this event individually."
 msgstr ""
+"Aceste setări sunt configurate în prezent la nivel de organizator. Astfel, "
+"pot fi modificate ușor pentru toate evenimentele simultan. Se pot modifica "
+"din setările organizatorului sau se pot decupla de la contul de organizator "
+"pentru a le modifica individual pentru acest eveniment."
 
 #: control/templatetags/hierarkey_form.py:53
 msgid ""
@@ -22422,30 +22491,34 @@ msgid ""
 "global settings to change them or decouple them from the global settings to "
 "change them for this event individually."
 msgstr ""
+"Aceste setări sunt configurate în prezent la nivel global. Astfel, pot fi "
+"modificate ușor pentru toți organizatorii simultan. Se pot modifica din "
+"setările globale sau se pot decupla de la setările globale pentru a le "
+"modifica individual pentru acest eveniment."
 
 #: control/templatetags/hierarkey_form.py:57
 msgid "Change only for this event"
-msgstr ""
+msgstr "Modifică doar pentru acest eveniment"
 
 #: control/templatetags/hierarkey_form.py:59
 msgid "Change only for this organizer"
-msgstr ""
+msgstr "Modifică doar pentru acest organizator"
 
 #: control/templatetags/hierarkey_form.py:60
 msgid "Change for all events"
-msgstr ""
+msgstr "Modifică pentru toate evenimentele"
 
 #: control/templatetags/hierarkey_form.py:60
 msgid "Change for all organizers"
-msgstr ""
+msgstr "Modifică pentru toți organizatorii"
 
 #: control/views/__init__.py:144
 msgid "That page number is not an integer"
-msgstr ""
+msgstr "Numărul de pagină nu este un număr întreg"
 
 #: control/views/__init__.py:146
 msgid "That page number is less than 1"
-msgstr ""
+msgstr "Numărul de pagină este mai mic decât 1"
 
 #: control/views/admin.py:119
 msgid "Invalid field."
@@ -22464,16 +22537,16 @@ msgstr ""
 #: control/views/admin.py:466 control/views/admin.py:490
 #: control/views/vouchers.py:174 control/views/vouchers.py:231
 msgid "The requested voucher does not exist."
-msgstr ""
+msgstr "Voucherul solicitat nu există."
 
 #: control/views/admin.py:496 control/views/admin.py:508
 #: control/views/vouchers.py:180 control/views/vouchers.py:193
 msgid "A voucher can not be deleted if it already has been redeemed."
-msgstr ""
+msgstr "Un voucher nu poate fi șters dacă a fost deja utilizat."
 
 #: control/views/admin.py:512 control/views/vouchers.py:200
 msgid "The selected voucher has been deleted."
-msgstr ""
+msgstr "Voucherul selectat a fost șters."
 
 #: control/views/admin_views.py:117
 msgid "The user has been created successfully, they can now log in."
@@ -25364,6 +25437,8 @@ msgid ""
 "address bar and make sure it is correct and that the link has not been used "
 "before."
 msgstr ""
+"Link nevalid. Copiați linkul din e-mail în bara de adrese și asigurați-vă că "
+"este corect și că linkul nu a mai fost utilizat."
 
 #: eventyay_common/views/auth.py:243
 #, python-brace-format

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-22 15:24+0000\n"
+"PO-Revision-Date: 2026-03-23 15:14+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ta/>\n"
@@ -10586,10 +10586,11 @@ msgid ""
 "We are experiencing difficulties when sending mails, but your session was "
 "submitted successfully!"
 msgstr ""
+"மின்னஞ்சல்கள் அனுப்புவதில் சிக்கல்கள் ஏற்படுகின்றன, ஆனால் அமர்வு வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!"
 
 #: cfp/phrases.py:69 orga/views/cfp.py:343
 msgid "Custom fields"
-msgstr ""
+msgstr "தனிப்பயன் புலங்கள்"
 
 #: cfp/templates/cfp/event/cfp.html:31
 #, python-format
@@ -10597,32 +10598,34 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
+"இப்போது இருந்து %(until_string)sக்குப் பிறகு, %(deadline)s (%(timezone)s) வரை "
+"முன்மொழிவுகளை உள்ளிடலாம்."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
 msgid "This Call for Papers closed on %(deadline)s (%(timezone)s)."
-msgstr ""
+msgstr "இந்த Call for Papers, %(deadline)s (%(timezone)s) அன்று முடிவடைந்தது."
 
 #: cfp/templates/cfp/event/cfp.html:60
 msgid "View or edit speaker profile"
-msgstr ""
+msgstr "பேச்சாளர் சுயவிவரத்தைப் பார்க்க அல்லது திருத்த"
 
 #: cfp/templates/cfp/event/cfp.html:67
 msgid "Submit a proposal"
-msgstr ""
+msgstr "முன்மொழிவை சமர்ப்பிக்க"
 
 #: cfp/templates/cfp/event/cfp.html:69 cfp/views/wizard.py:46
 msgid "Proposals are closed"
-msgstr ""
+msgstr "முன்மொழிவுகள் மூடப்பட்டுள்ளன"
 
 #: cfp/templates/cfp/event/index.html:36
 msgid "Go To Organiser Area"
-msgstr ""
+msgstr "அமைப்பாளர் பகுதியிற்குச் செல்லவும்"
 
 #: cfp/templates/cfp/event/invitation.html:7
 #: cfp/templates/cfp/event/invitation.html:10
 msgid "Accept invitation?"
-msgstr ""
+msgstr "அழைப்பை ஏற்கவா?"
 
 #: cfp/templates/cfp/event/invitation.html:14
 msgid ""
@@ -10630,10 +10633,12 @@ msgid ""
 "because the invitation has expired, or because the proposal cannot be edited "
 "any more."
 msgstr ""
+"துரதிர்ஷ்டவசமாக, தற்போது இந்த அழைப்பை ஏற்க முடியாது. அழைப்பு காலாவதியானதாலும் அல்லது "
+"முன்மொழிவை இனி திருத்த முடியாததாலும் இது இருக்கலாம்."
 
 #: cfp/templates/cfp/event/invitation.html:21
 msgid "Please contact the conference organizers for more information."
-msgstr ""
+msgstr "மேலும் தகவலுக்கு மாநாட்டு அமைப்பாளர்களைத் தொடர்பு கொள்ளவும்."
 
 #: cfp/templates/cfp/event/invitation.html:27
 #, python-format
@@ -10641,14 +10646,16 @@ msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
 msgstr ""
+"%(name)s, “ %(talk)s ” அமர்வுக்குப் பேச்சாளராக அழைக்கப்பட்டுள்ளீர்கள். இந்த அழைப்பை "
+"ஏற்கிறீர்களா?"
 
 #: cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
-msgstr ""
+msgstr "சுருக்கம்:"
 
 #: cfp/templates/cfp/event/invitation.html:45
 msgid "Accept invitation"
-msgstr ""
+msgstr "அழைப்பை ஏற்கவும்"
 
 #: cfp/templates/cfp/event/login.html:5
 #: common/templates/common/fragment_header_user.html:122
@@ -10659,19 +10666,21 @@ msgstr ""
 #: presale/templates/pretixpresale/fragment_modals.html:74
 #: presale/templates/pretixpresale/startpage.html:119
 msgid "Login"
-msgstr ""
+msgstr "உள்நுழைவு"
 
 #: cfp/templates/cfp/event/login.html:8
 #: control/templates/pretixcontrol/user/reauth.html:9
 #: eventyay_common/templates/eventyay_common/auth/login_2fa.html:9
 msgid "Welcome back!"
-msgstr ""
+msgstr "மீண்டும் வரவேற்கிறோம்!"
 
 #: cfp/templates/cfp/event/login.html:10
 msgid ""
 "If you already created a proposal for a different event on this server, you "
 "can re-use your account to log in for this event."
 msgstr ""
+"இந்த சேவையகத்தில் வேறு நிகழ்விற்காக ஏற்கனவே முன்மொழிவை உருவாக்கியிருந்தால், இந்த நிகழ்விற்காக "
+"உள்நுழைய உங்கள் கணக்கை மீண்டும் பயன்படுத்தலாம்."
 
 #: cfp/templates/cfp/event/login.html:15
 msgid ""
@@ -10680,15 +10689,18 @@ msgid ""
 "own personalized schedule, or if you are participating in the event as a "
 "speaker or organizer."
 msgstr ""
+"நிகழ்வைப் பார்க்க, கருத்துக்களைச் சமர்ப்பிக்க அல்லது அட்டவணை புதுப்பிப்புகளைப் பெற கணக்கு "
+"தேவையில்லை. தனிப்பயன் அட்டவணையை உருவாக்க விரும்பினாலோ, அல்லது பேச்சாளர்/அமைப்பாளராக நிகழ்வில் "
+"பங்கேற்கிறீர்களோ மட்டுமே கணக்கு அவசியம்."
 
 #: cfp/templates/cfp/event/recover.html:25
 msgid "Set your password to access your profile and proposals"
-msgstr ""
+msgstr "சுயவிவரம் மற்றும் முன்மொழிவுகளை அணுக கடவுச்சொல்லை அமைக்கவும்"
 
 #: cfp/templates/cfp/event/submission_base.html:12
 #: orga/templates/orga/submission/content_edit.html:29
 msgid "Create proposal"
-msgstr ""
+msgstr "முன்மொழிவு உருவாக்கவும்"
 
 #: cfp/templates/cfp/event/submission_base.html:39
 msgid "Done!"
@@ -19029,31 +19041,35 @@ msgstr ""
 #: control/templates/pretixcontrol/item/include_addons.html:28
 #: control/templates/pretixcontrol/item/include_addons.html:62
 msgid "Add-On"
-msgstr ""
+msgstr "ஆட்-ஆன்"
 
 #: control/templates/pretixcontrol/item/include_addons.html:86
 msgid "Add a new add-on"
-msgstr ""
+msgstr "புதிய ஆட்-ஆனைச் சேர்க்கவும்"
 
 #: control/templates/pretixcontrol/item/include_bundles.html:5
 msgid ""
 "With bundles, you can specify products that are always automatically added "
 "as add-ons in the cart for this product."
 msgstr ""
+"தொகுப்புகளுடன், இந்தப் பொருளுக்கான வண்டியில் எப்போதும் தானாகவே ஆட்-ஆன்களாகச் சேர்க்கப்படும் "
+"பொருட்களை குறிப்பிடலாம்."
 
 #: control/templates/pretixcontrol/item/include_bundles.html:68
 msgid "Add a new bundled product"
-msgstr ""
+msgstr "புதிய தொகுப்பு பொருளைச் சேர்க்கவும்"
 
 #: control/templates/pretixcontrol/item/include_variations.html:38
 msgid ""
 "Please note that your variation will <strong>not</strong> be available for "
 "sale until you have added it to an existing or newly created quota."
 msgstr ""
+"ஏற்கனவே உள்ள அல்லது புதிதாக உருவாக்கப்பட்ட ஒதுக்கீட்டில் சேர்க்கும் வரை, மாறுபாடு <strong>"
+"விற்பனைக்கு கிடைக்காது</strong> என்பதை கவனத்தில் கொள்ளவும்."
 
 #: control/templates/pretixcontrol/item/include_variations.html:89
 msgid "Add a new variation"
-msgstr ""
+msgstr "புதிய மாறுபாட்டைச் சேர்க்கவும்"
 
 #: control/templates/pretixcontrol/item/index.html:29
 msgid ""
@@ -19061,72 +19077,77 @@ msgid ""
 "your event. By default, pretix will only ask for attendee information and "
 "offer ticket downloads for these products."
 msgstr ""
+"இந்தப் பொருளின் ஒவ்வொரு வாங்குதலும் நிகழ்வில் நுழைய அனுமதிக்கப்படும் ஒருவரை குறிக்கிறது. "
+"இயல்பாக, pretix பங்கேற்பாளர் தகவலை மட்டும் கேட்டு, இந்தப் பொருட்களுக்கு டிக்கெட் "
+"பதிவிறக்கங்களை வழங்கும்."
 
 #: control/templates/pretixcontrol/item/index.html:48
 msgid ""
 "A product that does not represent a person. By default, pretix will not ask "
 "for attendee information or offer ticket downloads."
 msgstr ""
+"ஒருவரை குறிக்காத பொருள். இயல்பாக, pretix பங்கேற்பாளர் தகவலை கேட்காது அல்லது டிக்கெட் "
+"பதிவிறக்கங்களை வழங்காது."
 
 #: control/templates/pretixcontrol/item/index.html:95
 #: orga/templates/orga/cfp/forms.html:700 schedule/forms.py:18
 msgid "Availability"
-msgstr ""
+msgstr "கிடைக்கும்தன்மை"
 
 #: control/templates/pretixcontrol/item/index.html:117
 msgid "Tickets & check-in"
-msgstr ""
+msgstr "டிக்கெட்டுகள் & செக்-இன்"
 
 #: control/templates/pretixcontrol/item/index.html:122
 #: control/templates/pretixcontrol/subevents/bulk.html:577
 #: control/templates/pretixcontrol/subevents/detail.html:219
 msgid "Additional settings"
-msgstr ""
+msgstr "கூடுதல் அமைப்புகள்"
 
 #: control/templates/pretixcontrol/item/index.html:139
 msgid "Product history"
-msgstr ""
+msgstr "பொருள் வரலாறு"
 
 #: control/templates/pretixcontrol/items/categories.html:14
 msgid ""
 "You can use categories to group multiple products together in an organized "
 "way."
-msgstr ""
+msgstr "பல பொருட்களை ஒழுங்காகக் குழுபடுத்த வகைகளைப் பயன்படுத்தலாம்."
 
 #: control/templates/pretixcontrol/items/categories.html:21
 msgid "You haven't created any categories yet."
-msgstr ""
+msgstr "இன்னும் எந்த வகைகளையும் உருவாக்கவில்லை."
 
 #: control/templates/pretixcontrol/items/categories.html:27
 #: control/templates/pretixcontrol/items/categories.html:31
 msgid "Create a new category"
-msgstr ""
+msgstr "புதிய வகையை உருவாக்கவும்"
 
 #: control/templates/pretixcontrol/items/category.html:34
 msgid "Category history"
-msgstr ""
+msgstr "வகை வரலாறு"
 
 #: control/templates/pretixcontrol/items/category_delete.html:4
 #: control/templates/pretixcontrol/items/category_delete.html:6
 msgid "Delete product category"
-msgstr ""
+msgstr "பொருள் வகையை நீக்கவும்"
 
 #: control/templates/pretixcontrol/items/category_delete.html:9
 #, python-format
 msgid "Are you sure you want to delete the category <strong>%(name)s</strong>?"
-msgstr ""
+msgstr "வகை <strong>%(name)s</strong>-ஐ நீக்க விரும்புகிறீர்களா?"
 
 #: control/templates/pretixcontrol/items/description_delete.html:4
 #: control/templates/pretixcontrol/items/description_delete.html:6
 msgid "Delete description"
-msgstr ""
+msgstr "விளக்கத்தை நீக்கவும்"
 
 #: control/templates/pretixcontrol/items/description_delete.html:9
 #, python-format
 msgid ""
 "Are you sure you want to delete the description <strong>%(question)s</"
 "strong>?"
-msgstr ""
+msgstr "விளக்கம் <strong>%(question)s</strong>-ஐ நீக்க விரும்புகிறீர்களா?"
 
 #: control/templates/pretixcontrol/items/description_delete.html:11
 msgid ""
@@ -33144,92 +33165,100 @@ msgid ""
 "If you set room availabilities, speakers will only be able to set their "
 "availability for when any room is available."
 msgstr ""
+"அறை கிடைப்புகளை அமைத்தால், எந்த அறையாவது கிடைக்கும் நேரங்களுக்கே பேச்சாளர்கள் தங்களின் "
+"கிடைப்பை அமைக்க முடியும்."
 
 #: schedule/forms.py:110
 msgid "The submitted availability does not comply with the required format."
-msgstr ""
+msgstr "சமர்ப்பிக்கப்பட்ட கிடைப்பு தேவையான வடிவமைப்பிற்கு இணங்கவில்லை."
 
 #: schedule/forms.py:124
 msgid "The submitted availability contains an invalid date."
-msgstr ""
+msgstr "சமர்ப்பிக்கப்பட்ட கிடைப்பில் தவறான தேதி உள்ளது."
 
 #: schedule/forms.py:139
 msgid "Please fill in your availability!"
-msgstr ""
+msgstr "கிடைப்பை நிரப்பவும்!"
 
 #: schedule/forms.py:195
 msgid "Room I"
-msgstr ""
+msgstr "அறை I"
 
 #: schedule/forms.py:197
 msgid ""
 "Description, e.g.: Our main meeting place, Room I, enter from the right."
 msgstr ""
+"விளக்கம், எ.கா.: எங்கள் முக்கிய சந்திப்பு இடம், அறை I, வலதுபுறம் நுழையவும்."
 
 #: schedule/forms.py:200
 msgid "Information for speakers, e.g.: Projector has only HDMI input."
 msgstr ""
+"பேச்சாளர்களுக்கான தகவல், எ.கா.: புரொஜெக்டரில் HDMI உள்ளீடு மட்டும் உள்ளது."
 
 #: schedule/forms.py:204
 #, python-brace-format
 msgid "The current, automatically generated GUID is: {guid}."
-msgstr ""
+msgstr "தற்போதைய, தானாக உருவாக்கப்பட்ட GUID: {guid}."
 
 #: schedule/phrases.py:9
 msgctxt "Schedule/program of the conference"
 msgid "Schedule"
-msgstr ""
+msgstr "அட்டவணை"
 
 #: schedule/phrases.py:22
 msgid ""
 "You are currently viewing the editable schedule version, which is unreleased "
 "and may change at any time."
 msgstr ""
+"தற்போது திருத்தக்கூடிய அட்டவணை பதிப்பை காண்கிறீர்கள்; இது வெளியிடப்படாதது மற்றும் எந்த "
+"நேரத்திலும் மாற்றப்படலாம்."
 
 #: schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
-msgstr ""
+msgstr "தற்போது பழைய அட்டவணை பதிப்பை காண்கிறீர்கள்."
 
 #: schedule/phrases.py:25
 #, python-format
 msgid "You can find the current version <a href=\"%(current_url)s\">here</a>."
-msgstr ""
+msgstr "தற்போதைய பதிப்பை <a href=\"%(current_url)s\">இங்கே</a> காணலாம்."
 
 #. Translators: “tz” is a full timezone name like “Europe/Berlin”
 #: schedule/phrases.py:28
 #, python-format
 msgid "All times in %(tz)s"
-msgstr ""
+msgstr "%(tz)s இல் அனைத்து நேரங்களும்"
 
 #: schedule/phrases.py:30
 msgid "There has been no feedback for this session yet."
-msgstr ""
+msgstr "இந்த அமர்வுக்கு இன்னும் எந்த பின்னூட்டமும் இல்லை."
 
 #: schedule/templates/schedule/speaker_notification.txt:2
 #, python-format
 msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
 msgstr ""
+"- உங்கள் அமர்வு “ %(title)s ” %(location)s இல் %(start)s மணிக்கு நடைபெறும்"
 
 #: schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
 msgstr ""
+"- உங்கள் அமர்வு “ %(title)s ” %(location)s இல் %(start)s மணிக்கு மாற்றப்பட்டது"
 
 #: submission/exporters.py:18 submission/exporters.py:63
 msgid "Custom fields data"
-msgstr ""
+msgstr "தனிப்பயன் புலங்கள் தரவு"
 
 #: submission/exporters.py:18
 msgid "speakers"
-msgstr ""
+msgstr "பேச்சாளர்கள்"
 
 #: submission/exporters.py:63
 msgid "submissions"
-msgstr ""
+msgstr "சமர்ப்பிப்புகள்"
 
 #: submission/forms/feedback.py:18
 msgid "All speakers"
-msgstr ""
+msgstr "அனைத்து பேச்சாளர்கள்"
 
 #: submission/forms/resource.py:28
 msgid "Please either provide a link or upload a file, you cannot do both!"
