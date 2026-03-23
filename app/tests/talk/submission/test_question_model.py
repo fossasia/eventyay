@@ -126,6 +126,7 @@ def test_question_base_properties(submission, question):
         ("boolean", "None", ""),
         ("file", "answer", ""),
         ("choices", "answer", ""),
+        ("select", "answer", ""),
         ("country", "DE", get_country_name("DE") or "DE"),
         ("lol", "lol", None),
     ),
@@ -136,6 +137,26 @@ def test_answer_string_property(event, variant, answer, expected):
         question = Question.objects.create(question="?", variant=variant, event=event)
         answer = Answer.objects.create(question=question, answer=answer)
         assert answer.answer_string == expected
+
+
+@pytest.mark.django_db
+def test_answer_string_property_select_with_option(event, submission):
+    """answer_string for select variant returns the selected option text."""
+    with scope(event=event):
+        question = Question.objects.create(
+            question="Which format?",
+            variant="select",
+            event=event,
+            target="submission",
+        )
+        option = question.options.create(answer="In-person")
+        answer = Answer.objects.create(
+            question=question,
+            submission=submission,
+            answer=str(option.answer),
+        )
+        answer.options.add(option)
+        assert answer.answer_string == "In-person"
 
 
 @pytest.mark.django_db

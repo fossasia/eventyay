@@ -702,6 +702,51 @@ def test_organiser_can_create_question_option(
 
 
 @pytest.mark.django_db
+def test_organiser_can_create_option_for_select_question(
+    event, orga_user_write_token, client, select_question
+):
+    """Options can be created for select questions, same as for choices/multiple_choice."""
+    with scope(event=event):
+        initial_count = select_question.options.count()
+
+    response = client.post(
+        event.api_urls.question_options,
+        data=json.dumps(
+            {
+                "question": select_question.pk,
+                "answer": {"en": "Hybrid"},
+                "position": initial_count + 1,
+            }
+        ),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 201, response.text
+    with scope(event=event):
+        select_question.refresh_from_db()
+        assert select_question.options.count() == initial_count + 1
+
+
+@pytest.mark.django_db
+def test_organiser_can_list_options_for_select_question(
+    event, orga_user_token, client, select_question
+):
+    """Options on a select question are visible via the question_options endpoint."""
+    with scope(event=event):
+        option_count = select_question.options.count()
+        assert option_count > 0
+
+    response = client.get(
+        event.api_urls.question_options + f"?question={select_question.pk}",
+        headers={"Authorization": f"Token {orga_user_token.token}"},
+    )
+    assert response.status_code == 200, response.text
+    content = json.loads(response.text)
+    assert content["count"] == option_count
+    assert all(opt["question"] == select_question.pk for opt in content["results"])
+
+
+@pytest.mark.django_db
 def test_organiser_cannot_create_option_for_wrong_question_type(
     event, orga_user_write_token, client, question
 ):
