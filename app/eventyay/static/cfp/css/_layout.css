@@ -541,11 +541,56 @@ footer {
     font-size: 0.9rem;
   }
 
+  /* Hide the navbar join link on mobile, as it is now floating below the hero */
+  #header-tabs .join-video-link {
+    display: none !important;
+  }
+
+  .header-join-video-floating-mobile {
+    position: absolute;
+    bottom: -15px;
+    right: 15px;
+    z-index: 1050;
+    
+    .btn-join-video-icon-only {
+      width: 42px !important;
+      height: 42px !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      border-radius: 50% !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      background-color: var(--color-primary) !important;
+      color: white !important;
+      border: 2px solid white !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      i {
+        font-size: 1.15rem;
+        margin: 0 !important;
+        display: block;
+        transform: translateY(-0.5px); /* Minor optical adjustment for video camera icon */
+      }
+      
+      &:hover, &:focus {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        color: white !important;
+        background-color: var(--color-primary);
+        filter: brightness(1.1);
+      }
+    }
+  }
+
   .event-hero-overlay {
+    position: relative;
     display: flex;
     width: 100%;
     padding-left: 12px;
     padding-right: 12px;
+    min-height: 100px;
+    align-items: flex-end;
   }
 
   /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
@@ -669,14 +714,14 @@ footer {
   }
 }
 
-/* Hide mobile-only navbar icons and CfS short text on desktop */
-.nav-icon-mobile, .cfs-short {
+/* Hide mobile-only navbar icons, CfS short text, and floating join button on desktop */
+.nav-icon-mobile, .cfs-short, .header-join-video-floating-mobile {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .nav-icon-mobile {
-    display: inline-block;
+  .nav-icon-mobile, .header-join-video-floating-mobile {
+    display: block;
   }
   .mobile-hide-text {
     display: none;
