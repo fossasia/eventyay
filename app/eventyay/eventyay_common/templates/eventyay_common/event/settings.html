@@ -58,15 +58,17 @@
             {% bootstrap_field sform.imprint_url layout="control" %}
             <div class="form-group">
                 <label class="col-md-3 control-label">
-                    {% translate "Menu" %}<br>
+                    {% translate "Customize menu bar items" %}<br>
                     <span class="optional">{% trans "Optional" %}</span>
                 </label>
                 <div class="col-md-9">
-                    {% bootstrap_field sform.menu_label_tickets layout="inline" form_group_class="" %}
-                    {% bootstrap_field sform.menu_label_join_video layout="inline" form_group_class="" %}
+                    {% bootstrap_field sform.menu_label_tickets layout="control" %}
+                    {% bootstrap_field sform.menu_label_join_video layout="control" %}
                     <div class="help-block text-muted">
-                        <div>{{ sform.menu_label_tickets.help_text }}</div>
-                        <div>{{ sform.menu_label_join_video.help_text }}</div>
+                        {% blocktranslate trimmed %}
+                            These fields accept translated labels for your Tickets and Join Live Event menu items.
+                            Add additional locales above and switch languages before editing to provide locale-specific text.
+                        {% endblocktranslate %}
                     </div>
                 </div>
             </div>
