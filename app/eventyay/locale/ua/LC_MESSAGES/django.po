@@ -23948,7 +23948,7 @@ msgid ""
 "If this is the only device connected to your account, we will disable two-"
 "factor authentication."
 msgstr ""
-"Якщо це єдиний пристрій, підключений до а43оа43аунту, двофакторну "
+"Якщо це єдиний пристрій, підключений до вашого акаунту, двофакторну "
 "автентифікацію буде вимкнено."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-disable.html:4
