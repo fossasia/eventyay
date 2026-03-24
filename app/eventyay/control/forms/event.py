@@ -268,7 +268,7 @@ class EventWizardBasicsForm(I18nModelForm):
                 {'locale': _('Your default locale must also be enabled for your event (see box above).')}
             )
         if data.get('timezone') not in common_timezones:
-            raise ValidationError({'timezone': _('Your default locale must be specified.')})
+            raise ValidationError({'timezone': _('Your event timezone must be specified.')})
 
         # change timezone
         zone = timezone(data.get('timezone'))
@@ -292,7 +292,7 @@ class EventWizardBasicsForm(I18nModelForm):
         email = self.cleaned_data.get('email', '').strip()
         default_email = Event._meta.get_field('email').default
         if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
+            raise forms.ValidationError(_("Please provide a valid organizer email address. We'll show this publicly to allow attendees to contact you."))
         return email
 
     @staticmethod
@@ -399,7 +399,7 @@ class EventWizardDisplayForm(forms.Form):
         email = self.cleaned_data.get('email', '').strip()
         default_email = Event._meta.get_field('email').default
         if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
+            raise forms.ValidationError(_("Please provide a valid organizer email address. We'll show this publicly to allow attendees to contact you."))
         return email
 
 
