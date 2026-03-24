@@ -28,6 +28,7 @@ For local development:
 http://localhost:5000/api/v1/stripe/webhook
 ```
 Note: In local development, port 5000 refers to the backend API server used by Eventyay.
+
 ---
 
 ### Step 3: Select Events
