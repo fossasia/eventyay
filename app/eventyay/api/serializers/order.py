@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pycountry
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.files import File
 from django.db.models import F, Q
 from django.utils.timezone import now
@@ -180,25 +181,29 @@ class AnswerSerializer(I18nAwareModelSerializer):
         return q
 
     def _handle_file_upload(self, data):
+        submitted_file_id = data.get('answer', '')
+        if isinstance(submitted_file_id, str) and submitted_file_id.startswith('file:'):
+            submitted_file_id = submitted_file_id[len('file:') :]
+
         try:
             ao = self.context['request'].user or self.context['request'].auth
             cf = CachedFile.objects.get(
                 session_key=f'api-upload-{str(type(ao))}-{ao.pk}',
                 file__isnull=False,
-                pk=data['answer'][len('file:') :],
+                pk=submitted_file_id,
             )
-        except (ValidationError, IndexError):  # invalid uuid
-            raise ValidationError(f'The submitted file ID "{data}" was not found.')
+        except (DjangoValidationError, IndexError):  # invalid uuid
+            raise ValidationError(f'The submitted file ID "{submitted_file_id}" was not found.')
         except CachedFile.DoesNotExist:
-            raise ValidationError(f'The submitted file ID "{data}" was not found.')
+            raise ValidationError(f'The submitted file ID "{submitted_file_id}" was not found.')
 
         allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'application/pdf')
         if cf.type not in allowed_types:
             raise ValidationError(
-                f'The submitted file "{data}" has a file type that is not allowed in this field.'
+                f'The submitted file "{submitted_file_id}" has a file type that is not allowed in this field.'
             )
         if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:
-            raise ValidationError(f'The submitted file "{data}" is too large to be used in this field.')
+            raise ValidationError(f'The submitted file "{submitted_file_id}" is too large to be used in this field.')
 
         data['options'] = []
         data['answer'] = cf.file

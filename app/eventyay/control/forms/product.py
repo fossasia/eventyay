@@ -529,7 +529,6 @@ class ProductUpdateForm(I18nModelForm):
             ),
         )
         try:
-
             mv = self.instance.meta_values.select_related('property').get(property__name='limit_one_per_user')
             self.fields['limit_one_per_user'].initial = mv.value in (True, 'True', 'true', '1', 1)
         except Exception:
@@ -594,8 +593,6 @@ class ProductUpdateForm(I18nModelForm):
     def save(self, *args, **kwargs):
         inst = super().save(*args, **kwargs)
         # Persist meta flag limit_one_per_user via ProductMetaProperty/Value
-        from eventyay.base.models.product import ProductMetaValue
-
         pmp, _ = inst.event.product_meta_properties.get_or_create(name='limit_one_per_user', defaults={'default': ''})
         val = '1' if self.cleaned_data.get('limit_one_per_user') else ''
         if val:

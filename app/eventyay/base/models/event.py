@@ -1874,7 +1874,7 @@ class Event(
 
     def _component_presale_status(self, *, published: bool, private_testmode_enabled: bool, testmode: bool):
         if private_testmode_enabled:
-            text = _('private test mode')
+            text = _('live (private test mode)') if self.live else _('in private test mode')
         elif self.live and testmode:
             text = _('live and in test mode')
         elif self.live and published:
