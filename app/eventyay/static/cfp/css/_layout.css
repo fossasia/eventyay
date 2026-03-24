@@ -28,8 +28,8 @@ h1 a {
 }
 
 header {
-  position: sticky;
-  top: -180px;
+  position: relative;
+  top: 0;
 
   z-index: 1000;
   display: flex;
@@ -159,10 +159,77 @@ header {
   }
 }
 
+.presale-sticky-tabs-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  width: 100%;
+}
+
+.presale-sticky-tabs-inner {
+  width: 100%;
+  max-width: calc(100vw - 8px);
+  word-break: keep-all;
+  flex-wrap: nowrap;
+}
+
+.presale-sticky-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  z-index: 400;
+  background: var(--color-bg);
+  border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
+  padding-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.presale-sticky-tabs a.header-tab {
+  padding: 8px 10px 4px 10px;
+  border-bottom: 2px solid transparent;
+}
+
+.presale-sticky-tabs a.header-tab:hover {
+  text-decoration: none;
+  border-bottom: 2px dotted var(--color-primary);
+}
+
+.presale-sticky-tabs a.header-tab.active,
+.presale-sticky-tabs a.header-tab.underline {
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.presale-sticky-tabs .header-row-right {
+  color: var(--color-primary);
+  margin-left: auto;
+  margin-right: 10px;
+  display: flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: center;
+  font-size: 1rem;
+  gap: 10px;
+}
+
+.presale-sticky-tabs .header-row-right .header-nav {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: transparent;
+}
+
+.presale-sticky-tabs .header-row-right .header-nav:hover,
+.presale-sticky-tabs .header-row-right .header-nav:focus {
+  color: white;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  text-decoration: none;
+}
+
 .event-hero {
   display: flex;
   align-items: center;
   margin: 1rem 0 3.5rem;
+  min-height: 0;
 }
 
 .event-brand {
@@ -171,12 +238,15 @@ header {
   gap: 2rem;
   flex-wrap: nowrap;
   text-align: left;
+  min-width: 0;
 }
 
 .event-hero-overlay {
   display: inline-flex;
   border-radius: 14px;
   background: transparent;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .event-hero-text {
@@ -194,6 +264,9 @@ header {
   font-weight: 700;
   font-size: 3rem;
   line-height: 1.2;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 .public-event-header #event-logo {
@@ -218,6 +291,7 @@ header {
   box-shadow: 0 5px 10px rgb(0 0 0 / 0.2);
   padding: 0;
   border: none;
+  scroll-margin-top: 72px;
   main {
     padding: var(--size-spacer);
   }
@@ -319,14 +393,50 @@ footer {
   #main-container {
     max-width: 720px;
     margin-top: 3.8rem !important;
-    header .header-wrapper {
-      flex-direction: column-reverse;
-      align-items: flex-start;
-    }
+  }
+
+  /* NOTE: .presale-sticky-tabs flex-direction is handled in custom.css/custom.scss
+   * (flex-direction: row with .presale-tabs-scroll for horizontal scroll on mobile).
+   * Do NOT override it here with column. */
+
+  .presale-sticky-tabs .header-row-right {
+    margin-left: auto;
+  }
+
+  .event-hero {
+    margin: 0.5rem 0 2rem;
+  }
+
+  .event-hero-overlay {
+    display: flex;
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .event-brand {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .event-hero-text .event-title {
+    font-size: 2rem;
+  }
+
+  .event-date-line {
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 576px) {
+  .event-hero-text .event-title {
+    font-size: 1.6rem;
+  }
+
+  .event-brand {
+    gap: 0.75rem;
+  }
+
   #main-container {
     padding: 0;
     padding-top: 20px;
@@ -339,7 +449,6 @@ footer {
     }
 
     header {
-      top: -124px;
       padding: 0;
       #event-logo {
         max-height: 120px;
@@ -353,9 +462,8 @@ footer {
     }
 
     .header-wrapper {
-      overflow: auto;
+      overflow: visible;
       background: var(--color-bg);
-      padding-bottom: 6rem;
     }
 
     .user-row {
@@ -419,5 +527,25 @@ footer {
         width: 100%;
       }
     }
+  }
+}
+
+/* Hide mobile-only navbar icons and CfS short text on desktop */
+.nav-icon-mobile, .cfs-short {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .nav-icon-mobile {
+    display: inline-block;
+  }
+  .mobile-hide-text {
+    display: none;
+  }
+  .cfs-full {
+    display: none;
+  }
+  .cfs-short {
+    display: inline;
   }
 }

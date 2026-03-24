@@ -5,6 +5,18 @@ export function getLocalizedString (string) {
 	return string[lang] || string.en || Object.values(string)[0] || ''
 }
 
+export function getSessionTypeLabel (sessionType) {
+	if (!sessionType) return ''
+	if (typeof sessionType === 'string') return sessionType
+	if (typeof sessionType === 'object') {
+		const localized = getLocalizedString(sessionType)
+		if (typeof localized === 'string' && localized.length) return localized
+		const firstTextValue = Object.values(sessionType).find(v => typeof v === 'string' && v.length)
+		if (firstTextValue) return firstTextValue
+	}
+	return ''
+}
+
 const checkPropScrolling = (node, prop) => ['auto', 'scroll'].includes(getComputedStyle(node, null).getPropertyValue(prop))
 const isScrolling = node => checkPropScrolling(node, 'overflow') || checkPropScrolling(node, 'overflow-x') || checkPropScrolling(node, 'overflow-y')
 export function findScrollParent (node) {

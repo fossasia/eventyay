@@ -117,6 +117,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
             _('Product'),
             _('Reserve quota'),
             _('Bypass quota'),
+            _('Bypass approval'),
             _('Price effect'),
             _('Value'),
             _('Tag'),
@@ -143,6 +144,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
                 prod,
                 _('Yes') if v.block_quota else _('No'),
                 _('Yes') if v.allow_ignore_quota else _('No'),
+                _('Yes') if v.allow_ignore_approval else _('No'),
                 v.get_price_mode_display(),
                 str(v.value) if v.value is not None else '',
                 v.tag,
@@ -156,9 +158,6 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         r = HttpResponse(output.getvalue().encode('utf-8'), content_type='text/csv')
         r['Content-Disposition'] = 'attachment; filename="vouchers.csv"'
         return r
-
-
-
 
 
 class VoucherDelete(EventPermissionRequiredMixin, DeleteView):

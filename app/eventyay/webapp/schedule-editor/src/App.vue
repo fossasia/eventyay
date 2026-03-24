@@ -15,9 +15,28 @@
 				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", @startDragging="startNewBreak", @click="showNewBreakHint", v-tooltip.fixed="{text: newBreakTooltip, show: newBreakTooltip}", @pointerleave="removeNewBreakHint")
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
-				bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
-					bunt-tab(v-for="day of days", :key="day.format()", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
+				.schedule-controls
+					bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
+						bunt-tab(v-for="day of days", :key="day.format()", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
+					.density-controls
+						button.density-btn(:class="{active: density === 'compact'}", @click="setDensity('compact')", :title="$t('Compact')")
+							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
+								line(x1="3", y1="6", x2="21", y2="6")
+								line(x1="3", y1="10", x2="21", y2="10")
+								line(x1="3", y1="14", x2="21", y2="14")
+								line(x1="3", y1="18", x2="21", y2="18")
+						button.density-btn(:class="{active: density === 'default'}", @click="setDensity('default')", :title="$t('Default')")
+							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
+								line(x1="3", y1="5", x2="21", y2="5")
+								line(x1="3", y1="12", x2="21", y2="12")
+								line(x1="3", y1="19", x2="21", y2="19")
+						button.density-btn(:class="{active: density === 'comfortable'}", @click="setDensity('comfortable')", :title="$t('Comfortable')")
+							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
+								line(x1="3", y1="4", x2="21", y2="4")
+								line(x1="3", y1="12", x2="21", y2="12")
+								line(x1="3", y1="20", x2="21", y2="20")
 				grid-schedule(:sessions="sessions",
+					:density="density",
 					:rooms="schedule.rooms",
 					:availabilities="availabilities",
 					:warnings="warnings",
@@ -182,6 +201,14 @@ const showUnassignedSortMenu = ref<boolean>(false)
 const newBreakTooltip = ref<string>('')
 const eventTimezone = ref<string | null>(null)
 const since = ref<string | undefined>(undefined)
+
+type DensityLevel = 'compact' | 'default' | 'comfortable'
+const density = ref<DensityLevel>((localStorage.getItem('schedule-editor-density') as DensityLevel) || 'default')
+
+function setDensity(level: DensityLevel): void {
+  density.value = level
+  localStorage.setItem('schedule-editor-density', level)
+}
 
 function $t(key: string): string {
   return typeof window !== 'undefined' && (window as { $t?: (key: string) => string }).$t?.(key) || key;
@@ -605,14 +632,10 @@ onUnmounted(() => {
 		background-color: $clr-white
 		tabs-style(active-color: var(--color-primary), indicator-color: var(--color-primary), background-color: transparent)
 		overflow-x: auto
-		position: sticky
-		left: 0
-		top: 0
 		margin-bottom: 0
-		flex: none
+		flex: 1
 		min-width: 0
 		height: 48px
-		z-index: 30
 		.bunt-tabs-header
 			min-width: min-content
 		.bunt-tabs-header-items
@@ -679,6 +702,41 @@ onUnmounted(() => {
 				align-items: center
 				&:hover
 					background-color: $clr-dividers-light
+	.schedule-controls
+		display: flex
+		align-items: center
+		justify-content: space-between
+		position: sticky
+		left: 0
+		top: 0
+		z-index: 30
+		background-color: $clr-white
+		.days
+			flex: 1
+		.density-controls
+			display: flex
+			align-items: center
+			gap: 2px
+			padding: 0 12px
+			flex-shrink: 0
+			.density-btn
+				background: none
+				border: 1px solid transparent
+				border-radius: 4px
+				padding: 4px 6px
+				cursor: pointer
+				color: $clr-secondary-text-light
+				display: flex
+				align-items: center
+				justify-content: center
+				transition: all 0.15s ease
+				&:hover
+					background-color: $clr-grey-100
+					color: $clr-primary-text-light
+				&.active
+					background-color: var(--color-primary, #3b82f6)
+					color: $clr-white
+					border-color: var(--color-primary, #3b82f6)
 	#schedule-wrapper
 		width: 100%
 		margin-right: 40px
