@@ -18,7 +18,8 @@ env:
 jobs:
   python-uv-check:
     name: Backend validation (uv + Django checks)
-    runs-on: ubuntu-latest
+    # Pin to a specific Ubuntu LTS so package versions stay deterministic.
+    runs-on: ubuntu-24.04
     # All service and DB config is read from eventyay.testing.toml.
     # Only the secret key is kept here to avoid committing it to the TOML.
     env:
@@ -33,7 +34,9 @@ jobs:
           sudo apt-get install -y gettext redis-server
 
       - name: Start Redis
-        run: sudo systemctl start redis-server
+        run: |
+          sudo systemctl start redis-server
+          until redis-cli ping; do sleep 1; done
 
       - uses: actions/setup-python@v5
         with:
@@ -51,7 +54,7 @@ jobs:
 
   video-build:
     name: Video build (Vite)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: app/eventyay/webapp/video
@@ -72,29 +75,39 @@ jobs:
 
   pytest-integration:
     name: Integration tests (pytest)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: python-uv-check
     env:
       EVY_RUNNING_ENVIRONMENT: testing
       EVY_SECRET_KEY: ci-test-secret-key
+      # DB connection details are CI-specific and kept out of eventyay.testing.toml
+      # so local developer runs continue to use their own peer-auth connection.
+      EVY_POSTGRES_USER: eventyay
+      EVY_POSTGRES_PASSWORD: eventyay
+      EVY_POSTGRES_DB: eventyay-db
+      EVY_POSTGRES_HOST: localhost
+      EVY_POSTGRES_PORT: "5432"
     steps:
       - uses: actions/checkout@v4
 
       - name: Install system packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y gettext redis-server postgresql postgresql-client
+          sudo apt-get install -y gettext redis-server postgresql-16 postgresql-client-16
 
       - name: Set up PostgreSQL
         run: |
           sudo systemctl start postgresql
+          until pg_isready -h localhost -U postgres; do sleep 1; done
           sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname = 'eventyay';" | grep -q 1 || \
             sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
           sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = 'eventyay-db';" | grep -q 1 || \
             sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
 
       - name: Start Redis
-        run: sudo systemctl start redis-server
+        run: |
+          sudo systemctl start redis-server
+          until redis-cli ping; do sleep 1; done
 
       - uses: actions/setup-python@v5
         with:
@@ -121,29 +134,37 @@ jobs:
 
   backend-smoke:
     name: Backend smoke test (healthcheck)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: python-uv-check
     env:
       EVY_RUNNING_ENVIRONMENT: testing
       EVY_SECRET_KEY: ci-test-secret-key
+      EVY_POSTGRES_USER: eventyay
+      EVY_POSTGRES_PASSWORD: eventyay
+      EVY_POSTGRES_DB: eventyay-db
+      EVY_POSTGRES_HOST: localhost
+      EVY_POSTGRES_PORT: "5432"
     steps:
       - uses: actions/checkout@v4
 
       - name: Install system packages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y gettext redis-server postgresql postgresql-client curl
+          sudo apt-get install -y gettext redis-server postgresql-16 postgresql-client-16 curl
 
       - name: Set up PostgreSQL
         run: |
           sudo systemctl start postgresql
+          until pg_isready -h localhost -U postgres; do sleep 1; done
           sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname = 'eventyay';" | grep -q 1 || \
             sudo -u postgres psql -c "CREATE USER eventyay WITH PASSWORD 'eventyay' CREATEDB;"
           sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = 'eventyay-db';" | grep -q 1 || \
             sudo -u postgres psql -c 'CREATE DATABASE "eventyay-db" OWNER eventyay;'
 
       - name: Start Redis
-        run: sudo systemctl start redis-server
+        run: |
+          sudo systemctl start redis-server
+          until redis-cli ping; do sleep 1; done
 
       - uses: actions/setup-python@v5
         with:
