@@ -118,7 +118,7 @@
 						role="menuitemradio",
 						:aria-checked="sortModel === opt.value ? 'true' : 'false'",
 						@click="selectSort(opt.value)") {{ opt.label }}
-			button.toolbar-btn.icon-only.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.calendar_view : t.list_view", :aria-label="sessionsMode ? t.calendar_view : t.list_view")
+			button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.cal : t.list", :aria-label="sessionsMode ? t.cal : t.list")
 				template(v-if="sessionsMode")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
@@ -133,6 +133,7 @@
 						line(x1="3", y1="6", x2="3.01", y2="6")
 						line(x1="3", y1="12", x2="3.01", y2="12")
 						line(x1="3", y1="18", x2="3.01", y2="18")
+				span.sessions-toggle-label {{ sessionsMode ? t.cal : t.list }}
 		.toolbar-center(v-if="days && days.length > 1")
 			button.day-arrow(:disabled="dayWindowStart <= 0", @click="shiftDays(-2)", :title="t.previous_days", :aria-label="t.previous_days")
 				svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
@@ -409,6 +410,8 @@ export default {
 				density_default_view: m.density_default_view || 'default view',
 				density_comfortable_view: m.density_comfortable_view || 'comfortable view',
 				minutes: m.minutes || 'min',
+				list: (m.list_view || 'List').replace(' View', ''),
+				cal: (m.calendar_view || 'Cal').replace('endar View', '').replace(' View', ''),
 			}
 		},
 		timeDensityOptions() {
@@ -1355,6 +1358,10 @@ export default {
 			color: var(--pretalx-clr-primary, #3aa57c)
 			font-weight: 600
 			border-radius: 4px
+		.sessions-toggle-label
+			margin-left: 4px
+			font-size: 13px
+			font-weight: 500
 		&.recording-btn
 			position: relative
 		&.recording-btn.active::before
@@ -1408,6 +1415,28 @@ export default {
 	.c-schedule-toolbar
 		.sessions-toggle-label
 			display: none
+		.sessions-toggle[aria-label]
+			position: relative
+			&::after
+				content: attr(aria-label)
+				position: absolute
+				left: 50%
+				top: calc(100% + 6px)
+				transform: translateX(-50%) translateY(-2px)
+				opacity: 0
+				pointer-events: none
+				background-color: rgba(0, 0, 0, 0.87)
+				color: #fff
+				padding: 4px 8px
+				border-radius: 4px
+				font-size: 11px
+				line-height: 1.2
+				white-space: nowrap
+				z-index: 1000
+			&:hover::after, &:focus-visible::after
+				opacity: 1
+				transform: translateX(-50%) translateY(0)
+				transition: opacity 0.05s ease, transform 0.05s ease
 		.toolbar-right
 			.fullscreen-quick
 				display: inline-flex

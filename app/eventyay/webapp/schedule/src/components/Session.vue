@@ -201,7 +201,8 @@ export default {
 	display: flex
 	min-width: 300px
 	min-height: 96px
-	margin: 8px 6px
+	margin: 8px 0
+	margin-right: 8px
 	overflow: hidden
 	color: rgb(13 15 16)
 	position: relative
@@ -390,7 +391,8 @@ export default {
 @media (max-width: 600px)
 	.c-linear-schedule-session, .break
 		min-width: 0
-		margin: 6px 4px
+		margin: 8px 0
+		margin-right: 8px
 		min-height: 80px
 		.time-box
 			width: 56px
