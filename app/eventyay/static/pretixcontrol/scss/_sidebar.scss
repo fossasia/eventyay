@@ -157,7 +157,8 @@ body:not(.sidebar-minimized) #page-wrapper {
 
   .sidebar {
     position: fixed;
-    top: var(--navbar-height, 50px);
+    margin-top: var(--navbar-height);
+    top: 0;
     bottom: 0;
     left: 0;
     width: $sidebar-width;
@@ -167,6 +168,10 @@ body:not(.sidebar-minimized) #page-wrapper {
     overflow-y: auto;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
     height: calc(100vh - var(--navbar-height, 50px));
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    contain: strict;
 
     .nav>li {
       height: 41px;
@@ -230,6 +235,8 @@ body:not(.sidebar-minimized) #page-wrapper {
 
   #page-wrapper {
     margin-left: 0 !important;
+    height: calc(100vh - var(--navbar-height, 50px)) !important;
+    overflow-y: auto !important;
   }
 
   .navbar-brand {

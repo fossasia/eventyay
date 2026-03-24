@@ -104,6 +104,10 @@
                     <i class="fa fa-bars fa-lg"></i>
                 </button>
                 <div class="navbar-header">
+                    <a class="navbar-brand" href="{% url 'presale:index' %}">
+                        <img src="{% static "pretixbase/img/eventyay-icon.svg" %}" alt="{{ django_settings.INSTANCE_NAME }}"/>
+                        <span class="hidden-xs">{{ django_settings.INSTANCE_NAME }}</span>
+                    </a>
                     {% if request.event %}
                         {% if has_domain and not request.event.live %}
                             <form action="{% eventurl request.event "presale:event.auth" %}" method="post"
@@ -126,10 +130,6 @@
                             <i class="fa fa-eye"></i>
                         </a>
                     {% endif %}
-					<a class="navbar-brand" href="{% url 'presale:index' %}">
-                        <img src="{% static "pretixbase/img/eventyay-icon.svg" %}" />
-                        <span class="hidden-xs">{{ django_settings.INSTANCE_NAME }}</span>
-                    </a>
                 </div>
                 <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
                     {% if request.event %}

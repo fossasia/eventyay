@@ -24,6 +24,8 @@ body {
 
 @media(min-width:768px) {
     #page-wrapper {
+        height: calc(100vh - var(--navbar-height, 50px)) !important;
+        overflow-y: auto !important;
         position: inherit;
         margin: 0 0 0 $sidebar-width;
         padding: 0 30px;
@@ -50,7 +52,7 @@ body {
 }
 
 .navbar-top-links li a {
-    padding: 15px;
+    padding: 15px 10px;
     min-height: 50px;
     font-size: 14px;
     font-weight: normal;

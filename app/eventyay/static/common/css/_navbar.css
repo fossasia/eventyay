@@ -73,6 +73,7 @@ nav.navbar.navbar-inverse {
 
 nav.navbar.navbar-inverse .navbar-top-links a,
 nav.navbar.navbar-inverse .btn-link {
+  padding: 15px 10px;
   color: #f8f9fa;
   font-weight: 500;
 }
@@ -255,7 +256,7 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
   display: block;
   padding: 15px;
   min-height: 50px;
-  height: 50px;
+  height: auto;
   font-size: 14px;
   font-weight: normal;
   line-height: 20px;
@@ -404,10 +405,6 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     display: none !important;
   }
 
-  nav.navbar {
-    padding-bottom: 10px;
-  }
-
   .navbar-top-links.navbar-right {
     float: left !important;
   }
@@ -442,7 +439,4 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     white-space: nowrap;
   }
 
-  #main-title {
-    margin-top: calc(var(--navbar-height) + 10px);
-  }
 }

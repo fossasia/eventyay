@@ -27,6 +27,11 @@
     align-items: center;
   }
 
+  nav.navbar .danger {
+    padding: 3px !important;
+    min-height: 0 !important;
+  }
+
   .navbar-header {
     display: flex;
     align-items: center;
@@ -42,7 +47,6 @@
 
   .navbar-brand {
     padding: 0;
-    margin-right: 10px;
     margin-left: 10px;
   }
 
