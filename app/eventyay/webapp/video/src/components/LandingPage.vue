@@ -18,6 +18,7 @@
 					session(
 						v-for="session of featuredSessions",
 						:session="session",
+						:now="now",
 						:faved="favs.includes(session.id)",
 						@fav="$store.dispatch('schedule/fav', $event)",
 						@unfav="$store.dispatch('schedule/unfav', $event)"
@@ -50,17 +51,15 @@ import { mapState, mapGetters } from 'vuex'
 import '@splidejs/splide/dist/css/splide.min.css'
 import Splide from '@splidejs/splide'
 // Replace '@pretalx/schedule' Session import with local implementation
-import Session from 'views/schedule/schedule-components/Session.vue'
+import Session from '@schedule/components/Session.vue'
 import api from 'lib/api'
 import moment from 'lib/timetravelMoment'
 import Identicon from 'components/Identicon'
 import MarkdownContent from 'components/MarkdownContent'
-import scheduleProvidesMixin from 'components/mixins/schedule-provides'
 import RichTextContent from 'components/RichTextContent'
 
 export default {
 	components: { Identicon, MarkdownContent, Session, RichTextContent },
-	mixins: [scheduleProvidesMixin],
 	props: {
 		module: Object
 	},

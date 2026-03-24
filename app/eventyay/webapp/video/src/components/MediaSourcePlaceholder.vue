@@ -3,7 +3,8 @@
 </template>
 <script>
 // LIMITATIONS:
-// - has to always be top left because ResizeObserver can't observe position changes
+// - ResizeObserver does not fire on pure position changes, so we rely on layout/resize
+//   changes to refresh the placeholder rect.
 export default {
 	components: {},
 	data() {

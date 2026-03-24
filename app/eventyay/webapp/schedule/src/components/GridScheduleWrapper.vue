@@ -12,16 +12,18 @@
 		:locale="locale",
 		:scrollParent="scrollParent",
 		:favs="favs",
+		:showFavCount="showFavCount",
 		:onHomeServer="onHomeServer",
 		:disableAutoScroll="disableAutoScroll",
+		:forceScrollDay="forceScrollDay",
+		:density="density",
 		@changeDay="$emit('changeDay', $event)",
 		@fav="$emit('fav', $event)",
 		@unfav="$emit('unfav', $event)"
 	)
 </template>
 <script>
-import { DateTime } from 'luxon'
-import GridSchedule from '~/components/GridSchedule'
+import GridSchedule from './GridSchedule'
 
 export default {
 	components: { GridSchedule },
@@ -42,7 +44,16 @@ export default {
 		hasAmPm: Boolean,
 		scrollParent: Element,
 		onHomeServer: Boolean,
-		disableAutoScroll: Boolean
+		showFavCount: {
+			type: Boolean,
+			default: false,
+		},
+		disableAutoScroll: Boolean,
+		forceScrollDay: { type: Number, default: 0 },
+		density: {
+			type: String,
+			default: 'default'
+		}
 	},
 	computed: {
 		gridGroups () {
@@ -58,10 +69,10 @@ export default {
 			// First pass: create groups of one day and put all sessions into their day(s)
 			const dayToSessions = new Map();
 			for (const session of this.sessions) {
-				const startDay = session.start.setZone(this.timezone).startOf('day');
-				const endDay = session.end.setZone(this.timezone).startOf('day');
-				for (let day = startDay; day <= endDay; day = day.plus({days: 1})) {
-					const dayKey = day.toISODate();
+				const startDay = session.start.clone().tz(this.timezone).startOf('day');
+				const endDay = session.end.clone().tz(this.timezone).startOf('day');
+				for (let day = startDay.clone(); day.isSameOrBefore(endDay); day.add(1, 'day')) {
+					const dayKey = day.format('YYYY-MM-DD');
 					if (!dayToSessions.has(dayKey)) {
 						dayToSessions.set(dayKey, []);
 					}

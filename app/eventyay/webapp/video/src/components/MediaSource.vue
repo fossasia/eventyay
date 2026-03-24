@@ -91,9 +91,12 @@ const shouldUseLivestream = computed(() => {
 	return true;
 });
 
-// When stream schedules are enabled, the backend returns no iframe URL if no
-// stream is currently active. For iframe-based sources we render the standard
-// offline placeholder instead of an empty area.
+// When stream schedules are enabled, the backend returns 404 (mapped to null) if
+// no stream is currently active. For iframe-based streams we show a full-size
+// offline placeholder (same frame size as the player) instead of showing nothing.
+//
+// Important: If the module has a configured default URL/ytid, we still render it
+// even when there is no active schedule.
 const iframeOffline = computed(() => {
 	if (!props.room || !module.value) return false;
 	if (shouldUseLivestream.value) return false;
@@ -106,6 +109,7 @@ const iframeOffline = computed(() => {
 
 	if (!isIFrame && !isYouTube && !isVimeo) return false;
 
+	// Prefer schedule-provided stream URL when present.
 	const scheduleUrl = props.room?.currentStream?.url || null;
 	if (isYouTube) {
 		if (scheduleUrl && normalizeYoutubeVideoId(scheduleUrl)) return false;
@@ -590,6 +594,8 @@ iframe.iframe-media-source
 	align-items: center
 	background-color: $clr-blue-grey-200
 	z-index: 1
+	// Fallbacks prevent the overlay from shrinking to its text when
+	// --mediasource-placeholder-* are not yet available.
 	&:not(.size-tiny):not(.background)
 		width: var(--mediasource-placeholder-width, 100vw)
 		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))

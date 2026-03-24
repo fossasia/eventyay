@@ -329,6 +329,11 @@ class Submission(GenerateCode, PretalxModel):
         feedback = '{public}feedback/'
         social_image = '{public}og-image'
         ical = '{public_base}.ics'
+        export_json = '{public_base}.json'
+        export_xml = '{public_base}.xml'
+        export_xcal = '{public_base}.xcal'
+        export_google_calendar = '{public}export/google-calendar'
+        export_webcal = '{public}export/webcal'
         image = '{self.image_url}'
         invite = '{user_base}invite'
         accept_invitation = '{self.event.urls.base}invitation/{self.code}/{self.invitation_token}'
@@ -411,7 +416,7 @@ class Submission(GenerateCode, PretalxModel):
         )
         if self.track:
             qs = qs.filter(Q(question__tracks__in=[self.track]) | Q(question__tracks__isnull=True))
-        return []
+        return qs
 
     def get_duration(self) -> int:
         """Returns this submission's duration in minutes.

@@ -664,7 +664,7 @@ class SubmissionTypeView(OrderActionMixin, OrgaCRUDView):
     template_namespace = 'orga/cfp'
 
     def get_queryset(self):
-        return self.request.event.submission_types.all().order_by('default_duration')
+        return self.request.event.submission_types.all()
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
@@ -690,6 +690,8 @@ class SubmissionTypeView(OrderActionMixin, OrgaCRUDView):
 
 
 class SubmissionTypeDefault(PermissionRequired, View):
+    """Toggle default submission type. If the clicked type is already default, remove it."""
+
     permission_required = 'base.update_submissiontype'
 
     def get_object(self):
@@ -698,10 +700,20 @@ class SubmissionTypeDefault(PermissionRequired, View):
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
         submission_type = self.get_object()
-        self.request.event.cfp.default_type = submission_type
-        self.request.event.cfp.save(update_fields=['default_type'])
-        submission_type.log_action('eventyay.submission_type.make_default', person=self.request.user, orga=True)
-        messages.success(request, _('The Session Type has been made default.'))
+        cfp = self.request.event.cfp
+
+        if cfp.default_type == submission_type:
+            # Already default - remove it
+            cfp.default_type = None
+            cfp.save(update_fields=['default_type'])
+            messages.success(request, _('The default Session Type has been removed.'))
+        else:
+            # Set as new default
+            cfp.default_type = submission_type
+            cfp.save(update_fields=['default_type'])
+            submission_type.log_action('eventyay.submission_type.make_default', person=self.request.user, orga=True)
+            messages.success(request, _('The Session Type has been made default.'))
+
         return redirect(self.request.event.cfp.urls.types)
 
 

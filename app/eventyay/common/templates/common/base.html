@@ -124,7 +124,7 @@
                         {% block header_right %}{% endblock header_right %}
                         {% if request.event and request.user.is_authenticated and not is_html_export %}
                             <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
-                                {% has_event_perm "base.orga_access_event" request.user request request.event as can_see_orga_area %}
+                                {% is_event_organiser request.user request request.event as can_see_orga_area %}
                                 <summary>
                                     {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
                                 </summary>

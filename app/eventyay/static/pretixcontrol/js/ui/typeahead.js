@@ -1,4 +1,5 @@
-/*global $,u2f */
+/*global $,u2f,safeSelector */
+
 $(function () {
     $('.sidebar .dropdown, ul.navbar-nav .dropdown, .navbar-events-collapse').on('shown.bs.collapse shown.bs.dropdown', function () {
         $(this).parent().find("input").val("").change().focus();
@@ -9,7 +10,7 @@ $(function () {
 
     $("[data-event-typeahead]").each(function () {
         var $container = $(this);
-        var $query = $(this).find('[data-typeahead-query]').length ? $(this).find('[data-typeahead-query]') : $($(this).attr("data-typeahead-field"));
+        var $query = $(this).find('[data-typeahead-query]').length ? $(this).find('[data-typeahead-query]') : safeSelector($(this).attr("data-typeahead-field"));
         $container.find("li:not(.query-holder)").remove();
         var lastQuery = "";
 

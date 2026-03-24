@@ -80,7 +80,7 @@ services:
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: ${WATCHTOWER_NOTIFICATIONS_HOSTNAME}
       WATCHTOWER_POLL_INTERVAL: 600
       WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_NOTIFICATION_URL}
-    command: watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker --cleanup
+    command: watchtower eventyay-next-watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker --cleanup
 
 volumes:
   rd:
