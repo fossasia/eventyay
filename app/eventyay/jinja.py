@@ -7,10 +7,12 @@ from eventyay.helpers.templatetags.thumb import thumb
 
 from .helpers.jinja import static_url, url_for
 
+
 jj_globals = {
     'url_for': url_for,
     'settings': settings,
     'site_url': settings.SITE_URL,
+    'INSTANCE_NAME': settings.INSTANCE_NAME,
     'static_url': static_url,
 }
 

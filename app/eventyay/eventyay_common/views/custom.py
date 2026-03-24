@@ -22,9 +22,10 @@ class ConfirmEmailView(AllauthConfirmEmailView):
             # Store components separately for the template
             context['confirmation_email'] = email
             context['confirmation_user'] = user_display
+            email_link = f'<a href="mailto:{email}">{email}</a>'
             context['confirmation_message'] = _(
                 'Please confirm that %(email)s is an email address for user %(user)s.'
-            ) % {'email': email, 'user': user_display}
+            ) % {'email': email_link, 'user': user_display}
             context['already_confirmed_message'] = _(
                 'Unable to confirm %(email)s because it is already confirmed by a different account.'
             ) % {'email': email}

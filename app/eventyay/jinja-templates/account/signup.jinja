@@ -1,4 +1,5 @@
 {% extends 'account/base.jinja' %}
+{% import 'macros.jinja' as macros %}
 
 {% block head_title %}
   {{ _('Sign Up') }}
@@ -17,7 +18,7 @@
           {{ form.email.label }}
           {% if form.email.field.required %}<span class='required'>*</span>{% endif %}
         </label>
-        {{ form.email }}
+        {{ macros.add_widget_class(form.email, 'text-sm') }}
         {% if form.email.errors %}
           <div class='field-error'>
             {% for error in form.email.errors %}
@@ -32,7 +33,7 @@
           {{ form.password1.label }}
           {% if form.password1.field.required %}<span class='required'>*</span>{% endif %}
         </label>
-        {{ form.password1 }}
+        {{ macros.add_widget_class(form.password1, 'text-sm') }}
         {% if form.password1.errors %}
           <div class='field-error'>
             {% for error in form.password1.errors %}
@@ -50,7 +51,7 @@
           {{ form.password2.label }}
           {% if form.password2.field.required %}<span class='required'>*</span>{% endif %}
         </label>
-        {{ form.password2 }}
+        {{ macros.add_widget_class(form.password2, 'text-sm') }}
         {% if form.password2.errors %}
           <div class='field-error'>
             {% for error in form.password2.errors %}
@@ -80,7 +81,7 @@
         </div>
       {% endif %}
 
-      <button type='submit' class='btn btn-primary'>
+      <button type='submit' class='btn btn-primary btn-block'>
         <i class='fa fa-check'></i>
         {{ _('Create Account') }}
       </button>
