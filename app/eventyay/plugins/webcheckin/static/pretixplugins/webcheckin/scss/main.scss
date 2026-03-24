@@ -194,9 +194,25 @@ a.searchresult {
   font-size: 16px;
 }
 
+/* EXISTING */
 .modal {
   background: rgba(0, 0, 0, 0.7);
 }
+
+/* 🔥 GSOC FIX START */
+.modal {
+  z-index: 1050 !important;
+}
+
+.modal-backdrop {
+  z-index: 1040 !important;
+}
+
+.popup-modal {
+  z-index: 1060 !important;
+}
+/* 🔥 GSOC FIX END */
+
 .modal.fade.in {
   display: block;
   overflow: auto;
@@ -219,4 +235,16 @@ a.searchresult {
 
 .modal-footer .btn-primary.pull-right {
   margin-left: 10px;
+}
+
+/* 📱 MOBILE FIX */
+@media (max-width: 768px) {
+  .modal-dialog {
+    width: 95%;
+    margin: 10px auto;
+  }
+
+  .modal-content {
+    overflow: hidden;
+  }
 }
