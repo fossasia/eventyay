@@ -98,7 +98,7 @@ You can find these under:
 Add the following redirect URIs in Stripe:
 
 ```
-https://your-domain.com/_stripe/oauth_return/   
+https://your-domain.com/_stripe/oauth_return/ 
 ```
 Note: Replace `your-domain.com` with your actual backend/API domain.
 
