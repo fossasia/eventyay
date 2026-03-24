@@ -390,41 +390,11 @@ export default {
 		if (this.computedDays?.length) {
 			this.currentDay = this.computedDays[0].format('YYYY-MM-DD')
 		}
-		this.requestLandscapeOrientation()
 	},
 	beforeUnmount() {
 		this._resizeObserver?.disconnect()
-		// Release orientation lock if we acquired one
-		if (this._orientationLocked) {
-			try { screen.orientation.unlock() } catch { /* ignore */ }
-			this._orientationLocked = false
-		}
 	},
 	methods: {
-		requestLandscapeOrientation() {
-			// Only attempt on touch/mobile devices
-			const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-			if (!isMobile) return
-
-			// Inject iOS PWA-capable meta dynamically so we don't need to touch
-			// any HTML template (works for both Django-served and standalone builds)
-			if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
-				const meta = document.createElement('meta')
-				meta.name = 'apple-mobile-web-app-capable'
-				meta.content = 'yes'
-				document.head.appendChild(meta)
-			}
-
-			// Screen Orientation API — covers Android Chrome and iOS Safari PWA mode
-			if (screen.orientation && typeof screen.orientation.lock === 'function') {
-				screen.orientation.lock('landscape').then(() => {
-					this._orientationLocked = true
-				}).catch(() => {
-					// Silently ignored: browser may require fullscreen, a user gesture,
-					// or may simply not support locking (e.g. desktop, iOS regular tab).
-				})
-			}
-		},
 		setTimeDensityMinutes(minutes) {
 			const parsedMinutes = Number(minutes)
 			const fallbackMinutes = 30

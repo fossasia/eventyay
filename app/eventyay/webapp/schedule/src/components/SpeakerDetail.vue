@@ -235,7 +235,7 @@ export default {
 			align-items: center
 			text-align: center
 			&.has-export
-				padding-top: 24px
+				padding-top: 32px
 			.speaker-content-area
 				width: 100%
 				flex-direction: column
@@ -243,7 +243,7 @@ export default {
 				gap: 4px
 				.speaker-export
 					position: absolute
-					top: -24px
+					top: 0
 					right: 0
 				.speaker-title h2
 					text-align: center

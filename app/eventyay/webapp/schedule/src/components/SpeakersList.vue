@@ -457,7 +457,7 @@ export default {
 		display: flex
 		align-items: center
 		gap: 8px
-		padding: 12px 16px 0
+		padding: 12px 10px 0
 		flex-wrap: wrap
 		min-width: 0
 		width: 100%
