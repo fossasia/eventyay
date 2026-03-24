@@ -642,7 +642,7 @@ export default {
 	.speakers-grid
 		display: flex
 		flex-direction: column
-		padding: 16px
+		padding: 10px
 		gap: 12px
 	.speakers-details
 		display: flex

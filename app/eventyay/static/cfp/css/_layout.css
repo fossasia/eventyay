@@ -1,3 +1,21 @@
+.presale-sticky-tabs .header-row-right details.dropdown,
+.presale-sticky-tabs .header-row-right > a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.presale-sticky-tabs .header-row-right details.dropdown summary {
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--size-border-radius);
+  cursor: pointer;
+}
+
+/* Add padding to username for visual match */
+.presale-sticky-tabs .header-row-right details.dropdown summary .mobile-hide-text {
+  padding-left: 6px;
+  padding-right: 6px;
+}
 body {
   background: var(--color-grey-lightest);
 }
@@ -218,7 +236,7 @@ header {
   flex-shrink: 0;
   align-items: center;
   font-size: 1rem;
-  gap: 10px;
+  gap: 16px;
 }
 
 .presale-sticky-tabs .header-row-right .header-nav {

@@ -1429,7 +1429,7 @@ export default {
 				color: #fff
 				padding: 4px 8px
 				border-radius: 4px
-				font-size: 11px
+				font-size: 12px
 				line-height: 1.2
 				white-space: nowrap
 				z-index: 1000
@@ -1473,7 +1473,7 @@ export default {
 					box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12)
 					width: max-content
 					max-width: 94vw
-					max-height: 70vh
+					max-height: 80vh
 					flex-wrap: nowrap
 					overflow-x: auto
 					overflow-y: auto
@@ -1494,7 +1494,7 @@ export default {
 					.sort-dropdown-menu
 						position: static
 						min-width: 100%
-						max-height: 260px
+						max-height: 350px
 						overflow-y: auto
 						overflow-x: hidden
 						box-shadow: none
@@ -1502,14 +1502,22 @@ export default {
 						border-radius: 8px
 						background: #fff
 						padding: 4px 0
+						.filter-dropdown-item,
+						.recording-item,
+						.sort-item
+							padding: 8px 12px
+							font-size: 14px
+						.filter-checkbox
+							width: 14px
+							height: 14px
 			.toolbar-center
 				grid-area: center
 				width: 100%
 				justify-content: center
 				padding-top: 2px
 				.day-btn
-					padding: 3px 6px
-				font-size: 12px
+					padding: 4px 8px
+					font-size: 13px
 			.day-arrow svg
 				width: 16px
 				height: 16px
@@ -1520,7 +1528,8 @@ export default {
 			align-items: center
 			justify-content: flex-end
 			.search-area .search-compact .search-input
-				width: 120px
+				width: 130px
+				font-size: 13px
 			.toolbar-right-quick
 				display: flex
 				align-items: center
@@ -1598,8 +1607,8 @@ export default {
 					justify-content: flex-start
 		.toolbar-btn
 			padding: 0 6px
-			height: 28px
-			font-size: 12px
+			height: 30px
+			font-size: 13px
 
 		.toolbar-btn.mobile-toggle-btn
 			padding: 0 6px
