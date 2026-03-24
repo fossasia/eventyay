@@ -27,6 +27,7 @@ For local development:
 ```
 http://localhost:5000/api/v1/stripe/webhook
 ```
+
 Note: In local development, port 5000 refers to the backend API server used by Eventyay.
 
 ---
@@ -127,8 +128,9 @@ Stripe requires all possible redirect URIs to be registered.
 
 Make sure the following are added:
 
-- `https://your-domain.com/_stripe/oauth_return/`
-- `http://localhost:3000/_stripe/oauth_return/`
+`https://your-domain.com/_stripe/oauth_return/`
+
+`http://localhost:3000/_stripe/oauth_return/`
 
 These are used after successful Stripe onboarding.
 
