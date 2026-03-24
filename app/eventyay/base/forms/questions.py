@@ -66,6 +66,7 @@ from eventyay.helpers.http import get_client_ip
 from eventyay.helpers.i18n import get_format_without_seconds
 from eventyay.presale.signals import question_form_fields
 
+
 logger = logging.getLogger(__name__)
 
 REQUIRED_NAME_PARTS = ['salutation', 'given_name', 'family_name', 'full_name']
@@ -239,7 +240,7 @@ class WrappedPhonePrefixSelect(Select):
             for country_code in values:
                 country_name = locale.territories.get(country_code)
                 if country_name:
-                    choices.append((prefix, '{} {}'.format(country_name, prefix)))
+                    choices.append((prefix, f'{country_name} {prefix}'))
         super().__init__(
             choices=sorted(choices, key=lambda product: product[1]),
             attrs={'aria-label': pgettext_lazy('phonenumber', 'International area code')},
@@ -598,18 +599,15 @@ class BaseQuestionsForm(forms.Form):
                     empty_label=' ',
                     initial=(initial.answer if initial else (guess_country(event) if required else None)),
                 )
-            elif q.type == Question.TYPE_CHOICE:
-                options_count = q.options.count()
-                choices_qs = q.options.all()
-                use_radio = options_count < 4
+            elif q.type in Question.SINGLE_CHOICE_TYPES:
                 field = forms.ModelChoiceField(
-                    queryset=choices_qs,
+                    queryset=q.options.all(),
                     label=label,
                     required=required,
                     help_text=help_text,
-                    widget=(forms.RadioSelect if use_radio else forms.Select),
+                    widget=(forms.RadioSelect if q.type == Question.TYPE_CHOICE else forms.Select),
                     to_field_name='identifier',
-                    empty_label=(None if use_radio else ''),
+                    empty_label=(None if q.type == Question.TYPE_CHOICE else _('Select an option')),
                     initial=initial.options.first() if initial else None,
                 )
             elif q.type == Question.TYPE_CHOICE_MULTIPLE:
@@ -705,9 +703,7 @@ class BaseQuestionsForm(forms.Form):
                         if str(default_country) in values:
                             default_prefix = prefix
                     try:
-                        initial = (
-                            PhoneNumber().from_string(initial.answer) if initial else '+{}.'.format(default_prefix)
-                        )
+                        initial = PhoneNumber().from_string(initial.answer) if initial else f'+{default_prefix}.'
                     except NumberParseException:
                         initial = None
                     field = PhoneNumberField(
@@ -732,7 +728,7 @@ class BaseQuestionsForm(forms.Form):
             if q.dependency_question_id:
                 field.widget.attrs['data-question-dependency'] = q.dependency_question_id
                 field.widget.attrs['data-question-dependency-values'] = escapejson_attr(json.dumps(q.dependency_values))
-                if q.type != 'M':
+                if q.type != Question.TYPE_CHOICE_MULTIPLE:
                     field.widget.attrs['required'] = q.required and not self.all_optional
                     field._required = q.required and not self.all_optional
                 field.required = False
@@ -757,9 +753,7 @@ class BaseQuestionsForm(forms.Form):
 
         for k, v in self.fields.items():
             if v.widget.attrs.get('autocomplete') or k == 'attendee_name_parts':
-                v.widget.attrs['autocomplete'] = 'section-{} '.format(self.prefix) + v.widget.attrs.get(
-                    'autocomplete', ''
-                )
+                v.widget.attrs['autocomplete'] = f'section-{self.prefix} ' + v.widget.attrs.get('autocomplete', '')
 
     def clean(self):
         d = super().clean()
