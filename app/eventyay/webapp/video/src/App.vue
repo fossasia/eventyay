@@ -132,6 +132,8 @@ export default {
 			}
 			if (this.mediaSourcePlaceholderRect) {
 				Object.assign(style, {
+					'--mediasource-placeholder-top': this.mediaSourcePlaceholderRect.top + 'px',
+					'--mediasource-placeholder-left': this.mediaSourcePlaceholderRect.left + 'px',
 					'--mediasource-placeholder-height': this.mediaSourcePlaceholderRect.height + 'px',
 					'--mediasource-placeholder-width': this.mediaSourcePlaceholderRect.width + 'px'
 				})

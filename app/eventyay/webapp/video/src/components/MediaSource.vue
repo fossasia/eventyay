@@ -11,20 +11,22 @@
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
-	.error-container(v-if="iframeError")
+	.error-container(v-if="!iframeEl && iframeError", :class="{background: background, 'size-tiny': background}")
 		.error-card
 			.error-title {{ iframeError.title || $t('MediaSource:iframe-error:title') }}
 			.error-message {{ iframeError.message || $t('MediaSource:iframe-error:text') }}
 			.error-code(v-if="iframeError.code") {{ $t('MediaSource:error-code:label') }}: {{ iframeError.code }}
 			.error-actions
-				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="$router.push({name: 'preferences'})") {{ $t('MediaSource:error-goto-profile:button') }}
+				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="goToProfileSettings()") {{ $t('MediaSource:error-goto-profile:button') }}
 				bunt-button(v-else, @click="retryInitializeIframe()") {{ $t('MediaSource:error-retry:button') }}
+	.iframe-error(v-else-if="!iframeEl && iframeOffline", :class="{background: background, 'size-tiny': background}")
+		.offline-message {{ $t('Livestream:offline-message:text') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
 // TODO functional component?
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
 import api from 'lib/api';
@@ -49,6 +51,7 @@ defineEmits(['close']);
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 
 const iframeError = ref(null);
 const iframeEl = ref(null);
@@ -86,6 +89,34 @@ const shouldUseLivestream = computed(() => {
 		return false;
 	}
 	return true;
+});
+
+// When stream schedules are enabled, the backend returns no iframe URL if no
+// stream is currently active. For iframe-based sources we render the standard
+// offline placeholder instead of an empty area.
+const iframeOffline = computed(() => {
+	if (!props.room || !module.value) return false;
+	if (shouldUseLivestream.value) return false;
+
+	const streamType = props.room?.currentStream?.stream_type;
+	const moduleType = module.value.type;
+	const isIFrame = streamType === 'iframe' || moduleType === 'livestream.iframe';
+	const isYouTube = streamType === 'youtube' || moduleType === 'livestream.youtube';
+	const isVimeo = streamType === 'vimeo';
+
+	if (!isIFrame && !isYouTube && !isVimeo) return false;
+
+	const scheduleUrl = props.room?.currentStream?.url || null;
+	if (isYouTube) {
+		if (scheduleUrl && normalizeYoutubeVideoId(scheduleUrl)) return false;
+		const ytid = module.value.config?.ytid || null;
+		if (ytid && normalizeYoutubeVideoId(ytid)) return false;
+		return true;
+	}
+
+	if (scheduleUrl) return false;
+	const moduleUrl = module.value.config?.url || null;
+	return !moduleUrl;
 });
 
 const inRoomManager = computed(() => route.name === 'room:manage');
@@ -203,9 +234,11 @@ function unmuteYouTubePlayer() {
 }
 
 async function initializeIframe(mute) {
+	if (!module.value) return;
+	if (shouldUseLivestream.value) return;
+	if (iframeOffline.value) return;
+	iframeError.value = null;
 	try {
-		if (!module.value) return;
-		if (shouldUseLivestream.value) return;
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
@@ -220,23 +253,23 @@ async function initializeIframe(mute) {
 		switch (effectiveModuleType) {
 			case 'call.bigbluebutton': {
 				try {
-					({ url: iframeUrl } = await api.call('bbb.room_url', { room: props.room.id }))
+					({ url: iframeUrl } = await api.call('bbb.room_url', { room: props.room.id }));
 				} catch (error) {
-					handleBBBError(error)
-					return
+					handleBBBError(error);
+					return;
 				}
-				hideIfBackground = true
-				break
+				hideIfBackground = true;
+				break;
 			}
 			case 'call.zoom': {
 				try {
-					({ url: iframeUrl } = await api.call('zoom.room_url', { room: props.room.id }))
+					({ url: iframeUrl } = await api.call('zoom.room_url', { room: props.room.id }));
 				} catch (error) {
-					handleZoomError(error)
-					return
+					handleZoomError(error);
+					return;
 				}
-				hideIfBackground = true
-				break
+				hideIfBackground = true;
+				break;
 			}
 			case 'livestream.iframe': {
 				if (props.room?.currentStream?.url) {
@@ -340,7 +373,7 @@ async function initializeIframe(mute) {
 		}
 	} catch (error) {
 		// Non-API errors (e.g., iframeError set by error handlers)
-		console.error('Error initializing iframe:', error)
+		console.error('Error initializing iframe:', error);
 		iframeError.value = error;
 	}
 }
@@ -352,26 +385,31 @@ function destroyIframe() {
 
 
 function handleBBBError(error) {
-	const errorCode = error.apiError?.code
-	console.error('[BBB Error]', errorCode, error)
-	
+	const errorCode = error.apiError?.code;
+	console.error('[BBB Error]', errorCode, error);
+
 	iframeError.value = {
-		code: errorCode || 'bbb.unknown'
-	}
+		code: errorCode || 'bbb.unknown',
+	};
 }
 
 function handleZoomError(error) {
-	const errorCode = error.apiError?.code
-	console.error('[Zoom Error]', errorCode, error)
-	
+	const errorCode = error.apiError?.code;
+	console.error('[Zoom Error]', errorCode, error);
+
 	iframeError.value = {
-		code: errorCode || 'zoom.unknown'
-	}
+		code: errorCode || 'zoom.unknown',
+	};
 }
 
 async function retryInitializeIframe() {
-	iframeError.value = null
-	await initializeIframe(false)
+	iframeError.value = null;
+	await initializeIframe(false);
+}
+
+function goToProfileSettings() {
+	iframeError.value = null;
+	router.push({ name: 'preferences' });
 }
 
 function isPlaying() {
@@ -522,7 +560,7 @@ defineExpose({ isPlaying });
 	// 	transition-delay: .1s
 	.background-room-enter-from, .background-room-leave-to
 		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
-.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, iframe.iframe-media-source
+.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, .c-media-source .error-container, iframe.iframe-media-source
 	position: fixed
 	transition: all .3s ease
 	&.size-tiny, &.background
@@ -531,12 +569,10 @@ defineExpose({ isPlaying });
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
 	&:not(.size-tiny):not(.background)
-		top: 104px
-		width: var(--mediasource-placeholder-width)
-		height: var(--mediasource-placeholder-height)
-		+below('l')
-			bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
-			right: calc(100vw - var(--mediasource-placeholder-width))
+		top: var(--mediasource-placeholder-top, 104px)
+		left: var(--mediasource-placeholder-left, var(--sidebar-width))
+		width: var(--mediasource-placeholder-width, 100vw)
+		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none
@@ -548,19 +584,38 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
-.error-container
-	position: fixed
-	top: 104px
-	width: var(--mediasource-placeholder-width)
-	height: var(--mediasource-placeholder-height)
+.c-media-source .iframe-error
 	display: flex
-	align-items: center
 	justify-content: center
-	z-index: 100
-	+below('l')
-		bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
-		right: calc(100vw - var(--mediasource-placeholder-width))
-		top: auto
+	align-items: center
+	background-color: $clr-blue-grey-200
+	z-index: 1
+	&:not(.size-tiny):not(.background)
+		width: var(--mediasource-placeholder-width, 100vw)
+		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+	&.size-tiny, &.background
+		width: 86px
+		height: 48px
+		pointer-events: none
+		z-index: 101
+	.offline-message
+		font-size: 36px
+		color: $clr-secondary-text-light
+		text-align: center
+		padding: 16px
+	&.size-tiny, &.background
+		.offline-message
+			font-size: 14px
+			padding: 8px
+.c-media-source .error-container
+	display: flex
+	justify-content: center
+	align-items: center
+	z-index: 1
+	&.size-tiny, &.background
+		width: 86px
+		height: 48px
+		z-index: 101
 .error-card
 	background: white
 	border: 1px solid #e0e0e0
@@ -569,16 +624,27 @@ iframe.iframe-media-source
 	max-width: 400px
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
 	text-align: center
+	.error-container.size-tiny &, .error-container.background &
+		padding: 8px
+		max-width: 86px
+		max-height: 48px
+		overflow: hidden
 .error-title
 	font-size: 18px
 	font-weight: 600
 	color: #d32f2f
 	margin-bottom: 12px
+	.error-container.size-tiny &, .error-container.background &
+		display: none
 .error-message
 	font-size: 14px
 	color: #666
 	margin-bottom: 16px
 	line-height: 1.5
+	.error-container.size-tiny &, .error-container.background &
+		font-size: 11px
+		line-height: 1.2
+		margin-bottom: 0
 .error-code
 	font-size: 12px
 	color: #999
@@ -587,10 +653,14 @@ iframe.iframe-media-source
 	background: #f5f5f5
 	padding: 8px
 	border-radius: 4px
+	.error-container.size-tiny &, .error-container.background &
+		display: none
 .error-actions
 	display: flex
 	gap: 8px
 	justify-content: center
+	.error-container.size-tiny &, .error-container.background &
+		display: none
 	.bunt-button
 		min-width: 120px
 </style>

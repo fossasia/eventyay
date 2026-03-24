@@ -21,7 +21,7 @@ In a room-based BBB meeting, moderator and attendee permissions are assigned bas
 Error Handling
 ~~~~~~~~~~~~~~
 
-When joining a BBB room or call, the following errors may occur:
+When joining a BBB room using ``bbb.room_url``, the following errors may occur:
 
 **bbb.join.missing_profile**
   The user has not set a display name in their profile. The UI should prompt the user to:
@@ -55,7 +55,16 @@ If a private conversation includes a chat message referring to a call ID, you ca
     <- ["success", 1234, {"url": "https://…"}]
 
 
-The response will contain a URL for the video chat. See the Error Handling section above for possible errors when joining.
+The response will contain a URL for the video chat.
+
+When resolving a private call URL via ``bbb.call_url``, only the following errors may occur:
+
+**bbb.join.missing_profile**
+  The user has not set a display name in their profile.
+
+**bbb.failed**
+  The BBB server is unavailable, the meeting cannot be created, or the call ID is unknown or not accessible
+  to the current user (for example, because the user is not a participant of the private conversation).
 
 In private meetings, all participants have moderator rights.
 
