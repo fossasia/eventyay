@@ -90,7 +90,8 @@ If the user has the ``room:bbb.recordings`` permission, you can access recording
          }
        ]
 
-The response will contain the list of available recordings. If the BBB server can't be reached,
-``bbb.failed`` is returned. If the user does not have permission to view recordings, ``protocol.denied`` is returned.
+The response will contain the list of available recordings. If no recordings are available or the BBB server
+can't be reached, the call still returns ``success`` and ``results`` will be an empty list. If the user does not
+have permission to view recordings, ``protocol.denied`` is returned.
 
 Recordings are associated with rooms, and access to them is controlled via room and event permissions.
