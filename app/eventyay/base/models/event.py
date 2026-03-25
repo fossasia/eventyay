@@ -2073,26 +2073,35 @@ class Event(
         return not self.orders.exists() and not self.invoices.exists()
 
     def delete_sub_objects(self):
+        from django.core.exceptions import ObjectDoesNotExist
+
+        from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.resource import Resource
+        from eventyay.base.models.slot import TalkSlot
+
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
         self.queued_mails.all().delete()
 
-        for question in self.talkquestions.all():
-            question.answers.all().delete()
-            question.options.all().delete()
+        answers = Answer.objects.filter(question__event=self)
+        for answer in answers.only('pk', 'answer_file').iterator():
+            answer._delete_files()
+        answers.delete()
+        AnswerOption.objects.filter(question__event=self).delete()
 
-        for schedule in self.schedules.all():
-            schedule.talks.all().delete()
+        TalkSlot.objects.filter(schedule__event=self).delete()
+        Feedback.objects.filter(talk__event=self).delete()
 
-        for submission in self.submissions.all():
-            submission.feedback.all().delete()
-            submission.resources.all().delete()
+        resources = Resource.objects.filter(submission__event=self)
+        for resource in resources.only('pk', 'resource').iterator():
+            resource._delete_files()
+        resources.delete()
 
-        if hasattr(self, 'domains'):
-            for domain in self.domains.all():
-                domain.delete()
+        for domain in self.domains.all().iterator():
+            domain.delete()
 
-        for stored_file in self.storedfile_set.all():
+        for stored_file in self.storedfile_set.all().iterator():
             stored_file.full_delete()
 
         self.bbbserver_set.update(event_exclusive=None)
@@ -2109,8 +2118,12 @@ class Event(
         self.tags.all().delete()
         self.schedules.all().delete()
         self.mail_templates.all().delete()
-        if hasattr(self, 'cfp'):
-            self.cfp.delete()
+        try:
+            cfp = self.cfp
+        except ObjectDoesNotExist:
+            cfp = None
+        if cfp is not None and cfp.pk is not None:
+            cfp.delete()
         self.submitter_access_codes.all().delete()
         self.submission_types.all().delete()
 
