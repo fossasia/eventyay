@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-21 15:17+0000\n"
+"PO-Revision-Date: 2026-03-22 14:49+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Portuguese (Portugal) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_PT/>\n"
@@ -159,10 +159,8 @@ msgid "You can’t give feedback for this session at this time."
 msgstr "Não pode dar feedback para esta sessão neste momento."
 
 #: agenda/templates/agenda/schedule.html:23
-#, fuzzy
-#| msgid "Public changelog"
 msgid "Changelog"
-msgstr "Lista de mudanças público"
+msgstr "Registo de alterações"
 
 #: agenda/templates/agenda/schedule.html:29
 #, python-format
@@ -10760,10 +10758,8 @@ msgid "Proposals are closed"
 msgstr "As propostas estão fechadas"
 
 #: cfp/templates/cfp/event/index.html:36
-#, fuzzy
-#| msgid "Organiser area"
 msgid "Go To Organiser Area"
-msgstr "Área do Organizador"
+msgstr "Ir para a Área do Organizador"
 
 #: cfp/templates/cfp/event/invitation.html:7
 #: cfp/templates/cfp/event/invitation.html:10
@@ -11219,20 +11215,12 @@ msgid "Resources"
 msgstr "Recursos"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:13
-#, fuzzy
-#| msgid ""
-#| "Resources will be publicly visible. Please try to keep your uploads below "
-#| "16MB."
 msgid "Resources will be publicly visible."
-msgstr ""
-"Os recursos serão publicamente visíveis. Por favor, tente manter os seus "
-"uploads abaixo de 16 MB."
+msgstr "Os recursos estarão visíveis publicamente."
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:62
-#, fuzzy
-#| msgid "This proposal has no file uploads yet."
 msgid "This proposal has no resources yet."
-msgstr "Esta proposta ainda não tem uploads de ficheiros."
+msgstr "Esta proposta ainda não tem recursos."
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:94
 msgid "You can either provide a URL or upload a file."
@@ -11463,10 +11451,8 @@ msgid "The invitation to the review team was sent."
 msgstr "O convite para a equipa de revisão foi enviado."
 
 #: common/log_display.py:149
-#, fuzzy
-#| msgid "The team was removed."
 msgid "A team member was removed"
-msgstr "A equipa foi removida."
+msgstr "Um membro da equipa foi removido"
 
 #: common/log_display.py:150
 msgid "An email was created."
@@ -11501,16 +11487,12 @@ msgid "A mail template was modified."
 msgstr "Um modelo de email foi modificado."
 
 #: common/log_display.py:158
-#, fuzzy
-#| msgid "A question was added."
 msgid "A custom field was added."
-msgstr "Uma pergunta foi adicionada."
+msgstr "Foi adicionado um campo personalizado."
 
 #: common/log_display.py:159
-#, fuzzy
-#| msgid "A question was deleted."
 msgid "A custom field was deleted."
-msgstr "Uma pergunta foi eliminada."
+msgstr "Foi eliminado um campo personalizado."
 
 #: common/log_display.py:160
 msgid "A custom field was modified."
@@ -31219,10 +31201,8 @@ msgid "SocialAuth"
 msgstr "SocialAuth"
 
 #: plugins/socialauth/apps.py:13
-#, fuzzy
-#| msgid "the development team"
 msgid "the eventyay team"
-msgstr "a equipa eventyay"
+msgstr "a equipa da eventyay"
 
 #: plugins/socialauth/apps.py:16
 msgid "This plugin allows you to login via social networks"
@@ -32767,17 +32747,12 @@ msgid "Request invoice"
 msgstr "Solicitação de fatura"
 
 #: presale/templates/pretixpresale/event/order.html:284
-#, fuzzy
-#| msgid "Change order information"
 msgid "Change your information"
-msgstr "Alterar informações da encomenda"
+msgstr "Alterar informações"
 
 #: presale/templates/pretixpresale/event/order.html:292
-#, fuzzy
-#| msgctxt "checkoutflow"
-#| msgid "Your information"
 msgid "Your information"
-msgstr "A sua informação"
+msgstr "Informações"
 
 #: presale/templates/pretixpresale/event/order.html:332
 msgid "Internal Reference"
@@ -33087,11 +33062,8 @@ msgid "Voucher redemption"
 msgstr "Resgate de voucher"
 
 #: presale/templates/pretixpresale/event/voucher.html:18
-#, fuzzy
-#| msgctxt "subevent"
-#| msgid "This voucher is not valid for this event date."
 msgid "This voucher is valid only for the following specific date and time."
-msgstr "Este voucher não é válido nesta data do evento."
+msgstr "Este voucher é válido apenas para a seguinte data e hora específicas."
 
 #: presale/templates/pretixpresale/event/voucher.html:65
 msgid ""
@@ -33167,10 +33139,8 @@ msgstr "Não consegue encontrar o seu bilhete?"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:18
 #: presale/templates/pretixpresale/fragment_modals.html:33
-#, fuzzy
-#| msgid "Send out emails"
 msgid "Resend the email"
-msgstr "Enviar e-mails"
+msgstr "Reenviar o e-mail"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:20
 #: presale/templates/pretixpresale/fragment_modals.html:35
@@ -33179,69 +33149,51 @@ msgstr "para o receber."
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:23
 #: presale/templates/pretixpresale/fragment_modals.html:38
-#, fuzzy
-#| msgid "If you already ordered a ticket"
 msgid "Want to order a ticket?"
-msgstr "Se já encomendou um bilhete"
+msgstr "Pretende encomendar um bilhete?"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:25
 #: presale/templates/pretixpresale/fragment_modals.html:40
-#, fuzzy
-#| msgid "Go to the ticket shop"
 msgid "Get a ticket here"
-msgstr "Ir para a bilheteira"
+msgstr "Obter um bilhete aqui"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:31
 #: presale/templates/pretixpresale/fragment_modals.html:46
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Waiting, product %(num)sx available\n"
-#| "                                "
+#, python-format
 msgid ""
 "\n"
 "                            Want to create a %(event_name)s account?\n"
 "                        "
 msgstr ""
 "\n"
-"                                    Esperando, produto %(num)sx disponíveis\n"
-"                                "
+"                            Pretende criar uma conta %(event_name)s?\n"
+"                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:35
 #: presale/templates/pretixpresale/fragment_modals.html:50
-#, fuzzy
-#| msgid "Signature"
 msgid "Sign up here"
-msgstr "Assinatura"
+msgstr "Registar aqui"
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:39
 #: presale/templates/pretixpresale/fragment_modals.html:54
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                        from %(start_date)s\n"
-#| "                                    "
+#, python-format
 msgid ""
 "\n"
 "                            Already have a %(event_name)s account?\n"
 "                        "
 msgstr ""
 "\n"
-"                                        a partir de %(start_date)s\n"
-"                                    "
+"                            Já tem uma conta %(event_name)s?\n"
+"                        "
 
 #: presale/templates/pretixpresale/fragment_join_online_video.html:43
 #: presale/templates/pretixpresale/fragment_modals.html:58
-#, fuzzy
-#| msgid "Login"
 msgid "Login here"
-msgstr "Login"
+msgstr "Iniciar sessão aqui"
 
 #: presale/templates/pretixpresale/fragment_login_status.html:7
-#, fuzzy
-#| msgid "Account"
 msgid "account"
-msgstr "Conta"
+msgstr "conta"
 
 #: presale/templates/pretixpresale/fragment_modals.html:15
 msgid ""
@@ -33574,10 +33526,8 @@ msgid "You chose an invalid cancellation fee."
 msgstr "Escolheu uma taxa de cancelamento inválida."
 
 #: presale/views/order.py:1079
-#, fuzzy
-#| msgid "Any customer"
 msgid "Canceled by customer"
-msgstr "Qualquer cliente"
+msgstr "Cancelado pelo cliente"
 
 #: presale/views/order.py:1095
 msgid "The cancellation has been requested."
