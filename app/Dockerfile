@@ -67,6 +67,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     netcat-traditional \
     nodejs \
     make \
+    gettext \
     && rm -rf /var/lib/apt/lists/*
 
 # esbuild needed by Django-Compressor
