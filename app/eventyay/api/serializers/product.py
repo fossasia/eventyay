@@ -23,6 +23,7 @@ from eventyay.base.models import (
 )
 from eventyay.consts import SizeKey
 
+
 class InlineProductVariationSerializer(I18nAwareModelSerializer):
     price = serializers.DecimalField(read_only=True, decimal_places=2, max_digits=10, coerce_to_string=True)
 
@@ -385,11 +386,7 @@ class QuestionSerializer(I18nAwareModelSerializer):
 
     def validate_dependency_question(self, value):
         if value:
-            if value.type not in (
-                Question.TYPE_CHOICE,
-                Question.TYPE_BOOLEAN,
-                Question.TYPE_CHOICE_MULTIPLE,
-            ):
+            if value.type not in ((Question.TYPE_BOOLEAN,) + Question.OPTION_TYPES):
                 raise ValidationError('Question dependencies can only be set to boolean or choice questions.')
             if value == self.instance:
                 raise ValidationError('A question cannot depend on itself.')
