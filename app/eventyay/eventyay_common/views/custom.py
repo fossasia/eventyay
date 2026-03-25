@@ -1,10 +1,16 @@
-from allauth.account.views import ConfirmEmailView as AllauthConfirmEmailView
+from __future__ import annotations
+
+from allauth.account.views import ConfirmEmailView as _ConfirmEmailView
+from allauth.account.views import SignupView as _SignupView
 from django.urls import reverse
+from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
+from eventyay.base.models.page import Page
 
-class ConfirmEmailView(AllauthConfirmEmailView):
+
+class ConfirmEmailView(_ConfirmEmailView):
     """Custom email confirmation view that separates HTML from translatable strings."""
 
     # Explicitly use the Jinja template override located in jinja-templates/account/
@@ -22,10 +28,11 @@ class ConfirmEmailView(AllauthConfirmEmailView):
             # Store components separately for the template
             context['confirmation_email'] = email
             context['confirmation_user'] = user_display
-            email_link = f'<a href="mailto:{email}">{email}</a>'
-            context['confirmation_message'] = _(
-                'Please confirm that %(email)s is an email address for user %(user)s.'
-            ) % {'email': email_link, 'user': user_display}
+            email_link = format_html('<a href="mailto:{0}">{0}</a>', email)
+            context['confirmation_message'] = mark_safe(
+                _('Please confirm that %(email)s is an email address for user %(user)s.')
+                % {'email': email_link, 'user': conditional_escape(user_display)}
+            )
             context['already_confirmed_message'] = _(
                 'Unable to confirm %(email)s because it is already confirmed by a different account.'
             ) % {'email': email}
@@ -43,3 +50,14 @@ class ConfirmEmailView(AllauthConfirmEmailView):
             context['invalid_confirmation_message'] = mark_safe(message)
 
         return context
+
+
+# Override to provide additional context for the signup page, such as pages that require confirmation.
+class SignupView(_SignupView):
+    # Explicitly use the Jinja template override located in jinja-templates/account/
+    template_name = 'account/signup.jinja'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['confirmation_pages'] = Page.objects.filter(confirmation_required=True)
+        return ctx

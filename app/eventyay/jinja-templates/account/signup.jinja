@@ -61,12 +61,13 @@
         {% endif %}
       </div>
 
-      {% if confirmation_required %}
+      {# This is a queryset of Page #}
+      {% if confirmation_pages.exists() %}
         <div class='form-group'>
           <label>
             <input type='checkbox' class='checkbox' value='yes' required>
             {{ _('I have read and agree with the content of the following pages:') }}
-            {% for page in confirmation_required %}
+            {% for page in confirmation_pages %}
               <a href="{{ url_for('page', slug=page.slug) }}">{{ page.title|safe }}</a>{% if not loop.last %}, {% else %}.{% endif %}
             {% endfor %}
           </label>
