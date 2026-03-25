@@ -39,8 +39,18 @@
 .items-center {
   align-items: center;
 }
+.form-group label.flex {
+  display: flex;
+  flex-direction: row;
+}
+.form-group label.items-center {
+  align-items: center;
+}
 .w-auto {
   width: auto;
+}
+.ml-2 {
+  margin-left: 0.5rem;
 }
 .px-4 {
   padding-left: 1rem;

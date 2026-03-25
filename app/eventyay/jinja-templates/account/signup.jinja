@@ -82,6 +82,15 @@
         </div>
       {% endif %}
 
+      {% if show_keep_logged_in %}
+        <div class='form-group'>
+          <label class='flex items-center'>
+            <input type='checkbox' name='keep_logged_in' value='1' class='checkbox'>
+            <span class='ml-2'>{{ _('Keep me logged in') }}</span>
+          </label>
+        </div>
+      {% endif %}
+
       <button type='submit' class='btn btn-primary btn-block'>
         <i class='fa fa-check'></i>
         {{ _('Create Account') }}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from allauth.account.views import ConfirmEmailView as _ConfirmEmailView
 from allauth.account.views import SignupView as _SignupView
+from django.conf import settings
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
@@ -60,4 +61,7 @@ class SignupView(_SignupView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['confirmation_pages'] = Page.objects.filter(confirmation_required=True)
+        # TODO: django-allauth uses the "remember" field; migrate to that (in both login flow and signup flow)
+        # instead of posting "keep_logged_in" directly.
+        ctx['show_keep_logged_in'] = settings.EVENTYAY_LONG_SESSIONS
         return ctx
