@@ -37,30 +37,26 @@
                     {% blocktrans trimmed %}
                         Your request has been submitted and is awaiting approval by the event organizer. See below for details.
                     {% endblocktrans %}
+                    <br>
+                    <strong>
+                        {% if order.total == 0 %}
+                            {% trans "After approval, your registration will be completed automatically." as approval_suffix %}
+                        {% else %}
+                            {% trans "After approval, you can proceed with payment to complete your registration." as approval_suffix %}
+                        {% endif %}
+                        {% blocktrans trimmed with suffix=approval_suffix %}
+                            You will receive an email once your request has been reviewed. {{ suffix }}
+                        {% endblocktrans %}
+                    </strong>
                 </p>
-                {% if order.total == 0 %}
-                    <p>{% blocktrans trimmed %}
-                        You will receive an email once your request has been reviewed. After approval, your registration will be completed automatically.
-                    {% endblocktrans %}</p>
-                {% else %}
-                    <p>{% blocktrans trimmed %}
-                        You will receive an email once your request has been reviewed. After approval, you can proceed with payment to complete your registration.
-                    {% endblocktrans %}</p>
-                {% endif %}
-                <p>{% blocktrans trimmed %}
-                    You can access this page from your orders page or use the link sent to your email to return to it later.
-                {% endblocktrans %}</p>
+                <p>
+                    {% blocktrans trimmed %}
+                        You can access this page from your orders page or use the link sent to your email to return to it later.
+                    {% endblocktrans %}
+                </p>
                 {% if request.event.settings.checkout_success_text %}
                     {{ request.event.settings.checkout_success_text|event_localize|rich_text }}
                 {% endif %}
-                <p class="iframe-hidden">{% blocktrans trimmed %}
-                    Please bookmark or save the link to this exact page if you want to access your request later. We also sent you an email containing the link to the address you specified.
-                {% endblocktrans %}</p>
-                <p class="iframe-only">{% blocktrans trimmed %}
-                    Please save the following link if you want to access your request later. We
-                    also sent you an email containing the link to the address you specified.
-                {% endblocktrans %}<br>
-                    <code>{{ url }}</code></p>
                 <div class="clearfix"></div>
             </div>
         {% else %}
