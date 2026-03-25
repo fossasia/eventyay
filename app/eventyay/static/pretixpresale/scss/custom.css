@@ -449,9 +449,9 @@ header .header-row-right {
 }
 
 .thank-you.thank-you-pending .fa {
-    color: var(--color-warning);
+    color: #ffb419;
 }
 
 .thank-you.thank-you-pending h2 {
-    color: var(--color-warning-text);
+    color: #ffb419;
 }
