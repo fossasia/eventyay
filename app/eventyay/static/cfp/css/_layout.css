@@ -570,34 +570,53 @@ footer {
     right: 15px;
     z-index: 1050;
     
+    /* Button for mobile/tablet: compact with icon + text */
     .btn-join-video-icon-only {
-      width: 42px !important;
-      height: 42px !important;
-      min-width: 0 !important;
-      padding: 0 !important;
-      border-radius: 50% !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-      background-color: var(--color-primary) !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 2px 6px;
+      height: 28px;
+      min-width: 0;
+      border-radius: 6px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+      background-color: var(--Color-primary, var(--color-primary));
+      color: white;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    /* Very small screens (phones): make it a compact circular icon-only button */
+    /* Restrict the icon-only behavior to < 320px so 320px devices show the text */
+    @media (max-width: 319px) {
+      .btn-join-video-icon-only {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 50%;
+        border: none;
+      }
+      .btn-join-video-icon-only .join-video-text {
+        display: none;
+      }
+      .btn-join-video-icon-only i {
+        font-size: 0.95rem;
+      }
+    }
+
+    .btn-join-video-icon-only .join-video-text {
+      display: inline-block;
+    }
+
+    .btn-join-video-icon-only:hover, .btn-join-video-icon-only:focus {
+      transform: scale(1.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
       color: white !important;
-      border: 2px solid white !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      
-      i {
-        font-size: 1.15rem;
-        margin: 0 !important;
-        display: block;
-        transform: translateY(-0.5px); /* Minor optical adjustment for video camera icon */
-      }
-      
-      &:hover, &:focus {
-        transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        color: white !important;
-        background-color: var(--color-primary);
-        filter: brightness(1.1);
-      }
+      background-color: var(--color-primary);
+      filter: none;
     }
   }
 
