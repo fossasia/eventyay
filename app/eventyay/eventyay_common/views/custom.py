@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from allauth.account.views import ConfirmEmailView as _ConfirmEmailView
 from allauth.account.views import SignupView as _SignupView
+from django import forms
 from django.conf import settings
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
@@ -9,6 +10,24 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from eventyay.base.models.page import Page
+
+
+class SignupConfirmationForm(forms.Form):
+    confirmation_pages_accepted = forms.BooleanField(required=False)
+
+    def __init__(self, *args, has_required_pages: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.has_required_pages = has_required_pages
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.has_required_pages and not cleaned_data.get('confirmation_pages_accepted'):
+            raise forms.ValidationError(_('You must agree with the required pages before creating an account.'))
+        return cleaned_data
+
+
+def get_confirmation_pages():
+    return Page.objects.filter(confirmation_required=True)
 
 
 class ConfirmEmailView(_ConfirmEmailView):
@@ -58,9 +77,18 @@ class SignupView(_SignupView):
     # Explicitly use the Jinja template override located in jinja-templates/account/
     template_name = 'account/signup.jinja'
 
+    def form_valid(self, form):
+        has_required_pages = get_confirmation_pages().exists()
+        confirmation_form = SignupConfirmationForm(self.request.POST, has_required_pages=has_required_pages)
+        if not confirmation_form.is_valid():
+            for error in confirmation_form.non_field_errors():
+                form.add_error(None, error)
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['confirmation_pages'] = Page.objects.filter(confirmation_required=True)
+        ctx['confirmation_pages'] = get_confirmation_pages()
         # TODO: django-allauth uses the "remember" field; migrate to that (in both login flow and signup flow)
         # instead of posting "keep_logged_in" directly.
         ctx['show_keep_logged_in'] = settings.EVENTYAY_LONG_SESSIONS

@@ -4,5 +4,6 @@
   {%- set attrs = widget.attrs.copy() %}
   {%- set existing = attrs.class if 'class' in attrs else '' %}
   {%- set new_class = (existing ~ ' ' ~ class_name).strip() %}
-  {{ field.as_widget(attrs=attrs.update({'class': new_class}) or attrs) }}
+  {%- set _a = attrs.update({'class': new_class}) %}
+  {{ field.as_widget(attrs=attrs) }}
 {% endmacro %}

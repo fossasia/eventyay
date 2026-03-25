@@ -1,4 +1,4 @@
-/* TailwindCSS-like (v4) utility classes, to used for django-allauth views */
+/* TailwindCSS-like (v4) utility classes, to be used for django-allauth views */
 
 /* Tailwind v4-like gray background and text utilities */
 .bg-gray-50 { background-color: #f9fafb; }
