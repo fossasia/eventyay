@@ -136,6 +136,20 @@ After running ``uv sync``, activate a virtual environment
 
   python manage.py runserver
 
+Running tests locally
+~~~~~~~~~~~~~~~~~~~~~
+
+Always run tests with the project virtual environment interpreter.
+
+.. code-block:: bash
+
+  cd app
+  ./.venv/Scripts/python.exe -m pytest tests/stable/test_healthcheck.py -q
+
+Known limitation (tracked in issue #2988): Some ticket-related tests still import old ``pretix`` namespaces.
+As a result, targeted runs like ``tests/tickets/presale/test_widget.py`` may fail during collection with ``ModuleNotFoundError``.
+These imports need to be migrated to Eventyay modules (or handled through a compatibility layer) before those tests run cleanly in all environments.
+
 Mobile testing note: If you want to test the site from an **Android emulator**, use
 ``http://10.0.2.2:8000/`` (Android's alias for the host machine's localhost).
 
