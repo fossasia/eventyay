@@ -833,8 +833,17 @@ class Schedule(PretalxModel):
 
         include_avatar = self.event.cfp.request_avatar
         speaker_list = []
+        # Prefetch all speaker profiles for this event to avoid N+1 queries
+        from eventyay.base.models import SpeakerProfile
+
+        speaker_profiles = {
+            profile.user_id: profile
+            for profile in SpeakerProfile.objects.filter(
+                event=self.event, user__in=speakers,
+            ).select_related('user')
+        }
         for user in speakers:
-            profile = user.event_profile(self.event)
+            profile = speaker_profiles.get(user.pk) or user.event_profile(self.event)
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,

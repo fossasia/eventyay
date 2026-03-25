@@ -52,7 +52,10 @@ class ScheduleData(BaseExporter):
                 'submission__track',
                 'room',
             )
-            .prefetch_related('submission__speakers')
+            .prefetch_related(
+                'submission__speakers',
+                'submission__resources',
+            )
             .order_by('start')
             .exclude(submission__state='deleted')
         )
@@ -187,6 +190,24 @@ class FrabJsonExporter(ScheduleData):
     icon = 'fa-code'
     cors = '*'
 
+    @cached_property
+    def _speaker_profiles(self):
+        """Prefetch all speaker profiles for this event to avoid N+1 queries."""
+        from eventyay.base.models.profile import SpeakerProfile
+
+        return {
+            profile.user_id: profile
+            for profile in SpeakerProfile.objects.filter(event=self.event)
+            .select_related('user', 'event')
+        }
+
+    def _get_speaker_profile(self, person):
+        """Look up a prefetched speaker profile, falling back to event_profile()."""
+        profile = self._speaker_profiles.get(person.pk)
+        if profile is not None:
+            return profile
+        return person.event_profile(self.event)
+
     def get_data(self, **kwargs):
         schedule = self.schedule
         return {
@@ -229,63 +250,7 @@ class FrabJsonExporter(ScheduleData):
                         'day_end': day['end'].astimezone(self.event.tz).isoformat(),
                         'rooms': {
                             str(room['name']): [
-                                {
-                                    'guid': talk.uuid,
-                                    'code': talk.submission.code,
-                                    'id': talk.submission.id,
-                                    'logo': (talk.submission.urls.image.full() if talk.submission.image else None),
-                                    'date': talk.local_start.isoformat(),
-                                    'start': talk.local_start.strftime('%H:%M'),
-                                    'duration': talk.export_duration,
-                                    'room': localize_event_text(room['name']),
-                                    'slug': talk.frab_slug,
-                                    'url': talk.submission.urls.public.full(),
-                                    'title': localize_event_text(talk.submission.title),
-                                    'subtitle': '',
-                                    'track': (
-                                        localize_event_text(talk.submission.track.name)
-                                        if talk.submission.track
-                                        else None
-                                    ),
-                                    'type': localize_event_text(talk.submission.submission_type.name),
-                                    'language': talk.submission.content_locale,
-                                    'abstract': localize_event_text(talk.submission.abstract),
-                                    'description': localize_event_text(talk.submission.description),
-                                    'recording_license': '',
-                                    'do_not_record': talk.submission.do_not_record,
-                                    'persons': [
-                                        {
-                                            'code': person.code,
-                                            'name': person.get_display_name(),
-                                            'avatar': person.get_avatar_url(self.event) or None,
-                                            'biography': localize_event_text(person.event_profile(self.event).biography),
-                                            'public_name': person.get_display_name(),  # deprecated
-                                            'guid': person.guid,
-                                            'url': person.event_profile(self.event).urls.public.full(),
-                                        }
-                                        for person in talk.submission.speakers.all()
-                                    ],
-                                    'links': [
-                                        {
-                                            'title': localize_event_text(resource.description),
-                                            'url': resource.link,
-                                            'type': 'related',
-                                        }
-                                        for resource in talk.submission.resources.all()
-                                        if resource.link
-                                    ],
-                                    'feedback_url': talk.submission.urls.feedback.full(),
-                                    'origin_url': talk.submission.urls.public.full(),
-                                    'attachments': [
-                                        {
-                                            'title': localize_event_text(resource.description),
-                                            'url': resource.resource.url,
-                                            'type': 'related',
-                                        }
-                                        for resource in talk.submission.resources.all()
-                                        if not resource.link
-                                    ],
-                                }
+                                self._serialize_talk(talk, room)
                                 for talk in room['talks']
                                 if (self.favs_retrieve is True and talk.submission.code in self.talk_ids)
                                 or not self.favs_retrieve
@@ -296,6 +261,67 @@ class FrabJsonExporter(ScheduleData):
                     for day in self.data
                 ],
             },
+        }
+
+    def _serialize_talk(self, talk, room):
+        resources = list(talk.submission.resources.all())
+        persons = []
+        for person in talk.submission.speakers.all():
+            profile = self._get_speaker_profile(person)
+            persons.append({
+                'code': person.code,
+                'name': person.get_display_name(),
+                'avatar': person.get_avatar_url(self.event) or None,
+                'biography': localize_event_text(profile.biography),
+                'public_name': person.get_display_name(),  # deprecated
+                'guid': person.guid,
+                'url': profile.urls.public.full(),
+            })
+        return {
+            'guid': talk.uuid,
+            'code': talk.submission.code,
+            'id': talk.submission.id,
+            'logo': (talk.submission.urls.image.full() if talk.submission.image else None),
+            'date': talk.local_start.isoformat(),
+            'start': talk.local_start.strftime('%H:%M'),
+            'duration': talk.export_duration,
+            'room': localize_event_text(room['name']),
+            'slug': talk.frab_slug,
+            'url': talk.submission.urls.public.full(),
+            'title': localize_event_text(talk.submission.title),
+            'subtitle': '',
+            'track': (
+                localize_event_text(talk.submission.track.name)
+                if talk.submission.track
+                else None
+            ),
+            'type': localize_event_text(talk.submission.submission_type.name),
+            'language': talk.submission.content_locale,
+            'abstract': localize_event_text(talk.submission.abstract),
+            'description': localize_event_text(talk.submission.description),
+            'recording_license': '',
+            'do_not_record': talk.submission.do_not_record,
+            'persons': persons,
+            'links': [
+                {
+                    'title': localize_event_text(resource.description),
+                    'url': resource.link,
+                    'type': 'related',
+                }
+                for resource in resources
+                if resource.link
+            ],
+            'feedback_url': talk.submission.urls.feedback.full(),
+            'origin_url': talk.submission.urls.public.full(),
+            'attachments': [
+                {
+                    'title': localize_event_text(resource.description),
+                    'url': resource.resource.url,
+                    'type': 'related',
+                }
+                for resource in resources
+                if not resource.link
+            ],
         }
 
     def render(self, **kwargs):
