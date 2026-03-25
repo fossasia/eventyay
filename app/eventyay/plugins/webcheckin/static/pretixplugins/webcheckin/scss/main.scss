@@ -209,6 +209,17 @@ a.searchresult {
   overflow: auto;
 }
 
+/* 🔥 2nd PR FIX: TEXT OVERFLOW */
+.panel-body {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.panel-body a {
+  word-break: break-all;
+}
+
 @-webkit-keyframes blinking {
   0%, 49% {
     background-color: $brand-primary;
@@ -228,7 +239,7 @@ a.searchresult {
   margin-left: 10px;
 }
 
-/* 📱 MOBILE FIX (REVIEW SAFE) */
+/* 📱 MOBILE FIX */
 @media (max-width: 768px) {
   .modal-dialog {
     width: 95%;
