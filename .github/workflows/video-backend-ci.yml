@@ -18,7 +18,7 @@ env:
 jobs:
   python-uv-check:
     name: Backend validation (uv + Django checks)
-    # Pin to a specific Ubuntu LTS so package versions stay deterministic.
+    # Pin to a specific Ubuntu LTS to reduce runner drift; APT package versions may still change over time.
     runs-on: ubuntu-24.04
     # Most service and app config is read from eventyay.testing.toml via EVY_RUNNING_ENVIRONMENT=testing.
     # PostgreSQL uses EVY_POSTGRES_* env vars in other jobs, and Redis uses the code default (redis://localhost/0).
