@@ -299,7 +299,8 @@
   .email-confirm-container,
   .password-reset-container,
   .password-reset-done-container,
-  .email-confirm-success-container {
+  .email-confirm-success-container,
+  .signup-container {
     margin: 1rem auto;
     padding: 1rem;
   }
