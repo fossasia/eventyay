@@ -447,3 +447,11 @@ header .header-row-right {
 .panel-primary>summary.panel-heading .panel-title * {
     color: #fff;
 }
+
+.thank-you.thank-you-pending .fa {
+    color: var(--color-warning);
+}
+
+.thank-you.thank-you-pending h2 {
+    color: var(--color-warning-text);
+}
