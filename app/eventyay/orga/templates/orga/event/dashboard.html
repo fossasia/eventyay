@@ -68,17 +68,12 @@
                 <div class="dashboard-live-text">
                     {% translate "Your talk component is currently" %}
                 </div>
-                {% if request.event.is_public %}
-                    <div class="dashboard-live text-success">
-                        <i class="fa fa-check-circle"></i>
-                        {% translate "live" %}
+                {% with talk_status=request.event.talk_component_presale_status %}
+                    <div class="dashboard-live {{ talk_status.text_class }}">
+                        <i class="fa {{ talk_status.icon }}"></i>
+                        {{ talk_status.text }}
                     </div>
-                {% else %}
-                    <div class="dashboard-live text-danger">
-                        <i class="fa fa-times-circle"></i>
-                        {% translate "not live" %}
-                    </div>
-                {% endif %}
+                {% endwith %}
                 <div class="dashboard-live-text">
                     {% translate "Click here to change" %}
                 </div>

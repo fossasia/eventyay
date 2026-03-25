@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-17 16:16+0000\n"
+"PO-Revision-Date: 2026-03-21 17:10+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Vietnamese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/vi/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.16.1-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -234,16 +234,12 @@ msgid "This speaker also appears in:"
 msgstr "Diễn giả này cũng thuyết trình ở phiên:"
 
 #: agenda/views/schedule.py:200
-#, fuzzy
-#| msgid "Show featured sessions"
 msgid "No published sessions."
-msgstr "Hiển thị các phiên nổi bật"
+msgstr "Không có phiên đã xuất bản."
 
 #: agenda/views/schedule.py:201
-#, fuzzy
-#| msgid "New schedule!"
 msgid "No published schedule."
-msgstr "Lịch hội thảo mới!"
+msgstr "Không có lịch trình đã xuất bản."
 
 #: agenda/views/schedule.py:206
 msgid "Our schedule is not live yet."
@@ -262,10 +258,8 @@ msgid "Your favourites could only be saved locally in your browser."
 msgstr "Các phiên yêu thích chỉ có thể lưu ở trình duyệt trên máy tính này."
 
 #: agenda/views/speaker.py:37 agenda/views/speaker.py:65
-#, fuzzy
-#| msgid "Confirmed speakers"
 msgid "No published speakers."
-msgstr "Diễn giả đã xác nhận"
+msgstr "Không có diễn giả đã xuất bản."
 
 #: agenda/views/talk.py:152
 #, python-brace-format
@@ -281,10 +275,8 @@ msgstr ""
 "đọc sản phẩm và cài đặt)"
 
 #: api/auth/devicesecurity.py:27
-#, fuzzy
-#| msgid "eventyay documentation"
 msgid "eventyay_checkin"
-msgstr "Tài liệu hướng dẫn eventyay"
+msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
 msgid "eventyay_checkin (kiosk mode, online only)"
@@ -725,10 +717,8 @@ msgstr ""
 "địa chỉ email này."
 
 #: base/configurations/default_setting.py:202
-#, fuzzy
-#| msgid "Enter one email address per line."
 msgid "Require email address per order"
-msgstr "Nhập một địa chỉ email trên mỗi dòng."
+msgstr "Yêu cầu địa chỉ email cho mỗi đơn hàng"
 
 #: base/configurations/default_setting.py:203
 msgid "Require attendees to fill in an email address for the order."
@@ -1300,22 +1290,16 @@ msgid "Active languages"
 msgstr "Ngôn ngữ đang dùng"
 
 #: base/configurations/default_setting.py:880 control/forms/event.py:67
-#, fuzzy
-#| msgid ""
-#| "Users will be able to use eventyay in these languages, and you will be "
-#| "able to provide all texts in these languages. If you don’t provide a text "
-#| "in the language a user selects, it will be shown in your event’s default "
-#| "language instead."
 msgid ""
 "Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don't provide a text in the "
 "language a user selects, it will be shown in your event's default language "
 "instead."
 msgstr ""
-"Người dùng sẽ có thể sử dụng eventyay bằng các ngôn ngữ này và quý vị sẽ có "
-"thể cung cấp tất cả các văn bản bằng các ngôn ngữ này. Nếu quý vị không cung "
-"cấp văn bản bằng ngôn ngữ mà người dùng chọn, văn bản đó sẽ được hiển thị "
-"bằng ngôn ngữ mặc định của sự kiện."
+"Người dùng sẽ có thể sử dụng eventyay bằng các ngôn ngữ này, và có thể cung "
+"cấp toàn bộ văn bản bằng các ngôn ngữ này. Nếu không cung cấp văn bản bằng "
+"ngôn ngữ người dùng chọn, nội dung sẽ được hiển thị bằng ngôn ngữ mặc định "
+"của sự kiện."
 
 #: base/configurations/default_setting.py:899 control/forms/event.py:74
 msgid "Content languages"
@@ -2816,10 +2800,8 @@ msgid "Displayed as the background image on the public start page."
 msgstr "Hiển thị làm ảnh nền trên trang bắt đầu công khai."
 
 #: base/configurations/default_setting.py:2554
-#, fuzzy
-#| msgid "Frontpage header pattern"
 msgid "Start page header text"
-msgstr "Mẫu tiêu đề trang đầu"
+msgstr "Văn bản tiêu đề đầu trang"
 
 #: base/configurations/default_setting.py:2556
 msgid "Short text displayed on the public start page banner."
@@ -4007,25 +3989,25 @@ msgstr "Đã hết hạn"
 
 #: base/exporters/orderlist.py:1176 base/models/giftcards.py:64
 msgid "Test mode card"
-msgstr ""
+msgstr "Thẻ chế độ kiểm thử"
 
 #: base/exporters/orderlist.py:1178 base/models/auth_token.py:67
 #: base/models/giftcards.py:65
 #: control/templates/pretixcontrol/order/index.html:183
 #: control/templates/pretixcontrol/organizers/giftcards.html:52
 msgid "Expiry date"
-msgstr ""
+msgstr "Ngày hết hạn"
 
 #: base/exporters/orderlist.py:1179 control/forms/orders.py:648
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "Điều khoản và điều kiện đặc biệt"
 
 #: base/exporters/orderlist.py:1180
 #: control/templates/pretixcontrol/boxoffice/payment.html:37
 #: control/templates/pretixcontrol/organizers/giftcard.html:34
 #: plugins/banktransfer/refund_export.py:29
 msgid "Currency"
-msgstr ""
+msgstr "Tiền tệ"
 
 #: base/exporters/orderlist.py:1181
 #: control/templates/pretixcontrol/order/change.html:94
@@ -4033,60 +4015,60 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/giftcard.html:32
 #: control/templates/pretixcontrol/organizers/giftcards.html:55
 msgid "Current value"
-msgstr ""
+msgstr "Giá trị hiện tại"
 
 #: base/exporters/orderlist.py:1182
 msgid "Created in order"
-msgstr ""
+msgstr "Được tạo trong đơn hàng"
 
 #: base/exporters/orderlist.py:1183
 msgid "Last invoice number of order"
-msgstr ""
+msgstr "Số hóa đơn gần nhất của đơn hàng"
 
 #: base/exporters/orderlist.py:1184
 msgid "Last invoice date of order"
-msgstr ""
+msgstr "Ngày hóa đơn gần nhất của đơn hàng"
 
 #: base/exporters/waitinglist.py:26
 #: control/templates/pretixcontrol/waitinglist/index.html:94
 msgid "All entries"
-msgstr ""
+msgstr "Tất cả bản ghi"
 
 #: base/exporters/waitinglist.py:29
 #: control/templates/pretixcontrol/waitinglist/index.html:97
 msgid "Waiting for a voucher"
-msgstr ""
+msgstr "Đang chờ phiếu quà tặng"
 
 #: base/exporters/waitinglist.py:34
 #: control/templates/pretixcontrol/waitinglist/index.html:99
 #: control/templates/pretixcontrol/waitinglist/index.html:194
 #: control/views/waitinglist.py:264
 msgid "Voucher assigned"
-msgstr ""
+msgstr "Đã gán phiếu quà tặng"
 
 #: base/exporters/waitinglist.py:39
 #: control/templates/pretixcontrol/waitinglist/index.html:102
 msgid "Waiting for redemption"
-msgstr ""
+msgstr "Đang chờ đổi"
 
 #: base/exporters/waitinglist.py:47
 #: control/templates/pretixcontrol/waitinglist/index.html:190
 #: control/views/waitinglist.py:260
 msgid "Voucher redeemed"
-msgstr ""
+msgstr "Đã đổi phiếu quà tặng"
 
 #: base/exporters/waitinglist.py:55
 #: control/templates/pretixcontrol/waitinglist/index.html:108
 #: control/templates/pretixcontrol/waitinglist/index.html:192
 #: control/views/waitinglist.py:262
 msgid "Voucher expired"
-msgstr ""
+msgstr "Phiếu quà tặng đã hết hạn"
 
 #: base/exporters/waitinglist.py:88 base/models/product.py:282 base/pdf.py:81
 #: control/forms/event.py:1533
 #: control/templates/pretixcontrol/items/index.html:40
 msgid "Product name"
-msgstr ""
+msgstr "Tên sản phẩm"
 
 #: base/exporters/waitinglist.py:91 base/models/event.py:571 base/pdf.py:241
 #: control/forms/filter.py:803 control/forms/filter.py:804
@@ -4097,17 +4079,17 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/detail.html:49
 #: eventyay_common/templates/eventyay_common/events/index.html:55
 msgid "Event name"
-msgstr ""
+msgstr "Tên sự kiện"
 
 #: base/exporters/waitinglist.py:92 base/orderimport.py:149
 #: control/templates/pretixcontrol/checkin/index.html:72
 msgctxt "subevents"
 msgid "Date"
-msgstr ""
+msgstr "Ngày"
 
 #: base/exporters/waitinglist.py:96 control/views/waitinglist.py:246
 msgid "Priority"
-msgstr ""
+msgstr "Ưu tiên"
 
 #: base/exporters/waitinglist.py:98 base/models/vouchers.py:101
 #: base/models/vouchers.py:539
@@ -4121,20 +4103,15 @@ msgstr ""
 #: presale/templates/pretixpresale/event/index.html:336
 #: presale/templates/pretixpresale/event/index.html:340
 msgid "Voucher code"
-msgstr ""
+msgstr "Mã phiếu quà tặng"
 
 #: base/forms/__init__.py:156
-#, fuzzy
-#| msgctxt "Allows users to select how many lines/elements are shown in lists."
-#| msgid "Show per page:"
 msgid "Show secret key"
-msgstr "Hiển thị trên mỗi trang:"
+msgstr "Hiển thị khóa bí mật"
 
 #: base/forms/__init__.py:157
-#, fuzzy
-#| msgid "Hide schedule"
 msgid "Hide secret key"
-msgstr "Ẩn lịch hội thảo"
+msgstr "Ẩn khóa bí mật"
 
 #: base/forms/auth.py:17
 msgid ""
@@ -4147,7 +4124,7 @@ msgstr ""
 #: base/forms/auth.py:43 base/forms/auth.py:153
 #: presale/templates/pretixpresale/fragment_modals.html:97
 msgid "Keep me logged in"
-msgstr ""
+msgstr "Giữ đăng nhập"
 
 #: base/forms/auth.py:46 base/forms/auth.py:242
 msgid "This combination of credentials is not known to our system."
@@ -4662,10 +4639,8 @@ msgstr ""
 "thể lấy ảnh đại diện của bạn từ đó."
 
 #: base/models/auth.py:263 orga/templates/orga/submission/speakers.html:41
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile Picture Source"
-msgstr "Ảnh hồ sơ"
+msgstr "Nguồn ảnh hồ sơ"
 
 #: base/models/auth.py:264
 msgid ""
@@ -4675,10 +4650,8 @@ msgstr ""
 "Vui lòng nhập tên tác giả hoặc nguồn của hình ảnh và kèm liên kết nếu có."
 
 #: base/models/auth.py:269 orga/templates/orga/submission/speakers.html:47
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile Picture License"
-msgstr "Ảnh hồ sơ"
+msgstr "Giấy phép ảnh hồ sơ"
 
 #: base/models/auth.py:270
 msgid ""
@@ -4785,10 +4758,8 @@ msgid "Events"
 msgstr "Sự kiện"
 
 #: base/models/auth_token.py:69
-#, fuzzy
-#| msgid "Installed version"
 msgid "API version"
-msgstr "Phiên bản cài đặt"
+msgstr "Phiên bản API"
 
 #: base/models/billing.py:20 base/models/orders.py:166
 #: orga/templates/orga/review/dashboard.html:279
@@ -4996,16 +4967,12 @@ msgid "Visible on start page"
 msgstr "Hiển thị trên trang bắt đầu"
 
 #: base/models/event.py:596
-#, fuzzy
-#| msgid "Featured sessions text"
 msgid "Featured on start page"
-msgstr "Thông tin các phiên nổi bật"
+msgstr "Nổi bật trên trang bắt đầu"
 
 #: base/models/event.py:597
-#, fuzzy
-#| msgid "New schedule published"
 msgid "Tickets are published"
-msgstr "Lịch mới của hội thảo được công bố"
+msgstr "Vé đã được công bố"
 
 #: base/models/event.py:598
 msgid "Talk pages are published"
@@ -5118,10 +5085,8 @@ msgstr ""
 #: base/models/event.py:685 control/forms/event.py:223
 #: control/forms/event.py:384 event/forms.py:279
 #: eventyay_common/forms/event.py:94
-#, fuzzy
-#| msgid "Organiser email address"
 msgid "Organizer email address"
-msgstr "Email của Ban Tổ chức"
+msgstr "Địa chỉ email của ban tổ chức"
 
 #: base/models/event.py:686
 msgid "Will be used as Reply-To in emails."
@@ -5909,14 +5874,9 @@ msgid "Nobody on your teams has the permission to create new events."
 msgstr "Không ai trong nhóm của quý vị có quyền tạo hội thảo mới."
 
 #: base/models/organizer.py:65
-#, fuzzy
-#| msgid ""
-#| "Nobody on your teams has the permission to change organiser-level "
-#| "settings."
 msgid ""
 "Nobody on your teams has the permission to change organizer-level settings."
-msgstr ""
-"Không ai trong nhóm của quý vị có quyền thay đổi cài đặt ở cấp Ban tổ chức."
+msgstr "Không ai trong các nhóm có quyền thay đổi cài đặt cấp ban tổ chức."
 
 #: base/models/organizer.py:76
 #, python-brace-format
@@ -6174,10 +6134,8 @@ msgid "Allows managing kiosk displays inside Eventyay Video."
 msgstr "Cho phép quản lý màn hình kiosk trong Eventyay Video."
 
 #: base/models/organizer.py:492
-#, fuzzy
-#| msgid "Could not send mails, error in configuration."
 msgid "Video: Can edit event configuration"
-msgstr "Không thể gửi email, lỗi cấu hình."
+msgstr "Video: Có thể chỉnh sửa cấu hình sự kiện"
 
 #: base/models/organizer.py:493
 msgid "Allows editing the global Eventyay Video configuration."
@@ -6189,16 +6147,7 @@ msgid "Invite to team '{team}' for '{email}'"
 msgstr "Mời vào nhóm '{team}' cho '{email}'"
 
 #: base/models/organizer.py:548
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi!\n"
-#| "You have been invited to the {name} event organiser team - Please click "
-#| "here to accept:\n"
-#| "\n"
-#| "{invitation_link}\n"
-#| "\n"
-#| "See you there,\n"
-#| "The {organiser} team"
+#, python-brace-format
 msgid ""
 "Hi!\n"
 "You have been invited to the {name} event organizer team - Please click here "
@@ -6210,19 +6159,17 @@ msgid ""
 "The {organizer} team"
 msgstr ""
 "Xin chào!\n"
-"Quý vị đã được mời tham gia một nhóm thuộc Ban tổ chức hội thảo {name} - Vui "
-"lòng nhấp vào đây để chấp nhận:\n"
+"Đã được mời tham gia nhóm ban tổ chức sự kiện {name} - Vui lòng nhấp vào đây "
+"để chấp nhận:\n"
 "\n"
 "{invitation_link}\n"
 "\n"
-"Rất mong được chào đón quý vị,\n"
-"Nhóm {organiser}"
+"Hẹn gặp lại,\n"
+"Nhóm {organizer}"
 
 #: base/models/organizer.py:560
-#, fuzzy
-#| msgid "You have been invited to an organiser team"
 msgid "You have been invited to an organizer team"
-msgstr "Quý vị được mời tham dự một nhóm thuộc Ban Tổ chức"
+msgstr "Đã được mời vào nhóm ban tổ chức"
 
 #: base/models/organizer.py:682
 #: control/forms/organizer_forms/organizer_form.py:53
@@ -6655,10 +6602,8 @@ msgid "The product's tax rule must belong to the same event as the product."
 msgstr "Quy tắc thuế của sản phẩm phải thuộc cùng sự kiện với sản phẩm."
 
 #: base/models/product.py:695
-#, fuzzy
-#| msgid "The event end cannot be before the start."
 msgid "The product's availability cannot end before it starts."
-msgstr "Sự kiện không thể kết thúc trước khi bắt đầu."
+msgstr "Thời gian kết thúc cung cấp sản phẩm không thể trước thời gian bắt đầu."
 
 #: base/models/product.py:735
 msgid "This is shown below the variation name in lists."
@@ -6815,10 +6760,8 @@ msgstr "Trường văn bản"
 #: control/templates/pretixcontrol/items/question_edit.html:10
 #: control/templates/pretixcontrol/items/question_edit.html:20
 #: control/templates/pretixcontrol/items/questions.html:31
-#, fuzzy
-#| msgid "Custom Mail"
 msgid "Custom Field"
-msgstr "Email tuỳ chỉnh"
+msgstr "Trường tùy chỉnh"
 
 #: base/models/product.py:1161
 msgid ""
@@ -6847,10 +6790,8 @@ msgid "Type"
 msgstr "Loại"
 
 #: base/models/product.py:1187
-#, fuzzy
-#| msgid "Hide field"
 msgid "Required field"
-msgstr "Ẩn trường"
+msgstr "Trường bắt buộc"
 
 #: base/models/product.py:1193
 msgid "This question will be asked to buyers of the selected products"
@@ -6865,10 +6806,8 @@ msgid "Not supported by all check-in apps for all question types."
 msgstr "Không phải tất cả ứng dụng check-in đều hỗ trợ mọi loại câu hỏi."
 
 #: base/models/product.py:1202 control/forms/product.py:82
-#, fuzzy
-#| msgid "Hide field"
 msgid "Hidden field"
-msgstr "Ẩn trường"
+msgstr "Trường ẩn"
 
 #: base/models/product.py:1204
 msgid ""
@@ -7082,10 +7021,8 @@ msgid "URL"
 msgstr "URL"
 
 #: base/models/question.py:52
-#, fuzzy
-#| msgid "Confirm deletion"
 msgid "Confirmation"
-msgstr "Xác nhận xoá"
+msgstr "Xác nhận"
 
 #: base/models/question.py:65
 msgid "per proposal"
@@ -7112,10 +7049,8 @@ msgid "required after a deadline"
 msgstr "bắt buộc sau hạn chót"
 
 #: base/models/question.py:133
-#, fuzzy
-#| msgid "New type"
 msgid "Field type"
-msgstr "Loại mới"
+msgstr "Loại trường"
 
 #: base/models/question.py:134
 msgid "Do you require an answer from every speaker or for every session?"
@@ -7134,20 +7069,15 @@ msgid "Set a deadline to stop changes to responses after the given date."
 msgstr "Đặt hạn chót để ngăn thay đổi phản hồi sau ngày đã chỉ định."
 
 #: base/models/question.py:152
-#, fuzzy
-#| msgid "required"
 msgid "Field required"
-msgstr "bắt buộc"
+msgstr "Bắt buộc nhập"
 
 #: base/models/question.py:157
-#, fuzzy
-#| msgid ""
-#| "You can limit the days shown in the widget. Leave empty to show all days."
 msgid ""
 "You can limit this field to some tracks. Leave empty to apply to all tracks."
 msgstr ""
-"Quý vị có thể giới hạn số ngày hiển thị trong tiện ích. Để trống để hiển thị "
-"tất cả các ngày."
+"Có thể giới hạn trường này cho một số track. Để trống để áp dụng cho tất cả "
+"track."
 
 #: base/models/question.py:158 orga/forms/mails.py:426
 #: orga/templates/orga/base.html:269
@@ -7157,26 +7087,20 @@ msgid "Tracks"
 msgstr "Kênh"
 
 #: base/models/question.py:164
-#, fuzzy
-#| msgid ""
-#| "You can limit the days shown in the widget. Leave empty to show all days."
 msgid ""
 "You can limit this field to some session types. Leave empty to apply to all "
 "session types."
 msgstr ""
-"Quý vị có thể giới hạn số ngày hiển thị trong tiện ích. Để trống để hiển thị "
-"tất cả các ngày."
+"Có thể giới hạn trường này cho một số loại phiên. Để trống để áp dụng cho "
+"tất cả loại phiên."
 
 #: base/models/question.py:165
 msgid "Session Types"
 msgstr "Loại phiên"
 
 #: base/models/question.py:168 orga/forms/cfp.py:284
-#, fuzzy
-#| msgctxt "Type of plugin"
-#| msgid "Customizations"
 msgid "Custom question"
-msgstr "Tuỳ biến"
+msgstr "Câu hỏi tùy chỉnh"
 
 #: base/models/question.py:173
 msgid "help text"
@@ -7466,20 +7390,7 @@ msgstr ""
 "luận này được thuyết trình hoặc không nên được thuyết trình tại hội thảo."
 
 #: base/models/settings.py:71
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi,\n"
-#| "\n"
-#| "we hope you’re happy with eventyay as your event’s CfP system.\n"
-#| "These links may be helpful in the coming days and weeks:\n"
-#| "\n"
-#| "- Your event’s dashboard: {event_dashboard}\n"
-#| "- A list of proposals: {event_submissions}\n"
-#| "- Your schedule editor: {event_schedule}\n"
-#| "\n"
-#| "If there is anything you’re missing, come tell us about it\n"
-#| "at https://github.com/eventyay/eventyay/issues/new or via an\n"
-#| "email to support@eventyay.com!\n"
+#, python-brace-format
 msgid ""
 "Hi,\n"
 "\n"
@@ -7493,18 +7404,17 @@ msgid ""
 "If there is anything you’re missing, please contact us via our website on "
 "eventyay.com.\n"
 msgstr ""
-"Kính thưa quý vị,\n"
+"Xin chào,\n"
 "\n"
-"Chúng tôi hy vọng rằng quý vị hài lòng với Hệ thống phần mềm quản trị hội "
-"thảo Eventyay. Những đường dẫn sau có thể hữu ích trong thời gian tới:\n"
+"Hy vọng eventyay đang đáp ứng nhu cầu của sự kiện với tư cách là hệ thống "
+"CfP.\n"
+"Các liên kết sau có thể hữu ích trong vài ngày và tuần tới:\n"
 "\n"
-"- Bảng điều khiển hội thảo: {event_dashboard}\n"
-"- Danh mục đề xuất tham luận: {event_submissions}\n"
-"- Soạn lịch hội thảo: {event_schedule}\n"
+"- Bảng điều khiển sự kiện: {event_dashboard}\n"
+"- Danh sách đề xuất: {event_submissions}\n"
+"- Trình chỉnh sửa lịch trình: {event_schedule}\n"
 "\n"
-"Nếu còn thấy thiếu chức năng nào, vui lòng cho chúng tôi biết tại đường dẫn "
-"https://github.com/eventyay/eventyay/issues/new hoặc qua\n"
-"email support@eventyay.com!\n"
+"Nếu còn thiếu thông tin nào, vui lòng liên hệ qua website tại eventyay.com.\n"
 
 #: base/models/settings.py:90
 #, python-brace-format
@@ -7539,23 +7449,7 @@ msgstr ""
 "  {event_schedule}\n"
 
 #: base/models/settings.py:112
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi,\n"
-#| "\n"
-#| "congratulations, your event is over! Hopefully it went well. Here are "
-#| "some\n"
-#| "statistics you might find interesting:\n"
-#| "\n"
-#| "- You had {submission_count} proposals,\n"
-#| "- Of which you selected {talk_count} sessions.\n"
-#| "- The reviewers wrote {review_count} reviews.\n"
-#| "- You released {schedule_count} schedules in total.\n"
-#| "- Over the course of the event, you sent {mail_count} mails.\n"
-#| "\n"
-#| "If there is anything you’re missing, come tell us about it\n"
-#| "at https://github.com/eventyay/eventyay/issues/new or via an\n"
-#| "email to support@eventyay.com!\n"
+#, python-brace-format
 msgid ""
 "Hi,\n"
 "\n"
@@ -7573,19 +7467,16 @@ msgid ""
 msgstr ""
 "Xin chào,\n"
 "\n"
-"Xin chúc mừng, hội thảo của quý vị đã kết thúc! Hy vọng hội thảo diễn ra "
-"thành công tốt đẹp. Dưới đây là một số thống kê có thể quý vị quan tâm:\n"
+"Chúc mừng, sự kiện đã kết thúc! Hy vọng mọi việc đã diễn ra tốt đẹp. Dưới "
+"đây là một vài thống kê có thể hữu ích:\n"
 "\n"
-"- Hội thảo nhận được {submission_count} đề xuất tham luận,\n"
-"- Trong đó có {talk_count} đề xuất được lựa chọn thành các phiên hội thảo.\n"
-"- Hội đồng bình duyệt đã thực hiện {review_count} đánh giá.\n"
-"- Ban Tổ chức đã công bố tổng số {schedule_count} lịch hội thảo.\n"
-"- Trong suốt thời gian chuẩn bị và diễn ra hội thảo, Ban Tổ chức gửi ra "
-"{mail_count} email.\n"
+"- Có {submission_count} đề xuất,\n"
+"- Trong đó đã chọn {talk_count} phiên.\n"
+"- Người đánh giá đã viết {review_count} bài đánh giá.\n"
+"- Đã phát hành tổng cộng {schedule_count} lịch trình.\n"
+"- Trong suốt sự kiện, đã gửi {mail_count} email.\n"
 "\n"
-"Nếu còn thiếu loại thông tin nào cần thiết, quý vị có thể góp ý với chúng "
-"tôi tại địa chỉ https://github.com/eventyay/eventyay/issues/new hoặc qua\n"
-"email support@eventyay.com!\n"
+"Nếu còn thiếu thông tin nào, vui lòng liên hệ qua website tại eventyay.com.\n"
 
 #: base/models/slot.py:47 orga/views/schedule.py:514
 msgid "Room"
@@ -7593,27 +7484,27 @@ msgstr "Phòng"
 
 #: base/models/slot.py:48
 msgid "The room this talk is scheduled in, if any"
-msgstr ""
+msgstr "Phòng mà bài nói chuyện này được lên lịch, nếu có"
 
 #: base/models/slot.py:56 control/templates/control/event_create.html:21
 #: control/templates/control/event_update.html:27
 #: features/analytics/graphs/report.py:401
 msgid "Start"
-msgstr ""
+msgstr "Bắt đầu"
 
 #: base/models/slot.py:57
 msgid "When the talk starts, if it is currently scheduled"
-msgstr ""
+msgstr "Thời điểm bài nói chuyện bắt đầu, nếu hiện đang được lên lịch"
 
 #: base/models/slot.py:61 control/templates/control/event_create.html:22
 #: control/templates/control/event_update.html:28
 #: features/analytics/graphs/report.py:401
 msgid "End"
-msgstr ""
+msgstr "Kết thúc"
 
 #: base/models/slot.py:62
 msgid "When the talk ends, if it is currently scheduled"
-msgstr ""
+msgstr "Thời điểm bài nói chuyện kết thúc, nếu hiện đang được lên lịch"
 
 #: base/models/submission.py:76 submission/phrases.py:13
 msgctxt "proposal status"
@@ -8740,10 +8631,8 @@ msgid "You cannot pay with gift cards when buying a gift card."
 msgstr "Bạn không thể thanh toán bằng thẻ quà tặng khi mua thẻ quà tặng."
 
 #: base/payment.py:1259 base/payment.py:1345
-#, fuzzy
-#| msgid "Please enter at least one email address!"
 msgid "Please enter a gift card code."
-msgstr "Vui lòng nhập ít nhất một địa chỉ email!"
+msgstr "Vui lòng nhập mã thẻ quà tặng."
 
 #: base/payment.py:1265 base/payment.py:1351 base/payment.py:1403
 #: base/services/orders.py:960
@@ -10012,12 +9901,8 @@ msgstr ""
 "Ngôn ngữ mặc định của bạn cũng phải được bật cho sự kiện (xem ô ở trên)."
 
 #: base/settings.py:151 control/forms/event.py:131
-#, fuzzy
-#| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
-msgstr ""
-"Ngôn ngữ mặc định của quý vị phải là một trong những ngôn ngữ đang được sử "
-"dụng."
+msgstr "Ngôn ngữ nội dung phải là tập con của các ngôn ngữ đang hoạt động."
 
 #: base/settings.py:155
 msgid ""
@@ -10344,25 +10229,19 @@ msgid "Download ticket"
 msgstr "Tải vé"
 
 #: base/timeline.py:43
-#, fuzzy
-#| msgid "Event History"
 msgctxt "timeline"
 msgid "Event starts"
-msgstr "Lịch sử hội thảo"
+msgstr "Sự kiện bắt đầu"
 
 #: base/timeline.py:54
-#, fuzzy
-#| msgid "Event History"
 msgctxt "timeline"
 msgid "Event ends"
-msgstr "Lịch sử hội thảo"
+msgstr "Sự kiện kết thúc"
 
 #: base/timeline.py:65
-#, fuzzy
-#| msgid "Limit permissions to these events"
 msgctxt "timeline"
 msgid "Admissions for the event start"
-msgstr "Giới hạn quyền trong những hội thảo sau"
+msgstr "Bán vé bắt đầu"
 
 #: base/timeline.py:76
 msgctxt "timeline"
@@ -10506,14 +10385,12 @@ msgstr ""
 "chóng."
 
 #: cfp/flow.py:485
-#, fuzzy
-#| msgid ""
-#| "There was an error when logging in. Please contact the organiser for "
-#| "further help."
 msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
-msgstr "Có lỗi khi đăng nhập. Vui lòng liên hệ với Ban Tổ chức để được hỗ trợ."
+msgstr ""
+"Đã xảy ra lỗi khi đăng nhập. Vui lòng liên hệ ban tổ chức để được hỗ trợ "
+"thêm."
 
 #: cfp/flow.py:491 common/templates/common/base.html:151
 #: common/templates/common/fragment_header_user.html:101
@@ -10719,10 +10596,8 @@ msgid "This Call for Papers closed on %(deadline)s (%(timezone)s)."
 msgstr "Thông báo Nộp bài đã hết hạn vào ngày %(deadline)s (%(timezone)s)."
 
 #: cfp/templates/cfp/event/cfp.html:60
-#, fuzzy
-#| msgid "Speaker email"
 msgid "View or edit speaker profile"
-msgstr "Email của diễn giả"
+msgstr "Xem hoặc chỉnh sửa hồ sơ diễn giả"
 
 #: cfp/templates/cfp/event/cfp.html:67
 msgid "Submit a proposal"
@@ -10797,20 +10672,15 @@ msgstr ""
 "thể sử dụng lại tài khoản của mình để đăng nhập vào sự kiện này."
 
 #: cfp/templates/cfp/event/login.html:15
-#, fuzzy
-#| msgid ""
-#| "You do not need an account to view the event, or submit feedback, or "
-#| "receive schedule updates. You’ll only need an account if you participate "
-#| "in the event as speaker or as an organiser."
 msgid ""
 "You do not need an account to view the event, submit feedback, or receive "
 "schedule updates. An account is only necessary if you want to create your "
 "own personalized schedule, or if you are participating in the event as a "
 "speaker or organizer."
 msgstr ""
-"Quý vị không cần tài khoản để xem sự kiện, gửi phản hồi hoặc nhận thông tin "
-"cập nhật về chương trình hội thảo. Quý vị chỉ cần tài khoản nếu quý vị tham "
-"gia sự kiện với tư cách là diễn giả hoặc thành viên Ban Tổ chức."
+"Không cần tài khoản để xem sự kiện, gửi phản hồi hoặc nhận cập nhật lịch "
+"trình. Tài khoản chỉ cần thiết nếu muốn tạo lịch trình cá nhân, hoặc nếu "
+"tham gia sự kiện với vai trò diễn giả hoặc ban tổ chức."
 
 #: cfp/templates/cfp/event/recover.html:25
 msgid "Set your password to access your profile and proposals"
@@ -10827,11 +10697,11 @@ msgstr "Hoàn thành!"
 
 #: cfp/templates/cfp/event/submission_base.html:56
 msgid "Previously uploaded files:"
-msgstr ""
+msgstr "Tệp đã tải lên trước đó:"
 
 #: cfp/templates/cfp/event/submission_base.html:59
 msgid "(will be preserved if you don't upload a new file)"
-msgstr ""
+msgstr "(được giữ nguyên nếu không tải tệp mới)"
 
 #: cfp/templates/cfp/event/submission_base.html:71
 msgid "Save as draft"
@@ -10875,25 +10745,17 @@ msgstr ""
 "nhở về thời hạn sắp tới."
 
 #: cfp/templates/cfp/event/submission_base.html:100
-#, fuzzy
-#| msgid "You have been assigned to this proposal"
 msgid "You need to be logged in to submit a proposal"
-msgstr "Quý vị đã được giao bình duyệt đề xuất này"
+msgstr "Cần đăng nhập để gửi đề xuất"
 
 #: cfp/templates/cfp/event/submission_base.html:101
-#, fuzzy
-#| msgid ""
-#| "To create your proposal, you need an account on this page. This not only "
-#| "gives us a way to contact you, it also gives you the possibility to edit "
-#| "your proposal or to view its current state."
 msgid ""
 "Please log in or create an account to submit a proposal. This enables us to "
 "contact you and allows you to edit your proposal or check its status at any "
 "time."
 msgstr ""
-"Để gửi một đề xuất tham luận, quý vị cần có một tài khoản trên trang này. "
-"Tài khoản này không chỉ cho phép chúng tôi liên hệ với quý vị mà còn cho quý "
-"vị khả năng chỉnh sửa đề xuất hoặc xem trạng thái hiện tại của đề xuất."
+"Vui lòng đăng nhập hoặc tạo tài khoản để gửi đề xuất. Việc này cho phép liên "
+"hệ và cho phép chỉnh sửa đề xuất hoặc kiểm tra trạng thái bất cứ lúc nào."
 
 #: cfp/templates/cfp/event/submission_questions.html:13
 msgid "… about your proposal:"
@@ -11250,10 +11112,8 @@ msgid "Past events"
 msgstr "Sự kiện đã qua"
 
 #: cfp/views/locale.py:46
-#, fuzzy
-#| msgid "No celery workers have been configured."
 msgid "Your locale preferences have been saved."
-msgstr "Không có celery workers nào được cấu hình."
+msgstr "Tùy chọn ngôn ngữ đã được lưu."
 
 #: cfp/views/user.py:262
 msgid "Your draft was discarded."
@@ -11276,19 +11136,16 @@ msgstr "Vui lòng không tải lên tệp lớn hơn {size}!"
 #: common/forms/fields.py:89 control/forms/__init__.py:195
 #, python-brace-format
 msgid "Supported formats: {formats}"
-msgstr ""
+msgstr "Định dạng hỗ trợ: {formats}"
 
 #: common/forms/fields.py:102 control/forms/__init__.py:209
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "This filetype ({extension}) is not allowed, it has to be one of the "
-#| "following: "
+#, python-brace-format
 msgid ""
 "The file type '{extension}' is not supported. Please upload one of the "
 "supported formats: {formats}."
 msgstr ""
-"Loại file có đuôi ({extension}) không được hệ thống cho phép, file tải lên "
-"phải có đuôi là: "
+"Không hỗ trợ loại tệp \"{extension}\". Vui lòng tải lên một trong các định "
+"dạng được hỗ trợ: {formats}."
 
 #: common/forms/forms.py:12 common/forms/widgets.py:190
 #: common/templates/common/includes/search_form.html:7
@@ -11496,10 +11353,8 @@ msgid "A custom field option was deleted."
 msgstr "Đã xoá một lựa chọn trường tuỳ chỉnh."
 
 #: common/log_display.py:163
-#, fuzzy
-#| msgid "A question option was modified."
 msgid "A custom field option was modified."
-msgstr "Một lựa chọn cho câu hỏi đã được sửa."
+msgstr "Tùy chọn trường tùy chỉnh đã được sửa đổi."
 
 #: common/log_display.py:164
 msgid "A tag was added."
@@ -11518,16 +11373,12 @@ msgid "A new room was added."
 msgstr "Một phòng mới đã được bổ sung."
 
 #: common/log_display.py:168 control/logdisplay.py:658
-#, fuzzy
-#| msgid "A track was modified."
 msgid "A room was modified."
-msgstr "Một kênh hội thảo đã được chỉnh sửa."
+msgstr "Phòng đã được sửa đổi."
 
 #: common/log_display.py:169 control/logdisplay.py:659
-#, fuzzy
-#| msgid "A track was deleted."
 msgid "A room was deleted."
-msgstr "Một kênh hội thảo đã được xoá."
+msgstr "Phòng đã bị xóa."
 
 #: common/log_display.py:170
 msgid "A new schedule version was released."
@@ -11570,22 +11421,16 @@ msgid "A proposal resource was modified."
 msgstr "Tài liệu phụ trợ cho đề xuất tham luận đã được chỉnh sửa."
 
 #: common/log_display.py:180
-#, fuzzy
-#| msgid "A track was deleted."
 msgid "A review was deleted."
-msgstr "Một kênh hội thảo đã được xoá."
+msgstr "Đánh giá đã bị xóa."
 
 #: common/log_display.py:181
-#, fuzzy
-#| msgid "An email was modified."
 msgid "A review was modified."
-msgstr "Email đã được chỉnh sửa."
+msgstr "Đánh giá đã được sửa đổi."
 
 #: common/log_display.py:182
-#, fuzzy
-#| msgid "A track was added."
 msgid "A review was added."
-msgstr "Một kênh hội thảo đã được bổ sung."
+msgstr "Đánh giá đã được thêm."
 
 #: common/log_display.py:183
 msgid "A speaker was added to the proposal."
@@ -11612,28 +11457,20 @@ msgid "The proposal was withdrawn."
 msgstr "Một đề xuất tham luận đã được rút lại."
 
 #: common/log_display.py:189
-#, fuzzy
-#| msgid "A question was modified."
 msgid "A custom field response was modified."
-msgstr "Một câu hỏi đã được chỉnh sửa."
+msgstr "Phản hồi trường tùy chỉnh đã được sửa đổi."
 
 #: common/log_display.py:190
-#, fuzzy
-#| msgid "A question was added."
 msgid "A custom field response was added."
-msgstr "Một câu hỏi đã được bổ sung."
+msgstr "Phản hồi trường tùy chỉnh đã được thêm."
 
 #: common/log_display.py:191
-#, fuzzy
-#| msgid "A proposal resource was added."
 msgid "A proposal comment was added."
-msgstr "Tài liệu phụ trợ cho đề xuất tham luận đã được bổ sung."
+msgstr "Bình luận về đề xuất đã được thêm."
 
 #: common/log_display.py:192
-#, fuzzy
-#| msgid "A proposal resource was deleted."
 msgid "A proposal comment was deleted."
-msgstr "Tài liệu phụ trợ cho đề xuất tham luận đã được xoá."
+msgstr "Bình luận về đề xuất đã bị xóa."
 
 #: common/log_display.py:193
 msgid "A session type was added."
@@ -11688,39 +11525,28 @@ msgid "A speaker has been marked as not arrived."
 msgstr "Một diễn giả được ghi chú là chưa đến hội thảo."
 
 #: common/log_display.py:206
-#, fuzzy
-#| msgid "Speaker Information Note"
-#| msgid_plural "Speaker Information Notes"
 msgid "A speaker information note was added."
-msgstr "Ghi chú thông tin dành cho diễn giả"
+msgstr "Ghi chú thông tin diễn giả đã được thêm."
 
 #: common/log_display.py:207
-#, fuzzy
-#| msgid "A session type was modified."
 msgid "A speaker information note was modified."
-msgstr "Một loại phiên hội thảo đã được chỉnh sửa."
+msgstr "Ghi chú thông tin diễn giả đã được sửa đổi."
 
 #: common/log_display.py:208
-#, fuzzy
-#| msgid "A session type was deleted."
 msgid "A speaker information note was deleted."
-msgstr "Một loại phiên hội thảo đã được xoá."
+msgstr "Ghi chú thông tin diễn giả đã bị xóa."
 
 #: common/log_display.py:209
 msgid "The API token was reset."
 msgstr "Mã API token đã được tạo lại."
 
 #: common/log_display.py:210 orga/views/person.py:86
-#, fuzzy
-#| msgid "The API token was reset."
 msgid "The API token was revoked."
-msgstr "Mã API token đã được tạo lại."
+msgstr "Mã thông báo API đã bị thu hồi."
 
 #: common/log_display.py:211
-#, fuzzy
-#| msgid "The API token was reset."
 msgid "The API token was upgraded to the latest version."
-msgstr "Mã API token đã được tạo lại."
+msgstr "Mã thông báo API đã được nâng cấp lên phiên bản mới nhất."
 
 #: common/log_display.py:213
 msgid "The password was modified."
@@ -11733,10 +11559,8 @@ msgstr "Hồ sơ đã được chỉnh sửa."
 #: common/log_display.py:262 common/log_display.py:266
 #: orga/templates/orga/cfp/talkquestion/list.html:53
 #: orga/templates/orga/review/dashboard.html:87 orga/views/cfp.py:339
-#, fuzzy
-#| msgid "Custom Mail"
 msgid "Custom field"
-msgstr "Email tuỳ chỉnh"
+msgstr "Trường tùy chỉnh"
 
 #: common/log_display.py:273
 msgid "Response to custom field"
@@ -11753,10 +11577,8 @@ msgstr "Mẫu email"
 
 #: common/log_display.py:287 common/templates/common/base.html:142
 #: common/templates/common/fragment_header_user.html:92
-#, fuzzy
-#| msgid "Speaker email"
 msgid "Speaker profile"
-msgstr "Email của diễn giả"
+msgstr "Hồ sơ diễn giả"
 
 #: common/templates/400.html:18
 msgid ""
@@ -11789,10 +11611,8 @@ msgid "We have encountered an error."
 msgstr "Chúng tôi gặp phải sự cố."
 
 #: common/templates/common/auth.html:44
-#, fuzzy
-#| msgid "Organiser account"
 msgid "Register account"
-msgstr "Tài khoản Ban tổ chức"
+msgstr "Đăng ký tài khoản"
 
 #: common/templates/common/avatar.html:23
 msgid "Your avatar"
@@ -11821,17 +11641,13 @@ msgstr "Các đề xuất tham luận của tôi"
 
 #: common/templates/common/base.html:146
 #: common/templates/common/fragment_header_user.html:96
-#, fuzzy
-#| msgid "Sent emails"
 msgid "Event emails"
-msgstr "Email đã gửi"
+msgstr "Email sự kiện"
 
 #: common/templates/common/base.html:157
 #: common/templates/common/fragment_header_user.html:107
-#, fuzzy
-#| msgid "Organiser area"
 msgid "Organizer area"
-msgstr "Dành cho Ban Tổ chức"
+msgstr "Khu vực ban tổ chức"
 
 #: common/templates/common/base.html:165
 #: common/templates/common/fragment_header_user.html:115
@@ -11858,30 +11674,36 @@ msgid "Imprint"
 msgstr "Thông tin pháp lý"
 
 #: common/templates/common/base_public.html:93
-#, fuzzy
-#| msgid "This event is currently non-public. Only organisers can see it."
 msgid ""
 "This event is currently offline. Only event team members and system "
 "administrators can see it."
-msgstr "Hội thảo này hiện không công bố. Chỉ Ban Tổ chức mới có thể xem."
+msgstr ""
+"Sự kiện này hiện đang ngoại tuyến. Chỉ thành viên ban tổ chức sự kiện và "
+"quản trị viên hệ thống mới có thể xem."
 
 #: common/templates/common/base_public.html:106
 msgid ""
 "Tickets and talk pages are in private test mode. Only event team members and "
 "system administrators can see them."
 msgstr ""
+"Vé và trang bài nói đang ở chế độ thử nghiệm riêng tư. Chỉ thành viên ban tổ "
+"chức sự kiện và quản trị viên hệ thống mới có thể xem."
 
 #: common/templates/common/base_public.html:110
 msgid ""
 "Tickets are in private test mode. Only event team members and system "
 "administrators can see them."
 msgstr ""
+"Vé đang ở chế độ thử nghiệm riêng tư. Chỉ thành viên ban tổ chức sự kiện và "
+"quản trị viên hệ thống mới có thể xem."
 
 #: common/templates/common/base_public.html:114
 msgid ""
 "Talk pages are in private test mode. Only event team members and system "
 "administrators can see them."
 msgstr ""
+"Trang bài nói đang ở chế độ thử nghiệm riêng tư. Chỉ thành viên ban tổ chức "
+"sự kiện và quản trị viên hệ thống mới có thể xem."
 
 #: common/templates/common/forms/field.html:7
 #: control/templates/pretixcontrol/event/fragment_geodata.html:14
@@ -11901,32 +11723,28 @@ msgid "Optional"
 msgstr "Tùy chọn"
 
 #: common/templates/common/fragment_header_user.html:15
-#, fuzzy
-#| msgid "Invite language"
 msgid "Enforce UI language"
-msgstr "Ngôn ngữ thư mời"
+msgstr "Bắt buộc ngôn ngữ giao diện"
 
 #: common/templates/common/fragment_header_user.html:31
 msgid "Help: Enforce UI language"
-msgstr ""
+msgstr "Trợ giúp: Bắt buộc ngôn ngữ giao diện"
 
 #: common/templates/common/fragment_header_user.html:35
 msgid ""
 "When enabled, event language follows your UI language whenever that language "
 "is available for this event."
 msgstr ""
+"Khi bật, ngôn ngữ sự kiện sẽ theo ngôn ngữ giao diện bất cứ khi nào ngôn ngữ "
+"đó có sẵn cho sự kiện này."
 
 #: common/templates/common/fragment_header_user.html:41
-#, fuzzy
-#| msgid "Content languages"
 msgid "Event Language"
-msgstr "Ngôn ngữ nội dung"
+msgstr "Ngôn ngữ sự kiện"
 
 #: common/templates/common/fragment_header_user.html:54
-#, fuzzy
-#| msgid "Languages"
 msgid "UI Language"
-msgstr "Ngôn ngữ"
+msgstr "Ngôn ngữ giao diện"
 
 #: common/templates/common/fragment_nav.html:7 event/stages.py:81
 #: orga/templates/orga/settings/form.html:57
@@ -11960,7 +11778,7 @@ msgstr "Diễn giả"
 #: eventyay_common/views/event.py:570
 #: presale/templates/pretixpresale/event/fragment_nav.html:13
 msgid "Info"
-msgstr ""
+msgstr "Thông tin"
 
 #: common/templates/common/fragment_nav.html:15
 #: common/templates/common/fragment_profile_dropdown.html:19
@@ -11984,21 +11802,19 @@ msgstr "Vé"
 
 #: common/templates/common/fragment_nav.html:53
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
-#, fuzzy
-#| msgid "Call for Proposals"
 msgid "Call for Speakers"
-msgstr "Thông báo mời viết Đề xuất tham luận"
+msgstr "Kêu gọi diễn giả"
 
 #: common/templates/common/fragment_nav.html:58
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
 msgid "Call for Speakers (Closed)"
-msgstr ""
+msgstr "Kêu gọi diễn giả (Đã đóng)"
 
 #: common/templates/common/fragment_nav.html:67
 #: common/templates/common/fragment_nav.html:71
 #: presale/templates/pretixpresale/event/fragment_nav.html:62
 msgid "Join online video"
-msgstr ""
+msgstr "Tham gia video trực tuyến"
 
 #: common/templates/common/fragment_profile_dropdown.html:12
 #: control/navigation.py:558
@@ -12024,11 +11840,8 @@ msgid "Talks"
 msgstr "Bài thuyết trình"
 
 #: common/templates/common/fragment_profile_dropdown.html:31
-#, fuzzy
-#| msgid "session"
-#| msgid_plural "sessions"
 msgid "My sessions"
-msgstr "Phiên hội thảo"
+msgstr "Phiên của tôi"
 
 #: common/templates/common/fragment_profile_dropdown.html:34
 #: control/forms/filter.py:1171 eventyay_common/navigation.py:42
@@ -12037,18 +11850,16 @@ msgstr "Sự kiện của tôi"
 
 #: common/templates/common/fragment_profile_dropdown.html:47
 msgid "Admin"
-msgstr ""
+msgstr "Quản trị"
 
 #: common/templates/common/includes/modals.html:10
 #: presale/templates/pretixpresale/fragment_modals.html:75
 msgid "Close"
-msgstr ""
+msgstr "Đóng"
 
 #: common/templates/common/logs.html:15
-#, fuzzy
-#| msgid "This change was performed by a member of the event orga."
 msgid "This change was performed by an event organiser."
-msgstr "Thay đổi này được thực hiện bởi một thành viên Ban Tổ chức."
+msgstr "Thay đổi này được thực hiện bởi ban tổ chức sự kiện."
 
 #: common/templates/common/question_answer.html:9
 msgid "No file provided"
@@ -12358,10 +12169,8 @@ msgstr ""
 "tác được!"
 
 #: common/text/phrases.py:62
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The item has been deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Mục đã bị xóa."
 
 #: common/text/phrases.py:64
 #: control/templates/pretixcontrol/event/plugins.html:18
@@ -12477,10 +12286,8 @@ msgid "The password was reset."
 msgstr "Mật khẩu đã được đặt lại."
 
 #: common/text/phrases.py:97
-#, fuzzy
-#| msgid "You can use {link_start}Markdown{link_end} here."
 msgid "You can use Markdown in this field."
-msgstr "Bạn có thể sử dụng {link_start}Markdown{link_end} tại đây."
+msgstr "Có thể dùng Markdown trong trường này."
 
 #: common/text/phrases.py:99
 msgid "This content will be shown publicly."
@@ -12512,7 +12319,7 @@ msgstr "Chung"
 
 #: common/text/phrases.py:121
 msgid "Login with MediaWiki SSO or Email"
-msgstr ""
+msgstr "Đăng nhập bằng MediaWiki SSO hoặc email"
 
 #: common/views/mixins.py:293
 msgid "ManagementForm data is missing or has been tampered with."
@@ -12524,19 +12331,19 @@ msgstr "Tiếng Anh"
 
 #: config/settings.py:606
 msgid "English (United States)"
-msgstr ""
+msgstr "Tiếng Anh (Hoa Kỳ)"
 
 #: config/settings.py:615
 msgid "English (United Kingdom)"
-msgstr ""
+msgstr "Tiếng Anh (Vương quốc Anh)"
 
 #: config/settings.py:624
 msgid "English (Australia)"
-msgstr ""
+msgstr "Tiếng Anh (Úc)"
 
 #: config/settings.py:633
 msgid "English (Canada)"
-msgstr ""
+msgstr "Tiếng Anh (Canada)"
 
 #: config/settings.py:642
 msgid "German"
@@ -12544,146 +12351,143 @@ msgstr "Tiếng Đức"
 
 #: config/settings.py:650
 msgid "German (formal)"
-msgstr ""
+msgstr "Đức (trang trọng)"
 
 #: config/settings.py:659
 msgid "Arabic"
-msgstr ""
+msgstr "Tiếng Ả Rập"
 
 #: config/settings.py:667
 msgid "Bulgarian"
-msgstr ""
+msgstr "Tiếng Bulgaria"
 
 #: config/settings.py:675
 msgid "Catalan"
-msgstr ""
+msgstr "Tiếng Catalan"
 
 #: config/settings.py:683
 msgid "Czech"
-msgstr ""
+msgstr "Tiếng Séc"
 
 #: config/settings.py:691
 msgid "Danish"
-msgstr ""
+msgstr "Tiếng Đan Mạch"
 
 #: config/settings.py:699
 msgid "Greek"
-msgstr ""
+msgstr "Tiếng Hy Lạp"
 
 #: config/settings.py:707
 msgid "Spanish"
-msgstr ""
+msgstr "Tiếng Tây Ban Nha"
 
 #: config/settings.py:715
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Persian"
-msgstr "Phiên"
+msgstr "Tiếng Ba Tư"
 
 #: config/settings.py:724
 msgid "Finnish"
-msgstr ""
+msgstr "Tiếng Phần Lan"
 
 #: config/settings.py:732
 msgid "French"
-msgstr ""
+msgstr "Tiếng Pháp"
 
 #: config/settings.py:740
 msgid "Hungarian"
-msgstr ""
+msgstr "Tiếng Hungary"
 
 #: config/settings.py:748
 msgid "Indonesian"
-msgstr ""
+msgstr "Tiếng Indonesia"
 
 #: config/settings.py:756
 msgid "Italian"
-msgstr ""
+msgstr "Tiếng Ý"
 
 #: config/settings.py:764
 msgid "Japanese"
-msgstr ""
+msgstr "Tiếng Nhật"
 
 #: config/settings.py:773
 msgid "Korean"
-msgstr ""
+msgstr "Tiếng Hàn"
 
 #: config/settings.py:781
 msgid "Latvian"
-msgstr ""
+msgstr "Tiếng Latvia"
 
 #: config/settings.py:789
 msgid "Malay"
-msgstr ""
+msgstr "Tiếng Mã Lai"
 
 #: config/settings.py:797
 msgid "Norwegian Bokmål"
-msgstr ""
+msgstr "Tiếng Na Uy Bokmål"
 
 #: config/settings.py:805
 msgid "Dutch"
-msgstr ""
+msgstr "Tiếng Hà Lan"
 
 #: config/settings.py:813
 msgid "Dutch (informal)"
-msgstr ""
+msgstr "Tiếng Hà Lan (không trang trọng)"
 
 #: config/settings.py:822
 msgid "Polish"
-msgstr ""
+msgstr "Tiếng Ba Lan"
 
 #: config/settings.py:830
 msgid "Polish (informal)"
-msgstr ""
+msgstr "Tiếng Ba Lan (không trang trọng)"
 
 #: config/settings.py:839
 msgid "Brazilian Portuguese"
-msgstr ""
+msgstr "Tiếng Bồ Đào Nha (Brazil)"
 
 #: config/settings.py:848
 msgid "Portuguese"
-msgstr ""
+msgstr "Tiếng Bồ Đào Nha"
 
 #: config/settings.py:857
 msgid "Romanian"
-msgstr ""
+msgstr "Tiếng Romania"
 
 #: config/settings.py:865
 msgid "Russian"
-msgstr ""
+msgstr "Tiếng Nga"
 
 #: config/settings.py:873
 msgid "Sinhala"
-msgstr ""
+msgstr "Tiếng Sinhala"
 
 #: config/settings.py:881
 msgid "Slovenian"
-msgstr ""
+msgstr "Tiếng Slovenia"
 
 #: config/settings.py:889
 msgid "Swedish"
-msgstr ""
+msgstr "Tiếng Thụy Điển"
 
 #: config/settings.py:897
 msgid "Swahili"
-msgstr ""
+msgstr "Tiếng Swahili"
 
 #: config/settings.py:905
 msgid "Thai"
-msgstr ""
+msgstr "Tiếng Thái"
 
 #: config/settings.py:913
 msgid "Turkish"
-msgstr ""
+msgstr "Tiếng Thổ Nhĩ Kỳ"
 
 #: config/settings.py:921
 msgid "Ukrainian"
-msgstr ""
+msgstr "Tiếng Ukraina"
 
 #: config/settings.py:929
 msgid "Vietnamese"
-msgstr ""
+msgstr "Tiếng Việt"
 
 #: config/settings.py:937
 msgid "Simplified Chinese"
@@ -12691,19 +12495,19 @@ msgstr "Tiếng Trung giản thể"
 
 #: config/settings.py:946
 msgid "Traditional Chinese (Taiwan)"
-msgstr ""
+msgstr "Tiếng Trung phồn thể (Quốc ngữ, Đài Loan)"
 
 #: config/settings.py:1241
 msgid "User profile only"
-msgstr ""
+msgstr "Chỉ hồ sơ người dùng"
 
 #: config/settings.py:1242
 msgid "Read access"
-msgstr ""
+msgstr "Quyền đọc"
 
 #: config/settings.py:1243
 msgid "Write access"
-msgstr ""
+msgstr "Quyền ghi"
 
 #: control/forms/admin/admin.py:17 control/forms/global_settings.py:451
 msgid "Perform update checks"
@@ -12789,16 +12593,12 @@ msgid "This will create a new Video platform for this event."
 msgstr "Việc này sẽ tạo một nền tảng Video mới cho sự kiện này."
 
 #: control/forms/event.py:139
-#, fuzzy
-#| msgid ""
-#| "This short name is already taken, please choose another one (or ask the "
-#| "owner of that event to add you to their team)."
 msgid ""
 "This short name is already taken by another event. Please choose a different "
 "one or use the \"Set to random\" button for an automatic suggestion."
 msgstr ""
-"Tên ngắn này đã có người dùng, vui lòng chọn tên khác (hoặc yêu cầu Ban Tổ "
-"chức hội thảo đó thêm quý vị vào nhóm của họ)."
+"Tên ngắn này đã được một sự kiện khác sử dụng. Vui lòng chọn tên khác hoặc "
+"sử dụng nút \"Đặt ngẫu nhiên\" để nhận gợi ý tự động."
 
 #: control/forms/event.py:143 eventyay_common/forms/event.py:24
 msgid "Event timezone"
@@ -12846,21 +12646,19 @@ msgstr ""
 
 #: control/forms/event.py:219
 msgid "Latitude, e.g. 40.7128"
-msgstr ""
+msgstr "Vĩ độ, ví dụ: 40.7128"
 
 #: control/forms/event.py:220
 msgid "Longitude, e.g. -74.0060"
-msgstr ""
+msgstr "Kinh độ, ví dụ: -74.0060"
 
 #: control/forms/event.py:267
 msgid "Your default locale must be specified."
 msgstr "Ngôn ngữ mặc định của bạn phải được chỉ định."
 
 #: control/forms/event.py:291 control/forms/event.py:398 event/forms.py:293
-#, fuzzy
-#| msgid "Please provide a valid email address."
 msgid "Please provide a valid organizer email address."
-msgstr "Vui lòng cung cấp một địa chỉ email hợp lệ."
+msgstr "Vui lòng cung cấp địa chỉ email của ban tổ chức hợp lệ."
 
 #: control/forms/event.py:360 event/forms.py:316
 msgid "Copy configuration from"
@@ -12880,16 +12678,12 @@ msgid "Choose all languages that your event should be available in."
 msgstr "Chọn tất cả ngôn ngữ mà sự kiện của bạn sẽ hỗ trợ."
 
 #: control/forms/event.py:425 event/forms.py:192
-#, fuzzy
-#| msgid ""
-#| "The organiser running the event can copy settings from previous events "
-#| "and share team permissions across all or multiple events."
 msgid ""
 "The organizer running the event can copy settings from previous events and "
 "share team permissions across all or multiple events."
 msgstr ""
-"Ban Tổ chức hội thảo này có thể sao chép cài đặt từ các hội thảo trước đó và "
-"chia sẻ quyền của nhóm trên tất cả hoặc nhiều hội thảo."
+"Ban tổ chức vận hành sự kiện có thể sao chép cài đặt từ các sự kiện trước và "
+"chia sẻ quyền của nhóm trên tất cả hoặc nhiều sự kiện."
 
 #: control/forms/event.py:435 event/forms.py:244
 msgid ""
@@ -12916,6 +12710,9 @@ msgid ""
 "already received orders might lead to unexpected behavior when sorting or "
 "changing names."
 msgstr ""
+"Mục này xác định cách eventyay sẽ yêu cầu tên đầy đủ. Việc thay đổi sau khi "
+"đã nhận đơn hàng có thể dẫn đến hành vi không mong muốn khi sắp xếp hoặc "
+"thay đổi tên."
 
 #: control/forms/event.py:558
 msgid "Allowed titles"
@@ -13223,7 +13020,7 @@ msgstr ""
 
 #: control/forms/event.py:1243 control/forms/global_settings.py:443
 msgid "This field is required when using SendGrid as email vendor."
-msgstr ""
+msgstr "Trường này là bắt buộc khi sử dụng SendGrid làm nhà cung cấp email."
 
 #: control/forms/event.py:1258
 msgid "Ticket code generator"
@@ -13361,6 +13158,9 @@ msgid ""
 "then import your bank statements to process the payments within eventyay, or "
 "mark them as paid manually."
 msgstr ""
+"Khách hàng sẽ được hướng dẫn chuyển khoản vào tài khoản. Sau đó có thể nhập "
+"sao kê ngân hàng để xử lý thanh toán trong eventyay hoặc đánh dấu đã thanh "
+"toán thủ công."
 
 #: control/forms/event.py:1537
 #: control/templates/pretixcontrol/event/quick_setup.html:45
@@ -13479,63 +13279,63 @@ msgstr "Chờ phê duyệt"
 #: control/templates/pretixcontrol/items/question.html:30
 #: control/templates/pretixcontrol/waitinglist/index.html:111
 msgid "All products"
-msgstr ""
+msgstr "Tất cả sản phẩm"
 
 #: control/forms/filter.py:387 control/forms/filter.py:1595
 #: control/forms/vouchers.py:115 control/views/typeahead.py:533
 #, python-brace-format
 msgid "{product} – Any variation"
-msgstr ""
+msgstr "{product} – Mọi biến thể"
 
 #: control/forms/filter.py:456 control/forms/orders.py:610
 msgctxt "subevent"
 msgid "All dates starting at or after"
-msgstr ""
+msgstr "Tất cả ngày bắt đầu vào hoặc sau"
 
 #: control/forms/filter.py:461 control/forms/orders.py:619
 msgctxt "subevent"
 msgid "All dates starting before"
-msgstr ""
+msgstr "Tất cả ngày bắt đầu trước"
 
 #: control/forms/filter.py:466
 msgid "Order placed at or after"
-msgstr ""
+msgstr "Đơn hàng được đặt vào hoặc sau"
 
 #: control/forms/filter.py:471
 msgid "Order placed before"
-msgstr ""
+msgstr "Đơn hàng được đặt trước"
 
 #: control/forms/filter.py:496
 msgid "Minimal sum of payments and refunds"
-msgstr ""
+msgstr "Tổng tối thiểu của thanh toán và hoàn tiền"
 
 #: control/forms/filter.py:501
 msgid "Maximal sum of payments and refunds"
-msgstr ""
+msgstr "Tổng tối đa của thanh toán và hoàn tiền"
 
 #: control/forms/filter.py:540 control/forms/filter.py:545
 #: control/forms/filter.py:565 control/forms/filter.py:570
 #: control/forms/filter.py:580
 msgid "Exact matches only"
-msgstr ""
+msgstr "Chỉ khớp chính xác"
 
 #: control/forms/filter.py:577
 #: control/templates/pretixcontrol/order/change.html:177
 msgid "Ticket secret"
-msgstr ""
+msgstr "Mã bí mật vé"
 
 #: control/forms/filter.py:679 control/forms/filter.py:684
 #: control/forms/filter.py:1187 control/forms/filter.py:1192
 msgid "All organizers"
-msgstr ""
+msgstr "Tất cả nhà tổ chức"
 
 #: control/forms/filter.py:771 control/forms/filter.py:1173
 msgid "Shop live and presale running"
-msgstr ""
+msgstr "Cửa hàng đang mở bán và presale đang diễn ra"
 
 #: control/forms/filter.py:772 control/forms/filter.py:1454
 msgid "Inactive"
-msgstr ""
+msgstr "Không hoạt động"
 
 #: control/forms/filter.py:773 control/forms/filter.py:1175
 #: control/templates/pretixcontrol/admin/events/index.html:148
@@ -13543,7 +13343,7 @@ msgstr ""
 #: control/templates/pretixcontrol/subevents/index.html:130
 #: eventyay_common/templates/eventyay_common/events/index.html:136
 msgid "Presale not started"
-msgstr ""
+msgstr "Presale chưa bắt đầu"
 
 #: control/forms/filter.py:774 control/forms/filter.py:1176
 #: control/templates/pretixcontrol/admin/events/index.html:146
@@ -13551,31 +13351,31 @@ msgstr ""
 #: control/templates/pretixcontrol/subevents/index.html:128
 #: eventyay_common/templates/eventyay_common/events/index.html:134
 msgid "Presale over"
-msgstr ""
+msgstr "Presale đã kết thúc"
 
 #: control/forms/filter.py:779 control/forms/filter.py:1788
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:73
 #: plugins/reports/exporters.py:682
 msgid "Date from"
-msgstr ""
+msgstr "Từ ngày"
 
 #: control/forms/filter.py:784 control/forms/filter.py:1793
 #: plugins/reports/exporters.py:690
 msgid "Date until"
-msgstr ""
+msgstr "Đến ngày"
 
 #: control/forms/filter.py:789 control/forms/subevents.py:440
 #: control/forms/subevents.py:474
 msgid "Weekday"
-msgstr ""
+msgstr "Ngày trong tuần"
 
 #: control/forms/filter.py:791
 msgid "All days"
-msgstr ""
+msgstr "Tất cả ngày"
 
 #: control/forms/filter.py:792
 msgid "Monday"
-msgstr ""
+msgstr "Thứ Hai"
 
 #: control/forms/filter.py:793
 msgid "Tuesday"
@@ -13602,16 +13402,12 @@ msgid "Sunday"
 msgstr "Chủ Nhật"
 
 #: control/forms/filter.py:913 control/forms/filter.py:915
-#, fuzzy
-#| msgid "Speaker email"
 msgid "Name or email"
-msgstr "Email của diễn giả"
+msgstr "Tên hoặc email"
 
 #: control/forms/filter.py:925
-#, fuzzy
-#| msgid "Event History"
 msgid "Event filter"
-msgstr "Lịch sử hội thảo"
+msgstr "Bộ lọc sự kiện"
 
 #: control/forms/filter.py:927 control/forms/filter.py:1170
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:62
@@ -13620,13 +13416,11 @@ msgstr "Tất cả sự kiện"
 
 #: control/forms/filter.py:928
 msgid "Ongoing events"
-msgstr ""
+msgstr "Sự kiện đang diễn ra"
 
 #: control/forms/filter.py:929
-#, fuzzy
-#| msgid "New event"
 msgid "Recent events"
-msgstr "Hội thảo mới"
+msgstr "Sự kiện gần đây"
 
 #: control/forms/filter.py:935 control/forms/filter.py:1369
 msgid "Check-in status"
@@ -13638,7 +13432,7 @@ msgstr "Tất cả người tham dự"
 
 #: control/forms/filter.py:938
 msgid "Present"
-msgstr ""
+msgstr "Hiện tại"
 
 #: control/forms/filter.py:939
 #: control/templates/pretixcontrol/checkin/index.html:140
@@ -13658,53 +13452,36 @@ msgid "Not checked in"
 msgstr "Chưa điểm danh"
 
 #: control/forms/filter.py:1003
-#, fuzzy
-#| msgid "Send email to speakers"
 msgid "Title or speaker"
-msgstr "Gửi email tới diễn giả"
+msgstr "Tiêu đề hoặc diễn giả"
 
 #: control/forms/filter.py:1005
-#, fuzzy
-#| msgid "Speaker information"
 msgid "Title, speaker name or email"
-msgstr "Thông tin dành cho diễn giả"
+msgstr "Tiêu đề, tên diễn giả hoặc email"
 
 #: control/forms/filter.py:1017
-#, fuzzy
-#| msgid "My proposals"
 msgid "All proposals"
-msgstr "Các đề xuất tham luận của tôi"
+msgstr "Tất cả đề xuất"
 
 #: control/forms/filter.py:1018
-#, fuzzy
-#| msgid "Submitter"
-#| msgid_plural "Submitters"
 msgid "Submitted"
-msgstr "Người nộp bài"
+msgstr "Đã gửi"
 
 #: control/forms/filter.py:1019
-#, fuzzy
-#| msgid "accepted"
 msgid "Accepted"
-msgstr "duyệt"
+msgstr "Đã chấp nhận"
 
 #: control/forms/filter.py:1020
-#, fuzzy
-#| msgid "Reject"
 msgid "Rejected"
-msgstr "Từ chối"
+msgstr "Đã từ chối"
 
 #: control/forms/filter.py:1021
-#, fuzzy
-#| msgid "confirmed"
 msgid "Confirmed"
-msgstr "chốt"
+msgstr "Đã xác nhận"
 
 #: control/forms/filter.py:1022
-#, fuzzy
-#| msgid "Withdraw"
 msgid "Withdrawn"
-msgstr "Thu hồi"
+msgstr "Đã rút"
 
 #: control/forms/filter.py:1119 control/forms/filter.py:1120
 #: control/forms/filter.py:1468 control/forms/filter.py:1469
@@ -13843,10 +13620,8 @@ msgid "Disabled"
 msgstr "Đã tắt"
 
 #: control/forms/global_settings.py:54 control/forms/global_settings.py:425
-#, fuzzy
-#| msgid "Input validation"
 msgid "Billing validation"
-msgstr "Xác thực đầu vào"
+msgstr "Xác thực thanh toán"
 
 #: control/forms/global_settings.py:56
 msgid ""
@@ -13854,6 +13629,9 @@ msgid ""
 "before they can create events. When this option is enabled, no new event can "
 "be created until a valid billing method has been added."
 msgstr ""
+"Xác thực thanh toán cho phép yêu cầu ban tổ chức thiết lập phương thức thanh "
+"toán trước khi có thể tạo sự kiện. Khi bật tùy chọn này, sẽ không thể tạo sự "
+"kiện mới cho đến khi thêm phương thức thanh toán hợp lệ."
 
 #: control/forms/global_settings.py:66
 msgid "Additional footer text"
@@ -13907,11 +13685,13 @@ msgstr "Email hệ thống"
 
 #: control/forms/global_settings.py:213 control/forms/global_settings.py:266
 msgid "Publishable key (Live)"
-msgstr ""
+msgstr "Khóa công khai (Trực tiếp)"
 
 #: control/forms/global_settings.py:216
 msgid "Live publishable key for organizer billing and platform fees."
 msgstr ""
+"Khóa công khai có thể xuất bản (Live) cho thanh toán của ban tổ chức và phí "
+"nền tảng."
 
 #: control/forms/global_settings.py:222 control/forms/global_settings.py:275
 msgid "Secret key (Live)"
@@ -14118,10 +13898,8 @@ msgstr ""
 "dữ liệu cá nhân. Dữ liệu được gửi khoảng một lần mỗi ngày."
 
 #: control/forms/global_settings.py:482
-#, fuzzy
-#| msgid "Send all"
 msgid "Telemetry endpoint"
-msgstr "Gửi tất cả"
+msgstr "Điểm cuối telemetry"
 
 #: control/forms/global_settings.py:483
 msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
@@ -14732,10 +14510,8 @@ msgstr ""
 
 #: control/forms/organizer_forms/user_orders_form.py:13
 #: eventyay_common/forms/filters.py:13 eventyay_common/forms/filters.py:32
-#, fuzzy
-#| msgid "Select all"
 msgid "Select an Event"
-msgstr "Chọn tất cả"
+msgstr "Chọn sự kiện"
 
 #: control/forms/organizer_forms/web_hook_form.py:13
 msgctxt "webhooks"
@@ -14914,22 +14690,16 @@ msgid "Server"
 msgstr "Máy chủ"
 
 #: control/forms/server_management.py:235
-#, fuzzy
-#| msgid "Limit days"
 msgid "Validity in days"
-msgstr "Ngày giới hạn"
+msgstr "Thời hạn tính theo ngày"
 
 #: control/forms/server_management.py:240
-#, fuzzy
-#| msgid "Room"
 msgid "Room ID"
-msgstr "Phòng"
+msgstr "ID phòng"
 
 #: control/forms/server_management.py:243
-#, fuzzy
-#| msgid "Target group"
 msgid "Target Server"
-msgstr "Nhóm mục tiêu"
+msgstr "Máy chủ đích"
 
 #: control/forms/server_management.py:250
 msgid "Event ID"
@@ -15714,96 +15484,96 @@ msgstr "Cài đặt thông báo của bạn đã được thay đổi."
 
 #: control/logdisplay.py:591
 msgid "This user has been anonymized."
-msgstr ""
+msgstr "Người dùng này đã được ẩn danh."
 
 #: control/logdisplay.py:595
 msgid "Password reset mail sent."
-msgstr ""
+msgstr "Đã gửi email đặt lại mật khẩu."
 
 #: control/logdisplay.py:596
 msgid "The password has been reset."
-msgstr ""
+msgstr "Mật khẩu đã được đặt lại."
 
 #: control/logdisplay.py:598
 msgid ""
 "A repeated password reset has been denied, as the last request was less than "
 "24 hours ago."
 msgstr ""
+"Yêu cầu đặt lại mật khẩu lặp lại đã bị từ chối, vì yêu cầu gần nhất chưa đủ "
+"24 giờ."
 
 #: control/logdisplay.py:600
 #, python-brace-format
 msgid "The organizer \"{name}\" has been deleted."
-msgstr ""
+msgstr "Đơn vị tổ chức \"{name}\" đã bị xóa."
 
 #: control/logdisplay.py:601
 msgid "The voucher has been created."
-msgstr ""
+msgstr "Phiếu ưu đãi đã được tạo."
 
 #: control/logdisplay.py:604
 msgid "The voucher has been created and sent to a person on the waiting list."
-msgstr ""
+msgstr "Phiếu ưu đãi đã được tạo và gửi cho một người trong danh sách chờ."
 
 #: control/logdisplay.py:606
 msgid "The voucher has been changed."
-msgstr ""
+msgstr "Phiếu ưu đãi đã được thay đổi."
 
 #: control/logdisplay.py:607
 msgid "The voucher has been deleted."
-msgstr ""
+msgstr "Phiếu ưu đãi đã bị xóa."
 
 #: control/logdisplay.py:608
 #, python-brace-format
 msgid "The voucher has been redeemed in order {order_code}."
-msgstr ""
+msgstr "Phiếu ưu đãi đã được quy đổi trong đơn hàng {order_code}."
 
 #: control/logdisplay.py:609
 msgid "The product has been created."
-msgstr ""
+msgstr "Sản phẩm đã được tạo."
 
 #: control/logdisplay.py:610
 msgid "The product has been changed."
-msgstr ""
+msgstr "Sản phẩm đã được thay đổi."
 
 #: control/logdisplay.py:611
 msgid "The product has been deleted."
-msgstr ""
+msgstr "Sản phẩm đã bị xóa."
 
 #: control/logdisplay.py:612
 #, python-brace-format
 msgid "The variation \"{value}\" has been created."
-msgstr ""
+msgstr "Biến thể \"{value}\" đã được tạo."
 
 #: control/logdisplay.py:613
 #, python-brace-format
 msgid "The variation \"{value}\" has been deleted."
-msgstr ""
+msgstr "Biến thể \"{value}\" đã bị xóa."
 
 #: control/logdisplay.py:614
 #, python-brace-format
 msgid "The variation \"{value}\" has been changed."
-msgstr ""
+msgstr "Biến thể \"{value}\" đã được thay đổi."
 
 #: control/logdisplay.py:615
 msgid "An add-on has been added to this product."
-msgstr ""
+msgstr "Tiện ích bổ sung đã được thêm vào sản phẩm này."
 
 #: control/logdisplay.py:616
 msgid "An add-on has been removed from this product."
-msgstr ""
+msgstr "Tiện ích bổ sung đã được xóa khỏi sản phẩm này."
 
 #: control/logdisplay.py:617
 msgid "An add-on has been changed on this product."
-msgstr ""
+msgstr "Tiện ích bổ sung đã được thay đổi trên sản phẩm này."
 
 #: control/logdisplay.py:618
 msgid "A bundled product has been added to this product."
 msgstr "Đã thêm sản phẩm trong gói vào sản phẩm này."
 
 #: control/logdisplay.py:619
-#, fuzzy
-#| msgid "A speaker was removed from the proposal."
 msgid "A bundled product has been removed from this product."
-msgstr "Một diễn giả đã được bỏ ra khỏi đề xuất tham luận."
+msgstr "Một sản phẩm đi kèm đã bị xóa khỏi sản phẩm này."
 
 #: control/logdisplay.py:620
 msgid "A bundled product has been changed on this product."
@@ -15811,7 +15581,7 @@ msgstr "Một sản phẩm trong gói đã được thay đổi trên sản ph�
 
 #: control/logdisplay.py:621
 msgid "The quota has been added."
-msgstr ""
+msgstr "Hạn ngạch đã được thêm."
 
 #: control/logdisplay.py:622
 msgid "The quota has been deleted."
@@ -15866,16 +15636,12 @@ msgid "A plugin has been disabled."
 msgstr "Plugin đã được vô hiệu hóa."
 
 #: control/logdisplay.py:635
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The event has been published."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Sự kiện đã được xuất bản."
 
 #: control/logdisplay.py:636
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The event has been unpublished."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Sự kiện đã được hủy xuất bản."
 
 #: control/logdisplay.py:637
 msgid "The shop has been taken into test mode."
@@ -15886,16 +15652,12 @@ msgid "The test mode has been disabled."
 msgstr "Chế độ thử nghiệm đã được vô hiệu hóa."
 
 #: control/logdisplay.py:639
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "Private test mode has been enabled."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Chế độ thử nghiệm riêng tư đã được bật."
 
 #: control/logdisplay.py:640
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "Private test mode has been disabled."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Chế độ thử nghiệm riêng tư đã được tắt."
 
 #: control/logdisplay.py:641
 msgid "The event has been created."
@@ -16035,56 +15797,40 @@ msgid "A manual transaction has been performed."
 msgstr "Một giao dịch thủ công đã được thực hiện."
 
 #: control/logdisplay.py:676
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The property has been deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Thuộc tính đã bị xóa."
 
 #: control/logdisplay.py:677
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The property has been changed."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Thuộc tính đã được thay đổi."
 
 #: control/logdisplay.py:678
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The badge layout has been deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Bố cục thẻ đã bị xóa."
 
 #: control/logdisplay.py:679
 msgid "A new badge layout has been created."
 msgstr "Đã tạo bố cục thẻ mới."
 
 #: control/logdisplay.py:680
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The badge layout has been changed."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Bố cục thẻ đã được thay đổi."
 
 #: control/logdisplay.py:681
-#, fuzzy
-#| msgid "The event has been added."
 msgid "A new ticket layout has been created."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Đã tạo bố cục vé mới."
 
 #: control/logdisplay.py:682
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The ticket layout has been deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Bố cục vé đã bị xóa."
 
 #: control/logdisplay.py:683
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The ticket layout has been changed."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Bố cục vé đã được thay đổi."
 
 #: control/logdisplay.py:684
-#, fuzzy
-#| msgid "The event has been added."
 msgid "A new check-in list has been created."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Đã tạo danh sách check-in mới."
 
 #: control/logdisplay.py:685
 msgid "The check-in list has been changed."
@@ -16095,10 +15841,8 @@ msgid "The check-in list has been deleted."
 msgstr "Danh sách điểm danh đã được xóa."
 
 #: control/logdisplay.py:688
-#, fuzzy
-#| msgid "The user has been activated."
 msgid "A new question has been created."
-msgstr "Người dùng này đã được kích hoạt."
+msgstr "Đã tạo câu hỏi mới."
 
 #: control/logdisplay.py:689
 msgid "The question has been changed."
@@ -16109,32 +15853,24 @@ msgid "The question has been deleted."
 msgstr "Câu hỏi đã được xóa."
 
 #: control/logdisplay.py:691
-#, fuzzy
-#| msgid "The user has been activated."
 msgid "A new answer option has been created."
-msgstr "Người dùng này đã được kích hoạt."
+msgstr "Đã tạo tùy chọn câu trả lời mới."
 
 #: control/logdisplay.py:692
-#, fuzzy
-#| msgid "The user has been activated."
 msgid "The answer option has been changed."
-msgstr "Người dùng này đã được kích hoạt."
+msgstr "Tùy chọn trả lời đã được thay đổi."
 
 #: control/logdisplay.py:693
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The answer option has been deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Tùy chọn trả lời đã được xóa."
 
 #: control/logdisplay.py:694
 msgid "User impersonation has started."
 msgstr "Đã bắt đầu mạo danh người dùng."
 
 #: control/logdisplay.py:695
-#, fuzzy
-#| msgid "The event has been added."
 msgid "User impersonation has been stopped."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Đã dừng mạo danh người dùng."
 
 #: control/logdisplay.py:722
 msgid "The settings of a payment provider have been changed."
@@ -16380,10 +16116,8 @@ msgid "All Attendees"
 msgstr "Tất cả người tham dự"
 
 #: control/navigation.py:465
-#, fuzzy
-#| msgid "Session types"
 msgid "All Sessions"
-msgstr "Loại phiên"
+msgstr "Tất cả phiên"
 
 #: control/navigation.py:471
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:7
@@ -16438,10 +16172,8 @@ msgstr "Cài đặt đăng nhập mạng xã hội"
 #: control/navigation.py:541
 #: control/templates/pretixcontrol/admin/systemconfig.html:13
 #: control/templates/pretixcontrol/admin/systemconfig.html:17
-#, fuzzy
-#| msgid "Admin information"
 msgid "System information"
-msgstr "Thông tin quản trị"
+msgstr "Thông tin hệ thống"
 
 #: control/navigation.py:568 control/templates/control/bbb_list.html:6
 msgid "BBB servers"
@@ -16468,10 +16200,8 @@ msgid "Streamkey generator"
 msgstr "Trình tạo khóa stream"
 
 #: control/navigation.py:598 control/templates/control/systemlog_list.html:5
-#, fuzzy
-#| msgid "System"
 msgid "System log"
-msgstr "Hệ thống"
+msgstr "Nhật ký hệ thống"
 
 #: control/navigation.py:603
 msgid "Conftool posters"
@@ -16488,10 +16218,8 @@ msgid "You do not have permission to view this content."
 msgstr "Bạn không có quyền xem nội dung này."
 
 #: control/templates/control/bbb_delete.html:5
-#, fuzzy
-#| msgid "Delete review"
 msgid "Delete BBB server"
-msgstr "Xoá phần bình duyệt"
+msgstr "Xóa máy chủ BBB"
 
 #: control/templates/control/bbb_delete.html:8
 #: control/templates/control/janus_delete.html:8
@@ -16513,10 +16241,8 @@ msgstr "Thêm máy chủ BBB mới"
 #: control/templates/control/janus_list.html:8
 #: control/templates/control/streaming_list.html:8
 #: control/templates/control/turn_list.html:8
-#, fuzzy
-#| msgid "Add a new note"
 msgid "Add new server"
-msgstr "Thêm một ghi chú"
+msgstr "Thêm máy chủ mới"
 
 #: control/templates/control/bbb_list.html:19
 #: control/templates/control/event_list.html:13
@@ -16552,10 +16278,8 @@ msgstr "Hành động"
 #: control/templates/control/janus_list.html:43
 #: control/templates/control/streaming_list.html:35
 #: control/templates/control/turn_list.html:43
-#, fuzzy
-#| msgid "No redis server has been configured."
 msgid "No servers configured yet."
-msgstr "Chưa có máy chủ redis nào được cấu hình."
+msgstr "Chưa cấu hình máy chủ nào."
 
 #: control/templates/control/bbb_moveroom.html:6
 msgid "Move a BBB room to a new server"
@@ -16580,10 +16304,8 @@ msgstr ""
 "phản ứng. Sử dụng thận trọng."
 
 #: control/templates/control/bbb_moveroom.html:14
-#, fuzzy
-#| msgid "Move item"
 msgid "Move"
-msgstr "Di chuyển mục"
+msgstr "Di chuyển"
 
 #: control/templates/control/conftool_syncposters.html:6
 msgid "Sync conftool posters"
@@ -16610,10 +16332,8 @@ msgid "Sync"
 msgstr "Đồng bộ"
 
 #: control/templates/control/event_clear.html:5
-#, fuzzy
-#| msgid "Release next event date?"
 msgid "Delete event data"
-msgstr "Công bố ngày diễn ra hội thảo tiếp theo?"
+msgstr "Xóa dữ liệu sự kiện"
 
 #: control/templates/control/event_clear.html:8
 msgid "Delete statistics, systemlog, chat messages, questions, …"
@@ -16628,33 +16348,25 @@ msgid "Delete all uploaded files"
 msgstr "Xóa tất cả tệp đã tải lên"
 
 #: control/templates/control/event_create.html:6
-#, fuzzy
-#| msgid "Deactivate event"
 msgid "Create event"
-msgstr "Hủy kích hoạt hội thảo"
+msgstr "Tạo sự kiện"
 
 #: control/templates/control/event_create.html:13
 #: control/templates/control/event_update.html:13
-#, fuzzy
-#| msgid "Languages"
 msgid "Planned usages"
-msgstr "Ngôn ngữ"
+msgstr "Lịch sử dụng dự kiến"
 
 #: control/templates/control/event_create.html:23
 #: control/templates/control/event_update.html:29
 #: control/templates/pretixcontrol/admin/attendees/index.html:7
 #: control/templates/pretixcontrol/admin/attendees/index.html:12
-#, fuzzy
-#| msgid "Attendee feedback"
 msgid "Attendees"
-msgstr "Phản hồi của đại biểu tham dự"
+msgstr "Người tham dự"
 
 #: control/templates/control/event_create.html:55
 #: control/templates/control/event_update.html:73
-#, fuzzy
-#| msgid "Add link"
 msgid "Add planning"
-msgstr "Thêm liên kết"
+msgstr "Thêm lập kế hoạch"
 
 #: control/templates/control/event_create.html:64
 #, python-format
@@ -16674,16 +16386,12 @@ msgid "Usage"
 msgstr "Sử dụng"
 
 #: control/templates/control/event_list.html:42
-#, fuzzy
-#| msgid "Delete my account"
 msgid "Delete data"
-msgstr "Xoá tài khoản của tôi"
+msgstr "Xóa dữ liệu"
 
 #: control/templates/control/event_list.html:49
-#, fuzzy
-#| msgid "API Access"
 msgid "Admin access"
-msgstr "Truy cập API"
+msgstr "Quyền truy cập quản trị"
 
 #: control/templates/control/event_list.html:55
 #: control/templates/pretixcontrol/checkin/lists.html:140
@@ -16696,16 +16404,12 @@ msgid "Clone"
 msgstr "Nhân bản"
 
 #: control/templates/control/event_list.html:65
-#, fuzzy
-#| msgid "No comments yet."
 msgid "No events yet."
-msgstr "Chưa có bình luận."
+msgstr "Chưa có sự kiện nào."
 
 #: control/templates/control/event_update.html:6
-#, fuzzy
-#| msgid "New event"
 msgid "Update event"
-msgstr "Hội thảo mới"
+msgstr "Cập nhật sự kiện"
 
 #: control/templates/control/event_update.html:86
 msgid "JWT config"
@@ -16720,32 +16424,24 @@ msgid "More insights coming soon."
 msgstr "Sắp có thêm thông tin chi tiết."
 
 #: control/templates/control/janus_delete.html:5
-#, fuzzy
-#| msgid "Delete organiser"
 msgid "Delete Janus server"
-msgstr "Xoá thành viên Ban tổ chức"
+msgstr "Xóa máy chủ Janus"
 
 #: control/templates/control/janus_form.html:6
 msgid "Create or update Janus server"
 msgstr "Tạo hoặc cập nhật máy chủ Janus"
 
 #: control/templates/control/profile.html:5
-#, fuzzy
-#| msgid "Speaker email"
 msgid "Change your profile"
-msgstr "Email của diễn giả"
+msgstr "Thay đổi hồ sơ"
 
 #: control/templates/control/profile.html:11
-#, fuzzy
-#| msgid "User settings"
 msgid "MFA settings"
-msgstr "Cấu hình người dùng"
+msgstr "Cài đặt MFA"
 
 #: control/templates/control/streaming_delete.html:5
-#, fuzzy
-#| msgid "Delete organiser"
 msgid "Delete streaming server"
-msgstr "Xoá thành viên Ban tổ chức"
+msgstr "Xóa máy chủ phát trực tuyến"
 
 #: control/templates/control/streaming_form.html:6
 msgid "Create or update streaming server"
@@ -16764,16 +16460,12 @@ msgid "Stream key"
 msgstr "Khóa stream"
 
 #: control/templates/control/streamkey.html:13
-#, fuzzy
-#| msgid "Link URL"
 msgid "HLS URL"
-msgstr "Đường dẫn thông tin về BTC"
+msgstr "URL HLS"
 
 #: control/templates/control/streamkey.html:23
-#, fuzzy
-#| msgid "Generate widget"
 msgid "Generate"
-msgstr "Tạo tiện ích"
+msgstr "Tạo"
 
 #: control/templates/control/systemlog_detail.html:5
 msgid "System log entry"
@@ -16784,16 +16476,12 @@ msgid "Metadata"
 msgstr "Siêu dữ liệu"
 
 #: control/templates/control/systemlog_detail.html:14
-#, fuzzy
-#| msgid "User settings"
 msgid "User Agent"
-msgstr "Cấu hình người dùng"
+msgstr "User Agent"
 
 #: control/templates/control/systemlog_detail.html:18
-#, fuzzy
-#| msgid "Track"
 msgid "Trace"
-msgstr "Kênh hội thảo"
+msgstr "Trace"
 
 #: control/templates/control/systemlog_detail.html:24
 #: control/templates/control/systemlog_list.html:10
@@ -16822,26 +16510,21 @@ msgid "Details"
 msgstr "Chi tiết"
 
 #: control/templates/control/systemlog_list.html:31
-#, fuzzy
-#| msgid "Page not found."
 msgid "No log entries found."
-msgstr "Trang không tìm thấy."
+msgstr "Không tìm thấy mục nhật ký nào."
 
 #: control/templates/control/systemlog_list.html:39
 msgid "first"
 msgstr "thứ nhất"
 
 #: control/templates/control/systemlog_list.html:40
-#, fuzzy
-#| msgid "Previous step"
 msgid "previous"
-msgstr "Bước trước đó"
+msgstr "trước"
 
 #: control/templates/control/systemlog_list.html:44
-#, fuzzy, python-format
-#| msgid "Step %(current)s of %(total)s"
+#, python-format
 msgid "Page %(current)s of %(total)s."
-msgstr "Bước %(current)s trong tổng số %(total)s bước"
+msgstr "Trang %(current)s trên %(total)s."
 
 #: control/templates/control/systemlog_list.html:48
 msgid "next"
@@ -16852,26 +16535,20 @@ msgid "last"
 msgstr "cuối cùng"
 
 #: control/templates/control/turn_delete.html:5
-#, fuzzy
-#| msgid "Delete review"
 msgid "Delete TURN server"
-msgstr "Xoá phần bình duyệt"
+msgstr "Xóa máy chủ TURN"
 
 #: control/templates/control/turn_form.html:6
 msgid "Create or update TURN server"
 msgstr "Tạo hoặc cập nhật máy chủ TURN"
 
 #: control/templates/control/turn_list.html:16
-#, fuzzy
-#| msgid "Host"
 msgid "Host name"
-msgstr "Đăng cai"
+msgstr "Tên máy chủ"
 
 #: control/templates/control/user_list.html:8
-#, fuzzy
-#| msgid "Add a new note"
 msgid "Add new user"
-msgstr "Thêm một ghi chú"
+msgstr "Thêm người dùng mới"
 
 #: control/templates/control/user_list.html:30
 msgid "No users found."
@@ -16913,10 +16590,8 @@ msgid "Check in Status"
 msgstr "Trạng thái điểm danh"
 
 #: control/templates/pretixcontrol/admin/attendees/index.html:161
-#, fuzzy
-#| msgid "There are no pending changes to apply right now."
 msgid "There are no attendees to show."
-msgstr "Hiện tại không có thay đổi nào đang chờ thực thi."
+msgstr "Không có người tham dự nào để hiển thị."
 
 #: control/templates/pretixcontrol/admin/events/index.html:14
 msgid ""
@@ -17051,40 +16726,32 @@ msgid "This is a list of all talk submissions across events."
 msgstr "Đây là danh sách tất cả bài trình bày được gửi cho các sự kiện."
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:92
-#, fuzzy
-#| msgid "Proposal state"
 msgid "Proposal State"
-msgstr "Tình trạng của đề xuất"
+msgstr "Trạng thái đề xuất"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:157
-#, fuzzy
-#| msgid "There are no organisers you can edit."
 msgid "There are no submissions to show."
-msgstr "Không có thành viên Ban tổ chức nào quý vị có thể sửa."
+msgstr "Không có bài nộp nào để hiển thị."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:21
-#, fuzzy, python-format
-#| msgid ""
-#| "You are running eventyay in development mode. Please <strong>STOP</"
-#| "strong> and set the DEBUG variable to False if this page is in any way "
-#| "reachable from the internet."
+#, python-format
 msgid ""
 "You are running %(site_name)s in development mode. Please <strong>STOP</"
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"Bạn đang chạy eventyay ở chế độ phát triển. Vui lòng <strong>DỪNG</strong> "
-"và đặt biến DEBUG thành False nếu trang này có thể truy cập được từ internet."
+"Đang chạy %(site_name)s ở chế độ phát triển. Vui lòng <strong>DỪNG</strong> "
+"và đặt biến DEBUG thành False nếu trang này bằng bất kỳ cách nào có thể truy "
+"cập được từ internet."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
 msgstr "Phiên bản eventyay của bạn là:"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:33
-#, fuzzy, python-format
-#| msgid "You can check for updates <a href=\"%(url)s\">here</a>."
+#, python-format
 msgid "You can check for updates <a href=\"%(update_url)s\">here</a>."
-msgstr "Bạn có thể kiểm tra các bản cập nhật <a href=\"%(url)s\">tại đây</a>."
+msgstr "Có thể kiểm tra bản cập nhật tại <a href=\"%(update_url)s\">đây</a>."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:42
 msgid "Settings have been loaded from:"
@@ -18487,10 +18154,8 @@ msgstr "Xuất bản sự kiện để hiển thị vé trên trang bán trướ
 #: eventyay_common/templates/eventyay_common/event/live.html:103
 #: eventyay_common/templates/eventyay_common/event/live.html:135
 #: eventyay_common/templates/eventyay_common/event/live.html:143
-#, fuzzy
-#| msgid "Public link"
 msgid "Publish Tickets"
-msgstr "Liên kết công khai"
+msgstr "Phát hành vé"
 
 #: control/templates/pretixcontrol/event/live.html:43
 #: eventyay_common/templates/eventyay_common/event/live.html:109
@@ -18792,10 +18457,8 @@ msgid "Meta data"
 msgstr "Siêu dữ liệu"
 
 #: control/templates/pretixcontrol/event/settings.html:52
-#, fuzzy
-#| msgid "Resend speaker notifications"
 msgid "Order Modification"
-msgstr "Gửi lại thông báo cho diễn giả"
+msgstr "Sửa đổi đơn hàng"
 
 #: control/templates/pretixcontrol/event/settings.html:53
 msgid "Changes to existing orders"
@@ -19143,10 +18806,8 @@ msgid "This configuration is used for ticket payments via the Stripe plugin."
 msgstr "Cấu hình này dùng cho thanh toán vé qua plugin Stripe."
 
 #: control/templates/pretixcontrol/global_settings.html:76
-#, fuzzy
-#| msgid "Configuration reference"
 msgid "Client Configuration"
-msgstr "Tham khảo cấu hình"
+msgstr "Cấu hình khách hàng"
 
 #: control/templates/pretixcontrol/global_settings.html:109
 msgid "App Fees"
@@ -19586,8 +19247,6 @@ msgstr "Dữ liệu khách hàng (một lần cho mỗi đơn hàng)"
 
 #: control/templates/pretixcontrol/items/orderforms.html:44
 #: control/templates/pretixcontrol/items/orderforms.html:148
-#, fuzzy
-#| msgid "Fields"
 msgid "Field"
 msgstr "Trường"
 
@@ -19603,20 +19262,16 @@ msgstr "Trường"
 #: orga/templates/orga/cfp/forms.html:82 orga/templates/orga/cfp/forms.html:507
 #: orga/templates/orga/cfp/forms.html:850
 #: orga/templates/orga/cfp/talkquestion/list.html:55
-#, fuzzy
-#| msgid "required"
 msgid "Required"
-msgstr "bắt buộc"
+msgstr "Bắt buộc"
 
 #: control/templates/pretixcontrol/items/orderforms.html:68
 msgid "Required status for E-mail"
 msgstr "Trạng thái bắt buộc cho E-mail"
 
 #: control/templates/pretixcontrol/items/orderforms.html:79
-#, fuzzy
-#| msgid "twice"
 msgid "Ask twice"
-msgstr "hai lần"
+msgstr "Hỏi hai lần"
 
 #: control/templates/pretixcontrol/items/orderforms.html:105
 msgid "Required status for Phone number"
@@ -19639,20 +19294,16 @@ msgid "Attendee data (once per admission ticket)"
 msgstr "Dữ liệu người tham dự (một lần cho mỗi vé vào cửa)"
 
 #: control/templates/pretixcontrol/items/orderforms.html:163
-#, fuzzy
-#| msgid "Attendee feedback"
 msgid "Attendee names"
-msgstr "Phản hồi của đại biểu tham dự"
+msgstr "Tên người tham dự"
 
 #: control/templates/pretixcontrol/items/orderforms.html:176
 msgid "Required status for Attendee names"
 msgstr "Trạng thái bắt buộc cho tên người tham dự"
 
 #: control/templates/pretixcontrol/items/orderforms.html:196
-#, fuzzy
-#| msgid "Send emails"
 msgid "Attendee emails"
-msgstr "Gửi email"
+msgstr "Email người tham dự"
 
 #: control/templates/pretixcontrol/items/orderforms.html:226
 msgid "Required status for Attendee emails"
@@ -19663,33 +19314,25 @@ msgid "Required status for Company"
 msgstr "Trạng thái bắt buộc cho Công ty"
 
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Postal addresses"
-msgstr "Địa chỉ email"
+msgstr "Địa chỉ bưu điện"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
 msgid "Required status for Postal addresses"
 msgstr "Trạng thái bắt buộc cho địa chỉ bưu chính"
 
 #: control/templates/pretixcontrol/items/orderforms.html:321
-#, fuzzy
-#| msgid "Active languages"
 msgid "Active status for"
-msgstr "Ngôn ngữ đang dùng"
+msgstr "Trạng thái hoạt động cho"
 
 #: control/templates/pretixcontrol/items/orderforms.html:333
-#, fuzzy
-#| msgid "Requires access code"
 msgid "Required status for"
-msgstr "Yêu cầu mã truy cập"
+msgstr "Trạng thái bắt buộc cho"
 
 #: control/templates/pretixcontrol/items/orderforms.html:375
 #: control/templates/pretixcontrol/items/questions.html:22
-#, fuzzy
-#| msgid "New custom field"
 msgid "Create a new custom field"
-msgstr "Trường tuỳ biến mới"
+msgstr "Tạo trường tùy chỉnh mới"
 
 #: control/templates/pretixcontrol/items/orderforms.html:378
 #: control/templates/pretixcontrol/items/questions.html:24
@@ -19697,10 +19340,8 @@ msgid "Create a text field"
 msgstr "Tạo trường văn bản"
 
 #: control/templates/pretixcontrol/items/orderforms.html:388
-#, fuzzy
-#| msgid "Export settings"
 msgid "Form settings"
-msgstr "Xuất cài đặt"
+msgstr "Cài đặt biểu mẫu"
 
 #: control/templates/pretixcontrol/items/question.html:6
 #: control/templates/pretixcontrol/items/question.html:9
@@ -19773,10 +19414,9 @@ msgstr ""
 
 #: control/templates/pretixcontrol/items/question_edit.html:8
 #: control/templates/pretixcontrol/items/question_edit.html:18
-#, fuzzy, python-format
-#| msgid "Custom Mail"
+#, python-format
 msgid "Custom Field: %(name)s"
-msgstr "Email tuỳ chỉnh"
+msgstr "Trường tùy chỉnh: %(name)s"
 
 #: control/templates/pretixcontrol/items/question_edit.html:35
 msgid ""
@@ -19811,17 +19451,13 @@ msgid "Add a new option"
 msgstr "Thêm tùy chọn mới"
 
 #: control/templates/pretixcontrol/items/question_edit.html:133
-#, fuzzy
-#| msgid "Custom fields reminder"
 msgid "Custom field dependency"
-msgstr "Lời nhắc về trường tuỳ biến"
+msgstr "Phụ thuộc trường tùy chỉnh"
 
 #: control/templates/pretixcontrol/items/questions.html:4
 #: control/templates/pretixcontrol/items/questions.html:9
-#, fuzzy
-#| msgid "Custom Mail"
 msgid "Custom Fields"
-msgstr "Email tuỳ chỉnh"
+msgstr "Trường tùy chỉnh"
 
 #: control/templates/pretixcontrol/items/questions.html:15
 msgid ""
@@ -19833,26 +19469,20 @@ msgstr ""
 "bạn phục vụ đồ ăn, ví dụ có thể là hỏi người dùng về yêu cầu chế độ ăn."
 
 #: control/templates/pretixcontrol/items/questions.html:64
-#, fuzzy
-#| msgid "New custom field"
 msgid "System custom field"
-msgstr "Trường tuỳ biến mới"
+msgstr "Trường tùy chỉnh hệ thống"
 
 #: control/templates/pretixcontrol/items/questions.html:69
-#, fuzzy
-#| msgid "New custom field"
 msgid "Required custom field"
-msgstr "Trường tuỳ biến mới"
+msgstr "Trường tùy chỉnh bắt buộc"
 
 #: control/templates/pretixcontrol/items/questions.html:74
 msgid "Ask during check-in"
 msgstr "Yêu cầu khi check-in"
 
 #: control/templates/pretixcontrol/items/questions.html:80
-#, fuzzy
-#| msgid "New custom field"
 msgid "Hidden custom field"
-msgstr "Trường tuỳ biến mới"
+msgstr "Trường tùy chỉnh ẩn"
 
 #: control/templates/pretixcontrol/items/questions.html:93
 msgid "All admission products"
@@ -20269,49 +19899,49 @@ msgstr "Có, từ chối đơn hàng"
 #: control/templates/pretixcontrol/order/extend.html:9
 #: control/templates/pretixcontrol/order/index.html:59
 msgid "Extend payment term"
-msgstr ""
+msgstr "Gia hạn thời hạn thanh toán"
 
 #: control/templates/pretixcontrol/order/index.html:13
 #: control/templates/pretixcontrol/order/index.html:20
 #, python-format
 msgid "Order details: %(code)s"
-msgstr ""
+msgstr "Chi tiết đơn hàng: %(code)s"
 
 #: control/templates/pretixcontrol/order/index.html:18
 #: presale/templates/pretixpresale/event/fragment_cart.html:7
 msgid "taxes"
-msgstr ""
+msgstr "thuế"
 
 #: control/templates/pretixcontrol/order/index.html:45
 msgid "Approve"
-msgstr ""
+msgstr "Phê duyệt"
 
 #: control/templates/pretixcontrol/order/index.html:50
 msgid "Deny"
-msgstr ""
+msgstr "Từ chối"
 
 #: control/templates/pretixcontrol/order/index.html:56
 #: control/templates/pretixcontrol/order/pay_complete.html:31
 msgid "Mark as paid"
-msgstr ""
+msgstr "Đánh dấu là đã thanh toán"
 
 #: control/templates/pretixcontrol/order/index.html:68
 #: control/templates/pretixcontrol/order/reactivate.html:5
 #: control/templates/pretixcontrol/order/reactivate.html:9
 msgid "Reactivate order"
-msgstr ""
+msgstr "Kích hoạt lại đơn hàng"
 
 #: control/templates/pretixcontrol/order/index.html:75
 msgid "View order as user"
-msgstr ""
+msgstr "Xem đơn hàng với tư cách người dùng"
 
 #: control/templates/pretixcontrol/order/index.html:78
 msgid "View email history"
-msgstr ""
+msgstr "Xem lịch sử email"
 
 #: control/templates/pretixcontrol/order/index.html:89
 msgid "Expire order"
-msgstr ""
+msgstr "Cho đơn hàng hết hạn"
 
 #: control/templates/pretixcontrol/order/index.html:90
 msgid ""
@@ -20319,45 +19949,48 @@ msgid ""
 "orders automatically. To free quota capacity, you can mark it as expired "
 "manually."
 msgstr ""
+"Khoản thanh toán cho đơn hàng này đã quá hạn, nhưng đã cấu hình không tự "
+"động cho đơn hàng hết hạn. Để giải phóng dung lượng hạn mức, có thể đánh dấu "
+"đơn hàng là đã hết hạn thủ công."
 
 #: control/templates/pretixcontrol/order/index.html:105
 msgid "Refund for overpayment"
-msgstr ""
+msgstr "Hoàn tiền do thanh toán thừa"
 
 #: control/templates/pretixcontrol/order/index.html:107
 #, python-format
 msgid "This order is currently overpaid by %(amount)s."
-msgstr ""
+msgstr "Đơn hàng này hiện đang được thanh toán thừa %(amount)s."
 
 #: control/templates/pretixcontrol/order/index.html:111
 #, python-format
 msgid "Initiate a refund of %(amount)s"
-msgstr ""
+msgstr "Khởi tạo hoàn tiền %(amount)s"
 
 #: control/templates/pretixcontrol/order/index.html:125
 msgid "Cancellation request"
-msgstr ""
+msgstr "Yêu cầu hủy"
 
 #: control/templates/pretixcontrol/order/index.html:129
 msgid "The customer asked you to cancel the order with the following settings:"
-msgstr ""
+msgstr "Khách hàng đã yêu cầu hủy đơn hàng với các cài đặt sau:"
 
 #: control/templates/pretixcontrol/order/index.html:136
 msgid "Original payment method"
-msgstr ""
+msgstr "Phương thức thanh toán ban đầu"
 
 #: control/templates/pretixcontrol/order/index.html:145
 msgid "Delete request"
-msgstr ""
+msgstr "Yêu cầu xóa"
 
 #: control/templates/pretixcontrol/order/index.html:158
 #: presale/templates/pretixpresale/event/order.html:22
 msgid "Order details"
-msgstr ""
+msgstr "Chi tiết đơn hàng"
 
 #: control/templates/pretixcontrol/order/index.html:168
 msgid "Cancellation date"
-msgstr ""
+msgstr "Ngày hủy"
 
 #: control/templates/pretixcontrol/order/index.html:190
 msgid ""
@@ -22347,44 +21980,46 @@ msgstr "Không tìm thấy voucher nào khớp với tìm kiếm của bạn."
 #: control/templates/pretixcontrol/vouchers/index.html:95
 #: control/templates/pretixcontrol/vouchers/index.html:103
 msgid "Create multiple new vouchers"
-msgstr ""
+msgstr "Tạo nhiều phiếu mua hàng mới"
 
 #: control/templates/pretixcontrol/vouchers/index.html:106
 #: control/templates/pretixcontrol/waitinglist/index.html:133
 msgid "Download list"
-msgstr ""
+msgstr "Tải xuống danh sách"
 
 #: control/templates/pretixcontrol/vouchers/index.html:187
 #, python-format
 msgid "Any product in quota \"%(quota)s\""
-msgstr ""
+msgstr "Bất kỳ sản phẩm nào trong hạn ngạch \"%(quota)s\""
 
 #: control/templates/pretixcontrol/vouchers/index.html:203
 msgid "Use as a template for new vouchers"
-msgstr ""
+msgstr "Dùng làm mẫu cho phiếu mua hàng mới"
 
 #: control/templates/pretixcontrol/vouchers/index.html:224
 msgid ""
 "If you add a \"tag\" to a voucher, you can here see statistics on their "
 "usage."
 msgstr ""
+"Nếu thêm \"thẻ\" vào phiếu mua hàng, có thể xem thống kê về mức độ sử dụng "
+"của chúng tại đây."
 
 #: control/templates/pretixcontrol/vouchers/index.html:244
 msgid "You haven't added any tags to vouchers yet."
-msgstr ""
+msgstr "Chưa thêm thẻ nào vào phiếu mua hàng."
 
 #: control/templates/pretixcontrol/vouchers/index.html:255
 msgid "Redeemed vouchers"
-msgstr ""
+msgstr "Phiếu mua hàng đã được sử dụng"
 
 #: control/templates/pretixcontrol/vouchers/index.html:269
 msgid "Empty tag"
-msgstr ""
+msgstr "Thẻ trống"
 
 #: control/templates/pretixcontrol/waitinglist/delete.html:4
 #: control/templates/pretixcontrol/waitinglist/delete.html:6
 msgid "Delete entry"
-msgstr ""
+msgstr "Xóa mục"
 
 #: control/templates/pretixcontrol/waitinglist/delete.html:9
 #, python-format
@@ -22392,16 +22027,19 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
+"Chắc chắn muốn xóa mục danh sách chờ sau đây <strong>%(entry)s</strong>?"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
 "The waiting list is disabled, so if the event is sold out, people cannot add "
 "themselves to this list. If you want to enable it, go to the event settings."
 msgstr ""
+"Danh sách chờ đang bị tắt, vì vậy nếu sự kiện bán hết vé, không ai có thể tự "
+"thêm mình vào danh sách này. Nếu muốn bật, vào cài đặt sự kiện."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:28
 msgid "Send vouchers"
-msgstr ""
+msgstr "Gửi phiếu mua hàng"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:34
 msgid ""
@@ -22411,12 +22049,19 @@ msgid ""
 "capacity is available, so don't worry if entries do not disappear here "
 "immediately. If you want, you can also send them out manually right now."
 msgstr ""
+"Đã cấu hình để phiếu mua hàng tự động được gửi đến những người trong danh "
+"sách này đã chờ lâu nhất ngay khi có chỗ trống. Có thể mất tới nửa giờ để "
+"gửi phiếu mua hàng sau khi có chỗ trống, vì vậy đừng lo nếu các mục chưa "
+"biến mất khỏi đây ngay lập tức. Nếu muốn, cũng có thể gửi thủ công ngay bây "
+"giờ."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:43
 msgid ""
 "Currently, no vouchers will be sent since your event is not live or is not "
 "selling tickets."
 msgstr ""
+"Hiện tại, sẽ không có phiếu mua hàng nào được gửi vì sự kiện chưa được công "
+"khai hoặc không bán vé."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:48
 msgid ""
@@ -22426,14 +22071,19 @@ msgid ""
 "quota is available) or you can press the big button below this text to send "
 "out as many vouchers as currently possible to the persons who waited longest."
 msgstr ""
+"Đã cấu hình để phiếu mua hàng <strong>không</strong> được gửi tự động. Có "
+"thể gửi từng phiếu mua hàng theo thứ tự tùy chọn bằng cách nhấp vào các nút "
+"bên cạnh mỗi dòng trong bảng này (nếu còn đủ hạn ngạch) hoặc nhấn nút lớn "
+"bên dưới đoạn văn bản này để gửi nhiều phiếu mua hàng nhất có thể tới những "
+"người đã chờ lâu nhất."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:69
 msgid "Send as many vouchers as possible"
-msgstr ""
+msgstr "Gửi nhiều phiếu mua hàng nhất có thể"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:78
 msgid "Sales estimate"
-msgstr ""
+msgstr "Ước tính doanh thu"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:81
 #, python-format
@@ -22442,14 +22092,16 @@ msgid ""
 "waiting list in, you could sell tickets worth an additional "
 "<strong>%(amount)s</strong>."
 msgstr ""
+"Nếu có thể tạo đủ chỗ trống trong sự kiện để đón tất cả những người trong "
+"danh sách chờ, có thể bán thêm lượng vé trị giá <strong>%(amount)s</strong>."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:105
 msgid "Successfully redeemed"
-msgstr ""
+msgstr "Đã được sử dụng thành công"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:153
 msgid "On the list since"
-msgstr ""
+msgstr "Trong danh sách từ"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:182
 msgid ""
@@ -22547,16 +22199,12 @@ msgid "That page number is less than 1"
 msgstr "Số trang đó nhỏ hơn 1"
 
 #: control/views/admin.py:119
-#, fuzzy
-#| msgid "Hide field"
 msgid "Invalid field."
-msgstr "Ẩn trường"
+msgstr "Trường không hợp lệ."
 
 #: control/views/admin.py:121
-#, fuzzy
-#| msgid "Page not found."
 msgid "Event not found."
-msgstr "Trang không tìm thấy."
+msgstr "Không tìm thấy sự kiện."
 
 #: control/views/admin.py:130
 msgid "Only published events without test mode can be shown on the start page."
@@ -22594,10 +22242,8 @@ msgid "Ok!"
 msgstr "Đã xong!"
 
 #: control/views/admin_views.py:441
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The data will soon be deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Dữ liệu sẽ sớm bị xóa."
 
 #: control/views/admin_views.py:762
 msgid "No BBB session found for this room."
@@ -22681,10 +22327,8 @@ msgid "{quota} left"
 msgstr "{quota} còn lại"
 
 #: control/views/dashboards.py:296
-#, fuzzy
-#| msgid "Event History"
 msgid "Event is"
-msgstr "Lịch sử hội thảo"
+msgstr "Sự kiện là"
 
 #: control/views/dashboards.py:296
 msgid "Ticket shop is"
@@ -23448,15 +23092,10 @@ msgstr "Thẻ quà tặng đã được tạo và bây giờ có thể sử dụ
 
 #: control/views/organizer_views/organizer_view.py:65
 #: eventyay_common/views/organizer.py:67
-#, fuzzy
-#| msgid ""
-#| "Nobody on your teams has the permission to change organiser-level "
-#| "settings."
 msgid ""
 "You do not have permission to create organizers. Please contact an "
 "administrator."
-msgstr ""
-"Không ai trong nhóm của quý vị có quyền thay đổi cài đặt ở cấp Ban tổ chức."
+msgstr "Không có quyền tạo đơn vị tổ chức. Vui lòng liên hệ quản trị viên."
 
 #: control/views/organizer_views/organizer_view.py:70
 msgid "The new organizer has been created."
@@ -23514,10 +23153,8 @@ msgid "The requested product does not exist."
 msgstr "Sản phẩm yêu cầu không tồn tại."
 
 #: control/views/product.py:131
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The order of products has been updated."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Thứ tự sản phẩm đã được cập nhật."
 
 #: control/views/product.py:164 control/views/product.py:200
 #: control/views/product.py:297
@@ -23913,19 +23550,14 @@ msgid "Release next event date?"
 msgstr "Công bố ngày diễn ra hội thảo tiếp theo?"
 
 #: eventyay_common/forms/filters.py:38
-#, fuzzy
-#| msgid "Sessions by session type"
 msgid "Search by session name"
-msgstr "Phiên thuyết trình theo loại phiên"
+msgstr "Tìm kiếm theo tên phiên"
 
 #: eventyay_common/navigation.py:36
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:6
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:9
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "My Sessions"
-msgstr "Phiên"
+msgstr "Phiên của tôi"
 
 #: eventyay_common/navigation.py:198 eventyay_common/navigation.py:206
 msgid "Devices"
@@ -23944,10 +23576,8 @@ msgid "Two-factor authentication"
 msgstr "Xác thực hai yếu tố"
 
 #: eventyay_common/navigation.py:282
-#, fuzzy
-#| msgid "Input validation"
 msgid "OAuth applications"
-msgstr "Xác thực đầu vào"
+msgstr "Ứng dụng OAuth"
 
 #: eventyay_common/navigation.py:288
 #: orga/templates/orga/event/dashboard.html:119
@@ -24050,10 +23680,8 @@ msgid ""
 msgstr "Bạn có chắc chắn muốn xóa thiết bị xác thực \"%(device)s\"?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
-#, fuzzy
-#| msgid "You will not be able to revert this action."
 msgid "You will no longer be able to use this device to log in to pretix."
-msgstr "Quý vị sẽ không thể hồi lại tác vụ này."
+msgstr "Thiết bị này sẽ không còn có thể được sử dụng để đăng nhập vào pretix."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:27
 msgid ""
@@ -24218,8 +23846,6 @@ msgstr "Không có ứng dụng nào có quyền truy cập vào tài khoản ev
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:4
 #: eventyay_common/templates/eventyay_common/account/email-management.html:7
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Email Addresses"
 msgstr "Địa chỉ email"
 
@@ -24244,10 +23870,8 @@ msgid "Make Primary"
 msgstr "Đặt làm chính"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:35
-#, fuzzy
-#| msgid "Resend speaker notifications"
 msgid "Re-send Verification"
-msgstr "Gửi lại thông báo cho diễn giả"
+msgstr "Gửi lại xác minh"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:36
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:176
@@ -24266,16 +23890,12 @@ msgid ""
 msgstr "Hiện bạn chưa có địa chỉ email nào liên kết với tài khoản của mình."
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:44
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Add Email Address"
-msgstr "Địa chỉ email"
+msgstr "Thêm địa chỉ email"
 
 #: eventyay_common/templates/eventyay_common/account/email-management.html:51
-#, fuzzy
-#| msgid "My Emails"
 msgid "Add Email"
-msgstr "Email gửi cho tôi"
+msgstr "Thêm email"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:4
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:20
@@ -24304,16 +23924,12 @@ msgid "Login settings"
 msgstr "Cài đặt đăng nhập"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:55
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Email Address"
 msgstr "Địa chỉ email"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:60
-#, fuzzy
-#| msgid "Email addresses"
 msgid "Manage email addresses"
-msgstr "Địa chỉ email"
+msgstr "Quản lý địa chỉ email"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:75
 msgid "Change two-factor settings"
@@ -24335,16 +23951,12 @@ msgid "Show account history"
 msgstr "Hiển thị lịch sử tài khoản"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:112
-#, fuzzy
-#| msgid "Forgot your password?"
 msgid "Set your password"
-msgstr "Quên mật khẩu?"
+msgstr "Thiết lập mật khẩu"
 
 #: eventyay_common/templates/eventyay_common/account/general-settings.html:120
-#, fuzzy
-#| msgid "Password reset time"
 msgid "Send password setup link"
-msgstr "Thời gian đặt lại mật khẩu"
+msgstr "Gửi liên kết thiết lập mật khẩu"
 
 #: eventyay_common/templates/eventyay_common/account/notification-flip-off.html:4
 msgid "Disable notifications"
@@ -24526,10 +24138,8 @@ msgid "Ok"
 msgstr "OK"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
-#, fuzzy
-#| msgid "Event History"
 msgid "Event Dashboard"
-msgstr "Lịch sử hội thảo"
+msgstr "Bảng điều khiển sự kiện"
 
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:11
 msgid ""
@@ -24735,16 +24345,12 @@ msgstr ""
 "người đánh giá và quản trị hệ thống có thể xem hoặc mua vé."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:8
-#, fuzzy
-#| msgid "Event History"
 msgid "Event status"
-msgstr "Lịch sử hội thảo"
+msgstr "Trạng thái sự kiện"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:18
-#, fuzzy
-#| msgid "Event is public"
 msgid "Event visibility"
-msgstr "Hội thảo đã được công bố"
+msgstr "Chế độ hiển thị sự kiện"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:23
 msgid ""
@@ -24755,10 +24361,8 @@ msgstr ""
 "trạng thái ngoại tuyến."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:29
-#, fuzzy
-#| msgid "not public yet"
 msgid "Unpublish Event"
-msgstr "chưa công khai"
+msgstr "Ngừng xuất bản sự kiện"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:34
 msgid "Take the event live by publishing the event info page to the public."
@@ -24776,10 +24380,8 @@ msgid "Publish Event"
 msgstr "Xuất bản sự kiện"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:64
-#, fuzzy
-#| msgid "Public changelog"
 msgid "Public pages"
-msgstr "Nhật ký thay đổi công khai"
+msgstr "Trang công khai"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:73
 msgid "No public pages are available yet."
@@ -24792,10 +24394,8 @@ msgstr "Trạng thái bài nói"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:163
 #: orga/templates/orga/event/live.html:23
-#, fuzzy
-#| msgid "Your event may not be ready for release yet!"
 msgid "Your talk component may not be ready for release yet!"
-msgstr "Hội thảo của quý vị có thể chưa sẵn sàng để công bố!"
+msgstr "Thành phần bài nói có thể chưa sẵn sàng để phát hành!"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:167
 #: eventyay_common/templates/eventyay_common/event/live.html:177
@@ -24806,13 +24406,11 @@ msgstr "Sửa lỗi"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:173
 #: orga/templates/orga/event/live.html:33
-#, fuzzy
-#| msgid "There may be easy ways to improve your event before its release!"
 msgid ""
 "There may be easy ways to improve your talk component before its release!"
 msgstr ""
-"Có thể có nhiều cách dễ dàng để hoàn thiện hội thảo của quý vị trước khi "
-"công bố!"
+"Có thể có những cách dễ dàng để cải thiện thành phần bài nói trước khi phát "
+"hành!"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:184
 #: orga/templates/orga/event/live.html:44
@@ -24824,10 +24422,8 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/event/live.html:210
 #: orga/templates/orga/event/live.html:48
 #: orga/templates/orga/event/live.html:70
-#, fuzzy
-#| msgid "Public link"
 msgid "Publish Talks"
-msgstr "Liên kết công khai"
+msgstr "Xuất bản bài nói"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:193
 #: orga/templates/orga/event/live.html:53
@@ -24969,10 +24565,8 @@ msgstr ""
 "khai hay không."
 
 #: eventyay_common/templates/eventyay_common/event/live.html:349
-#, fuzzy
-#| msgid "Header links"
 msgid "Hide video link"
-msgstr "Các liên kết đầu trang"
+msgstr "Ẩn liên kết video"
 
 #: eventyay_common/templates/eventyay_common/event/live.html:351
 msgid "Show video link"
@@ -25032,18 +24626,10 @@ msgid "Set to random"
 msgstr "Đặt thành ngẫu nhiên"
 
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:18
-#, fuzzy
-#| msgid "Unavailable"
 msgid "Slug not available"
-msgstr "Chưa có"
+msgstr "Slug không khả dụng"
 
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:21
-#, fuzzy
-#| msgid ""
-#| "This is the address your event will be available at. Should be short, "
-#| "only contain lowercase letters and numbers, and must be unique. We "
-#| "recommend some kind of abbreviation with less than 30 characters that can "
-#| "be easily remembered."
 msgid ""
 "This is the address your event will be available at. Should be short, only "
 "contain lowercase letters and numbers, and must be unique. We recommend some "
@@ -25051,9 +24637,10 @@ msgid ""
 "remembered. You cannot change the slug later on! If you don't provide a "
 "slug, a random one will be generated for you."
 msgstr ""
-"Đây là đường dẫn tới hội thảo của quý vị. Đường dẫn nên ngắn gọn, chỉ chứa "
-"chữ thường và số và phải là duy nhất. Chúng tôi khuyến nghị nên sử dụng một "
-"số loại chữ viết tắt có ít hơn 30 ký tự có thể dễ nhớ."
+"Đây là địa chỉ sự kiện sẽ hiển thị. Nên ngắn gọn, chỉ bao gồm chữ thường và "
+"chữ số, và phải là duy nhất. Khuyến nghị dùng dạng viết tắt dưới 30 ký tự, "
+"dễ nhớ. Không thể thay đổi slug sau này! Nếu không cung cấp slug, một slug "
+"ngẫu nhiên sẽ được tạo."
 
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:29
 msgid ""
@@ -25131,26 +24718,20 @@ msgstr "Cho phép truy cập video"
 
 #: eventyay_common/templates/eventyay_common/filter_actions.html:8
 #: eventyay_common/templates/eventyay_common/filter_actions.html:10
-#, fuzzy
-#| msgid "Media files"
 msgid "Clear filters"
-msgstr "File đa phương tiện"
+msgstr "Xóa bộ lọc"
 
 #: eventyay_common/templates/eventyay_common/orders/orders.html:27
 msgid "Order Date"
 msgstr "Ngày đặt hàng"
 
 #: eventyay_common/templates/eventyay_common/orders/orders.html:53
-#, fuzzy
-#| msgid "You wrote {count} words."
 msgid "You have no orders."
-msgstr "Quý vị đã viết {count} từ."
+msgstr "Không có đơn hàng."
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:15
-#, fuzzy
-#| msgid "Create a new event"
 msgid "Create a team"
-msgstr "Tạo hội thảo mới"
+msgstr "Tạo một nhóm"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:18
 msgid ""
@@ -25166,34 +24747,26 @@ msgid "Create a new team"
 msgstr "Tạo nhóm mới"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:33
-#, fuzzy
-#| msgid "Create a new event"
 msgid "Create team"
-msgstr "Tạo hội thảo mới"
+msgstr "Tạo nhóm"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:51
-#, fuzzy, python-format
-#| msgctxt "Shown at the bottom of lists, always > 1 elements."
-#| msgid "%(count)s elements"
+#, python-format
 msgid "%(count)s member"
 msgid_plural "%(count)s members"
-msgstr[0] "%(count)s yếu tố"
+msgstr[0] "%(count)s thành viên"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:65
-#, fuzzy, python-format
-#| msgctxt "Shown at the bottom of lists, always > 1 elements."
-#| msgid "%(count)s elements"
+#, python-format
 msgid "%(count)s event"
 msgid_plural "%(count)s events"
-msgstr[0] "%(count)s yếu tố"
+msgstr[0] "%(count)s sự kiện"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:78
-#, fuzzy, python-format
-#| msgctxt "Shown at the bottom of lists, always > 1 elements."
-#| msgid "%(count)s elements"
+#, python-format
 msgid "%(count)s invite pending"
 msgid_plural "%(count)s invites pending"
-msgstr[0] "%(count)s yếu tố"
+msgstr[0] "%(count)s lời mời đang chờ"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:95
 msgid "Team permissions"
@@ -25208,16 +24781,12 @@ msgid "Are you sure you want to delete this team?"
 msgstr "Bạn có chắc chắn muốn xóa nhóm này không?"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:135
-#, fuzzy
-#| msgid "Submissions"
 msgid "Save permissions"
-msgstr "Bài đã nộp"
+msgstr "Lưu quyền"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:147
-#, fuzzy
-#| msgid "Resend invite"
 msgid "Members & invites"
-msgstr "Gửi lại thư mời"
+msgstr "Thành viên & lời mời"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:156
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:22
@@ -25235,10 +24804,8 @@ msgid "Two-factor authentication disabled"
 msgstr "Xác thực hai yếu tố đã tắt"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:183
-#, fuzzy
-#| msgid "No comments yet."
 msgid "No members yet."
-msgstr "Chưa có bình luận."
+msgstr "Chưa có thành viên."
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:192
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:55
@@ -25270,10 +24837,8 @@ msgid "API tokens"
 msgstr "Token API"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:257
-#, fuzzy
-#| msgid "No celery workers have been configured."
 msgid "No tokens have been created yet."
-msgstr "Không có celery workers nào được cấu hình."
+msgstr "Chưa tạo token nào."
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:284
 msgid "No teams exist yet. Click 'Create a team' to add your first team."
@@ -25349,20 +24914,16 @@ msgid "Team history"
 msgstr "Lịch sử nhóm"
 
 #: eventyay_common/templates/eventyay_common/sessions/sessions.html:82
-#, fuzzy
-#| msgid "We have new sessions!"
 msgid "You have no sessions."
-msgstr "Có các phiên mới!"
+msgstr "Không có phiên."
 
 #: eventyay_common/views/account/basic.py:66
 msgid "We have emailed you a link to set your password."
 msgstr "Chúng tôi đã gửi cho bạn một email chứa liên kết để đặt mật khẩu."
 
 #: eventyay_common/views/account/basic.py:154
-#, fuzzy
-#| msgid "Organiser email address"
 msgid "(no email address)"
-msgstr "Email của Ban Tổ chức"
+msgstr "(không có địa chỉ email)"
 
 #: eventyay_common/views/account/basic.py:206
 #: eventyay_common/views/account/basic.py:249
@@ -25391,10 +24952,8 @@ msgstr ""
 "khẩu cho bản thân ở bên dưới."
 
 #: eventyay_common/views/account/email.py:28
-#, fuzzy
-#| msgid "Please provide an email address."
 msgid "Please select an email address first."
-msgstr "Vui lòng cung cấp một địa chỉ email."
+msgstr "Vui lòng chọn một địa chỉ email trước."
 
 #: eventyay_common/views/account/oauth.py:67
 msgid "Access for the selected application has been revoked."
@@ -25594,13 +25153,8 @@ msgstr ""
 "(email_action_link)s."
 
 #: eventyay_common/views/dashboards.py:273
-#, fuzzy
-#| msgid ""
-#| "Nobody on your teams has the permission to change organiser-level "
-#| "settings."
 msgid "You do not have permission to change event settings."
-msgstr ""
-"Không ai trong nhóm của quý vị có quyền thay đổi cài đặt ở cấp Ban tổ chức."
+msgstr "Không có quyền thay đổi cài đặt sự kiện."
 
 #: eventyay_common/views/dashboards.py:282 eventyay_common/views/event.py:877
 msgid "Video link is now visible on public pages."
@@ -25619,10 +25173,8 @@ msgid "CFP"
 msgstr "CFP"
 
 #: eventyay_common/views/event.py:576
-#, fuzzy
-#| msgid "Schedule session"
 msgid "Schedule / Sessions / Speakers"
-msgstr "Lên lịch phiên"
+msgstr "Lịch trình / Phiên / Diễn giả"
 
 #: eventyay_common/views/event.py:583 orga/views/event.py:105
 msgid "The CfP doesn’t have a full text yet."
@@ -25650,16 +25202,12 @@ msgid "Please resolve the billing information before publishing the event."
 msgstr "Vui lòng hoàn tất thông tin thanh toán trước khi xuất bản sự kiện."
 
 #: eventyay_common/views/event.py:634
-#, fuzzy
-#| msgid "Your event is currently"
 msgid "Your event is now online."
-msgstr "Hội thảo của quý vị hiện đã được"
+msgstr "Sự kiện hiện đã ở trạng thái trực tuyến."
 
 #: eventyay_common/views/event.py:642
-#, fuzzy
-#| msgid "The event has been added."
 msgid "Your event has been unpublished."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Sự kiện đã bị hủy xuất bản."
 
 #: eventyay_common/views/event.py:741 orga/views/event.py:148
 msgid "Publish the event before publishing talks."
@@ -25710,14 +25258,12 @@ msgid "The team has been created. You can now add members to the team."
 msgstr "Nhóm đã được tạo. Bạn có thể thêm thành viên vào nhóm ngay bây giờ."
 
 #: eventyay_common/views/organizer.py:361
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid ""
 "Something went wrong, your changes could not be saved. Please see below for "
 "details."
 msgstr ""
-"Chúng tôi đã gặp sự cố khi lưu đầu vào của bạn - Vui lòng xem bên dưới để "
-"biết chi tiết."
+"Đã có lỗi xảy ra, không thể lưu các thay đổi. Vui lòng xem bên dưới để biết "
+"chi tiết."
 
 #: eventyay_common/views/organizer.py:391 eventyay_common/views/team.py:409
 #, python-format
@@ -25786,36 +25332,30 @@ msgstr ""
 "đây."
 
 #: eventyay_common/views/organizer.py:623 eventyay_common/views/team.py:457
-#, fuzzy, python-format
-#| msgid "The user has been deleted."
+#, python-format
 msgid "The team '%(team_name)s' cannot be deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Không thể xóa nhóm '%(team_name)s'."
 
 #: eventyay_common/views/organizer.py:632 eventyay_common/views/team.py:455
-#, fuzzy, python-format
-#| msgid "The user has been deleted."
+#, python-format
 msgid "The team '%(team_name)s' has been deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Đã xóa nhóm '%(team_name)s'."
 
 #: eventyay_common/views/team.py:41
 msgid "Team management has moved into the unified organizer page."
 msgstr "Quản lý nhóm đã được chuyển sang trang tổ chức hợp nhất."
 
 #: eventyay_common/views/team.py:337
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid ""
 "Something went wrong, your changes could not be saved. Please see below for "
 "details"
 msgstr ""
-"Chúng tôi đã gặp sự cố khi lưu đầu vào của bạn - Vui lòng xem bên dưới để "
-"biết chi tiết."
+"Đã có lỗi xảy ra, không thể lưu các thay đổi. Vui lòng xem bên dưới để biết "
+"chi tiết"
 
 #: features/analytics/graphs/report.py:279
-#, fuzzy
-#| msgid "Number of reviews"
 msgid "Total number of unique viewers"
-msgstr "Số nhận xét bình duyệt"
+msgstr "Tổng số người xem duy nhất"
 
 #: features/analytics/graphs/report.py:282
 msgid "Average time spent in room"
@@ -25826,10 +25366,8 @@ msgid "Median time spent in room"
 msgstr "Thời gian trung vị trong phòng"
 
 #: features/analytics/graphs/report.py:291
-#, fuzzy
-#| msgid "Number of reviews"
 msgid "Number of chat messages"
-msgstr "Số nhận xét bình duyệt"
+msgstr "Số tin nhắn trong chat"
 
 #: features/analytics/graphs/report.py:302
 msgid "Number of users who sent chat messages"
@@ -25840,10 +25378,8 @@ msgid "Unique viewers by session"
 msgstr "Người xem duy nhất theo phiên"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Reviewers"
 msgid "Viewers"
-msgstr "Người bình duyệt"
+msgstr "Người xem"
 
 #: features/analytics/graphs/report.py:410
 msgid "Exhibitors"
@@ -25854,22 +25390,16 @@ msgid "Exhibitor"
 msgstr "Nhà triển lãm"
 
 #: features/analytics/graphs/report.py:427
-#, fuzzy
-#| msgid "Reviews"
 msgid "Views"
-msgstr "Bài bình duyệt"
+msgstr "Lượt xem"
 
 #: features/analytics/graphs/report.py:428
-#, fuzzy
-#| msgid "Invite reviewers"
 msgid "Unique viewers"
-msgstr "Mời người bình duyệt"
+msgstr "Người xem duy nhất"
 
 #: features/analytics/graphs/report.py:429
-#, fuzzy
-#| msgid "Contact us"
 msgid "Contact requests"
-msgstr "Liên hệ"
+msgstr "Yêu cầu liên hệ"
 
 #: features/analytics/graphs/report.py:479
 msgid "Sum"
@@ -25884,10 +25414,8 @@ msgid "Report timeframe end"
 msgstr "Kết thúc khung thời gian báo cáo"
 
 #: features/analytics/graphs/report.py:514
-#, fuzzy
-#| msgid "Number of reviews"
 msgid "Number of users (total)"
-msgstr "Số nhận xét bình duyệt"
+msgstr "Số người dùng (tổng)"
 
 #: features/analytics/graphs/report.py:516
 msgid "Users with authenticated access (total)"
@@ -25915,10 +25443,8 @@ msgstr "Số lần cố gắng gọi 1:1 (trong khung thời gian)"
 
 #: features/live/templates/live/short_domain_invalid.html:4
 #: features/live/templates/live/short_domain_invalid.html:22
-#, fuzzy
-#| msgid "Input validation"
 msgid "Invalid link"
-msgstr "Xác thực đầu vào"
+msgstr "Liên kết không hợp lệ"
 
 #: features/live/templates/live/short_domain_invalid.html:23
 msgid ""
@@ -26007,10 +25533,8 @@ msgid "The track the proposal belongs to"
 msgstr "Kênh mà đề xuất tham luận được xếp"
 
 #: mail/context.py:222
-#, fuzzy
-#| msgid "The session’s start time"
 msgid "The session’s duration in minutes"
-msgstr "Giờ bắt đầu của phiên"
+msgstr "Thời lượng của phiên (phút)"
 
 #: mail/context.py:228
 msgid ""
@@ -26131,26 +25655,7 @@ msgstr ""
 "Ban tổ chức {event_name}"
 
 #: mail/default_templates.py:23
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi!\n"
-#| "\n"
-#| "We are happy to tell you that we accept your proposal "
-#| "“{submission_title}”\n"
-#| "to {event_name}. Please click this link to confirm your attendance:\n"
-#| "\n"
-#| "    {confirmation_link}\n"
-#| "\n"
-#| "We look forward to seeing you at {event_name} - Please contact us if you "
-#| "have any\n"
-#| "questions! We will reach out again before the conference to tell you "
-#| "details\n"
-#| "about your slot in the schedule and technical details concerning the "
-#| "room\n"
-#| "and presentation tech.\n"
-#| "\n"
-#| "See you there!\n"
-#| "The {event_name} organisers"
+#, python-brace-format
 msgid ""
 "Hi!\n"
 "\n"
@@ -26170,21 +25675,19 @@ msgid ""
 "See you there!\n"
 "The {event_name} organisers"
 msgstr ""
-"Xin chào!\n"
+"Chào!\n"
 "\n"
-"Chúng tôi vui mừng thông báo với quý vị rằng chúng tôi chấp nhận đề xuất “"
-"{submission_title}” và mời quý vị thuyết trình phiên này tại {event_name}. "
-"Vui lòng nhấp vào liên kết này để xác nhận sự tham dự của quý vị:\n"
+"Rất vui được thông báo là đề xuất \"{submission_title}\" đã được chấp nhận\n"
+"cho {event_name}. Vui lòng nhấp vào liên kết này để xác nhận tham dự:\n"
 "\n"
 "{confirmation_link}\n"
 "\n"
-"Chúng tôi mong được gặp quý vị tại {event_name} - Vui lòng liên hệ với chúng "
-"tôi nếu quý vị có bất kỳ câu hỏi nào! Chúng tôi sẽ liên hệ lại trước hội "
-"nghị để cho quý vị biết chi tiết vị trí phiên của quý vị trong lịch trình và "
-"các chi tiết kỹ thuật liên quan đến phòng và công nghệ thuyết trình.\n"
+"Hẹn gặp tại {event_name} - Vui lòng liên hệ nếu có bất kỳ\n"
+"câu hỏi nào! Sẽ liên hệ lại trước hội nghị để thông báo chi tiết\n"
+"về khung giờ trong lịch trình và các chi tiết kỹ thuật liên quan đến phòng\n"
+"và công nghệ trình bày.\n"
 "\n"
-"Mong gặp quý vị tại Hội thảo!\n"
-"\n"
+"Hẹn gặp lại!\n"
 "Ban tổ chức {event_name}"
 
 #: mail/default_templates.py:42
@@ -26279,18 +25782,7 @@ msgid "New proposal: {proposal_title}"
 msgstr "Đề xuất mới: {proposal_title}"
 
 #: mail/default_templates.py:89
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Hi,\n"
-#| "\n"
-#| "you have received a new proposal for your event {event_name}:\n"
-#| "“{submission_title}” by {speakers}.\n"
-#| "You can see details at\n"
-#| "\n"
-#| "  {orga_url}\n"
-#| "\n"
-#| "All the best,\n"
-#| "your {event_name} CfP system.\n"
+#, python-brace-format
 msgid ""
 "Hi,\n"
 "\n"
@@ -26303,18 +25795,16 @@ msgid ""
 "All the best,\n"
 "your {event_name} CfP system.\n"
 msgstr ""
-"Xin chào,\n"
+"Chào,\n"
 "\n"
-"Quý vị đã nhận được đề xuất tham luận mới cho Hội thảo {event_name} mà quý "
-"vị tổ chức:\n"
-"“{submission_title}” từ diễn giả {speakers}.\n"
-"Quý vị có thể xem chi tiết tại\n"
+"Đã nhận được một đề xuất mới cho sự kiện {event_name}:\n"
+"\"{submission_title}\" bởi {speakers}.\n"
+"Có thể xem chi tiết tại\n"
 "\n"
-"{orga_url}\n"
+"{event_url}\n"
 "\n"
-"Chúc quý vị mọi điều tốt lành,\n"
-"\n"
-"Hệ thống quản trị hội thảo {event_name}.\n"
+"Trân trọng,\n"
+"Hệ thống CfP {event_name}.\n"
 
 #: mail/default_templates.py:103
 #, python-brace-format
@@ -26402,16 +25892,12 @@ msgid "Send mail on new proposal"
 msgstr "Gửi email về đề xuất tham luận mới"
 
 #: orga/forms/cfp.py:54
-#, fuzzy
-#| msgid ""
-#| "If this setting is checked, you will receive an email to the organiser "
-#| "address for every received proposal."
 msgid ""
 "If this setting is checked, you will receive an email to the organizer "
 "address for every received proposal."
 msgstr ""
-"Nếu cài đặt này được chọn, quý vị sẽ nhận được email tới địa chỉ của Ban tổ "
-"chức mỗi khi có nhận được một đề xuất mới."
+"Nếu bật cài đặt này, sẽ nhận được email gửi đến địa chỉ email của ban tổ "
+"chức cho mỗi đề xuất được nhận."
 
 #: orga/forms/cfp.py:59
 msgid "Allow submitters to share their proposal publicly"
@@ -26740,16 +26226,12 @@ msgid "Enable submission comments"
 msgstr "Cho phép bình luận vào bài nộp"
 
 #: orga/forms/event.py:305
-#, fuzzy
-#| msgid ""
-#| "Allow organisers and reviewers to comment on submissions, separate from "
-#| "reviews."
 msgid ""
 "Allow organizers and reviewers to comment on submissions, separate from "
 "reviews."
 msgstr ""
-"Cho phép người tổ chức và người bình duyệt bình luận về bài nộp, tách biệt "
-"với phần bình duyệt."
+"Cho phép ban tổ chức và người duyệt bình luận về bài gửi, tách biệt khỏi "
+"đánh giá."
 
 #: orga/forms/event.py:308
 msgid "Require a review score"
@@ -26859,16 +26341,12 @@ msgid "Data delimiter"
 msgstr "Ký hiệu tách dữ liệu"
 
 #: orga/forms/export.py:30
-#, fuzzy
-#| msgid ""
-#| "How do you want to separate data within a single cell (for example, "
-#| "multiple speakers in one session)?"
 msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"Quý vị muốn phân tách dữ liệu trong một ô như thế nào (ví dụ: nhiều người "
-"nói trong một phiên)?"
+"Cần tách dữ liệu trong một ô như thế nào (ví dụ: nhiều diễn giả trong một "
+"phiên/nhiều phiên cho một diễn giả)?"
 
 #: orga/forms/export.py:33
 msgid "Comma"
@@ -27035,7 +26513,7 @@ msgstr "Mẫu email"
 
 #: orga/forms/schedule.py:35 schedule/phrases.py:20
 msgid "We released our first schedule!"
-msgstr ""
+msgstr "Lịch trình đầu tiên đã được phát hành!"
 
 #: orga/forms/schedule.py:37
 msgid "We released a new schedule version!"
@@ -27095,10 +26573,8 @@ msgid "Resources provided by the speaker, either as links or as uploaded files"
 msgstr "Tài nguyên do diễn giả cung cấp, dưới dạng liên kết hoặc tệp đã tải lên"
 
 #: orga/forms/speaker.py:17
-#, fuzzy
-#| msgid "A speaker was removed from the proposal."
 msgid "Just speakers with accepted and confirmed proposals"
-msgstr "Một diễn giả đã được bỏ ra khỏi đề xuất tham luận."
+msgstr "Chỉ diễn giả có đề xuất đã được chấp nhận và xác nhận"
 
 #: orga/forms/speaker.py:31
 msgid "Proposal IDs"
@@ -27117,28 +26593,20 @@ msgid "The link to the speaker’s profile picture"
 msgstr "Liên kết đến ảnh hồ sơ của diễn giả"
 
 #: orga/forms/speaker.py:49
-#, fuzzy
-#| msgid "Picture"
 msgid "Picture Source"
-msgstr "Ảnh"
+msgstr "Nguồn ảnh"
 
 #: orga/forms/speaker.py:50
-#, fuzzy
-#| msgid "The link to the speaker’s profile picture"
 msgid "The source of the speaker's profile picture"
-msgstr "Liên kết đến ảnh hồ sơ của diễn giả"
+msgstr "Nguồn của ảnh hồ sơ diễn giả"
 
 #: orga/forms/speaker.py:54
-#, fuzzy
-#| msgid "Picture"
 msgid "Picture License"
-msgstr "Ảnh"
+msgstr "Giấy phép ảnh"
 
 #: orga/forms/speaker.py:55
-#, fuzzy
-#| msgid "The link to the speaker’s profile picture"
 msgid "The license of the speaker's profile picture"
-msgstr "Liên kết đến ảnh hồ sơ của diễn giả"
+msgstr "Giấy phép của ảnh hồ sơ diễn giả"
 
 #: orga/forms/submission.py:122 submission/forms/submission.py:149
 msgid "Leave empty to use the default duration for the session type."
@@ -27307,10 +26775,8 @@ msgstr "Hộp thư đi"
 #: orga/templates/orga/mails/compose_choice.html:5
 #: plugins/sendmail/signals.py:47
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:5
-#, fuzzy
-#| msgid "Compose emails"
 msgid "Compose"
-msgstr "Soạn email"
+msgstr "Soạn"
 
 #: orga/templates/orga/base.html:420
 #: orga/templates/orga/mails/sent_list.html:31 plugins/sendmail/signals.py:65
@@ -27322,35 +26788,26 @@ msgid "Templates"
 msgstr "Mẫu"
 
 #: orga/templates/orga/cfp/flow.html:26 orga/templates/orga/cfp/flow.html:30
-#, fuzzy
-#| msgid "CfP Editor"
 msgid "Call for Papers Editor"
-msgstr "Soạn Thông báo mời viết Đề xuất Tham luận"
+msgstr "Trình chỉnh sửa Call for Papers"
 
 #: orga/templates/orga/cfp/flow.html:34
-#, fuzzy, python-format
-#| msgid ""
-#| "This is the eventyay CfP editor. This page allows you to change the "
-#| "headline and information text on all of the individual CfP steps. You can "
-#| "also add a custom help text to individual fields. Just click on the item "
-#| "you want to change!"
+#, python-format
 msgid ""
 "This is the %(site_name)s Call for Papers editor. This page allows you to "
 "change the headline and information text on all of the individual Call for "
 "Papers steps. You can also add a custom help text to individual fields. Just "
 "click on the item you want to change!"
 msgstr ""
-"Đây là trình soạn thảo Thông báo mời viết Đề xuất Tham luận. Trang này cho "
-"phép quý vị thay đổi tiêu đề và văn bản thông tin trên tất cả các bước Thông "
-"báo riêng lẻ. Quý vị cũng có thể thêm văn bản trợ giúp tùy chỉnh vào từng "
-"trường. Chỉ cần nhấp vào mục quý vị muốn thay đổi!"
+"Đây là trình chỉnh sửa Call for Papers %(site_name)s. Trang này cho phép "
+"thay đổi tiêu đề và văn bản thông tin trên tất cả các bước Call for Papers "
+"riêng lẻ. Cũng có thể thêm văn bản trợ giúp tùy chỉnh cho từng trường. Chỉ "
+"cần nhấp vào mục cần thay đổi!"
 
 #: orga/templates/orga/cfp/forms.html:39
 #: orga/templates/orga/cfp/talkquestion/list.html:33
-#, fuzzy
-#| msgid "Send out reminders for unanswered questions"
 msgid "Send out reminders for custom fields without responses"
-msgstr "Gửi lời nhắc cho những câu hỏi chưa được trả lời"
+msgstr "Gửi nhắc nhở cho trường tùy chỉnh chưa có phản hồi"
 
 #: orga/templates/orga/cfp/forms.html:47
 #: orga/templates/orga/cfp/talkquestion/list.html:40
@@ -27393,10 +26850,8 @@ msgstr "Độ dài tối đa"
 #: orga/templates/orga/cfp/forms.html:85 orga/templates/orga/cfp/forms.html:510
 #: orga/templates/orga/cfp/forms.html:853
 #: orga/templates/orga/cfp/talkquestion/list.html:57
-#, fuzzy
-#| msgid "Public link"
 msgid "Public"
-msgstr "Liên kết công khai"
+msgstr "Công khai"
 
 #: orga/templates/orga/cfp/forms.html:86 orga/templates/orga/cfp/forms.html:511
 #: orga/templates/orga/cfp/forms.html:854
@@ -27445,10 +26900,8 @@ msgid "Move item"
 msgstr "Di chuyển mục"
 
 #: orga/templates/orga/cfp/forms.html:308
-#, fuzzy
-#| msgid "Content"
 msgid "Content Locale"
-msgstr "Nội dung"
+msgstr "Ngôn ngữ nội dung"
 
 #: orga/templates/orga/cfp/forms.html:384
 msgid "Recording opt-out"
@@ -27457,10 +26910,8 @@ msgstr "Lựa chọn không ghi hình phiên này"
 #: orga/templates/orga/cfp/forms.html:422
 #: orga/templates/orga/cfp/forms.html:774
 #: orga/templates/orga/cfp/forms.html:863
-#, fuzzy
-#| msgid "Custom Mail"
 msgid "Custom"
-msgstr "Email tuỳ chỉnh"
+msgstr "Tùy chỉnh"
 
 #: orga/templates/orga/cfp/forms.html:450
 #: orga/templates/orga/cfp/forms.html:802
@@ -27477,10 +26928,8 @@ msgstr "Bạn không thể đưa trường này ra công khai vì đã có câu 
 #: orga/templates/orga/cfp/forms.html:456
 #: orga/templates/orga/cfp/forms.html:808
 #: orga/templates/orga/cfp/forms.html:897
-#, fuzzy
-#| msgid "Public changelog"
 msgid "Public toggle for"
-msgstr "Nhật ký thay đổi công khai"
+msgstr "Chuyển đổi công khai cho"
 
 #: orga/templates/orga/cfp/forms.html:482
 #: orga/templates/orga/cfp/forms.html:834
@@ -27490,14 +26939,9 @@ msgid "New custom field"
 msgstr "Trường tuỳ biến mới"
 
 #: orga/templates/orga/cfp/forms.html:498
-#, fuzzy
-#| msgid ""
-#| "Select which information should be requested and/or required during CfP "
-#| "proposal."
 msgid ""
 "Select which information should be requested and/or required from speakers."
-msgstr ""
-"Chọn thông tin nào cần được yêu cầu và/hoặc bắt buộc trong Đề xuất tham luận."
+msgstr "Chọn thông tin cần yêu cầu và/hoặc bắt buộc từ diễn giả."
 
 #: orga/templates/orga/cfp/forms.html:519
 msgid "Full Name"
@@ -27516,42 +26960,31 @@ msgid "Full Name is always required and cannot be changed."
 msgstr "Họ và tên luôn bắt buộc và không thể thay đổi."
 
 #: orga/templates/orga/cfp/forms.html:626
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile picture source"
-msgstr "Ảnh hồ sơ"
+msgstr "Nguồn ảnh hồ sơ"
 
 #: orga/templates/orga/cfp/forms.html:663
-#, fuzzy
-#| msgid "Profile picture"
 msgid "Profile picture license"
-msgstr "Ảnh hồ sơ"
+msgstr "Giấy phép ảnh hồ sơ"
 
 #: orga/templates/orga/cfp/forms.html:737
 msgid "Additional speakers"
 msgstr "Các diễn giả khác"
 
 #: orga/templates/orga/cfp/forms.html:841
-#, fuzzy
-#| msgid "Speaker Information"
 msgid "Reviewer Information"
-msgstr "Thông tin dành cho diễn giả"
+msgstr "Thông tin người đánh giá"
 
 #: orga/templates/orga/cfp/question/_form.html:36
 #: orga/templates/orga/cfp/talkquestion/_form.html:65
-#, fuzzy
-#| msgid ""
-#| "If you mark a Yes/No field as required, it means that the user has to "
-#| "select Yes and No is not accepted. If you want to allow both options, do "
-#| "not make this field required."
 msgid ""
 "If you mark a Confirmation field as required, it means that the user has to "
 "explicitly confirm and cannot proceed without doing so. If you want to allow "
 "users to leave this unchecked, do not make this field required."
 msgstr ""
-"Nếu quý vị đánh dấu trường Có/Không là bắt buộc, điều đó có nghĩa là người "
-"dùng phải chọn Có, và chọn Không là không được chấp nhận. Nếu quý vị muốn "
-"cho phép cả hai tùy chọn, đừng bắt buộc trường này."
+"Nếu đánh dấu một trường Xác nhận là bắt buộc, điều đó có nghĩa là người dùng "
+"phải xác nhận rõ ràng và không thể tiếp tục nếu không thực hiện. Nếu muốn "
+"cho phép người dùng để trống mục này, không đặt trường này là bắt buộc."
 
 #: orga/templates/orga/cfp/question/_form.html:46
 #: orga/templates/orga/cfp/talkquestion/_form.html:39
@@ -27565,10 +26998,8 @@ msgstr "Xác thực đầu vào"
 
 #: orga/templates/orga/cfp/question/_form.html:93
 #: orga/templates/orga/cfp/talkquestion/_form.html:92
-#, fuzzy
-#| msgid "Answer options"
 msgid "Response options"
-msgstr "Tùy chọn trả lời"
+msgstr "Tùy chọn phản hồi"
 
 #: orga/templates/orga/cfp/question/remind.html:5
 #: orga/templates/orga/cfp/question/remind.html:9
@@ -27782,10 +27213,8 @@ msgstr ""
 "loại phiên và các trường tuỳ biến để bắt đầu!"
 
 #: orga/templates/orga/event/dashboard.html:69
-#, fuzzy
-#| msgid "Your event is currently"
 msgid "Your talk component is currently"
-msgstr "Hội thảo của quý vị hiện đã được"
+msgstr "Thành phần bài nói hiện tại là"
 
 #: orga/templates/orga/event/dashboard.html:79
 msgid "not live"
@@ -27805,16 +27234,12 @@ msgid "Talk component status"
 msgstr "Trạng thái thành phần bài thuyết trình"
 
 #: orga/templates/orga/event_list.html:49
-#, fuzzy
-#| msgid ""
-#| "You are currently in the organiser area of eventyay. To view your "
-#| "submitted proposals, please go directly to the event page:"
 msgid ""
 "You are currently in the organizer area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
 msgstr ""
-"Hiện tại quý vị đang ở khu vực dành cho Ban tổ chức. Để xem các đề xuất mà "
-"bản thân quý vị đã nộp, vui lòng truy cập trực tiếp vào chính của hội thảo:"
+"Hiện đang ở khu vực ban tổ chức của eventyay. Để xem các đề xuất đã gửi, vui "
+"lòng truy cập trực tiếp trang sự kiện:"
 
 #: orga/templates/orga/includes/dashboard_block_event.html:13
 #: orga/templates/orga/speaker/form.html:30 orga/views/dashboard.py:297
@@ -27882,42 +27307,29 @@ msgid "Invitation"
 msgstr "Thư mời"
 
 #: orga/templates/orga/invitation.html:7
-#, fuzzy, python-format
-#| msgid "Invitation to the %(organiser)s team “%(name)s”"
+#, python-format
 msgid "Invitation to the %(organizer)s team “%(name)s”"
-msgstr "Thư mời tham gia vào Tiểu ban tổ chức %(organiser)s : “%(name)s”"
+msgstr "Lời mời tham gia nhóm %(organizer)s “ %(name)s ”"
 
 #: orga/templates/orga/invitation.html:15
 #: orga/templates/orga/invitation.html:34
-#, fuzzy, python-format
-#| msgid "You have been invited to join the organiser team %(name)s."
+#, python-format
 msgid "You have been invited to join the organizer team %(name)s."
-msgstr "Quý vị được mời tham gia vào Tiểu ban tổ chức: %(name)s."
+msgstr "Đã được mời tham gia nhóm ban tổ chức %(name)s."
 
 #: orga/templates/orga/invitation.html:20
-#, fuzzy, python-format
-#| msgid ""
-#| "If you already have an account – either as a speaker or an organiser – at "
-#| "<a href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, "
-#| "create a new account to join the team!"
+#, python-format
 msgid ""
 "If you already have an account – either as a speaker or an organizer – at <a "
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Nếu quý vị đã có tài khoản – với tư cách là diễn giả hoặc người tổ chức – "
-"tại <a href=\"%(domain)s\">%(domain)s</a>, vui lòng đăng nhập ngay. Nếu chưa "
-"có, hãy tạo một tài khoản mới để tham gia vào Tiểu ban!"
+"Nếu đã có tài khoản – với tư cách là diễn giả hoặc người tổ chức – tại <a "
+"href=\"%(domain)s\">%(domain)s</a>, vui lòng đăng nhập ngay. Nếu không, hãy "
+"tạo tài khoản mới để tham gia nhóm!"
 
 #: orga/templates/orga/invitation.html:37
-#, fuzzy, python-format
-#| msgid ""
-#| "To accept the invitation with the account you’re currently active, please "
-#| "use the button below. If you want to accept the invitation with a "
-#| "different account, you can <a href=\"/orga/logout/?next=%(link)s\">log "
-#| "out</a> and log in with the other account. </p><p> If you believe to have "
-#| "received this invitation by mistake, please contact the organiser "
-#| "directly."
+#, python-format
 msgid ""
 "To accept the invitation with the account you’re currently active, please "
 "use the button below. If you want to accept the invitation with a different "
@@ -27925,11 +27337,11 @@ msgid ""
 "in with the other account. </p><p> If you believe to have received this "
 "invitation by mistake, please contact the organizer directly."
 msgstr ""
-"Để chấp nhận lời mời bằng tài khoản quý vị đang sử dụng, vui lòng sử dụng "
-"nút bên dưới. Nếu quý vị muốn chấp nhận lời mời bằng một tài khoản khác, bạn "
-"có thể <a href=\"/orga/logout/?next=%(link)s\">đăng xuất</a> và đăng nhập "
-"bằng tài khoản khác. </p><p> Nếu quý vị tin rằng mình đã nhận được lời mời "
-"này do nhầm lẫn, vui lòng liên hệ trực tiếp với Ban tổ chức."
+"Để chấp nhận lời mời bằng tài khoản hiện đang hoạt động, vui lòng sử dụng "
+"nút bên dưới. Nếu muốn chấp nhận lời mời bằng tài khoản khác, có thể <a "
+"href=\"/orga/logout/?next=%(link)s\">đăng xuất</a> và đăng nhập bằng tài "
+"khoản kia. </p><p> Nếu cho rằng đã nhận được lời mời này do nhầm lẫn, vui "
+"lòng liên hệ trực tiếp với người tổ chức."
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -28042,22 +27454,15 @@ msgid "New custom template"
 msgstr "Mẫu tuỳ biến mới"
 
 #: orga/templates/orga/mails/mailtemplate/list.html:25
-#, fuzzy
-#| msgid ""
-#| "You can edit the default templates and your custom templates for emails "
-#| "here. If you want to send emails to some or all of your speakers, head "
-#| "over to the “Send Emails” tab. Mails queued for sending are in the "
-#| "“Outbox” tab."
 msgid ""
 "You can edit the default templates and your custom templates for emails "
 "here. If you want to send emails to some or all of your speakers, head over "
 "to the \"Send Emails\" tab. Mails queued for sending are in the \"Outbox\" "
 "tab."
 msgstr ""
-"Quý vị có thể chỉnh sửa các mẫu mặc định và mẫu tùy chỉnh của mình cho email "
-"tại đây. Nếu quý vị muốn gửi email cho một số hoặc tất cả diễn giả, hãy "
-"chuyển đến tab \"Gửi email\". Các email được xếp hàng để gửi sẽ nằm trong "
-"tab \"Hộp chờ chuyển\"."
+"Có thể chỉnh sửa các mẫu mặc định và các mẫu email tùy chỉnh tại đây. Để gửi "
+"email tới một số hoặc tất cả diễn giả, chuyển sang tab \"Gửi email\". Email "
+"đã xếp hàng để gửi nằm trong tab \"Hộp thư đi\"."
 
 #: orga/templates/orga/mails/mailtemplate/list.html:32
 msgid ""
@@ -28068,8 +27473,6 @@ msgstr ""
 "chi tiết khi bạn bắt đầu chỉnh sửa mẫu."
 
 #: orga/templates/orga/mails/mailtemplate/list.html:46
-#, fuzzy
-#| msgid "Templates"
 msgid "Template"
 msgstr "Mẫu"
 
@@ -28109,12 +27512,9 @@ msgid "Copy to draft"
 msgstr "Sao sang bản nháp"
 
 #: orga/templates/orga/mails/outbox_list.html:10
-#, fuzzy
-#| msgid "pending mail"
-#| msgid_plural "pending mails"
 msgid "pending email"
 msgid_plural "pending emails"
-msgstr[0] "email đang chờ gửi"
+msgstr[0] "email đang chờ"
 
 #: orga/templates/orga/mails/outbox_list.html:27
 msgid "Send all on this page"
@@ -28196,10 +27596,8 @@ msgid_plural "Teams"
 msgstr[0] "Tiểu ban"
 
 #: orga/templates/orga/organizer/list.html:51
-#, fuzzy
-#| msgid "There are no organisers you can edit."
 msgid "There are no organizers you can edit."
-msgstr "Không có thành viên Ban tổ chức nào quý vị có thể sửa."
+msgstr "Không có người tổ chức nào có thể chỉnh sửa."
 
 #: orga/templates/orga/organizer/speaker_list.html:6
 #: orga/templates/orga/organizer/speaker_list.html:11
@@ -28255,16 +27653,12 @@ msgstr ""
 "công người bình duyệt vào từng đề xuất riêng lẻ."
 
 #: orga/templates/orga/review/assignment.html:29
-#, fuzzy
-#| msgid ""
-#| "As teams can belong to multiple events, teams are managed in your "
-#| "organiser settings."
 msgid ""
 "As teams can belong to multiple events, teams are managed in your organizer "
 "settings."
 msgstr ""
-"Vì các tiểu ban có thể tham gia nhiều hội thảo nên các tiểu ban sẽ được quản "
-"lý trong phần cài đặt dành cho Ban tổ chức."
+"Vì nhóm có thể thuộc nhiều sự kiện, nhóm được quản lý trong cài đặt người tổ "
+"chức."
 
 #: orga/templates/orga/review/assignment.html:35
 msgid "New team"
@@ -28380,10 +27774,8 @@ msgid "You don’t have reviewer permissions for this event."
 msgstr "Quý vị chưa được giao nhiệm vụ bình duyệt trong hội thảo này."
 
 #: orga/templates/orga/review/dashboard.html:50
-#, fuzzy
-#| msgid "Proposals"
 msgid "Review Proposals"
-msgstr "Đề xuất"
+msgstr "Duyệt đề xuất"
 
 #: orga/templates/orga/review/dashboard.html:57
 msgid "Columns"
@@ -28762,16 +28154,12 @@ msgid "Other settings"
 msgstr "Cài đặt khác"
 
 #: orga/templates/orga/settings/form.html:78
-#, fuzzy
-#| msgid "Export settings"
 msgid "Event settings"
-msgstr "Xuất cài đặt"
+msgstr "Cài đặt sự kiện"
 
 #: orga/templates/orga/settings/form.html:82
-#, fuzzy
-#| msgid "Delete my account"
 msgid "Delete talk data"
-msgstr "Xoá tài khoản của tôi"
+msgstr "Xóa dữ liệu phiên nói"
 
 #: orga/templates/orga/settings/mail.html:30
 msgid ""
@@ -28993,35 +28381,24 @@ msgid "Not arrived"
 msgstr "Vắng mặt"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
-#, fuzzy
-#| msgid "Speaker information"
 msgid "New speaker information"
-msgstr "Thông tin dành cho diễn giả"
+msgstr "Thông tin diễn giả mới"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:23
-#, fuzzy
-#| msgid "Resources"
 msgid "Resource"
-msgstr "Tài liệu hỗ trợ"
+msgstr "Tài nguyên"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:39
-#, fuzzy
-#| msgid "submitter"
-#| msgid_plural "submitters"
 msgid "All submitters"
-msgstr "Người nộp"
+msgstr "Tất cả người gửi"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:53
-#, fuzzy
-#| msgid "Use tracks"
 msgid "All tracks"
-msgstr "Sử dụng kênh"
+msgstr "Tất cả chủ đề"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:63
-#, fuzzy
-#| msgid "Session types"
 msgid "All session types"
-msgstr "Loại phiên"
+msgstr "Tất cả loại phiên"
 
 #: orga/templates/orga/submission/anonymise.html:9
 #: orga/templates/orga/submission/base.html:64
@@ -29077,8 +28454,6 @@ msgid "There are no pending changes to apply right now."
 msgstr "Hiện tại không có thay đổi nào đang chờ thực thi."
 
 #: orga/templates/orga/submission/base.html:79
-#, fuzzy
-#| msgid "Comment"
 msgid "Comments"
 msgstr "Bình luận"
 
@@ -29112,16 +28487,12 @@ msgid "This proposal was created using an access code:"
 msgstr "Đề xuất này được tạo bằng mã truy cập:"
 
 #: orga/templates/orga/submission/content.html:116
-#, fuzzy
-#| msgid "Favourite this session"
 msgid "Don't record this session."
-msgstr "Đưa phiên này vào danh sách yêu thích"
+msgstr "Không ghi lại phiên này."
 
 #: orga/templates/orga/submission/content.html:203
-#, fuzzy
-#| msgid "No file provided"
 msgid "No answer provided"
-msgstr "Chưa có file nào"
+msgstr "Không có câu trả lời"
 
 #: orga/templates/orga/submission/content.html:216
 #: orga/templates/orga/submission/content_edit.html:70
@@ -29233,14 +28604,10 @@ msgid "Avatar"
 msgstr "Ảnh đại diện"
 
 #: orga/templates/orga/submission/speakers.html:35
-#, fuzzy
-#| msgid "The speaker’s profile picture"
 msgid "The speaker's profile picture"
-msgstr "Ảnh chân dung diễn giả"
+msgstr "Ảnh hồ sơ của diễn giả"
 
 #: orga/templates/orga/submission/speakers.html:53
-#, fuzzy
-#| msgid "Mails"
 msgid "E-Mail"
 msgstr "Email"
 
@@ -29253,10 +28620,8 @@ msgid "Start time"
 msgstr "Thời gian bắt đầu"
 
 #: orga/templates/orga/submission/speakers.html:64
-#, fuzzy
-#| msgid "time"
 msgid "End time"
-msgstr "giờ"
+msgstr "Thời gian kết thúc"
 
 #: orga/templates/orga/submission/speakers.html:84
 msgid "Other proposals by this speaker:"
@@ -29325,31 +28690,21 @@ msgid "API Access"
 msgstr "Truy cập API"
 
 #: orga/templates/orga/user.html:62
-#, fuzzy, python-format
-#| msgid ""
-#| "This token can be used to access the <a %(apiurl)s>pretalx API</a>. You "
-#| "can generate a new token, which will invalidate the old one. To find out "
-#| "more, please have a look at the <a %(docurl)s> API documentation</a>."
+#, python-format
 msgid ""
 "API tokens can be used to access the <a %(apiurl)s>eventyay API</a>. To find "
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
-"Mã thông báo này có thể được sử dụng để truy cập <a %(apiurl)s>API eventyay</"
-"a>. Bạn có thể tạo một mã thông báo mới, mã thông báo này sẽ vô hiệu hóa mã "
-"thông báo cũ. Để tìm hiểu thêm, vui lòng xem tài liệu <a %(docurl)s> API</a>."
+"Token API có thể được dùng để truy cập <a %(apiurl)s>API eventyay</a>. Để "
+"tìm hiểu thêm, vui lòng xem <a %(docurl)s>tài liệu API</a>."
 
 #: orga/templates/orga/user.html:69
-#, fuzzy
-#| msgid "API Token"
 msgid "Your API tokens"
-msgstr "API Token"
+msgstr "Token API"
 
 #: orga/templates/orga/user.html:74
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Version"
-msgstr "Phiên"
+msgstr "Phiên bản"
 
 #: orga/templates/orga/user.html:76
 msgid "Last used"
@@ -29364,16 +28719,12 @@ msgid "Updgrade"
 msgstr "Nâng cấp"
 
 #: orga/templates/orga/user.html:123
-#, fuzzy
-#| msgid "You don’t seem to have any proposals yet."
 msgid "You don't have any API tokens yet."
-msgstr "Dường như quý vị chưa có đề xuất tham luận nào."
+msgstr "Chưa có token API nào."
 
 #: orga/templates/orga/user.html:128
-#, fuzzy
-#| msgid "Create a new event"
 msgid "Create new token"
-msgstr "Tạo hội thảo mới"
+msgstr "Tạo token mới"
 
 #: orga/templates/orga/widgets/multi_languages_select.html:56
 #: orga/templates/orga/widgets/multi_languages_select.html:69
@@ -29382,16 +28733,12 @@ msgstr "Chưa chọn ngôn ngữ nào"
 
 #: orga/templates/orga/widgets/multi_languages_select.html:57
 #: orga/templates/orga/widgets/multi_languages_select.html:63
-#, fuzzy
-#| msgid "Invite language"
 msgid "Remove language"
-msgstr "Ngôn ngữ thư mời"
+msgstr "Xóa ngôn ngữ"
 
 #: orga/templates/orga/widgets/multi_languages_select.html:75
-#, fuzzy
-#| msgid "Widget language"
 msgid "Select language"
-msgstr "Ngôn ngữ của tiện ích"
+msgstr "Chọn ngôn ngữ"
 
 #: orga/templates/orga/widgets/multi_languages_widget.html:8
 #, python-format
@@ -29502,11 +28849,9 @@ msgid "unconfirmed"
 msgstr "chưa xác nhận"
 
 #: orga/views/dashboard.py:314
-#, fuzzy
-#| msgid "Apply pending changes"
 msgid "submission with pending changes"
 msgid_plural "submissions with pending changes"
-msgstr[0] "Thực thi các thay đổi đang chờ"
+msgstr[0] "bản gửi có thay đổi đang chờ"
 
 #: orga/views/dashboard.py:357
 msgid "sent email"
@@ -29557,14 +28902,12 @@ msgstr ""
 "không được sử dụng."
 
 #: orga/views/event.py:492
-#, fuzzy
-#| msgid ""
-#| "There was an error when logging in. Please contact the organiser for "
-#| "further help."
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
-msgstr "Có lỗi khi đăng nhập. Vui lòng liên hệ với Ban Tổ chức để được hỗ trợ."
+msgstr ""
+"Đã xảy ra sự cố với quá trình xác thực. Vui lòng liên hệ người tổ chức để "
+"được hỗ trợ thêm."
 
 #: orga/views/event.py:506
 msgid "You are now part of the team!"
@@ -29579,10 +28922,8 @@ msgstr ""
 "tải lên, cũng sẽ bị xóa và không thể khôi phục."
 
 #: orga/views/mails.py:46
-#, fuzzy
-#| msgid "You can’t give feedback for this session at this time."
 msgid "You cannot send emails at this time."
-msgstr "Hiện tại quý vị không thể đưa ra phản hồi cho phiên này."
+msgstr "Không thể gửi email vào lúc này."
 
 #: orga/views/mails.py:130
 #, python-brace-format
@@ -29671,16 +29012,12 @@ msgstr ""
 "thay đổi!"
 
 #: orga/views/mails.py:504
-#, fuzzy
-#| msgid "Email template"
 msgid "New email template"
-msgstr "Mẫu email"
+msgstr "Mẫu email mới"
 
 #: orga/views/mails.py:505
 #: plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:5
 #: plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:10
-#, fuzzy
-#| msgid "Email template"
 msgid "Email templates"
 msgstr "Mẫu email"
 
@@ -29693,26 +29030,20 @@ msgstr ""
 "sơ diễn giả và tệp tải lên, cũng sẽ bị xóa và không thể khôi phục."
 
 #: orga/views/organizer.py:90
-#, fuzzy
-#| msgid "The organiser {name} was deleted."
 msgid "The organizer and all related data have been deleted."
-msgstr "Ban Tổ chức {name} đã bị xoá."
+msgstr "Người tổ chức và tất cả dữ liệu liên quan đã được xóa."
 
 #: orga/views/person.py:69
-#, fuzzy
-#| msgid ""
-#| "Your API token has been regenerated. The previous token will not be "
-#| "usable any longer."
 msgid ""
 "This is your new API token. Please make sure to save it, as it will not be "
 "shown again:"
-msgstr "Token API đã được khởi tạo. Token trước đây không còn dùng được nữa."
+msgstr ""
+"Đây là mã thông báo API mới. Hãy bảo đảm lưu lại, vì mã này sẽ không được "
+"hiển thị lại:"
 
 #: orga/views/person.py:78
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The API token has been upgraded."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Mã thông báo API đã được nâng cấp."
 
 #: orga/views/person.py:104
 msgid "You are now an administrator instead of a superuser."
@@ -29839,10 +29170,8 @@ msgid "The session has been scheduled."
 msgstr "Phiên đã được lên lịch."
 
 #: orga/views/schedule.py:524
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The selected room has been deleted."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Phòng đã chọn đã bị xóa."
 
 #: orga/views/speaker.py:198
 msgid ""
@@ -29853,11 +29182,8 @@ msgstr ""
 "thể đăng nhập cho đến khi họ đặt mật khẩu mới."
 
 #: orga/views/speaker.py:259
-#, fuzzy
-#| msgid "Speaker Information Note"
-#| msgid_plural "Speaker Information Notes"
 msgid "Speaker Information Notes"
-msgstr "Ghi chú thông tin dành cho diễn giả"
+msgstr "Ghi chú thông tin diễn giả"
 
 #: orga/views/submission.py:167
 msgid ""
@@ -29920,10 +29246,8 @@ msgid "Your comment on “{title}”"
 msgstr "Bình luận của bạn về “{title}”"
 
 #: orga/views/submission.py:1001
-#, fuzzy
-#| msgid "The event has been added."
 msgid "The comment has been deleted."
-msgstr "Hội thảo này đã được tạo mới."
+msgstr "Bình luận đã được xóa."
 
 #: orga/views/submission.py:1026
 #, python-brace-format
@@ -29943,20 +29267,16 @@ msgid "Password (current)"
 msgstr "Mật khẩu (hiện tại)"
 
 #: person/forms/auth_token.py:23
-#, fuzzy
-#| msgid "Send all"
 msgid "Read all endpoints"
-msgstr "Gửi tất cả"
+msgstr "Đọc tất cả endpoint"
 
 #: person/forms/auth_token.py:24
 msgid "Read and write all endpoints"
 msgstr "Đọc và ghi tất cả các điểm cuối"
 
 #: person/forms/auth_token.py:25
-#, fuzzy
-#| msgid "Permissions"
 msgid "Customize permissions and endpoints"
-msgstr "Quyền"
+msgstr "Tùy chỉnh quyền và endpoint"
 
 #: person/forms/auth_token.py:27
 msgid "Choose a preset or configure detailed permissions below."
@@ -29992,16 +29312,12 @@ msgid "Non-accepted submitters"
 msgstr "Người nộp không được chấp nhận"
 
 #: person/forms/profile.py:336
-#, fuzzy
-#| msgid "Mark speaker as arrived"
 msgid "Marked as arrived"
-msgstr "Đánh dấu này diễn giả này đã có mặt"
+msgstr "Đã đánh dấu đã đến"
 
 #: person/forms/profile.py:337
-#, fuzzy
-#| msgid "Not arrived"
 msgid "Not yet arrived"
-msgstr "Vắng mặt"
+msgstr "Chưa đến"
 
 #: person/forms/user.py:29
 msgid "display name"
@@ -31104,10 +30420,8 @@ msgid "This plugin allows you to send out emails to all your customers."
 msgstr "Plugin này cho phép bạn gửi email đến tất cả khách hàng."
 
 #: plugins/sendmail/forms.py:30
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The 'web' sales channel must be selected."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Bắt buộc chọn kênh bán hàng 'web'."
 
 #: plugins/sendmail/forms.py:33
 msgid "Send email to"
@@ -31201,20 +30515,16 @@ msgid "Send to customers checked in on list"
 msgstr "Gửi tới khách hàng được điểm danh trong danh sách"
 
 #: plugins/sendmail/forms.py:434
-#, fuzzy
-#| msgid "New team"
 msgid "New attachment"
-msgstr "Tiểu ban mới"
+msgstr "Tệp đính kèm mới"
 
 #: plugins/sendmail/forms.py:435
 msgid "Upload a new file to replace the existing one."
 msgstr "Tải lên tệp mới để thay thế tệp hiện có."
 
 #: plugins/sendmail/forms.py:440
-#, fuzzy
-#| msgid "One email address or several addresses separated by commas."
 msgid "Edit the list of recipient email addresses separated by commas."
-msgstr "Một địa chỉ email hoặc nhiều địa chỉ được phân tách bằng dấu phẩy."
+msgstr "Chỉnh sửa danh sách địa chỉ email người nhận, phân tách bằng dấu phẩy."
 
 #: plugins/sendmail/forms.py:456
 msgid "Any changes to the Reply-To field will apply only to this queued email."
@@ -31240,16 +30550,12 @@ msgstr ""
 "hiện có."
 
 #: plugins/sendmail/forms.py:584
-#, fuzzy
-#| msgid "Placeholders"
 msgid "Available placeholders: "
-msgstr "Giữ chỗ"
+msgstr "Trình giữ chỗ khả dụng: "
 
 #: plugins/sendmail/forms.py:603
-#, fuzzy
-#| msgid "You are a member of this team"
 msgid "Send to members of these teams"
-msgstr "Quý vị là thành viên của Tiểu ban"
+msgstr "Gửi đến thành viên của các nhóm này"
 
 #: plugins/sendmail/signals.py:94
 msgid "Email was sent"
@@ -31268,22 +30574,16 @@ msgid "Attendees, Orders, Tickets"
 msgstr "Người tham dự, Đơn hàng, Vé"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:25
-#, fuzzy
-#| msgid ""
-#| "Send an email to speakers, authors, submitters, based on their proposal "
-#| "status and other filters."
 msgid ""
 "Send an email to attendees, orders, ticket buyers, based on their order "
 "status and other filters."
 msgstr ""
-"Gửi email cho diễn giả, tác giả, người gửi bài dựa trên trạng thái đề xuất "
-"của họ và các bộ lọc khác."
+"Gửi email đến người tham dự, đơn hàng, người mua vé, dựa trên trạng thái đơn "
+"hàng và các bộ lọc khác."
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:34
-#, fuzzy
-#| msgid "Send an email to your reviewers or other team members."
 msgid "Send an email to your team members."
-msgstr "Gửi email tới những người bình duyệt và thành viên khác của Tiểu ban."
+msgstr "Gửi email cho các thành viên trong nhóm."
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/mail_templates.html:22
 msgid "Placed order"
@@ -31322,10 +30622,8 @@ msgid "Attachments"
 msgstr "Tệp đính kèm"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:100
-#, fuzzy
-#| msgid "Contains an attachment"
 msgid "Existing attachments"
-msgstr "Chứa file đính kèm"
+msgstr "Tệp đính kèm hiện có"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_form.html:113
 msgid ""
@@ -31370,20 +30668,16 @@ msgstr[0] ""
 "                        "
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:113
-#, fuzzy
-#| msgid "Send emails"
 msgid "Send this email"
-msgstr "Gửi email"
+msgstr "Gửi email này"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:121
 msgid "Edit this email"
 msgstr "Chỉnh sửa email này"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:129
-#, fuzzy
-#| msgid "Reject email"
 msgid "Delete this email"
-msgstr "Email từ chối"
+msgstr "Xóa email này"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:142
 msgid "Some emails failed to send:"
@@ -31394,16 +30688,12 @@ msgid "and more"
 msgstr "và còn nữa"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/outbox_list.html:158
-#, fuzzy
-#| msgid "Send mails"
 msgid "No queued mails."
-msgstr "Gửi email"
+msgstr "Không có thư trong hàng đợi."
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/purge_confirmation.html:11
-#, fuzzy
-#| msgid "Confirmed speakers"
 msgid "Confirm discard"
-msgstr "Diễn giả đã xác nhận"
+msgstr "Xác nhận hủy bỏ"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:11
 msgid "Attendees, orders, tickets"
@@ -31425,58 +30715,40 @@ msgstr[0] ""
 "                "
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:70
-#, fuzzy
-#| msgid "No response"
 msgid "No recipients"
-msgstr "Không có phản hồi"
+msgstr "Không có người nhận"
 
 #: plugins/sendmail/templates/pretixplugins/sendmail/sent_list.html:77
 msgid "No sent mails found."
 msgstr "Không tìm thấy email đã gửi."
 
 #: plugins/sendmail/views.py:57
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid "We could not queue the email. See below for details."
-msgstr ""
-"Chúng tôi đã gặp sự cố khi lưu đầu vào của bạn - Vui lòng xem bên dưới để "
-"biết chi tiết."
+msgstr "Không thể đưa email vào hàng đợi. Xem chi tiết bên dưới."
 
 #: plugins/sendmail/views.py:114
 msgid "There are no orders matching this selection."
 msgstr "Không có đơn hàng phù hợp với lựa chọn này."
 
 #: plugins/sendmail/views.py:174 plugins/sendmail/views.py:630
-#, fuzzy
-#| msgid "No mails were sent to this speaker yet."
 msgid "Your email has been sent to the outbox."
-msgstr "Chưa có email nào được gửi tới diễn giả này."
+msgstr "Email đã được gửi đến hộp thư đi."
 
 #: plugins/sendmail/views.py:281
-#, fuzzy
-#| msgid "This mail has been sent already. It cannot be sent again."
 msgid "This mail has already been sent."
-msgstr "Thư này đã được gửi rồi. Không thể gửi lại được nữa."
+msgstr "Thư này đã được gửi."
 
 #: plugins/sendmail/views.py:287
-#, fuzzy
-#| msgid "The user has been deleted."
 msgid "The mail has been queued for sending."
-msgstr "Người dùng này đã bị xoá."
+msgstr "Thư đã được đưa vào hàng đợi để gửi."
 
 #: plugins/sendmail/views.py:329 plugins/sendmail/views.py:523
-#, fuzzy
-#| msgid "We had trouble saving your input – Please see below for details."
 msgid "We could not save the email. See below for details."
-msgstr ""
-"Chúng tôi đã gặp sự cố khi lưu đầu vào của bạn - Vui lòng xem bên dưới để "
-"biết chi tiết."
+msgstr "Không thể lưu email. Xem chi tiết bên dưới."
 
 #: plugins/sendmail/views.py:334
-#, fuzzy
-#| msgid "This mail has been sent already. It cannot be sent again."
 msgid "This email has already been sent and cannot be edited."
-msgstr "Thư này đã được gửi rồi. Không thể gửi lại được nữa."
+msgstr "Email này đã được gửi và không thể chỉnh sửa."
 
 #: plugins/sendmail/views.py:360 plugins/sendmail/views.py:366
 #: plugins/sendmail/views.py:545 plugins/sendmail/views.py:551
@@ -31485,30 +30757,24 @@ msgid "Invalid placeholder(s): {}"
 msgstr "Placeholder không hợp lệ: {}"
 
 #: plugins/sendmail/views.py:405
-#, fuzzy
-#| msgid "This mail has been sent already. It cannot be sent again."
 msgid "This mail has already been sent and cannot be deleted."
-msgstr "Thư này đã được gửi rồi. Không thể gửi lại được nữa."
+msgstr "Thư này đã được gửi và không thể xóa."
 
 #: plugins/sendmail/views.py:414
-#, fuzzy
-#| msgid "The organiser {name} was deleted."
 msgid "The mail and its related data have been deleted."
-msgstr "Ban Tổ chức {name} đã bị xoá."
+msgstr "Thư và dữ liệu liên quan đã được xóa."
 
 #: plugins/sendmail/views.py:433
-#, fuzzy, python-brace-format
-#| msgid "Do you really want to withdraw your proposal?"
+#, python-brace-format
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
-msgstr[0] "Quý vị thực sự muốn thu hồi đề xuất của mình?"
+msgstr[0] "Có thực sự muốn xóa vĩnh viễn {count} email không?"
 
 #: plugins/sendmail/views.py:449
-#, fuzzy, python-brace-format
-#| msgid "An email password has been set."
+#, python-brace-format
 msgid "One mail has been discarded."
 msgid_plural "{count} mails have been discarded."
-msgstr[0] "Mật khẩu email đã được thiết lập."
+msgstr[0] "{count} email đã bị loại bỏ."
 
 #: plugins/sendmail/views.py:582
 msgid "There are no valid recipients for the selected teams."
@@ -31576,87 +30842,90 @@ msgstr "Tạo một ứng dụng OAuth trên"
 #: plugins/socialauth/templates/socialauth/social_setup.html:21
 #: plugins/socialauth/templates/socialauth/social_setup.html:40
 msgid "Instructions:"
-msgstr ""
+msgstr "Hướng dẫn:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:23
 msgid "Follow the setup guide:"
-msgstr ""
+msgstr "Làm theo hướng dẫn cấu hình:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:26
 #: plugins/socialauth/templates/socialauth/social_setup.html:42
 msgid "Set the callback URL to:"
-msgstr ""
+msgstr "Thiết lập URL callback thành:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:31
 #: plugins/socialauth/templates/socialauth/social_setup.html:47
 msgid "Add the client ID and client secret to admin settings"
-msgstr ""
+msgstr "Thêm client ID và client secret vào cài đặt quản trị"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:36
 msgid "II. GitHub OAuth Application"
-msgstr ""
+msgstr "II. Ứng dụng OAuth GitHub"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:52
 msgid "III. MediaWiki OAuth Application"
-msgstr ""
+msgstr "III. Ứng dụng OAuth MediaWiki"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:54
 msgid ""
 "To enable MediaWiki social login for your Eventyay instance, you need to "
 "register an OAuth application with MediaWiki."
 msgstr ""
+"Để bật đăng nhập mạng xã hội MediaWiki cho phiên bản Eventyay, cần đăng ký "
+"một ứng dụng OAuth với MediaWiki."
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:57
 msgid "Important Notes"
-msgstr ""
+msgstr "Lưu ý quan trọng"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
-msgstr ""
+msgstr "Ứng dụng OAuth phải được quản trị viên MediaWiki phê duyệt"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:60
 msgid "Until approved, only the application owner can log in"
 msgstr ""
+"Cho đến khi được phê duyệt, chỉ chủ sở hữu ứng dụng mới có thể đăng nhập"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:63
 msgid "Registration Steps"
-msgstr ""
+msgstr "Các bước đăng ký"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:65
 msgid "Register your OAuth application at:"
-msgstr ""
+msgstr "Đăng ký ứng dụng OAuth tại:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:68
 msgid "Click \"Propose new OAuth 2.0 client\""
-msgstr ""
+msgstr "Nhấp \"Propose new OAuth 2.0 client\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:70
 msgid "On the form enter"
-msgstr ""
+msgstr "Trong biểu mẫu, nhập"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:72
 msgid "an application name"
-msgstr ""
+msgstr "tên ứng dụng"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:73
 msgid "an description description"
-msgstr ""
+msgstr "một mô tả mô tả"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:75
 msgid "Set Oauth \"callback\" URL to:"
-msgstr ""
+msgstr "Đặt URL \"callback\" OAuth thành:"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:80
 msgid "Contact Email address"
-msgstr ""
+msgstr "Địa chỉ email liên hệ"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
-msgstr ""
+msgstr "Chọn \"Client is confidential\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:82
 msgid "Tick \"Authorization code\""
-msgstr ""
+msgstr "Chọn \"Authorization code\""
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:83
 msgid "Tick \"Refresh token\""
@@ -32130,10 +31399,8 @@ msgid "You can now join the event using the following button:"
 msgstr "Bạn có thể tham gia sự kiện ngay bây giờ bằng nút sau:"
 
 #: presale/templates/pretix_venueless/order_info.html:51
-#, fuzzy
-#| msgid "New schedule!"
 msgid "View schedule"
-msgstr "Lịch hội thảo mới!"
+msgstr "Xem lịch"
 
 #: presale/templates/pretix_venueless/order_info.html:61
 msgid ""
@@ -32902,37 +32169,39 @@ msgstr ""
 #: presale/templates/pretixpresale/event/resend_link.html:4
 #: presale/templates/pretixpresale/event/resend_link.html:11
 msgid "Resend order links"
-msgstr ""
+msgstr "Gửi lại liên kết đơn hàng"
 
 #: presale/templates/pretixpresale/event/order.html:13
 #: presale/templates/pretixpresale/event/order.html:30
 msgid "Thank you!"
-msgstr ""
+msgstr "Cảm ơn!"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:33
 msgid "Your order has been placed successfully. See below for details."
-msgstr ""
+msgstr "Đơn hàng đã được đặt thành công. Xem chi tiết bên dưới."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:45
 msgid "Your order has been processed successfully! See below for details."
-msgstr ""
+msgstr "Đơn hàng đã được xử lý thành công! Xem chi tiết bên dưới."
 
 #: presale/templates/pretixpresale/event/order.html:19
 #: presale/templates/pretixpresale/event/order.html:47
 msgid "We successfully received your payment. See below for details."
-msgstr ""
+msgstr "Thanh toán đã được nhận thành công. Xem chi tiết bên dưới."
 
 #: presale/templates/pretixpresale/event/order.html:36
 msgid ""
 "Please note that we still await approval by the event organizer before you "
 "can pay and complete this order."
 msgstr ""
+"Lưu ý rằng vẫn đang chờ nhà tổ chức sự kiện phê duyệt trước khi có thể thanh "
+"toán và hoàn tất đơn hàng này."
 
 #: presale/templates/pretixpresale/event/order.html:40
 msgid "Please note that we still await your payment to complete the process."
-msgstr ""
+msgstr "Lưu ý rằng vẫn đang chờ thanh toán để hoàn tất quy trình."
 
 #: presale/templates/pretixpresale/event/order.html:52
 msgid ""
@@ -32940,51 +32209,58 @@ msgid ""
 "your order later. We also sent you an email containing the link to the "
 "address you specified."
 msgstr ""
+"Vui lòng đánh dấu trang hoặc lưu liên kết đến đúng trang này nếu muốn truy "
+"cập đơn hàng sau này. Email chứa liên kết cũng đã được gửi đến địa chỉ đã "
+"cung cấp."
 
 #: presale/templates/pretixpresale/event/order.html:55
 msgid ""
 "Please save the following link if you want to access your order later. We "
 "also sent you an email containing the link to the address you specified."
 msgstr ""
+"Vui lòng lưu liên kết sau nếu muốn truy cập đơn hàng sau này. Email chứa "
+"liên kết cũng đã được gửi đến địa chỉ đã cung cấp."
 
 #: presale/templates/pretixpresale/event/order.html:72
 #: presale/templates/pretixpresale/event/position.html:18
 msgid "View in backend"
-msgstr ""
+msgstr "Xem trong hệ thống quản trị"
 
 #: presale/templates/pretixpresale/event/order.html:86
 #, python-format
 msgid "A payment of %(total)s is still pending for this order."
-msgstr ""
+msgstr "Khoản thanh toán %(total)s cho đơn hàng này vẫn đang chờ xử lý."
 
 #: presale/templates/pretixpresale/event/order.html:89
 #, python-format
 msgid "Please complete your payment before %(date)s"
-msgstr ""
+msgstr "Vui lòng hoàn tất thanh toán trước %(date)s"
 
 #: presale/templates/pretixpresale/event/order.html:98
 msgid "Re-try payment or choose another payment method"
-msgstr ""
+msgstr "Thử thanh toán lại hoặc chọn phương thức thanh toán khác"
 
 #: presale/templates/pretixpresale/event/order.html:106
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:45
 msgid "Pay now"
-msgstr ""
+msgstr "Thanh toán ngay"
 
 #: presale/templates/pretixpresale/event/order.html:119
 msgid ""
 "We've received your request to cancel this order. Please stay patient while "
 "the event organizer decides on the cancellation."
 msgstr ""
+"Yêu cầu hủy đơn hàng này đã được nhận. Vui lòng chờ trong khi nhà tổ chức sự "
+"kiện quyết định việc hủy."
 
 #: presale/templates/pretixpresale/event/order.html:136
 #, python-format
 msgid "A refund of %(amount)s will be sent out to you soon, please be patient."
-msgstr ""
+msgstr "Khoản hoàn tiền %(amount)s sẽ sớm được gửi, vui lòng chờ."
 
 #: presale/templates/pretixpresale/event/order.html:143
 msgid "Print"
-msgstr ""
+msgstr "In"
 
 #: presale/templates/pretixpresale/event/order.html:145
 #, python-format
@@ -32992,16 +32268,18 @@ msgid ""
 "We've issued your refund of %(amount)s as a gift card. On your next purchase "
 "with us, you can use the following gift card code during payment:"
 msgstr ""
+"Khoản hoàn tiền %(amount)s đã được phát hành dưới dạng thẻ quà tặng. Trong "
+"lần mua tiếp theo, có thể sử dụng mã thẻ quà tặng sau khi thanh toán:"
 
 #: presale/templates/pretixpresale/event/order.html:155
 #, python-format
 msgid "The current value of your gift card is %(value)s."
-msgstr ""
+msgstr "Giá trị hiện tại của thẻ quà tặng là %(value)s."
 
 #: presale/templates/pretixpresale/event/order.html:162
 #, python-format
 msgid "This gift card is valid until %(expiry)s."
-msgstr ""
+msgstr "Thẻ quà tặng này có hiệu lực đến %(expiry)s."
 
 #: presale/templates/pretixpresale/event/order.html:173
 #, python-format
@@ -33485,16 +32763,12 @@ msgid "Please log in to continue."
 msgstr "Vui lòng đăng nhập để tiếp tục."
 
 #: presale/templates/pretixpresale/fragment_modals.html:87
-#, fuzzy
-#| msgid "Gather your team"
 msgid "Enter your email"
-msgstr "Tập hợp nhóm"
+msgstr "Nhập email"
 
 #: presale/templates/pretixpresale/fragment_modals.html:92
-#, fuzzy
-#| msgid "Forgot your password?"
 msgid "Enter your password"
-msgstr "Quên mật khẩu?"
+msgstr "Nhập mật khẩu"
 
 #: presale/templates/pretixpresale/fragment_modals.html:115
 msgid "Login with MediaWiki"
@@ -33505,26 +32779,20 @@ msgid "Login with Google"
 msgstr "Đăng nhập bằng Google"
 
 #: presale/templates/pretixpresale/fragment_modals.html:123
-#, fuzzy
-#| msgid "I already have an account"
 msgid "Don't have an account?"
-msgstr "Tôi đã có tài khoản"
+msgstr "Chưa có tài khoản?"
 
 #: presale/templates/pretixpresale/fragment_modals.html:123
-#, fuzzy
-#| msgid "Create a new event"
 msgid "Create one"
-msgstr "Tạo hội thảo mới"
+msgstr "Tạo tài khoản"
 
 #: presale/templates/pretixpresale/fragment_modals.html:325
 msgid "Logging in..."
 msgstr "Đang đăng nhập..."
 
 #: presale/templates/pretixpresale/fragment_modals.html:351
-#, fuzzy
-#| msgid "An email password has been set."
 msgid "Invalid email or password. Please try again."
-msgstr "Mật khẩu email đã được thiết lập."
+msgstr "Email hoặc mật khẩu không hợp lệ. Vui lòng thử lại."
 
 #: presale/templates/pretixpresale/fragment_modals.html:359
 msgid "Server error. Please try again later."
@@ -33558,10 +32826,8 @@ msgid "Test Mode"
 msgstr "Chế độ thử nghiệm"
 
 #: presale/templates/pretixpresale/includes/startpage_event_card.html:50
-#, fuzzy
-#| msgid "Copy access code link"
 msgid "Copy event link"
-msgstr "Copy đường dẫn mã truy cập"
+msgstr "Sao chép liên kết sự kiện"
 
 #: presale/templates/pretixpresale/index.html:8
 msgid "Hello!"
@@ -33671,26 +32937,20 @@ msgstr "Duyệt sự kiện trực tiếp trên"
 #: presale/templates/pretixpresale/startpage.html:84
 #: presale/templates/pretixpresale/startpage.html:167
 #: presale/templates/pretixpresale/startpage.html:168
-#, fuzzy
-#| msgid "New event"
 msgid "Search events"
-msgstr "Hội thảo mới"
+msgstr "Tìm kiếm sự kiện"
 
 #: presale/templates/pretixpresale/startpage.html:91
 msgid "No matching events"
 msgstr "Không có sự kiện phù hợp"
 
 #: presale/templates/pretixpresale/startpage.html:128
-#, fuzzy
-#| msgid "Frontpage header pattern"
 msgid "Start page header"
-msgstr "Mẫu tiêu đề trang đầu"
+msgstr "Tiêu đề trang bắt đầu"
 
 #: presale/templates/pretixpresale/startpage.html:155
-#, fuzzy
-#| msgid "New event"
 msgid "Live events"
-msgstr "Hội thảo mới"
+msgstr "Sự kiện trực tiếp"
 
 #: presale/templates/pretixpresale/startpage.html:178
 msgid "No matching events. Try a different search term."
@@ -33698,16 +32958,12 @@ msgstr "Không có sự kiện phù hợp. Hãy thử từ khóa khác."
 
 #: presale/templates/pretixpresale/startpage.html:184
 #: presale/templates/pretixpresale/startpage.html:185
-#, fuzzy
-#| msgid "Featured"
 msgid "Featured events"
-msgstr "Nổi bật"
+msgstr "Sự kiện nổi bật"
 
 #: presale/templates/pretixpresale/startpage.html:199
-#, fuzzy
-#| msgid "No comments yet."
 msgid "No upcoming events available yet."
-msgstr "Chưa có bình luận."
+msgstr "Chưa có sự kiện sắp diễn ra."
 
 #: presale/templates/pretixpresale/waiting.html:22
 msgid "We are processing your request …"
@@ -33789,10 +33045,8 @@ msgid "Unknown date selected."
 msgstr "Ngày đã chọn không hợp lệ."
 
 #: presale/views/order.py:212
-#, fuzzy
-#| msgid "eventyay website"
 msgid "Eventyay Video"
-msgstr "Website eventyay"
+msgstr "Video Eventyay"
 
 #: presale/views/order.py:497 presale/views/order.py:567
 #: presale/views/order.py:641
@@ -33915,11 +33169,9 @@ msgstr ""
 "có lại."
 
 #: presale/views/widget.py:310
-#, fuzzy
-#| msgid "powered by <a %(a_attr)s>eventyay</a>"
 msgctxt "widget"
 msgid "powered by eventyay"
-msgstr "Vận hành trên phần mềm <a %(a_attr)s>eventyay</a>"
+msgstr "được cung cấp bởi eventyay"
 
 #: presale/views/widget.py:324
 msgid "This ticket shop is currently disabled."
@@ -33942,10 +33194,8 @@ msgid "iCal (full event)"
 msgstr "iCal (toàn bộ sự kiện)"
 
 #: schedule/exporters.py:364
-#, fuzzy
-#| msgid "Welcome to our list of featured sessions!"
 msgid "iCal (your starred sessions)"
-msgstr "Danh mục các phiên nổi bật!"
+msgstr "iCal (các phiên đã gắn sao)"
 
 #: schedule/forms.py:20
 msgid ""
@@ -34003,61 +33253,57 @@ msgstr "GUID hiện tại được tạo tự động là: {guid}."
 #: schedule/phrases.py:9
 msgctxt "Schedule/program of the conference"
 msgid "Schedule"
-msgstr ""
+msgstr "Lịch trình"
 
 #: schedule/phrases.py:22
 msgid ""
 "You are currently viewing the editable schedule version, which is unreleased "
 "and may change at any time."
 msgstr ""
+"Hiện đang xem phiên bản lịch trình có thể chỉnh sửa, chưa phát hành và có "
+"thể thay đổi bất cứ lúc nào."
 
 #: schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
-msgstr ""
+msgstr "Hiện đang xem một phiên bản lịch trình cũ hơn."
 
 #: schedule/phrases.py:25
 #, python-format
 msgid "You can find the current version <a href=\"%(current_url)s\">here</a>."
 msgstr ""
+"Có thể tìm thấy phiên bản hiện tại <a href=\"%(current_url)s\">ở đây</a>."
 
 #. Translators: “tz” is a full timezone name like “Europe/Berlin”
 #: schedule/phrases.py:28
 #, python-format
 msgid "All times in %(tz)s"
-msgstr ""
+msgstr "Tất cả thời gian theo %(tz)s"
 
 #: schedule/phrases.py:30
 msgid "There has been no feedback for this session yet."
-msgstr ""
+msgstr "Chưa có phản hồi nào cho phiên này."
 
 #: schedule/templates/schedule/speaker_notification.txt:2
 #, python-format
 msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
-msgstr ""
+msgstr "- Phiên “%(title)s” sẽ diễn ra lúc %(start)s tại %(location)s"
 
 #: schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
-msgstr ""
+msgstr "- Phiên “%(title)s” đã được chuyển sang %(start)s tại %(location)s"
 
 #: submission/exporters.py:18 submission/exporters.py:63
-#, fuzzy
-#| msgid "Custom Mail"
 msgid "Custom fields data"
-msgstr "Email tuỳ chỉnh"
+msgstr "Dữ liệu trường tùy chỉnh"
 
 #: submission/exporters.py:18
-#, fuzzy
-#| msgid "speaker"
-#| msgid_plural "speakers"
 msgid "speakers"
 msgstr "diễn giả"
 
 #: submission/exporters.py:63
-#, fuzzy
-#| msgid "Submissions"
 msgid "submissions"
-msgstr "Bài đã nộp"
+msgstr "bài gửi"
 
 #: submission/forms/feedback.py:18
 msgid "All speakers"
@@ -34086,14 +33332,12 @@ msgstr ""
 "diễn giả khác sau khi hoàn tất quy trình gửi đề xuất."
 
 #: submission/forms/submission.py:166
-#, fuzzy
-#| msgid ""
-#| "Please confirm that you really want to change the state of this proposal."
 msgid ""
 "Please contact the organizers if you want to change how often you’re "
 "presenting this proposal."
 msgstr ""
-"Vui lòng xác nhận rằng bạn thực sự muốn thay đổi trạng thái của đề xuất này."
+"Vui lòng liên hệ ban tổ chức nếu muốn thay đổi tần suất trình bày đề xuất "
+"này."
 
 #: submission/forms/submission.py:238
 msgid "Proposal states"
