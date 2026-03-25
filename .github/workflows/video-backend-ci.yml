@@ -20,8 +20,9 @@ jobs:
     name: Backend validation (uv + Django checks)
     # Pin to a specific Ubuntu LTS so package versions stay deterministic.
     runs-on: ubuntu-24.04
-    # All service and DB config is read from eventyay.testing.toml.
-    # Only the secret key is kept here to avoid committing it to the TOML.
+    # Most service and app config is read from eventyay.testing.toml via EVY_RUNNING_ENVIRONMENT=testing.
+    # PostgreSQL uses EVY_POSTGRES_* env vars in other jobs, and Redis uses the code default (redis://localhost/0).
+    # Only the environment selector and secret key are set inline here.
     env:
       EVY_RUNNING_ENVIRONMENT: testing
       EVY_SECRET_KEY: ci-test-secret-key
