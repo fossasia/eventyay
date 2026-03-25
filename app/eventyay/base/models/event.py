@@ -2075,9 +2075,44 @@ class Event(
     def delete_sub_objects(self):
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
+        self.queued_mails.all().delete()
+
+        for question in self.talkquestions.all():
+            question.answers.all().delete()
+            question.options.all().delete()
+
+        for schedule in self.schedules.all():
+            schedule.talks.all().delete()
+
+        for submission in self.submissions.all():
+            submission.feedback.all().delete()
+            submission.resources.all().delete()
+
+        if hasattr(self, 'domains'):
+            for domain in self.domains.all():
+                domain.delete()
+
+        for stored_file in self.storedfile_set.all():
+            stored_file.full_delete()
+
+        self.bbbserver_set.update(event_exclusive=None)
+        self.janusserver_set.update(event_exclusive=None)
+        self.turnserver_set.update(event_exclusive=None)
+
         self.vouchers.all().delete()
         self.products.all().delete()
         self.subevents.all().delete()
+        self.talkquestions.all().delete()
+        self.submissions.all().delete()
+        self.rooms.all().delete()
+        self.tracks.all().delete()
+        self.tags.all().delete()
+        self.schedules.all().delete()
+        self.mail_templates.all().delete()
+        if hasattr(self, 'cfp'):
+            self.cfp.delete()
+        self.submitter_access_codes.all().delete()
+        self.submission_types.all().delete()
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins
