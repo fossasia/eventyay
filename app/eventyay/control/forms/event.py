@@ -58,6 +58,11 @@ REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
     'The "Continue as a Guest" option will not be available for attendees in this event.'
 )
 
+ORGANIZER_EMAIL_VALIDATION_MESSAGE = _(
+    "Please provide a valid organizer email address. "
+    "We'll show this publicly to allow attendees to contact you."
+)
+
 
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
@@ -268,7 +273,7 @@ class EventWizardBasicsForm(I18nModelForm):
                 {'locale': _('Your default locale must also be enabled for your event (see box above).')}
             )
         if data.get('timezone') not in common_timezones:
-            raise ValidationError({'timezone': _('Your event timezone must be specified.')})
+            raise ValidationError({'timezone': _('Please select a valid event timezone.')})
 
         # change timezone
         zone = timezone(data.get('timezone'))
@@ -292,7 +297,7 @@ class EventWizardBasicsForm(I18nModelForm):
         email = self.cleaned_data.get('email', '').strip()
         default_email = Event._meta.get_field('email').default
         if not email or email == default_email:
-            raise forms.ValidationError(_("Please provide a valid organizer email address. We'll show this publicly to allow attendees to contact you."))
+            raise forms.ValidationError(ORGANIZER_EMAIL_VALIDATION_MESSAGE)
         return email
 
     @staticmethod
@@ -399,7 +404,7 @@ class EventWizardDisplayForm(forms.Form):
         email = self.cleaned_data.get('email', '').strip()
         default_email = Event._meta.get_field('email').default
         if not email or email == default_email:
-            raise forms.ValidationError(_("Please provide a valid organizer email address. We'll show this publicly to allow attendees to contact you."))
+            raise forms.ValidationError(ORGANIZER_EMAIL_VALIDATION_MESSAGE)
         return email
 
 

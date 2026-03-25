@@ -205,8 +205,8 @@ class VoucherForm(I18nModelForm):
                 {
                     'show_hidden_products': [
                         _(
-                            'Please enable "Show hidden products". The selected voucher only matches hidden products.'
-                        )
+                            'Please enable "{label}". The selected voucher only matches hidden products.'
+                        ).format(label=self.fields['show_hidden_products'].label)
                     ]
                 }
             )
@@ -346,7 +346,9 @@ class VoucherBulkForm(VoucherForm):
         res = []
         if ',' in raw or ';' in raw:
             if '@' in r[0]:
-                raise ValidationError(_('CSV input needs to contain a header row in the first line with columns like "email", "name", etc.'))
+                raise ValidationError(
+                    _('CSV input needs to contain a header row in the first line, including at least an "email" column.')
+                )
             dialect = csv.Sniffer().sniff(raw[:1024])
             reader = csv.DictReader(StringIO(raw), dialect=dialect)
             if 'email' not in reader.fieldnames:
@@ -365,7 +367,9 @@ class VoucherBulkForm(VoucherForm):
                     EmailValidator()(row['email'])
                 except ValidationError as err:
                     raise ValidationError(
-                        _('"{value}" is not a valid email address. Please check for formatting errors.').format(value=row['email'])
+                        _('"{value}" is not a valid email address. Please check for formatting errors.').format(
+                            value=row['email']
+                        )
                     ) from err
                 try:
                     res.append(
@@ -383,7 +387,11 @@ class VoucherBulkForm(VoucherForm):
                 try:
                     EmailValidator()(e.strip())
                 except ValidationError as err:
-                    raise ValidationError(_('"{value}" is not a valid email address. Please check for formatting errors.').format(value=e.strip())) from err
+                    raise ValidationError(
+                        _('"{value}" is not a valid email address. Please check for formatting errors.').format(
+                            value=e.strip()
+                        )
+                    ) from err
                 else:
                     res.append(self.Recipient(email=e.strip(), number=1, tag=None, name=''))
         return res
@@ -414,9 +422,10 @@ class VoucherBulkForm(VoucherForm):
             recp_len = sum(r.number for r in recp)
             if code_len != recp_len:
                 raise ValidationError(
-                    _('You generated {codes} vouchers, but entered recipients for {recp} vouchers. The number of vouchers and recipients must match.').format(
-                        codes=code_len, recp=recp_len
-                    )
+                    _(
+                        'You generated {codes} vouchers, but entered recipients for {recp} vouchers. '
+                        'The number of vouchers and recipients must match.'
+                    ).format(codes=code_len, recp=recp_len)
                 )
 
         if data.get('seats'):
