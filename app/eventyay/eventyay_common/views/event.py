@@ -40,7 +40,7 @@ from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
 from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin, EventPlugins as ControlEventPlugins
 from eventyay.control.views.product import MetaDataEditorMixin
-from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
+from eventyay.eventyay_common.forms.event import EventCommonSettingsForm, EventPublicationForm
 from eventyay.eventyay_common.utils import (
     EventCreatedFor,
     check_create_permission,
@@ -381,9 +381,18 @@ class EventUpdate(
             instance=self.object,
         )
 
+    @cached_property
+    def pubform(self):
+        return EventPublicationForm(
+            obj=self.object,
+            prefix='publication',
+            data=self.request.POST if self.request.method == 'POST' else None,
+        )
+
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
         context['sform'] = self.sform
+        context['pubform'] = self.pubform
         context['header_links_formset'] = self.header_links_formset
         context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
@@ -400,6 +409,7 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        self.pubform.save()
         self.header_links_formset.save()
         self.footer_links_formset.save()
         # Keep event model timezone in sync with settings
@@ -483,11 +493,12 @@ class EventUpdate(
 
         form = self.get_form()
         has_formset_changes = self.header_links_formset.has_changed() or self.footer_links_formset.has_changed()
-        if form.changed_data or self.sform.changed_data or has_formset_changes:
+        if form.changed_data or self.sform.changed_data or self.pubform.changed_data or has_formset_changes:
             form.instance.sales_channels = ['web']
             if (
                 form.is_valid()
                 and self.sform.is_valid()
+                and self.pubform.is_valid()
                 and self.header_links_formset.is_valid()
                 and self.footer_links_formset.is_valid()
             ):
@@ -1033,6 +1044,7 @@ class EventSearchView(views.APIView):
         query = request.GET.get('query', '')
         events = (
             Event.objects.filter(Q(name__icontains=query) | Q(slug__icontains=query))
+            .exclude(display_settings__exclude_from_search=True)
             .order_by('name')
             .select_related('organizer')[:10]
         )

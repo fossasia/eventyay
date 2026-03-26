@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from eventyay.base.forms import SettingsForm
 from eventyay.base.settings import validate_event_settings
 from eventyay.base.models import Event
+from eventyay.common.forms.mixins import JsonSubfieldMixin
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.control.forms import (
@@ -161,4 +162,36 @@ class EventUpdateForm(I18nModelForm):
             'date_from': SplitDateTimePickerWidget(),
             'date_to': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_date_from_0'}),
             'date_admission': SplitDateTimePickerWidget(attrs={'data-date-default': '#id_date_from_0'}),
+        }
+
+
+class EventPublicationForm(JsonSubfieldMixin, forms.Form):
+    meta_noindex = forms.BooleanField(
+        label=_('Ask search engines not to index the event pages'),
+        help_text=_(
+            'When enabled, a noindex/nofollow robots meta tag is added to all public event pages, '
+            'asking search engines not to index them.'
+        ),
+        required=False,
+    )
+    exclude_from_start_page = forms.BooleanField(
+        label=_('Exclude this event from the start page'),
+        help_text=_(
+            'When enabled, this event will not appear in the public event listing on the organizer start page.'
+        ),
+        required=False,
+    )
+    exclude_from_search = forms.BooleanField(
+        label=_('Exclude this event from platform search results'),
+        help_text=_(
+            'When enabled, this event will not appear in platform-wide event search results.'
+        ),
+        required=False,
+    )
+
+    class Meta:
+        json_fields = {
+            'meta_noindex': 'display_settings',
+            'exclude_from_start_page': 'display_settings',
+            'exclude_from_search': 'display_settings',
         }

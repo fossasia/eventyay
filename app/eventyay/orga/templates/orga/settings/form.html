@@ -62,10 +62,6 @@
                 {{ form.export_html_on_release.as_field_group }}
                 {{ form.html_export_url.as_field_group }}
             </fieldset>
-            <fieldset>
-                <legend id="other-settings">{% translate "Other settings" %}</legend>
-                {{ form.meta_noindex.as_field_group }}
-            </fieldset>
         </section>
         <section role="tabpanel" id="tabpanel-texts" aria-labelledby="tab-texts" tabindex="0" aria-hidden="true">
             {{ form.featured_sessions_text.as_field_group }}
