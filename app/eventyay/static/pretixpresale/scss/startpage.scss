@@ -488,6 +488,13 @@ body.startpage-search-results-page #main-card {
     width: 220px;
   }
 
+  .startpage-search-results {
+    left: auto;
+    right: 0;
+    width: calc(100vw - 2rem);
+    max-width: 320px;
+  }
+
   .startpage-event-media {
     height: 160px;
   }
