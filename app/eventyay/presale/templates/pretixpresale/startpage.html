@@ -55,6 +55,25 @@
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
     </head>
+    <script>
+function adjustSearchWidth() {
+  const navbar = document.querySelector('nav.navbar');
+  const search = document.querySelector('.startpage-search');
+  const topLinks = document.querySelector('.navbar-top-links');
+
+  if(!navbar || !search || !topLinks) return;
+
+  const navbarWidth = navbar.clientWidth;
+  const linksWidth = topLinks.scrollWidth + 20; // padding buffer
+  const searchButtonWidth = 40; // approx search icon button
+
+  const availableWidth = navbarWidth - linksWidth - searchButtonWidth - 20; // 20px margin
+  search.style.maxWidth = availableWidth > 100 ? availableWidth + 'px' : '100%';
+}
+
+window.addEventListener('load', adjustSearchWidth);
+window.addEventListener('resize', adjustSearchWidth);
+</script>
     <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         {{ base_path|json_script:"base_path" }}
         {{ staff_session|json_script:"is_admin_mode" }}
