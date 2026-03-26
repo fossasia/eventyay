@@ -38,13 +38,47 @@ header .header-wrapper {
 }
 
 header .header-row-right {
-	color: var(--color-primary);
+    color: var(--color-primary);
     margin-left: auto;
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
+}
+
+#header-nav-bar {
+    margin-top: 10px;
+    margin-bottom: 3rem;
+    overflow: auto;
+}
+
+#header-nav-bar .navigation {
+    font-size: 1.65rem;
+    display: flex;
+    gap: 2rem;
+}
+
+#header-nav-bar a {
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+}
+
+#header-nav-bar a.underline::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    width: calc(100% + 20px);
+    height: 2px;
+    background-color: currentColor;
+}
+
+#header-nav-bar a:not(.underline):hover {
+    border-bottom: 2px dotted currentColor;
 }
 
 .alert::before {
@@ -59,7 +93,299 @@ header .header-row-right {
 }
 
 #main-card {
+    /* Sit above hero header (z-index:1000) so its date/title text does not
+     * bleed over page content. Below Bootstrap modal-backdrop (z-index:1040),
+     * modals (z-index:1050) and sticky nav (z-index:1200) so overlays and nav
+     * are on top. */
+    position: relative;
+    z-index: 1030;
     margin: 0 auto;
+}
+
+.event-hero-overlay {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.presale-sticky-tabs-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 1200;
+    width: 100%;
+}
+
+.presale-sticky-tabs-inner {
+    margin: 0;
+    background: var(--color-bg);
+    width: 100%;
+    max-width: 100%;
+    word-break: keep-all;
+    flex-wrap: nowrap;
+    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
+}
+
+.presale-sticky-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    z-index: 400;
+    background: var(--color-bg);
+    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
+    flex-shrink: 0;
+}
+
+.presale-tabs-scroll {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.presale-sticky-tabs a.header-tab {
+    padding: 8px 10px 4px 10px;
+    border-bottom: 2px solid transparent;
+}
+
+.presale-sticky-tabs a.header-tab:hover {
+    text-decoration: none;
+    border-bottom: 2px dotted var(--color-primary);
+}
+
+.presale-sticky-tabs a.header-tab.active,
+.presale-sticky-tabs a.header-tab.underline {
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.presale-sticky-tabs #header-nav-bar {
+    flex: 1 1 auto;
+    margin: 6px 0 0;
+    overflow: visible;
+}
+
+.presale-sticky-tabs #header-nav-bar .navigation {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    font-size: 1.65rem;
+    flex-wrap: nowrap;
+}
+
+.presale-sticky-tabs .header-row-right {
+    color: var(--color-primary);
+    margin-left: auto;
+    margin-right: 10px;
+    display: flex;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    align-items: center;
+    font-size: 1rem;
+    gap: 16px;
+}
+
+
+.presale-sticky-tabs .header-row-right details.dropdown,
+.presale-sticky-tabs .header-row-right>a {
+    display: inline-flex;
+    align-items: center;
+}
+
+.presale-sticky-tabs .header-row-right details.dropdown summary {
+    align-items: center;
+}
+
+.presale-sticky-tabs .header-row-right .header-nav,
+.presale-sticky-tabs .header-row-right .locale-switch-toggle,
+.presale-sticky-tabs .header-row-right a {
+    color: var(--color-primary);
+}
+
+.presale-sticky-tabs .header-row-right .header-nav {
+    border-color: var(--color-primary);
+    background: transparent;
+}
+
+.presale-sticky-tabs .header-row-right .header-nav:hover,
+.presale-sticky-tabs .header-row-right .header-nav:focus {
+    color: white;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    text-decoration: none;
+}
+
+#main-card {
+    scroll-margin-top: 72px;
+}
+
+.nav-icon-mobile {
+    display: none;
+}
+
+.cfs-short {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .presale-sticky-tabs {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .presale-tabs-scroll {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .presale-tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .presale-sticky-tabs-inner {
+        overflow: visible;
+    }
+
+    .presale-sticky-tabs a.header-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 4px 6px 3px 6px;
+        font-size: 0.8rem;
+    }
+
+    .presale-sticky-tabs .header-row-right {
+        margin-left: 0;
+        margin-right: 2px;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        gap: 0;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown {
+        position: relative;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 16px);
+    }
+
+    .mobile-hide-text {
+        display: none;
+    }
+
+    .nav-icon-mobile {
+        display: inline;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
+        display: none;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown summary {
+        padding: 2px 4px;
+    }
+
+    .cfs-full {
+        display: none;
+    }
+
+    .cfs-short {
+        display: inline;
+    }
+
+    .join-video-link {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 8px 12px;
+        margin: 4px 0 0;
+        background: var(--color-primary);
+        color: white !important;
+        border-radius: var(--size-border-radius, 4px);
+        border-bottom: none !important;
+        font-size: 0.88rem;
+        font-weight: 500;
+    }
+
+    .join-video-link:hover {
+        background: var(--color-primary-dark, var(--color-primary));
+        text-decoration: none;
+        opacity: 0.9;
+    }
+
+    .login-link {
+        display: flex;
+        align-items: center;
+        padding: 2px 4px;
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .login-link:hover {
+        text-decoration: none;
+        opacity: 0.85;
+    }
+
+    /* Align hero title/logo and description text with same horizontal padding on mobile.
+     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+    #main-card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* Only the OUTER <main> (direct child) gets the 12px — not descendants.
+     * padding-top: 0.15rem controls the gap between nav and text. */
+    #main-card > main {
+        padding-top: 0.15rem;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Zero the INNER <main aria-label>: #main-card > main > main has higher
+     * specificity (1,0,2) than _layout.css's #main-card main (1,0,1) anyway. */
+    #main-card > main > main {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    #locale-dropdown.dropdown-content {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 8px);
+    }
+
+    #locale-dropdown .language-columns {
+        width: 100%;
+        grid-template-columns: 1fr;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    #locale-dropdown .language-column {
+        max-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--color-border, #ced4da);
+    }
+
+    #locale-dropdown .language-enforce-bar {
+        width: 100%;
+    }
 }
 
 .btn-primary {
@@ -69,11 +395,12 @@ header .header-row-right {
     border-color: var(--color-primary);
     color: white;
     text-decoration: none;
-	&:hover {
-	    background: var(--color-primary-text-dark);
-		border-color: var(--color-primary-text-dark);
-	    color: white;
-	}
+
+    &:hover {
+        background: var(--color-primary-text-dark);
+        border-color: var(--color-primary-text-dark);
+        color: white;
+    }
 }
 
 .btn-default {
@@ -83,11 +410,12 @@ header .header-row-right {
     color: var(--color-primary);
     border-color: var(--color-primary);
     box-shadow: none;
-	&:hover {
-	    background: var(--color-primary-text-dark);
-		border-color: var(--color-primary-text-dark);
-	    color: white;
-	}
+
+    &:hover {
+        background: var(--color-primary-text-dark);
+        border-color: var(--color-primary-text-dark);
+        color: white;
+    }
 }
 
 #btn-add-to-cart:disabled {
@@ -98,22 +426,32 @@ header .header-row-right {
     box-shadow: none;
 }
 
-.panel-heading{
-	width: 100%;
+.panel-heading {
+    width: 100%;
 }
 
 .panel-primary {
     border-color: var(--color-primary);
 }
-.panel-primary > .panel-heading,
-.panel-primary > summary.panel-heading {
+
+.panel-primary>.panel-heading,
+.panel-primary>summary.panel-heading {
     background-color: var(--color-primary);
     border-color: var(--color-primary);
     color: #fff;
 }
-.panel-primary > .panel-heading .panel-title,
-.panel-primary > summary.panel-heading .panel-title,
-.panel-primary > .panel-heading .panel-title *,
-.panel-primary > summary.panel-heading .panel-title * {
+
+.panel-primary>.panel-heading .panel-title,
+.panel-primary>summary.panel-heading .panel-title,
+.panel-primary>.panel-heading .panel-title *,
+.panel-primary>summary.panel-heading .panel-title * {
     color: #fff;
+}
+
+.thank-you.thank-you-pending .fa {
+    color: #ffb419;
+}
+
+.thank-you.thank-you-pending h2 {
+    color: #ffb419;
 }
