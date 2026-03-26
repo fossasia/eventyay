@@ -18,8 +18,8 @@ def csrf_failure(request, reason=''):
         'reason': reason,
         'no_referer': reason == REASON_NO_REFERER,
         'no_referer1': _(
-            'This request was blocked because required security headers were missing. '
-            'Please ensure your browser supports HTTPS and try again.'
+            'This request was blocked because the required "Referer" header was not sent.'
+            'The Referer header is required for CSRF protection on HTTPS requests.'
         ),
         'no_referer2': _(
             "If you have configured your browser to disable 'Referer' headers, "
@@ -28,7 +28,7 @@ def csrf_failure(request, reason=''):
         ),
         'no_cookie': reason == REASON_NO_CSRF_COOKIE,
         'no_cookie1': _(
-             'This request was blocked because a required security cookie was missing. '
+             'This request was blocked because a required security cookie was missing.'
              'Please enable cookies in your browser and try again.'
         ),
         'no_cookie2': _(
