@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from django.db.models import Q
 from django.urls import reverse
@@ -15,6 +16,7 @@ TimelineEvent = namedtuple('TimelineEvent', ('event', 'subevent', 'datetime', 'd
 def timeline_for_event(event, subevent=None):
     tl = []
     ev = subevent or event
+    tz = event.timezone if not isinstance(event.timezone, str) else ZoneInfo(event.timezone)
     if subevent:
         ev_edit_url = reverse(
             'control:event.subevent',
@@ -105,7 +107,7 @@ def timeline_for_event(event, subevent=None):
     if rd:
         d = make_aware(
             datetime.combine(rd.date(ev), time(hour=23, minute=59, second=59)),
-            event.timezone,
+            tz,
         )
         tl.append(
             TimelineEvent(
@@ -233,7 +235,7 @@ def timeline_for_event(event, subevent=None):
         if availability_date:
             d = make_aware(
                 datetime.combine(availability_date.date(ev), time(hour=23, minute=59, second=59)),
-                event.timezone,
+                tz,
             )
             tl.append(
                 TimelineEvent(
