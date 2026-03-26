@@ -2072,6 +2072,7 @@ class Event(
     def allow_delete(self):
         return not self.orders.exists() and not self.invoices.exists()
 
+    @scopes_disabled()
     def delete_sub_objects(self):
         from django.core.exceptions import ObjectDoesNotExist
 
