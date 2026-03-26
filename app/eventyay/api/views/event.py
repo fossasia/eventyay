@@ -153,46 +153,32 @@ class EventViewSet(viewsets.ModelViewSet):
                 "The event can not be deleted as it already contains orders. Please set 'live' to false to hide "
                 'the event and take the shop offline instead.'
             )
+                try:
+        with transaction.atomic():
+            instance.organizer.log_action(
+                'eventyay.event.deleted',
+                user=self.request.user,
+                auth=self.request.auth,
+                data={
+                    'event_id': instance.pk,
+                    'name': str(instance.name),
+                }
+            )
+            instance.delete()
+    except Exception:
+        instance.delete()
     @action(detail=True, methods=['get'])
     def similar(self, request, event=None):
-        """
-        Returns similar events based on category.
-        """
-
         current_event = self.get_object()
 
-        similar_events = Event.objects.filter(
-            category=current_event.category
-        ).exclude(id=current_event.id)[:5]
+        similar_events = (
+            self.get_queryset()
+            .filter(category=current_event.category)
+            .exclude(id=current_event.id)
+            .values('id', 'name')[:5]
+     )
 
-        response_data = []
-
-        for e in similar_events:
-            response_data.append({
-                "id": e.id,
-                "name": str(e.name)
-            })
-
-        return Response(response_data)
-        try:
-            with transaction.atomic():
-                instance.organizer.log_action(
-                    'eventyay.event.deleted',
-                    user=self.request.user,
-                    auth=self.request.auth,
-                    data={
-                        'event_id': instance.pk,
-                        'name': str(instance.name),
-                        'slug': instance.slug,
-                        'logentries': list(instance.logentry_set.values_list('pk', flat=True)),
-                    },
-                )
-                instance.delete_sub_objects()
-                instance.delete()
-        except ProtectedError:
-            raise PermissionDenied(
-                'The event could not be deleted as some constraints (e.g. data created by plug-ins) do not allow it.'
-            )
+    return Response(list(similar_events))
 
 
 class CloneEventViewSet(viewsets.ModelViewSet):
