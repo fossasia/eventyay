@@ -184,7 +184,7 @@ class EventViewSet(viewsets.ModelViewSet):
             .values('id', 'name')[:5]
      )
 
-    return Response(list(similar_events))
+        return Response(list(similar_events))
 
 
 class CloneEventViewSet(viewsets.ModelViewSet):
