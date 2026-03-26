@@ -339,8 +339,48 @@ const sessions = computed<SessionData[]>(() => {
 
 const days = computed<Moment[]>(() => {
   if (!schedule.value) return []
-  const daysArray: Moment[] = [moment(schedule.value.event_start).startOf('day')]
-  const lastDay = moment(schedule.value.event_end)
+  let firstDay = moment(schedule.value.event_start).startOf('day')
+  let lastDay = moment(schedule.value.event_end).startOf('day')
+
+  // Keep editor tabs aligned with real talk dates as well, since imported
+  // schedules may contain talks outside the event date window.
+  const startedTalks = schedule.value.talks
+    .map((talk) => talk.start)
+    .filter((start): start is string => typeof start === 'string')
+    .map((start) => moment(start))
+    .filter((start) => start.isValid())
+
+  const endedTalks = schedule.value.talks
+    .map((talk) => talk.end)
+    .filter((end): end is string => typeof end === 'string')
+    .map((end) => moment(end))
+    .filter((end) => end.isValid())
+
+  const talkDates = [...startedTalks, ...endedTalks]
+
+  if (talkDates.length) {
+    let earliestTalkDay = talkDates[0].clone().startOf('day')
+    let latestTalkDay = talkDates[0].clone().startOf('day')
+
+    for (const talkDay of talkDates.slice(1)) {
+      const normalizedTalkDay = talkDay.clone().startOf('day')
+      if (normalizedTalkDay.isBefore(earliestTalkDay)) {
+        earliestTalkDay = normalizedTalkDay
+      }
+      if (normalizedTalkDay.isAfter(latestTalkDay)) {
+        latestTalkDay = normalizedTalkDay
+      }
+    }
+
+    if (earliestTalkDay.isBefore(firstDay)) {
+      firstDay = earliestTalkDay
+    }
+    if (latestTalkDay.isAfter(lastDay)) {
+      lastDay = latestTalkDay
+    }
+  }
+
+  const daysArray: Moment[] = [firstDay]
   while (!daysArray.at(-1)!.isSame(lastDay, 'day')) {
     daysArray.push(daysArray.at(-1)!.clone().add(1, 'days'))
   }

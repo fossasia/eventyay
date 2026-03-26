@@ -824,7 +824,7 @@ class Schedule(PretalxModel):
             {
                 'id': room.id,
                 'name': room.name,
-                'description': room.description,
+                'description': room.description if room.description else '',
                 'video_url': getattr(room, 'video_url', ''),
             }
             for room in self.event.rooms.all()
