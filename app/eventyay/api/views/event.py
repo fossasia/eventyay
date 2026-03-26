@@ -1,5 +1,6 @@
 import json
 import logging
+from rest_framework.decorators import action
 from contextlib import suppress
 from urllib.parse import urlparse
 
@@ -152,6 +153,27 @@ class EventViewSet(viewsets.ModelViewSet):
                 "The event can not be deleted as it already contains orders. Please set 'live' to false to hide "
                 'the event and take the shop offline instead.'
             )
+    @action(detail=True, methods=['get'])
+    def similar(self, request, event=None):
+        """
+        Returns similar events based on category.
+        """
+
+        current_event = self.get_object()
+
+        similar_events = Event.objects.filter(
+            category=current_event.category
+        ).exclude(id=current_event.id)[:5]
+
+        response_data = []
+
+        for e in similar_events:
+            response_data.append({
+                "id": e.id,
+                "name": str(e.name)
+            })
+
+        return Response(response_data)
         try:
             with transaction.atomic():
                 instance.organizer.log_action(
