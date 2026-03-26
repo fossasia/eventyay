@@ -102,11 +102,6 @@ header .header-row-right {
     margin: 0 auto;
 }
 
-.event-hero-overlay {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
 .presale-sticky-tabs-wrap {
     position: sticky;
     top: 0;
@@ -337,8 +332,6 @@ header .header-row-right {
     .event-hero-overlay {
         display: flex;
         width: 100%;
-        padding-left: 12px;
-        padding-right: 12px;
     }
 
     /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
@@ -454,4 +447,28 @@ header .header-row-right {
 
 .thank-you.thank-you-pending h2 {
     color: #ffb419;
+}
+
+.product-row .row > [class*="col-"]:not(.price),.product-row > [class*="col-"]:not(.price),.product-row [class*="col-"]:not(.price),
+.row-voucher > [class*="col-"]:not(.price),.checkout-button-row .clearfix > [class*="col-"]:not(.price) {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.front-page .col-md-4.col-md-offset-8,
+.front-page #btn-add-to-cart {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.redeem-voucher-container .col-md-4.col-sm-6.col-xs-12 {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+@media (min-width: 768px) {
+    .redeem-voucher-container .col-md-4.col-sm-6.col-xs-12 {
+        padding-left: 15px !important;
+        padding-right: 0;
+    }
 }

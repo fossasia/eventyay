@@ -657,8 +657,14 @@ export default {
 			gap: 18px
 
 		.featured-speaker-column
-			width: 370px
-			max-width: 100%
+				/* Default for smaller devices */
+				width: 400px
+				max-width: 100%
+
+				/* Desktop and large / mid tablets: use 350px */
+				@media (min-width: 768px)
+					width: 360px
+					max-width: 100%
 
 		.featured-speaker-card
 			margin: 0
