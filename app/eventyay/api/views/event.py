@@ -170,8 +170,8 @@ class EventViewSet(viewsets.ModelViewSet):
             instance.delete()
 
         except ProtectedError:
-    raise PermissionDenied(
-        'The event could not be deleted as some constraints (e.g. data created by plug-ins) do not allow it.'
+          raise PermissionDenied(
+            'The event could not be deleted as some constraints (e.g. data created by plug-ins) do not allow it.'
     )
     @action(detail=True, methods=['get'])
     def similar(self, request, event=None):
