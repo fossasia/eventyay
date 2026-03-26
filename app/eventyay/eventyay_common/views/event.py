@@ -1044,7 +1044,6 @@ class EventSearchView(views.APIView):
         query = request.GET.get('query', '')
         events = (
             Event.objects.filter(Q(name__icontains=query) | Q(slug__icontains=query))
-            .exclude(display_settings__exclude_from_search=True)
             .order_by('name')
             .select_related('organizer')[:10]
         )
