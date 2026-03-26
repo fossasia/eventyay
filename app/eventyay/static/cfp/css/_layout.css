@@ -562,8 +562,8 @@ footer {
 
   .header-join-video-floating-mobile {
     position: absolute;
-    bottom: -15px;
-    right: 15px;
+    bottom: -27.5px;
+    right: 7.5px;
     z-index: 1050;
     
     /* Button for mobile/tablet: compact with icon + text */
