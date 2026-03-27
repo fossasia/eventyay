@@ -98,34 +98,26 @@ if (modal) {
             const submitBtn = document.getElementById('checkout-login-submit');
             if (!submitBtn) return;
 
-            const originalChildNodes = [];
-            for (let i = 0; i < submitBtn.childNodes.length; i += 1) {
-                originalChildNodes.push(submitBtn.childNodes[i].cloneNode(true));
-            }
+            const originalChildNodes = [...submitBtn.childNodes].map(node =>
+                node.cloneNode(true)
+            );
 
-            const clearButtonContent = () => {
-                while (submitBtn.firstChild) {
-                    submitBtn.removeChild(submitBtn.firstChild);
-                }
-            };
             const setLoadingState = () => {
                 submitBtn.disabled = true;
-                clearButtonContent();
+                submitBtn.replaceChildren();
 
                 const spinner = document.createElement('i');
                 spinner.className = 'fa fa-spinner fa-spin';
                 spinner.setAttribute('aria-hidden', 'true');
+
                 submitBtn.appendChild(spinner);
                 submitBtn.append(' ', i18n.msgLoggingIn ?? '');
             };
+
             const resetButtonState = () => {
                 submitBtn.disabled = false;
-                clearButtonContent();
-                for (let i = 0; i < originalChildNodes.length; i += 1) {
-                    submitBtn.appendChild(originalChildNodes[i].cloneNode(true));
-                }
+                submitBtn.replaceChildren(...originalChildNodes);
             };
-
             setLoadingState();
 
             if (errorDiv) errorDiv.style.display = 'none';
