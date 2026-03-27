@@ -61,8 +61,8 @@
         {% endif %}
       </div>
 
-      {# This is a queryset of Page (only 1-2 records to worry about performance) #}
-      {% if confirmation_pages.exists() %}
+      {# This is a tuple of Page #}
+      {% if confirmation_pages %}
         <div class='form-group'>
           <label>
             <input type='checkbox' class='checkbox' name='confirmation_pages_accepted' value='yes' required>
