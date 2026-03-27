@@ -162,7 +162,11 @@
             </div>
         </div>
         {% if subevent %}
-            <h2 class="subevent-head">{{ subevent.name|event_localize }}</h2>
+            <h2 class="subevent-head">
+                <a href="{% eventurl event 'presale:event.index' subevent=subevent.pk %}">
+                    {{ subevent.name|event_localize }}
+                </a>
+            </h2>
             {% if frontpage_text and not cart_namespace %}
                 <div>
                     {{ frontpage_text|event_localize|rich_text }}
@@ -172,17 +176,29 @@
     {% else %}
         {% if event_logo_image and request.event.settings.logo_show_title %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
+                <a href="{% eventurl event 'presale:event.index' %}">
+                    {{ event.name|event_localize }}
+                </a>
                 {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
+                    <small>
+                        <a href="{% eventurl event 'presale:event.index' %}">
+                            {{ event.get_date_range_display }}
+                        </a>
+                    </small>
                 {% endif %}
             </h2>
         {% endif %}
         {% if not event_logo_image %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
+                <a href="{% eventurl event 'presale:event.index' %}">
+                    {{ event.name|event_localize }}
+                </a>
                 {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
+                    <small>
+                        <a href="{% eventurl event 'presale:event.index' %}">
+                            {{ event.get_date_range_display }}
+                        </a>
+                    </small>
                 {% endif %}
             </h2>
         {% endif %}
