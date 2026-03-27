@@ -465,6 +465,28 @@ class ProductCreateForm(I18nModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
+        free_price = cleaned_data.get('free_price')
+        min_price = cleaned_data.get('min_price')
+        max_price = cleaned_data.get('max_price')
+
+        # VALIDATION LOGIC
+        if free_price:
+            if min_price and max_price and min_price > max_price:
+                raise forms.ValidationError(
+                    _("Minimum price cannot be greater than maximum price.")
+                )
+
+            if min_price and min_price < 0:
+                raise forms.ValidationError(
+                    _("Minimum price cannot be negative.")
+                )
+
+            if max_price and max_price < 0:
+                raise forms.ValidationError(
+                    _("Maximum price cannot be negative.")
+                )
+
+        # existing logic
         if not self.event.has_subevents:
             if cleaned_data.get('quota_option') == self.NEW:
                 if not self.cleaned_data.get('quota_add_new_name'):
@@ -484,8 +506,21 @@ class ProductCreateForm(I18nModelForm):
             'category',
             'admission',
             'default_price',
+            'free_price',
             'tax_rule',
         ]
+
+    min_price = forms.DecimalField(
+        required=False,
+        label=_("Minimum price"),
+        help_text=_("Optional minimum price user must enter."),
+    )
+
+    max_price = forms.DecimalField(
+        required=False,
+        label=_("Maximum price"),
+        help_text=_("Optional maximum price user can enter."),
+    )
 
 
 class ShowQuotaNullBooleanSelect(forms.NullBooleanSelect):
