@@ -98,10 +98,19 @@ if (modal) {
             const submitBtn = document.getElementById('checkout-login-submit');
             if (!submitBtn) return;
 
-            const originalText = submitBtn.textContent ?? '';
+            const originalChildNodes = [];
+            for (let i = 0; i < submitBtn.childNodes.length; i += 1) {
+                originalChildNodes.push(submitBtn.childNodes[i].cloneNode(true));
+            }
+
+            const clearButtonContent = () => {
+                while (submitBtn.firstChild) {
+                    submitBtn.removeChild(submitBtn.firstChild);
+                }
+            };
             const setLoadingState = () => {
                 submitBtn.disabled = true;
-                submitBtn.replaceChildren();
+                clearButtonContent();
 
                 const spinner = document.createElement('i');
                 spinner.className = 'fa fa-spinner fa-spin';
@@ -111,7 +120,10 @@ if (modal) {
             };
             const resetButtonState = () => {
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+                clearButtonContent();
+                for (let i = 0; i < originalChildNodes.length; i += 1) {
+                    submitBtn.appendChild(originalChildNodes[i].cloneNode(true));
+                }
             };
 
             setLoadingState();
