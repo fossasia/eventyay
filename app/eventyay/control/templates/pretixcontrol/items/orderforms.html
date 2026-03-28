@@ -179,8 +179,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.attendee_name_parts %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_name_parts' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -229,8 +241,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.attendee_email %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_email' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -260,8 +284,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.company %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='company' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -291,8 +327,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.job_title %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='job_title' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -322,8 +370,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.street %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='street' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -417,8 +477,6 @@
 
         <fieldset>
             <legend>{% translate "Form settings" %}</legend>
-            {% bootstrap_field sform.name_scheme layout="control" %}
-            {% bootstrap_field sform.name_scheme_titles layout="control" %}
             {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
             {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
             {% bootstrap_field sform.include_wikimedia_username layout="control" %}

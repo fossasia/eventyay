@@ -21,6 +21,7 @@ from eventyay.base.models import (
     QuestionOption,
 )
 from eventyay.base.services.cart import get_fees
+from eventyay.base.services.system_questions import get_system_question_asked_required, product_has_system_questions
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.signals import question_form_fields
@@ -140,8 +141,7 @@ class CartMixin:
                     i = pos.pk
 
             has_attendee_data = pos.product.admission and (
-                self.request.event.settings.attendee_names_asked
-                or self.request.event.settings.attendee_emails_asked
+                product_has_system_questions(self.request.event, pos.product)
                 or pos_additional_fields.get(pos.pk)
             )
 
@@ -197,6 +197,32 @@ class CartMixin:
             group.has_questions = answers and k[0] != ''
             if not hasattr(group, 'tax_rule'):
                 group.tax_rule = group.product.tax_rule
+
+            group.ask_attendee_name_parts = get_system_question_asked_required(
+                self.request.event,
+                'attendee_name_parts',
+                group.product,
+            )[0]
+            group.ask_attendee_email = get_system_question_asked_required(
+                self.request.event,
+                'attendee_email',
+                group.product,
+            )[0]
+            group.ask_attendee_company = get_system_question_asked_required(
+                self.request.event,
+                'company',
+                group.product,
+            )[0]
+            group.ask_attendee_job_title = get_system_question_asked_required(
+                self.request.event,
+                'job_title',
+                group.product,
+            )[0]
+            group.ask_attendee_address = get_system_question_asked_required(
+                self.request.event,
+                'street',
+                group.product,
+            )[0]
 
             group.bundle_sum = group.price + sum(a.price for a in has_addons[group.pk])
             group.bundle_sum_net = group.net_price + sum(a.net_price for a in has_addons[group.pk])

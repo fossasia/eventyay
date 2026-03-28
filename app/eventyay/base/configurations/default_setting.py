@@ -91,6 +91,10 @@ DEFAULT_SETTINGS = {
         'default': {},
         'type': dict,
     },
+    'system_question_product_overrides': {
+        'default': {},
+        'type': dict,
+    },
     'attendee_names_asked': {
         'default': 'True',
         'type': bool,

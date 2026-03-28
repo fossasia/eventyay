@@ -112,6 +112,7 @@ from eventyay.base.services.orders import (
     send_order_approved_notifications,
     send_order_denied_notifications,
 )
+from eventyay.base.services.system_questions import get_system_question_asked_required, product_has_system_questions
 from eventyay.base.services.stats import order_overview
 from eventyay.base.services.tickets import generate
 from eventyay.base.signals import (
@@ -519,10 +520,34 @@ class OrderDetail(OrderView):
 
             p.has_questions = (
                 p.additional_fields
-                or (p.product.admission and self.request.event.settings.attendee_names_asked)
-                or (p.product.admission and self.request.event.settings.attendee_emails_asked)
+                or product_has_system_questions(self.request.event, p.product)
                 or p.product.questions.all()
             )
+            p.ask_attendee_name_parts = get_system_question_asked_required(
+                self.request.event,
+                'attendee_name_parts',
+                p.product,
+            )[0]
+            p.ask_attendee_email = get_system_question_asked_required(
+                self.request.event,
+                'attendee_email',
+                p.product,
+            )[0]
+            p.ask_attendee_company = get_system_question_asked_required(
+                self.request.event,
+                'company',
+                p.product,
+            )[0]
+            p.ask_attendee_job_title = get_system_question_asked_required(
+                self.request.event,
+                'job_title',
+                p.product,
+            )[0]
+            p.ask_attendee_address = get_system_question_asked_required(
+                self.request.event,
+                'street',
+                p.product,
+            )[0]
             p.cache_answers()
             p.order = self.order
 

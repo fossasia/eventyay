@@ -10,6 +10,7 @@ from django.utils.translation import pgettext_lazy
 
 from eventyay.base.models import TaxRule
 from eventyay.base.services.cart import update_tax_rates
+from eventyay.base.services.system_questions import get_system_question_asked_required
 from eventyay.presale.checkoutflowstep.template_flow_step import TemplateFlowStep
 from eventyay.presale.forms.checkout import (
     ContactForm,
@@ -279,9 +280,31 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                             _('Please fill in answers to all required questions.'),
                         )
                     return False
+
+            _, attendee_name_required = get_system_question_asked_required(
+                self.request.event,
+                'attendee_name_parts',
+                cp.product,
+            )
+            _, attendee_email_required = get_system_question_asked_required(
+                self.request.event,
+                'attendee_email',
+                cp.product,
+            )
+            _, attendee_company_required = get_system_question_asked_required(
+                self.request.event,
+                'company',
+                cp.product,
+            )
+            _, attendee_address_required = get_system_question_asked_required(
+                self.request.event,
+                'street',
+                cp.product,
+            )
+
             if (
                 cp.product.admission
-                and self.request.event.settings.get('attendee_names_required', as_type=bool)
+                and attendee_name_required
                 and not cp.attendee_name_parts
             ):
                 if warn:
@@ -289,7 +312,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 return False
             if (
                 cp.product.admission
-                and self.request.event.settings.get('attendee_emails_required', as_type=bool)
+                and attendee_email_required
                 and cp.attendee_email is None
             ):
                 if warn:
@@ -297,7 +320,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 return False
             if (
                 cp.product.admission
-                and self.request.event.settings.get('attendee_company_required', as_type=bool)
+                and attendee_company_required
                 and cp.company is None
             ):
                 if warn:
@@ -305,7 +328,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 return False
             if (
                 cp.product.admission
-                and self.request.event.settings.get('attendee_attendees_required', as_type=bool)
+                and attendee_address_required
                 and (cp.street is None or cp.city is None or cp.country is None)
             ):
                 if warn:

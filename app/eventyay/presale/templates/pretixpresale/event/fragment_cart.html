@@ -46,7 +46,7 @@
             {% endif %}
             {% if line.has_questions %}
                 <dl>
-                    {% if line.product.admission and event.settings.attendee_names_asked %}
+                    {% if line.ask_attendee_name_parts %}
                         <dt class="sr-only">
                             {% trans "Attendee name" %}
                         </dt>
@@ -56,7 +56,7 @@
                             </span>
                         </dd>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_emails_asked and line.attendee_email %}
+                    {% if line.ask_attendee_email and line.attendee_email %}
                         <dt class="sr-only">
                             {% trans "Attendee email" %}
                         </dt>
@@ -66,10 +66,10 @@
                             </span>
                         </dd>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_addresses_asked %}
+                    {% if line.ask_attendee_address %}
                         <br>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_company_asked and line.company %}
+                    {% if line.ask_attendee_company and line.company %}
                         <dt class="sr-only">
                             {% trans "Attendee company" %}
                         </dt>
@@ -79,7 +79,7 @@
                             </span>
                         </dd>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_job_title_asked and line.job_title %}
+                    {% if line.ask_attendee_job_title and line.job_title %}
                         <dt class="sr-only">
                             {% translate "Attendee job title" %}
                         </dt>
@@ -89,7 +89,7 @@
                             </span>
                         </dd>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_addresses_asked %}
+                    {% if line.ask_attendee_address %}
                         {% if line.street or line.zipcode or line.city %}
                             <dt class="sr-only">
                                 {% trans "Attendee address" %}
