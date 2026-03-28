@@ -296,6 +296,11 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 'company',
                 cp.product,
             )
+            _, attendee_job_title_required = get_system_question_asked_required(
+                self.request.event,
+                'job_title',
+                cp.product,
+            )
             _, attendee_address_required = get_system_question_asked_required(
                 self.request.event,
                 'street',
@@ -322,6 +327,14 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 cp.product.admission
                 and attendee_company_required
                 and cp.company is None
+            ):
+                if warn:
+                    messages.warning(request, _('Please fill in answers to all required questions.'))
+                return False
+            if (
+                cp.product.admission
+                and attendee_job_title_required
+                and cp.job_title is None
             ):
                 if warn:
                     messages.warning(request, _('Please fill in answers to all required questions.'))

@@ -21,7 +21,11 @@ from eventyay.base.models import (
     QuestionOption,
 )
 from eventyay.base.services.cart import get_fees
-from eventyay.base.services.system_questions import get_system_question_asked_required, product_has_system_questions
+from eventyay.base.services.system_questions import (
+    get_enabled_system_question_fields,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.signals import question_form_fields
@@ -125,6 +129,20 @@ class CartMixin:
                             }
                         )
 
+        base_states = get_system_question_base_states(self.request.event)
+        product_overrides = get_system_question_product_overrides(self.request.event)
+        enabled_system_fields_by_product_id: dict[int, set[str]] = {}
+
+        def get_enabled_system_fields_for_product(product) -> set[str]:
+            if product.pk not in enabled_system_fields_by_product_id:
+                enabled_system_fields_by_product_id[product.pk] = get_enabled_system_question_fields(
+                    self.request.event,
+                    product,
+                    base_states=base_states,
+                    product_overrides=product_overrides,
+                )
+            return enabled_system_fields_by_product_id[product.pk]
+
         # Group products of the same variation
         # We do this by list manipulations instead of a GROUP BY query, as
         # Django is unable to join related models in a .values() query
@@ -140,10 +158,8 @@ class CartMixin:
                 else:
                     i = pos.pk
 
-            has_attendee_data = pos.product.admission and (
-                product_has_system_questions(self.request.event, pos.product)
-                or pos_additional_fields.get(pos.pk)
-            )
+            enabled_system_fields = get_enabled_system_fields_for_product(pos.product)
+            has_attendee_data = pos.product.admission and (enabled_system_fields or pos_additional_fields.get(pos.pk))
 
             addon_penalty = 1 if pos.addon_to_id else 0
 
@@ -198,31 +214,12 @@ class CartMixin:
             if not hasattr(group, 'tax_rule'):
                 group.tax_rule = group.product.tax_rule
 
-            group.ask_attendee_name_parts = get_system_question_asked_required(
-                self.request.event,
-                'attendee_name_parts',
-                group.product,
-            )[0]
-            group.ask_attendee_email = get_system_question_asked_required(
-                self.request.event,
-                'attendee_email',
-                group.product,
-            )[0]
-            group.ask_attendee_company = get_system_question_asked_required(
-                self.request.event,
-                'company',
-                group.product,
-            )[0]
-            group.ask_attendee_job_title = get_system_question_asked_required(
-                self.request.event,
-                'job_title',
-                group.product,
-            )[0]
-            group.ask_attendee_address = get_system_question_asked_required(
-                self.request.event,
-                'street',
-                group.product,
-            )[0]
+            enabled_system_fields = get_enabled_system_fields_for_product(group.product)
+            group.ask_attendee_name_parts = 'attendee_name_parts' in enabled_system_fields
+            group.ask_attendee_email = 'attendee_email' in enabled_system_fields
+            group.ask_attendee_company = 'company' in enabled_system_fields
+            group.ask_attendee_job_title = 'job_title' in enabled_system_fields
+            group.ask_attendee_address = 'street' in enabled_system_fields
 
             group.bundle_sum = group.price + sum(a.price for a in has_addons[group.pk])
             group.bundle_sum_net = group.net_price + sum(a.net_price for a in has_addons[group.pk])

@@ -44,6 +44,13 @@ def get_system_question_base_state(event, field_id: str) -> str:
     return asked_required_to_state(asked, required)
 
 
+def get_system_question_base_states(event) -> dict[str, str]:
+    return {
+        field_id: get_system_question_base_state(event, field_id)
+        for field_id in SYSTEM_QUESTION_FIELDS
+    }
+
+
 def get_system_question_product_overrides(event) -> dict[str, dict[str, str]]:
     raw = event.settings.get(SYSTEM_QUESTION_PRODUCT_OVERRIDES_SETTING, as_type=dict) or {}
     if not isinstance(raw, dict):
@@ -66,21 +73,49 @@ def get_system_question_field_overrides(event, field_id: str) -> dict[str, str]:
     return get_system_question_product_overrides(event).get(field_id, {})
 
 
-def get_system_question_state(event, field_id: str, product: 'Product' = None) -> str:
+def get_system_question_state(
+    event,
+    field_id: str,
+    product: 'Product' = None,
+    *,
+    base_states: dict[str, str] | None = None,
+    product_overrides: dict[str, dict[str, str]] | None = None,
+) -> str:
     if product is not None and not product.admission:
         return STATE_DO_NOT_ASK
 
-    base_state = get_system_question_base_state(event, field_id)
+    if base_states is None:
+        base_state = get_system_question_base_state(event, field_id)
+    else:
+        base_state = base_states.get(field_id, get_system_question_base_state(event, field_id))
+
     if product is None:
         return base_state
 
     product_id = str(product.pk)
-    field_overrides = get_system_question_field_overrides(event, field_id)
+    if product_overrides is None:
+        product_overrides = get_system_question_product_overrides(event)
+    field_overrides = product_overrides.get(field_id, {})
     return field_overrides.get(product_id, base_state)
 
 
-def get_system_question_asked_required(event, field_id: str, product: 'Product' = None) -> tuple[bool, bool]:
-    return state_to_asked_required(get_system_question_state(event, field_id, product))
+def get_system_question_asked_required(
+    event,
+    field_id: str,
+    product: 'Product' = None,
+    *,
+    base_states: dict[str, str] | None = None,
+    product_overrides: dict[str, dict[str, str]] | None = None,
+) -> tuple[bool, bool]:
+    return state_to_asked_required(
+        get_system_question_state(
+            event,
+            field_id,
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+    )
 
 
 def set_system_question_field_overrides(event, field_id: str, product_states: dict[str | int, str]) -> None:
@@ -99,20 +134,62 @@ def set_system_question_field_overrides(event, field_id: str, product_states: di
     event.settings.set(SYSTEM_QUESTION_PRODUCT_OVERRIDES_SETTING, overrides)
 
 
-def get_enabled_system_question_fields(event, product: 'Product') -> set[str]:
+def get_enabled_system_question_fields(
+    event,
+    product: 'Product',
+    *,
+    base_states: dict[str, str] | None = None,
+    product_overrides: dict[str, dict[str, str]] | None = None,
+) -> set[str]:
     if not product.admission:
         return set()
 
     return {
         field_id
         for field_id in SYSTEM_QUESTION_FIELDS
-        if get_system_question_asked_required(event, field_id, product)[0]
+        if get_system_question_asked_required(
+            event,
+            field_id,
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )[0]
     }
 
 
-def product_has_system_questions(event, product: 'Product') -> bool:
-    return bool(get_enabled_system_question_fields(event, product))
+def product_has_system_questions(
+    event,
+    product: 'Product',
+    *,
+    base_states: dict[str, str] | None = None,
+    product_overrides: dict[str, dict[str, str]] | None = None,
+) -> bool:
+    return bool(
+        get_enabled_system_question_fields(
+            event,
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+    )
 
 
-def get_products_with_system_question(event, field_id: str, products: Iterable['Product']) -> list['Product']:
-    return [p for p in products if get_system_question_asked_required(event, field_id, p)[0]]
+def get_products_with_system_question(
+    event,
+    field_id: str,
+    products: Iterable['Product'],
+    *,
+    base_states: dict[str, str] | None = None,
+    product_overrides: dict[str, dict[str, str]] | None = None,
+) -> list['Product']:
+    return [
+        p
+        for p in products
+        if get_system_question_asked_required(
+            event,
+            field_id,
+            p,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )[0]
+    ]

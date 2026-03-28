@@ -37,6 +37,7 @@ from eventyay.base.services.system_questions import (
     SYSTEM_QUESTION_FIELD_SETTING_KEYS,
     get_system_question_base_state,
     get_system_question_field_overrides,
+    get_system_question_product_overrides,
     set_system_question_field_overrides,
     state_to_asked_required,
 )
@@ -892,7 +893,7 @@ class OrderFormDefaultFieldSettingsForm(forms.Form):
         return {
             asked_key: asked,
             required_key: required,
-            'system_question_product_overrides': get_system_question_field_overrides(self.event, self.field_id),
+            'system_question_product_overrides': get_system_question_product_overrides(self.event),
             **(
                 {
                     'name_scheme': self.cleaned_data['name_scheme'],

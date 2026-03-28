@@ -53,7 +53,9 @@ from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMet
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.services.system_questions import (
     SYSTEM_QUESTION_FIELDS,
-    get_products_with_system_question,
+    get_enabled_system_question_fields,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
 )
 from eventyay.base.services.tickets import invalidate_cache
 from eventyay.base.services.waitinglist import assign_automatically
@@ -1746,8 +1748,23 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
                     ordered_fields.append(OrderedField(id=field_id, type='question', question=q))
 
         ctx['ordered_fields'] = ordered_fields
+        base_states = get_system_question_base_states(self.request.event)
+        product_overrides = get_system_question_product_overrides(self.request.event)
+        enabled_system_fields_by_product_id = {
+            product.pk: get_enabled_system_question_fields(
+                self.request.event,
+                product,
+                base_states=base_states,
+                product_overrides=product_overrides,
+            )
+            for product in admission_products
+        }
         ctx['system_field_products'] = {
-            field_id: get_products_with_system_question(self.request.event, field_id, admission_products)
+            field_id: [
+                product
+                for product in admission_products
+                if field_id in enabled_system_fields_by_product_id[product.pk]
+            ]
             for field_id in SYSTEM_QUESTION_FIELDS
         }
 
