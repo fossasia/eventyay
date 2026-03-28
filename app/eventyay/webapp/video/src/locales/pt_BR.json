@@ -1,4 +1,4 @@
-{
+﻿{
 	"App:disconnected-warning:text": "Conexão perdida! Tentando reconectar…",
 	"App:error-code:1006": "Falha na conexão. Tentaremos novamente, mas se este erro ocorrer repetidamente, a conexão pode estar sendo bloqueada por um firewall em sua rede ou por um VPN em seu dispositivo.",
 	"App:error-code:text": "Código de erro",
@@ -170,7 +170,13 @@
 	"Livestream:default-source:text": "Padrão",
 	"Livestream:offline-message:text": "Transmissão offline",
 	"MediaSource:call:label": "Chamada privada",
-	"MediaSource:iframe-error:text": "Não conseguimos conectar ao servidor de videoconferência, desculpe.",
+	"MediaSource:iframe-error:text": "Não conseguimos conectar ao servidor de videoconferência, desculpe."
+	"MediaSource:join-error:missing-profile:text": "Your profile is incomplete. Please add a display name before joining.",
+	"MediaSource:join-error:bbb-failed:text": "The video server is currently unavailable. Please try again later.",
+	"MediaSource:join-error:no-server:text": "No video servers are available at the moment.",
+	"MediaSource:join-error:zoom-no-meeting-id:text": "Zoom meeting ID is missing or invalid.",
+	"MediaSource:join-error:zoom-missing-profile:text": "Your profile is incomplete. Please add a display name before joining the Zoom meeting.",
+	"MediaSource:join-error:retry:text": "Retry",,
 	"MediaSource:room:hint": "Reproduzindo agora",
 	"notifications/Announcment:title": "Anúncio",
 	"notifications/NotificationPermissionNotification:accept:label": "Ativar notificações",

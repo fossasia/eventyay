@@ -1,4 +1,4 @@
-{
+﻿{
 	"App:disconnected-warning:text": "انقطع الاتصال! نحاول إعادة الاتصال…",
 	"App:error-code:1006": "فشل الاتصال. سنحاول مجددًا، ولكن إذا تكررت هذه المشكلة، قد يكون الاتصال محجوبًا بواسطة جدار ناري في شبكتك أو VPN على جهازك.",
 	"App:error-code:text": "رمز الخطأ",
@@ -170,7 +170,13 @@
 	"Livestream:default-source:text": "افتراضي",
 	"Livestream:offline-message:text": "البث غير متصل",
 	"MediaSource:call:label": "مكالمة خاصة",
-	"MediaSource:iframe-error:text": "لم نتمكن من الاتصال بخادم مؤتمرات الفيديو، نعتذر.",
+	"MediaSource:iframe-error:text": "لم نتمكن من الاتصال بخادم مؤتمرات الفيديو، نعتذر."
+	"MediaSource:join-error:missing-profile:text": "Your profile is incomplete. Please add a display name before joining.",
+	"MediaSource:join-error:bbb-failed:text": "The video server is currently unavailable. Please try again later.",
+	"MediaSource:join-error:no-server:text": "No video servers are available at the moment.",
+	"MediaSource:join-error:zoom-no-meeting-id:text": "Zoom meeting ID is missing or invalid.",
+	"MediaSource:join-error:zoom-missing-profile:text": "Your profile is incomplete. Please add a display name before joining the Zoom meeting.",
+	"MediaSource:join-error:retry:text": "Retry",,
 	"MediaSource:room:hint": "جاري التشغيل حالياً",
 	"notifications/Announcment:title": "إعلان",
 	"notifications/NotificationPermissionNotification:accept:label": "تمكين الإشعارات",
