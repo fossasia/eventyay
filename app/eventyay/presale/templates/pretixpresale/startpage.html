@@ -54,6 +54,50 @@
         {% else %}
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
+
+       <style>
+            @media (max-width: 767px) {
+                /* 1. Neatly wrap the navbar items */
+                nav.navbar {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    height: auto !important; 
+                    padding: 10px 15px !important;
+                    z-index: 1050 !important;
+                    background-color: #2185d0 !important; 
+                }
+                
+                ul.navbar-top-links {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    width: 100%;
+                    justify-content: space-between !important;
+                    align-items: center;
+                    gap: 10px;
+                    margin-top: 10px !important;
+                    padding: 0 !important;
+                }
+
+                /* 2. Make the search bar full-width so it is easy to tap on phones */
+                .startpage-search-nav, .startpage-search-form, .startpage-search {
+                    width: 100%; 
+                }
+                .startpage-search input {
+                    width: 100% !important;
+                }
+
+                /* 3. FIX THE OVERLAP: Push the hero text safely below the expanded navbar */
+                .startpage-hero-header {
+                    padding-top: 140px !important; 
+                }
+                
+                /* Expand the blue background behind it so it doesn't look cut off */
+                #top-bg {
+                    min-height: 380px !important;
+                }
+            }
+        </style>
+
     </head>
     <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         {{ base_path|json_script:"base_path" }}
@@ -247,4 +291,3 @@
         {{ html_foot|safe }}
     </body>
 </html>
-

@@ -6,23 +6,23 @@
 {% load eventurl %}
 <!DOCTYPE html>
 <html{% if rtl %} dir="rtl" class="rtl"{% endif %}>
-	<head>
-		<title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
+    <head>
+        <title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ django_settings.INSTANCE_NAME }}</title>
          <script src="https://js.stripe.com/v3/"></script>
-		{% compress css %}
-    		<link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
+        {% compress css %}
+            <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_component_nav_mobile.css" %}" />
-		{% endcompress %}
+        {% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
                     defer></script>
         {% else %}
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
-		{% compress js %}
+        {% compress js %}
             <script type="text/javascript" src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
             <script type="text/javascript" src="{% static "js/jquery.formset.js" %}"></script>
             <script type="text/javascript" src="{% static "typeahead/typeahead.bundle.js" %}"></script>
@@ -42,7 +42,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/clipboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/menu.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/sb-admin-2.js" %}"></script>
-		    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
+            <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quota.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/subevent.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/question.js" %}"></script>
@@ -67,7 +67,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/popover.js" %}"></script>
             <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
             <script type="text/javascript" src="{% static "task_management/js/task_management.js" %}"></script>
-		{% endcompress %}
+        {% endcompress %}
         {{ html_head|safe }}
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -81,16 +81,30 @@
         {% endif %}
         <link rel="apple-touch-icon" sizes="180x180" href="{% static "pretixbase/img/icons/apple-touch-icon.png" %}">
         <link rel="icon" type="image/png" sizes="192x192" href="{% static "pretixbase/img/icons/android-chrome-192x192.png" %}">
-		<link rel="manifest" href="{% url "presale:site.webmanifest" %}">
+        <link rel="manifest" href="{% url "presale:site.webmanifest" %}">
         <link rel="mask-icon" href="{% static "pretixbase/img/icons/safari-pinned-tab.svg" %}" color="#2185d0">
         <meta name="msapplication-TileColor" content="#2185d0">
-		<meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}">
+        <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}">
         <meta name="theme-color" content="#2185d0">
         <meta name="referrer" content="origin">
 
+        <style>
+            @media (max-width: 767px) {
+                ul.navbar-top-links {
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    justify-content: flex-end !important;
+                }
+                .navbar-default.sidebar {
+                    background-color: #ffffff !important;
+                    z-index: 1050 !important; 
+                }
+            }
+        </style>
+
         {% block custom_header %}{% endblock %}
-	</head>
-	<body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
+    </head>
+    <body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
             data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"
             data-pretixlocale="{{ request.LANGUAGE_CODE }}"
             data-payment-weekdays-disabled="{{ js_payment_weekdays_disabled }}"
@@ -126,7 +140,7 @@
                             <i class="fa fa-eye"></i>
                         </a>
                     {% endif %}
-					<a class="navbar-brand" href="{% url 'presale:index' %}">
+                    <a class="navbar-brand" href="{% url 'presale:index' %}">
                         <img src="{% static "pretixbase/img/eventyay-icon.svg" %}" />
                         {{ django_settings.INSTANCE_NAME }}
                     </a>
@@ -201,7 +215,7 @@
 
                     {% if request.user.is_staff and not staff_session %}
                         <li>
-							<form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
+                            <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link" id="button-sudo">
                                     <i class="fa fa-id-card"></i> {% trans "Admin mode" %}
@@ -442,5 +456,5 @@
                 </div>
             </div>
         </div>
-	</body>
+    </body>
 </html>
