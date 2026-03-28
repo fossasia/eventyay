@@ -218,6 +218,14 @@ watch(youtubeTransUrl, (ytUrl) => {
 onMounted(async () => {
 	if (!props.room) return;
 	if (shouldUseLivestream.value) return;
+	const demoKey = joinErrorDemoKeyFromRoute();
+	if (demoKey) {
+		joinErrorKey.value = demoKey;
+		console.info(
+			'[MediaSource] join-error demo: remove ?joinErrorDemo from the URL to join normally.'
+		);
+		return;
+	}
 	await initializeIframe(false);
 });
 
@@ -290,6 +298,26 @@ function getJoinErrorKey(error) {
 		default:
 			return null
 	}
+}
+
+/**
+ * DEV only: append e.g. `?joinErrorDemo=1` or `?joinErrorDemo=bbb.no_server` on the
+ * room page URL to show the join-error banner without calling BBB/Zoom (for UI demos).
+ * Strips/reloads without the query for a normal join. No effect in production builds.
+ */
+function joinErrorDemoKeyFromRoute() {
+	if (!import.meta.env.DEV) return null;
+	const raw = route.query.joinErrorDemo;
+	if (raw == null || raw === '') return null;
+	const code = Array.isArray(raw) ? raw[0] : raw;
+	const effective =
+		code === '1' || code === 'true' ? 'bbb.failed' : code;
+	const key = getJoinErrorKey({ apiError: { code: effective } });
+	if (key) return key;
+	console.warn(
+		`[MediaSource] Unknown joinErrorDemo code "${effective}", using bbb.failed`
+	);
+	return getJoinErrorKey({ apiError: { code: 'bbb.failed' } });
 }
 
 async function initializeIframe(mute) {

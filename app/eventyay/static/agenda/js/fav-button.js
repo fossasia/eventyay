@@ -38,19 +38,16 @@ class PretalxFavButton extends HTMLElement {
     this._starFilled = starFilled
 
     const button = document.createElement('button')
-    button.type = 'button'
     button.className = 'btn btn-xs btn-link'
     const iconWrap = document.createElement('span')
     iconWrap.className = 'fav-icon'
     const parser = new DOMParser()
     const svg = parser.parseFromString(starOutline, 'image/svg+xml').documentElement
-    svg.setAttribute('aria-hidden', 'true')
     iconWrap.appendChild(svg)
     button.appendChild(iconWrap)
     this.replaceChildren(button)
     this._button = this.querySelector('button')
     this._iconWrap = this.querySelector('.fav-icon')
-    this._syncButtonA11y()
     this._button.addEventListener('click', () => this._toggle())
 
     this._loadState()
@@ -89,24 +86,13 @@ class PretalxFavButton extends HTMLElement {
     }
   }
 
-  _syncButtonA11y() {
-    if (!this._button) return
-    this._button.setAttribute('aria-pressed', this._isFaved ? 'true' : 'false')
-    this._button.setAttribute(
-      'aria-label',
-      this._isFaved ? 'Remove session from favourites' : 'Add session to favourites'
-    )
-  }
-
   _render() {
     const parser = new DOMParser()
     const svg = parser.parseFromString(
       this._isFaved ? this._starFilled : this._starOutline,
       'image/svg+xml'
     ).documentElement
-    svg.setAttribute('aria-hidden', 'true')
     this._iconWrap.replaceChildren(svg)
-    this._syncButtonA11y()
   }
 
   _spin() {
