@@ -345,3 +345,18 @@ This project is maintained by **FOSSASIA**.
 .. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
 .. _eventyay.com: https://eventyay.com
 .. _blog: https://blog.eventyay.com
+
+## Contributing
+
+We welcome contributions from the community.
+
+To contribute:
+
+1. Fork the repository
+2. Clone your fork to your local machine
+3. Create a new branch for your changes
+4. Make your changes and commit them
+5. Push the changes to your fork
+6. Open a Pull Request
+
+Please ensure your code follows the project guidelines and includes clear commit messages.
