@@ -802,7 +802,7 @@ class OrderFormDefaultFieldSettingsForm(forms.Form):
             'This defines how eventyay will ask for human names. Changing this after you already received '
             'orders might lead to unexpected behavior when sorting or changing names.'
         ),
-        required=False,
+        required=True,
     )
     name_scheme_titles = forms.ChoiceField(
         label=_('Allowed titles'),
@@ -866,6 +866,12 @@ class OrderFormDefaultFieldSettingsForm(forms.Form):
     def _product_field_name(product_id: int) -> str:
         return f'product_{product_id}'
 
+    def clean_name_scheme(self) -> str:
+        value = self.cleaned_data['name_scheme']
+        if value not in PERSON_NAME_SCHEMES:
+            raise forms.ValidationError(_('Please select a valid name format.'))
+        return value
+
     def save(self) -> dict:
         asked_key, required_key = SYSTEM_QUESTION_FIELD_SETTING_KEYS[self.field_id]
         global_state = self.cleaned_data['global_state']
@@ -874,6 +880,9 @@ class OrderFormDefaultFieldSettingsForm(forms.Form):
         settings_dict = self.event.settings.freeze()
         settings_dict[asked_key] = asked
         settings_dict[required_key] = required
+        if self.field_id == 'attendee_name_parts':
+            settings_dict['name_scheme'] = self.cleaned_data['name_scheme']
+            settings_dict['name_scheme_titles'] = self.cleaned_data['name_scheme_titles']
         validate_event_settings(self.event, settings_dict)
 
         self.event.settings.set(asked_key, asked)

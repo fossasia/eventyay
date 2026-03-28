@@ -51,7 +51,11 @@ from eventyay.base.models.tax import (
     cc_to_vat_prefix,
     is_eu_country,
 )
-from eventyay.base.services.system_questions import get_system_question_asked_required
+from eventyay.base.services.system_questions import (
+    get_system_question_asked_required,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.base.settings import (
     COUNTRIES_WITH_STATE_IN_ADDRESS,
     PERSON_NAME_SALUTATIONS,
@@ -403,11 +407,44 @@ class BaseQuestionsForm(forms.Form):
 
         add_fields = {}
 
-        ask_name, require_name = get_system_question_asked_required(event, 'attendee_name_parts', product)
-        ask_email, require_email = get_system_question_asked_required(event, 'attendee_email', product)
-        ask_company, require_company = get_system_question_asked_required(event, 'company', product)
-        ask_job_title, require_job_title = get_system_question_asked_required(event, 'job_title', product)
-        ask_address, require_address = get_system_question_asked_required(event, 'street', product)
+        base_states = get_system_question_base_states(event)
+        product_overrides = get_system_question_product_overrides(event)
+
+        ask_name, require_name = get_system_question_asked_required(
+            event,
+            'attendee_name_parts',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_email, require_email = get_system_question_asked_required(
+            event,
+            'attendee_email',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_company, require_company = get_system_question_asked_required(
+            event,
+            'company',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_job_title, require_job_title = get_system_question_asked_required(
+            event,
+            'job_title',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_address, require_address = get_system_question_asked_required(
+            event,
+            'street',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
 
         if ask_name:
             add_fields['attendee_name_parts'] = NamePartsFormField(

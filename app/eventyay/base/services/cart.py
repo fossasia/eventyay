@@ -1268,9 +1268,11 @@ class CartManager:
 
                         if ask_name:
                             scheme = PERSON_NAME_SCHEMES.get(self.event.settings.name_scheme)
+                            if scheme is None:
+                                scheme = next(iter(PERSON_NAME_SCHEMES.values()), None)
                             if 'attendee-name' in self._widget_data:
                                 cp.attendee_name_parts = {'_legacy': self._widget_data['attendee-name']}
-                            if any(
+                            if scheme and any(
                                 'attendee-name-{}'.format(k.replace('_', '-')) in self._widget_data
                                 for k, l, w in scheme['fields']
                             ):

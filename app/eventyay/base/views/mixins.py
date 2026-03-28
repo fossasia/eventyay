@@ -21,7 +21,11 @@ from eventyay.base.models import (
     QuestionAnswer,
     QuestionOption,
 )
-from eventyay.base.services.system_questions import get_enabled_system_question_fields
+from eventyay.base.services.system_questions import (
+    get_enabled_system_question_fields,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.presale.signals import contact_form_fields_overrides
 
 
@@ -54,6 +58,8 @@ class BaseQuestionsViewMixin:
         submitted at once.
         """
         formlist = []
+        base_states = get_system_question_base_states(self.request.event)
+        product_overrides = get_system_question_product_overrides(self.request.event)
         for cr in self._positions_for_questions:
             cartpos = cr if isinstance(cr, CartPosition) else None
             orderpos = cr if isinstance(cr, OrderPosition) else None
@@ -70,8 +76,18 @@ class BaseQuestionsViewMixin:
 
             shared_system_fields = set()
             if form.pos.addon_to and form.pos.addon_to.product.admission and form.pos.product.admission:
-                source_fields = get_enabled_system_question_fields(self.request.event, form.pos.addon_to.product)
-                target_fields = get_enabled_system_question_fields(self.request.event, form.pos.product)
+                source_fields = get_enabled_system_question_fields(
+                    self.request.event,
+                    form.pos.addon_to.product,
+                    base_states=base_states,
+                    product_overrides=product_overrides,
+                )
+                target_fields = get_enabled_system_question_fields(
+                    self.request.event,
+                    form.pos.product,
+                    base_states=base_states,
+                    product_overrides=product_overrides,
+                )
                 shared_system_fields = source_fields & target_fields
 
             form.show_copy_answers_to_addon_button = form.pos.addon_to and (
