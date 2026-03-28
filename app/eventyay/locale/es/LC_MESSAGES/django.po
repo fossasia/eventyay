@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-28 16:39+0000\n"
+"PO-Revision-Date: 2026-03-28 16:52+0000\n"
 "Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/es/>\n"
@@ -850,7 +850,7 @@ msgstr "Explicación de la dirección de facturación"
 msgid "This text will be shown above the invoice address form during checkout."
 msgstr ""
 "Este texto se mostrará encima del formulario de dirección de facturación "
-"durante el pago."
+"durante realizar el pedido."
 
 #: base/configurations/default_setting.py:372
 msgid "Show paid amount on partially paid invoices"
@@ -1621,10 +1621,10 @@ msgid ""
 "available for attendees in this event."
 msgstr ""
 "Si esta opción está activada, los usuarios deben iniciar sesión antes de "
-"completar un pedido. Cuando un usuario haga clic en \"Finalizar compra\" sin "
-"haber iniciado sesión, será redirigido a la página de inicio de sesión. La "
-"opción \"Continuar como invitado\" no estará disponible para los asistentes "
-"en este evento."
+"completar un pedido. Cuando un usuario haga clic en \"Realizar el pedido\" "
+"sin haber iniciado sesión, será redirigido a la página de inicio de sesión. "
+"La opción \"Continuar como invitado\" no estará disponible para los "
+"asistentes en este evento."
 
 #: base/configurations/default_setting.py:1219
 msgid "Show availability in event overviews"
@@ -8734,15 +8734,16 @@ msgstr "Nombre del método de pago"
 
 #: base/payment.py:1027
 msgid "Payment process description during checkout"
-msgstr "Descripción del proceso de pago durante la compra"
+msgstr "Descripción del proceso de pago durante realizar el pedido"
 
 #: base/payment.py:1029
 msgid ""
 "This text will be shown during checkout when the user selects this payment "
 "method. It should give a short explanation on this payment method."
 msgstr ""
-"Este texto se mostrará durante la compra cuando el usuario seleccione este "
-"método de pago. Debe dar una breve explicación sobre este método de pago."
+"Este texto se mostrará durante realizar el pedido cuando el usuario "
+"seleccione este método de pago. Debe dar una breve explicación sobre este "
+"método de pago."
 
 #: base/payment.py:1038
 msgid "Payment process description in order confirmation emails"
@@ -13033,7 +13034,7 @@ msgstr "La tienda online debe estar seleccionada para recibir estos correos."
 
 #: control/forms/event.py:944
 msgid "Sales channels for checkout emails"
-msgstr "Canales de venta para correos de compra"
+msgstr "Canales de venta para correos de realizar el pedido"
 
 #: control/forms/event.py:946
 msgid ""
@@ -32129,7 +32130,7 @@ msgstr "Paso %(current)s de %(total)s: %(label)s"
 #: presale/templates/pretixpresale/event/index.html:81
 #: presale/templates/pretixpresale/event/index.html:85
 msgid "Checkout"
-msgstr "Compra"
+msgstr "Realizar el pedido"
 
 #: presale/templates/pretixpresale/event/checkout_base.html:15
 #: presale/templates/pretixpresale/event/checkout_base.html:21
@@ -32624,7 +32625,7 @@ msgstr "Carrito vacío"
 #: presale/templates/pretixpresale/event/index.html:84
 msgid "Checkout (login required, opens login dialog)"
 msgstr ""
-"Finalizar compra (requiere iniciar sesión, abre el diálogo de inicio de "
+"Realizar el pedido (requiere iniciar sesión, abre el diálogo de inicio de "
 "sesión)"
 
 #: presale/templates/pretixpresale/event/index.html:119
