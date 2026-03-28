@@ -43,6 +43,7 @@ class PermissionMiddleware:
         'auth.invite',
         'user.settings.notifications.off',
         'oauth2_provider',
+        'account.locale',
     )
 
     EXCEPTIONS_2FA = (
