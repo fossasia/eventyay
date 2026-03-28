@@ -22,14 +22,15 @@
 		span {{ $t(joinErrorKey) }}
 		button.join-error-retry(
 			type="button",
-			@click="handleJoinErrorDismiss"
+			@click="handleJoinErrorRetry",
+			:aria-label="$t('MediaSource:join-error:retry:text')"
 		) {{ $t('MediaSource:join-error:retry:text') }}
 		button.join-error-dismiss(
 			type="button",
-			@click="joinErrorKey = null",
+			@click="handleJoinErrorDismiss",
 			:aria-label="$t('Prompt:cancel:label')"
 		) ✕
-	
+
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -101,11 +102,15 @@ const shouldUseLivestream = computed(() => {
 	return true;
 });
 
+function handleJoinErrorRetry() {
+	joinErrorKey.value = null;
+	initializeIframe(false);
+}
+
+/** Hide the join banner but keep a generic iframe error so the area is not blank. */
 function handleJoinErrorDismiss() {
 	joinErrorKey.value = null;
-
-	// Retry joining automatically
-	initializeIframe(false);
+	iframeError.value = new Error('join-error-dismissed');
 }
 
 // When stream schedules are enabled, the backend returns 404 (mapped to null) if
@@ -254,6 +259,11 @@ function unmuteYouTubePlayer() {
 	}
 }
 
+/**
+ * Maps WebSocket ApiError codes from bbb.room_url / zoom.room_url to i18n keys.
+ * Backend: bbb.join.missing_profile, bbb.failed, bbb.no_server (BBBService),
+ * zoom.missing_profile, zoom.no_meeting_id.
+ */
 function getJoinErrorKey(error) {
 	const code =
 		error?.apiError?.code ??
@@ -625,18 +635,23 @@ iframe.iframe-media-source
 	color: $clr-danger
 	padding: 12px 16px
 	border-radius: 4px
-	z-index: 102
-	max-width: 420px
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12)
+	z-index: 120
+	width: max-content
+	max-width: min(420px, calc(100vw - 24px))
 	text-align: center
 	display: flex
+	flex-wrap: wrap
 	align-items: center
+	justify-content: center
 	gap: 8px
 	+below('l')
-		top: 64px
-		left: 8px
-		right: 8px
+		top: calc(12px + env(safe-area-inset-top, 0px))
+		left: 12px
+		right: 12px
 		transform: none
-		max-width: calc(100% - 16px)
+		width: auto
+		max-width: none
 	.join-error-retry
 		background: none
 		border: 1px solid $clr-danger
