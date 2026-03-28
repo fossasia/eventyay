@@ -42,6 +42,7 @@ class PermissionMiddleware:
         'auth.forgot.recover',
         'auth.invite',
         'user.settings.notifications.off',
+        'account.locale',
         'oauth2_provider',
     )
 
