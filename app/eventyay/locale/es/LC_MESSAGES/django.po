@@ -33975,6 +33975,18 @@ msgctxt "proposal status"
 msgid "not accepted"
 msgstr "no aceptada"
 
+#: base/forms/questions.py
+msgid "Your answer"
+msgstr "Tu respuesta"
+
+#: base/forms/questions.py
+msgid "Select an option"
+msgstr "Selecciona una opción"
+
+#: base/forms/questions.py
+msgid "Phone"
+msgstr "Teléfono"
+
 #~ msgid "Available languages"
 #~ msgstr "Idiomas disponibles"
 
