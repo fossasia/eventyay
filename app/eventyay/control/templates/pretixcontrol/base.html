@@ -87,7 +87,6 @@
         <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}">
         <meta name="theme-color" content="#2185d0">
         <meta name="referrer" content="origin">
-
         <style>
             @media (max-width: 767px) {
                 ul.navbar-top-links {
@@ -97,11 +96,12 @@
                 }
                 .navbar-default.sidebar {
                     background-color: #ffffff !important;
-                    z-index: 1050 !important; 
+                    z-index: 1050 !important;
                 }
             }
         </style>
-
+       
+    
         {% block custom_header %}{% endblock %}
     </head>
     <body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
