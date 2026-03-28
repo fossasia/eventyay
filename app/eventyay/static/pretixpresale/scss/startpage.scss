@@ -495,6 +495,11 @@ body.startpage-search-results-page #main-card {
     max-width: 320px;
   }
 
+  [dir='rtl'] .startpage-search-results {
+    left: 0;
+    right: auto;
+  }
+
   .startpage-event-media {
     height: 160px;
   }
