@@ -1,6 +1,7 @@
 {% extends "orga/mails/base.html" %}
 
 {% load i18n %}
+{% load tz %}
 
 {% block mail_content %}
     <div class="d-md-flex justify-content-between">
@@ -58,7 +59,7 @@
                         <a href="{% querystring sort="to" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
                         <a href="{% querystring sort="-to" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                     </th>
-                    <th></th>
+                    <th>{% translate "Status" %}</th>
                     <th></th>
                     <th></th>
                 </tr>
@@ -77,6 +78,15 @@
                                     </a>{% else %}{{ user }}{% endif %}{% if not forloop.last or mail.to %}, {% endif %}
                             {% endfor %}
                             {% if mail.to %}{{ mail.to }}{% endif %}
+                        </td>
+                        <td>
+                            {% if mail.scheduled_at %}
+                                <span class="badge bg-info text-white">
+                                    {% translate "Scheduled for" %} {{ mail.scheduled_at|timezone:request.timezone|date:"Y-m-d H:i" }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-info text-white">{% translate "Immediate" %}</span>
+                            {% endif %}
                         </td>
                         <td>
                             {% for submission in mail.submissions.all %}

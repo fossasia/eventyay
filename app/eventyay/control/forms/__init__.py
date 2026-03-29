@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
-from django.forms.utils import from_current_timezone
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -333,7 +332,15 @@ class SplitDateTimeField(forms.SplitDateTimeField):
             if data_list[1] in self.empty_values:
                 raise ValidationError(self.error_messages['invalid_date'], code='invalid_date')
             result = datetime.datetime.combine(*data_list)
-            return from_current_timezone(result)
+            
+            from django.utils.timezone import get_current_timezone, is_aware
+            if not is_aware(result):
+                current_tz = get_current_timezone()
+                if hasattr(current_tz, 'localize'):
+                    result = current_tz.localize(result, is_dst=None)
+                else:
+                    result = result.replace(tzinfo=current_tz)
+            return result
         return None
 
 
