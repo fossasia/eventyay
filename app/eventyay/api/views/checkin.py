@@ -900,6 +900,27 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['POST'], url_name='redeem', url_path='(?P<pk>.*)/redeem')
     def redeem(self, *args, **kwargs):
+        def redeem(self, *args, **kwargs):
+
+    # ✅ ADD THIS BLOCK (NEW CODE)
+    if not self.request.data:
+        return Response(
+            {"error": "Request body cannot be empty"},
+            status=400
+        )
+
+    if 'type' in self.request.data:
+        if self.request.data.get('type') not in dict(Checkin.CHECKIN_TYPES):
+            return Response(
+                {"error": "Invalid check-in type provided"},
+                status=400
+            )
+
+    if 'force' in self.request.data and not isinstance(self.request.data.get('force'), bool):
+        return Response(
+            {"error": "Force must be a boolean"},
+            status=400
+        )
         force = bool(self.request.data.get('force', False))
         type = self.request.data.get('type', None) or Checkin.TYPE_ENTRY
         if type not in dict(Checkin.CHECKIN_TYPES):
