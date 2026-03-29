@@ -218,6 +218,23 @@ select.required-status-dropdown[data-current="optional"] {
 }
 
 /* Align field labels to the left with consistent padding */
+/* Fix: prevent horizontal overflow for long question texts */
+.order-form-option-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.order-form-option-table th.field-col {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 0;
+}
+
+@media (max-width: 1200px) {
+    .order-form-option-table col.field-col {
+        max-width: 250px;
+    }
+}
 .order-form-option-table tbody th {
     text-align: left;
     padding-right: 12px;
