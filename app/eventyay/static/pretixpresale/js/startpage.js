@@ -20,17 +20,27 @@
   }
 
   function initShareButtons() {
-    var buttons = document.querySelectorAll('.startpage-event-share');
-    if (!buttons.length) {
-      return;
-    }
+  var buttons = document.querySelectorAll('.startpage-event-share');
+  if (!buttons.length) {
+    return;
+  }
 
-    buttons.forEach(function (button) {
-      button.addEventListener('click', function () {
-        var url = button.dataset.url;
-        if (!url) {
-          return;
-        }
+  buttons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var url = button.dataset.url;
+      if (!url) {
+        return;
+      }
+
+      if (navigator.share) {
+        navigator.share({
+          title: document.title,
+          text: "Check out this event!",
+          url: url
+        }).catch(function (err) {
+          console.log("Share failed:", err);
+        });
+      } else {
         copyText(url)
           .then(function (ok) {
             if (ok) {
@@ -41,13 +51,12 @@
             }
           })
           .catch(function (error) {
-            // eslint-disable-next-line no-console
             console.error(error);
           });
-      });
+      }
     });
-  }
-
+  });
+}
   function initSearch() {
     var searchInput = document.getElementById('startpage-search-input');
     var resultsContainer = document.getElementById('startpage-search-results');
