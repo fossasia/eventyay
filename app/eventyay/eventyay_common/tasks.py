@@ -301,13 +301,20 @@ def update_billing_invoice_information(invoice_id: str | None):
         if not invoice_information_updated:
             current_status = BillingInvoice.objects.filter(id=invoice_id).values_list('status', flat=True).first()
             if current_status is not None:
-                logger.warning(
-                    'Invoice %s was not updated because current status is %s '
-                    '(expected %s for payment update). Skipping webhook.',
-                    invoice_id,
-                    current_status,
-                    BillingInvoice.STATUS_PENDING,
-                )
+                if current_status == BillingInvoice.STATUS_PAID:
+                    logger.warning(
+                        'Invoice %s was not updated because it is already marked as paid '
+                        '(idempotency guard). Skipping duplicate webhook.',
+                        invoice_id,
+                    )
+                else:
+                    logger.error(
+                        'Invoice %s was not updated because current status is %s '
+                        '(expected %s for payment update). Possible state inconsistency.',
+                        invoice_id,
+                        current_status,
+                        BillingInvoice.STATUS_PENDING,
+                    )
             else:
                 logger.error(
                     'Invoice %s does not exist in the database. '

@@ -51,6 +51,16 @@ def paid_invoice(db, organizer, event):
     )
 
 
+@pytest.fixture
+def expired_invoice(db, organizer, event):
+    """A BillingInvoice in STATUS_EXPIRED (unexpected for payment success)."""
+    return BillingInvoice.objects.create(
+        organizer=organizer, event=event, status=BillingInvoice.STATUS_EXPIRED,
+        amount="100.00", currency="USD", ticket_fee="100.00", final_ticket_fee="100.00",
+        monthly_bill=date.today(), created_by="test", updated_by="test",
+    )
+
+
 def _make_stripe_event(invoice_id=None, event_id="evt_test_123"):
     """Build a minimal fake Stripe webhook event object."""
     metadata = {"invoice_id": invoice_id} if invoice_id else {}
@@ -177,7 +187,19 @@ class TestUpdateBillingInvoiceInformationTask:
         assert paid_invoice.status == BillingInvoice.STATUS_PAID
         assert paid_invoice.paid_datetime == original_paid_datetime
         mock_warning.assert_called_once()
-        assert "current status is" in mock_warning.call_args[0][0].lower()
+        assert "already marked as paid" in mock_warning.call_args[0][0].lower()
+
+    @pytest.mark.django_db
+    def test_nonpending_nonpaid_invoice_logs_error(self, expired_invoice):
+        """Unexpected non-pending statuses should log an error and return None."""
+        with patch("eventyay.eventyay_common.tasks.logger.error") as mock_error:
+            result = update_billing_invoice_information(invoice_id=str(expired_invoice.pk))
+
+        expired_invoice.refresh_from_db()
+        assert result is None
+        assert expired_invoice.status == BillingInvoice.STATUS_EXPIRED
+        mock_error.assert_called_once()
+        assert "current status is" in mock_error.call_args[0][0].lower()
 
     @pytest.mark.django_db
     def test_nonexistent_invoice_logs_error_and_returns_none(self):
