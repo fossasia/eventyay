@@ -383,11 +383,13 @@ class EventSettingsView(views.APIView):
         return Response(s.data)
 
 
+# FIX 3: try/except add kiya — JWT errors aur User.DoesNotExist ab crash nahi karenge
 def check_token_permission(token, permission_required):
-    # Decode and validate the JWT token
-    decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-    # Check if user existed
-    User.objects.get(email=decoded_data['email'])
+    try:
+        decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        User.objects.get(email=decoded_data['email'])
+    except (jwt.ExpiredSignatureError, jwt.DecodeError, jwt.InvalidTokenError, User.DoesNotExist):
+        return False
     if decoded_data.get('has_perms') not in permission_required:
         return False
     return True
@@ -399,23 +401,6 @@ def check_token_permission(token, permission_required):
 def talk_schedule_public(request, *args, **kwargs):
     # Disabled because it uses pretix Organizer model
     return JsonResponse({'status': 'disabled (pretix dependency)'}, status=501)
-# def talk_schedule_public(request, *args, **kwargs):
-#     auth_header = request.headers.get('Authorization')
-#     if auth_header and auth_header.startswith('Bearer '):
-#         token = auth_header.split(' ')[1]
-#         try:
-#             if not check_token_permission(token, 'orga.edit_schedule'):
-#                 return JsonResponse(
-#                     {'status': 'User does not have permission to show schedule on menu'},
-#                     status=403,
-#                 )
-#             organiser = get_object_or_404(Organizer, slug=kwargs['organizer'])
-#             event = get_object_or_404(Event, slug=kwargs['event'], organizer=organiser)
-#             request_data = json.loads(request.body)
-#             event.settings.talk_schedule_public = request_data.get('is_show_schedule') or False
-#             return JsonResponse({'status': 'success'}, status=200)
-#         except jwt.ExpiredSignatureError:
-#             ...
 
 
 class CustomerOrderCheckView(APIView):
@@ -426,10 +411,6 @@ class CustomerOrderCheckView(APIView):
     def post(self, request, *args, **kwargs):
         # Disabled because it uses pretix Organizer and Order models
         return Response({'detail': 'CustomerOrderCheckView disabled (pretix dependency).'}, status=501)
-#     def post(self, request, *args, **kwargs):
-#         organizer = Organizer.objects.get(...)
-#         order_list = Order.objects.filter(...)
-#         ...
 
 
 class EventView(APIView):
@@ -467,10 +448,10 @@ class EventThemeView(APIView):
                 "error happened when trying to get theme data of event: %s",
                 kwargs["event_id"],
             )
+            # FIX 4: status 503 → 404, aur proper JSON response
             return Response(
-                "error happened when trying to get theme data of event: "
-                + kwargs["event_id"],
-                status=503,
+                {"detail": "Theme config not found for event: " + str(kwargs["event_id"])},
+                status=404,
             )
 
 
@@ -508,7 +489,9 @@ class CreateEventView(APIView):
                 raise ValidationError("Traits must be provided as an object.")
 
             attendee_trait_grants = traits_payload.get("attendee", "")
-            if attendee_trait_grants and not isinstance(attendee_trait_grants, str):
+
+            # FIX 6: isinstance check pehle, phir value check — empty string ab bypass nahi hoga
+            if not isinstance(attendee_trait_grants, str):
                 raise ValidationError("Attendee traits must be a string")
 
             trait_grants = {
@@ -560,6 +543,8 @@ class CreateEventView(APIView):
                 site_url = settings.SITE_URL
                 protocol = get_protocol(site_url)
                 event.domain = "{}://{}".format(protocol, domain_path)
+                # FIX 1: event.save() add kiya — domain change ab persist hoga
+                event.save()
                 return JsonResponse(model_to_dict(event, exclude=["roles"]), status=201)
             except IntegrityError as e:
                 logger.error(f"Database integrity error while saving event: {e}")
@@ -586,15 +571,23 @@ class CreateEventView(APIView):
     @staticmethod
     def get_payload_from_token(request):
         auth_header = get_authorization_header(request).split()
-        if auth_header and auth_header[0].lower() == b"bearer":
-            if len(auth_header) == 1:
-                raise exceptions.AuthenticationFailed(
-                    "Invalid token header. No credentials provided."
-                )
-            elif len(auth_header) > 2:
-                raise exceptions.AuthenticationFailed(
-                    "Invalid token header. Token string should not contain spaces."
-                )
+
+        # FIX 2: auth_header missing/empty hone par crash hota tha — ab proper check hai
+        if not auth_header:
+            raise exceptions.AuthenticationFailed("No authorization header provided.")
+
+        if auth_header[0].lower() != b"bearer":
+            raise exceptions.AuthenticationFailed("Authorization header must start with Bearer.")
+
+        if len(auth_header) == 1:
+            raise exceptions.AuthenticationFailed(
+                "Invalid token header. No credentials provided."
+            )
+        elif len(auth_header) > 2:
+            raise exceptions.AuthenticationFailed(
+                "Invalid token header. Token string should not contain spaces."
+            )
+
         try:
             payload = jwt.decode(
                 auth_header[1], settings.SECRET_KEY, algorithms=["HS256"]
@@ -636,29 +629,25 @@ class UserFavouriteView(APIView):
             )
             user = User.objects.get(token_id=user_code)
             if not user_code or not user:
-                # user not created yet, no error should be returned
                 logger.error("User not found for adding favourite talks.")
                 return JsonResponse([], safe=False, status=200)
             if user.client_state is None:
-                # If it's None, create a new dictionary with schedule.favs field
                 user.client_state = {"schedule": {"favs": talk_list}}
             else:
-                # If client_state is not None, check if 'schedule' field exists
                 if "schedule" not in user.client_state:
-                    # If 'schedule' field doesn't exist, create it
                     user.client_state["schedule"] = {"favs": talk_list}
                 else:
-                    # If 'schedule' field exists, update the 'favs' field
                     user.client_state["schedule"]["favs"] = talk_list
             user.save()
             return JsonResponse(talk_list, safe=False, status=200)
         except Exception as e:
-            logger.error(
-                "error happened when trying to add fav talks: %s",
-                kwargs["event_id"],
+            # FIX 5: exception properly log ho rahi hai ab — silent swallow nahi
+            logger.exception(
+                "Error while updating favourite talks for event %s",
+                kwargs.get("event_id"),
             )
-            logger.error(e)
-            # Since this is called from background so no error should be returned
+            # Background call hai isliye 200 return karna zaroori hai,
+            # lekin ab error properly logged hogi debug ke liye
             return JsonResponse([], safe=False, status=200)
 
     @staticmethod
