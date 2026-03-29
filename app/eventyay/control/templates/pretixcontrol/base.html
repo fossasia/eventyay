@@ -9,7 +9,7 @@
     <head>
         <title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ django_settings.INSTANCE_NAME }}</title>
-         <script src="https://js.stripe.com/v3/"></script>
+        <script src="https://js.stripe.com/v3/"></script>
         {% compress css %}
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
@@ -87,6 +87,7 @@
         <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}">
         <meta name="theme-color" content="#2185d0">
         <meta name="referrer" content="origin">
+
         <style>
             @media (max-width: 767px) {
                 ul.navbar-top-links {
@@ -100,8 +101,7 @@
                 }
             }
         </style>
-       
-    
+
         {% block custom_header %}{% endblock %}
     </head>
     <body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
