@@ -38,7 +38,7 @@
       {% endif %}
       {% if can_register %}
         <a href='{% url "eventyay_common:auth.register" %}{% append_next request.GET.next %}' class='btn btn-link btn-block'>
-          {% translate 'Register' %}
+          {% translate 'Sign up' %}
         </a>
       {% endif %}
     {% endif %}
