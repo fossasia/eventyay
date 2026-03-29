@@ -593,10 +593,14 @@ defineExpose({ isPlaying });
 		height: 48px
 		min-width: 280px
 		max-width: 380px
+		// Prevent overflow on very small screens
+		max-width: unquote('min(380px, calc(100vw - 8px))')
 		.description
 			flex: auto
 			align-self: stretch
 			padding: 4px 8px
+			// Allow description to shrink on narrow screens
+			min-width: 0
 			max-width: 238px
 			.hint
 				color: $clr-secondary-text-light
@@ -610,39 +614,73 @@ defineExpose({ isPlaying });
 		.global-placeholder
 			width: 86px
 			flex: none
+			// Shrink the placeholder on small screens to reclaim space
+			+below('m')
+				width: 64px
 		.bunt-icon-button
 			icon-button-style(style: clear)
 			margin: 0 2px
 		+below('l')
 			top: 51px
+		// On very small screens push all the way to edges
+		+below('s')
+			top: 4px
+			right: 4px
+			left: 4px
+			min-width: 0
+			max-width: none
+			height: 44px
 	.background-room-enter-active, .background-room-leave-active
 		transition: transform .3s ease
 	.background-room-enter-from, .background-room-leave-to
-		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
-.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, iframe.iframe-media-source
+		transform: translate(calc(-1 * var(--chatbar-width, 0px)), 52px)
+
+// Shared position/size rules for all media elements
+.c-media-source .c-livestream,
+.c-media-source .c-januscall,
+.c-media-source .c-januschannelcall,
+.c-media-source .iframe-error,
+iframe.iframe-media-source
 	position: fixed
 	transition: all .3s ease
+	// Tiny / background pip
 	&.size-tiny, &.background
 		bottom: calc(var(--vh100) - 48px - 51px)
 		right: 4px + 36px + 4px
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
+		+below('s')
+			// Move pip to bottom-right corner on phones so it doesn't clash
+			// with the (now full-width) background-room bar
+			bottom: 8px
+			right: 8px
+	// Full-size player
 	&:not(.size-tiny):not(.background)
 		top: var(--mediasource-placeholder-top, 104px)
-		left: var(--mediasource-placeholder-left, var(--sidebar-width))
+		left: var(--mediasource-placeholder-left, var(--sidebar-width, 0px))
 		width: var(--mediasource-placeholder-width, 100vw)
 		height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+		// Ensure the player never exceeds the viewport on any axis
+		max-width: 100vw
+		max-height: 100vh
+
+// Extra overrides specific to the raw iframe element
 iframe.iframe-media-source
-	transition: all .3s ease
 	border: none
 	&.background
 		pointer-events: none
 		height: 48px
 		width: 86px
 		z-index: 101
+		+below('s')
+			// Slightly smaller pip on phones
+			width: 64px
+			height: 36px
 		&.hide-if-background
 			width: 0
 			height: 0
+
+// Offline / error placeholder
 .c-media-source .iframe-error
 	display: flex
 	justify-content: center
@@ -657,15 +695,26 @@ iframe.iframe-media-source
 		height: 48px
 		pointer-events: none
 		z-index: 101
+		+below('s')
+			width: 64px
+			height: 36px
 	.offline-message
-		font-size: 36px
+		// Scale down the huge 36px heading on mobile
+		font-size: clamp(16px, 4vw, 36px)
 		color: $clr-secondary-text-light
 		text-align: center
 		padding: 16px
+		+below('m')
+			padding: 12px
 	&.size-tiny, &.background
 		.offline-message
 			font-size: 14px
 			padding: 8px
+			+below('s')
+				font-size: 11px
+				padding: 4px
+
+// Join-error banner
 .c-media-source .join-error
 	position: fixed
 	top: 120px
@@ -685,6 +734,7 @@ iframe.iframe-media-source
 	align-items: center
 	justify-content: center
 	gap: 8px
+	// Tablet / medium screens – detach from 50 % centre to avoid the sidebar
 	+below('l')
 		top: calc(12px + env(safe-area-inset-top, 0px))
 		left: 12px
@@ -692,6 +742,12 @@ iframe.iframe-media-source
 		transform: none
 		width: auto
 		max-width: none
+	// Phone – reduce vertical breathing room and use smaller text
+	+below('s')
+		top: calc(8px + env(safe-area-inset-top, 0px))
+		padding: 10px 12px
+		font-size: 13px
+		gap: 6px
 	.join-error-retry
 		background: none
 		border: 1px solid $clr-danger
@@ -702,6 +758,10 @@ iframe.iframe-media-source
 		padding: 2px 8px
 		flex-shrink: 0
 		opacity: 0.8
+		// Easier tap target on touch screens
+		+below('s')
+			padding: 6px 12px
+			font-size: 14px
 		&:hover
 			opacity: 1
 	.join-error-dismiss
@@ -714,6 +774,11 @@ iframe.iframe-media-source
 		padding: 0 0 0 4px
 		flex-shrink: 0
 		opacity: 0.7
+		// Easier tap target on touch screens
+		+below('s')
+			font-size: 20px
+			padding: 4px
 		&:hover
 			opacity: 1
+
 </style>
