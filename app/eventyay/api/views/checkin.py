@@ -353,12 +353,13 @@ def _checkin_list_position_queryset(
     return qs
 
 
+# FIX 4: settings.FILE_UPLOAD_MAX_SIZE_OTHER → settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]
 def _handle_file_upload(data, user, auth):
     try:
         cf = CachedFile.objects.get(
             session_key=f'api-upload-{str(type(user or auth))}-{(user or auth).pk}',
             file__isnull=False,
-            pk=data[len('file:') :],
+            pk=data[len('file:'):],
         )
     except (BaseValidationError, IndexError):  # invalid uuid
         raise BaseValidationError('The submitted file ID "{fid}" was not found.'.format(fid=data))
@@ -370,7 +371,7 @@ def _handle_file_upload(data, user, auth):
         raise BaseValidationError(
             'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
         )
-    if cf.file.size > settings.FILE_UPLOAD_MAX_SIZE_OTHER:
+    if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:  # FIXED
         raise BaseValidationError('The submitted file "{fid}" is too large to be used in this field.'.format(fid=data))
 
     return cf.file
@@ -616,6 +617,8 @@ def _redeem_process(
                 auth,
                 simulate,
             )
+        # FIX 5: revoked ticket mila toh uska position use karo
+        op_candidates = [revoked[0].position]
 
     if len(op_candidates) > 1:
         op_candidates_matching_product = _filter_matching_candidates(
@@ -679,7 +682,7 @@ def _redeem_process(
                         'position': op.id,
                         'positionid': op.positionid,
                         'errorcode': e.code,
-                        'reason_explanation': 'unkown',
+                        'reason_explanation': None,  # FIX 3: 'unkown' typo hataya, None kiya
                         'force': force,
                         'datetime': dateandtime,
                         'type': checkin_type,
@@ -690,6 +693,8 @@ def _redeem_process(
                 )
                 Checkin.objects.create(
                     position=op,
+                    successful=False,        # FIX 2: missing tha
+                    error_reason=e.code,     # FIX 2: missing tha
                     **common_checkin_args,
                 )
 
@@ -698,15 +703,17 @@ def _redeem_process(
             downloads = _append_badge_download(position_data['downloads'], op, request)
             position_data['downloads'] = downloads
 
+            # FIX 1: status='error', reason=e.code, status=400
             return Response(
                 {
-                    'status': 'redeemed',
-                    'reason': 'Already checked in',
+                    'status': 'error',
+                    'reason': e.code,
+                    'reason_explanation': None,
                     'require_attention': op.require_checkin_attention,
                     'position': position_data,
                     'list': MiniCheckinListSerializer(list_by_event[op.order.event_id]).data,
                 },
-                status=201,
+                status=400,
             )
         else:
             serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
@@ -1024,7 +1031,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             cf = CachedFile.objects.get(
                 session_key=f'api-upload-{str(type(self.request.user or self.request.auth))}-{(self.request.user or self.request.auth).pk}',
                 file__isnull=False,
-                pk=data[len('file:') :],
+                pk=data[len('file:'):],
             )
         except (BaseValidationError, IndexError):  # invalid uuid
             raise BaseValidationError('The submitted file ID "{fid}" was not found.'.format(fid=data))
