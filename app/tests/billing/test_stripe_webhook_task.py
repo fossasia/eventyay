@@ -177,7 +177,7 @@ class TestUpdateBillingInvoiceInformationTask:
         assert paid_invoice.status == BillingInvoice.STATUS_PAID
         assert paid_invoice.paid_datetime == original_paid_datetime
         mock_warning.assert_called_once()
-        assert "idempotency guard" in mock_warning.call_args[0][0].lower()
+        assert "current status is" in mock_warning.call_args[0][0].lower()
 
     @pytest.mark.django_db
     def test_nonexistent_invoice_logs_error_and_returns_none(self):

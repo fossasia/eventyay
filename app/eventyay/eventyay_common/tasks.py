@@ -280,10 +280,10 @@ def monthly_billing_collect(self):
 
 @shared_task()
 @scopes_disabled()
-def update_billing_invoice_information(invoice_id: str):
+def update_billing_invoice_information(invoice_id: str | None):
     """
     Update billing invoice information after payment is succeeded
-    @param invoice_id: A string representing the invoice ID
+    @param invoice_id: A string representing the invoice ID, or None if missing
     """
     if not invoice_id:
         logger.error('Missing invoice_id in Stripe webhook metadata -- task cannot proceed.')
@@ -299,12 +299,14 @@ def update_billing_invoice_information(invoice_id: str):
             reminder_enabled=False,
         )
         if not invoice_information_updated:
-            invoice_exists = BillingInvoice.objects.filter(id=invoice_id).exists()
-            if invoice_exists:
+            current_status = BillingInvoice.objects.filter(id=invoice_id).values_list('status', flat=True).first()
+            if current_status is not None:
                 logger.warning(
-                    'Invoice %s was not updated. Already marked as paid '
-                    '(idempotency guard). Skipping duplicate webhook.',
+                    'Invoice %s was not updated because current status is %s '
+                    '(expected %s for payment update). Skipping webhook.',
                     invoice_id,
+                    current_status,
+                    BillingInvoice.STATUS_PENDING,
                 )
             else:
                 logger.error(
@@ -315,7 +317,7 @@ def update_billing_invoice_information(invoice_id: str):
             return None
         logger.info('Payment succeeded and invoice updated: %s', invoice_id)
     except DatabaseError as e:
-        logger.error('Database error updating invoice: %s', str(e))
+        logger.error('Database error updating invoice: %s', e)
         return None
 
 
