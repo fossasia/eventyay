@@ -285,25 +285,35 @@ def update_billing_invoice_information(invoice_id: str):
     Update billing invoice information after payment is succeeded
     @param invoice_id: A string representing the invoice ID
     """
+    if not invoice_id:
+        logger.error('Missing invoice_id in Stripe webhook metadata -- task cannot proceed.')
+        raise ValueError('invoice_id must not be None or empty.')
     try:
-        if not invoice_id:
-            logger.error('Missing invoice_id in Stripe webhook metadata')
-            return None
         invoice_information_updated = BillingInvoice.objects.filter(
             id=invoice_id,
+            status=BillingInvoice.STATUS_PENDING,
         ).update(
             status=BillingInvoice.STATUS_PAID,
-            paid_datetime=datetime.now(),
+            paid_datetime=datetime.now(tz.utc),
             payment_method='stripe',
             reminder_enabled=False,
         )
         if not invoice_information_updated:
-            logger.error('Invoice not found or already updated: %s', invoice_id)
+            invoice_exists = BillingInvoice.objects.filter(id=invoice_id).exists()
+            if invoice_exists:
+                logger.warning(
+                    'Invoice %s was not updated. Already marked as paid '
+                    '(idempotency guard). Skipping duplicate webhook.',
+                    invoice_id,
+                )
+            else:
+                logger.error(
+                    'Invoice %s does not exist in the database. '
+                    'Possible data inconsistency in Stripe metadata.',
+                    invoice_id,
+                )
             return None
-        logger.info('Payment succeeded for invoice: %s', invoice_id)
-    except BillingInvoice.DoesNotExist as e:
-        logger.error('Invoice not found in database: %s', str(e))
-        return None
+        logger.info('Payment succeeded and invoice updated: %s', invoice_id)
     except DatabaseError as e:
         logger.error('Database error updating invoice: %s', str(e))
         return None

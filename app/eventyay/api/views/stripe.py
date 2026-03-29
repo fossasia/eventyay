@@ -31,6 +31,14 @@ def stripe_webhook_view(request):
 
     if event.type == 'payment_intent.succeeded':
         invoice_id = event.data.object.get('metadata', {}).get('invoice_id')
-        update_billing_invoice_information.delay(invoice_id=invoice_id)
+        if not invoice_id:
+            logger.warning(
+                'Skipping Celery task: invoice_id missing from Stripe webhook metadata '
+                '(event_id=%s, type=%s). This event does not map to a system billing invoice.',
+                event.id,
+                event.type,
+            )
+        else:
+            update_billing_invoice_information.delay(invoice_id=invoice_id)
 
     return HttpResponse('Success', status=200)
