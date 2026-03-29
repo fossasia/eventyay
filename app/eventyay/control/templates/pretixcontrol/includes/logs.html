@@ -3,7 +3,7 @@
 <ul class="list-group">
     {% for log in obj.top_logentries %}
         <li class="list-group-item logentry">
-            <p class="meta">
+            <p class="meta" style="word-break: break-word; overflow-wrap: anywhere;">
                 <span class="fa fa-clock-o"></span> {{ log.datetime|date:"SHORT_DATETIME_FORMAT" }}
                 {% if log.user %}
                     {% if log.user.is_staff %}
