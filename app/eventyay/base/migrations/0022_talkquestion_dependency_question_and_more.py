@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0020_voucher_allow_ignore_approval_alter_event_currency_and_more'),
+        ('base', '0021_alter_question_type_add_dropdown'),
     ]
 
     operations = [
