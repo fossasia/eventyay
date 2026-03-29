@@ -900,8 +900,6 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['POST'], url_name='redeem', url_path='(?P<pk>.*)/redeem')
     def redeem(self, *args, **kwargs):
-        def redeem(self, *args, **kwargs):
-
     # ✅ ADD THIS BLOCK (NEW CODE)
     if not self.request.data:
         return Response(
