@@ -140,9 +140,37 @@ nav.navbar .navbar-top-links .dropdown-content {
   .startpage-search input{
     width: 160px;
   }
+
+  .startpage-search:focus-within input {
+    width: 160px;
+  }
+  
+  nav.navbar.navbar-inverse #button-sudo {
+    font-size: 13px;
+    padding: 2px;
+    margin-left: 7px; 
+  }
+
+  .navbar-top-links #profile-dropdown > summary,
+  .navbar-top-links #language-dropdown > summary {
+    padding: 2px;
+    min-height: 40px;
+    margin-left: 10px;
+    font-size: 13px;
+  }
+
+  nav.navbar .navbar-top-links li a{
+    padding: 15px 5px;
+  }
+
 }
+
 @media (min-width: 1024px){
   .startpage-search input{
+    width: 220px;
+  }
+
+  .startpage-search:focus-within input {
     width: 220px;
   }
 }
@@ -155,7 +183,6 @@ nav.navbar .navbar-top-links .dropdown-content {
   border-color: rgba(255, 255, 255, 0.5);
   outline: 2px solid transparent;
   outline-offset: 2px;
-  width: 150px;
 }
 
 .startpage-search input:focus-visible {
@@ -490,11 +517,6 @@ body.startpage-search-results-page #main-card {
     align-items: center;
   }
 
-  nav.navbar .danger {
-    padding: 3px !important;
-    min-height: 0 !important;
-  }
-
   .navbar-header {
     display: flex;
     align-items: center;
@@ -505,7 +527,7 @@ body.startpage-search-results-page #main-card {
     padding: 0;
   }
 
-   nav.navbar.navbar-inverse #button-sudo {
+  nav.navbar.navbar-inverse #button-sudo {
     font-size: 13px;
     padding: 2px;
     margin-left: 7px;
@@ -520,30 +542,37 @@ body.startpage-search-results-page #main-card {
     display: inline-block;
     vertical-align: bottom;
   }
+  
+  nav.navbar .navbar-top-links li a{
+    min-height: auto;
+    font-size: 13px;
+    padding: 5px;
+  }
 
-  navbar-top-links li a {
+  .navbar-top-links li a {
     padding: 15px 10px;
     min-height: 50px;
     font-size: 14px;
     font-weight: normal;
   } 
-    .navbar-top-links #profile-dropdown > summary,
-    .navbar-top-links #language-dropdown > summary {
-      padding: 2px;
-      min-height: 40px;
-      margin-left: 7px;
-      font-size: 13px;
-    }
+
+  .navbar-top-links #profile-dropdown > summary,
+  .navbar-top-links #language-dropdown > summary {
+    padding: 2px;
+    min-height: 40px;
+    margin-left: 7px;
+    font-size: 13px;
+  }
 
   .startpage-search input {
-    padding: auto;
-    margin-left: 3px;
     width: 40px;
+    padding: 8px 14px 8px 30px;
   }
+
   .startpage-search-icon-btn {
-    padding: auto;
-    left: 10px;
+    left: 5px;
   }
+
   .hidden-xs {
     display: none !important;
   }
