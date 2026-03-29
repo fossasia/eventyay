@@ -1,4 +1,4 @@
-﻿{
+{
 	"App:disconnected-warning:text": "Verbindung verloren! Versuche, wieder zu verbinden…",
 	"App:error-code:1006": "Verbindung fehlgeschlagen. Wir werden es erneut versuchen, aber wenn dieser Fehler wiederholt auftritt, könnte die Verbindung durch eine Firewall in Ihrem Netzwerk oder ein VPN auf Ihrem Gerät blockiert werden.",
 	"App:error-code:text": "Fehlercode",

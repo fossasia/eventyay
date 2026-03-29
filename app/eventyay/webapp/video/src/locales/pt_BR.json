@@ -1,4 +1,4 @@
-﻿{
+{
 	"App:disconnected-warning:text": "Conexão perdida! Tentando reconectar…",
 	"App:error-code:1006": "Falha na conexão. Tentaremos novamente, mas se este erro ocorrer repetidamente, a conexão pode estar sendo bloqueada por um firewall em sua rede ou por um VPN em seu dispositivo.",
 	"App:error-code:text": "Código de erro",

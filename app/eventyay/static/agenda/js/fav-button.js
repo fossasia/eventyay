@@ -92,6 +92,14 @@ class PretalxFavButton extends HTMLElement {
   }
 
   _render() {
+    const labelAdd =
+      this.getAttribute('label-add') ||
+      this.getAttribute('label') ||
+      'Add to favourites'
+    const labelRemove =
+      this.getAttribute('label-remove') ||
+      this.getAttribute('label') ||
+      'Remove from favourites'
     const parser = new DOMParser()
     const svg = parser.parseFromString(
       this._isFaved ? this._starFilled : this._starOutline,
@@ -103,7 +111,7 @@ class PretalxFavButton extends HTMLElement {
     this._button?.setAttribute('aria-pressed', this._isFaved ? 'true' : 'false')
     this._button?.setAttribute(
       'aria-label',
-      this._isFaved ? 'Remove from favourites' : 'Add to favourites'
+      this._isFaved ? labelRemove : labelAdd
     )
   }
 

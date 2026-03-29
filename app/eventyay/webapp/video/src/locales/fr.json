@@ -1,4 +1,4 @@
-﻿{
+{
 	"App:disconnected-warning:text": "Connexion perdue! Tentative de reconnexion…",
 	"App:error-code:1006": "Échec de la connexion. Nous allons réessayer, mais si cette erreur se produit de manière répétée, la connexion peut être bloquée par un pare-feu sur votre réseau ou par un VPN sur votre appareil.",
 	"App:error-code:text": "Code d'erreur",

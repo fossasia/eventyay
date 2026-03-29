@@ -325,12 +325,13 @@ async function initializeIframe(mute) {
 	if (!module.value) return;
 	if (shouldUseLivestream.value) return;
 	if (iframeOffline.value) return;
+	let effectiveModuleType = null;
 	try {
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
 		const streamType = props.room?.currentStream?.stream_type;
-		const effectiveModuleType = streamType === 'youtube'
+		effectiveModuleType = streamType === 'youtube'
 			? 'livestream.youtube'
 			: streamType === 'vimeo'
 				? 'livestream.vimeo'
