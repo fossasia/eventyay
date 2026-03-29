@@ -567,7 +567,7 @@ class BaseQuestionsForm(forms.Form):
                     max_value=q.valid_number_max,
                     help_text=help_text,
                     initial=initial.answer if initial else None,
-                    widget=forms.NumberInput(attrs={'placeholder': 'Your answer'}),
+                    widget=forms.NumberInput(attrs={'placeholder': _('Your answer')}),
                 )
             elif q.type == Question.TYPE_STRING:
                 field = forms.CharField(
@@ -575,14 +575,14 @@ class BaseQuestionsForm(forms.Form):
                     required=required,
                     help_text=help_text,
                     initial=initial.answer if initial else None,
-                    widget=forms.TextInput(attrs={'placeholder': 'Your answer'}),
+                    widget=forms.TextInput(attrs={'placeholder': _('Your answer')}),
                 )
             elif q.type == Question.TYPE_TEXT:
                 field = forms.CharField(
                     label=label,
                     required=required,
                     help_text=help_text,
-                    widget=forms.Textarea(attrs={'placeholder': 'Your answer'}),
+                    widget=forms.Textarea(attrs={'placeholder': _('Your answer')}),
                     initial=initial.answer if initial else None,
                 )
             elif q.type == Question.TYPE_COUNTRYCODE:
