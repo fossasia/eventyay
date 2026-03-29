@@ -523,7 +523,7 @@ footer {
   .login-link {
     display: flex;
     align-items: center;
-    padding: 2px 4px;
+    padding: 0px 8px;
     color: var(--color-primary);
     text-decoration: none;
   }
@@ -752,6 +752,9 @@ footer {
 @media (max-width: 768px) {
   .nav-icon-mobile, .header-join-video-floating-mobile {
     display: block;
+  }
+  .nav-icon-mobile {
+    font-size: 1.25rem;
   }
   .mobile-hide-text {
     display: none;

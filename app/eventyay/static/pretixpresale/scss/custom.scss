@@ -258,6 +258,7 @@
     /* Show the mobile-only icons on mobile */
     .nav-icon-mobile {
         display: inline;
+        font-size: 1.25rem;
     }
 
     /* Remove the caret arrow — redundant when showing icon-only */
@@ -304,7 +305,7 @@
     .login-link {
         display: flex;
         align-items: center;
-        padding: 2px 4px;
+        padding: 0px 8px;
         color: var(--color-primary);
         text-decoration: none;
     }

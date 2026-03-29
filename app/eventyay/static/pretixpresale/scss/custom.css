@@ -276,6 +276,7 @@ header .header-row-right {
 
     .nav-icon-mobile {
         display: inline;
+        font-size: 1.25rem;
     }
 
     .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
@@ -317,7 +318,7 @@ header .header-row-right {
     .login-link {
         display: flex;
         align-items: center;
-        padding: 2px 4px;
+        padding: 0px 8px;
         color: var(--color-primary);
         text-decoration: none;
     }
