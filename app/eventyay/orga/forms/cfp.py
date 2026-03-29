@@ -395,6 +395,9 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 ),
             )
         
+        if not dependency_question:
+            d['dependency_values'] = []
+        
         return d
 
     def save(self, *args, **kwargs):

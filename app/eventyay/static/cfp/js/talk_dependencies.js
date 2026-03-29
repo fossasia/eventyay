@@ -1,10 +1,7 @@
 /**
  * Talk-specific runtime dependency evaluator for custom fields
- * Rewritten in vanilla JavaScript
+ * ES Module - handles dependent question visibility in talk forms
  */
-
-(function() {
-    'use strict';
 
 function talkDependenciesToggle(ev) {
     function shouldBeShown(el) {
@@ -12,34 +9,34 @@ function talkDependenciesToggle(ev) {
             return true;
         }
 
-        var dependencyId = el.dataset.questionDependency;
-        var dependencyValues = JSON.parse(el.dataset.questionDependencyValues);
-        var parentName = 'question_' + dependencyId;
+        const dependencyId = el.dataset.questionDependency;
+        const dependencyValues = JSON.parse(el.dataset.questionDependencyValues);
+        const parentName = 'question_' + dependencyId;
 
         // Check for select (single choice dropdown)
-        var select = document.querySelector('select[name="' + parentName + '"]');
+        const select = document.querySelector('select[name="' + parentName + '"]');
         if (select) {
-            var selectContainer = select.closest(".form-group");
+            const selectContainer = select.closest(".form-group");
             if (selectContainer && !selectContainer.classList.contains("dependency-hidden")) {
                 return shouldBeShown(select) && dependencyValues.indexOf(select.value) > -1;
             }
         }
 
         // Check for radio buttons (single choice radio)
-        var radioGroup = document.querySelectorAll('input[type="radio"][name="' + parentName + '"]');
+        const radioGroup = document.querySelectorAll('input[type="radio"][name="' + parentName + '"]');
         if (radioGroup.length) {
-            var checkedRadio = Array.from(radioGroup).find(function(r) { return r.checked; });
-            var radioContainer = radioGroup[0].closest(".form-group");
+            const checkedRadio = Array.from(radioGroup).find(function(r) { return r.checked; });
+            const radioContainer = radioGroup[0].closest(".form-group");
             if (radioContainer && !radioContainer.classList.contains("dependency-hidden")) {
                 return shouldBeShown(radioGroup[0]) && checkedRadio && dependencyValues.indexOf(checkedRadio.value) > -1;
             }
         }
 
         // Check for boolean checkbox (single checkbox without value attribute)
-        var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="' + parentName + '"]'));
-        var checkbox = checkboxes.find(function(cb) { return !cb.value || cb.value === 'on'; });
+        const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="' + parentName + '"]'));
+        const checkbox = checkboxes.find(function(cb) { return !cb.value || cb.value === 'on'; });
         if (checkbox && (dependencyValues.indexOf("True") > -1 || dependencyValues.indexOf("False") > -1)) {
-            var checkboxContainer = checkbox.closest(".form-group");
+            const checkboxContainer = checkbox.closest(".form-group");
             if (checkboxContainer && !checkboxContainer.classList.contains("dependency-hidden")) {
                 return shouldBeShown(checkbox) && (
                     (dependencyValues.indexOf("True") > -1 && checkbox.checked)
@@ -49,15 +46,15 @@ function talkDependenciesToggle(ev) {
         }
 
         // Check for multiple checkboxes (multiple choice with value attribute)
-        var multiCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="' + parentName + '"]')).filter(function(cb) {
+        const multiCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="' + parentName + '"]')).filter(function(cb) {
             return cb.value && cb.value !== 'on';
         });
         if (multiCheckboxes.length) {
-            var checkedBoxes = multiCheckboxes.filter(function(cb) { return cb.checked; });
-            var multiContainer = multiCheckboxes[0].closest(".form-group");
+            const checkedBoxes = multiCheckboxes.filter(function(cb) { return cb.checked; });
+            const multiContainer = multiCheckboxes[0].closest(".form-group");
             if (multiContainer && !multiContainer.classList.contains("dependency-hidden")) {
-                for (var i = 0; i < dependencyValues.length; i++) {
-                    var val = dependencyValues[i].toString();
+                for (let i = 0; i < dependencyValues.length; i++) {
+                    const val = dependencyValues[i].toString();
                     if (checkedBoxes.some(function(cb) { return cb.value === val; })) {
                         return shouldBeShown(multiCheckboxes[0]);
                     }
@@ -69,11 +66,11 @@ function talkDependenciesToggle(ev) {
     }
 
     document.querySelectorAll("[data-question-dependency]").forEach(function(el) {
-        var dependent = el.closest(".form-group");
+        const dependent = el.closest(".form-group");
         if (!dependent) return;
         
-        var isShown = !dependent.classList.contains("dependency-hidden");
-        var shouldShow = shouldBeShown(el);
+        const isShown = !dependent.classList.contains("dependency-hidden");
+        const shouldShow = shouldBeShown(el);
 
         if (shouldShow && !isShown) {
             dependent.classList.remove("dependency-hidden");
@@ -98,12 +95,10 @@ document.addEventListener('DOMContentLoaded', function() {
     talkDependenciesToggle();
     
     document.addEventListener('change', function(e) {
-        var target = e.target;
+        const target = e.target;
         if ((target.tagName === 'INPUT' || target.tagName === 'SELECT') && 
             target.name && target.name.startsWith('question_')) {
             talkDependenciesToggle(e);
         }
     });
 });
-
-})();
