@@ -345,3 +345,32 @@ This project is maintained by **FOSSASIA**.
 .. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
 .. _eventyay.com: https://eventyay.com
 .. _blog: https://blog.eventyay.com
+Setup Instructions
+==================
+
+1. Clone the repository:
+   git clone https://github.com/fossasia/eventyay-tickets
+
+2. Navigate to project directory:
+   cd eventyay-tickets
+
+3. Install dependencies:
+   npm install
+
+4. Run the project:
+   npm start
+
+
+Features
+========
+
+- Event ticket management system
+- Badge generation for attendees and speakers
+- Integration with check-in system
+- API-based event data handling
+
+
+Contributing
+============
+
+Contributions are welcome! Please fork the repository and submit a pull request.
