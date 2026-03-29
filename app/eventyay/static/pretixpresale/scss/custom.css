@@ -358,26 +358,10 @@ header .header-row-right {
 
 @media (max-width: 480px) {
     #locale-dropdown.dropdown-content {
+        transform: scale(0.75);
+        transform-origin: top right;
         right: 0;
         left: auto;
-        max-width: calc(100vw - 8px);
-    }
-
-    #locale-dropdown .language-columns {
-        width: 100%;
-        grid-template-columns: 1fr;
-        max-height: 60vh;
-        overflow-y: auto;
-    }
-
-    #locale-dropdown .language-column {
-        max-width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--color-border, #ced4da);
-    }
-
-    #locale-dropdown .language-enforce-bar {
-        width: 100%;
     }
 }
 
