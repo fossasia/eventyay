@@ -17,7 +17,6 @@
 	.join-error(
 		v-if="joinErrorKey",
 		role="alert",
-		aria-live="polite"
 	)
 		span {{ $t(joinErrorKey) }}
 		button.join-error-retry(
@@ -450,7 +449,19 @@ async function initializeIframe(mute) {
 		} else {
 			iframeError.value = error;
 		}
-		console.error('MediaSource join failed:', error);
+		console.error('MediaSource join failed', {
+			error,
+			errorCode: error?.apiError?.code ?? error?.error ?? error?.message ?? null,
+			roomId: props.room?.id ?? null,
+			moduleType: module.value?.type ?? null,
+			effectiveModuleType,
+			callId: props.call?.id ?? null,
+			channelId: props.call?.channel ?? null,
+			joinErrorKey: joinErrorKey.value,
+			background: props.background,
+			iframeOffline: iframeOffline.value,
+			shouldUseLivestream: shouldUseLivestream.value,
+		});
 	}
 }
 
@@ -666,7 +677,7 @@ iframe.iframe-media-source
 	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12)
 	z-index: 120
 	width: max-content
-	max-width: min(420px, calc(100vw - 24px))
+	max-width: unquote('min(420px, calc(100vw - 24px))')
 	text-align: center
 	display: flex
 	flex-wrap: wrap

@@ -38,11 +38,16 @@ class PretalxFavButton extends HTMLElement {
     this._starFilled = starFilled
 
     const button = document.createElement('button')
+    button.type = 'button'
     button.className = 'btn btn-xs btn-link'
+    button.setAttribute('aria-label', this.getAttribute('label') || 'Toggle favourite')
+    button.setAttribute('aria-pressed', 'false')
     const iconWrap = document.createElement('span')
     iconWrap.className = 'fav-icon'
     const parser = new DOMParser()
     const svg = parser.parseFromString(starOutline, 'image/svg+xml').documentElement
+    svg.setAttribute('aria-hidden', 'true')
+    svg.setAttribute('focusable', 'false')
     iconWrap.appendChild(svg)
     button.appendChild(iconWrap)
     this.replaceChildren(button)
@@ -92,7 +97,14 @@ class PretalxFavButton extends HTMLElement {
       this._isFaved ? this._starFilled : this._starOutline,
       'image/svg+xml'
     ).documentElement
+    svg.setAttribute('aria-hidden', 'true')
+    svg.setAttribute('focusable', 'false')
     this._iconWrap.replaceChildren(svg)
+    this._button?.setAttribute('aria-pressed', this._isFaved ? 'true' : 'false')
+    this._button?.setAttribute(
+      'aria-label',
+      this._isFaved ? 'Remove from favourites' : 'Add to favourites'
+    )
   }
 
   _spin() {
