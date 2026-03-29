@@ -83,6 +83,11 @@ nav.navbar .navbar-top-links .dropdown-content {
   color: var(--color-text);
 }
 
+.navbar {
+    position: relative;
+    z-index: 1000;
+}
+
 .startpage-search-nav {
   display: flex;
   align-items: center;
@@ -162,15 +167,16 @@ nav.navbar .navbar-top-links .dropdown-content {
   border-radius: 12px;
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
   display: none;
-  left: 0;
-  max-height: 320px;
-  overflow-y: auto;
   position: absolute;
   top: 100%;
+  left: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 320px;
+  overflow-y: auto;
   margin-top: 10px;
   transform: none;
-  width: 320px;
-  z-index: 1200;
+  z-index: 2000;
 }
 
 .startpage-search-results.is-open {
@@ -347,6 +353,15 @@ body.startpage-search-results-page #main-card {
 @media (max-width: 640px) {
   .startpage-event-list {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .startpage-search-results {
+    width: 100%;
+    max-width: 100%;
+    left: 0;
+    right: 0;
   }
 }
 
