@@ -38,7 +38,7 @@
           text: "Check out this event!",
           url: url
         }).catch(function (err) {
-          console.log("Share failed:", err);
+          console.error("Share failed:", err);
         });
       } else {
         copyText(url)
