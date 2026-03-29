@@ -53,7 +53,9 @@
                                     <legend>+ {{ form.pos.item }}</legend>
                                 {% endif %}
                                 {% for field in form.regular_fields %}
-                                    {% bootstrap_field field layout="control" %}
+                                    <div style="word-break: break-word; overflow-wrap: break-word;">
+                                        {% bootstrap_field field layout="control" %}
+                                    </div>
                                 {% endfor %}
 
                                 {% if form.badge_option_fields %}
