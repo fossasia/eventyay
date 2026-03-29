@@ -83,6 +83,13 @@
         {% endif %}
         <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
             <header>
+                 {% if request.user.is_authenticated %}
+                <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar" style="position:absolute; left:10px; top:10px; z-index:1000;">
+                    <span class="sr-only">{% trans "Toggle sidebar" %}</span>
+                    <i class="fa fa-bars fa-lg"></i>
+                </button>
+            {% endif %}
+
                 <h1 class="public-event-header">
                     <div class="event-logo">
                         <a href="{% block nav_link %}{% endblock nav_link %}">
