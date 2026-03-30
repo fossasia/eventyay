@@ -1,9 +1,9 @@
-{% extends "pretixpresale/event/base.html" %}
+{% extends 'pretixpresale/event/base.html' %}
 {% load i18n %}
 {% load eventurl %}
 {% load money %}
 {% load presale_locale %}
-{% block title %}{% trans "Cancel selected tickets" %}{% endblock %}
+{% block title %}{% trans 'Cancel selected tickets' %}{% endblock %}
 {% block content %}
     <h2>
         {% blocktrans trimmed with code=order.code %}
@@ -22,7 +22,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <strong>{% trans "Tickets in this order" %}</strong>
+                <strong>{% trans 'Tickets in this order' %}</strong>
             </div>
             <ul class="list-group">
                 {% for row in position_rows %}
@@ -60,23 +60,23 @@
         </div>
 
         {% if is_paid_order %}
-            {% if request.event.settings.cancel_allow_user_paid_refund_as_giftcard == "force" %}
+            {% if request.event.settings.cancel_allow_user_paid_refund_as_giftcard == 'force' %}
                 <p>
                     <strong>
-                        {% trans "Refunds for canceled tickets will be issued as a gift card for future purchases." %}
+                        {% trans 'Refunds for canceled tickets will be issued as a gift card for future purchases.' %}
                     </strong>
                 </p>
-            {% elif request.event.settings.cancel_allow_user_paid_refund_as_giftcard == "option" %}
+            {% elif request.event.settings.cancel_allow_user_paid_refund_as_giftcard == 'option' %}
                 <div class="radio">
                     <label>
                         <input type="radio" name="giftcard" value="true" checked id="id_giftcard">
-                        <strong>{% trans "Issue refund as gift card" %}</strong>
+                        <strong>{% trans 'Issue refund as gift card' %}</strong>
                     </label>
                 </div>
                 <div class="radio">
                     <label>
                         <input type="radio" name="giftcard" value="false" id="id_payout">
-                        <strong>{% trans "Send refund to original payment method" %}</strong>
+                        <strong>{% trans 'Send refund to original payment method' %}</strong>
                     </label>
                 </div>
             {% endif %}
@@ -87,12 +87,12 @@
             <div class="col-md-4">
                 <a class="btn btn-block btn-default btn-lg"
                         href="{% eventurl request.event 'presale:event.order' secret=order.secret order=order.code %}">
-                    {% trans "No, take me back" %}
+                    {% trans 'No, take me back' %}
                 </a>
             </div>
             <div class="col-md-4 col-md-offset-4">
                 <button class="btn btn-block btn-delete btn-danger btn-lg" type="submit">
-                    {% trans "Yes, cancel selected tickets" %}
+                    {% trans 'Yes, cancel selected tickets' %}
                 </button>
             </div>
             <div class="clearfix"></div>
