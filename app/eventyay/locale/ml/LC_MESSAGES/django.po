@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-29 20:09+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Malayalam <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ml/>\n"
@@ -207,10 +207,9 @@ msgid "Duration"
 msgstr "ദൈർഘ്യം"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
-msgstr "%(minutes)sമിനിറ്റ്"
+msgstr "%(minutes)s മിനിറ്റ്"
 
 #: agenda/templates/agenda/talk_review.html:31 base/models/access_code.py:30
 #: base/models/submission.py:193
@@ -272,10 +271,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (സ്റ്റാർ ചെയ്ത സെഷനുകൾ)"
+msgstr "%(name)s’s നക്ഷത്രമിട്ട സെഷനുകൾ"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -306,34 +304,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "മാറ്റപ്പട്ടിക"
+msgstr "ചേഞ്ച്‌ലോഗ് കാണുക"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "നിലവിലെ മൂല്യങ്ങൾ നിലനിർത്തുക"
+msgstr "നിലവിലെ പതിപ്പിലേക്കു പോകുക"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "ഫിൽട്ടറുകൾ മായ്ക്കുക"
+msgstr "എല്ലാ ഫിൽട്ടറുകളും പുനഃക്രമീകരിക്കുക"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
 msgstr "ക്രമീകരിക്കുക"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "പുതിയ മുറി"
+msgstr "മുറി പ്രകാരം"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -348,28 +336,20 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "പുറത്തിറങ്ങൽ സ്കാനുകൾ"
+msgstr "ഫുൾസ്ക്രീൻ നിന്ന് പുറത്തുകടക്കുക"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "ഗേറ്റുകൾ"
+msgstr "ഏറ്റവും പുതിയത്"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"റിലീസ് ചെയ്യാത്തതും ഏത് സമയത്തും മാറാനിടയുള്ളതുമായ തിരുത്താവുന്ന ഷെഡ്യൂള്‍ പതിപ്പാണ് ഇപ്പോള്‍ "
-"കാണുന്നത്."
+"നിലവിൽ എഡിറ്റ് ചെയ്യാവുന്ന ഷെഡ്യൂൾ പതിപ്പാണ് കാണുന്നത്. ഇത് പുറത്തിറക്കിയ പതിപ്പുമായി "
+"പൊരുത്തപ്പെടണമെന്നില്ല."
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -380,16 +360,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "വീഡിയോ"
+msgstr "വീഡിയോ കാണുക"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "ലൈവ് അല്ല"
+msgstr "ലൈവ് കാണുക"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -400,10 +376,8 @@ msgstr[0] "പ്രഭാഷകൻ"
 msgstr[1] "പ്രഭാഷകർ"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "വക്താവ് എത്തിയിട്ടില്ലെന്ന് അടയാളപ്പെടുത്തുക"
+msgstr "സ്പീക്കറുടെ പേര് നൽകിയിട്ടില്ല"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -431,10 +405,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "കലണ്ടറിലേക്ക് ചേർക്കുക"
+msgstr "Google Calendar"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -479,10 +451,8 @@ msgid "No"
 msgstr "ഇല്ല"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "ഉപയോക്താക്കളെ കണ്ടെത്തിയില്ല."
+msgstr "സ്പീക്കറുകളൊന്നും കണ്ടെത്തിയില്ല."
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -502,22 +472,16 @@ msgid "Tracks"
 msgstr "ട്രാക്കുകൾ"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
-msgstr "ഡൗൺലോഡ്"
+msgstr "ഡൗൺലോഡുകൾ"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "സൃഷ്ടിച്ചത്"
+msgstr "സ്റ്റാർ ചെയ്തിരിക്കുന്നത്"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "ആരംഭം"
+msgstr "നക്ഷത്രമിട്ടത്"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -527,10 +491,8 @@ msgid "Export"
 msgstr "കയറ്റുമതി"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
-msgstr "കയറ്റുമതി"
+msgstr "കയറ്റുമതികൾ"
 
 #: agenda/views/schedule.py:397 common/templates/common/question_answer.html:9
 #: multidomain/views.py:179
@@ -543,16 +505,12 @@ msgid "No response"
 msgstr "പ്രതികരണം ഇല്ല"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "മറ്റ് ഫീസുകൾ"
+msgstr "മറ്റ് സമയമേഖലകൾ"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "നിലവിലെ:"
+msgstr "നിലവിലെ"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -560,10 +518,8 @@ msgid "Print"
 msgstr "പ്രിന്റ്"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "പട്ടിക"
+msgstr "ലിസ്റ്റ് കാഴ്ച"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -591,22 +547,16 @@ msgstr "തിരയുക"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "പ്രമുഖ ഇവന്റുകൾ"
+msgstr "പ്രമുഖ പ്രഭാഷകര്‍"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "വക്താവിന്റെ പ്രൊഫൈല്‍ കാണുക അല്ലെങ്കില്‍ തിരുത്തുക"
+msgstr "സ്പീക്കറുടെ പ്രൊഫൈൽ കാണുക"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "പ്രസിദ്ധീകരിച്ച സെഷനുകളില്ല."
+msgstr "സ്റ്റാർ ചെയ്ത സെഷനുകളൊന്നുമില്ല."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -815,14 +765,10 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "ചെക്ക്-ഇൻ സമയത്ത് ഈ തരത്തിലുള്ള ചോദ്യം ചോദിക്കാൻ കഴിയില്ല."
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "മുമ്പുണ്ടായ ഒറ്റ ഇവന്റ്"
+msgstr "ആരംഭ സമയം കഴിഞ്ഞുപോയ സമയമായിരിക്കരുത്."
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
 msgstr "അവസാന സമയം ആരംഭ സമയത്തിന് ശേഷം ആയിരിക്കണം."
 
@@ -1070,16 +1016,12 @@ msgid "Require company per ticket"
 msgstr "ടിക്കറ്റിന് ഓരോന്നിനും കമ്പനി നിർബന്ധമാക്കുക"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "ടിക്കറ്റിന് ഓരോന്നിനും കമ്പനി ചോദിക്കുക"
+msgstr "ഓരോ ടിക്കറ്റിനും ജോലിയിലെ പദവി ചോദിക്കുക"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "ടിക്കറ്റിന് ഓരോന്നിനും കമ്പനി നിർബന്ധമാക്കുക"
+msgstr "ടിക്കറ്റിനുസരിച്ച് ജോബ് ടൈറ്റിൽ നിർബന്ധമാക്കുക"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3758,10 +3700,8 @@ msgid "Only paid orders"
 msgstr "പണമടച്ച ഓർഡറുകൾ മാത്രം"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "അംഗീകാരം നിലനിൽക്കുന്നു"
+msgstr "അംഗീകാരം മാത്രം ബാക്കി നിൽക്കുന്ന ഓർഡറുകൾ"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4498,8 +4438,6 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
 msgstr "ജോലി പദവി"
 
@@ -4514,16 +4452,12 @@ msgstr "സംസ്ഥാനം തിരഞ്ഞെടുക്കുക"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "കാർട്ട്"
+msgstr "നിങ്ങളുടെ ഉത്തരം"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "തിരഞ്ഞെടുപ്പ്"
+msgstr "ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4571,12 +4505,8 @@ msgstr ""
 "സപ്പോർട്ടിനെ ബന്ധപ്പെടുക."
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr "ഇ-മെയിൽ വിലാസമോ പാസ്‌വേഡോ മാറ്റാൻ, നിലവിലെ പാസ്‌വേഡ് നൽകുക."
+msgstr "പാസ്‌വേഡ് മാറ്റണമെങ്കിൽ നിലവിലെ പാസ്‌വേഡ് നൽകുക."
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6568,10 +6498,8 @@ msgid "Show link on the website start page"
 msgstr "വെബ്സൈറ്റ് ആരംഭ പേജിൽ ലിങ്ക് കാണിക്കുക"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "എല്ലാ പേജുകളിലും ഹെഡർ മെനുവിൽ കാണിക്കുക"
+msgstr "സിസ്റ്റം പേജുകളിലെ ഹെഡറിലും ഫൂട്ടറിലും കാണിക്കുക"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -7057,10 +6985,8 @@ msgid "Radio button (Choose one option)"
 msgstr "റേഡിയോ ബട്ടൺ (ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "റേഡിയോ ബട്ടൺ (ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക)"
+msgstr "ഡ്രോപ്പ്ഡൗൺ (ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7333,10 +7259,8 @@ msgid "Biography"
 msgstr "ജീവചരിത്രം"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "പ്രധാനപ്പെട്ട സെഷനുകളുടെ പൊതുപട്ടികയിൽ ഈ സെഷൻ കാണിക്കുക."
+msgstr "തിരഞ്ഞെടുത്ത വക്താക്കളുടെ പൊതു പട്ടികയിൽ ഈ വക്താവിനെ കാണിക്കുക."
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7363,10 +7287,8 @@ msgid "Confirmation"
 msgstr "സ്ഥിരീകരണം"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "രാജ്യം"
+msgstr "രാജ്യങ്ങളുടെ പട്ടിക"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7856,18 +7778,14 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "സിസ്ടം URL:"
+msgstr "സ്ട്രീം URL"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
 msgstr "ആരംഭ സമയം"
 
@@ -7876,8 +7794,6 @@ msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
 msgstr "അവസാന സമയം"
 
@@ -7886,16 +7802,12 @@ msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "സ്ട്രീം കീ"
+msgstr "സ്ട്രീം തരം"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "അധിക വിവരം"
+msgstr "അധിക കോൺഫിഗറേഷൻ"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -7904,16 +7816,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "ഷെഡ്യൂൾ"
+msgstr "സ്ട്രീം ഷെഡ്യൂൾ"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "ഷെഡ്യൂൾ"
+msgstr "സ്ട്രീം ഷെഡ്യൂളുകൾ"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8193,8 +8101,6 @@ msgid ""
 msgstr "പൊരുത്തപ്പെടുന്ന ആക്‌സസ് കോഡ് ഉള്ള സമര്‍പ്പകരെ മാത്രം ഈ സെഷന്‍ തരം കാണിക്കും."
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
 msgstr "സ്ഥാനം"
 
@@ -8271,22 +8177,17 @@ msgstr ""
 "സജീവമാക്കിയാൽ, ഈ വൗച്ചർ കോഡ് ഉള്ളവർക്ക് ടിക്കറ്റുകൾ വാങ്ങാനാകും, ഒന്നും ശേഷിക്കുന്നില്ലെങ്കിലും."
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "ക്വോട്ട മറികടക്കാൻ അനുവദിക്കുക"
+msgstr "അംഗീകാരം മറികടക്കാൻ അനുവദിക്കുക"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"സജീവമാക്കിയാൽ, ഈ വൗച്ചർ കോഡ് ഉള്ളവർക്ക് ടിക്കറ്റുകൾ വാങ്ങാനാകും, ഒന്നും ശേഷിക്കുന്നില്ലെങ്കിലും."
+"സജീവമാക്കിയാൽ, ഈ വൗച്ചർ കോഡ് ഉള്ളവർക്ക് സംഘാടകന്റെ അംഗീകാരത്തിനായി കാത്തിരിക്കാതെ ടിക്കറ്റുകൾ "
+"വാങ്ങാം. അംഗീകാരം ആവശ്യമായ ഉൽപ്പന്നങ്ങൾക്ക് ഇത് ബാധകമാണ്."
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9167,10 +9068,8 @@ msgid "Attendee job title"
 msgstr "പങ്കെടുകാരന്റെ ജോലിപേര്"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "Sample State"
+msgstr "സാമ്പിൾ ജോലിപദവി"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10301,12 +10200,10 @@ msgid "You have to ask for attendee emails if you want to make them required."
 msgstr "പങ്കെടുക്കുന്നവരുടെ ഇമെയിൽ വിലാസങ്ങൾ നിർബന്ധമാക്കണമെങ്കിൽ അവ ചോദിക്കണം."
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr "പങ്കെടുക്കുന്നവരുടെ ഇമെയിൽ വിലാസങ്ങൾ നിർബന്ധമാക്കണമെങ്കിൽ അവ ചോദിക്കണം."
+msgstr ""
+"പങ്കെടുക്കുന്നവരുടെ ജോലി പദവികള്‍ നിര്‍ബന്ധമാക്കണമെങ്കില്‍ അവ ചോദിക്കണം."
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11384,16 +11281,12 @@ msgid "Submit something now!"
 msgstr "ഇപ്പോൾ ഒന്നുകൂടി സമർപ്പിക്കുക!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "ഇവന്റ് തിരഞ്ഞെടുക്കുക"
+msgstr "ഫയൽ തിരഞ്ഞെടുക്കുക"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "ഫയൽ നൽകിയിട്ടില്ല"
+msgstr "ഫയൽ തിരഞ്ഞെടുത്തിട്ടില്ല"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11406,10 +11299,8 @@ msgid "Redo"
 msgstr "വീണ്ടും ചെയ്യുക"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "പുതുവരി"
+msgstr "അടിവര"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -12066,28 +11957,20 @@ msgid "Optional"
 msgstr "ഐച്ഛികം"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "ഭാഷകൾ"
+msgstr "ഭാഷകൾ ബന്ധിപ്പിക്കുക"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "സഹాయం: UI ഭാഷ നിർബന്ധമാക്കുക"
+msgstr "സഹായം: ലിങ്ക് ഭാഷകൾ"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"പ്രവർത്തനക്ഷമമാക്കിയാൽ, ഈ ഇവന്റിനായി ആ ഭാഷ ലഭ്യമായിരിക്കുന്ന പക്ഷം ഇവന്റിന്റെ ഭാഷ UI "
-"ഭാഷയെ പിന്തുടരും."
+"പ്രാപ്തമാക്കിയാൽ ഇവന്റ് ഭാഷയും UI ഭാഷയും ബന്ധിപ്പിക്കപ്പെടും. ഒന്നിനെ തിരഞ്ഞെടുക്കുമ്പോൾ, ഈ ഇവന്റിന് "
+"ആ ഭാഷ ലഭ്യമാകുന്ന എല്ലാ സമയത്തും മറ്റേതും പുതുക്കപ്പെടും."
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12138,10 +12021,8 @@ msgstr "പ്രഭാഷകർക്ക് ക്ഷണം"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12741,10 +12622,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "ദൈർഘ്യം"
+msgstr "ഗുജറാത്തി"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12775,10 +12654,8 @@ msgid "Malay"
 msgstr "മലായ്"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "മലായ്"
+msgstr "മലയാളം"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14405,16 +14282,14 @@ msgid "Payment date"
 msgstr "പേയ്‌മെന്റ് തീയതി"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "ഈ നിർദ്ദേശം ഇനി തിരുത്താനാകില്ല."
+msgstr ""
+"ഈ ഓപ്ഷൻ പണമടച്ച് ചെയ്ത ഓർഡറുകൾക്ക് മാത്രം എന്നതുമായി ചേർത്ത് ഉപയോഗിക്കാൻ കഴിയില്ല."
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "ഈ പ്രവർത്തനം പണ്ടിംഗ് ഓർഡറുകൾക്ക് മാത്രം അനുവദനീയമാണ്."
+msgstr ""
+"ഈ ഓപ്ഷൻ അംഗീകാരം മാത്രം ശേഷിക്കുന്ന ഓർഡറുകളുമായി ചേർത്തുപയോഗിക്കാൻ കഴിയില്ല."
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14726,10 +14601,8 @@ msgid "Please confirm that you want to cancel ALL dates in this event series."
 msgstr "ഈ ഇവന്റ് പരമ്പരയിലെ എല്ലാ തീയതികളും റദ്ദാക്കണമെന്ന് സ്ഥിരീകരിക്കുക."
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "എല്ലാ ഇവന്റുകളും (പുതുതായി സൃഷ്ടിച്ചതും ഉൾപ്പെടെ)"
+msgstr "എല്ലാ ഇവന്റുകളും (പുതുതായി സൃഷ്ടിച്ചതും പ്രസിദ്ധീകരിച്ചതും ഉൾപ്പെടെ)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14741,10 +14614,8 @@ msgid "Gift card value"
 msgstr "ഗിഫ്റ്റ് കാർഡ് മൂല്യം"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "ഓർഗനൈസറ് ലോഗുകള്"
+msgstr "ഓർഗനൈസർ സ്ലഗ്"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -17078,10 +16949,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "ഇവെന്റ് ദൃശ്യമാണത"
+msgstr "സിസ്റ്റം ദൃശ്യത ടോഗിൾ ചെയ്യുക"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19645,10 +19514,8 @@ msgid "Required status for Company"
 msgstr "കമ്പനിക്കുള്ള നിർബന്ധിത നില"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "ഇ-മെയിലിനുള്ള നിർബന്ധിത നില"
+msgstr "ജോലി ശീർഷകത്തിനുള്ള നിർബന്ധിത നില"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20195,10 +20062,8 @@ msgstr "(ഐച്ഛികം)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "റീഡംപ്ഷനുകൾ"
+msgstr "ബാഡ്ജ് ഓപ്ഷനുകൾ"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -21083,22 +20948,16 @@ msgstr[0] "1 ഓർഡർ"
 msgstr[1] "%(s)s ഓർഡറുകൾ"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "തിരഞ്ഞെടുപ്പ്"
+msgstr "പ്രവർത്തനം തിരഞ്ഞെടുക്കുക"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "അംഗീകരിച്ച സൗജന്യ ഓർഡർ"
+msgstr "തിരഞ്ഞെടുത്ത ഓർഡറുകൾ അംഗീകരിക്കുക"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "ഓർഡർ ഇല്ലാതാക്കുക"
+msgstr "തിരഞ്ഞെടുത്ത ഓർഡറുകൾ നിരസിക്കുക"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21302,10 +21161,8 @@ msgid "Revoke"
 msgstr "പിൻവലിക്കുക"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "ഡിവൈസ് ആക്സസ് പിൻവലിക്കുക:"
+msgstr "എല്ലാ ഉപകരണങ്ങളുടെയും അനുമതി പിൻവലിച്ച് നീക്കം ചെയ്യുക"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21322,17 +21179,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "ഈ ഇവന്റ് ഇല്ലാതാക്കാൻ കഴിയില്ല."
+msgstr "ഈ പ്രവർത്തി പഴയപടിയാക്കാനാവില്ല."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "ഡിവൈസ് ആക്സസ് പിൻവലിക്കുക:"
+msgstr "എല്ലാ ഉപകരണങ്ങളും റദ്ദാക്കി നീക്കംചെയ്യുക"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -22992,22 +22845,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "അപ്‌ലോഡ് ചെയ്ത ഫയല്‍ CSV ഫയലായി പാഴ്‌സ് ചെയ്യാന്‍ കഴിഞ്ഞില്ല."
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "സാധുവായ ഒരു സീറ്റ് തിരഞ്ഞെടുക്കുക."
+msgstr "ദയവായി സാധുവായ ഒരു പ്രവർത്തനം തിരഞ്ഞെടുക്കുക."
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "താഴെ കുറഞ്ഞത് ഒരു ഉപകരണം എങ്കിലും സജ്ജീകരിക്കുക."
+msgstr "കുറഞ്ഞത് ഒരു ഓർഡറെങ്കിലും തിരഞ്ഞെടുക്കുക."
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "തിരഞ്ഞെടുത്ത തീയതി ഈ ഇവന്റ് സീരീസിൽ നിലവിലില്ല."
+msgstr "തിരഞ്ഞെടുത്ത ഓർഡറുകളിൽ കുറഞ്ഞത് ഒന്ന് ഇനി നിലവിലില്ല."
 
 #: control/views/orders.py:330
 msgid ""
@@ -23015,20 +22862,18 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "ഓർഡർ അംഗീകരിച്ചു."
-msgstr[1] "ഓർഡർ അംഗീകരിച്ചു."
+msgstr[0] "%(count)d ഓർഡർ അംഗീകരിച്ചു."
+msgstr[1] "%(count)d ഓർഡറുകൾ അംഗീകരിച്ചു."
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "ഓര്‍ഡര്‍ നിരസിച്ചതിനാല്‍ ഇപ്പോള്‍ അത് റദ്ദാക്കി."
-msgstr[1] "ഓര്‍ഡര്‍ നിരസിച്ചതിനാല്‍ ഇപ്പോള്‍ അത് റദ്ദാക്കി."
+msgstr[0] "%(count)d ഓർഡർ നിരസിക്കുകയും ഇപ്പോൾ റദ്ദാക്കുകയും ചെയ്‌തിരിക്കുന്നു."
+msgstr[1] "%(count)d ഓർഡറുകൾ നിരസിക്കുകയും ഇപ്പോൾ റദ്ദാക്കുകയും ചെയ്‌തിരിക്കുന്നു."
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23416,16 +23261,13 @@ msgstr "ഈ ഉപകരണത്തിനുള്ള ആക്‌സസ് പ
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "പ്രദർശിപ്പിക്കാൻ പങ്കെടുക്കുന്നവർ ഇല്ല."
+msgstr "അനുമതി പിൻവലിച്ച് നീക്കം ചെയ്യാൻ ബന്ധിപ്പിച്ച ഉപകരണങ്ങളൊന്നുമില്ല."
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "തിരഞ്ഞെടുത്ത ടിക്കറ്റുകൾ ചെക്ക്-ഇൻ ചെയ്തതായി അടയാളപ്പെടുത്തി."
+msgstr ""
+"കണക്റ്റ് ചെയ്‌തിരുന്ന എല്ലാ ഉപകരണങ്ങളുടെയും അനുമതി റദ്ദാക്കി സ്ഥിരമായി നീക്കം ചെയ്‌തു."
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23522,16 +23364,12 @@ msgid "Please only upload PDF files."
 msgstr "PDF ഫയലുകൾ മാത്രം അപ്‌ലോഡ് ചെയ്യുക."
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "പങ്കെടുക്കുന്നയാളുടെ പേര് നല്‍കിയിട്ടില്ല"
+msgstr "ലേഔട്ട് ഡാറ്റ ഒന്നും നൽകിയിട്ടില്ല."
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "അസാധുവായ ഇൻപുട്ട് ഡാറ്റ."
+msgstr "അസാധുവായ ലേഔട്ട് ഡാറ്റയാണ് നൽകിയിരിക്കുന്നത്."
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -23738,10 +23576,8 @@ msgid "Bypass quota"
 msgstr "ബൈപാസ് ക്വോട്ട"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "ബൈപാസ് ക്വോട്ട"
+msgstr "അംഗീകാരം ഒഴിവാക്കുക"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25254,10 +25090,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "ഇവന്റ് തിരഞ്ഞെടുക്കുക"
+msgstr "— ഒരു ഇവന്റ് തിരഞ്ഞെടുക്കുക —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25268,10 +25102,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "ഇനിയും സെർവറുകൾ ക്രമീകരിച്ചിട്ടില്ല."
+msgstr "ഏതൊരു ഇവന്റുകൾക്കും ട്രാക്കുകൾ ക്രമീകരിച്ചിട്ടില്ല."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -25770,9 +25602,6 @@ msgid "Unique viewers by session"
 msgstr "സെഷൻ പ്രകാരമുള്ള ഏകദർശകർ"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
 msgstr "സെഷൻ"
 
@@ -26576,10 +26405,9 @@ msgid "Mail signature"
 msgstr "മെയില് ഒപ്പു"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "ഒപ്പു പുറത്തേക്കുള്ള മെയിലുകളോട് ചേര്ക്കും, മു൭നിരയായി “-- ” ചേര്ത്ത്."
+msgstr ""
+"ഒപ്പിന് മുമ്പായി “-- ” ചേര്‍ത്ത് ഔട്ട്‌ഗോയിംഗ് മെയിലുകളില്‍ ഒപ്പ് ചേര്‍ക്കുന്നതാണ്. "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27462,10 +27290,8 @@ msgid "Default duration"
 msgstr "സ്ഥിരസ്ഥിതി ദൈർഘ്യം"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "എല്ലാ സെഷൻ തരങ്ങളും"
+msgstr "സെഷൻ തരം മാറ്റുക"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -28759,10 +28585,8 @@ msgstr[1] "സമർപ്പകർ"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "ഈ നിർദേശം പ്രത്യേക സെഷനുകളുടെ പട്ടികയിൽ കാണിക്കുക."
+msgstr "ഫീച്ചേർഡ് സ്പീക്കർമാരുടെ പട്ടികയിൽ ഈ വക്താവിനെ കാണിക്കുക."
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -28773,10 +28597,8 @@ msgid "Not arrived"
 msgstr "എത്തിയിട്ടില്ല"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "ഉപയോക്താക്കളെ കണ്ടെത്തിയില്ല."
+msgstr "സമർപ്പിച്ചവർ കണ്ടെത്തിയില്ല."
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -29164,10 +28986,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "ഈ സെഷൻ തരം ഒരു പ്രൊപ്പോസലിൽ ഉപയോഗത്തിലാണ്; ഇല്ലാതാക്കാൻ കഴിയില്ല."
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "ഉപകരണം നീക്കം ചെയ്തു."
+msgstr "ഡിഫോൾട്ട് സെഷൻ തരം നീക്കം ചെയ്തിരിക്കുന്നു."
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -29824,23 +29644,17 @@ msgid "Sort by"
 msgstr "ക്രമീകരിക്കുക"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "ഉൽപ്പന്നം \"{}\" ഒരു ക്വോട്ടയിലേക്ക് അസൈൻ ചെയ്തിട്ടില്ല."
+msgstr "ഈ ലേഔട്ടിലേക്ക് നിയോഗിച്ച ഉൽപ്പന്നങ്ങൾ"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "ഇൻവോയ്സ് ഇഷ്ടാനുസൃതമാക്കൽ"
+msgstr "ബാഡ്ജ് ഇഷ്ടാനുസരണം മാറ്റാൻ അനുവദിക്കുക"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "ഫീൽഡ് മറയ്ക്കുക"
+msgstr "ബാഡ്ജ് ഫീൽഡുകൾ"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -29856,10 +29670,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "ഭാഷകളൊന്നും തിരഞ്ഞെടുക്കപ്പെട്ടിട്ടില്ല"
+msgstr "ഓപ്ഷണൽ ബാഡ്ജ് ഫീൽഡുകൾ ഒന്നും തിരഞ്ഞെടുത്തിട്ടില്ല"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -29871,10 +29683,8 @@ msgid "Download Badge"
 msgstr "ബാഡ്ജ് ഡൗൺലോഡ് ചെയ്യുക"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "അപ്‌ലോഡ് ഓപ്ഷനുകൾ"
+msgstr "ബാഡ്ജ് ഓപ്ഷനുകൾ"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -29935,10 +29745,8 @@ msgstr "പുതിയ ബാഡ്ജ് ലേഔട്ട് സൃഷ്ട
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "ബാഡ്ജ് ലേഔട്ട്"
+msgstr "ബാഡ്ജ് ലേഔട്ട് ക്രമീകരണങ്ങൾ"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -29948,10 +29756,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "എല്ലാ ഉപയോക്താക്കളും"
+msgstr "ഉപയോക്താവിനോട് ചോദിക്കുക"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -29959,16 +29765,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "ഇവന്റ് മെറ്റാഡേറ്റ"
+msgstr "ഇവന്റ് മെറ്റാ: {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "ഉൽപ്പന്ന നാമം"
+msgstr "ഉൽപ്പന്ന മെറ്റ: {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -29976,10 +29780,8 @@ msgid "The requested badge layout does not exist."
 msgstr "അഭ്യർത്ഥിച്ച ബാഡ്ജ് ലേഔട്ട് നിലവിലില്ല."
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "അക്കൗണ്ട് ക്രമീകരണങ്ങൾ മാറ്റി."
+msgstr "ബാഡ്ജ് ലേഔട്ട് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു."
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -31268,10 +31070,8 @@ msgid "Client Application Secret"
 msgstr "ക്ലയന്റ് ആപ്ലിക്കേഷൻ സീക്രട്ട്"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "ഫയൽ നൽകിയിട്ടില്ല"
+msgstr "മുൻഗണനാ പ്രൊവൈഡർ ഇല്ല"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31452,10 +31252,8 @@ msgstr ""
 "ഇൻസ്റ്റൻസിൽ ലോഗിൻ ചെയ്യാം."
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "ഈ ഉൽപ്പന്നം നിലവിൽ ലഭ്യമല്ല."
+msgstr "ഈ ലോഗിൻ രീതി ലഭ്യമല്ല."
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -32623,16 +32421,12 @@ msgstr "ഓർഡർ ലിങ്കുകൾ വീണ്ടും അയയ്
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"ഈ ഓർഡർ പൂർത്തിയാക്കാനും പണമടയ്ക്കാനും മുമ്പ് ഇവന്റ് സംഘാടകരുടെ അംഗീകാരം ലഭിക്കേണ്ടതുണ്ടെന്ന് "
-"ശ്രദ്ധിക്കുക."
+"അഭ്യർത്ഥന സമർപ്പിച്ചിരിക്കുന്നു. ഇവന്റ് സംഘാടകൻ അംഗീകരിക്കുന്നതിനു കാത്തിരിക്കുകയാണ്. "
+"വിശദാംശങ്ങൾക്കായി താഴെ കാണുക."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -33766,10 +33560,8 @@ msgstr ""
 "വക്താക്കളെ ചേർക്കാം."
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "ഡിഫോൾട്ട് സെഷൻ തരം"
+msgstr "ഒരു സെഷൻ തരം തിരഞ്ഞെടുക്കുക"
 
 #: submission/forms/submission.py:172
 msgid ""

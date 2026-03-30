@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-23 15:19+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Hungarian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/hu/>\n"
@@ -212,8 +212,7 @@ msgid "Duration"
 msgstr "Időtartam"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
 msgstr "%(minutes)s perc"
 
@@ -277,10 +276,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (csillagozott szekciók)"
+msgstr "%(name)s csillagozott munkamenetei"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -311,34 +309,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "Változásnapló"
+msgstr "Változásnapló megtekintése"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "Aktuális értékek megtartása"
+msgstr "Ugrás az aktuális verzióra"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "Szűrők törlése"
+msgstr "Az összes szűrő alaphelyzetbe állítása"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
-msgstr "Rendezés:"
+msgstr "Rendezés"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "Új terem"
+msgstr "Szobánként"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -353,28 +341,20 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "Kilépési szkennelések"
+msgstr "Kilépés a teljes képernyős módból"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "Kapuk"
+msgstr "Legújabb"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"Jelenleg a szerkeszthető programverzió látható, amely még nincs közzétéve, "
-"és bármikor változhat."
+"Jelenleg a szerkeszthető ütemtervverziót tekinti meg. Előfordulhat, hogy nem "
+"egyezik a közzétett verzióval."
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -385,16 +365,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "Videó"
+msgstr "Videó megtekintése"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "nem élő"
+msgstr "Élő adás nézése"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -405,10 +381,8 @@ msgstr[0] "Előadó"
 msgstr[1] "Előadók"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "Előadó megjelölése: nem érkezett meg"
+msgstr "A hangszóró neve nincs megadva"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -436,10 +410,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "Hozzáadás a naptárhoz"
+msgstr "Google Naptár"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -484,10 +456,8 @@ msgid "No"
 msgstr "Nem"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "Nem találhatók felhasználók."
+msgstr "Nem találhatók hangszórók."
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -507,22 +477,16 @@ msgid "Tracks"
 msgstr "Sávok"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
-msgstr "Letöltés"
+msgstr "Letöltések"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "készítette"
+msgstr "Csillagozta:"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "Kezdés"
+msgstr "Csillagozva"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -532,10 +496,8 @@ msgid "Export"
 msgstr "Exportálás"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
-msgstr "Exportálás"
+msgstr "Exportok"
 
 #: agenda/views/schedule.py:397 common/templates/common/question_answer.html:9
 #: multidomain/views.py:179
@@ -548,16 +510,12 @@ msgid "No response"
 msgstr "Nincs válasz"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "Egyéb díjak"
+msgstr "Egyéb időzónák"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "Jelenleg:"
+msgstr "jelenlegi"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -565,10 +523,8 @@ msgid "Print"
 msgstr "Nyomtatás"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "Lista"
+msgstr "Lista nézet"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -596,22 +552,16 @@ msgstr "Keresés"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "Kiemelt események"
+msgstr "Kiemelt előadók"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "Előadói profil megtekintése vagy szerkesztése"
+msgstr "Előadó profiljának megtekintése"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "Nincsenek közzétett szekciók."
+msgstr "Nincsenek csillagozott munkamenetek."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -821,16 +771,12 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "Ez a kérdéstípus nem tehető fel bejelentkezéskor."
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "Egyetlen esemény a múltban"
+msgstr "A kezdési időpont nem lehet a múltban."
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
-msgstr "A befejezési időpontnak a kezdő időpont után kell lennie."
+msgstr "A befejezési időpontnak a kezdési időpont után kell lennie."
 
 #: api/serializers/stream_schedule.py:101
 msgid ""
@@ -1080,16 +1026,12 @@ msgid "Require company per ticket"
 msgstr "Cégnév megadása kötelező jegyenként"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "Cégnév kérése jegyenként"
+msgstr "Munkakör megadása jegyenként"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "Cégnév megadása kötelező jegyenként"
+msgstr "A munkakör megadása kötelező jegyenként"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3837,10 +3779,8 @@ msgid "Only paid orders"
 msgstr "Csak kifizetett rendelések"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "jóváhagyás függőben"
+msgstr "Csak jóváhagyásra váró rendelések"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4580,10 +4520,8 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
-msgstr "Beosztás"
+msgstr "Munkaköri megnevezés"
 
 #: base/forms/questions.py:443 base/forms/questions.py:824
 msgid "Street and Number"
@@ -4596,16 +4534,12 @@ msgstr "Állam kiválasztása"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "Kosár"
+msgstr "Válasza"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "Kijelölés"
+msgstr "Válasszon egy lehetőséget"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4655,14 +4589,8 @@ msgstr ""
 "ügyfélszolgálattal, hogy ezt manuálisan lehessen rendezni."
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr ""
-"Az e-mail-cím vagy a jelszó megváltoztatásához adja meg a jelenlegi "
-"jelszavát."
+msgstr "A jelszó megváltoztatásához adja meg a jelenlegi jelszavát."
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6708,10 +6636,8 @@ msgid "Show link on the website start page"
 msgstr "Hivatkozás megjelenítése a webhely kezdőlapján"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "Megjelenítés a fejléc menüben minden oldalon"
+msgstr "Megjelenítés a fejlécben és a láblécben a rendszeroldalakon"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -7225,10 +7151,8 @@ msgid "Radio button (Choose one option)"
 msgstr "Választógomb (Egy lehetőség kiválasztása)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "Választógomb (Egy lehetőség kiválasztása)"
+msgstr "Legördülő lista (Válasszon egy lehetőséget)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7505,10 +7429,8 @@ msgid "Biography"
 msgstr "Életrajz"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "Szekció megjelenítése a kiemelt szekciók nyilvános listájában."
+msgstr "Az előadó megjelenítése a kiemelt előadók nyilvános listájában."
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7535,10 +7457,8 @@ msgid "Confirmation"
 msgstr "Megerősítés"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "Ország"
+msgstr "Országlista"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -8041,28 +7961,22 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "Rendszer URL-je:"
+msgstr "Stream URL"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
-msgstr "Kezdési idő"
+msgstr "Kezdés időpontja"
 
 #: base/models/stream_schedule.py:29
 msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
 msgstr "Befejezési idő"
 
@@ -8071,16 +7985,12 @@ msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "Streamkulcs"
+msgstr "Folyamtípus"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "További információ"
+msgstr "További konfiguráció"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -8089,16 +7999,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "Menetrend"
+msgstr "Streamütemezés"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "Menetrend"
+msgstr "Streamütemezések"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8389,10 +8295,8 @@ msgstr ""
 "számára lesz látható."
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
-msgstr "Pozíció"
+msgstr "pozíció"
 
 #: base/models/type.py:52
 msgid ""
@@ -8468,23 +8372,18 @@ msgstr ""
 "nincs elérhető."
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "Kvóta megkerülésének engedélyezése"
+msgstr "Jóváhagyás megkerülésének engedélyezése"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"Ha engedélyezve van, a kuponkód birtokosa akkor is vásárolhat jegyet, ha már "
-"nincs elérhető."
+"Ha aktiválva van, az utalványkód birtokosa a szervező jóváhagyására való "
+"várakozás nélkül is vásárolhat jegyeket. Ez azokra a termékekre vonatkozik, "
+"amelyekhez jóváhagyás szükséges."
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9391,10 +9290,8 @@ msgid "Attendee job title"
 msgstr "Résztvevő munkaköre"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "Példatartomány"
+msgstr "Minta munkakörmegnevezés"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10570,13 +10467,10 @@ msgstr ""
 "tenni."
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
 msgstr ""
-"A résztvevők e-mail-címét be kell kérni ahhoz, hogy kötelezővé lehessen "
+"A résztvevők beosztását meg kell kérdezni ahhoz, hogy kötelezővé lehessen "
 "tenni."
 
 #: base/settings.py:167
@@ -11690,16 +11584,12 @@ msgid "Submit something now!"
 msgstr "Beküldés most!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "Esemény kiválasztása"
+msgstr "Fájl kiválasztása"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "Nincs megadva fájl"
+msgstr "Nincs kiválasztott fájl"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11712,10 +11602,8 @@ msgid "Redo"
 msgstr "Újra"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "Új sor"
+msgstr "Aláhúzás"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -12369,28 +12257,21 @@ msgid "Optional"
 msgstr "Opcionális"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "Nyelvek"
+msgstr "Nyelvek összekapcsolása"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "Súgó: Felhasználói felület nyelvének kényszerítése"
+msgstr "Súgó: Nyelvek összekapcsolása"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"Bekapcsolva az esemény nyelve a felhasználói felület nyelvét követi, ha az a "
-"nyelv elérhető ehhez az eseményhez."
+"Ha engedélyezve van, az esemény és a felhasználói felület nyelve össze van "
+"kapcsolva. Az egyik kiválasztása frissíti a másikat, amikor az adott nyelv "
+"elérhető ehhez az eseményhez."
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12441,10 +12322,8 @@ msgstr "Felhívás előadóknak"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -13045,10 +12924,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "Időtartam"
+msgstr "gudzsaráti"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -13079,10 +12956,8 @@ msgid "Malay"
 msgstr "maláj"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "maláj"
+msgstr "malajálam"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -13169,10 +13044,8 @@ msgid "Vietnamese"
 msgstr "vietnámi"
 
 #: config/settings.py:978
-#, fuzzy
-#| msgid "Chinese (simplified)"
 msgid "Chinese Simplified"
-msgstr "kínai (egyszerűsített)"
+msgstr "Egyszerűsített kínai"
 
 #: config/settings.py:987
 msgid "Chinese Traditional"
@@ -14742,16 +14615,13 @@ msgid "Payment date"
 msgstr "Fizetés dátuma"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "Ez a javaslat már nem szerkeszthető."
+msgstr "Ez a beállítás nem kombinálható a csak fizetett rendelkésekkel."
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "Ez a művelet csak függőben lévő rendelések esetén engedélyezett."
+msgstr ""
+"Ez a beállítás nem kombinálható a kizárólag jóváhagyásra váró rendésekkel."
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -15075,10 +14945,9 @@ msgstr ""
 "dátumát."
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "Összes esemény (új események is)"
+msgstr ""
+"Minden esemény (beleértve az újonnan létrehozott és közzétett eseményeket is)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -15091,10 +14960,8 @@ msgid "Gift card value"
 msgstr "Ajándékkártya értéke"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "Szervezői naplók"
+msgstr "Szervező URL-azonosító"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -17487,10 +17354,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "Esemény láthatósága"
+msgstr "Rendszerláthatóság be-/kikapcsolása"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -20095,10 +19960,8 @@ msgid "Required status for Company"
 msgstr "Kötelező mező állapota: cég"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "E-mail kötelező állapota"
+msgstr "A munkakör megnevezésének kötelező státusza"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20661,10 +20524,8 @@ msgstr "(opcionális)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "Beváltások"
+msgstr "Jelvény beállításai"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -21558,22 +21419,16 @@ msgstr[0] "1 rendelés"
 msgstr[1] "%(s)s rendelés"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "Kijelölés"
+msgstr "Művelet kiválasztása"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "Jóváhagyott ingyenes rendelés"
+msgstr "Kijelölt rendellések jóváhagyása"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "Rendelés törlése"
+msgstr "A kijelölt rendelések elutasítása"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21779,10 +21634,8 @@ msgid "Revoke"
 msgstr "Visszavonás"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "Eszközhozzáférés visszavonása:"
+msgstr "Minden eszköz visszavonása és eltávolítása"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21799,17 +21652,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "Ez az esemény nem törölhető."
+msgstr "Ez a művelet nem vonható vissza."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "Eszközhozzáférés visszavonása:"
+msgstr "Összes eszköz visszavonása és eltávolítása"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -23505,22 +23354,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "A feltöltött fájlt nem sikerült CSV-fájlként feldolgozni."
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "Válasszon érvényes ülőhelyet."
+msgstr "Válasszon egy érvényes műveletet."
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "Az alábbiak közül állítson be legalább egy eszközt."
+msgstr "Válasszon ki legalább egy rendelést."
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "A kiválasztott dátum nem érvényes erre az eseménysorozatra."
+msgstr "A kiválasztott rendelések közül legalább egy már nem létezik."
 
 #: control/views/orders.py:330
 msgid ""
@@ -23528,20 +23371,19 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "A rendelést jóváhagyták."
-msgstr[1] "A rendelést jóváhagyták."
+msgstr[0] "%(count)d rendelés jóváhagyva."
+msgstr[1] "%(count)d rendelés jóváhagyva."
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "A rendelést elutasították, ezért most törölve lett."
-msgstr[1] "A rendelést elutasították, ezért most törölve lett."
+msgstr[0] "A(z) %(count)d rendelés elutasításra került, és mostantól törölve van."
+msgstr[1] ""
+"A(z) %(count)d rendelés elutasításra kerültek, és mostantól törölve vannak."
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23955,16 +23797,14 @@ msgstr "Az eszköz hozzáférése visszavonásra került."
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "Nincsenek megjeleníthető résztvevők."
+msgstr "Nincsenek visszavonható és eltávolítható csatlakoztatott eszközök."
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "A kijelölt jegyek bejelentkeztetettként lettek megjelölve."
+msgstr ""
+"Az összes csatlakoztatott eszköz visszavonásra került, és véglegesen "
+"eltávolításra került."
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -24063,16 +23903,12 @@ msgid "Please only upload PDF files."
 msgstr "Kérjük, csak PDF-fájlokat töltsön fel."
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "Nincs megadva résztvevő neve"
+msgstr "Nem lett elrendezési adat megadva."
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "Érvénytelen bemeneti adatok."
+msgstr "Érvénytelen elrendezési adatok lettek megadva."
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -24284,10 +24120,8 @@ msgid "Bypass quota"
 msgstr "Kvóta megkerülése"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "Kvóta megkerülése"
+msgstr "Jóváhagyás megkerülése"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25837,10 +25671,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "Esemény kiválasztása"
+msgstr "— Esemény kiválasztása —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25851,10 +25683,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "Még nincs konfigurált kiszolgáló."
+msgstr "Egyetlen eseményhez sincsenek sávok konfigurálva."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -26377,9 +26207,6 @@ msgid "Unique viewers by session"
 msgstr "Egyedi megtekintők munkamenetenként"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
 msgstr "Szekció"
 
@@ -27200,10 +27027,10 @@ msgid "Mail signature"
 msgstr "E-mail aláírás"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "Az aláírás a kimenő e-mailekhez lesz hozzáadva, előtte „-- ”."
+msgstr ""
+"Az aláírás a kimenő e-mailekhez lesz hozzáadva, előtte a „-- ” "
+"karakterekkel. "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -28114,10 +27941,8 @@ msgid "Default duration"
 msgstr "Alapértelmezett időtartam"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "Összes szekciótípus"
+msgstr "Munkamenet típusának áthelyezése"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -29447,10 +29272,8 @@ msgstr[1] "beküldők"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "A javaslat megjelenítése a kiemelt munkamenetek listájában."
+msgstr "Az előadó megjelenítése a kiemelt előadók listájában."
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -29461,10 +29284,8 @@ msgid "Not arrived"
 msgstr "Nem érkezett meg"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "Nem találhatók felhasználók."
+msgstr "Nem találhatók beküldők."
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -29865,10 +29686,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "Ez a szekciótípus használatban van egy javaslatban, és nem törölhető."
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "Az eszköz eltávolításra került."
+msgstr "Az alapértelmezett munkamenettípus el lett távolítva."
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -30542,23 +30361,17 @@ msgid "Sort by"
 msgstr "Rendezés:"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "\"{}\" termékhez nincs kvóta rendelve."
+msgstr "Az elrendezéshez rendelt termékek"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "Számla testreszabása"
+msgstr "Jelvény testreszabásának engedélyezése"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "Mező elrejtése"
+msgstr "Jelvénymezők"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -30574,10 +30387,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "Nincs kiválasztott nyelv"
+msgstr "Nincs kiválasztva egyetlen opcionális jelvénymező sem"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -30589,10 +30400,8 @@ msgid "Download Badge"
 msgstr "Kitűző letöltése"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "Feltöltési beállítások"
+msgstr "Jelvénybeállítások"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -30653,10 +30462,8 @@ msgstr "Új jelvényelrendezés létrehozása"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "Kitűzőelrendezés"
+msgstr "Jelvényelrendezés beállításai"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -30666,10 +30473,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "Összes felhasználó"
+msgstr "Felhasználó megkérdezése"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -30677,16 +30482,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "Esemény-metaadatok"
+msgstr "Esemény metaadatai: {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "Termék neve"
+msgstr "Termék metaadata: {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -30694,10 +30497,8 @@ msgid "The requested badge layout does not exist."
 msgstr "A kért jelvényelrendezés nem létezik."
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "A fiókbeállítások megváltoztak."
+msgstr "A jelvényelrendezés beállításai mentve."
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -32031,10 +31832,8 @@ msgid "Client Application Secret"
 msgstr "Kliensalkalmazás titka"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "Nincs megadva fájl"
+msgstr "Nincs preferált szolgáltató"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -32222,10 +32021,8 @@ msgstr ""
 "példányba a MediaWiki-fiókjukkal."
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "Ez a termék jelenleg nem elérhető."
+msgstr "Ez a bejelentkezési módszer nem érhető el."
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -33418,16 +33215,12 @@ msgstr "Rendelési hivatkozások újraküldése"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"Felhívjuk a figyelmet, hogy a fizetés és a rendelés lezárása előtt még az "
-"eseményszervező jóváhagyására várunk."
+"A kérelem elküldve, és az esemény szervezőjének jóváhagyására vár. A "
+"részletek alább találhatók."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -34593,10 +34386,8 @@ msgstr ""
 "folyamat befejezése után további előadókat is hozzáadhat."
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "Alapértelmezett szekciótípus"
+msgstr "Munkamenet-típus kiválasztása"
 
 #: submission/forms/submission.py:172
 msgid ""

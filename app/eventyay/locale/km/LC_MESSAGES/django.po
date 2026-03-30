@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-29 20:09+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Khmer (Central) <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/km/>\n"
@@ -202,10 +202,9 @@ msgid "Duration"
 msgstr "រយៈពេល"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
-msgstr "%(minutes)sនាទី"
+msgstr "%(minutes)s នាទី"
 
 #: agenda/templates/agenda/talk_review.html:31 base/models/access_code.py:30
 #: base/models/submission.py:193
@@ -267,10 +266,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (សម័យដែលបានផ្កាយរបស់អ្នក)"
+msgstr "សម័យដែលបានដាក់ផ្កាយរបស់ %(name)s"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -301,34 +299,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "កំណត់ហេតុការផ្លាស់ប្តូរ"
+msgstr "មើលកំណត់ហេតុនៃការផ្លាស់ប្តូរ"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "រក្សា​តម្លៃ​បច្ចុប្បន្ន"
+msgstr "ទៅកាន់​កំណែ​បច្ចុប្បន្ន"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "សម្អាតតម្រង"
+msgstr "កំណត់តម្រងទាំងអស់ឡើងវិញ"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
-msgstr "តម្រៀបតាម"
+msgstr "តម្រៀប"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "បន្ទប់​ថ្មី"
+msgstr "តាមបន្ទប់"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -343,28 +331,19 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "ការស្កេនចេញ"
+msgstr "ចាកចេញពីអេក្រង់ពេញ"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "ច្រកចូលចេញ"
+msgstr "ចុងក្រោយ"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"បច្ចុប្បន្ន កំពុងមើលកំណែតារាងពេលវេលាដែលអាចកែសម្រួលបាន ដែលមិនទាន់បានចេញផ្សាយ "
-"ហើយអាចផ្លាស់ប្តូរបានគ្រប់ពេល។"
+"បច្ចុប្បន្ន​កំពុង​មើល​កំណែ​កាលវិភាគ​ដែល​អាច​កែសម្រួល​បាន។ វា​អាច​មិន​ត្រូវ​គ្នា​នឹង​កំណែ​ដែល​បាន​ចេញផ្សាយ។"
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -375,16 +354,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "វីដេអូ"
+msgstr "មើលវីដេអូ"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "មិនដំណើរការ"
+msgstr "មើល​ផ្ទាល់"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -394,10 +369,8 @@ msgid_plural "Speakers"
 msgstr[0] "វាគ្មិន"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "សម្គាល់អ្នកនិយាយថាមិនទាន់មកដល់"
+msgstr "មិនបានផ្ដល់ឈ្មោះអ្នកនិយាយ"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -425,10 +398,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "បន្ថែមទៅប្រតិទិន"
+msgstr "Google Calendar"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -473,10 +444,8 @@ msgid "No"
 msgstr "ទេ"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "រក​មិន​ឃើញ​អ្នកប្រើ​ទេ។"
+msgstr "រកមិនឃើញឧបករណ៍បំពងសំឡេង។"
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -496,22 +465,16 @@ msgid "Tracks"
 msgstr "Tracks"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
-msgstr "ទាញយក"
+msgstr "ការទាញយក"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "បានបង្កើតដោយ"
+msgstr "បានដាក់ផ្កាយដោយ"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "ចាប់ផ្តើម"
+msgstr "បានដាក់ផ្កាយ"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -521,10 +484,8 @@ msgid "Export"
 msgstr "នាំចេញ"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
-msgstr "នាំចេញ"
+msgstr "ការនាំចេញ"
 
 #: agenda/views/schedule.py:397 common/templates/common/question_answer.html:9
 #: multidomain/views.py:179
@@ -537,16 +498,12 @@ msgid "No response"
 msgstr "គ្មានការឆ្លើយតប"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "ថ្លៃផ្សេងៗ"
+msgstr "តំបន់ពេលវេលាផ្សេងៗ"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "បច្ចុប្បន្ន៖"
+msgstr "បច្ចុប្បន្ន"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -554,10 +511,8 @@ msgid "Print"
 msgstr "បោះពុម្ព"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "បញ្ជី"
+msgstr "ទិដ្ឋភាព​បញ្ជី"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -585,22 +540,16 @@ msgstr "ស្វែងរក"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "ព្រឹត្តិការណ៍ពិសេស"
+msgstr "វាគ្មិនពិសេស"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "មើល ឬកែសម្រួលប្រវត្តិរូបអ្នកនិយាយ"
+msgstr "មើលប្រវត្តិរូបអ្នកនិយាយ"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "គ្មានសម័យដែលបានបោះពុម្ពផ្សាយទេ។"
+msgstr "មិនមានសម័យដែលបានដាក់ផ្កាយ។"
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -807,14 +756,10 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "ប្រភេទសំណួរនេះមិនអាចសួរបានក្នុងអំឡុងពេលចុះឈ្មោះចូល។"
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "ព្រឹត្តិការណ៍តែមួយនៅអតីតកាល"
+msgstr "ពេលវេលាចាប់ផ្តើមមិនអាចស្ថិតនៅក្នុងអតីតកាលបានទេ។"
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
 msgstr "ពេលបញ្ចប់ត្រូវតែបន្ទាប់ពីពេលចាប់ផ្តើម។"
 
@@ -1056,16 +1001,12 @@ msgid "Require company per ticket"
 msgstr "ទាមទារ​ឈ្មោះ​ក្រុមហ៊ុន​សម្រាប់​សំបុត្រ​នីមួយៗ"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "ស្នើសុំ​ឈ្មោះ​ក្រុមហ៊ុន​សម្រាប់​សំបុត្រ​នីមួយៗ"
+msgstr "ស្នើសុំចំណងជើងមុខតំណែងតាមសំបុត្រ"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "ទាមទារ​ឈ្មោះ​ក្រុមហ៊ុន​សម្រាប់​សំបុត្រ​នីមួយៗ"
+msgstr "ទាមទារចំណងជើងការងារសម្រាប់សំបុត្រនីមួយៗ"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3718,10 +3659,8 @@ msgid "Only paid orders"
 msgstr "តែការបញ្ជាទិញដែលបានបង់ប្រាក់ប៉ុណ្ណោះ"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "កំពុងរង់ចាំការអនុម័ត"
+msgstr "បញ្ជាទិញដែលកំពុងរង់ចាំការអនុម័តតែប៉ុណ្ណោះ"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4455,8 +4394,6 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
 msgstr "ចំណងជើងការងារ"
 
@@ -4471,16 +4408,12 @@ msgstr "ជ្រើសរើសរដ្ឋ"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "កន្ត្រក"
+msgstr "ចម្លើយ​របស់​អ្នក"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "ការជ្រើសរើស"
+msgstr "ជ្រើសរើសជម្រើសមួយ"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4526,12 +4459,8 @@ msgstr ""
 "ដូច្នេះ ត្រូវគិត VAT លើវិក្កយបត្រ។ សូមទាក់ទងផ្នែកគាំទ្រ ដើម្បីដោះស្រាយដោយដៃ។"
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr "សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន ប្រសិនបើចង់ប្តូរអាសយដ្ឋានអ៊ីមែល ឬពាក្យសម្ងាត់។"
+msgstr "សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន ប្រសិនបើចង់ផ្លាស់ប្តូរពាក្យសម្ងាត់។"
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6501,10 +6430,8 @@ msgid "Show link on the website start page"
 msgstr "បង្ហាញតំណនៅលើទំព័រដើមគេហទំព័រ"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "បង្ហាញក្នុងម៉ឺនុយបឋមកថានៅលើទំព័រទាំងអស់"
+msgstr "បង្ហាញ​នៅ​ក្នុង​បឋមកថា និង​បាតកថា​នៅ​លើ​ទំព័រ​ប្រព័ន្ធ"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -6979,10 +6906,8 @@ msgid "Radio button (Choose one option)"
 msgstr "ប៊ូតុងជម្រើស (ជ្រើសរើសជម្រើសមួយ)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "ប៊ូតុងជម្រើស (ជ្រើសរើសជម្រើសមួយ)"
+msgstr "ម៉ឺនុយធ្លាក់ចុះ (ជ្រើសរើសជម្រើសមួយ)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7251,10 +7176,8 @@ msgid "Biography"
 msgstr "ប្រវត្តិរូប"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "បង្ហាញសម័យនេះក្នុងបញ្ជីសាធារណៈនៃសម័យដែលបានជ្រើសរើស។"
+msgstr "បង្ហាញ​វាគ្មិន​នេះ​នៅក្នុង​បញ្ជី​សាធារណៈ​នៃ​វាគ្មិន​លេចធ្លោ។"
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7281,10 +7204,8 @@ msgid "Confirmation"
 msgstr "ការបញ្ជាក់"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "ប្រទេស"
+msgstr "បញ្ជីប្រទេស"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7764,46 +7685,36 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "URL ប្រព័ន្ធ៖"
+msgstr "URL ស្ទ្រីម"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
-msgstr "ពេលចាប់ផ្តើម"
+msgstr "ពេលវេលាចាប់ផ្តើម"
 
 #: base/models/stream_schedule.py:29
 msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
-msgstr "ពេលបញ្ចប់"
+msgstr "ពេលវេលាបញ្ចប់"
 
 #: base/models/stream_schedule.py:33
 msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "សោស្ទ្រីម"
+msgstr "ប្រភេទស្ទ្រីម"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "ព័ត៌មានបន្ថែម"
+msgstr "ការកំណត់រចនាសម្ព័ន្ធបន្ថែម"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -7812,16 +7723,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "កាលវិភាគ"
+msgstr "កាលវិភាគការផ្សាយ"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "កាលវិភាគ"
+msgstr "កាលវិភាគផ្សាយបន្តផ្ទាល់"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8097,8 +8004,6 @@ msgid ""
 msgstr "ប្រភេទសម័យនេះនឹងត្រូវបានបង្ហាញតែដល់អ្នកដាក់ស្នើដែលមានកូដចូលដំណើរការត្រូវគ្នា។"
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
 msgstr "ទីតាំង"
 
@@ -8174,21 +8079,17 @@ msgid ""
 msgstr "បើដំណើរការ អ្នកកានកូដប័ណ្ណោងនេះអាចទិញសំបុត្រ ទៅបីជាគ្មានសំបុត្រស្លេច។"
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "អនុញ្ញាតឱ្យរំលងកូតា"
+msgstr "អនុញ្ញាតឱ្យរំលងការអនុម័ត"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
-msgstr "បើដំណើរការ អ្នកកានកូដប័ណ្ណោងនេះអាចទិញសំបុត្រ ទៅបីជាគ្មានសំបុត្រស្លេច។"
+msgstr ""
+"ប្រសិនបើបានបើកដំណើរការ អ្នកកាន់កូដប័ណ្ណបញ្ចុះតម្លៃនេះអាចទិញសំបុត្របានដោយមិនចាំការអនុម័តពីអ្នករៀបចំ"
+"។ វាអនុវត្តចំពោះផលិតផលដែលត្រូវការការអនុម័ត។"
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9063,10 +8964,8 @@ msgid "Attendee job title"
 msgstr "មុខតំណែងការងារអ្នកចូលរួម"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "Sample State"
+msgstr "ចំណងជើងការងារគំរូ"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10174,12 +10073,10 @@ msgid "You have to ask for attendee emails if you want to make them required."
 msgstr "ត្រូវស្នើសុំអ៊ីមែលអ្នកចូលរួម ប្រសិនបើចង់ឲ្យវាជាកាតព្វកិច្ច។"
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr "ត្រូវស្នើសុំអ៊ីមែលអ្នកចូលរួម ប្រសិនបើចង់ឲ្យវាជាកាតព្វកិច្ច។"
+msgstr ""
+"ត្រូវស្នើសុំចំណងជើងតួនាទីការងាររបស់អ្នកចូលរួម ប្រសិនបើចង់ឲ្យវាជាវាលចាំបាច់។"
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11233,16 +11130,12 @@ msgid "Submit something now!"
 msgstr "ដាក់ស្នើឥឡូវនេះ!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "ជ្រើសរើសព្រឹត្តិការណ៍"
+msgstr "ជ្រើសរើសឯកសារ"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "មិនបានផ្ដល់ឯកសារ"
+msgstr "មិនបានជ្រើសរើសឯកសារ"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11255,10 +11148,8 @@ msgid "Redo"
 msgstr "ធ្វើឡើងវិញ"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "បន្ទាត់ថ្មី"
+msgstr "គូស​បន្ទាត់​ក្រោម"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -11909,28 +11800,20 @@ msgid "Optional"
 msgstr "សក្ម្មភាព"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "ភាសា"
+msgstr "ភ្ជាប់​ភាសា"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "ជំនួយ៖ បង្ខំប្រើភាសា UI"
+msgstr "ជំនួយ៖ ភ្ជាប់ភាសា"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"នៅពេលបើកប្រើ ភាសាព្រឹត្តិការណ៍នឹងអនុវត្តតាមភាសា UI របស់អ្នក "
-"នៅពេលដែលភាសានោះមានសម្រាប់ព្រឹត្តិការណ៍នេះ។"
+"នៅពេលបើកប្រើ ភាសាព្រឹត្តិការណ៍ និងភាសា UI នឹងត្រូវបានភ្ជាប់គ្នា។ ការជ្រើសរើសមួយ នឹងធ្វើឱ្យមួយទៀត"
+"ត្រូវបានអាប់ដេត នៅពេលណាដែលភាសានោះមានសម្រាប់ព្រឹត្តិការណ៍នេះ។"
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -11981,10 +11864,8 @@ msgstr "អំពាវនាវអ្នកបង្ហាញ"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12581,10 +12462,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "រយៈពេល"
+msgstr "ហ្គុជារ៉ាទី"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12615,10 +12494,8 @@ msgid "Malay"
 msgstr "ម៉ាឡេ"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "ម៉ាឡេ"
+msgstr "ម៉ាឡាយ៉ាឡាំ"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14231,16 +14108,13 @@ msgid "Payment date"
 msgstr "កាលបរិច្ឆេទបង់ប្រាក់"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "មិនអាចកែសម្រួលសំណើនេះបានទៀតទេ។"
+msgstr "ជម្រើសនេះមិនអាចប្រើរួមជាមួយការបញ្ជាទិញដែលបានបង់ប្រាក់តែប៉ុណ្ណោះទេ។"
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "សកម្មភាពនេះអនុញ្ញាតតែសម្រាប់ការបញ្ជាទិញដែលកំពុងរង់ចាំប៉ុណ្ណោះ។"
+msgstr ""
+"ជម្រើសនេះមិនអាចប្រើរួមជាមួយការបញ្ជាទិញដែលកំពុងរង់ចាំការអនុម័តតែប៉ុណ្ណោះបានទេ។"
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14544,10 +14418,9 @@ msgid "Please confirm that you want to cancel ALL dates in this event series."
 msgstr "សូមបញ្ជាក់ថាចង់បោះបង់កាលបរិច្ឆេទទាំងអស់ក្នុងស៊េរីព្រឹត្តិការណ៍នេះ។"
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "ព្រឹត្តិការណ៍ទាំងអស់ (រួមទាំងព្រឹត្តិការណ៍ដែលបានបង្កើតថ្មី)"
+msgstr ""
+"ព្រឹត្តិការណ៍ទាំងអស់ (រួមទាំងព្រឹត្តិការណ៍ដែលបានបង្កើតថ្មី និងបានបោះពុម្ពផ្សាយ)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14559,10 +14432,8 @@ msgid "Gift card value"
 msgstr "តម្លៃប័ណ្ណអំណោយ"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "កំណត់ហេតុអ្នករៀបចំ"
+msgstr "Slug អ្នករៀបចំ"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -16871,10 +16742,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "ភាពមើលឃើញនៃព្រឹត្តិការណ៍"
+msgstr "បិទ/បើក ការមើលឃើញប្រព័ន្ធ"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19403,10 +19272,8 @@ msgid "Required status for Company"
 msgstr "ស្ថានភាពចាំបាច់សម្រាប់ក្រុមហ៊ុន"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "ស្ថានភាពចាំបាច់សម្រាប់អ៊ីមែល"
+msgstr "ស្ថានភាពដែលត្រូវការសម្រាប់​ចំណងជើង​ការងារ"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -19949,10 +19816,8 @@ msgstr "(ជាជម្រើស)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "ការប្រើប្រាស់"
+msgstr "ជម្រើសផ្លាកសញ្ញា"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -20826,22 +20691,16 @@ msgid_plural "%(s)s orders"
 msgstr[0] "ការបញ្ជាទិញ %(s)s"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "ការជ្រើសរើស"
+msgstr "ជ្រើសរើសសកម្មភាព"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "បានអនុម័តការបញ្ជាទិញឥតគិតថ្លៃ"
+msgstr "អនុម័តការបញ្ជាទិញដែលបានជ្រើស"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "លុបការបញ្ជាទិញ"
+msgstr "បដិសេធការបញ្ជាទិញដែលបានជ្រើស"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21038,10 +20897,8 @@ msgid "Revoke"
 msgstr "ដកហូត"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "ដកហូតសិទ្ធិចូលប្រើឧបករណ៍៖"
+msgstr "ដកហូត និងលុបឧបករណ៍ទាំងអស់"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21057,17 +20914,13 @@ msgid_plural ""
 msgstr[0] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "ព្រឹត្តិការណ៍នេះមិនអាចលុបបានទេ។"
+msgstr "សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "ដកហូតសិទ្ធិចូលប្រើឧបករណ៍៖"
+msgstr "ដកហូត និងលុបឧបករណ៍ទាំងអស់"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -22707,22 +22560,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "មិនអាចបកស្រាយឯកសារដែលបានផ្ទុកឡើងជា​ឯកសារ CSV បានទេ។"
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "សូមជ្រើសរើសកៅអីដែលមានសុពលភាព។"
+msgstr "សូមជ្រើសរើសសកម្មភាពដែលមានសុពលភាព។"
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "សូមរៀបចំយ៉ាងហោចណាស់ឧបករណ៍មួយខាងក្រោម។"
+msgstr "សូមជ្រើសរើសការបញ្ជាទិញយ៉ាងហោចណាស់មួយ។"
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "កាលបរិច្ឆេទដែលបានជ្រើសមិនមាននៅក្នុងស៊េរីព្រឹត្តិការណ៍នេះទេ។"
+msgstr "យ៉ាងហោចណាស់មានការបញ្ជាទិញដែលបានជ្រើសរើសមួយ ឬច្រើនមិនមានទៀតឡើយ។"
 
 #: control/views/orders.py:330
 msgid ""
@@ -22730,18 +22577,16 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "បានអនុម័តការបញ្ជាទិញហើយ។"
+msgstr[0] "ការបញ្ជាទិញ %(count)d ត្រូវបានអនុម័ត។"
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "ការបញ្ជាទិញត្រូវបានបដិសេធ ហើយដូច្នេះឥឡូវនេះត្រូវបានបោះបង់។"
+msgstr[0] "ការបញ្ជាទិញ %(count)d ត្រូវបានបដិសេធ ហើយឥឡូវនេះត្រូវបានលុបចោល។"
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23126,16 +22971,12 @@ msgstr "សិទ្ធិចូលប្រើសម្រាប់ឧបករ
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "មិនមានអ្នកចូលរួមសម្រាប់បង្ហាញទេ។"
+msgstr "មិនមានឧបករណ៍ដែលបានភ្ជាប់ ដើម្បីដកសិទ្ធិ និងលុបចេញទេ។"
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "សំបុត្រ​ដែល​បាន​ជ្រើស​ត្រូវ​បាន​សម្គាល់​ថា​បាន​ចុះឈ្មោះ​ចូល។"
+msgstr "ឧបករណ៍ដែលបានភ្ជាប់ទាំងអស់ត្រូវបានដកហូត និងលុបចេញជាអចិន្ត្រៃយ៍។"
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23233,16 +23074,12 @@ msgid "Please only upload PDF files."
 msgstr "សូមផ្ទុកឡើងតែឯកសារ PDF ប៉ុណ្ណោះ។"
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "មិនបានផ្តល់ឈ្មោះអ្នកចូលរួម"
+msgstr "មិនបានផ្ដល់ទិន្នន័យប្លង់ទេ។"
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "ទិន្នន័យបញ្ចូលមិនត្រឹមត្រូវ។"
+msgstr "ទិន្នន័យ​ប្លង់​ដែល​បាន​ផ្ដល់​មក​មិន​ត្រឹមត្រូវ​ទេ។"
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -23449,10 +23286,8 @@ msgid "Bypass quota"
 msgstr "រំលងកូតា"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "រំលងកូតា"
+msgstr "រំលងការអនុម័ត"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -24941,10 +24776,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "ជ្រើសព្រឹត្តិការណ៍"
+msgstr "— ជ្រើសរើស​ព្រឹត្តិការណ៍ —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -24955,10 +24788,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "មិនទាន់បានកំណត់រចនាសម្ព័ន្ធម៉ាស៊ីនមេទេ។"
+msgstr "មិនមានបទត្រូវបានកំណត់រចនាសម្ព័ន្ធសម្រាប់ព្រឹត្តិការណ៍ណាមួយទេ។"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -25451,9 +25282,6 @@ msgid "Unique viewers by session"
 msgstr "អ្នកទស្សនាតែមួយគត់តាមសម័យ"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
 msgstr "សម័យ"
 
@@ -26248,10 +26076,8 @@ msgid "Mail signature"
 msgstr "ហត្ថលេខាអ៊ីមែល"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "ហត្ថលេខានឹងត្រូវបានបន្ថែមទៅអ៊ីមែលចេញ ដោយមាន “-- ” នៅខាងមុខ។"
+msgstr "ហត្ថលេខានឹងត្រូវបានបន្ថែមទៅអ៊ីមែលចេញ ដោយដាក់មុនដោយ “-- ”។ "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27123,10 +26949,8 @@ msgid "Default duration"
 msgstr "រយៈពេលលំនាំដើម"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "ប្រភេទសម័យទាំងអស់"
+msgstr "ផ្លាស់ទី​ប្រភេទ​សម័យ"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -28391,10 +28215,8 @@ msgstr[0] "អ្នកដាក់ស្នើ"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "បង្ហាញសំណើនេះក្នុងបញ្ជីសម័យពិសេស។"
+msgstr "បង្ហាញវាគ្មិននេះក្នុងបញ្ជីវាគ្មិនដែលបានជ្រើសរើស។"
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -28405,10 +28227,8 @@ msgid "Not arrived"
 msgstr "មិនទាន់មកដល់"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "រក​មិន​ឃើញ​អ្នកប្រើ​ទេ។"
+msgstr "រកមិនឃើញអ្នកដាក់ស្នើទេ។"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -28794,10 +28614,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "ប្រភេទសំណុំបែបបទនេះកំពុងត្រូវបានប្រើក្នុងសំណើ ហើយមិនអាចលុបបានទេ។"
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "ឧបករណ៍ត្រូវបានដកចេញ។"
+msgstr "ប្រភេទសម័យលំនាំដើមត្រូវបានដកចេញ។"
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -29435,23 +29253,17 @@ msgid "Sort by"
 msgstr "តម្រៀបតាម"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "ផលិតផល \"{}\" មិនត្រូវបានផ្ដាខ់ទៅនឹងកូតា។"
+msgstr "ផលិតផលដែលបានកំណត់ទៅប្លង់នេះ"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "ការកែតម្រូវវិក្កយបត្រ"
+msgstr "អនុញ្ញាត​ឲ្យ​ប្ដូរ​តាម​បំណង​ផ្លាកសញ្ញា"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "លាក់វាល"
+msgstr "វាលផ្លាកសញ្ញា"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -29467,10 +29279,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "មិនបានជ្រើសភាសា"
+msgstr "មិនបានជ្រើសរើសវាលផ្លាកសញ្ញាជាជម្រើស"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -29482,10 +29292,8 @@ msgid "Download Badge"
 msgstr "ទាញយកផ្លាកសញ្ញា"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "ជម្រើសផ្ទុកឡើង"
+msgstr "ជម្រើសផ្លាកសញ្ញា"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -29546,10 +29354,8 @@ msgstr "បង្កើតប្លង់ផ្លាកសញ្ញាថ្ម
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "ប្លង់ផ្លាកសញ្ញា"
+msgstr "ការកំណត់ប្លង់សញ្ញាសម្គាល់"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -29559,10 +29365,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "អ្នកប្រើទាំងអស់"
+msgstr "សួរអ្នកប្រើ"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -29570,16 +29374,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "ទិន្នន័យមេតាដាតាព្រឹត្តិការណ៍"
+msgstr "មេតាព្រឹត្តិការណ៍៖ {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "ឈ្មោះផលិតផល"
+msgstr "មេតាផលិតផល៖ {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -29587,10 +29389,8 @@ msgid "The requested badge layout does not exist."
 msgstr "មិនមានប្លង់ផ្លាកសញ្ញាដែលបានស្នើសុំទេ។"
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "ការកំណត់គណនីត្រូវបានផ្លាស់ប្តូរ។"
+msgstr "ការកំណត់ប្លង់ផ្លាកសញ្ញាត្រូវបានរក្សាទុក។"
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -30846,10 +30646,8 @@ msgid "Client Application Secret"
 msgstr "សម្ងាត់កម្មវិធីអតិថិជន"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "មិនបានផ្ដល់ឯកសារ"
+msgstr "មិនមានអ្នកផ្តល់សេវាដែលពេញចិត្ត"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31027,10 +30825,8 @@ msgstr ""
 "របស់ពួកគេ។"
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "ផលិតផលនេះមិនមានសម្រាប់ប្រើប្រាស់នៅពេលនេះទេ។"
+msgstr "វិធីសាស្ត្រចូលប្រើនេះមិនអាចប្រើបានទេ។"
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -32186,15 +31982,11 @@ msgstr "ផ្ញើតំណបញ្ជាទិញឡើងវិញ"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"សូមចំណាំថា កំពុងរង់ចាំការអនុម័តពីអ្នករៀបចំព្រឹត្តិការណ៍ មុនពេលអាចទូទាត់ និងបញ្ចប់ការបញ្ជាទិញនេះ។"
+"សំណើត្រូវបានដាក់ស្នើរួចហើយ និងកំពុងរង់ចាំការអនុម័តពីអ្នករៀបចំព្រឹត្តិការណ៍។ សូមមើលព័ត៌មានលម្អិតខាងក្រោម។"
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -33314,10 +33106,8 @@ msgstr ""
 "ប្រសិនបើមានវាគ្មិនរួមច្រើនជាងម្នាក់ អាចបន្ថែមវាគ្មិនបន្ថែមបាន បន្ទាប់ពីបញ្ចប់ដំណើរការដាក់សំណើ។"
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "ប្រភេទសេស្សដំលើម"
+msgstr "ជ្រើសរើសប្រភេទសម័យ"
 
 #: submission/forms/submission.py:172
 msgid ""
