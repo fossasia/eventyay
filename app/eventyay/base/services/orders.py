@@ -2694,6 +2694,130 @@ def _try_auto_refund(
         )
 
 
+def _cancel_order_positions(
+    order,
+    position_ids,
+    user=None,
+    api_token=None,
+    oauth_application=None,
+    device=None,
+):
+    with transaction.atomic():
+        if isinstance(order, int):
+            order = Order.objects.select_for_update().get(pk=order)
+        if isinstance(user, int):
+            user = User.objects.get(pk=user)
+        if isinstance(api_token, int):
+            api_token = TeamAPIToken.objects.get(pk=api_token)
+        if isinstance(device, int):
+            device = Device.objects.get(pk=device)
+        if isinstance(oauth_application, int):
+            oauth_application = OAuthApplication.objects.get(pk=oauth_application)
+
+        if not order.user_partial_cancel_allowed:
+            raise OrderError(_('You cannot cancel individual tickets in this order.'))
+        if not position_ids:
+            raise OrderError(_('Please select at least one ticket to cancel.'))
+
+        cancelable_positions = {p.pk: p for p in order.user_cancelable_positions}
+        selected_positions = {}
+        for position_id in position_ids:
+            try:
+                position_id = int(position_id)
+            except (TypeError, ValueError):
+                raise OrderError(_('One of the selected tickets can not be canceled.'))
+
+            if position_id not in cancelable_positions:
+                raise OrderError(_('One of the selected tickets can not be canceled.'))
+
+            selected_positions[position_id] = cancelable_positions[position_id]
+
+        positions_to_cancel = []
+        canceled_total = Decimal('0.00')
+        canceled_ids = set()
+        for position in sorted(selected_positions.values(), key=lambda p: p.positionid):
+            if position.addon_to_id and position.addon_to_id in selected_positions:
+                continue
+
+            positions_to_cancel.append(position)
+
+            if position.pk not in canceled_ids:
+                canceled_total += position.price
+                canceled_ids.add(position.pk)
+
+            for addon in position.addons.all():
+                if addon.pk in canceled_ids:
+                    continue
+                canceled_total += addon.price
+                canceled_ids.add(addon.pk)
+
+        ocm = OrderChangeManager(
+            order=order,
+            user=user,
+            auth=api_token or oauth_application or device,
+        )
+        for position in positions_to_cancel:
+            ocm.cancel(position)
+
+        cancellation_fee = order.user_partial_cancel_fee(canceled_total)
+        if cancellation_fee:
+            fee = OrderFee(
+                fee_type=OrderFee.FEE_TYPE_CANCELLATION,
+                value=cancellation_fee,
+                tax_rule=order.event.settings.tax_rate_default,
+                order=order,
+            )
+            fee._calculate_tax()
+            ocm.add_fee(fee)
+
+        ocm.commit()
+        return order
+
+
+@app.task(
+    base=ProfiledTask,
+    bind=True,
+    max_retries=5,
+    default_retry_delay=1,
+    throws=(OrderError,),
+)
+@scopes_disabled()
+def cancel_order_positions(
+    self,
+    order: int,
+    position_ids: list[int],
+    user: int = None,
+    api_token=None,
+    oauth_application=None,
+    device=None,
+    try_auto_refund=False,
+    refund_as_giftcard=False,
+    comment=None,
+):
+    try:
+        try:
+            order = _cancel_order_positions(
+                order,
+                position_ids,
+                user,
+                api_token,
+                oauth_application,
+                device,
+            )
+            if try_auto_refund:
+                _try_auto_refund(
+                    order,
+                    allow_partial=True,
+                    refund_as_giftcard=refund_as_giftcard,
+                    comment=comment,
+                )
+            return order.pk
+        except LockTimeoutException:
+            self.retry()
+    except (MaxRetriesExceededError, LockTimeoutException):
+        raise OrderError(error_messages['busy'])
+
+
 @app.task(
     base=ProfiledTask,
     bind=True,
