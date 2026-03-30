@@ -41,7 +41,8 @@ class PermissionMiddleware:
         'auth.forgot',
         'auth.forgot.recover',
         'auth.invite',
-        'user.settings.notifications.off',
+        'account.locale',
+        'account.notification.flip-off',
         'oauth2_provider',
     )
 
