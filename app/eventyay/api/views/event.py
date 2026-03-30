@@ -52,6 +52,7 @@ from eventyay.presale.style import regenerate_css
 from eventyay.presale.views.organizer import filter_qs_by_attr
 from eventyay.api.utils import get_protocol
 from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
+from rest_framework.pagination import PageNumberPagination
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,7 @@ class EventViewSet(viewsets.ModelViewSet):
     ordering = ('slug',)
     ordering_fields = ('date_from', 'slug')
     filterset_class = EventFilter
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         if isinstance(self.request.auth, (TeamAPIToken, Device)):
@@ -240,6 +242,7 @@ class SubEventViewSet(ConditionalListView, viewsets.ModelViewSet):
     ordering_fields = ('date_from', 'id')
     filterset_class = SubEventFilter
     write_permission = 'can_change_event_settings'
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         if getattr(self.request, 'event', None):
@@ -301,7 +304,8 @@ class TaxRuleViewSet(ConditionalListView, viewsets.ModelViewSet):
     serializer_class = TaxRuleSerializer
     queryset = TaxRule.objects.none()
     write_permission = 'can_change_event_settings'
-
+    pagination_class = PageNumberPagination
+    
     def get_queryset(self):
         return self.request.event.tax_rules.all()
 
