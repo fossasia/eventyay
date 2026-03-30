@@ -430,8 +430,11 @@ export default {
 		},
 		getStickyHeaderClearance () {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
-			// 40px page header (when stuck) + 40px toolbar + rooms bar + scrollbar + buffer
-			return 80 + (stickyHeader ? stickyHeader.offsetHeight : 0) + 10
+			const toolbar = this.$el.querySelector('.c-schedule-toolbar')
+			const style = getComputedStyle(this.$el)
+			const navOffset = parseInt(style.getPropertyValue('--pretalx-sticky-top-offset')) || 40
+			const toolbarHeight = toolbar ? toolbar.getBoundingClientRect().height : 0
+			return navOffset + toolbarHeight + (stickyHeader ? stickyHeader.getBoundingClientRect().height : 0) + 10
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -587,7 +590,7 @@ export default {
 	--room-col-min: 320px
 	.sticky-header
 		position: sticky
-		top: calc(var(--pretalx-sticky-top-offset, 0px) + 30px + var(--pretalx-version-warning-height, 0px))
+		top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) - 1px)
 		z-index: 25
 		background-color: $clr-white
 	.rooms-bar

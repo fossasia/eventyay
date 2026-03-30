@@ -19,7 +19,7 @@
 				line(x1="7" y1="12" x2="17" y2="12")
 				line(x1="10" y1="18" x2="14" y2="18")
 			span.btn-label {{ t.filters }}
-			span.badge(v-if="hasActiveFilters")
+			span.mobile-toggle-badge(v-if="hasActiveFilters")
 		.toolbar-filters(:class="{'open': mobileFiltersOpen}", ref="mobileFiltersPanel")
 			.filter-group(v-if="availableLanguages.length > 1")
 				.dropdown-wrapper
@@ -28,7 +28,7 @@
 							path(d="M12.87 15.07l-2.54-2.51c.86-1.02 1.52-2.12 1.99-3.28H14V7h-4V5H8v2H4v2h7.17c-.39 1.17-.96 2.27-1.7 3.25-.48-.63-.9-1.31-1.25-2.03H6.1c.5 1.09 1.17 2.14 2 3.11L3 20h2l5-5 3.11 3.11.76-3.04z")
 							path(d="M15.5 11h-2L9 22h2l1-3h4l1 3h2l-3.5-11zm-2.3 6 .8-2.8.8 2.8h-1.6z")
 						span.btn-label {{ t.language }}
-						span.badge(v-if="selectedLanguages.length") {{ selectedLanguages.length }}
+						span.filter-dot(v-if="selectedLanguages.length")
 					.dropdown-menu(v-if="openDropdown === 'language'")
 						label.dropdown-item(v-for="lang in availableLanguages", :key="lang")
 							input(type="checkbox", :value="lang", v-model="selectedLanguages")
@@ -40,7 +40,7 @@
 							path(d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z")
 							path(d="M6 6h.008v.008H6V6Z")
 						span.btn-label {{ t.track }}
-						span.badge(v-if="selectedTracks.length") {{ selectedTracks.length }}
+						span.filter-dot(v-if="selectedTracks.length")
 					.dropdown-menu(v-if="openDropdown === 'track'")
 						label.dropdown-item(v-for="track in availableTracks", :key="track.id")
 							input(type="checkbox", :value="track.id", v-model="selectedTracks")
@@ -550,19 +550,22 @@ export default {
 				width: 14px
 				height: 14px
 				flex-shrink: 0
-			.badge
-				display: inline-flex
-				align-items: center
-				justify-content: center
-				flex-shrink: 0
-				min-width: 18px
-				height: 18px
-				border-radius: 9px
+			.filter-dot
+				display: inline-block
+				width: 7px
+				height: 7px
+				border-radius: 50%
 				background: var(--pretalx-clr-primary, #3aa57c)
-				color: #fff
-				font-size: 11px
-				font-weight: 600
-				padding: 0 4px
+				flex-shrink: 0
+				margin-left: 6px
+			.mobile-toggle-badge
+				display: inline-block
+				width: 7px
+				height: 7px
+				border-radius: 50%
+				background: var(--pretalx-clr-primary, #3aa57c)
+				flex-shrink: 0
+				margin-left: 6px
 			&.clear-filters-btn
 				padding: 6px 10px
 				justify-content: center
@@ -595,7 +598,7 @@ export default {
 				cursor: pointer
 				border: none
 				background: none
-				width: 100%
+				width: auto
 				text-align: left
 				min-width: 0
 				white-space: normal
@@ -846,6 +849,7 @@ export default {
 				font-style: italic
 	.empty
 		padding: 32px
+		min-height: 400px
 		text-align: center
 		color: $clr-secondary-text-light
 

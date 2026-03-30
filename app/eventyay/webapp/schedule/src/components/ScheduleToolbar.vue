@@ -370,6 +370,13 @@ export default {
 		}
 	},
 	computed: {
+		effectiveHasActiveFilters() {
+			const groupActive = (this.filterGroups || []).some(group =>
+				group.refKey !== 'language' && Array.isArray(group.data) && group.data.some(item => item.selected)
+			);
+			const recordingActive = this.showRecordingFilter && this.recordingModel !== 'all';
+			return groupActive || recordingActive;
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -558,8 +565,12 @@ export default {
 		document.addEventListener('fullscreenchange', this.onFullscreenChange)
 		this.$nextTick(() => {
 			this.updateVersionBannerHeight()
+			this.updateToolbarHeight()
 			if (typeof ResizeObserver !== 'undefined') {
-				this._versionBannerResizeObserver = new ResizeObserver(() => this.updateVersionBannerHeight())
+				this._versionBannerResizeObserver = new ResizeObserver(() => {
+					this.updateVersionBannerHeight()
+					this.updateToolbarHeight()
+				})
 				if (this.$refs.versionBanner) this._versionBannerResizeObserver.observe(this.$refs.versionBanner)
 				this._versionBannerResizeObserver.observe(this.$el)
 			}
@@ -575,8 +586,18 @@ export default {
 			const host = this.$el?.parentElement
 			if (!host) return
 			const bannerEl = this.$refs.versionBanner
-			const height = bannerEl ? bannerEl.offsetHeight : 0
+			const height = bannerEl ? bannerEl.getBoundingClientRect().height : 0
 			host.style.setProperty('--pretalx-version-warning-height', `${height}px`)
+		},
+		updateToolbarHeight() {
+			const host = this.$el?.parentElement
+			if (!host) return
+			const height = this.$el ? this.$el.getBoundingClientRect().height : 0
+			// We only want the height of the toolbar portion (excluding the banner which is handled separately)
+			const bannerEl = this.$refs.versionBanner
+			const bannerHeight = bannerEl ? bannerEl.getBoundingClientRect().height : 0
+			const toolbarHeight = height - bannerHeight
+			host.style.setProperty('--pretalx-toolbar-height', `${toolbarHeight}px`)
 		},
 		formatVersionLabel(version) {
 			if (!version) return ''
@@ -1413,6 +1434,28 @@ export default {
 
 @media (max-width: 600px)
 	.c-schedule-toolbar
+		.filter-title,
+		.filter-title-text,
+		.filter-dot,
+		.filter-dropdown-label,
+		label.filter-dropdown-item,
+		button.toolbar-btn,
+		button.toolbar-btn span,
+		button.toolbar-btn .filter-title,
+		button.toolbar-btn .filter-title-text {
+			color: #111
+		}
+		svg.tb-icon,
+		svg.chevron-icon {
+			stroke: #111
+			color: #111
+			fill: none
+		}
+		.language-filter-area svg.tb-icon {
+			fill: #111
+			color: #111
+			stroke: none
+		}
 		.sessions-toggle-label
 			display: none
 		.sessions-toggle[aria-label]
@@ -1605,6 +1648,12 @@ export default {
 				.sessions-toggle-menu
 					display: flex
 					justify-content: flex-start
+			.toolbar-btn,
+			.toolbar-btn.icon-only,
+			button.toolbar-btn,
+			button.toolbar-btn.icon-only {
+				color: #111
+			}
 		.toolbar-btn
 			padding: 0 6px
 			height: 30px

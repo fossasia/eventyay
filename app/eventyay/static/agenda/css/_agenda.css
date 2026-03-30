@@ -111,6 +111,12 @@
   }
 }
 
+@media (max-width: 768px) {
+  #main-container #fahrplan pretalx-schedule {
+    --pretalx-sticky-top-offset: 33px;
+  }
+}
+
 #fahrplan noscript,
 .pretalx-tabbed {
   max-width: 80vw;
