@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-30 15:15+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-03-30 15:56+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/es/>\n"
 "Language: es\n"
@@ -20684,6 +20684,8 @@ msgstr "Opciones de insignia"
 #: presale/templates/pretixpresale/event/order_modify.html:79
 msgid "Please select all fields you'd like to appear on your event badge."
 msgstr ""
+"Por favor, seleccione todos los campos que le gustaría que aparezcan en su "
+"credencial del evento."
 
 #: control/templates/pretixcontrol/order/delete.html:4
 #: control/templates/pretixcontrol/order/delete.html:8
