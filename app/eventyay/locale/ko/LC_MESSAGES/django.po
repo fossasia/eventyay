@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-21 17:16+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Korean <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ko/>\n"
@@ -207,8 +207,7 @@ msgid "Duration"
 msgstr "기간"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
 msgstr "%(minutes)s분"
 
@@ -272,10 +271,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (별표 표시된 세션)"
+msgstr "%(name)s의 즐겨찾기한 세션"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -306,34 +304,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "변경사항"
+msgstr "변경 로그 보기"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "현재 값 유지"
+msgstr "현재 버전으로 이동"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "필터 지우기"
+msgstr "모든 필터 재설정"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
-msgstr "정렬 기준"
+msgstr "정렬"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "새 발표장"
+msgstr "회의실별"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -348,28 +336,20 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "스캔 종료"
+msgstr "전체 화면 종료"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "게이트"
+msgstr "최신"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"현재 편집 가능한 일정 버전을 보고 계시는데, 이 버전은 아직 출시되지 않았으며 "
-"언제든지 변경될 수 있습니다."
+"현재 편집 가능한 일정 버전을 보고 있습니다. 공개된 버전과 일치하지 않을 수 "
+"있습니다."
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -380,16 +360,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "비디오"
+msgstr "동영상 보기"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "비공개입니다"
+msgstr "실시간 시청"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -399,10 +375,8 @@ msgid_plural "Speakers"
 msgstr[0] "발표자"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "발표자를 도착하지 않은 것으로 표시"
+msgstr "발표자 이름이 제공되지 않았습니다"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -430,10 +404,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "캘린더에 추가"
+msgstr "Google 캘린더"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -478,10 +450,8 @@ msgid "No"
 msgstr "아니요"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "사용자를 찾을 수 없습니다."
+msgstr "스피커를 찾을 수 없습니다."
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -501,22 +471,16 @@ msgid "Tracks"
 msgstr "트랙"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
 msgstr "다운로드"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "작성자"
+msgstr "별표 표시한 사용자"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "시작"
+msgstr "즐겨찾기됨"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -526,8 +490,6 @@ msgid "Export"
 msgstr "내보내기"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
 msgstr "내보내기"
 
@@ -542,16 +504,12 @@ msgid "No response"
 msgstr "응답 없음"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "기타 수수료"
+msgstr "기타 시간대"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "현재:"
+msgstr "현재"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -559,10 +517,8 @@ msgid "Print"
 msgstr "인쇄"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "목록"
+msgstr "목록 보기"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -590,22 +546,16 @@ msgstr "검색"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "추천 이벤트"
+msgstr "주요 연사"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "발표자 프로필 보기 또는 편집"
+msgstr "발표자 프로필 보기"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "게시된 세션이 없습니다."
+msgstr "별표 표시된 세션이 없습니다."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -811,14 +761,10 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "체크인 중에는 이 유형의 질문을 할 수 없습니다."
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "단일 이벤트(종료됨)"
+msgstr "시작 시간은 과거일 수 없습니다."
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
 msgstr "종료 시간은 시작 시간 이후여야 합니다."
 
@@ -1063,16 +1009,12 @@ msgid "Require company per ticket"
 msgstr "티켓별 회사명 필수"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "티켓별 회사명 요청"
+msgstr "티켓별로 직함 요청"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "티켓별 회사명 필수"
+msgstr "티켓별 직함 필수"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3713,10 +3655,8 @@ msgid "Only paid orders"
 msgstr "결제 완료된 주문만"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "승인 대기"
+msgstr "승인 대기 중인 주문만"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4450,8 +4390,6 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
 msgstr "직함"
 
@@ -4466,16 +4404,12 @@ msgstr "주/도 선택"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "장바구니"
+msgstr "답변"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "선택"
+msgstr "옵션 선택"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4523,12 +4457,8 @@ msgstr ""
 "문의해 주세요."
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr "이메일 주소나 비밀번호를 변경하려면 현재 비밀번호를 입력해 주세요."
+msgstr "비밀번호를 변경하려면 현재 비밀번호를 입력하세요."
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6503,10 +6433,8 @@ msgid "Show link on the website start page"
 msgstr "웹사이트 시작 페이지에 링크 표시"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "모든 페이지의 헤더 메뉴에 표시"
+msgstr "시스템 페이지의 헤더 및 푸터에 표시"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -6983,10 +6911,8 @@ msgid "Radio button (Choose one option)"
 msgstr "라디오 버튼 (옵션 하나 선택)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "라디오 버튼 (옵션 하나 선택)"
+msgstr "드롭다운(옵션 1개 선택)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7253,10 +7179,8 @@ msgid "Biography"
 msgstr "약력"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "이 세션을 공개 추천 세션 목록에 표시합니다."
+msgstr "이 연사를 공개 추천 연사 목록에 표시합니다."
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7283,10 +7207,8 @@ msgid "Confirmation"
 msgstr "확인"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "국가"
+msgstr "국가 목록"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7769,18 +7691,14 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "시스템 URL:"
+msgstr "스트림 URL"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
 msgstr "시작 시간"
 
@@ -7789,8 +7707,6 @@ msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
 msgstr "종료 시간"
 
@@ -7799,16 +7715,12 @@ msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "스트림 키"
+msgstr "스트림 유형"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "추가 정보"
+msgstr "추가 구성"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -7817,16 +7729,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "일정"
+msgstr "스트리밍 일정"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "일정"
+msgstr "스트리밍 일정"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8105,8 +8013,6 @@ msgid ""
 msgstr "이 세션 유형은 일치하는 접근 코드를 가진 제출자에게만 표시됩니다."
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
 msgstr "위치"
 
@@ -8184,23 +8090,17 @@ msgstr ""
 "있습니다."
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "할당량 우회 허용"
+msgstr "승인을 우회하도록 허용"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"활성화되면 이 바우처 코드를 가진 사람은 남은 티켓이 없어도 티켓을 구매할 수 "
-"있습니다."
+"활성화하면 이 바우처 코드를 가진 사용자는 주최자의 승인 대기 없이 티켓을 "
+"구매할 수 있습니다. 이는 승인이 필요한 상품에 적용됩니다."
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9079,10 +8979,8 @@ msgid "Attendee job title"
 msgstr "참석자 직함"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "Sample State"
+msgstr "샘플 직무명"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10214,12 +10112,9 @@ msgid "You have to ask for attendee emails if you want to make them required."
 msgstr "참가자 이메일을 필수로 지정하려면 참가자 이메일을 요청해야 합니다."
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr "참가자 이메일을 필수로 지정하려면 참가자 이메일을 요청해야 합니다."
+msgstr "참석자의 직함을 필수로 설정하려면 직함을 요청해야 합니다."
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11298,16 +11193,12 @@ msgid "Submit something now!"
 msgstr "지금 바로 작성을 시작해봐요!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "이벤트 선택"
+msgstr "파일 선택"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "제공된 파일 없음"
+msgstr "파일이 선택되지 않았습니다"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11320,10 +11211,8 @@ msgid "Redo"
 msgstr "다시 실행"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "줄 바꿈"
+msgstr "밑줄"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -11978,28 +11867,20 @@ msgid "Optional"
 msgstr "선택 사항"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "언어"
+msgstr "언어 연결"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "도움말: UI 언어 강제 적용"
+msgstr "도움말: 언어 연결"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"활성화하면, 해당 언어가 이벤트에 사용 가능할 경우 이벤트 언어가 UI 언어를 따"
-"릅니다."
+"활성화하면 이벤트 언어와 UI 언어가 연동됩니다. 하나를 선택하면 해당 언어가 "
+"이 이벤트에서 사용 가능한 경우 다른 항목도 함께 업데이트됩니다."
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12050,10 +11931,8 @@ msgstr "발표자 모집"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12654,10 +12533,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "기간"
+msgstr "구자라트어"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12688,10 +12565,8 @@ msgid "Malay"
 msgstr "말레이어"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "말레이어"
+msgstr "말라얄람어"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14309,16 +14184,12 @@ msgid "Payment date"
 msgstr "결제일"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "이 발표 제안서는 더 이상 수정할 수 없습니다."
+msgstr "이 옵션은 유료 주문만으로는 함께 사용할 수 없습니다."
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "이 작업은 대기 중인 주문에만 허용됩니다."
+msgstr "이 옵션은 승인 대기 중인 주문만 있는 경우와 함께 사용할 수 없습니다."
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14627,10 +14498,8 @@ msgid "Please confirm that you want to cancel ALL dates in this event series."
 msgstr "이 이벤트 시리즈의 모든 날짜를 취소하려는 것인지 확인해 주세요."
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "모든 이벤트(새로 생성된 이벤트 포함)"
+msgstr "모든 이벤트(새로 생성 및 게시된 이벤트 포함)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14642,10 +14511,8 @@ msgid "Gift card value"
 msgstr "기프트카드 금액"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "주최자 로그"
+msgstr "주최자 슬러그"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -16981,10 +16848,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "이벤트 공개 설정"
+msgstr "시스템 표시 전환"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19526,10 +19391,8 @@ msgid "Required status for Company"
 msgstr "회사 필수 상태"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "이메일 필수 상태"
+msgstr "직함의 필수 상태"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20072,10 +19935,8 @@ msgstr "(선택 사항)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "사용 내역"
+msgstr "배지 옵션"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -20955,22 +20816,16 @@ msgid_plural "%(s)s orders"
 msgstr[0] "%(s)s개 주문"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "선택"
+msgstr "작업 선택"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "승인된 무료 주문"
+msgstr "선택한 주문 승인"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "주문 삭제"
+msgstr "선택한 주문 거부"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21168,10 +21023,8 @@ msgid "Revoke"
 msgstr "철회"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "기기 접근 권한 취소:"
+msgstr "모든 기기 액세스 권한을 취소하고 제거"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21187,17 +21040,13 @@ msgid_plural ""
 msgstr[0] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "이 이벤트는 삭제할 수 없습니다."
+msgstr "이 작업은 되돌릴 수 없습니다."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "기기 접근 권한 취소:"
+msgstr "모든 기기 액세스 취소 및 제거"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -22842,22 +22691,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "업로드된 파일을 CSV로 파싱할 수 없습니다."
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "유효한 좌석을 선택하세요."
+msgstr "올바른 작업을 선택하세요."
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "아래에서 최소 하나의 장치를 설정하세요."
+msgstr "주문을 하나 이상 선택하세요."
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "선택한 날짜가 이 이벤트 시리즈에 존재하지 않습니다."
+msgstr "선택한 주문 중 하나 이상이 더 이상 존재하지 않습니다."
 
 #: control/views/orders.py:330
 msgid ""
@@ -22865,18 +22708,16 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "주문이 승인되었습니다."
+msgstr[0] "%(count)d개의 주문이 승인되었습니다."
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "주문이 거부되어 취소되었습니다."
+msgstr[0] "%(count)d개의 주문이 거부되어 현재 취소되었습니다."
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23266,16 +23107,12 @@ msgstr "이 장치의 접근 권한이 취소되었습니다."
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "표시할 참석자가 없습니다."
+msgstr "취소 및 제거할 연결된 기기가 없습니다."
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "선택한 티켓이 체크인된 것으로 표시되었습니다."
+msgstr "연결된 모든 기기의 액세스 권한이 취소되었으며 영구적으로 삭제되었습니다."
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23372,16 +23209,12 @@ msgid "Please only upload PDF files."
 msgstr "PDF 파일만 업로드해 주세요."
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "참석자 이름이 제공되지 않았습니다."
+msgstr "레이아웃 데이터가 제공되지 않았습니다."
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "잘못된 입력 데이터입니다."
+msgstr "잘못된 레이아웃 데이터가 제공되었습니다."
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -23588,10 +23421,8 @@ msgid "Bypass quota"
 msgstr "쿼터 우회"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "쿼터 우회"
+msgstr "승인 우회"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25094,10 +24925,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "이벤트 선택"
+msgstr "— 이벤트 선택 —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25108,10 +24937,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "아직 서버가 구성되어 있지 않습니다."
+msgstr "어떤 이벤트에도 트랙이 구성되어 있지 않습니다."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -25609,9 +25436,6 @@ msgid "Unique viewers by session"
 msgstr "세션별 고유 시청자 수"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
 msgstr "세션"
 
@@ -26413,10 +26237,8 @@ msgid "Mail signature"
 msgstr "메일 서명"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "서명은 발신 메일에 추가되며, “-- ”로 시작합니다."
+msgstr "서명은 “-- ” 뒤에 추가되어 발신 메일에 포함됩니다. "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27295,10 +27117,8 @@ msgid "Default duration"
 msgstr "기본 소요 시간"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "모든 세션 유형"
+msgstr "세션 유형 이동"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -28575,10 +28395,8 @@ msgstr[0] "제출자"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "이 제안을 추천 세션 목록에 표시합니다."
+msgstr "이 발표자를 주요 발표자 목록에 표시합니다."
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -28589,10 +28407,8 @@ msgid "Not arrived"
 msgstr "미도착"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "사용자를 찾을 수 없습니다."
+msgstr "제출자를 찾을 수 없습니다."
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -28980,10 +28796,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "이 세션 유형은 제안서에서 사용 중이므로 삭제할 수 없습니다."
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "기기가 제거되었습니다."
+msgstr "기본 세션 유형이 제거되었습니다."
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -29629,23 +29443,17 @@ msgid "Sort by"
 msgstr "정렬 기준"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "상품 \"{}\"에 쿼터가 할당되어 있지 않습니다."
+msgstr "이 레이아웃에 할당된 제품"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "송장 맞춤 설정"
+msgstr "배지 사용자 지정 허용"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "필드 숨기기"
+msgstr "배지 필드"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -29661,10 +29469,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "선택된 언어가 없습니다."
+msgstr "선택된 선택 배지 필드가 없습니다"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -29676,10 +29482,8 @@ msgid "Download Badge"
 msgstr "배지 다운로드"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "업로드 옵션"
+msgstr "배지 옵션"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -29740,10 +29544,8 @@ msgstr "새 배지 레이아웃 만들기"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "배지 레이아웃"
+msgstr "배지 레이아웃 설정"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -29753,10 +29555,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "모든 사용자"
+msgstr "사용자에게 문의"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -29764,16 +29564,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "이벤트 메타데이터"
+msgstr "이벤트 메타: {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "상품명"
+msgstr "제품 메타: {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -29781,10 +29579,8 @@ msgid "The requested badge layout does not exist."
 msgstr "요청한 배지 레이아웃이 존재하지 않습니다."
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "계정 설정이 변경되었습니다."
+msgstr "배지 레이아웃 설정이 저장되었습니다."
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -31050,10 +30846,8 @@ msgid "Client Application Secret"
 msgstr "클라이언트 애플리케이션 시크릿"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "제공된 파일 없음"
+msgstr "선호하는 제공업체 없음"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31233,10 +31027,8 @@ msgstr ""
 "로그인할 수 있습니다."
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "이 상품은 현재 이용할 수 없습니다."
+msgstr "이 로그인 방법은 사용할 수 없습니다."
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -32395,16 +32187,12 @@ msgstr "주문 링크 재전송"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"이 주문을 결제하고 완료하려면 이벤트 주최자의 승인이 필요하며, 아직 승인을 기"
-"다리고 있습니다."
+"요청이 제출되었으며 이벤트 주최자의 승인을 기다리고 있습니다. 자세한 내용은 "
+"아래를 확인하세요."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -33538,10 +33326,8 @@ msgstr ""
 "후 더 많은 발표자를 추가할 수 있습니다."
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "기본 세션 유형"
+msgstr "세션 유형 선택"
 
 #: submission/forms/submission.py:172
 msgid ""
