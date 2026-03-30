@@ -64,8 +64,8 @@ from eventyay.base.services.mail import SendMailException
 from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
-    cancel_order_positions,
     cancel_order,
+    cancel_order_positions,
     change_payment_provider,
 )
 from eventyay.base.services.pricing import get_price
@@ -415,7 +415,9 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
         ctx['user_change_allowed'] = self.order.user_change_allowed
         ctx['user_cancel_allowed'] = self.order.user_cancel_allowed
         ctx['user_partial_cancel_allowed'] = self.order.user_partial_cancel_allowed
-        ctx['canceled_position_count'] = self.order.all_positions.filter(canceled=True).count()
+        ctx['canceled_position_count'] = (
+            self.order.all_positions.filter(canceled=True).count() if self.order.is_partially_canceled else 0
+        )
         for r in ctx['refunds']:
             if r.provider == 'giftcard':
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
@@ -543,6 +545,7 @@ class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
                 'payment': self.payment.pk,
             },
         )
+
 
 @method_decorator(xframe_options_exempt, 'dispatch')
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
@@ -980,10 +983,7 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
         return super().dispatch(request, *args, **kwargs)
 
 
-@method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPositionCancel(EventViewMixin, OrderDetailMixin, TemplateView):
-    template_name = 'pretixpresale/event/order_cancel_positions.html'
-
+class OrderPositionCancelMixin:
     def get_cancel_positions_url(self):
         return eventreverse(
             self.request.event,
@@ -991,9 +991,12 @@ class OrderPositionCancel(EventViewMixin, OrderDetailMixin, TemplateView):
             kwargs={'order': self.order.code, 'secret': self.order.secret},
         )
 
+
+@method_decorator(xframe_options_exempt, 'dispatch')
+class OrderPositionCancel(OrderPositionCancelMixin, EventViewMixin, OrderDetailMixin, TemplateView):
+    template_name = 'pretixpresale/event/order_cancel_positions.html'
+
     def dispatch(self, request, *args, **kwargs):
-        self.request = request
-        self.kwargs = kwargs
         if not self.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
         if not self.order.user_partial_cancel_allowed:
@@ -1013,7 +1016,8 @@ class OrderPositionCancel(EventViewMixin, OrderDetailMixin, TemplateView):
 
         position_rows = []
         for position in positions:
-            position_total = position.price + sum(addon.price for addon in position.addons.all())
+            addons = list(position.addons.all())
+            position_total = position.price + sum(addon.price for addon in addons)
             cancellation_fee = self.order.user_partial_cancel_fee(position_total)
             position_rows.append(
                 {
@@ -1031,16 +1035,9 @@ class OrderPositionCancel(EventViewMixin, OrderDetailMixin, TemplateView):
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
-class OrderPositionCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
+class OrderPositionCancelDo(OrderPositionCancelMixin, EventViewMixin, OrderDetailMixin, AsyncAction, View):
     task = cancel_order_positions
     known_errortypes = ['OrderError']
-
-    def get_cancel_positions_url(self):
-        return eventreverse(
-            self.request.event,
-            'presale:event.order.cancel.positions',
-            kwargs={'order': self.order.code, 'secret': self.order.secret},
-        )
 
     def get_success_url(self, value):
         return self.get_order_url()
@@ -1069,6 +1066,7 @@ class OrderPositionCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View)
         return self.do(
             self.order.pk,
             position_ids=position_ids,
+            user=self.request.user.pk if self.request.user.is_authenticated else None,
             try_auto_refund=True,
             refund_as_giftcard=giftcard,
             comment=comment,
