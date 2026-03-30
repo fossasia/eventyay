@@ -24,7 +24,7 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.filters import OrderingFilter
-from rest_framework.pagination import PageNumberPagination
+from eventyay.api.pagination import PageNumberPagination
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 

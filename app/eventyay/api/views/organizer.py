@@ -20,6 +20,7 @@ from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from eventyay.api.pagination import PageNumberPagination
 from eventyay.api.models import OAuthAccessToken
 from eventyay.api.serializers.organizer import (
     DeviceSerializer,
@@ -53,6 +54,7 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = OrganizerSerializer
     queryset = Organizer.objects.none()
     lookup_field = 'slug'
+    pagination_class = PageNumberPagination
     lookup_url_kwarg = 'organizer'
     lookup_value_regex = '[^/]+'
     filter_backends = (filters.OrderingFilter,)
@@ -80,6 +82,7 @@ class SeatingPlanViewSet(viewsets.ModelViewSet):
     queryset = SeatingPlan.objects.none()
     permission = 'can_change_organizer_settings'
     write_permission = 'can_change_organizer_settings'
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         return self.request.organizer.seating_plans.order_by('name')
@@ -140,6 +143,7 @@ class GiftCardViewSet(viewsets.ModelViewSet):
     queryset = GiftCard.objects.none()
     permission = 'can_manage_gift_cards'
     write_permission = 'can_manage_gift_cards'
+    pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = GiftCardFilter
 
@@ -218,6 +222,7 @@ class GiftCardTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = GiftCardTransaction.objects.none()
     permission = 'can_manage_gift_cards'
     write_permission = 'can_manage_gift_cards'
+    pagination_class = PageNumberPagination
 
     @cached_property
     def giftcard(self):
@@ -236,6 +241,7 @@ class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.none()
     permission = 'can_change_teams'
     write_permission = 'can_change_teams'
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         return self.request.organizer.teams.order_by('pk')
@@ -276,6 +282,7 @@ class TeamMemberViewSet(DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.none()
     permission = 'can_change_teams'
     write_permission = 'can_change_teams'
+    pagination_class = PageNumberPagination
 
     @cached_property
     def team(self):
@@ -305,6 +312,7 @@ class TeamInviteViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyMo
     queryset = TeamInvite.objects.none()
     permission = 'can_change_teams'
     write_permission = 'can_change_teams'
+    pagination_class = PageNumberPagination
 
     @cached_property
     def team(self):
@@ -345,6 +353,7 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
     queryset = TeamAPIToken.objects.none()
     permission = 'can_change_teams'
     write_permission = 'can_change_teams'
+    pagination_class = PageNumberPagination
 
     @cached_property
     def team(self):
@@ -415,6 +424,7 @@ class DeviceViewSet(
     permission = 'can_change_organizer_settings'
     write_permission = 'can_change_organizer_settings'
     lookup_field = 'device_id'
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         return self.request.organizer.devices.order_by('pk')
