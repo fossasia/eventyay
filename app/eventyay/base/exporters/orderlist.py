@@ -469,7 +469,7 @@ class OrderListExporter(MultiSheetListExporter):
         }
 
         yield self.ProgressSetTotal(total=qs.count())
-        id_iterator = qs.order_by('datetime').values_list('pk', flat=True).iterator()
+        id_iterator = qs.order_by('datetime').values_list('pk', flat=True).iterator(chunk_size=1000)
         for ids in chunked_iterable(id_iterator, 1000):
             ids = list(ids)
             orders_by_id = {order.pk: order for order in qs.filter(id__in=ids)}
