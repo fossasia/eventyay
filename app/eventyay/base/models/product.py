@@ -1154,6 +1154,8 @@ class Question(LoggedModel):
     )
     UNLOCALIZED_TYPES = [TYPE_DATE, TYPE_TIME, TYPE_DATETIME]
     ASK_DURING_CHECKIN_UNSUPPORTED = [TYPE_PHONENUMBER]
+    WIKIMEDIA_USERNAME_IDENTIFIER = 'wikimedia_username'
+    WIKIMEDIA_USERNAME_LABEL = 'wikimedia username'
 
     event = models.ForeignKey(Event, related_name='questions', on_delete=models.CASCADE)
     question = I18nTextField(verbose_name=_('Custom Field'))
@@ -1270,6 +1272,15 @@ class Question(LoggedModel):
 
     def __str__(self):
         return str(self.question)
+
+    @property
+    def is_wikimedia_username_question(self) -> bool:
+        identifier = (self.identifier or '').strip().lower()
+        question = str(self.question or '').strip().lower()
+        return (
+            identifier == self.WIKIMEDIA_USERNAME_IDENTIFIER
+            or question == self.WIKIMEDIA_USERNAME_LABEL
+        )
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)

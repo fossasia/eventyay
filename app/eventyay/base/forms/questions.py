@@ -394,9 +394,12 @@ class BaseQuestionsForm(forms.Form):
         orderpos = self.orderpos = kwargs.pop('orderpos', None)
         pos = cartpos or orderpos
         product = pos.product
-        questions = pos.product.questions_to_ask
         event = kwargs.pop('event')
         self.all_optional = kwargs.pop('all_optional', False)
+        questions = [
+            q for q in pos.product.questions_to_ask
+            if not (event.settings.include_wikimedia_username and q.is_wikimedia_username_question)
+        ]
 
         super().__init__(*args, **kwargs)
 

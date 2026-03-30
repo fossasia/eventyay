@@ -711,6 +711,8 @@ class QuestionUpdate(EventPermissionRequiredMixin, QuestionMixin, UpdateView):
                 user=self.request.user,
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
+        if form.warning_message:
+            messages.warning(self.request, form.warning_message)
         messages.success(self.request, _('Your changes have been saved.'))
         return super().form_valid(form)
 
@@ -772,6 +774,8 @@ class QuestionCreate(EventPermissionRequiredMixin, QuestionMixin, CreateView):
         max_question = self.request.event.questions.aggregate(Max('position'))['position__max'] or -1
         form.instance.position = max(max_system, max_question) + 1
 
+        if form.warning_message:
+            messages.warning(self.request, form.warning_message)
         messages.success(self.request, _('The new question has been created.'))
         ret = super().form_valid(form)
         form.instance.log_action(

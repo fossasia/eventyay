@@ -60,6 +60,7 @@ class QuestionForm(I18nModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.warning_message = None
         self.removeDesOption()
         self.fields['products'].queryset = self.instance.event.products.all()
         self.fields['products'].required = True
@@ -76,6 +77,41 @@ class QuestionForm(I18nModelForm):
         self.fields['help_text'].widget.attrs['rows'] = 3
         self.fields['type'].label = _('Type')
         self.fields['hidden'].label = _('Hidden field')
+        self._set_wikimedia_username_warning(
+            identifier=self.initial.get('identifier', self.instance.identifier),
+            question=self.initial.get('question', self.instance.question),
+            hidden=self.initial.get('hidden', self.instance.hidden),
+            ask_during_checkin=self.initial.get('ask_during_checkin', self.instance.ask_during_checkin),
+        )
+
+    def _is_wikimedia_username_duplicate(self, *, identifier, question, hidden, ask_during_checkin) -> bool:
+        if (
+            not self.instance.event.settings.include_wikimedia_username
+            or hidden
+            or ask_during_checkin
+        ):
+            return False
+
+        identifier = (identifier or '').strip().lower()
+        question = str(question or '').strip().lower()
+        return (
+            identifier == Question.WIKIMEDIA_USERNAME_IDENTIFIER
+            or question == Question.WIKIMEDIA_USERNAME_LABEL
+        )
+
+    def _set_wikimedia_username_warning(self, *, identifier, question, hidden, ask_during_checkin):
+        if self._is_wikimedia_username_duplicate(
+            identifier=identifier,
+            question=question,
+            hidden=hidden,
+            ask_during_checkin=ask_during_checkin,
+        ):
+            self.warning_message = _(
+                'This question duplicates the event-level Wikimedia Username field shown in checkout contact information. '
+                'Customers will only see the contact-level field during checkout.'
+            )
+        else:
+            self.warning_message = None
 
     def clean_dependency_values(self):
         val = self.data.getlist('dependency_values')
@@ -109,6 +145,12 @@ class QuestionForm(I18nModelForm):
             raise ValidationError({'dependency_values': [_('This field is required')]})
         if d.get('dependency_question') and d.get('ask_during_checkin'):
             raise ValidationError(_('Dependencies between questions are not supported during check-in.'))
+        self._set_wikimedia_username_warning(
+            identifier=d.get('identifier'),
+            question=d.get('question'),
+            hidden=d.get('hidden'),
+            ask_during_checkin=d.get('ask_during_checkin'),
+        )
         return d
 
     class Meta:

@@ -115,6 +115,20 @@ class QuestionsTest(ItemFormTest):
         assert doc.select('.alert-success')
         self.assertIn('shoe size', doc.select('#page-wrapper table')[0].text)
 
+    def test_wikimedia_username_warning(self):
+        self.event1.settings.set('include_wikimedia_username', True)
+        doc = self.get_doc('/control/event/%s/%s/questions/add' % (self.orga1.slug, self.event1.slug))
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['question_0'] = 'Wikimedia Username'
+        form_data['identifier'] = 'wikimedia_username'
+        form_data['type'] = 'S'
+        form_data['items'] = self.item1.id
+        doc = self.post_doc(
+            '/control/event/%s/%s/questions/add' % (self.orga1.slug, self.event1.slug),
+            form_data,
+        )
+        assert 'duplicates the event-level Wikimedia Username field' in doc.text
+
     def test_update_choices(self):
         with scopes_disabled():
             c = Question.objects.create(

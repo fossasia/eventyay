@@ -153,6 +153,29 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
             target_status_code=200,
         )
 
+    def test_wikimedia_username_only_rendered_once(self):
+        self.event.settings.set('include_wikimedia_username', True)
+        q1 = Question.objects.create(
+            event=self.event,
+            question='Wikimedia Username',
+            type='S',
+            identifier='wikimedia_username',
+        )
+        self.ticket.questions.add(q1)
+
+        with scopes_disabled():
+            CartPosition.objects.create(
+                event=self.event,
+                cart_id=self.session_key,
+                item=self.ticket,
+                price=23,
+                expires=now() + timedelta(minutes=10),
+            )
+
+        response = self.client.get('/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug))
+        assert response.status_code == 200
+        assert response.content.decode().count('Wikimedia Username') == 1
+
     def test_reverse_charge(self):
         self.tr19.eu_reverse_charge = True
         self.tr19.home_country = Country('DE')

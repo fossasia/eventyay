@@ -26,6 +26,11 @@
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
         {% bootstrap_form_errors form %}
+        {% if form.warning_message %}
+            <div class="alert alert-warning">
+                {{ form.warning_message }}
+            </div>
+        {% endif %}
         <fieldset>
             {% bootstrap_field form.question layout="control" %}
             {% bootstrap_field form.type layout="control" %}
