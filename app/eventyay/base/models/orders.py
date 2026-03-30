@@ -569,7 +569,7 @@ class Order(LockModel, LoggedModel):
             fee += self.event.settings.cancel_allow_user_paid_keep
         return round_decimal(fee, self.event.currency)
 
-    @property
+    @cached_property
     @scopes_disabled()
     def user_cancelable_positions(self):
         """
@@ -578,6 +578,9 @@ class Order(LockModel, LoggedModel):
         from .checkin import Checkin
 
         if self.cancellation_requests.exists() or not self.cancel_allowed():
+            return []
+
+        if self.status not in (Order.STATUS_PENDING, Order.STATUS_PAID):
             return []
 
         if self.user_cancel_deadline and now() > self.user_cancel_deadline:
@@ -617,6 +620,8 @@ class Order(LockModel, LoggedModel):
         Returns whether or not this order can be partially canceled by the user.
         """
         if self.status == Order.STATUS_PAID and self.total != Decimal('0.00'):
+            # Partial cancellation currently executes immediately.
+            # In approval mode, only full-order cancellation requests are supported.
             if self.event.settings.cancel_allow_user_paid_require_approval:
                 return False
 
