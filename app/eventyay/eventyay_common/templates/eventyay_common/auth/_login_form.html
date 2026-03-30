@@ -33,7 +33,7 @@
     {% if backend.identifier == 'native' %}
       {% if can_reset %}
         <a href='{% url "eventyay_common:auth.forgot" %}' class='btn btn-link btn-block'>
-          {% translate 'Forgot Password?' %}
+          {% translate 'Forgot password?' %}
         </a>
       {% endif %}
       {% if can_register %}
