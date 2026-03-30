@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-21 17:17+0000\n"
+"PO-Revision-Date: 2026-03-30 15:14+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Czech <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "cs/>\n"
@@ -211,8 +211,7 @@ msgid "Duration"
 msgstr "Doba trvání"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
 msgstr "%(minutes)s min"
 
@@ -276,10 +275,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (oblíbené přednášky)"
+msgstr "Oblíbené relace uživatele %(name)s"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -310,34 +308,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "Historie změn"
+msgstr "Zobrazit seznam změn"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "Ponechat aktuální hodnoty"
+msgstr "Přejít na aktuální verzi"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "Vymazat filtry"
+msgstr "Obnovit všechny filtry"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
-msgstr "Řadit podle"
+msgstr "Seřadit"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "Nová místnost"
+msgstr "Podle místnosti"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -352,28 +340,20 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "Výstupní skeny"
+msgstr "Ukončit režim celé obrazovky"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "Brány"
+msgstr "Nejnovější"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"Právě se díváte na upravitelnou verzi programu, který není vydán a kdykoliv "
-"se může změnit."
+"Aktuálně se zobrazuje upravitelná verze rozvrhu. Nemusí odpovídat vydané "
+"verzi."
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -384,16 +364,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "Video"
+msgstr "Zobrazit video"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "není veřejná"
+msgstr "Sledovat živě"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -405,10 +381,8 @@ msgstr[1] "Přednášející"
 msgstr[2] "Přednášejících"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "Označit přednášející(ho), že nepřijel(a)"
+msgstr "Název mluvčího nebyl zadán"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -436,10 +410,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "Přidat do kalendáře"
+msgstr "Kalendář Google"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -484,10 +456,8 @@ msgid "No"
 msgstr "Ne"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "Žádní uživatelé nenalezeni."
+msgstr "Nenalezeny žádné reproduktory."
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -507,22 +477,16 @@ msgid "Tracks"
 msgstr "Tracky"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
-msgstr "Stáhnout"
+msgstr "Stažení"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "vytvořil(a)"
+msgstr "Označeno hvězdičkou od"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "Začátek"
+msgstr "Označeno hvězdičkou"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -532,10 +496,8 @@ msgid "Export"
 msgstr "Export"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
-msgstr "Export"
+msgstr "Exporty"
 
 #: agenda/views/schedule.py:397 common/templates/common/question_answer.html:9
 #: multidomain/views.py:179
@@ -548,16 +510,12 @@ msgid "No response"
 msgstr "Žádná odpověď"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "Ostatní poplatky"
+msgstr "Další časová pásma"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "Aktuálně:"
+msgstr "aktuální"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -565,8 +523,6 @@ msgid "Print"
 msgstr "Tisk"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
 msgstr "Seznam"
 
@@ -596,22 +552,16 @@ msgstr "Hledat"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "Doporučené události"
+msgstr "Hlavní řečníci"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "Zobrazit nebo upravit profil přednášejícího"
+msgstr "Zobrazit profil přednášejícího"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "Žádné publikované relace."
+msgstr "Žádné oblíbené relace."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -820,16 +770,12 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "Tento typ otázky nelze položit během registrace."
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "Jediná událost proběhla v minulosti"
+msgstr "Počáteční čas nemůže být v minulosti."
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
-msgstr "Čas konce musí být po času začátku."
+msgstr "Čas ukončení musí být po čase zahájení."
 
 #: api/serializers/stream_schedule.py:101
 msgid ""
@@ -1077,16 +1023,12 @@ msgid "Require company per ticket"
 msgstr "Vyžadovat firmu u každé vstupenky"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "Ptát se na firmu u každé vstupenky"
+msgstr "Požadovat název pozice pro každý tiket"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "Vyžadovat firmu u každé vstupenky"
+msgstr "Vyžadovat název pozice u každého tiketu"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3812,10 +3754,8 @@ msgid "Only paid orders"
 msgstr "Pouze zaplacené objednávky"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "čeká na schválení"
+msgstr "Pouze objednávky čekající na schválení"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4553,10 +4493,8 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
-msgstr "Pracovní pozice"
+msgstr "Název pozice"
 
 #: base/forms/questions.py:443 base/forms/questions.py:824
 msgid "Street and Number"
@@ -4569,16 +4507,12 @@ msgstr "Vyberte stát"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "Váš košík"
+msgstr "Vaše odpověď"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "Výběr"
+msgstr "Vyberte možnost"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4626,14 +4560,8 @@ msgstr ""
 "Pro ruční vyřešení prosím kontaktujte podporu."
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr ""
-"Pokud chcete změnit svou e-mailovou adresu nebo heslo, zadejte prosím své "
-"aktuální heslo."
+msgstr "Chcete-li změnit heslo, zadejte aktuální heslo."
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6656,10 +6584,8 @@ msgid "Show link on the website start page"
 msgstr "Zobrazit odkaz na úvodní stránce webu"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "Zobrazit v horním menu na všech stránkách"
+msgstr "Zobrazit v záhlaví a zápatí na systémových stránkách"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -7159,10 +7085,8 @@ msgid "Radio button (Choose one option)"
 msgstr "Přepínač (Vyberte jednu možnost)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "Přepínač (Vyberte jednu možnost)"
+msgstr "Rozevírací seznam (Vyberte jednu možnost)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7436,10 +7360,8 @@ msgid "Biography"
 msgstr "Životopis"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "Zobrazit ve veřejném přehledu vybraných přednášek."
+msgstr "Zobrazit tohoto řečníka ve veřejném seznamu doporučených řečníků."
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7466,10 +7388,8 @@ msgid "Confirmation"
 msgstr "Potvrzení"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "Stát"
+msgstr "Seznam zemí"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7961,18 +7881,14 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "Systémová URL:"
+msgstr "URL streamu"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
 msgstr "Čas zahájení"
 
@@ -7981,8 +7897,6 @@ msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
 msgstr "Čas ukončení"
 
@@ -7991,16 +7905,12 @@ msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "Streamovací klíč"
+msgstr "Typ streamu"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "Další informace"
+msgstr "Další konfigurace"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -8009,16 +7919,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "Naplánovat"
+msgstr "Harmonogram streamu"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "Naplánovat"
+msgstr "Harmonogramy streamů"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8307,10 +8213,8 @@ msgstr ""
 "přístupovým kódem."
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
-msgstr "Pozice"
+msgstr "pozice"
 
 #: base/models/type.py:52
 msgid ""
@@ -8386,23 +8290,18 @@ msgstr ""
 "když už žádné nezbývají."
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "Povolit obejití kvóty"
+msgstr "Povolit obejití schválení"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"Pokud je aktivováno, držitel tohoto kódu poukazu může koupit vstupenky, i "
-"když už žádné nezbývají."
+"Pokud je aktivováno, držitel tohoto kódu poukazu může koupit vstupenky bez "
+"čekání na schválení organizátorem. Platí pro produkty, které vyžadují "
+"schválení."
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9305,10 +9204,8 @@ msgid "Attendee job title"
 msgstr "Pracovní pozice účastníka"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "Ukázkový stát"
+msgstr "Ukázkový název pozice"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10462,12 +10359,11 @@ msgid "You have to ask for attendee emails if you want to make them required."
 msgstr "Pokud chcete vyžadovat e-maily účastníků, musíte se na ně ptát."
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr "Pokud chcete vyžadovat e-maily účastníků, musíte se na ně ptát."
+msgstr ""
+"Pokud je chcete nastavit jako povinné, musíte vyžádat pracovní pozice "
+"účastníků."
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11579,16 +11475,12 @@ msgid "Submit something now!"
 msgstr "Poslat přihlášku!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "Vyberte událost"
+msgstr "Vybrat soubor"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "Nebyl poskytnut žádný soubor"
+msgstr "Nebyl vybrán žádný soubor"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11601,10 +11493,8 @@ msgid "Redo"
 msgstr "Znovu"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "Nový řádek"
+msgstr "Podtrhnout"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -12259,28 +12149,21 @@ msgid "Optional"
 msgstr "Volitelné"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "Jazyky"
+msgstr "Propojit jazyky"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "Nápověda: Vynutit jazyk uživatelského rozhraní"
+msgstr "Nápověda: Propojit jazyky"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"Po zapnutí bude jazyk akce vždy odpovídat jazyku vašeho uživatelského "
-"rozhraní, pokud je tento jazyk pro tuto akci k dispozici."
+"Když je tato možnost zapnutá, jazyky události a uživatelského rozhraní jsou "
+"propojené. Výběr jednoho aktualizuje druhý vždy, když je tento jazyk pro "
+"tuto událost k dispozici."
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12331,10 +12214,8 @@ msgstr "Výzva pro přednášející"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12934,10 +12815,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "Doba trvání"
+msgstr "Gudžarátština"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12968,10 +12847,8 @@ msgid "Malay"
 msgstr "Malajština"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "Malajština"
+msgstr "malajálámština"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14612,16 +14489,14 @@ msgid "Payment date"
 msgstr "Datum platby"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "Tato přihláška již nemůže být upravována."
+msgstr "Tuto možnost nelze kombinovat s možností „Pouze placené objednávky“."
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "Tato akce je povolena pouze pro objednávky ve stavu čeká na vyřízení."
+msgstr ""
+"Tuto možnost nelze kombinovat s objednávkami, u kterých se čeká pouze na "
+"schválení."
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14935,10 +14810,8 @@ msgstr ""
 "Potvrďte prosím, že chcete zrušit VŠECHNY termíny v této sérii událostí."
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "Všechny události (vč. nově vytvořených)"
+msgstr "Všechny události (včetně nově vytvořených a publikovaných)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14951,10 +14824,8 @@ msgid "Gift card value"
 msgstr "Hodnota dárkové karty"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "Protokoly organizátora"
+msgstr "Slug organizátora"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -17316,10 +17187,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "Viditelnost události"
+msgstr "Přepnout viditelnost systému"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19920,10 +19789,8 @@ msgid "Required status for Company"
 msgstr "Stav povinnosti pro společnost"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "Požadovaný stav pro e-mail"
+msgstr "Požadovaný stav pro název pozice"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20480,10 +20347,8 @@ msgstr "(volitelné)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "Uplatnění"
+msgstr "Možnosti odznaku"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -21376,22 +21241,16 @@ msgstr[1] "%(s)s objednávek"
 msgstr[2] "%(s)s objednávek"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "Výběr"
+msgstr "Vybrat akci"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "Schválená bezplatná objednávka"
+msgstr "Schválit vybrané objednávky"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "Smazat objednávku"
+msgstr "Zamítnout vybrané objednávky"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21598,10 +21457,8 @@ msgid "Revoke"
 msgstr "Zrušit"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "Odebrat přístup zařízení:"
+msgstr "Odvolat a odebrat všechna zařízení"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21619,17 +21476,13 @@ msgstr[1] ""
 msgstr[2] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "Tuto událost nelze smazat."
+msgstr "Tuto akci nelze vrátit zpět."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "Odebrat přístup zařízení:"
+msgstr "Zrušit oprávnění a odebrat všechna zařízení"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -23318,22 +23171,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "Nahraný soubor se nám nepodařilo zpracovat jako soubor CSV."
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "Vyberte prosím platné sedadlo."
+msgstr "Vyberte platnou akci."
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "Níže prosím nastavte alespoň jedno zařízení."
+msgstr "Vyberte alespoň jednu objednávku."
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "Vybrané datum v této sérii akcí neexistuje."
+msgstr "Alespoň jedna z vybraných objednávek již neexistuje."
 
 #: control/views/orders.py:330
 msgid ""
@@ -23341,22 +23188,20 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "Objednávka byla schválena."
-msgstr[1] "Objednávka byla schválena."
-msgstr[2] "Objednávka byla schválena."
+msgstr[0] "Objednávka %(count)d byla schválena."
+msgstr[1] "Objednávky %(count)d byly schváleny."
+msgstr[2] "Objednávky %(count)d byly schváleny."
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "Objednávka byla zamítnuta, a proto je nyní zrušena."
-msgstr[1] "Objednávka byla zamítnuta, a proto je nyní zrušena."
-msgstr[2] "Objednávka byla zamítnuta, a proto je nyní zrušena."
+msgstr[0] "Objednávka %(count)d byla zamítnuta a nyní je zrušena."
+msgstr[1] "Objednávky %(count)d byly zamítnuty a nyní jsou zrušeny."
+msgstr[2] "Objednávky %(count)d byly zamítnuty a nyní jsou zrušeny."
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23765,16 +23610,12 @@ msgstr "Přístup pro toto zařízení byl odebrán."
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "Nejsou k dispozici žádní účastníci k zobrazení."
+msgstr "Nejsou připojena žádná zařízení k odvolání a odebrání."
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "Vybrané vstupenky byly označeny jako odbavené."
+msgstr "Všechna připojená zařízení byla odvolána a trvale odstraněna."
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23872,16 +23713,12 @@ msgid "Please only upload PDF files."
 msgstr "Prosím, nahrávejte pouze soubory PDF."
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "Není uvedeno jméno účastníka"
+msgstr "Nebyla poskytnuta žádná data rozvržení."
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "Neplatná vstupní data."
+msgstr "Byla zadána neplatná data rozvržení."
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -24093,10 +23930,8 @@ msgid "Bypass quota"
 msgstr "Obejit kvótu"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "Obejit kvótu"
+msgstr "Obejít schválení"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25637,10 +25472,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "Vybrat akci"
+msgstr "— Vybrat událost —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25651,10 +25484,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "Zatím nejsou nakonfigurovány žádné servery."
+msgstr "Pro žádné události nejsou nakonfigurovány žádné stopy."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -26163,11 +25994,8 @@ msgid "Unique viewers by session"
 msgstr "Jedineční diváci podle relace"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
-msgstr "Přednáška"
+msgstr "Relace"
 
 #: features/analytics/graphs/report.py:401
 msgid "Viewers"
@@ -26980,10 +26808,9 @@ msgid "Mail signature"
 msgstr "Podpis e-mailu"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "Podpis bude přidán do odchozích e-mailů, předcházené znaky “-- ”."
+msgstr ""
+"Podpis bude přidán do odchozích e-mailů, před který bude vloženo „-- “. "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27879,10 +27706,8 @@ msgid "Default duration"
 msgstr "Výchozí doba trvání"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "Všechny typy sezení"
+msgstr "Přesunout typ relace"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -29213,10 +29038,8 @@ msgstr[2] "odesilatelů"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "Zobrazit tuto přihlášku v seznamu vybraných přednášek."
+msgstr "Zobrazit tohoto řečníka v seznamu doporučených řečníků."
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -29227,10 +29050,8 @@ msgid "Not arrived"
 msgstr "Nepřijel(a)"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "Žádní uživatelé nenalezeni."
+msgstr "Nebyli nalezeni žádní odesílatelé."
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -29624,10 +29445,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "Tento typ přednášky byl použit v přihlášce a nelze ho smazat."
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "Zařízení bylo odebráno."
+msgstr "Výchozí typ relace byl odebrán."
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -30298,23 +30117,17 @@ msgid "Sort by"
 msgstr "Řadit podle"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "Produkt \"{}\" nemá přiřazeno žádné omezení."
+msgstr "Produkty přiřazené k tomuto rozvržení"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "Přizpůsobení faktury"
+msgstr "Povolit přizpůsobení odznaku"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "Skrýt pole"
+msgstr "Pole odznaku"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -30330,10 +30143,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "Není vybrán žádný jazyk"
+msgstr "Nejsou vybrána žádná volitelná pole odznaku"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -30345,10 +30156,8 @@ msgid "Download Badge"
 msgstr "Stáhnout odznak"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "Možnosti nahrávání"
+msgstr "Možnosti odznaku"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -30409,10 +30218,8 @@ msgstr "Vytvořit nové rozvržení odznaku"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "Rozvržení odznaku"
+msgstr "Nastavení rozvržení odznaků"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -30422,10 +30229,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "Všichni uživatelé"
+msgstr "Zeptat se uživatele"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -30433,16 +30238,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "Metadata události"
+msgstr "Metadata události: {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "Název produktu"
+msgstr "Metadata produktu: {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -30450,10 +30253,8 @@ msgid "The requested badge layout does not exist."
 msgstr "Požadované rozvržení odznaku neexistuje."
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "Nastavení vašeho účtu bylo změněno."
+msgstr "Nastavení rozvržení odznaku bylo uloženo."
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -31779,10 +31580,8 @@ msgid "Client Application Secret"
 msgstr "Tajný klíč klientské aplikace"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "Nebyl poskytnut žádný soubor"
+msgstr "Bez upřednostněného poskytovatele"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31965,10 +31764,8 @@ msgstr ""
 "pomocí svého účtu MediaWiki."
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "Tento produkt je momentálně nedostupný."
+msgstr "Tato metoda přihlášení není k dispozici."
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -33164,16 +32961,12 @@ msgstr "Znovu odeslat odkazy na objednávku"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"Upozorňujeme, že stále čekáme na schválení od pořadatele akce, než budete "
-"moci zaplatit a tuto objednávku dokončit."
+"Požadavek byl odeslán a čeká na schválení organizátorem události. "
+"Podrobnosti jsou uvedeny níže."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -34335,10 +34128,8 @@ msgstr ""
 "přidat po dokončení přihlašovacího procesu."
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "Výchozí typ přednášky"
+msgstr "Vyberte typ relace"
 
 #: submission/forms/submission.py:172
 msgid ""

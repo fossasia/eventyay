@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-21 17:32+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Persian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/fa/>\n"
@@ -209,8 +209,7 @@ msgid "Duration"
 msgstr "مدت زمان"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
 msgstr "%(minutes)s دقیقه"
 
@@ -274,10 +273,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (جلسات نشانه‌دار شما)"
+msgstr "نشست‌های ستاره‌دارِ %(name)s"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -308,34 +306,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "فهرست تغییرات"
+msgstr "مشاهدهٔ تغییرات"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "مقادیر فعلی را نگه دارید."
+msgstr "رفتن به نسخهٔ فعلی"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "پاک کردن فیلترها"
+msgstr "بازنشانی همهٔ فیلترها"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
-msgstr "مرتب‌سازی بر اساس"
+msgstr "مرتب‌سازی"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "اتاق جدید"
+msgstr "بر اساس اتاق"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -350,28 +338,20 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "خروج از اسکن‌ها"
+msgstr "خروج از حالت تمام‌صفحه"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "دروازه‌ها"
+msgstr "جدیدترین"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"شما در حال مشاهده نسخه قابل ویرایش برنامه زمان‌بندی هستید که هنوز منتشر نشده "
-"و ممکن است در هر زمانی تغییر کند."
+"در حال مشاهده نسخه قابل‌ویرایش برنامه زمان‌بندی هستید. ممکن است با نسخه "
+"منتشرشده مطابقت نداشته باشد."
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -382,16 +362,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "ویدئو"
+msgstr "مشاهده ویدیو"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "غیرفعال"
+msgstr "پخش زنده"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -402,10 +378,8 @@ msgstr[0] "سخنران"
 msgstr[1] "سخنرانان"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "علامت‌گذاری سخنران به‌عنوان نرسیده"
+msgstr "نام گوینده ارائه نشده است"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -433,10 +407,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "افزودن به تقویم"
+msgstr "تقویم گوگل"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -481,10 +453,8 @@ msgid "No"
 msgstr "خیر"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "هیچ کاربری یافت نشد."
+msgstr "هیچ بلندگویی یافت نشد."
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -504,22 +474,16 @@ msgid "Tracks"
 msgstr "مسیرها"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
-msgstr "دانلود"
+msgstr "دانلودها"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "ایجاد شده توسط"
+msgstr "نشان‌دارشده توسط"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "شروع"
+msgstr "ستاره‌دار"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -529,10 +493,8 @@ msgid "Export"
 msgstr "خروجی"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
-msgstr "خروجی"
+msgstr "صادرات"
 
 #: agenda/views/schedule.py:397 common/templates/common/question_answer.html:9
 #: multidomain/views.py:179
@@ -545,16 +507,12 @@ msgid "No response"
 msgstr "بدون پاسخ"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "هزینه‌های دیگر"
+msgstr "سایر مناطق زمانی"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "فعلی:"
+msgstr "فعلی"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -562,10 +520,8 @@ msgid "Print"
 msgstr "چاپ"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "فهرستی"
+msgstr "نمای فهرست"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -593,22 +549,16 @@ msgstr "جستجو"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "رویدادهای ویژه"
+msgstr "سخنرانان ویژه"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "نمایه سخنران را مشاهده یا ویرایش کنید"
+msgstr "مشاهده نمایهٔ سخنران"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "هیچ جلسه‌ای منتشر نشده است."
+msgstr "هیچ جلسهٔ ستاره‌دار وجود ندارد."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -817,16 +767,12 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "این نوع سوال را نمی‌توان هنگام چک‌این پرسید."
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "رویداد واحد گذشته"
+msgstr "زمان شروع نمی‌تواند در گذشته باشد."
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
-msgstr "زمان پایان باید پس از زمان شروع باشد."
+msgstr "زمان پایان باید بعد از زمان شروع باشد."
 
 #: api/serializers/stream_schedule.py:101
 msgid ""
@@ -1071,16 +1017,12 @@ msgid "Require company per ticket"
 msgstr "الزام وارد کردن نام شرکت برای هر بلیت"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "درخواست نام شرکت برای هر بلیت"
+msgstr "درخواست عنوان شغلی برای هر تیکت"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "الزام وارد کردن نام شرکت برای هر بلیت"
+msgstr "الزامی کردن عنوان شغلی برای هر تیکت"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3789,10 +3731,8 @@ msgid "Only paid orders"
 msgstr "فقط سفارش‌های پرداخت شده"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "در انتظار تأیید"
+msgstr "فقط سفارش‌های در انتظار تأیید"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4528,8 +4468,6 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
 msgstr "عنوان شغلی"
 
@@ -4544,16 +4482,12 @@ msgstr "استان را انتخاب کنید"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "سبد خرید شما"
+msgstr "پاسخ شما"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "انتخاب"
+msgstr "یک گزینه را انتخاب کنید"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4601,14 +4535,8 @@ msgstr ""
 "اعمال کنیم. لطفاً برای حل این مورد به‌صورت دستی با پشتیبانی تماس بگیرید."
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr ""
-"اگر می‌خواهید نشانی ایمیل یا رمز عبور خود را تغییر دهید، لطفاً رمز عبور "
-"فعلی‌تان را وارد کنید."
+msgstr "اگر می‌خواهید گذرواژه را تغییر دهید، لطفاً گذرواژهٔ فعلی را وارد کنید."
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6615,10 +6543,8 @@ msgid "Show link on the website start page"
 msgstr "نمایش لینک در صفحه شروع وب‌سایت"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "نمایش در منوی سربرگ در همه صفحات"
+msgstr "نمایش در سربرگ و پابرگ در صفحات سیستمی"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -7114,10 +7040,8 @@ msgid "Radio button (Choose one option)"
 msgstr "دکمهٔ رادیویی (یک گزینه را انتخاب کنید)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "دکمهٔ رادیویی (یک گزینه را انتخاب کنید)"
+msgstr "منوی کشویی (یک گزینه را انتخاب کنید)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7389,10 +7313,8 @@ msgid "Biography"
 msgstr "زندگی‌نامه"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "این جلسه را در فهرست عمومی جلسات ویژه نمایش دهید."
+msgstr "نمایش این سخنران در فهرست عمومی سخنرانان ویژه."
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7419,10 +7341,8 @@ msgid "Confirmation"
 msgstr "تأیید"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "کشور"
+msgstr "فهرست کشورها"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7914,18 +7834,14 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "آدرس سیستم:"
+msgstr "نشانی اینترنتی پخش"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
 msgstr "زمان شروع"
 
@@ -7934,8 +7850,6 @@ msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
 msgstr "زمان پایان"
 
@@ -7944,16 +7858,12 @@ msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "کلید پخش"
+msgstr "نوع جریان"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "اطلاعات اضافی"
+msgstr "پیکربندی اضافی"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -7962,16 +7872,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "برنامه"
+msgstr "برنامه پخش"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "برنامه"
+msgstr "زمان‌بندی پخش‌ها"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8255,8 +8161,6 @@ msgstr ""
 "این نوع جلسه فقط به ارسال‌کنندگان با یک کد دسترسی منطبق نمایش داده خواهد شد."
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
 msgstr "موقعیت"
 
@@ -8334,23 +8238,18 @@ msgstr ""
 "نمانده باشد."
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "اجازه عبور از سهمیه"
+msgstr "اجازهٔ دور زدنِ تأیید"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"اگر فعال شود، دارندهٔ این کد تخفیف می‌تواند بلیت بخرد، حتی اگر بلیتی باقی "
-"نمانده باشد."
+"در صورت فعال‌سازی، دارنده این کد واچر می‌تواند بدون انتظار برای تأیید "
+"برگزارکننده بلیت خریداری کند. این مورد برای محصولاتی که نیاز به تأیید دارند "
+"اعمال می‌شود."
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9239,10 +9138,8 @@ msgid "Attendee job title"
 msgstr "عنوان شغلی شرکت‌کننده"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "استان نمونه"
+msgstr "عنوان شغلی نمونه"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10390,13 +10287,10 @@ msgstr ""
 "اگر می‌خواهید ایمیل شرکت‌کنندگان را اجباری کنید، باید از آن‌ها ایمیل بخواهید."
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
 msgstr ""
-"اگر می‌خواهید ایمیل شرکت‌کنندگان را اجباری کنید، باید از آن‌ها ایمیل بخواهید."
+"برای اجباری کردن عنوان‌های شغلی شرکت‌کنندگان، باید آن‌ها را درخواست کنید."
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11517,16 +11411,12 @@ msgid "Submit something now!"
 msgstr "همین حالا چیزی ارسال کنید!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "انتخاب رویداد"
+msgstr "انتخاب فایل"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "هنوز هیچ پرونده‌ای ارائه نشده است"
+msgstr "هیچ فایلی انتخاب نشده است"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11539,10 +11429,8 @@ msgid "Redo"
 msgstr "انجام مجدد"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "خط جدید"
+msgstr "زیرخط‌دار کردن"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -12197,28 +12085,21 @@ msgid "Optional"
 msgstr "اختیاری"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "زبان‌ها"
+msgstr "پیوند دادن زبان‌ها"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "راهنما: اعمال زبان رابط کاربری"
+msgstr "راهنما: پیوند دادن زبان‌ها"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"در صورت فعال بودن، زبان رویداد هر زمان که آن زبان برای این رویداد در دسترس "
-"باشد از زبان رابط کاربری پیروی می‌کند."
+"در صورت فعال بودن، زبان‌های رویداد و رابط کاربری به‌هم مرتبط هستند. با انتخاب "
+"یکی، هر زمان که آن زبان برای این رویداد در دسترس باشد، دیگری نیز به‌روزرسانی "
+"می‌شود."
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12269,10 +12150,8 @@ msgstr "فراخوان سخنرانان"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12876,10 +12755,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "مدت زمان"
+msgstr "گجراتی"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12910,10 +12787,8 @@ msgid "Malay"
 msgstr "مالایی"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "مالایی"
+msgstr "مالایالم"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14551,16 +14426,13 @@ msgid "Payment date"
 msgstr "تاریخ پرداخت"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "این طرح پیشنهادی دیگر نمی‌تواند ویرایش شود."
+msgstr "این گزینه را نمی‌توان با «فقط سفارش‌های پرداخت‌شده» ترکیب کرد."
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "این اقدام فقط برای سفارش‌های در انتظار مجاز است."
+msgstr ""
+"این گزینه را نمی‌توان با سفارش‌هایی که فقط در انتظار تأیید هستند ترکیب کرد."
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14872,10 +14744,8 @@ msgid "Please confirm that you want to cancel ALL dates in this event series."
 msgstr "لطفاً تأیید کنید که می‌خواهید تمام تاریخ‌های این سری رویداد را لغو کنید."
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "همهٔ رویدادها (شامل رویدادهای تازه ایجادشده)"
+msgstr "همه رویدادها (از جمله رویدادهای تازه ایجادشده و منتشرشده)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14888,10 +14758,8 @@ msgid "Gift card value"
 msgstr "مبلغ کارت هدیه"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "گزارش‌های برگزارکننده"
+msgstr "نامکِ برگزارکننده"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -17225,10 +17093,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "نمایان بودن رویداد"
+msgstr "تغییر وضعیت نمایش‌پذیری سیستم"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19813,10 +19679,8 @@ msgid "Required status for Company"
 msgstr "وضعیت مورد نیاز برای شرکت"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "وضعیت الزامی برای ایمیل"
+msgstr "وضعیت الزامی برای عنوان شغلی"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20374,10 +20238,8 @@ msgstr "(اختیاری)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "موارد استفاده"
+msgstr "گزینه‌های نشان"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -21269,22 +21131,16 @@ msgstr[0] "%(s)s سفارش"
 msgstr[1] "%(s)s سفارش"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "انتخاب"
+msgstr "انتخاب عملیات"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "سفارش رایگان تأیید شده"
+msgstr "تأیید سفارش‌های انتخاب‌شده"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "حذف سفارش"
+msgstr "رد کردن سفارش‌های انتخاب‌شده"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21492,10 +21348,8 @@ msgid "Revoke"
 msgstr "لغو"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "لغو دسترسی دستگاه:"
+msgstr "لغو و حذف همهٔ دستگاه‌ها"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21512,17 +21366,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "این رویداد قابل حذف نیست."
+msgstr "این اقدام قابل بازگشت نیست."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "لغو دسترسی دستگاه:"
+msgstr "لغو و حذف همهٔ دستگاه‌ها"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -23203,22 +23053,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "نتوانستیم فایل بارگذاری‌شده را به‌عنوان فایل CSV تجزیه کنیم."
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "لطفاً یک صندلی معتبر انتخاب کنید."
+msgstr "لطفاً یک اقدام معتبر انتخاب کنید."
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "لطفاً حداقل یک دستگاه را در قسمت زیر تنظیم کنید."
+msgstr "لطفاً حداقل یک سفارش را انتخاب کنید."
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "تاریخ انتخاب‌شده در این مجموعه رویداد وجود ندارد."
+msgstr "حداقل یکی از سفارش‌های انتخاب‌شده دیگر وجود ندارد."
 
 #: control/views/orders.py:330
 msgid ""
@@ -23226,20 +23070,18 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "سفارش تأیید شد."
-msgstr[1] "سفارش تأیید شد."
+msgstr[0] "%(count)d سفارش تأیید شده‌اند."
+msgstr[1] "%(count)d سفارش تأیید شده‌اند."
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "سفارش رد شده و بنابراین اکنون لغو شده است."
-msgstr[1] "سفارش رد شده و بنابراین اکنون لغو شده است."
+msgstr[0] "%(count)d سفارش رد شده‌اند و اکنون لغو شده‌اند."
+msgstr[1] "%(count)d سفارش رد شده‌اند و اکنون لغو شده‌اند."
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23641,16 +23483,12 @@ msgstr "دسترسی این دستگاه لغو شد."
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "هیچ شرکت‌کننده‌ای برای نمایش وجود ندارد."
+msgstr "هیچ دستگاه متصلی برای لغو دسترسی و حذف وجود ندارد."
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "بلیط‌های انتخاب‌شده به‌عنوان ورود ثبت شدند."
+msgstr "همه دستگاه‌های متصل لغو شدند و برای همیشه حذف شدند."
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23748,16 +23586,12 @@ msgid "Please only upload PDF files."
 msgstr "لطفاً فقط فایل‌های PDF را بارگذاری کنید."
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "نام شرکت‌کننده وارد نشده است."
+msgstr "هیچ داده‌ای برای چیدمان ارائه نشد."
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "داده‌های ورودی نامعتبر هستند."
+msgstr "داده‌های چیدمان نامعتبر ارائه شده است."
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -23969,10 +23803,8 @@ msgid "Bypass quota"
 msgstr "عبور از سهمیه"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "عبور از سهمیه"
+msgstr "دور زدن تأیید"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25502,10 +25334,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "انتخاب رویداد"
+msgstr "— انتخاب رویداد —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25516,10 +25346,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "هنوز هیچ سروری پیکربندی نشده است."
+msgstr "هیچ مسیری برای هیچ رویدادی پیکربندی نشده است."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -26025,11 +25853,8 @@ msgid "Unique viewers by session"
 msgstr "بینندگان یکتا بر اساس نشست"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
-msgstr "جلسه"
+msgstr "نشست"
 
 #: features/analytics/graphs/report.py:401
 msgid "Viewers"
@@ -26849,11 +26674,8 @@ msgid "Mail signature"
 msgstr "امضای رایانامه"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr ""
-"امضا به رایانامه‌های خروجی اضافه خواهد شد، پیش از آن «-- » قرار خواهد گرفت."
+msgstr "امضا به ایمیل‌های خروجی اضافه می‌شود و با «-- » شروع خواهد شد. "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27750,10 +27572,8 @@ msgid "Default duration"
 msgstr "مدت زمان پیش‌فرض"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "همهٔ انواع نشست"
+msgstr "جابجایی نوع جلسه"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -29072,10 +28892,8 @@ msgstr[1] "ارسال‌کنندگان"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "این طرح پیشنهادی را در فهرست جلسات ویژه نشان دهید."
+msgstr "این سخنران را در فهرست سخنرانان ویژه نمایش بدهید."
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -29086,10 +28904,8 @@ msgid "Not arrived"
 msgstr "نرسیده"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "هیچ کاربری یافت نشد."
+msgstr "هیچ ارسال‌کننده‌ای یافت نشد."
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -29483,10 +29299,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "این نوع جلسه در یک پیشنهاد استفاده شده است و نمی‌توان آن را حذف کرد."
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The Session Type has been deleted."
 msgid "The default Session Type has been removed."
-msgstr "نوع جلسه حذف شده است."
+msgstr "نوع جلسهٔ پیش‌فرض حذف شده است."
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -30157,23 +29971,17 @@ msgid "Sort by"
 msgstr "مرتب‌سازی بر اساس"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "محصول \"{}\" به سهمیه‌ای اختصاص نیافته است."
+msgstr "محصولات اختصاص‌یافته به این چیدمان"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "سفارشی‌سازی فاکتور"
+msgstr "اجازهٔ سفارشی‌سازی نشان"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "مخفی کردن فیلد"
+msgstr "فیلدهای نشان"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -30189,10 +29997,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "هیچ زبانی انتخاب نشده"
+msgstr "هیچ فیلد اختیاریِ نشان انتخاب نشده است"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -30204,10 +30010,8 @@ msgid "Download Badge"
 msgstr "دانلود نشان"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "گزینه‌ها را بارگذاری کنید"
+msgstr "گزینه‌های نشان"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -30270,10 +30074,8 @@ msgstr "ایجاد قالب نشان جدید"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "قالب نشان"
+msgstr "تنظیمات چیدمان نشان"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -30283,10 +30085,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "تمام کاربران"
+msgstr "پرسش از کاربر"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -30294,16 +30094,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "متادیتای رویداد"
+msgstr "متاداده رویداد: {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "نام محصول"
+msgstr "فرادادهٔ محصول: {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -30311,10 +30109,8 @@ msgid "The requested badge layout does not exist."
 msgstr "قالب کارت درخواستی وجود ندارد."
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "تنظیمات حساب شما تغییر کرد."
+msgstr "تنظیمات چیدمان نشان شما ذخیره شد."
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -31619,10 +31415,8 @@ msgid "Client Application Secret"
 msgstr "رمز مخفی برنامه مشتری"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "هنوز هیچ پرونده‌ای ارائه نشده است"
+msgstr "بدون ارائه‌دهندهٔ ترجیحی"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31803,10 +31597,8 @@ msgstr ""
 "شما وارد شوند"
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "این محصول در حال حاضر موجود نیست."
+msgstr "این روش ورود در دسترس نیست."
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -32989,16 +32781,12 @@ msgstr "ارسال مجدد لینک‌های سفارش"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"لطفاً توجه داشته باشید که قبل از امکان پرداخت و تکمیل این سفارش، هنوز در "
-"انتظار تأیید برگزارکنندهٔ رویداد هستیم."
+"درخواست ارسال شد و در انتظار تأیید برگزارکنندهٔ رویداد است. جزئیات را در زیر "
+"ببینید."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -34155,10 +33943,8 @@ msgstr ""
 "می‌توانید بعد از تکمیل فرآیند پیشنهاد، سخنرانان بیشتری اضافه کنید."
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "نوع جلسه پیش‌فرض"
+msgstr "یک نوع جلسه را انتخاب کنید"
 
 #: submission/forms/submission.py:172
 msgid ""
