@@ -106,6 +106,15 @@
         {% include "pretixpresale/event/fragment_order_status.html" with order=order event=request.event class="pull-right flip" %}
         <div class="clearfix"></div>
     </h2>
+    {% if order.is_partially_canceled %}
+        <div class="alert alert-info">
+            {% blocktrans trimmed count num=canceled_position_count %}
+                One ticket in this order has already been canceled and is no longer valid.
+            {% plural %}
+                {{ num }} tickets in this order have already been canceled and are no longer valid.
+            {% endblocktrans %}
+        </div>
+    {% endif %}
     {% if order.status == "n" and not order.require_approval %}
         <div class="panel panel-primary">
             <div class="panel-heading">
@@ -380,7 +389,7 @@
         </div>
         <div class="clearfix"></div>
     </div>
-    {% if user_change_allowed or user_cancel_allowed %}
+    {% if user_change_allowed or user_cancel_allowed or user_partial_cancel_allowed %}
         <div class="panel panel-primary panel-cancellation">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -399,6 +408,20 @@
                                 class="btn btn-default">
                             <span class="fa fa-edit" aria-hidden="true"></span>
                             {% trans "Change order" %}
+                        </a>
+                    </li>
+                {% endif %}
+                {% if user_partial_cancel_allowed %}
+                    <li class="list-group-item">
+                        <p>
+                            {% blocktrans trimmed %}
+                                You can cancel one or more selected tickets and keep the remaining tickets in this order.
+                            {% endblocktrans %}
+                        </p>
+                        <a href="{% eventurl event 'presale:event.order.cancel.positions' secret=order.secret order=order.code %}"
+                                class="btn btn-default btn-delete">
+                            <span class="fa fa-remove" aria-hidden="true"></span>
+                            {% trans "Cancel selected tickets" %}
                         </a>
                     </li>
                 {% endif %}

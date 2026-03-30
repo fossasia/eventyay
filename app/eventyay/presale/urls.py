@@ -141,6 +141,16 @@ event_patterns = [
         name='event.order.cancel',
     ),
     re_path(
+        r'^order/(?P<order>[^/]+)/(?P<secret>[A-Za-z0-9]+)/cancel/positions$',
+        eventyay.presale.views.order.OrderPositionCancel.as_view(),
+        name='event.order.cancel.positions',
+    ),
+    re_path(
+        r'^order/(?P<order>[^/]+)/(?P<secret>[A-Za-z0-9]+)/cancel/positions/do$',
+        eventyay.presale.views.order.OrderPositionCancelDo.as_view(),
+        name='event.order.cancel.positions.do',
+    ),
+    re_path(
         r'^order/(?P<order>[^/]+)/(?P<secret>[A-Za-z0-9]+)/cancel/do$',
         eventyay.presale.views.order.OrderCancelDo.as_view(),
         name='event.order.cancel.do',

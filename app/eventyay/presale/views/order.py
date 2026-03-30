@@ -64,6 +64,7 @@ from eventyay.base.services.mail import SendMailException
 from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
+    cancel_order_positions,
     cancel_order,
     change_payment_provider,
 )
@@ -413,6 +414,8 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
         ).exclude(provider__in=('offsetting', 'reseller', 'boxoffice', 'manual'))
         ctx['user_change_allowed'] = self.order.user_change_allowed
         ctx['user_cancel_allowed'] = self.order.user_cancel_allowed
+        ctx['user_partial_cancel_allowed'] = self.order.user_partial_cancel_allowed
+        ctx['canceled_position_count'] = self.order.all_positions.filter(canceled=True).count()
         for r in ctx['refunds']:
             if r.provider == 'giftcard':
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
@@ -540,7 +543,6 @@ class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
                 'payment': self.payment.pk,
             },
         )
-
 
 @method_decorator(xframe_options_exempt, 'dispatch')
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
@@ -976,6 +978,104 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
             messages.error(request, _('You cannot modify this order'))
             return redirect(self.get_order_url())
         return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(xframe_options_exempt, 'dispatch')
+class OrderPositionCancel(EventViewMixin, OrderDetailMixin, TemplateView):
+    template_name = 'pretixpresale/event/order_cancel_positions.html'
+
+    def get_cancel_positions_url(self):
+        return eventreverse(
+            self.request.event,
+            'presale:event.order.cancel.positions',
+            kwargs={'order': self.order.code, 'secret': self.order.secret},
+        )
+
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        self.kwargs = kwargs
+        if not self.order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if not self.order.user_partial_cancel_allowed:
+            messages.error(request, _('You cannot cancel individual tickets in this order.'))
+            return redirect(self.get_order_url())
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        cancelable_ids = [p.pk for p in self.order.user_cancelable_positions]
+        positions = (
+            self.order.positions.filter(pk__in=cancelable_ids)
+            .select_related('product', 'variation', 'addon_to')
+            .prefetch_related('addons')
+            .order_by('positionid')
+        )
+
+        position_rows = []
+        for position in positions:
+            position_total = position.price + sum(addon.price for addon in position.addons.all())
+            cancellation_fee = self.order.user_partial_cancel_fee(position_total)
+            position_rows.append(
+                {
+                    'position': position,
+                    'position_total': position_total,
+                    'cancellation_fee': cancellation_fee,
+                    'refund_amount': position_total - cancellation_fee,
+                }
+            )
+
+        ctx['order'] = self.order
+        ctx['position_rows'] = position_rows
+        ctx['is_paid_order'] = self.order.status == Order.STATUS_PAID and self.order.total != Decimal('0.00')
+        return ctx
+
+
+@method_decorator(xframe_options_exempt, 'dispatch')
+class OrderPositionCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
+    task = cancel_order_positions
+    known_errortypes = ['OrderError']
+
+    def get_cancel_positions_url(self):
+        return eventreverse(
+            self.request.event,
+            'presale:event.order.cancel.positions',
+            kwargs={'order': self.order.code, 'secret': self.order.secret},
+        )
+
+    def get_success_url(self, value):
+        return self.get_order_url()
+
+    def get_error_url(self):
+        return self.get_cancel_positions_url()
+
+    def post(self, request, *args, **kwargs):
+        if not self.order:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+        if not self.order.user_partial_cancel_allowed:
+            messages.error(request, _('You cannot cancel individual tickets in this order.'))
+            return redirect(self.get_order_url())
+
+        position_ids = request.POST.getlist('positions')
+        if not position_ids:
+            messages.error(request, _('Please select at least one ticket to cancel.'))
+            return redirect(self.get_cancel_positions_url())
+
+        giftcard = self.request.event.settings.cancel_allow_user_paid_refund_as_giftcard == 'force' or (
+            self.request.event.settings.cancel_allow_user_paid_refund_as_giftcard == 'option'
+            and self.request.POST.get('giftcard') == 'true'
+        )
+        comment = gettext('Canceled by customer (partial)')
+
+        return self.do(
+            self.order.pk,
+            position_ids=position_ids,
+            try_auto_refund=True,
+            refund_as_giftcard=giftcard,
+            comment=comment,
+        )
+
+    def get_success_message(self, value):
+        return _('The selected tickets have been canceled.')
 
 
 @method_decorator(xframe_options_exempt, 'dispatch')
