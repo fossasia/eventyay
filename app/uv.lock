@@ -1169,7 +1169,7 @@ source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=main#a6d9c
 [[package]]
 name = "eventyay-stripe"
 version = "1.0.1"
-source = { git = "https://github.com/fossasia/eventyay-stripe.git?rev=main#4c9d38cbba287d31c02dceb717478d34d776b1ac" }
+source = { git = "https://github.com/fossasia/eventyay-stripe.git?rev=main#a5c1191d7c4348dd6e7fcf8568b1aa601bab5efb" }
 dependencies = [
     { name = "stripe" },
 ]
