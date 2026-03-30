@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-21 17:17+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
@@ -210,10 +210,9 @@ msgid "Duration"
 msgstr "時間"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
-msgstr "%(minutes)s分"
+msgstr "%(minutes)s 分"
 
 #: agenda/templates/agenda/talk_review.html:31 base/models/access_code.py:30
 #: base/models/submission.py:193
@@ -275,10 +274,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal（スター付きセッション）"
+msgstr "%(name)s のスター付きセッション"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -309,34 +307,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "更新履歴"
+msgstr "変更履歴を表示"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "現在の値を保持"
+msgstr "現在のバージョンに移動"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "フィルターをクリア"
+msgstr "すべてのフィルターをリセット"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
-msgstr "並び替え"
+msgstr "並べ替え"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "新しい部屋"
+msgstr "部屋別"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -351,28 +339,20 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "スキャンを終了"
+msgstr "全画面表示を終了"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "ゲート"
+msgstr "最新"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"現在、編集可能なスケジュールのバージョンを表示していますが、未発表であり、随"
-"時変更される可能性があります。"
+"現在、編集可能なスケジュール版を表示しています。公開版と一致しない場合があり"
+"ます。"
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -383,16 +363,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "ビデオ"
+msgstr "動画を表示"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "未公開"
+msgstr "ライブで視聴"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -402,10 +378,8 @@ msgid_plural "Speakers"
 msgstr[0] "登壇者"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "講演者が到着していない"
+msgstr "話者名が提供されていません"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -433,10 +407,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "カレンダーに追加"
+msgstr "Google カレンダー"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -481,10 +453,8 @@ msgid "No"
 msgstr "いいえ"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "ユーザーが見つかりません。"
+msgstr "スピーカーが見つかりません。"
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -504,22 +474,16 @@ msgid "Tracks"
 msgstr "トラック"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
 msgstr "ダウンロード"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "作成者"
+msgstr "スター付き"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "開始"
+msgstr "スター付き"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -529,8 +493,6 @@ msgid "Export"
 msgstr "エクスポート"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
 msgstr "エクスポート"
 
@@ -545,16 +507,12 @@ msgid "No response"
 msgstr "応答なし"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "その他の手数料"
+msgstr "その他のタイムゾーン"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "現在:"
+msgstr "現在"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -562,10 +520,8 @@ msgid "Print"
 msgstr "印刷"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "リスト"
+msgstr "リストビュー"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -593,22 +549,16 @@ msgstr "検索"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "注目のイベント"
+msgstr "注目のスピーカー"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "スピーカープロフィールを表示または編集"
+msgstr "スピーカープロフィールを表示"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "公開されているセッションはありません。"
+msgstr "スター付きのセッションはありません。"
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -817,16 +767,12 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "この種類の質問はチェックイン時に行えません。"
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "単一イベント（過去）"
+msgstr "開始時刻は過去に設定できません。"
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
-msgstr "終了時刻は開始時刻より後でなければなりません。"
+msgstr "終了時刻は開始時刻より後である必要があります。"
 
 #: api/serializers/stream_schedule.py:101
 msgid ""
@@ -1067,16 +1013,12 @@ msgid "Require company per ticket"
 msgstr "チケットごとに会社名を必須にする"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "チケットごとに会社名を要求する"
+msgstr "チケットごとに役職名を確認する"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "チケットごとに会社名を必須にする"
+msgstr "チケットごとに役職名を必須にする"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3736,10 +3678,8 @@ msgid "Only paid orders"
 msgstr "支払い済みの注文のみ"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "承認待ち"
+msgstr "承認待ちの注文のみ"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4476,8 +4416,6 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
 msgstr "役職"
 
@@ -4492,16 +4430,12 @@ msgstr "州を選択"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "カート"
+msgstr "回答"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "セレクション"
+msgstr "オプションを選択"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4549,14 +4483,8 @@ msgstr ""
 "合わせください。"
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr ""
-"メールアドレスまたはパスワードを変更する場合は、現在のパスワードを入力してく"
-"ださい。"
+msgstr "パスワードを変更する場合は、現在のパスワードを入力してください。"
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6566,10 +6494,8 @@ msgid "Show link on the website start page"
 msgstr "ウェブサイトのトップページにリンクを表示"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "全ページのヘッダーメニューに表示"
+msgstr "システムページのヘッダーとフッターに表示"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -7053,10 +6979,8 @@ msgid "Radio button (Choose one option)"
 msgstr "ラジオボタン（1つ選択）"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "ラジオボタン（1つ選択）"
+msgstr "ドロップダウン（オプションを1つ選択）"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7330,10 +7254,8 @@ msgid "Biography"
 msgstr "バイオグラフィー"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "このセッションを注目セッション一覧に表示する。"
+msgstr "このスピーカーを注目スピーカーの公開リストに表示する。"
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7360,10 +7282,8 @@ msgid "Confirmation"
 msgstr "確認"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "国"
+msgstr "国リスト"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7849,18 +7769,14 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "システムURL:"
+msgstr "ストリームURL"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
 msgstr "開始時刻"
 
@@ -7869,8 +7785,6 @@ msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
 msgstr "終了時刻"
 
@@ -7879,16 +7793,12 @@ msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "ストリームキー"
+msgstr "ストリームタイプ"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "追加情報"
+msgstr "追加設定"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -7897,16 +7807,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "スケジュール"
+msgstr "配信スケジュール"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "スケジュール"
+msgstr "配信スケジュール"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8190,8 +8096,6 @@ msgstr ""
 "す。"
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
 msgstr "位置"
 
@@ -8269,23 +8173,17 @@ msgstr ""
 "す。"
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "クォータ回避を許可する"
+msgstr "承認をバイパスできるようにする"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"有効にすると、このバウチャーコード保有者は残席がなくてもチケットを購入できま"
-"す。"
+"有効にすると、このバウチャーコードの所持者は主催者の承認を待たずにチケットを"
+"購入できます。これは、承認が必要な商品に適用されます。"
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9172,10 +9070,8 @@ msgid "Attendee job title"
 msgstr "参加者の役職"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "サンプル州"
+msgstr "サンプルの役職名"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10319,14 +10215,9 @@ msgstr ""
 "ださい。"
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr ""
-"参加者のメールアドレスを必須にするには、メールアドレスを入力するよう求めてく"
-"ださい。"
+msgstr "必須にするには、参加者の役職を尋ねる必要があります。"
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11424,16 +11315,12 @@ msgid "Submit something now!"
 msgstr "何か提案しましょう！"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "イベントを選択"
+msgstr "ファイルを選択"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "ファイルが添付されていません"
+msgstr "ファイルが選択されていません"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11446,10 +11333,8 @@ msgid "Redo"
 msgstr "やり直す"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "改行"
+msgstr "下線"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -12105,28 +11990,20 @@ msgid "Optional"
 msgstr "任意"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "言語"
+msgstr "言語をリンク"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "ヘルプ: 表示言語の強制"
+msgstr "ヘルプ：言語をリンク"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"有効にすると、このイベントでその言語が利用可能な場合、イベント言語はUI言語に"
-"従います。"
+"有効にすると、イベントと言語設定（UI）が連動します。どちらか一方を選択すると"
+"、その言語がこのイベントで利用可能な場合、もう一方も更新されます。"
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12177,10 +12054,8 @@ msgstr "登壇者募集"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12782,10 +12657,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "時間"
+msgstr "グジャラート語"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12816,10 +12689,8 @@ msgid "Malay"
 msgstr "マレー語"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "マレー語"
+msgstr "マラヤーラム語"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14449,16 +14320,12 @@ msgid "Payment date"
 msgstr "支払日"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "この投稿はもう編集できません。"
+msgstr "このオプションは「有料の注文のみ」と組み合わせて使用できません。"
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "この操作は保留中の注文にのみ許可されています。"
+msgstr "このオプションは、承認待ちの注文のみとは併用できません。"
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14766,10 +14633,8 @@ msgstr ""
 "このイベントシリーズの全ての日付をキャンセルすることを確認してください。"
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "すべてのイベント（新規作成のものを含む）"
+msgstr "すべてのイベント（新規作成して公開したものを含む）"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14783,10 +14648,8 @@ msgid "Gift card value"
 msgstr "ギフトカードの金額"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "主催者ログ"
+msgstr "主催者スラッグ"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -17143,10 +17006,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "イベントの公開状態"
+msgstr "システムの表示/非表示を切り替え"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19700,10 +19561,8 @@ msgid "Required status for Company"
 msgstr "会社の必須設定"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "Eメールの必須ステータス"
+msgstr "役職の必須ステータス"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20252,10 +20111,8 @@ msgstr "（任意）"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "引換回数"
+msgstr "バッジのオプション"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -21135,22 +20992,16 @@ msgid_plural "%(s)s orders"
 msgstr[0] "%(s)s件の注文"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "セレクション"
+msgstr "操作を選択"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "無料注文が承認されました"
+msgstr "選択した注文を承認"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "注文を削除"
+msgstr "選択した注文を拒否"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21356,10 +21207,8 @@ msgid "Revoke"
 msgstr "取り消す"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "デバイスのアクセスを取り消す:"
+msgstr "すべてのデバイスを取り消して削除"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21375,17 +21224,13 @@ msgid_plural ""
 msgstr[0] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "このイベントは削除できません。"
+msgstr "この操作は元に戻せません。"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "デバイスのアクセスを取り消す:"
+msgstr "すべてのデバイスを失効して削除"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -23037,22 +22882,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "アップロードされたファイルをCSVとして解析できませんでした。"
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "有効な座席を選択してください。"
+msgstr "有効な操作を選択してください。"
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "下に少なくとも1台のデバイスを設定してください。"
+msgstr "少なくとも1件の注文を選択してください。"
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "選択した日付はこのイベントシリーズには存在しません。"
+msgstr "選択した注文のうち、少なくとも1件はすでに存在しません。"
 
 #: control/views/orders.py:330
 msgid ""
@@ -23060,18 +22899,16 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "注文が承認されました。"
+msgstr[0] "%(count)d 件の注文が承認されました。"
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "注文は拒否され、キャンセルされました。"
+msgstr[0] "%(count)d 件の注文は拒否され、現在キャンセルされています。"
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23462,16 +23299,12 @@ msgstr "このデバイスのアクセス権は取り消されました。"
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "表示する参加者がいません。"
+msgstr "取り消して削除できる接続済みデバイスはありません。"
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "選択したチケットをチェックイン済みにしました。"
+msgstr "接続済みのすべてのデバイスは取り消され、完全に削除されました。"
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23569,16 +23402,12 @@ msgid "Please only upload PDF files."
 msgstr "PDFファイルのみアップロードしてください。"
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "参加者名が未入力です"
+msgstr "レイアウトデータが提供されていません。"
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "入力データが無効です。"
+msgstr "無効なレイアウトデータが指定されました。"
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -23789,10 +23618,8 @@ msgid "Bypass quota"
 msgstr "定員制限を無視"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "定員制限を無視"
+msgstr "承認をバイパス"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25311,10 +25138,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "イベントを選択"
+msgstr "— イベントを選択 —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25325,10 +25150,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "まだサーバーが設定されていません。"
+msgstr "どのイベントにもトラックが設定されていません。"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -25837,9 +25660,6 @@ msgid "Unique viewers by session"
 msgstr "セッション別ユニーク視聴者数"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
 msgstr "セッション"
 
@@ -26653,10 +26473,8 @@ msgid "Mail signature"
 msgstr "メール署名"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "送信メールには、”-“の後に署名が追加されます。"
+msgstr "署名は送信メールに追加され、その前に「-- 」が付加されます。 "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27541,10 +27359,8 @@ msgid "Default duration"
 msgstr "デフォルトの長さ"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "すべてのセッションタイプ"
+msgstr "セッションタイプを移動"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -28835,10 +28651,8 @@ msgstr[0] "投稿者"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "この投稿を特別講演の一覧に表示します。"
+msgstr "この講演者を注目の講演者一覧に表示します。"
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -28849,10 +28663,8 @@ msgid "Not arrived"
 msgstr "未達"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "ユーザーが見つかりません。"
+msgstr "提出者が見つかりません。"
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -29244,10 +29056,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "投稿タイプは投稿に割り当てられており、削除できません。"
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "デバイスが削除されました。"
+msgstr "デフォルトのセッションタイプは削除されました。"
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -29898,23 +29708,17 @@ msgid "Sort by"
 msgstr "並び替え"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "商品 \"{}\" はクォータに割り当てられていません。"
+msgstr "このレイアウトに割り当てられた商品"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "請求書のカスタマイズ"
+msgstr "バッジのカスタマイズを許可"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "フィールドを非表示にする"
+msgstr "バッジのフィールド"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -29930,10 +29734,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "言語が選択されていません"
+msgstr "オプションのバッジフィールドが選択されていません"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -29945,10 +29747,8 @@ msgid "Download Badge"
 msgstr "バッジをダウンロード"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "アップロードオプション"
+msgstr "バッジのオプション"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -30010,10 +29810,8 @@ msgstr "新しいバッジレイアウトを作成"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "バッジレイアウト"
+msgstr "バッジのレイアウト設定"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -30023,10 +29821,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "全ユーザー"
+msgstr "ユーザーに確認"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -30034,16 +29830,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "イベントメタデータ"
+msgstr "イベントメタデータ：{key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "商品名"
+msgstr "商品メタ：{key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -30051,10 +29845,8 @@ msgid "The requested badge layout does not exist."
 msgstr "指定されたバッジレイアウトは存在しません。"
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "アカウント設定が変更されました。"
+msgstr "バッジのレイアウト設定を保存しました。"
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -31334,10 +31126,8 @@ msgid "Client Application Secret"
 msgstr "クライアントアプリケーションシークレット"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "ファイルが添付されていません"
+msgstr "優先プロバイダーなし"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31521,10 +31311,8 @@ msgstr ""
 "ンスタンスにログインできるようになります。"
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "この商品は現在利用できません。"
+msgstr "このログイン方法は利用できません。"
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -32689,14 +32477,12 @@ msgstr "注文リンクを再送"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
-msgstr "この注文は、お支払い・完了前にイベント主催者の承認が必要です。"
+msgstr ""
+"リクエストは送信され、イベント主催者の承認待ちです。詳細は以下をご確認くださ"
+"い。"
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -33838,10 +33624,8 @@ msgstr ""
 "投稿プロセスが完了した後に追加することができます。"
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "標準の投稿タイプ"
+msgstr "セッションの種類を選択"
 
 #: submission/forms/submission.py:172
 msgid ""

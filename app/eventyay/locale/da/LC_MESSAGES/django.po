@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-21 17:25+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Danish <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "da/>\n"
@@ -205,8 +205,7 @@ msgid "Duration"
 msgstr "Varighed"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
 msgstr "%(minutes)s min."
 
@@ -270,10 +269,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (dine stjernemarkerede sessioner)"
+msgstr "%(name)ss stjernemarkerede sessioner"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -304,34 +302,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "Ændringslog"
+msgstr "Se ændringslog"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "Behold de nuværende værdier"
+msgstr "Gå til den aktuelle version"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "Ryd filtre"
+msgstr "Nulstil alle filtre"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
-msgstr "Sorter efter"
+msgstr "Sortér"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "Nyt lokale"
+msgstr "Efter rum"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -346,28 +334,20 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "Udgangsscanninger"
+msgstr "Afslut fuld skærm"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "Indgange"
+msgstr "Seneste"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"Der vises i øjeblikket den redigerbare programversion, som ikke er udgivet "
-"og kan ændres når som helst."
+"Der vises i øjeblikket den redigerbare planversion. Den matcher muligvis "
+"ikke den udgivne version."
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -378,16 +358,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "Video"
+msgstr "Se video"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "ikke live"
+msgstr "Se live"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -398,10 +374,8 @@ msgstr[0] "Oplægsholder"
 msgstr[1] "Oplægsholdere"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "Markér oplægsholder som ikke ankommet"
+msgstr "Højttalernavn er ikke angivet"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -429,10 +403,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "Tilføj til kalender"
+msgstr "Google Kalender"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -477,10 +449,8 @@ msgid "No"
 msgstr "Nej"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "Ingen brugere fundet."
+msgstr "Ingen højttalere fundet."
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -500,22 +470,16 @@ msgid "Tracks"
 msgstr "Spor"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download date"
 msgid "Downloads"
-msgstr "Hentet dato"
+msgstr "Downloads"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "oprettet af"
+msgstr "Stjernemarkeret af"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "Start"
+msgstr "Stjernemarkeret"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -525,8 +489,6 @@ msgid "Export"
 msgstr "Eksporter"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
 msgstr "Eksporter"
 
@@ -541,16 +503,12 @@ msgid "No response"
 msgstr "Intet svar"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "Andre gebyrer"
+msgstr "Andre tidszoner"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "Aktuelt:"
+msgstr "nuværende"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -558,10 +516,8 @@ msgid "Print"
 msgstr "Print"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "Vis"
+msgstr "Listevisning"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -589,22 +545,16 @@ msgstr "Søg"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "Udvalgte arrangementer"
+msgstr "Udvalgte talere"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "Se eller rediger oplægsholderprofil"
+msgstr "Vis talerprofil"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "Ingen offentliggjorte sessioner."
+msgstr "Ingen stjernemarkerede sessioner."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -818,16 +768,12 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "Denne spørgsmålstype kan ikke stilles under check-in."
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "Enkelt arrangement i fortiden"
+msgstr "Starttidspunktet kan ikke ligge i fortiden."
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
-msgstr "Sluttidspunktet skal ligge efter starttidspunktet."
+msgstr "Sluttidspunktet skal være efter starttidspunktet."
 
 #: api/serializers/stream_schedule.py:101
 msgid ""
@@ -1073,16 +1019,12 @@ msgid "Require company per ticket"
 msgstr "Kræv firmanavn pr. billet"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "Spørg efter firmanavn pr. billet"
+msgstr "Spørg efter jobtitel pr. sag"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "Kræv firmanavn pr. billet"
+msgstr "Kræv jobtitel pr. ticket"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3785,10 +3727,8 @@ msgid "Only paid orders"
 msgstr "Kun betalte bestillinger"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "godkendelse afventer"
+msgstr "Kun ordrer, der afventer godkendelse"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4527,8 +4467,6 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
 msgstr "Jobtitel"
 
@@ -4543,16 +4481,12 @@ msgstr "Vælg delstat"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "Din kurv"
+msgstr "Dit svar"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "Valg"
+msgstr "Vælg en mulighed"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4600,14 +4534,8 @@ msgstr ""
 "fakturaen. Kontakt support for at få dette løst manuelt."
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr ""
-"Indtast venligst din nuværende adgangskode hvis du vil ændre e-mailadresse "
-"eller adgangskode."
+msgstr "Indtast den nuværende adgangskode for at ændre adgangskoden."
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6630,10 +6558,8 @@ msgid "Show link on the website start page"
 msgstr "Vis link på webstedets startside"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "Vis i header-menuen på alle sider"
+msgstr "Vis i sidehoved og sidefod på systemsider"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -7131,10 +7057,8 @@ msgid "Radio button (Choose one option)"
 msgstr "Radioknap (Vælg én mulighed)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "Radioknap (Vælg én mulighed)"
+msgstr "Rullemenu (Vælg en mulighed)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7406,10 +7330,8 @@ msgid "Biography"
 msgstr "Biografi"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "Vis denne session på den offentlige liste over fremhævede sessioner."
+msgstr "Vis denne taler på den offentlige liste over fremhævede talere."
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7436,10 +7358,8 @@ msgid "Confirmation"
 msgstr "Bekræftelse"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "Land"
+msgstr "Landeliste"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7935,46 +7855,36 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "System-URL:"
+msgstr "Stream-URL"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
-msgstr "Starttidspunkt"
+msgstr "Starttid"
 
 #: base/models/stream_schedule.py:29
 msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
-msgstr "Sluttidspunkt"
+msgstr "Sluttid"
 
 #: base/models/stream_schedule.py:33
 msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "Streamnøgle"
+msgstr "Streamtype"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "Yderligere oplysninger"
+msgstr "Yderligere konfiguration"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -7983,16 +7893,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "Skema"
+msgstr "Streamplan"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "Skema"
+msgstr "Streamplaner"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8277,10 +8183,8 @@ msgstr ""
 "Denne sessionstype vises kun for indsendere med en matchende adgangskode."
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
-msgstr "Linje"
+msgstr "position"
 
 #: base/models/type.py:52
 msgid ""
@@ -8357,23 +8261,18 @@ msgstr ""
 "udsolgt."
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "Tillad overskridelse af kvote"
+msgstr "Tillad at omgå godkendelse"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"Hvis sat, kan en bruger med denne rabatkode købe billetter selv hvis der er "
-"udsolgt."
+"Hvis aktiveret kan indehaveren af denne voucher-kode købe billetter uden at "
+"afvente godkendelse fra arrangøren. Dette gælder for produkter, der kræver "
+"godkendelse."
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9270,10 +9169,8 @@ msgid "Attendee job title"
 msgstr "Deltagers stillingsbetegnelse"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "Eksempel på delstat"
+msgstr "Eksempel på jobtitel"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10436,14 +10333,9 @@ msgstr ""
 "påkrævede."
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr ""
-"Du skal spørge efter deltageres e-mailadresser hvis du vil gøre dem "
-"påkrævede."
+msgstr "Deltagerens jobtitler skal indhentes for at kunne gøres obligatoriske."
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11542,16 +11434,12 @@ msgid "Submit something now!"
 msgstr "Indsend nu!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "Vælg arrangement"
+msgstr "Vælg fil"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "Ingen fil angivet"
+msgstr "Ingen fil valgt"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11564,10 +11452,8 @@ msgid "Redo"
 msgstr "Omgør"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "paid"
 msgid "Underline"
-msgstr "betalt"
+msgstr "Understreg"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -12224,28 +12110,21 @@ msgid "Optional"
 msgstr "Valgfrit"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "Sprog"
+msgstr "Sammenkæd sprog"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "Hjælp: Gennemtving UI-sprog"
+msgstr "Hjælp: Tilknyt sprog"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"Når dette er aktiveret, følger eventsproget dit UI-sprog, når dette sprog er "
-"tilgængeligt for dette event."
+"Når dette er aktiveret, er sprog for begivenhed og brugerflade knyttet. Valg "
+"af det ene opdaterer det andet, når sproget er tilgængeligt for denne "
+"begivenhed."
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12296,10 +12175,8 @@ msgstr "Call for Speakers"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12901,10 +12778,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "Varighed"
+msgstr "Gujarati"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12935,10 +12810,8 @@ msgid "Malay"
 msgstr "Malaysisk"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "Malaysisk"
+msgstr "Malayalam"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14577,16 +14450,14 @@ msgid "Payment date"
 msgstr "Betalingsdato"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "Dette forslag kan ikke redigeres længere."
+msgstr "Denne indstilling kan ikke kombineres med kun betalte ordrer."
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "Denne handling er kun tilladt for afventende ordrer."
+msgstr ""
+"Denne indstilling kan ikke kombineres med ordrer, der kun afventer "
+"godkendelse."
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14905,10 +14776,8 @@ msgid "Please confirm that you want to cancel ALL dates in this event series."
 msgstr "Bekræft, at ALLE datoer i denne arrangementsserie skal annulleres."
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "Alle arrangementer (inkl. nyligt oprettede)"
+msgstr "Alle begivenheder (inklusive nyoprettede og udgivne)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14920,10 +14789,8 @@ msgid "Gift card value"
 msgstr "Gavekortværdi"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "Arrangørlogs"
+msgstr "Arrangør-slug"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -17302,10 +17169,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "Eventets synlighed"
+msgstr "Slå systemets synlighed til/fra"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19909,10 +19774,8 @@ msgid "Required status for Company"
 msgstr "Påkrævet status for virksomhed"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "Påkrævet status for e-mail"
+msgstr "Påkrævet status for jobtitel"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20471,10 +20334,8 @@ msgstr "(valgfri)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "Indløsninger"
+msgstr "Badgeindstillinger"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -21368,22 +21229,16 @@ msgstr[0] "1 ordre"
 msgstr[1] "%(s)s ordrer"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "Valg"
+msgstr "Vælg handling"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "Godkendt gratis ordre"
+msgstr "Godkend valgte ordrer"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "Slet ordre"
+msgstr "Afvis valgte ordrer"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21591,10 +21446,8 @@ msgid "Revoke"
 msgstr "Tilbagekald"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "Tilbagekald enhedsadgang:"
+msgstr "Tilbagekald og fjern alle enheder"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21616,10 +21469,8 @@ msgstr "Denne handling kan ikke fortrydes."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "Tilbagekald enhedsadgang:"
+msgstr "Tilbagekald og fjern alle enheder"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -23302,22 +23153,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "Den uploadede fil kunne ikke fortolkes som en CSV-fil."
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "Vælg et gyldigt sæde."
+msgstr "Vælg en gyldig handling."
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "Opret mindst én enhed nedenfor."
+msgstr "Vælg mindst én ordre."
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected question does not exist."
 msgid "At least one selected order does not exist anymore."
-msgstr "Det valgte spørgsmål findes ikke."
+msgstr "Mindst én af de valgte ordrer findes ikke længere."
 
 #: control/views/orders.py:330
 msgid ""
@@ -23325,20 +23170,18 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "Ordren er blevet godkendt."
-msgstr[1] "Ordren er blevet godkendt."
+msgstr[0] "Ordren %(count)d er blevet godkendt."
+msgstr[1] "Ordrerne %(count)d er blevet godkendt."
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "Ordren er blevet afvist og er derfor nu annulleret."
-msgstr[1] "Ordren er blevet afvist og er derfor nu annulleret."
+msgstr[0] "Ordre %(count)d er blevet afvist og er nu annulleret."
+msgstr[1] "Ordrer %(count)d er blevet afvist og er nu annulleret."
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23746,16 +23589,12 @@ msgstr "Adgangen for denne enhed er blevet tilbagekaldt."
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "Der er ingen deltagere at vise."
+msgstr "Der er ingen tilsluttede enheder at tilbagekalde og fjerne."
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "De valgte billetter er markeret som værende tjekket ind."
+msgstr "Alle tilsluttede enheder er blevet tilbagekaldt og fjernet permanent."
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23854,16 +23693,12 @@ msgid "Please only upload PDF files."
 msgstr "Upload kun PDF-filer."
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "Der er ikke angivet noget deltagernavn"
+msgstr "Der blev ikke angivet nogen layoutdata."
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "Ugyldige inputdata."
+msgstr "Der blev angivet ugyldige layoutdata."
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -24074,10 +23909,8 @@ msgid "Bypass quota"
 msgstr "Omgå kvote"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "Omgå kvote"
+msgstr "Omgå godkendelse"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25609,10 +25442,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "Vælg et arrangement"
+msgstr "— Vælg en begivenhed —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25623,10 +25454,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "Der er endnu ikke konfigureret nogen servere."
+msgstr "Der er ikke konfigureret nogen spor til nogen begivenheder."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -26138,9 +25967,6 @@ msgid "Unique viewers by session"
 msgstr "Unikke seere efter session"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
 msgstr "Session"
 
@@ -26958,10 +26784,8 @@ msgid "Mail signature"
 msgstr "E-mailsignatur"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "Signaturen føjes til udgående e-mails, med “-- ” foran."
+msgstr "Signaturen bliver føjet til udgående mails og indledes med “-- ”. "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27862,10 +27686,8 @@ msgid "Default duration"
 msgstr "Standardvarighed"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "Alle sessionstyper"
+msgstr "Flyt sessionstype"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -29183,10 +29005,8 @@ msgstr[1] "indsendere"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "Vis dette forslag på listen over fremhævede sessioner."
+msgstr "Vis denne taler på listen over fremhævede talere."
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -29197,10 +29017,8 @@ msgid "Not arrived"
 msgstr "Ikke ankommet"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "Ingen brugere fundet."
+msgstr "Ingen indsendere fundet."
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -29596,10 +29414,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "Denne sessionstype er i brug i et forslag og kan ikke slettes."
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "Enheden er blevet fjernet."
+msgstr "Standardsessionstypen er blevet fjernet."
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -30277,17 +30093,13 @@ msgid "Products assigned to this layout"
 msgstr "Produktet \"{}\" er ikke tilknyttet en kvote."
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "Fakturatilpasning"
+msgstr "Tillad tilpasning af badge"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "Skjul felt"
+msgstr "Badgefæ lter"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -30303,10 +30115,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "Ingen sprog valgt"
+msgstr "Ingen valgfrie badgefelter er valgt"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -30318,10 +30128,8 @@ msgid "Download Badge"
 msgstr "Download badge"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "Uploadmuligheder"
+msgstr "Badgeindstillinger"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -30383,10 +30191,8 @@ msgstr "Opret et nyt badge-layout"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "Badge-layout"
+msgstr "Indstillinger for badge-layout"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -30396,10 +30202,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "Alle brugere"
+msgstr "Bed brugeren"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -30407,16 +30211,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "Eventmetadata"
+msgstr "Begivenhedsmetadata: {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "Produktnavn"
+msgstr "Produktmetadata: {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -30424,10 +30226,8 @@ msgid "The requested badge layout does not exist."
 msgstr "Det anmodede badge-layout findes ikke."
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "Dine kontoindstillinger er blevet ændret."
+msgstr "Indstillingerne for dit badge-layout er gemt."
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -31736,10 +31536,8 @@ msgid "Client Application Secret"
 msgstr "Klientapplikationshemmelighed"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "Ingen fil angivet"
+msgstr "Ingen foretrukken udbyder"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31922,10 +31720,8 @@ msgstr ""
 "hjælp af deres MediaWiki-konto."
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "Dette produkt er pt. ikke tilgængeligt."
+msgstr "Denne loginmetode er ikke tilgængelig."
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -33114,16 +32910,12 @@ msgstr "Gensend link til bestilling"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"Bemærk, at vi stadig afventer godkendelse fra eventarrangøren, før du kan "
-"betale og fuldføre denne ordre."
+"Anmodningen er indsendt og afventer godkendelse fra eventarrangøren. Se "
+"nedenfor for detaljer."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -34291,10 +34083,8 @@ msgstr ""
 "medtaler, kan der tilføjes flere talere, når forslagsprocessen er afsluttet."
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "Standard-sessiontype"
+msgstr "Vælg en sessionstype"
 
 #: submission/forms/submission.py:172
 msgid ""
