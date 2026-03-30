@@ -36962,11 +36962,3 @@ msgstr "Choisir un fichier"
 #: cfp/templates/cfp/includes/forms_header.html:7
 msgid "No file chosen"
 msgstr "Aucun fichier sélectionné"
-
-#: base/forms/questions.py:570 base/forms/questions.py:578 base/forms/questions.py:585
-msgid "Your answer"
-msgstr "Votre réponse"
-
-#: base/forms/questions.py:610
-msgid "Select an option"
-msgstr "Sélectionnez une option"
