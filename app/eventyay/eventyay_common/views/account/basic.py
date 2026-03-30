@@ -24,7 +24,7 @@ from eventyay.base.forms.user import UserSettingsForm
 from eventyay.base.models import Event, LogEntry, NotificationSetting, User
 from eventyay.base.notifications import get_all_notification_types
 from eventyay.common.utils.language import (
-    get_event_enforce_ui_language_cookie_name,
+    get_event_enforce_ui_language,
     get_event_language_cookie_name,
     strict_match_language,
 )
@@ -374,8 +374,7 @@ class LanguageSwitchView(View):
                     ).first()
 
             if event:
-                enforce_cookie_name = get_event_enforce_ui_language_cookie_name(event.slug, event.organizer.slug)
-                if request.COOKIES.get(enforce_cookie_name, '0') == '1':
+                if get_event_enforce_ui_language(request.COOKIES, event.slug, event.organizer.slug):
                     linked_event_language = strict_match_language(locale, event.locales)
                     if linked_event_language:
                         event_cookie_name = get_event_language_cookie_name(event.slug, event.organizer.slug)

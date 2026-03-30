@@ -19,7 +19,7 @@ from eventyay.base.models import Event, Organizer
 from eventyay.base.models import User
 from eventyay.base.models import Schedule
 from eventyay.common.utils.language import (
-    get_event_enforce_ui_language_cookie_name,
+    get_event_enforce_ui_language,
     get_event_language_cookie_name,
     set_current_event_language,
     strict_match_language,
@@ -160,11 +160,13 @@ class EventPermissionMiddleware:
         event_language = None
         if hasattr(request, 'event') and request.event:
             event_supported = request.event.locales
-            enforce_cookie_name = get_event_enforce_ui_language_cookie_name(
+            # Use the centralized helper so the default (ON) is declared in one place
+            # and is consistent across the middleware and locale views.
+            request.event_language_enforce_ui = get_event_enforce_ui_language(
+                request.COOKIES,
                 request.event.slug,
                 request.event.organizer.slug,
             )
-            request.event_language_enforce_ui = request.COOKIES.get(enforce_cookie_name, '0') == '1'
 
             if request.event_language_enforce_ui:
                 strict_ui_language = strict_match_language(ui_language, event_supported)
@@ -181,6 +183,17 @@ class EventPermissionMiddleware:
 
         if not event_language:
             event_language = ui_language
+
+        # Bidirectional sync: when enforce is ON, keep UI and event language aligned.
+        if (
+            request.event_language_enforce_ui
+            and event_language
+            and event_language != ui_language
+            and event_language in ui_supported
+        ):
+            translation.activate(event_language)
+            request.LANGUAGE_CODE = translation.get_language()
+            request.ui_language = event_language
 
         request.event_language = event_language
         set_current_event_language(event_language)
