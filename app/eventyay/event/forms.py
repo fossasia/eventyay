@@ -199,9 +199,10 @@ class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
     def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
         self.locales = locales or []
         super().__init__(*args, **kwargs, locales=locales)
-        self.fields["locale"].choices = [
-            (code, lang) for code, lang in settings.LANGUAGES if code in self.locales
-        ]
+
+        # Allow UI language independent of selected event locales
+        self.fields["locale"].choices = list(settings.LANGUAGES)
+
         self.fields["slug"].help_text = (
             str(
                 _(
@@ -215,13 +216,26 @@ class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
             + "</strong>"
         )
 
+    def clean(self):
+        data = super().clean()
+        locale = data.get("locale")
+        locales = self.locales
+
+        # Ensure UI language is allowed independently (unlink behavior)
+        if locale and locales and locale not in locales:
+            data["locale"] = locale
+
+        return data
+
     def clean_slug(self):
         slug = self.cleaned_data["slug"]
         qs = Event.objects.all()
+
         if qs.filter(slug__iexact=slug).exists():
             raise forms.ValidationError(
                 _(
-                    "This short name is already taken, please choose another one (or ask the owner of that event to add you to their team)."
+                    "This short name is already taken, please choose another one "
+                    "(or ask the owner of that event to add you to their team)."
                 )
             )
 
