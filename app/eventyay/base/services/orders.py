@@ -2719,14 +2719,17 @@ def _cancel_order_positions(
         if not position_ids:
             raise OrderError(_('Please select at least one ticket to cancel.'))
 
+        try:
+            normalized_position_ids = {int(position_id) for position_id in position_ids}
+        except (TypeError, ValueError):
+            raise OrderError(_('One of the selected tickets can not be canceled.'))
+
+        if not normalized_position_ids:
+            raise OrderError(_('Please select at least one ticket to cancel.'))
+
         cancelable_positions = {p.pk: p for p in order.user_cancelable_positions}
         selected_positions = {}
-        for position_id in position_ids:
-            try:
-                position_id = int(position_id)
-            except (TypeError, ValueError):
-                raise OrderError(_('One of the selected tickets can not be canceled.'))
-
+        for position_id in normalized_position_ids:
             if position_id not in cancelable_positions:
                 raise OrderError(_('One of the selected tickets can not be canceled.'))
 
@@ -2735,9 +2738,14 @@ def _cancel_order_positions(
         positions_to_cancel = []
         canceled_total = Decimal('0.00')
         canceled_ids = set()
+        # Sorting by position ID keeps parent positions before their add-ons.
         for position in sorted(selected_positions.values(), key=lambda p: p.positionid):
             if position.addon_to_id and position.addon_to_id in selected_positions:
                 continue
+
+            addons = list(position.addons.all())
+            if any(addon.pk not in cancelable_positions for addon in addons):
+                raise OrderError(_('One of the selected tickets can not be canceled.'))
 
             positions_to_cancel.append(position)
 
@@ -2745,7 +2753,7 @@ def _cancel_order_positions(
                 canceled_total += position.price
                 canceled_ids.add(position.pk)
 
-            for addon in position.addons.all():
+            for addon in addons:
                 if addon.pk in canceled_ids:
                     continue
                 canceled_total += addon.price
