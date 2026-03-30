@@ -24,6 +24,7 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.filters import OrderingFilter
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 
@@ -194,6 +195,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     lookup_field = 'code'
     permission = 'can_view_orders'
     write_permission = 'can_change_orders'
+    pagination_class = PageNumberPagination
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -860,6 +862,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
     filterset_class = OrderPositionFilter
     permission = 'can_view_orders'
     write_permission = 'can_change_orders'
+    pagination_class = PageNumberPagination
     ordering_custom = {
         'attendee_name': {
             '_order': F('display_name').asc(nulls_first=True),
@@ -1160,6 +1163,7 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     queryset = OrderPayment.objects.none()
     permission = 'can_view_orders'
     write_permission = 'can_change_orders'
+    pagination_class = PageNumberPagination
     lookup_field = 'local_id'
 
     def get_serializer_context(self):
@@ -1370,6 +1374,7 @@ class RefundViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     queryset = OrderRefund.objects.none()
     permission = 'can_view_orders'
     write_permission = 'can_change_orders'
+    pagination_class = PageNumberPagination
     lookup_field = 'local_id'
 
     def get_queryset(self):
@@ -1547,6 +1552,7 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_url_kwarg = 'number'
     lookup_field = 'nr'
     write_permission = 'can_change_orders'
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         return (
@@ -1633,6 +1639,7 @@ class RevokedSecretViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = RevokedSecretFilter
     permission = 'can_view_orders'
     write_permission = 'can_change_orders'
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         return RevokedTicketSecret.objects.filter(event=self.request.event)
