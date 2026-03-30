@@ -468,8 +468,7 @@ class EventThemeView(APIView):
                 kwargs["event_id"],
             )
             return Response(
-                "error happened when trying to get theme data of event: "
-                + kwargs["event_id"],
+                f'error happened when trying to get theme data of event: {kwargs["event_id"]}',
                 status=503,
             )
 
@@ -561,8 +560,8 @@ class CreateEventView(APIView):
                 protocol = get_protocol(site_url)
                 event.domain = "{}://{}".format(protocol, domain_path)
                 return JsonResponse(model_to_dict(event, exclude=["roles"]), status=201)
-            except IntegrityError as e:
-                logger.error(f"Database integrity error while saving event: {e}")
+            except IntegrityError:
+                logger.exception("Database integrity error while saving event")
                 return JsonResponse(
                     {
                         "error": "An event with this ID already exists or database constraint violated"
@@ -570,10 +569,10 @@ class CreateEventView(APIView):
                     status=400,
                 )
             except ValidationError as e:
-                logger.error(f"Validation error while saving event: {e}")
+                logger.exception("Validation error while saving event")
                 return JsonResponse({"error": str(e)}, status=400)
-            except Exception as e:
-                logger.error(f"Unexpected error creating event: {e}")
+            except Exception:
+                logger.exception("Unexpected error creating event")
                 return JsonResponse(
                     {"error": "An unexpected error occurred"}, status=500
                 )
