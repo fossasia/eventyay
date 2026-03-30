@@ -415,9 +415,8 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
         ctx['user_change_allowed'] = self.order.user_change_allowed
         ctx['user_cancel_allowed'] = self.order.user_cancel_allowed
         ctx['user_partial_cancel_allowed'] = self.order.user_partial_cancel_allowed
-        ctx['canceled_position_count'] = (
-            self.order.all_positions.filter(canceled=True).count() if self.order.is_partially_canceled else 0
-        )
+        canceled_positions_qs = self.order.all_positions.filter(canceled=True)
+        ctx['canceled_position_count'] = canceled_positions_qs.count()
         for r in ctx['refunds']:
             if r.provider == 'giftcard':
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))

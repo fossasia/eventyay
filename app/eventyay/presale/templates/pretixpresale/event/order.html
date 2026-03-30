@@ -106,7 +106,7 @@
         {% include "pretixpresale/event/fragment_order_status.html" with order=order event=request.event class="pull-right flip" %}
         <div class="clearfix"></div>
     </h2>
-    {% if order.is_partially_canceled %}
+    {% if canceled_position_count %}
         <div class="alert alert-info">
             {% blocktrans trimmed count num=canceled_position_count %}
                 One ticket in this order has already been canceled and is no longer valid.

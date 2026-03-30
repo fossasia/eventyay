@@ -611,12 +611,30 @@ class Order(LockModel, LoggedModel):
             .prefetch_related('issued_gift_cards')
         )
 
+        def is_position_cancelable(op):
+            if not op.product.allow_cancel or op.has_checkin:
+                return False
+            if any(gc.value != op.price for gc in op.issued_gift_cards.all()):
+                return False
+            return True
+
+        addons_by_base = {}
+        for op in positions:
+            if op.addon_to_id:
+                addons_by_base.setdefault(op.addon_to_id, []).append(op)
+
+        per_position_cancelable = {op.pk: is_position_cancelable(op) for op in positions}
+
         cancelable = []
         for op in positions:
-            if not op.product.allow_cancel or op.has_checkin:
+            if not per_position_cancelable.get(op.pk, False):
                 continue
-            if any(gc.value != op.price for gc in op.issued_gift_cards.all()):
-                continue
+
+            if not op.addon_to_id:
+                addons = addons_by_base.get(op.pk, [])
+                if any(not per_position_cancelable.get(addon.pk, False) for addon in addons):
+                    continue
+
             cancelable.append(op)
 
         return cancelable
