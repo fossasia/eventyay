@@ -33059,18 +33059,6 @@ msgctxt "proposal status"
 msgid "not accepted"
 msgstr "لم تتم الموافقة"
 
-#: base/forms/questions.py
-msgid "Your answer"
-msgstr "إجابتك"
-
-#: base/forms/questions.py
-msgid "Select an option"
-msgstr "اختر خيارًا"
-
-#: base/forms/questions.py
-msgid "Phone"
-msgstr "هاتف"
-
 #~ msgid "Available languages"
 #~ msgstr "اللغات المتوفرة"
 
