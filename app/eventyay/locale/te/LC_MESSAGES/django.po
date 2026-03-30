@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-23 15:19+0000\n"
+"PO-Revision-Date: 2026-03-29 20:10+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Telugu <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "te/>\n"
@@ -26776,7 +26776,7 @@ msgstr ""
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"
-msgstr ""
+msgstr "బృందంలో చేరండి!"
 
 #: orga/templates/orga/mails/_mail_editor.html:6
 #: orga/templates/orga/mails/_mail_editor.html:15
@@ -26785,26 +26785,27 @@ msgstr ""
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:5
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:11
 msgid "Email editor"
-msgstr ""
+msgstr "ఇమెయిల్ ఎడిటర్"
 
 #: orga/templates/orga/mails/_mail_editor.html:56
 msgid "Placeholders"
-msgstr ""
+msgstr "ప్లేస్‌హోల్డర్లు"
 
 #: orga/templates/orga/mails/_mail_editor.html:69
 msgid "Email preview"
-msgstr ""
+msgstr "ఇమెయిల్ ప్రివ్యూ"
 
 #: orga/templates/orga/mails/_mail_editor.html:71
 #, python-format
 msgid "Roughly %(count)s emails will be generated."
-msgstr ""
+msgstr "సుమారు %(count)s ఇమెయిల్లు రూపొందించబడతాయి."
 
 #: orga/templates/orga/mails/_mail_editor.html:78
 msgid ""
 "You have placeholders in your email that are either not valid or not valid "
 "for every email!"
 msgstr ""
+"ఇమెయిల్‌లో ఉన్న ప్లేస్‌హోల్డర్లు చెల్లని‌వి లేదా ప్రతి ఇమెయిల్‌కు చెల్లని‌వి ఉన్నాయి!"
 
 #: orga/templates/orga/mails/_mail_editor.html:85
 #, python-brace-format
@@ -26813,45 +26814,49 @@ msgid ""
 "For example, if you are using {session_room}, but some proposals don’t have "
 "a room yet, only emails for proposals with a scheduled room will be created."
 msgstr ""
+"ప్లేస్‌హోల్డర్లు చెల్లని ఇమెయిల్లు <strong>not</strong> సృష్టించబడవు! ఉదాహరణకు, "
+"{session_room} ఉపయోగిస్తున్నప్పటికీ, కొన్ని ప్రతిపాదనలకు ఇంకా గది లేకుంటే, షెడ్యూల్ చేసిన గది ఉన్న "
+"ప్రతిపాదనల కోసం మాత్రమే ఇమెయిల్లు సృష్టించబడతాయి."
 
 #: orga/templates/orga/mails/_mail_editor.html:123
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_form.html:84
 #: plugins/sendmail/templates/pretixplugins/sendmail/send_team_form.html:59
 msgid "Send to outbox"
-msgstr ""
+msgstr "అవుట్‌బాక్స్‌కు పంపండి"
 
 #: orga/templates/orga/mails/_placeholder_group.html:26
 msgid "Unavailable"
-msgstr ""
+msgstr "అందుబాటులో లేదు"
 
 #: orga/templates/orga/mails/_placeholder_group.html:41
 msgid "e.g."
-msgstr ""
+msgstr "ఉదా."
 
 #: orga/templates/orga/mails/compose_choice.html:9
 #: plugins/sendmail/templates/pretixplugins/sendmail/compose_choice.html:11
 msgid "Compose emails"
-msgstr ""
+msgstr "ఇమెయిల్లు రూపొందించండి"
 
 #: orga/templates/orga/mails/compose_choice.html:15
 #: orga/templates/orga/mails/compose_session_mail_form.html:6
 msgid "Sessions, proposals, speakers"
-msgstr ""
+msgstr "సెషన్లు, ప్రతిపాదనలు, ప్రసంగకులు"
 
 #: orga/templates/orga/mails/compose_choice.html:18
 msgid ""
 "Send an email to speakers, authors, submitters, based on their proposal "
 "status and other filters."
 msgstr ""
+"ప్రతిపాదన స్థితి మరియు ఇతర ఫిల్టర్ల ఆధారంగా ప్రసంగకులు, రచయితలు, సమర్పణకర్తలకు ఇమెయిల్ పంపండి."
 
 #: orga/templates/orga/mails/compose_choice.html:22
 #: orga/templates/orga/mails/compose_reviewer_mail_form.html:6
 msgid "Reviewers and team members"
-msgstr ""
+msgstr "సమీక్షకులు మరియు బృంద సభ్యులు"
 
 #: orga/templates/orga/mails/compose_choice.html:25
 msgid "Send an email to your reviewers or other team members."
-msgstr ""
+msgstr "సమీక్షకులు లేదా ఇతర బృంద సభ్యులకు ఇమెయిల్ పంపండి."
 
 #: orga/templates/orga/mails/compose_reviewer_mail_form.html:11
 msgid ""
@@ -26859,20 +26864,23 @@ msgid ""
 "are not placed in the outbox first. They also do not show up in the list of "
 "sent mails."
 msgstr ""
+"సమీక్షకులు మరియు ఇతర బృంద సభ్యులకు ఇమెయిల్లు ఎల్లప్పుడూ నేరుగా పంపబడతాయి; ముందుగా అవుట్‌బాక్స్‌లో "
+"ఉంచబడవు. పంపిన మెయిల్స్ జాబితాలో కూడా ఇవి కనిపించవు."
 
 #: orga/templates/orga/mails/compose_session_mail_form.html:16
 #, python-format
 msgid "Recipients filtered by responses to the custom field “%(question)s”."
 msgstr ""
+"కస్టమ్ ఫీల్డ్ “%(question)s” కు ఇచ్చిన ప్రతిస్పందనల ఆధారంగా వడపోసిన స్వీకర్తలు."
 
 #: orga/templates/orga/mails/compose_session_mail_form.html:28
 #, python-format
 msgid "Recipients filtered by search “%(search)s”."
-msgstr ""
+msgstr "శోధన “%(search)s” ఆధారంగా వడపోసిన స్వీకర్తలు."
 
 #: orga/templates/orga/mails/mailtemplate/list.html:11
 msgid "New custom template"
-msgstr ""
+msgstr "కొత్త కస్టమ్ టెంప్లేట్"
 
 #: orga/templates/orga/mails/mailtemplate/list.html:25
 msgid ""
@@ -26881,6 +26889,9 @@ msgid ""
 "to the \"Send Emails\" tab. Mails queued for sending are in the \"Outbox\" "
 "tab."
 msgstr ""
+"డిఫాల్ట్ టెంప్లేట్లు మరియు ఇమెయిల్స్ కోసం ఉన్న కస్టమ్ టెంప్లేట్లను ఇక్కడ సవరించవచ్చు. కొంతమంది లేదా అన్ని "
+"ప్రసంగకులకు ఇమెయిల్లు పంపాలంటే \"Send Emails\" ట్యాబ్‌కు వెళ్లండి. పంపడానికి క్యూ చేసిన మెయిల్లు "
+"\"Outbox\" ట్యాబ్‌లో ఉంటాయి."
 
 #: orga/templates/orga/mails/mailtemplate/list.html:32
 msgid ""
