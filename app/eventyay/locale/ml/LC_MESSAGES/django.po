@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-23 15:17+0000\n"
+"PO-Revision-Date: 2026-03-29 20:09+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Malayalam <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ml/>\n"
@@ -32927,92 +32927,98 @@ msgid ""
 "If you set room availabilities, speakers will only be able to set their "
 "availability for when any room is available."
 msgstr ""
+"റൂം ലഭ്യതകള്‍ സജ്ജമാക്കിയാല്‍, ഏതെങ്കിലും റൂം ലഭ്യമായിരിക്കുന്ന സമയങ്ങളില്‍ മാത്രമേ സ്പീക്കര്‍മാര്‍ക്ക് "
+"അവരുടെ ലഭ്യത സജ്ജമാക്കാന്‍ കഴിയൂ."
 
 #: schedule/forms.py:110
 msgid "The submitted availability does not comply with the required format."
-msgstr ""
+msgstr "സമര്‍പ്പിച്ച ലഭ്യത ആവശ്യമായ ഫോര്‍മാറ്റിനൊത്ത് പൊരുത്തപ്പെടുന്നില്ല."
 
 #: schedule/forms.py:124
 msgid "The submitted availability contains an invalid date."
-msgstr ""
+msgstr "സമര്‍പ്പിച്ച ലഭ്യതയില്‍ അസാധുവായ ഒരു തീയതി ഉള്‍പ്പെട്ടിരിക്കുന്നു."
 
 #: schedule/forms.py:139
 msgid "Please fill in your availability!"
-msgstr ""
+msgstr "ലഭ്യത പൂരിപ്പിക്കുക!"
 
 #: schedule/forms.py:195
 msgid "Room I"
-msgstr ""
+msgstr "റൂം I"
 
 #: schedule/forms.py:197
 msgid ""
 "Description, e.g.: Our main meeting place, Room I, enter from the right."
 msgstr ""
+"വിവരണം, ഉദാ.: നമ്മുടെ പ്രധാന കൂടിക്കാഴ്ച സ്ഥലം, റൂം I, വലത് വശത്ത് നിന്ന് പ്രവേശിക്കുക."
 
 #: schedule/forms.py:200
 msgid "Information for speakers, e.g.: Projector has only HDMI input."
 msgstr ""
+"സ്പീക്കര്‍മാര്‍ക്കുള്ള വിവരം, ഉദാ.: പ്രൊജക്ടറിന് HDMI ഇന്‍പുട്ട് മാത്രമേ ഉള്ളൂ."
 
 #: schedule/forms.py:204
 #, python-brace-format
 msgid "The current, automatically generated GUID is: {guid}."
-msgstr ""
+msgstr "നിലവിലെ, സ്വയം സൃഷ്ടിച്ച GUID: {guid}."
 
 #: schedule/phrases.py:9
 msgctxt "Schedule/program of the conference"
 msgid "Schedule"
-msgstr ""
+msgstr "ഷെഡ്യൂൾ"
 
 #: schedule/phrases.py:22
 msgid ""
 "You are currently viewing the editable schedule version, which is unreleased "
 "and may change at any time."
 msgstr ""
+"റിലീസ് ചെയ്യാത്തതും ഏത് സമയത്തും മാറാനിടയുള്ളതുമായ തിരുത്താവുന്ന ഷെഡ്യൂള്‍ പതിപ്പാണ് ഇപ്പോള്‍ കാണുന്നത്."
 
 #: schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
-msgstr ""
+msgstr "പഴയ ഒരു ഷെഡ്യൂള്‍ പതിപ്പാണ് ഇപ്പോള്‍ കാണുന്നത്."
 
 #: schedule/phrases.py:25
 #, python-format
 msgid "You can find the current version <a href=\"%(current_url)s\">here</a>."
-msgstr ""
+msgstr "നിലവിലെ പതിപ്പ് <a href=\"%(current_url)s\">ഇവിടെ</a> കണ്ടെത്താം."
 
 #. Translators: “tz” is a full timezone name like “Europe/Berlin”
 #: schedule/phrases.py:28
 #, python-format
 msgid "All times in %(tz)s"
-msgstr ""
+msgstr "%(tz)sയിലെ എല്ലാ സമയങ്ങളും"
 
 #: schedule/phrases.py:30
 msgid "There has been no feedback for this session yet."
-msgstr ""
+msgstr "ഈ സെഷനിന് ഇതുവരെ പ്രതികരണം ഒന്നും ലഭിച്ചിട്ടില്ല."
 
 #: schedule/templates/schedule/speaker_notification.txt:2
 #, python-format
 msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
-msgstr ""
+msgstr "- \"%(title)s\" എന്ന സെഷന്‍ %(location)sയില്‍ %(start)sന് നടക്കും"
 
 #: schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
 msgstr ""
+"- \"%(title)s\" എന്ന സെഷന്‍ %(location)sയിലെ %(start)sലേക്ക് മാറ്റിയിരിക്കുന്നു"
 
 #: submission/exporters.py:18 submission/exporters.py:63
 msgid "Custom fields data"
-msgstr ""
+msgstr "ഇഷ്ടാനുസൃത ഫീല്‍ഡുകളുടെ ഡാറ്റ"
 
 #: submission/exporters.py:18
 msgid "speakers"
-msgstr ""
+msgstr "പ്രഭാഷകർ"
 
 #: submission/exporters.py:63
 msgid "submissions"
-msgstr ""
+msgstr "സമര്‍പ്പണങ്ങള്‍"
 
 #: submission/forms/feedback.py:18
 msgid "All speakers"
-msgstr ""
+msgstr "എല്ലാ സ്പീക്കര്‍മാരും"
 
 #: submission/forms/resource.py:28
 msgid "Please either provide a link or upload a file, you cannot do both!"
