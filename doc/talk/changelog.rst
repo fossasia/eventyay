@@ -697,7 +697,7 @@ Release Notes
 - -: A one-character-oversight led to issues with the new navigation search with certain user permissions.
 - 0.7.0 <2018-06-19>:
 - 430: To maintain compatibility with frab XML exports, the schedule XML export now contains a ``<url>`` tag.
-- -: When trying to register a user with a nick that already existed in a different capitalisation, eventyay failed to show a clear error message.
+- -: When trying to sign up a user with a nick that already existed in a different capitalisation, eventyay failed to show a clear error message.
 - 128: An event’s schedule is now available even if the browser has no internet connection, provided it has opened the schedule before.
 - admin: Provide better upgrade documentation for administrators.
 - -: Add clever release notes.

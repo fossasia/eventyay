@@ -28,7 +28,6 @@
             flex-wrap: wrap;
             justify-content: flex-end;
             gap: 8px;
-            border-radius: 6px;
         }
 
         a {
@@ -151,6 +150,7 @@
 
                 .btn {
                     min-width: 100px;
+                    border-radius: 6px;
                 }
             }
 

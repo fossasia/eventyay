@@ -44,7 +44,7 @@ If you visit `translate.eventyay.com`_ for the first time, it admittedly looks p
 .. image:: img/weblate1.png
    :class: screenshot
 
-It gets better if you create an account, which you will need to contribute translations. Click on "Register" in the
+It gets better if you create an account, which you will need to contribute translations. Click on "Sign Up" in the
 top-right corner to get started:
 
 .. image:: img/weblate2.png
