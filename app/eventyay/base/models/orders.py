@@ -572,6 +572,80 @@ class Order(LockModel, LoggedModel):
 
     @property
     @scopes_disabled()
+    def user_cancelable_positions(self):
+        """
+        Returns all active order positions that can currently be canceled by the user.
+        """
+        from .checkin import Checkin
+
+        if self.cancellation_requests.exists() or not self.cancel_allowed():
+            return []
+
+        if self.user_cancel_deadline and now() > self.user_cancel_deadline:
+            return []
+
+        if self.status == Order.STATUS_PENDING and not self.event.settings.cancel_allow_user:
+            return []
+
+        if self.status == Order.STATUS_PAID:
+            if self.total == Decimal('0.00'):
+                if not self.event.settings.cancel_allow_user:
+                    return []
+            elif not self.event.settings.cancel_allow_user_paid:
+                return []
+
+        positions = list(
+            self.positions.all()
+            .annotate(has_checkin=Exists(Checkin.objects.filter(position_id=OuterRef('pk'))))
+            .select_related('product')
+            .prefetch_related('issued_gift_cards')
+        )
+
+        cancelable = []
+        for op in positions:
+            if not op.product.allow_cancel or op.has_checkin:
+                continue
+            if any(gc.value != op.price for gc in op.issued_gift_cards.all()):
+                continue
+            cancelable.append(op)
+
+        return cancelable
+
+    @property
+    @scopes_disabled()
+    def user_partial_cancel_allowed(self) -> bool:
+        """
+        Returns whether or not this order can be partially canceled by the user.
+        """
+        if self.status == Order.STATUS_PAID and self.total != Decimal('0.00'):
+            if self.event.settings.cancel_allow_user_paid_require_approval:
+                return False
+
+        return self.count_positions > 1 and bool(self.user_cancelable_positions)
+
+    @cached_property
+    @scopes_disabled()
+    def is_partially_canceled(self) -> bool:
+        if self.count_positions == 0:
+            return False
+        return self.all_positions.count() > self.count_positions
+
+    def user_partial_cancel_fee(self, canceled_total: Decimal) -> Decimal:
+        if canceled_total <= Decimal('0.00'):
+            return Decimal('0.00')
+
+        if self.status != Order.STATUS_PAID or self.total <= Decimal('0.00'):
+            return Decimal('0.00')
+
+        fee = self.user_cancel_fee
+        if fee <= Decimal('0.00'):
+            return Decimal('0.00')
+
+        proportional_fee = round_decimal(fee * canceled_total / self.total, self.event.currency)
+        return min(canceled_total, proportional_fee)
+
+    @property
+    @scopes_disabled()
     def user_change_allowed(self) -> bool:
         """
         Returns whether or not this order can be canceled by the user.
@@ -619,32 +693,11 @@ class Order(LockModel, LoggedModel):
         """
         Returns whether or not this order can be canceled by the user.
         """
-        from .checkin import Checkin
+        positions = self.user_cancelable_positions
+        if not positions:
+            return False
 
-        if self.cancellation_requests.exists() or not self.cancel_allowed():
-            return False
-        positions = list(
-            self.positions.all()
-            .annotate(has_checkin=Exists(Checkin.objects.filter(position_id=OuterRef('pk'))))
-            .select_related('product')
-            .prefetch_related('issued_gift_cards')
-        )
-        cancelable = all([op.product.allow_cancel and not op.has_checkin for op in positions])
-        if not cancelable or not positions:
-            return False
-        for op in positions:
-            for gc in op.issued_gift_cards.all():
-                if gc.value != op.price:
-                    return False
-        if self.user_cancel_deadline and now() > self.user_cancel_deadline:
-            return False
-        if self.status == Order.STATUS_PENDING:
-            return self.event.settings.cancel_allow_user
-        elif self.status == Order.STATUS_PAID:
-            if self.total == Decimal('0.00'):
-                return self.event.settings.cancel_allow_user
-            return self.event.settings.cancel_allow_user_paid
-        return False
+        return len(positions) == self.count_positions
 
     def propose_auto_refunds(self, amount: Decimal, payments: list = None):
         # Algorithm to choose which payments are to be refunded to create the least hassle
