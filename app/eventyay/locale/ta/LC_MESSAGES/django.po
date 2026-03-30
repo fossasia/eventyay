@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-23 15:14+0000\n"
+"PO-Revision-Date: 2026-03-29 20:09+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ta/>\n"
@@ -25078,16 +25078,18 @@ msgid ""
 "You cannot accept the invitation for \"{}\" as you already are part of this "
 "team."
 msgstr ""
+"ஏற்கனவே இந்த அணியின் உறுப்பினராக இருப்பதால், \"{}\" என்பதற்கான அழைப்பை ஏற்க முடியாது."
 
 #: eventyay_common/views/auth.py:260
 #, python-brace-format
 msgid "You are now part of the team \"{}\"."
-msgstr ""
+msgstr "இப்போது \"{}\" அணியின் உறுப்பினராக உள்ளீர்கள்."
 
 #: eventyay_common/views/auth.py:298
 #, python-brace-format
 msgid "Welcome to eventyay! You are now part of the team \"{}\"."
 msgstr ""
+"eventyay-க்கு வரவேற்கிறோம்! இப்போது \"{}\" அணியின் உறுப்பினராக உள்ளீர்கள்."
 
 #: eventyay_common/views/auth.py:343
 msgid ""
@@ -25095,12 +25097,17 @@ msgid ""
 "mail containing further instructions. Please note that we will send at most "
 "one email every 24 hours."
 msgstr ""
+"இந்த முகவரி செல்லுபடியாகும் கணக்கில் பதிவு செய்யப்பட்டிருந்தால், மேலதிக வழிமுறைகள் கொண்ட "
+"ஒரு மின்னஞ்சல் அனுப்பப்பட்டுள்ளது. ஒவ்வொரு 24 மணி நேரத்திற்கும் அதிகபட்சம் ஒரு மின்னஞ்சல் "
+"மட்டுமே அனுப்பப்படும் என்பதை கவனிக்கவும்."
 
 #: eventyay_common/views/auth.py:348
 msgid ""
 "If the address is registered to valid account, then we have sent you an e-"
 "mail containing further instructions."
 msgstr ""
+"இந்த முகவரி செல்லுபடியாகும் கணக்கில் பதிவு செய்யப்பட்டிருந்தால், மேலதிக வழிமுறைகள் கொண்ட "
+"ஒரு மின்னஞ்சல் அனுப்பப்பட்டுள்ளது."
 
 #: eventyay_common/views/auth.py:371
 msgid ""
@@ -25108,27 +25115,31 @@ msgid ""
 "address into your address bar. Please note that the link is only valid for "
 "three days and that the link can only be used once."
 msgstr ""
+"தவறான இணைப்பை கிளிக் செய்துள்ளீர்கள். முகவரி பட்டியில் முழு இணைய முகவரியும் "
+"நகலெடுக்கப்பட்டுள்ளதா என்பதை சரிபார்க்கவும். இந்த இணைப்பு மூன்று நாட்களுக்கு மட்டுமே "
+"செல்லுபடியாகும் மற்றும் ஒருமுறை மட்டுமே பயன்படுத்த முடியும் என்பதை கவனிக்கவும்."
 
 #: eventyay_common/views/auth.py:375
 msgid "We were unable to find the user you requested a new password for."
-msgstr ""
+msgstr "புதிய கடவுச்சொல்லை கோரிய பயனரை கண்டுபிடிக்க முடியவில்லை."
 
 #: eventyay_common/views/auth.py:408
 msgid "You can now login using your new password."
-msgstr ""
+msgstr "இப்போது புதிய கடவுச்சொல்லைப் பயன்படுத்தி உள்நுழையலாம்."
 
 #: eventyay_common/views/auth.py:455
 msgid "Please try again."
-msgstr ""
+msgstr "மீண்டும் முயற்சிக்கவும்."
 
 #: eventyay_common/views/auth.py:524
 msgid "Invalid code, please try again."
-msgstr ""
+msgstr "தவறான குறியீடு, மீண்டும் முயற்சிக்கவும்."
 
 #: eventyay_common/views/custom.py:26
 #, python-format
 msgid "Please confirm that %(email)s is an email address for user %(user)s."
 msgstr ""
+"%(email)s என்பது பயனர் %(user)s க்கான மின்னஞ்சல் முகவரி என்பதை உறுதிப்படுத்தவும்."
 
 #: eventyay_common/views/custom.py:29
 #, python-format
@@ -25136,10 +25147,11 @@ msgid ""
 "Unable to confirm %(email)s because it is already confirmed by a different "
 "account."
 msgstr ""
+"வேறு கணக்கால் ஏற்கனவே உறுதிப்படுத்தப்பட்டுள்ளதால் %(email)s ஐ உறுதிப்படுத்த முடியவில்லை."
 
 #: eventyay_common/views/custom.py:37
 msgid "issue a new email confirmation request"
-msgstr ""
+msgstr "புதிய மின்னஞ்சல் உறுதிப்படுத்தல் கோரிக்கையை வெளியிடவும்"
 
 #: eventyay_common/views/custom.py:40
 #, python-format
@@ -25147,30 +25159,32 @@ msgid ""
 "This email confirmation link expired or is invalid. Please "
 "%(email_action_link)s."
 msgstr ""
+"இந்த மின்னஞ்சல் உறுதிப்படுத்தல் இணைப்பு காலாவதியானது அல்லது தவறானது. தயவுசெய்து %"
+"(email_action_link)s."
 
 #: eventyay_common/views/dashboards.py:273
 msgid "You do not have permission to change event settings."
-msgstr ""
+msgstr "நிகழ்வு அமைப்புகளை மாற்ற அனுமதி இல்லை."
 
 #: eventyay_common/views/dashboards.py:282 eventyay_common/views/event.py:877
 msgid "Video link is now visible on public pages."
-msgstr ""
+msgstr "வீடியோ இணைப்பு இப்போது பொது பக்கங்களில் காணப்படும்."
 
 #: eventyay_common/views/dashboards.py:284 eventyay_common/views/event.py:879
 msgid "Video link is now hidden from public pages."
-msgstr ""
+msgstr "வீடியோ இணைப்பு இப்போது பொது பக்கங்களில் மறைக்கப்பட்டுள்ளது."
 
 #: eventyay_common/views/dashboards.py:324
 msgid "No dates"
-msgstr ""
+msgstr "தேதிகள் இல்லை"
 
 #: eventyay_common/views/event.py:574
 msgid "CFP"
-msgstr ""
+msgstr "CFP"
 
 #: eventyay_common/views/event.py:576
 msgid "Schedule / Sessions / Speakers"
-msgstr ""
+msgstr "அட்டவணை / அமர்வுகள் / பேச்சாளர்கள்"
 
 #: eventyay_common/views/event.py:583 orga/views/event.py:105
 msgid "The CfP doesn’t have a full text yet."
