@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-30 15:15+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-03-30 15:29+0000\n"
+"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -161,6 +161,8 @@ msgstr "Derzeit kann für diese Veranstaltung kein Feedback gegeben werden."
 #: agenda/templates/agenda/public_starred.html:38
 msgid "This page requires JavaScript to show the starred sessions."
 msgstr ""
+"JavaScript muss aktiviert sein, damit die markierten Sitzungen auf dieser "
+"Seite angezeigt werden können."
 
 #: agenda/templates/agenda/schedule.html:33
 #, python-format
