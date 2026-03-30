@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-23 15:11+0000\n"
+"PO-Revision-Date: 2026-03-29 20:09+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Khmer (Central) <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/km/>\n"
@@ -25217,10 +25217,19 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"សួស្តី!\n"
+"\n"
+"កំណែតារាងពេលវេលាថ្មីត្រូវបានចេញផ្សាយ ហើយចង់ជូនដំណឹង៖\n"
+"\n"
+"{speaker_schedule_new}\n"
+"\n"
+"សូមរីករាយរង់ចាំជួប ហើយសូមទាក់ទង ប្រសិនបើមានបញ្ហាណាមួយជាមួយសម័យ ឬពេលវេលាដែលបានកំណត់។\n"
+"\n"
+"ក្រុមរៀបចំ {event_name}"
 
 #: mail/default_templates.py:68
 msgid "We have some questions about your proposal"
-msgstr ""
+msgstr "មានសំណួរមួយចំនួនអំពីសំណើរបស់អ្នក"
 
 #: mail/default_templates.py:71
 #, python-brace-format
@@ -25238,11 +25247,22 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"សួស្តី!\n"
+"\n"
+"មានសំណួរបើកចំហមួយចំនួនអំពីខ្លួនអ្នក និងសំណើរបស់អ្នក ដែលចង់ឱ្យឆ្លើយ៖\n"
+"\n"
+"{questions}\n"
+"\n"
+"អាចឆ្លើយបាននៅ {url}។\n"
+"\n"
+"សូមទាក់ទង ប្រសិនបើមានសំណួរត្រឡប់មកវិញ!\n"
+"\n"
+"ក្រុមរៀបចំ {event_name}"
 
 #: mail/default_templates.py:86
 #, python-brace-format
 msgid "New proposal: {proposal_title}"
-msgstr ""
+msgstr "សំណើថ្មី៖ {proposal_title}"
 
 #: mail/default_templates.py:89
 #, python-brace-format
@@ -25258,11 +25278,21 @@ msgid ""
 "All the best,\n"
 "your {event_name} CfP system.\n"
 msgstr ""
+"សួស្តី\n"
+"\n"
+"បានទទួលសំណើថ្មីសម្រាប់ព្រឹត្តិការណ៍ {event_name}៖\n"
+"\"{submission_title}\" ដោយ {speakers}។\n"
+"អាចមើលព័ត៌មានលម្អិតនៅ\n"
+"\n"
+"{event_url}\n"
+"\n"
+"សូមជូនពរ\n"
+"ប្រព័ន្ធ CfP {event_name}។\n"
 
 #: mail/default_templates.py:103
 #, python-brace-format
 msgid "You have been added to a proposal for {event_name}"
-msgstr ""
+msgstr "ត្រូវបានបន្ថែមទៅក្នុងសំណើសម្រាប់ {event_name}"
 
 #: mail/default_templates.py:107
 #, python-brace-format
@@ -25281,6 +25311,16 @@ msgid ""
 "\n"
 "The {event} orga crew"
 msgstr ""
+"សួស្តី!\n"
+"\n"
+"ត្រូវបានបន្ថែមទៅក្នុងសំណើរបស់ {event_name} ដែលមានចំណងជើង “{proposal_title}”។\n"
+"បានបង្កើតគណនីសម្រាប់អ្នក — សូមបើកតំណនេះដើម្បីកំណត់ពាក្យសម្ងាត់គណនី។\n"
+"\n"
+"{invitation_link}\n"
+"\n"
+"បន្ទាប់មក អាចកែសម្រួលប្រវត្តិរូបអ្នកប្រើ និងមើលស្ថានភាពសំណើរបស់អ្នក។\n"
+"\n"
+"ក្រុម orga {event}"
 
 #: mail/default_templates.py:121
 #, python-brace-format
@@ -25296,56 +25336,66 @@ msgid ""
 "\n"
 "The {event_name} organisers"
 msgstr ""
+"សួស្តី!\n"
+"\n"
+"ត្រូវបានបន្ថែមទៅក្នុងសំណើរបស់ {event_name} ដែលមានចំណងជើង “{proposal_title}”។\n"
+"សូមបើកតំណនេះដើម្បីកែសម្រួលប្រវត្តិរូបអ្នកប្រើ និងមើលស្ថានភាពសំណើរបស់អ្នក៖\n"
+"\n"
+"{proposal_url}\n"
+"\n"
+"ក្រុមរៀបចំ {event_name}"
 
 #: multidomain/models.py:21
 msgid "Known domain"
-msgstr ""
+msgstr "ដែនដែលស្គាល់"
 
 #: multidomain/models.py:22
 msgid "Known domains"
-msgstr ""
+msgstr "ដែនដែលស្គាល់"
 
 #: orga/forms/cfp.py:42
 msgid "Use tracks"
-msgstr ""
+msgstr "ប្រើ track"
 
 #: orga/forms/cfp.py:44
 msgid "Do you organise your sessions by tracks?"
-msgstr ""
+msgstr "តើរៀបចំសម័យតាម track ដែរឬទេ?"
 
 #: orga/forms/cfp.py:49
 msgid "Can sessions be held multiple times?"
-msgstr ""
+msgstr "តើសម័យអាចធ្វើច្រើនដងបានទេ?"
 
 #: orga/forms/cfp.py:52
 msgid "Send mail on new proposal"
-msgstr ""
+msgstr "ផ្ញើអ៊ីមែលនៅពេលមានសំណើថ្មី"
 
 #: orga/forms/cfp.py:54
 msgid ""
 "If this setting is checked, you will receive an email to the organizer "
 "address for every received proposal."
 msgstr ""
+"ប្រសិនបើបានធីកការកំណត់នេះ នឹងទទួលអ៊ីមែលទៅអាសយដ្ឋានអ្នករៀបចំសម្រាប់រាល់សំណើដែលបានទទួល។"
 
 #: orga/forms/cfp.py:59
 msgid "Allow submitters to share their proposal publicly"
-msgstr ""
+msgstr "អនុញ្ញាតឱ្យអ្នកដាក់ស្នើចែករំលែកសំណើរបស់ខ្លួនជាសាធារណៈ"
 
 #: orga/forms/cfp.py:60
 msgid "Allow submitters to share a secret link to their proposal with others."
 msgstr ""
+"អនុញ្ញាតឱ្យអ្នកដាក់ស្នើចែករំលែកតំណសម្ងាត់ទៅសំណើរបស់ខ្លួនជាមួយអ្នកផ្សេងទៀត។"
 
 #: orga/forms/cfp.py:64
 msgid "Count text length in"
-msgstr ""
+msgstr "រាប់ប្រវែងអត្ថបទជា"
 
 #: orga/forms/cfp.py:65
 msgid "Characters"
-msgstr ""
+msgstr "តួអក្សរ"
 
 #: orga/forms/cfp.py:65
 msgid "Words"
-msgstr ""
+msgstr "ពាក្យ"
 
 #: orga/forms/cfp.py:235
 msgid "Display deadline publicly"
