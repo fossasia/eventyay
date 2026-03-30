@@ -194,7 +194,6 @@ class EventWizardInitialForm(forms.Form):
         )
         self.fields["organizer"].initial = self.fields["organizer"].queryset.first()
 
-
 class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
     def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
         self.locales = locales or []
@@ -215,17 +214,6 @@ class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
             + str(_("You cannot change the slug later on!"))
             + "</strong>"
         )
-
-    def clean(self):
-        data = super().clean()
-        locale = data.get("locale")
-        locales = self.locales
-
-        # Ensure UI language is allowed independently (unlink behavior)
-        if locale and locales and locale not in locales:
-            data["locale"] = locale
-
-        return data
 
     def clean_slug(self):
         slug = self.cleaned_data["slug"]
