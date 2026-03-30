@@ -572,6 +572,13 @@ class Order(LockModel, LoggedModel):
 
     @cached_property
     @scopes_disabled()
+    def user_existing_cancellation_fee(self):
+        return self.fees.filter(fee_type=OrderFee.FEE_TYPE_CANCELLATION).aggregate(s=Sum('value'))['s'] or Decimal(
+            '0.00'
+        )
+
+    @cached_property
+    @scopes_disabled()
     def user_cancelable_positions(self):
         """
         Returns all active order positions that can currently be canceled by the user.
@@ -642,11 +649,15 @@ class Order(LockModel, LoggedModel):
         if self.status != Order.STATUS_PAID or self.total <= Decimal('0.00'):
             return Decimal('0.00')
 
-        fee = self.user_cancel_fee
+        fee = self.user_cancel_fee - self.user_existing_cancellation_fee
         if fee <= Decimal('0.00'):
             return Decimal('0.00')
 
-        proportional_fee = round_decimal(fee * canceled_total / self.total, self.event.currency)
+        remaining_total = self.total - self.user_existing_cancellation_fee
+        if remaining_total <= Decimal('0.00'):
+            return Decimal('0.00')
+
+        proportional_fee = round_decimal(fee * canceled_total / remaining_total, self.event.currency)
         return min(canceled_total, proportional_fee)
 
     @property
