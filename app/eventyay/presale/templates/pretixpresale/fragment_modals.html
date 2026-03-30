@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load eventurl %}
-{% load oauth_tags %}
+{% load checkout_login_tags %}
 {% load static %}
 
 <div id="ajaxerr">
@@ -84,53 +84,7 @@
             <button type="button" class="checkout-login-close" aria-label="{% translate 'Close' %}">&times;</button>
         </div>
         <div class="checkout-login-body">
-            <p class="checkout-login-message">{% translate "Please log in to continue." %}</p>
-
-            <!-- Login Form -->
-            <form id="checkout-login-form" method="post" action="{% url 'eventyay_common:auth.login' %}">
-                {% csrf_token %}
-                <input type="hidden" name="next" id="checkout-next-url" value="">
-
-                <div class="form-group">
-                    <label for="checkout-email">{% translate "Email" %}</label>
-                    <input type="email" id="checkout-email" name="email" class="form-control" required autocomplete="email" placeholder="{% translate 'Enter your email' %}">
-                </div>
-
-                <div class="form-group">
-                    <label for="checkout-password">{% translate "Password" %}</label>
-                    <input type="password" id="checkout-password" name="password" class="form-control" required autocomplete="current-password" placeholder="{% translate 'Enter your password' %}">
-                </div>
-
-                <div class="form-group">
-                    <label class="checkbox-inline">
-                        <input type="checkbox" name="keep_logged_in" value="1"> {% translate "Keep me logged in" %}
-                    </label>
-                </div>
-
-                <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
-
-                <button type="submit" class="btn btn-primary btn-lg btn-block" id="checkout-login-submit">
-                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% translate "Log in" %}
-                </button>
-            </form>
-
-            <div class="checkout-login-divider">
-                <span>{% translate "or" %}</span>
-            </div>
-
-            <!-- SSO Provider Buttons -->
-            <div class="checkout-login-sso">
-                <a href="/oauth_login/mediawiki/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
-                    {% translate "Login with MediaWiki" %}
-                </a>
-                <a href="/oauth_login/google/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
-                    {% translate "Login with Google" %}
-                </a>
-            </div>
-
-            <div class="checkout-login-footer">
-                <p>{% translate "Don't have an account?" %} <a href="{% url 'eventyay_common:auth.register' %}">{% translate "Create one" %}</a></p>
-            </div>
+            {% checkout_login_modal_body %}
         </div>
     </div>
 </div>
