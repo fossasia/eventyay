@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-23 15:17+0000\n"
+"PO-Revision-Date: 2026-03-30 15:15+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Marathi <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/mr/>\n"
@@ -205,8 +205,7 @@ msgid "Duration"
 msgstr "कालावधी"
 
 #: agenda/templates/agenda/talk_review.html:24
-#, fuzzy, python-format
-#| msgid "%(minutes)smin"
+#, python-format
 msgid "%(minutes)s min"
 msgstr "%(minutes)s मिनिटे"
 
@@ -270,10 +269,9 @@ msgid "Anonymous (name not shared)"
 msgstr ""
 
 #: agenda/views/public.py:57
-#, fuzzy, python-format
-#| msgid "iCal (your starred sessions)"
+#, python-format
 msgid "%(name)s’s starred sessions"
-msgstr "iCal (स्टार केलेली सत्रे)"
+msgstr "%(name)s’s स्टार केलेली सत्रे"
 
 #: agenda/views/schedule.py:203
 msgid "No published sessions."
@@ -304,34 +302,24 @@ msgid "Sorry, no matching options."
 msgstr ""
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
-#, fuzzy
-#| msgid "Changelog"
 msgid "View Changelog"
-msgstr "बदल नोंद"
+msgstr "बदलांची नोंद पहा"
 
 #: agenda/views/schedule.py:358 multidomain/views.py:142
-#, fuzzy
-#| msgid "Keep the current values"
 msgid "Go to current version"
-msgstr "सध्याची मूल्ये कायम ठेवा"
+msgstr "सध्याच्या आवृत्तीवर जा"
 
 #: agenda/views/schedule.py:359 multidomain/views.py:143
-#, fuzzy
-#| msgid "Clear filters"
 msgid "Reset all filters"
-msgstr "फिल्टर्स साफ करा"
+msgstr "सर्व फिल्टर रीसेट करा"
 
 #: agenda/views/schedule.py:360 multidomain/views.py:144
-#, fuzzy
-#| msgid "Sort by"
 msgid "Sort"
 msgstr "क्रमवारी लावा"
 
 #: agenda/views/schedule.py:361 multidomain/views.py:145
-#, fuzzy
-#| msgid "New room"
 msgid "By room"
-msgstr "नवीन खोली"
+msgstr "खोलीनुसार"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
@@ -346,28 +334,19 @@ msgid "Fullscreen"
 msgstr ""
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
-#, fuzzy
-#| msgid "Exit scans"
 msgid "Exit Fullscreen"
-msgstr "एक्झिट स्कॅन्स"
+msgstr "फुलस्क्रीनमधून बाहेर पडा"
 
 #: agenda/views/schedule.py:366 multidomain/views.py:150
-#, fuzzy
-#| msgid "Gates"
 msgid "Latest"
-msgstr "गेट्स"
+msgstr "नवीनतम"
 
 #: agenda/views/schedule.py:368 multidomain/views.py:152
-#, fuzzy
-#| msgid ""
-#| "You are currently viewing the editable schedule version, which is "
-#| "unreleased and may change at any time."
 msgid ""
 "You are currently viewing the editable schedule version. It may not match "
 "the released version."
 msgstr ""
-"सध्या संपादनयोग्य वेळापत्रक आवृत्ती पाहत आहात; ती प्रकाशित केलेली नाही आणि कधीही बदलू "
-"शकते."
+"सध्या संपादनयोग्य वेळापत्रक आवृत्ती पाहिली जात आहे. ती प्रकाशित आवृत्तीशी जुळेलच असे नाही."
 
 #: agenda/views/schedule.py:372 multidomain/views.py:155 schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."
@@ -378,16 +357,12 @@ msgid "Join room"
 msgstr ""
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
-#, fuzzy
-#| msgid "Video"
 msgid "View Video"
-msgstr "व्हिडिओ"
+msgstr "व्हिडिओ पहा"
 
 #: agenda/views/schedule.py:376 multidomain/views.py:158
-#, fuzzy
-#| msgid "not live"
 msgid "Watch live"
-msgstr "लाइव्ह नाही"
+msgstr "थेट पहा"
 
 #: agenda/views/schedule.py:377
 #: cfp/templates/cfp/event/user_submission_edit.html:49
@@ -398,10 +373,8 @@ msgstr[0] "वक्ता"
 msgstr[1] "वक्ते"
 
 #: agenda/views/schedule.py:378 multidomain/views.py:160
-#, fuzzy
-#| msgid "Mark speaker as not arrived"
 msgid "Speaker name not provided"
-msgstr "वक्त्याला आलेले नाही म्हणून चिन्हांकित करा"
+msgstr "वक्ता नाव दिलेले नाही"
 
 #: agenda/views/schedule.py:379 multidomain/views.py:161
 #: presale/templates/pretixpresale/event/index.html:271
@@ -429,10 +402,8 @@ msgid "XCal"
 msgstr ""
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
-#, fuzzy
-#| msgid "Add to Calendar"
 msgid "Google Calendar"
-msgstr "कॅलेंडरमध्ये जोडा"
+msgstr "Google Calendar"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
@@ -477,10 +448,8 @@ msgid "No"
 msgstr "नाही"
 
 #: agenda/views/schedule.py:388 multidomain/views.py:170
-#, fuzzy
-#| msgid "No users found."
 msgid "No speakers found."
-msgstr "वापरकर्ते आढळले नाहीत."
+msgstr "स्पीकर आढळले नाहीत."
 
 #. Translators: Ideally a neutral term that will work for workshop, talks and special
 #. formats. Plural, used in headings.
@@ -500,22 +469,16 @@ msgid "Tracks"
 msgstr "ट्रॅक्स"
 
 #: agenda/views/schedule.py:392 multidomain/views.py:174
-#, fuzzy
-#| msgid "Download"
 msgid "Downloads"
 msgstr "डाउनलोड"
 
 #: agenda/views/schedule.py:393 multidomain/views.py:175
-#, fuzzy
-#| msgid "created by"
 msgid "Starred by"
-msgstr "तयार केले"
+msgstr "यांनी स्टार केले"
 
 #: agenda/views/schedule.py:394 multidomain/views.py:176
-#, fuzzy
-#| msgid "Start"
 msgid "Starred"
-msgstr "सुरुवात"
+msgstr "तारांकित"
 
 #: agenda/views/schedule.py:395 control/navigation.py:294
 #: eventyay_common/navigation.py:227 multidomain/views.py:177
@@ -525,8 +488,6 @@ msgid "Export"
 msgstr "निर्यात"
 
 #: agenda/views/schedule.py:396 multidomain/views.py:178
-#, fuzzy
-#| msgid "Export"
 msgid "Exports"
 msgstr "निर्यात"
 
@@ -541,16 +502,12 @@ msgid "No response"
 msgstr "प्रतिक्रिया नाही"
 
 #: agenda/views/schedule.py:399 multidomain/views.py:181
-#, fuzzy
-#| msgid "Other fees"
 msgid "Other Timezones"
-msgstr "इतर शुल्क"
+msgstr "इतर वेळ क्षेत्रे"
 
 #: agenda/views/schedule.py:400 multidomain/views.py:182
-#, fuzzy
-#| msgid "Current:"
 msgid "current"
-msgstr "सध्याचे:"
+msgstr "सध्याचे"
 
 #: agenda/views/schedule.py:401 multidomain/views.py:183
 #: presale/templates/pretixpresale/event/order.html:174
@@ -558,10 +515,8 @@ msgid "Print"
 msgstr "प्रिंट"
 
 #: agenda/views/schedule.py:402 multidomain/views.py:184
-#, fuzzy
-#| msgid "List"
 msgid "List View"
-msgstr "यादी"
+msgstr "सूची दृश्य"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
@@ -589,22 +544,16 @@ msgstr "शोधा"
 
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
-#, fuzzy
-#| msgid "Featured events"
 msgid "Featured Speakers"
-msgstr "वैशिष्ट्यीकृत कार्यक्रम"
+msgstr "वैशिष्ट्यीकृत वक्ते"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
-#, fuzzy
-#| msgid "View or edit speaker profile"
 msgid "View speaker profile"
-msgstr "वक्ता प्रोफाइल पहा किंवा संपादित करा"
+msgstr "वक्ता प्रोफाइल पहा"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
-#, fuzzy
-#| msgid "No published sessions."
 msgid "No starred sessions."
-msgstr "प्रकाशित सत्रे नाहीत."
+msgstr "तारांकित सत्रे नाहीत."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -809,16 +758,12 @@ msgid "This type of question cannot be asked during check-in."
 msgstr "चेक-इन दरम्यान या प्रकारचा प्रश्न विचारता येत नाही."
 
 #: api/serializers/stream_schedule.py:46 api/serializers/stream_schedule.py:58
-#, fuzzy
-#| msgid "Single event in the past"
 msgid "Start time cannot be in the past."
-msgstr "भूतकाळातील एकल कार्यक्रम"
+msgstr "सुरू होण्याची वेळ भूतकाळात असू शकत नाही."
 
 #: api/serializers/stream_schedule.py:63 base/models/stream_schedule.py:73
-#, fuzzy
-#| msgid "The end time has to be after the start time."
 msgid "End time must be after start time."
-msgstr "समाप्ती वेळ सुरुवातीच्या वेळेनंतरची असणे आवश्यक आहे."
+msgstr "समाप्तीची वेळ सुरुवातीच्या वेळेनंतरची असणे आवश्यक आहे."
 
 #: api/serializers/stream_schedule.py:101
 msgid ""
@@ -1059,16 +1004,12 @@ msgid "Require company per ticket"
 msgstr "प्रति तिकिट कंपनी आवश्यक"
 
 #: base/configurations/default_setting.py:172
-#, fuzzy
-#| msgid "Ask for company per ticket"
 msgid "Ask for job title per ticket"
-msgstr "प्रति तिकिट कंपनी विचारणे"
+msgstr "प्रत्येक तिकिटानुसार पदनाम विचारा"
 
 #: base/configurations/default_setting.py:181
-#, fuzzy
-#| msgid "Require company per ticket"
 msgid "Require job title per ticket"
-msgstr "प्रति तिकिट कंपनी आवश्यक"
+msgstr "प्रत्येक तिकिटसाठी जॉब टायटल आवश्यक करा"
 
 #: base/configurations/default_setting.py:191
 msgid "Ask for postal addresses per ticket"
@@ -3720,10 +3661,8 @@ msgid "Only paid orders"
 msgstr "फक्त सशुल्क ऑर्डर"
 
 #: base/exporters/orderlist.py:87
-#, fuzzy
-#| msgid "approval pending"
 msgid "Only approval pending orders"
-msgstr "मंजुरी प्रलंबित"
+msgstr "फक्त मंजुरी प्रलंबित असलेले ऑर्डर"
 
 #: base/exporters/orderlist.py:96
 msgid "Include payment amounts"
@@ -4459,8 +4398,6 @@ msgstr ""
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
-#, fuzzy
-#| msgid "Job Title"
 msgid "Job title"
 msgstr "पदनाम"
 
@@ -4475,16 +4412,12 @@ msgstr "राज्य निवडा"
 
 #: base/forms/questions.py:570 base/forms/questions.py:578
 #: base/forms/questions.py:585
-#, fuzzy
-#| msgid "Your cart"
 msgid "Your answer"
-msgstr "कार्ट"
+msgstr "तुमचे उत्तर"
 
 #: base/forms/questions.py:610
-#, fuzzy
-#| msgid "Selection"
 msgid "Select an option"
-msgstr "निवड"
+msgstr "पर्याय निवडा"
 
 #: base/forms/questions.py:763 base/forms/questions.py:795
 #: base/forms/questions.py:974 base/payment.py:71 control/forms/event.py:813
@@ -4530,12 +4463,8 @@ msgstr ""
 "त्यामुळे चलनावर VAT आकारणे आवश्यक आहे. हे हस्ते सोडवण्यासाठी कृपया सपोर्टशी संपर्क साधा."
 
 #: base/forms/user.py:17
-#, fuzzy
-#| msgid ""
-#| "Please enter your current password if you want to change your e-mail "
-#| "address or password."
 msgid "Please enter your current password if you want to change your password."
-msgstr "ई-मेल पत्ता किंवा पासवर्ड बदलण्यासाठी कृपया सध्याचा पासवर्ड प्रविष्ट करा."
+msgstr "पासवर्ड बदलायचा असल्यास कृपया सध्याचा पासवर्ड प्रविष्ट करा."
 
 #: base/forms/user.py:18 person/forms/auth.py:14 person/forms/profile.py:257
 msgid "The current password you entered was not correct."
@@ -6514,10 +6443,8 @@ msgid "Show link on the website start page"
 msgstr "वेबसाइटच्या प्रारंभ पृष्ठावर दुवा दाखवा"
 
 #: base/models/page.py:24
-#, fuzzy
-#| msgid "Show in header menu on all pages"
 msgid "Show in header and footer on system pages"
-msgstr "सर्व पृष्ठांवर हेडर मेनूमध्ये दाखवा"
+msgstr "सिस्टम पृष्ठांवर हेडर आणि फूटरमध्ये दाखवा"
 
 #: base/models/page.py:26
 msgid "Show in header menu on all pages"
@@ -6999,10 +6926,8 @@ msgid "Radio button (Choose one option)"
 msgstr "रेडिओ बटण (एक पर्याय निवडा)"
 
 #: base/models/product.py:1145
-#, fuzzy
-#| msgid "Radio button (Choose one option)"
 msgid "Dropdown (Choose one option)"
-msgstr "रेडिओ बटण (एक पर्याय निवडा)"
+msgstr "ड्रॉपडाउन (एक पर्याय निवडा)"
 
 #: base/models/product.py:1146 base/models/question.py:57
 msgid "Checkbox (Choose one or several options)"
@@ -7272,10 +7197,8 @@ msgid "Biography"
 msgstr "चरित्र"
 
 #: base/models/profile.py:45
-#, fuzzy
-#| msgid "Show this session in public list of featured sessions."
 msgid "Show this speaker in public list of featured speakers."
-msgstr "वैशिष्ट्यीकृत सत्रांच्या सार्वजनिक यादीत हे सत्र दाखवा."
+msgstr "वैशिष्ट्यीकृत वक्त्यांच्या सार्वजनिक यादीत हा वक्ता दाखवा."
 
 #: base/models/profile.py:48
 msgid "The speaker has arrived"
@@ -7302,10 +7225,8 @@ msgid "Confirmation"
 msgstr "पुष्टीकरण"
 
 #: base/models/question.py:58
-#, fuzzy
-#| msgid "Country"
 msgid "Country List"
-msgstr "देश"
+msgstr "देशांची यादी"
 
 #: base/models/question.py:68
 msgid "per proposal"
@@ -7790,28 +7711,22 @@ msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
 
 #: base/models/stream_schedule.py:24
-#, fuzzy
-#| msgid "System URL:"
 msgid "Stream URL"
-msgstr "सिस्टम URL:"
+msgstr "स्ट्रीम URL"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
 msgstr ""
 
 #: base/models/stream_schedule.py:28
-#, fuzzy
-#| msgid "Start time"
 msgid "Start Time"
-msgstr "सुरुवातीची वेळ"
+msgstr "प्रारंभ वेळ"
 
 #: base/models/stream_schedule.py:29
 msgid "When this stream becomes active"
 msgstr ""
 
 #: base/models/stream_schedule.py:32
-#, fuzzy
-#| msgid "End time"
 msgid "End Time"
 msgstr "समाप्तीची वेळ"
 
@@ -7820,16 +7735,12 @@ msgid "When this stream stops being active"
 msgstr ""
 
 #: base/models/stream_schedule.py:45
-#, fuzzy
-#| msgid "Stream key"
 msgid "Stream Type"
-msgstr "स्ट्रीम की"
+msgstr "स्ट्रीम प्रकार"
 
 #: base/models/stream_schedule.py:50
-#, fuzzy
-#| msgid "Additional information"
 msgid "Additional Configuration"
-msgstr "अतिरिक्त माहिती"
+msgstr "अतिरिक्त संरचना"
 
 #: base/models/stream_schedule.py:52
 msgid ""
@@ -7838,16 +7749,12 @@ msgid ""
 msgstr ""
 
 #: base/models/stream_schedule.py:60
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedule"
-msgstr "वेळापत्रक"
+msgstr "स्ट्रीम वेळापत्रक"
 
 #: base/models/stream_schedule.py:61
-#, fuzzy
-#| msgid "Schedule"
 msgid "Stream Schedules"
-msgstr "वेळापत्रक"
+msgstr "स्ट्रीम वेळापत्रके"
 
 #: base/models/stream_schedule.py:84
 msgid ""
@@ -8125,8 +8032,6 @@ msgid ""
 msgstr "जुळणारा प्रवेश कोड असलेल्या सादरकर्त्यांनाच हा सत्र प्रकार दाखवला जाईल."
 
 #: base/models/type.py:51
-#, fuzzy
-#| msgid "Position"
 msgid "position"
 msgstr "स्थान"
 
@@ -8203,22 +8108,17 @@ msgstr ""
 "सक्रिय केल्यास, या व्हाउचर कोडचा धारक तिकीटे खरेदी करू शकतो, जरी ती शिल्लक नसली तरी."
 
 #: base/models/vouchers.py:140
-#, fuzzy
-#| msgid "Allow to bypass quota"
 msgid "Allow to bypass approval"
-msgstr "कोटा वगळण्याची परवानगी द्या"
+msgstr "मंजुरी वगळण्याची परवानगी द्या"
 
 #: base/models/vouchers.py:142
-#, fuzzy
-#| msgid ""
-#| "If activated, a holder of this voucher code can buy tickets, even if "
-#| "there are none left."
 msgid ""
 "If activated, a holder of this voucher code can buy tickets without awaiting "
 "approval by the organiser. This is applicable for products that require "
 "approval."
 msgstr ""
-"सक्रिय केल्यास, या व्हाउचर कोडचा धारक तिकीटे खरेदी करू शकतो, जरी ती शिल्लक नसली तरी."
+"सक्रिय केल्यास, या व्हाउचर कोडचा धारक आयोजकाच्या मंजुरीची प्रतीक्षा न करता तिकिटे खरेदी "
+"करू शकतो. मंजुरी आवश्यक असलेल्या उत्पादनांसाठी हे लागू आहे."
 
 #: base/models/vouchers.py:147 base/models/vouchers.py:572
 msgid "Price mode"
@@ -9095,10 +8995,8 @@ msgid "Attendee job title"
 msgstr "भाग घेणाऱ्याचे पदनाम"
 
 #: base/pdf.py:168 plugins/badges/views.py:264
-#, fuzzy
-#| msgid "Sample State"
 msgid "Sample job title"
-msgstr "Sample State"
+msgstr "नमुना नोकरीचे पदनाम"
 
 #: base/pdf.py:175 control/templates/pretixcontrol/order/index.html:424
 #: presale/templates/pretixpresale/event/fragment_cart.html:74
@@ -10217,12 +10115,9 @@ msgid "You have to ask for attendee emails if you want to make them required."
 msgstr "अटेंडी ईमेल आवश्यक करायचे असल्यास प्रथम ते विचारावे लागतील."
 
 #: base/settings.py:163
-#, fuzzy
-#| msgid ""
-#| "You have to ask for attendee emails if you want to make them required."
 msgid ""
 "You have to ask for attendee job titles if you want to make them required."
-msgstr "अटेंडी ईमेल आवश्यक करायचे असल्यास प्रथम ते विचारावे लागतील."
+msgstr "उपस्थितांचे पदनाम आवश्यक करायचे असल्यास, ते विचारणे आवश्यक आहे."
 
 #: base/settings.py:167
 msgid "You have to ask for order email if you want to make it required."
@@ -11286,16 +11181,12 @@ msgid "Submit something now!"
 msgstr "आत्ताच काहीतरी सबमिट करा!"
 
 #: cfp/templates/cfp/includes/forms_header.html:6
-#, fuzzy
-#| msgid "Choose event"
 msgid "Choose file"
-msgstr "इव्हेंट निवडा"
+msgstr "फाइल निवडा"
 
 #: cfp/templates/cfp/includes/forms_header.html:7
-#, fuzzy
-#| msgid "No file provided"
 msgid "No file chosen"
-msgstr "फाइल दिलेली नाही"
+msgstr "कोणतीही फाइल निवडलेली नाही"
 
 #: cfp/templates/cfp/includes/forms_header.html:21
 #: control/templates/pretixcontrol/pdf/index.html:39
@@ -11308,10 +11199,8 @@ msgid "Redo"
 msgstr "पुन्हा करा"
 
 #: cfp/templates/cfp/includes/forms_header.html:23
-#, fuzzy
-#| msgid "Newline"
 msgid "Underline"
-msgstr "नवी ओळ"
+msgstr "रेषेखाली"
 
 #: cfp/templates/cfp/includes/submission_resources_form.html:9
 #: orga/forms/schedule.py:149 orga/templates/orga/submission/content.html:161
@@ -11964,27 +11853,20 @@ msgid "Optional"
 msgstr "ऐच्छिक"
 
 #: common/templates/common/fragment_header_user.html:16
-#, fuzzy
-#| msgid "Languages"
 msgid "Link languages"
-msgstr "भाषा"
+msgstr "भाषा लिंक करा"
 
 #: common/templates/common/fragment_header_user.html:32
-#, fuzzy
-#| msgid "Help: Enforce UI language"
 msgid "Help: Link languages"
-msgstr "मदत: UI भाषा सक्तीची करा"
+msgstr "मदत: दुव्याच्या भाषा"
 
 #: common/templates/common/fragment_header_user.html:36
-#, fuzzy
-#| msgid ""
-#| "When enabled, event language follows your UI language whenever that "
-#| "language is available for this event."
 msgid ""
 "When enabled, event and UI languages are linked. Selecting one updates the "
 "other whenever that language is available for this event."
 msgstr ""
-"सक्षम केल्यास, या इव्हेंटसाठी ती भाषा उपलब्ध असल्यास इव्हेंटची भाषा UI भाषेनुसार ठरते."
+"सक्षम केल्यावर, इव्हेंट आणि UI भाषा लिंक केल्या जातात. एक निवडल्यास, या इव्हेंटसाठी ती "
+"भाषा उपलब्ध असेल तेव्हा दुसरी भाषा देखील अद्ययावत होते."
 
 #: common/templates/common/fragment_header_user.html:42
 msgid "Event Language"
@@ -12035,10 +11917,8 @@ msgstr "वक्त्यांसाठी आवाहन"
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:47
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
-#, fuzzy
-#| msgid "CSV"
 msgid "CfS"
-msgstr "CSV"
+msgstr "CfS"
 
 #: common/templates/common/fragment_nav.html:51
 #: presale/templates/pretixpresale/event/fragment_nav.html:52
@@ -12637,10 +12517,8 @@ msgid "Hindi"
 msgstr ""
 
 #: config/settings.py:733
-#, fuzzy
-#| msgid "Duration"
 msgid "Gujarati"
-msgstr "कालावधी"
+msgstr "गुजराती"
 
 #: config/settings.py:741
 msgid "Indonesian"
@@ -12671,10 +12549,8 @@ msgid "Malay"
 msgstr "मलय"
 
 #: config/settings.py:798
-#, fuzzy
-#| msgid "Malay"
 msgid "Malayalam"
-msgstr "मलय"
+msgstr "मल्याळम"
 
 #: config/settings.py:806
 msgid "Marathi"
@@ -14292,16 +14168,13 @@ msgid "Payment date"
 msgstr "पेमेंट तारीख"
 
 #: control/forms/orders.py:183
-#, fuzzy
-#| msgid "This proposal cannot be edited anymore."
 msgid "This option cannot be combined with only paid orders."
-msgstr "हा प्रस्ताव आता संपादित करता येणार नाही."
+msgstr "हा पर्याय फक्त सशुल्क ऑर्डर्ससह एकत्र वापरता येत नाही."
 
 #: control/forms/orders.py:184
-#, fuzzy
-#| msgid "This action is only allowed for pending orders."
 msgid "This option cannot be combined with only approval pending orders."
-msgstr "ही क्रिया फक्त प्रलंबित ऑर्डरसाठीच अनुमत आहे."
+msgstr ""
+"हा पर्याय केवळ मंजुरी प्रलंबित असलेल्या ऑर्डरसोबत एकत्र वापरता येत नाही."
 
 #: control/forms/orders.py:214
 msgid "Re-calculate taxes"
@@ -14603,10 +14476,8 @@ msgid "Please confirm that you want to cancel ALL dates in this event series."
 msgstr "या इव्हेंट मालिकेतील सर्व तारखा रद्द करायच्या आहेत याची कृपया पुष्टी करा."
 
 #: control/forms/organizer_forms/device_form.py:17
-#, fuzzy
-#| msgid "All events (including newly created ones)"
 msgid "All events (including newly created and published ones)"
-msgstr "सर्व इव्हेंट्स (नवीन तयार केलेलेही समाविष्ट)"
+msgstr "सर्व इव्हेंट (नवीन तयार केलेले आणि प्रकाशित केलेलेही समाविष्ट)"
 
 #: control/forms/organizer_forms/device_form.py:23
 msgid ""
@@ -14618,10 +14489,8 @@ msgid "Gift card value"
 msgstr "गिफ्ट कार्डचे मूल्य"
 
 #: control/forms/organizer_forms/organizer_delete_form.py:11
-#, fuzzy
-#| msgid "Organizer logs"
 msgid "Organizer slug"
-msgstr "आयोजक लॉग"
+msgstr "आयोजक स्लग"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
@@ -16943,10 +16812,8 @@ msgid "Toggle start page visibility"
 msgstr ""
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
-#, fuzzy
-#| msgid "Event visibility"
 msgid "Toggle system visibility"
-msgstr "इव्हेंट दृश्यमानता"
+msgstr "सिस्टम दृश्यमानता टॉगल करा"
 
 #: control/templates/pretixcontrol/admin/submissions/index.html:7
 #: control/templates/pretixcontrol/admin/submissions/index.html:12
@@ -19495,10 +19362,8 @@ msgid "Required status for Company"
 msgstr "कंपनीसाठी आवश्यक स्थिती"
 
 #: control/templates/pretixcontrol/items/orderforms.html:288
-#, fuzzy
-#| msgid "Required status for E-mail"
 msgid "Required status for Job title"
-msgstr "ई-मेलसाठी आवश्यक स्थिती"
+msgstr "नोकरीच्या पदनामासाठी आवश्यक स्थिती"
 
 #: control/templates/pretixcontrol/items/orderforms.html:306
 msgid "Postal addresses"
@@ -20042,10 +19907,8 @@ msgstr "(ऐच्छिक)"
 #: control/templates/pretixcontrol/order/change_questions.html:62
 #: presale/templates/pretixpresale/event/checkout_questions.html:179
 #: presale/templates/pretixpresale/event/order_modify.html:76
-#, fuzzy
-#| msgid "Redemptions"
 msgid "Badge Options"
-msgstr "रिडेम्प्शन्स"
+msgstr "बॅज पर्याय"
 
 #: control/templates/pretixcontrol/order/change_questions.html:65
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
@@ -20925,22 +20788,16 @@ msgstr[0] "1 ऑर्डर"
 msgstr[1] "%(s)s ऑर्डर्स"
 
 #: control/templates/pretixcontrol/orders/index.html:237
-#, fuzzy
-#| msgid "Selection"
 msgid "Select action"
-msgstr "निवड"
+msgstr "कृती निवडा"
 
 #: control/templates/pretixcontrol/orders/index.html:245
-#, fuzzy
-#| msgid "Approved free order"
 msgid "Approve selected orders"
-msgstr "मंजूर केलेली विनामूल्य ऑर्डर"
+msgstr "निवडलेली ऑर्डर मंजूर करा"
 
 #: control/templates/pretixcontrol/orders/index.html:252
-#, fuzzy
-#| msgid "Delete order"
 msgid "Deny selected orders"
-msgstr "ऑर्डर हटवा"
+msgstr "निवडलेल्या ऑर्डर नाकारा"
 
 #: control/templates/pretixcontrol/orders/overview.html:6
 #: control/templates/pretixcontrol/orders/overview.html:13
@@ -21136,10 +20993,8 @@ msgid "Revoke"
 msgstr "रद्द करा"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:5
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and remove all devices"
-msgstr "डिव्हाइस प्रवेश रद्द करा:"
+msgstr "सर्व डिव्हाइसेसचा प्रवेश रद्द करा आणि काढून टाका"
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
@@ -21156,17 +21011,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
-#, fuzzy
-#| msgid "This event can not be deleted."
 msgid "This action cannot be undone."
-msgstr "हा इव्हेंट हटवता येणार नाही."
+msgstr "ही क्रिया पूर्ववत करता येणार नाही."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:26
 #: control/templates/pretixcontrol/organizers/devices.html:31
-#, fuzzy
-#| msgid "Revoke device access:"
 msgid "Revoke and Remove all devices"
-msgstr "डिव्हाइस प्रवेश रद्द करा:"
+msgstr "सर्व डिव्हाइसेस रद्द करा आणि काढून टाका"
 
 #: control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
@@ -22810,22 +22661,16 @@ msgid "We've been unable to parse the uploaded file as a CSV file."
 msgstr "अपलोड केलेली फाइल CSV फाइल म्हणून पार्स करता आली नाही."
 
 #: control/views/orders.py:301
-#, fuzzy
-#| msgid "Please select a valid seat."
 msgid "Please select a valid action."
-msgstr "कृपया वैध आसन निवडा."
+msgstr "कृपया वैध क्रिया निवडा."
 
 #: control/views/orders.py:309
-#, fuzzy
-#| msgid "Please set up at least one device below."
 msgid "Please select at least one order."
-msgstr "खाली किमान एक उपकरण सेट अप करा."
+msgstr "कृपया किमान एक ऑर्डर निवडा."
 
 #: control/views/orders.py:316
-#, fuzzy
-#| msgid "The selected date does not exist in this event series."
 msgid "At least one selected order does not exist anymore."
-msgstr "निवडलेली तारीख या इव्हेंट मालिकेत अस्तित्वात नाही."
+msgstr "किमान एक निवडलेला ऑर्डर आता अस्तित्वात नाही."
 
 #: control/views/orders.py:330
 msgid ""
@@ -22833,20 +22678,18 @@ msgid ""
 msgstr ""
 
 #: control/views/orders.py:358
-#, fuzzy, python-format
-#| msgid "The order has been approved."
+#, python-format
 msgid "%(count)d order has been approved."
 msgid_plural "%(count)d orders have been approved."
-msgstr[0] "ऑर्डर मंजूर करण्यात आली आहे."
-msgstr[1] "ऑर्डर मंजूर करण्यात आली आहे."
+msgstr[0] "%(count)d ऑर्डर मंजूर झाला आहे."
+msgstr[1] "%(count)d ऑर्डर मंजूर झाले आहेत."
 
 #: control/views/orders.py:368
-#, fuzzy, python-format
-#| msgid "The order has been denied and is therefore now canceled."
+#, python-format
 msgid "%(count)d order has been denied and is now canceled."
 msgid_plural "%(count)d orders have been denied and are now canceled."
-msgstr[0] "ऑर्डर नाकारली गेली आहे आणि त्यामुळे आता रद्द केली आहे."
-msgstr[1] "ऑर्डर नाकारली गेली आहे आणि त्यामुळे आता रद्द केली आहे."
+msgstr[0] "%(count)d ऑर्डर नाकारली गेली आहे आणि आता रद्द केली आहे."
+msgstr[1] "%(count)d ऑर्डर्स नाकारल्या गेल्या आहेत आणि आता रद्द केल्या आहेत."
 
 #: control/views/orders.py:583 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -23230,16 +23073,13 @@ msgstr "या डिव्हाइससाठीचा प्रवेश र
 
 #: control/views/organizer_views/device_view.py:238
 #: control/views/organizer_views/device_view.py:246
-#, fuzzy
-#| msgid "There are no attendees to show."
 msgid "There are no connected devices to revoke and remove."
-msgstr "दाखवण्यासाठी कोणतेही सहभागी नाहीत."
+msgstr "रद्द करून काढून टाकण्यासाठी कोणतीही कनेक्ट केलेली उपकरणे नाहीत."
 
 #: control/views/organizer_views/device_view.py:258
-#, fuzzy
-#| msgid "The selected tickets have been marked as checked in."
 msgid "All connected devices have been revoked and removed permanently."
-msgstr "निवडलेली तिकिटे चेक-इन म्हणून चिन्हांकित करण्यात आली आहेत."
+msgstr ""
+"सर्व कनेक्ट केलेली उपकरणे रद्द करण्यात आली आहेत आणि कायमची काढून टाकण्यात आली आहेत."
 
 #: control/views/organizer_views/gate_view.py:125
 msgid "The selected gate has been deleted."
@@ -23335,16 +23175,12 @@ msgid "Please only upload PDF files."
 msgstr "कृपया फक्त PDF फाइल्स अपलोड करा."
 
 #: control/views/pdf.py:123
-#, fuzzy
-#| msgid "No attendee name provided"
 msgid "No layout data was provided."
-msgstr "उपस्थित व्यक्तीचे नाव दिलेले नाही"
+msgstr "लेआउट डेटा प्रदान केला नाही."
 
 #: control/views/pdf.py:128 control/views/pdf.py:131
-#, fuzzy
-#| msgid "Invalid input data."
 msgid "Invalid layout data was provided."
-msgstr "अवैध इनपुट डेटा."
+msgstr "अवैध लेआउट डेटा प्रदान केला होता."
 
 #: control/views/product.py:119 control/views/product.py:1241
 #: control/views/product.py:1619
@@ -23551,10 +23387,8 @@ msgid "Bypass quota"
 msgstr "कोटा बायपास करा"
 
 #: control/views/vouchers.py:120
-#, fuzzy
-#| msgid "Bypass quota"
 msgid "Bypass approval"
-msgstr "कोटा बायपास करा"
+msgstr "मंजुरी वगळा"
 
 #: control/views/vouchers.py:140
 msgid "Any product"
@@ -25060,10 +24894,8 @@ msgid "Select event to configure tracks:"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
-#, fuzzy
-#| msgid "Select an Event"
 msgid "— Select an event —"
-msgstr "कार्यक्रम निवडा"
+msgstr "— एखादी घटना निवडा —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
@@ -25074,10 +24906,8 @@ msgid "None"
 msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
-#, fuzzy
-#| msgid "No servers configured yet."
 msgid "No tracks are configured for any events."
-msgstr "अजून कोणतेही सर्व्हर संरचित केलेले नाहीत."
+msgstr "कोणत्याही इव्हेंटसाठी कोणतेही ट्रॅक कॉन्फिगर केलेले नाहीत."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:107
 msgid "Video permissions"
@@ -25570,9 +25400,6 @@ msgid "Unique viewers by session"
 msgstr "सत्रानुसार अद्वितीय दर्शक"
 
 #: features/analytics/graphs/report.py:401
-#, fuzzy
-#| msgid "Session"
-#| msgid_plural "Sessions"
 msgid "Session"
 msgstr "सत्र"
 
@@ -26319,10 +26146,8 @@ msgid "Mail signature"
 msgstr "मेल स्वाक्षरी"
 
 #: orga/forms/event.py:202
-#, fuzzy
-#| msgid "The signature will be added to outgoing mails, preceded by “-- ”."
 msgid "The signature will be added to outgoing mails, preceded by “-- ”. "
-msgstr "स्वाक्षरी बाहेर जाणाऱ्या मेलमध्ये “-- ” च्या आधी जोडली जाईल."
+msgstr "स्वाक्षरी बाहेर जाणाऱ्या ईमेलमध्ये \"-- \" ने आधी जोडली जाईल. "
 
 #: orga/forms/event.py:208
 msgid "Use custom SMTP server"
@@ -27199,10 +27024,8 @@ msgid "Default duration"
 msgstr "मूलभूत कालावधी"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:60
-#, fuzzy
-#| msgid "All session types"
 msgid "Move session type"
-msgstr "सर्व सत्र प्रकार"
+msgstr "सत्र प्रकार हलवा"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
@@ -28487,10 +28310,8 @@ msgstr[1] "सबमिटर्स"
 
 #: orga/templates/orga/speaker/list.html:76
 #: orga/templates/orga/speaker/list.html:83
-#, fuzzy
-#| msgid "Show this proposal in the list of featured sessions."
 msgid "Show this speaker in the list of featured speakers."
-msgstr "हे प्रस्ताव वैशिष्ट्यीकृत सत्रांच्या यादीत दाखवा."
+msgstr "या वक्त्याला वैशिष्ट्यीकृत वक्त्यांच्या यादीत दाखवा."
 
 #: orga/templates/orga/speaker/list.html:107
 msgid "Arrived"
@@ -28501,10 +28322,8 @@ msgid "Not arrived"
 msgstr "आगमन झाले नाही"
 
 #: orga/templates/orga/speaker/list.html:122
-#, fuzzy
-#| msgid "No users found."
 msgid "No submitters found."
-msgstr "वापरकर्ते आढळले नाहीत."
+msgstr "कोणतेही सबमिटर आढळले नाहीत."
 
 #: orga/templates/orga/speaker/speakerinformation/list.html:6
 msgid "New speaker information"
@@ -28893,10 +28712,8 @@ msgid "This Session Type is in use in a proposal and cannot be deleted."
 msgstr "हा सत्र प्रकार प्रस्तावात वापरात आहे आणि काढू शकत नाही."
 
 #: orga/views/cfp.py:709
-#, fuzzy
-#| msgid "The device has been removed."
 msgid "The default Session Type has been removed."
-msgstr "डिव्हाइस काढून टाकले गेले आहे."
+msgstr "डीफॉल्ट सत्र प्रकार काढून टाकला आहे."
 
 #: orga/views/cfp.py:715
 msgid "The Session Type has been made default."
@@ -29549,23 +29366,17 @@ msgid "Sort by"
 msgstr "क्रमवारी लावा"
 
 #: plugins/badges/forms.py:20
-#, fuzzy
-#| msgid "The product \"{}\" is not assigned to a quota."
 msgid "Products assigned to this layout"
-msgstr "उत्पादन \"{}\" कोणत्याही कोटाला असाइन केलेले नाही."
+msgstr "या लेआउटला नियुक्त केलेली उत्पादने"
 
 #: plugins/badges/forms.py:25 plugins/badges/models.py:31
-#, fuzzy
-#| msgid "Invoice customization"
 msgid "Allow badge customization"
-msgstr "चलन सानुकूलन"
+msgstr "बॅज सानुकूलनाला अनुमती द्या"
 
 #: plugins/badges/forms.py:29
 #: plugins/badges/templates/pretixplugins/badges/settings.html:36
-#, fuzzy
-#| msgid "Hide field"
 msgid "Badge fields"
-msgstr "फील्ड लपवा"
+msgstr "बॅज फील्ड्स"
 
 #: plugins/badges/forms.py:42
 msgid ""
@@ -29581,10 +29392,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/forms.py:106
-#, fuzzy
-#| msgid "No languages selected"
 msgid "No optional badge fields selected"
-msgstr "कोणतीही भाषा निवडलेली नाही"
+msgstr "कोणतीही ऐच्छिक बॅज फील्ड निवडलेली नाहीत"
 
 #: plugins/badges/providers.py:11
 #: plugins/badges/templates/pretixplugins/badges/control_order_position_buttons.html:9
@@ -29596,10 +29405,8 @@ msgid "Download Badge"
 msgstr "बॅज डाउनलोड करा"
 
 #: plugins/badges/signals.py:133
-#, fuzzy
-#| msgid "Upload options"
 msgid "Badge options"
-msgstr "अपलोड पर्याय"
+msgstr "बॅज पर्याय"
 
 #: plugins/badges/signals.py:193
 msgid "Badge layout created."
@@ -29660,10 +29467,8 @@ msgstr "नवीन बॅज लेआउट तयार करा"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:7
 #: plugins/badges/templates/pretixplugins/badges/settings.html:20
-#, fuzzy
-#| msgid "Badge layout"
 msgid "Badge layout settings"
-msgstr "बॅज लेआउट"
+msgstr "बॅज लेआउट सेटिंग्ज"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:41
 msgid ""
@@ -29673,10 +29478,8 @@ msgid ""
 msgstr ""
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:48
-#, fuzzy
-#| msgid "All users"
 msgid "Ask user"
-msgstr "सर्व वापरकर्ते"
+msgstr "वापरकर्त्याला विचारा"
 
 #: plugins/badges/templates/pretixplugins/badges/settings.html:58
 #, python-format
@@ -29684,16 +29487,14 @@ msgid "Ask user for %(field)s"
 msgstr ""
 
 #: plugins/badges/utils.py:127
-#, fuzzy, python-brace-format
-#| msgid "Event metadata"
+#, python-brace-format
 msgid "Event meta: {key}"
-msgstr "इव्हेंट मेटाडेटा"
+msgstr "इव्हेंट मेटा: {key}"
 
 #: plugins/badges/utils.py:129
-#, fuzzy, python-brace-format
-#| msgid "Product name"
+#, python-brace-format
 msgid "Product meta: {key}"
-msgstr "उत्पादनाचे नाव"
+msgstr "उत्पादन मेटा: {key}"
 
 #: plugins/badges/views.py:75 plugins/badges/views.py:192
 #: plugins/badges/views.py:224 plugins/badges/views.py:256
@@ -29701,10 +29502,8 @@ msgid "The requested badge layout does not exist."
 msgstr "विनंती केलेले बॅज लेआउट अस्तित्वात नाही."
 
 #: plugins/badges/views.py:105
-#, fuzzy
-#| msgid "Your account settings have been changed."
 msgid "Your badge layout settings have been saved."
-msgstr "खाते सेटिंग्ज बदलल्या आहेत."
+msgstr "तुमच्या बॅज लेआउट सेटिंग्ज जतन करण्यात आल्या आहेत."
 
 #: plugins/badges/views.py:136
 msgid "The new badge layout has been created."
@@ -30973,10 +30772,8 @@ msgid "Client Application Secret"
 msgstr "क्लायंट अनुप्रयोग गुपित"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:94
-#, fuzzy
-#| msgid "No file provided"
 msgid "No preferred provider"
-msgstr "फाइल दिलेली नाही"
+msgstr "प्राधान्य प्रदाता नाही"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
@@ -31154,10 +30951,8 @@ msgstr ""
 "इंस्टन्समध्ये लॉग इन करू शकतात."
 
 #: plugins/socialauth/views.py:46
-#, fuzzy
-#| msgid "This product is currently not available."
 msgid "This login method is not available."
-msgstr "हे उत्पादन सध्या उपलब्ध नाही."
+msgstr "ही लॉगिन पद्धत उपलब्ध नाही."
 
 #: plugins/socialauth/views.py:120
 msgid "Error while authorizing: no email address available."
@@ -32316,16 +32111,11 @@ msgstr "ऑर्डर लिंक्स पुन्हा पाठवा"
 
 #: presale/templates/pretixpresale/event/order.html:15
 #: presale/templates/pretixpresale/event/order.html:37
-#, fuzzy
-#| msgid ""
-#| "Please note that we still await approval by the event organizer before "
-#| "you can pay and complete this order."
 msgid ""
 "Your request has been submitted and is awaiting approval by the event "
 "organizer. See below for details."
 msgstr ""
-"या ऑर्डरसाठी पेमेंट करून ऑर्डर पूर्ण करण्यापूर्वी इव्हेंट आयोजकाची मंजुरी अजून प्रलंबित आहे, "
-"कृपया लक्षात घ्या."
+"विनंती सबमिट केली असून कार्यक्रम आयोजकाच्या मंजुरीची प्रतीक्षा आहे. तपशीलांसाठी खाली पहा."
 
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:66
@@ -33454,10 +33244,8 @@ msgstr ""
 "जोडता येतील."
 
 #: submission/forms/submission.py:152
-#, fuzzy
-#| msgid "Default session type"
 msgid "Select a session type"
-msgstr "डीफॉल्ट सत्र प्रकार"
+msgstr "सत्र प्रकार निवडा"
 
 #: submission/forms/submission.py:172
 msgid ""
