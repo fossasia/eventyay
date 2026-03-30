@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-30 15:57+0000\n"
+"PO-Revision-Date: 2026-03-30 18:24+0000\n"
 "Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
@@ -6164,9 +6164,7 @@ msgstr "Le bon \"{voucher}\" a été utilisé entre-temps."
 #: presale/templates/pretixpresale/event/order.html:95
 #, python-format
 msgid "Your order: %(code)s"
-msgstr ""
-"Votre commande : %(code)s==WEBLATE_PART==Commande n° "
-"%(code)s==WEBLATE_PART==Référence de commande : %(code)s"
+msgstr "Votre commande : %(code)s"
 
 #: base/models/orders.py:1203
 msgid "<file>"
