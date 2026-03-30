@@ -4,8 +4,7 @@
         <a href='{% url "eventyay_common:event.index" organizer=request.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
             <i class="fa fa-home"></i> {% trans "Home" %}
         </a>
-        <a href="#" class="header-nav btn btn-outline-success active">
-            <i class="fa fa-ticket"></i> {% trans "Tickets" %}
+        <a href="{% url 'control:event.products' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">             <i class="fa fa-ticket"></i> {% trans "Tickets" %}
         </a>
         {% if is_talk_event_created %}
         <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
@@ -19,3 +18,4 @@
         </a>
     {% endif %}
 </div>
+
