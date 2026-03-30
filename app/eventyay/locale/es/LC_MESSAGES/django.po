@@ -36502,11 +36502,3 @@ msgstr "no aceptada"
 
 #~ msgid "Already have a %(event_name)s account?"
 #~ msgstr "¿Ya tienes una cuenta de %(event_name)s?"
-
-#: base/forms/questions.py:570 base/forms/questions.py:578 base/forms/questions.py:585
-msgid "Your answer"
-msgstr "Tu respuesta"
-
-#: base/forms/questions.py:610
-msgid "Select an option"
-msgstr "Selecciona una opción"
