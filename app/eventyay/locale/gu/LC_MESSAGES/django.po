@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-03-23 15:17+0000\n"
+"PO-Revision-Date: 2026-03-29 20:09+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Gujarati <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/gu/>\n"
@@ -242,94 +242,96 @@ msgid ""
 "You're currently not logged in, so your favourited talks will only be stored "
 "locally in your browser."
 msgstr ""
+"હાલમાં લોગ ઇન નથી, તેથી મનપસંદ વાર્તાલાપો ફક્ત બ્રાઉઝરમાં લોકલી સંગ્રહિત રહેશે."
 
 #: agenda/views/schedule.py:310
 msgid "Your favourites could only be saved locally in your browser."
-msgstr ""
+msgstr "મનપસંદ વસ્તુઓ ફક્ત બ્રાઉઝરમાં લોકલી સંગ્રહિત થઈ શક્યાં."
 
 #: agenda/views/speaker.py:37 agenda/views/speaker.py:65
 msgid "No published speakers."
-msgstr ""
+msgstr "પ્રકાશિત વક્તા નથી."
 
 #: agenda/views/talk.py:152
 #, python-brace-format
 msgid "The session “{title}” at {event}"
-msgstr ""
+msgstr "{event} પર સત્ર “ {title} ”"
 
 #: api/auth/devicesecurity.py:7
 msgid ""
 "Full device access (reading and changing orders and gift cards, reading of "
 "products and settings)"
 msgstr ""
+"સંપૂર્ણ ડિવાઇસ ઍક્સેસ (ઓર્ડર અને ગિફ્ટ કાર્ડ વાંચવા અને બદલવા, ઉત્પાદનો અને સેટિંગ્સ વાંચવા)"
 
 #: api/auth/devicesecurity.py:27
 msgid "eventyay_checkin"
-msgstr ""
+msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
 msgid "eventyay_checkin (kiosk mode, online only)"
-msgstr ""
+msgstr "eventyay_checkin (કિયોસ્ક મોડ, ફક્ત ઑનલાઇન)"
 
 #: api/models.py:23
 msgid "Application name"
-msgstr ""
+msgstr "એપ્લિકેશન નામ"
 
 #: api/models.py:27
 msgid "Redirection URIs"
-msgstr ""
+msgstr "રીડાયરેકશન URI"
 
 #: api/models.py:28
 msgid "Allowed URIs list, space separated"
-msgstr ""
+msgstr "મંજૂર URI યાદી, સ્પેસ દ્વારા જુદી પાડેલી"
 
 #: api/models.py:33
 msgid "Allowed list with space separated"
-msgstr ""
+msgstr "મંજૂર યાદી, સ્પેસ દ્વારા જુદી પાડેલી"
 
 #: api/models.py:37 control/forms/global_settings.py:258
 #: control/forms/global_settings.py:336
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:56
 msgid "Client ID"
-msgstr ""
+msgstr "ક્લાયન્ટ ID"
 
 #: api/models.py:44
 msgid "Client secret"
-msgstr ""
+msgstr "ક્લાયન્ટ સિક્રેટ"
 
 #: api/models.py:115
 msgid "Enable webhook"
-msgstr ""
+msgstr "વેબહુક સક્ષમ કરો"
 
 #: api/models.py:116
 #: control/templates/pretixcontrol/organizers/webhooks.html:36
 msgid "Target URL"
-msgstr ""
+msgstr "ટાર્ગેટ URL"
 
 #: api/models.py:117 base/models/devices.py:96 base/models/organizer.py:345
 msgid "All events (including newly created ones)"
-msgstr ""
+msgstr "બધા ઇવેન્ટ્સ (નવાં બનાવેલા સહિત)"
 
 #: api/models.py:118 base/models/devices.py:97 base/models/organizer.py:346
 #: base/models/vouchers.py:579
 msgid "Limit to events"
-msgstr ""
+msgstr "ઇવેન્ટ્સ સુધી મર્યાદિત કરો"
 
 #: api/serializers/cart.py:92 api/serializers/order.py:1353
 #, python-brace-format
 msgid "The product \"{}\" is not assigned to a quota."
-msgstr ""
+msgstr "ઉત્પાદન \"{}\" ક્વોટા સાથે સોંપાયેલ નથી."
 
 #: api/serializers/cart.py:99 api/serializers/order.py:1367
 #, python-brace-format
 msgid ""
 "There is not enough quota available on quota \"{}\" to perform the operation."
-msgstr ""
+msgstr "ઓપરેશન કરવા માટે ક્વોટા \"{}\" માં પૂરતું ઉપલબ્ધ ક્વોટા નથી."
 
 #: api/serializers/cart.py:130 api/serializers/order.py:1313
 #: base/services/orders.py:1472
 #, python-brace-format
 msgid "The selected seat \"{seat}\" is not available."
-msgstr ""
+msgstr "પસંદ કરાયેલ બેઠક \"{seat}\" ઉપલબ્ધ નથી."
 
 #: api/serializers/checkin.py:56 base/models/event.py:2943
 #: base/models/product.py:1406 base/models/product.py:1635
