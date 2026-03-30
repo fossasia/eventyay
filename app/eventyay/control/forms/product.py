@@ -77,12 +77,13 @@ class QuestionForm(I18nModelForm):
         self.fields['help_text'].widget.attrs['rows'] = 3
         self.fields['type'].label = _('Type')
         self.fields['hidden'].label = _('Hidden field')
-        self._set_wikimedia_username_warning(
-            identifier=self.initial.get('identifier', self.instance.identifier),
-            question=self.initial.get('question', self.instance.question),
-            hidden=self.initial.get('hidden', self.instance.hidden),
-            ask_during_checkin=self.initial.get('ask_during_checkin', self.instance.ask_during_checkin),
-        )
+        self._refresh_wikimedia_username_warning()
+
+    def _bound_question_value(self):
+        for key, value in self.data.items():
+            if key.startswith('question_') and value:
+                return value
+        return self.data.get('question')
 
     def _is_wikimedia_username_duplicate(self, *, identifier, question, hidden, ask_during_checkin) -> bool:
         if (
@@ -113,6 +114,27 @@ class QuestionForm(I18nModelForm):
         else:
             self.warning_message = None
 
+    def _refresh_wikimedia_username_warning(self, cleaned_data=None):
+        if cleaned_data is not None:
+            self._set_wikimedia_username_warning(
+                identifier=cleaned_data.get('identifier'),
+                question=cleaned_data.get('question'),
+                hidden=cleaned_data.get('hidden'),
+                ask_during_checkin=cleaned_data.get('ask_during_checkin'),
+            )
+            return
+
+        self._set_wikimedia_username_warning(
+            identifier=(self.data.get('identifier') if self.is_bound else self.initial.get('identifier', self.instance.identifier)),
+            question=(self._bound_question_value() if self.is_bound else self.initial.get('question', self.instance.question)),
+            hidden=(self.data.get('hidden') in ('on', 'true', 'True', '1') if self.is_bound else self.initial.get('hidden', self.instance.hidden)),
+            ask_during_checkin=(
+                self.data.get('ask_during_checkin') in ('on', 'true', 'True', '1')
+                if self.is_bound
+                else self.initial.get('ask_during_checkin', self.instance.ask_during_checkin)
+            ),
+        )
+
     def clean_dependency_values(self):
         val = self.data.getlist('dependency_values')
         return val
@@ -141,16 +163,11 @@ class QuestionForm(I18nModelForm):
 
     def clean(self):
         d = super().clean()
+        self._refresh_wikimedia_username_warning(d)
         if d.get('dependency_question') and not d.get('dependency_values'):
             raise ValidationError({'dependency_values': [_('This field is required')]})
         if d.get('dependency_question') and d.get('ask_during_checkin'):
             raise ValidationError(_('Dependencies between questions are not supported during check-in.'))
-        self._set_wikimedia_username_warning(
-            identifier=d.get('identifier'),
-            question=d.get('question'),
-            hidden=d.get('hidden'),
-            ask_during_checkin=d.get('ask_during_checkin'),
-        )
         return d
 
     class Meta:

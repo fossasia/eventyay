@@ -174,7 +174,9 @@ class CheckoutTestCase(BaseCheckoutTestCase, TestCase):
 
         response = self.client.get('/%s/%s/checkout/questions/' % (self.orga.slug, self.event.slug))
         assert response.status_code == 200
-        assert response.content.decode().count('Wikimedia Username') == 1
+        soup = BeautifulSoup(response.content, 'html.parser')
+        labels = [label for label in soup.find_all('label') if label.get_text(strip=True) == 'Wikimedia Username']
+        assert len(labels) == 1
 
     def test_reverse_charge(self):
         self.tr19.eu_reverse_charge = True

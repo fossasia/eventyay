@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
-from eventyay.base.models import TaxRule
+from eventyay.base.models import Question, TaxRule
 from eventyay.base.services.cart import update_tax_rates
 from eventyay.presale.checkoutflowstep.template_flow_step import TemplateFlowStep
 from eventyay.presale.forms.checkout import (
@@ -248,7 +248,8 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
 
         for cp in self._positions_for_questions:
             answ = {aw.question_id: aw for aw in cp.answerlist}
-            question_cache = {q.pk: q for q in cp.product.questions_to_ask}
+            visible_questions = Question.visible_during_checkout(self.request.event, cp.product.questions_to_ask)
+            question_cache = {q.pk: q for q in visible_questions}
 
             def question_is_visible(parentid, qvals):
                 if parentid not in question_cache:
@@ -271,7 +272,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                     not q.dependency_question_id or question_is_visible(q.dependency_question_id, q.dependency_values)
                 )
 
-            for q in cp.product.questions_to_ask:
+            for q in visible_questions:
                 if question_is_required(q) and q.id not in answ:
                     if warn:
                         messages.warning(

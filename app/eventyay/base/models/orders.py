@@ -1374,7 +1374,7 @@ class AbstractPosition(models.Model):
 
         if not all:
             if getattr(self.product, 'questions_to_ask', None) is not None:
-                questions = list(copy.copy(q) for q in self.product.questions_to_ask)
+                questions = list(copy.copy(q) for q in Question.visible_during_checkout(self.event, self.product.questions_to_ask))
             else:
                 questions = list(
                     copy.copy(q)

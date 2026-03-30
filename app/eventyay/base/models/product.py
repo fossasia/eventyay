@@ -1282,6 +1282,13 @@ class Question(LoggedModel):
             or question == self.WIKIMEDIA_USERNAME_LABEL
         )
 
+    @classmethod
+    def visible_during_checkout(cls, event, questions):
+        return [
+            q for q in questions
+            if not (event.settings.include_wikimedia_username and q.is_wikimedia_username_question)
+        ]
+
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
         if self.event:

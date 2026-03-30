@@ -129,6 +129,30 @@ class QuestionsTest(ItemFormTest):
         )
         assert 'duplicates the event-level Wikimedia Username field' in doc.text
 
+    def test_wikimedia_username_warning_on_invalid_form(self):
+        self.event1.settings.set('include_wikimedia_username', True)
+        with scopes_disabled():
+            dependency = Question.objects.create(
+                event=self.event1,
+                question='Need press pass?',
+                type='C',
+                required=True,
+            )
+            dependency.options.create(answer='Yes')
+        doc = self.get_doc('/control/event/%s/%s/questions/add' % (self.orga1.slug, self.event1.slug))
+        form_data = extract_form_fields(doc.select('.container-fluid form')[0])
+        form_data['question_0'] = 'Wikimedia Username'
+        form_data['identifier'] = 'wikimedia_username'
+        form_data['type'] = 'S'
+        form_data['items'] = self.item1.id
+        form_data['dependency_question'] = dependency.id
+        doc = self.post_doc(
+            '/control/event/%s/%s/questions/add' % (self.orga1.slug, self.event1.slug),
+            form_data,
+        )
+        assert 'This field is required' in doc.text
+        assert 'duplicates the event-level Wikimedia Username field' in doc.text
+
     def test_update_choices(self):
         with scopes_disabled():
             c = Question.objects.create(

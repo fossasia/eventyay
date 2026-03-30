@@ -396,10 +396,7 @@ class BaseQuestionsForm(forms.Form):
         product = pos.product
         event = kwargs.pop('event')
         self.all_optional = kwargs.pop('all_optional', False)
-        questions = [
-            q for q in pos.product.questions_to_ask
-            if not (event.settings.include_wikimedia_username and q.is_wikimedia_username_question)
-        ]
+        questions = Question.visible_during_checkout(event, pos.product.questions_to_ask)
 
         super().__init__(*args, **kwargs)
 
