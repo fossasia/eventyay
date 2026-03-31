@@ -5,12 +5,12 @@ on:
     branches: [ development, master ]
     paths:
       - 'doc/**'
-      - 'src/pretix/locale/**'
+      - 'app/eventyay/locale/**'
   pull_request:
     branches: [ development, master ]
     paths:
       - 'doc/**'
-      - 'src/pretix/locale/**'
+      - 'app/eventyay/locale/**'
 
 jobs:
   compile:
@@ -19,9 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.12
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.12
+          python-version: '3.12'
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -31,6 +31,12 @@ jobs:
         run: sudo apt update && sudo apt install gettext
       - name: Install Python dependencies
         run: uv sync
+        working-directory: ./app/
+      - name: Check translation placeholder consistency
+        continue-on-error: true
+        run: |
+          uv pip install polib
+          uv run python tools/check_po_placeholders.py eventyay/locale
         working-directory: ./app/
       - name: Compile messages
         run: uv run manage.py compilemessages
