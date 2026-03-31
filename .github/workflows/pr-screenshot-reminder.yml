@@ -67,7 +67,6 @@ jobs:
 
             const hasMarkdownImage = /!\[[^\]]*\]\([^)]+\)/i.test(body);
             const hasHtmlImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(body);
-            const screenshotKeywords = /(screenshot|screen shot|screen recording|recording|gif|loom)/i;
             const hasImageUrl =
               /https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp|svg|mp4|mov)(?:[?#][^\s)]*)?/i.test(body);
 
@@ -88,9 +87,9 @@ jobs:
               imageExtensions.some((ext) => file.filename.toLowerCase().endsWith(ext))
             );
 
-            const issueLinkPattern =
-              /\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\b[\s:]*(?:https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/\d+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d+|#\d+)/i;
-            const hasIssueLinkInBody = issueLinkPattern.test(body);
+            const issueReferencePattern =
+              /(?:^|[\s(])(?:#\d+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d+|https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/\d+)(?=$|[\s).,;:!?])/i;
+            const hasIssueReferenceInBody = issueReferencePattern.test(body);
 
             let hasLinkedIssueInGitHub = false;
             try {
@@ -117,7 +116,7 @@ jobs:
               core.warning(`Unable to query linked issues via GraphQL: ${error}`);
             }
 
-            const hasLinkedIssue = hasIssueLinkInBody || hasLinkedIssueInGitHub;
+            const hasLinkedIssue = hasIssueReferenceInBody || hasLinkedIssueInGitHub;
 
             const missingItems = [];
             if (!(hasScreenshotInBody || hasImageFileInDiff)) {
@@ -127,7 +126,7 @@ jobs:
             }
             if (!hasLinkedIssue) {
               missingItems.push(
-                'Please link the related issue in the PR description (for example: Closes #123).'
+                'Please link the related issue in the PR description (for example: Related to #123 or Closes #123).'
               );
             }
 
