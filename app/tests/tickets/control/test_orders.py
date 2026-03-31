@@ -2225,7 +2225,7 @@ def test_refund_amount_does_not_match_or_invalid(client, env):
         follow=True,
     )
     assert b'alert-danger' in resp.content
-    assert b'do not match the' in resp.content
+    assert b'can not be negative' in resp.content
     resp = client.post(
         '/control/event/dummy/dummy/orders/FOO/refund',
         {
@@ -2241,6 +2241,35 @@ def test_refund_amount_does_not_match_or_invalid(client, env):
     )
     assert b'alert-danger' in resp.content
     assert b'invalid number' in resp.content
+
+
+@pytest.mark.django_db
+def test_refund_negative_giftcard_does_not_create_giftcard(client, env):
+    with scopes_disabled():
+        p = env[2].payments.last()
+        p.confirm()
+        giftcard_count_before = GiftCard.objects.count()
+
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    resp = client.post(
+        '/control/event/dummy/dummy/orders/FOO/refund',
+        {
+            'start-partial_amount': '7.00',
+            'start-mode': 'partial',
+            'start-action': 'mark_pending',
+            'refund-new-giftcard': '-1.00',
+            'refund-{}'.format(p.pk): '8.00',
+            'manual_state': 'pending',
+            'perform': 'on',
+        },
+        follow=True,
+    )
+
+    assert b'alert-danger' in resp.content
+    assert b'can not be negative' in resp.content
+
+    with scopes_disabled():
+        assert GiftCard.objects.count() == giftcard_count_before
 
 
 @pytest.mark.django_db

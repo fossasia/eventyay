@@ -996,37 +996,46 @@ class OrderRefundView(OrderView):
             manual_value = formats.sanitize_separators(manual_value)
             try:
                 manual_value = Decimal(manual_value)
+                manual_value = round_decimal(manual_value, self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                refund_selected += manual_value
-                if manual_value:
-                    refunds.append(
-                        OrderRefund(
-                            order=self.order,
-                            payment=None,
-                            source=OrderRefund.REFUND_SOURCE_ADMIN,
-                            state=(
-                                OrderRefund.REFUND_STATE_DONE
-                                if self.request.POST.get('manual_state') == 'done'
-                                else OrderRefund.REFUND_STATE_CREATED
-                            ),
-                            amount=manual_value,
-                            comment=comment,
-                            provider='manual',
+                if manual_value < 0:
+                    messages.error(self.request, _('Refund values can not be negative.'))
+                    is_valid = False
+                else:
+                    refund_selected += manual_value
+                    if manual_value > 0:
+                        refunds.append(
+                            OrderRefund(
+                                order=self.order,
+                                payment=None,
+                                source=OrderRefund.REFUND_SOURCE_ADMIN,
+                                state=(
+                                    OrderRefund.REFUND_STATE_DONE
+                                    if self.request.POST.get('manual_state') == 'done'
+                                    else OrderRefund.REFUND_STATE_CREATED
+                                ),
+                                amount=manual_value,
+                                comment=comment,
+                                provider='manual',
+                            )
                         )
-                    )
 
             giftcard_value = self.request.POST.get('refund-new-giftcard', '0') or '0'
             giftcard_value = formats.sanitize_separators(giftcard_value)
             try:
                 giftcard_value = Decimal(giftcard_value)
+                giftcard_value = round_decimal(giftcard_value, self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                if giftcard_value:
+                if giftcard_value < 0:
+                    messages.error(self.request, _('Refund values can not be negative.'))
+                    is_valid = False
+                elif giftcard_value > 0:
                     refund_selected += giftcard_value
                     giftcard = self.request.organizer.issued_gift_cards.create(
                         expires=self.request.organizer.default_gift_card_expiry,
@@ -1052,11 +1061,15 @@ class OrderRefundView(OrderView):
             offsetting_value = formats.sanitize_separators(offsetting_value)
             try:
                 offsetting_value = Decimal(offsetting_value)
+                offsetting_value = round_decimal(offsetting_value, self.request.event.currency)
             except (DecimalException, TypeError):
                 messages.error(self.request, _('You entered an invalid number.'))
                 is_valid = False
             else:
-                if offsetting_value:
+                if offsetting_value < 0:
+                    messages.error(self.request, _('Refund values can not be negative.'))
+                    is_valid = False
+                elif offsetting_value > 0:
                     refund_selected += offsetting_value
                     try:
                         order = Order.objects.get(
@@ -1089,8 +1102,13 @@ class OrderRefundView(OrderView):
                 prof_value = formats.sanitize_separators(prof_value)
                 try:
                     prof_value = Decimal(prof_value)
+                    prof_value = round_decimal(prof_value, self.request.event.currency)
                 except (DecimalException, TypeError):
                     messages.error(self.request, _('You entered an invalid number.'))
+                    is_valid = False
+                    continue
+                if prof_value < Decimal('0.00'):
+                    messages.error(self.request, _('Refund values can not be negative.'))
                     is_valid = False
                     continue
                 if prof_value > Decimal('0.00'):
@@ -1112,10 +1130,15 @@ class OrderRefundView(OrderView):
                 value = formats.sanitize_separators(value)
                 try:
                     value = Decimal(value)
+                    value = round_decimal(value, self.request.event.currency)
                 except (DecimalException, TypeError):
                     messages.error(self.request, _('You entered an invalid number.'))
                     is_valid = False
                 else:
+                    if value < 0:
+                        messages.error(self.request, _('Refund values can not be negative.'))
+                        is_valid = False
+                        continue
                     if value == 0:
                         continue
                     elif value > p.available_amount:
@@ -1147,6 +1170,8 @@ class OrderRefundView(OrderView):
                         )
 
             any_success = False
+            refund_selected = round_decimal(refund_selected, self.request.event.currency)
+            full_refund = round_decimal(full_refund, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
                 for r in refunds:
                     r.save()
@@ -1243,10 +1268,21 @@ class OrderRefundView(OrderView):
                             )
                 return redirect(self.get_order_url())
             else:
-                messages.error(
-                    self.request,
-                    _('The refunds you selected do not match the selected total refund amount.'),
-                )
+                if is_valid:
+                    logger.warning(
+                        'Refund amount mismatch for order %s: selected=%s expected=%s',
+                        self.order.code,
+                        refund_selected,
+                        full_refund,
+                    )
+                    messages.error(
+                        self.request,
+                        _('The refunds you selected do not match the selected total refund amount. '
+                          'Selected: {selected}, expected: {expected}.').format(
+                            selected=money_filter(refund_selected, self.request.event.currency),
+                            expected=money_filter(full_refund, self.request.event.currency),
+                        ),
+                    )
 
         new_refunds = []
         for identifier, prov in self.request.event.get_payment_providers().items():
