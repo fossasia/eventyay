@@ -77,9 +77,10 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
-from .organizer import Organizer, OrganizerBillingModel, Team
+from .organizer import Organizer, Team
 from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
+
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 logger = logging.getLogger(__name__)
@@ -2011,7 +2012,6 @@ class Event(
         return issues
 
     def billing_issues(self):
-        from django.utils.html import format_html
         from django.utils.translation import gettext
 
         from eventyay.base.models.organizer import OrganizerBillingModel
@@ -2072,12 +2072,61 @@ class Event(
     def allow_delete(self):
         return not self.orders.exists() and not self.invoices.exists()
 
+    @scopes_disabled()
     def delete_sub_objects(self):
+        from django.core.exceptions import ObjectDoesNotExist
+
+        from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.resource import Resource
+        from eventyay.base.models.slot import TalkSlot
+
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
+        self.queued_mails.all().delete()
+
+        answers = Answer.objects.filter(question__event=self)
+        for answer in answers.only('pk', 'answer_file').iterator():
+            answer._delete_files()
+        answers.delete()
+        AnswerOption.objects.filter(question__event=self).delete()
+
+        TalkSlot.objects.filter(schedule__event=self).delete()
+        Feedback.objects.filter(talk__event=self).delete()
+
+        resources = Resource.objects.filter(submission__event=self)
+        for resource in resources.only('pk', 'resource').iterator():
+            resource._delete_files()
+        resources.delete()
+
+        for domain in self.domains.all().iterator():
+            domain.delete()
+
+        for stored_file in self.storedfile_set.all().iterator():
+            stored_file.full_delete()
+
+        self.bbbserver_set.update(event_exclusive=None)
+        self.janusserver_set.update(event_exclusive=None)
+        self.turnserver_set.update(event_exclusive=None)
+
         self.vouchers.all().delete()
         self.products.all().delete()
         self.subevents.all().delete()
+        self.talkquestions.all().delete()
+        self.submissions.all().delete()
+        self.rooms.all().delete()
+        self.tracks.all().delete()
+        self.tags.all().delete()
+        self.schedules.all().delete()
+        self.mail_templates.all().delete()
+        try:
+            cfp = self.cfp
+        except ObjectDoesNotExist:
+            cfp = None
+        if cfp is not None and cfp.pk is not None:
+            cfp.delete()
+        self.submitter_access_codes.all().delete()
+        self.submission_types.all().delete()
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins
@@ -2609,7 +2658,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.UTC)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i

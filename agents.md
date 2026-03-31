@@ -6,9 +6,10 @@ Supported agents include GitHub Copilot, Claude, Codex, Cursor, ChatGPT, and sim
 
 ## Precedence
 
-1. `agents.md` is the default policy for all agents.
+1. `agents.md` is the default policy for all agents (single source of truth).
 2. `.github/instructions/*.md` rules are mandatory when their `applyTo` pattern matches the edited file.
-3. Agent adapter files (`CLAUDE.md`, `CODEX.md`, `.cursorrules`, `.github/copilot-instructions.md`) should stay minimal and must not duplicate or override project rules.
+3. `.agents/skills/` contains reusable operational knowledge about the repository structure and deployment.
+4. Agent adapter files (`CLAUDE.md`, `CODEX.md`, `.cursorrules`, `.github/copilot-instructions.md`) should stay minimal and must not duplicate or override project rules.
 
 ## Verified Project Facts
 
@@ -61,3 +62,28 @@ Before submitting changes:
 2. Confirm imports and namespaces follow `eventyay.*` conventions.
 3. Confirm event data queries are scoped with `scope(event=event)` where required.
 4. Confirm error handling keeps specific exception types.
+
+## Context Index (`.agents/context/`)
+
+| Context file | Purpose |
+|---|---|
+| `.agents/context/architecture.md` | Context: Architecture and project structure |
+
+## Skills Index (`.agents/skills/`)
+
+| Skill directory/file | Purpose |
+|---|---|
+| `.agents/skills/repo-navigation/skill.md` | Repository layout and where to find code |
+| `.agents/skills/django-create-model/skill.md` | Steps for creating or modifying a Django model |
+| `.agents/skills/django-create-api-endpoint/skill.md` | Steps for adding a new Django REST Framework API endpoint |
+| `.agents/skills/django-add-form/skill.md` | Steps for creating or modifying Django forms and adding validation |
+| `.agents/skills/django-run-migrations/skill.md` | Steps for generating and applying Django migrations |
+| `.agents/skills/django-run-locally/skill.md` | Steps for initiating the Django development server without Docker |
+| `.agents/skills/docker-deployment/skill.md` | Docker Compose, container services, deployment |
+| `.agents/skills/documentation/skill.md` | How to update project documentation |
+
+## Important Notes
+
+- Skills **summarize and reference** existing instruction files; they do not duplicate coding rules.
+- When in doubt, defer to the coding standards in `.github/instructions/`.
+- All product code lives under `app/eventyay/`; use `eventyay.*` imports.
