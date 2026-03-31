@@ -35,3 +35,10 @@ We welcome contributions to Eventyay.
 
 All contributions are accepted under the Apache License 2.0.
 See [CLA.md](CLA.md) for details.
+
+### Contribution Tips
+
+- Follow coding standards and project guidelines  
+- Write clear and meaningful commit messages  
+- Test your changes before submitting a pull request  
+- Ensure proper documentation for any updates  
