@@ -517,7 +517,7 @@ body.startpage-search-results-page #main-card {
     align-items: center;
   }
 
-  .navbar-header {
+  nav.navbar .navbar-header {
     display: flex;
     align-items: center;
     gap: 2px;
@@ -547,14 +547,8 @@ body.startpage-search-results-page #main-card {
     min-height: auto;
     font-size: 13px;
     padding: 5px;
-  }
-
-  .navbar-top-links li a {
-    padding: 15px 10px;
-    min-height: 50px;
-    font-size: 14px;
     font-weight: normal;
-  } 
+  }
 
   .navbar-top-links #profile-dropdown > summary,
   .navbar-top-links #language-dropdown > summary {
