@@ -62,7 +62,17 @@
         </td>
     </tr>
     {% empty %}
-        <tr><td colspan="8" class="text-muted">{% trans "No events yet." %}</td></tr>
+        <tr>
+            <td colspan="8">
+                <div class="text-center mt-5">
+                    <h3>No events available</h3>
+                    <p>Looks like there are no events yet.</p>
+                    <a href="/create" class="btn btn-primary mt-3">
+                        Create Your First Event
+                    </a>
+                </div>
+            </td>
+        </tr>
     {% endfor %}
     </tbody>
 </table>
