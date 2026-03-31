@@ -1,3 +1,21 @@
+.presale-sticky-tabs .header-row-right details.dropdown,
+.presale-sticky-tabs .header-row-right > a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.presale-sticky-tabs .header-row-right details.dropdown summary {
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--size-border-radius);
+  cursor: pointer;
+}
+
+/* Add padding to username for visual match */
+.presale-sticky-tabs .header-row-right details.dropdown summary .mobile-hide-text {
+  padding-left: 6px;
+  padding-right: 6px;
+}
 body {
   background: var(--color-grey-lightest);
 }
@@ -167,10 +185,13 @@ header {
 }
 
 .presale-sticky-tabs-inner {
+  margin: 0;
+  background: var(--color-bg);
   width: 100%;
   max-width: calc(100vw - 8px);
   word-break: keep-all;
   flex-wrap: nowrap;
+  border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
 }
 
 .presale-sticky-tabs {
@@ -182,6 +203,13 @@ header {
   border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
   padding-bottom: 6px;
   flex-shrink: 0;
+}
+
+.presale-tabs-scroll {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .presale-sticky-tabs a.header-tab {
@@ -208,7 +236,7 @@ header {
   flex-shrink: 0;
   align-items: center;
   font-size: 1rem;
-  gap: 10px;
+  gap: 16px;
 }
 
 .presale-sticky-tabs .header-row-right .header-nav {
@@ -245,8 +273,6 @@ header {
   display: inline-flex;
   border-radius: 14px;
   background: transparent;
-  padding-left: 1rem;
-  padding-right: 1rem;
 }
 
 .event-hero-text {
@@ -287,6 +313,8 @@ header {
 }
 
 #main-card {
+  position: relative;
+  z-index: 1030;
   min-height: 300px;
   box-shadow: 0 5px 10px rgb(0 0 0 / 0.2);
   padding: 0;
@@ -391,16 +419,118 @@ footer {
 
 @media (max-width: 768px) {
   #main-container {
-    max-width: 720px;
-    margin-top: 3.8rem !important;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
   }
 
-  /* NOTE: .presale-sticky-tabs flex-direction is handled in custom.css/custom.scss
-   * (flex-direction: row with .presale-tabs-scroll for horizontal scroll on mobile).
-   * Do NOT override it here with column. */
+  .header-wrapper, .presale-sticky-tabs-inner {
+    max-width: 100%;
+  }
+
+  /* Keep the sticky tabs in a single flex row */
+  .presale-sticky-tabs {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .presale-sticky-tabs-inner {
+    overflow: visible;
+  }
+
+  /* ONLY the tab links scroll horizontally */
+  .presale-tabs-scroll {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .presale-tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .presale-sticky-tabs a.header-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 4px 6px 3px 6px;
+    font-size: 0.8rem;
+  }
 
   .presale-sticky-tabs .header-row-right {
-    margin-left: auto;
+    margin-left: 0;
+    margin-right: 2px;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    gap: 0;
+  }
+
+  .presale-sticky-tabs .header-row-right details.dropdown {
+    position: relative;
+  }
+
+  .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
+    right: 0;
+    left: auto;
+    max-width: calc(100vw - 16px);
+  }
+
+  /* Remove the caret arrow — redundant when showing icon-only */
+  .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
+    display: none;
+  }
+
+  /* Tighten padding on the summary trigger button */
+  .presale-sticky-tabs .header-row-right details.dropdown summary {
+    padding: 2px 4px;
+  }
+
+  /* "Join online video" as a small icon-only button on mobile */
+  .presale-sticky-tabs a.header-tab.join-video-link {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0 4px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    border-bottom: none;
+    flex-shrink: 0;
+  }
+
+  .presale-sticky-tabs a.header-tab.join-video-link i {
+    font-size: 10px;
+    margin: 0;
+  }
+
+  .join-video-link:hover {
+    background: var(--color-primary-dark, var(--color-primary));
+    text-decoration: none;
+    opacity: 0.9;
+  }
+
+  /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
+  .login-link {
+    display: flex;
+    align-items: center;
+    padding: 0px 8px;
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .login-link:hover {
+    text-decoration: none;
+    opacity: 0.85;
   }
 
   .event-hero {
@@ -410,8 +540,6 @@ footer {
   .event-hero-overlay {
     display: flex;
     width: 100%;
-    padding-left: 12px;
-    padding-right: 12px;
   }
 
   .event-brand {
@@ -425,6 +553,92 @@ footer {
 
   .event-date-line {
     font-size: 0.9rem;
+  }
+
+  /* Hide the navbar join link on mobile, as it is now floating below the hero */
+  #header-tabs .join-video-link {
+    display: none !important;
+  }
+
+  .header-join-video-floating-mobile {
+    position: absolute;
+    bottom: -27.5px;
+    right: 7.5px;
+    z-index: 1050;
+    
+    /* Button for mobile/tablet: compact with icon + text */
+    .btn-join-video-icon-only {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 2px 6px;
+      height: 28px;
+      min-width: 0;
+      border-radius: 6px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+      background-color: var(--Color-primary, var(--color-primary));
+      color: white;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    /* Very small screens (phones): make it a compact circular icon-only button */
+    /* Restrict the icon-only behavior to < 320px so 320px devices show the text */
+    @media (max-width: 319px) {
+      .btn-join-video-icon-only {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 50%;
+        border: none;
+      }
+      .btn-join-video-icon-only .join-video-text {
+        display: none;
+      }
+      .btn-join-video-icon-only i {
+        font-size: 0.95rem;
+      }
+    }
+
+    .btn-join-video-icon-only .join-video-text {
+      display: inline-block;
+    }
+
+    .btn-join-video-icon-only:hover, .btn-join-video-icon-only:focus {
+      transform: scale(1.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+      color: white !important;
+      background-color: var(--color-primary);
+      filter: none;
+    }
+  }
+
+  .event-hero-overlay {
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-height: 100px;
+    align-items: flex-end;
+  }
+
+  /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+  #main-card {
+    margin-left: 0;
+    margin-right: 0;
+    box-shadow: none !important;
+  }
+
+  #main-card>main {
+    padding-top: 0.15rem;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  #main-card>main>main {
+    padding:0;
   }
 }
 
@@ -530,14 +744,17 @@ footer {
   }
 }
 
-/* Hide mobile-only navbar icons and CfS short text on desktop */
-.nav-icon-mobile, .cfs-short {
+/* Hide mobile-only navbar icons, CfS short text, and floating join button on desktop */
+.nav-icon-mobile, .cfs-short, .header-join-video-floating-mobile {
   display: none;
 }
 
 @media (max-width: 768px) {
+  .nav-icon-mobile, .header-join-video-floating-mobile {
+    display: block;
+  }
   .nav-icon-mobile {
-    display: inline-block;
+    font-size: 1.25rem;
   }
   .mobile-hide-text {
     display: none;
@@ -547,5 +764,16 @@ footer {
   }
   .cfs-short {
     display: inline;
+  }
+}
+
+@media (min-width: 992px) {
+  aside .row-voucher .form-control,
+  aside .row-voucher .input-group-addon,
+  aside .row-voucher .btn {
+    height: 40px;
+  }
+  aside .row-voucher .btn {
+    margin-top: 0;
   }
 }
