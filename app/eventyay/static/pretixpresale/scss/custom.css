@@ -102,11 +102,6 @@ header .header-row-right {
     margin: 0 auto;
 }
 
-.event-hero-overlay {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
 .presale-sticky-tabs-wrap {
     position: sticky;
     top: 0;
@@ -281,6 +276,7 @@ header .header-row-right {
 
     .nav-icon-mobile {
         display: inline;
+        font-size: 1.25rem;
     }
 
     .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
@@ -322,7 +318,7 @@ header .header-row-right {
     .login-link {
         display: flex;
         align-items: center;
-        padding: 2px 4px;
+        padding: 0px 8px;
         color: var(--color-primary);
         text-decoration: none;
     }
@@ -337,8 +333,6 @@ header .header-row-right {
     .event-hero-overlay {
         display: flex;
         width: 100%;
-        padding-left: 12px;
-        padding-right: 12px;
     }
 
     /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
@@ -365,26 +359,10 @@ header .header-row-right {
 
 @media (max-width: 480px) {
     #locale-dropdown.dropdown-content {
+        transform: scale(0.75);
+        transform-origin: top right;
         right: 0;
         left: auto;
-        max-width: calc(100vw - 8px);
-    }
-
-    #locale-dropdown .language-columns {
-        width: 100%;
-        grid-template-columns: 1fr;
-        max-height: 60vh;
-        overflow-y: auto;
-    }
-
-    #locale-dropdown .language-column {
-        max-width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--color-border, #ced4da);
-    }
-
-    #locale-dropdown .language-enforce-bar {
-        width: 100%;
     }
 }
 
@@ -454,4 +432,28 @@ header .header-row-right {
 
 .thank-you.thank-you-pending h2 {
     color: #ffb419;
+}
+
+.product-row .row > [class*="col-"]:not(.price),.product-row > [class*="col-"]:not(.price),.product-row [class*="col-"]:not(.price),
+.row-voucher > [class*="col-"]:not(.price),.checkout-button-row .clearfix > [class*="col-"]:not(.price) {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.front-page .col-md-4.col-md-offset-8,
+.front-page #btn-add-to-cart {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.redeem-voucher-container .col-md-4.col-sm-6.col-xs-12 {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+@media (min-width: 768px) {
+    .redeem-voucher-container .col-md-4.col-sm-6.col-xs-12 {
+        padding-left: 15px !important;
+        padding-right: 0;
+    }
 }
