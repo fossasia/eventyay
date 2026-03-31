@@ -2,7 +2,7 @@
 .c-talk-detail
 	.talk-wrapper(v-if="resolvedTalk")
 		.talk
-			.talk-header
+			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
 				.header-actions
 					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
@@ -312,21 +312,20 @@ export default {
 		margin: 16px
 		.talk-header
 			display: flex
-			align-items: flex-start
-			gap: 8px
+			justify-content: space-between
+			align-items: center
+			gap: 16px
+			margin-bottom: 8px
 			h1
 				flex: 1
-				margin-bottom: 0
+				margin: 0
 			.header-actions
 				display: flex
 				align-items: center
-				gap: 4px
+				gap: 8px
 				flex-shrink: 0
-				margin-top: 4px
-			.button-container
-				flex-shrink: 0
-		h1
-			margin-bottom: 0
+				.button-container
+					flex-shrink: 0
 		.info
 			font-size: 18px
 			color: $clr-secondary-text-light
@@ -534,8 +533,13 @@ export default {
 	@media (max-width: 480px)
 		.talk
 			margin: 10px
-			h1
-				font-size: 20px
+			.talk-header
+				flex-direction: column-reverse
+				align-items: flex-end
+				h1
+					font-size: 20px
+				.header-actions
+					gap: 4px
 			.info
 				font-size: 15px
 			.abstract
