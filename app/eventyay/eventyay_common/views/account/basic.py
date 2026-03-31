@@ -25,6 +25,7 @@ from eventyay.base.models import Event, LogEntry, NotificationSetting, User
 from eventyay.base.notifications import get_all_notification_types
 from eventyay.common.utils.language import (
     get_event_enforce_ui_language,
+    get_event_enforce_ui_language_cookie_name,
     get_event_language_cookie_name,
     strict_match_language,
 )
@@ -383,6 +384,23 @@ class LanguageSwitchView(View):
                             response,
                             event_cookie_name,
                             linked_event_language,
+                            max_age=max_age,
+                            expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                            domain=settings.SESSION_COOKIE_DOMAIN,
+                            path='/',
+                        )
+                    else:
+                        # If the selected UI language is outside event locales,
+                        # automatically unlink so the UI choice can be applied independently.
+                        enforce_cookie_name = get_event_enforce_ui_language_cookie_name(
+                            event.slug,
+                            event.organizer.slug,
+                        )
+                        set_cookie_without_samesite(
+                            request,
+                            response,
+                            enforce_cookie_name,
+                            '0',
                             max_age=max_age,
                             expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
                             domain=settings.SESSION_COOKIE_DOMAIN,
