@@ -17,6 +17,7 @@
 		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
 		:density="density",
+		:timeDensityMinutes="timeDensityMinutes"
 		@changeDay="$emit('changeDay', $event)",
 		@fav="$emit('fav', $event)",
 		@unfav="$emit('unfav', $event)"
@@ -53,6 +54,10 @@ export default {
 		density: {
 			type: String,
 			default: 'default'
+		},
+		timeDensityMinutes: {
+			type: Number,
+			default: 30
 		}
 	},
 	computed: {

@@ -72,16 +72,29 @@
 }
 
 #main-container.main-schedule {
-  max-width: 100%;
   margin: 0 auto;
-  padding-left: 0;
-  padding-right: 0;
-  padding-bottom: 0;
   #main-card {
     margin: 0 auto;
     main {
-      padding: 0;
+      padding: 5px;
       width: 100%;
+    }
+  }
+
+  /* The container main now provides the 5px padding. We can set it to 0 or leave as minimal here. */
+  pretalx-schedule[view="schedule"],
+  #fahrplan {
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #main-container.main-schedule {
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    #main-card main {
+      padding: 0;
     }
   }
 }
@@ -95,6 +108,12 @@
     display: block;
     width: 100%;
     --pretalx-sticky-top-offset: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  #main-container #fahrplan pretalx-schedule {
+    --pretalx-sticky-top-offset: 33px;
   }
 }
 

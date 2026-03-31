@@ -31,7 +31,6 @@
         {% eventsignal event "pretix.presale.signals.render_seating_plan" request=request %}
     {% endif %}
 </form>
-{% include "pretixpresale/fragment_modals.html" %}
 {% if DEBUG %}
     <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
 {% else %}
