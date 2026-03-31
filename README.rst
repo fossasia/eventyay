@@ -345,3 +345,8 @@ This project is maintained by **FOSSASIA**.
 .. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
 .. _eventyay.com: https://eventyay.com
 .. _blog: https://blog.eventyay.com
+
+Contribution
+============
+
+Contributions are welcome. Please follow the contribution guidelines and ensure proper documentation and code quality while submitting pull requests.
