@@ -1053,6 +1053,12 @@ class EventSearchView(views.APIView):
         results = []
         for event in events:
             if request.user.has_event_permission(event.organizer, event, 'can_view_orders', request=request):
-                results.append({'name': event.name, 'slug': event.slug, 'organizer': event.organizer.slug})
+                results.append(
+                    {
+                        'name': str(event.name),
+                        'slug': str(event.slug),
+                        'organizer': str(event.organizer.slug),
+                    }
+                )
 
         return JsonResponse(results, safe=False)
