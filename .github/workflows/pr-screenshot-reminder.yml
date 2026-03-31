@@ -50,7 +50,7 @@ jobs:
               per_page: 100,
             });
 
-            const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
+            const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.mp4', '.mov', '.webm'];
             const hasImageFileInDiff = files.some((file) =>
               imageExtensions.some((ext) => file.filename.toLowerCase().endsWith(ext))
             );
