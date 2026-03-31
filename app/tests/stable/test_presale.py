@@ -79,7 +79,8 @@ class TestEventPages:
             live=True,
             email='hidden@example.com',
         )
-        hidden_event.settings.set('exclude_from_start_page', True)
+        hidden_event.display_settings['exclude_from_start_page'] = True
+        hidden_event.save(update_fields=['display_settings'])
 
         response = client.get(f'/{organizer.slug}/')
 
@@ -106,3 +107,32 @@ class TestAgendaPages:
         response = client.get(url)
         # May 404 if speakers not configured, but shouldn't 500
         assert response.status_code in [200, 404]
+
+
+@pytest.mark.django_db
+class TestPlatformSearch:
+    def test_event_search_excludes_hidden_events(self, organizer_client, organizer, event):
+        event.name = 'Visible Search Event'
+        event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Search Event',
+            slug='hidden-search-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            email='hidden-search@example.com',
+        )
+        hidden_event.display_settings['exclude_from_search'] = True
+        hidden_event.save(update_fields=['display_settings'])
+
+        response = organizer_client.get('/events/search/?query=Search')
+        assert response.status_code == 200
+        payload = response.json()
+        names = {row['name'] for row in payload}
+        assert 'Visible Search Event' in names
+        assert 'Hidden Search Event' not in names
