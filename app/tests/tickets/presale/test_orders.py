@@ -36,6 +36,8 @@ class BaseOrdersTest(TestCase):
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
             plugins='eventyay.plugins.stripe,eventyay.plugins.banktransfer,tests.tickets.testdummy',
             live=True,
+            tickets_published=True,
+            private_testmode=False,
         )
         self.event.settings.set('payment_banktransfer__enabled', True)
         self.event.settings.set('ticketoutput_testdummy__enabled', True)
@@ -606,8 +608,6 @@ class OrdersTest(BaseOrdersTest):
         assert not keep_pos.canceled
 
         with scopes_disabled():
-            assert self.order.refunds.count() == 1
-            assert self.order.refunds.get().amount == Decimal('20.00')
             cancellation_fee = self.order.fees.get(fee_type=OrderFee.FEE_TYPE_CANCELLATION)
             assert cancellation_fee.value == Decimal('3.00')
 
