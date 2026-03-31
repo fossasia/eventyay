@@ -2722,7 +2722,7 @@ def _cancel_order_positions(
         try:
             normalized_position_ids = {int(position_id) for position_id in position_ids}
         except (TypeError, ValueError):
-            raise OrderError(_('One of the selected tickets can not be canceled.'))
+            raise OrderError(_('One of the selected tickets cannot be canceled.'))
 
         if not normalized_position_ids:
             raise OrderError(_('Please select at least one ticket to cancel.'))
@@ -2731,7 +2731,7 @@ def _cancel_order_positions(
         selected_positions = {}
         for position_id in normalized_position_ids:
             if position_id not in cancelable_positions:
-                raise OrderError(_('One of the selected tickets can not be canceled.'))
+                raise OrderError(_('One of the selected tickets cannot be canceled.'))
 
             selected_positions[position_id] = cancelable_positions[position_id]
 
@@ -2745,7 +2745,7 @@ def _cancel_order_positions(
 
             addons = list(position.addons.all())
             if any(addon.pk not in cancelable_positions for addon in addons):
-                raise OrderError(_('One of the selected tickets can not be canceled.'))
+                raise OrderError(_('One of the selected tickets cannot be canceled.'))
 
             positions_to_cancel.append(position)
 

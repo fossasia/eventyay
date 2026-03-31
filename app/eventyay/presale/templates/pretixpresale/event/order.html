@@ -419,7 +419,7 @@
                             {% endblocktrans %}
                         </p>
                         <a href="{% eventurl event 'presale:event.order.cancel.positions' secret=order.secret order=order.code %}"
-                                class="btn btn-default btn-delete">
+                            class="btn btn-delete btn-danger">
                             <span class="fa fa-remove" aria-hidden="true"></span>
                             {% trans "Cancel selected tickets" %}
                         </a>
