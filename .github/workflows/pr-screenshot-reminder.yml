@@ -26,19 +26,40 @@ jobs:
             const marker = '<!-- pr-quality-reminder -->';
             const legacyMarker = '<!-- screenshot-reminder -->';
 
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              per_page: 100,
-            });
+            let alreadyCommented = false;
+            const perPage = 50;
+            let page = 1;
 
-            const alreadyCommented = comments.some(
-              (comment) =>
-                comment.user?.type === 'Bot' &&
-                (comment.body?.includes(marker) || comment.body?.includes(legacyMarker))
-            );
+            while (true) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                per_page: perPage,
+                page,
+              });
 
+              if (!comments || comments.length === 0) {
+                break;
+              }
+
+              if (
+                comments.some(
+                  (comment) =>
+                    comment.user?.type === 'Bot' &&
+                    (comment.body?.includes(marker) || comment.body?.includes(legacyMarker))
+                )
+              ) {
+                alreadyCommented = true;
+                break;
+              }
+
+              if (comments.length < perPage) {
+                break;
+              }
+
+              page += 1;
+            }
             if (alreadyCommented) {
               core.info('Reminder already posted on this PR.');
               return;
@@ -47,12 +68,13 @@ jobs:
             const hasMarkdownImage = /!\[[^\]]*\]\([^)]+\)/i.test(body);
             const hasHtmlImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(body);
             const screenshotKeywords = /(screenshot|screen shot|screen recording|recording|gif|loom)/i;
-            const hasImageUrl = /(https?:\/\/[^\s)]+(?:png|jpe?g|gif|webp|svg|mp4|mov))/i.test(body);
+            const hasImageUrl =
+              /https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp|svg|mp4|mov)(?:[?#][^\s)]*)?/i.test(body);
 
             const hasScreenshotInBody =
               hasMarkdownImage ||
               hasHtmlImage ||
-              (screenshotKeywords.test(body) && hasImageUrl);
+              hasImageUrl;
 
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner,
