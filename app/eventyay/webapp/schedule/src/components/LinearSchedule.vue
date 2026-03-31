@@ -3,7 +3,6 @@
 	.bucket(v-for="({date, sessions}, index) of sessionBuckets")
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISOString()")
 			.day(v-if="index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
-			.time {{ date.clone().tz(timezone).format('h:mm A') }}
 			template(v-for="session of sessions")
 				session(
 					v-if="isProperSession(session)",
@@ -207,7 +206,7 @@ export default {
 			font-size: 14px
 			font-weight: 500
 			color: $clr-secondary-text-light
-			padding-left: 16px
+			padding-left: 5px
 			.day
 				font-weight: 600
 		.break
