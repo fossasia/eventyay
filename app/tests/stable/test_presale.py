@@ -3,6 +3,10 @@ Tests for public presale/event pages (agenda, schedule, speakers).
 These pages should be accessible without authentication.
 """
 import pytest
+from datetime import timedelta
+from django.utils import timezone
+
+from eventyay.base.models import Event
 
 
 @pytest.mark.django_db
@@ -56,6 +60,33 @@ class TestEventPages:
         response = client.get('/robots.txt')
         assert response.status_code == 200
         assert 'text/plain' in response['Content-Type']
+
+    def test_organizer_page_hides_excluded_start_page_events(self, client, organizer, event):
+        """Events excluded from organizer start page should not be listed."""
+        visible_event = event
+        visible_event.name = 'Visible Organizer Event'
+        visible_event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Organizer Event',
+            slug='hidden-organizer-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            email='hidden@example.com',
+        )
+        hidden_event.settings.set('exclude_from_start_page', True)
+
+        response = client.get(f'/{organizer.slug}/')
+
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Visible Organizer Event' in content
+        assert 'Hidden Organizer Event' not in content
 
 
 @pytest.mark.django_db

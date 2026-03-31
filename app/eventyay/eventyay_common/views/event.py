@@ -409,7 +409,8 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
-        self.pubform.save()
+        if self.pubform.has_changed():
+            self.pubform.save()
         self.header_links_formset.save()
         self.footer_links_formset.save()
         # Keep event model timezone in sync with settings
