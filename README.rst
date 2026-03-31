@@ -345,3 +345,15 @@ This project is maintained by **FOSSASIA**.
 .. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
 .. _eventyay.com: https://eventyay.com
 .. _blog: https://blog.eventyay.com
+
+Troubleshooting
+===============
+
+If you encounter issues during setup or execution:
+
+* Ensure all dependencies are installed correctly  
+* Verify that environment variables are properly configured  
+* Check for version compatibility issues  
+* Refer to official documentation for detailed guidance  
+
+This section helps users quickly resolve common problems during setup.
