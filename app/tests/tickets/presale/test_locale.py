@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.urls import reverse
 from django.test import Client, TestCase
 from django.utils.timezone import now
 
@@ -88,6 +89,30 @@ class EventLanguageEnforceDefaultTest(TestCase):
         self.assertEqual(response.wsgi_request.event_language, 'de')
         self.assertEqual(response['Content-Language'], 'en')
         self.assertEqual(c.cookies[self.enforce_cookie].value, '0')
+
+    def test_ui_selection_outside_event_locales_unlinks_languages(self):
+        """Selecting an unsupported UI language should auto-disable linking."""
+        c = Client()
+        c.cookies[self.enforce_cookie] = '1'
+
+        response = c.post(
+            reverse('eventyay_common:account.locale'),
+            data={
+                'locale': 'fr',
+                'event': self.event.slug,
+                'organizer': self.organizer.slug,
+                'next': '/%s/%s/' % (self.organizer.slug, self.event.slug),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.cookies[self.enforce_cookie].value, '0')
+
+        event_page = self._get_event_page(c)
+        self.assertEqual(event_page.status_code, 200)
+        self.assertFalse(event_page.wsgi_request.event_language_enforce_ui)
+        self.assertEqual(event_page.wsgi_request.event_language, 'de')
+        self.assertEqual(event_page['Content-Language'], 'fr')
 
     def test_enforce_on_toggle_via_locale_view(self):
         """EventLocaleSet view correctly sets the enforce cookie to '0' when toggled."""
