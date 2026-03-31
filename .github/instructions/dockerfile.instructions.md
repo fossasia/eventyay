@@ -9,7 +9,7 @@ This document covers Docker Compose usage, container services, environment varia
 
 **Core Architecture Principle:**
 - **Development (`docker-compose.yml`)**: Builds directly from `app/Dockerfile`. The `web` container serves static assets directly via Django.
-- **Production (`deployment/docker-compose.yml`)**: Uses a pre-built image (`eventyay/eventyay-next:${TAG}`) rather than building it locally. This image is built from `app/Dockerfile.prod` via CI/CD pipelines. Static assets are pre-built and served directly via the Nginx reverse-proxy fronting the Gunicorn application server.
+- **Production (`deployment/docker-compose.yml`)**: Uses a pre-built image (`eventyay/eventyay-next:${TAG}`) rather than building it locally. This image is built from `app/Dockerfile.prod` via CI/CD pipelines. Static assets are pre-built. In production, Nginx is typically configured at the host level (outside this Compose stack) to reverse-proxy requests to the Gunicorn application server.
 
 For the full production deployment walkthrough including Nginx, SSL, and backups, see [`DEPLOYMENT.md`](../../DEPLOYMENT.md).
 
@@ -108,12 +108,13 @@ docker compose up --build web
 
 ## Production Workflow
 
-The production stack uses Gunicorn (instead of Django's dev server) behind an Nginx reverse proxy.
+The production stack uses Gunicorn (instead of Django's dev server) behind a host-level Nginx reverse proxy outside the Compose stack.
 
 ```bash
 # On the production server
 cd /home/$USER/$DEPLOYMENT_NAME
-docker compose -f docker-compose.yml up -d
+# Use the production compose file from the deployment/ directory
+docker compose -f deployment/docker-compose.yml up -d
 ```
 
 Refer to [`DEPLOYMENT.md`](../../DEPLOYMENT.md) for the complete step-by-step guide including SSL setup with Certbot.
