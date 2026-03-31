@@ -20,6 +20,7 @@ from django.db.models import (
     Value,
 )
 from django.db.models.functions import Coalesce, Greatest
+from django.db.models.query import prefetch_related_objects
 from django.db.transaction import get_connection
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -2728,6 +2729,8 @@ def _cancel_order_positions(
             raise OrderError(_('Please select at least one ticket to cancel.'))
 
         cancelable_positions = {p.pk: p for p in order.user_cancelable_positions}
+        # Prefetch addons to avoid N+1 queries during cancellation validation
+        prefetch_related_objects(list(cancelable_positions.values()), 'addons')
         selected_positions = {}
         for position_id in normalized_position_ids:
             if position_id not in cancelable_positions:

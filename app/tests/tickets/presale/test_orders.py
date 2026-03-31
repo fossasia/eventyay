@@ -562,7 +562,7 @@ class OrdersTest(BaseOrdersTest):
         assert self.ticket_pos.canceled
         assert not keep_pos.canceled
 
-    def test_orders_cancel_positions_paid_with_refund_and_fee(self):
+    def test_orders_cancel_positions_paid_with_fee(self):
         with scopes_disabled():
             keep_pos = OrderPosition.objects.create(
                 order=self.order,
