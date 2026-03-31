@@ -4027,7 +4027,7 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
         with scopes_disabled():
             for k, v in data.items():
                 a = cr1.answers.create(question=k, answer=str(v))
-                if k.type in ('M', 'C'):
+                if k.type in Question.OPTION_TYPES:
                     a.options.add(*k.options.filter(identifier__in=(v if isinstance(v, list) else [v])))
 
         response = self.client.get('/%s/%s/checkout/payment/' % (self.orga.slug, self.event.slug), follow=True)
@@ -4045,11 +4045,11 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
             assert not doc.select('.alert-warning')
 
     @scopes_disabled()
-    def _setup_dependency_questions(self):
+    def _setup_dependency_questions(self, root_question_type=Question.TYPE_CHOICE):
         self.q1 = self.event.questions.create(
             event=self.event,
             question='What industry are you in?',
-            type=Question.TYPE_CHOICE,
+            type=root_question_type,
             required=True,
         )
         self.q1.options.create(answer='Tech', identifier='TECH')
@@ -4220,6 +4220,18 @@ class QuestionsTestCase(BaseCheckoutTestCase, TestCase):
                 self.q3: 'False',
             },
             should_fail=True,
+        )
+
+    def test_question_dependencies_with_dropdown_parent(self):
+        self._setup_dependency_questions(root_question_type=Question.TYPE_CHOICE_DROPDOWN)
+        self._test_question_input(
+            {
+                self.q1: 'TECH',
+                self.q2a: 'DEV',
+                self.q3: 'True',
+                self.q4a: 'No curly braces!',
+            },
+            should_fail=False,
         )
 
 
