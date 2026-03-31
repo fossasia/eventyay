@@ -559,17 +559,14 @@ class OnlineVideoJoin(EventPermissionRequired, View):
 
         event = request.event
         logger.info('Checking video settings for event %s', event)
-        if not (venueless_settings := event.venueless_settings):
-            logger.info('venueless settings is missing.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        required_fields = (
-            ('join_url', 'venueless_settings.join_url'),
-            ('secret', 'venueless_settings.secret'),
-            ('issuer', 'venueless_settings.issuer'),
-            ('audience', 'venueless_settings.audience'),
-        )
+        required_fields = [
+            ('venueless_url', 'event.settings.venueless_url'),
+            ('venueless_secret', 'event.settings.venueless_secret'),
+            ('venueless_issuer', 'event.settings.venueless_issuer'),
+            ('venueless_audience', 'event.settings.venueless_audience'),
+        ]
         for attr, label in required_fields:
-            if not getattr(venueless_settings, attr):
+            if not getattr(event.settings, attr):
                 logger.info('%s is missing.', label)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
@@ -595,22 +592,23 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             profile["profile_picture"] = request.user.get_avatar_url(request.event)
 
         payload = {
-            "iss": venueless_settings.issuer,
-            "aud": venueless_settings.audience,
+            "iss": event.settings.venueless_issuer,
+            "aud": event.settings.venueless_audience,
             "exp": exp,
             "iat": iat,
             "uid": encode_email(request.user.email),
             "profile": profile,
             "traits": list(
                 {
+                    "attendee",
                     f"eventyay-video-event-{request.event.slug}",
                 }
             ),
         }
         token = jwt.encode(
-            payload, venueless_settings.secret, algorithm="HS256"
+            payload, event.settings.venueless_secret, algorithm="HS256"
         )
-        redirect_url = urljoin(venueless_settings.join_url, f'#token={token}')
+        redirect_url = urljoin(event.settings.venueless_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
         return JsonResponse(
             {
@@ -625,38 +623,33 @@ _T = TypeVar('_T', str, None)
 # The annotation `tuple[str, str | None, str | None]` doesn't satisfy this requirement.
 def extract_event_info_from_url(url: str) -> tuple[str, _T, _T]:
     parsed_url = urlparse(url)
-    ticket_host = settings.EVENTYAY_TICKET_BASE_PATH
     path = parsed_url.path
     parts = path.strip("/").split("/")
     if len(parts) >= 2:
         organizer, event = parts[-2:]
-        return ticket_host, unquote(organizer), unquote(event)
-    return ticket_host, None, None
+        return None, unquote(organizer), unquote(event)
+    return None, None, None
 
 
 def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
     """
-    Call eventyay-ticket API to check if user owns ticket for this event.
-
-    # NOTE: It doesn't work with the Docker setup for development, because we use fake domain then,
-    and inside the container, the fake domain points to the container itself, not the host.
+    Check if the user owns a valid ticket for this event using the local database, matching presale logic.
     """
-    # Use unified ticket base path and event slugs; no manual URL needed
-    base_url = settings.EVENTYAY_TICKET_BASE_PATH
-    # Normalize base URL to keep urljoin from dropping path segments
-    if not base_url.endswith('/'):
-        base_url = f'{base_url}/'
-    organizer_slug = event.organizer.slug
-    event_slug = event.slug
-    check_payload = {'user_email': user.email}
-    # call to ticket to check if user order ticket yet or not
-    api_url = urljoin(base_url, f'api/v1/{organizer_slug}/{event_slug}/ticket-check')
-    logger.info('To call API %s', api_url)
-    # In development, we disable the SSL verification.
-    response = requests.post(api_url, json=check_payload, verify=(not settings.DEBUG))
-
-    if response.status_code != HTTPStatus.OK:
-        logger.debug('Response from eventyay-ticket: %s', response.text)
-        logger.info('user is not allowed to join online event.')
-        return TicketCheckResult.NO_TICKET
-    return TicketCheckResult.HAS_TICKET
+    from eventyay.base.models import OrderPosition, Order
+    from django_scopes import scope
+    allowed_statuses = [Order.STATUS_PAID]
+    if event.settings.venueless_allow_pending:
+        allowed_statuses.append(Order.STATUS_PENDING)
+    with scope(organizer=event.organizer):
+        with scope(event=event):
+            has_ticket = OrderPosition.objects.filter(
+                order__event=event,
+                order__email__iexact=user.email,
+                order__status__in=allowed_statuses,
+                product__admission=True,
+                canceled=False,
+                addon_to__isnull=True,
+            ).exists()
+    if has_ticket:
+        return TicketCheckResult.HAS_TICKET
+    return TicketCheckResult.NO_TICKET
