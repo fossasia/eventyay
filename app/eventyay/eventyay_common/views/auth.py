@@ -52,11 +52,11 @@ from eventyay.multidomain.middlewares import get_cookie_domain
 logger = logging.getLogger(__name__)
 
 
-def _order_login_providers(login_providers):
+def order_login_providers(login_providers):
     """Return login_providers as a dict with the preferred provider first."""
     if not login_providers:
         return login_providers
-    preferred = _get_preferred_provider(login_providers)
+    preferred = get_preferred_provider(login_providers)
     ordered = {}
     if preferred and preferred in login_providers and login_providers[preferred].get('state'):
         ordered[preferred] = login_providers[preferred]
@@ -66,7 +66,7 @@ def _order_login_providers(login_providers):
     return ordered
 
 
-def _get_preferred_provider(login_providers):
+def get_preferred_provider(login_providers):
     """Return the provider key that is preferred, or None."""
     if not login_providers:
         return None
@@ -74,6 +74,11 @@ def _get_preferred_provider(login_providers):
         if config.get('state') and config.get('is_preferred'):
             return key
     return None
+
+
+# Backward-compatible aliases for older imports.
+_order_login_providers = order_login_providers
+_get_preferred_provider = get_preferred_provider
 
 
 def get_used_backend(request):
@@ -179,8 +184,8 @@ def login(request):
 
     gs = GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict)
-    ctx['login_providers'] = _order_login_providers(raw_providers)
-    ctx['preferred_provider'] = _get_preferred_provider(raw_providers)
+    ctx['login_providers'] = order_login_providers(raw_providers)
+    ctx['preferred_provider'] = get_preferred_provider(raw_providers)
     return render(request, 'eventyay_common/auth/login.html', ctx)
 
 

@@ -1,5 +1,4 @@
 {% load i18n %}
-{% load append_next_url %}
 <div class="checkout-login-form-signin">
   <p class="checkout-login-message">{% translate 'Please log in to continue.' %}</p>
 
@@ -14,9 +13,11 @@
             {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
           {% endwith %}
         </a>
-        <p class="login-separator">
-          <span class="login-separator-label">{% translate 'or' %}</span>
-        </p>
+        {% if show_native_login or has_secondary_oauth_providers %}
+          <p class="login-separator">
+            <span class="login-separator-label">{% translate 'or' %}</span>
+          </p>
+        {% endif %}
       {% endif %}
     {% endfor %}
 
@@ -26,10 +27,12 @@
       </div>
     {% endif %}
 
-    {% if has_oauth_providers %}
-      <p class="login-separator">
-        <span class="login-separator-label">{% translate 'or' %}</span>
-      </p>
+    {% if has_secondary_oauth_providers %}
+      {% if show_native_login %}
+        <p class="login-separator">
+          <span class="login-separator-label">{% translate 'or' %}</span>
+        </p>
+      {% endif %}
       <div class="login-options-secondary-group">
         {% for provider, cfg in enabled_providers %}
           {% if provider != preferred_provider %}
@@ -75,7 +78,7 @@
   {% if can_register %}
     <div class="checkout-login-footer">
       <p>
-        {% translate "Don't have an account?" %}
+        {% blocktranslate %}Don't have an account?{% endblocktranslate %}
         <a href="{% url 'eventyay_common:auth.register' %}" id="checkout-register-link">{% translate 'Create one' %}</a>
       </p>
     </div>

@@ -4,8 +4,8 @@ from django.conf import settings
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.eventyay_common.views.auth import (
-    _get_preferred_provider,
-    _order_login_providers,
+    get_preferred_provider,
+    order_login_providers,
 )
 
 register = template.Library()
@@ -20,15 +20,18 @@ def checkout_login_modal_body(context):
     request = context.get('request')
     gs = GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict) or {}
-    ordered = _order_login_providers(raw_providers)
+    ordered = order_login_providers(raw_providers)
     enabled_providers = [
         (key, cfg)
         for key, cfg in ordered.items()
         if isinstance(cfg, dict) and cfg.get('state')
     ]
-    preferred_provider = _get_preferred_provider(raw_providers)
+    preferred_provider = get_preferred_provider(raw_providers)
     if preferred_provider and not any(k == preferred_provider for k, _ in enabled_providers):
         preferred_provider = None
+    has_secondary_oauth_providers = bool(
+        preferred_provider and any(k != preferred_provider for k, _ in enabled_providers)
+    )
 
     backenddict = get_auth_backends()
     native = backenddict.get('native')
@@ -42,4 +45,5 @@ def checkout_login_modal_body(context):
         'can_register': settings.EVENTYAY_REGISTRATION,
         'show_native_login': show_native_login,
         'has_oauth_providers': bool(enabled_providers),
+        'has_secondary_oauth_providers': has_secondary_oauth_providers,
     }
