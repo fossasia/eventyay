@@ -4,7 +4,8 @@
 <li class="nav-item">
     <details class="dropdown fix-height" id="profile-dropdown">
         <summary class="header-nav">
-            <i class="fa fa-user"></i> <span class="d-none d-md-inline">{{ request.user|short_user_label }}</span>
+            <i class="fa fa-user nav-icon-mobile" aria-hidden="true"></i>
+            <span class="mobile-hide-text">{{ request.user|short_user_label }}</span>
             <i class="fa fa-caret-down"></i>
         </summary>
         <div class="dropdown-content dropdown-content-sw">
