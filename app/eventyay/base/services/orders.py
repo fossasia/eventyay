@@ -2809,6 +2809,7 @@ def cancel_order_positions(
                 device,
             )
             if try_auto_refund:
+                order.refresh_from_db()
                 _try_auto_refund(
                     order,
                     allow_partial=True,
