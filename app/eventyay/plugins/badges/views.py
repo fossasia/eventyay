@@ -284,7 +284,7 @@ class LayoutEditorView(BaseEditorView):
                 defaults={'answer': answer_text},
             )[0]
 
-            if question.type in (Question.TYPE_CHOICE, Question.TYPE_CHOICE_MULTIPLE):
+            if question.type in Question.OPTION_TYPES:
                 option = question.options.first()
                 if option:
                     answer.answer = option.answer

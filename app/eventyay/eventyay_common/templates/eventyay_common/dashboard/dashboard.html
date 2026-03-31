@@ -32,7 +32,9 @@
               </div>
           </div>
         {% empty %}
-        <div class="alert alert-info">{% trans "You have no upcoming events" %}</div>
+        {% if not can_create_event %}
+            <div class="alert alert-info">{% trans "You have no upcoming events" %}</div>
+        {% endif %}
       {% endfor %}
     </div>
     {% if upcoming %}
