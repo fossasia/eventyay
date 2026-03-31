@@ -133,6 +133,18 @@ class OrdersTest(BaseOrdersTest):
             '/%s/%s/order/%s/123/cancel/do' % (self.orga.slug, self.event.slug, self.not_my_order.code)
         )
         assert response.status_code == 404
+        response = self.client.get('/%s/%s/order/ABCDE/123/cancel/positions' % (self.orga.slug, self.event.slug))
+        assert response.status_code == 404
+        response = self.client.get(
+            '/%s/%s/order/%s/123/cancel/positions' % (self.orga.slug, self.event.slug, self.not_my_order.code)
+        )
+        assert response.status_code == 404
+        response = self.client.post('/%s/%s/order/ABCDE/123/cancel/positions/do' % (self.orga.slug, self.event.slug))
+        assert response.status_code == 404
+        response = self.client.post(
+            '/%s/%s/order/%s/123/cancel/positions/do' % (self.orga.slug, self.event.slug, self.not_my_order.code)
+        )
+        assert response.status_code == 404
 
     def test_unknown_position(self):
         response = self.client.get('/%s/%s/ticket/ABCDE/1/123/' % (self.orga.slug, self.event.slug))
@@ -504,6 +516,100 @@ class OrdersTest(BaseOrdersTest):
         )
         self.order.refresh_from_db()
         assert self.order.status == Order.STATUS_CANCELED
+
+    def test_orders_cancel_positions_pending(self):
+        with scopes_disabled():
+            keep_pos = OrderPosition.objects.create(
+                order=self.order,
+                item=self.ticket,
+                variation=None,
+                price=Decimal('23.00'),
+                attendee_name_parts={'full_name': 'Alice'},
+            )
+            self.order.total = Decimal('46.00')
+            self.order.save(update_fields=['total'])
+
+        response = self.client.get(
+            '/%s/%s/order/%s/%s/cancel/positions'
+            % (self.orga.slug, self.event.slug, self.order.code, self.order.secret)
+        )
+        assert response.status_code == 200
+        assert 'Cancel selected tickets' in response.content.decode()
+
+        response = self.client.post(
+            '/%s/%s/order/%s/%s/cancel/positions/do'
+            % (self.orga.slug, self.event.slug, self.order.code, self.order.secret),
+            {
+                'positions': [str(self.ticket_pos.pk)],
+            },
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/order/%s/%s/' % (self.orga.slug, self.event.slug, self.order.code, self.order.secret),
+            target_status_code=200,
+        )
+
+        self.order.refresh_from_db()
+        self.ticket_pos.refresh_from_db()
+        keep_pos.refresh_from_db()
+
+        assert self.order.status == Order.STATUS_PENDING
+        assert self.order.total == Decimal('23.00')
+        assert self.order.positions.count() == 1
+        assert self.ticket_pos.canceled
+        assert not keep_pos.canceled
+
+    def test_orders_cancel_positions_paid_with_refund_and_fee(self):
+        with scopes_disabled():
+            keep_pos = OrderPosition.objects.create(
+                order=self.order,
+                item=self.ticket,
+                variation=None,
+                price=Decimal('23.00'),
+                attendee_name_parts={'full_name': 'Alice'},
+            )
+            self.order.status = Order.STATUS_PAID
+            self.order.total = Decimal('46.00')
+            self.order.save(update_fields=['status', 'total'])
+            self.order.payments.create(
+                provider='testdummy_partialrefund',
+                amount=self.order.total,
+                state=OrderPayment.PAYMENT_STATE_CONFIRMED,
+            )
+
+        self.event.settings.cancel_allow_user_paid = True
+        self.event.settings.cancel_allow_user_paid_keep = Decimal('6.00')
+
+        response = self.client.post(
+            '/%s/%s/order/%s/%s/cancel/positions/do'
+            % (self.orga.slug, self.event.slug, self.order.code, self.order.secret),
+            {
+                'positions': [str(self.ticket_pos.pk)],
+            },
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/order/%s/%s/' % (self.orga.slug, self.event.slug, self.order.code, self.order.secret),
+            target_status_code=200,
+        )
+
+        self.order.refresh_from_db()
+        self.ticket_pos.refresh_from_db()
+        keep_pos.refresh_from_db()
+
+        assert self.order.status == Order.STATUS_PAID
+        assert self.order.total == Decimal('26.00')
+        assert self.order.positions.count() == 1
+        assert self.ticket_pos.canceled
+        assert not keep_pos.canceled
+
+        with scopes_disabled():
+            assert self.order.refunds.count() == 1
+            assert self.order.refunds.get().amount == Decimal('20.00')
+            cancellation_fee = self.order.fees.get(fee_type=OrderFee.FEE_TYPE_CANCELLATION)
+            assert cancellation_fee.value == Decimal('3.00')
 
     def test_orders_cancel_paid_request(self):
         self.order.status = Order.STATUS_PAID
