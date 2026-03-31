@@ -9,7 +9,6 @@ on:
       - edited
 
 permissions:
-  contents: none
   pull-requests: read
   issues: write
 
@@ -27,40 +26,19 @@ jobs:
             const marker = '<!-- pr-quality-reminder -->';
             const legacyMarker = '<!-- screenshot-reminder -->';
 
-            let alreadyCommented = false;
-            const perPage = 50;
-            let page = 1;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              per_page: 100,
+            });
 
-            while (true) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                per_page: perPage,
-                page,
-              });
+            const alreadyCommented = comments.some(
+              (comment) =>
+                comment.user?.type === 'Bot' &&
+                (comment.body?.includes(marker) || comment.body?.includes(legacyMarker))
+            );
 
-              if (!comments || comments.length === 0) {
-                break;
-              }
-
-              if (
-                comments.some(
-                  (comment) =>
-                    comment.user?.type === 'Bot' &&
-                    (comment.body?.includes(marker) || comment.body?.includes(legacyMarker))
-                )
-              ) {
-                alreadyCommented = true;
-                break;
-              }
-
-              if (comments.length < perPage) {
-                break;
-              }
-
-              page += 1;
-            }
             if (alreadyCommented) {
               core.info('Reminder already posted on this PR.');
               return;
@@ -68,13 +46,13 @@ jobs:
 
             const hasMarkdownImage = /!\[[^\]]*\]\([^)]+\)/i.test(body);
             const hasHtmlImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(body);
-            const hasImageUrl =
-              /https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp|svg|mp4|mov)(?:[?#][^\s)]*)?/i.test(body);
+            const screenshotKeywords = /(screenshot|screen shot|screen recording|recording|gif|loom)/i;
+            const hasImageUrl = /(https?:\/\/[^\s)]+(?:png|jpe?g|gif|webp|svg|mp4|mov))/i.test(body);
 
             const hasScreenshotInBody =
               hasMarkdownImage ||
               hasHtmlImage ||
-              hasImageUrl;
+              (screenshotKeywords.test(body) && hasImageUrl);
 
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner,
@@ -83,14 +61,14 @@ jobs:
               per_page: 100,
             });
 
-            const visualExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.mp4', '.mov'];
-            const hasVisualFileInDiff = files.some((file) =>
-              visualExtensions.some((ext) => file.filename.toLowerCase().endsWith(ext))
+            const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
+            const hasImageFileInDiff = files.some((file) =>
+              imageExtensions.some((ext) => file.filename.toLowerCase().endsWith(ext))
             );
 
-            const issueReferencePattern =
-              /(?:^|[\s(])(?:#\d+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d+|https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/\d+)(?=$|[\s).,;:!?])/i;
-            const hasIssueReferenceInBody = issueReferencePattern.test(body);
+            const issueLinkPattern =
+              /\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\b[\s:]*(?:https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/\d+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d+|#\d+)/i;
+            const hasIssueLinkInBody = issueLinkPattern.test(body);
 
             let hasLinkedIssueInGitHub = false;
             try {
@@ -117,17 +95,17 @@ jobs:
               core.warning(`Unable to query linked issues via GraphQL: ${error}`);
             }
 
-            const hasLinkedIssue = hasIssueReferenceInBody || hasLinkedIssueInGitHub;
+            const hasLinkedIssue = hasIssueLinkInBody || hasLinkedIssueInGitHub;
 
             const missingItems = [];
-            if (!(hasScreenshotInBody || hasVisualFileInDiff)) {
+            if (!(hasScreenshotInBody || hasImageFileInDiff)) {
               missingItems.push(
                 'Please add at least one screenshot (or a short screen recording) to show your fix.'
               );
             }
             if (!hasLinkedIssue) {
               missingItems.push(
-                'Please link the related issue in the PR description (for example: Related to #123 or Closes #123).'
+                'Please link the related issue in the PR description (for example: Closes #123).'
               );
             }
 
