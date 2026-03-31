@@ -26,15 +26,22 @@ jobs:
             const body = pr.body || '';
             const marker = '<!-- screenshot-reminder -->';
 
-            const hasMarkdownImage = /!\[[^\]]*\]\((https?:\/\/|\/)[^)]+\)/i.test(body);
+            const hasMarkdownImage =
+              /!\[[^\]]*]\(([^)]+\.(?:png|jpe?g|gif|webp|svg|mp4|mov))(?:\s+"[^"]*")?\)/i.test(body);
             const hasHtmlImage = /<img\s+[^>]*src=["'][^"']+["'][^>]*>/i.test(body);
             const screenshotKeywords = /(screenshot|screen shot|screen recording|recording|gif|loom)/i;
-            const hasImageUrl = /(https?:\/\/[^\s)]+(?:png|jpe?g|gif|webp|svg|mp4|mov))/i.test(body);
+            const hasImageUrl =
+              /(https?:\/\/[^\s)]+?\.(?:png|jpe?g|gif|webp|svg|mp4|mov)(?:[?#][^\s)]*)?)/i.test(body);
 
             const hasScreenshotInBody =
               hasMarkdownImage ||
               hasHtmlImage ||
               (screenshotKeywords.test(body) && hasImageUrl);
+
+            if (hasScreenshotInBody) {
+              core.info('Screenshot evidence found in PR body, no reminder needed.');
+              return;
+            }
 
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner,
