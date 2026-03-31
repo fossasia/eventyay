@@ -130,7 +130,7 @@ class TestPlatformSearch:
         hidden_event.display_settings['exclude_from_search'] = True
         hidden_event.save(update_fields=['display_settings'])
 
-        response = organizer_client.get('/events/search/?query=Search')
+        response = organizer_client.get('/common/events/search/?query=Search')
         assert response.status_code == 200
         payload = response.json()
         names = {row['name'] for row in payload}
