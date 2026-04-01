@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-24 21:09+0000\n"
+"PO-Revision-Date: 2026-03-28 16:45+0000\n"
 "Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.16.1-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -6952,9 +6952,9 @@ msgid ""
 "Unlike hidden questions (which are system-level), active controls visibility "
 "and can be toggled by event organizers."
 msgstr ""
-"Les questions inactives ne sont pas affichées aux clients lors du paiement "
-"ou de l'enregistrement. Contrairement aux questions masquées (qui sont "
-"gérées au niveau système), la visibilité des contrôles actifs peut être "
+"Les questions inactives ne sont pas affichées aux clients lors du passer à "
+"la caisse ou de l'enregistrement. Contrairement aux questions masquées (qui "
+"sont gérées au niveau système), la visibilité des contrôles actifs peut être "
 "basculée par les organisateurs de l'événement."
 
 #: base/models/product.py:1181
@@ -9502,7 +9502,7 @@ msgstr ""
 "Ce code de bon est actuellement verrouillé car il est déjà présent dans un "
 "panier. Cela peut signifier que quelqu'un d'autre utilise ce bon en ce "
 "moment, ou que vous avez tenté de l'utiliser auparavant sans terminer le "
-"processus de paiement. Vous pouvez réessayer dans %d minutes."
+"processus du passer à la caisse. Vous pouvez réessayer dans %d minutes."
 
 #: base/services/cart.py:101
 #, python-format
@@ -13136,7 +13136,7 @@ msgstr "La boutique en ligne doit être sélectionnée pour recevoir ces e-mails
 
 #: control/forms/event.py:944
 msgid "Sales channels for checkout emails"
-msgstr "Canaux de vente pour les e-mails de confirmation"
+msgstr "Canaux de vente pour les e-mails du passer à la caisse"
 
 #: control/forms/event.py:946
 msgid ""
@@ -25396,8 +25396,8 @@ msgstr[1] "%(count)s événements"
 #, python-format
 msgid "%(count)s invite pending"
 msgid_plural "%(count)s invites pending"
-msgstr[0] "%(count)s invitations en attente%(count)s invitations en attente"
-msgstr[1] ""
+msgstr[0] "%(count)s invitation en attente"
+msgstr[1] "%(count)s invitations en attente"
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:95
 msgid "Team permissions"
@@ -32420,7 +32420,7 @@ msgstr "Étape %(current)s sur %(total)s : %(label)s"
 #: presale/templates/pretixpresale/event/index.html:81
 #: presale/templates/pretixpresale/event/index.html:85
 msgid "Checkout"
-msgstr "Paiement"
+msgstr "Passer à la caisse"
 
 #: presale/templates/pretixpresale/event/checkout_base.html:15
 #: presale/templates/pretixpresale/event/checkout_base.html:21
@@ -32920,7 +32920,7 @@ msgstr "Vider le panier"
 
 #: presale/templates/pretixpresale/event/index.html:84
 msgid "Checkout (login required, opens login dialog)"
-msgstr "Paiement (connexion requise, ouvre la fenêtre de connexion)"
+msgstr "Passer à la caisse (connexion requise, ouvre la fenêtre de connexion)"
 
 #: presale/templates/pretixpresale/event/index.html:119
 msgid "Please select a date to redeem your voucher."
