@@ -77,9 +77,10 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
-from .organizer import Organizer, OrganizerBillingModel, Team
+from .organizer import Organizer, Team
 from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
+
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 logger = logging.getLogger(__name__)
@@ -2011,7 +2012,6 @@ class Event(
         return issues
 
     def billing_issues(self):
-        from django.utils.html import format_html
         from django.utils.translation import gettext
 
         from eventyay.base.models.organizer import OrganizerBillingModel
@@ -2076,15 +2076,19 @@ class Event(
     def delete_sub_objects(self):
         from django.core.exceptions import ObjectDoesNotExist
 
+        from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.feedback import Feedback
         from eventyay.base.models.question import Answer, AnswerOption
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.storage_model import StoredFile
 
+        logger.info('Deleting sub-objects for event %s: cart positions and queued mails', self.slug)
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
         self.queued_mails.all().delete()
 
+        logger.info('Deleting sub-objects for event %s: answers, schedules, feedback, and resources', self.slug)
         answers = Answer.objects.filter(question__event=self)
         for answer in answers.only('pk', 'answer_file').iterator():
             answer._delete_files()
@@ -2099,12 +2103,14 @@ class Event(
             resource._delete_files()
         resources.delete()
 
+        logger.info('Deleting sub-objects for event %s: domains and stored files', self.slug)
         for domain in self.domains.all().iterator():
             domain.delete()
 
-        for stored_file in self.storedfile_set.all().iterator():
+        for stored_file in StoredFile.objects.filter(event=self).iterator():
             stored_file.full_delete()
 
+        logger.info('Deleting sub-objects for event %s: server assignments and related content', self.slug)
         self.bbbserver_set.update(event_exclusive=None)
         self.janusserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
@@ -2118,7 +2124,11 @@ class Event(
         self.tracks.all().delete()
         self.tags.all().delete()
         self.schedules.all().delete()
-        self.mail_templates.all().delete()
+        logger.info('Deleting sub-objects for event %s: mail templates', self.slug)
+        mail_templates = self.mail_templates.all()
+        QueuedMail.objects.filter(template__in=mail_templates).update(template=None)
+        mail_templates.delete()
+        logger.info('Deleting sub-objects for event %s: CfP and submission metadata', self.slug)
         try:
             cfp = self.cfp
         except ObjectDoesNotExist:
@@ -2127,6 +2137,7 @@ class Event(
             cfp.delete()
         self.submitter_access_codes.all().delete()
         self.submission_types.all().delete()
+        logger.info('Finished deleting sub-objects for event %s', self.slug)
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins
@@ -2658,7 +2669,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.UTC)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i
