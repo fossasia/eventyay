@@ -2125,10 +2125,9 @@ class Event(
         self.tags.all().delete()
         self.schedules.all().delete()
         logger.info('Deleting sub-objects for event %s: mail templates', self.slug)
-        mail_template_ids = tuple(self.mail_templates.values_list('pk', flat=True))
-        if mail_template_ids:
-            QueuedMail.objects.filter(template_id__in=mail_template_ids).update(template=None)
-            self.mail_templates.filter(pk__in=mail_template_ids).delete()
+        mail_templates = self.mail_templates.all()
+        QueuedMail.objects.filter(template__in=mail_templates).update(template=None)
+        mail_templates.delete()
         logger.info('Deleting sub-objects for event %s: CfP and submission metadata', self.slug)
         try:
             cfp = self.cfp

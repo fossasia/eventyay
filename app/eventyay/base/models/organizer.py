@@ -283,11 +283,9 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
             e.delete_sub_objects()
             e.delete()
             logger.info('Deleted event %s for organizer %s', e.slug, self.slug)
-        token_ids = tuple(TeamAPIToken.objects.filter(team__organizer=self).values_list('pk', flat=True))
-        if token_ids:
-            logger.info('Clearing team API token log references for organizer %s', self.slug)
-            updated_log_entries = LogEntry.all.filter(api_token_id__in=token_ids).update(api_token=None)
-            logger.info('Cleared %s team API token log references for organizer %s', updated_log_entries, self.slug)
+        logger.info('Clearing team API token log references for organizer %s', self.slug)
+        updated_log_entries = LogEntry.all.filter(api_token__team__organizer=self).update(api_token=None)
+        logger.info('Cleared %s team API token log references for organizer %s', updated_log_entries, self.slug)
         logger.info('Deleting teams for organizer %s', self.slug)
         try:
             self.teams.all().delete()
