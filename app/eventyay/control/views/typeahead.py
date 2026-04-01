@@ -686,8 +686,8 @@ def product_meta_values(request, organizer, event):
             can_change_items=True,
             organizer=organizer,
         ).values_list('limit_events__id', flat=True).distinct()
-        defaults = defaults.filter(event__id__in=user_event_ids)
-        matches = matches.filter(product__event__id__in=user_event_ids)
+        defaults = defaults.filter(event_id__in=user_event_ids)
+        matches = matches.filter(product__event_id__in=user_event_ids)
 
     return JsonResponse(
         {
