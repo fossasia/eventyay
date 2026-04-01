@@ -111,19 +111,4 @@
 
 {% block header_navigation %}{% endblock header_navigation %}
 
-{% block header_navigation_after %}
-    <div class="presale-sticky-tabs-wrap">
-        <div class="header-wrapper presale-sticky-tabs-inner">
-            <div id="header-tabs" class="presale-sticky-tabs">
-                <div class="presale-tabs-scroll">
-                    {% block header_tabs %}{% endblock header_tabs %}
-                </div>
-                <div class="header-row-right">
-                    {% block header_right %}
-                        {% include "common/fragment_header_user.html" with current_event=current_event %}
-                    {% endblock header_right %}
-                </div>
-            </div>
-        </div>
-    </div>
-{% endblock header_navigation_after %}
+

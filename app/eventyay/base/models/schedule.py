@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from collections import defaultdict, namedtuple
 from contextlib import suppress
+from datetime import UTC
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 from xml.etree.ElementTree import tostring as xml_tostring
 
 import qrcode as qr_lib
-from qrcode.image.svg import SvgPathFillImage
-
 from django.conf import settings
 from django.db import models, transaction
 from django.db.models import Count
@@ -18,9 +20,10 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes import scope
 from i18nfield.fields import I18nTextField
+from qrcode.image.svg import SvgPathFillImage
 
-from eventyay.agenda.tasks import export_schedule_html
 from eventyay.agenda.signals import register_recording_provider
+from eventyay.agenda.tasks import export_schedule_html
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.schedule.notifications import render_notifications
@@ -30,11 +33,23 @@ from eventyay.talk_rules.orga import can_view_speaker_names
 from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
-from .mixins import PretalxModel
-from .stream_schedule import StreamSchedule
-from .submission import SubmissionFavourite
+from .auth import (
+    User,
+)
 
-from datetime import timezone as dt_timezone
+# We use relative imports here to avoid circular imports.
+from .availability import Availability
+from .mail import MailTemplateRoles
+from .mixins import PretalxModel
+from .profile import SpeakerProfile
+from .slot import TalkSlot
+from .stream_schedule import StreamSchedule
+from .submission import Submission, SubmissionFavourite, SubmissionStates
+
+
+if TYPE_CHECKING:
+    from .room import Room
+    from .track import Track
 
 
 @lru_cache(maxsize=512)
@@ -72,6 +87,8 @@ class Schedule(PretalxModel):
         + ' '
         + phrases.base.use_markdown,
     )
+    if TYPE_CHECKING:
+        talks: models.ManyToManyField[TalkSlot, models.Model]
 
     class Meta:
         ordering = ('-published',)
@@ -105,7 +122,6 @@ class Schedule(PretalxModel):
         :param comment: Public comment for the release
         :rtype: Schedule
         """
-        from eventyay.base.models import SubmissionStates, TalkSlot
 
         if name in ('wip', 'latest'):
             raise Exception(f'Cannot use reserved name "{name}" for schedule version.')
@@ -158,7 +174,6 @@ class Schedule(PretalxModel):
     @transaction.atomic
     def unfreeze(self, user=None):
         """Resets the current WIP schedule to an older schedule version."""
-        from eventyay.base.models import TalkSlot
 
         if not self.version:
             raise Exception('Cannot unfreeze schedule version: not released yet.')
@@ -192,7 +207,6 @@ class Schedule(PretalxModel):
         """Returns all :class:`~pretalx.schedule.models.slot.TalkSlot` objects
         that have been scheduled and are visible in the schedule (that is, have
         been confirmed at the time of release)."""
-        from eventyay.base.models import SubmissionStates
 
         return (
             self.talks.select_related(
@@ -222,7 +236,6 @@ class Schedule(PretalxModel):
         :class:`~pretalx.schedule.models.slot.TalkSlot` objects in this
         schedule.
         """
-        from eventyay.base.models import Submission
 
         return Submission.objects.filter(id__in=self.scheduled_talks.values_list('submission', flat=True))
 
@@ -339,8 +352,6 @@ class Schedule(PretalxModel):
 
     @cached_property
     def use_room_availabilities(self):
-        from eventyay.base.models import Availability
-
         return Availability.objects.filter(room__isnull=False, event=self.event).exists
 
     def get_talk_warnings(
@@ -357,7 +368,6 @@ class Schedule(PretalxModel):
         ``speaker``, for now) and a ``message`` fit for public display.
         This property only shows availability based warnings.
         """
-        from eventyay.base.models import Availability, TalkSlot
 
         if not talk.start or not talk.submission or not talk.room:
             return []
@@ -475,7 +485,6 @@ class Schedule(PretalxModel):
         speaker_avails = None
         speaker_profiles = None
         if with_speakers:
-            from eventyay.base.models import SpeakerProfile
 
             speaker_profiles = {
                 profile.user: profile
@@ -511,7 +520,6 @@ class Schedule(PretalxModel):
         visible due to their unconfirmed status, and ``no_track`` are
         submissions without a track in a conference that uses tracks.
         """
-        from eventyay.base.models import SubmissionStates
 
         talks = self.talks.filter(submission__isnull=False)
         warnings = {
@@ -534,8 +542,6 @@ class Schedule(PretalxModel):
         """
         result = {}
         if self.changes['action'] == 'create':
-            from eventyay.base.models import User
-
             for speaker in User.objects.filter(submissions__slots__schedule=self):
                 talks = self.talks.filter(
                     submission__speakers=speaker,
@@ -561,7 +567,6 @@ class Schedule(PretalxModel):
     def generate_notifications(self, save=False):
         """A list of unsaved :class:`~pretalx.mail.models.QueuedMail` objects
         to be sent on schedule release."""
-        from eventyay.base.models import MailTemplateRoles
 
         mails = []
         for speaker, data in self.speakers_concerned.items():
@@ -663,9 +668,9 @@ class Schedule(PretalxModel):
         for ss in stream_schedules:
             if ss.room_id and ss.start_time and ss.end_time:
                 stream_schedules_by_room[ss.room_id].append(ss)
-        rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
-        tracks = set()
-        speakers = set()
+        rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
+        tracks: set[Track] = set()
+        speakers: set[User] = set()
         result = {
             'talks': [],
             'version': self.version,
@@ -725,8 +730,8 @@ class Schedule(PretalxModel):
                             slot_start = timezone.make_aware(slot_start, timezone.get_current_timezone())
                         if timezone.is_naive(slot_end):
                             slot_end = timezone.make_aware(slot_end, timezone.get_current_timezone())
-                        slot_start = slot_start.astimezone(dt_timezone.utc)
-                        slot_end = slot_end.astimezone(dt_timezone.utc)
+                        slot_start = slot_start.astimezone(UTC)
+                        slot_end = slot_end.astimezone(UTC)
 
                         match = None
                         for ss in schedules:
@@ -736,8 +741,8 @@ class Schedule(PretalxModel):
                                 ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
                             if timezone.is_naive(ss_end):
                                 ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
-                            ss_start = ss_start.astimezone(dt_timezone.utc)
-                            ss_end = ss_end.astimezone(dt_timezone.utc)
+                            ss_start = ss_start.astimezone(UTC)
+                            ss_end = ss_end.astimezone(UTC)
                             if ss_start < slot_end and ss_end > slot_start:
                                 match = ss
                                 break
@@ -824,7 +829,7 @@ class Schedule(PretalxModel):
             {
                 'id': room.id,
                 'name': room.name,
-                'description': room.description,
+                'description': room.description if room.description else '',
                 'video_url': getattr(room, 'video_url', ''),
             }
             for room in self.event.rooms.all()
@@ -833,8 +838,16 @@ class Schedule(PretalxModel):
 
         include_avatar = self.event.cfp.request_avatar
         speaker_list = []
+        # Prefetch all speaker profiles for this event to avoid N+1 queries
+
+        speaker_profiles = {
+            profile.user_id: profile
+            for profile in SpeakerProfile.objects.filter(
+                event=self.event, user__in=speakers,
+            ).select_related('user')
+        }
         for user in speakers:
-            profile = user.event_profile(self.event)
+            profile = speaker_profiles.get(user.pk) or user.event_profile(self.event)
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,

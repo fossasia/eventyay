@@ -208,7 +208,6 @@ export default {
 
 <style lang="stylus">
 .c-featured-speakers
-	padding: 12px 0
 
 	h3#featured-speakers-heading
 		margin: 0 0 18px
@@ -222,8 +221,14 @@ export default {
 		gap: 18px
 
 	.featured-speaker-column
-		width: 320px
+		/* Default for smaller devices */
+		width: 400px
 		max-width: 100%
+
+		/* Desktop and large / mid tablets: use 350px */
+		@media (min-width: 768px)
+			width: 360px
+			max-width: 100%
 
 	.featured-speaker-card
 		margin: 0

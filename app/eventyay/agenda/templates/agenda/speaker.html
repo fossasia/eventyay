@@ -22,6 +22,8 @@
 <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
 {% endblock agenda_custom_header %}
 
+{% block container_width %} main-schedule{% endblock container_width %}
+
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_speaker_pages" sender=request.event request=request profile=profile %}
 <div>
