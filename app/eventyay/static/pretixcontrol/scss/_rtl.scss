@@ -103,7 +103,49 @@ html.rtl {
     border-left: 1px solid #d4d4d5;
     border-right: 0;
   }
+
+  .sidebar-minimized .sidebar .nav > li > a .fa, body.sidebar-minimized .sidebar .nav > li > a svg{
+    margin : auto;
+  }
+
+  .context-selector .fa-stack {
+    left: -2px  ;
+  }
+  .navbar-toggle-sidebar {
+    float: right;
+    margin-right: 15px;
+    margin-left: 0;
+  }
+  // langdropdown
+  .dropdown .dropdown-content-se {
+    right: 20px;
+    left: auto;
+  }
+  // maindropdown
+  .dropdown .dropdown-content-sw {
+    right: 0;
+    left: auto;
+  } 
+  // subdropdown
+  .dropdown .dropdown-content-w {
+    margin-left: 5px;
+    right:auto;
+    left: 100%;
+  }
+
+  .dropdown .dropdown-content-w::after {
+    top: 11px;
+    right: auto;
+    left: -14px;
+    border-color: transparent;
+    border-right-color: #fff;
+  }
+
+  .dropdown .dropdown-content-w::before {
+    content: none;
+  }
 }
+
 @media (min-width: $screen-sm-min) {
   html.rtl #page-wrapper {
     margin: 0 $sidebar-width 0 0;
@@ -113,11 +155,6 @@ html.rtl {
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  html.rtl body.sidebar-minimized:has(.sidebar:hover) #page-wrapper {
-      margin: 0 $sidebar-width 0 0;
-  }
-}
 @media(max-width: $screen-sm-max) {
   html.rtl .timeline {
     .col-date {

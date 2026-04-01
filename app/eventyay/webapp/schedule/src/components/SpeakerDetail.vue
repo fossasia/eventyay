@@ -1,15 +1,16 @@
 <template lang="pug">
 .c-speaker-detail
 	.speaker-wrapper(v-if="resolvedSpeaker")
-		.speaker-header
+		.speaker-header(:class="{'has-export': speakerExportOptions.length}")
 			.speaker-avatar
 				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-			.speaker-title
-				h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-			export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
+			.speaker-content-area
+				.speaker-title
+					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
+				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
 		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 {{ t.sessions }}
@@ -179,15 +180,23 @@ export default {
 		align-items: center
 		gap: 16px
 		margin-bottom: 16px
+		position: relative
 		h2
 			margin: 0
-	.speaker-title
+	.speaker-content-area
 		flex: 1
+		min-width: 0
+		display: flex
+		align-items: center
+		justify-content: space-between
+		gap: 12px
+	.speaker-title
+		width: 100%
 		display: flex
 		flex-direction: column
-		gap: 8px
 		h2
 			margin: 0
+			text-align: left
 	.speaker-export
 		flex-shrink: 0
 		align-self: center
@@ -223,7 +232,21 @@ export default {
 	@media (max-width: 768px)
 		.speaker-header
 			flex-direction: column
-			align-items: flex-start
+			align-items: center
+			text-align: center
+			&.has-export
+				padding-top: 32px
+			.speaker-content-area
+				width: 100%
+				flex-direction: column
+				align-items: center
+				gap: 4px
+				.speaker-export
+					position: absolute
+					top: 0
+					right: 0
+				.speaker-title h2
+					text-align: center
 		.speaker-avatar
 			width: 96px
 			height: 96px
