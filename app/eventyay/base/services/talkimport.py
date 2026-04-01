@@ -121,7 +121,12 @@ def _find_user_for_speaker(event, ref):
 
 @app.task(base=ProfiledEventTask, throws=(ImportExecutionError,))
 def import_speakers(event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
-    cf = CachedFile.objects.get(id=fileid)
+    try:
+        cf = CachedFile.objects.get(id=fileid)
+    except CachedFile.DoesNotExist:
+        raise ImportExecutionError(
+            _('The uploaded speaker file could not be found. Please upload it again and restart the import.')
+        )
     try:
         acting_user = User.objects.get(pk=user_id)
         with language(locale, event.settings.region):
