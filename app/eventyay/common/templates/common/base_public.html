@@ -136,6 +136,13 @@
                             </div>
                             {% if current_event %}
                                 <div class="event-hero-text">
+                                    {% if not is_html_export %}
+                                        <nav class="event-breadcrumb d-print-none" aria-label="{% translate 'Breadcrumb' %}">
+                                            <a href="{% url 'presale:index' %}" class="event-breadcrumb-home">{% translate 'Home' %}</a>
+                                            <span class="event-breadcrumb-sep" aria-hidden="true">/</span>
+                                            <span class="event-breadcrumb-current">{{ current_event.name|event_localize }}</span>
+                                        </nav>
+                                    {% endif %}
                                     <div class="event-title">{{ current_event.name|event_localize }}</div>
                                     {% if current_event.date_from %}
                                         {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}

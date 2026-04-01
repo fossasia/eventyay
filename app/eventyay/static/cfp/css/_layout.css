@@ -281,6 +281,46 @@ header {
   flex-direction: column;
 }
 
+.event-hero-text > .event-breadcrumb {
+  margin: 0 0 0.35rem;
+}
+
+/* Platform home + event trail (agenda & presale public headers) */
+.event-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.event-breadcrumb-home {
+  color: inherit;
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+
+.event-breadcrumb-home:hover {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.event-breadcrumb-sep {
+  flex-shrink: 0;
+  user-select: none;
+  padding: 0 0.35em;
+  opacity: 0.65;
+}
+
+.event-breadcrumb-current {
+  font-weight: inherit;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .event-date-line {
   font-size: 1rem;
   opacity: 0.96;
@@ -551,6 +591,10 @@ footer {
     font-size: 2rem;
   }
 
+  .event-breadcrumb {
+    font-size: 0.88rem;
+  }
+
   .event-date-line {
     font-size: 0.9rem;
   }
@@ -645,6 +689,10 @@ footer {
 @media (max-width: 576px) {
   .event-hero-text .event-title {
     font-size: 1.6rem;
+  }
+
+  .event-breadcrumb {
+    font-size: 0.82rem;
   }
 
   .event-brand {
