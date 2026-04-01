@@ -41,7 +41,7 @@
                 {% for panel in team_panels %}
                 <div class="panel-group team-permissions-panel" id="team-accordion-{{ panel.team.pk }}">
                     <div class="panel panel-default mt-3">
-                    <div class="panel-heading clearfix">
+                    <div class="panel-heading team-panel-heading">
                         <div class="team-heading-main">
                             <h3 class="panel-title">{{ panel.team.name }}</h3>
                             <div class="text-muted team-meta">
@@ -85,7 +85,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="team-actions btn-toolbar pull-right">
+                        <div class="team-actions">
                             <div class="btn-group btn-group-sm">
                                 <button type="button"
                                         class="btn btn-primary btn-sm"
@@ -112,12 +112,33 @@
                                 <input type="hidden" name="team_action" value="delete">
                                 <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
                             </form>
-                            <div class="btn-group btn-group-sm">
-                                <button type="submit" form="team-delete-form-{{ panel.team.pk }}" class="btn btn-danger btn-sm"
-                                        {% if not panel.can_delete %}disabled{% endif %}>
-                                    <i class="fa fa-trash"></i> {% translate "Delete" %}
-                                </button>
-                            </div>
+                            {% if panel.can_delete %}
+                                <div class="btn-group btn-group-sm">
+                                    <button type="submit"
+                                            form="team-delete-form-{{ panel.team.pk }}"
+                                            class="btn btn-danger btn-sm">
+                                        <i class="fa fa-trash"></i> {% translate "Delete" %}
+                                    </button>
+                                </div>
+                            {% else %}
+                                {% translate "Cannot be deleted as only team left with management privileges" as team_delete_disabled_help %}
+                                <div class="btn-group btn-group-sm team-delete-disabled"
+                                     role="group"
+                                     data-toggle="tooltip"
+                                     data-placement="bottom"
+                                     title="{{ team_delete_disabled_help }}">
+                                    <button type="submit"
+                                           form="team-delete-form-{{ panel.team.pk }}"
+                                           class="btn btn-danger btn-sm"
+                                           disabled
+                                           aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}">
+                                       <i class="fa fa-trash"></i> {% translate "Delete" %}
+                                    </button>
+                                    <span id="team-delete-disabled-help-{{ panel.team.pk }}" class="sr-only">
+                                        {{ team_delete_disabled_help }}
+                                    </span>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div id="team-permissions-{{ panel.team.pk }}"

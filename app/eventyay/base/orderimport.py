@@ -23,8 +23,8 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.forms.questions import guess_country
 from eventyay.base.models import (
-    ProductVariation,
     OrderPosition,
+    ProductVariation,
     Question,
     QuestionAnswer,
     QuestionOption,
@@ -225,7 +225,7 @@ class Variation(ImportColumn):
         )
 
     def static_choices(self):
-        return [(str(p.pk), '{} – {}'.format(p.product, p.value)) for p in self.products]
+        return [(str(p.pk), f'{p.product} – {p.value}') for p in self.products]
 
     def clean(self, value, previous_values):
         if value:
@@ -273,7 +273,7 @@ class InvoiceAddressNamePart(ImportColumn):
 
     @property
     def identifier(self):
-        return 'invoice_address_name_{}'.format(self.key)
+        return f'invoice_address_name_{self.key}'
 
     def assign(self, value, order, position, invoice_address, **kwargs):
         invoice_address.name_parts[self.key] = value or ''
@@ -396,7 +396,7 @@ class AttendeeNamePart(ImportColumn):
 
     @property
     def identifier(self):
-        return 'attendee_name_{}'.format(self.key)
+        return f'attendee_name_{self.key}'
 
     def assign(self, value, order, position, invoice_address, **kwargs):
         position.attendee_name_parts[self.key] = value or ''
@@ -570,8 +570,7 @@ class Secret(ImportColumn):
 
     def clean(self, value, previous_values):
         if value and (
-            value in self._cached
-            or OrderPosition.all.filter(order__event=self.event, secret=value).exists()
+            value in self._cached or OrderPosition.all.filter(order__event=self.event, secret=value).exists()
         ):
             raise ValidationError(_('You cannot assign a position secret that already exists.'))
         self._cached.add(value)
@@ -687,11 +686,11 @@ class QuestionColumn(ImportColumn):
 
     @property
     def identifier(self):
-        return 'question_{}'.format(self.q.pk)
+        return f'question_{self.q.pk}'
 
     def clean(self, value, previous_values):
         if value:
-            if self.q.type == Question.TYPE_CHOICE:
+            if self.q.type in Question.SINGLE_CHOICE_TYPES:
                 if value not in self.option_resolve_cache:
                     raise ValidationError(_('Invalid option selected.'))
                 if len(self.option_resolve_cache[value]) > 1:

@@ -1137,9 +1137,6 @@ ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
 INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
-if IS_DEVELOPMENT and '*' not in ALLOWED_HOSTS:
-    # Android emulators access the host machine via these addresses.
-    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
 
 EMAIL_BACKEND = conf.email_backend
 # Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
@@ -1484,3 +1481,13 @@ DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
+ 
+if IS_DEVELOPMENT:
+    # Support for Android emulators and port forwarding
+    if '*' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
+    # Trust standard local and emulator origins for CSRF
+    CSRF_TRUSTED_ORIGINS += ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://10.0.2.2:8000', 'http://10.0.3.2:8000']
+    # Use relative URLs to remain host-agnostic
+    if 'localhost' in SITE_URL: SITE_URL = ''
+    if 'localhost' in TALK_HOSTNAME: TALK_HOSTNAME = ''

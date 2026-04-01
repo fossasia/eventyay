@@ -25,7 +25,7 @@ def render_label(content, label_for=None, label_class=None, label_title='', opti
         attrs.setdefault('class', '')
         attrs['class'] += ' label-empty'
 
-    builder = '<{tag}{attrs}>{content}{opt}</{tag}>'
+    builder = '<{tag}{attrs}><span class="label-text">{content}</span>{opt}</{tag}>'
     return format_html(
         builder,
         tag='label',
