@@ -62,7 +62,9 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         # Check if user has permission to create organizers
         if not self._can_create_organizer(request.user):
-            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
+            raise PermissionDenied(
+                _('You do not have permission to create organizers. Please contact an administrator.')
+            )
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
@@ -220,6 +222,7 @@ class OrganizerDelete(AdministratorPermissionRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
+        logger.info('Starting organizer deletion for organizer %s', self.request.organizer.slug)
         try:
             with transaction.atomic():
                 self.request.user.log_action(
@@ -233,9 +236,13 @@ class OrganizerDelete(AdministratorPermissionRequiredMixin, FormView):
                 )
                 self.request.organizer.delete_sub_objects()
                 self.request.organizer.delete()
+            logger.info('Finished organizer deletion for organizer %s', self.request.organizer.slug)
             messages.success(self.request, _('The organizer has been deleted.'))
             return redirect(self.get_success_url())
         except ProtectedError:
+            logger.warning(
+                'Organizer deletion blocked by protected relation for organizer %s', self.request.organizer.slug
+            )
             messages.error(
                 self.request,
                 _(
@@ -246,7 +253,7 @@ class OrganizerDelete(AdministratorPermissionRequiredMixin, FormView):
             return self.get(self.request, *self.args, **self.kwargs)
 
     def get_success_url(self) -> str:
-        return reverse('control:index')
+        return reverse('eventyay_common:dashboard')
 
 
 class OrganizerDisplaySettings(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, View):
