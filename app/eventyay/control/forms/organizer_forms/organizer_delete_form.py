@@ -8,7 +8,7 @@ class OrganizerDeleteForm(forms.Form):
     }
     slug = forms.CharField(
         max_length=255,
-        label=_('Event slug'),
+        label=_('Organizer slug'),
     )
 
     def __init__(self, *args, **kwargs):

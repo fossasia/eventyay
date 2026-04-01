@@ -2773,7 +2773,6 @@ def test_order_create_answer_validation(token_client, organizer, event, item, qu
         pos = o.positions.first()
         answ = pos.answers.first()
     assert answ.answer == '3.45'
-
     question.type = Question.TYPE_NUMBER
     question.save()
     res['positions'][0]['answers'][0]['options'] = []
@@ -2939,6 +2938,65 @@ def test_order_create_answer_validation(token_client, organizer, event, item, qu
                 ]
             }
         ]
+    }
+
+
+@pytest.mark.django_db
+def test_order_create_dropdown_answer_validation(token_client, organizer, event, item, quota, question):
+    with scopes_disabled():
+        question.type = Question.TYPE_CHOICE_DROPDOWN
+        question.save()
+        question.options.create(answer='L')
+
+    res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
+    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['answers'][0]['question'] = question.pk
+    res['positions'][0]['answers'][0]['options'] = [question.options.first().pk, question.options.last().pk]
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 400
+    assert resp.data == {
+        'positions': [{'answers': [{'non_field_errors': ['You can specify at most one option for this question.']}]}]
+    }
+
+    res['positions'][0]['answers'][0]['options'] = [question.options.last().pk]
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 201
+    with scopes_disabled():
+        o = Order.objects.get(code=resp.data['code'])
+        pos = o.positions.first()
+        answ = pos.answers.first()
+    assert answ.question == question
+    assert answ.answer == 'L'
+
+
+@pytest.mark.django_db
+def test_order_create_file_answer_invalid_id_message(token_client, organizer, event, item, quota, question):
+    question.type = Question.TYPE_FILE
+    question.save()
+
+    res = copy.deepcopy(ORDER_CREATE_PAYLOAD)
+    res['positions'][0]['item'] = item.pk
+    res['positions'][0]['answers'][0]['question'] = question.pk
+    res['positions'][0]['answers'][0]['answer'] = 'file:not-a-real-id'
+    res['positions'][0]['answers'][0]['options'] = []
+
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 400
+    assert resp.data == {
+        'positions': [{'answers': [{'non_field_errors': ['The submitted file ID "not-a-real-id" was not found.']}]}]
     }
 
 
