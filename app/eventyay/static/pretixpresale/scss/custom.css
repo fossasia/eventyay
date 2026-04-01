@@ -457,3 +457,111 @@ header .header-row-right {
         padding-right: 0;
     }
 }
+
+/* Ticket variant toggle and hierarchy fixes for custom CSS mode */
+.item-with-variations > summary.product-row.headline {
+    display: block;
+    width: 100%;
+    text-align: left;
+}
+
+.item-with-variations > summary.product-row.headline > .col-md-8,
+.item-with-variations > summary.product-row.headline > .col-xs-12 {
+    text-align: left;
+}
+
+.item-with-variations .product-row.headline > .availability-box {
+    padding-left: 15px;
+    padding-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.item-with-variations .variation-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    max-width: 220px;
+    min-height: 42px;
+    padding: 6px 12px;
+    border: 1px solid var(--color-grey-light, #b8b8b8);
+    border-radius: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+    word-break: keep-all;
+    color: var(--color-primary);
+}
+
+.item-with-variations .variation-toggle:hover,
+.item-with-variations .variation-toggle:focus {
+    text-decoration: none;
+    color: var(--color-primary);
+}
+
+.item-with-variations .variation-toggle .variation-toggle-label {
+    line-height: 1;
+    white-space: nowrap;
+    color: inherit;
+}
+
+.item-with-variations .variation-toggle .variation-toggle-caret {
+    display: inline-block;
+    width: 10px;
+    text-align: center;
+    line-height: 1;
+}
+
+.item-with-variations .variation-toggle .variation-toggle-caret::before {
+    content: '>';
+}
+
+.item-with-variations[open] .variation-toggle .variation-toggle-caret::before,
+.item-with-variations.details-open .variation-toggle .variation-toggle-caret::before {
+    content: 'v';
+}
+
+.item-with-variations .variation-list > .product-row.variation {
+    padding-left: 18px;
+}
+
+.item-with-variations .variation-list > .product-row.variation > [class*="col-"] {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.item-with-variations .variation-list > .product-row.variation > [class*="col-"]:first-child {
+    position: relative;
+}
+
+.item-with-variations .variation-list > .product-row.variation > [class*="col-"]:first-child::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    left: 2px;
+    width: 1px;
+    background: var(--color-grey-light, #d0d0d0);
+}
+
+.item-with-variations .variation-list > .product-row.variation > [class*="col-"]:first-child::after {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 2px;
+    width: 10px;
+    height: 1px;
+    background: var(--color-grey-light, #d0d0d0);
+}
+
+.item-with-variations .variation-list > .product-row.variation h5 {
+    padding-left: 16px;
+}
+
+.item-with-variations .variation-selector-label.is-exclusive-disabled,
+.item-with-variations .product-row.variation.is-exclusive-disabled {
+    opacity: 0.55;
+}

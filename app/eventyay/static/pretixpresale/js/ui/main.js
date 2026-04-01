@@ -122,13 +122,87 @@ var form_handlers = function (el) {
         );
     });
 
+    var handledExclusivePrefixes = {};
     el.find("input[data-exclusive-prefix]").each(function () {
-        var $others = $("input[name^=" + $(this).attr("data-exclusive-prefix") + "]:not([name=" + $(this).attr("name") + "])");
-        $(this).on('click change', function () {
-            if ($(this).prop('checked')) {
-                $others.prop('checked', false);
+        var prefix = $(this).attr("data-exclusive-prefix");
+        if (!prefix || handledExclusivePrefixes[prefix]) {
+            return;
+        }
+        handledExclusivePrefixes[prefix] = true;
+
+        var $group = el.find("input[data-exclusive-prefix]").filter(function () {
+            return $(this).attr("data-exclusive-prefix") === prefix;
+        });
+
+        $group.each(function () {
+            var $input = $(this);
+            if (typeof $input.data("exclusive-original-disabled") === "undefined") {
+                $input.data("exclusive-original-disabled", $input.prop("disabled"));
             }
         });
+
+        var isNumberInput = function ($input) {
+            return $input.attr("type") === "number";
+        };
+
+        var numericValue = function ($input) {
+            var parsed = parseInt($input.val() || "0", 10);
+            return isNaN(parsed) ? 0 : parsed;
+        };
+
+        var isActive = function ($input) {
+            if (isNumberInput($input)) {
+                return numericValue($input) > 0;
+            }
+            return $input.prop("checked");
+        };
+
+        var setDisabled = function ($input, disabledByExclusive) {
+            var originallyDisabled = !!$input.data("exclusive-original-disabled");
+            $input.prop("disabled", disabledByExclusive || originallyDisabled);
+        };
+
+        var syncExclusiveState = function (changedInput) {
+            var $active = $group.filter(function () {
+                return isActive($(this));
+            });
+
+            if ($active.length > 1) {
+                var $changed = changedInput ? $(changedInput) : null;
+                var $keep = $changed && isActive($changed) ? $changed : $($active.get(0));
+
+                $group.not($keep).each(function () {
+                    var $other = $(this);
+                    if (isNumberInput($other)) {
+                        $other.val("0");
+                    } else {
+                        $other.prop("checked", false);
+                    }
+                });
+                $active = $keep;
+            }
+
+            var hasSelection = $active.length > 0;
+            $group.each(function () {
+                var $input = $(this);
+                var active = isActive($input);
+                var muted = hasSelection && !active;
+
+                if (isNumberInput($input) && muted && numericValue($input) > 0) {
+                    $input.val("0");
+                }
+
+                setDisabled($input, muted);
+                $input.closest(".variation-selector-label").toggleClass("is-exclusive-disabled", muted);
+                $input.closest(".product-row.variation").toggleClass("is-exclusive-disabled", muted);
+            });
+        };
+
+        $group.on('change input', function () {
+            syncExclusiveState(this);
+        });
+
+        syncExclusiveState();
     });
 
     el.find("input[name*=question], select[name*=question]").change(questions_toggle_dependent);
@@ -273,9 +347,132 @@ $(function () {
             $("#btn-add-to-cart").prop("disabled", false).popover("destroy")
         }
     };
+
+    var buildVariationLimitMessage = function ($details, maxTotal) {
+        var productName = $.trim($details.attr("data-product-name") || gettext("this product"));
+        return ngettext(
+            "You can only choose a maximum of %(max)s option for %(product)s.",
+            "You can only choose a maximum of %(max)s options for %(product)s.",
+            maxTotal
+        )
+            .replace("%(max)s", maxTotal)
+            .replace("%(product)s", productName);
+    };
+
+    var getVariationSelectionTotal = function ($details) {
+        var selectedTotal = 0;
+        $details.find(".variations input[type=checkbox], .variations input[type=number]").each(function () {
+            var $input = $(this);
+            if ($input.attr("type") === "checkbox") {
+                if ($input.prop("checked")) {
+                    selectedTotal += 1;
+                }
+                return;
+            }
+
+            var value = parseInt($input.val() || "0", 10);
+            if (!isNaN(value) && value > 0) {
+                selectedTotal += value;
+            }
+        });
+        return selectedTotal;
+    };
+
+    var variationInputs = function ($details) {
+        return $details.find(".variations input[type=checkbox], .variations input[type=number]");
+    };
+
+    var clearVariationValidity = function ($details) {
+        variationInputs($details).each(function () {
+            if (this.setCustomValidity) {
+                this.setCustomValidity("");
+            }
+        });
+    };
+
+    var showVariationValidity = function ($input, message) {
+        if (!$input || !$input.length) {
+            return;
+        }
+        var input = $input.get(0);
+        if (!input || !input.setCustomValidity || !input.reportValidity) {
+            return;
+        }
+        input.setCustomValidity(message);
+        input.reportValidity();
+    };
+
+    var enforceVariationMaximum = function ($details, $changedInput) {
+        var maxTotal = parseInt($details.attr("data-variation-max-total") || "0", 10);
+        if (!maxTotal || maxTotal < 1) {
+            clearVariationValidity($details);
+            return true;
+        }
+
+        clearVariationValidity($details);
+
+        var total = getVariationSelectionTotal($details);
+        if (total <= maxTotal) {
+            return true;
+        }
+
+        var message = buildVariationLimitMessage($details, maxTotal);
+
+        if ($changedInput && $changedInput.length) {
+            if ($changedInput.attr("type") === "checkbox") {
+                $changedInput.prop("checked", false);
+            } else {
+                var currentValue = parseInt($changedInput.val() || "0", 10);
+                if (isNaN(currentValue) || currentValue < 0) {
+                    currentValue = 0;
+                }
+                var allowedValue = Math.max(0, maxTotal - (total - currentValue));
+                $changedInput.val(String(allowedValue));
+            }
+            showVariationValidity($changedInput, message);
+            return false;
+        }
+
+        var $target = variationInputs($details).filter(function () {
+            if ($(this).attr("type") === "checkbox") {
+                return $(this).prop("checked");
+            }
+            var value = parseInt($(this).val() || "0", 10);
+            return !isNaN(value) && value > 0;
+        }).first();
+
+        showVariationValidity($target, message);
+        return false;
+    };
+
+    var validateVariationMaximums = function ($form) {
+        var isValid = true;
+        $form.find("details.item-with-variations[data-variation-max-total]").each(function () {
+            var $details = $(this);
+            if (!enforceVariationMaximum($details, null)) {
+                isValid = false;
+            }
+        });
+        return isValid;
+    };
+
+    $("details.item-with-variations[data-variation-max-total]").each(function () {
+        var $details = $(this);
+        variationInputs($details).on("change", function () {
+            enforceVariationMaximum($details, $(this));
+        });
+    });
+
     update_cart_form();
     $(".product-row input[type=checkbox], .variations input[type=checkbox], .product-row input[type=radio], .variations input[type=radio], .input-product-count, .input-seat-selection")
         .on("change mouseup keyup", update_cart_form);
+
+    $("form").on("submit", function (e) {
+        if (!validateVariationMaximums($(this))) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     $(".table-calendar td.has-events").click(function () {
         var $tr = $(this).closest(".table-calendar").find(".selected-day");
