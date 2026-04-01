@@ -2076,15 +2076,19 @@ class Event(
     def delete_sub_objects(self):
         from django.core.exceptions import ObjectDoesNotExist
 
+        from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.feedback import Feedback
         from eventyay.base.models.question import Answer, AnswerOption
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.storage_model import StoredFile
 
+        logger.info('Deleting sub-objects for event %s: cart positions and queued mails', self.slug)
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
         self.queued_mails.all().delete()
 
+        logger.info('Deleting sub-objects for event %s: answers, schedules, feedback, and resources', self.slug)
         answers = Answer.objects.filter(question__event=self)
         for answer in answers.only('pk', 'answer_file').iterator():
             answer._delete_files()
@@ -2099,12 +2103,14 @@ class Event(
             resource._delete_files()
         resources.delete()
 
+        logger.info('Deleting sub-objects for event %s: domains and stored files', self.slug)
         for domain in self.domains.all().iterator():
             domain.delete()
 
-        for stored_file in self.storedfile_set.all().iterator():
+        for stored_file in StoredFile.objects.filter(event=self).iterator():
             stored_file.full_delete()
 
+        logger.info('Deleting sub-objects for event %s: server assignments and related content', self.slug)
         self.bbbserver_set.update(event_exclusive=None)
         self.janusserver_set.update(event_exclusive=None)
         self.turnserver_set.update(event_exclusive=None)
@@ -2118,7 +2124,12 @@ class Event(
         self.tracks.all().delete()
         self.tags.all().delete()
         self.schedules.all().delete()
-        self.mail_templates.all().delete()
+        logger.info('Deleting sub-objects for event %s: mail templates', self.slug)
+        mail_template_ids = tuple(self.mail_templates.values_list('pk', flat=True))
+        if mail_template_ids:
+            QueuedMail.objects.filter(template_id__in=mail_template_ids).update(template=None)
+            self.mail_templates.filter(pk__in=mail_template_ids).delete()
+        logger.info('Deleting sub-objects for event %s: CfP and submission metadata', self.slug)
         try:
             cfp = self.cfp
         except ObjectDoesNotExist:
@@ -2127,6 +2138,7 @@ class Event(
             cfp.delete()
         self.submitter_access_codes.all().delete()
         self.submission_types.all().delete()
+        logger.info('Finished deleting sub-objects for event %s', self.slug)
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins

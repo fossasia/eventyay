@@ -273,10 +273,31 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
 
     @scopes_disabled()
     def delete_sub_objects(self):
+        from django.db.models import ProtectedError
+
+        from eventyay.base.models.log import LogEntry
+
+        logger.info('Deleting organizer sub-objects for organizer %s', self.slug)
         for e in self.events.all():
+            logger.info('Deleting event %s for organizer %s', e.slug, self.slug)
             e.delete_sub_objects()
             e.delete()
-        self.teams.all().delete()
+            logger.info('Deleted event %s for organizer %s', e.slug, self.slug)
+        token_ids = tuple(TeamAPIToken.objects.filter(team__organizer=self).values_list('pk', flat=True))
+        if token_ids:
+            logger.info('Clearing team API token log references for organizer %s', self.slug)
+            updated_log_entries = LogEntry.all.filter(api_token_id__in=token_ids).update(api_token=None)
+            logger.info('Cleared %s team API token log references for organizer %s', updated_log_entries, self.slug)
+        logger.info('Deleting teams for organizer %s', self.slug)
+        try:
+            self.teams.all().delete()
+        except ProtectedError as exc:
+            protected_labels = ', '.join(sorted({obj._meta.label for obj in exc.protected_objects})) or 'unknown'
+            logger.warning(
+                'Team deletion blocked for organizer %s by protected objects: %s', self.slug, protected_labels
+            )
+            raise
+        logger.info('Finished deleting organizer sub-objects for organizer %s', self.slug)
 
     def has_unpaid_invoice(self):
         # Check if Organizer has unpaid invoices which status is pending or expired
