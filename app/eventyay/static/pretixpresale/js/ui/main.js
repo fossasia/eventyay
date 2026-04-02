@@ -410,6 +410,28 @@ $(function () {
         input.reportValidity();
     };
 
+    var ensureVariationDetailsVisible = function ($details) {
+        if (!$details || !$details.length) {
+            return;
+        }
+
+        if (!$details.prop("open")) {
+            $details.prop("open", true);
+        }
+        $details.addClass("details-open");
+        $details.children(':not(summary)').stop(true, true).show();
+
+        $details.find("a.variation-toggle[data-hide-label]").each(function () {
+            var $toggle = $(this);
+            var hideLabel = $toggle.attr("data-hide-label");
+            var $label = $toggle.find(".variation-toggle-label");
+            if ($label.length) {
+                $label.text(hideLabel);
+            }
+            $toggle.attr("aria-expanded", "true");
+        });
+    };
+
     var enforceVariationMaximum = function ($details, $changedInput) {
         var maxTotal = parseInt($details.attr("data-variation-max-total") || "0", 10);
         if (!maxTotal || maxTotal < 1) {
@@ -425,6 +447,7 @@ $(function () {
         }
 
         var message = buildVariationLimitMessage($details, maxTotal);
+        ensureVariationDetailsVisible($details);
 
         if ($changedInput && $changedInput.length) {
             if ($changedInput.attr("type") === "checkbox") {
@@ -460,6 +483,7 @@ $(function () {
             var $details = $(this);
             if (!enforceVariationMaximum($details, null)) {
                 isValid = false;
+                return false;
             }
         });
         return isValid;

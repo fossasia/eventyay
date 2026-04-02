@@ -465,7 +465,7 @@ header .header-row-right {
     text-align: left;
 }
 
-.item-with-variations > .headline > .availability-box {
+.variation-toggle-box {
     padding-left: 15px;
     padding-right: 15px;
     display: flex;
@@ -482,6 +482,7 @@ header .header-row-right {
     width: 100%;
     max-width: 220px;
     min-height: 38px;
+
     padding: 6px 10px;
     border: 1px solid var(--color-grey-light, #b8b8b8);
     border-radius: 4px;
@@ -514,6 +515,7 @@ header .header-row-right {
     content: '>';
 }
 
+/* Support both native <details open> and JS-managed .details-open states. */
 .item-with-variations[open] .variation-toggle-caret::before,
 .item-with-variations.details-open .variation-toggle-caret::before {
     content: 'v';
