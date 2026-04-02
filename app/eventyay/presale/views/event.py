@@ -271,6 +271,7 @@ def get_grouped_products(
             max_per_order = sys.maxsize
         else:
             max_per_order = product.max_per_order or int(event.settings.max_products_per_order)
+        product.effective_max_per_order = None if max_per_order == sys.maxsize else max_per_order
 
         if product.hidden_if_available:
             q = product.hidden_if_available.availability(_cache=quota_cache)
@@ -340,6 +341,10 @@ def get_grouped_products(
             display_add_to_cart = display_add_to_cart or product.order_max > 0
         else:
             product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+            product.single_variation_selection = (
+                max_per_order == 1
+                or product.limit_one_per_user
+            )
 
             if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
                 product.min_per_order = 1
