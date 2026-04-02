@@ -116,7 +116,7 @@
                                                            data-toggle="variations"
                                                            class="variation-toggle js-only"
                                                            role="button"
-                                                                              aria-controls="addon-item-{{ form.cartpos.pk }}-{{ item.id }}"
+                                                           aria-controls="addon-item-{{ form.cartpos.pk }}-{{ item.id }}-variations"
                                                            data-show-label="{% trans 'Show variants' %}"
                                                            data-hide-label="{% trans 'Hide variants' %}">
                                                             <span class="variation-toggle-caret" aria-hidden="true"></span>
@@ -131,7 +131,7 @@
                                                     </div>
                                                     <div class="clearfix"></div>
                                                 </summary>
-                                                <div class="variations variation-list {% if not event.settings.show_variations_expanded %}variations-collapsed{% endif %}">
+                                                <div id="addon-item-{{ form.cartpos.pk }}-{{ item.id }}-variations" class="variations variation-list {% if not event.settings.show_variations_expanded %}variations-collapsed{% endif %}">
                                                     {% for var in item.available_variations %}
                                                         <div class="row-fluid product-row variation variation-option">
                                                             <div class="col-md-8 col-xs-12">

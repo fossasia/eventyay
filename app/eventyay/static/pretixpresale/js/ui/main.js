@@ -16,9 +16,9 @@ function ngettext(singular, plural, count) {
 
 function interpolate(fmt, object, named) {
     if (named) {
-        return fmt.replace(/%\(\w+\)s/g, function(match){return String(obj[match.slice(2,-2)])});
+        return fmt.replace(/%\(\w+\)s/g, function(match){return String(object[match.slice(2,-2)])});
     } else {
-        return fmt.replace(/%s/g, function(match){return String(obj.shift())});
+        return fmt.replace(/%s/g, function(match){return String(object.shift())});
     }
 }
 
@@ -467,7 +467,7 @@ $(function () {
 
     $("details.item-with-variations[data-variation-max-total]").each(function () {
         var $details = $(this);
-        variationInputs($details).on("change", function () {
+        variationInputs($details).on("change input", function () {
             enforceVariationMaximum($details, $(this));
         });
     });

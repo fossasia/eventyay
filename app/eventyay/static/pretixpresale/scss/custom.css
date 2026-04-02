@@ -528,16 +528,16 @@ header .header-row-right {
     padding-left: 18px;
 }
 
-.item-with-variations .variation-list > .product-row.variation > [class*="col-"] {
+.item-with-variations .variation-list > .variation-option > div {
     padding-left: 15px;
     padding-right: 15px;
 }
 
-.item-with-variations .variation-list > .product-row.variation > [class*="col-"]:first-child {
+.item-with-variations .variation-list > .variation-option > div:first-child {
     position: relative;
 }
 
-.item-with-variations .variation-list > .product-row.variation > [class*="col-"]:first-child::before {
+.item-with-variations .variation-list > .variation-option > div:first-child::before {
     content: '';
     position: absolute;
     top: 12px;
@@ -547,7 +547,7 @@ header .header-row-right {
     background: var(--color-grey-light, #d0d0d0);
 }
 
-.item-with-variations .variation-list > .product-row.variation > [class*="col-"]:first-child::after {
+.item-with-variations .variation-list > .variation-option > div:first-child::after {
     content: '';
     position: absolute;
     top: 24px;
