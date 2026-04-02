@@ -104,7 +104,7 @@ class VoucherForm(I18nModelForm):
             iv = self.data.get('productvar') or initial.get('productvar', '')
             if iv.startswith('q-'):
                 q = self.instance.event.quotas.get(pk=iv[2:])
-                choices.append(('q-%d' % q.pk, _('Any product in quota "{quota}"').format(quota=q)))
+                choices.append(('q-%d' % q.pk, _('Any product in capacity "{quota}"').format(quota=q)))
             elif '-' in iv:
                 productid, varid = iv.split('-')
                 i = self.instance.event.products.get(pk=productid)

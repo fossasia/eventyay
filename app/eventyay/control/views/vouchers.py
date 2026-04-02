@@ -115,8 +115,8 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
             _('Voucher code'),
             _('Valid until'),
             _('Product'),
-            _('Reserve quota'),
-            _('Bypass quota'),
+            _('Reserve capacity'),
+            _('Bypass capacity'),
             _('Bypass approval'),
             _('Price effect'),
             _('Value'),
@@ -135,7 +135,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
                 else:
                     prod = '%s' % str(v.product)
             elif v.quota:
-                prod = _('Any product in quota "{quota}"').format(quota=str(v.quota.name))
+                prod = _('Any product in capacity "{quota}"').format(quota=str(v.quota.name))
             else:
                 prod = _('Any product')
             row = [

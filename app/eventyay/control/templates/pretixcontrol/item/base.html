@@ -21,7 +21,7 @@
         <div class="alert alert-warning">
             {% blocktrans trimmed %}
                 Please note that your product will <strong>not</strong> be available for sale until you have added your
-                item to an existing or newly created quota.
+                item to an existing or newly created capacity.
             {% endblocktrans %}
         </div>
     {% elif object.pk and not object.is_available_by_time %}
@@ -35,7 +35,7 @@
         <div class="alert alert-warning">
             {% blocktrans trimmed %}
                 This product is currently not being shown since you configured below that it should only be visible
-                if a certain other quota is already sold out.
+                if a certain other capacity is already sold out.
             {% endblocktrans %}
         </div>
     {% endif %}

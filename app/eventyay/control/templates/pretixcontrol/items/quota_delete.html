@@ -1,12 +1,12 @@
 {% extends "pretixcontrol/items/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% block title %}{% trans "Delete quota" %}{% endblock %}
+{% block title %}{% trans "Delete capacity" %}{% endblock %}
 {% block inside %}
-    <h1>{% trans "Delete quota" %}</h1>
+    <h1>{% trans "Delete capacity" %}</h1>
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
-        <p>{% blocktrans %}Are you sure you want to delete the quota <strong>{{ quota }}</strong>?{% endblocktrans %}</p>
+        <p>{% blocktrans %}Are you sure you want to delete the capacity <strong>{{ quota }}</strong>?{% endblocktrans %}</p>
         {% if dependent|length > 0 %}
             <div class="alert alert-info">
                 <p>{% blocktrans %}The following products might be no longer available for sale:{% endblocktrans %}</p>

@@ -1108,13 +1108,13 @@ class PaymentListExporter(ListExporter):
 
 class QuotaListExporter(ListExporter):
     identifier = 'quotalist'
-    verbose_name = gettext_lazy('Quota availabilities')
+    verbose_name = gettext_lazy('Capacity availabilities')
 
     def iterate_list(self, form_data):
         has_subevents = self.event.has_subevents
         headers = [
-            _('Quota name'),
-            _('Total quota'),
+            _('Capacity name'),
+            _('Total capacity'),
             _('Paid orders'),
             _('Pending orders'),
             _('Blocking vouchers'),

@@ -65,7 +65,7 @@
         <div class="alert alert-warning">
             {% blocktrans trimmed %}
                 This event contains <strong>fully paid orders</strong> that are not marked as paid, probably
-                because no quota was left at the time their payment arrived. You should review the cases and consider
+                because no capacity was left at the time their payment arrived. You should review the cases and consider
                 either refunding the customer or creating more space.
             {% endblocktrans %}
             <a href="{% url "control:event.orders" event=request.event.slug organizer=request.event.organizer.slug %}?status=pendingpaid"

@@ -160,7 +160,7 @@ def get_event_navigation(request: HttpRequest):
                 or 'event.product.' in url.url_name,
             },
             {
-                'label': _('Quotas'),
+                'label': _('Capacity'),
                 'url': reverse(
                     'control:event.products.quotas',
                     kwargs={

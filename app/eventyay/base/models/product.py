@@ -1518,12 +1518,12 @@ class Quota(LoggedModel):
         related_name='quotas',
         verbose_name=pgettext_lazy('subevent', 'Date'),
     )
-    name = models.CharField(max_length=200, verbose_name=_('Name'))
+    name = models.CharField(max_length=200, verbose_name=_('Capacity name'), help_text=_('Use a name to identify this shared capacity.'))
     size = models.PositiveIntegerField(
-        verbose_name=_('Total capacity'),
+        verbose_name=_('Maximum number'),
         null=True,
         blank=True,
-        help_text=_('Leave empty for an unlimited number of tickets.'),
+        help_text=_('Leave empty for unlimited tickets.'),
     )
     products = models.ManyToManyField(Product, verbose_name=_('Product'), related_name='quotas', blank=True)
     variations = models.ManyToManyField(
@@ -1531,33 +1531,25 @@ class Quota(LoggedModel):
     )
 
     close_when_sold_out = models.BooleanField(
-        verbose_name=_('Close this quota permanently once it is sold out'),
+        verbose_name=_('Stop selling permanently when capacity is reached'),
         help_text=_(
-            'If you enable this, when the quota is sold out once, no more tickets will be sold, '
-            'even if tickets become available again through cancellations or expiring orders. Of course, '
-            'you can always re-open it manually.'
+            'Even if tickets are later refunded or cancelled, sales will not resume automatically.'
         ),
         default=False,
     )
     closed = models.BooleanField(default=False)
 
     release_after_exit = models.BooleanField(
-        verbose_name=_('Allow to sell more tickets once people have checked out'),
-        help_text=_(
-            'With this option, quota will be released as soon as people are scanned at an exit of your event. '
-            'This will only happen if they have been scanned both at an entry and at an exit and the exit '
-            'is the more recent scan. It does not matter which check-in list either of the scans was on, '
-            'but check-in lists are ignored if they are set to "Allow re-entering after an exit scan" to '
-            'prevent accidental overbooking.'
-        ),
+        verbose_name=_('Reuse capacity when attendees leave'),
+        help_text=_('When attendees are checked out, their spot becomes available again for new tickets.'),
         default=False,
     )
 
     objects = ScopedManager(organizer='event__organizer')
 
     class Meta:
-        verbose_name = _('Quota')
-        verbose_name_plural = _('Quotas')
+        verbose_name = _('Capacity')
+        verbose_name_plural = _('Capacities')
         ordering = ('name',)
 
     def __str__(self):

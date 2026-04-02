@@ -321,15 +321,19 @@ class ProductCreateForm(I18nModelForm):
 
         if not self.event.has_subevents:
             choices = [
-                (self.NONE, _('Do not add to a quota now')),
-                (self.EXISTING, _('Add product to an existing quota')),
-                (self.NEW, _('Create a new quota for this product')),
+                (self.NONE, _('No capacity limit for this ticket')),
+                (self.EXISTING, _('Use existing shared capacity')),
+                (self.NEW, _('Create shared capacity')),
             ]
             if not self.event.quotas.exists():
                 choices.remove(choices[1])
 
             self.fields['quota_option'] = forms.ChoiceField(
-                label=_('Quota options'),
+                label=_('Capacity options'),
+                help_text=_(
+                    'Control how many tickets can be sold. You can limit this ticket individually or share a '
+                    'capacity with other tickets.'
+                ),
                 widget=forms.RadioSelect,
                 choices=choices,
                 initial=self.NONE,
@@ -337,24 +341,26 @@ class ProductCreateForm(I18nModelForm):
             )
 
             self.fields['quota_add_existing'] = forms.ModelChoiceField(
-                label=_('Add to existing quota'),
-                widget=forms.Select(),
+                label=_('Shared capacity'),
+                widget=forms.Select(attrs={'data-placeholder': _('Select capacity'), 'placeholder': _('Select capacity')}),
                 queryset=self.instance.event.quotas.all(),
+                help_text=_('This ticket will share capacity with other tickets in the selected group.'),
                 required=False,
             )
 
             self.fields['quota_add_new_name'] = forms.CharField(
                 label=_('Name'),
                 max_length=200,
-                widget=forms.TextInput(attrs={'placeholder': _('New quota name')}),
+                widget=forms.TextInput(attrs={'placeholder': _('Example: Main event capacity')}),
+                help_text=_('Optional. Use a name to identify this shared capacity.'),
                 required=False,
             )
 
             self.fields['quota_add_new_size'] = forms.IntegerField(
                 min_value=0,
-                label=_('Size'),
+                label=_('Size → Maximum products'),
                 widget=forms.TextInput(attrs={'placeholder': _('Number of tickets')}),
-                help_text=_('Leave empty for an unlimited number of tickets.'),
+                help_text=_('Leave empty for unlimited tickets.'),
                 required=False,
             )
 
@@ -468,10 +474,10 @@ class ProductCreateForm(I18nModelForm):
         if not self.event.has_subevents:
             if cleaned_data.get('quota_option') == self.NEW:
                 if not self.cleaned_data.get('quota_add_new_name'):
-                    raise forms.ValidationError({'quota_add_new_name': [_('Quota name is required.')]})
+                    cleaned_data['quota_add_new_name'] = _('Shared capacity')
             elif cleaned_data.get('quota_option') == self.EXISTING:
                 if not self.cleaned_data.get('quota_add_existing'):
-                    raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
+                    raise forms.ValidationError({'quota_add_existing': [_('Please select a capacity.')]})
 
         return cleaned_data
 

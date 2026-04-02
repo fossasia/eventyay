@@ -87,7 +87,7 @@
             {% csrf_token %}
             <div class="alert alert-info">
                 <button name="status" value="e" class="btn btn-default pull-right flip">{% trans "Expire order" %}</button>
-                {% trans "The payment for this order is overdue, but you have configured not to expire orders automatically. To free quota capacity, you can mark it as expired manually." %}
+                {% trans "The payment for this order is overdue, but you have configured not to expire orders automatically. To free capacity, you can mark it as expired manually." %}
                 <div class="clearfix"></div>
             </div>
         </form>

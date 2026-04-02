@@ -1354,7 +1354,7 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                     )
                     if len(new_quotas) == 0:
                         errs[i]['product'] = [
-                            gettext_lazy('The product "{}" is not assigned to a quota.').format(
+                            gettext_lazy('The product "{}" is not assigned to a capacity.').format(
                                 str(pos_data.get('product'))
                             )
                         ]
@@ -1368,7 +1368,7 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                                 if quota_avail_cache[quota][1] < 0:
                                     errs[i]['product'] = [
                                         gettext_lazy(
-                                            'There is not enough quota available on quota "{}" to perform the operation.'
+                                            'There is not enough capacity available on capacity "{}" to perform the operation.'
                                         ).format(quota.name)
                                     ]
 

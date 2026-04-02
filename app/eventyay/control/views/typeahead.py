@@ -540,12 +540,12 @@ def productvarquota_select2(request, **kwargs):
             choices.append(
                 (
                     'q-%d' % q.pk,
-                    _('Any product in quota "{quota}"').format(quota=q),
+                    _('Any product in capacity "{quota}"').format(quota=q),
                     str(q.subevent),
                 )
             )
         else:
-            choices.append(('q-%d' % q.pk, _('Any product in quota "{quota}"').format(quota=q), ''))
+            choices.append(('q-%d' % q.pk, _('Any product in capacity "{quota}"').format(quota=q), ''))
 
     doc = {
         'results': [

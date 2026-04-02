@@ -3,18 +3,18 @@
 {% load bootstrap3 %}
 {% load escapejson %}
 {% load eventsignal %}
-{% block title %}{% blocktrans with name=quota.name %}Quota: {{ name }}{% endblocktrans %}{% endblock %}
+{% block title %}{% blocktrans with name=quota.name %}Capacity: {{ name }}{% endblocktrans %}{% endblock %}
 {% block inside %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
             <div class="navigation-title">
                 <h1>
-                    {% blocktrans with name=quota.name %}Quota: {{ name }}{% endblocktrans %}
+                    {% blocktrans with name=quota.name %}Capacity: {{ name }}{% endblocktrans %}
                     {% if 'can_change_items' in request.eventpermset %}
                         <a href="{% url "control:event.products.quotas.edit" event=request.event.slug organizer=request.event.organizer.slug quota=quota.pk %}"
                            class="btn btn-default">
                             <span class="fa fa-edit"></span>
-                            {% trans "Edit quota" %}
+                            {% trans "Edit capacity" %}
                         </a>
                     {% endif %}
                 </h1>
@@ -34,16 +34,16 @@
             {% if closed_and_sold_out %}
                 <div class="alert alert-info">
                     <button type="submit" class="btn btn-default pull-right flip" name="disable" value="true">
-                        {% trans "Open quota and disable closing" %}
+                        {% trans "Open capacity and disable closing" %}
                     </button>
-                    {% trans "This quota is sold out and closed. Even if tickets become available e.g. through cancellations, they will not become available again unless you manually re-open the quota on this page." %}
+                    {% trans "This capacity is sold out and closed. Even if tickets become available e.g. through cancellations, they will not become available again unless you manually re-open the capacity on this page." %}
                     <div class="clearfix"></div>
                 </div>
             {% else %}
                 <div class="alert alert-warning">
                     <button type="submit" class="btn btn-primary pull-right flip" name="reopen"
-                            value="true">{% trans "Open quota" %}</button>
-                    {% trans "This quota is closed since it has been sold out before. Tickets are theoretically available, but will not be sold unless you manually re-open the quota." %}
+                            value="true">{% trans "Open capacity" %}</button>
+                    {% trans "This capacity is closed since it has been sold out before. Tickets are theoretically available, but will not be sold unless you manually re-open the capacity." %}
                     <div class="clearfix"></div>
                 </div>
             {% endif %}
@@ -60,7 +60,7 @@
         <div class="col-md-5 col-xs-12">
             <legend>{% trans "Availability calculation" %}</legend>
             <div class="row">
-                <div class="col-xs-9">{% trans "Total quota" %}</div>
+                <div class="col-xs-9">{% trans "Total capacity" %}</div>
                 <div class="col-xs-3 flip text-right">
                     {% if quota.size == None %}{% trans "Infinite" %}{% else %}{{ quota.size }}{% endif %}
                 </div>
@@ -84,22 +84,22 @@
             {% if has_plugins > 0 %}
                 <div class="alert alert-warning">
                     {% blocktrans trimmed with num=quota_overbooked %}
-                        A plugin is active that might modify the actual result of this quota from what you see here.
+                        A plugin is active that might modify the actual result of this capacity from what you see here.
                     {% endblocktrans %}
                 </div>
             {% endif %}
             {% if quota_overbooked > 0 %}
                 <div class="alert alert-warning">
                     {% blocktrans trimmed with num=quota_overbooked %}
-                        This quota is currently overbooked by {{ num }} tickets.
+                        This capacity is currently overbooked by {{ num }} tickets.
                     {% endblocktrans %}
                 </div>
             {% endif %}
             {% if has_ignore_vouchers %}
                 <div class="alert alert-warning">
                     {% blocktrans trimmed %}
-                        Your event contains vouchers that affect products covered by this quota and that
-                        allow a user to buy products even if this quota is sold out.
+                        Your event contains vouchers that affect products covered by this capacity and that
+                        allow a user to buy products even if this capacity is sold out.
                     {% endblocktrans %}
                 </div>
             {% endif %}
@@ -108,7 +108,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        {% trans "Quota history" %}
+                        {% trans "Capacity history" %}
                     </h3>
                 </div>
                 {% include "pretixcontrol/includes/logs.html" with obj=quota %}

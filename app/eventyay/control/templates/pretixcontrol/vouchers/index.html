@@ -30,7 +30,7 @@
             <p>
                 {% blocktrans trimmed %}
                     Vouchers allow you to assign tickets to specific persons for a lower price. They also enable you to
-                    reserve some quota for your very special guests.
+                    reserve some capacity for your very special guests.
                 {% endblocktrans %}
             </p>
             <div class="row filter-form">
@@ -185,7 +185,7 @@
                                             {% endif %}
                                         {% elif v.quota %}
                                             {% blocktrans trimmed with quota=v.quota.name %}
-                                                Any product in quota "{{ quota }}"
+                                                Any product in capacity "{{ quota }}"
                                             {% endblocktrans %}
                                         {% endif %}
                                         {% if v.seat %}<br><small class="text-muted">{{ v.seat }}</small>{% endif %}

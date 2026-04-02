@@ -74,7 +74,7 @@
                             <a href="?{% url_replace request 'filter-ordering' 'date_from' %}"><i class="fa fa-caret-up"></i></a>
                         </th>
                         <th>
-                            {% trans "Paid tickets per quota" %}
+                            {% trans "Paid tickets per capacity" %}
                         </th>
                         <th>
                             {% trans "Status" %}
@@ -115,7 +115,7 @@
                                 {% endfor %}
                                 {% if s.first_quotas|length > 3 %}
                                     <a href="{% url "control:event.products.quotas" organizer=request.event.organizer.slug event=request.event.slug %}?subevent={{ s.id }}"
-                                            class="quotabox-more" data-toggle="tooltip" title="{% trans "More quotas" %}"
+                                            class="quotabox-more" data-toggle="tooltip" title="{% trans "More capacities" %}"
                                             data-placement="top">
                                         &middot;&middot;&middot;
                                     </a>

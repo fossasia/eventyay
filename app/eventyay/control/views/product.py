@@ -875,7 +875,7 @@ class QuotaCreate(EventPermissionRequiredMixin, CreateView):
     @transaction.atomic
     def form_valid(self, form):
         form.instance.event = self.request.event
-        messages.success(self.request, _('The new quota has been created.'))
+        messages.success(self.request, _('The new capacity has been created.'))
         ret = super().form_valid(form)
         form.instance.log_action(
             'eventyay.event.quota.added',
@@ -964,7 +964,7 @@ class QuotaView(ChartContainingView, DetailView):
 
         data.append(
             {
-                'label': gettext('Available quota'),
+                'label': gettext('Available capacity'),
                 'value': s,
                 'sum': False,
                 'strong': True,
@@ -1048,7 +1048,7 @@ class QuotaView(ChartContainingView, DetailView):
         try:
             return self.request.event.quotas.get(id=self.kwargs['quota'])
         except Quota.DoesNotExist:
-            raise Http404(_('The requested quota does not exist.'))
+            raise Http404(_('The requested capacity does not exist.'))
 
     def post(self, request, *args, **kwargs):
         if not request.user.has_event_permission(request.organizer, request.event, 'can_change_items', request):
@@ -1058,7 +1058,7 @@ class QuotaView(ChartContainingView, DetailView):
             quota.closed = False
             quota.save(update_fields=['closed'])
             quota.log_action('eventyay.event.quota.opened', user=request.user)
-            messages.success(request, _('The quota has been re-opened.'))
+            messages.success(request, _('The capacity has been re-opened.'))
 
             # Trigger waiting list assignment when quota is reopened
             event = request.event
@@ -1082,7 +1082,7 @@ class QuotaView(ChartContainingView, DetailView):
                 user=self.request.user,
                 data={'close_when_sold_out': False},
             )
-            messages.success(request, _('The quota has been re-opened and will not close again.'))
+            messages.success(request, _('The capacity has been re-opened and will not close again.'))
 
             # Trigger waiting list assignment when quota is reopened
             event = request.event
@@ -1123,7 +1123,7 @@ class QuotaUpdate(EventPermissionRequiredMixin, UpdateView):
         try:
             return self.request.event.quotas.get(id=self.kwargs['quota'])
         except Quota.DoesNotExist:
-            raise Http404(_('The requested quota does not exist.'))
+            raise Http404(_('The requested capacity does not exist.'))
 
     @transaction.atomic
     def form_valid(self, form):
@@ -1200,7 +1200,7 @@ class QuotaDelete(EventPermissionRequiredMixin, DeleteView):
         try:
             return self.request.event.quotas.get(id=self.kwargs['quota'])
         except Quota.DoesNotExist:
-            raise Http404(_('The requested quota does not exist.'))
+            raise Http404(_('The requested capacity does not exist.'))
 
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
@@ -1214,7 +1214,7 @@ class QuotaDelete(EventPermissionRequiredMixin, DeleteView):
         success_url = self.get_success_url()
         self.object.log_action(action='eventyay.event.quota.deleted', user=self.request.user)
         self.object.delete()
-        messages.success(self.request, _('The selected quota has been deleted.'))
+        messages.success(self.request, _('The selected capacity has been deleted.'))
         return HttpResponseRedirect(success_url)
 
     def get_success_url(self) -> str:

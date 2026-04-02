@@ -1473,13 +1473,13 @@ def notify_user_changed_order(order, user=None, auth=None, invoices=[]):
 class OrderChangeManager:
     error_messages = {
         'product_without_variation': _('You need to select a variation of the product.'),
-        'quota': _('The quota {name} does not have enough capacity left to perform the operation.'),
-        'quota_missing': _('There is no quota defined that allows this operation.'),
+        'quota': _('The capacity {name} does not have enough space left to perform the operation.'),
+        'quota_missing': _('There is no capacity defined that allows this operation.'),
         'product_invalid': _('The selected product is not active or has no price set.'),
         'complete_cancel': _('This operation would leave the order empty. Please cancel the order itself instead.'),
         'not_pending_or_paid': _('Only pending or paid orders can be changed.'),
         'paid_to_free_exceeded': _(
-            'This operation would make the order free and therefore immediately paid, however no quota is available.'
+            'This operation would make the order free and therefore immediately paid, however no capacity is available.'
         ),
         'addon_to_required': _('This is an add-on product, please select the base position it should be added to.'),
         'addon_invalid': _('The selected base position does not allow you to add this product as an add-on.'),

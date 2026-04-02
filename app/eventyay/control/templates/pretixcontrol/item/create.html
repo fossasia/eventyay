@@ -76,7 +76,7 @@
                             <strong>{% trans "Product with multiple variations" %}</strong>
                             <div class="help-block">
                                 {% blocktrans trimmed %}
-                                    This product exists in multiple variations which are different in either their name, price, quota, or description.
+                                    This product exists in multiple variations which are different in either their name, price, capacity, or description.
                                     All other settings need to be the same.
                                 {% endblocktrans %}
                             </div>
@@ -94,7 +94,7 @@
         </fieldset>
         {% if form.quota_option %}
             <fieldset>
-                <legend>{% trans "Quota settings" %}</legend>
+                <legend>{% trans "Capacity settings" %}</legend>
                 {% bootstrap_field form.quota_option layout="control" %}
                 <div id="existing-quota-group">
                     {% bootstrap_field form.quota_add_existing layout="control" %}

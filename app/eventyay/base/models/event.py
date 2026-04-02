@@ -1980,7 +1980,7 @@ class Event(
             issues.append(_('You have configured at least one paid product but have not enabled any payment methods.'))
 
         if self.products.exists() and not self.quotas.exists():
-            issues.append(_('You need to configure at least one quota to sell anything.'))
+            issues.append(_('You need to configure at least one capacity to sell anything.'))
 
         if self.organizer.has_unpaid_invoice():
             issues.append(_('You have unpaid invoices, please pay them before going live.'))

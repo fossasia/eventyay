@@ -42,9 +42,9 @@ from eventyay.helpers.money import change_decimal_field
 
 class ExtendForm(I18nModelForm):
     quota_ignore = forms.BooleanField(
-        label=_('Overbook quota'),
+        label=_('Overbook capacity'),
         help_text=_(
-            'If you check this box, this operation will be performed even if it leads to an overbooked quota '
+            'If you check this box, this operation will be performed even if it leads to an overbooked capacity '
             'and you having sold more tickets than you planned!'
         ),
         required=False,
@@ -87,9 +87,9 @@ class ExtendForm(I18nModelForm):
 
 class ForceQuotaConfirmationForm(forms.Form):
     force = forms.BooleanField(
-        label=_('Overbook quota and ignore late payment'),
+        label=_('Overbook capacity and ignore late payment'),
         help_text=_(
-            'If you check this box, this operation will be performed even if it leads to an overbooked quota '
+            'If you check this box, this operation will be performed even if it leads to an overbooked capacity '
             'and you having sold more tickets than you planned! The operation will also be performed '
             'regardless of the settings for late payments.'
         ),
@@ -242,7 +242,7 @@ class OtherOperationsForm(forms.Form):
         help_text=_('Send an email to the customer notifying that their order has been changed.'),
     )
     ignore_quotas = forms.BooleanField(
-        label=_('Allow to overbook quotas when performing this operation'),
+        label=_('Allow to overbook capacities when performing this operation'),
         required=False,
     )
 

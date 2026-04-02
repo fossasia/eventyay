@@ -1530,11 +1530,11 @@ class VoucherFilterForm(FilterForm):
         required=False,
     )
     qm = forms.ChoiceField(
-        label=_('Quota handling'),
+        label=_('Capacity handling'),
         choices=(
             ('', _('All')),
-            ('b', _('Reserve ticket from quota')),
-            ('i', _('Allow to ignore quota')),
+            ('b', _('Reserve ticket from capacity')),
+            ('i', _('Allow to ignore capacity')),
         ),
         required=False,
     )
@@ -1593,7 +1593,7 @@ class VoucherFilterForm(FilterForm):
             else:
                 choices.append((str(i.pk), i.name))
         for q in self.event.quotas.all():
-            choices.append(('q-%d' % q.pk, _('Any product in quota "{quota}"').format(quota=q)))
+            choices.append(('q-%d' % q.pk, _('Any product in capacity "{quota}"').format(quota=q)))
         self.fields['productvar'].choices = choices
 
     def filter_qs(self, qs):

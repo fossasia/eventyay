@@ -212,7 +212,7 @@ class LogEntry(models.Model):
                 'val': escape(str(co)),
             }
         elif isinstance(co, Quota):
-            a_text = _('Quota {val}')
+            a_text = _('Capacity {val}')
             a_map = {
                 'href': reverse(
                     'control:event.products.quotas.show',

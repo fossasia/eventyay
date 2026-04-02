@@ -271,7 +271,7 @@ def quota_widgets(sender, subevent=None, lazy=False, **kwargs):
                 if lazy
                 else NUM_WIDGET.format(
                     num='{}/{}'.format(left, q.size) if q.size is not None else '\u221e',
-                    text=_('{quota} left').format(quota=escape(q.name)),
+                    text=_('{capacity} left').format(capacity=escape(q.name)),
                 ),
                 'lazy': 'quota-{}'.format(q.pk),
                 'display_size': 'small',

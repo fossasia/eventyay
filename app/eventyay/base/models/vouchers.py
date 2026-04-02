@@ -43,7 +43,7 @@ def generate_code(prefix=None):
 
 class Voucher(LoggedModel):
     """
-    A Voucher can reserve ticket quota or allow special prices.
+    A Voucher can reserve ticket capacity or allow special prices.
 
     :param event: The event this voucher is valid for
     :type event: Event
@@ -57,7 +57,7 @@ class Voucher(LoggedModel):
     :type redeemed: int
     :param valid_until: The expiration date of this voucher (optional)
     :type valid_until: datetime.datetime
-    :param block_quota: If set to true, this voucher will reserve quota for its holder
+    :param block_quota: If set to true, this voucher will reserve capacity for its holder
     :type block_quota: bool
     :param allow_ignore_quota: If set to true, this voucher can be redeemed even if the event is sold out
     :type allow_ignore_quota: bool
@@ -70,7 +70,7 @@ class Voucher(LoggedModel):
     :type product: Product
     :param variation: If set, the variation to sell
     :type variation: ProductVariation
-    :param quota: If set, the quota to choose an product from
+    :param quota: If set, the capacity to choose an product from
     :type quota: Quota
     :param comment: An internal comment that will only be visible to staff, and never displayed to the user
     :type comment: str
@@ -80,7 +80,7 @@ class Voucher(LoggedModel):
 
     Various constraints apply:
 
-    * You need to either select a quota or an product
+    * You need to either select a capacity or an product
     * If you select an product that has variations but do not select a variation, you cannot set block_quota
     """
 
@@ -124,15 +124,15 @@ class Voucher(LoggedModel):
     valid_until = models.DateTimeField(blank=True, null=True, db_index=True, verbose_name=_('Valid until'))
     block_quota = models.BooleanField(
         default=False,
-        verbose_name=_('Reserve ticket from quota'),
+        verbose_name=_('Reserve ticket from capacity'),
         help_text=_(
-            "If activated, this voucher will be substracted from the affected product's quotas, such that it is "
+            "If activated, this voucher will be substracted from the affected product's capacities, such that it is "
             'guaranteed that anyone with this voucher code does receive a ticket.'
         ),
     )
     allow_ignore_quota = models.BooleanField(
         default=False,
-        verbose_name=_('Allow to bypass quota'),
+        verbose_name=_('Allow to bypass capacity'),
         help_text=_('If activated, a holder of this voucher code can buy tickets, even if there are none left.'),
     )
     allow_ignore_approval = models.BooleanField(
@@ -182,8 +182,8 @@ class Voucher(LoggedModel):
         null=True,
         blank=True,
         on_delete=models.PROTECT,  # We use a fake version of SET_NULL in Quota.delete()
-        verbose_name=_('Quota'),
-        help_text=_('If enabled, the voucher is valid for any product affected by this quota.'),
+        verbose_name=_('Capacity'),
+        help_text=_('If enabled, the voucher is valid for any product affected by this capacity.'),
     )
     seat = models.ForeignKey(
         Seat,
@@ -244,9 +244,9 @@ class Voucher(LoggedModel):
     def clean_product_properties(data, event, quota, product, variation, block_quota=False, seats_given=False):
         if quota:
             if quota.event != event:
-                raise ValidationError(_('You cannot select a quota that belongs to a different event.'))
+                raise ValidationError(_('You cannot select a capacity that belongs to a different event.'))
             if product:
-                raise ValidationError(_('You cannot select a quota and a specific product at the same time.'))
+                raise ValidationError(_('You cannot select a capacity and a specific product at the same time.'))
         elif product:
             if product.event != event:
                 raise ValidationError(_('You cannot select an product that belongs to a different event.'))
@@ -259,15 +259,15 @@ class Voucher(LoggedModel):
             if product.has_variations and not variation and data.get('block_quota'):
                 raise ValidationError(
                     _(
-                        'You can only block quota if you specify a specific product variation. '
-                        'Otherwise it might be unclear which quotas to block.'
+                        'You can only reserve capacity if you specify a specific product variation. '
+                        'Otherwise it might be unclear which capacities to reserve.'
                     )
                 )
             if product.category and product.category.is_addon:
                 raise ValidationError(_('It is currently not possible to create vouchers for add-on products.'))
         elif block_quota:
             raise ValidationError(
-                _('You need to select a specific product or quota if this voucher should reserve tickets.')
+                _('You need to select a specific product or capacity if this voucher should reserve tickets.')
             )
         elif variation:
             raise ValidationError(
@@ -288,7 +288,7 @@ class Voucher(LoggedModel):
     @staticmethod
     def clean_subevent(data, event):
         if event.has_subevents and data.get('block_quota') and not data.get('subevent'):
-            raise ValidationError(_('If you want this voucher to block quota, you need to select a specific date.'))
+            raise ValidationError(_('If you want this voucher to reserve capacity, you need to select a specific date.'))
         elif data.get('subevent') and not event.has_subevents:
             raise ValidationError(_('You can not select a subevent if your event is not an event series.'))
 
@@ -344,7 +344,7 @@ class Voucher(LoggedModel):
         old_quotas = Voucher.clean_quota_get_ignored(old_instance)
 
         if event.has_subevents and data.get('block_quota') and not data.get('subevent'):
-            raise ValidationError(_('If you want this voucher to block quota, you need to select a specific date.'))
+            raise ValidationError(_('If you want this voucher to reserve capacity, you need to select a specific date.'))
 
         if quota:
             if quota in old_quotas:
@@ -354,8 +354,8 @@ class Voucher(LoggedModel):
         elif product and product.has_variations and not variation:
             raise ValidationError(
                 _(
-                    'You can only block quota if you specify a specific product variation. '
-                    'Otherwise it might be unclear which quotas to block.'
+                    'You can only reserve capacity if you specify a specific product variation. '
+                    'Otherwise it might be unclear which capacities to reserve.'
                 )
             )
         elif product and variation:
@@ -364,14 +364,14 @@ class Voucher(LoggedModel):
             avail = product.check_quotas(ignored_quotas=old_quotas, subevent=data.get('subevent'))
         else:
             raise ValidationError(
-                _('You need to select a specific product or quota if this voucher should reserve tickets.')
+                _('You need to select a specific product or capacity if this voucher should reserve tickets.')
             )
 
         if avail[0] != Quota.AVAILABILITY_OK or (avail[1] is not None and avail[1] < cnt):
             raise ValidationError(
                 _(
-                    'You cannot create a voucher that blocks quota as the selected product or '
-                    'quota is currently sold out or completely reserved.'
+                    'You cannot create a voucher that reserves capacity as the selected product or '
+                    'capacity is currently sold out or completely reserved.'
                 )
             )
 

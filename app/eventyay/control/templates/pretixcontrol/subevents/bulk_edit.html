@@ -165,13 +165,13 @@
             {% endfor %}
         </fieldset>
         <fieldset>
-            <legend>{% trans "Quotas" %}</legend>
+            <legend>{% trans "Capacities" %}</legend>
             {% if sampled_quotas|default_if_none:"NONE" == "NONE" %}
                 <div class="alert alert-warning">
                     {% blocktrans trimmed %}
-                        You selected a set of dates that currently have different quota setups. You can therefore
-                        not change their quotas in bulk. If you want, you can set up a new set of quotas to
-                        <strong>replace</strong> the quota setup of all selected dates.
+                        You selected a set of dates that currently have different capacity setups. You can therefore
+                        not change their capacities in bulk. If you want, you can set up a new set of capacities to
+                        <strong>replace</strong> the capacity setup of all selected dates.
                     {% endblocktrans %}
                 </div>
             {% endif %}
@@ -243,7 +243,7 @@
                         </script>
                         <p>
                             <button type="button" class="btn btn-default" data-formset-add>
-                                <i class="fa fa-plus"></i> {% trans "Add a new quota" %}</button>
+                                <i class="fa fa-plus"></i> {% trans "Add a new capacity" %}</button>
                         </p>
                     </div>
                 </div>
