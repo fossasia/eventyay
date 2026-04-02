@@ -122,17 +122,20 @@ var form_handlers = function (el) {
         );
     });
 
-    var handledExclusivePrefixes = {};
+    var exclusiveGroups = {};
     el.find("input[data-exclusive-prefix]").each(function () {
         var prefix = $(this).attr("data-exclusive-prefix");
-        if (!prefix || handledExclusivePrefixes[prefix]) {
+        if (!prefix) {
             return;
         }
-        handledExclusivePrefixes[prefix] = true;
+        if (!exclusiveGroups[prefix]) {
+            exclusiveGroups[prefix] = [];
+        }
+        exclusiveGroups[prefix].push(this);
+    });
 
-        var $group = el.find("input[data-exclusive-prefix]").filter(function () {
-            return $(this).attr("data-exclusive-prefix") === prefix;
-        });
+    $.each(exclusiveGroups, function (_prefix, groupInputs) {
+        var $group = $(groupInputs);
 
         $group.each(function () {
             var $input = $(this);
@@ -350,13 +353,18 @@ $(function () {
 
     var buildVariationLimitMessage = function ($details, maxTotal) {
         var productName = $.trim($details.attr("data-product-name") || gettext("this product"));
-        return ngettext(
-            "You can only choose a maximum of %(max)s option for %(product)s.",
-            "You can only choose a maximum of %(max)s options for %(product)s.",
-            maxTotal
-        )
-            .replace("%(max)s", maxTotal)
-            .replace("%(product)s", productName);
+        return interpolate(
+            ngettext(
+                "You can only choose a maximum of %(max)s option for %(product)s.",
+                "You can only choose a maximum of %(max)s options for %(product)s.",
+                maxTotal
+            ),
+            {
+                max: maxTotal,
+                product: productName,
+            },
+            true
+        );
     };
 
     var getVariationSelectionTotal = function ($details) {
@@ -429,6 +437,7 @@ $(function () {
                 var allowedValue = Math.max(0, maxTotal - (total - currentValue));
                 $changedInput.val(String(allowedValue));
             }
+            update_cart_form();
             showVariationValidity($changedInput, message);
             return false;
         }
@@ -467,7 +476,7 @@ $(function () {
     $(".product-row input[type=checkbox], .variations input[type=checkbox], .product-row input[type=radio], .variations input[type=radio], .input-product-count, .input-seat-selection")
         .on("change mouseup keyup", update_cart_form);
 
-    $("form").on("submit", function (e) {
+    $("form").has("details.item-with-variations[data-variation-max-total]").on("submit", function (e) {
         if (!validateVariationMaximums($(this))) {
             e.preventDefault();
             return false;

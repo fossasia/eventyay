@@ -486,10 +486,10 @@ header .header-row-right {
     gap: 6px;
     width: 100%;
     max-width: 220px;
-    min-height: 42px;
-    padding: 6px 12px;
+    min-height: 38px;
+    padding: 6px 10px;
     border: 1px solid var(--color-grey-light, #b8b8b8);
-    border-radius: 6px;
+    border-radius: 4px;
     text-decoration: none;
     white-space: nowrap;
     word-break: keep-all;

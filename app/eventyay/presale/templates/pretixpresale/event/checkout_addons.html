@@ -63,7 +63,8 @@
                                     </p>
                                     {% for item in c.products %}
                                         {% if item.has_variations %}
-                                            <details class="item-with-variations" {% if event.settings.show_variations_expanded or item.expand %}open{% endif %}>
+                                            <details class="item-with-variations" {% if event.settings.show_variations_expanded or item.expand %}open{% endif %}
+                                                     id="addon-item-{{ form.cartpos.pk }}-{{ item.id }}">
                                                 <summary class="row-fluid product-row headline">
                                                     <div class="col-md-8 col-xs-12">
                                                         {% if item.picture %}
@@ -115,6 +116,7 @@
                                                            data-toggle="variations"
                                                            class="variation-toggle js-only"
                                                            role="button"
+                                                                              aria-controls="addon-item-{{ form.cartpos.pk }}-{{ item.id }}"
                                                            data-show-label="{% trans 'Show variants' %}"
                                                            data-hide-label="{% trans 'Hide variants' %}">
                                                             <span class="variation-toggle-caret" aria-hidden="true"></span>

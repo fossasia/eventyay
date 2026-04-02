@@ -344,7 +344,6 @@ def get_grouped_products(
             product.single_variation_selection = (
                 max_per_order == 1
                 or product.limit_one_per_user
-                or bool(product.min_per_order and product.min_per_order > 1)
             )
 
             if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
