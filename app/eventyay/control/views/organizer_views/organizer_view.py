@@ -222,6 +222,7 @@ class OrganizerDelete(AdministratorPermissionRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
+        logger.info('Starting organizer deletion for organizer %s', self.request.organizer.slug)
         try:
             with transaction.atomic():
                 self.request.user.log_action(
@@ -235,9 +236,13 @@ class OrganizerDelete(AdministratorPermissionRequiredMixin, FormView):
                 )
                 self.request.organizer.delete_sub_objects()
                 self.request.organizer.delete()
+            logger.info('Finished organizer deletion for organizer %s', self.request.organizer.slug)
             messages.success(self.request, _('The organizer has been deleted.'))
             return redirect(self.get_success_url())
         except ProtectedError:
+            logger.warning(
+                'Organizer deletion blocked by protected relation for organizer %s', self.request.organizer.slug
+            )
             messages.error(
                 self.request,
                 _(
