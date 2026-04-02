@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from csp.decorators import csp_update
@@ -22,6 +23,7 @@ from formtools.wizard.views import SessionWizardView
 
 from eventyay.common.forms import I18nEventFormSet, I18nFormSet
 from eventyay.base.models import LogEntry
+from eventyay.base.models.base import CachedFile
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
@@ -40,6 +42,9 @@ from eventyay.orga.forms.event import (
     WidgetGenerationForm,
     WidgetSettingsForm,
 )
+from eventyay.orga.forms.importers import CSVImportForm
+from eventyay.orga.forms.schedule import ScheduleExportForm
+from eventyay.orga.forms.speaker import SpeakerExportForm
 from eventyay.person.forms import UserForm
 from eventyay.base.models import User
 from eventyay.base.models import ReviewPhase, ReviewScoreCategory
@@ -559,8 +564,120 @@ class WidgetSettings(EventSettingsPermission, FormView):
 
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
+    IMPORT_TARGETS = {
+        'speaker': {
+            'filename': 'speaker_import.csv',
+            'redirect_base': 'speakers_import',
+        },
+        'session': {
+            'filename': 'session_import.csv',
+            'redirect_base': 'submissions_import',
+        },
+    }
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
         result['event'] = self.request.event
+        result['tablist'] = {
+            'import': _('Import'),
+            'export': _('Export'),
+        }
+        result['import_choices'] = (
+            ('speaker', _('Speakers')),
+            ('session', _('Sessions')),
+        )
+        result['import_target'] = kwargs.get('import_target', 'speaker')
+        result['export_target'] = kwargs.get('export_target', 'speaker')
+        result['import_form'] = kwargs.get('import_form') or CSVImportForm()
+        result['speaker_export_form'] = kwargs.get('speaker_export_form') or SpeakerExportForm(
+            event=self.request.event,
+            prefix='speaker',
+        )
+        result['session_export_form'] = kwargs.get('session_export_form') or ScheduleExportForm(
+            event=self.request.event,
+            prefix='session',
+        )
+        return result
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        if action == 'import':
+            return self.handle_import()
+        if action == 'export':
+            return self.handle_export()
+        messages.error(request, _('Unknown action. Please try again.'))
+        return redirect(request.path)
+
+    def handle_import(self):
+        import_target = self.request.POST.get('import_target', 'speaker')
+        if import_target not in self.IMPORT_TARGETS:
+            import_target = 'speaker'
+            messages.error(self.request, _('Please choose whether to import speakers or sessions.'))
+
+        import_form = CSVImportForm(self.request.POST, self.request.FILES)
+        if not import_form.is_valid():
+            context = self.get_context_data(import_form=import_form, import_target=import_target)
+            return self.render_to_response(context, status=400)
+
+        session = self.request.session
+        if not session.session_key:
+            session.save()
+        if not session.session_key:
+            messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
+            return redirect(self.request.path)
+
+        target_config = self.IMPORT_TARGETS[import_target]
+        import_filename = target_config['filename']
+        cached_file = CachedFile.objects.create(
+            expires=now() + timedelta(days=1),
+            date=now(),
+            filename=import_filename,
+            type='text/csv',
+            web_download=False,
+            session_key=session.session_key,
+        )
+        cached_file.file.save(import_filename, import_form.cleaned_data['file'])
+        redirect_base = getattr(self.request.event.orga_urls, target_config['redirect_base'])
+        return redirect(f'{redirect_base}{cached_file.id}/')
+
+    def handle_export(self):
+        export_target = self.request.POST.get('export_target', 'speaker')
+
+        if export_target == 'speaker':
+            speaker_export_form = SpeakerExportForm(
+                self.request.POST,
+                event=self.request.event,
+                prefix='speaker',
+            )
+            session_export_form = ScheduleExportForm(event=self.request.event, prefix='session')
+            if not speaker_export_form.is_valid():
+                context = self.get_context_data(
+                    export_target=export_target,
+                    speaker_export_form=speaker_export_form,
+                    session_export_form=session_export_form,
+                )
+                return self.render_to_response(context, status=400)
+            result = speaker_export_form.export_data()
+        elif export_target == 'session':
+            speaker_export_form = SpeakerExportForm(event=self.request.event, prefix='speaker')
+            session_export_form = ScheduleExportForm(
+                self.request.POST,
+                event=self.request.event,
+                prefix='session',
+            )
+            if not session_export_form.is_valid():
+                context = self.get_context_data(
+                    export_target=export_target,
+                    speaker_export_form=speaker_export_form,
+                    session_export_form=session_export_form,
+                )
+                return self.render_to_response(context, status=400)
+            result = session_export_form.export_data()
+        else:
+            messages.error(self.request, _('Please choose whether to export speakers or sessions.'))
+            return redirect(self.request.path)
+
+        if not result:
+            messages.success(self.request, _('No data to be exported'))
+            return redirect(self.request.path)
         return result

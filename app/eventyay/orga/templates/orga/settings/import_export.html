@@ -1,0 +1,248 @@
+{% extends 'orga/base.html' %}
+
+{% load i18n %}
+{% load static %}
+
+{% block extra_title %}{% translate 'Import/Export' %} :: {% endblock extra_title %}
+
+{% block content %}
+  <h2>{% translate 'Import/Export' %}</h2>
+
+  {% include 'orga/includes/tablist.html' %}
+
+  <section role='tabpanel' id='tabpanel-import' aria-labelledby='tab-import' tabindex='0' aria-hidden='false'>
+    <p>
+      {% blocktranslate trimmed %}
+        Upload a CSV file and choose whether the file contains speakers or sessions.
+        In the next step you will map CSV columns to fields and preview the data.
+      {% endblocktranslate %}
+    </p>
+
+    <form method='post' enctype='multipart/form-data' class='mb-4'>
+      {% csrf_token %}
+      <input type='hidden' name='action' value='import'>
+
+      {% if import_form.non_field_errors %}
+        <div class='alert alert-danger'>
+          {{ import_form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <div class='form-group'>
+        <label for='id_import_target'>{% translate 'Import target' %}</label>
+        <div class='w-50 mt-2'>
+          <select id='id_import_target' name='import_target' class='form-control'>
+            {% for value, label in import_choices %}
+              <option value='{{ value }}' {% if import_target == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      {% for field in import_form %}
+        <div class='form-group'>
+          <label for='{{ field.id_for_label }}'>{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <small class='form-text text-muted'>{{ field.help_text }}</small>
+          {% endif %}
+          {% for error in field.errors %}
+            <div class='invalid-feedback d-block'>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      <button type='submit' class='btn btn-success btn-lg'>
+        <i class='fa fa-upload'></i>
+        {% translate 'Upload and continue' %}
+      </button>
+    </form>
+  </section>
+
+  <section role='tabpanel' id='tabpanel-export' aria-labelledby='tab-export' tabindex='0' aria-hidden='true'>
+    <p>
+      {% blocktranslate trimmed %}
+        Choose whether to export speaker data or session data, then select fields and format.
+      {% endblocktranslate %}
+    </p>
+
+    <div id='unified-export' data-export-target='{{ export_target }}'>
+      <div class='form-group'>
+        <label for='id_export_target'>{% translate 'Export target' %}</label>
+        <div class='w-50 mt-2'>
+          <select id='id_export_target' class='form-control' data-export-target-select>
+            <option value='speaker' {% if export_target == 'speaker' %}selected{% endif %}>{% translate 'Speakers' %}</option>
+            <option value='session' {% if export_target == 'session' %}selected{% endif %}>{% translate 'Sessions' %}</option>
+          </select>
+        </div>
+      </div>
+
+      <div data-export-panel='speaker'>
+        <form method='post'>
+          {% csrf_token %}
+          <input type='hidden' name='action' value='export'>
+          <input type='hidden' name='export_target' value='speaker'>
+
+          {% if speaker_export_form.non_field_errors %}
+            <div class='alert alert-danger'>
+              {{ speaker_export_form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <fieldset>
+            <legend>{% translate 'Dataset' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right'>
+                {{ speaker_export_form.target.label }}
+                {% if speaker_export_form.target.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in speaker_export_form.target %}
+                  <div class='form-check form-check-inline'>
+                    {{ radio.tag }}
+                    <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                      {{ radio.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+                {% for error in speaker_export_form.target.errors %}
+                  <div class='invalid-feedback d-block'>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Data fields' %}</legend>
+            {% for field in speaker_export_form.export_fields %}
+              {{ field.as_field_group }}
+            {% endfor %}
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Export settings' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right'>
+                {{ speaker_export_form.export_format.label }}
+                {% if speaker_export_form.export_format.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in speaker_export_form.export_format %}
+                  <div class='form-check form-check-inline'>
+                    {{ radio.tag }}
+                    <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                      {{ radio.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div data-delimiter-group>
+              <div class='form-group row'>
+                <label class='col-md-3 col-form-label text-md-right'>
+                  {{ speaker_export_form.data_delimiter.label }}
+                </label>
+                <div class='col-md-9'>
+                  {% for radio in speaker_export_form.data_delimiter %}
+                    <div class='form-check form-check-inline'>
+                      {{ radio.tag }}
+                      <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                        {{ radio.choice_label }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <button type='submit' class='btn btn-success btn-lg'>
+            <i class='fa fa-download'></i>
+            {% translate 'Export speakers' %}
+          </button>
+        </form>
+      </div>
+
+      <div data-export-panel='session'>
+        <form method='post'>
+          {% csrf_token %}
+          <input type='hidden' name='action' value='export'>
+          <input type='hidden' name='export_target' value='session'>
+
+          {% if session_export_form.non_field_errors %}
+            <div class='alert alert-danger'>
+              {{ session_export_form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <fieldset>
+            <legend>{% translate 'Dataset' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right' for='{{ session_export_form.target.id_for_label }}'>
+                {{ session_export_form.target.label }}
+                {% if session_export_form.target.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {{ session_export_form.target }}
+                {% for error in session_export_form.target.errors %}
+                  <div class='invalid-feedback d-block'>{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Data fields' %}</legend>
+            {% for field in session_export_form.export_fields %}
+              {{ field.as_field_group }}
+            {% endfor %}
+          </fieldset>
+
+          <fieldset>
+            <legend>{% translate 'Export settings' %}</legend>
+            <div class='form-group row'>
+              <label class='col-md-3 col-form-label text-md-right'>
+                {{ session_export_form.export_format.label }}
+                {% if session_export_form.export_format.field.required %}*{% endif %}
+              </label>
+              <div class='col-md-9'>
+                {% for radio in session_export_form.export_format %}
+                  <div class='form-check form-check-inline'>
+                    {{ radio.tag }}
+                    <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                      {{ radio.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div data-delimiter-group>
+              <div class='form-group row'>
+                <label class='col-md-3 col-form-label text-md-right'>
+                  {{ session_export_form.data_delimiter.label }}
+                </label>
+                <div class='col-md-9'>
+                  {% for radio in session_export_form.data_delimiter %}
+                    <div class='form-check form-check-inline'>
+                      {{ radio.tag }}
+                      <label class='form-check-label' for='{{ radio.id_for_label }}'>
+                        {{ radio.choice_label }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <button type='submit' class='btn btn-success btn-lg'>
+            <i class='fa fa-download'></i>
+            {% translate 'Export sessions' %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script defer src='{% static 'orga/js/import_export_settings.js' %}'></script>
+{% endblock content %}
