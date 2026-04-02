@@ -205,7 +205,11 @@
                                                                                    {% if var.initial %}checked="checked"{% endif %}
                                                                                    id="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
                                                                                    name="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
-                                                                                   data-exclusive-prefix="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_"
+                                                                                   {% if c.max_count == 1 %}
+                                                                                       data-exclusive-prefix="cp_{{ form.cartpos.pk }}_category_{{ c.category.pk }}_"
+                                                                                   {% elif not c.multi_allowed %}
+                                                                                       data-exclusive-prefix="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_"
+                                                                                   {% endif %}
                                                                                    title="{% blocktrans with item=item.name|event_localize var=var.value|event_localize %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
                                                                         </label>
                                                                     {% else %}
@@ -313,7 +317,12 @@
                                                                 <input type="checkbox" value="1"
                                                                        {% if item.initial %}checked="checked"{% endif %}
                                                                        name="cp_{{ form.cartpos.pk }}_item_{{ item.id }}"
-                                                                       id="cp_{{ form.cartpos.pk }}_item_{{ item.id }}">
+                                                                       id="cp_{{ form.cartpos.pk }}_item_{{ item.id }}"
+                                                                       {% if c.max_count == 1 %}
+                                                                           data-exclusive-prefix="cp_{{ form.cartpos.pk }}_category_{{ c.category.pk }}_"
+                                                                       {% elif not c.multi_allowed %}
+                                                                           data-exclusive-prefix="cp_{{ form.cartpos.pk }}_item_{{ item.id }}_"
+                                                                       {% endif %}>
                                                             </label>
                                                         {% else %}
                                                             <input type="number" class="form-control input-product-count" placeholder="0" min="0"
