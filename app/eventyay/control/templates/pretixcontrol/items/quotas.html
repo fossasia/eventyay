@@ -33,12 +33,12 @@
                 {% endif %}
             </p>
 
-            <a href="{% url "control:event.products.quotas.add" organizer=request.event.organizer.slug event=request.event.slug %}"
+            <a href="{% url 'control:event.products.quotas.add' organizer=request.event.organizer.slug event=request.event.slug %}"
                     class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Add capacity rule" %}</a>
         </div>
     {% else %}
         <p>
-            <a href="{% url "control:event.products.quotas.add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Add capacity rule" %}
+            <a href="{% url 'control:event.products.quotas.add' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Add capacity rule" %}
             </a>
         </p>
         <div class="table-responsive">
@@ -47,18 +47,18 @@
                 <tr>
                     <th>{% trans "Capacity rule name" %}
                         <a href="?{% url_replace request 'ordering' '-name' %}"><i class="fa fa-caret-down"></i></a>
-                        <a href="?{% url_replace request 'ordering' 'name' %}"><i class="fa fa-caret-up"></i></a></th>
+                        <a href="?{% url_replace request 'ordering' 'name' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
                     <th>{% trans "Products" %}</th>
                     {% if request.event.has_subevents %}
                         <th>{% trans "Date" context "subevent" %}
                             <a href="?{% url_replace request 'ordering' '-date' %}"><i class="fa fa-caret-down"></i></a>
-                            <a href="?{% url_replace request 'ordering' 'date' %}"><i class="fa fa-caret-up"></i></a></th>
+                            <a href="?{% url_replace request 'ordering' 'date' %}"><i class="fa fa-caret-up"></i></a>
                         </th>
                     {% endif %}
                     <th>{% trans "Total capacity" %}
                         <a href="?{% url_replace request 'ordering' '-size' %}"><i class="fa fa-caret-down"></i></a>
-                        <a href="?{% url_replace request 'ordering' 'size' %}"><i class="fa fa-caret-up"></i></a></th>
+                        <a href="?{% url_replace request 'ordering' 'size' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
                     <th>{% trans "Available capacity" %}</th>
                     <th class="action-col-2"></th>
@@ -92,8 +92,8 @@
                         <td>{% include "pretixcontrol/items/fragment_quota_availability.html" with availability=q.cached_avail closed=q.closed %}</td>
                         <td class="text-right flip">
                             <a href="{% url "control:event.products.quotas.edit" organizer=request.event.organizer.slug event=request.event.slug quota=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
-                            <a href="{% url "control:event.products.quotas.add" organizer=request.event.organizer.slug event=request.event.slug %}?copy_from={{ q.id }}"
-                               class="btn btn-sm btn-default" title="{% trans "Clone" %}" data-toggle="tooltip">
+                            <a href="{% url 'control:event.products.quotas.add' organizer=request.event.organizer.slug event=request.event.slug %}?copy_from={{ q.id }}"
+                               class="btn btn-sm btn-default" title="{% trans 'Clone' %}" data-toggle="tooltip">
                                 <span class="fa fa-copy"></span>
                             </a>
                             <a href="{% url "control:event.products.quotas.delete" organizer=request.event.organizer.slug event=request.event.slug quota=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>

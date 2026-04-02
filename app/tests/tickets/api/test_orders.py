@@ -2322,7 +2322,7 @@ def test_order_create_item_validation(token_client, organizer, event, item, item
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == {'positions': [{'item': ['The product "Budget Ticket" is not assigned to a quota.']}]}
+    assert resp.data == {'positions': [{'item': ['The product "Budget Ticket" is not assigned to a capacity.']}]}
 
     with scopes_disabled():
         quota.variations.add(var1)
@@ -3038,8 +3038,8 @@ def test_order_create_quota_validation(token_client, organizer, event, item, quo
     assert resp.status_code == 400
     assert resp.data == {
         'positions': [
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'item': ['There is not enough capacity available in "Budget Quota" to perform the operation.']},
+            {'item': ['There is not enough capacity available in "Budget Quota" to perform the operation.']},
         ]
     }
 
@@ -3054,7 +3054,7 @@ def test_order_create_quota_validation(token_client, organizer, event, item, quo
     assert resp.data == {
         'positions': [
             {},
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'item': ['There is not enough capacity available in "Budget Quota" to perform the operation.']},
         ]
     }
 
@@ -3092,7 +3092,7 @@ def test_order_create_quota_consume_cart(token_client, organizer, event, item, q
     assert resp.status_code == 400
     assert resp.data == {
         'positions': [
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'item': ['There is not enough capacity available in "Budget Quota" to perform the operation.']},
         ]
     }
 
@@ -3133,7 +3133,7 @@ def test_order_create_quota_consume_cart_expired(token_client, organizer, event,
     assert resp.status_code == 400
     assert resp.data == {
         'positions': [
-            {'item': ['There is not enough quota available on quota "Budget Quota" to perform the operation.']},
+            {'item': ['There is not enough capacity available in "Budget Quota" to perform the operation.']},
         ]
     }
 

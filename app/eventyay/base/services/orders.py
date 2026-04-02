@@ -1473,7 +1473,7 @@ def notify_user_changed_order(order, user=None, auth=None, invoices=[]):
 class OrderChangeManager:
     error_messages = {
         'product_without_variation': _('You need to select a variation of the product.'),
-        'quota': _('The capacity {name} does not have enough space left to perform the operation.'),
+        'quota': _('The capacity {name} does not have enough capacity left to perform the operation.'),
         'quota_missing': _('There is no capacity defined that allows this operation.'),
         'product_invalid': _('The selected product is not active or has no price set.'),
         'complete_cancel': _('This operation would leave the order empty. Please cancel the order itself instead.'),

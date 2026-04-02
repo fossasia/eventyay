@@ -345,7 +345,7 @@ def test_cartpos_create_item_validation(token_client, organizer, event, item, it
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == ['The product "Budget Ticket" is not assigned to a quota.']
+    assert resp.data == ['The product "Budget Ticket" is not assigned to a capacity.']
 
     quota.variations.add(var1)
     resp = token_client.post(
@@ -663,7 +663,7 @@ def test_cartpos_create_quota_validation(token_client, organizer, event, item, q
         data=res,
     )
     assert resp.status_code == 400
-    assert resp.data == ['There is not enough quota available on quota "Budget Quota" to perform the operation.']
+    assert resp.data == ['There is not enough capacity available in "Budget Quota" to perform the operation.']
 
 
 @pytest.fixture

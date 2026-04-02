@@ -1,7 +1,7 @@
 {% load i18n %}
 <a class="quotabox" data-toggle="tooltip_html" data-placement="top"
-        title="{% trans "Capacity:" %} {{ q.name }}{% if q.cached_avail.1 is not None %}<br>{% blocktrans with num=q.cached_avail.1 %}Currently available: {{ num }}{% endblocktrans %}{% endif %}"
-    href="{% url "control:event.products.quotas.show" event=q.event.slug organizer=q.event.organizer.slug quota=q.pk %}">
+        title="{% trans 'Capacity:' %} {{ q.name }}{% if q.cached_avail.1 is not None %}<br>{% blocktrans with num=q.cached_avail.1 %}Currently available: {{ num }}{% endblocktrans %}{% endif %}"
+    href="{% url 'control:event.products.quotas.show' event=q.event.slug organizer=q.event.organizer.slug quota=q.pk %}">
     {% if q.size|default_if_none:"NONE" == "NONE" %}
         <div class="progress">
         </div>

@@ -249,7 +249,7 @@ class Voucher(LoggedModel):
                 raise ValidationError(_('You cannot select a capacity and a specific product at the same time.'))
         elif product:
             if product.event != event:
-                raise ValidationError(_('You cannot select an product that belongs to a different event.'))
+                raise ValidationError(_('You cannot select a product that belongs to a different event.'))
             if variation and (not product or not product.has_variations):
                 raise ValidationError(
                     _('You cannot select a variation without having selected a product that provides variations.')

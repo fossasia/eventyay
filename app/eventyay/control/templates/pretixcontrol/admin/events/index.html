@@ -131,7 +131,7 @@
                         {% endfor %}
                         {% if e.first_quotas|length > 3 %}
                             <a href='{% url "control:event.products.quotas" organizer=e.organizer.slug event=e.slug %}'
-                                    class="quotabox-more" data-toggle="tooltip" title="{% trans "More capacities" %}"
+                                    class="quotabox-more" data-toggle="tooltip" title="{% trans 'More capacities' %}"
                                     data-placement="top">
                                 &middot;&middot;&middot;
                             </a>
