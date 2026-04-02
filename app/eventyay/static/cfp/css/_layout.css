@@ -269,6 +269,10 @@ header {
   min-width: 0;
 }
 
+.event-brand--has-logo {
+  padding-left: 1.75rem;
+}
+
 .event-hero-overlay {
   display: inline-flex;
   border-radius: 14px;
@@ -281,10 +285,12 @@ header {
   flex-direction: column;
 }
 
-.event-home-back {
-  display: inline-block;
+header > .event-home-back {
   align-self: flex-start;
   margin: 0 0 0.35rem;
+  padding-left: 1.75rem;
+  box-sizing: border-box;
+  display: inline-block;
   text-decoration: none;
   color: #fff;
 }
@@ -442,7 +448,7 @@ footer {
   margin-right: auto;
   margin-left: auto;
   max-width: 1600px;
-  margin-top: 3.8rem !important;
+  margin-top: 1.5rem;
 }
 
 .url-links {
@@ -485,7 +491,7 @@ footer {
 @media (max-width: 992px) {
   #main-container {
     max-width: 960px;
-    margin-top: 3.8rem !important;
+    margin-top: 1.5rem;
   }
 }
 
@@ -617,6 +623,11 @@ footer {
   .event-brand {
     flex-wrap: wrap;
     gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .event-brand--has-logo {
+    padding-left: 12px;
   }
 
   .event-hero-text .event-title {
@@ -728,7 +739,7 @@ footer {
   }
 
   .event-home-back-icon {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
   }
 
   .event-home-back-label {
@@ -739,11 +750,19 @@ footer {
     gap: 0.75rem;
   }
 
+  .event-brand--has-logo {
+    padding-left: 12px;
+  }
+
+  header > .event-home-back {
+    padding-left: 12px;
+  }
+
   #main-container {
     padding: 0;
     padding-top: 20px;
     width: 100%;
-    margin-top: 3.8rem !important;
+    margin-top: 1.5rem;
 
     main {
       width: 100%;

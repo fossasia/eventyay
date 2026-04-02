@@ -122,9 +122,17 @@
         {% endblock site_notice %}
         <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
             <header>
+                {% if current_event and not is_html_export %}
+                    <a href="{% url 'presale:index' %}" class="event-home-back d-print-none" aria-label="{% translate 'Home' %}">
+                        <span class="event-home-back-pill">
+                            <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
+                            <span class="event-home-back-label" aria-hidden="true">{% translate 'Home' %}</span>
+                        </span>
+                    </a>
+                {% endif %}
                 <div class="event-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand">
+                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% endif %}">
                             <div class="event-logo">
                                 <a href="{% block nav_link %}{% endblock nav_link %}">
                                     {% block event_logo %}
@@ -136,14 +144,6 @@
                             </div>
                             {% if current_event %}
                                 <div class="event-hero-text">
-                                    {% if not is_html_export %}
-                                        <a href="{% url 'presale:index' %}" class="event-home-back d-print-none" aria-label="{% translate 'Home' %}">
-                                            <span class="event-home-back-pill">
-                                                <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
-                                                <span class="event-home-back-label" aria-hidden="true">{% translate 'Home' %}</span>
-                                            </span>
-                                        </a>
-                                    {% endif %}
                                     <div class="event-title">{{ current_event.name|event_localize }}</div>
                                     {% if current_event.date_from %}
                                         {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
