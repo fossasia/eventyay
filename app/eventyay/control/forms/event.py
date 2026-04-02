@@ -47,8 +47,9 @@ from eventyay.control.forms import (
 from eventyay.control.forms.widgets import Select2
 from eventyay.helpers.countries import CachedCountries
 from eventyay.multidomain.urlreverse import build_absolute_uri
-from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
+from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.plugins.banktransfer.payment import BankTransfer
+
 
 # Shared constants for require_registered_account_for_tickets field
 REQUIRE_REGISTERED_ACCOUNT_LABEL = _('Only allow registered accounts to get a ticket')
@@ -126,15 +127,15 @@ class EventWizardFoundationForm(forms.Form):
         cleaned_data = super().clean()
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
-        
+
         if not content_locales:
             return cleaned_data
-        
+
         if invalid_content_locales := set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
             })
-        
+
         return cleaned_data
 
 
