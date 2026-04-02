@@ -555,3 +555,12 @@ class WidgetSettings(EventSettingsPermission, FormView):
 
     def get_success_url(self) -> str:
         return self.request.event.orga_urls.widget_settings
+
+
+class ImportExportSettings(EventSettingsPermission, TemplateView):
+    template_name = 'orga/settings/import_export.html'
+
+    def get_context_data(self, **kwargs):
+        result = super().get_context_data(**kwargs)
+        result['event'] = self.request.event
+        return result

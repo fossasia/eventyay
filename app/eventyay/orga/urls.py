@@ -113,7 +113,11 @@ urlpatterns = [
                     event.WidgetSettings.as_view(),
                     name='settings.widget',
                 ),
-
+                path(
+                    'settings/import-export/',
+                    event.ImportExportSettings.as_view(),
+                    name='settings.import_export',
+                ),
                 path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
