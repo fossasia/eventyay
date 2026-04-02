@@ -329,7 +329,7 @@ class ProductCreateForm(I18nModelForm):
                 choices.remove(choices[1])
 
             self.fields['quota_option'] = forms.ChoiceField(
-                label=_('Quota options'),
+                label=_('Capacity options'),
                 widget=forms.RadioSelect,
                 choices=choices,
                 initial=self.NONE,

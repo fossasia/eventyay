@@ -6,14 +6,14 @@
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
             <div class="navigation-title">
-                <h1>{% trans "Quotas" %}</h1>
+                <h1>{% trans "Capacity" %}</h1>
             </div>
             {% include "pretixcontrol/event/component_link.html" %}
         </div>
     </nav>
     <p>
         {% blocktrans trimmed %}
-        To ensure your products are available as intended, you need to set quotas. Quotas determine how many instances of your product can be sold on the platform. This allows you to configure whether your event can accommodate an unlimited number of attendees or if the number of attendees is capped. You can assign a product to multiple quotas to meet more complex requirements, such as limiting the total number of tickets sold while also restricting the number of specific ticket types simultaneously.
+        Define how many tickets can be sold. You can set limits for the entire event or for individual ticket types. Multiple ticket types can also share a common capacity.
         {% endblocktrans %}
     </p>
     {% if request.event.has_subevents %}
@@ -34,18 +34,18 @@
             </p>
 
             <a href="{% url "control:event.products.quotas.add" organizer=request.event.organizer.slug event=request.event.slug %}"
-                    class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create a new quota" %}</a>
+                    class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Add capacity rule" %}</a>
         </div>
     {% else %}
         <p>
-            <a href="{% url "control:event.products.quotas.add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new quota" %}
+            <a href="{% url "control:event.products.quotas.add" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Add capacity rule" %}
             </a>
         </p>
         <div class="table-responsive">
             <table class="table table-hover table-quotas">
                 <thead>
                 <tr>
-                    <th>{% trans "Quota name" %}
+                    <th>{% trans "Capacity rule name" %}
                         <a href="?{% url_replace request 'ordering' '-name' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'name' %}"><i class="fa fa-caret-up"></i></a></th>
                     </th>
@@ -60,7 +60,7 @@
                         <a href="?{% url_replace request 'ordering' '-size' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'size' %}"><i class="fa fa-caret-up"></i></a></th>
                     </th>
-                    <th>{% trans "Capacity left" %}</th>
+                    <th>{% trans "Available capacity" %}</th>
                     <th class="action-col-2"></th>
                 </tr>
                 </thead>

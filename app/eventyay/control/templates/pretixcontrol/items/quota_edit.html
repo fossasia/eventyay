@@ -15,7 +15,7 @@
                 {% if question %}
                     <h1>{% blocktrans with name=quota.name %}Quota: {{ name }}{% endblocktrans %}</h1>
                 {% else %}
-                    <h1>{% trans "Quota" %}</h1>
+                    <h1>{% trans "Capacity rule" %}</h1>
                 {% endif %}
             </div>
             {% include "pretixcontrol/event/component_link.html" %}
@@ -25,7 +25,8 @@
         {% csrf_token %}
         {% bootstrap_form_errors form %}
         <fieldset>
-            <legend>{% trans "General information" %}</legend>
+            <legend>{% trans "Capacity settings" %}</legend>
+            <!-- work to be done -->
             {% bootstrap_field form.name layout="control" %}
             {% bootstrap_field form.size layout="control" %}
             {% if form.subevent %}
@@ -33,13 +34,10 @@
             {% endif %}
         </fieldset>
         <fieldset>
-            <legend>{% trans "Items" %}</legend>
+            <legend>{% trans "Applies to ticket types" %}</legend>
             <p>
                 {% blocktrans trimmed %}
-                    Please select the products or product variations this quota should be applied to. If you apply two
-                    quotas to the same product, it will only be available if
-                    <strong>both</strong> quotas have capacity
-                    left.
+                    Select which ticket types or products share this capacity. If multiple ticket types or products are selected, they will use the same pool of available capacity. If a ticket or product type is limited by multiple capacities, it will only be available while all limits still have remaining capacity.
                 {% endblocktrans %}
             </p>
             {% bootstrap_field form.productvars layout="control" %}
