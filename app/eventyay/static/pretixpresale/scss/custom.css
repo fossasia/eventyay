@@ -466,8 +466,8 @@ header .header-row-right {
 }
 
 .variation-toggle-box {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 0;
+    padding-right: 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -480,12 +480,13 @@ header .header-row-right {
     justify-content: center;
     gap: 6px;
     width: 100%;
-    max-width: 220px;
-    min-height: 38px;
+    max-width: none;
+    height: 36px;
 
-    padding: 6px 10px;
+    padding: 0 10px;
     border: 1px solid var(--color-grey-light, #b8b8b8);
     border-radius: 4px;
+    box-sizing: border-box;
     text-decoration: none;
     white-space: nowrap;
     word-break: keep-all;
