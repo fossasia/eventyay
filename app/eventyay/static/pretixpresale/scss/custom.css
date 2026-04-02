@@ -459,18 +459,13 @@ header .header-row-right {
 }
 
 /* Ticket variant toggle and hierarchy fixes for custom CSS mode */
-.item-with-variations > summary.product-row.headline {
+.item-with-variations > .headline {
     display: block;
     width: 100%;
     text-align: left;
 }
 
-.item-with-variations > summary.product-row.headline > .col-md-8,
-.item-with-variations > summary.product-row.headline > .col-xs-12 {
-    text-align: left;
-}
-
-.item-with-variations .product-row.headline > .availability-box {
+.item-with-variations > .headline > .availability-box {
     padding-left: 15px;
     padding-right: 15px;
     display: flex;
@@ -479,7 +474,7 @@ header .header-row-right {
     text-align: right;
 }
 
-.item-with-variations .variation-toggle {
+.variation-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -496,48 +491,48 @@ header .header-row-right {
     color: var(--color-primary);
 }
 
-.item-with-variations .variation-toggle:hover,
-.item-with-variations .variation-toggle:focus {
+.variation-toggle:hover,
+.variation-toggle:focus {
     text-decoration: none;
     color: var(--color-primary);
 }
 
-.item-with-variations .variation-toggle .variation-toggle-label {
+.variation-toggle-label {
     line-height: 1;
     white-space: nowrap;
     color: inherit;
 }
 
-.item-with-variations .variation-toggle .variation-toggle-caret {
+.variation-toggle-caret {
     display: inline-block;
     width: 10px;
     text-align: center;
     line-height: 1;
 }
 
-.item-with-variations .variation-toggle .variation-toggle-caret::before {
+.variation-toggle-caret::before {
     content: '>';
 }
 
-.item-with-variations[open] .variation-toggle .variation-toggle-caret::before,
-.item-with-variations.details-open .variation-toggle .variation-toggle-caret::before {
+.item-with-variations[open] .variation-toggle-caret::before,
+.item-with-variations.details-open .variation-toggle-caret::before {
     content: 'v';
 }
 
-.item-with-variations .variation-list > .product-row.variation {
+.variation-option {
     padding-left: 18px;
 }
 
-.item-with-variations .variation-list > .variation-option > div {
+.variation-option > div {
     padding-left: 15px;
     padding-right: 15px;
 }
 
-.item-with-variations .variation-list > .variation-option > div:first-child {
+.variation-option > div:first-child {
     position: relative;
 }
 
-.item-with-variations .variation-list > .variation-option > div:first-child::before {
+.variation-option > div:first-child::before {
     content: '';
     position: absolute;
     top: 12px;
@@ -547,7 +542,7 @@ header .header-row-right {
     background: var(--color-grey-light, #d0d0d0);
 }
 
-.item-with-variations .variation-list > .variation-option > div:first-child::after {
+.variation-option > div:first-child::after {
     content: '';
     position: absolute;
     top: 24px;
@@ -557,11 +552,11 @@ header .header-row-right {
     background: var(--color-grey-light, #d0d0d0);
 }
 
-.item-with-variations .variation-list > .product-row.variation h5 {
+.variation-option h5 {
     padding-left: 16px;
 }
 
-.item-with-variations .variation-selector-label.is-exclusive-disabled,
-.item-with-variations .product-row.variation.is-exclusive-disabled {
+.variation-selector-label.is-exclusive-disabled,
+.variation-option.is-exclusive-disabled {
     opacity: 0.55;
 }
