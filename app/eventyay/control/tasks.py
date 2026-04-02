@@ -1,10 +1,13 @@
+import json
 import logging
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import ProtectedError
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer, User
+from eventyay.base.models.log import LogEntry
 from eventyay.celery_app import app
 from eventyay.core.tasks import EventTask
 
@@ -43,21 +46,40 @@ def delete_organizer_data(organizer_id: int, user_id: int | None = None) -> None
                 event.delete()
 
         with transaction.atomic():
-            organizer = Organizer.objects.get(pk=organizer_id)
+            try:
+                organizer = Organizer.objects.get(pk=organizer_id)
+            except Organizer.DoesNotExist:
+                logger.info('Skipping final organizer cleanup because organizer %s was already deleted', organizer_id)
+                return
+
             organizer.delete_sub_objects()
             organizer.delete()
 
-        if user is not None:
-            user.log_action(
-                'pretix.organizer.deleted',
-                user=user,
-                data={
+        LogEntry.objects.create(
+            content_type=ContentType.objects.get_for_model(Organizer),
+            object_id=organizer_id,
+            user=user,
+            action_type='eventyay.organizer.deleted',
+            data=json.dumps(
+                {
                     'organizer_id': organizer_id,
                     'name': organizer_name,
                 },
-            )
+                sort_keys=True,
+            ),
+        )
     except ProtectedError as exc:
         protected_labels = ', '.join(sorted({obj._meta.label for obj in exc.protected_objects})) or 'unknown'
+        organizer = Organizer.objects.filter(pk=organizer_id).first()
+        if organizer is not None:
+            organizer.log_action(
+                'eventyay.organizer.deletion.failed',
+                user=user,
+                data={
+                    'name': organizer_name,
+                    'reason': protected_labels,
+                },
+            )
         logger.warning(
             'Async organizer deletion blocked for organizer %s by protected objects: %s',
             organizer_slug,

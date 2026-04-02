@@ -226,12 +226,22 @@ class OrganizerDelete(AdministratorPermissionRequiredMixin, FormView):
         organizer_id = self.request.organizer.pk
         user_id = self.request.user.pk
 
+        self.request.organizer.log_action(
+            'eventyay.organizer.deletion.scheduled',
+            user=self.request.user,
+            data={
+                'name': str(self.request.organizer.name),
+            },
+        )
         transaction.on_commit(
             lambda: delete_organizer_data.apply_async(kwargs={'organizer_id': organizer_id, 'user_id': user_id})
         )
         messages.success(
             self.request,
-            _('The organizer deletion has been scheduled and will continue in the background.'),
+            _(
+                'The organizer deletion has been scheduled and will continue in the background. '
+                'If the organizer is still visible after a short while, check the organizer logs for the outcome.'
+            ),
         )
         return redirect(self.get_success_url())
 
