@@ -96,7 +96,7 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
                 if avail[0] != Quota.AVAILABILITY_OK or (avail[1] is not None and avail[1] < 1):
                     raise ValidationError(
                         gettext_lazy(
-                            'There is not enough capacity available on capacity "{}" to perform the operation.'
+                            'There is not enough capacity available in "{}" to perform the operation.'
                         ).format(quota.name)
                     )
             attendee_name = validated_data.pop('attendee_name', '')

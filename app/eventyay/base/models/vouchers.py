@@ -70,7 +70,7 @@ class Voucher(LoggedModel):
     :type product: Product
     :param variation: If set, the variation to sell
     :type variation: ProductVariation
-    :param quota: If set, the capacity to choose an product from
+    :param quota: If set, the capacity to choose a product from
     :type quota: Quota
     :param comment: An internal comment that will only be visible to staff, and never displayed to the user
     :type comment: str
@@ -80,8 +80,8 @@ class Voucher(LoggedModel):
 
     Various constraints apply:
 
-    * You need to either select a capacity or an product
-    * If you select an product that has variations but do not select a variation, you cannot set block_quota
+    * You need to either select a capacity or a product
+    * If you select a product that has variations but do not select a variation, you cannot set block_quota
     """
 
     event = models.ForeignKey(
@@ -126,7 +126,7 @@ class Voucher(LoggedModel):
         default=False,
         verbose_name=_('Reserve ticket from capacity'),
         help_text=_(
-            "If activated, this voucher will be substracted from the affected product's capacities, such that it is "
+            "If activated, this voucher will be subtracted from the affected product's capacities, such that it is "
             'guaranteed that anyone with this voucher code does receive a ticket.'
         ),
     )

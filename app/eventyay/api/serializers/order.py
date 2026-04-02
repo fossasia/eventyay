@@ -1368,7 +1368,7 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                                 if quota_avail_cache[quota][1] < 0:
                                     errs[i]['product'] = [
                                         gettext_lazy(
-                                            'There is not enough capacity available on capacity "{}" to perform the operation.'
+                                            'There is not enough capacity available in "{}" to perform the operation.'
                                         ).format(quota.name)
                                     ]
 
