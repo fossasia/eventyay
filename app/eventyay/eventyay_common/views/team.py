@@ -420,7 +420,6 @@ class TeamUpdateView(
 
 
 class TeamDeleteView(
-    UnifiedTeamManagementRedirectMixin,
     OrganizerDetailViewMixin,
     OrganizerPermissionRequiredMixin,
     DeleteView,
@@ -431,9 +430,6 @@ class TeamDeleteView(
     template_name = 'eventyay_common/organizers/teams/team_delete.html'
     context_object_name = 'team'
     permission = 'can_change_teams'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(UnifiedTeamManagementRedirectMixin, self).dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
         return get_object_or_404(Team, organizer=self.request.organizer, pk=self.kwargs.get('team'))

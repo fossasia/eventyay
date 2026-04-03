@@ -694,17 +694,16 @@ class ReviewAssignment(EventPermissionRequired, FormView):
         )
         return_path = self.request.get_full_path()
 
-        def org_allows_delete(team):
-            return (
-                org.teams.exclude(pk=team.pk)
-                .filter(can_change_teams=True, members__isnull=False)
-                .exists()
-            )
+        admin_team_ids = set(
+            org.teams.filter(can_change_teams=True, members__isnull=False)
+            .values_list('pk', flat=True)
+            .distinct()
+        )
 
         rows = []
         for team in self.review_teams:
             delete_confirm_url = None
-            if can_manage_teams and org_allows_delete(team):
+            if can_manage_teams and bool(admin_team_ids - {team.pk}):
                 delete_confirm_url = (
                     reverse(
                         'eventyay_common:organizer.team.delete',
@@ -717,7 +716,7 @@ class ReviewAssignment(EventPermissionRequired, FormView):
                 {
                     'team': team,
                     'teams_tab_url': team.get_orga_teams_tab_url(next_url=return_path),
-                    'show_delete': can_manage_teams,
+                    'can_manage_teams': can_manage_teams,
                     'delete_confirm_url': delete_confirm_url,
                 }
             )

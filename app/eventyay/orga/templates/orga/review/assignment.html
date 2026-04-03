@@ -51,7 +51,7 @@
                     {% with team=row.team %}
                     <tr>
                         <td>
-                            {% if row.show_delete %}
+                            {% if row.can_manage_teams %}
                                 <a href="{{ row.teams_tab_url }}">{{ team.name }}</a>
                             {% else %}
                                 {{ team.name }}
@@ -84,7 +84,7 @@
                             </td>
                         {% endif %}
                         <td class="text-right">
-                            {% if row.show_delete %}
+                            {% if row.can_manage_teams %}
                                 <a href="{{ row.teams_tab_url }}" class="btn btn-sm btn-info" data-toggle="tooltip" data-placement="bottom" title="{{ phrases.base.edit }}">
                                     <i class="fa fa-edit"></i>
                                 </a>
