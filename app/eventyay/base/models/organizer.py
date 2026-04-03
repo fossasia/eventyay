@@ -32,6 +32,7 @@ from ..settings import settings_hierarkey
 from . import BillingInvoice
 from .auth import User
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -277,16 +278,10 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
 
         from eventyay.base.models.log import LogEntry
 
-        logger.info('Deleting organizer sub-objects for organizer %s', self.slug)
         for e in self.events.all():
-            logger.info('Deleting event %s for organizer %s', e.slug, self.slug)
             e.delete_sub_objects()
             e.delete()
-            logger.info('Deleted event %s for organizer %s', e.slug, self.slug)
-        logger.info('Clearing team API token log references for organizer %s', self.slug)
-        updated_log_entries = LogEntry.all.filter(api_token__team__organizer=self).update(api_token=None)
-        logger.info('Cleared %s team API token log references for organizer %s', updated_log_entries, self.slug)
-        logger.info('Deleting teams for organizer %s', self.slug)
+        LogEntry.all.filter(api_token__team__organizer=self).update(api_token=None)
         try:
             self.teams.all().delete()
         except ProtectedError as exc:
@@ -295,7 +290,6 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
                 'Team deletion blocked for organizer %s by protected objects: %s', self.slug, protected_labels
             )
             raise
-        logger.info('Finished deleting organizer sub-objects for organizer %s', self.slug)
 
     def has_unpaid_invoice(self):
         # Check if Organizer has unpaid invoices which status is pending or expired
