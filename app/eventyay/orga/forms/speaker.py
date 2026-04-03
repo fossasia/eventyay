@@ -117,6 +117,7 @@ class SpeakerExportForm(ExportForm):
     def _get_submission_titles_value(self, obj):
         return list(obj.submissions.filter(event=self.event).values_list('title', flat=True))
 
+    # Called by ExportForm.get_data.
     def _prepare_object_data(self, obj):
         obj._profile = obj.event_profile(self.event)
         return obj

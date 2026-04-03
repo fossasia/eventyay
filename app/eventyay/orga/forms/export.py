@@ -114,9 +114,12 @@ class ExportForm(forms.Form):
             code = getattr(obj, 'code', None)
             if code:
                 object_data['ID'] = code
+            # TODO: Bad OOP design: The parent class has to know about the custom method `_prepare_object_data`
+            # that the child class added. May fix in the future.
             prepare_method = getattr(self, '_prepare_object_data', None)
             if prepare_method:
-                _obj = prepare_method(obj)
+                # This method mutates the input `obj`.
+                prepare_method(obj)
             for field in fields:
                 object_data[str(self.fields[field].label)] = self.get_object_attribute(obj, field)
 
