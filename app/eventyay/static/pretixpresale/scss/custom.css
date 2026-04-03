@@ -560,6 +560,8 @@ header .header-row-right {
 }
 
 .variation-selector-label.is-exclusive-disabled,
-.variation-option.is-exclusive-disabled {
+.item-checkbox-label.is-exclusive-disabled,
+.variation-option.is-exclusive-disabled,
+.product-row.simple.is-exclusive-disabled {
     opacity: 0.55;
 }
