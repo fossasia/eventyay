@@ -2,10 +2,13 @@ import statistics
 from collections import defaultdict
 from contextlib import suppress
 
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView
@@ -671,7 +674,54 @@ class ReviewAssignment(EventPermissionRequired, FormView):
     @context
     @cached_property
     def review_teams(self):
-        return self.request.event.teams.filter(is_reviewer=True)
+        """Teams that may review (dedicated reviewers or submission managers)."""
+        return (
+            self.request.event.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))
+            .distinct()
+            .order_by('name')
+            .prefetch_related('members', 'limit_tracks')
+        )
+
+    @context
+    @cached_property
+    def review_team_rows(self):
+        """Per-team rows for the assignment table (URLs, delete eligibility)."""
+        org = self.request.event.organizer
+        can_manage_teams = self.request.user.has_organizer_permission(
+            org,
+            'can_change_teams',
+            request=self.request,
+        )
+        return_path = self.request.get_full_path()
+
+        def org_allows_delete(team):
+            return (
+                org.teams.exclude(pk=team.pk)
+                .filter(can_change_teams=True, members__isnull=False)
+                .exists()
+            )
+
+        rows = []
+        for team in self.review_teams:
+            delete_confirm_url = None
+            if can_manage_teams and org_allows_delete(team):
+                delete_confirm_url = (
+                    reverse(
+                        'eventyay_common:organizer.team.delete',
+                        kwargs={'organizer': org.slug, 'team': team.pk},
+                    )
+                    + '?'
+                    + urlencode({'next': return_path})
+                )
+            rows.append(
+                {
+                    'team': team,
+                    'teams_tab_url': team.get_orga_teams_tab_url(next_url=return_path),
+                    'show_delete': can_manage_teams,
+                    'delete_confirm_url': delete_confirm_url,
+                }
+            )
+        return rows
 
     @context
     def tablist(self):
