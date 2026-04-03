@@ -196,8 +196,8 @@ var form_handlers = function (el) {
                 }
 
                 setDisabled($input, muted);
-                $input.closest(".variation-selector-label").toggleClass("is-exclusive-disabled", muted);
-                $input.closest(".product-row.variation").toggleClass("is-exclusive-disabled", muted);
+                $input.closest(".variation-selector-label, .item-checkbox-label").toggleClass("is-exclusive-disabled", muted);
+                $input.closest(".product-row").toggleClass("is-exclusive-disabled", muted);
             });
         };
 
