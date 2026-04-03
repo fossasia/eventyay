@@ -1,11 +1,14 @@
-{% extends "pretixcontrol/admin/base.html" %} {% load i18n %} {% block
-video_admin_content %}
+{% extends "pretixcontrol/admin/base.html" %}
+{% load i18n %}
+{% block video_admin_content %}
 <div class="video-admin-header">
   <h1 class="page-header">{% trans "Events" %}</h1>
 </div>
 <p class="text-muted page-intro">
-  {% trans "Overview of events managed by the Video Admin. Use the table actions
-  to manage settings, generate admin tokens, or clear data." %}
+  {% blocktrans trimmed %}
+Overview of events managed by the Video Admin. Use the table actions
+to manage settings, generate admin tokens, or clear data.
+{% endblocktrans %}
 </p>
 <div class="video-admin-table-wrapper">
   <table class="table table-striped table-hover video-admin-table">
@@ -34,7 +37,7 @@ video_admin_content %}
         </td>
         <td>
           {% if event.domain %}
-          <a href="https://{{ event.domain }}" target="_blank">
+          <a href="https://{{ event.domain }}" target="_blank" rel="noopener noreferrer">
             {{ event.domain }}
           </a>
           {% endif %}
@@ -46,7 +49,7 @@ video_admin_content %}
             href="{% url 'eventyay_admin:video_admin:event.clear' pk=event.pk %}"
             class="btn btn-warning btn-xs"
           >
-            <span class="fa fa-trash"></span> {% trans "Delete data" %}
+            <span class="fa fa-trash" aria-hidden="true"></span> {% trans "Delete data" %}
           </a>
           {% endif %}
         </td>
@@ -80,21 +83,20 @@ video_admin_content %}
       {% empty %}
       <tr>
   <td colspan="8">
-    <div class="text-center mt-5 text-muted">
+    <div class="text-center text-muted" style="margin-top: 30px;">
 
-      <h3 class="fw-bold" role="status">
-        {% trans "No events available" %}
-      </h3>
+  <h3 role="status">
+    {% trans "No events available" %}
+  </h3>
+    <p>{% trans "Looks like there are no events yet." %}</p>
 
-      <p>{% trans "Looks like there are no events yet." %}</p>
-
-      <a href="{% url 'control:organizers.add' %}" 
-         class="btn btn-primary mt-3"
-         aria-label="{% trans 'Create your first event' %}">
-        {% trans "Create Your First Event" %}
-      </a>
-
-    </div>
+    <a href="{% url 'control:organizers.add' %}"
+       class="btn btn-primary"
+      style="margin-top: 15px;"
+      aria-label="{% trans 'Create your first organizer' %}">
+      {% trans "Create Your First Organizer" %}
+    </a>
+  </div>
   </td>
 </tr>
       {% endfor %}
