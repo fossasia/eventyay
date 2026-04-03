@@ -23,9 +23,8 @@ def clear_event_data(event):
 @app.task(name='eventyay.control.delete_organizer')
 @scopes_disabled()
 def delete_organizer_data(organizer_id: int, user_id: int | None = None) -> None:
-    try:
-        organizer = Organizer.objects.get(pk=organizer_id)
-    except Organizer.DoesNotExist:
+    organizer = Organizer.objects.filter(pk=organizer_id).first()
+    if organizer is None:
         logger.warning('Skipping organizer deletion because organizer %s no longer exists', organizer_id)
         return
 
@@ -45,15 +44,17 @@ def delete_organizer_data(organizer_id: int, user_id: int | None = None) -> None
                 event.delete_sub_objects()
                 event.delete()
 
-        with transaction.atomic():
-            try:
-                organizer = Organizer.objects.get(pk=organizer_id)
-            except Organizer.DoesNotExist:
-                logger.info('Skipping final organizer cleanup because organizer %s was already deleted', organizer_id)
-                return
+        if not Organizer.objects.filter(pk=organizer_id).exists():
+            logger.info('Skipping final organizer cleanup because organizer %s was already deleted', organizer_id)
+            return
 
+        with transaction.atomic():
             organizer.delete_sub_objects()
-            organizer.delete()
+            deleted_count, _ = organizer.delete()
+
+        if deleted_count == 0:
+            logger.info('Skipping organizer deletion log because organizer %s was already deleted', organizer_id)
+            return
 
         LogEntry.objects.create(
             content_type=ContentType.objects.get_for_model(Organizer),
