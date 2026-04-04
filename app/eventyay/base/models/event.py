@@ -2792,7 +2792,7 @@ class Event(
                     name=_('Review'),
                     start=cfp_deadline,
                     end=self.datetime_from - relativedelta(months=-3),
-                    is_active=True,
+                    is_active=False,
                     position=0,
                 )
                 ReviewPhase.objects.create(
