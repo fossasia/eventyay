@@ -2778,7 +2778,6 @@ def _cancel_order_positions(
                 tax_rule=order.event.settings.tax_rate_default,
                 order=order,
             )
-            fee._calculate_tax()
             ocm.add_fee(fee)
 
         ocm.commit()

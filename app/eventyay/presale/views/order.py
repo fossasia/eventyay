@@ -17,6 +17,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q, Sum
+from django.db.models.query import prefetch_related_objects
 from django.http import (
     FileResponse,
     Http404,
@@ -1005,13 +1006,9 @@ class OrderPositionCancel(OrderPositionCancelMixin, EventViewMixin, OrderDetailM
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        cancelable_ids = [p.pk for p in self.order.user_cancelable_positions]
-        positions = (
-            self.order.positions.filter(pk__in=cancelable_ids)
-            .select_related('product', 'variation', 'addon_to')
-            .prefetch_related('addons')
-            .order_by('positionid')
-        )
+        positions = self.order.user_cancelable_positions
+        prefetch_related_objects(positions, 'variation', 'addon_to', 'addons')
+        positions = sorted(positions, key=lambda p: p.positionid)
 
         position_rows = []
         for position in positions:
