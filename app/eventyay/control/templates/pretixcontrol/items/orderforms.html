@@ -163,12 +163,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Attendee names" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="attendee_name_parts"
+                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.attendee_name_parts %}1{% else %}0{% endif %}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_attendee_name_parts" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -225,12 +228,15 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="attendee_email"
+                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.attendee_email %}1{% else %}0{% endif %}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_attendee_email" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -268,12 +274,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Company" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="company"
+                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.company %}1{% else %}0{% endif %}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_company" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -311,12 +320,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Job title" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="job_title"
+                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.job_title %}1{% else %}0{% endif %}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_job_title" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -354,12 +366,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Postal addresses" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="street"
+                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.street %}1{% else %}0{% endif %}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_street" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">

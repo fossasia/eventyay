@@ -95,7 +95,7 @@ class TestOrderFormDefaultFields:
 
     def test_orderforms_page_links_to_default_field_settings(self, organizer_client, organizer, event):
         Product.objects.create(
-            event=event,
+            event=event,    
             name='In-person Ticket',
             default_price=Decimal('20.00'),
             admission=True,
@@ -116,3 +116,58 @@ class TestOrderFormDefaultFields:
             in content
         )
         assert 'Name format' not in content
+
+    def test_orderforms_toggle_off_clears_product_overrides(self, organizer_client, organizer, event):
+        virtual = Product.objects.create(
+            event=event,
+            name='Virtual Ticket',
+            default_price=Decimal('5.00'),
+            admission=True,
+            position=1,
+        )
+        event.settings.attendee_emails_asked = True
+        event.settings.attendee_emails_required = False
+        set_system_question_field_overrides(event, 'attendee_email', {str(virtual.pk): 'required'})
+
+        response = organizer_client.post(
+            f'/control/event/{organizer.slug}/{event.slug}/orderforms/',
+            {
+                'settings-attendee_emails_asked_required': 'do_not_ask',
+            },
+            follow=True,
+        )
+
+        assert response.status_code == 200
+
+        event.settings.flush()
+        assert get_system_question_asked_required(event, 'attendee_email', virtual) == (False, False)
+        overrides = event.settings.get('system_question_product_overrides', as_type=dict) or {}
+        assert 'attendee_email' not in overrides
+
+    def test_orderforms_clear_override_marker_clears_product_overrides(self, organizer_client, organizer, event):
+        virtual = Product.objects.create(
+            event=event,
+            name='Virtual Ticket',
+            default_price=Decimal('5.00'),
+            admission=True,
+            position=1,
+        )
+        event.settings.attendee_emails_asked = False
+        event.settings.attendee_emails_required = False
+        set_system_question_field_overrides(event, 'attendee_email', {str(virtual.pk): 'required'})
+
+        response = organizer_client.post(
+            f'/control/event/{organizer.slug}/{event.slug}/orderforms/',
+            {
+                'settings-attendee_emails_asked_required': 'do_not_ask',
+                'settings-clear_override_attendee_email': '1',
+            },
+            follow=True,
+        )
+
+        assert response.status_code == 200
+
+        event.settings.flush()
+        assert get_system_question_asked_required(event, 'attendee_email', virtual) == (False, False)
+        overrides = event.settings.get('system_question_product_overrides', as_type=dict) or {}
+        assert 'attendee_email' not in overrides

@@ -99,6 +99,7 @@ function initOrderFormToggles() {
         const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
         const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
         const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
+        const toggleSwitch = toggleInput?.closest('.toggle-switch');
 
         if (!toggleInput) return;
 
@@ -107,7 +108,9 @@ function initOrderFormToggles() {
             const wrapper = requiredDropdown.closest('.required-status-wrapper');
             
             if (value === 'do_not_ask') {
-                toggleInput.checked = false;
+                const effectiveActive = toggleSwitch?.dataset.effectiveActive === '1';
+                toggleInput.checked = effectiveActive;
+                toggleInput.dataset.overrideActive = effectiveActive ? '1' : '0';
                 requiredDropdown.disabled = true;
                 
                 // Add .is-disabled class for interaction state
@@ -117,6 +120,10 @@ function initOrderFormToggles() {
                 }
             } else {
                 toggleInput.checked = true;
+                toggleInput.dataset.overrideActive = '0';
+                if (toggleSwitch) {
+                    toggleSwitch.dataset.effectiveActive = '0';
+                }
                 requiredDropdown.disabled = false;
 
                 // Update dropdown value and data-current attribute for semantic state
@@ -227,11 +234,19 @@ function initOrderFormToggles() {
         input.addEventListener('change', function () {
             const toggle = this.closest('.toggle-switch');
             const fieldId = toggle.dataset.fieldId;
+            const systemFieldId = toggle.dataset.systemFieldId;
+            const clearOverrideInput = systemFieldId
+                ? document.querySelector(`input[name="settings-clear_override_${systemFieldId}"]`)
+                : null;
             const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
             const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
             const hiddenInput = document.getElementById(fieldId);
 
             if (!hiddenInput) return;
+
+            if (clearOverrideInput) {
+                clearOverrideInput.value = '0';
+            }
 
             // Check if this is a boolean field (no dropdown) or asked_required field
             if (!requiredDropdown) {
@@ -240,6 +255,9 @@ function initOrderFormToggles() {
             } else {
                 // asked_required field
                 if (this.checked) {
+                    if (toggle.dataset.effectiveActive === '1') {
+                        toggle.dataset.effectiveActive = '0';
+                    }
                     // Activate - restore previous state or default to 'optional'
                     let state = hiddenInput.dataset.previousState || requiredDropdown.value;
                     if (!REQUIRED_STATES_ARRAY.includes(state)) {
@@ -250,6 +268,12 @@ function initOrderFormToggles() {
                     // Clear stored previous state
                     delete hiddenInput.dataset.previousState;
                 } else {
+                    if (toggle.dataset.effectiveActive === '1') {
+                        toggle.dataset.effectiveActive = '0';
+                        if (clearOverrideInput) {
+                            clearOverrideInput.value = '1';
+                        }
+                    }
                     // Deactivate - store current state before deactivating
                     if (hiddenInput.value !== 'do_not_ask') {
                         hiddenInput.dataset.previousState = hiddenInput.value;
