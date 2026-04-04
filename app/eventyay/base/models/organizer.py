@@ -13,7 +13,7 @@ from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext_lazy as _
-from django_scopes import scope
+from django_scopes import scope, scopes_disabled
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
@@ -31,6 +31,7 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from . import BillingInvoice
 from .auth import User
+
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +149,7 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
 
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this organizer."""
+
         base_path = settings.BASE_PATH
         base = '{base_path}/orga/organizer/{self.slug}/'
         settings = '{base_path}/orga/organizer/{self.slug}/settings/'
@@ -270,11 +272,24 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
             and not self.devices.exists()
         )
 
+    @scopes_disabled()
     def delete_sub_objects(self):
+        from django.db.models import ProtectedError
+
+        from eventyay.base.models.log import LogEntry
+
         for e in self.events.all():
             e.delete_sub_objects()
             e.delete()
-        self.teams.all().delete()
+        LogEntry.all.filter(api_token__team__organizer=self).update(api_token=None)
+        try:
+            self.teams.all().delete()
+        except ProtectedError as exc:
+            protected_labels = ', '.join(sorted({obj._meta.label for obj in exc.protected_objects})) or 'unknown'
+            logger.warning(
+                'Team deletion blocked for organizer %s by protected objects: %s', self.slug, protected_labels
+            )
+            raise
 
     def has_unpaid_invoice(self):
         # Check if Organizer has unpaid invoices which status is pending or expired
@@ -389,7 +404,7 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         return {
             attr
             for attr in attribs
-            if (attr.startswith("can_") or attr.startswith("is_"))
+            if (attr.startswith('can_') or attr.startswith('is_'))
             and getattr(self, attr, False) is True
             and self.has_permission(attr)
         }
@@ -428,14 +443,14 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             'Can edit submission details, change proposal states (accept/reject/waitlist), '
             'manage submission metadata, and oversee the review workflow. '
             'This provides full management permissions beyond standard reviewing.'
-        )
+        ),
     )
     is_reviewer = models.BooleanField(
         default=False,
         verbose_name=_('Reviewer — can only review submissions'),
         help_text=_(
             'Can review and provide feedback on submissions but cannot edit details or change submission states.'
-        )
+        ),
     )
     force_hide_speaker_names = models.BooleanField(
         verbose_name=_('Always hide speaker names'),
@@ -506,6 +521,7 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
 
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this team."""
+
         base = '{self.organizer.orga_urls.teams}{self.pk}/'
         delete = '{base}delete/'
 

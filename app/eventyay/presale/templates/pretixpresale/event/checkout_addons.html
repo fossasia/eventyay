@@ -63,7 +63,8 @@
                                     </p>
                                     {% for item in c.products %}
                                         {% if item.has_variations %}
-                                            <details class="item-with-variations" {% if event.settings.show_variations_expanded or item.expand %}open{% endif %}>
+                                            <details class="item-with-variations" {% if event.settings.show_variations_expanded or item.expand %}open{% endif %}
+                                                     id="addon-item-{{ form.cartpos.pk }}-{{ item.id }}">
                                                 <summary class="row-fluid product-row headline">
                                                     <div class="col-md-8 col-xs-12">
                                                         {% if item.picture %}
@@ -110,18 +111,29 @@
                                                             {{ item.min_price|money:event.currency }}
                                                         {% endif %}
                                                     </div>
-                                                    <div class="col-md-2 col-xs-6 availability-box">
-                                                        {% if not event.settings.show_variations_expanded %}
-                                                            <a href="#" data-toggle="variations" class="js-only">
-                                                                {% trans "Show variants" %}
-                                                            </a>
-                                                        {% endif %}
+                                                    <div class="col-md-2 col-xs-6 availability-box variation-toggle-box">
+                                                        <a href="#"
+                                                           data-toggle="variations"
+                                                           class="variation-toggle js-only"
+                                                           role="button"
+                                                           aria-controls="addon-item-{{ form.cartpos.pk }}-{{ item.id }}-variations"
+                                                           data-show-label="{% trans 'Show variants' %}"
+                                                           data-hide-label="{% trans 'Hide variants' %}">
+                                                            <span class="variation-toggle-caret" aria-hidden="true"></span>
+                                                            <span class="variation-toggle-label">
+                                                                {% if event.settings.show_variations_expanded or item.expand %}
+                                                                    {% trans "Hide variants" %}
+                                                                {% else %}
+                                                                    {% trans "Show variants" %}
+                                                                {% endif %}
+                                                            </span>
+                                                        </a>
                                                     </div>
                                                     <div class="clearfix"></div>
                                                 </summary>
-                                                <div class="variations {% if not event.settings.show_variations_expanded %}variations-collapsed{% endif %}">
+                                                <div id="addon-item-{{ form.cartpos.pk }}-{{ item.id }}-variations" class="variations variation-list {% if not event.settings.show_variations_expanded %}variations-collapsed{% endif %}">
                                                     {% for var in item.available_variations %}
-                                                        <div class="row-fluid product-row variation">
+                                                        <div class="row-fluid product-row variation variation-option">
                                                             <div class="col-md-8 col-xs-12">
                                                                 <h5>
                                                                     <label for="cp_{{ form.cartpos.pk }}_variation_{{ item.pk }}_{{ var.pk }}">
@@ -189,12 +201,21 @@
                                                                 <div class="col-md-2 col-xs-6 availability-box available">
                                                                     {% if c.max_count == 1 or not c.multi_allowed %}
                                                                         <label class="item-checkbox-label">
-                                                                            <input type="checkbox" value="1"
-                                                                                   {% if var.initial %}checked="checked"{% endif %}
-                                                                                   id="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
-                                                                                   name="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
-                                                                                   data-exclusive-prefix="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_"
-                                                                                   title="{% blocktrans with item=item.name|event_localize var=var.value|event_localize %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
+                                                                            {% if c.max_count == 1 %}
+                                                                                <input type="checkbox" value="1"
+                                                                                       {% if var.initial %}checked="checked"{% endif %}
+                                                                                       id="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
+                                                                                       name="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
+                                                                                       data-exclusive-prefix="cp_{{ form.cartpos.pk }}_category_{{ c.category.pk }}_"
+                                                                                       title="{% blocktrans with item=item.name|event_localize var=var.value|event_localize %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
+                                                                            {% else %}
+                                                                                <input type="checkbox" value="1"
+                                                                                       {% if var.initial %}checked="checked"{% endif %}
+                                                                                       id="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
+                                                                                       name="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_{{ var.id }}"
+                                                                                       data-exclusive-prefix="cp_{{ form.cartpos.pk }}_variation_{{ item.id }}_"
+                                                                                       title="{% blocktrans with item=item.name|event_localize var=var.value|event_localize %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
+                                                                            {% endif %}
                                                                         </label>
                                                                     {% else %}
                                                                         <input type="number" class="form-control input-product-count" placeholder="0" min="0"
@@ -298,10 +319,19 @@
                                                     <div class="col-md-2 col-xs-6 availability-box available">
                                                         {% if c.max_count == 1 or not c.multi_allowed %}
                                                             <label class="item-checkbox-label">
-                                                                <input type="checkbox" value="1"
-                                                                       {% if item.initial %}checked="checked"{% endif %}
-                                                                       name="cp_{{ form.cartpos.pk }}_item_{{ item.id }}"
-                                                                       id="cp_{{ form.cartpos.pk }}_item_{{ item.id }}">
+                                                                {% if c.max_count == 1 %}
+                                                                    <input type="checkbox" value="1"
+                                                                           {% if item.initial %}checked="checked"{% endif %}
+                                                                           name="cp_{{ form.cartpos.pk }}_item_{{ item.id }}"
+                                                                           id="cp_{{ form.cartpos.pk }}_item_{{ item.id }}"
+                                                                           data-exclusive-prefix="cp_{{ form.cartpos.pk }}_category_{{ c.category.pk }}_">
+                                                                {% else %}
+                                                                    <input type="checkbox" value="1"
+                                                                           {% if item.initial %}checked="checked"{% endif %}
+                                                                           name="cp_{{ form.cartpos.pk }}_item_{{ item.id }}"
+                                                                           id="cp_{{ form.cartpos.pk }}_item_{{ item.id }}"
+                                                                           data-exclusive-prefix="cp_{{ form.cartpos.pk }}_item_{{ item.id }}_">
+                                                                {% endif %}
                                                             </label>
                                                         {% else %}
                                                             <input type="number" class="form-control input-product-count" placeholder="0" min="0"
