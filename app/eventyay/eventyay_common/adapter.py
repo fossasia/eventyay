@@ -1,8 +1,10 @@
 import time
 
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.core import context
 from django.conf import settings
 from django.http import HttpRequest
+from django.urls import reverse
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION
@@ -41,3 +43,11 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             signup=signup,
             redirect_url=redirect_url,
         )
+
+    def send_account_already_exists_mail(self, email: str) -> None:
+        request = context.request
+        ctx = {
+            'signup_url': request.build_absolute_uri(reverse('account_signup')),
+            'password_reset_url': request.build_absolute_uri(reverse('eventyay_common:auth.forgot')),
+        }
+        self.send_mail('account/email/account_already_exists', email, ctx)
