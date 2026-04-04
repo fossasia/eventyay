@@ -94,7 +94,7 @@
                                     </a>
                                 {% else %}
                                     {% translate "Cannot be deleted as only team left with management privileges" as team_delete_disabled_help %}
-                                    <span class="d-inline-block tooltip-textbox-delete" data-toggle="tooltip" data-placement="bottom-right" title="{{ team_delete_disabled_help }}">
+                                    <span class="d-inline-block tooltip-textbox-delete" data-toggle="tooltip" data-placement="bottom-right" title="{{ team_delete_disabled_help }}" tabindex="0">
                                         <button type="button" class="btn btn-sm btn-danger" disabled aria-label="{{ team_delete_disabled_help }}">
                                             <i class="fa fa-trash"></i>
                                         </button>
