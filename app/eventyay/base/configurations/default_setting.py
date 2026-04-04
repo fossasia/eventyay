@@ -15,7 +15,6 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
-from eventyay.base.forms import I18nAutoExpandingTextarea
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
 
@@ -27,7 +26,7 @@ from eventyay.api.serializers.i18n import I18nField, I18nURLField
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
     LazyI18nStringList,
 )
-from eventyay.base.forms import I18nURLFormField
+from eventyay.base.forms import I18nAutoExpandingTextarea, I18nURLFormField
 from eventyay.base.models.tax import TaxRule
 from eventyay.base.reldate import (
     RelativeDateField,
@@ -209,7 +208,9 @@ DEFAULT_SETTINGS = {
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
             label=_('E-mail'),
-            help_text=_('Ask for an email address per order. The order confirmation will be sent to this email address.'),
+            help_text=_(
+                'Ask for an email address per order. The order confirmation will be sent to this email address.'
+            ),
         ),
     },
     'order_email_required': {
@@ -1297,7 +1298,7 @@ DEFAULT_SETTINGS = {
                 ('no', _('No modifications after order was submitted')),
                 ('order', _('Only the person who ordered can make changes')),
                 ('attendee', _('Both the attendee and the person who ordered can make changes')),
-            )
+            ),
         ),
     },
     'allow_modifications_after_checkin': {
@@ -1307,8 +1308,10 @@ DEFAULT_SETTINGS = {
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
             label=_('Allow attendees to modify their information after they checked in.'),
-            help_text=_('By default, no more modifications are possible for an order as soon as '
-                   'one of the tickets in the order has been checked in.')
+            help_text=_(
+                'By default, no more modifications are possible for an order as soon as '
+                'one of the tickets in the order has been checked in.'
+            ),
         ),
     },
     'last_order_modification_date': {
@@ -2392,6 +2395,8 @@ Your {event} team"""
         ),
     },
     'order_import_settings': {'default': '{}', 'type': dict},
+    'speaker_import_settings': {'default': '{}', 'type': dict},
+    'submission_import_settings': {'default': '{}', 'type': dict},
     'organizer_info_text': {
         'default': '',
         'type': LazyI18nString,
@@ -2790,7 +2795,7 @@ NAME_SCHEMES = OrderedDict(
                 ),
                 'concatenation': lambda d: (
                     str(d.get('family_name', ''))
-                    + str((', ' if d.get('family_name') and d.get('given_name') else ''))
+                    + str(', ' if d.get('family_name') and d.get('given_name') else '')
                     + str(d.get('given_name', ''))
                 ),
                 'sample': {
@@ -2893,7 +2898,7 @@ NAME_SCHEMES = OrderedDict(
                 ),
                 'concatenation': lambda d: (
                     ' '.join(str(p) for p in (d.get(key, '') for key in ['title', 'given_name', 'family_name']) if p)
-                    + str((', ' if d.get('degree') else ''))
+                    + str(', ' if d.get('degree') else '')
                     + str(d.get('degree', ''))
                 ),
                 'sample': {

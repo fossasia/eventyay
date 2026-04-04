@@ -841,6 +841,8 @@ class Event(
         feedback = '{submissions}feedback/'
         apply_pending = '{submissions}apply-pending/'
         speakers = '{base}speakers/'
+        speakers_import = '{speakers}import/'
+        submissions_import = '{submissions}import/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
@@ -2076,10 +2078,15 @@ class Event(
     def delete_sub_objects(self):
         from django.core.exceptions import ObjectDoesNotExist
 
+        from eventyay.base.models.auth import EventGrant, RoomGrant, ShortToken, User
         from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.log import ActivityLog, LogEntry
+        from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.question import Answer, AnswerOption
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.storage_model import StoredFile
+        from eventyay.base.models.systemlog import SystemLog
 
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
@@ -2102,7 +2109,7 @@ class Event(
         for domain in self.domains.all().iterator():
             domain.delete()
 
-        for stored_file in self.storedfile_set.all().iterator():
+        for stored_file in StoredFile.objects.filter(event=self).iterator():
             stored_file.full_delete()
 
         self.bbbserver_set.update(event_exclusive=None)
@@ -2118,7 +2125,23 @@ class Event(
         self.tracks.all().delete()
         self.tags.all().delete()
         self.schedules.all().delete()
-        self.mail_templates.all().delete()
+        mail_templates = self.mail_templates.all()
+        QueuedMail.objects.filter(template__in=mail_templates).update(template=None)
+        mail_templates.delete()
+        ActivityLog.objects.filter(event=self).delete()
+        LogEntry.all.filter(event=self).update(event=None)
+        SystemLog.objects.filter(event=self).update(event=None)
+        EventGrant.objects.filter(event=self).delete()
+        RoomGrant.objects.filter(event=self).delete()
+        ShortToken.objects.filter(event=self).delete()
+        User.objects.filter(event=self).delete()
+        EventView.objects.filter(event=self).delete()
+        self.audits.all().delete()
+        self.meta_values.all().delete()
+        self.extra_links.all().delete()
+        self.planned_usages.all().delete()
+        self.requiredaction_set.all().delete()
+        self.settings.flush()
         try:
             cfp = self.cfp
         except ObjectDoesNotExist:

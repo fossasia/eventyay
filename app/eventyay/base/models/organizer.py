@@ -32,6 +32,7 @@ from ..settings import settings_hierarkey
 from . import BillingInvoice
 from .auth import User
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -273,10 +274,22 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
 
     @scopes_disabled()
     def delete_sub_objects(self):
+        from django.db.models import ProtectedError
+
+        from eventyay.base.models.log import LogEntry
+
         for e in self.events.all():
             e.delete_sub_objects()
             e.delete()
-        self.teams.all().delete()
+        LogEntry.all.filter(api_token__team__organizer=self).update(api_token=None)
+        try:
+            self.teams.all().delete()
+        except ProtectedError as exc:
+            protected_labels = ', '.join(sorted({obj._meta.label for obj in exc.protected_objects})) or 'unknown'
+            logger.warning(
+                'Team deletion blocked for organizer %s by protected objects: %s', self.slug, protected_labels
+            )
+            raise
 
     def has_unpaid_invoice(self):
         # Check if Organizer has unpaid invoices which status is pending or expired
