@@ -297,36 +297,49 @@ def shop_state_widget(sender, **kwargs):
     url_name = 'eventyay_common:event.live' if is_common else 'control:event.live'
     
     is_test_mode = sender.private_testmode or sender.testmode
-    
+
+    if is_common:
+        state = (
+            _('live (private test mode)')
+            if sender.live and sender.private_testmode
+            else (
+                _('live and in test mode')
+                if sender.live and sender.testmode
+                else (
+                    _('live')
+                    if sender.live
+                    else (
+                        _('in private test mode')
+                        if sender.private_testmode
+                        else (_('in test mode') if sender.testmode else _('not yet public'))
+                    )
+                )
+            )
+        )
+        icon = (
+            'fa-check-circle'
+            if sender.live and not is_test_mode
+            else ('fa-warning' if is_test_mode else 'fa-times-circle')
+        )
+        css_class = 'live' if sender.live else 'off'
+    else:
+        ticket_status = sender.ticket_component_presale_status
+        state = ticket_status['text']
+        icon = ticket_status['icon']
+        css_class = ticket_status['class']
+
     return [
         {
             'display_size': 'small',
             'priority': 1000,
-            'content': '<div class="shopstate">{t1}<br><span class="{cls}" {style}><span class="fa {icon}"></span> {state}</span>{t2}</div>'.format(
+            # We wrapped the inner content in a new span with the color_cls
+            'content': '<div class="shopstate">{t1}<br><span class="{cls}"><span class="{color_cls}"><span class="fa {icon}"></span> {state}</span></span>{t2}</div>'.format(
                 t1=label,
                 t2=_('Click here to change'),
-                state=(
-                    _('live (private test mode)')
-                    if sender.live and sender.private_testmode
-                    else (
-                        _('live and in test mode')
-                        if sender.live and sender.testmode
-                        else (
-                            _('live')
-                            if sender.live
-                            else (
-                                _('in private test mode')
-                                if sender.private_testmode
-                                else (_('in test mode') if sender.testmode else _('not yet public'))
-                            )
-                        )
-                    )
-                ),
-                icon='fa-check-circle'
-                if sender.live and not is_test_mode
-                else ('fa-warning' if is_test_mode else 'fa-times-circle'),
-                cls='live' if sender.live else 'off',
-                style='style="color: #ffc107;"' if is_test_mode else ''
+                state=state,
+                icon=icon,
+                cls=css_class,
+                color_cls='text-warning' if is_test_mode else ''
             ),
             'url': reverse(
                 url_name,
