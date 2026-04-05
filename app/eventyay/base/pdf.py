@@ -751,7 +751,7 @@ def get_variables(event):
 
 
 class Renderer:
-    def __init__(self, event, layout, background_file, *, auto_inject_validity: bool = True):
+    def __init__(self, event, layout, background_file, *, auto_inject_validity: bool = False):
         self.layout = layout
         self.background_file = background_file
         self.variables = get_variables(event)
@@ -948,7 +948,8 @@ class Renderer:
     def draw_page(self, canvas: Canvas, order: Order, op: OrderPosition, show_page=True):
         layout = self.layout
         if self.auto_inject_validity:
-            # Auto-inject ticket_validity if the layout does not already include it
+            # Opt-in: inject a ticket_validity textarea when the layout omits it (not used for default ticket PDFs;
+            # organizers normally add ticket_validity in the layout editor).
             has_validity = any(
                 o.get('type') == 'textarea' and o.get('content') == 'ticket_validity'
                 for o in layout
