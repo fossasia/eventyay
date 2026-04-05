@@ -2653,7 +2653,7 @@ class Event(
     def reviewers(self):
         from eventyay.base.models import User
 
-        return User.objects.filter(teams__in=self.teams.filter(is_reviewer=True)).distinct()
+        return User.objects.filter(teams__in=self.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))).distinct()
 
     @cached_property
     def active_review_phase(self):

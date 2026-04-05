@@ -2,6 +2,7 @@ import json
 import logging
 import string
 from datetime import date, datetime, time
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
@@ -519,11 +520,19 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             return self.organizer.events.all()
         return self.limit_events.all()
 
+    def get_orga_teams_tab_url(self, next_url=None):
+        """Unified organizer teams page with this team selected (permissions)."""
+        base = reverse('eventyay_common:organizer.teams', kwargs={'organizer': self.organizer.slug})
+        query = [('team', str(self.pk)), ('section', 'permissions')]
+        if next_url:
+            query.append(('next', next_url))
+        return f'{base}?{urlencode(query)}'
+
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this team."""
 
-        base = '{self.organizer.orga_urls.teams}{self.pk}/'
-        delete = '{base}delete/'
+        base = '{self.organizer.orga_urls.teams}?team={self.pk}&section=permissions'
+        delete = '{self.organizer.orga_urls.base}team/{self.pk}/delete/'
 
 
 class TeamInvite(models.Model):
