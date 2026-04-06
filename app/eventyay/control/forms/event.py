@@ -637,6 +637,19 @@ class EventSettingsForm(SettingsForm):
         'og_image',
     ]
 
+    def _is_submitted(self, field_name):
+        return self.add_prefix(field_name) in self.data
+
+    def clean_name_scheme(self):
+        if not self._is_submitted('name_scheme'):
+            return self.event.settings.name_scheme
+        return self.cleaned_data.get('name_scheme')
+
+    def clean_name_scheme_titles(self):
+        if not self._is_submitted('name_scheme_titles'):
+            return self.event.settings.name_scheme_titles
+        return self.cleaned_data.get('name_scheme_titles')
+
     def clean(self):
         data = super().clean()
         settings_dict = self.event.settings.freeze()
@@ -687,6 +700,13 @@ class EventSettingsForm(SettingsForm):
             (k, '{scheme}: {samples}'.format(scheme=v[0], samples=', '.join(v[1])))
             for k, v in PERSON_NAME_TITLE_GROUPS.items()
         ]
+
+        # This form is shared by multiple settings pages. Some pages (e.g. general
+        # settings) do not render name scheme fields, so missing POST keys should
+        # not make the entire form invalid.
+        if self.is_bound and not self._is_submitted('name_scheme'):
+            self.fields['name_scheme'].required = False
+
         if not self.event.has_subevents:
             self.fields.pop('frontpage_subevent_ordering', None)
             self.fields.pop('event_list_type', None)
