@@ -89,4 +89,5 @@ Before submitting changes:
 - Skills **summarize and reference** existing instruction files; they do not duplicate coding rules.
 - When in doubt, defer to the coding standards in `.github/instructions/`.
 - All product code lives under `app/eventyay/`; use `eventyay.*` imports.
-- New skills should follow this layout: `SKILL.md`, `scripts/`, `references/`, `assets/`, and optional `tests/`.
+- New skills should follow this layout: `SKILL.md`, `references/`, `assets/`, and optional `tests/`.
+- Do not add partial script scaffolding under skills unless command usage and working-directory assumptions are fully documented and validated.

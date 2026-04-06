@@ -112,10 +112,13 @@ The production stack uses Gunicorn (instead of Django's dev server) behind a hos
 
 ```bash
 # On the production server
-cd /home/$USER/$DEPLOYMENT_NAME
-# Use the production compose file from the deployment/ directory
+cd /home/$USER/$DEPLOYMENT_NAME/eventyay
+# Use the production compose file from the cloned repository
 docker compose -f deployment/docker-compose.yml up -d
 ```
+
+If your server setup follows a top-level compose symlink (as shown in `DEPLOYMENT.md`),
+run from `/home/$USER/$DEPLOYMENT_NAME` with that symlinked compose file instead.
 
 Refer to [`DEPLOYMENT.md`](../../DEPLOYMENT.md) for the complete step-by-step guide including SSL setup with Certbot.
 

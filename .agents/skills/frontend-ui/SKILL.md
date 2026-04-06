@@ -29,7 +29,6 @@ Use this skill when implementing or modifying UI behavior in:
 
 ## Supporting Artifacts
 
-- Script checks: `scripts/`
 - Implementation references: `references/`
 - Reusable templates/checklists: `assets/`
 - Example validation scenarios: `tests/`

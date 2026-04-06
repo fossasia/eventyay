@@ -7,10 +7,11 @@ This directory stores reusable operational skills for agents.
 Each skill directory should contain:
 
 - `SKILL.md` (metadata + concise workflow)
-- `scripts/` (reusable executable helpers)
 - `references/` (detailed docs loaded on demand)
 - `assets/` (templates/checklists/snippets)
-- `tests/` (scenario docs or test cases)
+- `tests/` (scenario docs or test cases, optional but recommended)
+
+Avoid adding script stubs inside skill directories unless they are production-ready, have clear invocation guidance, and work from documented directories.
 
 ## Validation
 

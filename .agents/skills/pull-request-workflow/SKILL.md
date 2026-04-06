@@ -26,7 +26,6 @@ Use this skill when preparing changes for review, responding to feedback, and fi
 
 ## Supporting Artifacts
 
-- Script checks: `scripts/`
 - Workflow playbooks: `references/`
 - Reusable templates: `assets/`
 - Example review scenarios: `tests/`
