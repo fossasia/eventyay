@@ -638,6 +638,9 @@ class EventSettingsForm(SettingsForm):
     ]
 
     def _is_submitted(self, field_name):
+        # Settings forms are consistently submitted with Django's prefixed field
+        # naming, so add_prefix() matches the POST keys on all pages that share
+        # this form class.
         return self.add_prefix(field_name) in self.data
 
     def clean_name_scheme(self):
@@ -704,8 +707,11 @@ class EventSettingsForm(SettingsForm):
         # This form is shared by multiple settings pages. Some pages (e.g. general
         # settings) do not render name scheme fields, so missing POST keys should
         # not make the entire form invalid.
-        if self.is_bound and not self._is_submitted('name_scheme'):
-            self.fields['name_scheme'].required = False
+        if self.is_bound:
+            if not self._is_submitted('name_scheme'):
+                self.fields['name_scheme'].required = False
+            if not self._is_submitted('name_scheme_titles'):
+                self.fields['name_scheme_titles'].required = False
 
         if not self.event.has_subevents:
             self.fields.pop('frontpage_subevent_ordering', None)
