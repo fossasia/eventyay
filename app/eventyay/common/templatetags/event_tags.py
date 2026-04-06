@@ -7,6 +7,7 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
+from eventyay.common.permissions import is_admin_mode_active
 
 register = template.Library()
 logger = logging.getLogger(__name__)
@@ -149,6 +150,25 @@ def can_view_talks(context, event=None):
     if not event:
         return False
     return event.user_can_view_talks(getattr(request, 'user', None), request=request)
+
+
+@register.simple_tag(takes_context=True)
+def can_view_featured_sessions_public(context, event=None):
+    """Whether the public nav should link to the featured sessions page.
+
+    Matches :class:`eventyay.agenda.views.featured.FeaturedView` (``base.list_featured_submission`` on the event),
+    including anonymous users (unlike ``has_event_perm``).
+    """
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not request or not event:
+        return False
+    if is_admin_mode_active(request):
+        return True
+    user = getattr(request, 'user', None)
+    if user is None:
+        return False
+    return user.has_perm('base.list_featured_submission', event)
 
 
 @register.simple_tag(takes_context=True)
