@@ -17,8 +17,9 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.caption.text-center
 							h4 {{ speaker.name || t.speaker_fallback }}
-							markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
+							markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography", :disable-links="true")
 				.featured-speaker-details
+					markdown-content.featured-speaker-bio(v-if="speaker.biography", :markdown="speaker.biography")
 					template(v-if="speaker.sessions && speaker.sessions.length")
 						hr.featured-speaker-divider
 						.featured-speaker-sessions
@@ -282,14 +283,7 @@ export default {
 						line-height: inherit
 					a
 						color: inherit
-
-	.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
-		display: block
-		-webkit-line-clamp: unset
-		-webkit-box-orient: unset
-		overflow: visible
-		p + p
-			margin-top: 8px
+						pointer-events: none
 
 	.avatar-placeholder
 		width: 100%
@@ -308,6 +302,18 @@ export default {
 		padding: 12px
 		background: $clr-grey-100
 		border-top: 1px solid $clr-grey-300
+
+	.featured-speaker-bio
+		font-size: 14px
+		line-height: 1.5
+		color: $clr-primary-text-light
+		overflow-wrap: anywhere
+		p
+			margin: 0
+		p + p
+			margin-top: 8px
+		a
+			color: var(--pretalx-clr-primary, var(--clr-primary))
 
 	.featured-speaker-divider
 		margin: 12px 0 8px
