@@ -17,7 +17,7 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.caption.text-center
 							h4 {{ speaker.name || t.speaker_fallback }}
-							p.featured-speaker-preview-bio(v-if="speaker.biography") {{ speaker.biography }}
+							markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 				.featured-speaker-details
 					template(v-if="speaker.sessions && speaker.sessions.length")
 						hr.featured-speaker-divider
@@ -40,10 +40,12 @@
 
 <script>
 import moment from 'moment-timezone'
+import MarkdownContent from './MarkdownContent.vue'
 import { getLocalizedString } from '../utils'
 
 export default {
 	name: 'FeaturedSpeakers',
+	components: { MarkdownContent },
 	inject: {
 		scheduleData: { default: null },
 		eventUrl: { default: '' },
@@ -274,13 +276,20 @@ export default {
 					-webkit-box-orient: vertical
 					overflow: hidden
 					overflow-wrap: anywhere
+					p
+						margin: 0
+						font-size: inherit
+						line-height: inherit
+					a
+						color: inherit
 
 	.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
 		display: block
 		-webkit-line-clamp: unset
 		-webkit-box-orient: unset
 		overflow: visible
-		white-space: pre-wrap
+		p + p
+			margin-top: 8px
 
 	.avatar-placeholder
 		width: 100%
