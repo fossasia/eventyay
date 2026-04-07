@@ -638,9 +638,6 @@ class EventSettingsForm(SettingsForm):
     ]
 
     def _is_submitted(self, field_name):
-        # Settings forms are consistently submitted with Django's prefixed field
-        # naming, so add_prefix() matches the POST keys on all pages that share
-        # this form class.
         return self.add_prefix(field_name) in self.data
 
     def clean_name_scheme(self):
