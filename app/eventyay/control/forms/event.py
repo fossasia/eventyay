@@ -798,14 +798,9 @@ class OrderFormSettingsForm(EventSettingsForm):
 
     def save(self):
         fields_with_cleared_overrides = set()
-        for field_id, (asked_key, _) in SYSTEM_QUESTION_FIELD_SETTING_KEYS.items():
+        for field_id in SYSTEM_QUESTION_FIELD_SETTING_KEYS:
             clear_override_key = self.add_prefix(f'clear_override_{field_id}')
             if self.data.get(clear_override_key) == '1':
-                fields_with_cleared_overrides.add(field_id)
-                continue
-
-            virtual_key = f'{asked_key}_required'
-            if virtual_key in self.changed_data:
                 fields_with_cleared_overrides.add(field_id)
 
         result = super().save()
@@ -917,6 +912,8 @@ class OrderFormDefaultFieldSettingsForm(forms.Form):
         asked_key, required_key = SYSTEM_QUESTION_FIELD_SETTING_KEYS[self.field_id]
         global_state = self.cleaned_data['global_state']
         asked, required = state_to_asked_required(global_state)
+        if global_state == STATE_DO_NOT_ASK:
+            required = self.event.settings.get(required_key, as_type=bool)
 
         settings_dict = self.event.settings.freeze()
         settings_dict[asked_key] = asked

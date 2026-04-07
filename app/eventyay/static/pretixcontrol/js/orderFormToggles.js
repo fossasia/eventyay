@@ -211,11 +211,6 @@ function initOrderFormToggles() {
             const hiddenInput = document.getElementById(fieldId);
             const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
             const checkbox = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
-            const toggle = checkbox?.closest('.toggle-switch');
-            const systemFieldId = toggle?.dataset.systemFieldId;
-            const clearOverrideInput = systemFieldId
-                ? document.querySelector(`input[name="settings-clear_override_${systemFieldId}"]`)
-                : null;
 
             if (!hiddenInput || !checkbox || !checkbox.checked) {
                 return; // Can't change if inactive
@@ -230,9 +225,6 @@ function initOrderFormToggles() {
 
             // Update hidden input
             hiddenInput.value = newValue;
-            if (clearOverrideInput) {
-                clearOverrideInput.value = '1';
-            }
             updateVisualState(fieldId, newValue);
         });
     });
