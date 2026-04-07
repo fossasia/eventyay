@@ -969,6 +969,12 @@ input.password_strength {
       margin-bottom: 8px;
     }
   }
+
+  label.col-form-label.col-md-3 {
+    margin-left: 0;
+    max-width: 100%;
+    text-align: left;
+  }
 }
 
 .toastui-editor-ww-container {
