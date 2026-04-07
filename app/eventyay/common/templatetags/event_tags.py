@@ -8,6 +8,7 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
 from eventyay.common.permissions import is_admin_mode_active
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 register = template.Library()
 logger = logging.getLogger(__name__)
@@ -156,8 +157,12 @@ def can_view_talks(context, event=None):
 def can_view_featured_sessions_public(context, event=None):
     """Whether the public nav should link to the featured sessions page.
 
-    Matches :class:`eventyay.agenda.views.featured.FeaturedView` (``base.list_featured_submission`` on the event),
-    including anonymous users (unlike ``has_event_perm``).
+    Matches :class:`eventyay.agenda.views.featured.FeaturedView` and Submission
+    ``list_featured`` rules (``are_featured_submissions_visible | orga_can_change_submissions``).
+
+    Anonymous users only pass the visibility predicate; authenticated users also use
+    ``has_perm('base.list_featured_submission', event)`` so orga/reviewer cases stay correct.
+    ``has_event_perm`` in orga still short-circuits anonymous users and is not a substitute here.
     """
     request = context.get('request')
     event = event or getattr(request, 'event', None)
@@ -168,6 +173,8 @@ def can_view_featured_sessions_public(context, event=None):
     user = getattr(request, 'user', None)
     if user is None:
         return False
+    if are_featured_submissions_visible(user, event):
+        return True
     return user.has_perm('base.list_featured_submission', event)
 
 

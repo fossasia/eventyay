@@ -195,7 +195,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
         el: mount,
         height: textarea.dataset.editorHeight || '320px',
         initialEditType: 'wysiwyg',
-        previewStyle: 'vertical',
+        /* 'tab' matches Toast UI defaults; 'vertical' can confuse layout in wysiwyg-only mode */
+        previewStyle: 'tab',
         usageStatistics: false,
         hideModeSwitch: true,
         initialValue: String(textarea.value || ''),
@@ -408,6 +409,48 @@ const initToastUiMarkdownTextarea = (textarea) => {
             syncToTextarea()
         })
         updateModeToggleUi(toggleButton)
+    }
+
+    const bumpEditorLayout = () => {
+        try {
+            if (typeof editor.refreshToolbarLayout === 'function') {
+                editor.refreshToolbarLayout()
+            }
+        } catch {
+            /* ignore */
+        }
+        try {
+            window.dispatchEvent(new Event('resize'))
+        } catch {
+            /* ignore */
+        }
+    }
+
+    requestAnimationFrame(() => {
+        bumpEditorLayout()
+        requestAnimationFrame(bumpEditorLayout)
+    })
+    const layoutBumpTimer = window.setTimeout(bumpEditorLayout, 200)
+
+    let layoutObserver = null
+    if (typeof IntersectionObserver === 'function') {
+        layoutObserver = new IntersectionObserver(
+            (entries) => {
+                const visible = entries.some((entry) => entry.isIntersecting)
+                if (!visible) return
+                bumpEditorLayout()
+                layoutObserver?.disconnect()
+                layoutObserver = null
+            },
+            { threshold: [0.01] },
+        )
+        layoutObserver.observe(wrapper)
+    }
+
+    textarea.__eventyayToastUiLayoutCleanup = () => {
+        window.clearTimeout(layoutBumpTimer)
+        layoutObserver?.disconnect()
+        layoutObserver = null
     }
 
     // Ensure we always submit the latest value.
