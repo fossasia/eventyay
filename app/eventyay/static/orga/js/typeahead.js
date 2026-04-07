@@ -1,6 +1,6 @@
 const initNavSearch = () => {
     const wrapper = document.querySelector("#nav-search-wrapper")
-    const summary = wrapper.querySelector(".summary-div")
+    const searchToggle = wrapper.querySelector(".nav-search-toggle")
     const searchInput = wrapper.querySelector("input")
     const searchWrapper = wrapper.querySelector("#nav-search-input-wrapper")
     const apiURL = searchWrapper.getAttribute("data-source")
@@ -74,17 +74,35 @@ const initNavSearch = () => {
 
     searchInput.addEventListener("input", () => {triggerSearch()})
 
-    // Focus search input when dropdown is expanded, and trigger empty search
-    wrapper.addEventListener("click", () => {
-        triggerSearch()
-        setTimeout(() => {
-            if (wrapper.getAttribute("open") === "") {
-                searchInput.focus()
-            } else {
-                // Clear search input when dropdown is collapsed
-                searchInput.value = ""
-            }
-        }, 0)
+    // Toggle search dropdown when search icon is clicked
+    const toggleSearchDropdown = () => {
+        const isOpen = !searchWrapper.classList.contains("d-none")
+        if (isOpen) {
+            searchWrapper.classList.add("d-none")
+            searchInput.value = ""
+            lastQuery = null
+        } else {
+            searchWrapper.classList.remove("d-none")
+            triggerSearch()
+            setTimeout(() => searchInput.focus(), 0)
+        }
+    }
+
+    if (searchToggle) {
+        searchToggle.addEventListener("click", (ev) => {
+            ev.preventDefault()
+            ev.stopPropagation()
+            toggleSearchDropdown()
+        })
+    }
+
+    // Close search dropdown when clicking outside
+    document.addEventListener("click", (ev) => {
+        if (!wrapper.contains(ev.target) && !searchWrapper.classList.contains("d-none")) {
+            searchWrapper.classList.add("d-none")
+            searchInput.value = ""
+            lastQuery = null
+        }
     })
 
     searchInput.addEventListener("keyup", (ev) => {
@@ -121,8 +139,8 @@ const initNavSearch = () => {
     // Open search dropdown with alt+k
     document.addEventListener("keydown", (ev) => {
         if (ev.altKey && ev.key === "k") {
-            if (summary.open) return
-            summary.click()
+            if (!searchWrapper.classList.contains("d-none")) return
+            toggleSearchDropdown()
             ev.preventDefault()
             ev.stopPropagation()
         }

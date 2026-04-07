@@ -182,36 +182,37 @@
             <aside class="nav flex-column sidebar">
                 <div class="dropdown nav-link p-0" id="nav-search-wrapper">
                     {% block nav_top_header %}
-                        <a href="{% get_dashboard_url %}" style="text-decoration: none; color: inherit;">
-                            <div id="nav-search" class="dropdown-toggle summary-div" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span id="search-context-icon" class="fa-stack fa-lg">
-                                        <i class="fa fa-circle fa-stack-2x"></i>
-                                        <i class="fa {% get_top_menu_item_icon_class %} fa-stack-1x fa-inverse"></i>
-                                    </span>
-                                    <div id="search-context-text">
-                                        {% if request.event %}
-                                            <span class="context-name font-weight-bold">{{ request.event.name }}</span>
-                                            <span class="context-meta">{{ request.event.get_date_range_display }}</span>
-                                        {% elif request.organizer %}
-                                            <span class="context-name font-weight-bold">{{ request.organizer.name }}</span>
-                                            <span class="context-meta">{% translate "Organizer account" %}</span>
-                                        {% else %}
-                                            <span class="context-name font-weight-bold">{% translate "Talk dashboard" %}</span>
-                                        {% endif %}
-                                    </div>
+                        <div id="nav-search" class="summary-div" aria-haspopup="true" aria-expanded="false">
+                            <a href="{% get_dashboard_url %}" class="d-flex align-items-center" style="text-decoration: none; color: inherit;">
+                                <span id="search-context-icon" class="fa-stack fa-lg">
+                                    <i class="fa fa-circle fa-stack-2x"></i>
+                                    <i class="fa {% get_top_menu_item_icon_class %} fa-stack-1x fa-inverse"></i>
+                                </span>
+                                <div id="search-context-text">
+                                    {% if request.event %}
+                                        <span class="context-name font-weight-bold">{{ request.event.name }}</span>
+                                        <span class="context-meta">{{ request.event.get_date_range_display }}</span>
+                                    {% elif request.organizer %}
+                                        <span class="context-name font-weight-bold">{{ request.organizer.name }}</span>
+                                        <span class="context-meta">{% translate "Organizer account" %}</span>
+                                    {% else %}
+                                        <span class="context-name font-weight-bold">{% translate "Talk dashboard" %}</span>
+                                    {% endif %}
+                                </div>
+                            </a>
+                            <span class="nav-search-toggle" title="{% translate 'Search' %} (Alt + k)">
+                                <i class="fa fa-search"></i>
+                            </span>
+                        </div>
+                        <div id="nav-search-input-wrapper" class="d-none dropdown-content dropdown-menu dropdown-menu-left" aria-labelledby="nav-search" data-source="{% url 'orga:nav.typeahead' %}" data-event-typeahead data-organizer="{% if request.event %}{{ request.event.organizer.pk }}{% elif request.organizer %}{{ request.organizer.pk }}{% endif %}">
+                            <div class="query-holder">
+                                <div class="form-box">
+                                    <input type="search" class="form-control" placeholder="{% translate 'Search' %} (Alt + k)" data-typeahead-query>
                                 </div>
                             </div>
-                            <div id="nav-search-input-wrapper" class="d-none dropdown-content dropdown-menu dropdown-menu-left" aria-labelledby="nav-search" data-source="{% url 'orga:nav.typeahead' %}" data-event-typeahead data-organizer="{% if request.event %}{{ request.event.organizer.pk }}{% elif request.organizer %}{{ request.organizer.pk }}{% endif %}">
-                                <div class="query-holder">
-                                    <div class="form-box">
-                                        <input type="search" class="form-control" placeholder="{% translate 'Search' %} (Alt + k)" data-typeahead-query>
-                                    </div>
-                                </div>
-                                <ul id="search-results">
-                                </ul>
-                            </div>
-                        </a>
+                            <ul id="search-results">
+                            </ul>
+                        </div>
                     {% endblock %}
                 </div>
                 {% if request.event %}
