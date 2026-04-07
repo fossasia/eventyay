@@ -9103,7 +9103,7 @@ msgstr ""
 
 #: base/services/orders.py:399
 #, python-format
-msgid "Order denied: %(code)s"
+msgid "Your order request update: %(code)s"
 msgstr ""
 
 #: base/services/orders.py:456 presale/views/order.py:993
