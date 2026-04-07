@@ -700,10 +700,7 @@ class EventSettingsForm(SettingsForm):
             (k, '{scheme}: {samples}'.format(scheme=v[0], samples=', '.join(v[1])))
             for k, v in PERSON_NAME_TITLE_GROUPS.items()
         ]
-
-        # This form is shared by multiple settings pages. Some pages (e.g. general
-        # settings) do not render name scheme fields, so missing POST keys should
-        # not make the entire form invalid.
+        
         if self.is_bound:
             if not self._is_submitted('name_scheme'):
                 self.fields['name_scheme'].required = False
