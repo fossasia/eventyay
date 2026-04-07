@@ -124,9 +124,8 @@
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 							.caption.text-center
 								h4 {{ speaker.name || t.speaker_fallback }}
-								p(v-if="speaker.biography") {{ speaker.biography }}
+								p.featured-speaker-preview-bio(v-if="speaker.biography") {{ speaker.biography }}
 					.featured-speaker-details
-						.featured-speaker-bio(v-if="speaker.biography") {{ speaker.biography }}
 						template(v-if="speaker.sessions && speaker.sessions.length")
 							hr.featured-speaker-divider
 							.featured-speaker-sessions
@@ -698,18 +697,26 @@ export default {
 					h4
 						margin: 8px 0 0
 						color: $clr-primary-text-light
-						font-size: 22px
-						font-weight: 600
-						line-height: 1.2
-					p
+						font-size: 18px
+						font-weight: 500
+						line-height: 1.3
+					.featured-speaker-preview-bio
 						margin: 4px 0 0
 						color: $clr-secondary-text-light
 						font-size: 12px
 						line-height: 1.35
 						display: -webkit-box
-						-webkit-line-clamp: 3
+						-webkit-line-clamp: 2
 						-webkit-box-orient: vertical
 						overflow: hidden
+						overflow-wrap: anywhere
+
+		.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
+			display: block
+			-webkit-line-clamp: unset
+			-webkit-box-orient: unset
+			overflow: visible
+			white-space: pre-wrap
 
 		.avatar-placeholder
 			width: 100%
@@ -728,12 +735,6 @@ export default {
 			padding: 12px
 			background: $clr-grey-100
 			border-top: 1px solid $clr-grey-300
-
-		.featured-speaker-bio
-			color: $clr-primary-text-light
-			font-size: 13px
-			line-height: 1.55
-			white-space: pre-wrap
 
 		.featured-speaker-divider
 			margin: 12px 0 8px
