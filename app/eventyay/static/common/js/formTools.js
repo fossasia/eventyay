@@ -333,10 +333,10 @@ const initToastUiMarkdownTextarea = (textarea) => {
         return () => popupObserver.disconnect()
     }
 
-    installAbsoluteLinkOnlyValidation()
+    const disconnectAbsoluteLinkValidation = installAbsoluteLinkOnlyValidation()
 
     const root = mount.querySelector?.('.toastui-editor-defaultUI')
-    root?.addEventListener?.('click', (event) => {
+    const onToastUiRootClick = (event) => {
         if (typeof event.detail === 'number' && event.detail > 1) return
         const selection = window.getSelection?.()
         if (selection && !selection.isCollapsed) return
@@ -351,7 +351,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
         if (!target.closest('.toastui-editor-main')) return
 
         if (typeof editor.focus === 'function') editor.focus()
-    })
+    }
+    root?.addEventListener?.('click', onToastUiRootClick)
 
     const modeSwitch = mount.querySelector?.('.toastui-editor-mode-switch')
     if (modeSwitch instanceof HTMLElement) {
@@ -366,6 +367,10 @@ const initToastUiMarkdownTextarea = (textarea) => {
     }
 
     if (typeof editor.on === 'function') editor.on('change', syncToTextarea)
+
+    const form = textarea.form
+    const onToastUiFormSubmit = () => syncToTextarea()
+    form?.addEventListener?.('submit', onToastUiFormSubmit)
 
     let isMarkdownMode = false
 
@@ -447,14 +452,54 @@ const initToastUiMarkdownTextarea = (textarea) => {
         layoutObserver.observe(wrapper)
     }
 
-    textarea.__eventyayToastUiLayoutCleanup = () => {
+    const stopLayoutBumpWatchers = () => {
         window.clearTimeout(layoutBumpTimer)
         layoutObserver?.disconnect()
         layoutObserver = null
     }
 
-    // Ensure we always submit the latest value.
-    textarea.form?.addEventListener?.('submit', syncToTextarea)
+    let domRemovalObserver = null
+    const stopDomRemovalWatch = () => {
+        domRemovalObserver?.disconnect()
+        domRemovalObserver = null
+    }
+
+    let toastUiTeardownDone = false
+    const teardownToastUiEditor = () => {
+        if (toastUiTeardownDone) return
+        toastUiTeardownDone = true
+        stopLayoutBumpWatchers()
+        stopDomRemovalWatch()
+        try {
+            disconnectAbsoluteLinkValidation()
+        } catch {
+            /* ignore */
+        }
+        form?.removeEventListener?.('submit', onToastUiFormSubmit)
+        root?.removeEventListener?.('click', onToastUiRootClick)
+        try {
+            if (typeof editor.destroy === 'function') editor.destroy()
+        } catch {
+            /* ignore */
+        }
+        delete textarea.dataset.toastuiBound
+        textarea.__eventyayToastUiEditor = undefined
+        textarea.__eventyayToastUiLayoutCleanup = undefined
+        mount.__eventyayToastUiEditor = undefined
+    }
+
+    textarea.__eventyayToastUiLayoutCleanup = () => {
+        stopLayoutBumpWatchers()
+    }
+
+    if (typeof MutationObserver === 'function') {
+        const watchRoot = textarea.closest('form') || wrapper.parentElement || document.documentElement
+        domRemovalObserver = new MutationObserver(() => {
+            if (wrapper.isConnected) return
+            teardownToastUiEditor()
+        })
+        domRemovalObserver.observe(watchRoot, { childList: true, subtree: true })
+    }
 
     syncToTextarea()
 }

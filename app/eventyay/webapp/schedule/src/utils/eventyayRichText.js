@@ -1,6 +1,13 @@
 /**
  * Rich text for public schedule UI: markdown + allowlisted HTML.
- * Keep in sync with eventyay.base.templatetags.rich_text (ALLOWED_TAGS / ALLOWED_ATTRIBUTES / protocols).
+ *
+ * Keep allowlists and URI protocol policy in sync with
+ * `eventyay.base.templatetags.rich_text` (ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_PROTOCOLS).
+ *
+ * Unlike the Django renderer, this path does not run bleach’s linkify `safelink_callback` (no safelink
+ * redirect URLs) and does not add `target="_blank"` / `rel="noopener"` to external links. Schedule UI
+ * should match server-rendered snippets where possible, but treat link behavior as intentionally
+ * different unless we add a client-side post-pass.
  *
  * Attributes: DOMPurify only supports a global ALLOWED_ATTR list; we use that union for the first pass,
  * then enforce per-tag rules in uponSanitizeAttribute (same semantics as bleach attributes=).
@@ -83,7 +90,7 @@ const PURIFY_CONFIG = {
 	ALLOWED_ATTR: EVENTYAY_RICH_TEXT_ALLOWED_ATTR,
 	ALLOW_DATA_ATTR: false,
 	ALLOW_UNKNOWN_PROTOCOLS: false,
-	ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
+	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
 }
 
 /** @type {ReturnType<typeof createDOMPurify> | null} */

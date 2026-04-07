@@ -160,8 +160,9 @@ def can_view_featured_sessions_public(context, event=None):
     Matches :class:`eventyay.agenda.views.featured.FeaturedView` and Submission
     ``list_featured`` rules (``are_featured_submissions_visible | orga_can_change_submissions``).
 
-    Anonymous users only pass the visibility predicate; authenticated users also use
-    ``has_perm('base.list_featured_submission', event)`` so orga/reviewer cases stay correct.
+    Access is granted when featured submissions are publicly visible, or when the current user has
+    ``base.list_featured_submission`` for the event. The permission check uses ``user.has_perm`` for
+    any non-``None`` user, including ``AnonymousUser``, consistent with the view’s visibility logic.
     ``has_event_perm`` in orga still short-circuits anonymous users and is not a substitute here.
     """
     request = context.get('request')
