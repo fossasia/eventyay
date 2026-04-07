@@ -24,6 +24,7 @@
 {% endblock scripts %}
 
 {% block content %}
+    <div class="cfp-forms-page">
     <div id="cfp-field-order-data" 
          data-session-field-order='{{ session_field_order|safe }}' 
          data-speaker-field-order='{{ speaker_field_order|safe }}'
@@ -34,7 +35,7 @@
         <span data-dialog-target="#info-dialog" data-toggle="dialog">
             <i class="fa fa-question-circle-o text-info ml-2"></i>
         </span>
-        <div class="ml-auto mb-3">
+        <div class="cfp-forms-heading-actions mb-3">
             {% if question_list %}
                 <a href="{{ request.event.cfp.urls.remind_questions }}" class="btn btn-info">{% translate "Send out reminders for custom fields without responses" %}</a>
             {% endif %}
@@ -91,7 +92,7 @@
                         <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
                     </span></div>
                 </dialog>
-                <div class="table-responsive-sm offset-md-3">
+                <div class="table-responsive table-responsive-always mw-100">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -495,8 +496,8 @@
                     </table>
                 </div>
                 <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
-                        <a href="{{ create_url }}?target=submission" class="btn btn-success btn-sm">
+                    <div class="col-md-9 d-flex cfp-forms-new-field-actions justify-content-end">
+                        <a href="{{ create_url }}?target=submission" class="btn btn-success">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
                     </div>
@@ -516,7 +517,7 @@
                         {% translate "Select which information should be requested and/or required from speakers." %}
                     </span></div>
                 </dialog>
-                <div class="table-responsive-sm offset-md-3">
+                <div class="table-responsive table-responsive-always mw-100">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -847,8 +848,8 @@
                     </table>
                 </div>
                 <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
-                        <a href="{{ create_url }}?target=speaker" class="btn btn-success btn-sm">
+                    <div class="col-md-9 d-flex cfp-forms-new-field-actions justify-content-end">
+                        <a href="{{ create_url }}?target=speaker" class="btn btn-success">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
                     </div>
@@ -859,7 +860,7 @@
                     {% translate "Reviewer Information" %}
                 </div></legend>
                 {% if custom_reviewer_fields %}
-                <div class="table-responsive-sm offset-md-3">
+                <div class="table-responsive table-responsive-always mw-100">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -937,8 +938,8 @@
                 </div>
                 {% endif %}
                 <div class="row mb-3">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
-                        <a href="{{ create_url }}?target=reviewer" class="btn btn-success btn-sm">
+                    <div class="col-md-9 d-flex cfp-forms-new-field-actions justify-content-end">
+                        <a href="{{ create_url }}?target=reviewer" class="btn btn-success">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
                     </div>
@@ -946,4 +947,5 @@
             </fieldset>
         {% include "orga/includes/submit_row.html" %}
     </form>
+    </div>
 {% endblock %}
