@@ -775,22 +775,20 @@ class OrderFormSettingsForm(EventSettingsForm):
         self.fields.pop('name_scheme_titles', None)
 
     def save(self):
-        toggled_off_system_fields = set()
+        fields_with_cleared_overrides = set()
         for field_id, (asked_key, _) in SYSTEM_QUESTION_FIELD_SETTING_KEYS.items():
             clear_override_key = self.add_prefix(f'clear_override_{field_id}')
             if self.data.get(clear_override_key) == '1':
-                toggled_off_system_fields.add(field_id)
+                fields_with_cleared_overrides.add(field_id)
                 continue
 
             virtual_key = f'{asked_key}_required'
-            if virtual_key not in self.changed_data:
-                continue
-            if self.data.get(self.add_prefix(virtual_key)) == STATE_DO_NOT_ASK:
-                toggled_off_system_fields.add(field_id)
+            if virtual_key in self.changed_data:
+                fields_with_cleared_overrides.add(field_id)
 
         result = super().save()
 
-        for field_id in toggled_off_system_fields:
+        for field_id in fields_with_cleared_overrides:
             set_system_question_field_overrides(self.obj, field_id, {})
 
         return result
