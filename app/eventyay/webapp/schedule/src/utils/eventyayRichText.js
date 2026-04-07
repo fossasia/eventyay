@@ -1,6 +1,9 @@
 /**
  * Rich text for public schedule UI: markdown + allowlisted HTML.
  * Keep in sync with eventyay.base.templatetags.rich_text (ALLOWED_TAGS / ALLOWED_ATTRIBUTES / protocols).
+ *
+ * Attributes: DOMPurify only supports a global ALLOWED_ATTR list; we use that union for the first pass,
+ * then enforce per-tag rules in uponSanitizeAttribute (same semantics as bleach attributes=).
  */
 import MarkdownIt from 'markdown-it'
 import createDOMPurify from 'dompurify'
@@ -42,8 +45,25 @@ export const EVENTYAY_RICH_TEXT_ALLOWED_TAGS = [
 	'h6',
 ]
 
-/** Union of attribute names allowed on at least one tag in rich_text.py */
-const EVENTYAY_RICH_TEXT_ALLOWED_ATTR = ['href', 'title', 'class', 'width', 'align']
+/**
+ * Mirrors eventyay.base.templatetags.rich_text.ALLOWED_ATTRIBUTES (tags omitted → no attributes).
+ * @type {Record<string, string[]>}
+ */
+export const EVENTYAY_RICH_TEXT_ALLOWED_ATTRIBUTES_BY_TAG = {
+	a: ['href', 'title', 'class'],
+	abbr: ['title'],
+	acronym: ['title'],
+	table: ['width'],
+	td: ['width', 'align'],
+	div: ['class'],
+	p: ['class'],
+	span: ['class', 'title'],
+}
+
+/** Union of attribute names; required by DOMPurify before per-tag hook runs */
+const EVENTYAY_RICH_TEXT_ALLOWED_ATTR = [
+	...new Set(Object.values(EVENTYAY_RICH_TEXT_ALLOWED_ATTRIBUTES_BY_TAG).flat()),
+]
 
 /** Browser: markdown + raw HTML, then DOMPurify. Non-browser: markdown only (no embedded HTML) to avoid XSS without a DOM. */
 const markdownItWithHtml = new MarkdownIt({
@@ -68,10 +88,27 @@ const PURIFY_CONFIG = {
 
 /** @type {ReturnType<typeof createDOMPurify> | null} */
 let domPurifyInstance = null
+let domPurifyPerTagHookInstalled = false
+
+function installPerTagAttributeHook (purify) {
+	if (domPurifyPerTagHookInstalled) return
+	domPurifyPerTagHookInstalled = true
+	purify.addHook('uponSanitizeAttribute', (node, data) => {
+		const tag = node.tagName.toLowerCase()
+		const attr = data.attrName.toLowerCase()
+		const allowed = EVENTYAY_RICH_TEXT_ALLOWED_ATTRIBUTES_BY_TAG[tag]
+		if (!allowed?.includes(attr)) {
+			data.keepAttr = false
+		}
+	})
+}
 
 function getDomPurify () {
 	if (typeof window === 'undefined') return null
-	if (!domPurifyInstance) domPurifyInstance = createDOMPurify(window)
+	if (!domPurifyInstance) {
+		domPurifyInstance = createDOMPurify(window)
+		installPerTagAttributeHook(domPurifyInstance)
+	}
 	return domPurifyInstance
 }
 

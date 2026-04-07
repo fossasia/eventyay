@@ -1,5 +1,9 @@
 /* This file contains styles for the schedule and other attendee-facing components */
 
+body.page-agenda #main-container > header {
+  margin-top: 24px;
+}
+
 #main-container.list-schedule {
   min-width: 0;
 }

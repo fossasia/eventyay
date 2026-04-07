@@ -335,6 +335,12 @@ header .header-row-right {
         width: 100%;
     }
 
+    /* Event index (Info): full-bleed hero overlay; body copy stays padded via #main-card > main */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
     #main-card {
         margin-left: 0;
