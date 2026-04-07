@@ -10344,8 +10344,8 @@ msgstr "Commande approuvée et en attente de paiement : %(code)s"
 
 #: base/services/orders.py:399
 #, python-format
-msgid "Order denied: %(code)s"
-msgstr "Commande refusée : %(code)s"
+msgid "Your order request update: %(code)s"
+msgstr "Mise à jour de votre demande de commande : %(code)s"
 
 #: base/services/orders.py:456 presale/views/order.py:993
 #: presale/views/order.py:1039
