@@ -90,9 +90,12 @@ class BaseQuestionsViewMixin:
                 )
                 shared_system_fields = source_fields & target_fields
 
-            form.show_copy_answers_to_addon_button = form.pos.addon_to and (
-                set(form.pos.addon_to.product.questions.all()) & set(form.pos.product.questions.all())
-                or shared_system_fields
+            form.show_copy_answers_to_addon_button = bool(
+                form.pos.addon_to
+                and (
+                    set(form.pos.addon_to.product.questions.all()) & set(form.pos.product.questions.all())
+                    or shared_system_fields
+                )
             )
 
             override_sets = self.get_question_override_sets(cr)

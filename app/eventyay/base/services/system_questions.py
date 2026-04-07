@@ -76,7 +76,7 @@ def get_system_question_field_overrides(event, field_id: str) -> dict[str, str]:
 def get_system_question_state(
     event,
     field_id: str,
-    product: 'Product' = None,
+    product: 'Product | None' = None,
     *,
     base_states: dict[str, str] | None = None,
     product_overrides: dict[str, dict[str, str]] | None = None,
@@ -102,7 +102,7 @@ def get_system_question_state(
 def get_system_question_asked_required(
     event,
     field_id: str,
-    product: 'Product' = None,
+    product: 'Product | None' = None,
     *,
     base_states: dict[str, str] | None = None,
     product_overrides: dict[str, dict[str, str]] | None = None,
@@ -143,6 +143,11 @@ def get_enabled_system_question_fields(
 ) -> set[str]:
     if not product.admission:
         return set()
+
+    if base_states is None:
+        base_states = get_system_question_base_states(event)
+    if product_overrides is None:
+        product_overrides = get_system_question_product_overrides(event)
 
     return {
         field_id

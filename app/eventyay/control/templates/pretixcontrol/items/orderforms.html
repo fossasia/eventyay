@@ -164,7 +164,7 @@
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     data-system-field-id="attendee_name_parts"
-                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.attendee_name_parts %}1{% else %}0{% endif %}"
+                                    data-effective-active="{{ system_field_effective_active.attendee_name_parts|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
@@ -229,7 +229,7 @@
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     data-system-field-id="attendee_email"
-                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.attendee_email %}1{% else %}0{% endif %}"
+                                    data-effective-active="{{ system_field_effective_active.attendee_email|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
@@ -275,7 +275,7 @@
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     data-system-field-id="company"
-                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.company %}1{% else %}0{% endif %}"
+                                    data-effective-active="{{ system_field_effective_active.company|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
@@ -321,7 +321,7 @@
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     data-system-field-id="job_title"
-                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.job_title %}1{% else %}0{% endif %}"
+                                    data-effective-active="{{ system_field_effective_active.job_title|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
@@ -367,7 +367,7 @@
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     data-system-field-id="street"
-                                    data-effective-active="{% if field.value != 'do_not_ask' or system_field_products.street %}1{% else %}0{% endif %}"
+                                    data-effective-active="{{ system_field_effective_active.street|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>

@@ -883,7 +883,7 @@ class OrderFormDefaultFieldSettingsForm(forms.Form):
             self.product_field_names.append(field_name)
 
         if self.field_id == 'attendee_name_parts':
-            self.fields['name_scheme'].choices = (
+            self.fields['name_scheme'].choices = [
                 (
                     k,
                     _('Ask for {fields}, display like {example}').format(
@@ -892,7 +892,7 @@ class OrderFormDefaultFieldSettingsForm(forms.Form):
                     ),
                 )
                 for k, v in PERSON_NAME_SCHEMES.items()
-            )
+            ]
             self.fields['name_scheme_titles'].choices = [('', _('Free text input'))] + [
                 (k, '{scheme}: {samples}'.format(scheme=v[0], samples=', '.join(v[1])))
                 for k, v in PERSON_NAME_TITLE_GROUPS.items()

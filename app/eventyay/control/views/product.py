@@ -52,6 +52,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.services.system_questions import (
+    STATE_DO_NOT_ASK,
     SYSTEM_QUESTION_FIELDS,
     get_enabled_system_question_fields,
     get_system_question_base_states,
@@ -1765,6 +1766,13 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
                 for product in admission_products
                 if field_id in enabled_system_fields_by_product_id[product.pk]
             ]
+            for field_id in SYSTEM_QUESTION_FIELDS
+        }
+        ctx['system_field_effective_active'] = {
+            field_id: (
+                base_states.get(field_id) != STATE_DO_NOT_ASK
+                or bool(ctx['system_field_products'][field_id])
+            )
             for field_id in SYSTEM_QUESTION_FIELDS
         }
 
