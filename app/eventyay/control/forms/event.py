@@ -659,16 +659,16 @@ class EventSettingsForm(SettingsForm):
         'og_image',
     ]
 
-    def _is_submitted(self, field_name):
+    def is_submitted(self, field_name):
         return self.add_prefix(field_name) in self.data
 
     def clean_name_scheme(self):
-        if not self._is_submitted('name_scheme'):
+        if not self.is_submitted('name_scheme'):
             return self.event.settings.name_scheme
         return self.cleaned_data.get('name_scheme')
 
     def clean_name_scheme_titles(self):
-        if not self._is_submitted('name_scheme_titles'):
+        if not self.is_submitted('name_scheme_titles'):
             return self.event.settings.name_scheme_titles
         return self.cleaned_data.get('name_scheme_titles')
 
@@ -724,9 +724,9 @@ class EventSettingsForm(SettingsForm):
         ]
         
         if self.is_bound:
-            if not self._is_submitted('name_scheme'):
+            if not self.is_submitted('name_scheme'):
                 self.fields['name_scheme'].required = False
-            if not self._is_submitted('name_scheme_titles'):
+            if not self.is_submitted('name_scheme_titles'):
                 self.fields['name_scheme_titles'].required = False
 
         if not self.event.has_subevents:
