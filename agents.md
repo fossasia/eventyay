@@ -73,17 +73,21 @@ Before submitting changes:
 
 | Skill directory/file | Purpose |
 |---|---|
-| `.agents/skills/repo-navigation/skill.md` | Repository layout and where to find code |
-| `.agents/skills/django-create-model/skill.md` | Steps for creating or modifying a Django model |
-| `.agents/skills/django-create-api-endpoint/skill.md` | Steps for adding a new Django REST Framework API endpoint |
-| `.agents/skills/django-add-form/skill.md` | Steps for creating or modifying Django forms and adding validation |
-| `.agents/skills/django-run-migrations/skill.md` | Steps for generating and applying Django migrations |
-| `.agents/skills/django-run-locally/skill.md` | Steps for initiating the Django development server without Docker |
-| `.agents/skills/docker-deployment/skill.md` | Docker Compose, container services, deployment |
-| `.agents/skills/documentation/skill.md` | How to update project documentation |
+| `.agents/skills/repo-navigation/SKILL.md` | Repository layout and where to find code |
+| `.agents/skills/django-create-model/SKILL.md` | Steps for creating or modifying a Django model |
+| `.agents/skills/django-create-api-endpoint/SKILL.md` | Steps for adding a new Django REST Framework API endpoint |
+| `.agents/skills/django-add-form/SKILL.md` | Steps for creating or modifying Django forms and adding validation |
+| `.agents/skills/django-run-migrations/SKILL.md` | Steps for generating and applying Django migrations |
+| `.agents/skills/django-run-locally/SKILL.md` | Steps for initiating the Django development server without Docker |
+| `.agents/skills/docker-deployment/SKILL.md` | Docker Compose, container services, deployment |
+| `.agents/skills/documentation/SKILL.md` | How to update project documentation |
+| `.agents/skills/frontend-ui/SKILL.md` | Frontend UI implementation, accessibility, and responsive checks |
+| `.agents/skills/pull-request-workflow/SKILL.md` | Branching, commits, PR preparation, and review follow-up |
 
 ## Important Notes
 
 - Skills **summarize and reference** existing instruction files; they do not duplicate coding rules.
 - When in doubt, defer to the coding standards in `.github/instructions/`.
 - All product code lives under `app/eventyay/`; use `eventyay.*` imports.
+- New skills should follow this layout: `SKILL.md`, `references/`, `assets/`, and optional `tests/`.
+- Do not add partial script scaffolding under skills unless command usage and working-directory assumptions are fully documented and validated.
