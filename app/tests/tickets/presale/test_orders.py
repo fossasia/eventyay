@@ -1563,8 +1563,7 @@ class OrdersTest(BaseOrdersTest):
         assert response.status_code == 302
 
     def test_change_variation_paid(self):
-        self.shirt.allow_user_variation_change = True
-        self.shirt.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.settings.change_allow_user_price = 'any'
 
         with scopes_disabled():
@@ -1599,8 +1598,7 @@ class OrdersTest(BaseOrdersTest):
         assert self.order.total == Decimal('35.00')
 
     def test_change_variation_require_higher_price(self):
-        self.shirt.allow_user_variation_change = True
-        self.shirt.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.settings.change_allow_user_price = 'gt'
 
         with scopes_disabled():
@@ -1667,8 +1665,7 @@ class OrdersTest(BaseOrdersTest):
         assert shirt_pos.price == Decimal('14.00')
 
     def test_change_variation_require_higher_equal_price(self):
-        self.shirt.allow_user_variation_change = True
-        self.shirt.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.settings.change_allow_user_price = 'gte'
 
         with scopes_disabled():
@@ -1735,8 +1732,7 @@ class OrdersTest(BaseOrdersTest):
         assert shirt_pos.price == Decimal('14.00')
 
     def test_change_variation_require_equal_price(self):
-        self.shirt.allow_user_variation_change = True
-        self.shirt.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.settings.change_allow_user_price = 'eq'
 
         with scopes_disabled():
@@ -1762,8 +1758,7 @@ class OrdersTest(BaseOrdersTest):
         assert 'alert-danger' in response.content.decode()
 
     def test_change_variation_require_same_product(self):
-        self.shirt.allow_user_variation_change = True
-        self.shirt.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.settings.change_allow_user_price = 'any'
 
         with scopes_disabled():
@@ -1789,8 +1784,7 @@ class OrdersTest(BaseOrdersTest):
         assert 'alert-danger' in response.content.decode()
 
     def test_change_variation_require_quota(self):
-        self.shirt.allow_user_variation_change = True
-        self.shirt.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.settings.change_allow_user_price = 'any'
 
         with scopes_disabled():
@@ -1840,8 +1834,7 @@ class OrdersTest(BaseOrdersTest):
         assert shirt_pos.price == Decimal('14.00')
 
     def test_change_paid_to_pending(self):
-        self.shirt.allow_user_variation_change = True
-        self.shirt.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.settings.change_allow_user_price = 'any'
         self.order.status = Order.STATUS_PAID
         self.order.save()

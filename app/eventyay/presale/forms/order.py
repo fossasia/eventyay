@@ -108,6 +108,11 @@ class OrderPositionChangeForm(forms.Form):
                 choices.append((f'{i.pk}-{v.pk}', label))
 
             if not choices:
+                if instance.variation_id:
+                    current_label = f'{i.name} – {instance.variation.value}'
+                    choices.append((f'{i.pk}-{instance.variation_id}', current_label))
+                else:
+                    choices.append((str(i.pk), '%s' % pname))
                 self.fields['productvar'].disabled = True
                 self.fields['productvar'].help_text = _(
                     'No other variation of this product is currently available for you.'

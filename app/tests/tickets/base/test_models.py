@@ -1857,16 +1857,13 @@ class OrderTestCase(BaseQuotaTestCase):
         v = item1.variations.create(value='V')
         OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
         assert not self.order.user_change_allowed
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed
 
-        item1.allow_user_variation_change = False
-        item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = False
         self.order.require_approval = True
         assert not self.order.user_change_allowed
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert not self.order.user_change_allowed
 
     @classscope(attr='o')
@@ -1881,8 +1878,7 @@ class OrderTestCase(BaseQuotaTestCase):
         )
         v = item1.variations.create(value='V')
         p = OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.organizer.issued_gift_cards.create(currency='EUR', issued_in=p)
         assert not self.order.user_change_allowed
 
@@ -1892,8 +1888,7 @@ class OrderTestCase(BaseQuotaTestCase):
         self.order.positions.update(variation=v)
         self.order.status = Order.STATUS_PAID
         self.order.save()
-        self.item1.allow_user_variation_change = True
-        self.item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed
         Checkin.objects.create(
             position=self.order.positions.first(),
@@ -1921,10 +1916,7 @@ class OrderTestCase(BaseQuotaTestCase):
         v2 = item2.variations.create(value='V')
         OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
         OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
-        item2.allow_user_variation_change = True
-        item2.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed
 
     @classscope(attr='o')
@@ -1938,8 +1930,7 @@ class OrderTestCase(BaseQuotaTestCase):
         )
         v = item1.variations.create(value='V')
         OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
 
     @classscope(attr='o')
@@ -1952,8 +1943,7 @@ class OrderTestCase(BaseQuotaTestCase):
             allow_cancel=True,
         )
         OrderPosition.objects.create(order=self.order, item=item1, variation=None, price=23)
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
         item2 = Item.objects.create(
             event=self.event,
@@ -1963,8 +1953,6 @@ class OrderTestCase(BaseQuotaTestCase):
             allow_cancel=True,
         )
         v2 = item2.variations.create(value='V')
-        item2.allow_user_variation_change = True
-        item2.save(update_fields=['allow_user_variation_change'])
         OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
         assert self.order.user_change_allowed is True
 
@@ -1988,10 +1976,7 @@ class OrderTestCase(BaseQuotaTestCase):
         v2 = item2.variations.create(value='V')
         OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
         OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
-        item2.allow_user_variation_change = True
-        item2.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
 
     @classscope(attr='o')
@@ -2014,18 +1999,14 @@ class OrderTestCase(BaseQuotaTestCase):
         v2 = item2.variations.create(value='V')
         OrderPosition.objects.create(order=self.order, item=item1, variation=v, price=23)
         OrderPosition.objects.create(order=self.order, item=item2, variation=v2, price=23)
-        item1.allow_user_variation_change = True
-        item1.save(update_fields=['allow_user_variation_change'])
-        item2.allow_user_variation_change = True
-        item2.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_allowed is False
 
     @classscope(attr='o')
     def test_user_change_absolute_deadline_unpaid_no_subevents(self):
         v = self.item1.variations.create(value='V')
         self.order.positions.update(variation=v)
-        self.item1.allow_user_variation_change = True
-        self.item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         assert self.order.user_change_deadline is None
         self.event.settings.set('change_allow_user_until', RelativeDateWrapper(now() + timedelta(days=1)))
         self.order = Order.objects.get(pk=self.order.pk)
@@ -2040,8 +2021,7 @@ class OrderTestCase(BaseQuotaTestCase):
     def test_user_change_relative_deadline_unpaid_no_subevents(self):
         v = self.item1.variations.create(value='V')
         self.order.positions.update(variation=v)
-        self.item1.allow_user_variation_change = True
-        self.item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.date_from = now() + timedelta(days=3)
         self.event.save()
 
@@ -2079,8 +2059,7 @@ class OrderTestCase(BaseQuotaTestCase):
     def test_user_change_relative_deadline_to_subevents(self):
         v = self.item1.variations.create(value='V')
         self.order.positions.update(variation=v)
-        self.item1.allow_user_variation_change = True
-        self.item1.save(update_fields=['allow_user_variation_change'])
+        self.event.settings.change_allow_user_variation = True
         self.event.date_from = now() + timedelta(days=3)
         self.event.has_subevents = True
         self.event.save()
