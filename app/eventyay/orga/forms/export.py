@@ -183,7 +183,7 @@ class ExportForm(forms.Form):
                     buffer.seek(0)
                     buffer.truncate(0)
 
-                row = [object_data.get(col, "") for col in header]
+                row = [object_data.get(col) or "" for col in header]
                 writer.writerow(row)
                 yield buffer.getvalue()
 
