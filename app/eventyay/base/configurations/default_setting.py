@@ -2602,7 +2602,7 @@ Your {event} team"""
             label=_('Join Live Event'),
             widget=I18nTextInput,
             help_text=_('Custom label for the "Join Live Event" menu item. Leave empty to use the default label or locale-specific translation.'),
-            widget_kwargs={'attrs': {'placeholder': _('Live Video')}},
+            widget_kwargs={'attrs': {'placeholder': _('Join Live Event')}},
             required=False,
         ),
     },
