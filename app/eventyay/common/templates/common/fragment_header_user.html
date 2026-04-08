@@ -95,9 +95,9 @@
                 {% if show_talks_user_menu %}
                     {% can_view_featured_sessions_public current_event as show_featured_sessions_menu %}
                     {% if show_featured_sessions_menu %}
-                        <a href="{{ current_event.urls.featured }}" class="dropdown-item {% if '/featured/' in request.path_info %}active{% endif %}" role="menuitem" tabindex="-1">
-                            <i class="fa fa-certificate"></i>
-                            {% translate "Featured sessions" %}
+                        <a href="{{ current_event.urls.featured }}" class="dropdown-item {% if '/featured/' in request.path_info %}active{% endif %}" role="menuitem" tabindex="-1" title="{% translate 'Featured Sessions' %}">
+                            <i class="fa fa-certificate" aria-hidden="true"></i>
+                            {% translate "Featured" %}
                         </a>
                     {% endif %}
                 {% endif %}
