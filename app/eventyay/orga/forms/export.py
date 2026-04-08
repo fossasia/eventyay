@@ -164,28 +164,36 @@ class ExportForm(forms.Form):
                 if hasattr(self, 'get_additional_data'):
                     object_data.update(**self.get_additional_data(obj))
 
+                # handle list fields
                 for key, value in object_data.items():
                     if isinstance(value, list):
                         object_data[key] = delimiter.join(
                             str(item) for item in value if item is not None
                         )
 
+                buffer = StringIO()
+                writer = csv.writer(buffer)
+
                 if header is None:
                     header = list(object_data.keys())
-                    yield ','.join(header) + '\n'
+                    writer.writerow(header)
+                    yield buffer.getvalue()
+                    buffer.seek(0)
+                    buffer.truncate(0)
 
-                row = [str(object_data.get(col, "")) for col in header]
-                yield ','.join(row) + '\n'
+                row = [object_data.get(col, "") for col in header]
+                writer.writerow(row)
+                yield buffer.getvalue()
 
         return StreamingHttpResponse(
             generate(),
-            content_type='text/plain; charset=utf-8',
+            content_type='text/csv; charset=utf-8',
             headers={
                 'Content-Disposition': f'attachment; filename="{self.filename}.csv"',
                 'Access-Control-Allow-Origin': '*',
             },
         )
-
+    
     def json_export(self, data):
         content = json.dumps(data, cls=I18nJSONEncoder, indent=2)
         return HttpResponse(
