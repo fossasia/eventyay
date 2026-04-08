@@ -33,6 +33,7 @@ from eventyay.agenda.views.utils import (
 )
 from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
 
@@ -203,8 +204,8 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
                 return redirect_to_presale_with_warning(request, _('No published sessions.'))
             return redirect_to_presale_with_warning(request, _('No published schedule.'))
 
-        if not self.has_permission() and self.request.user.has_perm(
-            'base.list_featured_submission', self.request.event
+        if not self.has_permission() and are_featured_submissions_visible(
+            self.request.user, self.request.event
         ):
             messages.success(request, _('Our schedule is not live yet.'))
             return HttpResponseRedirect(self.request.event.urls.featured)
@@ -311,7 +312,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         """Build enriched schedule data for inline embedding, avoiding extra API calls."""
         if not self.schedule:
             return '{}'
-        data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True)
+        data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True, include_featured_speaker_metadata=are_featured_submissions_visible(self.request.user, self.request.event))
         return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     def get_context_data(self, **kwargs):

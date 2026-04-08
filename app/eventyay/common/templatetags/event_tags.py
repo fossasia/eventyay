@@ -155,9 +155,11 @@ def can_view_talks(context, event=None):
 
 @register.simple_tag(takes_context=True)
 def can_view_featured_sessions_public(context, event=None):
-    """Public nav may link to featured sessions (same gate as FeaturedView / list_featured rules).
+    """Whether public UI may link to featured sessions (same gate as :class:`FeaturedView`).
 
-    True if featured submissions are publicly visible or ``user.has_perm('base.list_featured_submission', event)``.
+    Uses ``are_featured_submissions_visible`` so org setting "Show featured sessions" applies
+    to everyone (including organizers on the public site). ``has_perm('list_featured')`` is
+    intentionally not used here: it always passes for orga via ``orga_can_change_submissions``.
     """
     request = context.get('request')
     event = event or getattr(request, 'event', None)
@@ -168,9 +170,7 @@ def can_view_featured_sessions_public(context, event=None):
     user = getattr(request, 'user', None)
     if user is None:
         return False
-    if are_featured_submissions_visible(user, event):
-        return True
-    return user.has_perm('base.list_featured_submission', event)
+    return are_featured_submissions_visible(user, event)
 
 
 @register.simple_tag(takes_context=True)

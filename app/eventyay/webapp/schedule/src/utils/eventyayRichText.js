@@ -78,7 +78,7 @@ const PURIFY_CONFIG = {
 	ALLOWED_ATTR: EVENTYAY_RICH_TEXT_ALLOWED_ATTR,
 	ALLOW_DATA_ATTR: false,
 	ALLOW_UNKNOWN_PROTOCOLS: false,
-	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
+	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|(?!(?:[a-z][a-z0-9+.-]*:))[\s\S]*)$/i,
 }
 
 /** @type {ReturnType<typeof createDOMPurify> | null} */

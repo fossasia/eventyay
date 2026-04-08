@@ -45,7 +45,7 @@
                         <i>{{ talk.submission_type.name|event_localize }}</i>
                     </small>
                 </h5>
-                <p>{{ talk.abstract|default:talk.description|default:""|event_localize|rich_text }}</p>
+                <div class="featured-talk-abstract">{{ talk.abstract|default:talk.description|default:""|event_localize|rich_text }}</div>
                 {% if not forloop.last %}<hr>{% endif %}
             </section>
         {% endfor %}

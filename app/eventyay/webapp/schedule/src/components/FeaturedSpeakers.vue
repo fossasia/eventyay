@@ -278,7 +278,7 @@ export default {
 					overflow: hidden
 					overflow-wrap: anywhere
 					text-overflow: ellipsis
-					.c-markdown-content
+					&.c-markdown-content
 						font-size: inherit
 						line-height: inherit
 						color: inherit
@@ -298,7 +298,7 @@ export default {
 		overflow: visible
 		white-space: normal
 		text-overflow: clip
-		.c-markdown-content
+		&.c-markdown-content
 			display: block
 
 	.avatar-placeholder

@@ -28,6 +28,7 @@ from eventyay.common.views.mixins import (
     SocialMediaCardMixin,
 )
 from eventyay.agenda.views.utils import escape_json_for_script, is_public_speakers_empty, redirect_to_presale_with_warning
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models import TalkQuestionTarget
 
@@ -40,7 +41,7 @@ class ScheduleDataMixin:
         schedule = self.request.event.current_schedule
         if not schedule:
             return '{}'
-        data = schedule.build_data(enrich=True)
+        data = schedule.build_data(enrich=True, include_featured_speaker_metadata=are_featured_submissions_visible(self.request.user, self.request.event))
         return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
 

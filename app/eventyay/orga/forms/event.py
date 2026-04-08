@@ -66,11 +66,14 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         label=_('Show featured sessions'),
         choices=(
             ('never', _('Never')),
-            ('pre_schedule', _('Until the first schedule is released')),
+            ('after_schedule', _('Once the first schedule version is published'),),
             ('always', _('Always')),
         ),
         help_text=_(
-            'Marking sessions as “featured” is a good way to show them before the first schedule release, or to highlight them once the schedule is visible.'
+            'Never: the featured page and nav entry are always hidden. '
+            '"Once the first schedule version is published": featured sessions are hidden until you '
+            'release a schedule version; after the first release the featured page and tab appear. '
+            'Always: the featured page and tab are always visible (even before a schedule is released).'
         ),
         required=True,
     )

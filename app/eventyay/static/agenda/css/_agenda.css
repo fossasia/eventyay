@@ -66,7 +66,7 @@ body.page-agenda .featured-page #featured-talks {
   margin-top: 0.35rem;
 }
 
-body.page-agenda .featured-page #featured-talks section > p {
+body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract {
   font-size: var(--featured-body-size);
   line-height: 1.6;
   margin-top: 0.35rem;
@@ -74,13 +74,13 @@ body.page-agenda .featured-page #featured-talks section > p {
   color: var(--color-text);
 }
 
-body.page-agenda .featured-page #featured-talks section > p :is(ul, ol) {
+body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract :is(ul, ol) {
   margin-top: 0.35rem;
   margin-bottom: 0.35rem;
   padding-left: 1.25rem;
 }
 
-body.page-agenda .featured-page #featured-talks section > p li {
+body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract li {
   margin-bottom: 0.25rem;
 }
 
