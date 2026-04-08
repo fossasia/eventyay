@@ -34,8 +34,9 @@ class OrderPositionChangeForm(forms.Form):
         i = instance.product
         pname = str(i)
         variations = list(i.variations.all())
+        legacy_event_setting = event.settings.get('change_allow_user_variation', as_type=bool, default=False)
 
-        if not instance.product.allow_user_variation_change:
+        if not (instance.product.allow_user_variation_change or legacy_event_setting):
             if instance.variation_id:
                 current_label = f'{i.name} – {instance.variation.value}'
                 choices.append((f'{i.pk}-{instance.variation_id}', current_label))
