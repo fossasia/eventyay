@@ -41,7 +41,12 @@ class ScheduleDataMixin:
         schedule = self.request.event.current_schedule
         if not schedule:
             return '{}'
-        data = schedule.build_data(enrich=True, include_featured_speaker_metadata=are_featured_submissions_visible(self.request.user, self.request.event))
+        data = schedule.build_data(
+            enrich=True,
+            include_featured_speaker_metadata=are_featured_submissions_visible(
+                self.request.user, self.request.event
+            ),
+        )
         return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
 

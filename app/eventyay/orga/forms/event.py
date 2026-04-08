@@ -129,6 +129,12 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             + str(_('You can find the page <a {href}>here</a>.')).format(href=f'href="{self.instance.urls.featured}"')
         )
 
+    def clean_show_featured(self):
+        value = self.cleaned_data.get('show_featured', '')
+        if value == 'pre_schedule':
+            return 'after_schedule'
+        return value
+
     def clean_custom_css(self):
         if self.cleaned_data.get('custom_css') or self.files.get('custom_css'):
             css = self.cleaned_data['custom_css'] or self.files['custom_css']

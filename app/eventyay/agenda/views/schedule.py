@@ -312,7 +312,13 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         """Build enriched schedule data for inline embedding, avoiding extra API calls."""
         if not self.schedule:
             return '{}'
-        data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True, include_featured_speaker_metadata=are_featured_submissions_visible(self.request.user, self.request.event))
+        data = self.schedule.build_data(
+            all_talks=not self.schedule.version,
+            enrich=True,
+            include_featured_speaker_metadata=are_featured_submissions_visible(
+                self.request.user, self.request.event
+            ),
+        )
         return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     def get_context_data(self, **kwargs):

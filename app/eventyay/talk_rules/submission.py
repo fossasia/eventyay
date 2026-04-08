@@ -71,15 +71,7 @@ def _show_featured_setting(event):
 
 def _event_has_published_schedule(event):
     """True once at least one schedule version has been published (``published`` is set)."""
-    from django_scopes import scope
-
-    from eventyay.base.models.schedule import Schedule
-
-    eid = getattr(event, 'pk', None)
-    if not eid:
-        return False
-    with scope(event=event):
-        return Schedule.objects.filter(event_id=eid, published__isnull=False).exists()
+    return event.current_schedule is not None
 
 
 def schedule_widget_featured_cache_key_part(event):

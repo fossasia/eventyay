@@ -84,7 +84,17 @@ class VideoSPAView(View):
                 if not schedule:
                     schedule = event.current_schedule or event.wip_schedule
 
-                schedule_data = (schedule.build_data(all_talks=False, enrich=True, include_featured_speaker_metadata=are_featured_submissions_visible(AnonymousUser(), event),) if schedule else None)
+                schedule_data = (
+                    schedule.build_data(
+                        all_talks=False,
+                        enrich=True,
+                        include_featured_speaker_metadata=are_featured_submissions_visible(
+                            AnonymousUser(), event
+                        ),
+                    )
+                    if schedule
+                    else None
+                )
                 schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 

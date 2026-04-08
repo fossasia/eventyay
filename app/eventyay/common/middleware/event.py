@@ -29,6 +29,7 @@ from eventyay.common.utils.language import (
 
 logger = logging.getLogger(__name__)
 
+
 def _agenda_featured_allowed_without_talks_published(url, request, event):
     """Let /featured/ load when org settings allow it, even if talks are not published yet."""
     if 'agenda' not in url.namespaces or url.url_name != 'featured':
