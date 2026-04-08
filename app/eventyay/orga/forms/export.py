@@ -134,6 +134,8 @@ class ExportForm(forms.Form):
         return self.json_export(data)
 
     def csv_export_stream(self, queryset, fields, questions):
+        from django_scopes import scope
+
         delimiters = {
             'newline': '\n',
             'comma': ', ',
@@ -143,50 +145,55 @@ class ExportForm(forms.Form):
         def generate():
             header = None
 
-            for obj in queryset.iterator(chunk_size=200):
-                object_data = {}
+            with scope(event=self.event):
+                for obj in queryset:
+                    object_data = {}
 
-                code = getattr(obj, 'code', None)
-                if code:
-                    object_data['ID'] = code
+                    code = getattr(obj, 'code', None)
+                    if code:
+                        object_data['ID'] = code
 
-                prepare_method = getattr(self, '_prepare_object_data', None)
-                if prepare_method:
-                    obj = prepare_method(obj)
+                    prepare_method = getattr(self, '_prepare_object_data', None)
+                    if prepare_method:
+                        obj = prepare_method(obj)
 
-                for field in fields:
-                    label = str(self.fields[field].label)
-                    object_data[label] = self.get_object_attribute(obj, field)
+                    for field in fields:
+                        label = str(self.fields[field].label)
+                        object_data[label] = self.get_object_attribute(obj, field)
 
-                for question in questions:
-                    label = str(question.question)
-                    answer = self.get_answer(question, obj)
-                    object_data[label] = answer.answer_string if answer else None
+                    for question in questions:
+                        label = str(question.question)
+                        answer = self.get_answer(question, obj)
+                        object_data[label] = answer.answer_string if answer else None
 
-                if hasattr(self, 'get_additional_data'):
-                    object_data.update(**self.get_additional_data(obj))
+                    if hasattr(self, 'get_additional_data'):
+                        object_data.update(**self.get_additional_data(obj))
 
-                # handle list fields
-                for key, value in object_data.items():
-                    if isinstance(value, list):
-                        object_data[key] = delimiter.join(
-                            str(item) for item in value if item is not None
-                        )
+                    for key, value in object_data.items():
+                        if isinstance(value, list):
+                            object_data[key] = delimiter.join(
+                                str(item) for item in value if item is not None
+                            )
 
-                buffer = StringIO()
-                writer = csv.writer(buffer)
+                    buffer = StringIO()
+                    writer = csv.writer(buffer)
 
-                if header is None:
-                    header = list(object_data.keys())
-                    writer.writerow(header)
+                    if header is None:
+                        header = list(object_data.keys())
+                        writer.writerow(header)
+                        yield buffer.getvalue()
+                        buffer.seek(0)
+                        buffer.truncate(0)
+
+                    row = [
+                        "" if object_data.get(col) is None else object_data.get(col)
+                        for col in header
+                    ]
+                    writer.writerow(row)
                     yield buffer.getvalue()
                     buffer.seek(0)
                     buffer.truncate(0)
-
-                row = [object_data.get(col) or "" for col in header]
-                writer.writerow(row)
-                yield buffer.getvalue()
-
+ 
         return StreamingHttpResponse(
             generate(),
             content_type='text/csv; charset=utf-8',
