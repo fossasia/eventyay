@@ -1,3 +1,4 @@
+
 name: Deploy Documentation
 
 on:
@@ -71,7 +72,7 @@ jobs:
           ../app/.venv/bin/sphinx-build -b html -d _build/doctrees . _build/html
 
       - name: Prepare deployment
-        if: github.event_name == 'push' && github.repository == 'fossasia/eventyay'
+        if: github.event_name == 'push'
         run: |
           mkdir -p _site
           cp -r doc/_build/html/* _site/
@@ -80,17 +81,17 @@ jobs:
           ls -la _site/
 
       - name: Setup Pages
-        if: github.event_name == 'push' && github.repository == 'fossasia/eventyay'
+        if: github.event_name == 'push'
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        if: github.event_name == 'push' && github.repository == 'fossasia/eventyay'
+        if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v4
         with:
           path: '_site'
 
   deploy:
-    if: github.event_name == 'push' && github.repository == 'fossasia/eventyay'
+    if: github.event_name == 'push'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -103,4 +104,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
