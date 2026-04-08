@@ -3,7 +3,7 @@ from io import StringIO
 
 from defusedcsv import csv
 from django import forms
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from i18nfield.utils import I18nJSONEncoder
@@ -119,32 +119,66 @@ class ExportForm(forms.Form):
     def export_data(self):
         fields = [field_name for field_name in self.export_field_names if self.cleaned_data.get(field_name)]
         questions = [question for question in self.questions if self.cleaned_data.get(f'question_{question.pk}')]
-        data = self.get_data(self.get_queryset(), fields, questions)
+        queryset = self.get_queryset()
+
+        if self.cleaned_data.get('export_format') == 'csv':
+            return self.csv_export_stream(queryset, fields, questions)
+
+        data = self.get_data(queryset, fields, questions)
+
         if not data:
             return
-        if self.cleaned_data.get('export_format') == 'csv':
-            return self.csv_export(data)
+
         return self.json_export(data)
 
-    def csv_export(self, data):
+    def csv_export_stream(self, queryset, fields, questions):
         delimiters = {
             'newline': '\n',
             'comma': ', ',
         }
         delimiter = delimiters[self.cleaned_data.get('data_delimiter') or 'newline']
 
-        for row in data:
-            for key, value in row.items():
-                if isinstance(value, list):
-                    row[key] = delimiter.join(str(item) for item in value if item is not None)
+        def generate():
+            header = None
 
-        output = StringIO()
-        writer = csv.DictWriter(output, fieldnames=data[0].keys())
-        writer.writeheader()
-        writer.writerows(data)
-        content = output.getvalue()
-        return HttpResponse(
-            content,
+            for obj in queryset.iterator(chunk_size=200):
+                object_data = {}
+
+                code = getattr(obj, 'code', None)
+                if code:
+                    object_data['ID'] = code
+
+                prepare_method = getattr(self, '_prepare_object_data', None)
+                if prepare_method:
+                    obj = prepare_method(obj)
+
+                for field in fields:
+                    label = str(self.fields[field].label)
+                    object_data[label] = self.get_object_attribute(obj, field)
+
+                for question in questions:
+                    label = str(question.question)
+                    answer = self.get_answer(question, obj)
+                    object_data[label] = answer.answer_string if answer else None
+
+                if hasattr(self, 'get_additional_data'):
+                    object_data.update(**self.get_additional_data(obj))
+
+                for key, value in object_data.items():
+                    if isinstance(value, list):
+                        object_data[key] = delimiter.join(
+                            str(item) for item in value if item is not None
+                        )
+
+                if header is None:
+                    header = list(object_data.keys())
+                    yield ','.join(header) + '\n'
+
+                row = [str(object_data.get(col, "")) for col in header]
+                yield ','.join(row) + '\n'
+
+        return StreamingHttpResponse(
+            generate(),
             content_type='text/plain; charset=utf-8',
             headers={
                 'Content-Disposition': f'attachment; filename="{self.filename}.csv"',
