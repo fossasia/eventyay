@@ -41,12 +41,9 @@ class OrderPositionChangeForm(forms.Form):
                 choices.append((f'{i.pk}-{instance.variation_id}', current_label))
             else:
                 choices.append((str(i.pk), '%s' % pname))
-            self.fields['productvar'].widget.attrs['disabled'] = True
+            self.fields['productvar'].disabled = True
             self.fields['productvar'].help_text = _('The organizer does not allow changing variations for this product.')
-            self.fields['productvar'].choices = choices
-            return
-
-        if variations:
+        elif variations:
             current_quotas = instance.variation.quotas.all() if instance.variation else instance.product.quotas.all()
             qa = QuotaAvailability()
             for v in variations:
@@ -111,13 +108,13 @@ class OrderPositionChangeForm(forms.Form):
                 choices.append((f'{i.pk}-{v.pk}', label))
 
             if not choices:
-                self.fields['productvar'].widget.attrs['disabled'] = True
+                self.fields['productvar'].disabled = True
                 self.fields['productvar'].help_text = _(
                     'No other variation of this product is currently available for you.'
                 )
         else:
             choices.append((str(i.pk), '%s' % pname))
-            self.fields['productvar'].widget.attrs['disabled'] = True
+            self.fields['productvar'].disabled = True
             self.fields['productvar'].help_text = _('No other variations of this product exist.')
 
         self.fields['productvar'].choices = choices

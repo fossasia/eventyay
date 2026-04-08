@@ -378,6 +378,7 @@ class ProductCreateForm(I18nModelForm):
                 'issue_giftcard',
                 'require_approval',
                 'allow_waitinglist',
+                'allow_user_variation_change',
                 'show_quota_left',
                 'hidden_if_available',
                 'require_bundling',
