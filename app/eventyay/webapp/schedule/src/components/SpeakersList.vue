@@ -710,9 +710,11 @@ export default {
 						line-height: 1.35
 						display: -webkit-box
 						-webkit-line-clamp: 2
+						line-clamp: 2
 						-webkit-box-orient: vertical
 						overflow: hidden
 						overflow-wrap: anywhere
+						text-overflow: ellipsis
 						.c-markdown-content
 							font-size: inherit
 							line-height: inherit
@@ -728,9 +730,11 @@ export default {
 		.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
 			display: block
 			-webkit-line-clamp: unset
+			line-clamp: unset
 			-webkit-box-orient: unset
 			overflow: visible
 			white-space: normal
+			text-overflow: clip
 			.c-markdown-content
 				display: block
 
@@ -855,9 +859,12 @@ export default {
 			font-size: 14px
 			color: $clr-secondary-text-light
 			display: -webkit-box
-			-webkit-line-clamp: 3
+			-webkit-line-clamp: 1
+			line-clamp: 1
 			-webkit-box-orient: vertical
 			overflow: hidden
+			overflow-wrap: anywhere
+			text-overflow: ellipsis
 			margin-bottom: 4px
 			.c-markdown-content
 				font-size: inherit
