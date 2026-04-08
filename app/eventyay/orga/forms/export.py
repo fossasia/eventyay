@@ -121,6 +121,8 @@ class ExportForm(forms.Form):
         questions = [question for question in self.questions if self.cleaned_data.get(f'question_{question.pk}')]
         queryset = self.get_queryset()
 
+        if not queryset.exists():
+            return
         if self.cleaned_data.get('export_format') == 'csv':
             return self.csv_export_stream(queryset, fields, questions)
 
