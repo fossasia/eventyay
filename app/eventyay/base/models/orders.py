@@ -604,7 +604,7 @@ class Order(LockModel, LoggedModel):
         if self.user_change_deadline and now() > self.user_change_deadline:
             return False
 
-        return self.event.settings.change_allow_user_variation and any([op.has_variations for op in positions])
+        return any([op.has_variations and op.product.allow_user_variation_change for op in positions])
 
     @property
     @scopes_disabled()

@@ -644,9 +644,6 @@ class EventSettingsForm(SettingsForm):
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
-        'change_allow_user_variation',
-        'change_allow_user_price',
-        'change_allow_user_until',
         'checkout_show_copy_answers_button',
         'primary_color',
         'theme_color_success',
@@ -817,7 +814,6 @@ class CancelSettingsForm(SettingsForm):
         'cancel_allow_user_paid_adjust_fees_step',
         'cancel_allow_user_paid_refund_as_giftcard',
         'cancel_allow_user_paid_require_approval',
-        'change_allow_user_variation',
         'change_allow_user_price',
         'change_allow_user_until',
     ]

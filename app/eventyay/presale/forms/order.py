@@ -35,6 +35,17 @@ class OrderPositionChangeForm(forms.Form):
         pname = str(i)
         variations = list(i.variations.all())
 
+        if not instance.product.allow_user_variation_change:
+            if instance.variation_id:
+                current_label = f'{i.name} – {instance.variation.value}'
+                choices.append((f'{i.pk}-{instance.variation_id}', current_label))
+            else:
+                choices.append((str(i.pk), '%s' % pname))
+            self.fields['productvar'].widget.attrs['disabled'] = True
+            self.fields['productvar'].help_text = _('The organizer does not allow changing variations for this product.')
+            self.fields['productvar'].choices = choices
+            return
+
         if variations:
             current_quotas = instance.variation.quotas.all() if instance.variation else instance.product.quotas.all()
             qa = QuotaAvailability()

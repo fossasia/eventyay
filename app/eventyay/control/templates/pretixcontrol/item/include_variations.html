@@ -2,6 +2,11 @@
 {% load bootstrap3 %}
 {% load formset_tags %}
 <div class="formset" data-formset data-formset-prefix="{{ formset.prefix }}">
+    {% if form.allow_user_variation_change %}
+        <div class="form-horizontal">
+            {% bootstrap_field form.allow_user_variation_change layout='control' %}
+        </div>
+    {% endif %}
     {{ formset.management_form }}
     {% bootstrap_formset_errors formset %}
     <div data-formset-body>
