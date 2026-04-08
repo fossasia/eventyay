@@ -79,17 +79,22 @@ const initNavSearch = () => {
         const isOpen = !searchWrapper.classList.contains("d-none")
         if (isOpen) {
             searchWrapper.classList.add("d-none")
+            searchWrapper.setAttribute("aria-hidden", "true")
+            if (searchToggle) searchToggle.setAttribute("aria-expanded", "false")
             searchInput.value = ""
             lastQuery = null
         } else {
             searchWrapper.classList.remove("d-none")
+            searchWrapper.removeAttribute("aria-hidden")
+            if (searchToggle) searchToggle.setAttribute("aria-expanded", "true")
             triggerSearch()
             setTimeout(() => searchInput.focus(), 0)
         }
     }
 
-    if (searchToggle) {
-        searchToggle.addEventListener("click", (ev) => {
+    const toggleClickTarget = searchToggle || wrapper.querySelector("#nav-search")
+    if (toggleClickTarget) {
+        toggleClickTarget.addEventListener("click", (ev) => {
             ev.preventDefault()
             ev.stopPropagation()
             toggleSearchDropdown()
@@ -100,6 +105,8 @@ const initNavSearch = () => {
     document.addEventListener("click", (ev) => {
         if (!wrapper.contains(ev.target) && !searchWrapper.classList.contains("d-none")) {
             searchWrapper.classList.add("d-none")
+            searchWrapper.setAttribute("aria-hidden", "true")
+            if (searchToggle) searchToggle.setAttribute("aria-expanded", "false")
             searchInput.value = ""
             lastQuery = null
         }

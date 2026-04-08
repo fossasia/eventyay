@@ -182,7 +182,7 @@
             <aside class="nav flex-column sidebar">
                 <div class="dropdown nav-link p-0" id="nav-search-wrapper">
                     {% block nav_top_header %}
-                        <div id="nav-search" class="summary-div" aria-haspopup="true" aria-expanded="false">
+                        <div id="nav-search" class="summary-div">
                             <a href="{% get_dashboard_url %}" class="d-flex align-items-center" style="text-decoration: none; color: inherit;">
                                 <span id="search-context-icon" class="fa-stack fa-lg">
                                     <i class="fa fa-circle fa-stack-2x"></i>
@@ -200,9 +200,9 @@
                                     {% endif %}
                                 </div>
                             </a>
-                            <span class="nav-search-toggle" title="{% translate 'Search' %} (Alt + k)">
-                                <i class="fa fa-search"></i>
-                            </span>
+                            <button type="button" class="nav-search-toggle" aria-label="{% translate 'Search' %}" aria-expanded="false" aria-controls="nav-search-input-wrapper" aria-haspopup="listbox">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </button>
                         </div>
                         <div id="nav-search-input-wrapper" class="d-none dropdown-content dropdown-menu dropdown-menu-left" aria-labelledby="nav-search" data-source="{% url 'orga:nav.typeahead' %}" data-event-typeahead data-organizer="{% if request.event %}{{ request.event.organizer.pk }}{% elif request.organizer %}{{ request.organizer.pk }}{% endif %}">
                             <div class="query-holder">

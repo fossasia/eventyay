@@ -361,19 +361,25 @@ aside.sidebar {
       display: none;
     }
 
-    .nav-search-toggle {
+    button.nav-search-toggle {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 36px;
+      flex-shrink: 0;
       cursor: pointer;
       color: var(--color-primary);
       opacity: 0.7;
-      flex-shrink: 0;
+      background: none;
+      border: none;
+      padding: 0;
 
-      &:hover {
+      &:hover,
+      &:focus-visible {
         opacity: 1;
         color: var(--color-primary-hover);
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
       }
     }
 
