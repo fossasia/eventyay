@@ -2,6 +2,21 @@
 
 setup_collapsible_details = function (el) {
     var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
+    var updateVariationToggles = function ($details) {
+        var isOpen = $details.prop("open");
+        $details.find("a.variation-toggle[data-show-label][data-hide-label]").each(function () {
+            var $toggle = $(this);
+            var label = isOpen ? $toggle.attr("data-hide-label") : $toggle.attr("data-show-label");
+            var $label = $toggle.find(".variation-toggle-label");
+            if ($label.length) {
+                $label.text(label);
+            } else {
+                $toggle.text(label);
+            }
+            $toggle.attr("aria-expanded", isOpen ? "true" : "false");
+        });
+    };
+
     el.find("details summary, details summary a[data-toggle=variations]").click(function (e) {
         if (this.tagName !== "A" && $(e.target).closest("a").length > 0) {
             return true;
@@ -21,12 +36,14 @@ setup_collapsible_details = function (el) {
             $details.removeClass("details-open");
             $detailsNotSummary.stop().show().slideUp(duration || 500, function () {
                 $details.prop("open", false);
+                updateVariationToggles($details);
             });
         } else {
             $detailsNotSummary.stop().hide();
             $details.prop("open", true);
             $details.addClass("details-open");
             $detailsNotSummary.slideDown(duration);
+            updateVariationToggles($details);
         }
         e.preventDefault();
         return false;
@@ -60,6 +77,7 @@ setup_collapsible_details = function (el) {
         }).prop('tabIndex', 0).bind('selectstart dragstart mousedown', function () {
             return false;
         });
+        updateVariationToggles($details);
     });
 };
 

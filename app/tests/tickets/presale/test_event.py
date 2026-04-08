@@ -485,6 +485,39 @@ class ItemDisplayTest(EventTestMixin, SoupTest):
         self.assertIn('Red', doc.select('section:nth-of-type(1)')[0].text)
         self.assertNotIn('Black', doc.select('section:nth-of-type(1)')[0].text)
 
+    def _create_variation_item_for_max_total(self, max_per_order):
+        with scopes_disabled():
+            q = Quota.objects.create(event=self.event, name='Quota', size=20)
+            item = Item.objects.create(
+                event=self.event,
+                name='Early-bird shirt',
+                default_price=12,
+                max_per_order=max_per_order,
+            )
+            var1 = ItemVariation.objects.create(item=item, value='Red')
+            var2 = ItemVariation.objects.create(item=item, value='Blue')
+            q.items.add(item)
+            q.variations.add(var1)
+            q.variations.add(var2)
+        return item
+
+    def test_variation_max_total_attribute_limited_channel(self):
+        item = self._create_variation_item_for_max_total(max_per_order=3)
+        doc = self.get_doc('/%s/%s/' % (self.orga.slug, self.event.slug))
+        details = doc.select_one('#item-%d' % item.pk)
+        self.assertIsNotNone(details)
+        self.assertEqual(details.get('data-variation-max-total'), '3')
+
+    def test_variation_max_total_attribute_unlimited_channel(self):
+        item = self._create_variation_item_for_max_total(max_per_order=3)
+        doc = self.get_doc(
+            '/%s/%s/' % (self.orga.slug, self.event.slug),
+            PRETIX_SALES_CHANNEL=FoobarSalesChannel,
+        )
+        details = doc.select_one('#item-%d' % item.pk)
+        self.assertIsNotNone(details)
+        self.assertEqual(details.get('data-variation-max-total'), '')
+
     def test_variation_prices_in_quota(self):
         with scopes_disabled():
             c = ItemCategory.objects.create(event=self.event, name='Entry tickets', position=0)

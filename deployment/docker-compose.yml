@@ -4,7 +4,7 @@ services:
   web:
     image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-web
-    command: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120 --graceful-timeout 90
     volumes:
       - ${DATA_DIR:-./data}/static:/home/app/web/eventyay/static.dist
       - ${DATA_DIR:-./data}/data:/home/app/web/eventyay/data
@@ -80,7 +80,7 @@ services:
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: ${WATCHTOWER_NOTIFICATIONS_HOSTNAME}
       WATCHTOWER_POLL_INTERVAL: 600
       WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_NOTIFICATION_URL}
-    command: watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker --cleanup
+    command: watchtower eventyay-next-watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker --cleanup
 
 volumes:
   rd:
