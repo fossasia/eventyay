@@ -2,6 +2,7 @@ import json
 import logging
 import string
 from datetime import date, datetime, time
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
@@ -31,6 +32,7 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from . import BillingInvoice
 from .auth import User
+
 
 logger = logging.getLogger(__name__)
 
@@ -273,10 +275,22 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
 
     @scopes_disabled()
     def delete_sub_objects(self):
+        from django.db.models import ProtectedError
+
+        from eventyay.base.models.log import LogEntry
+
         for e in self.events.all():
             e.delete_sub_objects()
             e.delete()
-        self.teams.all().delete()
+        LogEntry.all.filter(api_token__team__organizer=self).update(api_token=None)
+        try:
+            self.teams.all().delete()
+        except ProtectedError as exc:
+            protected_labels = ', '.join(sorted({obj._meta.label for obj in exc.protected_objects})) or 'unknown'
+            logger.warning(
+                'Team deletion blocked for organizer %s by protected objects: %s', self.slug, protected_labels
+            )
+            raise
 
     def has_unpaid_invoice(self):
         # Check if Organizer has unpaid invoices which status is pending or expired
@@ -506,11 +520,19 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
             return self.organizer.events.all()
         return self.limit_events.all()
 
+    def get_orga_teams_tab_url(self, next_url=None):
+        """Unified organizer teams page with this team selected (permissions)."""
+        base = reverse('eventyay_common:organizer.teams', kwargs={'organizer': self.organizer.slug})
+        query = [('team', str(self.pk)), ('section', 'permissions')]
+        if next_url:
+            query.append(('next', next_url))
+        return f'{base}?{urlencode(query)}'
+
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this team."""
 
-        base = '{self.organizer.orga_urls.teams}{self.pk}/'
-        delete = '{base}delete/'
+        base = '{self.organizer.orga_urls.teams}?team={self.pk}&section=permissions'
+        delete = '{self.organizer.orga_urls.base}team/{self.pk}/delete/'
 
 
 class TeamInvite(models.Model):
