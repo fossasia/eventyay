@@ -4,7 +4,7 @@ body.page-agenda #main-container > header {
   margin-top: 24px;
 }
 
-/* Featured page: type scale (title h3 1.5rem; intro + abstracts step down; meta under session titles). */
+/* Featured page typography */
 body.page-agenda .featured-page {
   --featured-intro-size: 0.9375rem;
   --featured-body-size: 0.9375rem;
@@ -92,7 +92,7 @@ body.page-agenda .featured-page #featured-talks section :is(ul, ol) {
   color: var(--color-text);
 }
 
-/* Narrower than global .talk-title small { 18px } so meta sits under the 1.5rem title */
+/* Featured list: session meta smaller than global .talk-title small */
 body.page-agenda .featured-page #featured-talks .talk-title small {
   font-size: var(--featured-meta-size);
   line-height: 1.4;

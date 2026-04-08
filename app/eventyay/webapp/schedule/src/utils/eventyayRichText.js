@@ -1,16 +1,7 @@
 /**
- * Rich text for public schedule UI: markdown + allowlisted HTML.
- *
- * Keep allowlists and URI protocol policy in sync with
- * `eventyay.base.templatetags.rich_text` (ALLOWED_TAGS, ALLOWED_ATTRIBUTES, ALLOWED_PROTOCOLS).
- *
- * Unlike the Django renderer, this path does not run bleach’s linkify `safelink_callback` (no safelink
- * redirect URLs) and does not add `target="_blank"` / `rel="noopener"` to external links. Schedule UI
- * should match server-rendered snippets where possible, but treat link behavior as intentionally
- * different unless we add a client-side post-pass.
- *
- * Attributes: DOMPurify only supports a global ALLOWED_ATTR list; we use that union for the first pass,
- * then enforce per-tag rules in uponSanitizeAttribute (same semantics as bleach attributes=).
+ * Schedule rich text (markdown + allowlisted HTML). Keep tags, per-tag attrs, and URI rules aligned
+ * with `eventyay.base.templatetags.rich_text`. No safelink or target/rel like Django; DOMPurify uses a
+ * global ALLOWED_ATTR union plus uponSanitizeAttribute for per-tag enforcement.
  */
 import MarkdownIt from 'markdown-it'
 import createDOMPurify from 'dompurify'
@@ -52,10 +43,7 @@ export const EVENTYAY_RICH_TEXT_ALLOWED_TAGS = [
 	'h6',
 ]
 
-/**
- * Mirrors eventyay.base.templatetags.rich_text.ALLOWED_ATTRIBUTES (tags omitted → no attributes).
- * @type {Record<string, string[]>}
- */
+/** @type {Record<string, string[]>} Matches rich_text.ALLOWED_ATTRIBUTES */
 export const EVENTYAY_RICH_TEXT_ALLOWED_ATTRIBUTES_BY_TAG = {
 	a: ['href', 'title', 'class'],
 	abbr: ['title'],

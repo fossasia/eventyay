@@ -155,15 +155,9 @@ def can_view_talks(context, event=None):
 
 @register.simple_tag(takes_context=True)
 def can_view_featured_sessions_public(context, event=None):
-    """Whether the public nav should link to the featured sessions page.
+    """Public nav may link to featured sessions (same gate as FeaturedView / list_featured rules).
 
-    Matches :class:`eventyay.agenda.views.featured.FeaturedView` and Submission
-    ``list_featured`` rules (``are_featured_submissions_visible | orga_can_change_submissions``).
-
-    Access is granted when featured submissions are publicly visible, or when the current user has
-    ``base.list_featured_submission`` for the event. The permission check uses ``user.has_perm`` for
-    any non-``None`` user, including ``AnonymousUser``, consistent with the view’s visibility logic.
-    ``has_event_perm`` in orga still short-circuits anonymous users and is not a substitute here.
+    True if featured submissions are publicly visible or ``user.has_perm('base.list_featured_submission', event)``.
     """
     request = context.get('request')
     event = event or getattr(request, 'event', None)

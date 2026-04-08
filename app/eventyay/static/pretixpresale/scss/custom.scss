@@ -315,8 +315,7 @@
         opacity: 0.85;
     }
 
-    /* Align hero title/logo and description text with same horizontal padding on mobile.
-     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
+    /* Mobile: hero overlay width + horizontal padding */
     .event-hero-overlay {
         display: flex;
         width: 100%;
@@ -324,29 +323,24 @@
         padding-right: 12px;
     }
 
-    /* Event index (Info): full-bleed hero overlay; body copy stays padded via #main-card > main */
+    /* Presale event index: full-bleed hero overlay */
     #main-container.page-presale-event-index .event-hero-overlay {
         padding-left: 0;
         padding-right: 0;
     }
 
-    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
     #main-card {
         margin-left: 0;
         margin-right: 0;
     }
 
-    /* Target only the OUTER <main> (direct child of #main-card) so we apply padding once.
-     * The presale event page has TWO nested <main> elements; without >, both get padded
-     * and the content double-indents. */
+    /* Outer main only (presale nests two <main> — avoid double horizontal padding) */
     #main-card>main {
         padding-top: 0.15rem;
         padding-left: 12px;
         padding-right: 12px;
     }
 
-    /* Zero the INNER <main aria-label> so its inherited 1rem from _layout.css
-     * does not add to the outer main's 12px, keeping description exactly at 12px. */
     #main-card>main>main {
         padding-left: 0;
         padding-right: 0;

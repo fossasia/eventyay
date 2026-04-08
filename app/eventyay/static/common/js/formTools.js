@@ -195,7 +195,7 @@ const initToastUiMarkdownTextarea = (textarea) => {
         el: mount,
         height: textarea.dataset.editorHeight || '320px',
         initialEditType: 'wysiwyg',
-        /* 'tab' matches Toast UI defaults; 'vertical' can confuse layout in wysiwyg-only mode */
+        // tab preview: vertical layout confuses wysiwyg-only mode
         previewStyle: 'tab',
         usageStatistics: false,
         hideModeSwitch: true,

@@ -336,7 +336,7 @@ header > .event-home-back {
   outline-offset: 2px;
 }
 
-/* px (not rem): presale loads Bootstrap html { font-size: 10px }; agenda/CFP use ~16px root — rem would diverge. */
+/* px: presale root font-size differs from agenda/CFP */
 .event-home-back .event-home-back-icon {
   font-size: 22px;
   line-height: 1;
