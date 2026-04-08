@@ -644,6 +644,9 @@ class EventSettingsForm(SettingsForm):
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
+        'change_allow_user_variation',
+        'change_allow_user_price',
+        'change_allow_user_until',
         'checkout_show_copy_answers_button',
         'primary_color',
         'theme_color_success',
@@ -722,7 +725,7 @@ class EventSettingsForm(SettingsForm):
             (k, '{scheme}: {samples}'.format(scheme=v[0], samples=', '.join(v[1])))
             for k, v in PERSON_NAME_TITLE_GROUPS.items()
         ]
-        
+
         if self.is_bound:
             if not self.is_submitted('name_scheme'):
                 self.fields['name_scheme'].required = False

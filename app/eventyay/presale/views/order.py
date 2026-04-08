@@ -63,6 +63,7 @@ from eventyay.base.services.mail import SendMailException
 from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
+    _try_auto_refund,
     cancel_order,
     change_payment_provider,
 )
@@ -1455,6 +1456,32 @@ class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
                             },
                         )
                     )
+
+                overpaid_amount = self.order.pending_sum * -1
+                if overpaid_amount > Decimal('0.00'):
+                    refund_as_giftcard = self.request.event.settings.cancel_allow_user_paid_refund_as_giftcard == 'force'
+                    try:
+                        _try_auto_refund(
+                            self.order,
+                            refund_as_giftcard=refund_as_giftcard,
+                            comment=gettext('Refund requested after order change'),
+                        )
+                    except OrderError as e:
+                        messages.warning(self.request, str(e))
+
+                    self.order.refresh_from_db()
+                    overpaid_amount = self.order.pending_sum * -1
+                    if overpaid_amount > Decimal('0.00'):
+                        self.order.log_action('eventyay.event.order.overpaid', user=self.request.user)
+                        messages.success(self.request, _('The order has been changed.'))
+                        messages.info(
+                            self.request,
+                            _(
+                                'Your order is now overpaid by {amount}. We have notified the organizer to process the refund.'
+                            ).format(amount=money_filter(overpaid_amount, self.request.event.currency)),
+                        )
+                    else:
+                        messages.success(self.request, _('The order has been changed and a refund has been initiated.'))
                 else:
                     messages.success(self.request, _('The order has been changed.'))
 

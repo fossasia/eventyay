@@ -56,6 +56,12 @@
                     {% bootstrap_field sform.last_order_modification_date layout="control" %}
                     {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
                 </div>
+                <h4>{% translate "Changes to ordered products" %}</h4>
+                {% bootstrap_field sform.change_allow_user_variation layout="control" %}
+                <div data-display-dependency='#id_settings-change_allow_user_variation'>
+                    {% bootstrap_field sform.change_allow_user_price layout="control" %}
+                    {% bootstrap_field sform.change_allow_user_until layout="control" %}
+                </div>
             </fieldset>
             <fieldset>
                 <legend>{% trans "Texts" %}</legend>
