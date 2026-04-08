@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-30 15:15+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-04-07 17:05+0000\n"
+"Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -160,7 +160,7 @@ msgstr "Anda tidak dapat memberikan umpan balik untuk sesi ini sekarang."
 
 #: agenda/templates/agenda/public_starred.html:38
 msgid "This page requires JavaScript to show the starred sessions."
-msgstr ""
+msgstr "Halaman ini menggunakan JavaScript untuk menampilkan sesi favorit."
 
 #: agenda/templates/agenda/schedule.html:33
 #, python-format
@@ -552,7 +552,7 @@ msgstr "Cari"
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
 msgid "Featured Speakers"
-msgstr "Pembicara Unggulan"
+msgstr "Pembicara Utama"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
 msgid "View speaker profile"
@@ -560,7 +560,7 @@ msgstr "Lihat profil pembicara"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
 msgid "No starred sessions."
-msgstr "Tidak ada sesi yang dibintangi."
+msgstr "Tidak ada sesi yang ditandai bintang."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -585,7 +585,7 @@ msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
 msgid "eventyay_checkin (kiosk mode, online only)"
-msgstr "eventyay_checkin (mode kios, hanya online)"
+msgstr "eventyay_checkin (mode kios, hanya daring)"
 
 #: api/models.py:23
 msgid "Application name"
@@ -601,7 +601,7 @@ msgstr "Daftar URI yang diizinkan, dipisahkan dengan spasi"
 
 #: api/models.py:33
 msgid "Allowed list with space separated"
-msgstr "Daftar yang diizinkan, dipisahkan dengan spasi"
+msgstr "Daftar yang diizinkan dengan spasi yang dipisahkan"
 
 #: api/models.py:37 control/forms/global_settings.py:258
 #: control/forms/global_settings.py:336
