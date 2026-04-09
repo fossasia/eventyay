@@ -36,7 +36,11 @@ class OrderPositionChangeForm(forms.Form):
         variations = list(i.variations.all())
         legacy_event_setting = event.settings.get('change_allow_user_variation', as_type=bool, default=False)
 
-        if not (instance.product.allow_user_variation_change or legacy_event_setting):
+        if not variations:
+            choices.append((str(i.pk), '%s' % pname))
+            self.fields['productvar'].disabled = True
+            self.fields['productvar'].help_text = _('No other variations of this product exist.')
+        elif not (instance.product.allow_user_variation_change or legacy_event_setting):
             if instance.variation_id:
                 current_label = f'{i.name} – {instance.variation.value}'
                 choices.append((f'{i.pk}-{instance.variation_id}', current_label))
@@ -44,7 +48,7 @@ class OrderPositionChangeForm(forms.Form):
                 choices.append((str(i.pk), '%s' % pname))
             self.fields['productvar'].disabled = True
             self.fields['productvar'].help_text = _('The organizer does not allow changing variations for this product.')
-        elif variations:
+        else:
             current_quotas = instance.variation.quotas.all() if instance.variation else instance.product.quotas.all()
             qa = QuotaAvailability()
             for v in variations:
@@ -118,9 +122,5 @@ class OrderPositionChangeForm(forms.Form):
                 self.fields['productvar'].help_text = _(
                     'No other variation of this product is currently available for you.'
                 )
-        else:
-            choices.append((str(i.pk), '%s' % pname))
-            self.fields['productvar'].disabled = True
-            self.fields['productvar'].help_text = _('No other variations of this product exist.')
 
         self.fields['productvar'].choices = choices
