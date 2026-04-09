@@ -1,5 +1,5 @@
 .presale-sticky-tabs .header-row-right details.dropdown,
-.presale-sticky-tabs .header-row-right > a {
+.presale-sticky-tabs .header-row-right>a {
   display: inline-flex;
   align-items: center;
 }
@@ -16,6 +16,7 @@
   padding-left: 6px;
   padding-right: 6px;
 }
+
 body {
   background: var(--color-grey-lightest);
 }
@@ -66,6 +67,7 @@ header {
     word-break: keep-all;
     flex-wrap: nowrap;
   }
+
   #header-tabs {
     display: flex;
     flex-wrap: nowrap;
@@ -74,22 +76,26 @@ header {
     border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
     padding-bottom: 6px;
     flex-shrink: 0;
+
     a.header-tab {
       padding: 8px 10px 4px 10px;
       border-bottom: 2px solid transparent;
+
       &:hover {
         text-decoration: none;
         border-bottom: 2px dotted var(--color-primary);
       }
+
       &.active {
         border-bottom: 2px solid var(--color-primary);
       }
     }
   }
+
   .header-row-right {
     color: var(--color-primary);
     margin-left: auto;
-	margin-right: 10px;
+    margin-right: 10px;
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
@@ -138,35 +144,35 @@ header {
 
     .locales {
       margin-right: 20px;
-      
+
       summary {
         cursor: pointer;
         color: var(--color-primary);
       }
-      
+
       summary:focus-visible {
         outline: 2px solid var(--color-primary);
         border-radius: var(--size-border-radius);
       }
-      
+
       .dropdown-content {
         border: 1px solid var(--color-grey-lighter);
         border-radius: 4px;
         right: 0;
         left: auto;
         min-width: 100px;
-        
+
         .dropdown-item {
           &:hover {
             background-color: var(--color-primary-lighter);
             color: var(--color-grey-dark);
             text-decoration: none;
           }
-          
+
           &.active {
             background-color: var(--color-primary);
             color: white;
-            
+
             &:hover {
               background-color: var(--color-primary-dark, var(--color-primary));
             }
@@ -273,13 +279,6 @@ header {
   padding-left: 1.75rem;
 }
 
-@media (min-width: 769px) {
-  /* Presale info / tickets: align logo block with tab content (tighter than agenda & CFP) */
-  #main-container.presale-container .event-brand--has-logo {
-    padding-left: 0.75rem;
-  }
-}
-
 .event-hero-overlay {
   display: inline-flex;
   border-radius: 14px;
@@ -290,12 +289,25 @@ header {
   color: white;
   display: flex;
   flex-direction: column;
+
+  a,
+  a:hover,
+  a:focus {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  a:hover,
+  a:focus {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
-header > .event-home-back {
+header>.event-home-back {
   align-self: flex-start;
-  margin: 0 0 6px;
-  padding-left: 28px;
+  margin: 0 0 0.35rem;
+  padding-left: 1.75rem;
   box-sizing: border-box;
   display: inline-block;
   text-decoration: none;
@@ -313,7 +325,7 @@ header > .event-home-back {
   align-items: center;
   justify-content: center;
   gap: 0;
-  min-height: 32px;
+  min-height: 2rem;
   padding: 0 11px;
   background: rgba(0, 0, 0, 0.45);
   border-radius: 8px;
@@ -336,15 +348,14 @@ header > .event-home-back {
   outline-offset: 2px;
 }
 
-/* px: presale root font-size differs from agenda/CFP */
-.event-home-back .event-home-back-icon {
-  font-size: 22px;
+.event-home-back-icon {
+  font-size: 1.35rem;
   line-height: 1;
   flex-shrink: 0;
 }
 
-.event-home-back .event-home-back-label {
-  font-size: 14px;
+.event-home-back-label {
+  font-size: 0.9rem;
   font-weight: 600;
   line-height: 1;
   max-width: 0;
@@ -361,6 +372,7 @@ header > .event-home-back {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .event-home-back-pill,
   .event-home-back-label {
     transition: none;
@@ -370,6 +382,7 @@ header > .event-home-back {
 .event-date-line {
   font-size: 1rem;
   opacity: 0.96;
+  cursor: pointer;
 }
 
 .event-hero-text .event-title {
@@ -379,6 +392,7 @@ header > .event-home-back {
   word-break: break-word;
   overflow-wrap: break-word;
   min-width: 0;
+  cursor: pointer;
 }
 
 .public-event-header #event-logo {
@@ -389,7 +403,7 @@ header > .event-home-back {
 .header-image-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.15) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 40%, rgba(0, 0, 0, 0.15) 100%);
   pointer-events: none;
 }
 
@@ -406,6 +420,7 @@ header > .event-home-back {
   padding: 0;
   border: none;
   scroll-margin-top: 72px;
+
   main {
     padding: var(--size-spacer);
   }
@@ -511,7 +526,8 @@ footer {
     margin-top: 0 !important;
   }
 
-  .header-wrapper, .presale-sticky-tabs-inner {
+  .header-wrapper,
+  .presale-sticky-tabs-inner {
     max-width: 100%;
   }
 
@@ -638,20 +654,16 @@ footer {
     padding-left: 12px;
   }
 
-  header > .event-home-back {
-    padding-left: 12px;
-  }
-
   .event-hero-text .event-title {
     font-size: 2rem;
   }
 
-  .event-home-back .event-home-back-icon {
-    font-size: 19px;
+  .event-home-back-icon {
+    font-size: 1.2rem;
   }
 
-  .event-home-back .event-home-back-label {
-    font-size: 13.5px;
+  .event-home-back-label {
+    font-size: 0.85rem;
   }
 
   .event-date-line {
@@ -668,7 +680,7 @@ footer {
     bottom: -27.5px;
     right: 7.5px;
     z-index: 1050;
-    
+
     /* Button for mobile/tablet: compact with icon + text */
     .btn-join-video-icon-only {
       display: inline-flex;
@@ -679,7 +691,7 @@ footer {
       height: 28px;
       min-width: 0;
       border-radius: 6px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
       background-color: var(--Color-primary, var(--color-primary));
       color: white;
       border: none;
@@ -698,9 +710,11 @@ footer {
         border-radius: 50%;
         border: none;
       }
+
       .btn-join-video-icon-only .join-video-text {
         display: none;
       }
+
       .btn-join-video-icon-only i {
         font-size: 0.95rem;
       }
@@ -710,9 +724,10 @@ footer {
       display: inline-block;
     }
 
-    .btn-join-video-icon-only:hover, .btn-join-video-icon-only:focus {
+    .btn-join-video-icon-only:hover,
+    .btn-join-video-icon-only:focus {
       transform: scale(1.02);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
       color: white !important;
       background-color: var(--color-primary);
       filter: none;
@@ -741,7 +756,7 @@ footer {
   }
 
   #main-card>main>main {
-    padding:0;
+    padding: 0;
   }
 }
 
@@ -750,13 +765,23 @@ footer {
     font-size: 1.6rem;
   }
 
-  /* Home control: use same icon/label sizes as @media (max-width: 768px); do not shrink further here */
+  .event-home-back-icon {
+    font-size: 1.2rem;
+  }
+
+  .event-home-back-label {
+    font-size: 0.8rem;
+  }
 
   .event-brand {
     gap: 0.75rem;
   }
 
   .event-brand--has-logo {
+    padding-left: 12px;
+  }
+
+  header>.event-home-back {
     padding-left: 12px;
   }
 
@@ -773,6 +798,7 @@ footer {
 
     header {
       padding: 0;
+
       #event-logo {
         max-height: 120px;
         width: auto;
@@ -829,7 +855,7 @@ footer {
       flex-direction: row;
       margin-left: auto;
 
-      > * {
+      >* {
         margin-left: 4px;
       }
     }
@@ -851,42 +877,47 @@ footer {
       }
     }
   }
-
-  /* Agenda uses its own spacing (e.g. header margin); skip presale-style top padding */
-  body.page-agenda #main-container {
-    padding-top: 0;
-  }
 }
 
 /* Hide mobile-only navbar icons, CfS short text, and floating join button on desktop */
-.nav-icon-mobile, .cfs-short, .header-join-video-floating-mobile {
+.nav-icon-mobile,
+.cfs-short,
+.header-join-video-floating-mobile {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .nav-icon-mobile, .header-join-video-floating-mobile {
+
+  .nav-icon-mobile,
+  .header-join-video-floating-mobile {
     display: block;
   }
+
   .nav-icon-mobile {
     font-size: 1.25rem;
   }
+
   .mobile-hide-text {
     display: none;
   }
+
   .cfs-full {
     display: none;
   }
+
   .cfs-short {
     display: inline;
   }
 }
 
 @media (min-width: 992px) {
+
   aside .row-voucher .form-control,
   aside .row-voucher .input-group-addon,
   aside .row-voucher .btn {
     height: 40px;
   }
+
   aside .row-voucher .btn {
     margin-top: 0;
   }
