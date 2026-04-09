@@ -508,19 +508,23 @@ header .header-row-right {
 
 .variation-toggle-caret {
     display: inline-block;
-    width: 10px;
+    width: 12px;
     text-align: center;
     line-height: 1;
 }
 
 .variation-toggle-caret::before {
-    content: '>';
+    content: '\f054';
+    display: inline-block;
+    font-family: 'FontAwesome';
+    font-size: 12px;
+    transition: transform 0.2s ease;
 }
 
 /* Support both native <details open> and JS-managed .details-open states. */
 .item-with-variations[open] .variation-toggle-caret::before,
 .item-with-variations.details-open .variation-toggle-caret::before {
-    content: 'v';
+    transform: rotate(90deg);
 }
 
 .variation-option {
