@@ -664,14 +664,33 @@ input.password_strength {
   }
 }
 
+.markdown-toastui-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
 .markdown-toastui .toastui-editor-defaultUI {
   border-color: var(--color-border);
   border-radius: var(--size-border-radius);
+  display: flex;
+  flex-direction: column;
 }
 
 .markdown-toastui .toastui-editor-defaultUI-toolbar {
   border-top-left-radius: var(--size-border-radius);
   border-top-right-radius: var(--size-border-radius);
+  display: flex !important;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 45px;
+  overflow: visible;
+}
+
+/* Toast UI icons are CSS sprites on .toastui-editor-toolbar-icons; avoid global button resets stripping them */
+.markdown-toastui .toastui-editor-defaultUI-toolbar button.toastui-editor-toolbar-icons {
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .markdown-toastui .toastui-editor-ww-container,
@@ -977,7 +996,8 @@ input.password_strength {
   }
 }
 
-.toastui-editor-ww-container {
+/* Scope to our markdown mount so Toast UI internals are not affected globally */
+.markdown-toastui .toastui-editor-ww-container {
   padding: 12px;
   padding-top: 0;
 }
