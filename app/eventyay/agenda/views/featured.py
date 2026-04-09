@@ -4,8 +4,10 @@ from django.utils.functional import cached_property
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired
 from eventyay.base.models.submission import SubmissionStates
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
 def sneakpeek_redirect(request, *args, **kwargs):
@@ -15,6 +17,16 @@ def sneakpeek_redirect(request, *args, **kwargs):
 class FeaturedView(EventPermissionRequired, TemplateView):
     template_name = 'agenda/featured.html'
     permission_required = 'base.list_featured_submission'
+
+    def has_permission(self):
+        """Gate on org "show featured" + schedule rules, not ``list_featured`` (orga always passes that)."""
+        request = self.request
+        if is_admin_mode_active(request):
+            return True
+        user = getattr(request, 'user', None)
+        if user is None:
+            return False
+        return are_featured_submissions_visible(user, request.event)
 
     @context
     def talks(self):
@@ -36,7 +48,7 @@ class FeaturedView(EventPermissionRequired, TemplateView):
     @context
     @cached_property
     def hide_visibility_warning(self):
-        return AnonymousUser().has_perm(self.permission_required, self.request.event)
+        return are_featured_submissions_visible(AnonymousUser(), self.request.event)
 
     def dispatch(self, request, *args, **kwargs):
         can_see_featured = self.has_permission()
