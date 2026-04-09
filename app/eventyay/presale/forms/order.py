@@ -32,7 +32,7 @@ class OrderPositionChangeForm(forms.Form):
         choices = []
 
         i = instance.product
-        pname = str(i)
+        pname = str(i.name)
         variations = list(i.variations.all())
         legacy_event_setting = event.settings.get('change_allow_user_variation', as_type=bool, default=False)
 
