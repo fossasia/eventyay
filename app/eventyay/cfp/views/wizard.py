@@ -95,6 +95,40 @@ class SubmitWizard(EventPageMixin, View):
             if step.is_applicable(request):
                 if not step.is_completed(request, not_strict=draft):
                     query = {'draft': 1} if draft else None
+                    # Build a helpful error message listing the specific missing fields
+                    if hasattr(step, 'get_form'):
+                        form = step.get_form(from_storage=True, not_strict=draft)
+                        form.is_valid()  # ensure errors are populated
+                        missing = [
+                            str(form.fields[key].label)
+                            for key in form.errors
+                            if key != '__all__' and key in form.fields
+                        ]
+                        if missing:
+                            messages.error(
+                                request,
+                                _(
+                                    'Please complete the "{step}" step before submitting. '
+                                    'The following fields are required: {fields}.'
+                                ).format(
+                                    step=step.label,
+                                    fields=', '.join(missing),
+                                ),
+                            )
+                        else:
+                            messages.error(
+                                request,
+                                _(
+                                    'Please complete the "{step}" step before submitting.'
+                                ).format(step=step.label),
+                            )
+                    else:
+                        messages.error(
+                            request,
+                            _(
+                                'Please complete the "{step}" step before submitting.'
+                            ).format(step=step.label),
+                        )
                     return redirect(step.get_step_url(request, query=query))
                 valid_steps.append(step)
 
