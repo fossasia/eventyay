@@ -328,29 +328,30 @@ header .header-row-right {
         opacity: 0.85;
     }
 
-    /* Align hero title/logo and description text with same horizontal padding on mobile.
-     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
+    /* Mobile: hero overlay width (+ padding where set in main bundle) */
     .event-hero-overlay {
         display: flex;
         width: 100%;
     }
 
-    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+    /* Presale event index: full-bleed hero overlay */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     #main-card {
         margin-left: 0;
         margin-right: 0;
     }
 
-    /* Only the OUTER <main> (direct child) gets the 12px — not descendants.
-     * padding-top: 0.15rem controls the gap between nav and text. */
+    /* Outer main only (presale nests two <main>) */
     #main-card > main {
         padding-top: 0.15rem;
         padding-left: 12px;
         padding-right: 12px;
     }
 
-    /* Zero the INNER <main aria-label>: #main-card > main > main has higher
-     * specificity (1,0,2) than _layout.css's #main-card main (1,0,1) anyway. */
     #main-card > main > main {
         padding-left: 0;
         padding-right: 0;
