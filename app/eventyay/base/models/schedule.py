@@ -612,7 +612,13 @@ class Schedule(PretalxModel):
 
         return self != self.event.current_schedule
 
-    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False):
+    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False, *, include_featured_speaker_metadata=True,):
+        """Build schedule JSON for widgets and exports.
+
+        ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
+        ``featured_position`` on each speaker so clients respect org "show featured sessions"
+        without duplicating that logic in the frontend.
+        """
         talks = self.talks.all()
         if not all_talks:
             talks = self.talks.filter(is_visible=True)
@@ -862,6 +868,9 @@ class Schedule(PretalxModel):
                 'is_featured': bool(getattr(profile, 'is_featured', False)),
                 'featured_position': getattr(profile, 'position', None),
             }
+            if not include_featured_speaker_metadata:
+                speaker_data['is_featured'] = False
+                speaker_data['featured_position'] = None
             if enrich:
                 spk_base = f'{base_url}speakers/{user.code}'
                 spk_full_base = f'{full_base_url}speakers/{user.code}'
