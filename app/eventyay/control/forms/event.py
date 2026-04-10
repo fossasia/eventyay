@@ -793,6 +793,18 @@ class GeneralEventSettingsForm(EventSettingsForm):
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
+        'primary_color',
+        'theme_color_success',
+        'theme_color_danger',
+        'theme_color_background',
+        'theme_round_borders',
+        'hover_button_color',
+        'primary_font',
+        'logo_image',
+        'logo_image_large',
+        'event_logo_image',
+        'logo_show_title',
+        'og_image',
     ]
 
     def __init__(self, *args, **kwargs):
