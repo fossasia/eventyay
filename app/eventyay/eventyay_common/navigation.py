@@ -115,6 +115,12 @@ def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
         return []
     nav = [
         {
+            'label': _('Dashboard'),
+            'url': reverse('eventyay_common:organizer.dashboard', kwargs={'organizer': request.organizer.slug}),
+            'active': url.url_name == 'organizer.dashboard',
+            'icon': 'dashboard',
+        },
+        {
             'label': _('Events'),
             'url': reverse('eventyay_common:organizer.events', kwargs={'organizer': request.organizer.slug}),
             'active': url.url_name == 'organizer.events',
