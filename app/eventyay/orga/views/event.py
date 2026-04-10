@@ -635,7 +635,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
             return redirect(self.request.path)
 
-        target_config = self.IMPORT_TARGETS[import_target]
+        target_config = self.IMPORT_TARGETS[target]
         import_filename = target_config['filename']
         cached_file = CachedFile.objects.create(
             expires=now() + timedelta(days=1),

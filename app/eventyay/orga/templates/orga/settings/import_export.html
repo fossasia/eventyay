@@ -1,11 +1,11 @@
-{% extends 'orga/base.html' %}
+{% extends 'orga/settings/base.html' %}
 
 {% load i18n %}
 {% load static %}
 
 {% block extra_title %}{% translate 'Import/Export' %} :: {% endblock extra_title %}
 
-{% block content %}
+{% block settings_content %}
   <h2>{% translate 'Import/Export' %}</h2>
 
   {% include 'orga/includes/tablist.html' %}
@@ -400,5 +400,5 @@
     </div>
   </section>
 
-  <script defer src='{% static 'orga/js/import_export_settings.js' %}'></script>
-{% endblock content %}
+  <script defer src="{% static 'orga/js/import_export_settings.js' %}"></script>
+{% endblock settings_content %}
