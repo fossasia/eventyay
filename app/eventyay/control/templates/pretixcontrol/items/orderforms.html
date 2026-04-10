@@ -194,7 +194,7 @@
                                 </ul>
                             </td>
                             <td class="dnd-container text-center text-nowrap">
-                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_name_parts' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_name_parts' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Attendee names' %}" title="{% translate 'Settings for Attendee names' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
                         {% endif %}
@@ -259,7 +259,7 @@
                                 </ul>
                             </td>
                             <td class="dnd-container text-center text-nowrap">
-                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_email' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_email' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Attendee emails' %}" title="{% translate 'Settings for Attendee emails' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
                         {% endif %}
@@ -305,7 +305,7 @@
                                 </ul>
                             </td>
                             <td class="dnd-container text-center text-nowrap">
-                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='company' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='company' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Company' %}" title="{% translate 'Settings for Company' %}"><i class="fa fa-cog fa-fw"></i></a>
                             </td>
                         </tr>
                         {% endif %}
@@ -351,7 +351,7 @@
                                 </ul>
                             </td>
                             <td class="dnd-container text-center text-nowrap">
-                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='job_title' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='job_title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Job title' %}" title="{% translate 'Settings for Job title' %}"><i class="fa fa-cog fa-fw" aria-hidden="true"></i></a>
                             </td>
                         </tr>
                         {% endif %}
@@ -397,7 +397,7 @@
                                 </ul>
                             </td>
                             <td class="dnd-container text-center text-nowrap">
-                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='street' %}" class="btn btn-default btn-sm"><i class="fa fa-cog fa-fw"></i></a>
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='street' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Postal addresses' %}"><i class="fa fa-cog fa-fw" aria-hidden="true"></i></a>
                             </td>
                         </tr>
                         {% endif %}
