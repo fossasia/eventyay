@@ -18,11 +18,13 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext as _
 from django.views.generic import View
 from django.views.static import serve as static_serve
+from django.contrib.auth.models import AnonymousUser
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 from eventyay.agenda.views.utils import build_public_schedule_exporters
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
 logger = logging.getLogger(__name__)
@@ -82,7 +84,17 @@ class VideoSPAView(View):
                 if not schedule:
                     schedule = event.current_schedule or event.wip_schedule
 
-                schedule_data = schedule.build_data(all_talks=False, enrich=True) if schedule else None
+                schedule_data = (
+                    schedule.build_data(
+                        all_talks=False,
+                        enrich=True,
+                        include_featured_speaker_metadata=are_featured_submissions_visible(
+                            AnonymousUser(), event
+                        ),
+                    )
+                    if schedule
+                    else None
+                )
                 schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 
