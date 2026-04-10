@@ -1,6 +1,7 @@
 import pytest
 from django_scopes import scope
 
+from eventyay.base.models import SpeakerProfile
 from pretalx.submission.models import Answer, Question, QuestionVariant
 
 
@@ -160,3 +161,25 @@ def test_build_data_speakers(event, slot):
         for s in data["speakers"]:
             assert "code" in s
             assert "name" in s
+
+
+@pytest.mark.django_db
+def test_build_data_include_featured_speaker_metadata_false(event, slot):
+    """When include_featured_speaker_metadata is False, speaker featured flags are cleared."""
+    with scope(event=event):
+        speaker_user = slot.submission.speakers.first()
+        assert speaker_user is not None
+        profile = SpeakerProfile.objects.get(user=speaker_user, event=event)
+        profile.is_featured = True
+        profile.position = 1
+        profile.save()
+
+        data = slot.schedule.build_data()
+        spk = next(s for s in data["speakers"] if s["code"] == speaker_user.code)
+        assert spk["is_featured"] is True
+        assert spk["featured_position"] == 1
+
+        data_masked = slot.schedule.build_data(include_featured_speaker_metadata=False)
+        spk_m = next(s for s in data_masked["speakers"] if s["code"] == speaker_user.code)
+        assert spk_m["is_featured"] is False
+        assert spk_m["featured_position"] is None
