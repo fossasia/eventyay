@@ -131,7 +131,7 @@ def staff_member_required():
             if not request.user.is_authenticated:  # NOQA
                 # just a double check, should not ever happen
                 raise PermissionDenied()
-            if not request.user.is_staff:
+            if not (request.user.is_staff or request.user.is_superuser):
                 raise PermissionDenied(_('You do not have permission to view this content.'))
             return function(request, *args, **kw)
 
