@@ -28,8 +28,8 @@
   }
 
   nav.navbar .danger {
-    padding: 3px !important;
-    min-height: 0 !important;
+    padding: 3px;
+    min-height: 0;
   }
 
   .navbar-header {
@@ -43,6 +43,8 @@
     display: flex;
     align-items: center;
     gap: 2px;
+    margin-top:0;
+    margin-bottom: 0;
   }
 
   .navbar-brand {
