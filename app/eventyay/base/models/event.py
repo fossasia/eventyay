@@ -77,9 +77,10 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
-from .organizer import Organizer, OrganizerBillingModel, Team
+from .organizer import Organizer, Team
 from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
+
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 logger = logging.getLogger(__name__)
@@ -191,7 +192,7 @@ FEATURE_FLAGS = [
 def default_feature_flags():
     return {
         'show_schedule': True,
-        'show_featured': 'pre_schedule',
+        'show_featured': 'after_schedule',
         'show_widget_if_not_public': False,
         'session_popularity_enabled': False,
         'session_popularity_show_on_calendar': True,
@@ -840,6 +841,8 @@ class Event(
         feedback = '{submissions}feedback/'
         apply_pending = '{submissions}apply-pending/'
         speakers = '{base}speakers/'
+        speakers_import = '{speakers}import/'
+        submissions_import = '{submissions}import/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
@@ -2011,7 +2014,6 @@ class Event(
         return issues
 
     def billing_issues(self):
-        from django.utils.html import format_html
         from django.utils.translation import gettext
 
         from eventyay.base.models.organizer import OrganizerBillingModel
@@ -2076,10 +2078,15 @@ class Event(
     def delete_sub_objects(self):
         from django.core.exceptions import ObjectDoesNotExist
 
+        from eventyay.base.models.auth import EventGrant, RoomGrant, ShortToken, User
         from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.log import ActivityLog, LogEntry
+        from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.question import Answer, AnswerOption
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.storage_model import StoredFile
+        from eventyay.base.models.systemlog import SystemLog
 
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
@@ -2102,7 +2109,7 @@ class Event(
         for domain in self.domains.all().iterator():
             domain.delete()
 
-        for stored_file in self.storedfile_set.all().iterator():
+        for stored_file in StoredFile.objects.filter(event=self).iterator():
             stored_file.full_delete()
 
         self.bbbserver_set.update(event_exclusive=None)
@@ -2118,7 +2125,23 @@ class Event(
         self.tracks.all().delete()
         self.tags.all().delete()
         self.schedules.all().delete()
-        self.mail_templates.all().delete()
+        mail_templates = self.mail_templates.all()
+        QueuedMail.objects.filter(template__in=mail_templates).update(template=None)
+        mail_templates.delete()
+        ActivityLog.objects.filter(event=self).delete()
+        LogEntry.all.filter(event=self).update(event=None)
+        SystemLog.objects.filter(event=self).update(event=None)
+        EventGrant.objects.filter(event=self).delete()
+        RoomGrant.objects.filter(event=self).delete()
+        ShortToken.objects.filter(event=self).delete()
+        User.objects.filter(event=self).delete()
+        EventView.objects.filter(event=self).delete()
+        self.audits.all().delete()
+        self.meta_values.all().delete()
+        self.extra_links.all().delete()
+        self.planned_usages.all().delete()
+        self.requiredaction_set.all().delete()
+        self.settings.flush()
         try:
             cfp = self.cfp
         except ObjectDoesNotExist:
@@ -2628,7 +2651,7 @@ class Event(
     def reviewers(self):
         from eventyay.base.models import User
 
-        return User.objects.filter(teams__in=self.teams.filter(is_reviewer=True)).distinct()
+        return User.objects.filter(teams__in=self.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))).distinct()
 
     @cached_property
     def active_review_phase(self):
@@ -2658,7 +2681,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.UTC)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i

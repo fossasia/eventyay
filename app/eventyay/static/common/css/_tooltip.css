@@ -48,6 +48,20 @@
     width: min(450px, 100vw);
   }
 }
+.tooltip-textbox-delete[data-toggle="tooltip"] {
+  &:after {
+    box-sizing: border-box;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    width: min(260px, 92vw);
+    max-width: min(260px, 92vw);
+    padding: 0.5em 0.6em;
+    line-height: 1.35;
+    text-align: left;
+    hyphens: auto;
+  }
+}
 
 [data-toggle="tooltip"][data-placement|="top"] {
   &:before {
@@ -160,14 +174,27 @@
 }
 
 [data-toggle="tooltip"][data-placement="bottom-right"] {
+  &:before {
+    left: auto;
+    right: 12px;
+    transform: translate3d(50%, -10px, 0);
+  }
+
+  &:hover:before,
+  &[data-visibility="always"]:before {
+    transform: translate3d(50%, 0, 0);
+  }
+
   &:after {
-    transform: translate3d(calc(0% + -16px), -10px, 0);
+    left: auto;
+    right: 0;
+    transform: translate3d(0, -10px, 0);
     top: 100%;
   }
 
   &:hover:after,
   &[data-visibility="always"]:after {
-    transform: translate3d(calc(0% + -16px), 0, 0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
