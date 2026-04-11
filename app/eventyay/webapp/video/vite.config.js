@@ -200,7 +200,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('uuid')) return 'vendor-uuid'
               if (id.includes('register-service-worker')) return 'vendor-sw'
               if (id.includes('mux-embed') || id.includes('mux.js')) return 'vendor-mux'
-              if (id.includes('qrcode')) return 'vendor-qrcode'
               if (id.includes('random-js')) return 'vendor-randomjs'
               if (id.includes('web-animations-js')) return 'vendor-webanimations'
               return 'vendor'
