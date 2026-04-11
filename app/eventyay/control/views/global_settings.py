@@ -205,28 +205,27 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
         try:
             backend = get_mail_backend(timeout=10)
             email = EmailMessage(
-                subject='Eventyay system - test email',
-                body='This is a test email from your Eventyay system email configuration.',
+                subject=_('Eventyay system - test email'),
+                body=_('This is a test email from your Eventyay system email configuration.'),
                 from_email=mail_from,
                 to=[recipient],
                 connection=backend,
             )
             email.send(fail_silently=False)
         except UnicodeEncodeError:
-            # The stored SMTP password (or username) contains a non-ASCII character
+            # The stored SMTP password, username, or recipient address contains a non-ASCII character
             # (e.g. a no-break space copied from a Gmail App Password display).
             logger.warning(
-                'Admin SMTP test failed — credentials contain non-ASCII characters (from=%s)',
+                'Admin SMTP test failed — credentials or recipient contain non-ASCII characters (from=%s)',
                 mail_from,
             )
             messages.error(
                 request,
                 _(
-                    'SMTP authentication failed because the stored password '
-                    'contains an invisible non-ASCII character (e.g. a '
-                    'no-break space pasted from the clipboard). '
-                    'Please go to the Email tab, re-TYPE the SMTP password '
-                    'without copy-pasting, and save again.'
+                    'SMTP authentication or email sending failed because the password, '
+                    'username, or recipient address contains an invisible non-ASCII '
+                    'character (e.g. a no-break space pasted from the clipboard). '
+                    'Please verify these fields and try again.'
                 ),
             )
         except (smtplib.SMTPException, OSError) as e:
