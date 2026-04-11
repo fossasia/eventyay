@@ -118,6 +118,10 @@ export default new Vuex.Store({
 			if (!room) return
 			room.upcomingStream = stream
 			room.upcomingStreamStartsAt = startsAt
+		},
+		addUnblockedIframeDomain(state, domain) {
+			// Replace the Set so watchers that track the reference see the change.
+			state.unblockedIframeDomains = new Set([...state.unblockedIframeDomains, domain])
 		}
 	},
 	actions: {
@@ -304,8 +308,8 @@ export default new Vuex.Store({
 			state.autoplayUserSetting = autoplay
 			localStorage.disableAutoplay = !autoplay
 		},
-		unblockIframeDomain({state}, domain) {
-			state.unblockedIframeDomains.add(domain)
+		unblockIframeDomain({state, commit}, domain) {
+			commit('addUnblockedIframeDomain', domain)
 			localStorage.unblockedIframeDomains = JSON.stringify(Array.from(state.unblockedIframeDomains))
 			// TODO propagate between tabs?
 		},
