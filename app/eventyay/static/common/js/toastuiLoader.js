@@ -1,7 +1,22 @@
 /* Lazy-load Toast UI Editor assets only when needed. */
 
 (() => {
-    const scriptEl = document.currentScript
+    /**
+     * When this file is concatenated by django-compressor, `document.currentScript` refers to the
+     * merged bundle's <script> tag, which does not carry our data-toastui-* attributes. Prefer the
+     * real loader tag when present.
+     */
+    const resolveLoaderScriptEl = () => {
+        const cur = document.currentScript
+        if (cur?.dataset?.toastuiCss && cur?.dataset?.toastuiJs) return cur
+        const candidates = document.querySelectorAll('script[src*="toastuiLoader"]')
+        for (const el of candidates) {
+            if (el?.dataset?.toastuiCss && el?.dataset?.toastuiJs) return el
+        }
+        return cur
+    }
+
+    const scriptEl = resolveLoaderScriptEl()
     const toastUiCssUrl = scriptEl?.dataset?.toastuiCss
     const toastUiJsUrl = scriptEl?.dataset?.toastuiJs
 

@@ -1,5 +1,7 @@
 {% extends "common/base_public.html" %}
 
+{% block body_attrs %}{{ block.super }} class="page-agenda"{% endblock %}
+
 {% load event_tags %}
 {% load staff_session %}
 {% load i18n %}
