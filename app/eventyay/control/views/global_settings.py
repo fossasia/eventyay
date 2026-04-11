@@ -1,8 +1,12 @@
 import logging
 import secrets
+import smtplib
 
+
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import EmailMessage
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
@@ -13,6 +17,7 @@ from django.views.generic import DeleteView, FormView, TemplateView
 
 from eventyay.api.models import OAuthApplication
 from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
+from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.global_settings import (
@@ -156,6 +161,98 @@ class UpdateCheckView(StaffMemberRequiredMixin, FormView):
 class MessageView(TemplateView):
     template_name = 'pretixcontrol/global_message.html'
 
+
+class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
+    """
+    Tests the current system-level email configuration.
+    """
+
+    def post(self, request, *args, **kwargs):
+        recipient = request.POST.get('test_email', '').strip()
+        if not recipient:
+            messages.error(request, _('Please enter a valid recipient email address.'))
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        # ── 1. Resolve the sender address ────────────────────────────────────
+        gs = GlobalSettingsObject()
+        raw_from = gs.settings.get('mail_from') or getattr(settings, 'DEFAULT_FROM_EMAIL', '')
+        mail_from = str(raw_from).strip() if raw_from else ''
+
+        if not mail_from:
+            messages.error(
+                request,
+                _(
+                    'No sender address is configured. '
+                    'Please set the "Sender address" field in the Email tab and save first.'
+                ),
+            )
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+
+        try:
+            mail_from.encode('ascii')
+        except UnicodeEncodeError:
+            messages.error(
+                request,
+                _(
+                    'The sender address "%(addr)s" contains non-ASCII characters '
+                    'which are not allowed in SMTP. '
+                    'Please correct the "Sender address" field and save again.'
+                ) % {'addr': mail_from},
+            )
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        try:
+            backend = get_mail_backend(timeout=10)
+            email = EmailMessage(
+                subject='Eventyay system - test email',
+                body='This is a test email from your Eventyay system email configuration.',
+                from_email=mail_from,
+                to=[recipient],
+                connection=backend,
+            )
+            email.send(fail_silently=False)
+        except UnicodeEncodeError:
+            # The stored SMTP password (or username) contains a non-ASCII character
+            # (e.g. a no-break space copied from a Gmail App Password display).
+            logger.warning(
+                'Admin SMTP test failed — credentials contain non-ASCII characters (from=%s)',
+                mail_from,
+            )
+            messages.error(
+                request,
+                _(
+                    'SMTP authentication failed because the stored password '
+                    'contains an invisible non-ASCII character (e.g. a '
+                    'no-break space pasted from the clipboard). '
+                    'Please go to the Email tab, re-TYPE the SMTP password '
+                    'without copy-pasting, and save again.'
+                ),
+            )
+        except (smtplib.SMTPException, OSError) as e:
+            logger.exception(
+                'Admin SMTP test failed (from=%s)', mail_from
+            )
+            messages.warning(
+                request,
+                _('Test email failed to connect or send: %(err)s') % {'err': str(e)},
+            )
+        except Exception as e:
+            logger.exception(
+                'Admin SMTP test failed unexpectedly (from=%s)', mail_from
+            )
+            messages.warning(
+                request,
+                _('Test email failed unexpectedly: %(err)s') % {'err': str(e)},
+            )
+        else:
+            logger.info('Admin test email sent to %s', recipient)
+            messages.success(
+                request,
+                _('Test email sent to %(email)s — check inbox.') % {'email': recipient},
+            )
+
+        return redirect(reverse('eventyay_admin:admin.global.settings'))
 
 class LogDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
