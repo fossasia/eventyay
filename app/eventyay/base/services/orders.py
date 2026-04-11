@@ -396,7 +396,7 @@ def send_order_denied_notifications(order, comment='', user=None, send_mail: boo
         email_template = order.event.settings.mail_text_order_denied
         email_context = get_email_context(event=order.event, order=order, comment=comment)
         with language(order.locale, order.event.settings.region):
-            email_subject = _('Order denied: %(code)s') % {'code': order.code}
+            email_subject = _('Your order request update: %(code)s') % {'code': order.code}
             try:
                 order.send_mail(
                     email_subject,
