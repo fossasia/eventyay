@@ -61,7 +61,7 @@ def test_can_see_schedule_with_broken_accept_header(client, event):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("slot", "other_slot")
-@pytest.mark.parametrize("featured", ("always", "never", "pre_schedule"))
+@pytest.mark.parametrize("featured", ("always", "never", "after_schedule"))
 def test_cannot_see_schedule_by_setting(client, user, event, featured):
     with scope(event=event):
         event.feature_flags["show_schedule"] = False
@@ -79,7 +79,7 @@ def test_cannot_see_schedule_by_setting(client, user, event, featured):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("slot", "other_slot")
-@pytest.mark.parametrize("featured", ("always", "never", "pre_schedule"))
+@pytest.mark.parametrize("featured", ("always", "never", "after_schedule"))
 def test_cannot_see_no_schedule(client, user, event, featured):
     with scope(event=event):
         event.current_schedule.talks.all().delete()

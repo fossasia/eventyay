@@ -192,7 +192,7 @@ FEATURE_FLAGS = [
 def default_feature_flags():
     return {
         'show_schedule': True,
-        'show_featured': 'pre_schedule',
+        'show_featured': 'after_schedule',
         'show_widget_if_not_public': False,
         'session_popularity_enabled': False,
         'session_popularity_show_on_calendar': True,
