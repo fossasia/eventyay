@@ -11,6 +11,7 @@
 <script>
 import store from 'store'
 import { getUrlDomain, getBlockerConfig, isDomainBlocked } from 'lib/iframeConsent'
+import { normalizeIframeConsentDomain } from 'lib/iframeConsentDomain'
 export default {
 	inheritAttrs: false,
 	props: {
@@ -42,7 +43,10 @@ export default {
 	methods: {
 		showOnce() {
 			if (this.remember) {
-				store.dispatch('unblockIframeDomain', this.domain)
+				const domain = normalizeIframeConsentDomain(this.domain)
+				if (domain) {
+					store.dispatch('unblockIframeDomain', domain)
+				}
 			}
 			this.showingOnce = true
 			// Pass `this.remember` so the parent knows whether this is persistent

@@ -54,6 +54,9 @@ const iframeEl = ref(null);
 const languageIframeUrl = ref(null);
 const isUnmounted = ref(false);
 const consentBlockedUrl = ref(null);
+// Prevents overlapping initializeIframe runs (e.g. store watcher + consent handler)
+// from both passing the iframeEl guard before the first await.
+let iframeInitInProgress = false;
 
 // Template refs
 const livestream = ref(null);
@@ -173,11 +176,14 @@ watch(
 watch(
 	() => store.state.unblockedIframeDomains,
 	() => {
-		if (iframeEl.value) return 
-		if (!consentBlockedUrl.value) return // no consent gate is active
+		if (iframeEl.value) return
+		if (!consentBlockedUrl.value) return // gate not active; nothing to reconcile
 		const domain = getUrlDomain(consentBlockedUrl.value)
 		if (domain && !isDomainBlocked(domain)) {
 			consentBlockedUrl.value = null
+			// Covers store-only unblocks (e.g. consent changed elsewhere) while the
+			// gate URL is still set. Persistent "Remember" relies on this path only;
+			// onConsentGiven skips initializeIframe for that case to avoid a double init race.
 			initializeIframe(false)
 		}
 	}
@@ -256,6 +262,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 	if (shouldUseLivestream.value) return;
 	if (iframeOffline.value) return;
 	if (iframeEl.value) return; // already initialised
+	if (iframeInitInProgress) return;
+	iframeInitInProgress = true;
 	iframeError.value = null;
 	try {
 		let iframeUrl;
@@ -347,10 +355,12 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		}
 		if (!iframeUrl || isUnmounted.value) return;
 
-		// the iframe consent blocker policy before creating the element.
+		// Check iframe consent policy before creating the element.
 		// skipConsentCheck is set when the user clicked "Show" in the consent gate
 		// so the iframe can be created even for the "Show once" (non-persistent) path.
-		if (!hideIfBackground && !skipConsentCheck) {
+		// Consent applies to all iframe providers (including BBB/Zoom). hideIfBackground
+		// only affects CSS for miniplayer layout, not whether consent is required.
+		if (!skipConsentCheck) {
 			const urlDomain = getUrlDomain(iframeUrl)
 			if (isDomainBlocked(urlDomain)) {
 				consentBlockedUrl.value = iframeUrl
@@ -400,6 +410,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 		}
 	} catch (error) {
 		iframeError.value = error;
+	} finally {
+		iframeInitInProgress = false;
 	}
 }
 
@@ -410,15 +422,13 @@ function destroyIframe() {
 }
 
 function onConsentGiven(persistent) {
-	// Always clear the gate immediately so the UI responds without waiting.
-	consentBlockedUrl.value = null
-	if (!persistent) {
-		// unblockedIframeDomains watcher won't fire.  We must initialize directly.
-		initializeIframe(false, true)
+	if (persistent) {
+		// Store commit runs first; unblockedIframeDomains watcher clears the gate and
+		// calls initializeIframe once. Calling it here too can race with overlapping async inits.
+		return
 	}
-	// Persistent path: the domain was committed to the store by IframeBlocker, so
-	// the unblockedIframeDomains watcher will call initializeIframe itself.
-	// Calling it here too would race and risk creating duplicate iframes.
+	consentBlockedUrl.value = null
+	initializeIframe(false, true)
 }
 
 function isPlaying() {

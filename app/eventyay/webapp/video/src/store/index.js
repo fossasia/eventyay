@@ -12,6 +12,7 @@ import exhibition from './exhibition'
 import schedule from './schedule'
 import notifications from './notifications'
 import moment from 'lib/timetravelMoment'
+import { normalizeIframeConsentDomain } from 'lib/iframeConsentDomain'
 
 export default new Vuex.Store({
 	state: {
@@ -37,7 +38,11 @@ export default new Vuex.Store({
 		streamPollInterval: null,
 		lastKnownStreamId: null,
 		now: moment(),
-		unblockedIframeDomains: new Set(JSON.parse(localStorage.unblockedIframeDomains || '[]')),
+		unblockedIframeDomains: new Set(
+			JSON.parse(localStorage.unblockedIframeDomains || '[]')
+				.map((d) => normalizeIframeConsentDomain(d))
+				.filter(Boolean)
+		),
 		youtubeTransUrl: null
 	},
 	getters: {
@@ -120,8 +125,10 @@ export default new Vuex.Store({
 			room.upcomingStreamStartsAt = startsAt
 		},
 		addUnblockedIframeDomain(state, domain) {
+			const normalized = normalizeIframeConsentDomain(domain)
+			if (!normalized) return
 			// Replace the Set so watchers that track the reference see the change.
-			state.unblockedIframeDomains = new Set([...state.unblockedIframeDomains, domain])
+			state.unblockedIframeDomains = new Set([...state.unblockedIframeDomains, normalized])
 		}
 	},
 	actions: {
