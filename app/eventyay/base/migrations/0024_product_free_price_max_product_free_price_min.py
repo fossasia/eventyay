@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0023_product_allow_user_variation_change.py'),
+        ('base', '0023_product_allow_user_variation_change'),
     ]
 
     operations = [
