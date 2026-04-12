@@ -17,6 +17,7 @@ from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.encoding import iri_to_uri
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
@@ -892,6 +893,7 @@ class EventLive(TemplateView):
 
 class VideoAccessAuthenticator(View):
     _RESUME_QUERY_SAFE = re.compile(r'^[a-zA-Z0-9_=&%.+-]*$')
+    _RESUME_PATH_SEGMENT_SAFE = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9._-]*$')
 
     def get(self, request, *args, **kwargs):
         """
@@ -973,6 +975,9 @@ class VideoAccessAuthenticator(View):
         parts = [p for p in path.split('/') if p and p != '.']
         if any(p == '..' for p in parts):
             return None
+        for p in parts:
+            if not self._RESUME_PATH_SEGMENT_SAFE.fullmatch(p):
+                return None
         if query and not self._RESUME_QUERY_SAFE.fullmatch(query):
             return None
         safe_path = '/'.join(parts)
@@ -1070,7 +1075,8 @@ class VideoAccessAuthenticator(View):
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         base_url = str(self.request.event.settings.venueless_url).rstrip('/')
         if resume_suffix:
-            target = f'{base_url}/{resume_suffix}'
+            tail = resume_suffix.lstrip('/')
+            target = iri_to_uri(f'{base_url}/{tail}')
         else:
             target = f'{base_url}/'
         return f'{target}#token={token}'.replace('//#', '/#')

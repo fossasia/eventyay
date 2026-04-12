@@ -185,7 +185,7 @@ class StartStaffSession(StaffMemberRequiredMixin, RecentAuthenticationRequiredMi
 
 
 class StopStaffSession(StaffMemberRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
+    def _end_staff_session(self, request):
         session = StaffSession.objects.filter(
             date_end__isnull=True,
             session_key=request.session.session_key,
@@ -196,13 +196,19 @@ class StopStaffSession(StaffMemberRequiredMixin, View):
 
         session.date_end = now()
         session.save()
-        next_url = request.GET.get('next')
+        next_url = request.GET.get('next') or request.POST.get('next')
         if next_url and url_has_allowed_host_and_scheme(
             next_url,
             allowed_hosts={request.get_host()},
         ):
             return redirect(next_url)
         return redirect(reverse('eventyay_admin:admin.user.sudo.edit', kwargs={'id': session.pk}))
+
+    def get(self, request, *args, **kwargs):
+        return self._end_staff_session(request)
+
+    def post(self, request, *args, **kwargs):
+        return self._end_staff_session(request)
 
 
 class StaffSessionList(AdministratorPermissionRequiredMixin, ListView):

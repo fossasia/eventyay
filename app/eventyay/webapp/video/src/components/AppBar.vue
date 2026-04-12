@@ -230,10 +230,26 @@ function startAdminSession() {
 }
 
 function endAdminSession() {
-	const url = new URL('control/sudo/stop/', buildBaseSansVideo())
+	const csrf = getCsrfToken()
+	if (!csrf) {
+		if (process.env.NODE_ENV === 'development') {
+			console.warn('Cannot end admin session: missing CSRF cookie.')
+		}
+		return
+	}
+	const action = new URL('control/sudo/stop/', buildBaseSansVideo())
 	const nextUrl = videoAccessRefreshPath()
-	if (nextUrl) url.searchParams.set('next', nextUrl)
-	window.location.assign(url.toString())
+	if (nextUrl) action.searchParams.set('next', nextUrl)
+	const form = document.createElement('form')
+	form.method = 'POST'
+	form.action = action.toString()
+	const input = document.createElement('input')
+	input.type = 'hidden'
+	input.name = 'csrfmiddlewaretoken'
+	input.value = csrf
+	form.appendChild(input)
+	document.body.appendChild(form)
+	form.submit()
 }
 
 function buildBaseSansVideo() {

@@ -110,7 +110,7 @@ def administrator_permission_required():
                 # just a double check, should not ever happen
                 raise PermissionDenied()
             if not request.user.has_active_staff_session(request.session.session_key):
-                if request.user.is_staff:
+                if request.user.is_staff or request.user.is_superuser:
                     return redirect(reverse('control:user.sudo') + '?next=' + quote(current_url(request)))
                 raise PermissionDenied(_('You do not have permission to view this content.'))
             return function(request, *args, **kw)
