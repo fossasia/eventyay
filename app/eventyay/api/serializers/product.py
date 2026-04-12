@@ -183,6 +183,7 @@ class ProductSerializer(I18nAwareModelSerializer):
             'require_voucher',
             'hide_without_voucher',
             'allow_cancel',
+            'allow_user_variation_change',
             'require_bundling',
             'min_per_order',
             'max_per_order',

@@ -380,6 +380,7 @@ class ProductCreateForm(I18nModelForm):
                 'issue_giftcard',
                 'require_approval',
                 'allow_waitinglist',
+                'allow_user_variation_change',
                 'show_quota_left',
                 'hidden_if_available',
                 'require_bundling',
@@ -583,6 +584,8 @@ class ProductUpdateForm(I18nModelForm):
             }
         )
         self.fields['category'].widget.choices = self.fields['category'].choices
+        if not self.instance.has_variations:
+            self.fields.pop('allow_user_variation_change', None)
 
     def clean(self):
         d = super().clean()
@@ -652,6 +655,7 @@ class ProductUpdateForm(I18nModelForm):
             'show_quota_left',
             'hidden_if_available',
             'issue_giftcard',
+            'allow_user_variation_change',
         ]
         field_classes = {
             'available_from': SplitDateTimeField,

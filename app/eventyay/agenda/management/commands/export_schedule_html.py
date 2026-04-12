@@ -16,7 +16,9 @@ from eventyay.base.models.transaction import rolledback_transaction
 from eventyay.common.signals import register_data_exporters
 from eventyay.base.models import Event
 
-SERVER_NAME = settings.SITE_URL.split('://')[1]
+from urllib.parse import urlparse
+ 
+SERVER_NAME = urlparse(settings.SITE_URL).netloc or 'localhost'
 
 
 @contextlib.contextmanager
