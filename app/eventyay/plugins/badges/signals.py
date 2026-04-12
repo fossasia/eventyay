@@ -118,7 +118,10 @@ def badge_question_form_fields(sender, position, **kwargs):
 
     ask_user_keys = set(layout.ask_user_fields_data)
     choices = [
-        (field['key'], field['label'])
+        (
+            field['key'],
+            field['sample'] if field['key'].startswith('question_') and field.get('sample') else field['label'],
+        )
         for field in get_badge_customizable_fields(sender, layout)
         if field['key'] in ask_user_keys
     ]

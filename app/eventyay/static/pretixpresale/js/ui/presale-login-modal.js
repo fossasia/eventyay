@@ -96,9 +96,29 @@ if (modal) {
             e.preventDefault();
 
             const submitBtn = document.getElementById('checkout-login-submit');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> ${i18n.msgLoggingIn ?? ''}`;
+            if (!submitBtn) return;
+
+            const originalChildNodes = [...submitBtn.childNodes].map(node =>
+                node.cloneNode(true)
+            );
+
+            const setLoadingState = () => {
+                submitBtn.disabled = true;
+                submitBtn.replaceChildren();
+
+                const spinner = document.createElement('i');
+                spinner.className = 'fa fa-spinner fa-spin';
+                spinner.setAttribute('aria-hidden', 'true');
+
+                submitBtn.appendChild(spinner);
+                submitBtn.append(' ', i18n.msgLoggingIn ?? '');
+            };
+
+            const resetButtonState = () => {
+                submitBtn.disabled = false;
+                submitBtn.replaceChildren(...originalChildNodes);
+            };
+            setLoadingState();
 
             if (errorDiv) errorDiv.style.display = 'none';
 
@@ -145,13 +165,11 @@ if (modal) {
                     }
                 }
                 
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+                resetButtonState();
             } catch (error) {
                 // Network errors, timeouts, CORS issues, etc.
                 console.error('Network error during login:', error);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+                resetButtonState();
                 if (errorDiv) {
                     errorDiv.textContent = i18n.msgConnectionFailed ?? '';
                     errorDiv.style.display = 'block';

@@ -22,7 +22,7 @@
 			:days="computedDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
-			:density="density",
+			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
 			:sortOptions="sortOptions",
 			v-model:sortBy="internalSortBy",
@@ -32,7 +32,7 @@
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
-			@setDensity="setDensity")
+			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 				:sessions="filteredSessions",
@@ -46,7 +46,8 @@
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
 				:showFavCount="showFavCountOnCalendar",
-				:density="density",
+				:density="'default'",
+				:timeDensityMinutes="timeDensityMinutes",
 				@changeDay="setCurrentDay",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -63,7 +64,7 @@
 				:showFavCount="showFavCountOnList",
 				:sortBy="effectiveSortBy",
 				:showBreaks="!linearOnly && !sessionsMode",
-				:density="density",
+				:density="'default'",
 				@changeDay="dayScrolled",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -145,7 +146,7 @@ export default {
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
 			recordingFilter: 'all',
-			density: localStorage.getItem('schedule-density') || 'default',
+			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
 			internalSortBy: this.sortBy || 'room',
 			filterState: {
 				tracks: [],
@@ -394,10 +395,13 @@ export default {
 		this._resizeObserver?.disconnect()
 	},
 	methods: {
-		setDensity(density) {
-			this.density = density
+		setTimeDensityMinutes(minutes) {
+			const parsedMinutes = Number(minutes)
+			const fallbackMinutes = 30
+			const validMinutes = Number.isFinite(parsedMinutes) && parsedMinutes > 0 ? parsedMinutes : fallbackMinutes
+			this.timeDensityMinutes = validMinutes
 			try {
-				localStorage.setItem('schedule-density', density)
+				localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
 			} catch {
 				// ignore localStorage access errors
 			}
