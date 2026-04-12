@@ -89,7 +89,7 @@ error_messages = {
         'The presale period for one of the events in your cart has ended. The affected '
         'positions have been removed from your cart.'
     ),
-    'price_too_high': _('The entered price is to high.'),
+    'price_too_high': _('The entered price is too high.'),
     'price_too_low': _('The entered price is too low. The minimum price is %s.'),
     'price_too_high_max': _('The entered price is too high. The maximum price is %s.'),
     'price_out_of_bounds': _('The entered price is out of the allowed range. The price must be between %s and %s.'),
