@@ -373,6 +373,8 @@ class ProductCreateForm(I18nModelForm):
                 'generate_tickets',
                 'checkin_attention',
                 'free_price',
+                'free_price_min',
+                'free_price_max',
                 'original_price',
                 'sales_channels',
                 'issue_giftcard',
@@ -473,6 +475,12 @@ class ProductCreateForm(I18nModelForm):
                 if not self.cleaned_data.get('quota_add_existing'):
                     raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
 
+        free_price_min = cleaned_data.get('free_price_min')
+        free_price_max = cleaned_data.get('free_price_max')
+        if free_price_min is not None and free_price_max is not None:
+            if free_price_min > free_price_max:
+                raise forms.ValidationError({'free_price_max': [_('Maximum price cannot be lower than minimum price.')]})
+
         return cleaned_data
 
     class Meta:
@@ -484,6 +492,9 @@ class ProductCreateForm(I18nModelForm):
             'category',
             'admission',
             'default_price',
+            'free_price',
+            'free_price_min',
+            'free_price_max',
             'tax_rule',
         ]
 
@@ -588,6 +599,13 @@ class ProductUpdateForm(I18nModelForm):
                     'admission',
                     _('Gift card products should not be admission products at the same time.'),
                 )
+        
+        free_price_min = d.get('free_price_min')
+        free_price_max = d.get('free_price_max')
+        if free_price_min is not None and free_price_max is not None:
+            if free_price_min > free_price_max:
+                self.add_error('free_price_max', _('Maximum price cannot be lower than minimum price.'))
+
         return d
 
     def save(self, *args, **kwargs):
@@ -615,6 +633,8 @@ class ProductUpdateForm(I18nModelForm):
             'picture',
             'default_price',
             'free_price',
+            'free_price_min',
+            'free_price_max',
             'tax_rule',
             'available_from',
             'available_until',

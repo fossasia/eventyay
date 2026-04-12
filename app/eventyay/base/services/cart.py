@@ -90,6 +90,9 @@ error_messages = {
         'positions have been removed from your cart.'
     ),
     'price_too_high': _('The entered price is to high.'),
+    'price_too_low': _('The entered price is too low. The minimum price is %s.'),
+    'price_too_high_max': _('The entered price is too high. The maximum price is %s.'),
+    'price_out_of_bounds': _('The entered price is out of the allowed range. The price must be between %s and %s.'),
     'voucher_invalid': _('This voucher code is not known in our database.'),
     'voucher_redeemed': _('This voucher code has already been used the maximum number of times allowed.'),
     'voucher_redeemed_cart': _(
@@ -445,6 +448,13 @@ class CartManager:
         except ValueError as e:
             if str(e) == 'price_too_high':
                 raise CartError(error_messages['price_too_high'])
+            elif str(e).startswith('price_too_low:'):
+                raise CartError(error_messages['price_too_low'], str(e).split(':', 1)[1])
+            elif str(e).startswith('price_too_high_max:'):
+                raise CartError(error_messages['price_too_high_max'], str(e).split(':', 1)[1])
+            elif str(e).startswith('price_out_of_bounds:'):
+                parts = str(e).split(':', 1)[1].split('|')
+                raise CartError(error_messages['price_out_of_bounds'], tuple(parts))
             else:
                 raise e
 

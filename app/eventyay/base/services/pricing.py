@@ -82,18 +82,44 @@ def get_price(
         if custom_price > 100000000:
             raise ValueError('price_too_high')
 
+        if product.free_price_max is not None:
+            max_price_obj = tax_rule.tax(product.free_price_max, invoice_address=invoice_address)
+            if custom_price_is_net and custom_price > max_price_obj.net:
+                raise ValueError(f'price_too_high_max:{product.free_price_max} {product.event.currency}')
+            elif not custom_price_is_net and custom_price > max_price_obj.gross:
+                raise ValueError(f'price_too_high_max:{product.free_price_max} {product.event.currency}')
+
         price = tax_rule.tax(price, invoice_address=invoice_address)
+
+        if product.free_price_min is not None:
+            min_price_obj = tax_rule.tax(product.free_price_min, invoice_address=invoice_address)
+            min_net = min_price_obj.net
+            min_gross = min_price_obj.gross
+
+            if custom_price_is_net and custom_price < min_net:
+                if product.free_price_max is not None:
+                    raise ValueError(f'price_out_of_bounds:{product.free_price_min} {product.event.currency}|{product.free_price_max} {product.event.currency}')
+                else:
+                    raise ValueError(f'price_too_low:{product.free_price_min} {product.event.currency}')
+            elif not custom_price_is_net and custom_price < min_gross:
+                if product.free_price_max is not None:
+                    raise ValueError(f'price_out_of_bounds:{product.free_price_min} {product.event.currency}|{product.free_price_max} {product.event.currency}')
+                else:
+                    raise ValueError(f'price_too_low:{product.free_price_min} {product.event.currency}')
+        else:
+            min_net = price.net
+            min_gross = price.gross
 
         if custom_price_is_net:
             price = tax_rule.tax(
-                max(custom_price, price.net),
+                max(custom_price, min_net),
                 base_price_is='net',
                 invoice_address=invoice_address,
                 subtract_from_gross=bundled_sum,
             )
         else:
             price = tax_rule.tax(
-                max(custom_price, price.gross),
+                max(custom_price, min_gross),
                 base_price_is='gross',
                 gross_price_is_tax_rate=custom_price_is_tax_rate,
                 invoice_address=invoice_address,

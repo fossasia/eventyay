@@ -108,6 +108,13 @@
         <fieldset>
             <legend>{% trans "Price settings" %}</legend>
             {% bootstrap_field form.default_price layout="control" %}
+            {% bootstrap_field form.free_price layout="control" %}
+            
+            <div id="free-price-bounds" style="display: none;">
+                {% bootstrap_field form.free_price_min layout="control" %}
+                {% bootstrap_field form.free_price_max layout="control" %}
+            </div>
+            
             {% bootstrap_field form.tax_rule layout="control" %}
         </fieldset>
         <div class="form-group submit-group">
@@ -116,4 +123,18 @@
             </button>
         </div>
     </form>
+    
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var freePriceCb = document.getElementById('id_free_price');
+            var freePriceBounds = document.getElementById('free-price-bounds');
+            if(freePriceCb && freePriceBounds) {
+                function toggleBounds() {
+                    freePriceBounds.style.display = freePriceCb.checked ? 'block' : 'none';
+                }
+                freePriceCb.addEventListener('change', toggleBounds);
+                toggleBounds();
+            }
+        });
+    </script>
 {% endblock %}

@@ -318,6 +318,26 @@ class Product(LoggedModel):
             'bought as an add-on to other products.'
         ),
     )
+    free_price_min = models.DecimalField(
+        verbose_name=_('Minimum price'),
+        help_text=_(
+            'The minimum price a user has to enter. If left empty, the default price will be used as the minimum.'
+        ),
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    free_price_max = models.DecimalField(
+        verbose_name=_('Maximum price'),
+        help_text=_(
+            'The maximum price a user can enter. If left empty, there is no upper limit.'
+        ),
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     tax_rule = models.ForeignKey(
         'TaxRule',
         verbose_name=_('Sales tax'),
