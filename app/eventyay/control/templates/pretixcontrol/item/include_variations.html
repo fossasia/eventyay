@@ -2,21 +2,26 @@
 {% load bootstrap3 %}
 {% load formset_tags %}
 <div class="formset" data-formset data-formset-prefix="{{ formset.prefix }}">
+    {% if form.allow_user_variation_change %}
+        <div class="form-horizontal">
+            {% bootstrap_field form.allow_user_variation_change layout='control' %}
+        </div>
+    {% endif %}
     {{ formset.management_form }}
     {% bootstrap_formset_errors formset %}
     <div data-formset-body>
-        {% for form in formset %}
+        {% for variation_form in formset %}
             <div class="panel panel-default" data-formset-form>
                 <div class="sr-only">
-                    {{ form.id }}
-                    {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
-                    {% bootstrap_field form.ORDER form_group_class="" layout="inline" %}
+                    {{ variation_form.id }}
+                    {% bootstrap_field variation_form.DELETE form_group_class="" layout="inline" %}
+                    {% bootstrap_field variation_form.ORDER form_group_class="" layout="inline" %}
                 </div>
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <div class="row">
                             <div class="col-md-9">
-                                {% bootstrap_field form.value layout='inline' form_group_class="" %}
+                                {% bootstrap_field variation_form.value layout='inline' form_group_class="" %}
                             </div>
                             <div class="col-md-3 text-right flip">
                                 <button type="button" class="btn btn-default" data-formset-move-up-button>
@@ -25,15 +30,15 @@
                                     <i class="fa fa-arrow-down"></i></button>
                                 <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
                                     <i class="fa fa-trash"></i></button>
-                                {% if form.instance.id %}
-                                    <br><small class="text-muted">#{{ form.instance.id }}</small>
+                                {% if variation_form.instance.id %}
+                                    <br><small class="text-muted">#{{ variation_form.instance.id }}</small>
                                 {% endif %}
                             </div>
                         </div>
                     </h4>
                 </div>
                 <div class="panel-body form-horizontal">
-                    {% if form.instance.pk and not form.instance.quotas.exists %}
+                    {% if variation_form.instance.pk and not variation_form.instance.quotas.exists %}
                         <div class="alert alert-warning">
                             {% blocktrans trimmed %}
                                 Please note that your variation will <strong>not</strong> be available for sale
@@ -41,11 +46,11 @@
                             {% endblocktrans %}
                         </div>
                     {% endif %}
-                    {% bootstrap_form_errors form %}
-                    {% bootstrap_field form.active layout="control" %}
-                    {% bootstrap_field form.default_price addon_after=request.event.currency layout="control" %}
-                    {% bootstrap_field form.original_price addon_after=request.event.currency layout="control" %}
-                    {% bootstrap_field form.description layout="control" %}
+                    {% bootstrap_form_errors variation_form %}
+                    {% bootstrap_field variation_form.active layout="control" %}
+                    {% bootstrap_field variation_form.default_price addon_after=request.event.currency layout="control" %}
+                    {% bootstrap_field variation_form.original_price addon_after=request.event.currency layout="control" %}
+                    {% bootstrap_field variation_form.description layout="control" %}
                 </div>
             </div>
         {% endfor %}

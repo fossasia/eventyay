@@ -6,8 +6,9 @@
 {% with nav_context=nav_context|default:"agenda" %}
     {% if current_event and current_event.locales and not is_html_export %}
         <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
-            <summary>
-				{% translate "Language" %}
+        <summary aria-label="{% translate 'Language' %}">
+				<i class="fa fa-globe nav-icon-mobile" aria-hidden="true"></i>
+				<span class="mobile-hide-text">{% translate "Language" %}</span>
 				<i class="fa fa-caret-down ml-1"></i>
             </summary>
             <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
@@ -78,7 +79,8 @@
         <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
             {% is_event_organiser request.user request current_event as can_see_orga_area %}
             <summary>
-                {{ request.user|short_user_label }} <i class="fa fa-caret-down ml-1"></i>
+                <i class="fa fa-user nav-icon-mobile" aria-hidden="true"></i>
+                <span class="mobile-hide-text">{{ request.user|short_user_label }}</span> <i class="fa fa-caret-down ml-1"></i>
             </summary>
             <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                 <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
@@ -89,6 +91,13 @@
                     <i class="fa fa-sticky-note-o"></i>
                     {% translate "My proposals" %}
                 </a>
+                {% can_view_featured_sessions_public current_event as show_featured_sessions_menu %}
+                {% if show_featured_sessions_menu %}
+                    <a href="{{ current_event.urls.featured }}" class="dropdown-item {% if '/featured/' in request.path_info %}active{% endif %}" role="menuitem" tabindex="-1" title="{% translate 'Featured Sessions' %}">
+                        <i class="fa fa-certificate" aria-hidden="true"></i>
+                        {% translate "Featured" %}
+                    </a>
+                {% endif %}
                 <a href="{{ current_event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
                     <i class="fa fa-address-card-o"></i>
                     {% translate "Speaker profile" %}
@@ -120,6 +129,9 @@
             </div>
         </details>
     {% elif not subheader_login_link_disabled and not is_html_export %}
-        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">{% translate "Login" %}</a>
+        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}" class="login-link" aria-label="{% translate 'Login' %}">
+            <i class="fa fa-user nav-icon-mobile" aria-hidden="true"></i>
+            <span class="mobile-hide-text">{% translate "Login" %}</span>
+        </a>
     {% endif %}
 {% endwith %}

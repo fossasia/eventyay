@@ -15,6 +15,12 @@
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
     {% endif %}
+    {% can_view_featured_sessions_public current_event as show_featured_sessions_tab %}
+    {% if show_featured_sessions_tab %}
+        <a href="{{ current_event.urls.featured }}" id="nav-tab-featured" class="header-tab {% if '/featured/' in path %}active{% endif %}" title="{% translate 'Featured Sessions' %}">
+            <i class="fa fa-certificate" aria-hidden="true"></i> {% translate "Featured" %}
+        </a>
+    {% endif %}
     {% if show_talks_tab %}
         {% if schedule or current_event.has_schedule_content %}
             {% with schedule_url=current_event.talk_schedule_url|default:current_event.urls.schedule %}
@@ -43,12 +49,12 @@
             {% if cfp.is_open or access_code.is_valid %}
                 <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
                     href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
-                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+                    <i class="fa fa-bullhorn"></i> <span class="cfs-full">{% translate "Call for Speakers" %}</span><span class="cfs-short">{% translate "CfS" %}</span>
                 </a>
             {% elif not cfp.settings.hide_after_deadline %}
                 <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
                     href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
-                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
+                    <i class="fa fa-bullhorn"></i> <span class="cfs-full">{% translate "Call for Speakers (Closed)" %}</span><span class="cfs-short">{% translate "CfS" %}</span>
                 </a>
             {% endif %}
         {% endwith %}
@@ -56,12 +62,12 @@
 
     {% if show_online_video_link|default:False %}
         {% if nav_context == "presale" %}
-            <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+            <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
+                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% translate "Join online video" %}</span>
             </a>
         {% else %}
-            <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+            <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
+                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% translate "Join online video" %}</span>
             </a>
         {% endif %}
     {% endif %}
