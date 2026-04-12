@@ -308,6 +308,8 @@ class ProductCreateForm(I18nModelForm):
 
         self.fields['tax_rule'].queryset = self.instance.event.tax_rules.all()
         change_decimal_field(self.fields['default_price'], self.instance.event.currency)
+        change_decimal_field(self.fields['free_price_min'], self.instance.event.currency)
+        change_decimal_field(self.fields['free_price_max'], self.instance.event.currency)
         self.fields['tax_rule'].empty_label = _('No taxation')
         self.fields['copy_from'] = forms.ModelChoiceField(
             label=_('Copy product information'),
@@ -552,6 +554,8 @@ class ProductUpdateForm(I18nModelForm):
             widget=forms.CheckboxSelectMultiple,
         )
         change_decimal_field(self.fields['default_price'], self.event.currency)
+        change_decimal_field(self.fields['free_price_min'], self.event.currency)
+        change_decimal_field(self.fields['free_price_max'], self.event.currency)
         self.fields['hidden_if_available'].queryset = self.event.quotas.all()
         self.fields['hidden_if_available'].widget = Select2(
             attrs={
