@@ -52,7 +52,11 @@ def get_badge_layout_for_position(event, position):
 
 def get_badge_hidden_fields(position):
     config_position = get_badge_config_position(position)
-    hidden_fields = config_position.meta_info_data.get('question_form_data', {}).get(BADGE_HIDDEN_FIELDS_KEY, [])
+    root_question_form_data = config_position.meta_info_data.get('question_form_data', {})
+    if BADGE_HIDDEN_FIELDS_KEY in root_question_form_data:
+        hidden_fields = root_question_form_data[BADGE_HIDDEN_FIELDS_KEY]
+    else:
+        hidden_fields = position.meta_info_data.get('question_form_data', {}).get(BADGE_HIDDEN_FIELDS_KEY, [])
     if isinstance(hidden_fields, str):
         return [hidden_fields]
     return hidden_fields
