@@ -20,7 +20,7 @@
                 <span class="hidden-xs current-locale" aria-hidden="true">
                     {% for option in language_options %}
                         {% if option.code|lower == request.LANGUAGE_CODE|lower %}
-                            {{ option.code|slice:":2"|title }}
+                            {{ option.code|slice:':2'|title }}
                         {% endif %}
                     {% endfor %}
                 </span>
