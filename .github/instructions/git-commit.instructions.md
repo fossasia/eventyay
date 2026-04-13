@@ -10,3 +10,16 @@ applyTo: "**"
 - When there are many things to say, the commit message should be split into two parts, separated by a blank line:
   + A short summary line following the brevity rule above.
   + A detailed description, which can be arbitrarily long.
+
+## Branching
+
+- Work in feature branches; open PRs against the `dev` branch.
+- Keep commits focused and atomic.
+
+## PR Expectations
+
+- All CI checks must pass before merging.
+- Keep diffs small and focused on a single concern.
+- Update or add tests for any changed behavior.
+- Only work inside this repository.
+- All changes must be self-contained; do not depend on code in external forks or unmerged upstream branches. You may reference issues for context, but the PR itself must be reviewable and workable on its own in this repo.

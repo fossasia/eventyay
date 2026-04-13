@@ -422,7 +422,7 @@ class EventOrderFilterForm(OrderFilterForm):
                     file__isnull=False,
                 )
                 qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=True)
-            elif q.type in (Question.TYPE_CHOICE, Question.TYPE_CHOICE_MULTIPLE):
+            elif q.type in Question.OPTION_TYPES:
                 answers = QuestionAnswer.objects.filter(
                     question_id=q.pk,
                     orderposition__order_id=OuterRef('pk'),
@@ -1023,7 +1023,7 @@ class SubmissionFilterForm(forms.Form):
         ),
         required=False,
     )
-    
+
     submission_type = forms.CharField(
         label=_('Session Type'),
         required=False,
@@ -1058,31 +1058,24 @@ class SubmissionFilterForm(forms.Form):
         # Search by event name
         if fdata.get('event_query'):
             qs = qs.filter(
-                Q(event__name__icontains=fdata['event_query'])
-                | Q(event__slug__icontains=fdata['event_query'])
+                Q(event__name__icontains=fdata['event_query']) | Q(event__slug__icontains=fdata['event_query'])
             )
 
         # Filter by proposal state
         if fdata.get('proposal_state'):
             qs = qs.filter(state=fdata['proposal_state'])
-        
+
         # Filter by session type
         if fdata.get('submission_type'):
-            qs = qs.filter(
-                Q(submission_type__name__icontains=fdata['submission_type'])
-            )
+            qs = qs.filter(Q(submission_type__name__icontains=fdata['submission_type']))
 
         # Filter by track
         if fdata.get('track'):
-            qs = qs.filter(
-                Q(track__name__icontains=fdata['track'])
-            )
+            qs = qs.filter(Q(track__name__icontains=fdata['track']))
 
         # Filter by tags
         if fdata.get('tags'):
-            qs = qs.filter(
-                Q(tags__tag__icontains=fdata['tags'])
-            )
+            qs = qs.filter(Q(tags__tag__icontains=fdata['tags']))
 
         return qs
 
@@ -1241,9 +1234,11 @@ class EventFilterForm(FilterForm):
             # Filter for events where user is a team member
             user = self.request.user
             qs = qs.filter(
-                Q(organizer__teams__members=user) &
-                (Q(organizer__teams__all_events=True) |
-                 Q(organizer__teams__limit_events__in=qs.values_list('pk', flat=True)))
+                Q(organizer__teams__members=user)
+                & (
+                    Q(organizer__teams__all_events=True)
+                    | Q(organizer__teams__limit_events__in=qs.values_list('pk', flat=True))
+                )
             ).distinct()
         elif fdata.get('status') == 'live':
             qs = qs.filter(live=True)
