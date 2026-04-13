@@ -403,14 +403,14 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.3.1"
+version = "8.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/75/31212c6bf2503fdf920d87fee5d7a86a2e3bcf444984126f13d8e4016804/click-8.3.2.tar.gz", hash = "sha256:14162b8b3b3550a7d479eafa77dfd3c38d9dc8951f6f69c78913a8f9a7540fd5", size = 302856, upload-time = "2026-04-03T19:14:45.118Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/78/01c019cdb5d6498122777c1a43056ebb3ebfeef2076d9d026bfe15583b2b/click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6", size = 108274, upload-time = "2025-11-15T20:45:41.139Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/20/71885d8b97d4f3dde17b1fdb92dbd4908b00541c5a3379787137285f602e/click-8.3.2-py3-none-any.whl", hash = "sha256:1924d2c27c5653561cd2cae4548d1406039cb79b858b747cfea24924bbc1616d", size = 108379, upload-time = "2026-04-03T19:14:43.505Z" },
 ]
 
 [[package]]
@@ -953,16 +953,16 @@ wheels = [
 
 [[package]]
 name = "django-multifactor"
-version = "0.8.5"
+version = "0.8.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "fido2" },
     { name = "pyotp" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/f4/ef9128237cbe471f844dbb06f93598249e0fc902cb2a6cac6057b15ebeae/django_multifactor-0.8.5.tar.gz", hash = "sha256:395de31ef3569aef4cad61f255675efccd434066b0f1e3d6fd45b997f91ef17c", size = 45922, upload-time = "2026-03-11T09:58:13.119Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/36/b27ed3c41e74373ccf8d41d14604ddc2430c3290b85cc105cb628ce51e9d/django_multifactor-0.8.7.tar.gz", hash = "sha256:d1eeb6abbf367e134ae7be06a76a45dc9771c29223988f19173a2e420b7568fd", size = 48854, upload-time = "2026-04-07T09:32:12.485Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2e/d6/974799034ce774ebbfa246a29dcbd6483635c623f70c21b93d258ec51374/django_multifactor-0.8.5-py3-none-any.whl", hash = "sha256:5cd938d9f7ee26bf8f543f011f4e6c9c6d5ec90c822f6ae92d4ac042903c8b2c", size = 58416, upload-time = "2026-03-11T09:58:14.164Z" },
+    { url = "https://files.pythonhosted.org/packages/46/89/f5f2ee45fdfbacd0c925428d67ff48d5c38af91bde8af9b0008861ab6609/django_multifactor-0.8.7-py3-none-any.whl", hash = "sha256:20ac360e6adc85f939d77e2ca102de2aaf545cde479deeb2184d36af893f7782", size = 60150, upload-time = "2026-04-07T09:32:13.655Z" },
 ]
 
 [[package]]
@@ -1437,7 +1437,7 @@ requires-dist = [
     { name = "channels-redis", specifier = ">=4.2.1" },
     { name = "chardet", specifier = ">=5.2.0" },
     { name = "charset-normalizer", specifier = ">=3.4.4" },
-    { name = "click", specifier = ">=8.3.1" },
+    { name = "click", specifier = ">=8.3.2" },
     { name = "click-didyoumean", specifier = ">=0.3.1" },
     { name = "click-plugins", specifier = ">=1.1.1" },
     { name = "click-repl", specifier = ">=0.3.0" },
@@ -1474,7 +1474,7 @@ requires-dist = [
     { name = "django-libsass", specifier = ">=0.9" },
     { name = "django-localflavor", specifier = ">=4.0" },
     { name = "django-markup", specifier = ">=1.9.1" },
-    { name = "django-multifactor", specifier = ">=0.8.2" },
+    { name = "django-multifactor", specifier = ">=0.8.7" },
     { name = "django-oauth-toolkit", specifier = ">=3.2.0" },
     { name = "django-otp", specifier = ">=1.7.0" },
     { name = "django-pdb", specifier = ">=0.6.2" },
@@ -1634,7 +1634,7 @@ test = [
     { name = "pytest-cache", specifier = ">=1.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-django", specifier = ">=4.9.0" },
-    { name = "pytest-env", specifier = ">=1.2.0" },
+    { name = "pytest-env", specifier = ">=1.6.0" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "pytest-rerunfailures", specifier = ">=16.1" },
     { name = "pytest-sugar", specifier = ">=1.1.1" },
@@ -2813,15 +2813,15 @@ wheels = [
 
 [[package]]
 name = "pytest-env"
-version = "1.5.0"
+version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
     { name = "python-dotenv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e6/56/a931c6f6194917ff44be41b8586e2ffd13a18fa70fb28d9800a4695befa5/pytest_env-1.5.0.tar.gz", hash = "sha256:db8994b9ce170f135a37acc09ac753a6fc697d15e691b576ed8d8ca261c40246", size = 15271, upload-time = "2026-02-17T18:31:39.095Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/69/4db1c30625af0621df8dbe73797b38b6d1b04e15d021dd5d26a6d297f78c/pytest_env-1.6.0.tar.gz", hash = "sha256:ac02d6fba16af54d61e311dd70a3c61024a4e966881ea844affc3c8f0bf207d3", size = 16163, upload-time = "2026-03-12T22:39:43.78Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/af/99b52a8524983bfece35e51e65a0b517b22920c023e57855c95e744e19e4/pytest_env-1.5.0-py3-none-any.whl", hash = "sha256:89a15686ac837c9cd009a8a2d52bd55865e2f23c82094247915dae4540c87161", size = 10122, upload-time = "2026-02-17T18:31:37.496Z" },
+    { url = "https://files.pythonhosted.org/packages/27/16/ad52f56b96d851a2bcfdc1e754c3531341885bd7177a128c13ff2ca72ab4/pytest_env-1.6.0-py3-none-any.whl", hash = "sha256:1e7f8a62215e5885835daaed694de8657c908505b964ec8097a7ce77b403d9a3", size = 10400, upload-time = "2026-03-12T22:39:41.887Z" },
 ]
 
 [[package]]
@@ -2932,11 +2932,11 @@ wheels = [
 
 [[package]]
 name = "python-dotenv"
-version = "1.2.1"
+version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f0/26/19cadc79a718c5edbec86fd4919a6b6d3f681039a2f6d66d14be94e75fb9/python_dotenv-1.2.1.tar.gz", hash = "sha256:42667e897e16ab0d66954af0e60a9caa94f0fd4ecf3aaf6d2d260eec1aa36ad6", size = 44221, upload-time = "2025-10-26T15:12:10.434Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/ed/0301aeeac3e5353ef3d94b6ec08bbcabd04a72018415dcb29e588514bba8/python_dotenv-1.2.2.tar.gz", hash = "sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3", size = 50135, upload-time = "2026-03-01T16:00:26.196Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/1b/a298b06749107c305e1fe0f814c6c74aea7b2f1e10989cb30f544a1b3253/python_dotenv-1.2.1-py3-none-any.whl", hash = "sha256:b81ee9561e9ca4004139c6cbba3a238c32b03e4894671e181b671e8cb8425d61", size = 21230, upload-time = "2025-10-26T15:12:09.109Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/d7/1959b9648791274998a9c3526f6d0ec8fd2233e4d4acce81bbae76b44b2a/python_dotenv-1.2.2-py3-none-any.whl", hash = "sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a", size = 22101, upload-time = "2026-03-01T16:00:25.09Z" },
 ]
 
 [[package]]
