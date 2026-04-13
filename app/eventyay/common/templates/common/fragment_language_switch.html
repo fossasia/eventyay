@@ -8,9 +8,9 @@
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
 
         <details class="dropdown fix-height" id="language-dropdown" aria-haspopup="menu">
-            <summary class="header-nav" aria-label="{{ language_label }}">
+            <summary class="header-nav" aria-label="{{ language_label }} - {% for option in language_options %}{% if option.code|lower == request.LANGUAGE_CODE|lower %}{{ option.label }}{% endif %}{% endfor %}">
                 <i class="fa fa-globe" aria-hidden="true"></i>
-                <span class="hidden-xs current-locale">
+                <span class="hidden-xs current-locale" aria-hidden="true">
                     {% for option in language_options %}
                         {% if option.code|lower == request.LANGUAGE_CODE|lower %}
                             {{ option.code|slice:":2"|title }}

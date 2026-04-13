@@ -3,10 +3,10 @@
 
 <li class="nav-item">
     <details class="dropdown fix-height" id="profile-dropdown">
-        <summary class="header-nav">
+        <summary class="header-nav" aria-label="{% translate 'User menu' %} - {{ request.user|short_user_label }}">
             <i class="fa fa-user" aria-hidden="true"></i>
-            <span class="hidden-xs">{{ request.user|short_user_label }}</span>
-            <i class="fa fa-caret-down ml-1 hidden-xs"></i>
+            <span class="hidden-xs" aria-hidden="true">{{ request.user|short_user_label }}</span>
+            <i class="fa fa-caret-down ml-1 hidden-xs" aria-hidden="true"></i>
         </summary>
         <div class="dropdown-content dropdown-content-sw">
             <div class="dashboard-dropdown">
