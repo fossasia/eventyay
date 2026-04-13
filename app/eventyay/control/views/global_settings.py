@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import EmailMessage
+from django.core.validators import validate_email
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
@@ -169,7 +170,9 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         recipient = request.POST.get('test_email', '').strip()
-        if not recipient:
+        try:
+            validate_email(recipient)
+        except ValidationError:
             messages.error(request, _('Please enter a valid recipient email address.'))
             return redirect(reverse('eventyay_admin:admin.global.settings'))
 
@@ -234,7 +237,7 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             )
             messages.warning(
                 request,
-                _('Test email failed to connect or send: %(err)s') % {'err': str(e)},
+                _('Test email failed to connect or send: %(err)s') % {'err': e},
             )
         except Exception as e:
             logger.exception(
@@ -242,7 +245,7 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             )
             messages.warning(
                 request,
-                _('Test email failed unexpectedly: %(err)s') % {'err': str(e)},
+                _('Test email failed unexpectedly: %(err)s') % {'err': e},
             )
         else:
             logger.info('Admin test email sent to %s', recipient)
