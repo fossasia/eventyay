@@ -6,11 +6,13 @@
 {% with nav_context=nav_context|default:"agenda" %}
     {% if current_event and current_event.locales and not is_html_export %}
         <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
+        {% with active_event_lang=request.event_language|default_if_none:current_event.locale|default_if_none:request.LANGUAGE_CODE %}
         <summary aria-label="{% translate 'Language' %}">
-				<i class="fa fa-globe nav-icon-mobile" aria-hidden="true"></i>
-				<span class="mobile-hide-text">{% translate "Language" %}</span>
-				<i class="fa fa-caret-down ml-1"></i>
-            </summary>
+            <i class="fa fa-globe" aria-hidden="true"></i>
+            <span class="hidden-xs">{{ active_event_lang|slice:":2"|title }}/{{ request.LANGUAGE_CODE|slice:":2"|title }}</span>
+            <i class="fa fa-caret-down ml-1 hidden-xs"></i>
+        </summary>
+        {% endwith %}
             <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                 <div class="language-enforce-bar">
                     <span id="language-enforce-label" class="language-enforce-label">{% translate "Link languages" %}</span>
@@ -79,8 +81,9 @@
         <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
             {% is_event_organiser request.user request current_event as can_see_orga_area %}
             <summary>
-                <i class="fa fa-user nav-icon-mobile" aria-hidden="true"></i>
-                <span class="mobile-hide-text">{{ request.user|short_user_label }}</span> <i class="fa fa-caret-down ml-1"></i>
+                <i class="fa fa-user" aria-hidden="true"></i>
+                <span class="hidden-xs">{{ request.user|short_user_label }}</span>
+                <i class="fa fa-caret-down ml-1 hidden-xs"></i>
             </summary>
             <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                 <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
