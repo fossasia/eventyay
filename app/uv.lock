@@ -1627,7 +1627,7 @@ test = [
     { name = "coverage", specifier = ">=7.13.1" },
     { name = "coveralls", specifier = ">=4.0.2" },
     { name = "faker", specifier = ">=40.1.2" },
-    { name = "fakeredis", specifier = ">=2.33.0" },
+    { name = "fakeredis", specifier = ">=2.35.0" },
     { name = "freezegun", specifier = ">=1.5.5" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
@@ -1672,15 +1672,15 @@ wheels = [
 
 [[package]]
 name = "fakeredis"
-version = "2.34.1"
+version = "2.35.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "redis" },
     { name = "sortedcontainers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/40/fd09efa66205eb32253d2b2ebc63537281384d2040f0a88bcd2289e120e4/fakeredis-2.34.1.tar.gz", hash = "sha256:4ff55606982972eecce3ab410e03d746c11fe5deda6381d913641fbd8865ea9b", size = 177315, upload-time = "2026-02-25T13:17:51.315Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/b9/c40b92cd49155a8ebbdc983cb50c02fc1c87d3a53f19aa420aefb96b00a3/fakeredis-2.35.0.tar.gz", hash = "sha256:5d1a0192c2c559e55b2d05328d86282ddd2079c1712a91e6d1b3010e0dd45ca6", size = 189000, upload-time = "2026-04-09T18:02:14.746Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/b5/82f89307d0d769cd9bf46a54fb9136be08e4e57c5570ae421db4c9a2ba62/fakeredis-2.34.1-py3-none-any.whl", hash = "sha256:0107ec99d48913e7eec2a5e3e2403d1bd5f8aa6489d1a634571b975289c48f12", size = 122160, upload-time = "2026-02-25T13:17:49.701Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/43/83508ccf8177a840aec118bf4d20b0c25ddca6ccecd13f1f89caabcb1a45/fakeredis-2.35.0-py3-none-any.whl", hash = "sha256:565d337a5492e8c19be33a89e7acc078374741c65cb6d4413bd8818346b8c252", size = 129578, upload-time = "2026-04-09T18:02:13.264Z" },
 ]
 
 [[package]]
