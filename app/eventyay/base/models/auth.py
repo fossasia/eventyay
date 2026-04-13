@@ -1038,6 +1038,8 @@ the eventyay team"""
         if include_admin_info:
             d["moderation_state"] = self.moderation_state
             d["token_id"] = self.token_id
+            d["email"] = self.email
+            d["wikimedia_username"] = self.wikimedia_username
         if include_client_state:
             d["client_state"] = self.client_state
         if include_personal_data:

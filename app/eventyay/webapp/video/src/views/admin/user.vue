@@ -20,7 +20,11 @@
 				bunt-button#btn-change-avatar(@click="showChangeAvatar = true", v-if="edit") {{ $t('preferences/index:btn-change-avatar:label') }}
 			bunt-input.display-name(name="displayName", :label="$t('profile/GreetingPrompt:displayname:label')", v-model.trim="user.profile.display_name", :validation="v$.user.profile.display_name", :disabled="!edit")
 			bunt-input(name="id", label="ID", :modelValue="user.id", :disabled="true")
-			bunt-input(name="token_id", label="External ID", :modelValue="user.token_id", :disabled="true")
+			bunt-input(name="token_id", label="Login UID (JWT uid)", :modelValue="user.token_id || '–'", :disabled="true")
+			bunt-input(name="email", label="Email", :modelValue="user.email || '–'", :disabled="true")
+			bunt-input(name="wikimedia_username", label="Wikimedia / Wikimania username", :modelValue="user.wikimedia_username || '–'", :disabled="true")
+			bunt-input(name="order_code", label="Order code", :modelValue="user.order_code || '–'", :disabled="true")
+			bunt-input(name="ticket_code", label="Ticket code (position secret)", :modelValue="user.ticket_code || '–'", :disabled="true")
 			bunt-input(name="mod_state", label="Moderation state", :modelValue="user.moderation_state || '-'", :disabled="true")
 			change-additional-fields(v-model="user.profile.fields", :disabled="!edit")
 	bunt-progress-circular(v-else, size="huge")

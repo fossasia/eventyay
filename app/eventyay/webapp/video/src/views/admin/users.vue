@@ -7,18 +7,33 @@
 		.header
 			.avatar
 			.id ID
-			.tokenid External ID
+			.tokenid Login UID
 			.name Name
+			.email Email
+			.ticket-info Order / ticket code
+			.wikimedia Wikimedia
 			.state State
 			.actions
 		RecycleScroller.tbody.bunt-scrollbar(v-if="filteredUsers", :items="filteredUsers", :item-size="48", v-slot="{item: user}", v-scrollbar.y="")
 			router-link(:to="{name: 'admin:user', params: {userId: user.id}}", :class="{error: user.error, updating: user.updating}").user.table-row
 				avatar.avatar(:user="user", :size="32")
 				.id(:title="user.id") {{ user.id }}
-				.tokenid(:title="user.token_id") {{ user.token_id }}
+				.tokenid(:title="user.token_id || ''") {{ user.token_id || '–' }}
 				.name
 					| {{ user.profile.display_name }}
 					.ui-badge(v-for="badge in user.badges") {{ badge }}
+				.email(:title="user.email || ''") {{ user.email || '–' }}
+				.ticket-info(@click.prevent.stop="")
+					template(v-if="user.order_code && eventRouting.organizer && eventRouting.event")
+						a.order-link(
+							:href="`/control/${eventRouting.organizer}/${eventRouting.event}/orders/${user.order_code}/`",
+							target="_blank",
+							:title="user.order_code"
+						) {{ user.order_code }}
+						span.ticket-code(v-if="user.ticket_code", :title="user.ticket_code") {{ user.ticket_code }}
+					span(v-else-if="user.ticket_code", :title="user.ticket_code") {{ user.ticket_code }}
+					span(v-else) –
+				.wikimedia(:title="user.wikimedia_username || ''") {{ user.wikimedia_username || '–' }}
 				.state {{ user.moderation_state }}
 				.actions(v-if="user.id !== ownUser.id", @click.prevent.stop="")
 					.placeholder.mdi.mdi-dots-horizontal
@@ -28,7 +43,7 @@
 						:key="`${user.id}-reactivate`",
 						:loading="user.updating === 'reactivate'",
 						:error-message="(user.error && user.error.action === 'reactivate') ? user.error.message : null",
-						tooltipPlacement="left", 
+						tooltipPlacement="left",
 						@click="doAction(user, 'reactivate', null)")
 						| {{ user.moderation_state === 'banned' ? 'unban' : 'unsilence'}}
 					bunt-button.btn-ban(
@@ -70,11 +85,11 @@ export default {
 		...mapState({
 			ownUser: 'user'
 		}),
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'eventRouting']),
 		filteredUsers() {
 			if (!this.users) return
 			if (!this.search) return this.users
-			return this.users.filter(user => user.id.startsWith(this.search.trim()) || (user.token_id && user.token_id.startsWith(this.search.trim())) || fuzzysearch(this.search.toLowerCase(), user.profile?.display_name?.toLowerCase()))
+			return this.users.filter(user => user.id.startsWith(this.search.trim()) || (user.token_id && user.token_id.startsWith(this.search.trim())) || fuzzysearch(this.search.toLowerCase(), user.profile?.display_name?.toLowerCase()) || (user.email && fuzzysearch(this.search.toLowerCase(), user.email.toLowerCase())) || (user.ticket_code && fuzzysearch(this.search.toLowerCase(), user.ticket_code.toLowerCase())))
 		}
 	},
 	async created() {
@@ -132,13 +147,37 @@ export default {
 			width: 32px
 			padding-right: 0
 		.id
-			width: 128px
+			width: 100px
 			ellipsis()
 		.tokenid
-			width: 128px
+			width: 100px
 			ellipsis()
 		.name
-			flex: auto
+			width: 160px
+			ellipsis()
+		.email
+			width: 180px
+			ellipsis()
+		.ticket-info
+			width: 180px
+			ellipsis()
+			display: flex
+			align-items: center
+			gap: 6px
+			min-width: 0
+			.order-link
+				flex: none
+				color: $clr-primary
+				text-decoration: none
+				&:hover
+					text-decoration: underline
+			.ticket-code
+				ellipsis()
+				color: $clr-secondary-text-light
+				font-size: 12px
+		.wikimedia
+			width: 140px
+			ellipsis()
 		.state
 			width: 78px
 		.actions
