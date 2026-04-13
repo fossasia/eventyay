@@ -7,7 +7,15 @@
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
 
         <details class="dropdown fix-height" id="language-dropdown" aria-haspopup="menu">
-            <summary class="header-nav" aria-label="{{ language_label }} - {% for option in language_options %}{% if option.code|lower == request.LANGUAGE_CODE|lower %}{{ option.label }}{% endif %}{% endfor %}">
+            <summary class="header-nav">
+                <span class="sr-only">
+                    {{ language_label }} - 
+                    {% for option in language_options %}
+                        {% if option.code|lower == request.LANGUAGE_CODE|lower %}
+                            {{ option.label }}
+                        {% endif %}
+                    {% endfor %}
+                </span>
                 <i class="fa fa-globe" aria-hidden="true"></i>
                 <span class="hidden-xs current-locale" aria-hidden="true">
                     {% for option in language_options %}
