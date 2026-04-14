@@ -1,5 +1,5 @@
 from contextlib import suppress
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlsplit, urlunsplit
 
 from django.conf import settings
 from django.urls import register_converter, resolve, reverse
@@ -37,6 +37,46 @@ def get_base_url(event=None, url=None):
 def build_absolute_uri(urlname, event=None, args=None, kwargs=None):
     url = get_base_url(event)
     return urljoin(url, reverse(urlname, args=args, kwargs=kwargs))
+
+
+def get_url_scheme(value: str | None) -> str:
+    if not isinstance(value, str):
+        return ''
+    return urlsplit(value).scheme.lower()
+
+
+def is_http_url(value: str | None) -> bool:
+    return get_url_scheme(value) in ('http', 'https')
+
+
+def is_file_url(value: str | None) -> bool:
+    return get_url_scheme(value) == 'file'
+
+
+def normalize_url_scheme(value: str) -> str:
+    parsed = urlsplit(value)
+    if not parsed.scheme:
+        return value
+    return urlunsplit(parsed._replace(scheme=parsed.scheme.lower()))
+
+
+def get_url_origin(value: str | None) -> str | None:
+    if not is_http_url(value):
+        return None
+
+    parsed = urlsplit(value)
+    if not parsed.netloc:
+        return None
+
+    return urlunsplit((parsed.scheme.lower(), parsed.netloc.lower(), '', '', ''))
+
+
+def get_file_url_path(value: str | None) -> str | None:
+    if not is_file_url(value):
+        return None
+
+    parsed = urlsplit(value)
+    return f'{parsed.netloc}{parsed.path}' or None
 
 
 class EventUrls(Urls):

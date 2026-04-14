@@ -2,6 +2,7 @@ import logging
 
 import i18nfield.forms
 from django import forms
+from django.core.files import File
 from django.core.validators import URLValidator
 from django.forms.models import ModelFormMetaclass
 from django.utils.crypto import get_random_string
@@ -12,8 +13,10 @@ from hierarkey.forms import HierarkeyForm
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
+from eventyay.common.urls import is_http_url
 
 from .validators import PlaceholderValidator  # NOQA
+
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +68,20 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
         self.locales = self.obj.settings.get('locales') if self.obj else kwargs.pop('locales', None)
         kwargs['attribute_name'] = 'settings'
         kwargs['locales'] = self.locales
-        kwargs['initial'] = self.obj.settings.freeze()
-        super().__init__(*args, **kwargs)
+        kwargs['initial'] = self.get_initial_settings()
+        original_freeze = None
+
+        def freeze_with_safe_initial():
+            return kwargs['initial'].copy()
+
+        if self.obj:
+            original_freeze = self.obj.settings.freeze
+            object.__setattr__(self.obj.settings, 'freeze', freeze_with_safe_initial)
+        try:
+            super().__init__(*args, **kwargs)
+        finally:
+            if self.obj and original_freeze:
+                object.__setattr__(self.obj.settings, 'freeze', original_freeze)
         for fname in self.auto_fields:
             kwargs = DEFAULTS[fname].get('form_kwargs', {})
             if callable(kwargs):
@@ -83,6 +98,35 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
         for k, f in self.fields.items():
             if isinstance(f, (RelativeDateTimeField, RelativeDateField)):
                 f.set_event(self.obj)
+
+    def get_initial_settings(self):
+        if not self.obj:
+            return {}
+
+        return self.build_initial_settings(self.obj.settings)
+
+    def build_initial_settings(self, settings_proxy):
+        initial = {}
+        if settings_proxy._parent:
+            initial.update(
+                self.build_initial_settings(getattr(settings_proxy._parent, settings_proxy._h.attribute_name))
+            )
+
+        for key, default in settings_proxy._h.defaults.items():
+            initial[key] = self.get_initial_setting_value(settings_proxy, key, default.type, default.value)
+
+        for key in settings_proxy._cache():
+            declared_type = settings_proxy._h.get_declared_type(key)
+            initial[key] = self.get_initial_setting_value(settings_proxy, key, declared_type)
+
+        return initial
+
+    def get_initial_setting_value(self, settings_proxy, key, declared_type, default=None):
+        if declared_type is File:
+            value = settings_proxy.get(key, as_type=str, default=default)
+            if isinstance(value, str) and is_http_url(value):
+                return value
+        return settings_proxy.get(key, as_type=declared_type, default=default)
 
     def save(self):
         for k, v in self.cleaned_data.items():
@@ -140,7 +184,7 @@ class SecretKeySettingsWidget(forms.TextInput):
             {
                 'autocomplete': 'new-password',  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
                 'type': 'password',
-                'class': (attrs.get('class', '') + ' secret-key-input').strip()
+                'class': (attrs.get('class', '') + ' secret-key-input').strip(),
             }
         )
         super().__init__(attrs)
@@ -192,12 +236,11 @@ class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
 
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
-
     def __init__(self, attrs=None, **kwargs):
         default_attrs = {
             'class': 'form-control auto-expanding-textarea',
             'data-auto-expand': 'true',
-            'style': 'min-height: 320px; max-height: 400px; overflow-y: auto; resize: vertical; transition: height 0.2s ease-in-out; box-sizing: border-box;'
+            'style': 'min-height: 320px; max-height: 400px; overflow-y: auto; resize: vertical; transition: height 0.2s ease-in-out; box-sizing: border-box;',
         }
         if attrs:
             if 'class' in attrs:
