@@ -21,6 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from eventyay.base.models import SystemLog, Event
+from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.models.auth import ShortToken
 from eventyay.base.models.room import AnonymousInvite
 
@@ -158,7 +159,7 @@ class AppView(View):
                         "externalAuthUrl": event.external_auth_url,
                         "locale": event.locale,
                         "date_locale": event.config.get("date_locale", "en-ie"),
-                        "theme": event.config.get("theme", {}),
+                        "theme": build_video_theme_for_event(event),
                         "video_player": event.config.get("video_player", {}),
                         "mux": event.config.get("mux", {}),
                     }
