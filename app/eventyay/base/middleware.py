@@ -293,7 +293,7 @@ class SecurityMiddleware(MiddlewareMixin):
                 '{dynamic}',
                 '{media}',
                 'https://checkout.stripe.com',
-                'https://cloudflareinsights.com',
+                'https://static.cloudflareinsights.com',
                 'https:',
                 'blob:',
             ],

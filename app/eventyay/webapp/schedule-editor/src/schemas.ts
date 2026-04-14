@@ -31,7 +31,7 @@ const SpeakerReferenceSchema = z.union([
 const toSpeakerReference = (val: z.infer<typeof SpeakerReferenceSchema>): string | undefined => {
   if (typeof val === 'string') return val;
   if (!val) return undefined;
-  return val.code ?? val.name ?? undefined;
+  return val.code ?? undefined;
 };
 
 export const SpeakerSchema = z.object({
