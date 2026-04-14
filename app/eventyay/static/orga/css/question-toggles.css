@@ -223,6 +223,10 @@ select.required-status-dropdown[data-current="after_deadline"] {
     vertical-align: middle;
 }
 
+.cfp-option-table td.text-right {
+    white-space: nowrap;
+}
+
 .cfp-option-table .btn-info {
     --highlight-color: #2a8fd7;
     border-color: #2a8fd7;
