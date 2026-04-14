@@ -243,10 +243,10 @@ class EventUpdateForm(I18nModelForm):
 
 class EventPublicationForm(JsonSubfieldMixin, forms.Form):
     meta_noindex = forms.BooleanField(
-        label=_('Ask search engines not to index the public schedule and talk pages'),
+        label=_('Ask search engines not to index this event’s public pages, including ticket shop pages'),
         help_text=_(
-            'When enabled, a noindex/nofollow robots meta tag is added to all public schedule and talk pages of this event, '
-            'asking search engines not to index them.'
+            'When enabled, a noindex/nofollow robots meta tag is added to this event’s public pages, including '
+            'schedule, talk, and ticket shop pages, asking search engines not to index them.'
         ),
         required=False,
     )
