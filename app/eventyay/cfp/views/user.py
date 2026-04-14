@@ -322,7 +322,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         extra_forms = [
             form
             for form in self.formset.extra_forms
-            if form.has_changed and not self.formset._should_delete_form(form) and form.is_valid()
+            if form.has_changed() and not self.formset._should_delete_form(form) and form.is_valid()
         ]
         for form in extra_forms:
             form.instance.submission = obj
@@ -365,10 +365,12 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
     def form_valid(self, form):
         if self.can_edit:
-            form.save()
+            # Validate formset before saving form to ensure atomic transactions
             result = self.save_formset(form.instance)
             if not result:
                 return self.get(self.request, *self.args, **self.kwargs)
+            # Only save form if formset validation passed
+            form.save()
             if form.has_changed():
                 if form.instance.pk and 'duration' in form.changed_data:
                     form.instance.update_duration()
