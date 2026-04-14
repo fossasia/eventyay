@@ -3,7 +3,7 @@ from rest_framework import exceptions
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.mail.context import get_invalid_placeholders
-from eventyay.base.models.mail import MailTemplate
+from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -30,6 +30,11 @@ class MailTemplateSerializer(PretalxSerializer):
         # submission-level placeholders (like {submission_title}) that aren't
         # available at send time, causing KeyError crashes.
         role = self.initial_data.get("role", getattr(self.instance, "role", None))
+        # Only use the role for placeholder scoping if it's a known value;
+        # invalid roles are rejected by DRF's own field validation separately.
+        valid_roles = {choice.value for choice in MailTemplateRoles}
+        if role not in valid_roles:
+            role = None
         if not self.instance:
             kwargs = {"event": self.event}
             if role:

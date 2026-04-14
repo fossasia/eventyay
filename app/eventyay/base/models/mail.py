@@ -1,3 +1,4 @@
+import functools
 import logging
 from collections import defaultdict
 from copy import deepcopy
@@ -23,7 +24,13 @@ from eventyay.helpers.i18n import is_rtl
 from .mixins import PretalxModel
 
 logger = logging.getLogger(__name__)
-_warned_template_placeholders: set[tuple[int | None, frozenset[str]]] = set()
+
+
+@functools.lru_cache(maxsize=128)
+def _should_warn_missing_placeholders(template_pk, missing):
+    """Returns True once per unique (template_pk, missing) combination,
+    bounded to 128 entries so long-running workers don't leak memory."""
+    return True
 
 
 def get_prefixed_subject(event, subject):
@@ -192,16 +199,13 @@ class MailTemplate(PretalxModel):
             context = default_context
             used = get_used_placeholders(self.subject) | get_used_placeholders(self.text)
             missing = used - set(context.keys())
-            if missing:
-                warn_key = (self.pk, frozenset(missing))
-                if warn_key not in _warned_template_placeholders:
-                    _warned_template_placeholders.add(warn_key)
-                    logger.warning(
-                        'Mail template "%s" (pk=%s, role=%s) for event "%s" uses '
-                        'placeholders not available in this context: %s',
-                        self.subject, self.pk, self.role, event.slug,
-                        ', '.join(sorted(missing)),
-                    )
+            if missing and _should_warn_missing_placeholders(self.pk, frozenset(missing)):
+                logger.warning(
+                    'Mail template "%s" (pk=%s, role=%s) for event "%s" uses '
+                    'placeholders not available in this context: %s',
+                    self.subject, self.pk, self.role, event.slug,
+                    ', '.join(sorted(missing)),
+                )
             try:
                 subject = str(self.subject).format_map(defaultdict(str, context))
                 text = str(self.text).format_map(defaultdict(str, context))
