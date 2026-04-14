@@ -619,7 +619,8 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
             if context['cart_redirect'].startswith('https:'):
                 context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
         else:
-            context['cart_redirect'] = self.request.path
+            # Preserve full path including voucher query params (e.g. ?voucher=CODE)
+            context['cart_redirect'] = self.request.get_full_path()
         return context
 
     def dispatch(self, request, *args, **kwargs):
