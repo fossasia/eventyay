@@ -26,10 +26,19 @@ from .mixins import PretalxModel
 logger = logging.getLogger(__name__)
 
 
-@functools.lru_cache(maxsize=128)
-def _should_warn_missing_placeholders(template_pk, missing):
+_missing_placeholder_warning_seen = {}
+
+
+def _should_warn_missing_placeholders(template_pk, missing) -> bool:
     """Returns True once per unique (template_pk, missing) combination,
     bounded to 128 entries so long-running workers don't leak memory."""
+    key = (template_pk, missing)
+    if key in _missing_placeholder_warning_seen:
+        return False
+
+    _missing_placeholder_warning_seen[key] = None
+    if len(_missing_placeholder_warning_seen) > 128:
+        _missing_placeholder_warning_seen.pop(next(iter(_missing_placeholder_warning_seen)))
     return True
 
 
