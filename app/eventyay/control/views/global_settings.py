@@ -169,12 +169,22 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
     """
 
     def post(self, request, *args, **kwargs):
-        recipient = request.POST.get('test_email', '').strip()
-        try:
-            validate_email(recipient)
-        except ValidationError:
-            messages.error(request, _('Please enter a valid recipient email address.'))
+        recipients_raw = request.POST.get('test_email', '').strip()
+        recipients = [r.strip() for r in recipients_raw.split(',') if r.strip()]
+
+        if not recipients:
+            messages.error(request, _('Please enter at least one valid recipient email address.'))
             return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        for recipient in recipients:
+            try:
+                validate_email(recipient)
+            except ValidationError:
+                messages.error(
+                    request,
+                    _('Please enter a valid recipient email address ("%(email)s" is invalid).') % {'email': recipient}
+                )
+                return redirect(reverse('eventyay_admin:admin.global.settings'))
 
         # ── 1. Resolve the sender address ────────────────────────────────────
         gs = GlobalSettingsObject()
@@ -211,9 +221,10 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 subject=_('Eventyay system - test email'),
                 body=_('This is a test email from your Eventyay system email configuration.'),
                 from_email=mail_from,
-                to=[recipient],
+                to=recipients,
                 connection=backend,
             )
+            email.content_subtype = 'html'
             email.send(fail_silently=False)
         except UnicodeEncodeError:
             # The stored SMTP password, username, or recipient address contains a non-ASCII character
@@ -239,19 +250,12 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 request,
                 _('Test email failed to connect or send: %(err)s') % {'err': e},
             )
-        except Exception as e:
-            logger.exception(
-                'Admin SMTP test failed unexpectedly (from=%s)', mail_from
-            )
-            messages.warning(
-                request,
-                _('Test email failed unexpectedly: %(err)s') % {'err': e},
-            )
         else:
-            logger.info('Admin test email sent to %s', recipient)
+            recipients_str = ', '.join(recipients)
+            logger.info('Admin test email sent to %s', recipients_str)
             messages.success(
                 request,
-                _('Test email sent to %(email)s — check inbox.') % {'email': recipient},
+                _('Test email sent to %(email)s — check inbox.') % {'email': recipients_str},
             )
 
         return redirect(reverse('eventyay_admin:admin.global.settings'))
