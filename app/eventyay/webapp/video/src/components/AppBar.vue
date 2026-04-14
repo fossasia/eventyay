@@ -157,11 +157,37 @@ const showAdminModeEnd = computed(() => isAdminMode.value)
 
 const isAnonymous = computed(() => Object.keys(user.value.profile || {}).length === 0)
 
+function videoAppRootHref() {
+	const { protocol, host } = window.location
+	const basePath = config?.basePath ?? ''
+	const origin = typeof window.location.origin === 'string' ? window.location.origin : `${protocol}//${host}`
+	if (!basePath) {
+		return `${origin}/`
+	}
+	const normalized = basePath.endsWith('/') ? basePath : `${basePath}/`
+	return `${origin}${normalized}`
+}
+
+function isEventConfigAdmin() {
+	return store.getters.hasPermission('world:update')
+}
+
+function buildMenuExternalHref(item) {
+	if (item.key === 'dashboard:main' && !isEventConfigAdmin()) {
+		return videoAppRootHref()
+	}
+	const base = buildBaseSansVideo()
+	return base + item.externalPath
+}
+
 const logoHref = computed(() => {
 	try {
-		return buildBaseSansVideo() + 'common/'
+		if (isEventConfigAdmin()) {
+			return buildBaseSansVideo() + 'common/'
+		}
+		return videoAppRootHref()
 	} catch (e) {
-		return '/common/'
+		return isEventConfigAdmin() ? '/common/' : videoAppRootHref()
 	}
 })
 
@@ -303,8 +329,7 @@ function onMenuItem(item) {
 	}
 	if (item.externalPath) {
 		try {
-			const base = buildBaseSansVideo()
-			window.location.assign(base + item.externalPath)
+			window.location.assign(buildMenuExternalHref(item))
 		} catch (e) {
 			window.location.assign('/' + item.externalPath)
 		}
@@ -326,8 +351,7 @@ function getItemHref(item) {
 	if (item.children) return '#dashboard'
 	if (item.externalPath) {
 		try {
-			const base = buildBaseSansVideo()
-			return base + item.externalPath
+			return buildMenuExternalHref(item)
 		} catch (e) {
 			return '/' + item.externalPath
 		}
