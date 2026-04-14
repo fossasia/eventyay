@@ -30,6 +30,7 @@ from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
 from eventyay.base.settings import (
+    GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
     PERSON_NAME_TITLE_GROUPS,
     validate_event_settings,
@@ -57,6 +58,29 @@ REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
     'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
     'The "Continue as a Guest" option will not be available for attendees in this event.'
 )
+ORGANIZER_EMAIL_MODEL_DEFAULT = Event._meta.get_field('email').default
+ORGANIZER_EMAIL_PLACEHOLDER = _('name@example.org')
+
+
+def apply_organizer_email_placeholder(field):
+    field.widget.attrs['placeholder'] = ORGANIZER_EMAIL_PLACEHOLDER
+
+
+def get_default_organizer_email() -> str:
+    default_email = GlobalSettingsObject().settings.mail_from or settings.MAIL_FROM
+    return str(default_email or ORGANIZER_EMAIL_MODEL_DEFAULT).strip()
+
+
+def normalize_organizer_email_initial(email) -> str:
+    cleaned_email = str(email or '').strip()
+    if cleaned_email in {get_default_organizer_email(), ORGANIZER_EMAIL_MODEL_DEFAULT}:
+        return ''
+    return cleaned_email
+
+
+def clean_organizer_email(email):
+    cleaned_email = str(email or '').strip()
+    return cleaned_email or get_default_organizer_email()
 
 
 class EventWizardFoundationForm(forms.Form):
@@ -223,9 +247,14 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
-        self.fields['email'].required = True
+        self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
         self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        email_initial = self.initial.get('email', self.fields['email'].initial)
+        normalized_email = normalize_organizer_email_initial(email_initial)
+        self.initial['email'] = normalized_email
+        self.fields['email'].initial = normalized_email
+        apply_organizer_email_placeholder(self.fields['email'])
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -289,11 +318,7 @@ class EventWizardBasicsForm(I18nModelForm):
         return slug.lower()
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        default_email = Event._meta.get_field('email').default
-        if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
-        return email
+        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
     @staticmethod
     def has_control_rights(user, organizer):
@@ -387,20 +412,17 @@ class EventWizardDisplayForm(forms.Form):
     email = forms.EmailField(
         label=_('Organizer email address'),
         help_text=_("We'll show this publicly to allow attendees to contact you."),
-        required=True,
+        required=False,
     )
 
     def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
+        apply_organizer_email_placeholder(self.fields['email'])
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        default_email = Event._meta.get_field('email').default
-        if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
-        return email
+        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
 
 class EventWizardInitialForm(forms.Form):
@@ -727,6 +749,58 @@ class EventSettingsForm(SettingsForm):
                 self.initial[virtual_key] = 'do_not_ask'
 
 
+class GeneralEventSettingsForm(EventSettingsForm):
+    """
+    Settings form used on the general event settings page.
+
+    Keep this list limited to fields rendered there so saving that page
+    cannot overwrite dedicated order-form settings.
+    """
+
+    auto_fields = [
+        'checkout_email_helptext',
+        'presale_has_ended_text',
+        'voucher_explanation_text',
+        'checkout_success_text',
+        'show_dates_on_frontpage',
+        'show_date_to',
+        'show_times',
+        'show_products_outside_presale_period',
+        'display_net_prices',
+        'presale_start_show_date',
+        'show_quota_left',
+        'waiting_list_enabled',
+        'waiting_list_hours',
+        'waiting_list_auto',
+        'waiting_list_names_asked',
+        'waiting_list_names_required',
+        'waiting_list_phones_asked',
+        'waiting_list_phones_required',
+        'waiting_list_phones_explanation_text',
+        'max_products_per_order',
+        'reservation_time',
+        'show_variations_expanded',
+        'hide_sold_out',
+        'meta_noindex',
+        'redirect_to_checkout_directly',
+        'frontpage_subevent_ordering',
+        'event_list_type',
+        'event_list_available_only',
+        'event_info_text',
+        'checkout_phone_helptext',
+        'banner_text',
+        'banner_text_bottom',
+        'allow_modifications',
+        'last_order_modification_date',
+        'allow_modifications_after_checkin',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('name_scheme', None)
+        self.fields.pop('name_scheme_titles', None)
+
+
 class OrderFormSettingsForm(EventSettingsForm):
     """
     Settings form used on the dedicated order-forms page.
@@ -772,7 +846,6 @@ class CancelSettingsForm(SettingsForm):
         'cancel_allow_user_paid_adjust_fees_step',
         'cancel_allow_user_paid_refund_as_giftcard',
         'cancel_allow_user_paid_require_approval',
-        'change_allow_user_variation',
         'change_allow_user_price',
         'change_allow_user_until',
     ]
