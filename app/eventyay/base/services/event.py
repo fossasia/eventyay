@@ -20,6 +20,7 @@ from eventyay.core.permissions import Permission
 # Add missing imports for models referenced in this module
 from eventyay.base.models.chat import Channel
 from eventyay.base.models.audit import AuditLog
+from eventyay.base.services.video_theme import build_video_theme_for_event
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -414,7 +415,7 @@ def _config_serializer(event, *args, **kwargs):
     cfg = event.config or {}
     return EventConfigSerializer(
         instance={
-            "theme": cfg.get("theme", {}),
+            "theme": build_video_theme_for_event(event),
             "title": getattr(event, "title", getattr(event, "name", "")),
             "locale": event.locale,
             "date_locale": cfg.get("date_locale", "en-ie"),
