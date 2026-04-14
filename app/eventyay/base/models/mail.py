@@ -210,7 +210,7 @@ class MailTemplate(PretalxModel):
                 subject = str(self.subject).format_map(defaultdict(str, context))
                 text = str(self.text).format_map(defaultdict(str, context))
             except (KeyError, IndexError, ValueError) as e:
-                raise SendMailException(f'Experienced error when rendering email text: {str(e)}')
+                raise SendMailException(f'Experienced error when rendering email text: {e}') from e
 
             if len(subject) > 200:
                 subject = subject[:198] + '…'
