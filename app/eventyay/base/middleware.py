@@ -269,6 +269,7 @@ class SecurityMiddleware(MiddlewareMixin):
             'default-src': ['{static}'],
             'script-src': [
                 '{static}',
+                'https://static.cloudflareinsights.com',
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
                 'http://localhost:8080',
@@ -288,7 +289,14 @@ class SecurityMiddleware(MiddlewareMixin):
                 '{media}',
                 "'unsafe-inline'",  # allow inline styles
             ],
-            'connect-src': ['{dynamic}', '{media}', 'https://checkout.stripe.com', 'https:', 'blob:'],
+            'connect-src': [
+                '{dynamic}',
+                '{media}',
+                'https://checkout.stripe.com',
+                'https://cloudflareinsights.com',
+                'https:',
+                'blob:',
+            ],
             'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com']
             + external_img_src
             + img_src,
@@ -345,7 +353,7 @@ class SecurityMiddleware(MiddlewareMixin):
             if domain:
                 siteurlsplit = urlsplit(settings.SITE_URL)
                 if siteurlsplit.port and siteurlsplit.port not in (80, 443):
-                    domain = '%s:%d' % (domain, siteurlsplit.port)
+                    domain = f'{domain}:{siteurlsplit.port}'
                 dynamicdomain += ' ' + domain
 
         # Add DEBUG mode settings before rendering CSP
