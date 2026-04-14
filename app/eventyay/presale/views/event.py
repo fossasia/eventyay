@@ -581,14 +581,16 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             and context['cart']['positions']
             and (self.request.event.has_subevents or self.request.event.presale_is_running)
         )
-        # Always redirect directly to checkout after adding products
-        context['cart_redirect'] = eventreverse(
-            self.request.event,
-            'presale:event.checkout.start',
-            kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
-        )
-        if context['cart_redirect'].startswith('https:'):
-            context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
+        if self.request.event.settings.redirect_to_checkout_directly:
+            context['cart_redirect'] = eventreverse(
+                self.request.event,
+                'presale:event.checkout.start',
+                kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
+            )
+            if context['cart_redirect'].startswith('https:'):
+                context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
+        else:
+            context['cart_redirect'] = self.request.path
 
         # Get event_name in language code
         event_name_data = self.request.event.name.data
@@ -915,13 +917,16 @@ class SeatingPlanView(EventViewMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['subevent'] = self.subevent
-        context['cart_redirect'] = eventreverse(
-            self.request.event,
-            'presale:event.checkout.start',
-            kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
-        )
-        if context['cart_redirect'].startswith('https:'):
-            context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
+        if self.request.event.settings.redirect_to_checkout_directly:
+            context['cart_redirect'] = eventreverse(
+                self.request.event,
+                'presale:event.checkout.start',
+                kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
+            )
+            if context['cart_redirect'].startswith('https:'):
+                context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
+        else:
+            context['cart_redirect'] = self.request.path
         return context
 
 
