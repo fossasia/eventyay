@@ -478,13 +478,18 @@ class ProductCreateForm(I18nModelForm):
                 if not self.cleaned_data.get('quota_add_existing'):
                     raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
 
+        free_price = cleaned_data.get('free_price')
+        if not free_price:
+            cleaned_data['free_price_min'] = None
+            cleaned_data['free_price_max'] = None
+
         free_price_min = cleaned_data.get('free_price_min')
         free_price_max = cleaned_data.get('free_price_max')
         default_price = cleaned_data.get('default_price')
         if free_price_min is not None and free_price_max is not None:
             if free_price_min > free_price_max:
                 raise forms.ValidationError({'free_price_max': [_('Maximum price cannot be lower than minimum price.')]})
-        if cleaned_data.get('free_price') and free_price_max is not None:
+        if free_price and free_price_max is not None:
             effective_min = free_price_min if free_price_min is not None else default_price
             if effective_min is not None and free_price_max < effective_min:
                 raise forms.ValidationError(
@@ -614,13 +619,18 @@ class ProductUpdateForm(I18nModelForm):
                     _('Gift card products should not be admission products at the same time.'),
                 )
         
+        free_price = d.get('free_price')
+        if not free_price:
+            d['free_price_min'] = None
+            d['free_price_max'] = None
+
         free_price_min = d.get('free_price_min')
         free_price_max = d.get('free_price_max')
         default_price = d.get('default_price')
         if free_price_min is not None and free_price_max is not None:
             if free_price_min > free_price_max:
                 self.add_error('free_price_max', _('Maximum price cannot be lower than minimum price.'))
-        if d.get('free_price') and free_price_max is not None:
+        if free_price and free_price_max is not None:
             effective_min = free_price_min if free_price_min is not None else default_price
             if effective_min is not None and effective_min > free_price_max:
                 self.add_error(

@@ -110,7 +110,7 @@
             {% bootstrap_field form.default_price layout="control" %}
             {% bootstrap_field form.free_price layout="control" %}
             
-            <div id="free-price-bounds" style="display: none;">
+            <div id="free-price-bounds" data-display-dependency="#id_free_price">
                 {% bootstrap_field form.free_price_min layout="control" %}
                 {% bootstrap_field form.free_price_max layout="control" %}
             </div>
@@ -123,18 +123,4 @@
             </button>
         </div>
     </form>
-    
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function() {
-            var freePriceCb = document.getElementById('id_free_price');
-            var freePriceBounds = document.getElementById('free-price-bounds');
-            if(freePriceCb && freePriceBounds) {
-                function toggleBounds() {
-                    freePriceBounds.style.display = freePriceCb.checked ? 'block' : 'none';
-                }
-                freePriceCb.addEventListener('change', toggleBounds);
-                toggleBounds();
-            }
-        });
-    </script>
 {% endblock %}
