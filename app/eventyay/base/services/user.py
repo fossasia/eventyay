@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
+from eventyay.eventyay_common.utils import encode_email
 from eventyay.features.live.channels import GROUP_USER
 from eventyay.base.models import AuditLog
 from eventyay.base.models.auth import User
@@ -48,6 +49,23 @@ def _is_email_hash_uid_token(token_id):
     return all(c in "0123456789ABCDEFabcdef" for c in token_id)
 
 
+def admin_public_fields_from_user_row(user_row, ticket_by_token):
+    """Admin-only list fields derived from a User values() row and ticket lookup."""
+    tid = user_row["token_id"]
+    ticket = (ticket_by_token.get(tid) or {}) if tid else {}
+    return {
+        "moderation_state": user_row["moderation_state"],
+        "token_id": tid,
+        "email": (user_row.get("email") or "").strip()
+        or ticket.get("contact_email", ""),
+        "wikimedia_username": display_wikimedia_username_from_profile(
+            user_row["profile"], user_row.get("wikimedia_username")
+        ),
+        "order_code": ticket.get("order_code"),
+        "ticket_code": ticket.get("ticket_code"),
+    }
+
+
 def build_admin_ticket_rows_by_token(event_id, token_ids):
     """
     Map a video user's JWT ``uid`` (stored as ``User.token_id``) to Pretix order data.
@@ -55,8 +73,6 @@ def build_admin_ticket_rows_by_token(event_id, token_ids):
     Tokens are either ``OrderPosition.pseudonymization_id`` or ``encode_email(order.email)``
     (seven hex characters) as used by presale video join links.
     """
-    from eventyay.eventyay_common.utils import encode_email
-
     uniq = list(dict.fromkeys(t for t in token_ids if t))
     if not uniq:
         return {}
@@ -253,23 +269,7 @@ def get_public_users(
                 else {}
             ),
             **(
-                {
-                    "moderation_state": u["moderation_state"],
-                    "token_id": u["token_id"],
-                    "email": (u["email"] or "").strip()
-                    or (ticket_by_token.get(u["token_id"]) or {}).get(
-                        "contact_email", ""
-                    ),
-                    "wikimedia_username": display_wikimedia_username_from_profile(
-                        u["profile"], u["wikimedia_username"]
-                    ),
-                    "order_code": (ticket_by_token.get(u["token_id"]) or {}).get(
-                        "order_code"
-                    ),
-                    "ticket_code": (ticket_by_token.get(u["token_id"]) or {}).get(
-                        "ticket_code"
-                    ),
-                }
+                admin_public_fields_from_user_row(u, ticket_by_token)
                 if include_admin_info
                 else {}
             ),
@@ -779,23 +779,7 @@ def list_users(
                             else []
                         ),
                         **(
-                            {
-                                "moderation_state": u["moderation_state"],
-                                "token_id": u["token_id"],
-                                "email": (u["email"] or "").strip()
-                                or (
-                                    ticket_by_token.get(u["token_id"]) or {}
-                                ).get("contact_email", ""),
-                                "wikimedia_username": display_wikimedia_username_from_profile(
-                                    u["profile"], u["wikimedia_username"]
-                                ),
-                                "order_code": (
-                                    ticket_by_token.get(u["token_id"]) or {}
-                                ).get("order_code"),
-                                "ticket_code": (
-                                    ticket_by_token.get(u["token_id"]) or {}
-                                ).get("ticket_code"),
-                            }
+                            admin_public_fields_from_user_row(u, ticket_by_token)
                             if include_admin_info
                             else {}
                         ),

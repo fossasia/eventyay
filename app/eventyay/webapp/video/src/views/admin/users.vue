@@ -18,7 +18,12 @@
 		RecycleScroller.tbody.bunt-scrollbar(v-if="filteredUsers", :items="filteredUsers", :item-size="56", v-slot="{item: user}", v-scrollbar.y="")
 			.user.table-row(
 				:class="{error: user.error, updating: user.updating}",
-				@click="$router.push({name: 'admin:user', params: {userId: user.id}})"
+				tabindex="0",
+				role="link",
+				:aria-label="userRowAriaLabel(user)",
+				@click="goToUser(user)",
+				@keydown.enter.prevent="goToUser(user)",
+				@keydown.space.prevent="goToUser(user)"
 			)
 				avatar.avatar(:user="user", :size="24")
 				.id(:title="user.id") {{ user.id }}
@@ -36,8 +41,8 @@
 							:title="user.order_code",
 							@click.stop
 						) {{ user.order_code }}
-						span.ticket-code(v-if="user.ticket_code") {{ user.ticket_code }}
-					span.ticket-code-only(v-else-if="user.ticket_code") {{ user.ticket_code }}
+						span.ticket-code(v-if="user.ticket_code", :title="user.ticket_code") {{ user.ticket_code }}
+					span.ticket-code-only(v-else-if="user.ticket_code", :title="user.ticket_code") {{ user.ticket_code }}
 					span.ticket-empty(v-else) –
 				.wikimedia(:title="user.wikimedia_username || ''") {{ user.wikimedia_username || '–' }}
 				.state {{ user.moderation_state || '–' }}
@@ -93,8 +98,17 @@ export default {
 		...mapGetters(['hasPermission', 'eventRouting']),
 		filteredUsers() {
 			if (!this.users) return
-			if (!this.search) return this.users
-			return this.users.filter(user => user.id.startsWith(this.search.trim()) || (user.token_id && user.token_id.startsWith(this.search.trim())) || fuzzysearch(this.search.toLowerCase(), user.profile?.display_name?.toLowerCase()) || (user.email && fuzzysearch(this.search.toLowerCase(), user.email.toLowerCase())) || (user.ticket_code && fuzzysearch(this.search.toLowerCase(), user.ticket_code.toLowerCase())))
+			const q = this.search.trim()
+			if (!q) return this.users
+			const ql = q.toLowerCase()
+			return this.users.filter(
+				user =>
+					user.id.startsWith(q) ||
+					(user.token_id && user.token_id.startsWith(q)) ||
+					fuzzysearch(ql, user.profile?.display_name?.toLowerCase()) ||
+					(user.email && fuzzysearch(ql, user.email.toLowerCase())) ||
+					(user.ticket_code && fuzzysearch(ql, user.ticket_code.toLowerCase()))
+			)
 		}
 	},
 	async created() {
@@ -107,6 +121,13 @@ export default {
 		})
 	},
 	methods: {
+		goToUser(user) {
+			this.$router.push({ name: 'admin:user', params: { userId: user.id } })
+		},
+		userRowAriaLabel(user) {
+			const name = user.profile?.display_name
+			return name ? `User ${name}` : `User ${user.id}`
+		},
 		async doAction(user, action, postState) {
 			user.updating = action
 			user.error = null
@@ -297,6 +318,7 @@ export default {
 				button-style(style: clear, color: $clr-danger, text-color: $clr-danger)
 			.btn-silence
 				button-style(style: clear, color: $clr-deep-orange, text-color: $clr-deep-orange)
-		.user.table-row:hover .row-actions
+		.user.table-row:hover .row-actions,
+		.user.table-row:focus-within .row-actions
 			display: flex
 </style>
