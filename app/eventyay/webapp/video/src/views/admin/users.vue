@@ -7,36 +7,41 @@
 		.header
 			.avatar
 			.id ID
-			.tokenid Login UID
+			.tokenid External ID
 			.name Name
 			.email Email
-			.ticket-info Order / ticket code
+			.ticket-info
+				span.ticket-info-head-order Order/
+				span.ticket-info-head-ticket Ticket code
 			.wikimedia Wikimedia
 			.state State
-			.actions
-		RecycleScroller.tbody.bunt-scrollbar(v-if="filteredUsers", :items="filteredUsers", :item-size="48", v-slot="{item: user}", v-scrollbar.y="")
-			router-link(:to="{name: 'admin:user', params: {userId: user.id}}", :class="{error: user.error, updating: user.updating}").user.table-row
-				avatar.avatar(:user="user", :size="32")
+		RecycleScroller.tbody.bunt-scrollbar(v-if="filteredUsers", :items="filteredUsers", :item-size="56", v-slot="{item: user}", v-scrollbar.y="")
+			.user.table-row(
+				:class="{error: user.error, updating: user.updating}",
+				@click="$router.push({name: 'admin:user', params: {userId: user.id}})"
+			)
+				avatar.avatar(:user="user", :size="24")
 				.id(:title="user.id") {{ user.id }}
 				.tokenid(:title="user.token_id || ''") {{ user.token_id || '–' }}
 				.name
 					| {{ user.profile.display_name }}
 					.ui-badge(v-for="badge in user.badges") {{ badge }}
 				.email(:title="user.email || ''") {{ user.email || '–' }}
-				.ticket-info(@click.prevent.stop="")
+				.ticket-info(@click.stop="")
 					template(v-if="user.order_code && eventRouting.organizer && eventRouting.event")
 						a.order-link(
 							:href="`/control/${eventRouting.organizer}/${eventRouting.event}/orders/${user.order_code}/`",
 							target="_blank",
-							:title="user.order_code"
+							rel="noopener noreferrer",
+							:title="user.order_code",
+							@click.stop
 						) {{ user.order_code }}
-						span.ticket-code(v-if="user.ticket_code", :title="user.ticket_code") {{ user.ticket_code }}
-					span(v-else-if="user.ticket_code", :title="user.ticket_code") {{ user.ticket_code }}
-					span(v-else) –
+						span.ticket-code(v-if="user.ticket_code") {{ user.ticket_code }}
+					span.ticket-code-only(v-else-if="user.ticket_code") {{ user.ticket_code }}
+					span.ticket-empty(v-else) –
 				.wikimedia(:title="user.wikimedia_username || ''") {{ user.wikimedia_username || '–' }}
-				.state {{ user.moderation_state }}
-				.actions(v-if="user.id !== ownUser.id", @click.prevent.stop="")
-					.placeholder.mdi.mdi-dots-horizontal
+				.state {{ user.moderation_state || '–' }}
+				.row-actions(v-if="user.id !== ownUser.id", @click.stop="")
 					bunt-button.btn-open-dm(v-if="hasPermission('world:chat.direct')", @click="$store.dispatch('chat/openDirectMessage', {users: [user]})") message
 					bunt-button.btn-reactivate(
 						v-if="hasPermission('world:users.manage') && user.moderation_state",
@@ -130,66 +135,160 @@ export default {
 	.header
 		background-color: $clr-grey-50
 	h2
-		margin: 16px
+		margin: 8px 12px 4px
+		font-size: 20px
 	.search
 		input-style(size: compact)
 		padding: 0
-		margin: 8px
+		margin: 4px 8px 6px
 		flex: none
 	.users-list
 		flex-table()
-		.user
+		font-size: 12px
+		// flex-table uses overflow: hidden — allow horizontal scroll when needed
+		overflow-x: auto
+		overflow-y: hidden
+		> .header, .tbody .user.table-row
+			width: 100%
+			min-width: 0
+			max-width: 100%
+			box-sizing: border-box
+		> .header > *, .tbody .user.table-row > *
+			padding: 3px 6px
+			box-sizing: border-box
+		.avatar, .id, .tokenid, .wikimedia, .state
+			flex-shrink: 0
+		.id, .tokenid, .wikimedia, .state, .name, .email
+			overflow: hidden
+			text-overflow: ellipsis
+			white-space: nowrap
+		> .header > *
+			line-height: 1.2
+			white-space: normal
+			overflow: visible
+			text-overflow: clip
+		.header, .user.table-row
+			height: auto
+			min-height: 56px
+			line-height: 1.2
+			align-items: stretch
+			> .ticket-info
+				line-height: 1.15
+				padding-top: 2px
+				padding-bottom: 2px
+				justify-content: center
+				white-space: normal
+				overflow: visible
+				text-overflow: clip
+		.tbody .table-row
+			overflow: visible
+			position: relative
+		.user.table-row
 			display: flex
-			align-items: center
+			align-items: stretch
 			color: $clr-primary-text-light
+			cursor: pointer
+			&:focus-visible
+				outline: 2px solid $clr-primary
+				outline-offset: 2px
+			> *:not(.ticket-info)
+				align-self: center
+		.header
+			> *:not(.ticket-info)
+				align-self: center
 		.avatar
 			display: flex
-			width: 32px
-			padding-right: 0
-		.id
-			width: 100px
-			ellipsis()
-		.tokenid
-			width: 100px
-			ellipsis()
-		.name
-			width: 160px
-			ellipsis()
-		.email
-			width: 180px
-			ellipsis()
-		.ticket-info
-			width: 180px
-			ellipsis()
-			display: flex
+			flex: 0 0 40px
+			width: 40px
+			min-width: 40px
+			padding-left: 4px
+			padding-right: 4px
 			align-items: center
-			gap: 6px
+			justify-content: flex-start
+			box-sizing: border-box
+		.id
+			flex: 0 0 56px
+			width: 56px
+			min-width: 56px
+			max-width: 56px
+		.tokenid
+			flex: 0 0 108px
+			width: 108px
+			min-width: 108px
+			max-width: 108px
+		.name
+			flex: 0.6 1 0
 			min-width: 0
+			width: 0
+			max-width: 150px
+		.email
+			flex: 0.75 1 0
+			min-width: 0
+			width: 0
+			max-width: 200px
+		.ticket-info
+			flex: 0.75 1 0
+			min-width: 0
+			width: 0
+			max-width: 240px
+			flex-shrink: 1
+			overflow: hidden
+			display: flex
+			flex-direction: column
+			align-items: flex-start
+			justify-content: center
+			gap: 1px
+			box-sizing: border-box
+			.ticket-info-head-order, .ticket-info-head-ticket
+				display: block
+				font-weight: 600
+				color: $clr-primary-text
+				font-size: 9px
+				line-height: 1.1
+				text-transform: uppercase
+				letter-spacing: 0.02em
 			.order-link
-				flex: none
+				flex: 0 1 auto
+				min-width: 0
+				max-width: 100%
 				color: $clr-primary
 				text-decoration: none
+				font-size: 11px
+				overflow: hidden
+				text-overflow: ellipsis
+				white-space: nowrap
 				&:hover
 					text-decoration: underline
-			.ticket-code
-				ellipsis()
+			.ticket-code, .ticket-code-only
 				color: $clr-secondary-text-light
-				font-size: 12px
+				font-size: 10px
+				font-family: ui-monospace, monospace
+				max-width: 100%
+				overflow: hidden
+				text-overflow: ellipsis
+				white-space: nowrap
+			.ticket-empty
+				color: $clr-secondary-text-light
 		.wikimedia
-			width: 140px
-			ellipsis()
+			flex: 0 0 264px
+			width: 264px
+			min-width: 264px
+			max-width: 264px
 		.state
-			width: 78px
-		.actions
-			flex: none
-			width: 260px
-			padding: 0 24px 0 0
-			display: flex
+			flex: 0 0 88px
+			width: 88px
+			min-width: 88px
+			max-width: 88px
+		.row-actions
+			display: none
+			position: absolute
+			right: 0
+			top: 50%
+			transform: translateY(-50%)
 			align-items: center
-			justify-content: flex-end
-			.placeholder
-				flex: none
-				color: $clr-secondary-text-light
+			gap: 2px
+			padding: 0 8px
+			z-index: 1
 			.btn-open-dm
 				button-style(style: clear)
 			.btn-reactivate
@@ -198,10 +297,6 @@ export default {
 				button-style(style: clear, color: $clr-danger, text-color: $clr-danger)
 			.btn-silence
 				button-style(style: clear, color: $clr-deep-orange, text-color: $clr-deep-orange)
-		.user:not(:hover):not(.error):not(.updating)
-			.actions .bunt-button
-				display: none
-		.user:hover, .user.error, .user.updating
-			.actions .placeholder
-				display: none
+		.user.table-row:hover .row-actions
+			display: flex
 </style>
