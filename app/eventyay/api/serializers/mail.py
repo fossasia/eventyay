@@ -31,10 +31,13 @@ class MailTemplateSerializer(PretalxSerializer):
         # available at send time, causing KeyError crashes.
         role = self.initial_data.get("role", getattr(self.instance, "role", None))
         if not self.instance:
-            valid_placeholders = MailTemplate(event=self.event, role=role or "").valid_placeholders
+            kwargs = {"event": self.event}
+            if role:
+                kwargs["role"] = role
+            valid_placeholders = MailTemplate(**kwargs).valid_placeholders
         else:
             template = self.instance
-            if role is not None and role != template.role:
+            if role and role != template.role:
                 template = MailTemplate(event=self.event, role=role)
             valid_placeholders = template.valid_placeholders
         try:
