@@ -21,6 +21,7 @@ from rest_framework import serializers
 from eventyay.api.serializers.fields import (
     ListMultipleChoiceField,
     UploadedFileField,
+    UploadedFileOrURLField,
 )
 from eventyay.api.serializers.i18n import I18nField, I18nURLField
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
@@ -897,7 +898,7 @@ DEFAULT_SETTINGS = {
             required=True,
             label=_('Active languages'),
             help_text=_(
-                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                'Users will be able to use eventyay in these languages, and you will be able to provide all texts in '
                 "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
                 "event's default language instead."
             ),
@@ -1292,7 +1293,7 @@ DEFAULT_SETTINGS = {
             )
         ),
         'form_kwargs': dict(
-            label=_("Allow customers to modify their information"),
+            label=_('Allow customers to modify their information'),
             widget=forms.RadioSelect,
             choices=(
                 ('no', _('No modifications after order was submitted')),
@@ -2147,7 +2148,7 @@ Your {event} team"""
                 'We recommend an image at least 1170 px wide and 120 px in height for best results.'
             ),
         ),
-        'serializer_class': UploadedFileField,
+        'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
@@ -2167,7 +2168,7 @@ Your {event} team"""
                 'We recommend not using small details as it will be resized on smaller screens.'
             ),
         ),
-        'serializer_class': UploadedFileField,
+        'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
