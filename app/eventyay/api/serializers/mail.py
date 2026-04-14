@@ -24,10 +24,19 @@ class MailTemplateSerializer(PretalxSerializer):
         return super().create(validated_data)
 
     def _validate_text(self, value):
+        # Build a MailTemplate with the correct role so valid_placeholders
+        # returns only the placeholders available in that role's mail context.
+        # Without this, creating a NEW_SCHEDULE template via API would accept
+        # submission-level placeholders (like {submission_title}) that aren't
+        # available at send time, causing KeyError crashes.
+        role = self.initial_data.get("role", getattr(self.instance, "role", None))
         if not self.instance:
-            valid_placeholders = MailTemplate(event=self.event).valid_placeholders
+            valid_placeholders = MailTemplate(event=self.event, role=role or "").valid_placeholders
         else:
-            valid_placeholders = self.instance.valid_placeholders
+            template = self.instance
+            if role is not None and role != template.role:
+                template = MailTemplate(event=self.event, role=role)
+            valid_placeholders = template.valid_placeholders
         try:
             fields = get_invalid_placeholders(value, valid_placeholders)
         except Exception:

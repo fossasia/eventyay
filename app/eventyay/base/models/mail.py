@@ -1,3 +1,5 @@
+import logging
+from collections import defaultdict
 from copy import deepcopy
 
 import rules
@@ -12,13 +14,15 @@ from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.urls import EventUrls
-from eventyay.mail.context import get_available_placeholders, get_mail_context
+from eventyay.mail.context import get_available_placeholders, get_mail_context, get_used_placeholders
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
 from eventyay.mail.signals import queuedmail_post_send, queuedmail_pre_send
 from eventyay.talk_rules.submission import orga_can_change_submissions
 from eventyay.helpers.i18n import is_rtl
 
 from .mixins import PretalxModel
+
+logger = logging.getLogger(__name__)
 
 
 def get_prefixed_subject(event, subject):
@@ -185,11 +189,20 @@ class MailTemplate(PretalxModel):
             default_context = get_mail_context(**context_kwargs)
             default_context.update(context or {})
             context = default_context
+            used = get_used_placeholders(self.subject) | get_used_placeholders(self.text)
+            missing = used - set(context.keys())
+            if missing:
+                logger.warning(
+                    'Mail template "%s" (pk=%s, role=%s) for event "%s" uses '
+                    'placeholders not available in this context: %s',
+                    self.subject, self.pk, self.role, event.slug,
+                    ', '.join(sorted(missing)),
+                )
             try:
-                subject = str(self.subject).format(**context)
-                text = str(self.text).format(**context)
-            except KeyError as e:
-                raise SendMailException(f'Experienced KeyError when rendering email text: {str(e)}')
+                subject = str(self.subject).format_map(defaultdict(str, context))
+                text = str(self.text).format_map(defaultdict(str, context))
+            except (KeyError, IndexError, ValueError) as e:
+                raise SendMailException(f'Experienced error when rendering email text: {str(e)}')
 
             if len(subject) > 200:
                 subject = subject[:198] + '…'
