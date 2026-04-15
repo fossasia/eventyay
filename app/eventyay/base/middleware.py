@@ -1,7 +1,7 @@
+import zoneinfo
 from collections import OrderedDict
 from urllib.parse import urlsplit
 
-import pytz
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
 from django.middleware.common import CommonMiddleware
@@ -75,10 +75,11 @@ class LocaleMiddleware(MiddlewareMixin):
             tzname = request.user.timezone
         if tzname:
             try:
-                timezone.activate(pytz.timezone(tzname))
+                timezone.activate(zoneinfo.ZoneInfo(tzname))
                 request.timezone = tzname
-            except pytz.UnknownTimeZoneError:
-                pass
+            except zoneinfo.ZoneInfoNotFoundError:
+                timezone.deactivate()
+                request.timezone = None
         else:
             timezone.deactivate()
 
