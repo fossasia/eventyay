@@ -93,7 +93,7 @@ class ExportForm(forms.Form):
     def get_data(self, queryset, fields, questions):
         data = []
 
-        for obj in queryset:
+        for obj in queryset.iterator(chunk_size=200):
             object_data = {}
             code = getattr(obj, 'code', None)
             if code:
@@ -121,6 +121,29 @@ class ExportForm(forms.Form):
         questions = [question for question in self.questions if self.cleaned_data.get(f'question_{question.pk}')]
         queryset = self.get_queryset()
 
+        # Optimize DB queries
+        try:
+            queryset = queryset.select_related()
+        except Exception:
+            pass
+
+        try:
+            queryset = queryset.prefetch_related()
+        except Exception:
+            pass
+
+        # Limit fields fetched
+        try:
+            queryset = queryset.only(*fields)
+        except Exception:
+            pass
+
+        # Safety limit
+        if queryset[:10001].count() > 10000:
+            return HttpResponse(
+                "Export too large. Please narrow filters or use async export."
+            ) 
+
         if not queryset.exists():
             return
         if self.cleaned_data.get('export_format') == 'csv':
@@ -134,6 +157,10 @@ class ExportForm(forms.Form):
         return self.json_export(data)
 
     def csv_export_stream(self, queryset, fields, questions):
+        # NOTE:
+        # This streaming approach reduces memory usage but does not eliminate
+        # heavy database queries or high concurrency load in production.
+        # A background job system (e.g., Celery) would be the proper long-term solution.
         from django_scopes import scope
 
         delimiters = {
@@ -142,11 +169,21 @@ class ExportForm(forms.Form):
         }
         delimiter = delimiters[self.cleaned_data.get('data_delimiter') or 'newline']
 
+        field_labels = {
+            field: str(self.fields[field].label)
+            for field in fields
+        }
+
+        question_labels = {
+            question: str(question.question)
+            for question in questions
+        }
+
         def generate():
             header = None
 
             with scope(event=self.event):
-                for obj in queryset:
+                for obj in queryset.iterator(chunk_size=200):
                     object_data = {}
 
                     code = getattr(obj, 'code', None)
@@ -158,11 +195,11 @@ class ExportForm(forms.Form):
                         obj = prepare_method(obj)
 
                     for field in fields:
-                        label = str(self.fields[field].label)
+                        label = field_labels[field]
                         object_data[label] = self.get_object_attribute(obj, field)
 
                     for question in questions:
-                        label = str(question.question)
+                        label = question_labels[question]
                         answer = self.get_answer(question, obj)
                         object_data[label] = answer.answer_string if answer else None
 
