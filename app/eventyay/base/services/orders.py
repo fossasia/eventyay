@@ -998,7 +998,7 @@ def _create_order(
             datetime=now_dt,
             locale=get_language_without_region(locale),
             total=total,
-            testmode=True if sales_channel.testmode_supported and event.testmode else False,
+            testmode=True if sales_channel.testmode_supported and (event.testmode or event.private_testmode) else False,
             meta_info=json.dumps(meta_info or {}),
             require_approval=any(p.requires_approval for p in positions),
             sales_channel=sales_channel.identifier,
