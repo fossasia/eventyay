@@ -29,8 +29,30 @@ nav.navbar .navbar-header {
   padding: 0 0.25rem 0 0;
 }
 
-body.startpage-body:not(.sidebar-minimized) nav.navbar .navbar-header {
+body.startpage-body:not(.has-sidebar) nav.navbar .navbar-header {
   padding-left: 1rem;
+}
+
+body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar {
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  margin: 0 0 0 1rem;
+  padding: 0.5rem;
+}
+
+body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:hover,
+body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:focus {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  outline: none;
+}
+
+body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar .fa-bars {
+  color: #fff;
 }
 
 nav.navbar .navbar-brand {
@@ -604,12 +626,12 @@ body.startpage-body {
   }
 
   /* Sidebar minimized (collapsed): icons only */
-  &.sidebar-minimized .sidebar {
+  &.has-sidebar.sidebar-minimized .sidebar {
     width: $sidebar-minimized-width;
   }
 
   /* Sidebar expanded: show text labels and set page margin */
-  &:not(.sidebar-minimized) .sidebar {
+  &.has-sidebar:not(.sidebar-minimized) .sidebar {
     width: $sidebar-width;
 
     .context-selector .dropdown-toggle .context-indicator {
@@ -627,18 +649,18 @@ body.startpage-body {
   }
 
   /* Push page content right — no transition to avoid shake */
-  &:not(.sidebar-minimized) .presale-container {
+  &.has-sidebar:not(.sidebar-minimized) .presale-container {
     margin-left: $sidebar-width;
   }
 
-  &.sidebar-minimized .presale-container {
+  &.has-sidebar.sidebar-minimized .presale-container {
     margin-left: $sidebar-minimized-width;
   }
 
   /* Mobile: sidebar overlays content */
   @media (max-width: 767px) {
-    &:not(.sidebar-minimized) .presale-container,
-    &.sidebar-minimized .presale-container {
+    &.has-sidebar:not(.sidebar-minimized) .presale-container,
+    &.has-sidebar.sidebar-minimized .presale-container {
       margin-left: 0;
     }
 
@@ -649,11 +671,11 @@ body.startpage-body {
       width: $sidebar-width;
     }
 
-    &:not(.sidebar-minimized) .sidebar {
+    &.has-sidebar:not(.sidebar-minimized) .sidebar {
       transform: translateX(0);
     }
 
-    &.sidebar-minimized .sidebar {
+    &.has-sidebar.sidebar-minimized .sidebar {
       transform: translateX(-100%);
     }
   }

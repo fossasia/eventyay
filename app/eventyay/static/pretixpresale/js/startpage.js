@@ -199,10 +199,79 @@
     });
   }
 
+  function initSidebar() {
+    var body = document.body;
+    if (!body.classList.contains('has-sidebar')) {
+      return;
+    }
+
+    var sidebarToggle = document.getElementById('sidebar-toggle');
+    var sidebar = document.getElementById('sidebar');
+    if (!sidebarToggle || !sidebar) {
+      return;
+    }
+
+    sidebarToggle.setAttribute('aria-controls', sidebar.id);
+
+    var storageKey = 'sidebar-minimized';
+
+    function isMobileView() {
+      return window.matchMedia('(max-width: 767px)').matches;
+    }
+
+    function isSidebarMinimized() {
+      return body.classList.contains('sidebar-minimized');
+    }
+
+    function setSidebarState(minimized, persist) {
+      body.classList.toggle('sidebar-minimized', minimized);
+      sidebarToggle.setAttribute('aria-expanded', minimized ? 'false' : 'true');
+
+      if (persist && !isMobileView()) {
+        try {
+          localStorage.setItem(storageKey, minimized ? 'true' : 'false');
+        } catch (error) {
+          // Ignore storage errors.
+        }
+      }
+    }
+
+    function getStoredSidebarState() {
+      try {
+        return localStorage.getItem(storageKey);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function initializeSidebarState() {
+      if (isMobileView()) {
+        setSidebarState(true, false);
+        return;
+      }
+
+      var storedState = getStoredSidebarState();
+      if (storedState === null) {
+        setSidebarState(true, true);
+        return;
+      }
+
+      setSidebarState(storedState === 'true', false);
+    }
+
+    initializeSidebarState();
+
+    sidebarToggle.addEventListener('click', function (event) {
+      event.preventDefault();
+      setSidebarState(!isSidebarMinimized(), true);
+    });
+  }
+
   function init() {
     initShareButtons();
     initSearch();
     initKeyboardShortcuts();
+    initSidebar();
   }
 
   if (document.readyState === 'loading') {
