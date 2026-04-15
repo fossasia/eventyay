@@ -659,19 +659,6 @@ class EventSettingsForm(SettingsForm):
         'og_image',
     ]
 
-    def is_submitted(self, field_name):
-        return self.add_prefix(field_name) in self.data
-
-    def clean_name_scheme(self):
-        if not self.is_submitted('name_scheme'):
-            return self.event.settings.name_scheme
-        return self.cleaned_data.get('name_scheme')
-
-    def clean_name_scheme_titles(self):
-        if not self.is_submitted('name_scheme_titles'):
-            return self.event.settings.name_scheme_titles
-        return self.cleaned_data.get('name_scheme_titles')
-
     def clean(self):
         data = super().clean()
         settings_dict = self.event.settings.freeze()
@@ -722,13 +709,6 @@ class EventSettingsForm(SettingsForm):
             (k, '{scheme}: {samples}'.format(scheme=v[0], samples=', '.join(v[1])))
             for k, v in PERSON_NAME_TITLE_GROUPS.items()
         ]
-        
-        if self.is_bound:
-            if not self.is_submitted('name_scheme'):
-                self.fields['name_scheme'].required = False
-            if not self.is_submitted('name_scheme_titles'):
-                self.fields['name_scheme_titles'].required = False
-
         if not self.event.has_subevents:
             self.fields.pop('frontpage_subevent_ordering', None)
             self.fields.pop('event_list_type', None)
@@ -767,6 +747,58 @@ class EventSettingsForm(SettingsForm):
                 self.initial[virtual_key] = "optional"
             else:
                 self.initial[virtual_key] = 'do_not_ask'
+
+
+class GeneralEventSettingsForm(EventSettingsForm):
+    """
+    Settings form used on the general event settings page.
+
+    Keep this list limited to fields rendered there so saving that page
+    cannot overwrite dedicated order-form settings.
+    """
+
+    auto_fields = [
+        'checkout_email_helptext',
+        'presale_has_ended_text',
+        'voucher_explanation_text',
+        'checkout_success_text',
+        'show_dates_on_frontpage',
+        'show_date_to',
+        'show_times',
+        'show_products_outside_presale_period',
+        'display_net_prices',
+        'presale_start_show_date',
+        'show_quota_left',
+        'waiting_list_enabled',
+        'waiting_list_hours',
+        'waiting_list_auto',
+        'waiting_list_names_asked',
+        'waiting_list_names_required',
+        'waiting_list_phones_asked',
+        'waiting_list_phones_required',
+        'waiting_list_phones_explanation_text',
+        'max_products_per_order',
+        'reservation_time',
+        'show_variations_expanded',
+        'hide_sold_out',
+        'meta_noindex',
+        'redirect_to_checkout_directly',
+        'frontpage_subevent_ordering',
+        'event_list_type',
+        'event_list_available_only',
+        'event_info_text',
+        'checkout_phone_helptext',
+        'banner_text',
+        'banner_text_bottom',
+        'allow_modifications',
+        'last_order_modification_date',
+        'allow_modifications_after_checkin',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('name_scheme', None)
+        self.fields.pop('name_scheme_titles', None)
 
 
 class OrderFormSettingsForm(EventSettingsForm):
@@ -814,7 +846,6 @@ class CancelSettingsForm(SettingsForm):
         'cancel_allow_user_paid_adjust_fees_step',
         'cancel_allow_user_paid_refund_as_giftcard',
         'cancel_allow_user_paid_require_approval',
-        'change_allow_user_variation',
         'change_allow_user_price',
         'change_allow_user_until',
     ]
