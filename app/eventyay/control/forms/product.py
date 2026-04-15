@@ -618,7 +618,6 @@ class ProductUpdateForm(I18nModelForm):
                     'admission',
                     _('Gift card products should not be admission products at the same time.'),
                 )
-        
         free_price = d.get('free_price')
         if not free_price:
             d['free_price_min'] = None
