@@ -474,25 +474,119 @@ body.startpage-search-results-page #main-card {
   margin: 0;
 }
 
+/* ══════════════════════════════════════════════
+   STARTPAGE NAVBAR – FULL MOBILE RESPONSIVENESS
+   ══════════════════════════════════════════════ */
+
 @media (max-width: 767px) {
-  nav.navbar .navbar-header,
+  /* --- Navbar container --- */
+  nav.navbar {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  nav.navbar .navbar-header {
+    padding: 0 0.5rem;
+    flex-shrink: 0;
+    width: 100%;
+    text-align: center;
+  }
+  
+  nav.navbar .navbar-brand {
+    display: inline-flex;
+    justify-content: center;
+    width: 100%;
+  }
+
   nav.navbar .navbar-top-links {
-    padding: 0 0.75rem;
+    padding: 0.5rem;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: visible;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Reduce link padding so items fit */
+  nav.navbar .navbar-top-links li a,
+  nav.navbar .navbar-top-links summary,
+  nav.navbar .navbar-top-links .header-nav,
+  nav.navbar .navbar-top-links .btn-link {
+    padding: 8px 6px;
+    font-size: 13px;
+    min-height: unset;
+    white-space: nowrap;
+  }
+
+  /* --- Brand: tighter --- */
+  nav.navbar .navbar-brand {
+    font-size: 16px;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+  nav.navbar .navbar-brand img {
+    height: 22px;
+  }
+
+  /* --- Search: collapse to icon, expand on focus/click --- */
+  .startpage-search-nav {
+    margin-right: 0;
+    flex-shrink: 1;
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
   }
 
   .startpage-search input {
-    width: 160px;
+    width: 100%;
+    padding: 6px 8px 6px 36px;
+    font-size: 13px;
   }
 
   .startpage-search:focus-within input {
-    width: 220px;
+    width: 100%;
   }
 
+  /* --- Event media card height --- */
   .startpage-event-media {
-    height: 160px;
+    height: 140px;
   }
 
+  /* --- Search content (results page) --- */
   .startpage-search-content input {
     width: auto;
   }
 }
+
+
+
+/* ── Mobile hero text: prevent clipping at left edge ── */
+@media (max-width: 767px) {
+  .startpage-hero .event-hero-overlay,
+  .event-hero-overlay {
+    padding-left: 12px;
+    padding-right: 12px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .event-title {
+    font-size: clamp(1.2rem, 5vw, 2rem);
+    word-break: break-word;
+    overflow-wrap: break-word;
+    padding-left: 0;
+  }
+
+  .event-hero-text {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .startpage-hero-header {
+    overflow: hidden;
+  }
+}
+

@@ -1,0 +1,317 @@
+// ============================================================
+// EVENTYAY – Presale (Public) Mobile Responsiveness
+// ============================================================
+
+// ── 1. Hero header: reduce height on small screens ─────────
+@media (max-width: 992px) {
+  .custom-header {
+    height: 160px;
+    margin-top: -2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .custom-header {
+    height: 120px;
+    margin-top: -1.5rem;
+
+    h1, h2 {
+      font-size: 1.4rem;
+      line-height: 1.25;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-header {
+    height: 90px;
+    margin-top: -1rem;
+
+    h1, h2 {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// ── 2. Hero event logo placement ───────────────────────────
+@media (max-width: 768px) {
+  .event-logo-img-placement {
+    margin: 0 4%;
+  }
+}
+
+// ── 3. Header navigation tabs font size ────────────────────
+@media (max-width: 576px) {
+  #header-nav-bar div,
+  #header-nav-bar .navigation {
+    font-size: 1.1rem;
+    gap: 1rem;
+  }
+}
+
+// ── 4. Product rows: stacked columns on xs ─────────────────
+@media (max-width: 576px) {
+  .product-row {
+    // Price and count cols: full width stacked
+    .price,
+    .count {
+      text-align: left;
+      padding-left: 0;
+    }
+
+    // Availability takes full width
+    .availability-box {
+      text-align: left;
+    }
+
+    // Product description that sits next to picture
+    .product-description.with-picture {
+      margin-left: 60px;
+    }
+  }
+}
+
+// ── 5. Cart / checkout button rows ─────────────────────────
+@media (max-width: 768px) {
+  .checkout-button-row {
+    > div {
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      margin-bottom: 4px;
+    }
+  }
+
+  .checkout-action-row {
+    padding-top: 10px;
+
+    .btn {
+      width: 100%;
+      display: block;
+      margin-bottom: 6px;
+    }
+  }
+}
+
+// ── 6. Panel headings – word wrap on xs ────────────────────
+@media (max-width: 576px) {
+  .panel-heading {
+    .panel-title {
+      font-size: 14px;
+      word-break: break-word;
+    }
+  }
+
+  .panel-body {
+    padding: 10px 8px;
+    overflow-x: auto;
+  }
+}
+
+// ── 7. Tables in presale (order details, etc.) ─────────────
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 0;
+  }
+
+  // Stack definition-list items
+  .dl-horizontal {
+    dt {
+      float: none;
+      width: auto;
+      text-align: left;
+      font-weight: 600;
+      padding-bottom: 2px;
+    }
+    dd {
+      margin-left: 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+// ── 8. Thank-you / confirmation page ──────────────────────
+@media (max-width: 768px) {
+  .thank-you {
+    text-align: center;
+
+    .fa {
+      float: none;
+      font-size: 80px;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      padding-top: 0;
+    }
+
+    p {
+      margin-left: 0;
+    }
+  }
+}
+
+// ── 9. Subevent list: readable on mobile ──────────────────
+@media (max-width: 576px) {
+  .subevent-list {
+    .subevent-row .row > div {
+      padding: 4px;
+      font-size: 13px;
+    }
+  }
+}
+
+// ── 10. Voucher row: stack on xs ──────────────────────────
+@media (max-width: 576px) {
+  .voucher-row {
+    .row > div {
+      float: none;
+      width: 100%;
+      padding-left: 0;
+      padding-right: 0;
+      margin-bottom: 8px;
+    }
+
+    // Input + button group
+    .input-group {
+      width: 100%;
+    }
+  }
+}
+
+// ── 11. Event info page: image + description ──────────────
+@media (max-width: 576px) {
+  .front-page {
+    margin-top: 16px;
+
+    // Event banner image
+    > img:first-child {
+      width: 100%;
+      height: auto;
+    }
+  }
+}
+
+// ── 12. Pagination ────────────────────────────────────────
+@media (max-width: 576px) {
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+
+    > li > a,
+    > li > span {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+  }
+}
+
+// ── 13. Alert banners ─────────────────────────────────────
+@media (max-width: 576px) {
+  .alert {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .offline-banner {
+    font-size: 13px;
+    padding: 8px;
+  }
+}
+
+// ── 14. Cancel-fee slider: stack on xs ────────────────────
+@media (max-width: 576px) {
+  .cancel-fee-slider {
+    flex-direction: column;
+    align-items: stretch;
+
+    > div:first-child {
+      text-align: center;
+      padding-right: 0;
+    }
+
+    > div:last-child {
+      text-align: center;
+      padding-left: 0;
+    }
+  }
+}
+
+// ── 15. Radio / checkbox option lists ─────────────────────
+@media (max-width: 576px) {
+  .radio-box label,
+  .item-checkbox-label {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+}
+
+// ── 16. Contact / address panels ─────────────────────────
+@media (max-width: 576px) {
+  .panel-contact dl {
+    font-size: 13px;
+  }
+}
+
+// ── 17. Page header – responsive title ───────────────────
+@media (max-width: 576px) {
+  .page-header h1,
+  h1.content-header {
+    font-size: 1.5rem;
+    word-break: break-word;
+
+    small {
+      display: block;
+      font-size: 0.85rem;
+      margin-top: 4px;
+      white-space: normal;
+    }
+  }
+}
+
+// ── 18. Main container horizontal padding ────────────────
+@media (max-width: 576px) {
+  .container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+// ── 19. Startpage hero – tight layout on xs ──────────────
+@media (max-width: 480px) {
+  header.startpage-hero-header {
+    margin: 1rem 0 1.5rem;
+  }
+
+  .startpage-events h2 {
+    font-size: 1.2rem;
+  }
+
+  .startpage-event-body {
+    padding: 0.85rem 1rem 0.8rem;
+  }
+
+  .startpage-event-title {
+    font-size: 1.1rem;
+  }
+}
+
+// ── 20. Search bar: full width on xs ─────────────────────
+@media (max-width: 480px) {
+  .startpage-search-results {
+    width: calc(100vw - 32px);
+    left: 0;
+    right: auto;
+  }
+}

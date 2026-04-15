@@ -1,0 +1,420 @@
+// ============================================================
+// EVENTYAY – Control Panel Mobile Responsiveness
+// Breakpoints mirror Bootstrap 3 variables:
+//   xs  < 768px  ($screen-xs-max = 767px)
+//   sm  768–991px
+//   md  992–1199px
+// ============================================================
+
+// ── 1. Global table overflow ────────────────────────────────
+// Prevent wide tables from breaking the page layout on mobile.
+@media (max-width: $screen-sm-max) {
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Tables that aren't already wrapped
+  #page-wrapper table:not(.table-no-scroll) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+// ── 2. Toolbar / button-group wrapping ─────────────────────
+@media (max-width: $screen-xs-max) {
+  .btn-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+
+    .btn-group,
+    .btn {
+      flex-shrink: 0;
+    }
+  }
+
+  // Action icon columns in list tables
+  .action-col-2,
+  .action-col-3,
+  .action-col-4 {
+    min-width: unset;
+    white-space: nowrap;
+  }
+}
+
+// ── 3. Submit / cancel button group ────────────────────────
+@media (max-width: $screen-xs-max) {
+  .submit-group {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+    text-align: center;
+
+    .btn-save,
+    .btn-cancel {
+      width: 100%;
+      float: none !important;
+    }
+  }
+}
+
+// ── 4. Page-header row (h1 + buttons on same line) ─────────
+@media (max-width: $screen-xs-max) {
+  .page-header {
+    h1 {
+      font-size: 22px;
+      word-break: break-word;
+    }
+
+    // Buttons that sit inline with the heading
+    h1 .btn,
+    h1 .btn-group {
+      display: block;
+      margin-top: 8px;
+      width: 100%;
+    }
+  }
+}
+
+// ── 5. Form horizontal – labels left-aligned on mobile ─────
+// Already handled in _forms.scss for sm-max, extend to xs.
+@media (max-width: $screen-xs-max) {
+  .form-horizontal {
+    .control-label {
+      text-align: left;
+      padding-bottom: 4px;
+    }
+
+    .col-sm-2.control-label,
+    .col-sm-3.control-label {
+      width: 100%;
+      float: none;
+    }
+
+    .col-sm-9,
+    .col-sm-8,
+    .col-sm-10 {
+      width: 100%;
+      float: none;
+      padding-left: 0;
+    }
+  }
+}
+
+// ── 6. Nav tabs scroll on mobile ──────────────────────────
+@media (max-width: $screen-xs-max) {
+  .nav-tabs {
+    display: flex;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-bottom: 1px solid #ddd;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    > li {
+      flex-shrink: 0;
+
+      > a {
+        white-space: nowrap;
+        padding: 8px 10px;
+      }
+    }
+  }
+
+  .tab-content {
+    padding: 12px 8px;
+  }
+}
+
+// ── 7. Panel overflow / description lists ─────────────────
+@media (max-width: $screen-sm-max) {
+  .panel-body {
+    overflow-x: auto;
+  }
+
+  .dl-horizontal {
+    dt {
+      float: none;
+      width: auto;
+      clear: none;
+      text-align: left;
+      font-weight: 600;
+    }
+    dd {
+      margin-left: 0;
+    }
+  }
+}
+
+// ── 8. Breadcrumb wrapping ────────────────────────────────
+@media (max-width: $screen-xs-max) {
+  .breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 6px 8px;
+    font-size: 12px;
+    word-break: break-word;
+
+    > li {
+      + li::before {
+        padding: 0 4px;
+      }
+    }
+  }
+}
+
+// ── 9. Navbar – full mobile overhaul ─────────────────────
+@media (max-width: 767px) {
+  // Navbar: single flex row, no wrap, allow overflow via scroll
+  nav.navbar.navbar-inverse {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    overflow: visible;
+    padding: 0;
+  }
+
+  // Hamburger toggle button: left side
+  #sidebar-toggle.navbar-toggle-sidebar {
+    flex-shrink: 0;
+    margin: 0 0 0 6px;
+    padding: 8px 10px;
+  }
+
+  // Brand: grows to fill available space, truncates
+  .navbar-header {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 6px;
+
+    .navbar-brand {
+      font-size: 15px;
+      padding: 0;
+
+      img {
+        height: 22px;
+      }
+    }
+  }
+
+  // Top-right link group: shrink, no wrapping
+  .navbar-top-links {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0 4px 0 0;
+
+    li {
+      display: inline-flex;
+    }
+
+    // Reduce padding on all link items
+    li > a,
+    li summary,
+    li .header-nav,
+    li .btn-link {
+      padding: 8px 6px;
+      font-size: 14px;
+      min-height: unset;
+      white-space: nowrap;
+    }
+
+    // Language switcher: keep globe icon and text, allow to wrap properly
+    .language-switch {
+      .language-summary {
+        padding: 8px 6px;
+        gap: 0;
+        margin-right: 0;
+      }
+    }
+
+    // Keep danger button readable
+    li:has(.danger) > a,
+    li > a.danger {
+      padding: 8px 6px;
+      font-size: 12px;
+    }
+  }
+
+  // Hidden-xs links: truly hide them
+  .navbar-nav.hidden-xs,
+  .navbar-left.hidden-xs {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  // Very small phones: make logo slightly smaller
+  nav.navbar.navbar-inverse .navbar-brand {
+    font-size: 14px;
+    img {
+      height: 20px;
+    }
+  }
+
+  // Only show icon for user links
+  .navbar-top-links li > a,
+  .navbar-top-links li summary.header-nav {
+    padding: 8px 4px;
+    font-size: 15px;
+  }
+}
+
+
+
+// ── 10. Impersonate warning full-width on mobile ──────────
+@media (max-width: 767px) {
+  .impersonate-warning {
+    margin-left: 0 !important;
+    padding: 10px 12px;
+  }
+}
+
+// ── 11. Dashboard widgets single-column on xs ────────────
+// Already handled for sm in _dashboard.scss; add xs explicitly.
+@media (max-width: $screen-xs-max) {
+  .dashboard .widget-container {
+    width: 100% !important;
+  }
+
+  // Event cards in dashboard: tighter padding
+  .widget-container.widget-container-event {
+    .event {
+      padding: 10px 12px;
+      font-size: 16px;
+    }
+
+    .bottomrow a {
+      font-size: 12px;
+      padding: 8px 4px;
+    }
+  }
+}
+
+// ── 12. Order / attendee tables: stack key columns ────────
+@media (max-width: $screen-xs-max) {
+  // Hide lower-priority columns in list tables
+  .table > thead > tr > th.hidden-xs,
+  .table > tbody > tr > td.hidden-xs {
+    display: none !important;
+  }
+
+  // Make order-code col not so wide
+  .table .order-code {
+    word-break: break-all;
+    max-width: 80px;
+  }
+}
+
+// ── 13. Sidebar overlay backdrop on mobile ────────────────
+@media (max-width: 767px) {
+  // When sidebar is open show a semi-transparent backdrop
+  body:not(.sidebar-minimized)::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 11; // just below sidebar (z-index: 12)
+    pointer-events: none;
+  }
+}
+
+// ── 14. Filter form – stack on mobile ────────────────────
+@media (max-width: $screen-xs-max) {
+  .filter-form {
+    .row > [class*='col-'] {
+      float: none;
+      width: 100%;
+      padding-left: 0;
+      padding-right: 0;
+      margin-bottom: 8px;
+    }
+
+    .input-group {
+      width: 100%;
+    }
+
+    .input-group-btn {
+      width: auto !important;
+    }
+
+    input.form-control,
+    select.form-control {
+      width: 100%;
+    }
+  }
+}
+
+// ── 15. Stat / number widgets: readable font on xs ────────
+@media (max-width: $screen-xs-max) {
+  .dashboard .numwidget {
+    .num {
+      font-size: 28px;
+    }
+    .text {
+      font-size: 15px;
+    }
+  }
+}
+
+// ── 16. Event-name column wraps gracefully ────────────────
+@media (max-width: $screen-sm-max) {
+  .event-name-col {
+    width: auto;
+    min-width: 120px;
+  }
+}
+
+// ── 17. Organizer-tabs: horizontal scroll ────────────────
+@media (max-width: $screen-xs-max) {
+  .organizer-tabs {
+    .nav-tabs {
+      white-space: nowrap;
+    }
+  }
+}
+
+// ── 18. Timeline: already stacked in main.scss ───────────
+// Extra spacing improvement.
+@media (max-width: $screen-sm-max) {
+  .timeline .col-date {
+    padding-bottom: 4px;
+    font-size: 12px;
+    color: $text-muted;
+  }
+}
+
+// ── 19. Pagination full-width on xs ──────────────────────
+@media (max-width: $screen-xs-max) {
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .pagination > li > a,
+  .pagination > li > span {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+// ── 20. Alert messages: comfortable on mobile ────────────
+@media (max-width: $screen-xs-max) {
+  .container-fluid > .alert {
+    margin: 10px 0;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
