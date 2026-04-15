@@ -173,8 +173,8 @@
 
 // ── 10. Voucher row: stack on xs ──────────────────────────
 @media (max-width: 576px) {
-  .voucher-row {
-    .row > div {
+  .row-voucher {
+    > div {
       float: none;
       width: 100%;
       padding-left: 0;

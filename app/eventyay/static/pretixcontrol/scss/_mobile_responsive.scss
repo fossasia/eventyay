@@ -320,8 +320,8 @@
 
 // ── 13. Sidebar overlay backdrop on mobile ────────────────
 @media (max-width: 767px) {
-  // When sidebar is open show a semi-transparent backdrop
-  body:not(.sidebar-minimized)::before {
+  // On mobile screens, .sidebar-minimized means the sidebar is OPEN (left: 0)
+  body.sidebar-minimized::before {
     content: '';
     position: fixed;
     inset: 0;
