@@ -19,8 +19,23 @@ const LocalizedTextSchema = z.union([
 
 const NullableTextSchema = z.string().nullable().optional().transform(val => val ?? '');
 
+const SpeakerReferenceSchema = z.union([
+  z.string(),
+  z.null(),
+  z.object({
+    name: z.string().nullable().optional(),
+    code: z.string().nullable().optional(),
+  }).passthrough(),
+]);
+
+const toSpeakerReference = (val: z.infer<typeof SpeakerReferenceSchema>): string | undefined => {
+  if (typeof val === 'string') return val;
+  if (!val) return undefined;
+  return val.code ?? undefined;
+};
+
 export const SpeakerSchema = z.object({
-  code: z.string(),
+  code: z.string().nullable().optional(),
   name: z.string().nullable().transform(val => val ?? ''),
 });
 
@@ -47,16 +62,10 @@ export const TalkSchema = z.object({
   title: LocalizedTextSchema,
   abstract: NullableTextSchema,
   description: NullableTextSchema,
-  speakers: z.union([
-    z.array(z.string()),
-    z.array(z.object({ name: z.string() }))
-  ]).transform(val => {
-    // Transform to array of strings (speaker names) for consistency
-    if (val.length === 0) return [];
-    if (typeof val[0] === 'string') {
-      return val as string[];
-    }
-    return (val as { name: string }[]).map(speaker => speaker.name);
+  speakers: z.array(SpeakerReferenceSchema).transform(val => {
+    return val
+      .map(toSpeakerReference)
+      .filter((speaker): speaker is string => typeof speaker === 'string' && speaker.length > 0);
   }).optional().default([]),
   room: z.union([
     z.number(),
