@@ -361,8 +361,10 @@
                         <button class="btn btn-block btn-primary btn-lg" id="btn-add-to-cart" type="submit">
                             {% if allfree %}
                                 <i class="fa fa-ticket" aria-hidden="true"></i> {% trans "Register" context "free_tickets" %}
-                            {% else %}
+                            {% elif event.settings.redirect_to_checkout_directly %}
                                 <i class="fa fa-shopping-cart" aria-hidden="true"></i> {% trans "Order now" %}
+                            {% else %}
+                                <i class="fa fa-shopping-cart" aria-hidden="true"></i> {% trans "Add to cart" %}
                             {% endif %}
                         </button>
                     </div>
