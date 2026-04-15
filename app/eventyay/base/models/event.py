@@ -50,7 +50,7 @@ from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
-from eventyay.common.urls import EventUrls
+from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
 from eventyay.core.permissions import (
     MAX_PERMISSIONS_IF_SILENCED,
@@ -77,9 +77,10 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
-from .organizer import Organizer, OrganizerBillingModel, Team
+from .organizer import Organizer, Team
 from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
+
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 logger = logging.getLogger(__name__)
@@ -191,7 +192,7 @@ FEATURE_FLAGS = [
 def default_feature_flags():
     return {
         'show_schedule': True,
-        'show_featured': 'pre_schedule',
+        'show_featured': 'after_schedule',
         'show_widget_if_not_public': False,
         'session_popularity_enabled': False,
         'session_popularity_show_on_calendar': True,
@@ -840,6 +841,8 @@ class Event(
         feedback = '{submissions}feedback/'
         apply_pending = '{submissions}apply-pending/'
         speakers = '{base}speakers/'
+        speakers_import = '{speakers}import/'
+        submissions_import = '{submissions}import/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
@@ -935,12 +938,22 @@ class Event(
     def social_image(self):
         from eventyay.multidomain.urlreverse import build_absolute_uri
 
+        def get_image_value(setting_name: str) -> str:
+            value = self.settings.get(setting_name, as_type=str, default='') or ''
+            if value.startswith('file://'):
+                return value[7:]
+            return value
+
         img = None
-        logo_file = self.settings.get('logo_image', as_type=str, default='')[7:]
-        og_file = self.settings.get('og_image', as_type=str, default='')[7:]
+        logo_file = get_image_value('logo_image')
+        og_file = get_image_value('og_image')
         if og_file:
+            if is_http_url(og_file):
+                return og_file
             img = get_thumbnail(og_file, '1200').thumb.url
         elif logo_file:
+            if is_http_url(logo_file):
+                return logo_file
             img = get_thumbnail(logo_file, '5000x120').thumb.url
         if img:
             return urljoin(build_absolute_uri(self, 'presale:event.index'), img)
@@ -2011,7 +2024,6 @@ class Event(
         return issues
 
     def billing_issues(self):
-        from django.utils.html import format_html
         from django.utils.translation import gettext
 
         from eventyay.base.models.organizer import OrganizerBillingModel
@@ -2076,10 +2088,15 @@ class Event(
     def delete_sub_objects(self):
         from django.core.exceptions import ObjectDoesNotExist
 
+        from eventyay.base.models.auth import EventGrant, RoomGrant, ShortToken, User
         from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.log import ActivityLog, LogEntry
+        from eventyay.base.models.mail import QueuedMail
         from eventyay.base.models.question import Answer, AnswerOption
         from eventyay.base.models.resource import Resource
         from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.storage_model import StoredFile
+        from eventyay.base.models.systemlog import SystemLog
 
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
@@ -2102,7 +2119,7 @@ class Event(
         for domain in self.domains.all().iterator():
             domain.delete()
 
-        for stored_file in self.storedfile_set.all().iterator():
+        for stored_file in StoredFile.objects.filter(event=self).iterator():
             stored_file.full_delete()
 
         self.bbbserver_set.update(event_exclusive=None)
@@ -2118,7 +2135,23 @@ class Event(
         self.tracks.all().delete()
         self.tags.all().delete()
         self.schedules.all().delete()
-        self.mail_templates.all().delete()
+        mail_templates = self.mail_templates.all()
+        QueuedMail.objects.filter(template__in=mail_templates).update(template=None)
+        mail_templates.delete()
+        ActivityLog.objects.filter(event=self).delete()
+        LogEntry.all.filter(event=self).update(event=None)
+        SystemLog.objects.filter(event=self).update(event=None)
+        EventGrant.objects.filter(event=self).delete()
+        RoomGrant.objects.filter(event=self).delete()
+        ShortToken.objects.filter(event=self).delete()
+        User.objects.filter(event=self).delete()
+        EventView.objects.filter(event=self).delete()
+        self.audits.all().delete()
+        self.meta_values.all().delete()
+        self.extra_links.all().delete()
+        self.planned_usages.all().delete()
+        self.requiredaction_set.all().delete()
+        self.settings.flush()
         try:
             cfp = self.cfp
         except ObjectDoesNotExist:
@@ -2362,19 +2395,19 @@ class Event(
 
         # Only check event_logo_image - NOT logo_image (which is for header images)
         for key in ('event_logo_image',):
-            settings_logo = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            settings_logo = self.settings.get(key, as_type=str, default=None)
             path = _extract_path(settings_logo)
             if not path:
                 continue
 
             # Keep full URLs
-            if path.startswith(('http://', 'https://')):
+            if is_http_url(path):
                 return path
 
             # Strip file:// scheme if present
             parsed = urlparse(path)
             if parsed.scheme == 'file':
-                path = parsed.path
+                path = f'{parsed.netloc}{parsed.path}'
 
             # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
             abs_path = os.path.abspath(path)
@@ -2421,17 +2454,17 @@ class Event(
         # header image for the site is stored in common settings under logo_image (historical)
         # and in the legacy field header_image; prefer the settings value first
         for key in ('logo_image', 'header_image'):
-            settings_header = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            settings_header = self.settings.get(key, as_type=str, default=None)
             path = _extract_path(settings_header)
             if not path:
                 continue
 
-            if path.startswith(('http://', 'https://')):
+            if is_http_url(path):
                 return path
 
             parsed = urlparse(path)
             if parsed.scheme == 'file':
-                path = parsed.path
+                path = f'{parsed.netloc}{parsed.path}'
 
             abs_path = os.path.abspath(path)
             media_root = os.path.abspath(settings.MEDIA_ROOT)
@@ -2467,7 +2500,7 @@ class Event(
             return None
         with suppress(Exception):
             # If already a full URL, return as-is
-            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_logo_path)):
                 return self._visible_logo_path
             return default_storage.url(self._visible_logo_path)
         return None
@@ -2479,7 +2512,7 @@ class Event(
         if not self._visible_logo_path:
             return None
         with suppress(Exception):
-            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_logo_path)):
                 return None
             return default_storage.open(self._visible_logo_path)
 
@@ -2490,7 +2523,7 @@ class Event(
         if not self._visible_header_image_path:
             return None
         with suppress(Exception):
-            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_header_image_path)):
                 return self._visible_header_image_path
             return default_storage.url(self._visible_header_image_path)
 
@@ -2501,7 +2534,7 @@ class Event(
         if not self._visible_header_image_path:
             return None
         with suppress(Exception):
-            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_header_image_path)):
                 return None
             return default_storage.open(self._visible_header_image_path)
         return None
@@ -2628,7 +2661,9 @@ class Event(
     def reviewers(self):
         from eventyay.base.models import User
 
-        return User.objects.filter(teams__in=self.teams.filter(is_reviewer=True)).distinct()
+        return User.objects.filter(
+            teams__in=self.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))
+        ).distinct()
 
     @cached_property
     def active_review_phase(self):
@@ -2658,7 +2693,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.timezone.utc)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.UTC)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i

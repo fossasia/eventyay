@@ -242,16 +242,6 @@ const routes = [
 					component: () => import('views/admin/config/main')
 				},
 				{
-					path: 'schedule',
-					name: 'admin:config:schedule',
-					component: () => import('views/admin/config/schedule')
-				},
-				{
-					path: 'theme',
-					name: 'admin:config:theme',
-					component: () => import('views/admin/config/theme')
-				},
-				{
 					path: 'permissions',
 					name: 'admin:config:permissions',
 					component: () => import('views/admin/config/permissions')
