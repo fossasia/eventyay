@@ -10,6 +10,7 @@ from xml.etree.ElementTree import tostring as xml_tostring
 
 import qrcode as qr_lib
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models, transaction
 from django.db.models import Count
 from django.db.utils import DatabaseError
@@ -46,6 +47,7 @@ from .slot import TalkSlot
 from .stream_schedule import StreamSchedule
 from .submission import Submission, SubmissionFavourite, SubmissionStates
 
+BUILD_DATA_CACHE_SECONDS = 60 * 60
 
 if TYPE_CHECKING:
     from .room import Room
@@ -164,6 +166,11 @@ class Schedule(PretalxModel):
             del wip_schedule.event.current_schedule
 
         schedule_release.send_robust(self.event, schedule=self, user=user)
+
+        self.invalidate_build_data_cache()
+        ts = now().timestamp()
+        cache.set(f'video_spa_html_stamp_{self.event_id}_{self.version or "none"}', ts, timeout=None)
+        cache.set(f'video_spa_html_stamp_{self.event_id}_none', ts, timeout=None)
 
         if self.event.get_feature_flag('export_html_on_release'):
             if not settings.CELERY_TASK_ALWAYS_EAGER:
@@ -730,13 +737,39 @@ class Schedule(PretalxModel):
 
         return self != self.event.current_schedule
 
+    @staticmethod
+    def _build_data_cache_key(schedule_pk, all_talks, enrich, include_featured_speaker_metadata):
+        return (
+            f'schedule_build_data_{schedule_pk}'
+            f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
+        )
+
+    def invalidate_build_data_cache(self):
+        for all_talks in (True, False):
+            for enrich in (True, False):
+                for fs in (True, False):
+                    cache.delete(self._build_data_cache_key(self.pk, all_talks, enrich, fs))
+
     def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False, *, include_featured_speaker_metadata=True,):
         """Build schedule JSON for widgets and exports.
 
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
+
+        Versioned (released) schedules are cached with a 1-hour safety TTL and
+        invalidated via signals on relevant model changes. Favourite-count
+        changes flush at most once per event every 30 minutes (see
+        ``eventyay.base.schedule_cache``). WIP schedules, incremental
+        (``filter_updated``), and ``all_rooms`` calls bypass the cache entirely.
         """
+        use_cache = bool(self.version) and not filter_updated and not all_rooms
+        if use_cache:
+            cache_key = self._build_data_cache_key(self.pk, all_talks, enrich, include_featured_speaker_metadata)
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         talks = self.talks.all()
         if not all_talks:
             talks = self.talks.filter(is_visible=True)
@@ -1017,6 +1050,10 @@ class Schedule(PretalxModel):
                 }
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
+
+        if use_cache:
+            cache.set(cache_key, result, timeout=BUILD_DATA_CACHE_SECONDS)
+
         return result
 
     def __str__(self) -> str:

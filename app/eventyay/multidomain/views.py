@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import cast
 from django.shortcuts import redirect
 from django.conf import settings
+from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import Http404, HttpResponse
 from django.utils.decorators import method_decorator
@@ -28,6 +29,7 @@ from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
+VIDEO_SPA_HTML_CACHE_SECONDS = 60 * 60
 logger = logging.getLogger(__name__)
 
 
@@ -63,15 +65,10 @@ class VideoSPAView(View):
 
         base_href = '/video/'
         if event:
-            # Inject window.venueless config (frontend still expects this name)
-            # Mirror structure used in legacy live AppView but adjusted basePath
-
-            # Quick fix: avoid reverse('api:root') which is currently not included -> NoReverseMatch
             api_base = f'/api/v1/events/{event.slug}/'  # TODO replace with reverse once API namespace wired
 
-            # Best effort reverse for optional endpoints
-
             cfg = event.config or {}
+            _page_cache_key = None  # set below once schedule_version is known
 
             with scope(event=event):
                 requested_version = request.GET.get('v') or request.GET.get('version')
@@ -85,6 +82,19 @@ class VideoSPAView(View):
                 if not schedule:
                     schedule = event.current_schedule or event.wip_schedule
 
+                schedule_version = schedule.version if schedule else None
+                if not request.user.is_authenticated and schedule_version:
+                    language = getattr(request, 'LANGUAGE_CODE', 'en')
+                    cache_stamp = cache.get(f'video_spa_html_stamp_{event.pk}_{schedule_version}', 0)
+                    _page_cache_key = (
+                        f'video_spa_html_{event.pk}_{schedule_version}_{language}_{cache_stamp}'
+                    )
+                    _cached_html = cache.get(_page_cache_key)
+                    if _cached_html is not None:
+                        resp = HttpResponse(_cached_html, content_type='text/html')
+                        resp._csp_ignore = True
+                        return resp
+
                 schedule_data = (
                     schedule.build_data(
                         all_talks=False,
@@ -96,7 +106,6 @@ class VideoSPAView(View):
                     if schedule
                     else None
                 )
-                schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 
             base_path = event.urls.video_base.rstrip('/')
@@ -218,6 +227,14 @@ class VideoSPAView(View):
                 html_content = f'{html_content[:idx]}{extra_script}{html_content[idx:]}'
             else:
                 html_content = f'{extra_script}{html_content}'
+
+            if not request.user.is_authenticated and _page_cache_key:
+                if '<base ' not in html_content.lower():
+                    html_content = html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
+                cache.set(_page_cache_key, html_content, timeout=VIDEO_SPA_HTML_CACHE_SECONDS)
+                resp = HttpResponse(html_content, content_type='text/html')
+                resp._csp_ignore = True
+                return resp
 
         elif event_identifier:
             # Event identifier provided but not found -> 404
