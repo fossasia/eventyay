@@ -203,14 +203,12 @@ html.rtl {
   }
 }
 
-@media (max-width: $screen-sm-max) {
+@media(max-width: $screen-sm-max) {
+
   html.rtl #page-wrapper {
     margin-top: var(--navbar-height);
   }
-  
-}
 
-@media(max-width: $screen-sm-max) {
   html.rtl .timeline {
     .col-date {
       width: 100%;

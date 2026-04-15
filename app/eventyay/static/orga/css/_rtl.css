@@ -9,10 +9,6 @@
 
     #page-wrapper aside.sidebar {
       width: 45px;
-      display: block;
-      > span &:hover{
-          display: none;
-      }
     }
 
     #page-content{
@@ -29,8 +25,9 @@
 
     aside.sidebar {
       &:hover {
-      #nav-search #search-context-name, .nav-link > span {
+      #nav-search #search-context-text, .nav-link > span {
           display: none;
+        }
       }
     }
 
@@ -51,6 +48,7 @@
       margin-right: 0;
       padding: 3px 15px;
     }
+
     .navbar-toggle-sidebar, .navbar-toggle-sidebar.navbar-toggle, nav.navbar.navbar-inverse #sidebar-toggle, .navbar-inverse #sidebar-toggle {
       float: right;
       order: 1;
@@ -124,6 +122,6 @@
       margin-left: auto;
       margin-right: -2px;
     }
-  }
+  
   }
 }
