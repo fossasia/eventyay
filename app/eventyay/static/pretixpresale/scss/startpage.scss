@@ -1,3 +1,7 @@
+/* Sidebar widths (matching pretixcontrol values) */
+$sidebar-width: 220px;
+$sidebar-minimized-width: 50px;
+
 body.startpage-body {
   padding-top: var(--navbar-height, 50px);
 }
@@ -8,7 +12,6 @@ nav.navbar {
   border-radius: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   font-weight: 500;
   left: 0;
   margin: 0;
@@ -23,7 +26,7 @@ nav.navbar .navbar-header {
   align-items: center;
   display: flex;
   height: var(--navbar-height, 50px);
-  padding: 0 1rem;
+  padding: 0 0.25rem 0 0;
 }
 
 nav.navbar .navbar-brand {
@@ -46,6 +49,7 @@ nav.navbar .navbar-top-links {
   display: flex;
   list-style: none;
   margin: 0;
+  margin-left: auto;
   padding: 0 1rem;
 }
 
@@ -496,3 +500,158 @@ body.startpage-search-results-page #main-card {
     width: auto;
   }
 }
+
+/* ============================================================
+   Startpage sidebar (authenticated users only)
+   Mirrors pretixcontrol/_sidebar.scss without !important
+   ============================================================ */
+
+body.startpage-body {
+  /* Sidebar panel */
+  .sidebar {
+    background-color: #f8f8f8;
+    bottom: 0;
+    left: 0;
+    overflow-y: auto;
+    position: fixed;
+    top: var(--navbar-height, 50px);
+    width: $sidebar-minimized-width;
+    z-index: 12;
+
+    .sidebar-nav {
+      display: block;
+      height: auto;
+      overflow: visible;
+      padding-bottom: 0;
+    }
+
+    /* Context selector (dashboard link) */
+    .context-selector .dropdown-toggle {
+      align-items: center;
+      color: #2185d0;
+      display: flex;
+      height: 56px;
+      padding: 8px 0 8px 4px;
+      text-decoration: none;
+
+      /* Make the stacked icon circles blue like the nav icons */
+      .fa-circle {
+        color: #2185d0;
+      }
+
+      .fa-inverse {
+        color: #fff;
+      }
+
+      .context-indicator {
+        display: none;
+        flex-direction: column;
+        flex-grow: 1;
+        margin-left: 6px;
+        overflow: hidden;
+
+        .context-name {
+          color: #2185d0;
+          font-size: 15px;
+          font-weight: 600;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    /* Nav container */
+    .nav {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Nav items */
+    .nav > li {
+      border-bottom: 1px solid #e7e7e7;
+    }
+
+    .nav > li > a {
+      align-items: center;
+      color: #2185d0;
+      display: flex;
+      font-size: 14px;
+      padding: 10px 15px;
+      text-decoration: none;
+      white-space: nowrap;
+
+      .sidebar-text {
+        display: none;
+      }
+
+      .fa {
+        flex-shrink: 0;
+        margin-right: 0;
+        text-align: center;
+        width: 1.28571429em;
+      }
+    }
+
+    .nav > li > a:hover {
+      background-color: #eee;
+    }
+  }
+
+  /* Sidebar minimized (collapsed): icons only */
+  &.sidebar-minimized .sidebar {
+    width: $sidebar-minimized-width;
+  }
+
+  /* Sidebar expanded: show text labels and set page margin */
+  &:not(.sidebar-minimized) .sidebar {
+    width: $sidebar-width;
+
+    .context-selector .dropdown-toggle .context-indicator {
+      display: flex;
+    }
+
+    .nav > li > a .sidebar-text {
+      display: inline-block;
+      margin-left: 8px;
+    }
+
+    .nav > li > a .fa {
+      margin-right: 0;
+    }
+  }
+
+  /* Push page content right — no transition to avoid shake */
+  &:not(.sidebar-minimized) .presale-container {
+    margin-left: $sidebar-width;
+  }
+
+  &.sidebar-minimized .presale-container {
+    margin-left: $sidebar-minimized-width;
+  }
+
+  /* Mobile: sidebar overlays content */
+  @media (max-width: 767px) {
+    &:not(.sidebar-minimized) .presale-container,
+    &.sidebar-minimized .presale-container {
+      margin-left: 0;
+    }
+
+    .sidebar {
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+      height: calc(100vh - var(--navbar-height, 50px));
+      transform: translateX(-100%);
+      width: $sidebar-width;
+    }
+
+    &:not(.sidebar-minimized) .sidebar {
+      transform: translateX(0);
+    }
+
+    &.sidebar-minimized .sidebar {
+      transform: translateX(-100%);
+    }
+  }
+}
+
