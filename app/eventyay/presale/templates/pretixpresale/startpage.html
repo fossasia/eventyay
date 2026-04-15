@@ -48,12 +48,12 @@
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'pretixpresale/js/startpage.js' %}"></script>
+            {% if request.user.is_authenticated %}
+                <script defer src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
+                <script defer src="{% static 'pretixcontrol/js/menu.js' %}"></script>
+                <script defer src="{% static 'pretixcontrol/js/sb-admin-2.js' %}"></script>
+            {% endif %}
         {% endcompress %}
-        {% if request.user.is_authenticated %}
-            <script type="text/javascript" src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
-            <script type="text/javascript" src="{% static 'pretixcontrol/js/menu.js' %}"></script>
-            <script type="text/javascript" src="{% static 'pretixcontrol/js/sb-admin-2.js' %}"></script>
-        {% endif %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
         {% else %}
