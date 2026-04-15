@@ -29,6 +29,10 @@ nav.navbar .navbar-header {
   padding: 0 0.25rem 0 0;
 }
 
+body.startpage-body:not(.sidebar-minimized) nav.navbar .navbar-header {
+  padding-left: 1rem;
+}
+
 nav.navbar .navbar-brand {
   align-items: center;
   color: #fff;
