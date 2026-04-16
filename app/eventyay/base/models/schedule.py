@@ -764,6 +764,7 @@ class Schedule(PretalxModel):
         *,
         include_featured_speaker_metadata=True,
         include_qr_codes=True,
+        _force_recompute=False,
     ):
         """Build schedule JSON for widgets and exports.
 
@@ -774,6 +775,11 @@ class Schedule(PretalxModel):
         ``include_qr_codes``: when False (video SPA embed), skip CPU-heavy SVG QR
         generation; ``exporters['qrcodes']`` is ``{}`` while export URLs stay the same.
 
+        ``_force_recompute``: when True, skip both fresh and stale cache checks and
+        always run a full computation.  Used by the Celery rebuild task and the cache
+        warmer so they always write fresh + stale entries instead of returning a stale
+        hit (which would otherwise cause infinite task re-enqueueing).
+
         Versioned (released) schedules are cached with a 1-hour safety TTL and
         invalidated via signals on relevant model changes. Favourite-count
         changes flush at most once per event every 30 minutes (see
@@ -782,7 +788,7 @@ class Schedule(PretalxModel):
         """
         use_cache = bool(self.version) and not filter_updated and not all_rooms
         stale_key = None
-        if use_cache:
+        if use_cache and not _force_recompute:
             language = get_language() or 'en'
             stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
             cache_key = schedule_json_cache_key(
@@ -803,14 +809,25 @@ class Schedule(PretalxModel):
             )
             stale = cache.get(stale_key)
             if stale is not None:
-                # Stale-while-revalidate: serve last known-good payload immediately;
-                # background task recomputes and writes fresh + stale keys.
+                # Stale-while-revalidate: serve last known-good payload immediately.
+                # The Celery rebuild task uses _force_recompute=True so it never lands
+                # here — no risk of infinite task re-enqueueing.
                 from eventyay.base.schedule_cache import rebuild_schedule_json_cache  # local: circular dep
                 try:
                     rebuild_schedule_json_cache.apply_async(args=[self.pk], countdown=1)
                 except Exception:
                     pass
                 return stale
+        elif use_cache:
+            # _force_recompute=True: still need language + keys for the write-back below.
+            language = get_language() or 'en'
+            stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
+            cache_key = schedule_json_cache_key(
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language, stamp
+            )
+            stale_key = schedule_json_stale_cache_key(
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language
+            )
 
         talks = self.talks.all()
         if not all_talks:
