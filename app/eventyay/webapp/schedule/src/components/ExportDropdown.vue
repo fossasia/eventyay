@@ -19,16 +19,25 @@
 				span.exporter-icon(v-if="option.icon")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", v-html="faIconSvg(option.icon)")
 				span.exporter-name {{ option.label }}
-	.qr-hover(v-if="hoveredOption && hoveredOption.qrcode_svg", :style="qrStyle", v-html="hoveredOption.qrcode_svg")
+	.qr-hover(v-if="hoveredOption && hoveredOption.url", :style="qrStyle")
+		.qr-spinner(v-if="qrLoading")
+			svg.spinner-svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+				path(d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83")
+		div(v-else-if="hoveredQrSvg", v-html="hoveredQrSvg")
 </template>
 
 <script>
+import QRCode from 'qrcode'
+
 const FA_SVG_MAP = {
 	'fa-calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
 	'fa-code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
 	'fa-google': '<circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/>',
 	'fa-star': '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
 }
+
+// Module-level cache: URL → SVG string. Computed once per browser session.
+const qrCache = new Map()
 
 export default {
 	name: 'ExportDropdown',
@@ -46,6 +55,8 @@ export default {
 		return {
 			isOpen: false,
 			hoveredOption: null,
+			hoveredQrSvg: null,
+			qrLoading: false,
 			menuStyle: {},
 			qrStyle: {}
 		}
@@ -78,6 +89,7 @@ export default {
 				this.$nextTick(() => this.positionMenu())
 			} else {
 				this.hoveredOption = null
+				this.hoveredQrSvg = null
 			}
 		},
 		positionMenu() {
@@ -90,23 +102,38 @@ export default {
 				right: `${window.innerWidth - rect.right}px`
 			}
 		},
-		onItemHover(event, option) {
+		async onItemHover(event, option) {
 			this.hoveredOption = option
-			if (!option.qrcode_svg) return
+			this.hoveredQrSvg = null
+			if (!option.url) return
+
 			const itemEl = event.currentTarget
 			const rect = itemEl.getBoundingClientRect()
-			// Position QR to the left of the menu item using fixed positioning
-			// QR box is ~144px wide (128px + 16px padding)
 			const qrWidth = 148
 			let left = rect.left - qrWidth - 4
-			// If it would go off the left edge, show to the right instead
-			if (left < 0) {
-				left = rect.right + 4
-			}
+			if (left < 0) left = rect.right + 4
 			this.qrStyle = {
 				position: 'fixed',
 				top: `${rect.top}px`,
 				left: `${left}px`
+			}
+
+			if (qrCache.has(option.url)) {
+				this.hoveredQrSvg = qrCache.get(option.url)
+				return
+			}
+
+			this.qrLoading = true
+			try {
+				const svg = await QRCode.toString(option.url, { type: 'svg', width: 128, margin: 1 })
+				qrCache.set(option.url, svg)
+				if (this.hoveredOption === option) {
+					this.hoveredQrSvg = svg
+				}
+			} catch (_) {
+				// silently skip if QR generation fails
+			} finally {
+				this.qrLoading = false
 			}
 		},
 		outsideClick(event) {
@@ -178,10 +205,30 @@ export default {
 		box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1)
 		z-index: 10001
 		pointer-events: none
+		width: 144px
+		height: 144px
+		display: flex
+		align-items: center
+		justify-content: center
 		svg
 			width: 128px
 			height: 128px
 			display: block
+	.qr-spinner
+		display: flex
+		align-items: center
+		justify-content: center
+		width: 128px
+		height: 128px
+		.spinner-svg
+			width: 32px
+			height: 32px
+			animation: qr-spin 1s linear infinite
+	@keyframes qr-spin
+		from
+			transform: rotate(0deg)
+		to
+			transform: rotate(360deg)
 	.fade-enter-active, .fade-leave-active
 		transition: opacity 0.3s
 	.fade-enter-from, .fade-leave-to

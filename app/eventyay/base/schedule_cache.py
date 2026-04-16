@@ -78,6 +78,7 @@ def rebuild_schedule_json_cache(schedule_pk: int) -> None:
             include_featured_speaker_metadata=are_featured_submissions_visible(
                 AnonymousUser(), schedule.event
             ),
+            include_qr_codes=False,
             _force_recompute=True,
         )
     logger.info('Rebuilt schedule JSON cache for schedule %s (event %s)', schedule_pk, schedule.event_id)
@@ -240,6 +241,7 @@ def warm_event_build_data_caches(*, max_events: int = 10) -> int:
                 include_featured_speaker_metadata=are_featured_submissions_visible(
                     AnonymousUser(), event
                 ),
+                include_qr_codes=False,
                 _force_recompute=True,
             )
         n += 1
