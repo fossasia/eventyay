@@ -164,7 +164,7 @@ class ExportForm(forms.Form):
             export.delay(
                 self.event.id,
                 str(cf.id),
-                self.Meta.model._meta.model_name
+                self.Meta.model._meta.model_name,
                 {
                     "fields": fields,
                     "questions": [q.pk for q in questions],
