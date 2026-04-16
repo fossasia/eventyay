@@ -1,5 +1,4 @@
 import io
-from collections import defaultdict
 from urllib.parse import quote, urlparse
 
 import vobject
@@ -47,16 +46,7 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
             .select_related('user', 'event', 'event__organizer')
             .order_by('user__fullname')
         )
-        qs = self.filter_queryset(qs)
-
-        speaker_mapping = defaultdict(list)
-        for talk in self.request.event.talks.all().prefetch_related('speakers'):
-            for speaker in talk.speakers.all():
-                speaker_mapping[speaker.code].append(talk)
-
-        for profile in qs:
-            profile.talks = speaker_mapping[profile.user.code]
-        return qs
+        return self.filter_queryset(qs)
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(**kwargs)
