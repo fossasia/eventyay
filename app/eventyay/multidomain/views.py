@@ -108,6 +108,7 @@ class VideoSPAView(View):
                         include_featured_speaker_metadata=are_featured_submissions_visible(
                             AnonymousUser(), event
                         ),
+                        include_qr_codes=False,
                     )
                     if schedule
                     else None

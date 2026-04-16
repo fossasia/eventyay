@@ -117,6 +117,15 @@ def test_build_data_enrich_exporters(event, slot):
 
 
 @pytest.mark.django_db
+def test_build_data_include_qr_codes_false_skips_qr_svgs(event, slot):
+    """include_qr_codes=False keeps export URLs but omits embedded SVG QR payloads."""
+    with scope(event=event):
+        data = slot.schedule.build_data(enrich=True, include_qr_codes=False)
+        talk = next(t for t in data["talks"] if t.get("code"))
+        assert talk["exporters"]["qrcodes"] == {}
+
+
+@pytest.mark.django_db
 def test_build_data_enrich_recording_iframe_empty(event, slot):
     """Without a recording provider, recording_iframe is empty string."""
     with scope(event=event):

@@ -10,6 +10,7 @@ from urllib.parse import quote
 from xml.etree.ElementTree import tostring as xml_tostring
 
 import qrcode as qr_lib
+from qrcode import constants as qr_constants
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models, transaction
@@ -72,7 +73,11 @@ def make_qr_svg(url: str) -> str:
     speakers); 16384 covers that while keeping worker RAM bounded in
     multi-tenant deployments.
     """
-    image = qr_lib.make(url, image_factory=SvgPathFillImage)
+    image = qr_lib.make(
+        url,
+        image_factory=SvgPathFillImage,
+        error_correction=qr_constants.ERROR_CORRECT_L,
+    )
     return xml_tostring(image.get_image()).decode()
 
 
@@ -750,12 +755,24 @@ class Schedule(PretalxModel):
         """
         cache.set(schedule_json_stamp_key(self.pk), time.time_ns(), timeout=None)
 
-    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False, *, include_featured_speaker_metadata=True,):
+    def build_data(
+        self,
+        all_talks=False,
+        filter_updated=None,
+        all_rooms=False,
+        enrich=False,
+        *,
+        include_featured_speaker_metadata=True,
+        include_qr_codes=True,
+    ):
         """Build schedule JSON for widgets and exports.
 
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
+
+        ``include_qr_codes``: when False (video SPA embed), skip CPU-heavy SVG QR
+        generation; ``exporters['qrcodes']`` is ``{}`` while export URLs stay the same.
 
         Versioned (released) schedules are cached with a 1-hour safety TTL and
         invalidated via signals on relevant model changes. Favourite-count
@@ -769,14 +786,20 @@ class Schedule(PretalxModel):
             language = get_language() or 'en'
             stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
             cache_key = schedule_json_cache_key(
-                self.pk, all_talks, enrich, include_featured_speaker_metadata, language, stamp
+                self.pk,
+                all_talks,
+                enrich,
+                include_featured_speaker_metadata,
+                include_qr_codes,
+                language,
+                stamp,
             )
             cached = cache.get(cache_key)
             if cached is not None:
                 return cached
 
             stale_key = schedule_json_stale_cache_key(
-                self.pk, all_talks, enrich, include_featured_speaker_metadata, language
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language
             )
             stale = cache.get(stale_key)
             if stale is not None:
@@ -840,10 +863,19 @@ class Schedule(PretalxModel):
                 .only('room_id', 'start_time', 'end_time', 'url', 'stream_type')
                 .order_by('start_time')
             )
+        _tz = timezone.get_current_timezone()
+
+        def _to_utc(dt):
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, _tz)
+            return dt.astimezone(UTC)
+
         stream_schedules_by_room = defaultdict(list)
         for ss in stream_schedules:
             if ss.room_id and ss.start_time and ss.end_time:
-                stream_schedules_by_room[ss.room_id].append(ss)
+                stream_schedules_by_room[ss.room_id].append(
+                    (_to_utc(ss.start_time), _to_utc(ss.end_time), ss.url, ss.stream_type)
+                )
         rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
@@ -905,35 +937,16 @@ class Schedule(PretalxModel):
                     'session_type': talk.submission.submission_type.name,
                     'content_locale': talk.submission.content_locale,
                 }
-                # Attach stream URL if a stream schedule overlaps this slot.
                 if talk.room_id and talk.start and talk.end:
                     schedules = stream_schedules_by_room.get(talk.room_id)
                     if schedules:
-                        slot_start = talk.start
-                        slot_end = talk.end
-                        if timezone.is_naive(slot_start):
-                            slot_start = timezone.make_aware(slot_start, timezone.get_current_timezone())
-                        if timezone.is_naive(slot_end):
-                            slot_end = timezone.make_aware(slot_end, timezone.get_current_timezone())
-                        slot_start = slot_start.astimezone(UTC)
-                        slot_end = slot_end.astimezone(UTC)
-
-                        match = None
-                        for ss in schedules:
-                            ss_start = ss.start_time
-                            ss_end = ss.end_time
-                            if timezone.is_naive(ss_start):
-                                ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
-                            if timezone.is_naive(ss_end):
-                                ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
-                            ss_start = ss_start.astimezone(UTC)
-                            ss_end = ss_end.astimezone(UTC)
+                        slot_start = _to_utc(talk.start)
+                        slot_end = _to_utc(talk.end)
+                        for ss_start, ss_end, stream_url, stream_type in schedules:
                             if ss_start < slot_end and ss_end > slot_start:
-                                match = ss
+                                talk_data['stream_url'] = stream_url
+                                talk_data['stream_type'] = stream_type
                                 break
-                        if match:
-                            talk_data['stream_url'] = match.url
-                            talk_data['stream_type'] = match.stream_type
                 if enrich:
                     talk_data['resources'] = [
                         {
@@ -966,15 +979,18 @@ class Schedule(PretalxModel):
                         'xcal': f'{base_url}talk/{code}.xcal',
                         'google_calendar': google_url,
                         'webcal': webcal_url,
-                        'qrcodes': {
+                    }
+                    if include_qr_codes:
+                        talk_data['exporters']['qrcodes'] = {
                             'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
                             'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
                             'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
                             'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
                             'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
                             'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
-                        },
-                    }
+                        }
+                    else:
+                        talk_data['exporters']['qrcodes'] = {}
                     recording_iframe = ''
                     for provider in recording_providers:
                         rec = provider.get_recording(talk.submission)
@@ -1058,15 +1074,18 @@ class Schedule(PretalxModel):
                     'xcal': f'{spk_base}/talks.xcal',
                     'google_calendar': spk_google,
                     'webcal': spk_webcal,
-                    'qrcodes': {
+                }
+                if include_qr_codes:
+                    speaker_data['exporters']['qrcodes'] = {
                         'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
                         'json': make_qr_svg(f'{spk_full_base}/talks.json'),
                         'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
                         'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
                         'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
                         'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-                    },
-                }
+                    }
+                else:
+                    speaker_data['exporters']['qrcodes'] = {}
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
 

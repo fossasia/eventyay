@@ -34,6 +34,7 @@ def schedule_json_cache_key(
     all_talks: bool,
     enrich: bool,
     include_featured_speaker_metadata: bool,
+    include_qr_codes: bool,
     language: str,
     stamp: int,
 ) -> str:
@@ -41,7 +42,7 @@ def schedule_json_cache_key(
     return (
         f'schedule_build_data_{schedule_pk}'
         f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
-        f'_{language}_v{stamp}'
+        f'_qr{int(include_qr_codes)}_{language}_v{stamp}'
     )
 
 
@@ -50,6 +51,7 @@ def schedule_json_stale_cache_key(
     all_talks: bool,
     enrich: bool,
     include_featured_speaker_metadata: bool,
+    include_qr_codes: bool,
     language: str,
 ) -> str:
     """Redis key for the last-known-good ``build_data()`` payload (no stamp — survives invalidation).
@@ -60,7 +62,7 @@ def schedule_json_stale_cache_key(
     return (
         f'schedule_build_data_stale_{schedule_pk}'
         f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
-        f'_{language}'
+        f'_qr{int(include_qr_codes)}_{language}'
     )
 
 
