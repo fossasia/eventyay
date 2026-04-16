@@ -98,6 +98,15 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
   line-height: 1.4;
 }
 
+/* Prevent page-level horizontal scrollbar on schedule pages. */
+body.page-agenda {
+  overflow-x: clip;
+}
+/* Same for html root in browsers that support :has(). */
+html:has(body.page-agenda) {
+  overflow-x: clip;
+}
+
 #main-container.list-schedule {
   min-width: 0;
 }
@@ -171,6 +180,9 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
 
 #main-container.main-schedule {
   margin: 0 auto;
+  /* clip (not hidden) so sticky positioning inside is not broken. */
+  overflow-x: clip;
+  max-width: min(1600px, 100vw);
   #main-card {
     margin: 0 auto;
     main {
@@ -179,7 +191,6 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
     }
   }
 
-  /* The container main now provides the 5px padding. We can set it to 0 or leave as minimal here. */
   pretalx-schedule[view="schedule"],
   #fahrplan {
     padding: 0 !important;
@@ -198,13 +209,24 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
 }
 
 #main-container #fahrplan {
-  overflow: visible;
+  /* auto makes #fahrplan the Vue component's scroll parent (findScrollParent
+   * skips clip/hidden); browser scrollbar hidden because the component
+   * renders its own custom scroll thumb. */
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   pretalx-schedule {
     display: block;
     width: 100%;
+    max-width: 100%;
     --pretalx-sticky-top-offset: 40px;
   }
 }

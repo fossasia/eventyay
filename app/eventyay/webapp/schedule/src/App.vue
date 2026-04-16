@@ -998,7 +998,8 @@ export default {
 		background: #fff
 		padding: 0
 		margin: 0
-		overflow: auto
+		overflow-y: auto
+		overflow-x: hidden
 		--pretalx-sticky-top-offset: 0px
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
