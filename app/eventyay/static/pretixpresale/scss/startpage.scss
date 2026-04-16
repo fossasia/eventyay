@@ -44,11 +44,19 @@ body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar {
   padding: 0.5rem;
 }
 
-body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:hover,
-body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:focus {
+body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:hover {
   background-color: transparent;
   color: rgba(255, 255, 255, 0.8);
-  outline: none;
+}
+
+body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:focus {
+  outline: 2px solid transparent;
+}
+
+body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar .fa-bars {

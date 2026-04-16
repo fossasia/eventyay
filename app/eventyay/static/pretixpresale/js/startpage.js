@@ -265,6 +265,32 @@
       event.preventDefault();
       setSidebarState(!isSidebarMinimized(), true);
     });
+
+    document.addEventListener('click', function (event) {
+      if (!isMobileView() || isSidebarMinimized()) {
+        return;
+      }
+      var target = event.target;
+      if (target.closest('.sidebar') || target.closest('#sidebar-toggle')) {
+        return;
+      }
+      setSidebarState(true, false);
+    });
+
+    sidebar.addEventListener('click', function (event) {
+      if (!isMobileView() || isSidebarMinimized()) {
+        return;
+      }
+      var link = event.target.closest('a[href]');
+      if (!link) {
+        return;
+      }
+      var href = (link.getAttribute('href') || '').trim();
+      if (!href || href.charAt(0) === '#') {
+        return;
+      }
+      setSidebarState(true, false);
+    });
   }
 
   function init() {
