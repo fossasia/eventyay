@@ -361,6 +361,8 @@ class Schedule(PretalxModel):
         room_avails=None,
         speaker_avails=None,
         speaker_profiles=None,
+        room_overlap_ids=None,
+        speaker_overlaps_by_talk=None,
     ) -> list:
         """A list of warnings that apply to this slot.
 
@@ -389,17 +391,20 @@ class Schedule(PretalxModel):
                         'url': url,
                     }
                 )
-        overlaps = (
-            TalkSlot.objects.filter(schedule=self, room=talk.room)
-            .filter(
-                models.Q(start__lt=talk.start, end__gt=talk.start)
-                | models.Q(start__lt=talk.real_end, end__gt=talk.real_end)
-                | models.Q(start__gt=talk.start, end__lt=talk.real_end)
-                | models.Q(start=talk.start, end=talk.real_end)
+        if room_overlap_ids is not None:
+            overlaps = talk.pk in room_overlap_ids
+        else:
+            overlaps = (
+                TalkSlot.objects.filter(schedule=self, room=talk.room)
+                .filter(
+                    models.Q(start__lt=talk.start, end__gt=talk.start)
+                    | models.Q(start__lt=talk.real_end, end__gt=talk.real_end)
+                    | models.Q(start__gt=talk.start, end__lt=talk.real_end)
+                    | models.Q(start=talk.start, end=talk.real_end)
+                )
+                .exclude(pk=talk.pk)
+                .exists()
             )
-            .exclude(pk=talk.pk)
-            .exists()
-        )
         if overlaps:
             warnings.append(
                 {
@@ -436,17 +441,20 @@ class Schedule(PretalxModel):
                             'url': url,
                         }
                     )
-            overlaps = (
-                TalkSlot.objects.filter(schedule=self, submission__speakers__in=[speaker])
-                .exclude(pk=talk.pk)
-                .filter(
-                    models.Q(start__lt=talk.start, end__gt=talk.start)
-                    | models.Q(start__lt=talk.real_end, end__gt=talk.real_end)
-                    | models.Q(start__gt=talk.start, end__lt=talk.real_end)
-                    | models.Q(start=talk.start, end=talk.real_end)
+            if speaker_overlaps_by_talk is not None:
+                overlaps = speaker.pk in speaker_overlaps_by_talk.get(talk.pk, ())
+            else:
+                overlaps = (
+                    TalkSlot.objects.filter(schedule=self, submission__speakers__in=[speaker])
+                    .exclude(pk=talk.pk)
+                    .filter(
+                        models.Q(start__lt=talk.start, end__gt=talk.start)
+                        | models.Q(start__lt=talk.real_end, end__gt=talk.real_end)
+                        | models.Q(start__gt=talk.start, end__lt=talk.real_end)
+                        | models.Q(start=talk.start, end=talk.real_end)
+                    )
+                    .exists()
                 )
-                .exists()
-            )
             if overlaps:
                 warnings.append(
                     {
@@ -497,18 +505,125 @@ class Schedule(PretalxModel):
                     for profile in SpeakerProfile.objects.filter(event=self.event).prefetch_related('availabilities')
                 },
             )
+        talk_list = list(talks)
+        # Only scan the rest of the schedule when we have a subset to emit for.
+        # This keeps the incremental `since=...` polling path cheap: if no talks
+        # were updated since the last poll, we do no extra work here.
+        if talk_list:
+            is_full_scan = not filter_updated
+            subset_pks = None if is_full_scan else {t.pk for t in talk_list}
+            # Include break slots (submission is null) in the scan set so that
+            # sessions conflicting with a scheduled break still produce a
+            # room_overlap warning — matching the per-talk ``.exists()`` query
+            # at get_talk_warnings() which scans all TalkSlots in the room.
+            extra_slots_qs = self.talks.filter(
+                start__isnull=False, room__isnull=False
+            ).select_related('submission').prefetch_related('submission__speakers')
+            if is_full_scan:
+                extra_slots_qs = extra_slots_qs.filter(submission__isnull=True)
+            else:
+                extra_slots_qs = extra_slots_qs.exclude(pk__in=subset_pks)
+            scan_set = talk_list + list(extra_slots_qs)
+            room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(
+                scan_set, subset_pks=subset_pks
+            )
+        else:
+            room_overlap_ids, speaker_overlaps_by_talk = set(), {}
         result = {}
-        for talk in talks:
+        for talk in talk_list:
             talk_warnings = self.get_talk_warnings(
                 talk=talk,
                 with_speakers=with_speakers,
                 room_avails=room_avails.get(talk.room_id) if talk.room_id else None,
                 speaker_avails=speaker_avails,
                 speaker_profiles=speaker_profiles,
+                room_overlap_ids=room_overlap_ids,
+                speaker_overlaps_by_talk=speaker_overlaps_by_talk,
             )
             if talk_warnings:
                 result[talk] = talk_warnings
         return result
+
+    def _compute_overlap_maps(self, talks, subset_pks=None):
+        """Compute room- and speaker-overlap sets for the given scheduled talks.
+
+        Replaces per-talk ``.exists()`` probes in ``get_talk_warnings`` with a single
+        scan over all scheduled slots and the prefetched speakers. Preserves the
+        original query's semantics: strict-inequality overlap plus exact-bounds match.
+
+        If ``subset_pks`` is provided, the ``talks`` argument is expected to contain
+        the full scan set (every relevant scheduled slot), while results are only
+        emitted for talks whose pk is in ``subset_pks``. This keeps overlap detection
+        schedule-wide even when the caller only wants warnings for a subset.
+
+        Caller contract: every element of ``talks`` must have ``submission`` selected
+        and ``submission__speakers`` prefetched; otherwise iterating speakers here
+        regresses to an N+1. Break slots (``submission_id`` is NULL) are allowed and
+        contribute to room-overlap detection only.
+        """
+
+        def is_overlap(a_start, a_end, b_start, b_end):
+            return (
+                (b_start < a_start and b_end > a_start)
+                or (b_start < a_end and b_end > a_end)
+                or (b_start > a_start and b_end < a_end)
+                or (b_start == a_start and b_end == a_end)
+            )
+
+        by_room = defaultdict(list)
+        by_speaker = defaultdict(list)
+        for talk in talks:
+            entry = (talk.pk, talk.start, talk.real_end)
+            if talk.room_id:
+                by_room[talk.room_id].append(entry)
+            # Break slots have no submission/speakers — they contribute to
+            # room-overlap detection only.
+            if talk.submission_id:
+                for speaker in talk.submission.speakers.all():
+                    by_speaker[speaker.pk].append(entry)
+
+        room_overlap_ids = set()
+        speaker_overlaps_by_talk = defaultdict(set)
+
+        if subset_pks is None:
+            # Full-schedule scan: O(bucket²) pairwise check per room/speaker.
+            for entries in by_room.values():
+                for i, (pk_a, start_a, end_a) in enumerate(entries):
+                    for pk_b, start_b, end_b in entries[i + 1:]:
+                        if is_overlap(start_a, end_a, start_b, end_b):
+                            room_overlap_ids.add(pk_a)
+                            room_overlap_ids.add(pk_b)
+            for speaker_pk, entries in by_speaker.items():
+                for i, (pk_a, start_a, end_a) in enumerate(entries):
+                    for pk_b, start_b, end_b in entries[i + 1:]:
+                        if is_overlap(start_a, end_a, start_b, end_b):
+                            speaker_overlaps_by_talk[pk_a].add(speaker_pk)
+                            speaker_overlaps_by_talk[pk_b].add(speaker_pk)
+            return room_overlap_ids, speaker_overlaps_by_talk
+
+        # Subset scan: only probe subset talks against their own room/speaker
+        # buckets. Scales with |subset| × bucket size, not |schedule|².
+        for entries in by_room.values():
+            for pk_a, start_a, end_a in entries:
+                if pk_a not in subset_pks:
+                    continue
+                for pk_b, start_b, end_b in entries:
+                    if pk_b == pk_a:
+                        continue
+                    if is_overlap(start_a, end_a, start_b, end_b):
+                        room_overlap_ids.add(pk_a)
+                        break
+        for speaker_pk, entries in by_speaker.items():
+            for pk_a, start_a, end_a in entries:
+                if pk_a not in subset_pks:
+                    continue
+                for pk_b, start_b, end_b in entries:
+                    if pk_b == pk_a:
+                        continue
+                    if is_overlap(start_a, end_a, start_b, end_b):
+                        speaker_overlaps_by_talk[pk_a].add(speaker_pk)
+                        break
+        return room_overlap_ids, speaker_overlaps_by_talk
 
     @cached_property
     def warnings(self) -> dict:
