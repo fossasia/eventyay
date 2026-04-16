@@ -6,7 +6,7 @@ from django import forms
 from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from i18nfield.utils import I18nJSONEncod
+from i18nfield.utils import I18nJSONEncoder
 from eventyay.orga.tasks import run_csv_export
 from eventyay.base.models import CachedFile
 from django.utils.timezone import now
