@@ -67,11 +67,10 @@ if TYPE_CHECKING:
 def make_qr_svg(url: str) -> str:
     """Generate an SVG QR code string for the given URL.
 
-    Results are cached because the same export URLs are generated on every
-    schedule page load and QR encoding is CPU-intensive. The cache needs to
-    be large enough to hold (6 exports × talks) + (6 exports × speakers)
-    entries for the biggest event on a given process; 512 thrashed on
-    mid-sized events.
+    LRU-cached: QR encoding is CPU-heavy and the same export URLs repeat across
+    pages. Large events need enough slots for (6 formats × talks) + (6 ×
+    speakers); 16384 covers that while keeping worker RAM bounded in
+    multi-tenant deployments.
     """
     image = qr_lib.make(url, image_factory=SvgPathFillImage)
     return xml_tostring(image.get_image()).decode()
@@ -976,7 +975,6 @@ class Schedule(PretalxModel):
                             'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
                         },
                     }
-                    # Recording iframe from provider plugins
                     recording_iframe = ''
                     for provider in recording_providers:
                         rec = provider.get_recording(talk.submission)
@@ -1028,7 +1026,8 @@ class Schedule(PretalxModel):
             ).select_related('user')
         }
         for user in speakers:
-            profile = speaker_profiles.get(user.pk) or user.event_profile(self.event)
+            # Avoid calling user.event_profile() which issues a DB query (and may save) per miss.
+            profile = speaker_profiles.get(user.pk) or SpeakerProfile(event=self.event, user=user)
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
