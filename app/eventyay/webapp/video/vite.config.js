@@ -140,6 +140,7 @@ export default defineConfig(({ mode }) => {
           'node_modules/markdown-it-multimd-table'
         ),
         dompurify: path.resolve(__dirname, 'node_modules/dompurify'),
+        qrcode: path.resolve(__dirname, 'node_modules/qrcode'),
         // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
         sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
       }

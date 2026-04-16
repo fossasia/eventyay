@@ -71,7 +71,7 @@ class Command(BaseCommand):
                     if not settings.SENTRY_ENABLED:
                         traceback.print_exc()
                 else:
-                    if options.get('verbosity') > 1:
+                    if verbosity > 1:
                         if r is SKIPPED:
                             self.stdout.write(self.style.SUCCESS(f'INFO Skipped {name}'))
                         else:

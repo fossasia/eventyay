@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from collections import defaultdict, namedtuple
 from contextlib import suppress
@@ -63,6 +64,7 @@ if TYPE_CHECKING:
     from .room import Room
     from .track import Track
 
+logger = logging.getLogger(__name__)
 
 @lru_cache(maxsize=16384)
 def make_qr_svg(url: str) -> str:
@@ -780,11 +782,12 @@ class Schedule(PretalxModel):
         warmer so they always write fresh + stale entries instead of returning a stale
         hit (which would otherwise cause infinite task re-enqueueing).
 
-        Versioned (released) schedules are cached with a 1-hour safety TTL and
-        invalidated via signals on relevant model changes. Favourite-count
-        changes flush at most once per event every 30 minutes (see
-        ``eventyay.base.schedule_cache``). WIP schedules, incremental
-        (``filter_updated``), and ``all_rooms`` calls bypass the cache entirely.
+        Versioned (released) schedules are cached in Redis with a random lifetime
+        between 24 and 48 hours per write; signals bump a stamp so edits take
+        effect immediately. Favourite-driven invalidation is throttled to about
+        once per event per hour with jitter (see ``eventyay.base.schedule_cache``).
+        WIP schedules, incremental (``filter_updated``), and ``all_rooms`` calls
+        bypass the cache entirely.
         """
         use_cache = bool(self.version) and not filter_updated and not all_rooms
         backup_key = None
@@ -809,12 +812,30 @@ class Schedule(PretalxModel):
             )
             backup = cache.get(backup_key)
             if backup is not None:
-                from eventyay.base.schedule_cache import rebuild_schedule_json_cache  # local: circular dep
-                try:
-                    rebuild_schedule_json_cache.apply_async(args=[self.pk], countdown=1)
-                except Exception:
-                    pass
-                return backup
+                if getattr(settings, 'HAS_CELERY', False):
+                    lock_key = f'schedule_json_rebuild_fill_lock:{cache_key}'
+                    if cache.add(lock_key, 1, timeout=90):
+                        from eventyay.base.schedule_cache import rebuild_schedule_json_cache  # local: circular dep
+                        try:
+                            rebuild_schedule_json_cache.apply_async(
+                                kwargs={
+                                    'schedule_pk': self.pk,
+                                    'all_talks': all_talks,
+                                    'enrich': enrich,
+                                    'include_featured_speaker_metadata': include_featured_speaker_metadata,
+                                    'include_qr_codes': include_qr_codes,
+                                    'language': language,
+                                },
+                                countdown=1,
+                            )
+                        except Exception:
+                            logger.warning(
+                                'Could not enqueue schedule JSON cache rebuild for schedule %s',
+                                self.pk,
+                                exc_info=True,
+                            )
+                            cache.delete(lock_key)
+                    return backup
         elif use_cache:
             language = get_language() or 'en'
             stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)

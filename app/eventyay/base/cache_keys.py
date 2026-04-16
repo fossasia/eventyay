@@ -57,7 +57,7 @@ def schedule_json_backup_key(
 ) -> str:
     """Key for the last-known-good schedule JSON that survives stamp invalidation."""
     return (
-        f'schedule_build_data_backup_{schedule_pk}'
+        f'schedule_build_data_stale_{schedule_pk}'
         f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
         f'_qr{int(include_qr_codes)}_{language}'
     )

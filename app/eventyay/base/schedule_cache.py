@@ -47,20 +47,30 @@ def released_schedules_for_event(event_id: int) -> list[Schedule]:
 
     with scopes_disabled():
         return list(
-            Schedule.objects.filter(event_id=event_id, version__isnull=False).only(
-                'pk', 'event_id', 'version'
+            Schedule.objects.filter(event_id=event_id, version__isnull=False).select_related(
+                'event', 'event__organizer'
             )
         )
 
 
 @app.task(name='eventyay.base.rebuild_schedule_json_cache', ignore_result=True)
-def rebuild_schedule_json_cache(schedule_pk: int) -> None:
-    """Recompute and warm the ``build_data`` cache for a single released schedule.
+def rebuild_schedule_json_cache(
+    schedule_pk: int,
+    *,
+    all_talks: bool = False,
+    enrich: bool = True,
+    include_featured_speaker_metadata: bool | None = None,
+    include_qr_codes: bool = False,
+    language: str | None = None,
+) -> None:
+    """Recompute ``build_data`` for one released schedule and write fresh + backup cache entries.
 
-    Reads the current stamp at execution time so concurrent rebuilds for the
-    same schedule are naturally idempotent: the first worker to finish writes
-    the cache; any later worker for the same stamp gets an immediate hit.
+    Keyword arguments must match the ``build_data`` variant that missed the cache
+    (same stamp dimensions), otherwise the background job would not fill the key
+    the next browser request expects.
     """
+    from django.utils import translation
+
     from eventyay.base.models.schedule import Schedule  # local import: circular dependency
 
     with scopes_disabled():
@@ -72,27 +82,58 @@ def rebuild_schedule_json_cache(schedule_pk: int) -> None:
     if not schedule:
         return
 
-    with scope(event=schedule.event):
-        schedule.build_data(
-            all_talks=False,
-            enrich=True,
-            include_featured_speaker_metadata=are_featured_submissions_visible(
-                AnonymousUser(), schedule.event
-            ),
-            include_qr_codes=False,
-            _force_recompute=True,
-        )
+    meta = include_featured_speaker_metadata
+    if meta is None:
+        meta = are_featured_submissions_visible(AnonymousUser(), schedule.event)
+    lang = language or getattr(settings, 'LANGUAGE_CODE', 'en')
+
+    with translation.override(lang):
+        with scope(event=schedule.event):
+            schedule.build_data(
+                all_talks=all_talks,
+                enrich=enrich,
+                include_featured_speaker_metadata=meta,
+                include_qr_codes=include_qr_codes,
+                _force_recompute=True,
+            )
     logger.info('Rebuilt schedule JSON cache for schedule %s (event %s)', schedule_pk, schedule.event_id)
 
 
 def invalidate_released_schedule_caches(schedules: Iterable[Schedule]) -> None:
     """Invalidate ``build_data`` cache entries, refresh video HTML stamps, and enqueue background rebuilds."""
+    schedules = list(schedules)
+    if not schedules:
+        return
+    events_by_id = {
+        e.pk: e
+        for e in Event.objects.filter(pk__in={s.event_id for s in schedules}).select_related('organizer')
+    }
     for schedule in schedules:
         schedule.invalidate_build_data_cache()
         refresh_video_html_cache_stamp(schedule.event_id, schedule.version)
         if getattr(settings, 'HAS_CELERY', False):
+            event = events_by_id.get(schedule.event_id)
+            if event is None:
+                logger.warning(
+                    'Skipping cache rebuild enqueue: event %s missing for schedule %s',
+                    schedule.event_id,
+                    schedule.pk,
+                )
+                continue
             try:
-                rebuild_schedule_json_cache.apply_async(args=[schedule.pk], countdown=1)
+                rebuild_schedule_json_cache.apply_async(
+                    kwargs={
+                        'schedule_pk': schedule.pk,
+                        'all_talks': False,
+                        'enrich': True,
+                        'include_featured_speaker_metadata': are_featured_submissions_visible(
+                            AnonymousUser(), event
+                        ),
+                        'include_qr_codes': False,
+                        'language': getattr(settings, 'LANGUAGE_CODE', 'en'),
+                    },
+                    countdown=1,
+                )
             except Exception:
                 logger.warning('Could not enqueue cache rebuild for schedule %s', schedule.pk, exc_info=True)
 
@@ -114,7 +155,7 @@ def invalidate_on_submission_change(sender, instance, **kwargs):
         schedules = list(
             Schedule.objects.filter(talks__submission=instance, version__isnull=False)
             .distinct()
-            .only('pk', 'event_id', 'version')
+            .select_related('event', 'event__organizer')
         )
     invalidate_released_schedule_caches(schedules)
 
@@ -128,7 +169,7 @@ def invalidate_on_speakerrole_change(sender, instance, **kwargs):
         schedules = list(
             Schedule.objects.filter(talks__submission=instance.submission, version__isnull=False)
             .distinct()
-            .only('pk', 'event_id', 'version')
+            .select_related('event', 'event__organizer')
         )
     invalidate_released_schedule_caches(schedules)
 
@@ -142,7 +183,7 @@ def invalidate_on_resource_change(sender, instance, **kwargs):
         schedules = list(
             Schedule.objects.filter(talks__submission=instance.submission, version__isnull=False)
             .distinct()
-            .only('pk', 'event_id', 'version')
+            .select_related('event', 'event__organizer')
         )
     invalidate_released_schedule_caches(schedules)
 
@@ -158,7 +199,7 @@ def invalidate_on_answer_change(sender, instance, **kwargs):
         schedules = list(
             Schedule.objects.filter(talks__submission_id=instance.submission_id, version__isnull=False)
             .distinct()
-            .only('pk', 'event_id', 'version')
+            .select_related('event', 'event__organizer')
         )
     invalidate_released_schedule_caches(schedules)
 
@@ -272,13 +313,13 @@ def warm_video_spa_pages(*, max_events: int = 10) -> int:
     for event in Event.objects.select_related('organizer').order_by('-id').iterator(chunk_size=100):
         with scope(event=event):
             schedule = event.current_schedule
-        if not schedule or not schedule.version:
-            continue
-        path = '/%s/%s/video/' % (event.organizer.slug, event.slug)
-        request = rf.get(path, secure=(site_scheme == 'https'))
-        request.user = AnonymousUser()
-        request.LANGUAGE_CODE = getattr(settings, 'LANGUAGE_CODE', 'en')
-        view(request, organizer=event.organizer.slug, event=event.slug)
+            if not schedule or not schedule.version:
+                continue
+            path = '/%s/%s/video/' % (event.organizer.slug, event.slug)
+            request = rf.get(path, secure=(site_scheme == 'https'))
+            request.user = AnonymousUser()
+            request.LANGUAGE_CODE = getattr(settings, 'LANGUAGE_CODE', 'en')
+            view(request, organizer=event.organizer.slug, event=event.slug)
         n += 1
         if n >= max_events:
             break
@@ -286,7 +327,7 @@ def warm_video_spa_pages(*, max_events: int = 10) -> int:
     return n
 
 
-_periodic_warm_next_run_key = 'eventyay.periodic_warm_public_caches_next_ts'
+periodic_warm_public_caches_next_run_key = 'eventyay.periodic_warm_public_caches_next_ts'
 
 
 @receiver(signal=periodic_task)
@@ -297,7 +338,7 @@ def periodic_warm_public_caches(sender, **kwargs) -> object | None:
     scheduled a next timestamp.  Edits still invalidate immediately via signals.
     """
     now = time.time()
-    raw = cache.get(_periodic_warm_next_run_key)
+    raw = cache.get(periodic_warm_public_caches_next_run_key)
     if raw is not None:
         try:
             if now < float(raw):
@@ -307,5 +348,5 @@ def periodic_warm_public_caches(sender, **kwargs) -> object | None:
     warm_event_build_data_caches(max_events=20)
     warm_video_spa_pages(max_events=15)
     delay = random.randint(24 * 3600, 48 * 3600)
-    cache.set(_periodic_warm_next_run_key, now + delay, timeout=delay + 600)
+    cache.set(periodic_warm_public_caches_next_run_key, now + delay, timeout=delay + 600)
     return None

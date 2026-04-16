@@ -20,7 +20,7 @@
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", v-html="faIconSvg(option.icon)")
 				span.exporter-name {{ option.label }}
 	.qr-hover(v-if="hoveredOption && hoveredOption.url", :style="qrStyle")
-		.qr-spinner(v-if="qrLoading")
+		.qr-spinner(v-if="qrLoadingUrl && hoveredOption.url === qrLoadingUrl")
 			svg.spinner-svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				path(d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83")
 		div(v-else-if="hoveredQrSvg", v-html="hoveredQrSvg")
@@ -56,7 +56,7 @@ export default {
 			isOpen: false,
 			hoveredOption: null,
 			hoveredQrSvg: null,
-			qrLoading: false,
+			qrLoadingUrl: null,
 			menuStyle: {},
 			qrStyle: {}
 		}
@@ -90,6 +90,7 @@ export default {
 			} else {
 				this.hoveredOption = null
 				this.hoveredQrSvg = null
+				this.qrLoadingUrl = null
 			}
 		},
 		positionMenu() {
@@ -120,20 +121,24 @@ export default {
 
 			if (qrCache.has(option.url)) {
 				this.hoveredQrSvg = qrCache.get(option.url)
+				this.qrLoadingUrl = null
 				return
 			}
 
-			this.qrLoading = true
+			const url = option.url
+			this.qrLoadingUrl = url
 			try {
-				const svg = await QRCode.toString(option.url, { type: 'svg', width: 128, margin: 1 })
-				qrCache.set(option.url, svg)
+				const svg = await QRCode.toString(url, { type: 'svg', width: 128, margin: 1 })
+				qrCache.set(url, svg)
 				if (this.hoveredOption === option) {
 					this.hoveredQrSvg = svg
 				}
 			} catch (_) {
 				// silently skip if QR generation fails
 			} finally {
-				this.qrLoading = false
+				if (this.qrLoadingUrl === url) {
+					this.qrLoadingUrl = null
+				}
 			}
 		},
 		outsideClick(event) {
