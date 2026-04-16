@@ -23,6 +23,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
+from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
@@ -116,7 +117,7 @@ class VideoSPAView(View):
                 'externalAuthUrl': getattr(event, 'external_auth_url', None),
                 'locale': event.locale,
                 'date_locale': cfg.get('date_locale', 'en-ie'),
-                'theme': cfg.get('theme', {}),
+                'theme': build_video_theme_for_event(event),
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
                 'schedule': schedule_data,
