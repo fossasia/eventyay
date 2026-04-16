@@ -555,6 +555,11 @@ class Schedule(PretalxModel):
         the full scan set (every relevant scheduled slot), while results are only
         emitted for talks whose pk is in ``subset_pks``. This keeps overlap detection
         schedule-wide even when the caller only wants warnings for a subset.
+
+        Caller contract: every element of ``talks`` must have ``submission`` selected
+        and ``submission__speakers`` prefetched; otherwise iterating speakers here
+        regresses to an N+1. Break slots (``submission_id`` is NULL) are allowed and
+        contribute to room-overlap detection only.
         """
 
         def is_overlap(a_start, a_end, b_start, b_end):
@@ -599,10 +604,9 @@ class Schedule(PretalxModel):
         # Subset scan: only probe subset talks against their own room/speaker
         # buckets. Scales with |subset| × bucket size, not |schedule|².
         for entries in by_room.values():
-            subset_entries = [e for e in entries if e[0] in subset_pks]
-            if not subset_entries:
-                continue
-            for pk_a, start_a, end_a in subset_entries:
+            for pk_a, start_a, end_a in entries:
+                if pk_a not in subset_pks:
+                    continue
                 for pk_b, start_b, end_b in entries:
                     if pk_b == pk_a:
                         continue
@@ -610,10 +614,9 @@ class Schedule(PretalxModel):
                         room_overlap_ids.add(pk_a)
                         break
         for speaker_pk, entries in by_speaker.items():
-            subset_entries = [e for e in entries if e[0] in subset_pks]
-            if not subset_entries:
-                continue
-            for pk_a, start_a, end_a in subset_entries:
+            for pk_a, start_a, end_a in entries:
+                if pk_a not in subset_pks:
+                    continue
                 for pk_b, start_b, end_b in entries:
                     if pk_b == pk_a:
                         continue
