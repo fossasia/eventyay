@@ -37,8 +37,10 @@ from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from eventyay.base.cache_keys import (
+    SCHEDULE_JSON_STALE_CACHE_LIFETIME,
     schedule_json_cache_key,
     schedule_json_cache_timeout_secs,
+    schedule_json_stale_cache_key,
     schedule_json_stamp_key,
     video_html_stamp_key,
 )
@@ -763,6 +765,7 @@ class Schedule(PretalxModel):
         (``filter_updated``), and ``all_rooms`` calls bypass the cache entirely.
         """
         use_cache = bool(self.version) and not filter_updated and not all_rooms
+        stale_key = None
         if use_cache:
             language = get_language() or 'en'
             stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
@@ -772,6 +775,20 @@ class Schedule(PretalxModel):
             cached = cache.get(cache_key)
             if cached is not None:
                 return cached
+
+            stale_key = schedule_json_stale_cache_key(
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, language
+            )
+            stale = cache.get(stale_key)
+            if stale is not None:
+                # Stale-while-revalidate: serve last known-good payload immediately;
+                # background task recomputes and writes fresh + stale keys.
+                from eventyay.base.schedule_cache import rebuild_schedule_json_cache  # local: circular dep
+                try:
+                    rebuild_schedule_json_cache.apply_async(args=[self.pk], countdown=1)
+                except Exception:
+                    pass
+                return stale
 
         talks = self.talks.all()
         if not all_talks:
@@ -1056,6 +1073,7 @@ class Schedule(PretalxModel):
 
         if use_cache:
             cache.set(cache_key, result, timeout=schedule_json_cache_timeout_secs())
+            cache.set(stale_key, result, timeout=int(SCHEDULE_JSON_STALE_CACHE_LIFETIME.total_seconds()))
 
         return result
 

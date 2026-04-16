@@ -4,6 +4,14 @@
 * **Video page HTML** — anonymous ``/…/video/`` HTML shell (includes host-specific websocket URL).
 
 Each has its own key helpers and expiry (Django ``cache.set(..., timeout=…)`` uses seconds).
+
+Stale-while-revalidate
+----------------------
+Every successful ``build_data()`` call also writes a *stale* copy under
+``schedule_json_stale_cache_key()``.  The stale key has no stamp component
+so it survives ``invalidate_build_data_cache()`` intact.  On a fresh-cache
+miss the view returns the stale payload immediately and enqueues a Celery
+rebuild, ensuring no user ever waits for recomputation.
 """
 
 import random
@@ -11,6 +19,7 @@ from datetime import timedelta
 
 # Base lifetimes before ±15 min jitter is applied in *_timeout_secs().
 SCHEDULE_JSON_CACHE_LIFETIME = timedelta(hours=1)
+SCHEDULE_JSON_STALE_CACHE_LIFETIME = timedelta(hours=24)
 VIDEO_HTML_CACHE_LIFETIME = timedelta(hours=1)
 FAVOURITE_FLUSH_THROTTLE = timedelta(minutes=30)
 
@@ -33,6 +42,25 @@ def schedule_json_cache_key(
         f'schedule_build_data_{schedule_pk}'
         f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
         f'_{language}_v{stamp}'
+    )
+
+
+def schedule_json_stale_cache_key(
+    schedule_pk: int,
+    all_talks: bool,
+    enrich: bool,
+    include_featured_speaker_metadata: bool,
+    language: str,
+) -> str:
+    """Redis key for the last-known-good ``build_data()`` payload (no stamp — survives invalidation).
+
+    Used by stale-while-revalidate: returned instantly on a fresh-cache miss while
+    the Celery rebuild task recomputes in the background.
+    """
+    return (
+        f'schedule_build_data_stale_{schedule_pk}'
+        f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
+        f'_{language}'
     )
 
 
