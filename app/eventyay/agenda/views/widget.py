@@ -3,6 +3,7 @@ import os
 from urllib.parse import unquote
 
 from csp.decorators import csp_exempt
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.staticfiles import finders
 from django.http import Http404, HttpResponse, JsonResponse
 from django.views.decorators.cache import cache_page
@@ -10,6 +11,7 @@ from django.views.decorators.http import condition
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.talk_rules.agenda import is_widget_visible
+from eventyay.talk_rules.submission import (are_featured_submissions_visible, schedule_widget_featured_cache_key_part)
 from eventyay.common.views import conditional_cache_page
 
 WIDGET_JS_CHECKSUM = None
@@ -59,11 +61,13 @@ def is_public_and_versioned(request, organizer=None, event=None, version=None, *
 
 
 def version_prefix(request, organizer=None, event=None, version=None, **kwargs):
-    """On non-versioned pages, we want cache-invalidation on schedule
-    release."""
+    """On non-versioned pages, invalidate cache on schedule release and featured-setting changes."""
+    featured_part = schedule_widget_featured_cache_key_part(request.event)
     if not version and request.event.current_schedule:
-        return request.event.current_schedule.version
-    return version
+        return f'{request.event.current_schedule.version}-{featured_part}'
+    if version:
+        return f'{version}-{featured_part}'
+    return f'nov-{featured_part}'
 
 
 @conditional_cache_page(
@@ -115,7 +119,10 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
     if not schedule:
         raise Http404()
 
-    result = schedule.build_data(all_talks=not schedule.version)
+    result = schedule.build_data(
+        all_talks=not schedule.version,
+        include_featured_speaker_metadata=are_featured_submissions_visible(AnonymousUser(), event),
+    )
     response = JsonResponse(result, encoder=I18nJSONEncoder)
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
     response['Access-Control-Allow-Origin'] = '*'
