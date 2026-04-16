@@ -52,12 +52,15 @@ if TYPE_CHECKING:
     from .track import Track
 
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=16384)
 def make_qr_svg(url: str) -> str:
     """Generate an SVG QR code string for the given URL.
 
     Results are cached because the same export URLs are generated on every
-    schedule page load and QR encoding is CPU-intensive.
+    schedule page load and QR encoding is CPU-intensive. The cache needs to
+    be large enough to hold (6 exports × talks) + (6 exports × speakers)
+    entries for the biggest event on a given process; 512 thrashed on
+    mid-sized events.
     """
     image = qr_lib.make(url, image_factory=SvgPathFillImage)
     return xml_tostring(image.get_image()).decode()
@@ -808,22 +811,31 @@ class Schedule(PretalxModel):
         show_do_not_record = self.event.cfp.request_do_not_record
         base_url = str(self.event.urls.base)
         full_base_url = str(self.event.urls.base.full())
+        # Resolve recording providers once; providers are event-level, not per-talk.
+        recording_providers = []
+        if enrich:
+            for __, response in register_recording_provider.send_robust(self.event):
+                if (
+                    response
+                    and not isinstance(response, Exception)
+                    and getattr(response, 'get_recording', None)
+                ):
+                    recording_providers.append(response)
         for talk in talk_list:
             # Only add room if it's not deleted
             if talk.room and not talk.room.deleted:
                 rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)
-                speakers |= set(talk.submission.speakers.all())
+                talk_speakers = list(talk.submission.speakers.all())
+                speakers.update(talk_speakers)
                 talk_data = {
-                    'code': talk.submission.code if talk.submission else None,
+                    'code': talk.submission.code,
                     'id': talk.id,
-                    'title': (talk.submission.title if talk.submission else talk.description),
-                    'abstract': (talk.submission.abstract if talk.submission else None),
-                    'description': (talk.submission.description if talk.submission else None),
-                    'speakers': (
-                        [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
-                    ),
+                    'title': talk.submission.title,
+                    'abstract': talk.submission.abstract,
+                    'description': talk.submission.description,
+                    'speakers': [speaker.code for speaker in talk_speakers],
                     'track': talk.submission.track_id if talk.submission else None,
                     'start': talk.local_start,
                     'end': talk.local_end,
@@ -913,16 +925,11 @@ class Schedule(PretalxModel):
                     }
                     # Recording iframe from provider plugins
                     recording_iframe = ''
-                    for __, response in register_recording_provider.send_robust(self.event):
-                        if (
-                            response
-                            and not isinstance(response, Exception)
-                            and getattr(response, 'get_recording', None)
-                        ):
-                            rec = response.get_recording(talk.submission)
-                            if rec and rec.get('iframe'):
-                                recording_iframe = rec['iframe']
-                                break
+                    for provider in recording_providers:
+                        rec = provider.get_recording(talk.submission)
+                        if rec and rec.get('iframe'):
+                            recording_iframe = rec['iframe']
+                            break
                     talk_data['recording_iframe'] = recording_iframe
                 result['talks'].append(talk_data)
             else:
