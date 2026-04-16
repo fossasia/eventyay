@@ -800,7 +800,7 @@ class EventRefundExportListView(EventPermissionRequiredMixin, RefundExportListVi
             order__event=self.request.event,
             provider__in=['banktransfer', 'sepadebit'],
             state=OrderRefund.REFUND_STATE_CREATED,
-            order__testmode=self.request.event.testmode,
+            order__testmode=self.request.event.testmode or self.request.event.private_testmode_tickets_enabled,
         )
 
 
