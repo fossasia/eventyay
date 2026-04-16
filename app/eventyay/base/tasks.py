@@ -5,6 +5,7 @@ This module imports all Celery tasks from the services package so they can be
 registered with the Celery worker via autodiscover_tasks().
 """
 
+from eventyay.base.schedule_cache import rebuild_schedule_json_cache  # noqa: F401
 from eventyay.base.services import (  # noqa: F401
     cancelevent,
     cart,

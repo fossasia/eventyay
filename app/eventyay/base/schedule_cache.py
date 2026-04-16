@@ -25,6 +25,7 @@ from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.models.submission import Submission, SubmissionFavourite, SpeakerRole
 from eventyay.base.models.track import Track
 from eventyay.base.signals import periodic_task
+from eventyay.celery_app import app
 from eventyay.common.signals import minimum_interval
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
@@ -51,11 +52,46 @@ def released_schedules_for_event(event_id: int) -> list[Schedule]:
         )
 
 
+@app.task(name='eventyay.base.rebuild_schedule_json_cache', ignore_result=True)
+def rebuild_schedule_json_cache(schedule_pk: int) -> None:
+    """Recompute and warm the ``build_data`` cache for a single released schedule.
+
+    Reads the current stamp at execution time so concurrent rebuilds for the
+    same schedule are naturally idempotent: the first worker to finish writes
+    the cache; any later worker for the same stamp gets an immediate hit.
+    """
+    from eventyay.base.models.schedule import Schedule  # local import: circular dependency
+
+    with scopes_disabled():
+        schedule = (
+            Schedule.objects.filter(pk=schedule_pk, version__isnull=False)
+            .select_related('event__organizer')
+            .first()
+        )
+    if not schedule:
+        return
+
+    with scope(event=schedule.event):
+        schedule.build_data(
+            all_talks=False,
+            enrich=True,
+            include_featured_speaker_metadata=are_featured_submissions_visible(
+                AnonymousUser(), schedule.event
+            ),
+        )
+    logger.info('Rebuilt schedule JSON cache for schedule %s (event %s)', schedule_pk, schedule.event_id)
+
+
 def invalidate_released_schedule_caches(schedules: Iterable[Schedule]) -> None:
-    """Invalidate ``build_data`` cache entries and refresh video SPA HTML stamps for each schedule."""
+    """Invalidate ``build_data`` cache entries, refresh video HTML stamps, and enqueue background rebuilds."""
     for schedule in schedules:
         schedule.invalidate_build_data_cache()
         refresh_video_html_cache_stamp(schedule.event_id, schedule.version)
+        if getattr(settings, 'HAS_CELERY', False):
+            try:
+                rebuild_schedule_json_cache.apply_async(args=[schedule.pk], countdown=1)
+            except Exception:
+                logger.warning('Could not enqueue cache rebuild for schedule %s', schedule.pk, exc_info=True)
 
 
 @receiver(post_save, sender=TalkSlot, dispatch_uid='schedule_cache_talkslot_save')
@@ -63,9 +99,8 @@ def invalidate_released_schedule_caches(schedules: Iterable[Schedule]) -> None:
 def invalidate_on_talkslot_change(sender, instance, **kwargs):
     with scopes_disabled():
         schedule = instance.schedule
-        if schedule.version:
-            schedule.invalidate_build_data_cache()
-            refresh_video_html_cache_stamp(schedule.event_id, schedule.version)
+    if schedule.version:
+        invalidate_released_schedule_caches([schedule])
 
 
 @receiver(post_save, sender=Submission, dispatch_uid='schedule_cache_submission_save')
@@ -190,14 +225,14 @@ def invalidate_on_submissionfavourite_change(sender, instance, **kwargs):
     invalidate_released_schedule_caches(released_schedules_for_event(event_id))
 
 
-def warm_event_build_data_caches(*, max_events: int = 25) -> int:
+def warm_event_build_data_caches(*, max_events: int = 10) -> int:
     """Populate ``Schedule.build_data`` cache for released current schedules."""
     n = 0
     for event in Event.objects.select_related('organizer').order_by('-id').iterator(chunk_size=100):
-        schedule = event.current_schedule
-        if not schedule or not schedule.version:
-            continue
         with scope(event=event):
+            schedule = event.current_schedule
+            if not schedule or not schedule.version:
+                continue
             schedule.build_data(
                 all_talks=False,
                 enrich=True,
@@ -212,7 +247,7 @@ def warm_event_build_data_caches(*, max_events: int = 25) -> int:
     return n
 
 
-def warm_video_spa_pages(*, max_events: int = 25) -> int:
+def warm_video_spa_pages(*, max_events: int = 10) -> int:
     """Populate anonymous video SPA HTML cache using the configured SITE_URL host.
 
     The cache key is host+scheme aware; warming uses settings.SITE_URL so the
@@ -230,7 +265,8 @@ def warm_video_spa_pages(*, max_events: int = 25) -> int:
 
     n = 0
     for event in Event.objects.select_related('organizer').order_by('-id').iterator(chunk_size=100):
-        schedule = event.current_schedule
+        with scope(event=event):
+            schedule = event.current_schedule
         if not schedule or not schedule.version:
             continue
         path = '/%s/%s/video/' % (event.organizer.slug, event.slug)
@@ -248,5 +284,5 @@ def warm_video_spa_pages(*, max_events: int = 25) -> int:
 @receiver(signal=periodic_task)
 @minimum_interval(minutes_after_success=50, minutes_after_error=5)
 def periodic_warm_public_caches(sender, **kwargs) -> None:
-    warm_event_build_data_caches(max_events=50)
-    warm_video_spa_pages(max_events=30)
+    warm_event_build_data_caches(max_events=20)
+    warm_video_spa_pages(max_events=15)

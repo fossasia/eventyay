@@ -747,7 +747,7 @@ class Schedule(PretalxModel):
 
         Old entries expire naturally via TTL; no key enumeration required.
         """
-        cache.set(schedule_json_stamp_key(self.pk), int(time.time()), timeout=None)
+        cache.set(schedule_json_stamp_key(self.pk), time.time_ns(), timeout=None)
 
     def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False, *, include_featured_speaker_metadata=True,):
         """Build schedule JSON for widgets and exports.
