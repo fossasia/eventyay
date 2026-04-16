@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from collections import defaultdict, namedtuple
 from contextlib import suppress
 from datetime import UTC
@@ -17,6 +18,7 @@ from django.db.utils import DatabaseError
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
+from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes import scope
@@ -34,6 +36,13 @@ from eventyay.talk_rules.orga import can_view_speaker_names
 from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
+from eventyay.base.cache_keys import (
+    schedule_json_cache_key,
+    schedule_json_cache_timeout_secs,
+    schedule_json_stamp_key,
+    video_html_stamp_key,
+)
+
 from .auth import (
     User,
 )
@@ -46,8 +55,6 @@ from .profile import SpeakerProfile
 from .slot import TalkSlot
 from .stream_schedule import StreamSchedule
 from .submission import Submission, SubmissionFavourite, SubmissionStates
-
-BUILD_DATA_CACHE_SECONDS = 60 * 60
 
 if TYPE_CHECKING:
     from .room import Room
@@ -168,9 +175,7 @@ class Schedule(PretalxModel):
         schedule_release.send_robust(self.event, schedule=self, user=user)
 
         self.invalidate_build_data_cache()
-        ts = now().timestamp()
-        cache.set(f'video_spa_html_stamp_{self.event_id}_{self.version or "none"}', ts, timeout=None)
-        cache.set(f'video_spa_html_stamp_{self.event_id}_none', ts, timeout=None)
+        cache.set(video_html_stamp_key(self.event_id, self.version), time.time(), timeout=None)
 
         if self.event.get_feature_flag('export_html_on_release'):
             if not settings.CELERY_TASK_ALWAYS_EAGER:
@@ -737,18 +742,12 @@ class Schedule(PretalxModel):
 
         return self != self.event.current_schedule
 
-    @staticmethod
-    def _build_data_cache_key(schedule_pk, all_talks, enrich, include_featured_speaker_metadata):
-        return (
-            f'schedule_build_data_{schedule_pk}'
-            f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
-        )
+    def invalidate_build_data_cache(self) -> None:
+        """Bump the per-schedule stamp, making all cached build_data entries unreachable.
 
-    def invalidate_build_data_cache(self):
-        for all_talks in (True, False):
-            for enrich in (True, False):
-                for fs in (True, False):
-                    cache.delete(self._build_data_cache_key(self.pk, all_talks, enrich, fs))
+        Old entries expire naturally via TTL; no key enumeration required.
+        """
+        cache.set(schedule_json_stamp_key(self.pk), int(time.time()), timeout=None)
 
     def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False, *, include_featured_speaker_metadata=True,):
         """Build schedule JSON for widgets and exports.
@@ -765,7 +764,11 @@ class Schedule(PretalxModel):
         """
         use_cache = bool(self.version) and not filter_updated and not all_rooms
         if use_cache:
-            cache_key = self._build_data_cache_key(self.pk, all_talks, enrich, include_featured_speaker_metadata)
+            language = get_language() or 'en'
+            stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
+            cache_key = schedule_json_cache_key(
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, language, stamp
+            )
             cached = cache.get(cache_key)
             if cached is not None:
                 return cached
@@ -1052,7 +1055,7 @@ class Schedule(PretalxModel):
         result['speakers'] = speaker_list
 
         if use_cache:
-            cache.set(cache_key, result, timeout=BUILD_DATA_CACHE_SECONDS)
+            cache.set(cache_key, result, timeout=schedule_json_cache_timeout_secs())
 
         return result
 

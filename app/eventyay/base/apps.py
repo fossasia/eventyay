@@ -12,7 +12,6 @@ class EventyayBaseConfig(AppConfig):
         from . import invoice  # NOQA
         from . import notifications  # NOQA
         from . import email  # NOQA
-        from . import cache_warm  # NOQA
         from . import schedule_cache  # NOQA
         from django.conf import settings
 

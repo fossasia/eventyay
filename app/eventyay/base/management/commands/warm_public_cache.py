@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from eventyay.base import cache_warm
+from eventyay.base.schedule_cache import warm_event_build_data_caches, warm_video_spa_pages
 
 
 class Command(BaseCommand):
@@ -20,8 +20,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, limit: int, video: bool, **options):
-        n_sched = cache_warm.warm_event_build_data_caches(max_events=limit)
+        n_sched = warm_event_build_data_caches(max_events=limit)
         self.stdout.write(self.style.SUCCESS('Warmed build_data for %s events' % n_sched))
         if video:
-            n_vid = cache_warm.warm_video_spa_pages(max_events=min(limit, 80))
+            n_vid = warm_video_spa_pages(max_events=min(limit, 80))
             self.stdout.write(self.style.SUCCESS('Warmed video SPA HTML for %s events' % n_vid))
