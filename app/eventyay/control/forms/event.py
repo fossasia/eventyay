@@ -749,6 +749,58 @@ class EventSettingsForm(SettingsForm):
                 self.initial[virtual_key] = 'do_not_ask'
 
 
+class GeneralEventSettingsForm(EventSettingsForm):
+    """
+    Settings form used on the general event settings page.
+
+    Keep this list limited to fields rendered there so saving that page
+    cannot overwrite dedicated order-form settings.
+    """
+
+    auto_fields = [
+        'checkout_email_helptext',
+        'presale_has_ended_text',
+        'voucher_explanation_text',
+        'checkout_success_text',
+        'show_dates_on_frontpage',
+        'show_date_to',
+        'show_times',
+        'show_products_outside_presale_period',
+        'display_net_prices',
+        'presale_start_show_date',
+        'show_quota_left',
+        'waiting_list_enabled',
+        'waiting_list_hours',
+        'waiting_list_auto',
+        'waiting_list_names_asked',
+        'waiting_list_names_required',
+        'waiting_list_phones_asked',
+        'waiting_list_phones_required',
+        'waiting_list_phones_explanation_text',
+        'max_products_per_order',
+        'reservation_time',
+        'show_variations_expanded',
+        'hide_sold_out',
+        'meta_noindex',
+        'redirect_to_checkout_directly',
+        'frontpage_subevent_ordering',
+        'event_list_type',
+        'event_list_available_only',
+        'event_info_text',
+        'checkout_phone_helptext',
+        'banner_text',
+        'banner_text_bottom',
+        'allow_modifications',
+        'last_order_modification_date',
+        'allow_modifications_after_checkin',
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('name_scheme', None)
+        self.fields.pop('name_scheme_titles', None)
+
+
 class OrderFormSettingsForm(EventSettingsForm):
     """
     Settings form used on the dedicated order-forms page.
