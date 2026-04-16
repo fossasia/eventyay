@@ -6,8 +6,9 @@ from django.core.cache import cache
 from django_scopes import scope
 
 from eventyay.base.cache_keys import (
-    FAVOURITE_FLUSH_THROTTLE,
-    SCHEDULE_JSON_CACHE_LIFETIME,
+    SCHEDULE_JSON_CACHE_TTL_MAX_SEC,
+    SCHEDULE_JSON_CACHE_TTL_MIN_SEC,
+    favourite_flush_throttle_timeout_secs,
     schedule_json_cache_key,
     schedule_json_cache_timeout_secs,
     schedule_json_stamp_key,
@@ -28,16 +29,20 @@ class TestCacheKeys:
         assert '7' in key
         assert 'v1.0' in key
 
-    def test_schedule_json_cache_lifetime_is_positive(self):
-        assert SCHEDULE_JSON_CACHE_LIFETIME.total_seconds() > 0
+    def test_schedule_json_cache_ttl_bounds(self):
+        for _ in range(30):
+            t = schedule_json_cache_timeout_secs()
+            assert SCHEDULE_JSON_CACHE_TTL_MIN_SEC <= t <= SCHEDULE_JSON_CACHE_TTL_MAX_SEC
 
     def test_cache_timeouts_never_below_sixty_seconds(self):
         for _ in range(30):
             assert schedule_json_cache_timeout_secs() >= 60
             assert video_html_cache_timeout_secs() >= 60
 
-    def test_favourite_flush_throttle_is_positive(self):
-        assert FAVOURITE_FLUSH_THROTTLE.total_seconds() > 0
+    def test_favourite_flush_throttle_in_expected_range(self):
+        for _ in range(30):
+            t = favourite_flush_throttle_timeout_secs()
+            assert 45 * 60 <= t <= 75 * 60
 
 
 @pytest.mark.django_db
