@@ -1,18 +1,14 @@
-"""
-Tests for released schedule JSON cache (``Schedule.build_data()``) and invalidation signals.
-"""
+"""Tests for released schedule JSON cache (``Schedule.build_data()``) and invalidation signals."""
 import pytest
 from django.core.cache import cache
 from django_scopes import scope
 
 from eventyay.base.cache_keys import (
-    SCHEDULE_JSON_CACHE_TTL_MAX_SEC,
-    SCHEDULE_JSON_CACHE_TTL_MIN_SEC,
-    favourite_flush_throttle_timeout_secs,
     schedule_json_cache_key,
-    schedule_json_cache_timeout_secs,
+    schedule_json_expire_seconds,
     schedule_json_stamp_key,
-    video_html_cache_timeout_secs,
+    star_flush_delay_seconds,
+    video_html_expire_seconds,
     video_html_stamp_key,
 )
 
@@ -29,19 +25,19 @@ class TestCacheKeys:
         assert '7' in key
         assert 'v1.0' in key
 
-    def test_schedule_json_cache_ttl_bounds(self):
+    def test_schedule_json_expire_seconds_in_range(self):
         for _ in range(30):
-            t = schedule_json_cache_timeout_secs()
-            assert SCHEDULE_JSON_CACHE_TTL_MIN_SEC <= t <= SCHEDULE_JSON_CACHE_TTL_MAX_SEC
+            t = schedule_json_expire_seconds()
+            assert 24 * 3600 <= t <= 48 * 3600
 
-    def test_cache_timeouts_never_below_sixty_seconds(self):
+    def test_cache_expire_seconds_never_below_sixty(self):
         for _ in range(30):
-            assert schedule_json_cache_timeout_secs() >= 60
-            assert video_html_cache_timeout_secs() >= 60
+            assert schedule_json_expire_seconds() >= 60
+            assert video_html_expire_seconds() >= 60
 
-    def test_favourite_flush_throttle_in_expected_range(self):
+    def test_star_flush_delay_in_expected_range(self):
         for _ in range(30):
-            t = favourite_flush_throttle_timeout_secs()
+            t = star_flush_delay_seconds()
             assert 45 * 60 <= t <= 75 * 60
 
 

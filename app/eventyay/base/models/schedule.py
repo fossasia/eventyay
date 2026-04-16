@@ -38,10 +38,10 @@ from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from eventyay.base.cache_keys import (
-    SCHEDULE_JSON_STALE_CACHE_LIFETIME,
+    schedule_json_backup_expire_seconds,
+    schedule_json_backup_key,
     schedule_json_cache_key,
-    schedule_json_cache_timeout_secs,
-    schedule_json_stale_cache_key,
+    schedule_json_expire_seconds,
     schedule_json_stamp_key,
     video_html_stamp_key,
 )
@@ -787,7 +787,7 @@ class Schedule(PretalxModel):
         (``filter_updated``), and ``all_rooms`` calls bypass the cache entirely.
         """
         use_cache = bool(self.version) and not filter_updated and not all_rooms
-        stale_key = None
+        backup_key = None
         if use_cache and not _force_recompute:
             language = get_language() or 'en'
             stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
@@ -804,28 +804,24 @@ class Schedule(PretalxModel):
             if cached is not None:
                 return cached
 
-            stale_key = schedule_json_stale_cache_key(
+            backup_key = schedule_json_backup_key(
                 self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language
             )
-            stale = cache.get(stale_key)
-            if stale is not None:
-                # Stale-while-revalidate: serve last known-good payload immediately.
-                # The Celery rebuild task uses _force_recompute=True so it never lands
-                # here — no risk of infinite task re-enqueueing.
+            backup = cache.get(backup_key)
+            if backup is not None:
                 from eventyay.base.schedule_cache import rebuild_schedule_json_cache  # local: circular dep
                 try:
                     rebuild_schedule_json_cache.apply_async(args=[self.pk], countdown=1)
                 except Exception:
                     pass
-                return stale
+                return backup
         elif use_cache:
-            # _force_recompute=True: still need language + keys for the write-back below.
             language = get_language() or 'en'
             stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
             cache_key = schedule_json_cache_key(
                 self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language, stamp
             )
-            stale_key = schedule_json_stale_cache_key(
+            backup_key = schedule_json_backup_key(
                 self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language
             )
 
@@ -1107,8 +1103,8 @@ class Schedule(PretalxModel):
         result['speakers'] = speaker_list
 
         if use_cache:
-            cache.set(cache_key, result, timeout=schedule_json_cache_timeout_secs())
-            cache.set(stale_key, result, timeout=int(SCHEDULE_JSON_STALE_CACHE_LIFETIME.total_seconds()))
+            cache.set(cache_key, result, timeout=schedule_json_expire_seconds())
+            cache.set(backup_key, result, timeout=schedule_json_backup_expire_seconds())
 
         return result
 

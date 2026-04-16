@@ -14,7 +14,7 @@ from django.dispatch import receiver
 from django.test import RequestFactory
 from django_scopes import scope, scopes_disabled
 
-from eventyay.base.cache_keys import favourite_flush_throttle_timeout_secs, video_html_stamp_key
+from eventyay.base.cache_keys import star_flush_delay_seconds, video_html_stamp_key
 from eventyay.base.models import Event
 from eventyay.base.models.cfp import CfP
 from eventyay.base.models.profile import SpeakerProfile
@@ -223,7 +223,7 @@ def invalidate_on_submissionfavourite_change(sender, instance, **kwargs):
     with scopes_disabled():
         event_id = instance.submission.event_id
     throttle_key = f'schedule_fav_flush_throttle_{event_id}'
-    if not cache.add(throttle_key, 1, timeout=favourite_flush_throttle_timeout_secs()):
+    if not cache.add(throttle_key, 1, timeout=star_flush_delay_seconds()):
         return
     invalidate_released_schedule_caches(released_schedules_for_event(event_id))
 
@@ -286,7 +286,7 @@ def warm_video_spa_pages(*, max_events: int = 10) -> int:
     return n
 
 
-PERIODIC_WARM_NEXT_TS_KEY = 'eventyay.periodic_warm_public_caches_next_ts'
+_periodic_warm_next_run_key = 'eventyay.periodic_warm_public_caches_next_ts'
 
 
 @receiver(signal=periodic_task)
@@ -297,7 +297,7 @@ def periodic_warm_public_caches(sender, **kwargs) -> object | None:
     scheduled a next timestamp.  Edits still invalidate immediately via signals.
     """
     now = time.time()
-    raw = cache.get(PERIODIC_WARM_NEXT_TS_KEY)
+    raw = cache.get(_periodic_warm_next_run_key)
     if raw is not None:
         try:
             if now < float(raw):
@@ -307,6 +307,5 @@ def periodic_warm_public_caches(sender, **kwargs) -> object | None:
     warm_event_build_data_caches(max_events=20)
     warm_video_spa_pages(max_events=15)
     delay = random.randint(24 * 3600, 48 * 3600)
-    nxt = now + delay
-    cache.set(PERIODIC_WARM_NEXT_TS_KEY, nxt, timeout=delay + 600)
+    cache.set(_periodic_warm_next_run_key, now + delay, timeout=delay + 600)
     return None

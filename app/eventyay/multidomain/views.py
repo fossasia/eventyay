@@ -24,7 +24,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.cache_keys import (
     video_html_cache_key,
-    video_html_cache_timeout_secs,
+    video_html_expire_seconds,
     video_html_stamp_key,
 )
 from eventyay.base.models.room import AnonymousInvite
@@ -238,7 +238,7 @@ class VideoSPAView(View):
             if not request.user.is_authenticated and _page_cache_key:
                 if '<base ' not in html_content.lower():
                     html_content = html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
-                cache.set(_page_cache_key, html_content, timeout=video_html_cache_timeout_secs())
+                cache.set(_page_cache_key, html_content, timeout=video_html_expire_seconds())
                 resp = HttpResponse(html_content, content_type='text/html')
                 resp._csp_ignore = True
                 return resp
