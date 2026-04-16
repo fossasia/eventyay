@@ -139,7 +139,13 @@ class ExportForm(forms.Form):
         queryset = self.get_queryset()
 
         if not queryset.exists():
-            return
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "No data to export.",
+                },
+                status=400
+            )
 
         # Extract selected fields
         fields = [f for f in self.export_field_names if self.cleaned_data.get(f)]
@@ -158,8 +164,8 @@ class ExportForm(forms.Form):
             export.delay(
                 self.event.id,
                 str(cf.id),
-                self.Meta.model._meta.model_name,
-                form_data={
+                self.Meta.model._meta.model_name
+                {
                     "fields": fields,
                     "questions": [q.pk for q in questions],
                     "delimiter": self.cleaned_data.get("data_delimiter"),
@@ -170,7 +176,7 @@ class ExportForm(forms.Form):
                 {
                     "status": "processing",
                     "file_id": str(cf.id),
-                    "message": "Export started",
+                    "message": "Export started. Use file_id to check status.",
                 },
                 status=202
             )
@@ -181,7 +187,13 @@ class ExportForm(forms.Form):
         data = self.get_data(queryset, fields, questions)
 
         if not data:
-            return
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "No data to export.",
+                },
+                status=400
+            )
 
         return self.json_export(data)
 
