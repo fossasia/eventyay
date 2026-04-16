@@ -506,18 +506,29 @@ class Schedule(PretalxModel):
                 },
             )
         talk_list = list(talks)
-        # Scan ALL scheduled slots for overlaps so that a filtered subset (via
-        # filter_updated or similar) still detects conflicts with slots outside
-        # the subset — matching the original per-talk query semantics.
-        all_scheduled = list(
-            self.talks.filter(start__isnull=False, room__isnull=False, submission__isnull=False)
-            .select_related('submission')
-            .prefetch_related('submission__speakers')
-        )
-        subset_pks = {t.pk for t in talk_list}
-        room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(
-            all_scheduled, subset_pks=subset_pks
-        )
+        # Only scan the rest of the schedule when we have a subset to emit for.
+        # This keeps the incremental `since=...` polling path cheap: if no talks
+        # were updated since the last poll, we do no extra work here.
+        if talk_list:
+            is_full_scan = not filter_updated
+            subset_pks = None if is_full_scan else {t.pk for t in talk_list}
+            # Include break slots (submission is null) in the scan set so that
+            # sessions conflicting with a scheduled break still produce a
+            # room_overlap warning — matching the per-talk ``.exists()`` query
+            # at get_talk_warnings() which scans all TalkSlots in the room.
+            extra_slots_qs = self.talks.filter(
+                start__isnull=False, room__isnull=False
+            ).select_related('submission').prefetch_related('submission__speakers')
+            if is_full_scan:
+                extra_slots_qs = extra_slots_qs.filter(submission__isnull=True)
+            else:
+                extra_slots_qs = extra_slots_qs.exclude(pk__in=subset_pks)
+            scan_set = talk_list + list(extra_slots_qs)
+            room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(
+                scan_set, subset_pks=subset_pks
+            )
+        else:
+            room_overlap_ids, speaker_overlaps_by_talk = set(), {}
         result = {}
         for talk in talk_list:
             talk_warnings = self.get_talk_warnings(
@@ -560,31 +571,55 @@ class Schedule(PretalxModel):
             entry = (talk.pk, talk.start, talk.real_end)
             if talk.room_id:
                 by_room[talk.room_id].append(entry)
-            for speaker in talk.submission.speakers.all():
-                by_speaker[speaker.pk].append(entry + (speaker.pk,))
-
-        def should_emit(pk):
-            return subset_pks is None or pk in subset_pks
+            # Break slots have no submission/speakers — they contribute to
+            # room-overlap detection only.
+            if talk.submission_id:
+                for speaker in talk.submission.speakers.all():
+                    by_speaker[speaker.pk].append(entry)
 
         room_overlap_ids = set()
-        for entries in by_room.values():
-            for i, (pk_a, start_a, end_a) in enumerate(entries):
-                for pk_b, start_b, end_b in entries[i + 1:]:
-                    if is_overlap(start_a, end_a, start_b, end_b):
-                        if should_emit(pk_a):
-                            room_overlap_ids.add(pk_a)
-                        if should_emit(pk_b):
-                            room_overlap_ids.add(pk_b)
-
         speaker_overlaps_by_talk = defaultdict(set)
-        for entries in by_speaker.values():
-            for i, (pk_a, start_a, end_a, sp) in enumerate(entries):
-                for pk_b, start_b, end_b, _sp in entries[i + 1:]:
+
+        if subset_pks is None:
+            # Full-schedule scan: O(bucket²) pairwise check per room/speaker.
+            for entries in by_room.values():
+                for i, (pk_a, start_a, end_a) in enumerate(entries):
+                    for pk_b, start_b, end_b in entries[i + 1:]:
+                        if is_overlap(start_a, end_a, start_b, end_b):
+                            room_overlap_ids.add(pk_a)
+                            room_overlap_ids.add(pk_b)
+            for speaker_pk, entries in by_speaker.items():
+                for i, (pk_a, start_a, end_a) in enumerate(entries):
+                    for pk_b, start_b, end_b in entries[i + 1:]:
+                        if is_overlap(start_a, end_a, start_b, end_b):
+                            speaker_overlaps_by_talk[pk_a].add(speaker_pk)
+                            speaker_overlaps_by_talk[pk_b].add(speaker_pk)
+            return room_overlap_ids, speaker_overlaps_by_talk
+
+        # Subset scan: only probe subset talks against their own room/speaker
+        # buckets. Scales with |subset| × bucket size, not |schedule|².
+        for entries in by_room.values():
+            subset_entries = [e for e in entries if e[0] in subset_pks]
+            if not subset_entries:
+                continue
+            for pk_a, start_a, end_a in subset_entries:
+                for pk_b, start_b, end_b in entries:
+                    if pk_b == pk_a:
+                        continue
                     if is_overlap(start_a, end_a, start_b, end_b):
-                        if should_emit(pk_a):
-                            speaker_overlaps_by_talk[pk_a].add(sp)
-                        if should_emit(pk_b):
-                            speaker_overlaps_by_talk[pk_b].add(sp)
+                        room_overlap_ids.add(pk_a)
+                        break
+        for speaker_pk, entries in by_speaker.items():
+            subset_entries = [e for e in entries if e[0] in subset_pks]
+            if not subset_entries:
+                continue
+            for pk_a, start_a, end_a in subset_entries:
+                for pk_b, start_b, end_b in entries:
+                    if pk_b == pk_a:
+                        continue
+                    if is_overlap(start_a, end_a, start_b, end_b):
+                        speaker_overlaps_by_talk[pk_a].add(speaker_pk)
+                        break
         return room_overlap_ids, speaker_overlaps_by_talk
 
     @cached_property
