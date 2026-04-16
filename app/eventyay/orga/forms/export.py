@@ -132,14 +132,8 @@ class ExportForm(forms.Form):
         except Exception:
             pass
 
-        # Limit fields fetched
-        try:
-            queryset = queryset.only(*fields)
-        except Exception:
-            pass
-
         # Safety limit
-        if queryset[:10001].count() > 10000:
+        if queryset.count() > 10000:
             return HttpResponse(
                 "Export too large. Please narrow filters or use async export."
             ) 
