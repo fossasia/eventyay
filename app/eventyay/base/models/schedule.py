@@ -506,7 +506,18 @@ class Schedule(PretalxModel):
                 },
             )
         talk_list = list(talks)
-        room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(talk_list)
+        # Scan ALL scheduled slots for overlaps so that a filtered subset (via
+        # filter_updated or similar) still detects conflicts with slots outside
+        # the subset — matching the original per-talk query semantics.
+        all_scheduled = list(
+            self.talks.filter(start__isnull=False, room__isnull=False, submission__isnull=False)
+            .select_related('submission')
+            .prefetch_related('submission__speakers')
+        )
+        subset_pks = {t.pk for t in talk_list}
+        room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(
+            all_scheduled, subset_pks=subset_pks
+        )
         result = {}
         for talk in talk_list:
             talk_warnings = self.get_talk_warnings(
@@ -522,12 +533,17 @@ class Schedule(PretalxModel):
                 result[talk] = talk_warnings
         return result
 
-    def _compute_overlap_maps(self, talks):
+    def _compute_overlap_maps(self, talks, subset_pks=None):
         """Compute room- and speaker-overlap sets for the given scheduled talks.
 
         Replaces per-talk ``.exists()`` probes in ``get_talk_warnings`` with a single
         scan over all scheduled slots and the prefetched speakers. Preserves the
         original query's semantics: strict-inequality overlap plus exact-bounds match.
+
+        If ``subset_pks`` is provided, the ``talks`` argument is expected to contain
+        the full scan set (every relevant scheduled slot), while results are only
+        emitted for talks whose pk is in ``subset_pks``. This keeps overlap detection
+        schedule-wide even when the caller only wants warnings for a subset.
         """
 
         def is_overlap(a_start, a_end, b_start, b_end):
@@ -547,21 +563,28 @@ class Schedule(PretalxModel):
             for speaker in talk.submission.speakers.all():
                 by_speaker[speaker.pk].append(entry + (speaker.pk,))
 
+        def should_emit(pk):
+            return subset_pks is None or pk in subset_pks
+
         room_overlap_ids = set()
         for entries in by_room.values():
             for i, (pk_a, start_a, end_a) in enumerate(entries):
                 for pk_b, start_b, end_b in entries[i + 1:]:
                     if is_overlap(start_a, end_a, start_b, end_b):
-                        room_overlap_ids.add(pk_a)
-                        room_overlap_ids.add(pk_b)
+                        if should_emit(pk_a):
+                            room_overlap_ids.add(pk_a)
+                        if should_emit(pk_b):
+                            room_overlap_ids.add(pk_b)
 
         speaker_overlaps_by_talk = defaultdict(set)
         for entries in by_speaker.values():
             for i, (pk_a, start_a, end_a, sp) in enumerate(entries):
                 for pk_b, start_b, end_b, _sp in entries[i + 1:]:
                     if is_overlap(start_a, end_a, start_b, end_b):
-                        speaker_overlaps_by_talk[pk_a].add(sp)
-                        speaker_overlaps_by_talk[pk_b].add(sp)
+                        if should_emit(pk_a):
+                            speaker_overlaps_by_talk[pk_a].add(sp)
+                        if should_emit(pk_b):
+                            speaker_overlaps_by_talk[pk_b].add(sp)
         return room_overlap_ids, speaker_overlaps_by_talk
 
     @cached_property
