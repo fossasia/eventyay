@@ -16,6 +16,7 @@ from eventyay.orga.views import (
     submission,
     typeahead,
 )
+from eventyay.orga.views import export_status as export_views
 
 
 app_name = 'orga'
@@ -535,6 +536,16 @@ urlpatterns = [
                     'mails/outbox/purge',
                     mails.OutboxPurge.as_view(),
                     name='mails.outbox.purge',
+                ),
+                path(
+                    'export/status/<uuid:job_id>/',
+                    export_views.export_status,
+                    name='export.status',
+                ),  
+                path(
+                    'export/download/<uuid:job_id>/',
+                    export_views.export_download,
+                name='export.download',
                 ),
             ]
         ),

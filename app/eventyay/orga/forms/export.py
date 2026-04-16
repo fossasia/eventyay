@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.models import CachedFile
-from eventyay.base.services.export import export
+from eventyay.orga.tasks import run_csv_export
 from eventyay.common.text.phrases import phrases
 
 
@@ -161,16 +161,16 @@ class ExportForm(forms.Form):
                 expires=now() + timedelta(hours=24),
             )
 
-            export.delay(
+            run_csv_export.delay(
                 self.event.id,
                 str(cf.id),
-                self.Meta.model._meta.model_name,
-                {
+                f'{self.__class__.__module__}.{self.__class__.__qualname__}',
+               { 
                     "fields": fields,
                     "questions": [q.pk for q in questions],
                     "delimiter": self.cleaned_data.get("data_delimiter"),
                 }
-            )
+           )
 
             return JsonResponse(
                 {
