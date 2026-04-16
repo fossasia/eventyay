@@ -3,6 +3,19 @@ server {
 
 	access_log /var/log/nginx/<SERVER_NAME>-access.log;
     error_log /var/log/nginx/<SERVER_NAME>-error.log;
+
+	gzip on;
+	gzip_vary on;
+	gzip_proxied any;
+	gzip_comp_level 6;
+	gzip_types
+		text/plain
+		text/css
+		text/javascript
+		application/javascript
+		application/json
+		image/svg+xml;
+	gzip_min_length 1024;
 	
 	set $cors_origin "";
     set $cors_allowed_origin 0;
@@ -81,8 +94,16 @@ server {
 		proxy_redirect off;
   	}
 
+	location ~* ^/static/.+\.[0-9a-f]{8,}\.(js|css|woff2?|ttf|eot|png|svg|ico)$ {
+		root <PATH_TO>/data;
+		access_log off;
+		add_header Cache-Control "public, max-age=31536000, immutable" always;
+	}
+
 	location /static/ {
 		alias <PATH_TO>/data/static/;
+		access_log off;
+		add_header Cache-Control "public, max-age=3600" always;
 	}
 
 	location /media/ {
