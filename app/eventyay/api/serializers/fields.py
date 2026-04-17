@@ -1,7 +1,12 @@
 from collections import OrderedDict
 
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
+from django.core.validators import URLValidator
+from hierarkey.proxy import HierarkeyProxy
 from rest_framework import serializers
+
+from eventyay.common.urls import get_file_url_path, get_url_scheme, is_http_url, normalize_url_scheme
 
 
 def remove_duplicates_from_list(data):
@@ -70,3 +75,41 @@ class UploadedFileField(serializers.Field):
             return None
         request = self.context['request']
         return request.build_absolute_uri(url)
+
+
+class UploadedFileOrURLField(UploadedFileField):
+    default_error_messages = {
+        **UploadedFileField.default_error_messages,
+        'invalid_url': 'Enter a valid URL.',
+    }
+
+    def get_attribute(self, instance):
+        if isinstance(instance, HierarkeyProxy):
+            return instance.get(self.source_attrs[-1], as_type=str, default=None)
+        return super().get_attribute(instance)
+
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            if is_http_url(data):
+                data = normalize_url_scheme(data)
+                try:
+                    URLValidator(schemes=['http', 'https'])(data)
+                except ValidationError:
+                    self.fail('invalid_url')
+                return data
+            if get_url_scheme(data) and not data.startswith('file:'):
+                self.fail('invalid_url')
+        return super().to_internal_value(data)
+
+    def to_representation(self, value):
+        if not value:
+            return None
+        if isinstance(value, str):
+            if is_http_url(value):
+                return value
+            file_path = get_file_url_path(value)
+            if file_path:
+                url = default_storage.url(file_path)
+                request = self.context.get('request')
+                return request.build_absolute_uri(url) if request else url
+        return super().to_representation(value)

@@ -174,14 +174,18 @@ class StartStaffSession(StaffMemberRequiredMixin, RecentAuthenticationRequiredMi
         if not request.user.has_active_staff_session(request.session.session_key):
             StaffSession.objects.create(user=request.user, session_key=request.session.session_key)
 
-        if 'next' in request.GET and url_has_allowed_host_and_scheme(request.GET.get('next'), allowed_hosts=None):
-            return redirect(request.GET.get('next'))
+        next_url = request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+        ):
+            return redirect(next_url)
         else:
             return redirect(reverse('control:index'))
 
 
 class StopStaffSession(StaffMemberRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
+    def _end_staff_session(self, request):
         session = StaffSession.objects.filter(
             date_end__isnull=True,
             session_key=request.session.session_key,
@@ -192,7 +196,19 @@ class StopStaffSession(StaffMemberRequiredMixin, View):
 
         session.date_end = now()
         session.save()
+        next_url = request.GET.get('next') or request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+        ):
+            return redirect(next_url)
         return redirect(reverse('eventyay_admin:admin.user.sudo.edit', kwargs={'id': session.pk}))
+
+    def get(self, request, *args, **kwargs):
+        return self._end_staff_session(request)
+
+    def post(self, request, *args, **kwargs):
+        return self._end_staff_session(request)
 
 
 class StaffSessionList(AdministratorPermissionRequiredMixin, ListView):

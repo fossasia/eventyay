@@ -202,6 +202,11 @@ export default {
 		joinRoomBaseUrl: {
 			type: String,
 			default: ''
+		},
+		// Fetch the enriched schedule payload used on first-party agenda pages.
+		enrichData: {
+			type: Boolean,
+			default: false
 		}
 	},
 	provide () {
@@ -530,7 +535,7 @@ export default {
 			this.translationMessages = PRETALX_MESSAGES
 		}
 
-		// Use inline data if available (on-site), otherwise fetch (external embed)
+		// Use inline data if available, otherwise fetch the schedule JSON.
 		const dataEl = document.getElementById('pretalx-schedule-data')
 		if (dataEl) {
 			try { this.schedule = JSON.parse(dataEl.textContent) } catch (e) { /* ignore parse error, fall through to fetch */ }
@@ -541,8 +546,12 @@ export default {
 			let version = ''
 			if (this.version)
 				version = `v/${this.version}/`
-			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json`
-			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json`
+			const params = new URLSearchParams()
+			if (this.enrichData) params.set('enrich', '1')
+			const query = params.toString()
+			const suffix = query ? `?${query}` : ''
+			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json${suffix}`
+			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json${suffix}`
 			// fetch from url, but fall back to legacyUrl if url fails
 			try {
 				this.schedule = await (await fetch(url)).json()
