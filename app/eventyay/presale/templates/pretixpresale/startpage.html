@@ -48,11 +48,7 @@
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'pretixpresale/js/startpage.js' %}"></script>
-            {% if request.user.is_authenticated %}
-                <script defer src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
-                <script defer src="{% static 'pretixcontrol/js/menu.js' %}"></script>
-                <script defer src="{% static 'pretixcontrol/js/sb-admin-2.js' %}"></script>
-            {% endif %}
+
         {% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
@@ -73,7 +69,7 @@
                 </button>
             {% endif %}
             <div class="navbar-header">
-                <a class="navbar-brand" href="{% url "presale:index" %}">
+                <a class="navbar-brand" href="{% url 'presale:index' %}">
                     <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
                     {{ site_name }}
                 </a>
@@ -81,7 +77,7 @@
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
                 {% if not search_query %}
                 <li class="startpage-search-nav">
-                    <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
+                    <form class="startpage-search-form" action="{% url 'presale:index' %}" method="get" role="search">
                         <div class="startpage-search">
                             <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
                                 <i class="fa fa-search" aria-hidden="true"></i>
@@ -108,7 +104,7 @@
                 {% if show_link_in_header_for_start_page %}
                     {% for page in show_link_in_header_for_start_page %}
                         <li>
-                            <a href="{% url "page" slug=page.slug %}" title="{{ page.title|safe }}">
+                            <a href="{% url 'page' slug=page.slug %}" title="{{ page.title|safe }}">
                                 {{ page.title|safe }}
                             </a>
                         </li>
@@ -135,7 +131,7 @@
                     {% include "common/fragment_profile_dropdown.html" %}
                 {% else %}
                     <li>
-                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}">
+                        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.get_full_path|urlencode }}">
                             <i class="fa fa-sign-in"></i> {% trans "Login" %}
                         </a>
                     </li>
