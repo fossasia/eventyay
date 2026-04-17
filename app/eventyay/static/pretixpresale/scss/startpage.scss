@@ -641,6 +641,7 @@ body.startpage-body {
 
   /* Sidebar minimized (collapsed): icons only */
   &.has-sidebar.sidebar-minimized .sidebar {
+    overflow-x: hidden;
     width: $sidebar-minimized-width;
   }
 

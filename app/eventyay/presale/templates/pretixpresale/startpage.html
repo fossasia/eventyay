@@ -61,7 +61,7 @@
         {{ staff_session|json_script:"is_admin_mode" }}
         {{ html_page_header|safe }}
 
-        <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+        <nav class="navbar navbar-inverse navbar-static-top" role="navigation" aria-label="{% trans 'Primary navigation' %}">
             {% if request.user.is_authenticated %}
                 <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar" aria-expanded="false" aria-controls="sidebar">
                     <span class="sr-only">{% trans "Toggle sidebar" %}</span>

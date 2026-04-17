@@ -271,6 +271,9 @@
         return;
       }
       var target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
       if (target.closest('.sidebar') || target.closest('#sidebar-toggle')) {
         return;
       }
@@ -279,6 +282,9 @@
 
     sidebar.addEventListener('click', function (event) {
       if (!isMobileView() || isSidebarMinimized()) {
+        return;
+      }
+      if (!(event.target instanceof Element)) {
         return;
       }
       var link = event.target.closest('a[href]');
