@@ -1,6 +1,6 @@
 /**
  * Talk-specific runtime dependency evaluator for custom fields
- * ES Module - handles dependent question visibility in talk forms
+ * Handles dependent question visibility in talk forms
  */
 
 function talkDependenciesToggle(ev) {

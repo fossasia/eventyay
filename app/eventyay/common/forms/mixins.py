@@ -4,6 +4,7 @@ from functools import partial
 
 import dateutil.parser
 from django import forms
+
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
@@ -29,7 +30,6 @@ from eventyay.common.utils.language import localize_event_text
 from eventyay.helpers.countries import CachedCountries
 from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
-from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 

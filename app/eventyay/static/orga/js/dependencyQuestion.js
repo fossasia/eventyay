@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(function(error) {
                 console.error('Failed to load dependency options', error);
+                depValues.required = false;
                 removeLoadingIndicator();
             });
     }
