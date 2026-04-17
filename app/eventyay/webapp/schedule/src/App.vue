@@ -1012,6 +1012,7 @@ export default {
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
 	&.grid-schedule
+		overflow-x: clip
 		margin: 0 auto
 	&.list-schedule
 		min-width: 0
