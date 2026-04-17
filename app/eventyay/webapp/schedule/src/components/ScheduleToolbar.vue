@@ -7,6 +7,7 @@
 	.toolbar-row
 		.toolbar-left
 			button.toolbar-btn.mobile-toggle-btn.mobile-filter-toggle.icon-only(
+				class="tooltip-align-left"
 				@click="toggleMobileFilters",
 				:class="{active: mobileFiltersOpen || effectiveHasActiveFilters}",
 				:aria-expanded="mobileFiltersOpen ? 'true' : 'false'",
@@ -159,7 +160,7 @@
 						svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 							path(d="M18 6L6 18M6 6l12 12")
 
-			button.toolbar-btn.icon-only.fullscreen-quick(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
+			button.toolbar-btn.icon-only.fullscreen-quick.tooltip-align-right(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
 				svg.tb-icon(v-if="!isFullscreen", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					polyline(points="15 3 21 3 21 9")
 					polyline(points="9 21 3 21 3 15")
@@ -291,7 +292,7 @@
 						polyline(points="6 9 6 2 18 2 18 9")
 						path(d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2")
 						rect(x="6", y="14", width="12", height="8")
-				button.toolbar-btn.icon-only.fullscreen-desktop(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
+				button.toolbar-btn.icon-only.fullscreen-desktop.tooltip-align-right(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
 					svg.tb-icon(v-if="!isFullscreen", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						polyline(points="15 3 21 3 21 9")
 						polyline(points="9 21 3 21 3 15")
@@ -1370,6 +1371,19 @@ export default {
 				opacity: 1
 				transform: translateX(-50%) translateY(0)
 				transition: opacity 0.05s ease, transform 0.05s ease
+		&.icon-only.tooltip-align-left[aria-label]
+			&::after
+				left: 0
+				transform: translateY(-2px)
+			&:hover::after, &:focus-visible::after
+				transform: translateY(0)
+		&.icon-only.tooltip-align-right[aria-label]
+			&::after
+				left: auto
+				right: 0
+				transform: translateY(-2px)
+			&:hover::after, &:focus-visible::after
+				transform: translateY(0)
 		&.icon-only
 			padding: 0 5px
 			gap: 3px
