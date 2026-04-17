@@ -2,8 +2,14 @@ import textwrap
 from urllib.parse import quote
 
 import pytest
+from django.core.cache import cache
 from django.urls import reverse
 from django_scopes import scope
+
+
+@pytest.fixture(autouse=True)
+def clear_public_page_cache():
+    cache.clear()
 
 
 @pytest.mark.django_db
@@ -98,11 +104,15 @@ def test_cannot_see_no_schedule(client, user, event, featured):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('slot', 'other_slot')
-def test_speaker_list(client, event, speaker):
+def test_speaker_list(client, event):
     url = event.urls.speakers
     response = client.get(url, follow=True)
     assert response.status_code == 200
-    assert speaker.fullname in response.text
+    assert 'max-age=60' in response.headers.get('Cache-Control', '')
+    assert response.headers.get('ETag')
+    assert '<pretalx-schedule' in response.text
+    assert 'view="speakers"' in response.text
+    assert 'widgets/schedule.js' in response.text
     assert 'pretalx-schedule-data' not in response.text
 
 
@@ -119,12 +129,17 @@ def test_speaker_page(client, event, speaker, slot, other_submission):
     url = reverse('agenda:speaker', kwargs={'code': speaker.code, 'event': event.slug})
     response = client.get(url, follow=True)
     assert response.status_code == 200
+    assert 'max-age=60' in response.headers.get('Cache-Control', '')
+    assert response.headers.get('ETag')
+    assert '<pretalx-schedule' in response.text
+    assert 'view="speaker"' in response.text
+    assert f'speaker-code="{speaker.code}"' in response.text
+    assert 'widgets/schedule.js' in response.text
     assert len(response.context['talks']) == 2, response.context['talks']
     assert response.context['talks'].filter(submission=other_submission)
     assert 'pretalx-schedule-data' not in response.text
     with scope(event=event):
         assert speaker.profiles.get(event=event).biography in response.text
-        assert slot.submission.title in response.text
 
 
 @pytest.mark.django_db

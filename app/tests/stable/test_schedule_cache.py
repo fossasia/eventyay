@@ -142,3 +142,31 @@ class TestScheduleCacheSignals:
         sched.invalidate_build_data_cache()
         new_stamp = cache.get(schedule_json_stamp_key(sched.pk))
         assert new_stamp is not None, 'Stamp must be set after invalidation'
+
+    def test_rebuild_enqueue_uses_on_commit(self, released_schedule, monkeypatch, settings):
+        from eventyay.base import schedule_cache
+
+        settings.HAS_CELERY = True
+        callbacks = []
+        apply_calls = []
+
+        def fake_on_commit(callback):
+            callbacks.append(callback)
+
+        def fake_apply_async(*, kwargs, countdown):
+            apply_calls.append({'kwargs': kwargs, 'countdown': countdown})
+
+        monkeypatch.setattr(schedule_cache.transaction, 'on_commit', fake_on_commit)
+        monkeypatch.setattr(schedule_cache.rebuild_schedule_json_cache, 'apply_async', fake_apply_async)
+
+        schedule_cache.invalidate_released_schedule_caches([released_schedule])
+
+        assert len(callbacks) == 1, 'Rebuild should be registered as an on_commit callback'
+        assert apply_calls == [], 'Task enqueue must not run before commit callback executes'
+
+        callbacks[0]()
+
+        assert len(apply_calls) == 1
+        assert apply_calls[0]['kwargs']['schedule_pk'] == released_schedule.pk
+        assert apply_calls[0]['kwargs']['language']
+        assert apply_calls[0]['countdown'] == 1

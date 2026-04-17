@@ -8,6 +8,7 @@ from django.core.files.storage import Storage
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.template.loader import get_template
+from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -21,6 +22,7 @@ from eventyay.base.models import SpeakerProfile, TalkQuestionTarget, User
 from eventyay.common.text.path import safe_filename
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
+from eventyay.common.views import conditional_cache_page
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
     Filterable,
@@ -28,6 +30,32 @@ from eventyay.common.views.mixins import (
     SocialMediaCardMixin,
 )
 
+
+def is_cacheable_public_speaker_request(request, organizer=None, event=None, **kwargs):
+    """Cache only cookie-less anonymous requests on speaker HTML pages."""
+    match = request.resolver_match
+    if not match or match.url_name not in {'speakers', 'speaker'}:
+        return False
+    # Avoid parsing cookies for requests that should never be cached.
+    if request.META.get('HTTP_COOKIE'):
+        return False
+    return request.user.is_anonymous
+
+
+def public_speaker_page_cache_prefix(request, organizer=None, event=None, **kwargs):
+    # talks_published toggles speaker page visibility for anonymous users.
+    return f'public-speaker-v1-pub{int(request.event.talks_published)}'
+
+
+@method_decorator(
+    conditional_cache_page(
+        60,
+        key_prefix=public_speaker_page_cache_prefix,
+        condition=is_cacheable_public_speaker_request,
+        server_timeout=5 * 60,
+    ),
+    name='dispatch',
+)
 class SpeakerList(EventPermissionRequired, Filterable, ListView):
     context_object_name = 'speakers'
     template_name = 'agenda/speakers.html'
@@ -51,6 +79,15 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
         return super().get_context_data(**kwargs)
 
 
+@method_decorator(
+    conditional_cache_page(
+        60,
+        key_prefix=public_speaker_page_cache_prefix,
+        condition=is_cacheable_public_speaker_request,
+        server_timeout=5 * 60,
+    ),
+    name='dispatch',
+)
 class SpeakerView(PermissionRequired, TemplateView):
     template_name = 'agenda/speaker.html'
     permission_required = 'base.view_speakerprofile'

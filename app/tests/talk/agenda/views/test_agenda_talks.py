@@ -1,9 +1,14 @@
 import datetime as dt
 
 import pytest
-from django.utils import formats
+from django.core.cache import cache
 from django.utils.timezone import now
 from django_scopes import scope
+
+
+@pytest.fixture(autouse=True)
+def clear_public_page_cache():
+    cache.clear()
 
 
 @pytest.mark.django_db
@@ -21,17 +26,18 @@ def test_can_see_talk_list(client, django_assert_max_num_queries, event):
 def test_can_see_talk(client, event, slot):
     response = client.get(slot.submission.urls.public, follow=True)
     assert response.status_code == 200
+    assert 'max-age=60' in response.headers.get('Cache-Control', '')
+    assert response.headers.get('ETag')
     content = response.text
-    assert 'pretalx-schedule-data' in content
+    assert '<pretalx-schedule' in content
+    assert 'view="talk"' in content
+    assert f'talk-code="{slot.submission.code}"' in content
+    assert 'widgets/schedule.js' in content
+    assert '<noscript>' in content
     with scope(event=event):
-        assert content.count(slot.submission.title) >= 2  # meta+h1
-        assert slot.submission.abstract in content
-        assert slot.submission.description in content
-        assert formats.date_format(slot.local_start, 'H:i') in content
-        assert formats.date_format(slot.local_end, 'H:i') in content
-        assert str(slot.room.name) in content
-        assert 'fa-edit' not in content  # edit btn
-        assert 'fa-video' not in content  # do not record
+        assert slot.submission.title in content
+        description_text = slot.submission.abstract or slot.submission.description
+        assert description_text in content
         assert '<iframe' not in content  # test plugin not active
 
 
@@ -42,7 +48,8 @@ def test_can_see_talk_with_iframe(client, event, slot):
     response = client.get(slot.submission.urls.public, follow=True)
     assert response.status_code == 200
     content = response.text
-    assert 'pretalx-schedule-data' in content
+    assert '<pretalx-schedule' in content
+    assert 'view="talk"' in content
     assert '<iframe' in content
 
 
@@ -72,13 +79,10 @@ def test_orga_can_see_new_talk(orga_client, django_assert_num_queries, event, un
     content = response.text
     with scope(event=event):
         assert event.schedules.count() == 1
-        assert content.count(slot.submission.title) >= 2  # meta+h1
-        assert slot.submission.abstract in content
-        assert slot.submission.description in content
-        assert formats.date_format(slot.local_start, 'H:i') in content
-        assert formats.date_format(slot.local_end, 'H:i') in content
-        assert str(slot.room.name) in content
-        assert 'fa-edit' not in content  # edit btn
+        assert '<pretalx-schedule' in content
+        assert 'view="talk"' in content
+        assert f'talk-code="{slot.submission.code}"' in content
+        assert slot.submission.title in content
 
 
 @pytest.mark.django_db
@@ -89,7 +93,9 @@ def test_can_see_talk_edit_btn(orga_client, django_assert_num_queries, orga_user
         response = orga_client.get(slot.submission.urls.public, follow=True)
     assert response.status_code == 200
     content = response.text
-    assert 'fa-edit' in content  # edit btn
+    assert '<pretalx-schedule' in content
+    assert 'view="talk"' in content
+    assert f'talk-code="{slot.submission.code}"' in content
 
 
 @pytest.mark.django_db
@@ -101,8 +107,9 @@ def test_can_see_talk_do_not_record(client, event, django_assert_num_queries, sl
         response = client.get(slot.submission.urls.public, follow=True)
     assert response.status_code == 200
     content = response.text
-    assert 'fa-edit' not in content  # edit btn
-    assert 'fa-video' in content
+    assert '<pretalx-schedule' in content
+    assert 'view="talk"' in content
+    assert f'talk-code="{slot.submission.code}"' in content
 
 
 @pytest.mark.django_db
@@ -115,8 +122,9 @@ def test_can_see_talk_does_accept_feedback(client, django_assert_num_queries, ev
         response = client.get(slot.submission.urls.public, follow=True)
     assert response.status_code == 200
     content = response.text
-    assert 'fa-edit' not in content  # edit btn
-    assert 'fa-comments' in content
+    assert '<pretalx-schedule' in content
+    assert 'view="talk"' in content
+    assert f'talk-code="{slot.submission.code}"' in content
 
 
 @pytest.mark.django_db

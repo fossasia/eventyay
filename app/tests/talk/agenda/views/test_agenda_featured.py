@@ -1,5 +1,11 @@
 import pytest
+from django.core.cache import cache
 from django_scopes import scope
+
+
+@pytest.fixture(autouse=True)
+def clear_public_page_cache():
+    cache.clear()
 
 
 @pytest.mark.django_db
@@ -79,6 +85,8 @@ def test_featured_talk_list(
     with django_assert_max_num_queries(9):
         response = client.get(event.urls.featured, follow=True)
     assert response.status_code == 200
+    assert 'max-age=60' in response.headers.get('Cache-Control', '')
+    assert response.headers.get('ETag')
     content = response.text
     assert confirmed_submission.title in content
     assert other_confirmed_submission.title not in content

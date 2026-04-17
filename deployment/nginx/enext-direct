@@ -92,9 +92,9 @@ server {
 		add_header Cache-Control "public, max-age=3600" always;
 	}
 
-	location ~ "^/[^/]+/[^/]+/schedule/widget/v2\.[a-z]{2}\.js$" {
+	location ~ "^/[^/]+/[^/]+/schedule/widget/v2\.[A-Za-z_-]{2,12}\.js$" {
 		root <PATH_TO>/data/static;
-		rewrite ^/[^/]+/[^/]+/schedule/widget/v2\.[a-z]{2}\.js$ /schedule/pretalx-schedule.js break;
+		rewrite ^/[^/]+/[^/]+/schedule/widget/v2\.[A-Za-z_-]{2,12}\.js$ /schedule/pretalx-schedule.js break;
 		try_files $uri =404;
 		access_log off;
 		add_header Cache-Control "public, max-age=3600" always;

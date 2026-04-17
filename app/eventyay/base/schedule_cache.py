@@ -3,15 +3,18 @@ from __future__ import annotations
 import logging
 import random
 import time
+from functools import partial
 from typing import TYPE_CHECKING, Iterable
 from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.test import RequestFactory
+from django.utils import translation
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.cache_keys import star_flush_delay_seconds, video_html_stamp_key
@@ -111,6 +114,24 @@ def invalidate_released_schedule_caches(schedules: Iterable[Schedule]) -> None:
         e.pk: e
         for e in Event.objects.filter(pk__in={s.event_id for s in schedules}).select_related('organizer')
     }
+    include_featured_by_event_id = {
+        event_id: are_featured_submissions_visible(AnonymousUser(), event)
+        for event_id, event in events_by_id.items()
+    }
+    language = getattr(settings, 'LANGUAGE_CODE', 'en')
+
+    def enqueue_rebuild(schedule_pk: int, include_featured_speaker_metadata: bool) -> None:
+        rebuild_schedule_json_cache.apply_async(
+            kwargs={
+                'schedule_pk': schedule_pk,
+                'all_talks': False,
+                'enrich': True,
+                'include_featured_speaker_metadata': include_featured_speaker_metadata,
+                'language': language,
+            },
+            countdown=1,
+        )
+
     for schedule in schedules:
         schedule.invalidate_build_data_cache()
         refresh_video_html_cache_stamp(schedule.event_id, schedule.version)
@@ -123,21 +144,10 @@ def invalidate_released_schedule_caches(schedules: Iterable[Schedule]) -> None:
                     schedule.pk,
                 )
                 continue
-            try:
-                rebuild_schedule_json_cache.apply_async(
-                    kwargs={
-                        'schedule_pk': schedule.pk,
-                        'all_talks': False,
-                        'enrich': True,
-                        'include_featured_speaker_metadata': are_featured_submissions_visible(
-                            AnonymousUser(), event
-                        ),
-                        'language': getattr(settings, 'LANGUAGE_CODE', 'en'),
-                    },
-                    countdown=1,
-                )
-            except Exception:
-                logger.warning('Could not enqueue cache rebuild for schedule %s', schedule.pk, exc_info=True)
+            include_featured_speaker_metadata = include_featured_by_event_id[schedule.event_id]
+            transaction.on_commit(
+                partial(enqueue_rebuild, schedule.pk, include_featured_speaker_metadata)
+            )
 
 
 @receiver(post_save, sender=TalkSlot, dispatch_uid='schedule_cache_talkslot_save')
@@ -309,6 +319,7 @@ def warm_video_spa_pages(*, max_events: int = 10) -> int:
     site_port = str(parsed.port) if parsed.port else ('443' if site_scheme == 'https' else '80')
     rf = RequestFactory(SERVER_NAME=site_hostname, SERVER_PORT=site_port)
     view = VideoSPAView.as_view()
+    language = getattr(settings, 'LANGUAGE_CODE', 'en')
 
     n = 0
     for event in Event.objects.select_related('organizer').order_by('-id').iterator(chunk_size=100):
@@ -319,8 +330,8 @@ def warm_video_spa_pages(*, max_events: int = 10) -> int:
             path = '/%s/%s/video/' % (event.organizer.slug, event.slug)
             request = rf.get(path, secure=(site_scheme == 'https'))
             request.user = AnonymousUser()
-            request.LANGUAGE_CODE = getattr(settings, 'LANGUAGE_CODE', 'en')
-            view(request, organizer=event.organizer.slug, event=event.slug)
+            with translation.override(language):
+                view(request, organizer=event.organizer.slug, event=event.slug)
         n += 1
         if n >= max_events:
             break

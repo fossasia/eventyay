@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
+from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -37,6 +38,7 @@ from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
+from eventyay.common.views import conditional_cache_page
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
     PermissionRequired,
@@ -46,6 +48,22 @@ from eventyay.submission.forms import FeedbackForm
 
 
 logger = logging.getLogger(__name__)
+
+
+def is_cacheable_public_talk_request(request, organizer=None, event=None, **kwargs):
+    """Cache only cookie-less anonymous requests on the public talk detail route."""
+    match = request.resolver_match
+    if not match or match.url_name != 'talk.detail':
+        return False
+    # Avoid parsing cookies for requests that should never be cached.
+    if request.META.get('HTTP_COOKIE'):
+        return False
+    return request.user.is_anonymous
+
+
+def public_talk_page_cache_prefix(request, organizer=None, event=None, **kwargs):
+    # talks_published toggles talk visibility for anonymous users.
+    return f'public-talk-v1-pub{int(request.event.talks_published)}'
 
 
 class TicketCheckResult(StrEnum):
@@ -159,6 +177,15 @@ def talk_starrers(request, event, slug, **kwargs):
     return response
 
 
+@method_decorator(
+    conditional_cache_page(
+        60,
+        key_prefix=public_talk_page_cache_prefix,
+        condition=is_cacheable_public_talk_request,
+        server_timeout=5 * 60,
+    ),
+    name='dispatch',
+)
 class TalkView(TalkMixin, TemplateView):
     template_name = 'agenda/talk.html'
 

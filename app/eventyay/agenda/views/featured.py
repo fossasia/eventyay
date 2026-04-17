@@ -1,19 +1,49 @@
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
+from eventyay.common.views import conditional_cache_page
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired
 from eventyay.base.models.submission import SubmissionStates
-from eventyay.talk_rules.submission import are_featured_submissions_visible
+from eventyay.talk_rules.submission import (
+    are_featured_submissions_visible,
+    schedule_widget_featured_cache_key_part,
+)
 
 
 def sneakpeek_redirect(request, *args, **kwargs):
     return HttpResponsePermanentRedirect(request.event.urls.featured)
 
 
+def is_cacheable_public_featured_request(request, organizer=None, event=None, **kwargs):
+    """Cache only cookie-less anonymous requests on the featured page."""
+    match = request.resolver_match
+    if not match or match.url_name != 'featured':
+        return False
+    # Avoid parsing cookies for requests that should never be cached.
+    if request.META.get('HTTP_COOKIE'):
+        return False
+    return request.user.is_anonymous
+
+
+def public_featured_page_cache_prefix(request, organizer=None, event=None, **kwargs):
+    featured_part = schedule_widget_featured_cache_key_part(request.event)
+    return f'public-featured-v1-pub{int(request.event.talks_published)}-{featured_part}'
+
+
+@method_decorator(
+    conditional_cache_page(
+        60,
+        key_prefix=public_featured_page_cache_prefix,
+        condition=is_cacheable_public_featured_request,
+        server_timeout=5 * 60,
+    ),
+    name='dispatch',
+)
 class FeaturedView(EventPermissionRequired, TemplateView):
     template_name = 'agenda/featured.html'
     permission_required = 'base.list_featured_submission'
