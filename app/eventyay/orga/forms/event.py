@@ -173,7 +173,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         fields = [
             'email',
             'custom_css',
-            'featured_sessions_text',
         ]
         json_fields = {
             'imprint_url': 'display_settings',
