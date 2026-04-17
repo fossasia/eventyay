@@ -29,6 +29,8 @@
 <script>
 import QRCode from 'qrcode'
 
+/** Hover QR previews are generated in the browser (qrcode npm). There is no Django URL for QR SVGs. */
+
 const FA_SVG_MAP = {
 	'fa-calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
 	'fa-code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
@@ -133,8 +135,8 @@ export default {
 				if (this.hoveredOption === option) {
 					this.hoveredQrSvg = svg
 				}
-			} catch (_) {
-				// silently skip if QR generation fails
+			} catch (err) {
+				console.warn('[ExportDropdown] QR generation failed', err)
 			} finally {
 				if (this.qrLoadingUrl === url) {
 					this.qrLoadingUrl = null

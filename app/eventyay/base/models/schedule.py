@@ -5,13 +5,8 @@ import time
 from collections import defaultdict, namedtuple
 from contextlib import suppress
 from datetime import UTC
-from functools import lru_cache
 from typing import TYPE_CHECKING
 from urllib.parse import quote
-from xml.etree.ElementTree import tostring as xml_tostring
-
-import qrcode as qr_lib
-from qrcode import constants as qr_constants
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models, transaction
@@ -25,7 +20,6 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes import scope
 from i18nfield.fields import I18nTextField
-from qrcode.image.svg import SvgPathFillImage
 
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.tasks import export_schedule_html
@@ -65,22 +59,6 @@ if TYPE_CHECKING:
     from .track import Track
 
 logger = logging.getLogger(__name__)
-
-@lru_cache(maxsize=16384)
-def make_qr_svg(url: str) -> str:
-    """Generate an SVG QR code string for the given URL.
-
-    LRU-cached: QR encoding is CPU-heavy and the same export URLs repeat across
-    pages. Large events need enough slots for (6 formats × talks) + (6 ×
-    speakers); 16384 covers that while keeping worker RAM bounded in
-    multi-tenant deployments.
-    """
-    image = qr_lib.make(
-        url,
-        image_factory=SvgPathFillImage,
-        error_correction=qr_constants.ERROR_CORRECT_L,
-    )
-    return xml_tostring(image.get_image()).decode()
 
 
 class Schedule(PretalxModel):
@@ -765,7 +743,6 @@ class Schedule(PretalxModel):
         enrich=False,
         *,
         include_featured_speaker_metadata=True,
-        include_qr_codes=True,
         _force_recompute=False,
     ):
         """Build schedule JSON for widgets and exports.
@@ -774,8 +751,8 @@ class Schedule(PretalxModel):
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
 
-        ``include_qr_codes``: when False (video SPA embed), skip CPU-heavy SVG QR
-        generation; ``exporters['qrcodes']`` is ``{}`` while export URLs stay the same.
+        QR previews are generated client-side (see schedule export UI); ``exporters['qrcodes']``
+        is always empty here.
 
         ``_force_recompute``: when True, skip both fresh and stale cache checks and
         always run a full computation.  Used by the Celery rebuild task and the cache
@@ -799,7 +776,6 @@ class Schedule(PretalxModel):
                 all_talks,
                 enrich,
                 include_featured_speaker_metadata,
-                include_qr_codes,
                 language,
                 stamp,
             )
@@ -808,7 +784,7 @@ class Schedule(PretalxModel):
                 return cached
 
             backup_key = schedule_json_backup_key(
-                self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, language
             )
             backup = cache.get(backup_key)
             if backup is not None:
@@ -823,7 +799,6 @@ class Schedule(PretalxModel):
                                     'all_talks': all_talks,
                                     'enrich': enrich,
                                     'include_featured_speaker_metadata': include_featured_speaker_metadata,
-                                    'include_qr_codes': include_qr_codes,
                                     'language': language,
                                 },
                                 countdown=1,
@@ -840,10 +815,10 @@ class Schedule(PretalxModel):
             language = get_language() or 'en'
             stamp = int(cache.get(schedule_json_stamp_key(self.pk), 0) or 0)
             cache_key = schedule_json_cache_key(
-                self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language, stamp
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, language, stamp
             )
             backup_key = schedule_json_backup_key(
-                self.pk, all_talks, enrich, include_featured_speaker_metadata, include_qr_codes, language
+                self.pk, all_talks, enrich, include_featured_speaker_metadata, language
             )
 
         talks = self.talks.all()
@@ -928,7 +903,6 @@ class Schedule(PretalxModel):
         }
         show_do_not_record = self.event.cfp.request_do_not_record
         base_url = str(self.event.urls.base)
-        full_base_url = str(self.event.urls.base.full())
         # Resolve recording providers once; providers are event-level, not per-talk.
         recording_providers = []
         if enrich:
@@ -1013,18 +987,8 @@ class Schedule(PretalxModel):
                         'xcal': f'{base_url}talk/{code}.xcal',
                         'google_calendar': google_url,
                         'webcal': webcal_url,
+                        'qrcodes': {},
                     }
-                    if include_qr_codes:
-                        talk_data['exporters']['qrcodes'] = {
-                            'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
-                            'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
-                            'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
-                            'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
-                            'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
-                            'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
-                        }
-                    else:
-                        talk_data['exporters']['qrcodes'] = {}
                     recording_iframe = ''
                     for provider in recording_providers:
                         rec = provider.get_recording(talk.submission)
@@ -1097,7 +1061,6 @@ class Schedule(PretalxModel):
                 speaker_data['featured_position'] = None
             if enrich:
                 spk_base = f'{base_url}speakers/{user.code}'
-                spk_full_base = f'{full_base_url}speakers/{user.code}'
                 spk_ics = f'{spk_base}/talks.ics'
                 spk_google = f'{spk_base}/talks/export/google-calendar'
                 spk_webcal = f'{spk_base}/talks/export/webcal'
@@ -1108,18 +1071,8 @@ class Schedule(PretalxModel):
                     'xcal': f'{spk_base}/talks.xcal',
                     'google_calendar': spk_google,
                     'webcal': spk_webcal,
+                    'qrcodes': {},
                 }
-                if include_qr_codes:
-                    speaker_data['exporters']['qrcodes'] = {
-                        'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
-                        'json': make_qr_svg(f'{spk_full_base}/talks.json'),
-                        'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
-                        'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
-                        'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
-                        'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-                    }
-                else:
-                    speaker_data['exporters']['qrcodes'] = {}
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
 

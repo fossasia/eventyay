@@ -36,14 +36,13 @@ def schedule_json_cache_key(
     all_talks: bool,
     enrich: bool,
     include_featured_speaker_metadata: bool,
-    include_qr_codes: bool,
     language: str,
     stamp: int,
 ) -> str:
     return (
         f'schedule_build_data_{schedule_pk}'
         f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
-        f'_qr{int(include_qr_codes)}_{language}_v{stamp}'
+        f'_{language}_v{stamp}'
     )
 
 
@@ -52,14 +51,13 @@ def schedule_json_backup_key(
     all_talks: bool,
     enrich: bool,
     include_featured_speaker_metadata: bool,
-    include_qr_codes: bool,
     language: str,
 ) -> str:
     """Key for the last-known-good schedule JSON that survives stamp invalidation."""
     return (
         f'schedule_build_data_stale_{schedule_pk}'
         f'_at{int(all_talks)}_e{int(enrich)}_fs{int(include_featured_speaker_metadata)}'
-        f'_qr{int(include_qr_codes)}_{language}'
+        f'_{language}'
     )
 
 

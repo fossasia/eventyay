@@ -60,7 +60,7 @@ class TestBuildDataCacheHitMiss:
         with scope(event=sched.event):
             sched.build_data()
         stamp = cache.get(schedule_json_stamp_key(sched.pk), 0)
-        expected_key = schedule_json_cache_key(sched.pk, False, False, True, True, 'en', stamp)
+        expected_key = schedule_json_cache_key(sched.pk, False, False, True, 'en', stamp)
         assert cache.get(expected_key) is not None, 'build_data result must be stored under the expected cache key'
 
     def test_versioned_schedule_uses_cached_result(self, schedule_with_version):
@@ -98,7 +98,7 @@ class TestBuildDataCacheHitMiss:
         with scope(event=sched.event):
             sched.build_data()
         stamp_before = cache.get(schedule_json_stamp_key(sched.pk), 0)
-        old_key = schedule_json_cache_key(sched.pk, False, False, True, True, 'en', stamp_before)
+        old_key = schedule_json_cache_key(sched.pk, False, False, True, 'en', stamp_before)
         assert cache.get(old_key) is not None, 'Entry must be cached before invalidation'
 
         sched.invalidate_build_data_cache()
@@ -106,7 +106,7 @@ class TestBuildDataCacheHitMiss:
         stamp_after = cache.get(schedule_json_stamp_key(sched.pk))
         assert stamp_after != stamp_before, 'Stamp must change'
         assert cache.get(old_key) is not None, 'Old entry still in Redis (expires via TTL)'
-        new_key = schedule_json_cache_key(sched.pk, False, False, True, True, 'en', stamp_after)
+        new_key = schedule_json_cache_key(sched.pk, False, False, True, 'en', stamp_after)
         assert new_key != old_key, 'New key must differ — next build_data call will miss and recompute'
 
 

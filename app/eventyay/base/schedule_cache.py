@@ -26,6 +26,7 @@ from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.models.submission import Submission, SubmissionFavourite, SpeakerRole
 from eventyay.base.models.track import Track
 from eventyay.base.signals import periodic_task
+from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.celery_app import app
 from eventyay.helpers.periodic import SKIPPED
 from eventyay.talk_rules.submission import are_featured_submissions_visible
@@ -53,14 +54,17 @@ def released_schedules_for_event(event_id: int) -> list[Schedule]:
         )
 
 
-@app.task(name='eventyay.base.rebuild_schedule_json_cache', ignore_result=True)
+@app.task(
+    name='eventyay.base.rebuild_schedule_json_cache',
+    ignore_result=True,
+    base=TransactionAwareTask,
+)
 def rebuild_schedule_json_cache(
     schedule_pk: int,
     *,
     all_talks: bool = False,
     enrich: bool = True,
     include_featured_speaker_metadata: bool | None = None,
-    include_qr_codes: bool = False,
     language: str | None = None,
 ) -> None:
     """Recompute ``build_data`` for one released schedule and write fresh + backup cache entries.
@@ -93,7 +97,6 @@ def rebuild_schedule_json_cache(
                 all_talks=all_talks,
                 enrich=enrich,
                 include_featured_speaker_metadata=meta,
-                include_qr_codes=include_qr_codes,
                 _force_recompute=True,
             )
     logger.info('Rebuilt schedule JSON cache for schedule %s (event %s)', schedule_pk, schedule.event_id)
@@ -129,7 +132,6 @@ def invalidate_released_schedule_caches(schedules: Iterable[Schedule]) -> None:
                         'include_featured_speaker_metadata': are_featured_submissions_visible(
                             AnonymousUser(), event
                         ),
-                        'include_qr_codes': False,
                         'language': getattr(settings, 'LANGUAGE_CODE', 'en'),
                     },
                     countdown=1,
@@ -283,7 +285,6 @@ def warm_event_build_data_caches(*, max_events: int = 10) -> int:
                 include_featured_speaker_metadata=are_featured_submissions_visible(
                     AnonymousUser(), event
                 ),
-                include_qr_codes=False,
                 _force_recompute=True,
             )
         n += 1

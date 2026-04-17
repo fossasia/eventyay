@@ -28,7 +28,6 @@ from eventyay.common.views.mixins import (
     SocialMediaCardMixin,
 )
 
-
 class SpeakerList(EventPermissionRequired, Filterable, ListView):
     context_object_name = 'speakers'
     template_name = 'agenda/speakers.html'

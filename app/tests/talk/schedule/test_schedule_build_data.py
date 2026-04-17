@@ -114,15 +114,7 @@ def test_build_data_enrich_exporters(event, slot):
         for fmt in ("ics", "json", "xml", "xcal", "google_calendar", "webcal"):
             assert fmt in exp, f"Missing exporter: {fmt}"
             assert talk["code"] in exp[fmt]
-
-
-@pytest.mark.django_db
-def test_build_data_include_qr_codes_false_skips_qr_svgs(event, slot):
-    """include_qr_codes=False keeps export URLs but omits embedded SVG QR payloads."""
-    with scope(event=event):
-        data = slot.schedule.build_data(enrich=True, include_qr_codes=False)
-        talk = next(t for t in data["talks"] if t.get("code"))
-        assert talk["exporters"]["qrcodes"] == {}
+        assert exp.get("qrcodes") == {}
 
 
 @pytest.mark.django_db

@@ -6,16 +6,12 @@ from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.agenda.views.utils import build_enriched_schedule_json, is_email_like
+from eventyay.agenda.views.utils import is_email_like
 from eventyay.base.models import SubmissionFavourite, User
 
 
 class PublicStarredScheduleView(TemplateView):
     template_name = 'agenda/public_starred.html'
-
-    @context
-    def schedule_json(self) -> str:
-        return build_enriched_schedule_json(self.request)
 
     @cached_property
     def public_user(self) -> User:

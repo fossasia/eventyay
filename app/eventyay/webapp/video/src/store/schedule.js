@@ -198,6 +198,10 @@ export default {
 				state.errorLoading = null
 				if (window.eventyay?.schedule) {
 					state.schedule = window.eventyay.schedule
+				} else if (window.eventyay?.scheduleDataUrl) {
+					const res = await fetch(window.eventyay.scheduleDataUrl, { credentials: 'same-origin' })
+					if (!res.ok) throw new Error(`schedule ${res.status}`)
+					state.schedule = await res.json()
 				}
 				if (window.eventyay?.scheduleMeta) {
 					state.scheduleMeta = window.eventyay.scheduleMeta
@@ -205,7 +209,6 @@ export default {
 			} catch (error) {
 				state.errorLoading = error
 			}
-			// Load favourites from server / localStorage after schedule data is ready
 			dispatch('loadFavs')
 		},
 		async fav ({ state, rootState }, id) {

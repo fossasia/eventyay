@@ -139,7 +139,6 @@ server {
 		proxy_redirect off;
 	}
 
-
 	location ~* "^/static/.+\.[0-9a-f]{8,}\.(js|css|woff2?|ttf|eot|png|svg|ico)$" {
 		root <PATH_TO>/data;
 		access_log off;

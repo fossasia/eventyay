@@ -160,9 +160,9 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: env.OUT_DIR ? `${env.OUT_DIR}/video` : 'dist',
-      emptyOutDir: false,
+      emptyOutDir: mode === 'production',
       target: 'esnext',
-      sourcemap: true, // Added for debugging vendor-webrtc issue
+      sourcemap: mode !== 'production',
       chunkSizeWarningLimit: 1250,
       rollupOptions: {
         input: {

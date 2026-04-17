@@ -4,6 +4,7 @@ import os
 from mimetypes import guess_type
 from pathlib import Path
 from typing import cast
+from urllib.parse import urlencode
 from django.shortcuts import redirect
 from django.conf import settings
 from django.core.cache import cache
@@ -16,10 +17,9 @@ from django.urls.exceptions import NoReverseMatch
 from django.utils.encoding import force_str
 from django.utils.timezone import now
 from django.utils.functional import Promise
-from django.utils.translation import gettext as _
+from django.utils.translation import get_language, gettext as _
 from django.views.generic import View
 from django.views.static import serve as static_serve
-from django.contrib.auth.models import AnonymousUser
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.cache_keys import (
@@ -31,10 +31,24 @@ from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
-from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
 logger = logging.getLogger(__name__)
+
+VIDEO_BASE_MARKER = '<base id="eventyay-video-base" href="./" />'
+
+
+def apply_video_base_href(html_content: str, base_href: str) -> str:
+    """Set the SPA document base; prefer replacing the marker from ``video/index.html``."""
+    if VIDEO_BASE_MARKER in html_content:
+        return html_content.replace(
+            VIDEO_BASE_MARKER,
+            f'<base id="eventyay-video-base" href="{base_href}" />',
+            1,
+        )
+    if '<base ' not in html_content.lower():
+        return html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
+    return html_content
 
 
 def safe_reverse(name: str, **kw) -> str:
@@ -72,7 +86,7 @@ class VideoSPAView(View):
             api_base = f'/api/v1/events/{event.slug}/'  # TODO replace with reverse once API namespace wired
 
             cfg = event.config or {}
-            _page_cache_key = None  # set below once schedule_version is known
+            page_cache_key = None  # set below once schedule_version is known
 
             with scope(event=event):
                 requested_version = request.GET.get('v') or request.GET.get('version')
@@ -88,35 +102,27 @@ class VideoSPAView(View):
 
                 schedule_version = schedule.version if schedule else None
                 if not request.user.is_authenticated and schedule_version:
-                    language = getattr(request, 'LANGUAGE_CODE', 'en')
+                    language = get_language() or 'en'
                     cache_stamp = cache.get(video_html_stamp_key(event.pk, schedule_version), 0)
                     scheme = 'https' if request.is_secure() else 'http'
                     host = request.get_host()
-                    _page_cache_key = video_html_cache_key(
+                    page_cache_key = video_html_cache_key(
                         event.pk, schedule_version, language, scheme, host, cache_stamp
                     )
-                    _cached_html = cache.get(_page_cache_key)
-                    if _cached_html is not None:
-                        resp = HttpResponse(_cached_html, content_type='text/html')
+                    cached_html = cache.get(page_cache_key)
+                    if cached_html is not None:
+                        resp = HttpResponse(cached_html, content_type='text/html')
                         resp._csp_ignore = True
                         return resp
 
-                schedule_data = (
-                    schedule.build_data(
-                        all_talks=False,
-                        enrich=True,
-                        include_featured_speaker_metadata=are_featured_submissions_visible(
-                            AnonymousUser(), event
-                        ),
-                        include_qr_codes=False,
-                    )
-                    if schedule
-                    else None
-                )
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 
             base_path = event.urls.video_base.rstrip('/')
             base_href = event.urls.video_base
+            html_content = apply_video_base_href(html_content, base_href)
+            schedule_data_url = str(event.urls.schedule_widget_data)
+            if schedule_version:
+                schedule_data_url = f'{schedule_data_url}?{urlencode({"v": schedule_version})}'
             injected = {
                 'api': {
                     'base': api_base,
@@ -136,7 +142,7 @@ class VideoSPAView(View):
                 'theme': build_video_theme_for_event(event),
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
-                'schedule': schedule_data,
+                'scheduleDataUrl': schedule_data_url,
                 'scheduleMeta': {
                     'version': schedule_version or '',
                     'is_current': schedule == event.current_schedule if schedule else False,
@@ -235,10 +241,8 @@ class VideoSPAView(View):
             else:
                 html_content = f'{extra_script}{html_content}'
 
-            if not request.user.is_authenticated and _page_cache_key:
-                if '<base ' not in html_content.lower():
-                    html_content = html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
-                cache.set(_page_cache_key, html_content, timeout=video_html_expire_seconds())
+            if not request.user.is_authenticated and page_cache_key:
+                cache.set(page_cache_key, html_content, timeout=video_html_expire_seconds())
                 resp = HttpResponse(html_content, content_type='text/html')
                 resp._csp_ignore = True
                 return resp
@@ -247,9 +251,8 @@ class VideoSPAView(View):
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)
 
-        if '<base ' not in html_content.lower():
-            # Ensure assets resolve correctly regardless of nested route
-            html_content = html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
+        if not event:
+            html_content = apply_video_base_href(html_content, base_href)
 
         resp = HttpResponse(html_content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
