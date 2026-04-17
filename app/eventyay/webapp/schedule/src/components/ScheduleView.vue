@@ -540,6 +540,10 @@ export default {
 	flex-direction: column
 	min-height: 0
 	min-width: 0
+	font-size: 14px
+	color: rgb(13, 15, 16)
+	--pretalx-clr-text: rgb(13, 15, 16)
+	overflow: hidden
 	&:fullscreen
 		background: #fff
 		.c-schedule-toolbar
@@ -551,7 +555,7 @@ export default {
 		overflow: auto
 		// The toolbar sits outside this scroll container, so reset
 		// the sticky offset to cancel the +40px baked into GridSchedule.
-		--pretalx-sticky-top-offset: calc(-30px - var(--pretalx-version-warning-height, 0px))
+		--pretalx-sticky-top-offset: calc(-40px - var(--pretalx-version-warning-height, 0px))
 	.schedule-error
 		padding: 32px
 		text-align: center
