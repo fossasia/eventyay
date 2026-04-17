@@ -569,6 +569,10 @@ class TargetChoice(models.TextChoices):
 
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
+    IMPORT_CHOICES = (
+        (TargetChoice.SPEAKER, _('Speakers')),
+        (TargetChoice.SESSION, _('Schedule')),
+    )
     IMPORT_TARGETS = {
         TargetChoice.SPEAKER: {
             'filename': 'speaker_import.csv',
@@ -587,7 +591,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             'import': _('Import'),
             'export': _('Export'),
         }
-        result['import_choices'] = TargetChoice.choices
+        result['import_choices'] = self.IMPORT_CHOICES
         result['import_target'] = kwargs.get('import_target', TargetChoice.SPEAKER)
         result['export_target'] = kwargs.get('export_target', TargetChoice.SPEAKER)
         result['import_form'] = kwargs.get('import_form') or CSVImportForm()
@@ -620,7 +624,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         try:
             target = TargetChoice(import_target)
         except ValueError:
-            messages.error(self.request, _('Please choose whether to import speakers or sessions.'))
+            messages.error(self.request, _('Please choose whether to import speakers or schedule.'))
             context = self.get_context_data(import_form=import_form, import_target=import_target)
             return self.render_to_response(context, status=400)
 
