@@ -18,6 +18,8 @@
 	"App:fatal-connection-error:else:headline": "З'єднання відхилено",
 	"App:fatal-connection-error:world.unknown_world:headline": "Захід не знайдено",
 	"AppBar:user-anonymous": "анонімний",
+	"AppBar:admin-mode:start": "Режим адміністратора",
+	"AppBar:admin-mode:end": "Завершити сеанс адміністратора",
 	"AVDevice:error:notfound": "Камеру або мікрофон не знайдено.",
 	"AVDevice:error:notreadable": "Ваша камера або мікрофон недоступні, можливо, їх використовує інша програма?",
 	"AVDevice:error:notallowed": "Дозволи камери або мікрофону відхилені. Будь ласка, надайте доступ до камери або мікрофону у вашому браузері та перезавантажте сторінку.",
