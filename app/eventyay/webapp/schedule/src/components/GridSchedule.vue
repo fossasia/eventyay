@@ -586,8 +586,9 @@ export default {
 <style lang="stylus">
 .c-grid-schedule
 	flex: auto
+	min-width: 0
 	background-color: $clr-grey-50
-	--room-col-min: 320px
+	--room-col-min: 280px
 	.sticky-header
 		position: sticky
 		top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) - 1px)
@@ -772,9 +773,9 @@ export default {
 	.rooms-inner
 		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 
-@media (max-width: 600px)
+@media (max-width: 768px)
 	.c-grid-schedule
-		--room-col-min: 240px
+		--room-col-min: 200px
 
 @media print
 	.c-grid-schedule

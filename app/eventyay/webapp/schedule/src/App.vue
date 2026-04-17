@@ -1013,6 +1013,9 @@ export default {
 			border-bottom: 1px solid $clr-dividers-light
 	&.grid-schedule
 		margin: 0 auto
+		min-width: 0
+		width: 100%
+		overflow-x: clip
 	&.list-schedule
 		min-width: 0
 	&.speaker-view
