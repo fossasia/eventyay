@@ -138,7 +138,7 @@
                 {% endif %}
             </ul>
             {% if request.user.is_authenticated %}
-                <div class="navbar-default sidebar" id="sidebar" role="navigation">
+                <div class="navbar-default sidebar" id="sidebar" role="navigation" aria-label="{% trans 'Sidebar navigation' %}">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
                         <div class="dropdown context-selector">
                             <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-toggle">
