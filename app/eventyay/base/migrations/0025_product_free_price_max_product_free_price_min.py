@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0023_product_allow_user_variation_change'),
+        ('base', '0024_remove_event_featured_sessions_text'),
     ]
 
     operations = [
