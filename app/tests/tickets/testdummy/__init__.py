@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class TestDummyApp(AppConfig):
-    name = 'tests.testdummy'
+    name = 'tests.tickets.testdummy'
     verbose_name = '.testdummy'
 
     class PretixPluginMeta:
@@ -10,7 +10,7 @@ class TestDummyApp(AppConfig):
         version = '1.0.0'
 
     def ready(self):
-        from tests.testdummy import signals  # noqa
+        from tests.tickets.testdummy import signals  # noqa
 
 
-default_app_config = 'tests.testdummy.TestDummyApp'
+default_app_config = 'tests.tickets.testdummy.TestDummyApp'

@@ -1,8 +1,8 @@
 import logging
 
-from pretix.base.ticketoutput import BaseTicketOutput
+from eventyay.base.ticketoutput import BaseTicketOutput
 
-logger = logging.getLogger('tests.testdummy.ticketoutput')
+logger = logging.getLogger('tests.tickets.testdummy.ticketoutput')
 
 
 class DummyTicketOutput(BaseTicketOutput):

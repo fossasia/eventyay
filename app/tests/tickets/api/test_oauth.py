@@ -5,13 +5,13 @@ from urllib.parse import quote
 import pytest
 from django.utils.crypto import get_random_string
 
-from pretix.api.models import (
+from eventyay.api.models import (
     OAuthAccessToken,
     OAuthApplication,
     OAuthGrant,
     OAuthRefreshToken,
 )
-from pretix.base.models import Organizer, Team, User
+from eventyay.base.models import Organizer, Team, User
 
 
 @pytest.fixture

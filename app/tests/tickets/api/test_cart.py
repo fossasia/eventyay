@@ -9,8 +9,8 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import Question, SeatingPlan
-from pretix.base.models.orders import CartPosition
+from eventyay.base.models import Question, SeatingPlan
+from eventyay.base.models.orders import CartPosition
 
 
 @pytest.fixture

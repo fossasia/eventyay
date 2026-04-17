@@ -4,8 +4,8 @@ from django.template import Context, Template, TemplateSyntaxError
 from django.urls import NoReverseMatch
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Organizer
-from pretix.multidomain.models import KnownDomain
+from eventyay.base.models import Event, Organizer
+from eventyay.multidomain.models import KnownDomain
 
 
 @pytest.fixture

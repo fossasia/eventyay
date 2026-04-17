@@ -14,16 +14,16 @@ from django.test import TestCase
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
-from pretix.base.i18n import language
-from pretix.base.models import (
+from eventyay.base.i18n import language
+from eventyay.base.models import (
     CachedFile,
     CartPosition,
     Checkin,
     CheckinList,
     Event,
-    Item,
-    ItemCategory,
-    ItemVariation,
+    Product as Item,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Order,
     OrderFee,
     OrderPayment,
@@ -37,16 +37,16 @@ from pretix.base.models import (
     Voucher,
     WaitingListEntry,
 )
-from pretix.base.models.event import SubEvent
-from pretix.base.models.items import (
-    ItemBundle,
-    SubEventItem,
-    SubEventItemVariation,
+from eventyay.base.models.event import SubEvent
+from eventyay.base.models.product import (
+    ProductBundle as ItemBundle,
+    SubEventProduct as SubEventItem,
+    SubEventProductVariation as SubEventItemVariation,
 )
-from pretix.base.reldate import RelativeDate, RelativeDateWrapper
-from pretix.base.services.orders import OrderError, cancel_order, perform_order
-from pretix.base.services.quotas import QuotaAvailability
-from pretix.testutils.scope import classscope
+from eventyay.base.reldate import RelativeDate, RelativeDateWrapper
+from eventyay.base.services.orders import OrderError, cancel_order, perform_order
+from eventyay.base.services.quotas import QuotaAvailability
+from tests.testutils.scope import classscope
 
 
 class UserTestCase(TestCase):
@@ -71,7 +71,7 @@ class BaseQuotaTestCase(TestCase):
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='tests.testdummy',
+            plugins='tests.tickets.testdummy',
         )
         self.quota = Quota.objects.create(name='Test', size=2, event=self.event)
         self.item1 = Item.objects.create(event=self.event, name='Ticket', default_price=23, admission=True)

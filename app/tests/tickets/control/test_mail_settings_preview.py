@@ -4,8 +4,8 @@ import re
 
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Organizer, Team, User
-from tests.base import SoupTest
+from eventyay.base.models import Event, Organizer, Team, User
+from tests.tickets.base import SoupTest
 
 
 class MailSettingPreviewTest(SoupTest):

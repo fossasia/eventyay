@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from django_scopes import scopes_disabled
 
-from pretix.base.models import GiftCard, Organizer
+from eventyay.base.models import GiftCard, Organizer
 
 
 @pytest.fixture

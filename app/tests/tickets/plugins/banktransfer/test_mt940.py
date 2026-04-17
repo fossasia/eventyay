@@ -1,7 +1,7 @@
 import io
 import pprint
 
-from pretix.plugins.banktransfer.mt940import import parse
+from eventyay.plugins.banktransfer.mt940import import parse
 
 TEST_DATA = [
     # Source: https://www.ksk-koeln.de/Produkte/girokonten/Elektronisches%20Bezahlen/datenstruktur-mt940-swift.pdfx

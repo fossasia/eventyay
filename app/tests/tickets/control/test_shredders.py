@@ -7,8 +7,8 @@ from zipfile import ZipFile
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Order, Organizer, Team, User
-from tests.base import SoupTest
+from eventyay.base.models import Event, Order, Organizer, Team, User
+from tests.tickets.base import SoupTest
 
 
 class EventShredderTest(SoupTest):
@@ -23,7 +23,7 @@ class EventShredderTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,pretix.plugins.stripe,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,eventyay.plugins.stripe,tests.tickets.testdummy',
         )
 
         t = Team.objects.create(

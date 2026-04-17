@@ -2,7 +2,7 @@ from django.conf import settings
 from django.test import Client, TestCase
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Organizer, User
+from eventyay.base.models import Event, Organizer, User
 
 
 class LocaleDeterminationTest(TestCase):

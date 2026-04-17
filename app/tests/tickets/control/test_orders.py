@@ -9,11 +9,11 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
     GiftCard,
     InvoiceAddress,
-    Item,
+    Product as Item,
     Order,
     OrderFee,
     OrderPayment,
@@ -26,15 +26,15 @@ from pretix.base.models import (
     Team,
     User,
 )
-from pretix.base.exporters.orderlist import OrderListExporter
-from pretix.base.payment import PaymentException
-from pretix.control.forms.orders import ExporterForm
-from pretix.base.services.invoices import (
+from eventyay.base.exporters.orderlist import OrderListExporter
+from eventyay.base.payment import PaymentException
+from eventyay.control.forms.orders import ExporterForm
+from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
 )
-from tests.api.test_orders import MockedCharge
-from tests.base import SoupTest
+from tests.tickets.api.test_orders import MockedCharge
+from tests.tickets.base import SoupTest
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer,pretix.plugins.stripe,tests.testdummy',
+        plugins='eventyay.plugins.banktransfer,eventyay.plugins.stripe,tests.tickets.testdummy',
     )
     event.settings.set('ticketoutput_testdummy__enabled', True)
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
@@ -1615,7 +1615,7 @@ class OrderChangeTests(SoupTest):
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='pretix.plugins.banktransfer',
+            plugins='eventyay.plugins.banktransfer',
         )
         self.order = Order.objects.create(
             code='FOO',

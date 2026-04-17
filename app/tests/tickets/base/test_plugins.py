@@ -3,9 +3,9 @@ from django.conf import settings
 from django.test import TestCase
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Organizer
-from pretix.base.plugins import get_all_plugins
-from pretix.base.signals import register_ticket_outputs
+from eventyay.base.models import Event, Organizer
+from eventyay.base.plugins import get_all_plugins
+from eventyay.base.signals import register_ticket_outputs
 
 plugins = get_all_plugins()
 
@@ -44,9 +44,9 @@ class PluginSignalTest(TestCase):
         self.assertEqual(len(responses), 0)
 
     def test_one_plugin_active(self):
-        self.event.plugins = 'tests.testdummy'
+        self.event.plugins = 'tests.tickets.testdummy'
         self.event.save()
         payload = {'foo': 'bar'}
         responses = register_ticket_outputs.send(self.event, **payload)
         self.assertEqual(len(responses), 1)
-        self.assertIn('tests.testdummy.signals', [r[0].__module__ for r in responses])
+        self.assertIn('tests.tickets.testdummy.signals', [r[0].__module__ for r in responses])

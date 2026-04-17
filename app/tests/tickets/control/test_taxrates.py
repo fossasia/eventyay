@@ -4,9 +4,9 @@ from decimal import Decimal
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Order, Organizer, Team, User
-from pretix.base.models.orders import OrderFee
-from tests.base import SoupTest, extract_form_fields
+from eventyay.base.models import Event, Order, Organizer, Team, User
+from eventyay.base.models.orders import OrderFee
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 class TaxRateFormTest(SoupTest):

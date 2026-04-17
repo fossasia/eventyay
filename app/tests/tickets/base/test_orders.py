@@ -10,23 +10,23 @@ from django.utils.timezone import make_aware, now
 from django_countries.fields import Country
 from django_scopes import scope
 
-from pretix.base.decimal import round_decimal
-from pretix.base.models import (
+from eventyay.base.decimal import round_decimal
+from eventyay.base.models import (
     CartPosition,
     Event,
     InvoiceAddress,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
     SeatingPlan,
 )
-from pretix.base.models.items import SubEventItem
-from pretix.base.models.orders import OrderFee, OrderPayment, OrderRefund
-from pretix.base.payment import FreeOrderProvider
-from pretix.base.reldate import RelativeDate, RelativeDateWrapper
-from pretix.base.services.invoices import generate_invoice
-from pretix.base.services.orders import (
+from eventyay.base.models.product import SubEventProduct as SubEventItem
+from eventyay.base.models.orders import OrderFee, OrderPayment, OrderRefund
+from eventyay.base.payment import FreeOrderProvider
+from eventyay.base.reldate import RelativeDate, RelativeDateWrapper
+from eventyay.base.services.invoices import generate_invoice
+from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
     _create_order,
@@ -38,9 +38,9 @@ from pretix.base.services.orders import (
     send_download_reminders,
     send_expiry_warnings,
 )
-from pretix.plugins.banktransfer.payment import BankTransfer
-from pretix.testutils.scope import classscope
-from tests.testdummy.signals import FoobazSalesChannel
+from eventyay.plugins.banktransfer.payment import BankTransfer
+from tests.testutils.scope import classscope
+from tests.tickets.testdummy.signals import FoobazSalesChannel
 
 
 @pytest.fixture(scope='function')
@@ -51,7 +51,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     with scope(organizer=o):
         yield event
@@ -505,7 +505,7 @@ class PaymentReminderTests(TestCase):
                 name='Dummy',
                 slug='dummy',
                 date_from=now() + timedelta(days=2),
-                plugins='pretix.plugins.banktransfer',
+                plugins='eventyay.plugins.banktransfer',
             )
             self.order = Order.objects.create(
                 code='FOO',
@@ -580,7 +580,7 @@ class DownloadReminderTests(TestCase):
                 name='Dummy',
                 slug='dummy',
                 date_from=now() + timedelta(days=2),
-                plugins='pretix.plugins.banktransfer',
+                plugins='eventyay.plugins.banktransfer',
             )
             self.order = Order.objects.create(
                 code='FOO',
@@ -743,7 +743,7 @@ class OrderCancelTests(TestCase):
                 name='Dummy',
                 slug='dummy',
                 date_from=now(),
-                plugins='tests.testdummy',
+                plugins='tests.tickets.testdummy',
             )
             self.order = Order.objects.create(
                 code='FOO',
@@ -966,7 +966,7 @@ class OrderChangeManagerTests(TestCase):
                 name='Dummy',
                 slug='dummy',
                 date_from=now(),
-                plugins='pretix.plugins.banktransfer',
+                plugins='eventyay.plugins.banktransfer',
             )
             self.order = Order.objects.create(
                 code='FOO',
@@ -3243,7 +3243,7 @@ class OrderReactivateTest(TestCase):
                 name='Dummy',
                 slug='dummy',
                 date_from=now(),
-                plugins='tests.testdummy',
+                plugins='tests.tickets.testdummy',
             )
             self.order = Order.objects.create(
                 code='FOO',

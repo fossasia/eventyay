@@ -2,7 +2,7 @@ from datetime import date
 
 from django.utils import translation
 
-from pretix.helpers.daterange import daterange
+from eventyay.helpers.daterange import daterange
 
 
 def test_same_day_german():

@@ -6,15 +6,15 @@ import pytz
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
     InvoiceAddress,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
 )
-from pretix.plugins.checkinlists.exporters import CSVCheckinList
+from eventyay.plugins.checkinlists.exporters import CSVCheckinList
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def event():
             name='Dummy',
             slug='dummy',
             date_from=now(),
-            plugins='pretix.plugins.checkinlists,tests.testdummy',
+            plugins='eventyay.plugins.checkinlists,tests.tickets.testdummy',
         )
         event.settings.set('attendee_names_asked', True)
         event.settings.set('name_scheme', 'title_given_middle_family')

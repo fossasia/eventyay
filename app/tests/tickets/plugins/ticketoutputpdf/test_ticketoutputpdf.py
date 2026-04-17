@@ -7,15 +7,15 @@ from django.utils.timezone import now
 from django_scopes import scope
 from pypdf import PdfReader
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemVariation,
+    Product as Item,
+    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Organizer,
 )
-from pretix.plugins.ticketoutputpdf.ticketoutput import PdfTicketOutput
+from eventyay.plugins.ticketoutputpdf.ticketoutput import PdfTicketOutput
 
 
 @pytest.fixture

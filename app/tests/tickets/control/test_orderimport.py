@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Organizer, Team, User
+from eventyay.base.models import Event, Organizer, Team, User
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     t = Team.objects.create(organizer=event.organizer, can_view_orders=True, can_change_orders=True)

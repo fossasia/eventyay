@@ -5,10 +5,10 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemCategory,
+    Product as Item,
+    ProductCategory as ItemCategory,
     Order,
     OrderPosition,
     Organizer,
@@ -28,7 +28,7 @@ def event():
         name='30C3',
         slug='30c3',
         date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-        plugins='pretix.plugins.banktransfer,tests.testdummy',
+        plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
     )
 
 

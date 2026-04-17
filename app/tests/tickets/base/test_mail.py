@@ -7,8 +7,8 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import scope
 
-from pretix.base.models import Event, Organizer, User
-from pretix.base.services.mail import mail
+from eventyay.base.models import Event, Organizer, User
+from eventyay.base.services.mail import mail
 
 
 @pytest.fixture

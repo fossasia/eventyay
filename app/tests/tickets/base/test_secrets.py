@@ -2,8 +2,8 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import Event, Organizer
-from pretix.base.secrets import (
+from eventyay.base.models import Event, Organizer
+from eventyay.base.secrets import (
     RandomTicketSecretGenerator,
     Sig1TicketSecretGenerator,
 )
@@ -22,7 +22,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     with scope(organizer=o):
         yield event

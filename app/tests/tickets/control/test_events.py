@@ -8,10 +8,10 @@ from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 from pytz import timezone
 
-from pretix.base.models import Event, Order, Organizer, Team, User
-from pretix.base.models.organizer import OrganizerBillingModel
-from pretix.testutils.mock import mocker_context
-from tests.base import SoupTest, extract_form_fields
+from eventyay.base.models import Event, Order, Organizer, Team, User
+from eventyay.base.models.organizer import OrganizerBillingModel
+from tests.testutils.mock import mocker_context
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 class EventsTest(SoupTest):
@@ -41,7 +41,7 @@ class EventsTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
         )
         self.event2 = Event.objects.create(
             organizer=self.orga1,
@@ -130,7 +130,7 @@ class EventsTest(SoupTest):
             self.event1.settings.get('payment_banktransfer_bank_details', as_type=LazyI18nString).localize('en')
             == 'Foo'
         )
-        assert 'pretix.plugins.banktransfer' in self.event1.plugins
+        assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
             assert self.event1.items.count() == 2
             i = self.event1.items.first()
@@ -182,7 +182,7 @@ class EventsTest(SoupTest):
             self.event1.settings.get('payment_banktransfer_bank_details', as_type=LazyI18nString).localize('en')
             == 'Foo'
         )
-        assert 'pretix.plugins.banktransfer' in self.event1.plugins
+        assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
             assert self.event1.items.count() == 2
             i = self.event1.items.first()
@@ -238,7 +238,7 @@ class EventsTest(SoupTest):
             self.event1.settings.get('payment_banktransfer_bank_details', as_type=LazyI18nString).localize('en')
             == 'Foo'
         )
-        assert 'pretix.plugins.banktransfer' in self.event1.plugins
+        assert 'eventyay.plugins.banktransfer' in self.event1.plugins
         with scopes_disabled():
             assert self.event1.items.count() == 2
             i = self.event1.items.first()
@@ -508,7 +508,7 @@ class EventsTest(SoupTest):
 
     def test_display_settings(self):
         with mocker_context() as mocker:
-            mocked = mocker.patch('pretix.presale.style.regenerate_css.apply_async')
+            mocked = mocker.patch('eventyay.presale.style.regenerate_css.apply_async')
 
             doc = self.get_doc('/control/event/%s/%s/settings/' % (self.orga1.slug, self.event1.slug))
             data = extract_form_fields(doc.select('form')[0])
@@ -555,7 +555,7 @@ class EventsTest(SoupTest):
 
     def test_email_settings(self):
         with mocker_context() as mocker:
-            mocked = mocker.patch('pretix.base.email.CustomSMTPBackend.test')
+            mocked = mocker.patch('eventyay.base.email.CustomSMTPBackend.test')
 
             doc = self.get_doc('/control/event/%s/%s/settings/email' % (self.orga1.slug, self.event1.slug))
             data = extract_form_fields(doc.select('form')[0])
@@ -1185,7 +1185,7 @@ class EventDeletionTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
             has_subevents=False,
         )
 

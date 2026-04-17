@@ -6,16 +6,16 @@ import pytz
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import (
+from eventyay.base.models import (
     CartPosition,
     Event,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
 )
-from pretix.base.reldate import RelativeDate, RelativeDateWrapper
-from tests.testdummy.payment import DummyPaymentProvider
+from eventyay.base.reldate import RelativeDate, RelativeDateWrapper
+from tests.tickets.testdummy.payment import DummyPaymentProvider
 
 
 @pytest.fixture

@@ -4,9 +4,9 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
-from pretix.base.models import Event, Organizer
-from pretix.base.services import locking
-from pretix.base.services.locking import (
+from eventyay.base.models import Event, Organizer
+from eventyay.base.services import locking
+from eventyay.base.services.locking import (
     LockReleaseException,
     LockTimeoutException,
 )

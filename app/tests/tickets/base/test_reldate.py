@@ -4,8 +4,8 @@ import pytest
 import pytz
 from django_scopes import scope
 
-from pretix.base.models import Event, Organizer
-from pretix.base.reldate import RelativeDate, RelativeDateWrapper
+from eventyay.base.models import Event, Organizer
+from eventyay.base.reldate import RelativeDate, RelativeDateWrapper
 
 TOKYO = pytz.timezone('Asia/Tokyo')
 BERLIN = pytz.timezone('Europe/Berlin')
@@ -20,7 +20,7 @@ def event():
         slug='dummy',
         date_from=TOKYO.localize(datetime(2017, 12, 27, 5, 0, 0)),
         presale_start=TOKYO.localize(datetime(2017, 12, 1, 5, 0, 0)),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     event.settings.timezone = 'Asia/Tokyo'
     return event

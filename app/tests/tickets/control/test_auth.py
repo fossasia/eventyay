@@ -16,7 +16,7 @@ from webauthn.authentication.verify_authentication_response import (
     VerifiedAuthentication,
 )
 
-from pretix.base.models import U2FDevice, User
+from eventyay.base.models import U2FDevice, User
 
 
 class LoginFormTest(TestCase):
@@ -333,7 +333,7 @@ class RegistrationFormTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    @override_settings(PRETIX_AUTH_BACKENDS=['tests.testdummy.auth.TestFormAuthBackend'])
+    @override_settings(PRETIX_AUTH_BACKENDS=['tests.tickets.testdummy.auth.TestFormAuthBackend'])
     def test_no_native_auth(self):
         response = self.client.post(
             '/control/register',
@@ -514,7 +514,7 @@ class PasswordRecoveryFormTest(TestCase):
         assert len(djmail.outbox) == 1
         assert djmail.outbox[0].to == [self.user.email]
         assert 'recover?id=%d&token=' % self.user.id in djmail.outbox[0].body
-        assert self.user.all_logentries[0].action_type == 'pretix.control.auth.user.forgot_password.mail_sent'
+        assert self.user.all_logentries[0].action_type == 'eventyay.control.auth.user.forgot_password.mail_sent'
 
     @override_settings(HAS_REDIS=True)
     def test_email_reset_twice_redis(self):
@@ -525,7 +525,7 @@ class PasswordRecoveryFormTest(TestCase):
             fake_redis.get_redis_connection,
             raising=False,
         )
-        m.setattr('pretix.base.metrics.redis', fake_redis, raising=False)
+        m.setattr('eventyay.base.metrics.redis', fake_redis, raising=False)
 
         djmail.outbox = []
 
@@ -540,7 +540,7 @@ class PasswordRecoveryFormTest(TestCase):
         assert len(djmail.outbox) == 1
         assert djmail.outbox[0].to == [self.user.email]
         assert 'recover?id=%d&token=' % self.user.id in djmail.outbox[0].body
-        assert self.user.all_logentries[0].action_type == 'pretix.control.auth.user.forgot_password.mail_sent'
+        assert self.user.all_logentries[0].action_type == 'eventyay.control.auth.user.forgot_password.mail_sent'
 
         response = self.client.post(
             '/control/forgot',
@@ -551,7 +551,7 @@ class PasswordRecoveryFormTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
         assert len(djmail.outbox) == 1
-        assert self.user.all_logentries[0].action_type == 'pretix.control.auth.user.forgot_password.denied.repeated'
+        assert self.user.all_logentries[0].action_type == 'eventyay.control.auth.user.forgot_password.denied.repeated'
 
     def test_recovery_unknown_user(self):
         response = self.client.get('/control/forgot/recover?id=0&token=foo')
@@ -697,7 +697,7 @@ class PasswordRecoveryFormTest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-    @override_settings(PRETIX_AUTH_BACKENDS=['tests.testdummy.auth.TestFormAuthBackend'])
+    @override_settings(PRETIX_AUTH_BACKENDS=['tests.tickets.testdummy.auth.TestFormAuthBackend'])
     def test_no_native_auth(self):
         response = self.client.post(
             '/control/forgot',
@@ -827,8 +827,7 @@ class SessionTimeOutTest(TestCase):
 
 
 @pytest.fixture
-@pytest.mark.django_db
-def user():
+def user(db):
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     return user
 

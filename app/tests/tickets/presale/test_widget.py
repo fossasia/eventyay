@@ -9,8 +9,8 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from freezegun import freeze_time
 
-from pretix.base.models import Order, OrderPosition
-from pretix.presale.style import regenerate_css, regenerate_organizer_css
+from eventyay.base.models import Order, OrderPosition
+from eventyay.presale.style import regenerate_css, regenerate_organizer_css
 
 from .test_cart import CartTestMixin
 

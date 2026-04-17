@@ -4,7 +4,7 @@ import json
 import pytest
 from django_scopes import scopes_disabled
 
-from pretix.base.models import SeatingPlan
+from eventyay.base.models import SeatingPlan
 
 SAMPLE_PLAN = """{
   "name": "Sample plan",

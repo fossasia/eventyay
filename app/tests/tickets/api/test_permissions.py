@@ -5,7 +5,7 @@ from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import Organizer
+from eventyay.base.models import Organizer
 
 event_urls = [
     (None, ''),

@@ -3,8 +3,8 @@ from django.conf import settings
 from django.test.utils import override_settings
 from django.utils.timezone import now
 
-from pretix.base.models import Event, Organizer
-from pretix.multidomain.models import KnownDomain
+from eventyay.base.models import Event, Organizer
+from eventyay.multidomain.models import KnownDomain
 
 
 @pytest.fixture

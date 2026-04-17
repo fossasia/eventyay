@@ -5,10 +5,10 @@ from django.core import mail as djmail
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Checkin,
     Event,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
@@ -26,7 +26,7 @@ def event():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.sendmail,tests.testdummy',
+        plugins='eventyay.plugins.sendmail,tests.tickets.testdummy',
     )
     return event
 

@@ -3,10 +3,10 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from pretix.base import settings
-from pretix.base.models import Event, Organizer
-from pretix.base.settings import SettingsSandbox
-from pretix.control.forms.global_settings import GlobalSettingsObject
+from eventyay.base import settings
+from eventyay.base.models import Event, Organizer
+from eventyay.base.settings import SettingsSandbox
+from eventyay.control.forms.global_settings import GlobalSettingsObject
 
 
 class SettingsTestCase(TestCase):

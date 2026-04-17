@@ -6,7 +6,7 @@ import pytest
 from django_scopes import scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import WaitingListEntry
+from eventyay.base.models import WaitingListEntry
 
 
 @pytest.fixture

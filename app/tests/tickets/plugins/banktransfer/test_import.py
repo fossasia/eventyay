@@ -8,9 +8,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
+    Product as Item,
     Order,
     OrderPayment,
     OrderPosition,
@@ -19,8 +19,8 @@ from pretix.base.models import (
     Team,
     User,
 )
-from pretix.plugins.banktransfer.models import BankImportJob, BankTransaction
-from pretix.plugins.banktransfer.tasks import process_banktransfers
+from eventyay.plugins.banktransfer.models import BankImportJob, BankTransaction
+from eventyay.plugins.banktransfer.tasks import process_banktransfers
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     t = Team.objects.create(organizer=event.organizer, can_view_orders=True, can_change_orders=True)
@@ -414,7 +414,7 @@ def test_wrong_event_organizer(env, orga_job):
         name='Wrong',
         slug='wrong',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     process_banktransfers(
         orga_job,

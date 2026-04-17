@@ -5,7 +5,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import Event, Organizer
+from eventyay.base.models import Event, Organizer
 
 
 @pytest.fixture

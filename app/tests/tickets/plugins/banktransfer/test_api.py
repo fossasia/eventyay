@@ -8,9 +8,9 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
+    Product as Item,
     Order,
     OrderPosition,
     Organizer,
@@ -18,7 +18,7 @@ from pretix.base.models import (
     Team,
     User,
 )
-from pretix.plugins.banktransfer.models import BankImportJob, BankTransaction
+from eventyay.plugins.banktransfer.models import BankImportJob, BankTransaction
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def env():
         name='Dummy',
         slug='dummy',
         date_from=now(),
-        plugins='pretix.plugins.banktransfer',
+        plugins='eventyay.plugins.banktransfer',
     )
     user = User.objects.create_user('dummy@dummy.dummy', 'dummy')
     t = Team.objects.create(organizer=event.organizer, can_view_orders=True, can_change_orders=True)

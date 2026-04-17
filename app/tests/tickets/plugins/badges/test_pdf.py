@@ -7,16 +7,16 @@ from django.utils.timezone import now
 from django_scopes import scope
 from pypdf import PdfReader
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemVariation,
+    Product as Item,
+    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Organizer,
 )
-from pretix.base.services.orders import OrderError
-from pretix.plugins.badges.exporters import BadgeExporter
+from eventyay.base.services.orders import OrderError
+from eventyay.plugins.badges.exporters import BadgeExporter
 
 
 @pytest.fixture

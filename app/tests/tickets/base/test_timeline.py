@@ -5,9 +5,9 @@ import pytest
 import pytz
 from django_scopes import scope
 
-from pretix.base.i18n import language
-from pretix.base.models import Event, Organizer
-from pretix.base.timeline import timeline_for_event
+from eventyay.base.i18n import language
+from eventyay.base.models import Event, Organizer
+from eventyay.base.timeline import timeline_for_event
 
 tz = pytz.timezone('Europe/Berlin')
 

@@ -1,6 +1,6 @@
 import pytest
 
-from pretix.base.models import Organizer
+from eventyay.base.models import Organizer
 
 
 @pytest.mark.django_db

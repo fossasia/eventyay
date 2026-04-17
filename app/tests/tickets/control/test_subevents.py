@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
     Order,
     OrderPosition,
@@ -13,8 +13,8 @@ from pretix.base.models import (
     Team,
     User,
 )
-from pretix.base.models.items import SubEventItem
-from tests.base import SoupTest, extract_form_fields
+from eventyay.base.models.product import SubEventProduct as SubEventItem
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 class SubEventsTest(SoupTest):
@@ -28,7 +28,7 @@ class SubEventsTest(SoupTest):
             name='30C3',
             slug='30c3',
             date_from=datetime.datetime(2013, 12, 26, tzinfo=datetime.timezone.utc),
-            plugins='pretix.plugins.banktransfer,tests.testdummy',
+            plugins='eventyay.plugins.banktransfer,tests.tickets.testdummy',
             has_subevents=True,
         )
 

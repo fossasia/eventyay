@@ -2,8 +2,8 @@ from collections import OrderedDict
 
 from django import forms
 
-from pretix.base.auth import BaseAuthBackend
-from pretix.base.models import User
+from eventyay.base.auth import BaseAuthBackend
+from eventyay.base.models import User
 
 
 class TestFormAuthBackend(BaseAuthBackend):

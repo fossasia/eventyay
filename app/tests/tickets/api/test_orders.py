@@ -12,21 +12,21 @@ from django_countries.fields import Country
 from django_scopes import scope, scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import (
+from eventyay.base.models import (
     InvoiceAddress,
     Order,
     OrderPosition,
     Question,
     SeatingPlan,
 )
-from pretix.base.models.orders import (
+from eventyay.base.models.orders import (
     CartPosition,
     OrderFee,
     OrderPayment,
     OrderRefund,
     QuestionAnswer,
 )
-from pretix.base.services.invoices import (
+from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
 )
@@ -90,7 +90,7 @@ def quota(event, item):
 @pytest.fixture
 def order(event, item, taxrule, question):
     testtime = datetime.datetime(2017, 12, 1, 10, 0, 0, tzinfo=UTC)
-    event.plugins += ',pretix.plugins.stripe'
+    event.plugins += ',eventyay.plugins.stripe'
     event.save()
 
     with mock.patch('django.utils.timezone.now') as mock_now:

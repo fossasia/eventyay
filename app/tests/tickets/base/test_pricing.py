@@ -5,9 +5,9 @@ import pytest
 from django.utils.timezone import now
 from django_countries.fields import Country
 
-from pretix.base.models import Event, InvoiceAddress, Organizer
-from pretix.base.models.items import SubEventItem, SubEventItemVariation
-from pretix.base.services.pricing import get_price
+from eventyay.base.models import Event, InvoiceAddress, Organizer
+from eventyay.base.models.product import SubEventProduct as SubEventItem, SubEventProductVariation as SubEventItemVariation
+from eventyay.base.services.pricing import get_price
 
 
 @pytest.fixture

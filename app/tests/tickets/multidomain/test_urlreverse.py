@@ -4,10 +4,10 @@ from django.test import override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Organizer
-from pretix.multidomain.models import KnownDomain
-from pretix.multidomain.urlreverse import build_absolute_uri, eventreverse
-from tests import assert_num_queries
+from eventyay.base.models import Event, Organizer
+from eventyay.multidomain.models import KnownDomain
+from eventyay.multidomain.urlreverse import build_absolute_uri, eventreverse
+from tests.tickets import assert_num_queries
 
 
 @pytest.fixture

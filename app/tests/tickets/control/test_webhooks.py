@@ -2,8 +2,8 @@ import pytest
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.api.models import WebHook
-from pretix.base.models import Event, Organizer, Team, User
+from eventyay.api.models import WebHook
+from eventyay.base.models import Event, Organizer, Team, User
 
 
 @pytest.fixture

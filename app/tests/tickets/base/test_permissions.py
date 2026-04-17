@@ -3,8 +3,8 @@ from django.test import RequestFactory
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretix.base.models import Event, Organizer, Team, User
-from pretix.multidomain.middlewares import SessionMiddleware
+from eventyay.base.models import Event, Organizer, Team, User
+from eventyay.multidomain.middlewares import SessionMiddleware
 
 
 @pytest.fixture

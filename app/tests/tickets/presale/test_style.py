@@ -5,8 +5,8 @@ from django.conf import settings
 from django.test import TestCase
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Organizer
-from pretix.presale.style import regenerate_organizer_css
+from eventyay.base.models import Event, Organizer
+from eventyay.presale.style import regenerate_organizer_css
 
 
 class StyleTest(TestCase):

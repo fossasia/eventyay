@@ -5,11 +5,11 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from pretix.base.models import (
+from eventyay.base.models import (
     Event,
-    Item,
-    ItemCategory,
-    ItemVariation,
+    Product as Item,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Organizer,
@@ -18,7 +18,7 @@ from pretix.base.models import (
     Team,
     User,
 )
-from tests.base import SoupTest, extract_form_fields
+from tests.tickets.base import SoupTest, extract_form_fields
 
 
 class ItemFormTest(SoupTest):

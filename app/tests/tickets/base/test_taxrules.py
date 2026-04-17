@@ -6,7 +6,7 @@ from django.utils.timezone import now
 from django_countries.fields import Country
 from django_scopes import scope
 
-from pretix.base.models import Event, InvoiceAddress, Organizer, TaxRule
+from eventyay.base.models import Event, InvoiceAddress, Organizer, TaxRule
 
 
 @pytest.fixture

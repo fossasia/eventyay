@@ -8,21 +8,21 @@ from django_countries.fields import Country
 from django_scopes import scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import (
+from eventyay.base.models import (
     CartPosition,
     InvoiceAddress,
-    Item,
-    ItemAddOn,
-    ItemBundle,
-    ItemCategory,
-    ItemVariation,
+    Product as Item,
+    ProductAddOn as ItemAddOn,
+    ProductBundle as ItemBundle,
+    ProductCategory as ItemCategory,
+    ProductVariation as ItemVariation,
     Order,
     OrderPosition,
     Question,
     QuestionOption,
     Quota,
 )
-from pretix.base.models.orders import OrderFee
+from eventyay.base.models.orders import OrderFee
 
 
 @pytest.fixture

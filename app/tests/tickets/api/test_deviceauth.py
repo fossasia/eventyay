@@ -1,6 +1,6 @@
 import pytest
 
-from pretix.base.models import Device
+from eventyay.base.models import Device
 
 
 @pytest.fixture

@@ -3,7 +3,7 @@ from django.utils import translation
 from django.utils.timezone import now
 from i18nfield.strings import LazyI18nString
 
-from pretix.base.models import Event, ItemCategory, Organizer
+from eventyay.base.models import Event, ProductCategory as ItemCategory, Organizer
 
 
 class I18nStringTest(TestCase):
