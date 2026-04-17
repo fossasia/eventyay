@@ -224,7 +224,6 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                 to=recipients,
                 connection=backend,
             )
-            email.content_subtype = 'html'
             email.send(fail_silently=False)
         except UnicodeEncodeError:
             # The stored SMTP password, username, or recipient address contains a non-ASCII character
@@ -252,7 +251,7 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             )
         else:
             recipients_str = ', '.join(recipients)
-            logger.info('Admin test email sent to %s', recipients_str)
+            logger.info('Admin test email sent to %d recipient(s)', len(recipients))
             messages.success(
                 request,
                 _('Test email sent to %(email)s — check inbox.') % {'email': recipients_str},
