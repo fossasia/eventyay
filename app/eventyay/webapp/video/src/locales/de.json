@@ -18,6 +18,8 @@
 	"App:fatal-connection-error:else:headline": "Verbindung abgelehnt",
 	"App:fatal-connection-error:world.unknown_world:headline": "Veranstaltung nicht gefunden",
 	"AppBar:user-anonymous": "anonym",
+	"AppBar:admin-mode:start": "Admin-Modus",
+	"AppBar:admin-mode:end": "Admin-Sitzung beenden",
 	"AVDevice:error:notfound": "Keine Kamera oder Mikrofon gefunden.",
 	"AVDevice:error:notreadable": "Ihre Kamera oder Ihr Mikrofon ist nicht verfügbar, vielleicht verwendet ein anderes Programm sie gerade?",
 	"AVDevice:error:notallowed": "Kamera- oder Mikrofonberechtigungen verweigert. Bitte erlauben Sie den Zugriff auf die Kamera oder das Mikrofon in Ihrem Browser und laden Sie die Seite neu.",
