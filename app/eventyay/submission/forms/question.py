@@ -81,9 +81,10 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
                     if 'required-hidden' not in classes:
                         classes.append('required-hidden')
                     field.widget.attrs['class'] = ' '.join(classes)
-                    field.widget.attrs.setdefault('required', 'required')
+                    field.widget.attrs['required'] = 'required'
+                else:
+                    field.widget.attrs.pop('required', None)
                 field.required = False
-                field.widget.attrs.pop('required', None)
             field_name = f'question_{question.pk}'
             if field_name not in self.fields:
                 self.fields[field_name] = field

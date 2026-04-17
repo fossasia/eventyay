@@ -95,5 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     updateDependencyOptions();
+    savedValues = [];
     depQuestion.addEventListener('change', updateDependencyOptions);
 });

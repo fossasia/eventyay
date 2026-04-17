@@ -404,7 +404,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
     def clean_dependency_values(self):
         if self.is_bound:
-            return self.data.getlist('dependency_values')
+            return self.data.getlist(self.add_prefix('dependency_values'))
         return self.cleaned_data.get('dependency_values')
 
     def clean_dependency_question(self):

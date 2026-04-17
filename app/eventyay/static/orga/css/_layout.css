@@ -1770,7 +1770,7 @@ h2 .user-name-display img {
 }
 
 .form-group:has([data-question-dependency]):not(.dependency-hidden) {
-  max-height: 1000px;
+  max-height: 10000px;
   opacity: 1;
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease;
 }

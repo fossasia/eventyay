@@ -568,41 +568,47 @@ class QuestionFieldsMixin:
 
     def clean(self):
         cleaned_data = super().clean()
+
+        question_cache = {
+            field.question.pk: field.question
+            for field_name, field in self.fields.items()
+            if field_name.startswith('question_') and hasattr(field, 'question')
+        }
+
+        def question_is_visible(parent_id, dep_values):
+            if parent_id not in question_cache:
+                return False
+            parent_question = question_cache[parent_id]
+            if parent_question.dependency_question_id and not question_is_visible(
+                parent_question.dependency_question_id, parent_question.dependency_values
+            ):
+                return False
+            parent_field_name = f'question_{parent_id}'
+            if parent_field_name not in cleaned_data:
+                return False
+            parent_value = cleaned_data[parent_field_name]
+            if parent_value is None or parent_value == '':
+                return False
+            if isinstance(parent_value, bool):
+                return ('True' in dep_values and parent_value) or ('False' in dep_values and not parent_value)
+            if isinstance(parent_value, str):
+                return parent_value in dep_values
+            if hasattr(parent_value, '__iter__'):
+                return any(str(v) in dep_values for v in parent_value)
+            return str(parent_value) in dep_values
+
         for field_name, field in self.fields.items():
             if not field_name.startswith('question_') or not hasattr(field, 'question'):
                 continue
             question = field.question
-            if not question.dependency_question_id:
+            if not question.dependency_question_id or not question.required:
                 continue
-            if not question.required:
-                continue
-            parent_field_name = f'question_{question.dependency_question_id}'
-            parent_value = cleaned_data.get(parent_field_name)
-            if parent_value is None or parent_value == '':
-                continue
-            if isinstance(parent_value, str):
-                parent_values_iter = [parent_value]
-            elif hasattr(parent_value, '__iter__'):
-                parent_values_iter = list(parent_value)
-            else:
-                parent_values_iter = [parent_value]
-            normalized_parent_values = []
-            for v in parent_values_iter:
-                if hasattr(v, 'pk'):
-                    normalized_parent_values.append(str(v.pk))
-                elif isinstance(v, bool):
-                    normalized_parent_values.append(str(v))
-                else:
-                    normalized_parent_values.append(str(v))
-            if not any(val in question.dependency_values for val in normalized_parent_values):
+            if not question_is_visible(question.dependency_question_id, question.dependency_values):
                 continue
             value = cleaned_data.get(field_name)
-            if (
-                value is None
-                or value == ''
-                or (hasattr(value, '__len__') and len(value) == 0)
-            ):
+            if value is None or value == '' or (hasattr(value, '__len__') and len(value) == 0):
                 self.add_error(field_name, forms.ValidationError(_('This field is required.')))
+
         return cleaned_data
 
 

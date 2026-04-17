@@ -72,13 +72,15 @@ function talkDependenciesToggle(ev) {
         const isShown = !dependent.classList.contains("dependency-hidden");
         const shouldShow = shouldBeShown(el);
 
-        if (shouldShow && !isShown) {
-            dependent.classList.remove("dependency-hidden");
+        if (shouldShow) {
+            if (!isShown) {
+                dependent.classList.remove("dependency-hidden");
+            }
             dependent.querySelectorAll("input.required-hidden, select.required-hidden, textarea.required-hidden").forEach(function(field) {
                 field.required = true;
                 field.classList.remove("required-hidden");
             });
-        } else if (!shouldShow && isShown) {
+        } else if (isShown) {
             if (dependent.classList.contains("has-error") || dependent.querySelector(".has-error")) {
                 return;
             }
