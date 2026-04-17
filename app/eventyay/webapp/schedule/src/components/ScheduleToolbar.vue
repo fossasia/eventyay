@@ -115,12 +115,12 @@
 					.template-sort-inclusion
 						.sort-inclusion-row
 							span.sort-inclusion-label {{ t.sort_include_room }}
-							button.sort-toggle-slider(type="button", :class="{on: includeRoomSortKeyModel}", :aria-pressed="includeRoomSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleRoomSort")
-								span.toggle-slider
+							button.sort-toggle-slider(type="button", :class="{on: includeRoomSortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_room", :aria-checked="includeRoomSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleRoomSort")
+								span.toggle-slider(aria-hidden="true")
 						.sort-inclusion-row
 							span.sort-inclusion-label {{ t.sort_include_datetime }}
-							button.sort-toggle-slider(type="button", :class="{on: includeDateSortKeyModel}", :aria-pressed="includeDateSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleDatetimeSort")
-								span.toggle-slider
+							button.sort-toggle-slider(type="button", :class="{on: includeDateSortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_datetime", :aria-checked="includeDateSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleDatetimeSort")
+								span.toggle-slider(aria-hidden="true")
 						.sort-menu-divider
 					button.sort-item(
 						v-for="opt in resolvedSortOptions",

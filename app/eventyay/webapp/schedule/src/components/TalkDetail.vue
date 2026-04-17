@@ -8,7 +8,9 @@
 					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
 					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
 						fav-button(@toggleFav="toggleFav")
-			.info {{ datetime }} {{ roomName }}
+			.info
+				span.info-main {{ datetime }} {{ roomName }}
+				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
 			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
 			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
@@ -138,6 +140,26 @@ export default {
 				anonymous_attendee: m.anonymous_attendee || 'Anonymous (name not shared)',
 				view_all: m.view_all || 'View all',
 				hide_list: m.hide_list || 'Hide',
+				session_language: m.session_language || 'Language',
+			}
+		},
+		uiLocale () {
+			if (typeof document === 'undefined') return 'en'
+			return (document.documentElement.lang || 'en').trim().split(',')[0] || 'en'
+		},
+		sessionLanguageLabel () {
+			const code = this.resolvedTalk?.content_locale
+			if (!code || typeof code !== 'string') return ''
+			const tag = code.replace(/_/g, '-')
+			try {
+				return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(tag) || code
+			} catch {
+				try {
+					const primary = tag.split('-')[0] || tag
+					return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(primary) || code
+				} catch {
+					return code
+				}
 			}
 		},
 		inlineStarrersLimit() {
@@ -329,6 +351,8 @@ export default {
 		.info
 			font-size: 18px
 			color: $clr-secondary-text-light
+			.session-language
+				white-space: nowrap
 		.abstract
 			margin: 16px 0 0 0
 			font-size: 16px
