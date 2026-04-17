@@ -740,9 +740,12 @@ export default {
 			window.location.hash = day.format('YYYY-MM-DD')
 		},
 		selectDay (dayId) {
-			this.currentDay = dayId
 			window.location.hash = dayId
-			this.forceScrollDay++
+			if (dayId === this.currentDay) {
+				this.forceScrollDay++
+				return
+			}
+			this.currentDay = dayId
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
