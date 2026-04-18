@@ -223,7 +223,6 @@
 
     function resetLegacySidebarStorage() {
       try {
-        localStorage.removeItem('sidebar-minimized');
         localStorage.removeItem('startpage-sidebar-minimized');
       } catch (error) {
         // Ignore storage errors.
@@ -236,9 +235,6 @@
     } else {
       resetLegacySidebarStorage();
       setSidebarState(true);
-      window.setTimeout(function () {
-        setSidebarState(true);
-      }, 0);
     }
 
     sidebarToggle.addEventListener('click', function (event) {

@@ -15,6 +15,12 @@ body.startpage-body.has-sidebar.sidebar-minimized .presale-container {
   margin-inline-start: 0;
 }
 
+@media (min-width: 992px) {
+  body.startpage-body.has-sidebar:not(.sidebar-minimized) .presale-container {
+    margin-inline-start: 250px;
+  }
+}
+
 .startpage-search-nav {
   display: flex;
   align-items: center;
