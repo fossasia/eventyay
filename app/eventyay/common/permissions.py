@@ -31,3 +31,21 @@ def is_event_organiser(user, request, event=None) -> bool:
     return user.has_event_permission(
         event.organizer, event, request=request
     )
+
+
+def user_has_cfp_submissions(request: HttpRequest, event=None) -> bool:
+    if not request or not event:
+        return False
+    if not request.user.is_authenticated:
+        return False
+
+    submission_cache = getattr(request, 'eventyay_user_has_cfp_submissions_cache', None)
+    if submission_cache is None:
+        submission_cache = {}
+        request.eventyay_user_has_cfp_submissions_cache = submission_cache
+
+    event_pk = event.pk
+    if event_pk not in submission_cache:
+        submission_cache[event_pk] = event.submissions.filter(speakers=request.user).exists()
+
+    return submission_cache[event_pk]
