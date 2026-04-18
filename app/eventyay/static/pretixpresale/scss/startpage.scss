@@ -6,121 +6,6 @@ body.startpage-body {
   padding-top: var(--navbar-height, 50px);
 }
 
-nav.navbar {
-  background: #2185d0;
-  border: none;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  left: 0;
-  margin: 0;
-  min-height: var(--navbar-height, 50px);
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 1100;
-}
-
-nav.navbar .navbar-header {
-  align-items: center;
-  display: flex;
-  height: var(--navbar-height, 50px);
-  padding: 0 0.25rem 0 0;
-}
-
-body.startpage-body:not(.has-sidebar) nav.navbar .navbar-header {
-  padding-left: 1rem;
-}
-
-body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar {
-  display: flex;
-  align-items: center;
-  background-color: transparent;
-  border: 0;
-  color: #fff;
-  cursor: pointer;
-  margin: 0 0 0 1rem;
-  padding: 0.5rem;
-}
-
-body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:hover {
-  background-color: transparent;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:focus {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar:focus:not(:focus-visible) {
-  outline: 2px solid transparent;
-}
-
-body.startpage-body.has-sidebar nav.navbar .navbar-toggle-sidebar .fa-bars {
-  color: #fff;
-}
-
-nav.navbar .navbar-brand {
-  align-items: center;
-  color: #fff;
-  display: flex;
-  font-size: 20px;
-  gap: 0.5rem;
-  line-height: 1;
-  text-decoration: none;
-}
-
-nav.navbar .navbar-brand img {
-  height: 28px;
-  width: auto;
-}
-
-nav.navbar .navbar-top-links {
-  align-items: center;
-  display: flex;
-  list-style: none;
-  margin: 0;
-  margin-left: auto;
-  padding: 0 1rem;
-}
-
-nav.navbar .navbar-top-links li {
-  align-items: center;
-  display: inline-flex;
-}
-
-nav.navbar .navbar-top-links li a,
-nav.navbar .navbar-top-links summary,
-nav.navbar .navbar-top-links .header-nav,
-nav.navbar .navbar-top-links .btn-link {
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  min-height: var(--navbar-height, 50px);
-  padding: 15px;
-}
-
-nav.navbar .navbar-top-links li a:hover,
-nav.navbar .navbar-top-links summary:hover,
-nav.navbar .navbar-top-links .btn-link:hover {
-  color: #fff;
-  text-decoration: none;
-}
-
-nav.navbar .danger,
-nav.navbar .danger:hover,
-nav.navbar .danger:active {
-  background: #db2828;
-  font-size: 14px;
-}
-
-nav.navbar .navbar-top-links .dropdown-content {
-  color: var(--color-text);
-}
-
 .startpage-search-nav {
   display: flex;
   align-items: center;
@@ -513,11 +398,6 @@ body.startpage-search-results-page #main-card {
 }
 
 @media (max-width: 767px) {
-  nav.navbar .navbar-header,
-  nav.navbar .navbar-top-links {
-    padding: 0 0.75rem;
-  }
-
   .startpage-search input {
     width: 160px;
   }
@@ -549,13 +429,16 @@ body.startpage-body {
     overflow-y: auto;
     position: fixed;
     top: var(--navbar-height, 50px);
-    width: $sidebar-minimized-width;
+    width: $sidebar-width;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
     z-index: 12;
 
     html.rtl &,
     html[dir='rtl'] & {
       left: auto;
       right: 0;
+      transform: translateX(100%);
     }
 
     .sidebar-nav {
@@ -641,13 +524,17 @@ body.startpage-body {
 
   /* Sidebar minimized (collapsed): icons only */
   &.has-sidebar.sidebar-minimized .sidebar {
-    overflow-x: hidden;
-    width: $sidebar-minimized-width;
+    transform: translateX(-100%);
+
+    html.rtl &,
+    html[dir='rtl'] & {
+      transform: translateX(100%);
+    }
   }
 
   /* Sidebar expanded: show text labels and set page margin */
   &.has-sidebar:not(.sidebar-minimized) .sidebar {
-    width: $sidebar-width;
+    transform: translateX(0);
 
     .context-selector .dropdown-toggle .context-indicator {
       display: flex;
@@ -669,7 +556,7 @@ body.startpage-body {
   }
 
   &.has-sidebar.sidebar-minimized .presale-container {
-    margin-inline-start: $sidebar-minimized-width;
+    margin-inline-start: 0;
   }
 
   /* Mobile: sidebar overlays content */

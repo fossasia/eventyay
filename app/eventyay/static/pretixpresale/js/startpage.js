@@ -213,7 +213,9 @@
 
     sidebarToggle.setAttribute('aria-controls', sidebar.id);
 
-    var storageKey = 'sidebar-minimized';
+    // Keep startpage sidebar state independent from dashboard pages.
+    // This prevents the startpage from loading in an expanded state.
+    var storageKey = 'startpage-sidebar-minimized';
 
     function isMobileView() {
       return window.matchMedia('(max-width: 767px)').matches;
