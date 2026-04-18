@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.core.exceptions import ValidationError
 from django.core.files.storage import FileSystemStorage
-from django.db import transaction
+from django.db import models, transaction
 from django.forms.models import inlineformset_factory
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -20,7 +20,7 @@ from django.views.generic import FormView, ListView, TemplateView, UpdateView, V
 from django_context_decorator import context
 from django_scopes import scope, scopes_disabled
 from formtools.wizard.views import SessionWizardView
-from django.db import models
+
 
 from eventyay.common.forms import I18nEventFormSet, I18nFormSet
 from eventyay.base.models import LogEntry
@@ -566,6 +566,7 @@ class TargetChoice(models.TextChoices):
     SPEAKER = 'speaker', _('Speakers')
     SESSION = 'session', _('Sessions')
 
+
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
     IMPORT_CHOICES = (
@@ -636,7 +637,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             session.save()
         if not session.session_key:
             messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
-            return redirect(self.request.path)
+            return redirect(f'{self.request.path}#tab-import')
 
         target_config = self.IMPORT_TARGETS[target]
         import_filename = target_config['filename']
@@ -695,5 +696,5 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
 
         if not result:
             messages.success(self.request, _('No data to be exported'))
-            return redirect(self.request.path)
+            return redirect(f'{self.request.path}#tab-export')
         return result
