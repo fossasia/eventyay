@@ -2,85 +2,17 @@ body.startpage-body {
   padding-top: var(--navbar-height, 50px);
 }
 
-nav.navbar {
-  background: #2185d0;
-  border: none;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 500;
-  left: 0;
-  margin: 0;
-  min-height: var(--navbar-height, 50px);
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 1100;
+/* Startpage-specific sidebar behavior: fully hidden when collapsed */
+body.startpage-body.has-sidebar.sidebar-minimized .sidebar {
+  display: none;
 }
 
-nav.navbar .navbar-header {
-  align-items: center;
-  display: flex;
-  height: var(--navbar-height, 50px);
-  padding: 0 1rem;
+body.startpage-body.has-sidebar:not(.sidebar-minimized) .sidebar {
+  display: block;
 }
 
-nav.navbar .navbar-brand {
-  align-items: center;
-  color: #fff;
-  display: flex;
-  font-size: 20px;
-  gap: 0.5rem;
-  line-height: 1;
-  text-decoration: none;
-}
-
-nav.navbar .navbar-brand img {
-  height: 28px;
-  width: auto;
-}
-
-nav.navbar .navbar-top-links {
-  align-items: center;
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0 1rem;
-}
-
-nav.navbar .navbar-top-links li {
-  align-items: center;
-  display: inline-flex;
-}
-
-nav.navbar .navbar-top-links li a,
-nav.navbar .navbar-top-links summary,
-nav.navbar .navbar-top-links .header-nav,
-nav.navbar .navbar-top-links .btn-link {
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  min-height: var(--navbar-height, 50px);
-  padding: 15px;
-}
-
-nav.navbar .navbar-top-links li a:hover,
-nav.navbar .navbar-top-links summary:hover,
-nav.navbar .navbar-top-links .btn-link:hover {
-  color: #fff;
-  text-decoration: none;
-}
-
-nav.navbar .danger,
-nav.navbar .danger:hover,
-nav.navbar .danger:active {
-  background: #db2828;
-  font-size: 14px;
-}
-
-nav.navbar .navbar-top-links .dropdown-content {
-  color: var(--color-text);
+body.startpage-body.has-sidebar.sidebar-minimized .presale-container {
+  margin-inline-start: 0;
 }
 
 .startpage-search-nav {
@@ -475,11 +407,6 @@ body.startpage-search-results-page #main-card {
 }
 
 @media (max-width: 767px) {
-  nav.navbar .navbar-header,
-  nav.navbar .navbar-top-links {
-    padding: 0 0.75rem;
-  }
-
   .startpage-search input {
     width: 160px;
   }

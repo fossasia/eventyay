@@ -199,10 +199,59 @@
     });
   }
 
+  function initSidebar() {
+    var body = document.body;
+    if (!body.classList.contains('has-sidebar')) {
+      return;
+    }
+
+    var sidebarToggle = document.getElementById('sidebar-toggle');
+    var sidebar = document.getElementById('sidebar');
+    if (!sidebarToggle || !sidebar) {
+      return;
+    }
+
+    function isMobileView() {
+      return window.matchMedia('(max-width: 767px)').matches;
+    }
+
+    function setSidebarState(minimized) {
+      body.classList.toggle('sidebar-minimized', minimized);
+      sidebarToggle.setAttribute('aria-expanded', minimized ? 'false' : 'true');
+      sidebar.setAttribute('aria-hidden', minimized ? 'true' : 'false');
+    }
+
+    function resetLegacySidebarStorage() {
+      try {
+        localStorage.removeItem('sidebar-minimized');
+        localStorage.removeItem('startpage-sidebar-minimized');
+      } catch (error) {
+        // Ignore storage errors.
+      }
+    }
+
+    // Startpage should be collapsed (fully hidden) by default.
+    if (isMobileView()) {
+      setSidebarState(true);
+    } else {
+      resetLegacySidebarStorage();
+      setSidebarState(true);
+      window.setTimeout(function () {
+        setSidebarState(true);
+      }, 0);
+    }
+
+    sidebarToggle.addEventListener('click', function (event) {
+      event.preventDefault();
+      setSidebarState(!body.classList.contains('sidebar-minimized'));
+    });
+  }
+
   function init() {
     initShareButtons();
     initSearch();
     initKeyboardShortcuts();
+    initSidebar();
   }
 
   if (document.readyState === 'loading') {
