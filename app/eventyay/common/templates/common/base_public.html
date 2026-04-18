@@ -163,7 +163,7 @@
                             {% endif %}
                         </div>
                         {% if show_online_video_link %}
-                            <div class="header-join-video-floating-mobile d-md-none">
+                            <div class="header-join-video-floating-mobile">
                                     <a href="{% if request.resolver_match.namespace == 'agenda' %}{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}{% else %}{% eventurl current_event 'presale:event.onlinevideo.join' %}{% endif %}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{% translate "Join online video" %}">
                                         <i class="fa fa-video-camera" aria-hidden="true"></i>
                                         <span class="join-video-text">{% translate "Join online video" %}</span>
