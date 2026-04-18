@@ -22,4 +22,5 @@ BASE_PATH = ''
 FORCE_SCRIPT_NAME = BASE_PATH
 
 for a in testutils_settings.PLUGINS:
-    INSTALLED_APPS.remove(a)
+    if a in INSTALLED_APPS:
+        INSTALLED_APPS.remove(a)
