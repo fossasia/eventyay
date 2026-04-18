@@ -211,10 +211,6 @@
       return;
     }
 
-    function isMobileView() {
-      return window.matchMedia('(max-width: 767px)').matches;
-    }
-
     function setSidebarState(minimized) {
       body.classList.toggle('sidebar-minimized', minimized);
       sidebarToggle.setAttribute('aria-expanded', minimized ? 'false' : 'true');

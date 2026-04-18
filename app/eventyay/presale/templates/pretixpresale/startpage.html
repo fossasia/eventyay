@@ -152,14 +152,43 @@
                             </a>
                         </div>
                         <ul class="nav" id="side-menu">
-                            {% for item in nav_items %}
-                                <li{% if item.active %} class="active"{% endif %}>
-                                    <a href="{{ item.url }}">
-                                        {% if item.icon %}
-                                            <span class="fa fa-fw fa-{{ item.icon }}"></span>
+                            {% for nav in nav_items %}
+                                <li>
+                                    <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}
+                                            {% if nav.external %}target="_blank" rel="noopener"{% endif %}
+                                            {% if nav.children %}class="has-children"{% endif %} class="nav-item-label">
+                                        {% if nav.icon %}
+                                            {% if "<svg" in nav.icon %}
+                                                {{ nav.icon|safe }}
+                                            {% else %}
+                                                <span class="fa fa-fw fa-{{ nav.icon }}"></span>
+                                            {% endif %}
                                         {% endif %}
-                                        <span class="sidebar-text">{{ item.label }}</span>
+                                        <span class="sidebar-text">{{ nav.label }}</span>
                                     </a>
+                                    {% if nav.children %}
+                                        <a href="#" class="arrow">
+                                            <span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-second-level">
+                                            {% for item in nav.children %}
+                                                <li>
+                                                    <a href="{{ item.url }}"
+                                                            {% if item.external %}target="_blank" rel="noopener"{% endif %}
+                                                            {% if item.active %}class="active"{% endif %}>
+                                                        {% if item.icon %}
+                                                            {% if "<svg" in item.icon %}
+                                                                {{ item.icon|safe }}
+                                                            {% else %}
+                                                                <span class="fa fa-fw fa-{{ item.icon }}"></span>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        <span class="sidebar-text">{{ item.label }}</span>
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
