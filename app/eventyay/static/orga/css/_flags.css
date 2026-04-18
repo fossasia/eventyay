@@ -1304,3 +1304,23 @@ input[lang="uk"],
 textarea[lang="uk"] {
   background-image: url("/static/vendored/flags/ua.png");
 }
+div[lang="ta"],
+input[lang="ta"],
+textarea[lang="ta"] {
+  background-image: url("/static/vendored/flags/in.png");
+}
+div[lang="te"],
+input[lang="te"],
+textarea[lang="te"] {
+  background-image: url("/static/vendored/flags/in.png");
+}
+div[lang="ur"],
+input[lang="ur"],
+textarea[lang="ur"] {
+  background-image: url("/static/vendored/flags/pk.png");
+}
+div[lang="hi"],
+input[lang="hi"],
+textarea[lang="hi"] {
+  background-image: url("/static/vendored/flags/in.png");
+}
