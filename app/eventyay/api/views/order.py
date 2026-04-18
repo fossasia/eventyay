@@ -555,7 +555,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         except SendMailException:
             return Response(
                 {'detail': _('There was an error sending the mail. Please try again later.')},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                # ✅ FIXED
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,       
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
