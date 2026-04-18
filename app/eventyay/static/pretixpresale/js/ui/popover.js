@@ -73,6 +73,7 @@ $(function () {
   const basePathDefinition = document.getElementById(BASE_PATH_ID);
   const orgNameDefinition = document.getElementById(ORGANIZER_NAME_ID);
   const eventSlugDefinition = document.getElementById(EVENT_SLUG_ID);
+  const eventPkDefinition = document.getElementById(EVENT_PK_ID);
   const showOrganizerAreaDefinition = document.getElementById(SHOW_ORGANIZER_AREA_ID);
   let basePath = '';
   if (basePathDefinition) {
@@ -93,6 +94,12 @@ $(function () {
     eventSlug = JSON.parse(eventSlugDefinition.textContent);
   } else {
     console.warn(`JSON element to define ${EVENT_SLUG_ID} is missing!`)
+  }
+  let eventPk = '';
+  if (eventPkDefinition) {
+    eventPk = JSON.parse(eventPkDefinition.textContent);
+  } else {
+    console.warn(`JSON element to define ${EVENT_PK_ID} is missing!`)
   }
   let showOrganizerArea = false;
   if (showOrganizerAreaDefinition) {
@@ -179,7 +186,7 @@ $(function () {
         <a href="${basePath}${profilePath}" target="_self" class="btn btn-outline-success">
         <i class="fa fa-user"></i> ${window.gettext('Account')}
         </a>
-      </div></div>`
+      </div>`
   );
 
   if (showOrganizerArea) {
@@ -197,6 +204,7 @@ $(function () {
         <a href="${basePath}${logoutPath}" target="_self" class="btn btn-outline-success">
             <i class="fa fa-sign-out"></i> ${window.gettext('Logout')}
         </a>
+    </div>
     </div>`
   );
 
