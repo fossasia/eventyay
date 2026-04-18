@@ -221,21 +221,8 @@
       sidebar.setAttribute('aria-hidden', minimized ? 'true' : 'false');
     }
 
-    function resetLegacySidebarStorage() {
-      try {
-        localStorage.removeItem('startpage-sidebar-minimized');
-      } catch (error) {
-        // Ignore storage errors.
-      }
-    }
-
     // Startpage should be collapsed (fully hidden) by default.
-    if (isMobileView()) {
-      setSidebarState(true);
-    } else {
-      resetLegacySidebarStorage();
-      setSidebarState(true);
-    }
+    setSidebarState(true);
 
     sidebarToggle.addEventListener('click', function (event) {
       event.preventDefault();

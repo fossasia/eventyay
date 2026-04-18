@@ -15,6 +15,7 @@ from eventyay.helpers.i18n import (
     get_javascript_format_without_seconds,
     get_moment_locale,
 )
+from eventyay.eventyay_common.navigation import get_global_navigation
 
 from ..base.i18n import get_language_without_region
 from .signals import (
@@ -172,5 +173,7 @@ def _default_context(request):
 
     ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
     ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
+    if request.user.is_authenticated:
+        ctx['nav_items'] = get_global_navigation(request)
 
     return ctx

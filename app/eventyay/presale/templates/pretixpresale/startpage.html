@@ -152,30 +152,16 @@
                             </a>
                         </div>
                         <ul class="nav" id="side-menu">
-                            <li>
-                                <a href="{% url 'eventyay_common:orders' %}">
-                                    <span class="fa fa-fw fa-shopping-cart"></span>
-                                    <span class="sidebar-text">{% trans "My Orders" %}</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{% url 'eventyay_common:sessions' %}">
-                                    <span class="fa fa-fw fa-sticky-note-o"></span>
-                                    <span class="sidebar-text">{% trans "My Sessions" %}</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{% url 'eventyay_common:events' %}">
-                                    <span class="fa fa-fw fa-calendar"></span>
-                                    <span class="sidebar-text">{% trans "My Events" %}</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{% url 'eventyay_common:organizers' %}">
-                                    <span class="fa fa-fw fa-group"></span>
-                                    <span class="sidebar-text">{% trans "Organizers" %}</span>
-                                </a>
-                            </li>
+                            {% for item in nav_items %}
+                                <li{% if item.active %} class="active"{% endif %}>
+                                    <a href="{{ item.url }}">
+                                        {% if item.icon %}
+                                            <span class="fa fa-fw fa-{{ item.icon }}"></span>
+                                        {% endif %}
+                                        <span class="sidebar-text">{{ item.label }}</span>
+                                    </a>
+                                </li>
+                            {% endfor %}
                         </ul>
                     </div>
                 </div>
