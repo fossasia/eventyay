@@ -7,7 +7,6 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
-from eventyay.common.permissions import is_admin_mode_active
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 register = template.Library()
@@ -165,8 +164,6 @@ def can_view_featured_sessions_public(context, event=None):
     event = event or getattr(request, 'event', None)
     if not request or not event:
         return False
-    if is_admin_mode_active(request):
-        return True
     user = getattr(request, 'user', None)
     if user is None:
         return False

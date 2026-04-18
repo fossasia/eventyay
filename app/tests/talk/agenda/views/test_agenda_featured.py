@@ -25,6 +25,20 @@ def test_featured_invisible_because_setting(
         assert response.url == event.urls.featured
 
 
+@pytest.mark.django_db
+def test_featured_invisible_when_setting_unset(
+    client, django_assert_max_num_queries, event, confirmed_submission
+):
+    with scope(event=event):
+        event.feature_flags.pop("show_featured", None)
+        event.save()
+        confirmed_submission.is_featured = True
+        confirmed_submission.save()
+    with django_assert_max_num_queries(9):
+        response = client.get(event.urls.featured, follow=True)
+    assert response.status_code == 404
+
+
 @pytest.mark.parametrize("featured", ("always", "never", "after_schedule"))
 @pytest.mark.django_db
 def test_featured_invisible_because_schedule(
