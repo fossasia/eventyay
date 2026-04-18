@@ -202,9 +202,14 @@ class AddOnsStep(CartMixin, AsyncAction, TemplateFlowStep):
                     if val:
                         selected[i, v] = val, price
             else:
-                product_key = f'{product_key_base}_product_{i.pk}'
-                val = int(self.request.POST.get(product_key) or '0')
-                price = self.request.POST.get(f'{product_key}_price') or '0'
+                item_key = f'{product_key_base}_item_{i.pk}'
+                legacy_product_key = f'{product_key_base}_product_{i.pk}'
+                val = int(self.request.POST.get(item_key) or self.request.POST.get(legacy_product_key) or '0')
+                price = (
+                    self.request.POST.get(f'{item_key}_price')
+                    or self.request.POST.get(f'{legacy_product_key}_price')
+                    or '0'
+                )
                 if val:
                     selected[i, None] = val, price
 

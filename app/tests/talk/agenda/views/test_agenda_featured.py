@@ -3,7 +3,7 @@ from django_scopes import scope
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("featured", ("always", "never", "pre_schedule"))
+@pytest.mark.parametrize("featured", ("always", "never", "after_schedule"))
 def test_featured_invisible_because_setting(
     client, django_assert_max_num_queries, event, featured, confirmed_submission
 ):
@@ -25,7 +25,7 @@ def test_featured_invisible_because_setting(
         assert response.url == event.urls.featured
 
 
-@pytest.mark.parametrize("featured", ("always", "never", "pre_schedule"))
+@pytest.mark.parametrize("featured", ("always", "never", "after_schedule"))
 @pytest.mark.django_db
 def test_featured_invisible_because_schedule(
     client, django_assert_max_num_queries, event, featured
@@ -47,7 +47,7 @@ def test_featured_invisible_because_schedule(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("featured", ("always", "pre_schedule"))
+@pytest.mark.parametrize("featured", ("always", "after_schedule"))
 def test_featured_visible_despite_schedule(
     client, django_assert_max_num_queries, event, featured
 ):
