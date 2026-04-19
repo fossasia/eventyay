@@ -93,9 +93,16 @@ class CentralMailSettingsForm(SettingsForm):
             return data
 
         password = data.get('smtp_password')
-        if not password or password == ENCRYPTED_PASSWORD_PLACEHOLDER:
-            if data.get('smtp_username'):
-                data['smtp_password'] = self.initial.get('smtp_password')
+        username = data.get('smtp_username')
+        if password == ENCRYPTED_PASSWORD_PLACEHOLDER:
+            data['smtp_password'] = self.initial.get('smtp_password', '')
+        elif not password:
+            if username:
+                data['smtp_password'] = self.initial.get('smtp_password', '')
+            else:
+                data['smtp_password'] = ''
+        elif not username:
+            data['smtp_password'] = ''
 
         vendor = data.get('email_vendor', 'smtp')
 

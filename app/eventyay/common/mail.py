@@ -79,8 +79,8 @@ def mail_send_task(
         backend = event.get_mail_backend()
 
         sender = settings.MAIL_FROM
-        if event.mail_settings['smtp_use_custom']:  # pragma: no cover
-            sender = event.mail_settings['mail_from'] or sender
+        if event.settings.smtp_use_custom: 
+            sender = event.settings.mail_from or sender
 
         # Use unified Reply-To resolution
         if not reply_to:

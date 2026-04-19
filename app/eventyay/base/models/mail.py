@@ -225,8 +225,8 @@ class MailTemplate(PretalxModel):
             if len(subject) > 200:
                 subject = subject[:198] + '…'
 
-            # Determine sender for SMTP context
-            sender = event.mail_settings.get('mail_from') if event else settings.MAIL_FROM
+            # Determine sender for SMTP context.
+            sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
             sender = sender or settings.MAIL_FROM
 
             # Use unified Reply-To resolution

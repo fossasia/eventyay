@@ -601,7 +601,6 @@ class Submission(GenerateCode, PretalxModel):
             # Fan-out to every admin instead of a single event.email address.
             admin_emails = list(
                 self.event.teams.filter(can_change_event_settings=True)
-                .prefetch_related('members')
                 .values_list('members__email', flat=True)
                 .distinct()
                 .exclude(members__email__isnull=True)
