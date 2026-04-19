@@ -140,6 +140,9 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
             else:
                 return None
 
+    @cached_property
+    def order(self):
+        return self.position.order if self.position else None
 
 @method_decorator(xframe_options_exempt, 'dispatch')
 class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
@@ -253,9 +256,6 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
         logger.info('Redirecting to %s...', redirect_url)
         return redirect(redirect_url)
 
-    @cached_property
-    def order(self):
-        return self.position.order if self.position else None
 
     def get_position_url(self):
         return eventreverse(

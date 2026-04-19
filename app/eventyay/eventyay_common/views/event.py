@@ -1,5 +1,6 @@
 import datetime as dt
 import logging
+import re
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
@@ -16,6 +17,7 @@ from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.encoding import iri_to_uri
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
@@ -890,6 +892,9 @@ class EventLive(TemplateView):
 
 
 class VideoAccessAuthenticator(View):
+    _RESUME_QUERY_SAFE = re.compile(r'^[a-zA-Z0-9_=&%.+-]*$')
+    _RESUME_PATH_SEGMENT_SAFE = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9._-]*$')
+
     def get(self, request, *args, **kwargs):
         """
         Check if the video configuration is complete, the plugin is enabled, and the user has permission to modify the event settings.
@@ -907,7 +912,8 @@ class VideoAccessAuthenticator(View):
 
         # Generate token and include in url to video system
         token_traits = self._build_token_traits(has_staff_video_access, video_traits)
-        return redirect(self.generate_token_url(request, token_traits))
+        resume_suffix = self._resume_suffix_from_request(request)
+        return redirect(self.generate_token_url(request, token_traits, resume_suffix=resume_suffix))
 
     def _has_staff_video_access(self) -> bool:
         request = self.request
@@ -939,6 +945,47 @@ class VideoAccessAuthenticator(View):
                 seen.add(trait)
                 deduped_traits.append(trait)
         return deduped_traits
+
+    def _resume_suffix_from_request(self, request: HttpRequest) -> str | None:
+        path = (request.GET.get('resume_path') or '').strip().strip('/')
+        query = (request.GET.get('resume_query') or '').strip()
+        if path or query:
+            if not path:
+                return None
+            raw = f'{path}?{query}' if query else path
+            return self._safe_video_resume_suffix(raw)
+        legacy = request.GET.get('resume', '')
+        return self._safe_video_resume_suffix(legacy) if legacy else None
+
+    def _safe_video_resume_suffix(self, raw: str) -> str | None:
+        """
+        Path (and optional query) appended under the event video base URL after minting a token.
+        Rejects absolute URLs, traversal, and odd encodings to avoid open redirects.
+        """
+        if not raw or not isinstance(raw, str):
+            return None
+        raw = raw.strip().strip('/')
+        if not raw:
+            return None
+        if '#' in raw or any(ord(c) < 32 or ord(c) == 127 for c in raw):
+            return None
+        if raw.startswith(('/', '\\')) or '..' in raw or '//' in raw:
+            return None
+        path, sep, query = raw.partition('?')
+        parts = [p for p in path.split('/') if p and p != '.']
+        if any(p == '..' for p in parts):
+            return None
+        for p in parts:
+            if not self._RESUME_PATH_SEGMENT_SAFE.fullmatch(p):
+                return None
+        if query and not self._RESUME_QUERY_SAFE.fullmatch(query):
+            return None
+        safe_path = '/'.join(parts)
+        if not safe_path and not query:
+            return None
+        if query:
+            return f'{safe_path}?{query}' if safe_path else None
+        return safe_path
 
     def _ensure_video_configuration(self):
         """
@@ -1011,7 +1058,7 @@ class VideoAccessAuthenticator(View):
 
         # Video is integrated; do not toggle event plugins here.
 
-    def generate_token_url(self, request, traits):
+    def generate_token_url(self, request, traits, resume_suffix: str | None = None):
         uid_token = encode_email(request.user.email)
         iat = datetime.now(tz.utc)
         exp = iat + dt.timedelta(days=1)
@@ -1022,10 +1069,17 @@ class VideoAccessAuthenticator(View):
             'iat': iat,
             'uid': uid_token,
             'traits': traits,
+            'is_staff': bool(self.request.user.is_staff),
+            'is_superuser': bool(getattr(self.request.user, 'is_superuser', False)),
         }
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
-        base_url = self.request.event.settings.venueless_url
-        return '{}/#token={}'.format(base_url, token).replace('//#', '/#')
+        base_url = str(self.request.event.settings.venueless_url).rstrip('/')
+        if resume_suffix:
+            tail = resume_suffix.lstrip('/')
+            target = iri_to_uri(f'{base_url}/{tail}')
+        else:
+            target = f'{base_url}/'
+        return f'{target}#token={token}'.replace('//#', '/#')
 
 
 class EventSearchView(views.APIView):

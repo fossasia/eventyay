@@ -6,13 +6,16 @@ from django.views.generic import TemplateView, View
 from django_context_decorator import context
 from django_scopes import scope
 
-from eventyay.agenda.views.speaker import ScheduleDataMixin
-from eventyay.agenda.views.utils import is_email_like
+from eventyay.agenda.views.utils import build_enriched_schedule_json, is_email_like
 from eventyay.base.models import SubmissionFavourite, User
 
 
-class PublicStarredScheduleView(ScheduleDataMixin, TemplateView):
+class PublicStarredScheduleView(TemplateView):
     template_name = 'agenda/public_starred.html'
+
+    @context
+    def schedule_json(self) -> str:
+        return build_enriched_schedule_json(self.request)
 
     @cached_property
     def public_user(self) -> User:
@@ -58,7 +61,6 @@ class PublicStarredScheduleView(ScheduleDataMixin, TemplateView):
 
 
 class PublicStarredScheduleDataView(View):
-
     @cached_property
     def public_user(self) -> User:
         user = (
@@ -80,9 +82,7 @@ class PublicStarredScheduleDataView(View):
             raise Http404()
 
         # Only include talks that are visible in the published schedule.
-        visible_submission_ids = schedule.talks.filter(is_visible=True).values_list(
-            'submission_id', flat=True
-        )
+        visible_submission_ids = schedule.talks.filter(is_visible=True).values_list('submission_id', flat=True)
         with scope(event=request.event):
             favs = list(
                 SubmissionFavourite.objects.filter(

@@ -11,7 +11,9 @@
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
-	.error-container(v-if="!iframeEl && iframeError", :class="{background: background, 'size-tiny': background}")
+	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
+		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
+	.error-container(v-else-if="!iframeEl && !consentBlockedUrl && iframeError", :class="{background: background, 'size-tiny': background}")
 		.error-card
 			.error-title {{ iframeError.title || $t('MediaSource:iframe-error:title') }}
 			.error-message {{ iframeError.message || $t('MediaSource:iframe-error:text') }}
@@ -19,7 +21,7 @@
 			.error-actions
 				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="goToProfileSettings()") {{ $t('MediaSource:error-goto-profile:button') }}
 				bunt-button(v-else, @click="retryInitializeIframe()") {{ $t('MediaSource:error-retry:button') }}
-	.iframe-error(v-else-if="!iframeEl && iframeOffline", :class="{background: background, 'size-tiny': background}")
+	.iframe-error(v-else-if="!iframeEl && !consentBlockedUrl && iframeOffline", :class="{background: background, 'size-tiny': background}")
 		.offline-message {{ $t('Livestream:offline-message:text') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
@@ -31,13 +33,15 @@ import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
 import api from 'lib/api';
 import { normalizeYoutubeVideoId } from 'lib/validators';
+import { isDomainBlocked, getUrlDomain } from 'lib/iframeConsent';
+import IframeBlocker from 'components/IframeBlocker';
 import JanusCall from 'components/JanusCall';
 import JanusChannelCall from 'components/JanusChannelCall';
 import Livestream from 'components/Livestream';
 
 // Props & Emits
 defineOptions({
-	components: { Livestream, JanusCall, JanusChannelCall },
+	components: { Livestream, JanusCall, JanusChannelCall, IframeBlocker },
 });
 const props = defineProps({
 	room: Object,
@@ -47,7 +51,7 @@ const props = defineProps({
 		default: false,
 	},
 });
-defineEmits(['close']);
+const emit = defineEmits(['close']);
 
 const store = useStore();
 const route = useRoute();
@@ -57,6 +61,10 @@ const iframeError = ref(null);
 const iframeEl = ref(null);
 const languageIframeUrl = ref(null);
 const isUnmounted = ref(false);
+const consentBlockedUrl = ref(null);
+// Prevents overlapping initializeIframe runs (e.g. store watcher + consent handler)
+// from both passing the iframeEl guard before the first await.
+let iframeInitInProgress = false;
 
 // Template refs
 const livestream = ref(null);
@@ -128,6 +136,10 @@ const inRoomManager = computed(() => route.name === 'room:manage');
 watch(
 	() => props.background,
 	(value) => {
+		if (value && consentBlockedUrl.value && !iframeEl.value) {
+			emit('close')
+			return
+		}
 		if (!iframeEl.value) return;
 		if (value) {
 			iframeEl.value.classList.add('background');
@@ -168,6 +180,22 @@ watch(
 	},
 	{ deep: true }
 );
+
+watch(
+	() => store.state.unblockedIframeDomains,
+	() => {
+		if (iframeEl.value) return
+		if (!consentBlockedUrl.value) return // gate not active; nothing to reconcile
+		const domain = getUrlDomain(consentBlockedUrl.value)
+		if (domain && !isDomainBlocked(domain)) {
+			consentBlockedUrl.value = null
+			// Covers store-only unblocks (e.g. consent changed elsewhere) while the
+			// gate URL is still set. Persistent "Remember" relies on this path only;
+			// onConsentGiven skips initializeIframe for that case to avoid a double init race.
+			initializeIframe(false)
+		}
+	}
+)
 
 watch(youtubeTransUrl, (ytUrl) => {
 	if (!props.room) return;
@@ -237,10 +265,13 @@ function unmuteYouTubePlayer() {
 	}
 }
 
-async function initializeIframe(mute) {
+async function initializeIframe(mute, skipConsentCheck = false) {
 	if (!module.value) return;
 	if (shouldUseLivestream.value) return;
 	if (iframeOffline.value) return;
+	if (iframeEl.value) return; // already initialised
+	if (iframeInitInProgress) return;
+	iframeInitInProgress = true;
 	iframeError.value = null;
 	try {
 		let iframeUrl;
@@ -337,6 +368,22 @@ async function initializeIframe(mute) {
 			}
 		}
 		if (!iframeUrl || isUnmounted.value) return;
+
+		// Check iframe consent policy before creating the element.
+		// skipConsentCheck is set when the user clicked "Show" in the consent gate
+		// so the iframe can be created even for the "Show once" (non-persistent) path.
+		// Consent applies to all iframe providers (including BBB/Zoom). hideIfBackground
+		// only affects CSS for miniplayer layout, not whether consent is required.
+		if (!skipConsentCheck) {
+			const urlDomain = getUrlDomain(iframeUrl)
+			if (isDomainBlocked(urlDomain)) {
+				consentBlockedUrl.value = iframeUrl
+				return
+			}
+		}
+		// Consent is satisfied (or not required); clear any previous gate.
+		consentBlockedUrl.value = null
+
 		const iframe = document.createElement('iframe');
 		iframe.src = iframeUrl;
 		iframe.classList.add('iframe-media-source');
@@ -379,12 +426,25 @@ async function initializeIframe(mute) {
 		// Non-API errors (e.g., iframeError set by error handlers)
 		console.error('Error initializing iframe:', error);
 		iframeError.value = error;
+	} finally {
+		iframeInitInProgress = false;
 	}
 }
 
 function destroyIframe() {
 	iframeEl.value?.remove();
 	iframeEl.value = null;
+	consentBlockedUrl.value = null;
+}
+
+function onConsentGiven(persistent) {
+	if (persistent) {
+		// Store commit runs first; unblockedIframeDomains watcher clears the gate and
+		// calls initializeIframe once. Calling it here too can race with overlapping async inits.
+		return
+	}
+	consentBlockedUrl.value = null
+	initializeIframe(false, true)
 }
 
 
@@ -426,13 +486,11 @@ function isPlaying() {
 	if (module.value?.type === 'call.janus') {
 		return janus.value?.roomId;
 	}
-	if (module.value?.type === 'call.bigbluebutton') {
-		return !!iframeEl.value;
-	}
-	if (module.value?.type === 'call.zoom') {
-		return !!iframeEl.value;
-	}
-	return true;
+	// For every iframe-based module (BBB, Zoom, YouTube, Vimeo, custom iframe):
+	// the room is "playing" only when the iframe element actually exists.
+	// This correctly returns false when consent is pending (no iframe yet),
+	// preventing App.vue from activating the miniplayer.
+	return !!iframeEl.value;
 }
 
 function getYoutubeUrl(
@@ -588,6 +646,17 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
+.c-media-source .iframe-consent-gate
+	position: fixed
+	display: flex
+	transition: all .3s ease
+	z-index: 1
+	top: var(--mediasource-placeholder-top, 104px)
+	left: var(--mediasource-placeholder-left, var(--sidebar-width))
+	width: var(--mediasource-placeholder-width, 100vw)
+	height: var(--mediasource-placeholder-height, var(--mobile-media-height, 40vh))
+	.c-iframe-blocker
+		flex: auto
 .c-media-source .iframe-error
 	display: flex
 	justify-content: center

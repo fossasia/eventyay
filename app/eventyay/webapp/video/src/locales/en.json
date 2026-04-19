@@ -18,6 +18,8 @@
   "App:fatal-connection-error:else:headline": "Connection refused",
   "App:fatal-connection-error:world.unknown_world:headline": "Event not found",
   "AppBar:user-anonymous": "anonymous",
+  "AppBar:admin-mode:start": "Admin mode",
+	"AppBar:admin-mode:end": "End admin session",
   "AVDevice:error:notfound": "No camera or microphone found.",
   "AVDevice:error:notreadable": "Your camera or microphone is not available, maybe another program uses it right now?",
   "AVDevice:error:notallowed": "Camera or microphone permissions denied. Please allow camera or microphone access in your browser and reload the page.",

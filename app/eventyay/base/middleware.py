@@ -1,7 +1,7 @@
+import zoneinfo
 from collections import OrderedDict
 from urllib.parse import urlsplit
 
-import pytz
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
 from django.middleware.common import CommonMiddleware
@@ -18,10 +18,12 @@ from django.utils.translation.trans_real import (
 
 from eventyay.base.i18n import get_language_without_region
 from eventyay.base.settings import global_settings_object
+from eventyay.common.urls import get_url_origin
 from eventyay.multidomain.urlreverse import (
     get_event_domain,
     get_organizer_domain,
 )
+
 
 _supported = None
 
@@ -73,10 +75,11 @@ class LocaleMiddleware(MiddlewareMixin):
             tzname = request.user.timezone
         if tzname:
             try:
-                timezone.activate(pytz.timezone(tzname))
+                timezone.activate(zoneinfo.ZoneInfo(tzname))
                 request.timezone = tzname
-            except pytz.UnknownTimeZoneError:
-                pass
+            except zoneinfo.ZoneInfoNotFoundError:
+                timezone.deactivate()
+                request.timezone = None
         else:
             timezone.deactivate()
 
@@ -185,6 +188,59 @@ def _merge_csp(a, b):
             a[k] = b[k]
 
 
+def is_event_settings_preview_request(request: HttpRequest) -> bool:
+    view_name = getattr(getattr(request, 'resolver_match', None), 'view_name', None) or ''
+    if view_name.endswith('event.update'):
+        return True
+
+    return '/event/' in request.path and request.path.endswith('/settings/')
+
+
+def get_startpage_events(request: HttpRequest):
+    view_name = getattr(getattr(request, 'resolver_match', None), 'view_name', None)
+    if view_name not in ('index', 'presale:index'):
+        return []
+
+    from django.db.models import Q
+    from django_scopes import scopes_disabled
+
+    from eventyay.base.models import Event
+
+    search_query = request.GET.get('q', '').strip()
+    with scopes_disabled():
+        qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
+        if search_query:
+            qs = qs.filter(name__icontains=search_query)
+        else:
+            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+
+        return [event for event in qs.order_by('date_from') if not event.has_component_testmode]
+
+
+def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
+    if is_event_settings_preview_request(request):
+        sources = ['https:']
+        if settings.SITE_URL.startswith('http://'):
+            sources.append('http:')
+        return sources
+
+    sources = []
+
+    if hasattr(request, 'event') and request.event:
+        for image_url in (request.event.visible_header_image_url, request.event.visible_logo_url):
+            origin = get_url_origin(image_url)
+            if origin:
+                sources.append(origin)
+
+    for event in get_startpage_events(request):
+        for image_url in (event.visible_header_image_url, event.visible_logo_url):
+            origin = get_url_origin(image_url)
+            if origin:
+                sources.append(origin)
+
+    return list(OrderedDict.fromkeys(sources))
+
+
 class SecurityMiddleware(MiddlewareMixin):
     CSP_EXEMPT = ('/api/v1/docs/',)
 
@@ -205,6 +261,7 @@ class SecurityMiddleware(MiddlewareMixin):
         resp['Referrer-Policy'] = 'strict-origin-when-cross-origin'
 
         img_src = []
+        external_img_src = get_external_image_csp_sources(request)
         gs = global_settings_object(request)
         if gs.settings.leaflet_tiles:
             img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
@@ -213,6 +270,7 @@ class SecurityMiddleware(MiddlewareMixin):
             'default-src': ['{static}'],
             'script-src': [
                 '{static}',
+                'https://static.cloudflareinsights.com',
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
                 'http://localhost:8080',
@@ -232,8 +290,17 @@ class SecurityMiddleware(MiddlewareMixin):
                 '{media}',
                 "'unsafe-inline'",  # allow inline styles
             ],
-            'connect-src': ['{dynamic}', '{media}', 'https://checkout.stripe.com', 'https:', 'blob:'],
-            'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com'] + img_src,
+            'connect-src': [
+                '{dynamic}',
+                '{media}',
+                'https://checkout.stripe.com',
+                'https://static.cloudflareinsights.com',
+                'https:',
+                'blob:',
+            ],
+            'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com']
+            + external_img_src
+            + img_src,
             'font-src': [
                 '{static}',
                 'https://fonts.gstatic.com',  # fix Google Fonts
@@ -287,13 +354,13 @@ class SecurityMiddleware(MiddlewareMixin):
             if domain:
                 siteurlsplit = urlsplit(settings.SITE_URL)
                 if siteurlsplit.port and siteurlsplit.port not in (80, 443):
-                    domain = '%s:%d' % (domain, siteurlsplit.port)
+                    domain = f'{domain}:{siteurlsplit.port}'
                 dynamicdomain += ' ' + domain
 
         # Add DEBUG mode settings before rendering CSP
         if settings.DEBUG:
-            h.setdefault('script-src', []).extend(["'unsafe-inline'", "http://localhost:8080"])
-            h.setdefault('connect-src', []).extend(["http://localhost:8080", "ws://localhost:8080"])
+            h.setdefault('script-src', []).extend(["'unsafe-inline'", 'http://localhost:8080'])
+            h.setdefault('connect-src', []).extend(['http://localhost:8080', 'ws://localhost:8080'])
 
         if request.path not in self.CSP_EXEMPT and not getattr(resp, '_csp_ignore', False):
             for k, v in h.items():
