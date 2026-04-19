@@ -52,7 +52,7 @@ export default {
 
 				return {
 					id: 'info',
-					name: 'Info',
+					name: 'About',
 					modules: [{
 						type: 'page.landing'
 					}]
@@ -120,8 +120,8 @@ export default {
 					: inferRoomType(this.room))
 				: null
 			if (!inferred) {
-				if (this.$route.name === 'info') return
-				this.$router.replace({name: 'info'})
+				if (this.$route.name === 'about') return
+				this.$router.replace({name: 'about'})
 			}
 		}
 	},

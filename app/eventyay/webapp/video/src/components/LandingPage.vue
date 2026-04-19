@@ -1,8 +1,11 @@
 <template lang="pug">
-.c-landing-page(v-scrollbar.y="", :style="{'--header-background-color': module.config.header_background_color || 'var(--clr-primary)', '--header-background-image': module.config.header_background_image ? `url(${module.config.header_background_image})` : 'none'}")
-	.hero(:class="{'has-no-image': !module.config.header_image && !module.config.header_background_image}")
-		img(v-if="module.config.header_image", :src="module.config.header_image")
-		h1.hero-text(v-else-if="world") {{ world.title }}
+.c-landing-page(v-scrollbar.y="", :style="landingStyle")
+	.hero(:class="{'has-no-image': !hasHeroVisual}")
+		img.hero-logo(v-if="heroImage", :src="heroImage", :alt="eventTitle")
+		.hero-copy(v-if="eventTitle || eventStartLine || eventEndLine")
+			h1.hero-text(v-if="eventTitle") {{ eventTitle }}
+			p.hero-time(v-if="eventStartLine") {{ eventStartLine }}
+			p.hero-time(v-if="eventEndLine") {{ eventEndLine }}
 	.sponsors.splide(ref="sponsors", v-show="sponsors && sponsors.length")
 		.splide__track
 			ul.splide__list
@@ -10,7 +13,8 @@
 					img.sponsor(:src="sponsor.logo", :alt="sponsor.name", @load="onSponsorImageLoad(sponsor.id)")
 	.content-container
 		.content
-			rich-text-content(v-if="hasMainContent", :content="module.config.main_content")
+			rich-text-content(v-if="mainContentIsRichText", :content="mainContent")
+			markdown-content(v-else-if="mainContentIsMarkdown", :content="mainContent")
 			template(v-if="activeRooms && activeRooms.length")
 				.header
 					h3 {{ $t('LandingPage:rooms:header') || 'Active Rooms' }}
@@ -67,6 +71,7 @@ import Splide from '@splidejs/splide'
 // Replace '@pretalx/schedule' Session import with local implementation
 import Session from '@schedule/components/Session.vue'
 import api from 'lib/api'
+import config from 'config'
 import moment from 'lib/timetravelMoment'
 import Identicon from 'components/Identicon'
 import MarkdownContent from 'components/MarkdownContent'
@@ -81,13 +86,97 @@ export default {
 		return {
 			moment,
 			sponsors: null,
-			loadedSponsorImages: []
+			loadedSponsorImages: [],
+			eventMeta: null
 		}
 	},
 	computed: {
-		...mapState(['now', 'rooms', 'world']),
+		...mapState(['now', 'rooms', 'world', 'userTimezone']),
 		...mapState('schedule', ['schedule']),
 		...mapGetters('schedule', ['sessions', 'favs', 'currentSessionPerRoom']),
+		landingConfig() {
+			return this.module?.config || {}
+		},
+		mainContent() {
+			return this.landingConfig.main_content ?? this.landingConfig.content ?? null
+		},
+		mainContentIsRichText() {
+			const content = this.mainContent
+			if (!content || typeof content !== 'object') return false
+			if (Array.isArray(content)) {
+				return content.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			}
+			if (Array.isArray(content.ops)) {
+				return content.ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			}
+			return false
+		},
+		mainContentIsMarkdown() {
+			return typeof this.mainContent === 'string' && this.mainContent.trim().length > 0
+		},
+		mediaBaseUrl() {
+			const apiBase = config?.api?.base
+			if (!apiBase) return '/media/'
+			try {
+				return new URL('/media/', apiBase).toString()
+			} catch {
+				return '/media/'
+			}
+		},
+		heroImage() {
+			return this.resolveMediaUrl(
+				this.landingConfig.header_image
+				|| this.world?.visible_logo_url
+				|| config?.theme?.logo?.url
+			)
+		},
+		heroBackgroundImage() {
+			return this.resolveMediaUrl(
+				this.landingConfig.header_background_image
+				|| this.world?.visible_header_image_url
+			)
+		},
+		hasHeroVisual() {
+			return !!(this.heroImage || this.heroBackgroundImage)
+		},
+		landingStyle() {
+			return {
+				'--landing-hero-background-color': this.landingConfig.header_background_color || 'var(--clr-primary)',
+				'--landing-hero-background-image': this.heroBackgroundImage ? `url("${this.heroBackgroundImage}")` : 'none'
+			}
+		},
+		eventTitle() {
+			if (this.world?.title) return this.world.title
+			const name = this.eventMeta?.name
+			if (typeof name === 'string') return name
+			if (name && typeof name === 'object') {
+				return name[this.$i18n?.language] || name.en || Object.values(name)[0] || ''
+			}
+			return ''
+		},
+		eventDateRange() {
+			if (this.sessions?.length) {
+				const start = this.sessions[0].start
+				const end = this.sessions.reduce((latest, session) => session.end.isAfter(latest) ? session.end : latest, this.sessions[0].end)
+				return { start, end }
+			}
+			if (this.eventMeta?.date_from) {
+				const timezone = this.world?.timezone || this.userTimezone || moment.tz.guess()
+				return {
+					start: moment.tz(this.eventMeta.date_from, timezone),
+					end: moment.tz(this.eventMeta.date_to || this.eventMeta.date_from, timezone)
+				}
+			}
+			return null
+		},
+		eventStartLine() {
+			if (!this.eventDateRange) return ''
+			return this.formatEventDateTime(this.eventDateRange.start)
+		},
+		eventEndLine() {
+			if (!this.eventDateRange) return ''
+			return `To ${this.formatEventDateTime(this.eventDateRange.end)}`
+		},
 		featuredSessions() {
 			if (!this.sessions) return
 			return this.sessions.filter(session => session.featured)
@@ -106,9 +195,6 @@ export default {
 		speakers() {
 			return this.schedule?.speakers.slice().sort((a, b) => a.name.split(' ').at(-1).localeCompare(b.name.split(' ').at(-1)))
 		},
-		hasMainContent() {
-			return this.module.config.main_content?.ops?.some(op => op.insert.trim() !== '')
-		},
 		activeRooms() {
 			if (!this.rooms) return []
 			return this.rooms.filter(r => r.schedule_data || r.modules?.some(m => ['livestream.native', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(m.type))).map(room => {
@@ -121,8 +207,9 @@ export default {
 		},
 	},
 	async mounted() {
+		await this.fetchEventMeta()
 		// TODO make this configurable?
-		const sponsorRoom = this.rooms.find(r => r.id === this.module.config.sponsor_room_id)
+		const sponsorRoom = this.rooms?.find(r => r.id === this.landingConfig.sponsor_room_id)
 		if (!sponsorRoom) return
 		this.sponsors = (await api.call('exhibition.list', {room: sponsorRoom.id})).exhibitors
 		await this.$nextTick()
@@ -151,9 +238,71 @@ export default {
 		this.sponsorSplide = splide
 	},
 	methods: {
+		toMediaUrl(pathValue) {
+			const cleaned = String(pathValue || '').replace(/^\/+/, '')
+			if (!cleaned) return ''
+			if (this.mediaBaseUrl.endsWith('/')) {
+				return `${this.mediaBaseUrl}${cleaned}`
+			}
+			return `${this.mediaBaseUrl}/${cleaned}`
+		},
+		resolveMediaUrl(rawValue) {
+			let value = typeof rawValue === 'string'
+				? rawValue.trim()
+				: (rawValue && typeof rawValue.url === 'string' ? rawValue.url.trim() : '')
+			if (!value) return ''
+			value = value.replace(/^['"]|['"]$/g, '')
+
+			if (value.startsWith('public:')) {
+				return this.toMediaUrl(value.slice(7))
+			}
+			if (value.startsWith('file://')) {
+				return this.toMediaUrl(value.slice(7))
+			}
+			if (value.startsWith('data:') || value.startsWith('blob:')) {
+				return value
+			}
+			if (/^(https?:)?\/\//.test(value)) {
+				return value
+			}
+			if (value.startsWith('/')) {
+				return value
+			}
+
+			return this.toMediaUrl(value)
+		},
+		formatEventDateTime(value) {
+			const timezoneLabel = this.world?.timezone || this.userTimezone || 'UTC'
+			return `${value.clone().tz(timezoneLabel).format('dddd, D MMMM YYYY h:mm A')} (${timezoneLabel})`
+		},
+		async fetchEventMeta() {
+			if (!config?.api?.base) return
+			try {
+				const token = this.$store?.state?.token
+				const clientId = this.$store?.state?.clientId
+				const headers = {
+					Accept: 'application/json'
+				}
+				if (token) {
+					headers.Authorization = `Bearer ${token}`
+				} else if (clientId) {
+					headers.Authorization = `Client ${clientId}`
+				}
+
+				const response = await fetch(config.api.base, {
+					method: 'GET',
+					headers,
+					credentials: 'same-origin'
+				})
+				if (!response.ok) return
+				this.eventMeta = await response.json()
+			} catch (error) {
+				console.error('Failed to load landing page event metadata:', error)
+			}
+		},
 		onSponsorImageLoad(sponsorId) {
 			this.loadedSponsorImages.push(sponsorId)
-			if (this.loadedSponsorImages.length === this.sponsors.length) {
+			if (this.sponsorSplide && this.loadedSponsorImages.length === this.sponsors.length) {
 				this.sponsorSplide.refresh()
 			}
 		}
@@ -165,30 +314,43 @@ export default {
 	flex: auto
 	background-color: $clr-grey-50
 	.hero
-		height: calc(var(--vh) * 20)
-		min-height: 120px
+		min-height: 150px
 		display: flex
 		align-items: center
-		justify-content: center
-		background-color: var(--header-background-color)
-		background-image: var(--header-background-image)
+		justify-content: flex-start
+		gap: 18px
+		padding: 16px 20px
+		background-color: var(--landing-hero-background-color)
+		background-image: var(--landing-hero-background-image)
 		background-repeat: no-repeat
 		background-size: cover
 		background-position: center
+		position: relative
 		&.has-no-image
 			height: auto
-			padding: 48px 16px
+			padding: 22px 16px
 			background-color: var(--clr-primary)
 			color: $clr-primary-text-dark
+		.hero-copy
+			display: flex
+			flex-direction: column
+			gap: 6px
+			color: $clr-primary-text-dark
+			text-shadow: 0 1px 2px rgba(0, 0, 0, .28)
 		.hero-text
-			font-size: 36px
+			font-size: 34px
 			font-weight: 700
-			text-align: center
+			line-height: 1.1
+			text-align: left
 			margin: 0
-			padding: 0 16px
-		img
-			height: 100%
-			max-width: 100%
+		.hero-time
+			font-size: 16px
+			line-height: 1.3
+			margin: 0
+		.hero-logo
+			height: auto
+			max-height: 96px
+			max-width: min(28vw, 260px)
 			object-fit: contain
 	.content-container
 		display: flex
@@ -318,6 +480,18 @@ export default {
 					themed-button-primary()
 
 	+below('m')
+		.hero
+			flex-direction: column
+			align-items: flex-start
+			gap: 10px
+			padding: 14px 12px
+			.hero-text
+				font-size: 24px
+			.hero-time
+				font-size: 14px
+			.hero-logo
+				max-width: min(72vw, 280px)
+				max-height: 76px
 		.content-container
 			flex-direction: column
 			align-items: center

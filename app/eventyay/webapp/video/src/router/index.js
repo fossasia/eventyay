@@ -60,14 +60,15 @@ const routes = [
 				// manage view gets linked to room url
 				// use a relative empty path instead of absolute '/' so parent params (like worldName) are preserved
 				path: '',
-				redirect: { name: 'info' }
+				redirect: { name: 'about' }
 			},
 			{
-				path: 'info',
+				path: 'about',
+				alias: 'info',
 				component: RoomHeader,
 				children: [{
 					path: '',
-					name: 'info',
+					name: 'about',
 					component: Room
 				}]
 			},

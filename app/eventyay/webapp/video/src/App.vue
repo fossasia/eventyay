@@ -143,7 +143,7 @@ export default {
 			if (!routeName) return
 			if (routeName.startsWith && routeName.startsWith('admin')) return
 			const rooms = this.rooms || []
-			if (routeName === 'info') {
+			if (routeName === 'about') {
 				return rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
 			}
 			const wantedId = String(this.$route.params.roomId)
@@ -180,7 +180,7 @@ export default {
 		overrideSidebarCollapse() {
 			return this.$mq.below.l &&
 				this.$mq.above.m &&
-				this.$route.name === 'info' &&
+				this.$route.name === 'about' &&
 				!this.roomHasMedia
 		},
 		// safari cleverly includes the address bar cleverly in 100vh
