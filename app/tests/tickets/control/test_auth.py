@@ -892,7 +892,7 @@ def test_staff_session(user, client):
     assert response['Location'] == '/control/'
     response = client.get('/control/admin/global/settings/')
     assert response.status_code == 200
-    response = client.get('/control/sudo/stop/', follow=True)
+    response = client.post('/control/sudo/stop/', follow=True)
     assert response.status_code == 200
     response = client.get('/control/admin/global/settings/')
     assert response.status_code == 302
