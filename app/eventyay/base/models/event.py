@@ -50,7 +50,7 @@ from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
-from eventyay.common.urls import EventUrls
+from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
 from eventyay.core.permissions import (
     MAX_PERMISSIONS_IF_SILENCED,
@@ -746,14 +746,7 @@ class Event(
         choices=settings.LANGUAGES,
         verbose_name=_('Default language'),
     )
-    featured_sessions_text = I18nTextField(
-        verbose_name=_('Featured sessions text'),
-        help_text=_('This text will be shown at the top of the featured sessions page instead of the default text.')
-        + ' '
-        + phrases.base.use_markdown,
-        null=True,
-        blank=True,
-    )
+
     # Virtual platform fields
     config = models.JSONField(null=True, blank=True)
     roles = models.JSONField(null=True, blank=True, default=default_roles, encoder=CustomJSONEncoder)
@@ -938,12 +931,22 @@ class Event(
     def social_image(self):
         from eventyay.multidomain.urlreverse import build_absolute_uri
 
+        def get_image_value(setting_name: str) -> str:
+            value = self.settings.get(setting_name, as_type=str, default='') or ''
+            if value.startswith('file://'):
+                return value[7:]
+            return value
+
         img = None
-        logo_file = self.settings.get('logo_image', as_type=str, default='')[7:]
-        og_file = self.settings.get('og_image', as_type=str, default='')[7:]
+        logo_file = get_image_value('logo_image')
+        og_file = get_image_value('og_image')
         if og_file:
+            if is_http_url(og_file):
+                return og_file
             img = get_thumbnail(og_file, '1200').thumb.url
         elif logo_file:
+            if is_http_url(logo_file):
+                return logo_file
             img = get_thumbnail(logo_file, '5000x120').thumb.url
         if img:
             return urljoin(build_absolute_uri(self, 'presale:event.index'), img)
@@ -2385,19 +2388,19 @@ class Event(
 
         # Only check event_logo_image - NOT logo_image (which is for header images)
         for key in ('event_logo_image',):
-            settings_logo = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            settings_logo = self.settings.get(key, as_type=str, default=None)
             path = _extract_path(settings_logo)
             if not path:
                 continue
 
             # Keep full URLs
-            if path.startswith(('http://', 'https://')):
+            if is_http_url(path):
                 return path
 
             # Strip file:// scheme if present
             parsed = urlparse(path)
             if parsed.scheme == 'file':
-                path = parsed.path
+                path = f'{parsed.netloc}{parsed.path}'
 
             # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
             abs_path = os.path.abspath(path)
@@ -2444,17 +2447,17 @@ class Event(
         # header image for the site is stored in common settings under logo_image (historical)
         # and in the legacy field header_image; prefer the settings value first
         for key in ('logo_image', 'header_image'):
-            settings_header = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            settings_header = self.settings.get(key, as_type=str, default=None)
             path = _extract_path(settings_header)
             if not path:
                 continue
 
-            if path.startswith(('http://', 'https://')):
+            if is_http_url(path):
                 return path
 
             parsed = urlparse(path)
             if parsed.scheme == 'file':
-                path = parsed.path
+                path = f'{parsed.netloc}{parsed.path}'
 
             abs_path = os.path.abspath(path)
             media_root = os.path.abspath(settings.MEDIA_ROOT)
@@ -2490,7 +2493,7 @@ class Event(
             return None
         with suppress(Exception):
             # If already a full URL, return as-is
-            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_logo_path)):
                 return self._visible_logo_path
             return default_storage.url(self._visible_logo_path)
         return None
@@ -2502,7 +2505,7 @@ class Event(
         if not self._visible_logo_path:
             return None
         with suppress(Exception):
-            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_logo_path)):
                 return None
             return default_storage.open(self._visible_logo_path)
 
@@ -2513,7 +2516,7 @@ class Event(
         if not self._visible_header_image_path:
             return None
         with suppress(Exception):
-            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_header_image_path)):
                 return self._visible_header_image_path
             return default_storage.url(self._visible_header_image_path)
 
@@ -2524,7 +2527,7 @@ class Event(
         if not self._visible_header_image_path:
             return None
         with suppress(Exception):
-            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_header_image_path)):
                 return None
             return default_storage.open(self._visible_header_image_path)
         return None
@@ -2651,7 +2654,9 @@ class Event(
     def reviewers(self):
         from eventyay.base.models import User
 
-        return User.objects.filter(teams__in=self.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))).distinct()
+        return User.objects.filter(
+            teams__in=self.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))
+        ).distinct()
 
     @cached_property
     def active_review_phase(self):

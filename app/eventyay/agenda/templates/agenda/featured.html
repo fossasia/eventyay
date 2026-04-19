@@ -14,11 +14,7 @@
 {% block agenda_content %}
 <div class="featured-page">
     <h3 class="talk-title featured-page-title">{% translate "Featured Sessions" %}</h3>
-    {% if request.event.featured_sessions_text %}
-        <div class="featured-custom-intro">
-            {{ request.event.featured_sessions_text|event_localize|rich_text }}
-        </div>
-    {% elif talks %}
+    {% if talks %}
         <p>
             {% blocktranslate trimmed %}
                 We prepared a list of exciting sessions, so you can get a feel for our
