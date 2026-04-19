@@ -9,7 +9,7 @@ from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceFie
 from i18nfield.forms import I18nFormMixin, I18nModelForm
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.forms import I18nMarkdownTextarea
+from eventyay.base.forms import I18nMarkdownTextarea, MarkdownI18nFormMixin
 from eventyay.common.forms.fields import ColorField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
@@ -249,7 +249,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         self.instance.cfp.save(update_fields=['settings', 'fields'])
 
 
-class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
+class CfPForm(MarkdownI18nFormMixin, ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     show_deadline = forms.BooleanField(
         label=_('Display deadline publicly'),
         required=False,
@@ -277,7 +277,7 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         }
 
 
-class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class TalkQuestionForm(MarkdownI18nFormMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     options = forms.FileField(
         label=_('Upload options'),
         help_text=_(
@@ -438,7 +438,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         }
 
 
-class AnswerOptionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class AnswerOptionForm(MarkdownI18nFormMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     class Meta:
         model = AnswerOption
         fields = ['answer', 'position']
@@ -447,7 +447,7 @@ class AnswerOptionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         }
 
 
-class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class SubmissionTypeForm(MarkdownI18nFormMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         super().__init__(*args, **kwargs)
@@ -476,7 +476,7 @@ class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         }
 
 
-class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class TrackForm(MarkdownI18nFormMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
         # Set initial color for new tracks (when creating, not editing)

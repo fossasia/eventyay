@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SecretKeySettingsField, SettingsForm
+from eventyay.base.forms import SecretKeySettingsField, SettingsForm, enable_i18n_markdown_all
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
@@ -433,6 +433,8 @@ class GlobalSettingsForm(SettingsForm):
                 'allow_payment_users_create_organizer',
             ]),
         ]
+
+        enable_i18n_markdown_all(self)
 
     def clean(self):
         data = super().clean()

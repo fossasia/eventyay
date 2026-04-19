@@ -5,11 +5,11 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
-from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from i18nfield.forms import I18nFormField, I18nTextInput
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
-from eventyay.base.forms import PlaceholderValidator, SettingsForm
+from eventyay.base.forms import I18nMarkdownTextarea, PlaceholderValidator, SettingsForm
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
@@ -162,7 +162,7 @@ class MailForm(forms.Form):
         )
         self.fields['message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=True,
             locales=event.settings.get('locales'),
         )
@@ -231,7 +231,7 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_placed = I18nFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     mail_send_order_placed_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
@@ -241,13 +241,13 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_placed_attendee = I18nFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_order_paid = I18nFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     mail_send_order_paid_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
@@ -257,13 +257,13 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_paid_attendee = I18nFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_order_free = I18nFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     mail_send_order_free_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
@@ -273,24 +273,24 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_free_attendee = I18nFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_resend_link = I18nFormField(
         label=_('Text (sent by admin)'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     mail_text_resend_all_links = I18nFormField(
         label=_('Text (requested by user)'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_order_changed = I18nFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_days_order_expire_warning = forms.IntegerField(
@@ -305,31 +305,31 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_expire_warning = I18nFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_waiting_list = I18nFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_order_canceled = I18nFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_order_custom_mail = I18nFormField(
         label=_('Text'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     mail_text_download_reminder = I18nFormField(
         label=_('Text sent to order contact address'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     mail_send_download_reminder_attendee = forms.BooleanField(
         label=_('Send an email to attendees'),
@@ -339,7 +339,7 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_download_reminder_attendee = I18nFormField(
         label=_('Text sent to attendees'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     mail_days_download_reminder = forms.IntegerField(
         label=_('Number of days'),
@@ -363,12 +363,12 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_placed_require_approval = I18nFormField(
         label=_('Received order'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     mail_text_order_approved = I18nFormField(
         label=_('Approved order'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
         help_text=_(
             'This will only be sent out for non-free orders. Free orders will receive the free order '
             'template from below instead.'
@@ -377,7 +377,7 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_approved_free = I18nFormField(
         label=_('Approved free order'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
         help_text=_(
             'This will only be sent out for free orders. Non-free orders will receive the non-free order '
             'template from above instead.'
@@ -386,7 +386,7 @@ class MailContentSettingsForm(SettingsForm):
     mail_text_order_denied = I18nFormField(
         label=_('Denied order'),
         required=False,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
 
     base_context = {
@@ -493,7 +493,7 @@ class EmailQueueEditForm(forms.ModelForm):
         )
         self.fields['message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=False,
             locales=list(allowed_locales),
             initial=self.instance.message
@@ -592,7 +592,7 @@ class TeamMailForm(forms.Form):
         )
         self.fields['message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=True,
             locales=locales,
             help_text=placeholder_text

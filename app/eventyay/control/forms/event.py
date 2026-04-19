@@ -25,7 +25,13 @@ from pytz import common_timezones, timezone
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
-from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsForm
+from eventyay.base.forms import (
+    I18nModelForm,
+    MarkdownI18nFormMixin,
+    PlaceholderValidator,
+    SettingsForm,
+    enable_i18n_markdown_all,
+)
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
@@ -930,6 +936,8 @@ class ProviderForm(SettingsForm):
             if hasattr(v, '_as_type'):
                 self.initial[k] = self.obj.settings.get(k, as_type=v._as_type, default=v.initial)
 
+        enable_i18n_markdown_all(self)
+
     def clean(self):
         cleaned_data = super().clean()
         enabled = cleaned_data.get(self.settingspref + '_enabled')
@@ -1395,6 +1403,8 @@ class TicketSettingsForm(SettingsForm):
                 v.one_required = False
                 v.widget.enabled_locales = self.locales
 
+        enable_i18n_markdown_all(self)
+
     def clean(self):
         # required=True files should only be required if the feature is enabled
         cleaned_data = super().clean()
@@ -1551,7 +1561,7 @@ class EventDeleteForm(forms.Form):
         return slug
 
 
-class QuickSetupForm(I18nForm):
+class QuickSetupForm(MarkdownI18nFormMixin, I18nForm):
     show_quota_left = forms.BooleanField(
         label=_('Show number of tickets left'),
         help_text=_('Publicly show how many tickets of a certain type are still available.'),
@@ -1683,7 +1693,7 @@ class ProductMetaPropertyForm(forms.ModelForm):
         widgets = {'default': forms.TextInput()}
 
 
-class ConfirmTextForm(I18nForm):
+class ConfirmTextForm(MarkdownI18nFormMixin, I18nForm):
     text = I18nFormField(
         widget=I18nTextarea,
         widget_kwargs={'attrs': {'rows': '2'}},

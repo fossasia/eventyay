@@ -10,6 +10,7 @@ from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.forms import MarkdownI18nFormMixin
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
@@ -24,7 +25,7 @@ from eventyay.base.models import Track
 from eventyay.base.models.submission import Submission, SubmissionStates
 
 
-class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
+class MailTemplateForm(MarkdownI18nFormMixin, ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = getattr(self, 'event', None) or event
         if self.event:

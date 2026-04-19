@@ -5,6 +5,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.forms import MarkdownI18nFormMixin
 from eventyay.common.forms.mixins import I18nHelpText
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple
@@ -19,7 +20,7 @@ from eventyay.base.models.submission import Submission, SubmissionStates
 logger = logging.getLogger(__name__)
 
 
-class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
+class ScheduleReleaseForm(MarkdownI18nFormMixin, I18nHelpText, I18nModelForm):
     default_renderer = InlineFormRenderer
 
     notify_speakers = forms.BooleanField(label=_('Notify speakers of changes'), required=False, initial=True)

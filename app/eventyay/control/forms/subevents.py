@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from i18nfield.forms import I18nInlineFormSet
 
-from eventyay.base.forms import I18nModelForm
+from eventyay.base.forms import I18nMarkdownTextarea, I18nModelForm
 from eventyay.base.forms.widgets import DatePickerWidget, TimePickerWidget
 from eventyay.base.models.event import SubEvent, SubEventMetaValue
 from eventyay.base.models.product import SubEventProduct
@@ -64,6 +64,7 @@ class SubEventForm(I18nModelForm):
             'date_admission': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_date_from_0'}),
             'presale_start': SplitDateTimePickerWidget(),
             'presale_end': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_presale_start_0'}),
+            'frontpage_text': I18nMarkdownTextarea,
         }
 
 
@@ -160,7 +161,9 @@ class SubEventBulkEditForm(I18nModelForm):
             'active',
         ]
         field_classes = {}
-        widgets = {}
+        widgets = {
+            'frontpage_text': I18nMarkdownTextarea,
+        }
 
     def save(self, commit=True):
         objs = list(self.queryset)

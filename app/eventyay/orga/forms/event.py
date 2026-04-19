@@ -9,9 +9,10 @@ from django.forms import inlineformset_factory
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelMultipleChoiceField
-from i18nfield.fields import I18nFormField, I18nTextarea
+from i18nfield.fields import I18nFormField
 from i18nfield.forms import I18nFormMixin, I18nFormSetMixin, I18nModelForm
 
+from eventyay.base.forms import I18nMarkdownTextarea
 from eventyay.common.forms.mixins import (
     HierarkeyMixin,
     I18nHelpText,
@@ -256,6 +257,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
         super().__init__(*args, **kwargs)
         if self.fields['smtp_password'].initial:
             self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
+        self.fields['signature'].widget.attrs.setdefault('data-markdown-field', 'true')
 
     def clean(self):
         data = self.cleaned_data
@@ -358,7 +360,7 @@ class ReviewSettingsForm(
         help_text=_('This text will be shown at the top of every review, as long as reviews can be created or edited.')
         + ' '
         + phrases.base.use_markdown,
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
         required=False,
     )
 

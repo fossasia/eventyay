@@ -9,7 +9,9 @@ from django.http import HttpRequest
 from django.template.loader import get_template
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from i18nfield.fields import I18nFormField, I18nTextarea
+from i18nfield.fields import I18nFormField
+
+from eventyay.base.forms import I18nMarkdownTextarea
 from i18nfield.forms import I18nTextInput
 from i18nfield.strings import LazyI18nString
 from localflavor.generic.forms import BICFormField, IBANFormField
@@ -108,7 +110,7 @@ class BankTransfer(BasePaymentProvider):
                     'bank_details',
                     I18nFormField(
                         label=_('Bank account details'),
-                        widget=I18nTextarea,
+                        widget=I18nMarkdownTextarea,
                         help_text=_(
                             'Include everything else that your customers might need to send you a bank transfer '
                             'payment. If you have lots of international customers, they might need your full address '
@@ -175,7 +177,7 @@ class BankTransfer(BasePaymentProvider):
                             'This text will be shown on the order confirmation page for pending orders in addition to '
                             'the standard text.'
                         ),
-                        widget=I18nTextarea,
+                        widget=I18nMarkdownTextarea,
                         required=False,
                     ),
                 ),

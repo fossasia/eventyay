@@ -29,6 +29,7 @@ class BaseI18nModelForm(i18nfield.forms.BaseI18nModelForm):
         if self.event:
             kwargs['locales'] = self.event.settings.get('locales')
         super().__init__(*args, **kwargs)
+        enable_i18n_markdown_all(self)
 
 
 class I18nModelForm(BaseI18nModelForm, metaclass=ModelFormMetaclass):
@@ -98,6 +99,8 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
         for k, f in self.fields.items():
             if isinstance(f, (RelativeDateTimeField, RelativeDateField)):
                 f.set_event(self.obj)
+
+        enable_i18n_markdown_all(self)
 
     def get_initial_settings(self):
         if not self.obj:
@@ -229,10 +232,64 @@ class SecretKeySettingsField(forms.CharField):
 
 
 class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
+    """
+    Same as I18nTextarea but marks each per-locale textarea for Toast UI (formTools.js).
+    Always constructed with ``locales`` and ``field`` (see i18nfield I18nFormField / I18nWidget).
+    """
+
     def __init__(self, attrs=None, **kwargs):
-        attrs = attrs.copy() if attrs is not None else {}
+        if attrs is not None:
+            attrs = attrs.copy()
+        else:
+            attrs = {}
         attrs.setdefault('data-markdown-field', 'true')
         super().__init__(attrs=attrs, **kwargs)
+
+
+def enable_i18n_markdown(form, field_names):
+    """
+    Point named ``I18nFormField``s at ``I18nMarkdownTextarea`` so ``formTools.js`` can
+    attach Toast UI (same pattern as Talk/orga).
+
+    Prefer ``enable_i18n_markdown_all(form)`` when every ``I18nTextarea`` on the form is
+    markdown. ``SettingsForm`` and ``BaseI18nModelForm`` call that automatically; other
+    forms (e.g. plain ``I18nForm``) can use ``MarkdownI18nFormMixin`` or call explicitly.
+    The page must still load ``toastuiLoader.js`` + ``formTools.js``.
+    """
+    form_locales = getattr(form, 'locales', None)
+    for name in field_names:
+        i18n_field = form.fields.get(name)
+        if not i18n_field or not isinstance(i18n_field, i18nfield.forms.I18nFormField):
+            continue
+        previous = i18n_field.widget
+        attrs = dict(previous.attrs) if getattr(previous, 'attrs', None) else {}
+        i18n_field.widget = I18nMarkdownTextarea(
+            attrs=attrs,
+            locales=previous.locales,
+            field=i18n_field,
+        )
+        if getattr(previous, 'enabled_locales', None):
+            i18n_field.widget.enabled_locales = previous.enabled_locales
+        elif form_locales is not None:
+            i18n_field.widget.enabled_locales = form_locales
+
+
+def enable_i18n_markdown_all(form):
+    """Attach Toast UI to every ``I18nFormField`` that still uses plain ``I18nTextarea``."""
+    names = [
+        name
+        for name, field in form.fields.items()
+        if isinstance(field, i18nfield.forms.I18nFormField) and type(field.widget) is i18nfield.forms.I18nTextarea
+    ]
+    enable_i18n_markdown(form, names)
+
+
+class MarkdownI18nFormMixin:
+    """For ``i18nfield.forms.I18nForm`` subclasses: same markdown upgrade as ``BaseI18nModelForm``."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        enable_i18n_markdown_all(self)
 
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
@@ -255,6 +312,23 @@ class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
 
     class Media:
         js = ('eventyay-common/js/auto-expanding-textarea.js',)
+
+
+class I18nMarkdownAutoExpandingTextarea(I18nAutoExpandingTextarea):
+    """
+    Same as ``I18nAutoExpandingTextarea`` but marks inputs for Toast UI (``formTools.js``).
+
+    Use only where stored content is rendered as markdown (e.g. ``rich_text``); do not use
+    for plain-text settings.
+    """
+
+    def __init__(self, attrs=None, **kwargs):
+        if attrs is not None:
+            attrs = attrs.copy()
+        else:
+            attrs = {}
+        attrs.setdefault('data-markdown-field', 'true')
+        super().__init__(attrs=attrs, **kwargs)
 
 
 class I18nURLFormField(i18nfield.forms.I18nFormField):

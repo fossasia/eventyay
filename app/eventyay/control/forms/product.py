@@ -22,7 +22,7 @@ from django_scopes.forms import (
 from i18nfield.forms import I18nFormField, I18nTextarea
 
 from eventyay.base.channels import get_all_sales_channels
-from eventyay.base.forms import I18nFormSet, I18nModelForm
+from eventyay.base.forms import I18nFormSet, I18nMarkdownTextarea, I18nModelForm
 from eventyay.base.forms.widgets import DatePickerWidget
 from eventyay.base.models import (
     Product,
@@ -45,10 +45,15 @@ class CategoryForm(I18nModelForm):
         model = ProductCategory
         localized_fields = '__all__'
         fields = ['name', 'internal_name', 'description', 'is_addon']
+        widgets = {
+            'description': I18nMarkdownTextarea,
+        }
 
 
 class QuestionForm(I18nModelForm):
-    question = I18nFormField(label=_('Custom Field'), widget_kwargs={'attrs': {'rows': 2}}, widget=I18nTextarea)
+    question = I18nFormField(
+        label=_('Custom Field'), widget_kwargs={'attrs': {'rows': 2}}, widget=I18nMarkdownTextarea
+    )
 
     def removeDesOption(self):
         choices = list(self.fields['type'].choices)
@@ -148,18 +153,22 @@ class QuestionForm(I18nModelForm):
             'products': SafeModelMultipleChoiceField,
             'dependency_question': SafeModelChoiceField,
         }
+        widgets = {
+            'help_text': I18nMarkdownTextarea,
+            'description': I18nMarkdownTextarea,
+        }
 
 
 class DescriptionForm(QuestionForm):
     question = I18nFormField(
         label=_('Description Title'),
         widget_kwargs={'attrs': {'rows': 2}},
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
     )
     description = I18nFormField(
         label=_('Description'),
         widget_kwargs={'attrs': {'rows': 3}},
-        widget=I18nTextarea,
+        widget=I18nMarkdownTextarea,
         initial='hahaha',
     )
 
@@ -647,6 +656,7 @@ class ProductUpdateForm(I18nModelForm):
             'available_until': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_available_from_0'}),
             'generate_tickets': TicketNullBooleanSelect(),
             'show_quota_left': ShowQuotaNullBooleanSelect(),
+            'description': I18nMarkdownTextarea,
         }
 
 
@@ -713,6 +723,9 @@ class ProductVariationForm(I18nModelForm):
             'original_price',
             'description',
         ]
+        widgets = {
+            'description': I18nMarkdownTextarea,
+        }
 
 
 class ProductAddOnsFormSet(I18nFormSet):

@@ -27,7 +27,7 @@ from eventyay.api.serializers.i18n import I18nField, I18nURLField
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
     LazyI18nStringList,
 )
-from eventyay.base.forms import I18nAutoExpandingTextarea, I18nURLFormField
+from eventyay.base.forms import I18nMarkdownAutoExpandingTextarea, I18nURLFormField
 from eventyay.base.models.tax import TaxRule
 from eventyay.base.reldate import (
     RelativeDateField,
@@ -2267,7 +2267,7 @@ Your {event} team"""
         'type': LazyI18nString,
         'serializer_class': I18nField,
         'form_class': I18nFormField,
-        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nAutoExpandingTextarea),
+        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nMarkdownAutoExpandingTextarea),
     },
     'event_info_text': {
         'default': '',

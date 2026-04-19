@@ -15,11 +15,11 @@ from django.utils.translation import (
     gettext_noop,
     pgettext_lazy,
 )
-from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from i18nfield.forms import I18nFormField, I18nTextInput
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.email import get_available_placeholders
-from eventyay.base.forms import I18nModelForm, PlaceholderValidator
+from eventyay.base.forms import I18nMarkdownTextarea, I18nModelForm, PlaceholderValidator
 from eventyay.base.forms.questions import WrappedPhoneNumberPrefixWidget
 from eventyay.base.forms.widgets import (
     DatePickerWidget,
@@ -719,7 +719,7 @@ class EventCancelForm(forms.Form):
         )
         self.fields['send_message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=True,
             widget_kwargs={'attrs': {'data-display-dependency': '#id_send'}},
             locales=self.event.settings.get('locales'),
@@ -764,7 +764,7 @@ class EventCancelForm(forms.Form):
         )
         self.fields['send_waitinglist_message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=True,
             locales=self.event.settings.get('locales'),
             widget_kwargs={'attrs': {'data-display-dependency': '#id_send_waitinglist'}},
