@@ -12,8 +12,8 @@
 <head>
     <meta charset="utf-8">
     <title>{% trans "Start page" %} :: {{ site_name }}</title>
-    <meta name="title" content="{% trans " Start page" %} {{ site_name }}">
-    <meta name="description" content="{% trans " Browse live events on" %} {{ site_name }}">
+    <meta name="title" content="{% trans 'Start page' %} {{ site_name }}">
+    <meta name="description" content="{% trans 'Browse live events on' %} {{ site_name }}">
     <meta name="application-name" content="{{ site_name }}">
     <meta name="generator" content="{{ site_name }}">
     {{ html_head|safe }}
@@ -70,7 +70,7 @@
         aria-label="{% trans 'Primary navigation' %}">
         {% if request.user.is_authenticated %}
         <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar"
-            aria-expanded="false" aria-controls="sidebar">
+            aria-expanded="true" aria-controls="sidebar">
             <span class="sr-only">{% trans "Toggle sidebar" %}</span>
             <i class="fa fa-bars fa-lg"></i>
         </button>
@@ -86,14 +86,14 @@
             <li class="startpage-search-nav">
                 <form class="startpage-search-form" action="{% url 'presale:index' %}" method="get" role="search">
                     <div class="startpage-search">
-                        <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans " Search" %}">
+                        <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans 'Search' %}">
                             <i class="fa fa-search" aria-hidden="true"></i>
                         </button>
                         <input id="startpage-search-input" name="q" type="search" autocomplete="off"
-                            placeholder="{% trans " Search events" %}" aria-label="{% trans " Search events" %}"
+                            placeholder="{% trans 'Search events' %}" aria-label="{% trans 'Search events' %}"
                             value="{{ search_query|default:'' }}" />
                         <div class="startpage-search-results" id="startpage-search-results" role="listbox"
-                            data-empty-text="{% trans " No matching events" %}"></div>
+                            data-empty-text="{% trans 'No matching events' %}"></div>
                     </div>
                 </form>
             </li>
@@ -136,7 +136,7 @@
         </ul>
         {% if request.user.is_authenticated %}
         <div class="navbar-default sidebar" id="sidebar" role="navigation" aria-label="{% trans 'Sidebar navigation' %}"
-            aria-hidden="true">
+            aria-hidden="false">
             <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
                 <div class="dropdown context-selector">
                     <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-toggle">
@@ -196,7 +196,7 @@
 
     <div id="top-bg" class="header startpage-header">
         {% if startpage_header_image_url %}
-        <img src="{{ startpage_header_image_url }}" id="header-image" alt="{% trans " Start page header" %}">
+        <img src="{{ startpage_header_image_url }}" id="header-image" alt="{% trans 'Start page header' %}">
         {% endif %}
         <div class="header-image-overlay"></div>
     </div>
@@ -223,17 +223,16 @@
             {% endif %}
             <main>
                 {% if search_query %}
-                <section class="startpage-events" aria-label="{% trans " Live events" %}">
+                <section class="startpage-events" aria-label="{% trans 'Live events' %}">
                     <div class="startpage-search-content-bar">
                         <form class="startpage-search-form" action="{% url 'presale:index' %}" method="get"
                             role="search">
                             <div class="startpage-search startpage-search-content">
-                                <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans " Search"
-                                    %}">
+                                <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans 'Search' %}">
                                     <i class="fa fa-search" aria-hidden="true"></i>
                                 </button>
                                 <input id="startpage-search-content-input" name="q" type="search" autocomplete="off"
-                                    placeholder="{% trans " Search events" %}" aria-label="{% trans " Search events" %}"
+                                    placeholder="{% trans 'Search events' %}" aria-label="{% trans 'Search events' %}"
                                     value="{{ search_query|default:'' }}" />
                             </div>
                         </form>
@@ -248,7 +247,7 @@
                 </section>
                 {% else %}
                 {% if featured_events %}
-                <section class="startpage-events" aria-label="{% trans " Featured events" %}">
+                <section class="startpage-events" aria-label="{% trans 'Featured events' %}">
                     <h2>{% trans "Featured events" %}</h2>
                     <div class="startpage-event-list">
                         {% for event in featured_events %}
@@ -257,7 +256,7 @@
                     </div>
                 </section>
                 {% endif %}
-                <section class="startpage-events" aria-label="{% trans " Upcoming events" %}">
+                <section class="startpage-events" aria-label="{% trans 'Upcoming events' %}">
                     <h2>{% trans "Upcoming events" %}</h2>
                     <div class="startpage-event-list">
                         {% for event in upcoming_events %}
@@ -268,7 +267,7 @@
                     </div>
                 </section>
                 {% if past_events %}
-                <section class="startpage-events" aria-label="{% trans " Past events" %}">
+                <section class="startpage-events" aria-label="{% trans 'Past events' %}">
                     <h2>{% trans "Past events" %}</h2>
                     <div class="startpage-event-list">
                         {% for event in past_events %}

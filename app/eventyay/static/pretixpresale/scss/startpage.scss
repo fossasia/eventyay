@@ -2,6 +2,12 @@ body.startpage-body {
   padding-top: var(--navbar-height, 50px);
 }
 
+@media (max-width: 991px) {
+  body.startpage-body {
+    padding-top: 0;
+  }
+}
+
 /* Startpage-specific sidebar behavior: fully hidden when collapsed */
 body.startpage-body.has-sidebar.sidebar-minimized .sidebar {
   display: none;
