@@ -463,6 +463,7 @@ class EventMailSettings(EventSettingsPermission, ActionFromUrl, FormView):
         return super().form_valid(form)
 
 
+
 class InvitationView(FormView):
     template_name = 'orga/invitation.html'
     form_class = UserForm

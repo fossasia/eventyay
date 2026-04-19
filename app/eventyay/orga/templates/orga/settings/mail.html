@@ -18,7 +18,7 @@
         {% csrf_token %}
         <div id="main-title" class="d-md-flex justify-content-between">
             <h2>
-            {% translate "Email settings" %}
+            {% translate "Talk Email Settings" %}
             <span data-dialog-target="#info-dialog" data-toggle="dialog">
                 <i class="fa fa-question-circle-o text-info"></i>
             </span>
@@ -28,23 +28,34 @@
         <dialog id="info-dialog">
             <div class="alert alert-info">
                 {% blocktranslate trimmed %}
-                    If you don’t configure custom email settings, the global configuration
-                    for this server will be used (ask your administrator for details).<br>
-                    We recommend that you add email settings here explicitly.
+                    These settings apply to emails sent in the context of the Talks component
+                    (e.g. speaker notifications, review emails).
                 {% endblocktranslate %}
             </div>
         </dialog>
+
+        <div class="alert alert-info" role="alert">
+            <strong>{% translate "SMTP is configured centrally" %}</strong> —
+            {% blocktranslate trimmed %}
+                The SMTP server used for all outgoing emails (including talk emails) is configured centrally
+                under <strong>Event Settings › Email</strong>.
+                Changes made there affect all event components.
+            {% endblocktranslate %}
+            <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info" style="margin-left:8px;">
+                {% translate "Go to Email Settings" %}
+            </a>
+        </div>
+
         {{ form }}
+
         <div class="submit-group panel">
             <span></span>
             <span>
                 {% if action == "edit" or action == "create" %}
-                    <button type="submit" class="btn btn-lg btn-success" name="test" value="1">
-                        {% translate "Save and test custom SMTP connection" %}
-                    </button>
                     <button type="submit" class="btn btn-lg btn-info">{{ phrases.base.save }}</button>
                 {% endif %}
             </span>
         </div>
     </form>
 {% endblock settings_content %}
+

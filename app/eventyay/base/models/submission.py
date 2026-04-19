@@ -597,18 +597,39 @@ class Submission(GenerateCode, PretalxModel):
             template.text = template_text
             template.save()
         if self.event.mail_settings['mail_on_new_submission']:
-            self.event.get_mail_template(MailTemplateRoles.NEW_SUBMISSION_INTERNAL).to_mail(
-                user=self.event.email,
-                event=self.event,
-                context_kwargs={
-                    'user': person,
-                    'submission': self,
-                },
-                context={'orga_url': self.orga_urls.base.full()},
-                skip_queue=True,
-                commit=False,  # Send immediately, don't save a record
-                locale=self.event.locale,
+            # Collect all event admin email addresses (users in teams with can_change_event_settings).
+            # Fan-out to every admin instead of a single event.email address.
+            admin_emails = list(
+                self.event.teams.filter(can_change_event_settings=True)
+                .prefetch_related('members')
+                .values_list('members__email', flat=True)
+                .distinct()
+                .exclude(members__email__isnull=True)
+                .exclude(members__email='')
             )
+            # Fall back to event.email or mail settings reply_to if no team admins found
+            if not admin_emails:
+                fallback = (
+                    self.event.email
+                    or self.event.mail_settings.get('reply_to')
+                    or self.event.settings.mail_from
+                )
+                if fallback:
+                    admin_emails = [fallback]
+
+            for admin_email in admin_emails:
+                self.event.get_mail_template(MailTemplateRoles.NEW_SUBMISSION_INTERNAL).to_mail(
+                    user=admin_email,
+                    event=self.event,
+                    context_kwargs={
+                        'user': person,
+                        'submission': self,
+                    },
+                    context={'orga_url': self.orga_urls.base.full()},
+                    skip_queue=True,
+                    commit=False,  # Send immediately, don't save a record
+                    locale=self.event.locale,
+                )
 
     def make_submitted(
         self,

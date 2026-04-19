@@ -1620,7 +1620,7 @@ DEFAULT_SETTINGS = {
         'serializer_class': serializers.EmailField,
         'form_kwargs': dict(
             label=_('Sender address'),
-            help_text=_('Sender address for outgoing emails'),
+            help_text=_('Sender address for outgoing emails. When using a custom sender, replies go to this address unless a Reply-To is set.'),
         ),
     },
     'mail_reply_to': {
