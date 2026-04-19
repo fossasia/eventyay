@@ -1,0 +1,67 @@
+{% extends "eventyay_common/organizers/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ request.organizer.name }} — {% trans "Organizer Dashboard" %}{% endblock %}
+
+{% block inner %}
+  <h1>
+    {% blocktrans with name=request.organizer.name %}{{ name }} Organizer Dashboard{% endblocktrans %}
+  </h1>
+  <p>
+    {% blocktrans with name=request.organizer.name %}Welcome to the dashboard for {{ name }}.{% endblocktrans %}
+  </p>
+  <div class="row">
+    <div class="col-md-4 col-sm-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">
+            <i class="fa fa-calendar"></i>
+            {% trans "Events" %}
+          </h3>
+        </div>
+        <div class="panel-body">
+          <p>{% trans "View and manage all events for this organizer." %}</p>
+          <a href="{% url 'eventyay_common:organizer.events' organizer=request.organizer.slug %}" class="btn btn-default">
+            {% trans "View events" %}
+          </a>
+        </div>
+      </div>
+    </div>
+    {% if "can_create_events" in request.orgapermset %}
+      <div class="col-md-4 col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              <i class="fa fa-plus"></i>
+              {% trans "Create Event" %}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <p>{% trans "Set up a new event under this organizer." %}</p>
+            <a href="{% url 'eventyay_common:events.add' %}?organizer={{ request.organizer.slug }}" class="btn btn-primary">
+              {% trans "Create a new event" %}
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    {% if "can_change_organizer_settings" in request.orgapermset %}
+      <div class="col-md-4 col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              <i class="fa fa-wrench"></i>
+              {% trans "Settings" %}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <p>{% trans "Configure organizer settings and preferences." %}</p>
+            <a href="{% url 'eventyay_common:organizer.edit' organizer=request.organizer.slug %}" class="btn btn-default">
+              {% trans "Organizer settings" %}
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

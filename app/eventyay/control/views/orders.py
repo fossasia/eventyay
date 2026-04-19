@@ -434,7 +434,7 @@ class OrderDetail(OrderView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['products'] = self.get_products()
+        ctx['items'] = self.get_products()
         ctx['event'] = self.request.event
         ctx['payments'] = self.order.payments.order_by('-created')
         ctx['refunds'] = self.order.refunds.select_related('payment').order_by('-created')
