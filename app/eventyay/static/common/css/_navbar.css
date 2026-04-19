@@ -128,6 +128,9 @@ nav.navbar.navbar-inverse .btn-link:focus i {
   outline: 0;
 }
 
+.navbar-toggle.mobile-navbar-view-link{
+  display: none;
+}
 /* ============================================
    Sidebar toggle button - _sidebar.scss
    Overrides .navbar-toggle for sidebar
@@ -444,4 +447,18 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     white-space: nowrap;
   }
 
+  .navbar-toggle.mobile-navbar-view-link{
+    display: block;
+    border: 1px solid black;
+  }
+
+  .mobile-navbar-view-link{
+    color: white;
+  }
+  
+  nav.navbar.navbar-inverse .navbar-brand,
+  .navbar-inverse .navbar-brand{
+    margin-right: 0;
+
+  }
 }

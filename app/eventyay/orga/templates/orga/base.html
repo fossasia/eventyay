@@ -7,7 +7,7 @@
 {% load rules %}
 {% load static %}
 {% load vite %}
-
+{% load eventurl %}
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
@@ -86,6 +86,23 @@
                     <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
                     <span class="hidden-xs">{{ site_name }}</span>
                 </a>
+                {% if request.event %}
+                    {% if has_domain and not request.event.live %}
+                        <form action="{% eventurl request.event "presale:event.auth" %}" method="post"
+                                target="_blank" class="mobile-navbar-view-form visible-xs-block">
+                            {% csrf_token %}
+                            <input type="hidden" value="{{ new_session }}" name="session">
+                            <button type="submit" class="btn btn-link navbar-toggle">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{% eventurl request.event "presale:event.index" %}" title="{% trans "View event" %}"
+                                target="_blank" class="navbar-toggle mobile-navbar-view-link">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    {% endif %}
+                {% endif %}
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
                 {% if request.event %}
