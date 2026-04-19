@@ -968,11 +968,16 @@ class Submission(GenerateCode, PretalxModel):
         ]
         data = []
         result = ''
+        info_step_config = self.event.cfp_flow.config.get('steps', {}).get('info', {})
+        info_fields = {f['key']: f for f in info_step_config.get('fields', [])}
+
         for field in order:
             field_content = getattr(self, field, None)
             if field_content:
                 _field = self._meta.get_field(field)
                 field_name = _field.verbose_name or _field.name
+                if field in info_fields and info_fields[field].get('label'):
+                    field_name = str(info_fields[field]['label'])
                 data.append({'name': field_name, 'value': field_content})
         for answer in self.answers.all().order_by('question__position'):
             if answer.question.variant == 'boolean':
