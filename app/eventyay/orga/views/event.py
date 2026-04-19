@@ -76,7 +76,6 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
     def tablist(self):
         return {
             'display': _('Display settings'),
-            'texts': _('Texts'),
         }
 
     def get_success_url(self) -> str:
