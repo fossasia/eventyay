@@ -969,7 +969,11 @@ class Submission(GenerateCode, PretalxModel):
         data = []
         result = ''
         info_step_config = self.event.cfp_flow.config.get('steps', {}).get('info', {})
-        info_fields = {f['key']: f for f in info_step_config.get('fields', [])}
+        info_fields = {
+            field_key: field
+            for field in info_step_config.get('fields', [])
+            if isinstance(field, dict) and (field_key := field.get('key'))
+        }
 
         for field in order:
             field_content = getattr(self, field, None)
