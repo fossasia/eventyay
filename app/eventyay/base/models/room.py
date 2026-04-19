@@ -32,6 +32,7 @@ def empty_module_config():
 def default_grants():
     return {
         "viewer": [],
+        "participant": [],
     }
 
 

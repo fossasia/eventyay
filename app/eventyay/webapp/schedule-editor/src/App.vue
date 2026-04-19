@@ -3,6 +3,17 @@
 	template(v-if="schedule")
 		#main-wrapper
 			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="isUnassigning = false")
+				.density-controls
+					button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
+						i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
+						span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
+					.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
+						span.time-density-display {{ timeDensityMinutes }} min
+						i.fa.fa-chevron-down(aria-hidden="true")
+						.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
+							.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
+								span {{ mins }} min
+								i.fa.fa-check(v-if="timeDensityMinutes === mins")
 				.title
 					bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
 					#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
@@ -18,25 +29,9 @@
 				.schedule-controls
 					bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
 						bunt-tab(v-for="day of days", :key="day.format()", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
-					.density-controls
-						button.density-btn(:class="{active: density === 'compact'}", @click="setDensity('compact')", :title="$t('Compact')")
-							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
-								line(x1="3", y1="6", x2="21", y2="6")
-								line(x1="3", y1="10", x2="21", y2="10")
-								line(x1="3", y1="14", x2="21", y2="14")
-								line(x1="3", y1="18", x2="21", y2="18")
-						button.density-btn(:class="{active: density === 'default'}", @click="setDensity('default')", :title="$t('Default')")
-							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
-								line(x1="3", y1="5", x2="21", y2="5")
-								line(x1="3", y1="12", x2="21", y2="12")
-								line(x1="3", y1="19", x2="21", y2="19")
-						button.density-btn(:class="{active: density === 'comfortable'}", @click="setDensity('comfortable')", :title="$t('Comfortable')")
-							svg(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", width="18", height="18")
-								line(x1="3", y1="4", x2="21", y2="4")
-								line(x1="3", y1="12", x2="21", y2="12")
-								line(x1="3", y1="20", x2="21", y2="20")
 				grid-schedule(:sessions="sessions",
-					:density="density",
+					:density="gridDensity",
+					:timeDensityMinutes="timeDensityMinutes",
 					:rooms="schedule.rooms",
 					:availabilities="availabilities",
 					:warnings="warnings",
@@ -59,7 +54,8 @@
 							label.data-label.col-form-label.col-md-3 {{ $t('Speakers') }}
 							.col-md-9.data-value
 								span(v-for="speaker, index of editorSession.speakers")
-									a(:href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{speaker.name || speaker.code}}
+									a(v-if="speaker.code", :href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{ speaker.name || speaker.code }}
+									span(v-else) {{ speaker.name }}
 									span(v-if="index != editorSession.speakers.length - 1") {{', '}}
 								span.text-warning(v-if="editorSession.speakers.some(s => !s.name)")  ({{ $t('some speakers have not shared their names') }})
 						.data-row(v-else).form-group.row
@@ -106,7 +102,7 @@ import { getLocalizedString } from '~/utils'
 import type { AvailabilityEntry } from '~/schemas';
 
 interface Speaker {
-  code: string
+  code?: string | null
   name: string
 }
 
@@ -144,7 +140,7 @@ interface Talk {
 
 interface SessionData {
   id: number
-  code: string
+  code?: string
   title: Record<string, string> | string
   abstract?: string
   speakers?: Speaker[]
@@ -201,13 +197,25 @@ const showUnassignedSortMenu = ref<boolean>(false)
 const newBreakTooltip = ref<string>('')
 const eventTimezone = ref<string | null>(null)
 const since = ref<string | undefined>(undefined)
+const showTimeDensityMenu = ref<boolean>(false)
+const customDropdownRef = ref<HTMLElement | null>(null)
 
-type DensityLevel = 'compact' | 'default' | 'comfortable'
-const density = ref<DensityLevel>((localStorage.getItem('schedule-editor-density') as DensityLevel) || 'default')
+const condensedView = ref<boolean>(localStorage.getItem('schedule-editor-condensed') === '1')
+const timeDensityMinutes = ref<number>(Number(localStorage.getItem('schedule-time-density-minutes') || 30))
 
-function setDensity(level: DensityLevel): void {
-  density.value = level
-  localStorage.setItem('schedule-editor-density', level)
+const gridDensity = computed<'compact' | 'default' | 'comfortable'>(() => {
+  // Condensed view only affects how dense the grid looks (zoom/spacing).
+  // Time density only affects how the schedule timeslices are generated.
+  return condensedView.value ? 'compact' : 'default'
+})
+
+function toggleCondensedView (): void {
+  condensedView.value = !condensedView.value
+  localStorage.setItem('schedule-editor-condensed', condensedView.value ? '1' : '0')
+}
+
+function onTimeDensityChange (): void {
+  localStorage.setItem('schedule-time-density-minutes', String(timeDensityMinutes.value))
 }
 
 function $t(key: string): string {
@@ -239,10 +247,19 @@ const tracksLookup = computed<Record<string, Track>>(() => {
 const speakersLookup = computed<Record<string, Speaker>>(() => {
   if (!schedule.value) return {}
   return schedule.value.speakers.reduce((acc, speaker) => {
-    acc[speaker.code] = speaker
+    if (speaker.code) {
+      acc[speaker.code] = speaker
+    }
     return acc
   }, {} as Record<string, Speaker>)
 })
+
+function resolveSessionSpeakers(speakers?: string[]): Speaker[] {
+  if (!speakers?.length) return []
+  return speakers
+    .map((speakerCode) => speakersLookup.value[speakerCode])
+    .filter((speaker): speaker is Speaker => Boolean(speaker))
+}
 
 // Sort methods for unassigned sessions
 const unassignedSortMethods = computed<SortMethod[]>(() => {
@@ -267,7 +284,7 @@ const unscheduled = computed<SessionData[]>(() => {
       code: session.code,
       title: session.title,
       abstract: session.abstract,
-      speakers: session.speakers?.map((s) => speakersLookup.value[s]) ?? [],
+      speakers: resolveSessionSpeakers(session.speakers),
       track: tracksLookup.value[session.track ?? ''],
       duration: session.duration,
       state: session.state,
@@ -327,7 +344,7 @@ const sessions = computed<SessionData[]>(() => {
     start: moment(session.start),
     end: moment(session.end),
     duration: moment(session.end).diff(moment(session.start), 'minutes'),
-    speakers: session.speakers?.map((s) => speakersLookup.value[s]) ?? [],
+    speakers: resolveSessionSpeakers(session.speakers),
     track: tracksLookup.value[session.track ?? ''],
     state: session.state,
     room: roomsLookup.value[session.room ?? ''],
@@ -339,8 +356,48 @@ const sessions = computed<SessionData[]>(() => {
 
 const days = computed<Moment[]>(() => {
   if (!schedule.value) return []
-  const daysArray: Moment[] = [moment(schedule.value.event_start).startOf('day')]
-  const lastDay = moment(schedule.value.event_end)
+  let firstDay = moment(schedule.value.event_start).startOf('day')
+  let lastDay = moment(schedule.value.event_end).startOf('day')
+
+  // Keep editor tabs aligned with real talk dates as well, since imported
+  // schedules may contain talks outside the event date window.
+  const startedTalks = schedule.value.talks
+    .map((talk) => talk.start)
+    .filter((start): start is string => typeof start === 'string')
+    .map((start) => moment(start))
+    .filter((start) => start.isValid())
+
+  const endedTalks = schedule.value.talks
+    .map((talk) => talk.end)
+    .filter((end): end is string => typeof end === 'string')
+    .map((end) => moment(end))
+    .filter((end) => end.isValid())
+
+  const talkDates = [...startedTalks, ...endedTalks]
+
+  if (talkDates.length) {
+    let earliestTalkDay = talkDates[0].clone().startOf('day')
+    let latestTalkDay = talkDates[0].clone().startOf('day')
+
+    for (const talkDay of talkDates.slice(1)) {
+      const normalizedTalkDay = talkDay.clone().startOf('day')
+      if (normalizedTalkDay.isBefore(earliestTalkDay)) {
+        earliestTalkDay = normalizedTalkDay
+      }
+      if (normalizedTalkDay.isAfter(latestTalkDay)) {
+        latestTalkDay = normalizedTalkDay
+      }
+    }
+
+    if (earliestTalkDay.isBefore(firstDay)) {
+      firstDay = earliestTalkDay
+    }
+    if (latestTalkDay.isAfter(lastDay)) {
+      lastDay = latestTalkDay
+    }
+  }
+
+  const daysArray: Moment[] = [firstDay]
   while (!daysArray.at(-1)!.isSame(lastDay, 'day')) {
     daysArray.push(daysArray.at(-1)!.clone().add(1, 'days'))
   }
@@ -580,13 +637,32 @@ onBeforeMount(async () => {
   })
 })
 
+const onStorageChange = (e: StorageEvent) => {
+  if (e.key === 'schedule-time-density-minutes' && e.newValue) {
+    timeDensityMinutes.value = Number(e.newValue)
+  }
+  if (e.key === 'schedule-editor-condensed') {
+    condensedView.value = e.newValue === '1'
+  }
+}
+
+const onWindowClick = (e: MouseEvent) => {
+  if (showTimeDensityMenu.value && customDropdownRef.value && !customDropdownRef.value.contains(e.target as Node)) {
+    showTimeDensityMenu.value = false
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('click', onWindowClick)
   window.addEventListener('resize', onWindowResize)
+  window.addEventListener('storage', onStorageChange)
   onWindowResize()
 })
 
 onUnmounted(() => {
+  window.removeEventListener('click', onWindowClick)
   window.removeEventListener('resize', onWindowResize)
+  window.removeEventListener('storage', onStorageChange)
 })
 </script>
 
@@ -653,6 +729,94 @@ onUnmounted(() => {
 			margin-right: 12px
 		> .bunt-scrollbar-rail-y
 			margin: 0
+		> .density-controls
+			display: flex
+			align-items: center
+			justify-content: flex-start
+			gap: 12px
+			padding: 0 8px
+			margin-bottom: 12px
+			.select-wrapper.custom-dropdown
+				position: relative
+				display: flex
+				align-items: center
+				background-color: transparent
+				border: 1px solid #999
+				border-radius: 4px
+				padding: 4px 28px 4px 10px
+				color: #333
+				cursor: pointer
+				font-size: 14px
+				font-weight: 500
+				line-height: 1.2
+				transition: all 0.15s ease
+				&:hover
+					background-color: #f3f4f6
+				.fa-chevron-down
+					position: absolute
+					right: 8px
+					pointer-events: none
+					font-size: 12px
+					color: #333
+				.time-density-menu, .vue-dropdown
+					position: absolute
+					top: calc(100% + 4px)
+					right: 0
+					background-color: white
+					border-radius: 4px
+					box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)
+					border: 1px solid #e5e7eb
+					z-index: 1000
+					min-width: 120px
+					display: flex
+					flex-direction: column
+					overflow: hidden
+					cursor: default
+					.density-option
+						padding: 8px 12px
+						display: flex
+						justify-content: space-between
+						align-items: center
+						color: #374151
+						cursor: pointer
+						&:hover
+							background-color: #f3f4f6
+						&.active
+							background-color: #e5e7eb
+							color: #111
+						.fa-check
+							font-size: 12px
+							color: var(--color-primary, #3b82f6)
+			.density-btn
+				background: none
+				border: 1px solid #999
+				border-radius: 4px
+				padding: 4px 10px
+				cursor: pointer
+				color: #333
+				display: flex
+				align-items: center
+				justify-content: center
+				transition: all 0.15s ease
+				font-size: 14px
+				font-weight: 500
+				&:hover
+					background-color: #f3f4f6
+				&:focus-visible
+					outline: 2px solid var(--color-primary, #3b82f6)
+					outline-offset: -1px
+					background-color: #f3f4f6
+				&.active
+					background-color: #e5e7eb
+					color: #111
+					border-color: #6b7280
+					box-shadow: inset 0 2px 4px rgba(0,0,0,0.05)
+				.fa
+					font-size: 14px
+				.density-btn-text
+					margin-left: 6px
+					font-weight: 500
+					white-space: nowrap
 		> .title
 			padding 4px 0
 			font-size: 18px
@@ -705,7 +869,7 @@ onUnmounted(() => {
 	.schedule-controls
 		display: flex
 		align-items: center
-		justify-content: space-between
+		justify-content: flex-start
 		position: sticky
 		left: 0
 		top: 0
@@ -713,30 +877,6 @@ onUnmounted(() => {
 		background-color: $clr-white
 		.days
 			flex: 1
-		.density-controls
-			display: flex
-			align-items: center
-			gap: 2px
-			padding: 0 12px
-			flex-shrink: 0
-			.density-btn
-				background: none
-				border: 1px solid transparent
-				border-radius: 4px
-				padding: 4px 6px
-				cursor: pointer
-				color: $clr-secondary-text-light
-				display: flex
-				align-items: center
-				justify-content: center
-				transition: all 0.15s ease
-				&:hover
-					background-color: $clr-grey-100
-					color: $clr-primary-text-light
-				&.active
-					background-color: var(--color-primary, #3b82f6)
-					color: $clr-white
-					border-color: var(--color-primary, #3b82f6)
 	#schedule-wrapper
 		width: 100%
 		margin-right: 40px

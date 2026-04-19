@@ -13,14 +13,13 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.urls import resolve, reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
 from django_context_decorator import context
-from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.views.utils import (
     build_public_schedule_exporters,
@@ -35,6 +34,7 @@ from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
 # Starred-ICS token timing: grace, fallback, refresh buffer.
@@ -78,9 +78,9 @@ class ScheduleMixin:
             expiry = expiry_event
 
         value = {
-            "user_id": user_id,
-            "exp": int(expiry.timestamp()),
-            "event_id": event.pk,
+            'user_id': user_id,
+            'exp': int(expiry.timestamp()),
+            'event_id': event.pk,
         }
         token = signing.dumps(value, salt='my-starred-ics')
 
@@ -109,7 +109,9 @@ class ScheduleMixin:
         elif self.version:
             with suppress(Exception):
                 schedule = (
-                    self.request.event.schedules.filter(version__iexact=self.version).select_related('event', 'event__organizer').first()
+                    self.request.event.schedules.filter(version__iexact=self.version)
+                    .select_related('event', 'event__organizer')
+                    .first()
                 )
         schedule = schedule or self.request.event.current_schedule
         if schedule:
@@ -203,9 +205,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
                 return redirect_to_presale_with_warning(request, _('No published sessions.'))
             return redirect_to_presale_with_warning(request, _('No published schedule.'))
 
-        if not self.has_permission() and self.request.user.has_perm(
-            'base.list_featured_submission', self.request.event
-        ):
+        if not self.has_permission() and are_featured_submissions_visible(self.request.user, self.request.event):
             messages.success(request, _('Our schedule is not live yet.'))
             return HttpResponseRedirect(self.request.event.urls.featured)
         return super().dispatch(request, **kwargs)
@@ -306,14 +306,6 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     def show_talk_list(self):
         return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
 
-    @context
-    def schedule_json(self):
-        """Build enriched schedule data for inline embedding, avoiding extra API calls."""
-        if not self.schedule:
-            return '{}'
-        data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True)
-        return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         schedule = ctx.get('schedule')
@@ -324,14 +316,9 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             .values_list('version', flat=True)
         )
         base_schedule_url = str(self.request.event.urls.schedule)
-        current_version = (
-            self.request.event.current_schedule.version
-            if self.request.event.current_schedule
-            else None
-        )
+        current_version = self.request.event.current_schedule.version if self.request.event.current_schedule else None
         versions = [
-            {'version': v, 'url': f'{base_schedule_url}v/{v}/', 'isCurrent': v == current_version}
-            for v in released
+            {'version': v, 'url': f'{base_schedule_url}v/{v}/', 'isCurrent': v == current_version} for v in released
         ]
         meta = {
             'version': version or '',
@@ -365,12 +352,9 @@ def schedule_messages(request, **kwargs):
         'exit_fullscreen': _('Exit Fullscreen'),
         'latest': _('Latest'),
         'version_warning_editable': _(
-            'You are currently viewing the editable schedule version.'
-            ' It may not match the released version.'
+            'You are currently viewing the editable schedule version. It may not match the released version.'
         ),
-        'version_warning_old': _(
-            'You are currently viewing an older schedule version.'
-        ),
+        'version_warning_old': _('You are currently viewing an older schedule version.'),
         'join_room': _('Join room'),
         'view_video': _('View Video'),
         'watch_live': _('Watch live'),
@@ -448,7 +432,9 @@ class ChangelogView(EventPermissionRequired, TemplateView):
 
     @context
     def schedules(self):
-        return self.request.event.schedules.all().filter(version__isnull=False).select_related('event', 'event__organizer')
+        return (
+            self.request.event.schedules.all().filter(version__isnull=False).select_related('event', 'event__organizer')
+        )
 
 
 class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView):
@@ -510,7 +496,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             )
 
         if is_google:
-            google_url = f"https://calendar.google.com/calendar/r?{urlencode({'cid': ics_url})}"
+            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url})}'
             return HttpResponseRedirect(google_url)
 
         parsed = urlparse(ics_url)

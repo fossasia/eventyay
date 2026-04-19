@@ -66,11 +66,14 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         label=_('Show featured sessions'),
         choices=(
             ('never', _('Never')),
-            ('pre_schedule', _('Until the first schedule is released')),
+            ('after_schedule', _('Once the first schedule version is published'),),
             ('always', _('Always')),
         ),
         help_text=_(
-            'Marking sessions as “featured” is a good way to show them before the first schedule release, or to highlight them once the schedule is visible.'
+            'Never: the featured page and nav entry are always hidden. '
+            '"Once the first schedule version is published": featured sessions are hidden until you '
+            'release a schedule version; after the first release the featured page and tab appear. '
+            'Always: the featured page and tab are always visible (even before a schedule is released).'
         ),
         required=True,
     )
@@ -126,6 +129,12 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             + str(_('You can find the page <a {href}>here</a>.')).format(href=f'href="{self.instance.urls.featured}"')
         )
 
+    def clean_show_featured(self):
+        value = self.cleaned_data.get('show_featured', '')
+        if value == 'pre_schedule':
+            return 'after_schedule'
+        return value
+
     def clean_custom_css(self):
         if self.cleaned_data.get('custom_css') or self.files.get('custom_css'):
             css = self.cleaned_data['custom_css'] or self.files['custom_css']
@@ -166,7 +175,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         fields = [
             'email',
             'custom_css',
-            'featured_sessions_text',
         ]
         json_fields = {
             'imprint_url': 'display_settings',

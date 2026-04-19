@@ -1018,6 +1018,7 @@ pl-0 {
 .table-responsive-always {
   display: block;
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
