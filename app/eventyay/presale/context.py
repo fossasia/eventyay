@@ -172,7 +172,8 @@ def _default_context(request):
     if request.user and request.user.is_authenticated and hasattr(request, 'event') and request.event:
         ctx['show_organizer_area'] = is_event_organiser(request.user, request, request.event)
         ctx['talks_published'] = request.event.talks_published
-        ctx['user_has_cfp_submissions'] = user_has_cfp_submissions(request, request.event)
+        if ctx['talks_published']:
+            ctx['user_has_cfp_submissions'] = user_has_cfp_submissions(request, request.event)
 
     ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
     ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
