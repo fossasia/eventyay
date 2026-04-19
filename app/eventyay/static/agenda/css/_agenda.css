@@ -170,6 +170,7 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
 }
 
 #main-container.main-schedule {
+  overflow-x: clip;
   margin: 0 auto;
   #main-card {
     margin: 0 auto;
