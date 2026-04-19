@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
-from eventyay.base.forms import SecretKeySettingsField, SettingsForm, enable_i18n_markdown_all
+from eventyay.base.forms import SecretKeySettingsField, SettingsForm, enable_i18n_markdown
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import register_global_settings
 
@@ -434,7 +434,7 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
-        enable_i18n_markdown_all(self)
+        enable_i18n_markdown(self, ('banner_message_detail',))
 
     def clean(self):
         data = super().clean()

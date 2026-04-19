@@ -146,16 +146,14 @@ class QuestionForm(I18nModelForm):
             'valid_date_max': DatePickerWidget(),
             'products': forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             'dependency_values': forms.SelectMultiple,
+            'help_text': I18nMarkdownTextarea,
+            'description': I18nMarkdownTextarea,
         }
         field_classes = {
             'valid_datetime_min': SplitDateTimeField,
             'valid_datetime_max': SplitDateTimeField,
             'products': SafeModelMultipleChoiceField,
             'dependency_question': SafeModelChoiceField,
-        }
-        widgets = {
-            'help_text': I18nMarkdownTextarea,
-            'description': I18nMarkdownTextarea,
         }
 
 
@@ -169,7 +167,6 @@ class DescriptionForm(QuestionForm):
         label=_('Description'),
         widget_kwargs={'attrs': {'rows': 3}},
         widget=I18nMarkdownTextarea,
-        initial='hahaha',
     )
 
     def removeDesOption(self):
