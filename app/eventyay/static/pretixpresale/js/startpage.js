@@ -256,6 +256,12 @@
   }
 
   function init() {
+    // Remove nojs class and handle initial sidebar state
+    document.body.classList.remove('nojs');
+    if (document.body.classList.contains('has-sidebar')) {
+      document.body.classList.add('sidebar-minimized');
+    }
+
     initShareButtons();
     initSearch();
     initKeyboardShortcuts();
