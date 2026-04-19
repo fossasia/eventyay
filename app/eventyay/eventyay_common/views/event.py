@@ -1,11 +1,14 @@
 import datetime as dt
 import logging
-import re
 import os
+import re
+import smtplib
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
 from urllib.parse import urlparse
+
+from python_http_client.exceptions import HTTPError
 
 import jwt
 from django.conf import settings
@@ -55,6 +58,7 @@ from eventyay.eventyay_common.utils import (
     encode_email,
     generate_token,
 )
+from eventyay.orga.forms.email import CentralMailSettingsForm
 from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
@@ -577,6 +581,15 @@ class EventUpdate(
         )
 
     @cached_property
+    def email_form(self):
+        return CentralMailSettingsForm(
+            obj=self.object,
+            attribute_name='settings',
+            prefix='email',
+            data=self.request.POST if self.request.method == 'POST' else None,
+        )
+
+    @cached_property
     def header_links_formset(self):
         return EventHeaderLinkFormset(
             self.request.POST if self.request.method == 'POST' else None,
@@ -597,6 +610,7 @@ class EventUpdate(
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
         context['sform'] = self.sform
+        context['email_form'] = self.email_form
         context['header_links_formset'] = self.header_links_formset
         context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
@@ -609,10 +623,32 @@ class EventUpdate(
             context['is_talk_event_created'] = True
         return context
 
+    def _run_email_test(self):
+        """Test the central SMTP/SendGrid configuration and add a flash message."""
+        test_email = self.email_form.cleaned_data.get('test_email')
+        to_addrs = None
+        if test_email:
+            to_addrs = [a.strip() for a in test_email.split(',') if a.strip()] or None
+        backend = self.object.get_mail_backend(force_custom=True, timeout=10)
+        try:
+            backend.test(self.object.settings.mail_from, to_addrs=to_addrs)
+        except HTTPError as e:
+            logger.exception('Central SendGrid test failed (event=%s)', self.object.slug)
+            messages.error(self.request, _('SendGrid test failed. HTTP Error: %s') % str(e))
+        except (smtplib.SMTPException, OSError) as e:
+            logger.exception('Central SMTP test failed (event=%s)', self.object.slug)
+            messages.warning(self.request, _('Test email failed: %s') % str(e))
+        except Exception as e:
+            logger.exception('Unexpected error during email test (event=%s)', self.object.slug)
+            messages.error(self.request, _('Error testing email configuration: %s') % str(e))
+        else:
+            messages.success(self.request, _('Test email sent successfully.'))
+
     @transaction.atomic
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        self.email_form.save()
         self.header_links_formset.save()
         self.footer_links_formset.save()
         # Keep event model timezone in sync with settings
@@ -635,7 +671,9 @@ class EventUpdate(
             )
         )
 
-        if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
+        if self.request.POST.get('test', '0').strip() == '1':
+            self._run_email_test()
+        elif self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
             transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
@@ -735,11 +773,13 @@ class EventUpdate(
 
         form = self.get_form()
         has_formset_changes = self.header_links_formset.has_changed() or self.footer_links_formset.has_changed()
-        if form.changed_data or self.sform.changed_data or has_formset_changes:
+        is_test_request = request.POST.get('test', '0').strip() == '1'
+        if is_test_request or form.changed_data or self.sform.changed_data or self.email_form.has_changed() or has_formset_changes:
             form.instance.sales_channels = ['web']
             if (
                 form.is_valid()
                 and self.sform.is_valid()
+                and self.email_form.is_valid()
                 and self.header_links_formset.is_valid()
                 and self.footer_links_formset.is_valid()
             ):

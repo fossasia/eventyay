@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 
-from eventyay.base.models import Event
+from eventyay.base.models.event import Event
 from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
 
@@ -78,16 +78,14 @@ def mail_send_task(
         event = Event.objects.get(pk=event)
         backend = event.get_mail_backend()
 
-        sender = settings.MAIL_FROM
-        if event.mail_settings['smtp_use_custom']:  # pragma: no cover
-            sender = event.mail_settings['mail_from'] or sender
+        sender = event.settings.mail_from or settings.MAIL_FROM
 
-        reply_to = reply_to or event.mail_settings['reply_to']
-        if not reply_to and sender == settings.MAIL_FROM:
-            reply_to = event.email
+        if not reply_to:
+            reply_to = get_reply_to_address(event, sender_email=sender)
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
+        reply_to = reply_to or []
 
         sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
 
@@ -134,3 +132,33 @@ def mail_send_task(
     except Exception as exception:  # pragma: no cover
         logger.exception('Error sending email')
         raise SendMailException(f'Failed to send an email to {to}: {exception}')
+
+
+def get_reply_to_address(
+    event,
+    *,
+    override=None,
+    template=None,
+    sender_email=None
+):
+    """
+    Resolve Reply-To with unified precedence:
+    override → template.reply_to → mail_settings['reply_to'] → settings.mail_reply_to → event.email (platform sender only) → None
+    """
+    if override is not None:
+        return override
+
+    if template and hasattr(template, 'reply_to') and template.reply_to:
+        return template.reply_to
+
+    if event.mail_settings.get('reply_to'):
+        return event.mail_settings['reply_to']
+
+    if event.settings.get('mail_reply_to'):
+        return event.settings.mail_reply_to
+
+    use_default_sender = not event.settings.smtp_use_custom
+    if use_default_sender and sender_email == settings.MAIL_FROM and event.email:
+        return event.email
+
+    return None

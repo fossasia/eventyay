@@ -14,6 +14,7 @@ from django.utils.translation import override, pgettext_lazy
 from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.exceptions import SendMailException
+from eventyay.common.mail import get_reply_to_address
 from eventyay.common.urls import EventUrls
 from eventyay.mail.context import get_available_placeholders, get_mail_context, get_used_placeholders
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
@@ -234,11 +235,20 @@ class MailTemplate(PretalxModel):
             if len(subject) > 200:
                 subject = subject[:198] + '…'
 
+            sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
+            sender = sender or settings.MAIL_FROM
+
+            resolved_reply_to = (
+                get_reply_to_address(event, template=self, sender_email=sender)
+                if event
+                else self.reply_to
+            )
+
             mail = QueuedMail(
                 event=event,
                 template=self,
                 to=address,
-                reply_to=self.reply_to,
+                reply_to=resolved_reply_to,
                 bcc=self.bcc,
                 subject=subject,
                 text=text,
@@ -349,7 +359,7 @@ class QueuedMail(PretalxModel):
         null=True,
         blank=True,
         verbose_name=_('Reply-To'),
-        help_text=_('By default, the organiser address is used as Reply-To.'),
+        help_text=_('By default, the organizer email is used as Reply-To when the platform sender is used. With a custom sender, replies go to the sender address unless overridden here.'),
     )
     cc = models.CharField(
         max_length=1000,
