@@ -9,27 +9,39 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from lxml import etree
 
-from pretalx.common.models.settings import GlobalSettings
-from pretalx.event.models import Event, Organiser, Team, TeamInvite
-from pretalx.mail.models import MailTemplate
-from pretalx.person.models import SpeakerInformation, SpeakerProfile, User, UserApiToken
-from pretalx.person.models.auth_token import ENDPOINTS, generate_api_token
-from pretalx.schedule.models import Availability, Room, TalkSlot
-from pretalx.submission.models import (
+from eventyay.base.models import (
     Answer,
     AnswerOption,
+    Availability,
+    CfP,
+    Event,
     Feedback,
+    GlobalSettings,
+    MailTemplate,
+    Organizer,
+    Organizer as Organiser,
     Question,
-    QuestionVariant,
     Resource,
     Review,
+    Room,
+    SpeakerProfile,
     Submission,
+    SubmissionStates,
     SubmissionType,
     SubmitterAccessCode,
     Tag,
+    TalkQuestion as Question,
+    TalkQuestionRequired as QuestionRequired,
+    TalkQuestionTarget as QuestionTarget,
+    TalkQuestionVariant as QuestionVariant,
+    TalkSlot,
+    Team,
+    TeamInvite,
     Track,
+    User,
 )
-from pretalx.submission.models.question import QuestionRequired
+from eventyay.base.models.auth_token import ENDPOINTS, UserApiToken, generate_api_token
+from eventyay.base.models.information import SpeakerInformation
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -54,27 +66,27 @@ def template_patch(monkeypatch):
 @pytest.fixture
 def organiser(instance_identifier):
     with scopes_disabled():
-        o = Organiser.objects.create(name="Super Organiser", slug="superorganiser")
+        o = Organizer.objects.create(name="Super Organiser", slug="superorganiser")
         Team.objects.create(
             name="Organisers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
         )
         Team.objects.create(
             name="Organisers and reviewers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
             is_reviewer=True,
         )
-        Team.objects.create(name="Reviewers", organiser=o, is_reviewer=True)
+        Team.objects.create(name="Reviewers", organizer=o, is_reviewer=True)
     return o
 
 
@@ -86,27 +98,27 @@ def team(organiser):
 @pytest.fixture
 def other_organiser(instance_identifier):
     with scopes_disabled():
-        o = Organiser.objects.create(name="Different Organiser", slug="diffo")
+        o = Organizer.objects.create(name="Different Organiser", slug="diffo")
         Team.objects.create(
             name="Organisers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
         )
         Team.objects.create(
             name="Organisers and reviewers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
             is_reviewer=True,
         )
-        Team.objects.create(name="Reviewers", organiser=o, is_reviewer=True)
+        Team.objects.create(name="Reviewers", organizer=o, is_reviewer=True)
     return o
 
 
@@ -121,7 +133,7 @@ def event(organiser):
             email="orga@orga.org",
             date_from=today,
             date_to=today + dt.timedelta(days=3),
-            organiser=organiser,
+            organizer=organiser,
         )
         # exporting takes quite some time, so this speeds up our tests
         event.feature_flags["export_html_on_release"] = False

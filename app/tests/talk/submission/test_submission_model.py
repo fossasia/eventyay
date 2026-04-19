@@ -3,9 +3,9 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django_scopes import scope
 
-from pretalx.common.exceptions import SubmissionError
-from pretalx.submission.models import Answer, Submission, SubmissionStates
-from pretalx.submission.models.submission import submission_image_path
+from eventyay.common.exceptions import SubmissionError
+from eventyay.base.models import Answer, Submission, SubmissionStates
+from eventyay.base.models.submission import submission_image_path
 
 
 @pytest.mark.parametrize(
@@ -410,6 +410,22 @@ def test_content_for_mail(submission, file_question, boolean_question):
 
 **{file_question.question}**: {host}{fa.answer_file.url}""".strip()
         )
+
+
+@pytest.mark.django_db
+def test_content_for_mail_custom_labels(submission):
+    with scope(event=submission.event):
+        # Set a custom label for the 'title' field in the CfP flow config
+        config = submission.event.cfp_flow.config or {}
+        config.setdefault('steps', {}).setdefault('info', {})['fields'] = [
+            {'key': 'title', 'label': 'Custom Proposal Title', 'request': 'required'}
+        ]
+        submission.event.cfp_flow.save_config(config)
+
+        content = submission.get_content_for_mail()
+        assert "Custom Proposal Title" in content
+        assert f"Custom Proposal Title: {submission.title}" in content.replace("**", "")
+
 
 
 @pytest.mark.django_db
