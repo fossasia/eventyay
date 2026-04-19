@@ -102,7 +102,7 @@ dependencies = [
     "eventyay-bitpay @ git+https://github.com/fossasia/eventyay-bitpay.git@main",
     "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@main",
     "execnet>=2.1.2",
-    "fido2>=2.1.0",
+    "fido2>=2.2.0",
     "fonttools>=4.61.1",
     "frozenlist>=1.8.0",
     "geoip2>=4.8.1",
