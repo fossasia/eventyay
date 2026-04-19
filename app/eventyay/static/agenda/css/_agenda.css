@@ -23,7 +23,10 @@ body.page-agenda .featured-page .featured-custom-intro {
   color: var(--color-text);
 }
 
-body.page-agenda .featured-page .featured-custom-intro :is(h1, h2, h3, h4, h5, h6) {
+body.page-agenda
+  .featured-page
+  .featured-custom-intro
+  :is(h1, h2, h3, h4, h5, h6) {
   font-weight: 600;
   line-height: 1.3;
   margin-top: 0.65rem;
@@ -66,7 +69,11 @@ body.page-agenda .featured-page #featured-talks {
   margin-top: 0.35rem;
 }
 
-body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract {
+body.page-agenda
+  .featured-page
+  #featured-talks
+  section
+  > .featured-talk-abstract {
   font-size: var(--featured-body-size);
   line-height: 1.6;
   margin-top: 0.35rem;
@@ -74,13 +81,23 @@ body.page-agenda .featured-page #featured-talks section > .featured-talk-abstrac
   color: var(--color-text);
 }
 
-body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract :is(ul, ol) {
+body.page-agenda
+  .featured-page
+  #featured-talks
+  section
+  > .featured-talk-abstract
+  :is(ul, ol) {
   margin-top: 0.35rem;
   margin-bottom: 0.35rem;
   padding-left: 1.25rem;
 }
 
-body.page-agenda .featured-page #featured-talks section > .featured-talk-abstract li {
+body.page-agenda
+  .featured-page
+  #featured-talks
+  section
+  > .featured-talk-abstract
+  li {
   margin-bottom: 0.25rem;
 }
 
@@ -102,84 +119,91 @@ body.page-agenda .featured-page #featured-talks .talk-title small {
   min-width: 0;
 }
 
-.has-join-popup #join-video-popupmodal, .has-join-popup #join-video-popupmodal-missing-config {
-    opacity: 1;
-    visibility: visible;
-    transition: opacity .5s ease-in-out;
-    -moz-transition: opacity .5s ease-in-out;
-    -webkit-transition: opacity .5s ease-in-out;
+.has-join-popup #join-video-popupmodal,
+.has-join-popup #join-video-popupmodal-missing-config {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease-in-out;
+  -moz-transition: opacity 0.5s ease-in-out;
+  -webkit-transition: opacity 0.5s ease-in-out;
 }
 
-#join-video-popupmodal, #join-video-popupmodal-missing-config {
+#join-video-popupmodal,
+#join-video-popupmodal-missing-config {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255, .7);
+  background: rgba(255, 255, 255, 0.7);
   opacity: 0;
   z-index: 900000;
   visibility: hidden;
   padding: 10px;
 
   .modal-card {
-      margin: 50px auto 0;
-      top: 50px;
-      width: 90%;
-      max-width: 900px;
-      background: white;
-      border-radius: 0;
-      box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1),0 3px 6px 0 rgba(0,0,0,.07);
-      padding: 20px;
-      min-height: 160px;
+    margin: 50px auto 0;
+    top: 50px;
+    width: 90%;
+    max-width: 900px;
+    background: white;
+    border-radius: 0;
+    box-shadow:
+      0 7px 14px 0 rgba(78, 50, 92, 0.1),
+      0 3px 6px 0 rgba(0, 0, 0, 0.07);
+    padding: 20px;
+    min-height: 160px;
 
-      .modal-card-icon {
-          float: left;
-          width: 150px;
-          text-align: center;
+    .modal-card-icon {
+      float: left;
+      width: 150px;
+      text-align: center;
+    }
+    .modal-card-content {
+      margin-left: 160px;
+      text-align: left;
+      h3 {
+        margin-top: 0;
       }
-      .modal-card-content {
-          margin-left: 160px;
-          text-align: left;
-          h3 {
-              margin-top: 0;
-          }
+    }
+    .modal-card-content-join {
+      text-align: left;
+      h3 {
+        margin-top: 0;
       }
-      .modal-card-content-join {
-        text-align: left;
-        h3 {
-            margin-top: 0;
-        }
-        .btn-link {
-          padding: 5px;
-          box-shadow: 1px 1px 1px 1px var(--color-border) inset;
-          box-sizing: border-box;
-        }
-        a:hover{
-            text-decoration: none;
-        }
+      .btn-link {
+        padding: 5px;
+        box-shadow: 1px 1px 1px 1px var(--color-border) inset;
+        box-sizing: border-box;
       }
-      .join-online-close {
-          display: flex;
-          .join-online-close-button {
-              margin-left: auto;
-              box-shadow: 0px 0px 0px 1px var(--color-border) inset;
-          }
+      a:hover {
+        text-decoration: none;
       }
+    }
+    .join-online-close {
+      display: flex;
+      .join-online-close-button {
+        margin-left: auto;
+        box-shadow: 0px 0px 0px 1px var(--color-border) inset;
+      }
+    }
   }
 }
 
 #main-container.main-schedule {
   margin: 0 auto;
   #main-card {
-    margin: 0 auto;
+    margin-left: 0;
+    margin-right: 0;
+    box-shadow: none !important;
     main {
-      padding: 5px;
+      padding-top: 0.15rem;
+      padding-left: 12px;
+      padding-right: 12px;
       width: 100%;
     }
   }
 
-  /* The container main now provides the 5px padding. We can set it to 0 or leave as minimal here. */
   pretalx-schedule[view="schedule"],
   #fahrplan {
     padding: 0 !important;
@@ -489,23 +513,22 @@ article .pretalx-session .pretalx-session-info .abstract {
 }
 
 @media (max-width: 700px) {
-  #join-video-popupmodal, #join-video-popupmodal-missing-config {
-      .modal-card {
-          .modal-card-icon {
-              float: none;
-              width: 100%;
-          }
-          .modal-card-content {
-              text-align: center;
-              margin-left: 0;
-              margin-right: 0;
-              margin-top: 10px;
-          }
+  #join-video-popupmodal,
+  #join-video-popupmodal-missing-config {
+    .modal-card {
+      .modal-card-icon {
+        float: none;
+        width: 100%;
       }
+      .modal-card-content {
+        text-align: center;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 10px;
+      }
+    }
   }
 }
-
-
 
 .markdown-column .form-group {
   flex-direction: column;
