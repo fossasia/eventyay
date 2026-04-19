@@ -18,6 +18,8 @@
 	"App:fatal-connection-error:else:headline": "Соединение отклонено",
 	"App:fatal-connection-error:world.unknown_world:headline": "Мероприятие не найдено",
 	"AppBar:user-anonymous": "анонимный",
+	"AppBar:admin-mode:start": "Режим администратора",
+	"AppBar:admin-mode:end": "Завершить сеанс администратора",
 	"AVDevice:error:notfound": "Камера или микрофон не найдены.",
 	"AVDevice:error:notreadable": "Ваша камера или микрофон недоступны, возможно, их использует другая программа?",
 	"AVDevice:error:notallowed": "Доступ к камере или микрофону запрещен. Пожалуйста, разрешите доступ к камере или микрофону в вашем браузере и перезагрузите страницу.",

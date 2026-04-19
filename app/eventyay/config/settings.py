@@ -1488,6 +1488,3 @@ if IS_DEVELOPMENT:
         ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
     # Trust standard local and emulator origins for CSRF
     CSRF_TRUSTED_ORIGINS += ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://10.0.2.2:8000', 'http://10.0.3.2:8000']
-    # Use relative URLs to remain host-agnostic
-    if 'localhost' in SITE_URL: SITE_URL = ''
-    if 'localhost' in TALK_HOSTNAME: TALK_HOSTNAME = ''
