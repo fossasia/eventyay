@@ -181,7 +181,7 @@
         {% endif %}
         <div id="page-wrapper">
             {% if request.user.is_authenticated %}
-            <aside class="nav flex-column sidebar">
+            <aside class="nav flex-column sidebar sidebar-uncollapsed">
                 <div class="dropdown nav-link p-0" id="nav-search-wrapper">
                     {% block nav_top_header %}
                         <a href="{% get_dashboard_url %}" style="text-decoration: none; color: inherit;">

@@ -295,9 +295,6 @@ aside.sidebar {
   }
 
   .nav-link {
-    .fa {
-      margin-right: 5px;
-    }
 
     i+span {
       display: none;

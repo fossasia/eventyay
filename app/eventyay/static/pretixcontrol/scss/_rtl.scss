@@ -124,7 +124,7 @@ html.rtl {
   }
 
   .context-selector .fa-stack {
-    left: -2px  ;
+    left: -3px  ;
   }
   .navbar-toggle-sidebar {
     float: right;
@@ -133,9 +133,10 @@ html.rtl {
   }
   // langdropdown
   .dropdown .dropdown-content-se {
-    right: 20px;
-    left: auto;
+    right: auto;
+    left: 15px;
   }
+
   // maindropdown
   .dropdown .dropdown-content-sw {
     right: auto;
@@ -201,6 +202,10 @@ html.rtl {
   nav.navbar.navbar-inverse .navbar-brand img{
     margin-left: 5px;
     margin-right: 0px;
+  }
+
+  #event-nav .navigation-title, .header-nav .navigation-title {
+    text-align: right;
   }
 }
 
