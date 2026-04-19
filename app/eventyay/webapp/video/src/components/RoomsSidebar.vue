@@ -3,7 +3,7 @@ transition(name="sidebar")
 	.c-rooms-sidebar(v-show="show && !snapBack", :style="style", role="navigation", @pointerdown="onPointerdown", @pointermove="onPointermove", @pointerup="onPointerup", @pointercancel="onPointercancel")
 		scrollbars(y)
 			.global-links(role="group", aria-label="pages")
-				router-link.room(v-if="homeRoom && roomsByType.page.includes(homeRoom)", :to="{name: 'home'}", v-html="$emojify(homeRoom.name)")
+				router-link.room(v-if="homeRoom", :to="{name: 'info'}", v-html="$emojify(homeRoom.name)")
 				router-link.room(:to="{name: 'schedule'}") {{ $t('RoomsSidebar:schedule:label') }}
 				router-link.room(:to="{name: 'schedule:speakers'}") {{ $t('RoomsSidebar:speaker:label') }}
 				template(v-for="page of roomsByType.page", :key="page.id")
@@ -12,7 +12,7 @@ transition(name="sidebar")
 				span {{ $t('RoomsSidebar:stages-headline:text') }}
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", @click="showStageCreationPrompt = true") plus
 			.stages(role="group", aria-describedby="stages-title")
-				router-link.stage(v-for="stage of roomsByType.stage", :to="homeRoom && stage.room === homeRoom ? {name: 'home'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
+				router-link.stage(v-for="stage of roomsByType.stage", :to="homeRoom && stage.room === homeRoom ? {name: 'info'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
 					template(v-if="stage.session")
 						img.preview(v-if="stage.image", :src="stage.image")
 						.info
@@ -37,11 +37,11 @@ transition(name="sidebar")
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", tooltip="Create Channel", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
 				bunt-icon-button(v-if="worldHasTextChannels", tooltip="Browse all channels", :tooltip-fixed="true", @click="showChannelBrowser = true") compass-outline
 			.chats(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", role="group", aria-describedby="chats-title")
-				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="homeRoom && chat === homeRoom ? {name: 'home'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId, 'starts-with-emoji': startsWithEmoji(chat.name)}")
+				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="homeRoom && chat === homeRoom ? {name: 'info'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId, 'starts-with-emoji': startsWithEmoji(chat.name)}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.name)")
 					i.bunt-icon.activity-icon.mdi(v-if="chat.users === 'many' || chat.users === 'few'", :class="{'mdi-account-group': (chat.users === 'many'), 'mdi-account-multiple': (chat.users === 'few')}", v-tooltip.bottom.fixed="{text: $t('RoomsSidebar:users-tooltip:' + chat.users)}", :aria-label="$t('RoomsSidebar:users-tooltip:' + chat.users)")
-				router-link.text-chat(v-for="chat of roomsByType.textChat", :to="homeRoom && chat.room === homeRoom ? {name: 'home'} : {name: 'room', params: {roomId: chat.room.id}}", :class="{unread: hasUnreadMessages(chat.room.modules[0].channel_id), 'starts-with-emoji': startsWithEmoji(chat.room.name)}")
+				router-link.text-chat(v-for="chat of roomsByType.textChat", :to="homeRoom && chat.room === homeRoom ? {name: 'info'} : {name: 'room', params: {roomId: chat.room.id}}", :class="{unread: hasUnreadMessages(chat.room.modules[0].channel_id), 'starts-with-emoji': startsWithEmoji(chat.room.name)}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.room.name)")
 					.notifications(v-if="chat.notifications") {{ chat.notifications }}
@@ -119,14 +119,16 @@ export default {
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		homeRoom() {
 			const rooms = this.rooms || []
-			const isInitiated = (room) => {
-				if (!room) return false
-				if (Array.isArray(room.module_config)) {
-					return !!inferType({ module_config: room.module_config })
-				}
-				return !!inferRoomType(room)
+			const infoRoom = rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
+			if (infoRoom) return infoRoom
+
+			return {
+				id: 'info',
+				name: 'Info',
+				modules: [{
+					type: 'page.landing'
+				}]
 			}
-			return rooms.find(isInitiated) || rooms[0]
 		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {

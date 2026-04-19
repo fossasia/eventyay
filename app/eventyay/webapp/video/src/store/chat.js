@@ -226,7 +226,7 @@ export default {
 		async leaveChannel({state}, {channelId}) {
 			await api.call('chat.leave', {channel: channelId})
 			if (router.currentRoute.name === 'channel' && router.currentRoute.params.channelId === channelId) {
-				await router.push({name: 'home'})
+				await router.push({name: 'info'})
 			}
 			const index = state.joinedChannels.findIndex(c => c.id === channelId)
 			if (index > -1) state.joinedChannels.splice(index, 1)

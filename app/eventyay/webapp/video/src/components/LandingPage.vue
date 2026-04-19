@@ -1,8 +1,9 @@
 <template lang="pug">
-.c-landing-page(v-scrollbar.y="", :style="{'--header-background-color': module.config.header_background_color, '--header-background-image': `url(${module.config.header_background_image})`}")
-	.hero
-		img(:src="module.config.header_image")
-	.sponsors.splide(ref="sponsors")
+.c-landing-page(v-scrollbar.y="", :style="{'--header-background-color': module.config.header_background_color || 'var(--clr-primary)', '--header-background-image': module.config.header_background_image ? `url(${module.config.header_background_image})` : 'none'}")
+	.hero(:class="{'has-no-image': !module.config.header_image && !module.config.header_background_image}")
+		img(v-if="module.config.header_image", :src="module.config.header_image")
+		h1.hero-text(v-else-if="world") {{ world.title }}
+	.sponsors.splide(ref="sponsors", v-show="sponsors && sponsors.length")
 		.splide__track
 			ul.splide__list
 				li.splide__slide(v-for="sponsor of sponsors")
@@ -10,6 +11,19 @@
 	.content-container
 		.content
 			rich-text-content(v-if="hasMainContent", :content="module.config.main_content")
+			template(v-if="activeRooms && activeRooms.length")
+				.header
+					h3 {{ $t('LandingPage:rooms:header') || 'Active Rooms' }}
+				.active-rooms
+					.room-card(v-for="item of activeRooms", :key="item.room.id")
+						.room-info
+							.room-name {{ item.room.name }}
+							.current-session(v-if="item.session")
+								span.live-badge(v-if="item.isLive") LIVE
+								span {{ item.session.title }}
+						bunt-link-button(:to="{name: 'room', params: {roomId: item.room.id}}", :class="{'join-btn': item.isLive}")
+							template(v-if="item.isLive") {{ $t('LandingPage:rooms:join') || 'Join Now' }}
+							template(v-else) {{ $t('LandingPage:rooms:view') || 'View Room' }}
 			template(v-if="featuredSessions && featuredSessions.length")
 				.header
 					h3 {{ $t('LandingPage:sessions:featured:header') }}
@@ -71,9 +85,9 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(['now', 'rooms']),
+		...mapState(['now', 'rooms', 'world']),
 		...mapState('schedule', ['schedule']),
-		...mapGetters('schedule', ['sessions', 'favs']),
+		...mapGetters('schedule', ['sessions', 'favs', 'currentSessionPerRoom']),
 		featuredSessions() {
 			if (!this.sessions) return
 			return this.sessions.filter(session => session.featured)
@@ -94,6 +108,16 @@ export default {
 		},
 		hasMainContent() {
 			return this.module.config.main_content?.ops?.some(op => op.insert.trim() !== '')
+		},
+		activeRooms() {
+			if (!this.rooms) return []
+			return this.rooms.filter(r => r.schedule_data || r.modules?.some(m => ['livestream.native', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(m.type))).map(room => {
+				const sessionInfo = this.currentSessionPerRoom?.[room.id]
+				const session = sessionInfo?.session
+				const hasVideo = room.modules && room.modules.some(m => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(m.type))
+				const isLive = !!session && hasVideo
+				return { room, session, hasVideo, isLive }
+			})
 		},
 	},
 	async mounted() {
@@ -142,13 +166,26 @@ export default {
 	background-color: $clr-grey-50
 	.hero
 		height: calc(var(--vh) * 20)
+		min-height: 120px
 		display: flex
+		align-items: center
 		justify-content: center
 		background-color: var(--header-background-color)
 		background-image: var(--header-background-image)
 		background-repeat: no-repeat
 		background-size: cover
 		background-position: center
+		&.has-no-image
+			height: auto
+			padding: 48px 16px
+			background-color: var(--clr-primary)
+			color: $clr-primary-text-dark
+		.hero-text
+			font-size: 36px
+			font-weight: 700
+			text-align: center
+			margin: 0
+			padding: 0 16px
 		img
 			height: 100%
 			max-width: 100%
@@ -241,6 +278,44 @@ export default {
 			top: calc(50% - 12px)
 		&:not(.is-overflow) .splide__list
 			justify-content: center
+
+	.active-rooms
+		display: grid
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))
+		gap: 16px
+		padding: 0 8px
+		margin-bottom: 24px
+		.room-card
+			display: flex
+			flex-direction: column
+			justify-content: space-between
+			background: $clr-white
+			border: border-separator()
+			border-radius: 6px
+			padding: 16px
+			.room-name
+				font-size: 18px
+				font-weight: 600
+				margin-bottom: 8px
+			.current-session
+				font-size: 14px
+				color: $clr-secondary-text-light
+				display: flex
+				align-items: center
+				gap: 8px
+				margin-bottom: 16px
+				.live-badge
+					background-color: var(--clr-danger)
+					color: var(--clr-primary-text-dark)
+					padding: 2px 6px
+					border-radius: 4px
+					font-weight: bold
+					font-size: 12px
+			.bunt-link-button
+				align-self: flex-start
+				themed-button-secondary()
+				&.join-btn
+					themed-button-primary()
 
 	+below('m')
 		.content-container
