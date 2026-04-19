@@ -199,6 +199,13 @@
     });
   }
 
+  function updateNavbarHeight() {
+    var navbar = document.querySelector('.navbar');
+    if (navbar) {
+      document.documentElement.style.setProperty('--navbar-height', navbar.offsetHeight + 'px');
+    }
+  }
+
   function initSidebar() {
     var body = document.body;
     if (!body.classList.contains('has-sidebar')) {
@@ -218,12 +225,34 @@
     }
 
     // Startpage should be collapsed (fully hidden) by default.
-    setSidebarState(true);
+    setSidebarState(body.classList.contains('sidebar-minimized'));
 
     sidebarToggle.addEventListener('click', function (event) {
       event.preventDefault();
       setSidebarState(!body.classList.contains('sidebar-minimized'));
     });
+
+    // Nested menu toggle logic for sidebar
+    var sideMenu = document.getElementById('side-menu');
+    if (sideMenu) {
+      sideMenu.querySelectorAll('.arrow').forEach(function (arrow) {
+        arrow.addEventListener('click', function (e) {
+          e.preventDefault();
+          var parentLi = arrow.parentElement;
+          var subMenu = parentLi.querySelector('.nav-second-level');
+          if (subMenu) {
+            var isOpen = parentLi.classList.contains('active');
+            if (isOpen) {
+              parentLi.classList.remove('active');
+              subMenu.style.display = 'none';
+            } else {
+              parentLi.classList.add('active');
+              subMenu.style.display = 'block';
+            }
+          }
+        });
+      });
+    }
   }
 
   function init() {
@@ -231,6 +260,8 @@
     initSearch();
     initKeyboardShortcuts();
     initSidebar();
+    updateNavbarHeight();
+    window.addEventListener('resize', updateNavbarHeight);
   }
 
   if (document.readyState === 'loading') {

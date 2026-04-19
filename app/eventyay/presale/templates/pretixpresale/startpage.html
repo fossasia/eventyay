@@ -56,7 +56,13 @@
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
     </head>
-    <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}{% if request.user.is_authenticated %} has-sidebar sidebar-minimized{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+    <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}{% if request.user.is_authenticated %} has-sidebar nojs{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+        {% if request.user.is_authenticated %}
+            <script>
+                document.body.classList.remove('nojs');
+                document.body.classList.add('sidebar-minimized');
+            </script>
+        {% endif %}
         {{ base_path|json_script:"base_path" }}
         {{ staff_session|json_script:"is_admin_mode" }}
         {{ html_page_header|safe }}
@@ -154,9 +160,8 @@
                         <ul class="nav" id="side-menu">
                             {% for nav in nav_items %}
                                 <li>
-                                    <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}
-                                            {% if nav.external %}target="_blank" rel="noopener"{% endif %}
-                                            {% if nav.children %}class="has-children"{% endif %} class="nav-item-label">
+                                    <a href="{{ nav.url }}" class="nav-item-label{% if nav.active %} active{% endif %}{% if nav.children %} has-children{% endif %}"
+                                            {% if nav.external %}target="_blank" rel="noopener"{% endif %}>
                                         {% if nav.icon %}
                                             {% if "<svg" in nav.icon %}
                                                 {{ nav.icon|safe }}
