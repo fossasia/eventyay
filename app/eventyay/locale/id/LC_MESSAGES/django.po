@@ -4527,7 +4527,7 @@ msgstr "Nomor telepon (tanpa kode negara internasional)"
 #: base/forms/questions.py:271
 msgctxt "phonenumber"
 msgid "Phone"
-msgstr "Telpon"
+msgstr "Telepon"
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
@@ -7998,7 +7998,7 @@ msgid ""
 "This stream schedule overlaps with an existing schedule for this room. "
 "Please ensure stream schedules do not overlap."
 msgstr ""
-"Jadwal siaran ini bertumpang tindih dengan jadwa siaran yang ada di ruangan "
+"Jadwal siaran ini bertumpang tindih dengan jadwal siaran yang ada di ruangan "
 "ini. Silakan pastikan jadwal siaran tidak bertumpang tindih."
 
 #: base/models/submission.py:76 submission/phrases.py:13
@@ -21626,7 +21626,7 @@ msgstr "Cabut akses dan hapus semua perangkat"
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
 msgstr ""
-"Tindakan ini akan mencabut dan memindahkan perangkat yang telah terhubung "
+"Tindakan ini akan mencabut dan menghapus perangkat yang telah terhubung "
 "secara permanen."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:12
@@ -21637,7 +21637,7 @@ msgid_plural ""
 "Once confirmed, %(count)s connected devices will be deleted from the "
 "database."
 msgstr[0] ""
-"Seteleah dikonfirmasi, %(count)s perangkat yang terhubung akan dihapus dari "
+"Setelah dikonfirmasi, %(count)s perangkat yang terhubung akan dihapus dari "
 "pangkalan data."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
@@ -25648,7 +25648,7 @@ msgstr "— Pilih acara —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
-msgstr "Pilih salah satu acara diatas untuk mengatur tracks."
+msgstr "Pilih salah satu acara di atas untuk mengatur tracks."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:89
 msgid "None"
@@ -27902,7 +27902,7 @@ msgstr "Pindahkan jenis sesi"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
-msgstr "Klik untuk memindahkan default"
+msgstr "Klik untuk menghapus default"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:68
 #: plugins/badges/templates/pretixplugins/badges/index.html:70
