@@ -79,6 +79,18 @@ def test_cannot_see_schedule_by_setting(client, user, event, featured):
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('slot', 'other_slot')
+def test_cannot_see_schedule_by_default_featured_setting(client, user, event):
+    with scope(event=event):
+        event.feature_flags['show_schedule'] = False
+        event.feature_flags.pop('show_featured', None)
+        event.save()
+        assert not user.has_perm('schedule.list_schedule', event)
+    response = client.get(event.urls.schedule, HTTP_ACCEPT='text/html')
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures('slot', 'other_slot')
 @pytest.mark.parametrize('featured', ('always', 'never', 'after_schedule'))
 def test_cannot_see_no_schedule(client, user, event, featured):
     with scope(event=event):
