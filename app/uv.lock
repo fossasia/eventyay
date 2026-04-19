@@ -173,11 +173,11 @@ wheels = [
 
 [[package]]
 name = "attrs"
-version = "25.4.0"
+version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6b/5c/685e6633917e101e5dcb62b9dd76946cbb57c26e133bae9e0cd36033c0a9/attrs-25.4.0.tar.gz", hash = "sha256:16d5969b87f0859ef33a48b35d55ac1be6e42ae49d5e853b597db70c35c57e11", size = 934251, upload-time = "2025-10-06T13:54:44.725Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171802bc1d26985/attrs-26.1.0.tar.gz", hash = "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32", size = 952055, upload-time = "2026-03-19T14:22:25.026Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl", hash = "sha256:adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373", size = 67615, upload-time = "2025-10-06T13:54:43.17Z" },
+    { url = "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl", hash = "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309", size = 67548, upload-time = "2026-03-19T14:22:23.645Z" },
 ]
 
 [[package]]
@@ -1422,7 +1422,7 @@ requires-dist = [
     { name = "argon2-cffi-bindings", specifier = ">=25.1.0" },
     { name = "asgiref", specifier = ">=3.11.0" },
     { name = "asn1crypto", specifier = ">=1.5.1" },
-    { name = "attrs", specifier = ">=25.4.0" },
+    { name = "attrs", specifier = ">=26.1.0" },
     { name = "autobahn", specifier = ">=25.12.2" },
     { name = "automat", specifier = ">=25.4.16" },
     { name = "babel", specifier = ">=2.16.0" },
@@ -1495,7 +1495,7 @@ requires-dist = [
     { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=main" },
     { name = "execnet", specifier = ">=2.1.2" },
     { name = "exhibition", git = "https://github.com/fossasia/eventyay-exhibition.git?rev=main" },
-    { name = "fido2", specifier = ">=2.1.0" },
+    { name = "fido2", specifier = ">=2.2.0" },
     { name = "fonttools", specifier = ">=4.61.1" },
     { name = "frozenlist", specifier = ">=1.8.0" },
     { name = "geoip2", specifier = ">=4.8.1" },
@@ -1518,7 +1518,7 @@ requires-dist = [
     { name = "markdownify", specifier = ">=1.2.2" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "maxminddb", specifier = ">=3.0.0" },
-    { name = "more-itertools", specifier = ">=10.8.0" },
+    { name = "more-itertools", specifier = ">=11.0.2" },
     { name = "msgspec", specifier = ">=0.20.0" },
     { name = "mt-940", specifier = ">=4.30.0" },
     { name = "multidict", specifier = ">=6.7.0" },
@@ -1685,14 +1685,14 @@ wheels = [
 
 [[package]]
 name = "fido2"
-version = "2.1.1"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e7/3c/c65377e48c144afca6b02c69f10c0fe936db556096a4e2c9798e2aa72db6/fido2-2.1.1.tar.gz", hash = "sha256:f1379f845870cc7fc64c7f07323c3ce41e8c96c37054e79e0acd5630b3fec5ac", size = 4455940, upload-time = "2026-01-19T11:08:34.683Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/09/34/4837e2f5640baf61d8abd6125ccb6cc60b4b2933088528356ad6e781496f/fido2-2.2.0.tar.gz", hash = "sha256:0d8122e690096ad82afde42ac9d6433a4eeffda64084f36341ea02546b181dd1", size = 294167, upload-time = "2026-04-15T06:42:50.264Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/ab/d0fa89cc4b982800dd88daa799612f11642bf9393851715d9eaeba3cfcac/fido2-2.1.1-py3-none-any.whl", hash = "sha256:f85c16c8084abf6530b6c6ec3a0cf8575943321842e06916686943a8b784182c", size = 226945, upload-time = "2026-01-19T11:08:29.675Z" },
+    { url = "https://files.pythonhosted.org/packages/01/82/f3c5dd87b0977f5547cc132b7969e6f5075a8c2f5881cf4b6df6378505f9/fido2-2.2.0-py3-none-any.whl", hash = "sha256:3587ccf0af7b71b5dd73f17e1dbec9f0fd157292f9163f02e7778f46d0d25fe5", size = 234025, upload-time = "2026-04-15T06:42:51.813Z" },
 ]
 
 [[package]]
@@ -2133,11 +2133,11 @@ wheels = [
 
 [[package]]
 name = "more-itertools"
-version = "11.0.1"
+version = "11.0.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/24/24/e0acc4bf54cba50c1d432c70a72a3df96db4a321b2c4c68432a60759044f/more_itertools-11.0.1.tar.gz", hash = "sha256:fefaf25b7ab08f0b45fa9f1892cae93b9fc0089ef034d39213bce15f1cc9e199", size = 144739, upload-time = "2026-04-02T16:17:45.061Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/f7/139d22fef48ac78127d18e01d80cf1be40236ae489769d17f35c3d425293/more_itertools-11.0.2.tar.gz", hash = "sha256:392a9e1e362cbc106a2457d37cabf9b36e5e12efd4ebff1654630e76597df804", size = 144659, upload-time = "2026-04-09T15:01:33.297Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d8/f4/5e52c7319b8087acef603ed6e50dc325c02eaa999355414830468611f13c/more_itertools-11.0.1-py3-none-any.whl", hash = "sha256:eaf287826069452a8f61026c597eae2428b2d1ba2859083abbf240b46842ce6d", size = 72182, upload-time = "2026-04-02T16:17:43.724Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/98/6af411189d9413534c3eb691182bff1f5c6d44ed2f93f2edfe52a1bbceb8/more_itertools-11.0.2-py3-none-any.whl", hash = "sha256:6e35b35f818b01f691643c6c611bc0902f2e92b46c18fffa77ae1e7c46e912e4", size = 71939, upload-time = "2026-04-09T15:01:32.21Z" },
 ]
 
 [[package]]
