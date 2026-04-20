@@ -1,6 +1,7 @@
 from functools import partial
 from io import BytesIO
 from pathlib import Path
+import logging
 
 from csp.decorators import csp_update
 from django.conf import settings
@@ -9,6 +10,8 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 from PIL import Image, ImageOps
 from PIL.Image import MAX_IMAGE_PIXELS, DecompressionBombError, Resampling
+
+logger = logging.getLogger(__name__)
 
 THUMBNAIL_SIZES = {
     'tiny': (64, 64),
@@ -76,7 +79,8 @@ def process_image(*, image, generate_thumbnail=False):
     """
     try:
         img = Image.open(image)
-    except Exception:
+    except Exception as e:
+        logger.error("Failed to process image: {e}")
         return
 
     extension = '.jpg'
@@ -119,7 +123,8 @@ def create_thumbnail(image, size):
     try:
         img = Image.open(image, formats=('PNG', 'JPEG', 'GIF'))
         img.load()
-    except Exception:
+    except Exception as e:
+        logger.error("Thumbnail creation failed: {e}")
         return None
     img.thumbnail(THUMBNAIL_SIZES[size], resample=Resampling.LANCZOS)
     thumbnail_field = getattr(image.instance, thumbnail_field_name)
