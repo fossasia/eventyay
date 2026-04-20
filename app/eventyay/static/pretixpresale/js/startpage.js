@@ -232,6 +232,15 @@
       setSidebarState(!body.classList.contains('sidebar-minimized'));
     });
 
+    // Close sidebar when clicking outside
+    document.addEventListener('click', function (event) {
+      if (!body.classList.contains('sidebar-minimized')) {
+        if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+          setSidebarState(true);
+        }
+      }
+    });
+
     // Nested menu toggle logic for sidebar
     var sideMenu = document.getElementById('side-menu');
     if (sideMenu) {
