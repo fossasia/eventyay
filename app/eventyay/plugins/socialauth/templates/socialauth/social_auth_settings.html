@@ -39,7 +39,7 @@
                                             {% trans "Disable" %}
                                         </button>
                                         {% if not settings.client_id or not settings.secret %}
-                                            <p class="text-warning text-center" style="margin-top: 5px;">
+                                            <p class="text-warning text-center help-block">
                                                 <small><i class="fa fa-exclamation-triangle"></i> {% trans "Requires keys to be configured" %}</small>
                                             </p>
                                         {% endif %}

@@ -8,11 +8,11 @@ def test_get_checkout_login_context_no_providers(rf):
     # Ensure no providers are enabled
     gs = GlobalSettingsObject()
     gs.settings.set('login_providers', {})
-    
+
     request = rf.get('/')
     context = {'request': request}
     result = get_checkout_login_context(context)
-    
+
     assert result['enabled_providers'] == []
     assert result['preferred_provider'] is None
     assert result['has_oauth_providers'] is False
@@ -37,11 +37,11 @@ def test_get_checkout_login_context_with_providers(rf):
         }
     }
     gs.settings.set('login_providers', providers)
-    
+
     request = rf.get('/')
     context = {'request': request}
     result = get_checkout_login_context(context)
-    
+
     assert len(result['enabled_providers']) == 2
     assert result['preferred_provider'] == 'google'
     assert result['has_oauth_providers'] is True
@@ -60,11 +60,11 @@ def test_get_checkout_login_context_unconfigured_providers(rf):
         }
     }
     gs.settings.set('login_providers', providers)
-    
+
     request = rf.get('/')
     context = {'request': request}
     result = get_checkout_login_context(context)
-    
+
     # Should be filtered out by order_login_providers/get_preferred_provider
     assert result['enabled_providers'] == []
     assert result['preferred_provider'] is None

@@ -1,22 +1,14 @@
-from functools import lru_cache
-from importlib import import_module
 from django import template
 from django.conf import settings
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.settings import GlobalSettingsObject, global_settings_object
+from eventyay.eventyay_common.services.auth_providers import (
+    get_preferred_provider,
+    order_login_providers,
+)
 
 register = template.Library()
-
-
-@lru_cache(maxsize=1)
-def get_auth_provider_helpers():
-    """
-    Lazily import the auth provider helper functions to avoid importing the heavy
-    eventyay_common.views.auth module at template tag import time.
-    """
-    auth_module = import_module('eventyay.eventyay_common.views.auth')
-    return auth_module.order_login_providers, auth_module.get_preferred_provider
 
 
 @register.simple_tag(takes_context=True)
@@ -26,7 +18,6 @@ def get_checkout_login_context(context):
     as eventyay_common.views.auth.login.
     """
     request = context.get('request')
-    order_login_providers, get_preferred_provider = get_auth_provider_helpers()
 
     gs = global_settings_object(request) if request else GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict) or {}
@@ -47,12 +38,15 @@ def get_checkout_login_context(context):
     native = backenddict.get('native')
     show_native_login = bool(native and native.visible)
 
+    can_reset = show_native_login and settings.EVENTYAY_PASSWORD_RESET
+    can_register = show_native_login and settings.EVENTYAY_REGISTRATION
+
     return {
         'request': request,
         'enabled_providers': enabled_providers,
         'preferred_provider': preferred_provider,
-        'can_reset': settings.EVENTYAY_PASSWORD_RESET,
-        'can_register': settings.EVENTYAY_REGISTRATION,
+        'can_reset': can_reset,
+        'can_register': can_register,
         'show_native_login': show_native_login,
         'has_oauth_providers': bool(enabled_providers),
         'has_secondary_oauth_providers': has_secondary_oauth_providers,
