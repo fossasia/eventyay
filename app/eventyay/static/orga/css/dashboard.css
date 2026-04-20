@@ -82,7 +82,12 @@
       align-items: center;
       justify-content: center;
       i {
-        font-size: 56px;
+        display: block;
+        font-size: 60px;
+        padding-bottom: 15px;
+      }
+      .text {
+        font-size: 20px;
       }
     }
 
