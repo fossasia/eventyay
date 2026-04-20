@@ -1,7 +1,7 @@
+import logging
 from functools import partial
 from io import BytesIO
 from pathlib import Path
-import logging
 
 from csp.decorators import csp_update
 from django.conf import settings
@@ -79,8 +79,8 @@ def process_image(*, image, generate_thumbnail=False):
     """
     try:
         img = Image.open(image)
-    except Exception as e:
-        logger.error(f"Failed to process image: {e}")
+    except Exception:
+        logger.exception("Failed to process image")
         return
 
     extension = '.jpg'
@@ -123,8 +123,9 @@ def create_thumbnail(image, size):
     try:
         img = Image.open(image, formats=('PNG', 'JPEG', 'GIF'))
         img.load()
-    except Exception as e:
-        logger.error(f"Thumbnail creation failed: {e}")
+    except Exception:
+        logger.exception("Thumbnail creation failed")
+
         return None
     img.thumbnail(THUMBNAIL_SIZES[size], resample=Resampling.LANCZOS)
     thumbnail_field = getattr(image.instance, thumbnail_field_name)
