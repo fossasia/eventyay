@@ -78,15 +78,16 @@
 
     &.symbol {
       display: flex;
+      flex-direction: column;
       padding: 0;
       align-items: center;
       justify-content: center;
+      gap: 15px;
       i {
         display: block;
         font-size: 60px;
-        padding-bottom: 15px;
       }
-      .text {
+      .symbol-label {
         font-size: 20px;
       }
     }
