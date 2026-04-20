@@ -9,8 +9,6 @@ $(function () {
   const basePathDefinition = document.getElementById(BASE_PATH_ID);
   const orgNameDefinition = document.getElementById(ORGANIZER_NAME_ID);
   const eventSlugDefinition = document.getElementById(EVENT_SLUG_ID);
-  const eventPkDefinition = document.getElementById(EVENT_PK_ID);
-  const showOrganizerAreaDefinition = document.getElementById(SHOW_ORGANIZER_AREA_ID);
   let basePath = '';
   if (basePathDefinition) {
     basePath = JSON.parse(basePathDefinition.textContent);
@@ -30,18 +28,6 @@ $(function () {
     eventSlug = JSON.parse(eventSlugDefinition.textContent);
   } else {
     console.warn(`JSON element to define ${EVENT_SLUG_ID} is missing!`)
-  }
-  let eventPk = '';
-  if (eventPkDefinition) {
-    eventPk = JSON.parse(eventPkDefinition.textContent);
-  } else {
-    console.warn(`JSON element to define ${EVENT_PK_ID} is missing!`)
-  }
-  let showOrganizerArea = false;
-  if (showOrganizerAreaDefinition) {
-    showOrganizerArea = JSON.parse(showOrganizerAreaDefinition.textContent);
-  } else {
-    console.warn(`JSON element to define ${SHOW_ORGANIZER_AREA_ID} is missing!`)
   }
   const options = {
     html: true,

@@ -146,21 +146,23 @@
                                         <i class="fa fa-ticket mr-2 mb-1"></i>
                                         {% translate "My tickets" %}
                                     </a>
-                                    {% user_has_submissions request.event as has_cfp_submissions %}
-                                    {% if request.event.talks_published and has_cfp_submissions %}
-                                        <hr>
-                                        <a href="{% url 'cfp:event.user.submissions' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                            <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
-                                            {% translate "My proposals" %}
-                                        </a>
-                                        <a href="{{ request.event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                            <i class="fa fa-address-card-o mr-2 mb-1"></i>
-                                            {% translate "Speaker profile" %}
-                                        </a>
-                                        <a href="{{ request.event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                            <i class="fa fa-envelope mr-2 mb-1"></i>
-                                            {% translate "Speaker Emails" %}
-                                        </a>
+                                    {% if request.event.talks_published %}
+                                        {% user_has_submissions request.event as has_cfp_submissions %}
+                                        {% if has_cfp_submissions %}
+                                            <hr>
+                                            <a href="{% url 'cfp:event.user.submissions' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                                <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
+                                                {% translate "My proposals" %}
+                                            </a>
+                                            <a href="{{ request.event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                                <i class="fa fa-address-card-o mr-2 mb-1"></i>
+                                                {% translate "Speaker profile" %}
+                                            </a>
+                                            <a href="{{ request.event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                                <i class="fa fa-envelope mr-2 mb-1"></i>
+                                                {% translate "Speaker Emails" %}
+                                            </a>
+                                        {% endif %}
                                     {% endif %}
                                     <hr>
                                     <a href="{% url 'eventyay_common:account.general' %}" class="dropdown-item" role="menuitem" tabindex="-1">

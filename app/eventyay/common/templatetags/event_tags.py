@@ -203,7 +203,10 @@ def is_event_team_member(context, event=None):
 def user_has_submissions(context, event=None):
     """Return True if the authenticated user has submitted proposals for this event."""
     request = context.get('request')
-    if not request or not hasattr(request, 'user') or not request.user.is_authenticated:
+    if not request:
+        return False
+    user = request.user
+    if not user.is_authenticated:
         return False
     event = event or getattr(request, 'event', None)
     if not event:
