@@ -67,7 +67,7 @@
   <section role='tabpanel' id='tabpanel-export' aria-labelledby='tab-export' tabindex='0' aria-hidden='true'>
     <p>
       {% blocktranslate trimmed %}
-        Choose whether to export speaker data or session data, then select fields and format.
+        Choose whether to export speaker data or schedule data, then select fields and format.
       {% endblocktranslate %}
     </p>
 
@@ -76,7 +76,7 @@
         <label class='mb-0 mr-3 font-weight-bold' for='id_export_target'>{% translate 'Export target' %}</label>
         <select id='id_export_target' class='form-control w-25' data-export-target-select>
           <option value='speaker' {% if export_target == 'speaker' %}selected{% endif %}>{% translate 'Speakers' %}</option>
-          <option value='session' {% if export_target == 'session' %}selected{% endif %}>{% translate 'Sessions' %}</option>
+          <option value='session' {% if export_target == 'session' %}selected{% endif %}>{% translate 'Schedule' %}</option>
         </select>
       </div>
 
@@ -301,7 +301,7 @@
             <span>
               <button type='submit' class='btn btn-success btn-lg'>
                 <i class='fa fa-download'></i>
-                {% translate 'Export sessions' %}
+                {% translate 'Export schedule' %}
               </button>
             </span>
           </div>

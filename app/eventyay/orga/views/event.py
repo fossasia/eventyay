@@ -564,21 +564,21 @@ class WidgetSettings(EventSettingsPermission, FormView):
 
 class TargetChoice(models.TextChoices):
     SPEAKER = 'speaker', _('Speakers')
-    SESSION = 'session', _('Sessions')
+    SCHEDULE = 'session', _('Schedule')
 
 
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
     IMPORT_CHOICES = (
         (TargetChoice.SPEAKER, _('Speakers')),
-        (TargetChoice.SESSION, _('Schedule')),
+        (TargetChoice.SCHEDULE, _('Schedule')),
     )
     IMPORT_TARGETS = {
         TargetChoice.SPEAKER: {
             'filename': 'speaker_import.csv',
             'redirect_base': 'speakers_import',
         },
-        TargetChoice.SESSION: {
+        TargetChoice.SCHEDULE: {
             'filename': 'session_import.csv',
             'redirect_base': 'submissions_import',
         },
@@ -659,7 +659,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         try:
             target = TargetChoice(export_target)
         except ValueError:
-            messages.error(self.request, _('Please choose whether to export speakers or sessions.'))
+            messages.error(self.request, _('Please choose whether to export speakers or schedule.'))
             context = self.get_context_data(export_target=export_target)
             return self.render_to_response(context, status=400)
 
@@ -678,7 +678,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
                 )
                 return self.render_to_response(context, status=400)
             result = speaker_export_form.export_data()
-        else:  # TargetChoice.SESSION
+        else:  # TargetChoice.SCHEDULE
             speaker_export_form = SpeakerExportForm(event=self.request.event, prefix='speaker')
             session_export_form = ScheduleExportForm(
                 self.request.POST,
