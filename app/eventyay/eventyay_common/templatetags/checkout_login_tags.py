@@ -1,24 +1,32 @@
+from importlib import import_module
 from django import template
 from django.conf import settings
 
 from eventyay.base.auth import get_auth_backends
-from eventyay.base.settings import GlobalSettingsObject
-from eventyay.eventyay_common.views.auth import (
-    get_preferred_provider,
-    order_login_providers,
-)
+from eventyay.base.settings import GlobalSettingsObject, global_settings_object
 
 register = template.Library()
 
 
-@register.inclusion_tag('eventyay_common/auth/_checkout_login_modal_inner.html', takes_context=True)
-def checkout_login_modal_body(context):
+def get_auth_provider_helpers():
     """
-    Build checkout login modal content using the same OAuth provider config and ordering
-    as eventyay_common.views.auth.login (global login_providers + preferred provider).
+    Lazily import the auth provider helper functions to avoid importing the heavy
+    eventyay_common.views.auth module at template tag import time.
+    """
+    auth_module = import_module('eventyay.eventyay_common.views.auth')
+    return auth_module.order_login_providers, auth_module.get_preferred_provider
+
+
+@register.simple_tag(takes_context=True)
+def get_checkout_login_context(context):
+    """
+    Return context for checkout login modal using the same OAuth provider config and ordering
+    as eventyay_common.views.auth.login.
     """
     request = context.get('request')
-    gs = GlobalSettingsObject()
+    order_login_providers, get_preferred_provider = get_auth_provider_helpers()
+
+    gs = global_settings_object(request) if request else GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict) or {}
     ordered = order_login_providers(raw_providers)
     enabled_providers = [
