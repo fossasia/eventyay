@@ -576,11 +576,11 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
     IMPORT_TARGETS = {
         TargetChoice.SPEAKER: {
             'filename': 'speaker_import.csv',
-            'redirect_base': 'speakers_import',
+            'process_url_name': 'orga:settings.import_export.speakers_import_process',
         },
         TargetChoice.SCHEDULE: {
             'filename': 'session_import.csv',
-            'redirect_base': 'submissions_import',
+            'process_url_name': 'orga:settings.import_export.submissions_import_process',
         },
     }
 
@@ -650,8 +650,11 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             session_key=session.session_key,
         )
         cached_file.file.save(import_filename, import_form.cleaned_data['file'])
-        redirect_base = getattr(self.request.event.orga_urls, target_config['redirect_base'])
-        return redirect(f'{redirect_base}{cached_file.id}/')
+        process_url = reverse(
+            target_config['process_url_name'],
+            kwargs={'event': self.request.event.slug, 'file': cached_file.id},
+        )
+        return redirect(process_url)
 
     def handle_export(self):
         export_target = self.request.POST.get('export_target', TargetChoice.SPEAKER)

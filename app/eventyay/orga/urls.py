@@ -119,6 +119,16 @@ urlpatterns = [
                     name='settings.import_export',
                 ),
                 path(
+                    'settings/import-export/speakers/import/<uuid:file>/',
+                    speaker.SpeakerImportProcessView.as_view(),
+                    name='settings.import_export.speakers_import_process',
+                ),
+                path(
+                    'settings/import-export/submissions/import/<uuid:file>/',
+                    submission.SubmissionImportProcessView.as_view(),
+                    name='settings.import_export.submissions_import_process',
+                ),
+                path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
                     name='cfp',
