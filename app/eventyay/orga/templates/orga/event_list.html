@@ -30,6 +30,7 @@
                 {% if can_create_event %}
                     <a class="dashboard-block symbol" href="{% url "eventyay_common:events.add" %}">
                         <i class="fa fa-plus-circle" title="{% translate "Create a new event" %}"></i>
+                        <div class="dashboard-description">{% translate "Create a new event" %}</div>
                     </a>
                 {% endif %}
             </div>
