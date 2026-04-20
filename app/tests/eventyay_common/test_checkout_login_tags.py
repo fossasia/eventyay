@@ -1,7 +1,7 @@
 import pytest
-from django.conf import settings
 from eventyay.eventyay_common.templatetags.checkout_login_tags import get_checkout_login_context
 from eventyay.base.settings import GlobalSettingsObject
+
 
 @pytest.mark.django_db
 def test_get_checkout_login_context_no_providers(rf):
@@ -54,7 +54,7 @@ def test_get_checkout_login_context_unconfigured_providers(rf):
     providers = {
         'google': {
             'state': True,
-            'client_id': '', # Unconfigured
+            'client_id': '',  # Unconfigured
             'secret': '',
             'is_preferred': True
         }

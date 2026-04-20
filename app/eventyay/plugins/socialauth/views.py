@@ -45,7 +45,7 @@ class OAuthLoginView(View):
             or not login_providers[provider].get('client_id')
             or not login_providers[provider].get('secret')
         ):
-            messages.error(request, _('This login method is not available because it is not configured.'))
+            messages.error(request, _('This login method is not available (it may be disabled or unconfigured).'))
             return redirect('eventyay_common:auth.login')
         provider_config = login_providers[provider]
         if provider_config.get('is_preferred'):

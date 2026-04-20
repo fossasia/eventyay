@@ -1,3 +1,4 @@
+from functools import lru_cache
 from importlib import import_module
 from django import template
 from django.conf import settings
@@ -8,6 +9,7 @@ from eventyay.base.settings import GlobalSettingsObject, global_settings_object
 register = template.Library()
 
 
+@lru_cache(maxsize=1)
 def get_auth_provider_helpers():
     """
     Lazily import the auth provider helper functions to avoid importing the heavy
