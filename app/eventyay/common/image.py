@@ -80,7 +80,7 @@ def process_image(*, image, generate_thumbnail=False):
     try:
         img = Image.open(image)
     except Exception as e:
-        logger.error("Failed to process image: {e}")
+        logger.error(f"Failed to process image: {e}")
         return
 
     extension = '.jpg'
@@ -124,7 +124,7 @@ def create_thumbnail(image, size):
         img = Image.open(image, formats=('PNG', 'JPEG', 'GIF'))
         img.load()
     except Exception as e:
-        logger.error("Thumbnail creation failed: {e}")
+        logger.error(f"Thumbnail creation failed: {e}")
         return None
     img.thumbnail(THUMBNAIL_SIZES[size], resample=Resampling.LANCZOS)
     thumbnail_field = getattr(image.instance, thumbnail_field_name)
