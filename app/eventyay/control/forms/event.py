@@ -29,6 +29,18 @@ from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsFor
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
+from eventyay.base.services.system_questions import (
+    STATE_DEFAULT,
+    STATE_DO_NOT_ASK,
+    STATE_OPTIONAL,
+    STATE_REQUIRED,
+    SYSTEM_QUESTION_FIELD_SETTING_KEYS,
+    get_system_question_base_state,
+    get_system_question_field_overrides,
+    get_system_question_product_overrides,
+    set_system_question_field_overrides,
+    state_to_asked_required,
+)
 from eventyay.base.settings import (
     GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
@@ -830,6 +842,166 @@ class OrderFormSettingsForm(EventSettingsForm):
         'include_wikimedia_username',
         'checkout_show_copy_answers_button',
     ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('name_scheme', None)
+        self.fields.pop('name_scheme_titles', None)
+
+    def save(self):
+        fields_with_cleared_overrides = set()
+        for field_id in SYSTEM_QUESTION_FIELD_SETTING_KEYS:
+            clear_override_key = self.add_prefix(f'clear_override_{field_id}')
+            if self.data.get(clear_override_key) == '1':
+                fields_with_cleared_overrides.add(field_id)
+
+        result = super().save()
+
+        for field_id in fields_with_cleared_overrides:
+            set_system_question_field_overrides(self.obj, field_id, {})
+
+        return result
+
+
+class OrderFormDefaultFieldSettingsForm(forms.Form):
+    FIELD_LABELS = {
+        'attendee_name_parts': _('Attendee names'),
+        'attendee_email': _('Attendee emails'),
+        'company': _('Company'),
+        'job_title': _('Job title'),
+        'street': _('Postal addresses'),
+    }
+
+    global_state = forms.ChoiceField(
+        label=_('Default behavior'),
+        help_text=_(
+            'Used for all admission products unless a product-specific override is configured below.'
+        ),
+        choices=[
+            (STATE_DO_NOT_ASK, _('Do not ask')),
+            (STATE_OPTIONAL, _('Ask, but do not require input')),
+            (STATE_REQUIRED, _('Ask and require input')),
+        ],
+        widget=forms.RadioSelect,
+    )
+    name_scheme = forms.ChoiceField(
+        label=_('Name format'),
+        help_text=_(
+            'This defines how eventyay will ask for human names. Changing this after you already received '
+            'orders might lead to unexpected behavior when sorting or changing names.'
+        ),
+        required=True,
+    )
+    name_scheme_titles = forms.ChoiceField(
+        label=_('Allowed titles'),
+        help_text=_(
+            'If the naming scheme you defined above allows users to input a title, you can use this to '
+            'restrict the set of selectable titles.'
+        ),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.event = kwargs.pop('event')
+        self.field_id = kwargs.pop('field_id')
+        self.products = list(self.event.products.filter(admission=True).order_by('position', 'id'))
+        self.product_field_names = []
+        super().__init__(*args, **kwargs)
+
+        self.fields['global_state'].initial = get_system_question_base_state(self.event, self.field_id)
+
+        state_choices = [
+            (STATE_DEFAULT, _('Use default setting')),
+            (STATE_DO_NOT_ASK, _('Do not ask')),
+            (STATE_OPTIONAL, _('Ask, but do not require input')),
+            (STATE_REQUIRED, _('Ask and require input')),
+        ]
+        overrides = get_system_question_field_overrides(self.event, self.field_id)
+
+        for product in self.products:
+            field_name = self._product_field_name(product.pk)
+            self.fields[field_name] = forms.ChoiceField(
+                label=str(product),
+                choices=state_choices,
+                required=True,
+                widget=forms.Select,
+            )
+            self.initial[field_name] = overrides.get(str(product.pk), STATE_DEFAULT)
+            self.product_field_names.append(field_name)
+
+        if self.field_id == 'attendee_name_parts':
+            self.fields['name_scheme'].choices = [
+                (
+                    k,
+                    _('Ask for {fields}, display like {example}').format(
+                        fields=' + '.join(str(vv[1]) for vv in v['fields']),
+                        example=v['concatenation'](v['sample']),
+                    ),
+                )
+                for k, v in PERSON_NAME_SCHEMES.items()
+            ]
+            self.fields['name_scheme_titles'].choices = [('', _('Free text input'))] + [
+                (k, '{scheme}: {samples}'.format(scheme=v[0], samples=', '.join(v[1])))
+                for k, v in PERSON_NAME_TITLE_GROUPS.items()
+            ]
+            self.fields['name_scheme'].initial = self.event.settings.name_scheme
+            self.fields['name_scheme_titles'].initial = self.event.settings.name_scheme_titles
+        else:
+            self.fields.pop('name_scheme')
+            self.fields.pop('name_scheme_titles')
+
+    @staticmethod
+    def _product_field_name(product_id: int) -> str:
+        return f'product_{product_id}'
+
+    def clean_name_scheme(self) -> str:
+        value = self.cleaned_data['name_scheme']
+        if value not in PERSON_NAME_SCHEMES:
+            raise forms.ValidationError(_('Please select a valid name format.'))
+        return value
+
+    def save(self) -> dict:
+        asked_key, required_key = SYSTEM_QUESTION_FIELD_SETTING_KEYS[self.field_id]
+        global_state = self.cleaned_data['global_state']
+        asked, required = state_to_asked_required(global_state)
+        if global_state == STATE_DO_NOT_ASK:
+            required = self.event.settings.get(required_key, as_type=bool)
+
+        settings_dict = self.event.settings.freeze()
+        settings_dict[asked_key] = asked
+        settings_dict[required_key] = required
+        if self.field_id == 'attendee_name_parts':
+            settings_dict['name_scheme'] = self.cleaned_data['name_scheme']
+            settings_dict['name_scheme_titles'] = self.cleaned_data['name_scheme_titles']
+        validate_event_settings(self.event, settings_dict)
+
+        self.event.settings.set(asked_key, asked)
+        self.event.settings.set(required_key, required)
+
+        product_states = {}
+        for product in self.products:
+            state = self.cleaned_data[self._product_field_name(product.pk)]
+            if state != STATE_DEFAULT:
+                product_states[str(product.pk)] = state
+        set_system_question_field_overrides(self.event, self.field_id, product_states)
+
+        if self.field_id == 'attendee_name_parts':
+            self.event.settings.name_scheme = self.cleaned_data['name_scheme']
+            self.event.settings.name_scheme_titles = self.cleaned_data['name_scheme_titles']
+
+        return {
+            asked_key: asked,
+            required_key: required,
+            'system_question_product_overrides': get_system_question_product_overrides(self.event),
+            **(
+                {
+                    'name_scheme': self.cleaned_data['name_scheme'],
+                    'name_scheme_titles': self.cleaned_data['name_scheme_titles'],
+                }
+                if self.field_id == 'attendee_name_parts'
+                else {}
+            ),
+        }
 
 
 class CancelSettingsForm(SettingsForm):
