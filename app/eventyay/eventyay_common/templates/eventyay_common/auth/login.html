@@ -4,10 +4,10 @@
 {% load static %}
 {% load urlreplace %}
 {% load append_next_url %}
-{% load checkout_login_tags %}
+{% load auth_login_tags %}
 
 {% block content %}
-    {% get_checkout_login_context as login_ctx %}
+    {% get_login_context as login_ctx %}
     <form class="form-signin" action="" method="post">
         {% if login_ctx.preferred_provider %}
             <div class='form-group buttons login-options-primary-first'>

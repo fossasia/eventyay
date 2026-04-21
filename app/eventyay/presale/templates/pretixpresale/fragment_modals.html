@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load eventurl %}
-{% load checkout_login_tags %}
+{% load auth_login_tags %}
 {% load static %}
 
 <div id="ajaxerr">
@@ -84,7 +84,8 @@
             <button type="button" class="checkout-login-close" aria-label="{% translate 'Close' %}">&times;</button>
         </div>
         <div class="checkout-login-body">
-            {% get_checkout_login_context as login_ctx %}
+            {% get_login_context as login_ctx %}
+            <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
             <div class="checkout-login-form-signin">
 
                 {% if login_ctx.preferred_provider %}
@@ -150,7 +151,6 @@
                                     </div>
                                 {% endif %}
 
-                                <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
 
                                 <button type="submit" class="btn btn-primary btn-lg btn-block" id="checkout-login-submit">
                                     <i class="fa fa-sign-in" aria-hidden="true"></i> {% translate 'Log in' %}

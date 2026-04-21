@@ -12,10 +12,10 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def get_checkout_login_context(context):
+def get_login_context(context):
     """
-    Return context for checkout login modal using the same OAuth provider config and ordering
-    as eventyay_common.views.auth.login.
+    Return context for authentication login (main page or checkout modal) using the 
+    same OAuth provider config and ordering as eventyay_common.views.auth.login.
     """
     request = context.get('request')
 

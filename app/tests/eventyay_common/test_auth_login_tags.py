@@ -1,17 +1,17 @@
 import pytest
-from eventyay.eventyay_common.templatetags.checkout_login_tags import get_checkout_login_context
+from eventyay.eventyay_common.templatetags.auth_login_tags import get_login_context
 from eventyay.base.settings import GlobalSettingsObject
 
 
 @pytest.mark.django_db
-def test_get_checkout_login_context_no_providers(rf):
+def test_get_login_context_no_providers(rf):
     # Ensure no providers are enabled
     gs = GlobalSettingsObject()
     gs.settings.set('login_providers', {})
 
     request = rf.get('/')
     context = {'request': request}
-    result = get_checkout_login_context(context)
+    result = get_login_context(context)
 
     assert result['enabled_providers'] == []
     assert result['preferred_provider'] is None
@@ -20,7 +20,7 @@ def test_get_checkout_login_context_no_providers(rf):
     assert isinstance(result['show_native_login'], bool)
 
 @pytest.mark.django_db
-def test_get_checkout_login_context_with_providers(rf):
+def test_get_login_context_with_providers(rf):
     gs = GlobalSettingsObject()
     providers = {
         'google': {
@@ -40,7 +40,7 @@ def test_get_checkout_login_context_with_providers(rf):
 
     request = rf.get('/')
     context = {'request': request}
-    result = get_checkout_login_context(context)
+    result = get_login_context(context)
 
     assert len(result['enabled_providers']) == 2
     assert result['preferred_provider'] == 'google'
@@ -49,7 +49,7 @@ def test_get_checkout_login_context_with_providers(rf):
     assert result['enabled_providers'][0][0] == 'google'
 
 @pytest.mark.django_db
-def test_get_checkout_login_context_unconfigured_providers(rf):
+def test_get_login_context_unconfigured_providers(rf):
     gs = GlobalSettingsObject()
     providers = {
         'google': {
@@ -63,7 +63,7 @@ def test_get_checkout_login_context_unconfigured_providers(rf):
 
     request = rf.get('/')
     context = {'request': request}
-    result = get_checkout_login_context(context)
+    result = get_login_context(context)
 
     # Should be filtered out by order_login_providers/get_preferred_provider
     assert result['enabled_providers'] == []
