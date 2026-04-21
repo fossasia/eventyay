@@ -663,7 +663,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             target = TargetChoice(export_target)
         except ValueError:
             messages.error(self.request, _('Please choose whether to export speakers or schedule.'))
-            context = self.get_context_data(export_target=export_target)
+            context = self.get_context_data(export_target=TargetChoice.SPEAKER)
             return self.render_to_response(context, status=400)
 
         if target == TargetChoice.SPEAKER:

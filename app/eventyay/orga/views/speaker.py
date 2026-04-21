@@ -411,6 +411,14 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
     known_errortypes = ['ImportExecutionError']
     IMPORT_FILENAME = 'speaker_import.csv'
 
+    @cached_property
+    def _import_redirect_url(self):
+        """Return the correct import/error page URL based on entry point."""
+        match = getattr(self.request, 'resolver_match', None)
+        if match and match.url_name == 'settings.import_export.speakers_import_process':
+            return self.request.event.orga_urls.import_export_settings + '#tab-import'
+        return self.request.event.orga_urls.speakers_import
+
     def dispatch(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
             return super().dispatch(request, *args, **kwargs)
@@ -418,7 +426,7 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
             _ = self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self._import_redirect_url)
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -462,13 +470,13 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
             return self.get_result(request)
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self._import_redirect_url)
         return FormView.get(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self._import_redirect_url)
         return FormView.post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -482,10 +490,12 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
         )
 
     def get_success_url(self, value):
+        if self._import_redirect_url != self.request.event.orga_urls.speakers_import:
+            return self._import_redirect_url
         return self.request.event.orga_urls.speakers
 
     def get_error_url(self):
-        return self.request.event.orga_urls.speakers_import
+        return self._import_redirect_url
 
     def get_success_message(self, value):
         if isinstance(value, dict):
