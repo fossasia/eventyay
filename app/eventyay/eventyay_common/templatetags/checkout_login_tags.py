@@ -34,8 +34,12 @@ def get_checkout_login_context(context):
         preferred_provider and any(k != preferred_provider for k, _ in enabled_providers)
     )
 
-    backenddict = get_auth_backends()
-    native = backenddict.get('native')
+    backends = context.get('backends')
+    if backends:
+        native = next((b for b in backends if b.identifier == 'native'), None)
+    else:
+        native = get_auth_backends().get('native')
+
     show_native_login = bool(native and native.visible)
 
     can_reset = show_native_login and settings.EVENTYAY_PASSWORD_RESET

@@ -1,5 +1,3 @@
-from eventyay.base.settings import GlobalSettingsObject
-
 def order_login_providers(login_providers):
     """
     Return login_providers as a dict with the preferred provider first,

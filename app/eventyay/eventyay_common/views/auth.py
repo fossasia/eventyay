@@ -158,10 +158,6 @@ def login(request):
     ctx['backends'] = backends
     ctx['backend'] = backend
 
-    gs = GlobalSettingsObject()
-    raw_providers = gs.settings.get('login_providers', as_type=dict)
-    ctx['login_providers'] = order_login_providers(raw_providers)
-    ctx['preferred_provider'] = get_preferred_provider(raw_providers)
     return render(request, 'eventyay_common/auth/login.html', ctx)
 
 
