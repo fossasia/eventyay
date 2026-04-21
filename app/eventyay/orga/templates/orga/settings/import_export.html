@@ -18,7 +18,7 @@
       {% endblocktranslate %}
     </p>
 
-    <form method='post' enctype='multipart/form-data' class='mb-4' action='#tab-import'>
+    <form method='post' enctype='multipart/form-data' class='mb-4' action='{{ request.path }}#tab-import'>
       {% csrf_token %}
       <input type='hidden' name='action' value='import'>
 
@@ -81,7 +81,7 @@
       </div>
 
       <div data-export-panel='speaker'>
-        <form method='post' action='#tab-export'>
+        <form method='post' action='{{ request.path }}#tab-export'>
           {% csrf_token %}
           <input type='hidden' name='action' value='export'>
           <input type='hidden' name='export_target' value='speaker'>
@@ -225,7 +225,7 @@
       </div>
 
       <div data-export-panel='session'>
-        <form method='post' action='#tab-export'>
+        <form method='post' action='{{ request.path }}#tab-export'>
           {% csrf_token %}
           <input type='hidden' name='action' value='export'>
           <input type='hidden' name='export_target' value='session'>
