@@ -484,7 +484,11 @@ def base_placeholders(sender: Event, **kwargs):
     def render_video_join_link(event: Event, order) -> str:
         url = build_join_video_url(event, order)
 
-        return format_lazy('<a href="{url}" class="button">{label}</a>', url=url, label=_("Join online event"))
+        return format_lazy(
+            '<a href="{url}" class="button">{label}</a>',
+            url=url,
+            label=_('Join online event'),
+        )
 
     
     ph = [
