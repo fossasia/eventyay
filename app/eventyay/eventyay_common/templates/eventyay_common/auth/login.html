@@ -18,17 +18,23 @@
                     {% endwith %}
                 </a>
             </div>
-            <p class='login-separator'>
-                <span class='login-separator-label'>{% translate 'or' %}</span>
-            </p>
+            {% if login_ctx.show_native_login %}
+                <p class='login-separator'>
+                    <span class='login-separator-label'>{% translate 'or' %}</span>
+                </p>
+            {% endif %}
         {% endif %}
 
-        {% include 'eventyay_common/auth/_login_form.html' with force_show=True %}
+        {% if login_ctx.show_native_login %}
+            {% include 'eventyay_common/auth/_login_form.html' with force_show=True %}
+        {% endif %}
 
         {% if login_ctx.has_secondary_oauth_providers or not login_ctx.preferred_provider and login_ctx.has_oauth_providers %}
-            <p class='login-separator'>
-                <span class='login-separator-label'>{% translate 'or' %}</span>
-            </p>
+            {% if login_ctx.show_native_login or login_ctx.preferred_provider %}
+                <p class='login-separator'>
+                    <span class='login-separator-label'>{% translate 'or' %}</span>
+                </p>
+            {% endif %}
             <div class='form-group buttons login-options-secondary-group-wrap'>
                 <div class='login-options-secondary-group'>
                     {% for provider, cfg in login_ctx.enabled_providers %}

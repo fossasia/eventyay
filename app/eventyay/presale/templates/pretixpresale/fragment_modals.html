@@ -85,7 +85,6 @@
         </div>
         <div class="checkout-login-body">
             {% get_login_context as login_ctx %}
-            <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
             <div class="checkout-login-form-signin">
 
                 {% if login_ctx.preferred_provider %}
@@ -107,6 +106,7 @@
                             <span class="login-separator-label">{% translate 'or' %}</span>
                         </p>
                     {% endif %}
+                        <div id="checkout-login-error" class="alert alert-danger checkout-login-error"></div>
                         <div id="checkout-login-form-wrap" class="checkout-login-native-wrap">
                             <form id="checkout-login-form" method="post" action="{% url 'eventyay_common:auth.login' %}">
                                 {% csrf_token %}

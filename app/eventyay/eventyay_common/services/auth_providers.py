@@ -8,7 +8,7 @@ def order_login_providers(login_providers):
 
     valid_providers = {
         k: v for k, v in login_providers.items()
-        if v.get('client_id') and v.get('secret')
+        if isinstance(v, dict) and v.get('client_id') and v.get('secret')
     }
 
     preferred = get_preferred_provider(valid_providers)
@@ -26,6 +26,12 @@ def get_preferred_provider(login_providers):
     if not login_providers:
         return None
     for key, config in login_providers.items():
-        if config.get('state') and config.get('is_preferred') and config.get('client_id') and config.get('secret'):
+        if (
+            isinstance(config, dict)
+            and config.get('state')
+            and config.get('is_preferred')
+            and config.get('client_id')
+            and config.get('secret')
+        ):
             return key
     return None

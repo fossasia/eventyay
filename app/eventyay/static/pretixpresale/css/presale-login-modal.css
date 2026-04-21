@@ -53,6 +53,10 @@
     padding: 20px;
 }
 
+.checkout-login-error {
+    display: none;
+}
+
 /* Align with eventyay_common auth login (auth.scss form-signin patterns) */
 .checkout-login-form-signin .login-separator {
     align-items: center;
