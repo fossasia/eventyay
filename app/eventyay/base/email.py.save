@@ -1,4 +1,4 @@
-import inspect
+qimport inspect
 import logging
 import os
 import secrets
@@ -362,7 +362,20 @@ class BaseMailTextPlaceholder:
         """
         raise NotImplementedError()
 
-
+ GNU nano 7.2                  email.py *                         
+qimport inspect
+import logging
+import os
+import secrets
+from collections.abc import Iterable, Sequence
+from datetime import datetime, timedelta
+from decimal import Decimal
+from email import policy
+from email.parser import BytesParser
+from itertools import groupby
+ [ line   1/836 ( 0%), col  1/15 (  6%), char     0/30187 ( 0%) ]
+^G Help      ^O Write Out ^W Where Is  ^K Cut       ^T Execute
+^X Exit      ^R Read File ^\ Replace   ^U Paste     ^J Justify
 class SimpleFunctionalMailTextPlaceholder(BaseMailTextPlaceholder):
     def __init__(self, identifier, args, func, sample):
         self._identifier = identifier
