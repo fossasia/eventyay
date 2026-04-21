@@ -19,6 +19,7 @@ def test_get_login_context_no_providers(rf):
     assert result['has_secondary_oauth_providers'] is False
     assert isinstance(result['show_native_login'], bool)
 
+
 @pytest.mark.django_db
 def test_get_login_context_with_providers(rf):
     gs = GlobalSettingsObject()
@@ -47,6 +48,7 @@ def test_get_login_context_with_providers(rf):
     assert result['has_oauth_providers'] is True
     assert result['has_secondary_oauth_providers'] is True
     assert result['enabled_providers'][0][0] == 'google'
+
 
 @pytest.mark.django_db
 def test_get_login_context_unconfigured_providers(rf):
