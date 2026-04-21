@@ -55,7 +55,7 @@ from eventyay.control.forms.event import (
     ConfirmTextFormset,
     EventDeleteForm,
     EventMetaValueForm,
-    EventSettingsForm,
+    GeneralEventSettingsForm,
     EventUpdateForm,
     InvoiceSettingsForm,
     ProductMetaPropertyForm,
@@ -173,7 +173,7 @@ class EventUpdate(
 
     @cached_property
     def sform(self):
-        return EventSettingsForm(
+        return GeneralEventSettingsForm(
             obj=self.object,
             prefix='settings',
             data=self.request.POST if self.request.method == 'POST' else None,
