@@ -40,7 +40,7 @@
                                         </button>
                                         {% if not settings.client_id or not settings.secret %}
                                             <p class="text-warning text-center help-block">
-                                                <small><i class="fa fa-exclamation-triangle"></i> {% trans "Requires keys to be configured" %}</small>
+                                                <small><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {% trans "Requires keys to be configured" %}</small>
                                             </p>
                                         {% endif %}
                                     {% else %}

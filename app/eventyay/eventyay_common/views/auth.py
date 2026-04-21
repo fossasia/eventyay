@@ -48,12 +48,6 @@ from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
 
-
-from eventyay.eventyay_common.services.auth_providers import (
-    get_preferred_provider,
-    order_login_providers,
-)
-
 logger = logging.getLogger(__name__)
 
 
