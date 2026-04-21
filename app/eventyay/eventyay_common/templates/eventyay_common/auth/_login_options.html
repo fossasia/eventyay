@@ -1,36 +1,46 @@
 {% load i18n %}
 {% load append_next_url %}
-<div class='form-group buttons{% if preferred_provider %} login-options-primary-first{% endif %}'>
+{% if show_group == 'primary' %}
   {% if preferred_provider %}
     {% for provider, settings in login_providers.items %}
       {% if provider == preferred_provider and settings.state %}
-        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
-           data-method='post' class='btn btn-primary btn-block login-option-primary'>
-          {% with provider|capfirst as provider_capitalized %}
-            {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
-          {% endwith %}
-        </a>
-        <p class='login-separator'>
-          <span class='login-separator-label'>{% translate 'or' %}</span>
-        </p>
+        <div class='form-group buttons login-options-primary-first'>
+          <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
+             data-method='post' class='btn btn-primary btn-block login-option-primary'>
+            {% with provider|capfirst as provider_capitalized %}
+              {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+            {% endwith %}
+          </a>
+        </div>
       {% endif %}
     {% endfor %}
   {% endif %}
-  <div class='login-options-secondary-group'>
-    <button type='button' id='toggle-login' class='btn btn-primary btn-block login-option-secondary' data-toggle='collapse' data-target='#login-form'>
-      {% translate 'Log in with email' %}
-    </button>
-    {% if login_providers %}
+{% elif show_group == 'secondary' %}
+  {% if login_providers %}
+    {% with has_secondary=False %}
       {% for provider, settings in login_providers.items %}
         {% if settings.state and provider != preferred_provider %}
+          {% if not has_secondary %}
+            <p class='login-separator'>
+              <span class='login-separator-label'>{% translate 'or' %}</span>
+            </p>
+            <div class='form-group buttons login-options-secondary-group-wrap'>
+              <div class='login-options-secondary-group'>
+          {% endif %}
           <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
              data-method='post' class='btn btn-primary btn-block login-option-secondary'>
             {% with provider|capfirst as provider_capitalized %}
               {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
             {% endwith %}
           </a>
+          {% if forloop.last %}
+              </div>
+            </div>
+          {% endif %}
+          {# Since we can't easily set variables, this is a bit hacky but works if it's the last iteration #}
+          {# Wait, the 'has_secondary' variable won't persist across iterations in standard Django. #}
         {% endif %}
       {% endfor %}
-    {% endif %}
-  </div>
-</div>
+    {% endwith %}
+  {% endif %}
+{% endif %}
