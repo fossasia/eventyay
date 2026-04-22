@@ -6,71 +6,61 @@
 			h1.hero-text(v-if="eventTitle") {{ eventTitle }}
 			p.hero-time(v-if="eventStartLine") {{ eventStartLine }}
 			p.hero-time(v-if="eventEndLine") {{ eventEndLine }}
-	.sponsors.splide(ref="sponsors", v-show="sponsors && sponsors.length")
-		.splide__track
-			ul.splide__list
-				li.splide__slide(v-for="sponsor of sponsors")
-					img.sponsor(:src="sponsor.logo", :alt="sponsor.name", @load="onSponsorImageLoad(sponsor.id)")
-	.content-container
+	.content-container(v-if="hasContent")
 		.content
 			rich-text-content(v-if="mainContentIsRichText", :content="mainContent")
 			markdown-content(v-else-if="mainContentIsMarkdown", :content="mainContent")
-			template(v-if="activeRooms && activeRooms.length")
-				.header
-					h3 {{ $t('LandingPage:rooms:header') || 'Active Rooms' }}
-				.active-rooms
-					.room-card(v-for="item of activeRooms", :key="item.room.id")
-						.room-info
-							.room-name {{ item.room.name }}
-							.current-session(v-if="item.session")
-								span.live-badge(v-if="item.isLive") LIVE
-								span {{ item.session.title }}
-						bunt-link-button(:to="{name: 'room', params: {roomId: item.room.id}}", :class="{'join-btn': item.isLive}")
-							template(v-if="item.isLive") {{ $t('LandingPage:rooms:join') || 'Join Now' }}
-							template(v-else) {{ $t('LandingPage:rooms:view') || 'View Room' }}
-			template(v-if="featuredSessions && featuredSessions.length")
-				.header
-					h3 {{ $t('LandingPage:sessions:featured:header') }}
-					bunt-link-button(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:featured:link') }}
-				.sessions
-					session(
-						v-for="session of featuredSessions",
-						:session="session",
-						:now="now",
-						:faved="favs.includes(session.id)",
-						@fav="$store.dispatch('schedule/fav', $event)",
-						@unfav="$store.dispatch('schedule/unfav', $event)"
-					)
-			.header
-				h3 {{ $t('LandingPage:sessions:next:header') }}
-				bunt-link-button(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:next:link') }}
-			.sessions
-				session(
-					v-for="session of nextSessions",
-					:session="session",
-					:now="now",
-					:faved="favs.includes(session.id)",
-					@fav="$store.dispatch('schedule/fav', $event)",
-					@unfav="$store.dispatch('schedule/unfav', $event)"
-				)
-		.speakers(v-if="speakers")
-			.header
-				h3 {{ $t('LandingPage:speakers:header', {speakers: speakers.length}) }}
-				bunt-link-button(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
-			.speakers-list
-				router-link.speaker(v-for="speaker of speakers.slice(0, 32)", :to="speaker.attendee ? {name: '', params: {}} : { name: 'schedule:speaker', params: { speakerId: speaker.code } }")
-					img.avatar(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
-					identicon(v-else, :user="{id: speaker.name, profile: {display_name: speaker.name}}")
-					.name {{ speaker.name }}
-				router-link.additional-speakers(v-if="speakers.length > 32", :to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:more', {additional_speakers: speakers.length - 32}) }}
+			.split-layout
+				.split-left(v-if="(featuredSessions && featuredSessions.length) || (nextSessions && nextSessions.length)")
+					template(v-if="featuredSessions && featuredSessions.length")
+						.header
+							h3 {{ $t('LandingPage:sessions:featured:header') }}
+							bunt-link-button(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:featured:link') }}
+						.sessions
+							session(
+								v-for="session of featuredSessions",
+								:session="session",
+								:now="now",
+								:faved="favs.includes(session.id)",
+								@fav="$store.dispatch('schedule/fav', $event)",
+								@unfav="$store.dispatch('schedule/unfav', $event)"
+							)
+					template(v-if="nextSessions && nextSessions.length")
+						.header
+							h3 {{ $t('LandingPage:sessions:next:header') }}
+							bunt-link-button(:to="{name: 'schedule'}") {{ $t('LandingPage:sessions:next:link') }}
+						.sessions
+							session(
+								v-for="session of nextSessions",
+								:session="session",
+								:now="now",
+								:faved="favs.includes(session.id)",
+								@fav="$store.dispatch('schedule/fav', $event)",
+								@unfav="$store.dispatch('schedule/unfav', $event)"
+							)
+				.split-right
+					template(v-if="activeRooms && activeRooms.length")
+						.header
+							h3 {{ $t('LandingPage:rooms:header') === 'LandingPage:rooms:header' ? 'Active Rooms' : $t('LandingPage:rooms:header') }}
+						.active-rooms.active-rooms-list
+							router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
+								.room-info
+									.room-name {{ item.room.name }}
+									.current-session(v-if="item.session")
+										span.live-badge(v-if="item.isLive") LIVE
+										span {{ item.session.title }}
+								svg.room-arrow(viewBox="0 0 24 24", stroke="currentColor", stroke-width="2", fill="none")
+									path(d="M5 12h14M12 5l7 7-7 7")
+					.speakers-section(v-if="schedule && schedule.speakers && schedule.speakers.length")
+						.header
+							h3 {{ $t('LandingPage:speakers:header', {speakers: schedule.speakers.length}) === 'LandingPage:speakers:header' ? 'Speakers' : $t('LandingPage:speakers:header', {speakers: schedule.speakers.length}) }}
+							bunt-link-button(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') === 'LandingPage:speakers:link' ? 'More' : $t('LandingPage:speakers:link') }}
+						speakers-list(:hideToolbar="true", :speakers="schedule.speakers")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
-import '@splidejs/splide/dist/css/splide.min.css'
-import Splide from '@splidejs/splide'
-// Replace '@pretalx/schedule' Session import with local implementation
 import Session from '@schedule/components/Session.vue'
-import api from 'lib/api'
+import SpeakersList from '@schedule/components/SpeakersList.vue'
 import config from 'config'
 import moment from 'lib/timetravelMoment'
 import Identicon from 'components/Identicon'
@@ -78,15 +68,13 @@ import MarkdownContent from 'components/MarkdownContent'
 import RichTextContent from 'components/RichTextContent'
 
 export default {
-	components: { Identicon, MarkdownContent, Session, RichTextContent },
+	components: { MarkdownContent, Session, RichTextContent, SpeakersList },
 	props: {
 		module: Object
 	},
 	data() {
 		return {
 			moment,
-			sponsors: null,
-			loadedSponsorImages: [],
 			eventMeta: null
 		}
 	},
@@ -113,6 +101,14 @@ export default {
 		},
 		mainContentIsMarkdown() {
 			return typeof this.mainContent === 'string' && this.mainContent.trim().length > 0
+		},
+		hasContent() {
+			return this.mainContentIsRichText ||
+				this.mainContentIsMarkdown ||
+				(this.activeRooms && this.activeRooms.length > 0) ||
+				(this.featuredSessions && this.featuredSessions.length > 0) ||
+				(this.nextSessions && this.nextSessions.length > 0) ||
+				(this.schedule && this.schedule.speakers && this.schedule.speakers.length > 0)
 		},
 		mediaBaseUrl() {
 			const apiBase = config?.api?.base
@@ -182,7 +178,7 @@ export default {
 			return this.sessions.filter(session => session.featured)
 		},
 		nextSessions() {
-			if (!this.sessions) return
+			if (!this.sessions) return []
 			// current or next sessions per room
 			const sessions = []
 			for (const session of this.sessions) {
@@ -192,15 +188,24 @@ export default {
 			}
 			return sessions
 		},
-		speakers() {
-			return this.schedule?.speakers.slice().sort((a, b) => a.name.split(' ').at(-1).localeCompare(b.name.split(' ').at(-1)))
-		},
 		activeRooms() {
 			if (!this.rooms) return []
-			return this.rooms.filter(r => r.schedule_data || r.modules?.some(m => ['livestream.native', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(m.type))).map(room => {
+			// Shared list used for both the inclusion filter and the hasVideo flag.
+			// Using the same constant avoids the bug where rooms with only
+			// livestream.youtube / livestream.iframe are shown as active but
+			// not marked as having video.
+			const videoModuleTypes = [
+				'livestream.native',
+				'livestream.youtube',
+				'livestream.iframe',
+				'call.bigbluebutton',
+				'call.zoom',
+				'call.janus'
+			]
+			return this.rooms.filter(r => r.schedule_data || r.modules?.some(m => videoModuleTypes.includes(m.type))).map(room => {
 				const sessionInfo = this.currentSessionPerRoom?.[room.id]
 				const session = sessionInfo?.session
-				const hasVideo = room.modules && room.modules.some(m => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(m.type))
+				const hasVideo = room.modules && room.modules.some(m => videoModuleTypes.includes(m.type))
 				const isLive = !!session && hasVideo
 				return { room, session, hasVideo, isLive }
 			})
@@ -208,34 +213,6 @@ export default {
 	},
 	async mounted() {
 		await this.fetchEventMeta()
-		// TODO make this configurable?
-		const sponsorRoom = this.rooms?.find(r => r.id === this.landingConfig.sponsor_room_id)
-		if (!sponsorRoom) return
-		this.sponsors = (await api.call('exhibition.list', {room: sponsorRoom.id})).exhibitors
-		await this.$nextTick()
-		const splide = new Splide(this.$refs.sponsors, {
-			type: 'loop',
-			autoWidth: true
-		})
-
-		splide.on('overflow', (isOverflow) => {
-			splide.go(0)
-			splide.options = {
-				arrows: isOverflow,
-				pagination: isOverflow,
-				drag: isOverflow,
-				focus: isOverflow ? 'center' : false,
-				clones: isOverflow ? 50 : 0, // HACK setting this to 50 instead of undefined
-			}
-			splide.go(0)
-		})
-
-		splide.on('click', (slide) => {
-			this.$router.push({name: 'exhibitor', params: {exhibitorId: this.sponsors[slide.slideIndex].id}})
-		})
-
-		splide.mount()
-		this.sponsorSplide = splide
 	},
 	methods: {
 		toMediaUrl(pathValue) {
@@ -300,12 +277,6 @@ export default {
 				console.error('Failed to load landing page event metadata:', error)
 			}
 		},
-		onSponsorImageLoad(sponsorId) {
-			this.loadedSponsorImages.push(sponsorId)
-			if (this.sponsorSplide && this.loadedSponsorImages.length === this.sponsors.length) {
-				this.sponsorSplide.refresh()
-			}
-		}
 	}
 }
 </script>
@@ -354,22 +325,23 @@ export default {
 			object-fit: contain
 	.content-container
 		display: flex
-		justify-content: center
+		flex-direction: column
+		align-items: center
 		gap: 32px
-		padding: 0 16px
-		> *
-			flex: 1
-			min-width: 0
-			display: flex
-			flex-direction: column
+		padding: 0 24px
+		width: 100%
+		max-width: 1400px
+		margin: 0 auto
+		box-sizing: border-box
 	.content
 		display: flex
 		flex-direction: column
-		max-width: 960px
+		width: 100%
 		.header
 			padding: 0 8px
-	.rich-text-content
-		padding: 0 8px
+	.rich-text-content, .c-markdown-content
+		max-width: 960px
+		margin: 0 auto
 	.header
 		display: flex
 		justify-content: space-between
@@ -380,81 +352,46 @@ export default {
 			line-height: 56px
 		.bunt-link-button
 			themed-button-primary()
-	.speakers
-		max-width: calc(124px * 3 + 2px)
-	.speakers-list
-		display: flex
-		flex-wrap: wrap
-		justify-content: center
-		background-color: $clr-white
-		border-radius: 6px
-		border: border-separator()
-		margin: 8px 0
-		.speaker
+
+	.split-layout
+		display: grid
+		grid-template-columns: 1fr
+		gap: 32px
+		margin-top: 24px
+		@media (min-width: 900px)
+			grid-template-columns: 1fr 1fr
+		.split-left
 			display: flex
 			flex-direction: column
-			align-items: center
-			gap: 4px
-			width: 124px
-			cursor: pointer
-			padding: 12px 4px
-			box-sizing: border-box
-			color: $clr-primary-text-light
-			&:hover
-				background-color: $clr-grey-200
-			img
-				border-radius: 50%
-				height: 92px
-				width: @height
-				object-fit: cover
-			.name
-				text-align: center
-				white-space: break-word
-				font-weight: 500
-				font-size: 14px
-		.additional-speakers
-			font-size: 18px
-			font-weight: 600
-			align-self: center
-			width: 100%
-			height: 92px
-			text-align: center
-			line-height: 90px
-			&:hover
-				background-color: $clr-grey-200
-	.sponsors
-		padding: 8px 0 16px 0
-		margin: 0 0 8px 0
-		background-color: $clr-white
-		.sponsor
-			height: 10vh
-			max-height: 10vh
-			max-width: unquote("min(260px, 90vw)")
-			object-fit: contain
-			user-select: none
-			margin: 0 24px 0 24px
-		// .splide__pagination
-		.splide__pagination__page.is-active
-			background-color: var(--clr-primary)
-		.splide__arrow
-			top: calc(50% - 12px)
-		&:not(.is-overflow) .splide__list
-			justify-content: center
+			gap: 24px
+		.split-right
+			display: flex
+			flex-direction: column
+			gap: 24px
 
-	.active-rooms
-		display: grid
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))
-		gap: 16px
+	.active-rooms-list
+		display: flex
+		flex-direction: column
+		gap: 12px
 		padding: 0 8px
 		margin-bottom: 24px
 		.room-card
 			display: flex
-			flex-direction: column
+			flex-direction: row
+			align-items: center
 			justify-content: space-between
 			background: $clr-white
 			border: border-separator()
 			border-radius: 6px
 			padding: 16px
+			text-decoration: none
+			color: inherit
+			transition: background-color 0.2s
+			&:hover
+				background-color: $clr-grey-100
+			.room-info
+				flex: 1
+				min-width: 0
 			.room-name
 				font-size: 18px
 				font-weight: 600
@@ -462,22 +399,25 @@ export default {
 			.current-session
 				font-size: 14px
 				color: $clr-secondary-text-light
+				white-space: nowrap
+				overflow: hidden
+				text-overflow: ellipsis
 				display: flex
 				align-items: center
-				gap: 8px
-				margin-bottom: 16px
 				.live-badge
-					background-color: var(--clr-danger)
-					color: var(--clr-primary-text-dark)
+					background-color: $clr-danger
+					color: $clr-white
+					font-size: 10px
+					font-weight: 700
 					padding: 2px 6px
 					border-radius: 4px
-					font-weight: bold
-					font-size: 12px
-			.bunt-link-button
-				align-self: flex-start
-				themed-button-secondary()
-				&.join-btn
-					themed-button-primary()
+					margin-right: 8px
+			.room-arrow
+				width: 20px
+				height: 20px
+				color: $clr-secondary-text-light
+				margin-left: 12px
+				flex-shrink: 0
 
 	+below('m')
 		.hero

@@ -28,6 +28,7 @@
 			v-model:sortBy="internalSortBy",
 			v-model:includeRoomSortKey="sortIncludeRoom",
 			v-model:includeDateSortKey="sortIncludeDate",
+			v-model:includePopularitySortKey="sortIncludePopularity",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
@@ -67,6 +68,7 @@
 				:sortBy="effectiveSortBy",
 				:includeRoomSortKey="sortIncludeRoom",
 				:includeDateSortKey="sortIncludeDate",
+				:includePopularitySortKey="sortIncludePopularity",
 				:showBreaks="!linearOnly && !sessionsMode",
 				:density="'default'",
 				@changeDay="dayScrolled",
@@ -101,6 +103,17 @@ function localesMatch (filterValue, sessionValue) {
 	if (!a || !b) return false
 	if (a === b) return true
 	return localePrimary(a) === localePrimary(b)
+}
+
+function normalizePopularityCount (session) {
+	const value = Number(
+		session?.fav_count
+		?? session?.favorite_count
+		?? session?.favourites_count
+		?? session?.stars
+		?? 0
+	)
+	return Number.isFinite(value) ? value : 0
 }
 
 export default {
@@ -156,12 +169,13 @@ export default {
 			sortIncludeDate: (() => {
 				try {
 					const stored = localStorage.getItem('schedule-include-datetime')
-					if (stored === null) return true
+					if (stored === null) return false
 					return stored === 'true'
 				} catch {
-					return true
+					return false
 				}
 			})(),
+			sortIncludePopularity: false,
 			filterState: {
 				tracks: [],
 				rooms: [],
@@ -241,7 +255,7 @@ export default {
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
-					fav_count: session.fav_count,
+					fav_count: normalizePopularityCount(session),
 					tags: session.tags,
 					session_type: session.session_type,
 					resources: session.resources,
