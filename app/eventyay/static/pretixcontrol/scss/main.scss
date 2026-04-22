@@ -1147,11 +1147,29 @@ h1 .label {
 #event-nav .navigation-title,
 .header-nav .navigation-title {
     text-align: left;
-    flex: 0 1 75%;
+    flex: 1 1 auto;
     min-width: 0;
 
+    h1,
     h2 {
-        word-wrap: break-word;
+        font-size: 30px;
+        line-height: 1.2;
         overflow-wrap: break-word;
+    }
+}
+
+#event-nav.event-dashboard-nav {
+    .navigation-button {
+        margin-top: 0;
+    }
+}
+
+body:not(.sidebar-minimized) #event-nav.event-dashboard-nav {
+    .navigation {
+        row-gap: 0;
+    }
+
+    .navigation-button {
+        width: 100%;
     }
 }
