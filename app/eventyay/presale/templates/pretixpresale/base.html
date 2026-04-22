@@ -52,6 +52,9 @@
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/main.scss" %}"/>
         {% endcompress %}
     {% endif %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/presale-login-modal.css' %}">
+        {% endcompress %}
 {% endblock %}
 
 {% block scripts %}
@@ -60,6 +63,7 @@
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/popover.js" %}"></script>
         <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
     {% endcompress %}
+    <script type="module" src="{% static 'pretixpresale/js/ui/presale-login-modal.js' %}"></script>
 {% endblock %}
 
 {% block custom_header %}
@@ -102,4 +106,9 @@
 
 {% block body_bottom %}
     {{ html_foot|safe }}
+    {% include "pretixpresale/fragment_modals.html" %}
 {% endblock %}
+
+{% block header_navigation %}{% endblock header_navigation %}
+
+

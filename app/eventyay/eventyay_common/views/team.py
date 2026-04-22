@@ -419,11 +419,12 @@ class TeamUpdateView(
 
 
 class TeamDeleteView(
-    UnifiedTeamManagementRedirectMixin,
     OrganizerDetailViewMixin,
     OrganizerPermissionRequiredMixin,
     DeleteView,
 ):
+    """Central team deletion: GET shows confirmation, POST deletes. Optional ``next`` returns after delete."""
+
     model = Team
     template_name = 'eventyay_common/organizers/teams/team_delete.html'
     context_object_name = 'team'
@@ -435,6 +436,20 @@ class TeamDeleteView(
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
         context['possible'] = self.can_deleted()
+        raw_next = self.request.GET.get('next') or self.request.POST.get('next')
+        teams_default = reverse(
+            'eventyay_common:organizer.teams',
+            kwargs={'organizer': self.request.organizer.slug},
+        )
+        if raw_next and url_has_allowed_host_and_scheme(
+            raw_next,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            context['next_url'] = raw_next
+        else:
+            context['next_url'] = None
+        context['cancel_url'] = context['next_url'] or teams_default
         return context
 
     def can_deleted(self) -> bool:
@@ -450,17 +465,32 @@ class TeamDeleteView(
         self.object = self.get_object()
         if self.can_deleted():
             team_name = self.object.name
+            self.object.log_action(
+                'eventyay.team.deleted',
+                user=self.request.user,
+            )
             self.object.delete()
-            messages.success(self.request, _("The team '%(team_name)s' has been deleted.") % {"team_name": team_name})
+            messages.success(
+                self.request,
+                _("The team '%(team_name)s' has been deleted.") % {'team_name': team_name},
+            )
         else:
-            messages.success(self.request, _("The team '%(team_name)s' cannot be deleted.") % {"team_name": team_name})
+            messages.error(
+                self.request,
+                _("The team '%(team_name)s' cannot be deleted.") % {'team_name': self.object.name},
+            )
 
         return redirect(success_url)
 
     def get_success_url(self):
+        raw_next = self.request.POST.get('next') or self.request.GET.get('next')
+        if raw_next and url_has_allowed_host_and_scheme(
+            raw_next,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return raw_next
         return reverse(
-            'eventyay_common:organizer.edit',
-            kwargs={
-                'organizer': self.request.organizer.slug,
-            },
+            'eventyay_common:organizer.teams',
+            kwargs={'organizer': self.request.organizer.slug},
         )

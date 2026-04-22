@@ -242,6 +242,9 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
 
         return Err(UnmatchedSecretOrderError())
 
+    @cached_property
+    def order(self):
+        return self.position.order if self.position else None
 
 @method_decorator(xframe_options_exempt, 'dispatch')
 class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):

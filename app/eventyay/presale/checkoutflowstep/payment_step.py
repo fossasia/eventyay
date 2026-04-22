@@ -126,7 +126,7 @@ class PaymentStep(CartMixin, TemplateFlowStep):
         self.request = request
 
         for cartpos in get_cart(self.request):
-            if cartpos.product.require_approval:
+            if cartpos.requires_approval:
                 if 'payment' in self.cart_session:
                     del self.cart_session['payment']
                 return False

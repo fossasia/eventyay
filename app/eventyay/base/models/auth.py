@@ -22,6 +22,7 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import JSONField, Q
 from django.http import HttpRequest
@@ -48,6 +49,11 @@ from eventyay.talk_rules.person import is_administrator
 from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
 from .mixins import FileCleanupMixin, GenerateCode
+
+
+if TYPE_CHECKING:
+    from .event import Event
+    from .profile import SpeakerProfile
 
 
 # from eventyay.person.signals import delete_user as delete_user_signal
@@ -465,7 +471,7 @@ class User(
             mail(
                 email or self.email,
                 _('Account information changed'),
-                'eventyaycontrol/email/security_notice.txt',
+                'pretixcontrol/email/security_notice.txt',
                 {'user': self, 'messages': msg, 'url': build_absolute_uri('eventyay_common:account.general')},
                 event=None,
                 user=self,
@@ -690,13 +696,13 @@ class User(
         self.permission_cache[(perm, obj)] = result
         return result
 
-    def event_profile(self, event):
+    def event_profile(self, event: Event) -> SpeakerProfile:
         """Retrieve (and/or create) the event.
 
         :class:`~eventyay.base.models.profile.SpeakerProfile` for this user.
 
         :type event: :class:`eventyay.base.models.event.Event`
-        :retval: :class:`eventyay.base.models.profile.EventProfile`
+        :retval: :class:`eventyay.base.models.profile.SpeakerProfile`
         """
         if profile := self.event_profile_cache.get(event.pk):
             return profile
@@ -709,7 +715,7 @@ class User(
 
         try:
             profile = self.profiles.select_related('event').get(event=event)
-        except Exception:
+        except ObjectDoesNotExist:
             from eventyay.base.models.profile import SpeakerProfile
 
             profile = SpeakerProfile(event=event, user=self)

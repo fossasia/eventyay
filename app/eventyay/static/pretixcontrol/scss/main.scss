@@ -1106,6 +1106,33 @@ h1 .label {
     .submit-group {
         background: $gray-lightest;
     }
+
+    .team-permissions-panel {
+        .panel-default,
+        .panel-default > .panel-heading {
+            background-color: $main-box-bg;
+        }
+
+        .team-panel-heading {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .team-heading-main .panel-title {
+            margin-bottom: 8px;
+        }
+
+        .team-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-inline-start: auto;
+        }
+    }
 }
 
 /* Event name in main content - max width and wrap */

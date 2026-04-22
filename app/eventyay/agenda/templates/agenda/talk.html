@@ -2,6 +2,7 @@
 
 {% load event_tags %}
 {% load html_signal %}
+{% load static %}
 
 {% load presale_locale %}
 {% block title %}{{ submission.title|event_localize }} ::{% endblock title %}
@@ -21,11 +22,13 @@
 <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
 {% endblock agenda_custom_header %}
 
+{% block container_width %} main-schedule{% endblock container_width %}
+
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_session_pages" sender=request.event request=request submission=submission %}
 <div>
     <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
-    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+    <script type="text/javascript" src="{% static 'schedule/pretalx-schedule.js' %}" async></script>
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="talk" talk-code="{{ submission.code }}" {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}

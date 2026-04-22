@@ -44,10 +44,19 @@
                                         </button>
                                     {% endif %}
                                 </td>
+                                <td class="text-right flip" width="25%">
+                                    {% if settings.state %}
+                                        <label class="radio-inline">
+                                            <input type="radio" name="preferred_provider" value="{{ provider }}"
+                                                {% if settings.is_preferred %}checked{% endif %}>
+                                            {% trans "Make this the preferred login method" %}
+                                        </label>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% if settings.state %}
                             <tr>
-                                <td colspan="2">
+                                <td colspan="3">
                                     <div class="form-group">
                                         <label class="col-sm-3 control-label">
                                             {% if provider == "mediawiki" %}
@@ -76,6 +85,16 @@
                             </tr>
                             {% endif %}
                         {% endfor %}
+                        <tr>
+                            <td colspan="2"></td>
+                            <td class="text-right flip">
+                                <label class="radio-inline">
+                                    <input type="radio" name="preferred_provider" value="none"
+                                        {% if not any_preferred %}checked{% endif %}>
+                                    {% trans "No preferred provider" %}
+                                </label>
+                            </td>
+                        </tr>
                     </table>
                 </div>
             </fieldset>

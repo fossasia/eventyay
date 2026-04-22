@@ -604,36 +604,34 @@ def render_mail(template, context):
     return body
 
 
-def replace_images_with_cid_paths(body_html):
-    if body_html:
-        email = BeautifulSoup(body_html, 'lxml')
-        cid_images = []
-        for image in email.findAll('img'):
-            original_image_src = image['src']
-
-            try:
-                cid_id = f'image_{cid_images.index(original_image_src)}'
-            except ValueError:
-                cid_images.append(original_image_src)
-                cid_id = f'image_{len(cid_images) - 1}'
-
-            image['src'] = f'cid:{cid_id}'
-
-        return str(email), cid_images
-    else:
+def replace_images_with_cid_paths(body_html: str) -> tuple[str, list[str]]:
+    if not body_html:
         return body_html, []
+    email = BeautifulSoup(body_html, 'lxml')
+    cid_images = []
+    for image in email.findAll('img'):
+        original_image_src = image['src']
+
+        try:
+            cid_id = f'image_{cid_images.index(original_image_src)}'
+        except ValueError:
+            cid_images.append(original_image_src)
+            cid_id = f'image_{len(cid_images) - 1}'
+
+        image['src'] = f'cid:{cid_id}'
+
+    return str(email), cid_images
 
 
-def attach_cid_images(msg, cid_images, verify_ssl=True):
+def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_ssl: bool = True):
     if cid_images and len(cid_images) > 0:
         msg.mixed_subtype = 'mixed'
         for key, image in enumerate(cid_images):
             cid = f'image_{key}'
             try:
-                mime_image = convert_image_to_cid(image, cid, verify_ssl)
-                if mime_image:
+                if mime_image := convert_image_to_cid(image, cid, verify_ssl):
                     msg.attach(mime_image)
-            except:
+            except (ValueError, IndexError, requests.RequestException, ssl.SSLError):
                 logger.exception('ERROR attaching CID image %s[%s]', cid, image)
 
 
@@ -652,34 +650,36 @@ def encoder_linelength(msg):
     msg.set_payload(b'\r\n'.join(pieces))
 
 
-def convert_image_to_cid(image_src, cid_id, verify_ssl=True):
-    try:
-        if image_src.startswith('data:image/'):
-            image_type, image_content = image_src.split(',', 1)
-            image_type = re.findall(r'data:image/(\w+);base64', image_type)[0]
-            mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
-            mime_image.add_header('Content-Transfer-Encoding', 'base64')
-        elif image_src.startswith('data:'):
-            logger.exception('ERROR creating MIME element %s[%s]', cid_id, image_src)
-            return None
-        else:
-            image_src = normalize_image_url(image_src)
-
-            path = urlparse(image_src).path
-            guess_subtype = os.path.splitext(path)[1][1:]
-
-            response = requests.get(image_src, verify=verify_ssl)
-            mime_image = MIMEImage(response.content, _subtype=guess_subtype)
-
-        mime_image.add_header('Content-ID', f'<{cid_id}>')
-
-        return mime_image
-    except:
-        logger.exception('ERROR creating mime_image %s[%s]', cid_id, image_src)
+# May raise:
+# - ValueError (If image_src lacks ",")
+# - IndexError (If regex failed)
+# - requests.RequestException
+# - ssl.SSLError
+def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -> MIMEImage | None:
+    if image_src.startswith('data:image/'):
+        # Let ValueError bubble up here.
+        image_type, image_content = image_src.split(',', 1)
+        image_type = re.findall(r'data:image/(\w+);base64', image_type)[0]
+        mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
+        mime_image.add_header('Content-Transfer-Encoding', 'base64')
+    elif image_src.startswith('data:'):
+        logger.warning('Non-image MIME element %s[%s]', cid_id, image_src)
         return None
+    else:
+        image_src = normalize_image_url(image_src)
+
+        path = urlparse(image_src).path
+        guess_subtype = os.path.splitext(path)[1][1:]
+
+        response = requests.get(image_src, verify=verify_ssl)
+        mime_image = MIMEImage(response.content, _subtype=guess_subtype)
+
+    mime_image.add_header('Content-ID', f'<{cid_id}>')
+
+    return mime_image
 
 
-def normalize_image_url(url):
+def normalize_image_url(url: str) -> str:
     if '://' not in url:
         """
         If we see a relative URL in an email, we can't know if it is meant to be a media file
@@ -729,8 +729,8 @@ def get_mail_backend(timeout=None):
                 timeout=timeout,
             )
         logger.warning(
-            'Event SMTP %s:%s is not reachable, falling back to system email backend',
+            'Global SMTP %s:%s is not reachable, falling back to system email backend',
             smtp_host,
             smtp_port,
         )
-    return get_connection(fail_silently=False)
+    return get_connection(fail_silently=False, timeout=timeout)

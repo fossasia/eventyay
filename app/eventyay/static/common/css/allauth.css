@@ -1,5 +1,29 @@
 /* Used in customized Jinja templates for django-allauth */
 
+
+/* Navbar styles for allauth views */
+.allauth-navbar {
+  background-color: #2185d0;
+  border-color: #1b6ba8;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.allauth-navbar .navbar-header {
+  margin: 0;
+}
+.allauth-navbar .navbar-brand {
+  color: #fff;
+  font-weight: 600;
+  width: auto;
+}
+.allauth-navbar .navbar-brand img {
+  height: 32px;
+  margin-right: 10px;
+}
+
 /* Container styles */
 .email-confirm-container,
 .password-reset-container,

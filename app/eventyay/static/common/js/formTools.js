@@ -5,7 +5,7 @@ let eventyayToastuiIdSeq = 0
 
 const createEventyayUnderlinePlugin = () => {
     const convertUnderlineSyntax = (src) => {
-        const input = String(src || "")
+        const input = String(src || '')
         if (!input.includes('++')) return input
 
         const codeSpanRe = /(`+)([\s\S]*?)\1/g
@@ -195,7 +195,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
         el: mount,
         height: textarea.dataset.editorHeight || '320px',
         initialEditType: 'wysiwyg',
-        previewStyle: 'vertical',
+        // tab preview: vertical layout confuses wysiwyg-only mode
+        previewStyle: 'tab',
         usageStatistics: false,
         hideModeSwitch: true,
         initialValue: String(textarea.value || ''),
@@ -332,10 +333,10 @@ const initToastUiMarkdownTextarea = (textarea) => {
         return () => popupObserver.disconnect()
     }
 
-    installAbsoluteLinkOnlyValidation()
+    const disconnectAbsoluteLinkValidation = installAbsoluteLinkOnlyValidation()
 
     const root = mount.querySelector?.('.toastui-editor-defaultUI')
-    root?.addEventListener?.('click', (event) => {
+    const onToastUiRootClick = (event) => {
         if (typeof event.detail === 'number' && event.detail > 1) return
         const selection = window.getSelection?.()
         if (selection && !selection.isCollapsed) return
@@ -350,7 +351,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
         if (!target.closest('.toastui-editor-main')) return
 
         if (typeof editor.focus === 'function') editor.focus()
-    })
+    }
+    root?.addEventListener?.('click', onToastUiRootClick)
 
     const modeSwitch = mount.querySelector?.('.toastui-editor-mode-switch')
     if (modeSwitch instanceof HTMLElement) {
@@ -365,6 +367,10 @@ const initToastUiMarkdownTextarea = (textarea) => {
     }
 
     if (typeof editor.on === 'function') editor.on('change', syncToTextarea)
+
+    const form = textarea.form
+    const onToastUiFormSubmit = () => syncToTextarea()
+    form?.addEventListener?.('submit', onToastUiFormSubmit)
 
     let isMarkdownMode = false
 
@@ -410,8 +416,90 @@ const initToastUiMarkdownTextarea = (textarea) => {
         updateModeToggleUi(toggleButton)
     }
 
-    // Ensure we always submit the latest value.
-    textarea.form?.addEventListener?.('submit', syncToTextarea)
+    const bumpEditorLayout = () => {
+        try {
+            if (typeof editor.refreshToolbarLayout === 'function') {
+                editor.refreshToolbarLayout()
+            }
+        } catch {
+            /* ignore */
+        }
+        try {
+            window.dispatchEvent(new Event('resize'))
+        } catch {
+            /* ignore */
+        }
+    }
+
+    requestAnimationFrame(() => {
+        bumpEditorLayout()
+        requestAnimationFrame(bumpEditorLayout)
+    })
+    const layoutBumpTimer = window.setTimeout(bumpEditorLayout, 200)
+
+    let layoutObserver = null
+    if (typeof IntersectionObserver === 'function') {
+        layoutObserver = new IntersectionObserver(
+            (entries) => {
+                const visible = entries.some((entry) => entry.isIntersecting)
+                if (!visible) return
+                bumpEditorLayout()
+                layoutObserver?.disconnect()
+                layoutObserver = null
+            },
+            { threshold: [0.01] },
+        )
+        layoutObserver.observe(wrapper)
+    }
+
+    const stopLayoutBumpWatchers = () => {
+        window.clearTimeout(layoutBumpTimer)
+        layoutObserver?.disconnect()
+        layoutObserver = null
+    }
+
+    let domRemovalObserver = null
+    const stopDomRemovalWatch = () => {
+        domRemovalObserver?.disconnect()
+        domRemovalObserver = null
+    }
+
+    let toastUiTeardownDone = false
+    const teardownToastUiEditor = () => {
+        if (toastUiTeardownDone) return
+        toastUiTeardownDone = true
+        stopLayoutBumpWatchers()
+        stopDomRemovalWatch()
+        try {
+            disconnectAbsoluteLinkValidation()
+        } catch {
+            /* ignore */
+        }
+        form?.removeEventListener?.('submit', onToastUiFormSubmit)
+        root?.removeEventListener?.('click', onToastUiRootClick)
+        try {
+            if (typeof editor.destroy === 'function') editor.destroy()
+        } catch {
+            /* ignore */
+        }
+        delete textarea.dataset.toastuiBound
+        textarea.__eventyayToastUiEditor = undefined
+        textarea.__eventyayToastUiLayoutCleanup = undefined
+        mount.__eventyayToastUiEditor = undefined
+    }
+
+    textarea.__eventyayToastUiLayoutCleanup = () => {
+        stopLayoutBumpWatchers()
+    }
+
+    if (typeof MutationObserver === 'function') {
+        const watchRoot = textarea.closest('form') || wrapper.parentElement || document.documentElement
+        domRemovalObserver = new MutationObserver(() => {
+            if (wrapper.isConnected) return
+            teardownToastUiEditor()
+        })
+        domRemovalObserver.observe(watchRoot, { childList: true, subtree: true })
+    }
 
     syncToTextarea()
 }
@@ -464,15 +552,18 @@ const startMarkdownEditorObserver = () => {
 }
 
 const warnFileSize = (element) => {
-    const warning = document.createElement("div")
-    warning.classList = ["invalid-feedback"]
+    let warning = element.parentElement.querySelector('.eventyay-size-warning')
+    if (!warning) {
+        warning = document.createElement('div')
+        warning.classList.add('invalid-feedback', 'eventyay-size-warning')
+        element.parentElement.appendChild(warning)
+    }
+    element.classList.add('is-invalid')
     warning.textContent = element.dataset.sizewarning
-    element.parentElement.appendChild(warning)
-    element.classList.add("is-invalid")
 }
 const unwarnFileSize = (element) => {
-    element.classList.remove("is-invalid")
-    const warning = element.parentElement.querySelector(".invalid-feedback")
+    element.classList.remove('is-invalid')
+    const warning = element.parentElement.querySelector('.eventyay-size-warning')
     if (warning) element.parentElement.removeChild(warning)
 }
 
@@ -481,16 +572,46 @@ const initFileSizeCheck = (element) => {
         const files = element.files
         if (!files || !files.length) {
             unwarnFileSize(element)
+            return true
         } else {
-            maxsize = parseInt(element.dataset.maxsize)
+            const maxsize = parseInt(element.dataset.maxsize , 10)
             if (files[0].size > maxsize) {
                 warnFileSize(element)
+                return false
             } else {
                 unwarnFileSize(element)
+                return true
             }
         }
     }
     element.addEventListener("change", checkFileSize, false)
+    if (element.form && !element.form.dataset.fileSizeGuardRegistered) {
+        element.form.dataset.fileSizeGuardRegistered = "true"
+        element.form.addEventListener("submit", (event) => {
+            const fileInputs = element.form.querySelectorAll("input[data-maxsize][type=file]")
+            let firstInvalid = null
+            fileInputs.forEach((fileInput) => {
+                const isValid = (
+                    !fileInput.files
+                    || !fileInput.files.length
+                    || fileInput.files[0].size <= parseInt(fileInput.dataset.maxsize , 10)
+                )
+                if (!isValid) {
+                    warnFileSize(fileInput)
+                    if (!firstInvalid) firstInvalid = fileInput
+                }
+            })
+            if (firstInvalid) {
+                event.preventDefault()
+                if (typeof event.stopImmediatePropagation === "function") {
+                    event.stopImmediatePropagation()
+                } else if (typeof event.stopPropagation === "function") {
+                    event.stopPropagation()
+                }
+                firstInvalid.focus()
+            }
+        })
+    }
 }
 
 const isVisible = (element) => {

@@ -21,6 +21,7 @@ from rest_framework import serializers
 from eventyay.api.serializers.fields import (
     ListMultipleChoiceField,
     UploadedFileField,
+    UploadedFileOrURLField,
 )
 from eventyay.api.serializers.i18n import I18nField, I18nURLField
 from eventyay.base.configurations.lazy_i18n_string_list_base import (
@@ -88,6 +89,10 @@ DEFAULT_SETTINGS = {
         ),
     },
     'system_question_order': {
+        'default': {},
+        'type': dict,
+    },
+    'system_question_product_overrides': {
         'default': {},
         'type': dict,
     },
@@ -209,7 +214,9 @@ DEFAULT_SETTINGS = {
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
             label=_('E-mail'),
-            help_text=_('Ask for an email address per order. The order confirmation will be sent to this email address.'),
+            help_text=_(
+                'Ask for an email address per order. The order confirmation will be sent to this email address.'
+            ),
         ),
     },
     'order_email_required': {
@@ -896,7 +903,7 @@ DEFAULT_SETTINGS = {
             required=True,
             label=_('Active languages'),
             help_text=_(
-                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                'Users will be able to use eventyay in these languages, and you will be able to provide all texts in '
                 "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
                 "event's default language instead."
             ),
@@ -1287,7 +1294,7 @@ DEFAULT_SETTINGS = {
             choices=AllowModifications.choices
         ),
         'form_kwargs': dict(
-            label=_("Allow customers to modify their information"),
+            label=_('Allow customers to modify their information'),
             widget=forms.RadioSelect,
             choices=AllowModifications.choices
         ),
@@ -1299,8 +1306,10 @@ DEFAULT_SETTINGS = {
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
             label=_('Allow attendees to modify their information after they checked in.'),
-            help_text=_('By default, no more modifications are possible for an order as soon as '
-                   'one of the tickets in the order has been checked in.')
+            help_text=_(
+                'By default, no more modifications are possible for an order as soon as '
+                'one of the tickets in the order has been checked in.'
+            ),
         ),
     },
     'last_order_modification_date': {
@@ -1315,15 +1324,6 @@ DEFAULT_SETTINGS = {
                 'answers to questions. If you use the event series feature and an order contains tickets for '
                 'multiple event dates, the earliest date will be used.'
             ),
-        ),
-    },
-    'change_allow_user_variation': {
-        'default': 'False',
-        'type': bool,
-        'form_class': forms.BooleanField,
-        'serializer_class': serializers.BooleanField,
-        'form_kwargs': dict(
-            label=_('Customers can change the variation of the products they purchased'),
         ),
     },
     'change_allow_user_price': {
@@ -2145,7 +2145,7 @@ Your {event} team"""
                 'We recommend an image at least 1170 px wide and 120 px in height for best results.'
             ),
         ),
-        'serializer_class': UploadedFileField,
+        'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
@@ -2165,7 +2165,7 @@ Your {event} team"""
                 'We recommend not using small details as it will be resized on smaller screens.'
             ),
         ),
-        'serializer_class': UploadedFileField,
+        'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
@@ -2384,6 +2384,8 @@ Your {event} team"""
         ),
     },
     'order_import_settings': {'default': '{}', 'type': dict},
+    'speaker_import_settings': {'default': '{}', 'type': dict},
+    'submission_import_settings': {'default': '{}', 'type': dict},
     'organizer_info_text': {
         'default': '',
         'type': LazyI18nString,

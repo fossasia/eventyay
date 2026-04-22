@@ -12,8 +12,7 @@
       {% if can_confirm %}
         <div class='alert alert-info'>
           <p>
-            {{ confirmation_message }}
-            <a href="mailto:{{ confirmation_email }}">{{ confirmation_email }}</a>
+            {{ confirmation_message|safe }}
           </p>
         </div>
 
@@ -27,7 +26,7 @@
               {{ _('Confirm') }}
             </button>
 
-            <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-white'>
+            <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn bg-white text-gray-700 border border-gray-300 rounded px-4 py-2 hover:bg-gray-100 hover:text-gray-900 transition'>
               <i class='fa fa-times'></i>
               {{ _('Cancel') }}
             </a>

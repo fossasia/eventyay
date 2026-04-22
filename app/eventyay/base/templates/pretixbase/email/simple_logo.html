@@ -197,15 +197,22 @@
     <table width="600"><tr><td align="center"
     <![endif]-->
     <table class="layout" width="600" border="0" cellspacing="0">
-        {% if event.settings.logo_image %}
+        {% if event.visible_header_image_url %}
             <!--[if !mso]><!-- -->
             <tr>
                 <td style="line-height: 0;" align="center" class="logo">
-                    {% if event.settings.logo_image|thumb:'5000x120'|first == '/' %}
-                        <img src="{{ site_url }}{{ event.settings.logo_image|thumb:'5000x120' }}" alt="{{ event.name }}"
-                             style="height: auto; max-width: 100%;" />
+                    {% if event.visible_header_image_file %}
+                        {% with header_thumb=event.visible_header_image_file|thumb:'5000x120' %}
+                            {% if header_thumb|first == '/' %}
+                                <img src="{{ site_url }}{{ header_thumb }}" alt="{{ event.name }}"
+                                     style="height: auto; max-width: 100%;" />
+                            {% else %}
+                                <img src="{{ header_thumb }}" alt="{{ event.name }}"
+                                     style="height: auto; max-width: 100%;" />
+                            {% endif %}
+                        {% endwith %}
                     {% else %}
-                        <img src="{{ event.settings.logo_image|thumb:'5000x120' }}" alt="{{ event.name }}"
+                        <img src="{{ event.visible_header_image_url }}" alt="{{ event.name }}"
                              style="height: auto; max-width: 100%;" />
                     {% endif %}
                 </td>

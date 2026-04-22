@@ -173,14 +173,15 @@ class DirectionForm(forms.Form):
 class ReviewAssignmentForm(forms.Form):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
+        review_teams = self.event.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True)).distinct()
         self.reviewers = (
-            User.objects.filter(teams__in=self.event.teams.filter(is_reviewer=True)).order_by('fullname').distinct()
+            User.objects.filter(teams__in=review_teams).order_by('fullname').distinct()
         ).prefetch_related('assigned_reviews', 'teams', 'teams__limit_tracks')
         self.submissions = (
             self.event.submissions.order_by('title').select_related('track').prefetch_related('assigned_reviewers')
         )
         self.reviewers_by_track = defaultdict(set)
-        for team in self.event.teams.filter(is_reviewer=True).prefetch_related('members', 'limit_tracks'):
+        for team in review_teams.prefetch_related('members', 'limit_tracks'):
             if team.limit_tracks.exists():
                 for track in team.limit_tracks.all():
                     self.reviewers_by_track[track].update(team.members.all())
