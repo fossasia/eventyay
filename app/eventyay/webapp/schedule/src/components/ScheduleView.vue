@@ -8,9 +8,11 @@
 			:currentScheduleUrl="resolvedMeta.current_schedule_url || ''",
 			:versions="resolvedMeta.versions || []",
 			:filterGroups="filterGroups",
+			:showRecordingFilter="showRecordingFilter",
+			v-model:recordingFilter="recordingFilter",
 			:favsCount="resolvedFavs.length",
 			:onlyFavs="onlyFavs",
-			:hasActiveFilters="onlyFavs || activeFilterCount > 0",
+			:hasActiveFilters="onlyFavs || activeFilterCount > 0 || recordingFilter !== 'all'",
 			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="resolvedSchedule.timezone",
@@ -20,13 +22,19 @@
 			:days="computedDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
+			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
+			:sortOptions="sortOptions",
+			v-model:sortBy="internalSortBy",
+			v-model:includeRoomSortKey="sortIncludeRoom",
+			v-model:includeDateSortKey="sortIncludeDate",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone",
-			@toggleSessionsMode="sessionsMode = !sessionsMode")
+			@toggleSessionsMode="sessionsMode = !sessionsMode",
+			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 				:sessions="filteredSessions",
@@ -39,6 +47,9 @@
 				:locale="locale",
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
+				:showFavCount="showFavCountOnCalendar",
+				:density="'default'",
+				:timeDensityMinutes="timeDensityMinutes",
 				@changeDay="setCurrentDay",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -52,8 +63,12 @@
 				:locale="locale",
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
-				:sortBy="sortBy",
+				:showFavCount="showFavCountOnList",
+				:sortBy="effectiveSortBy",
+				:includeRoomSortKey="sortIncludeRoom",
+				:includeDateSortKey="sortIncludeDate",
 				:showBreaks="!linearOnly && !sessionsMode",
+				:density="'default'",
 				@changeDay="dayScrolled",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -68,7 +83,25 @@ import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
-import { getLocalizedString, isProperSession } from '../utils'
+import { getLocalizedString, getSessionTypeLabel, isProperSession } from '../utils'
+
+function normalizeLocaleCode (code) {
+	if (!code) return ''
+	return code.toString().trim().toLowerCase().replace(/_/g, '-')
+}
+
+function localePrimary (code) {
+	const normalized = normalizeLocaleCode(code)
+	return normalized.split('-')[0] || normalized
+}
+
+function localesMatch (filterValue, sessionValue) {
+	const a = normalizeLocaleCode(filterValue)
+	const b = normalizeLocaleCode(sessionValue)
+	if (!a || !b) return false
+	if (a === b) return true
+	return localePrimary(a) === localePrimary(b)
+}
 
 export default {
 	name: 'ScheduleView',
@@ -77,6 +110,7 @@ export default {
 		scheduleData: { default: null },
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
+		loggedIn: { default: false },
 		scheduleExporters: { default: () => [] },
 		scheduleMetaData: { default: () => ({}) }
 	},
@@ -98,7 +132,7 @@ export default {
 		},
 		sortBy: {
 			type: String,
-			default: 'room'
+			default: 'title'
 		},
 		exporters: {
 			type: Array,
@@ -115,6 +149,19 @@ export default {
 			userTimezone: null,
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
+			recordingFilter: 'all',
+			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
+			internalSortBy: this.sortBy || 'title',
+			sortIncludeRoom: false,
+			sortIncludeDate: (() => {
+				try {
+					const stored = localStorage.getItem('schedule-include-datetime')
+					if (stored === null) return true
+					return stored === 'true'
+				} catch {
+					return true
+				}
+			})(),
 			filterState: {
 				tracks: [],
 				rooms: [],
@@ -153,6 +200,14 @@ export default {
 		},
 		scheduleReady() {
 			return !!(this.resolvedSchedule && this.enrichedSessions.length)
+		},
+		showFavCountOnCalendar() {
+			const flags = this.scheduleData?.schedule?.feature_flags || {}
+			return !!(this.loggedIn && flags.session_popularity_enabled && flags.session_popularity_show_on_calendar)
+		},
+		showFavCountOnList() {
+			const flags = this.scheduleData?.schedule?.feature_flags || {}
+			return !!(this.loggedIn && flags.session_popularity_enabled && flags.session_popularity_show_on_list)
 		},
 		hasError() {
 			return !!(this.errorLoading || this.scheduleData?.errorLoading)
@@ -199,6 +254,17 @@ export default {
 				}))
 				.sort((a, b) => a.start.diff(b.start))
 		},
+		showRecordingFilter() {
+			const sessions = this.enrichedSessions || []
+			let hasRecorded = false
+			let hasNotRecorded = false
+			for (const s of sessions) {
+				if (s?.do_not_record === true) hasNotRecorded = true
+				else if (s?.do_not_record === false) hasRecorded = true
+				if (hasRecorded && hasNotRecorded) return true
+			}
+			return false
+		},
 		filteredSessions() {
 			let sessions = this.enrichedSessions
 			// In linear-only (sessions) mode, filter out breaks
@@ -207,6 +273,13 @@ export default {
 			}
 			if (this.onlyFavs) {
 				sessions = sessions.filter(s => this.resolvedFavs.includes(s.id))
+			}
+			if (this.showRecordingFilter) {
+				if (this.recordingFilter === 'yes') {
+					sessions = sessions.filter(s => s?.do_not_record === false)
+				} else if (this.recordingFilter === 'no') {
+					sessions = sessions.filter(s => s?.do_not_record === true)
+				}
 			}
 			const selectedTracks = this.filterState.tracks.filter(t => t.selected).map(t => t.value)
 			const selectedRooms = this.filterState.rooms.filter(r => r.selected).map(r => r.value)
@@ -227,7 +300,12 @@ export default {
 				})
 			}
 			if (selectedLanguages.length) {
-				sessions = sessions.filter(s => s.content_locale && selectedLanguages.includes(s.content_locale))
+				const fallbackLocale = this.resolvedSchedule?.content_locales?.[0] || null
+				sessions = sessions.filter(s => {
+					const sessionLocale = s.content_locale || fallbackLocale
+					if (!sessionLocale) return false
+					return selectedLanguages.some(sel => localesMatch(sel, sessionLocale))
+				})
 			}
 			if (this.searchQuery) {
 				const q = this.searchQuery.toLowerCase()
@@ -260,7 +338,11 @@ export default {
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
-			return days.sort((a, b) => a.diff(b))
+			const sortedDays = days.sort((a, b) => a.diff(b))
+			if ((this.linearOnly || this.sessionsMode) && !this.sortIncludeDate && ['title', 'title_desc'].includes(this.effectiveSortBy)) {
+				return sortedDays.length ? [sortedDays[0]] : []
+			}
+			return sortedDays
 		},
 		filterGroups() {
 			const groups = [
@@ -284,9 +366,36 @@ export default {
 		},
 		showGrid() {
 			return !this.linearOnly && this.scrollParentWidth > 710
+		},
+		popularityFeatureEnabled() {
+			return !!this.resolvedSchedule?.feature_flags?.session_popularity_enabled
+		},
+		sortOptions() {
+			const options = ['title', 'title_desc']
+			if (this.loggedIn && this.popularityFeatureEnabled) options.push('popularity')
+			return options
+		},
+		effectiveSortBy() {
+			return this.sortOptions.includes(this.internalSortBy) ? this.internalSortBy : 'title'
 		}
 	},
 	watch: {
+		recordingFilter() {
+			this.writeRecordingQueryParam()
+		},
+		sortIncludeDate() {
+			try {
+				localStorage.setItem('schedule-include-datetime', String(this.sortIncludeDate))
+			} catch {
+				// ignore localStorage access errors
+			}
+		},
+		sortBy: {
+			handler(val) {
+				if (val && val !== this.internalSortBy) this.internalSortBy = val
+			},
+			immediate: true
+		},
 		resolvedSchedule: {
 			handler(val) {
 				if (val) this.buildFilterState()
@@ -297,6 +406,7 @@ export default {
 	created() {
 		this.userTimezone = moment.tz.guess()
 		this.currentTimezone = localStorage.getItem('userTimezone') || this.timezone || this.scheduleData?.timezone || this.userTimezone
+		this.readRecordingQueryParam()
 	},
 	mounted() {
 		this.onResize()
@@ -310,6 +420,40 @@ export default {
 		this._resizeObserver?.disconnect()
 	},
 	methods: {
+		setTimeDensityMinutes(minutes) {
+			const parsedMinutes = Number(minutes)
+			const fallbackMinutes = 30
+			const validMinutes = Number.isFinite(parsedMinutes) && parsedMinutes > 0 ? parsedMinutes : fallbackMinutes
+			this.timeDensityMinutes = validMinutes
+			try {
+				localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
+			} catch {
+				// ignore localStorage access errors
+			}
+		},
+		readRecordingQueryParam() {
+			try {
+				const url = new URL(window.location.href)
+				const value = url.searchParams.get('recording')
+				if (value === 'yes' || value === 'no' || value === 'all') {
+					this.recordingFilter = value
+				}
+			} catch {
+				// ignore invalid URL contexts (e.g. non-browser env)
+			}
+		},
+		writeRecordingQueryParam() {
+			try {
+				const url = new URL(window.location.href)
+				const value = (this.recordingFilter === 'yes' || this.recordingFilter === 'no' || this.recordingFilter === 'all')
+					? this.recordingFilter
+					: 'all'
+				url.searchParams.set('recording', value)
+				window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+			} catch {
+				// ignore invalid URL contexts
+			}
+		},
 		buildFilterState() {
 			const schedule = this.resolvedSchedule
 			if (!schedule) return
@@ -330,7 +474,7 @@ export default {
 			for (const talk of (schedule.talks || [])) {
 				const st = talk.session_type
 				if (!st) continue
-				const label = typeof st === 'object' ? (st[lang] || st.en || Object.values(st)[0]) : st
+				const label = getSessionTypeLabel(st)
 				if (label && !typeSet.has(label)) {
 					typeSet.add(label)
 					types.push({ value: label, label, selected: false })
@@ -378,12 +522,14 @@ export default {
 			this.currentDay = dayStr
 		},
 		toggleFavs() {
+			if (!this.loggedIn) return
 			this.onlyFavs = !this.onlyFavs
 			if (this.onlyFavs) this.resetFilters()
 		},
 		resetAllFilters() {
 			this.onlyFavs = false
 			this.resetFilters()
+			this.recordingFilter = 'all'
 		},
 		resetFilters() {
 			for (const group of Object.values(this.filterState)) {
@@ -397,10 +543,12 @@ export default {
 			localStorage.setItem('userTimezone', this.currentTimezone)
 		},
 		onFav(id) {
+			if (!this.loggedIn) return
 			if (this.scheduleFav) this.scheduleFav(id)
 			this.$emit('fav', id)
 		},
 		onUnfav(id) {
+			if (!this.loggedIn) return
 			if (this.scheduleUnfav) this.scheduleUnfav(id)
 			this.$emit('unfav', id)
 		},
@@ -417,6 +565,10 @@ export default {
 	flex-direction: column
 	min-height: 0
 	min-width: 0
+	font-size: 14px
+	color: rgb(13, 15, 16)
+	--pretalx-clr-text: rgb(13, 15, 16)
+	overflow: hidden
 	&:fullscreen
 		background: #fff
 		.c-schedule-toolbar
@@ -428,7 +580,7 @@ export default {
 		overflow: auto
 		// The toolbar sits outside this scroll container, so reset
 		// the sticky offset to cancel the +40px baked into GridSchedule.
-		--pretalx-sticky-top-offset: -40px
+		--pretalx-sticky-top-offset: calc(-40px - var(--pretalx-version-warning-height, 0px))
 	.schedule-error
 		padding: 32px
 		text-align: center

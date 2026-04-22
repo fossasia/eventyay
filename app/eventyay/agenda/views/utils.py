@@ -1,26 +1,29 @@
 import hashlib
+import json
+import logging
 import random
 import string
-import logging
-from datetime import datetime, timezone as dt_timezone
+from datetime import UTC, datetime
 
 from django.contrib import messages
 from django.core import signing
 from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
-from django.urls import reverse, NoReverseMatch
-from django.utils.encoding import force_str
-from django.utils.translation import gettext_lazy as _
-from django.utils.translation import activate
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
+from django.utils.encoding import force_str
+from django.utils.translation import activate
+from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
 from eventyay.common.text.path import safe_filename
 from eventyay.schedule.exporters import FavedICalExporter
+from eventyay.talk_rules.submission import are_featured_submissions_visible
+
 
 # Same escaping Django applies inside json_script to prevent XSS in <script> tags.
-JSON_SCRIPT_ESCAPES = {ord(">"): "\\u003E", ord("<"): "\\u003C", ord("&"): "\\u0026"}
+JSON_SCRIPT_ESCAPES = {ord('>'): '\\u003E', ord('<'): '\\u003C', ord('&'): '\\u0026'}
 
 
 def escape_json_for_script(json_str: str) -> str:
@@ -28,7 +31,37 @@ def escape_json_for_script(json_str: str) -> str:
     return json_str.translate(JSON_SCRIPT_ESCAPES)
 
 
+def build_enriched_schedule_json(request: HttpRequest) -> str:
+    """Serialize the current schedule for inline first-party agenda views.
+
+    Some public pages, such as featured talk pages, remain accessible even when the
+    standalone widget JSON endpoint is intentionally hidden. Those pages need a
+    self-contained payload instead of depending on ``widgets/schedule.json``.
+    """
+
+    schedule = request.event.current_schedule
+    if not schedule:
+        return '{}'
+
+    data = schedule.build_data(
+        enrich=True,
+        include_featured_speaker_metadata=are_featured_submissions_visible(request.user, request.event),
+    )
+    return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+
+
+def is_email_like(value: str) -> bool:
+    value = (value or '').strip()
+    if '@' not in value:
+        return False
+    local_part, _, domain = value.partition('@')
+    if not local_part or not domain:
+        return False
+    return True
+
+
 logger = logging.getLogger(__name__)
+
 
 def load_starred_ics_token(token: str, *, event=None):
     """Validate and decode a starred-ICS token.
@@ -53,7 +86,7 @@ def load_starred_ics_token(token: str, *, event=None):
                 return None, None
         user_id = value['user_id']
         exp_ts = int(value['exp'])
-        expiry_dt = datetime.fromtimestamp(exp_ts, tz=dt_timezone.utc)
+        expiry_dt = datetime.fromtimestamp(exp_ts, tz=UTC)
         if expiry_dt <= timezone.now():
             return None, None
         return user_id, expiry_dt
@@ -145,11 +178,19 @@ def build_public_schedule_exporters(event, version=None):
                 all_exporters.append(exporter)
 
     order = {
-        'google-calendar': 0, 'webcal': 1,
-        'schedule.ics': 10, 'schedule.json': 11, 'schedule.xml': 12, 'schedule.xcal': 13,
+        'google-calendar': 0,
+        'webcal': 1,
+        'schedule.ics': 10,
+        'schedule.json': 11,
+        'schedule.xml': 12,
+        'schedule.xcal': 13,
         'faved.ics': 14,
-        'my-google-calendar': 100, 'my-webcal': 101,
-        'schedule-my.ics': 110, 'schedule-my.json': 111, 'schedule-my.xml': 112, 'schedule-my.xcal': 113,
+        'my-google-calendar': 100,
+        'my-webcal': 101,
+        'schedule-my.ics': 110,
+        'schedule-my.json': 111,
+        'schedule-my.xml': 112,
+        'schedule-my.xcal': 113,
     }
     all_exporters.sort(key=lambda e: (order.get(e.identifier, 50), force_str(e.verbose_name), e.identifier))
 
@@ -165,13 +206,15 @@ def build_public_schedule_exporters(event, version=None):
             url = reverse(view_name, kwargs={**export_kwargs, 'name': exporter.identifier})
         except NoReverseMatch:
             continue
-        result.append({
-            'identifier': exporter.identifier,
-            'verbose_name': force_str(exporter.verbose_name),
-            'icon': getattr(exporter, 'icon', ''),
-            'export_url': url,
-            'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
-        })
+        result.append(
+            {
+                'identifier': exporter.identifier,
+                'verbose_name': force_str(exporter.verbose_name),
+                'icon': getattr(exporter, 'icon', ''),
+                'export_url': url,
+                'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
+            }
+        )
     return result
 
 
@@ -214,7 +257,7 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
             exporter.talk_ids = request.GET.get('talks').split(',')
         else:
             return HttpResponseRedirect(request.event.urls.login)
-    if token and "-my" in exporter.identifier:
+    if token and '-my' in exporter.identifier:
         user_id = parse_ics_token(token, event=request.event)
         if not user_id:
             return
@@ -226,7 +269,7 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         )
         if talk_ids:
             exporter.talk_ids = talk_ids
-    elif "-my" in exporter.identifier:
+    elif '-my' in exporter.identifier:
         talk_ids = list(
             SubmissionFavourite.objects.filter(
                 user_id=request.user.id,

@@ -4,6 +4,36 @@
 {% load order_overview %}
 {% load static %}
 {% block title %}{% trans "Data export" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            var paidOnly = $('#id_orderlist-paid_only');
+            var approvalPendingOnly = $('#id_orderlist-approval_pending_only');
+            var includePaymentAmounts = $('#id_orderlist-include_payment_amounts');
+
+            function updateDisabledState($field, disabled) {
+                $field.prop('disabled', disabled);
+                if (disabled) {
+                    $field.prop('checked', false);
+                }
+                $field.closest('.form-group, .form-field-boundary').toggleClass('disabled', disabled);
+            }
+
+            function syncOrderExportFilters() {
+                updateDisabledState(approvalPendingOnly, paidOnly.prop('checked'));
+                updateDisabledState(paidOnly, approvalPendingOnly.prop('checked'));
+                updateDisabledState(includePaymentAmounts, approvalPendingOnly.prop('checked'));
+            }
+
+            if (paidOnly.length && approvalPendingOnly.length && includePaymentAmounts.length) {
+                syncOrderExportFilters();
+                paidOnly.on('change', syncOrderExportFilters);
+                approvalPendingOnly.on('change', syncOrderExportFilters);
+            }
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">

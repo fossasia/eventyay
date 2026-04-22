@@ -100,6 +100,11 @@ class ImageInput(ClearableBasenameFileInput):
 class MarkdownWidget(Textarea):
     template_name = 'common/widgets/markdown.html'
 
+    def __init__(self, attrs=None):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-markdown-field', 'true')
+        super().__init__(attrs=attrs)
+
 
 class EnhancedSelectMixin(Select):
     # - add the "class: enhanced" attribute to the select widget

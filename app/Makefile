@@ -3,7 +3,7 @@ production: localecompile staticfiles compress
 LNGS:=`find eventyay/locale/ -mindepth 1 -maxdepth 1 -type d -printf "-l %f "`
 
 localecompile:
-	./manage.py compilemessages
+	./manage.py compilemessages --ignore ".venv"
 
 localegen:
 	./manage.py makemessages --keep-pot --ignore "eventyay/helpers/*" $(LNGS)

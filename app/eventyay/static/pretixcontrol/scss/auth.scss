@@ -47,6 +47,53 @@ footer {
 	p:last-child {
 		margin-bottom: 20px;
 	}
+
+	.login-separator {
+		align-items: center;
+		display: flex;
+		gap: 12px;
+		margin: 1em 0;
+		text-align: center;
+
+		&::before,
+		&::after {
+			border-top: 1px solid rgba(33, 133, 208, 0.2);
+			content: "";
+			flex: 1;
+		}
+	}
+
+	.login-separator-label {
+		color: #6c7a89;
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.login-options-secondary-group {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.login-options-primary-first {
+		.login-option-secondary {
+			background: #fff;
+			border: 1px solid rgba(33, 133, 208, 0.3);
+			box-shadow: none;
+			color: #2f6ea5;
+			font-weight: 400;
+			margin-bottom: 0;
+
+			&:hover,
+			&:focus {
+				background: #f7fbff;
+				border-color: rgba(33, 133, 208, 0.45);
+				color: #245983;
+			}
+		}
+	}
 }
 
 .container > .alert {

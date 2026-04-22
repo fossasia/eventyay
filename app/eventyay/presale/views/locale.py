@@ -7,6 +7,7 @@ from django.views.generic import View
 
 from eventyay.base.models.event import Event
 from eventyay.common.utils.language import (
+    get_event_enforce_ui_language,
     get_event_enforce_ui_language_cookie_name,
     get_event_language_cookie_name,
     strict_match_language,
@@ -121,7 +122,7 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
                 enforce_active = (
                     enforce_ui_language == '1'
                     if enforce_ui_language is not None
-                    else request.COOKIES.get(enforce_cookie_name, '0') == '1'
+                    else get_event_enforce_ui_language(request.COOKIES, event.slug, event.organizer.slug)
                 )
                 if enforce_active:
                     linked_ui_language = strict_match_language(locale, ui_supported)

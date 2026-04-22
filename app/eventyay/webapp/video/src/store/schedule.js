@@ -36,6 +36,25 @@ function getApiBase () {
 	return config?.api?.base || ''
 }
 
+// Listen for cross-tab localStorage changes so favs stay in sync when the
+// user stars/unstars sessions in the schedule (agenda) tab.
+let _storageListenerBound = false
+function bindStorageListener (state) {
+	if (_storageListenerBound) return
+	_storageListenerBound = true
+	const key = getFavStorageKey()
+	window.addEventListener('storage', (e) => {
+		if (e.key !== key) return
+		if (e.newValue === null) {
+			state.favs = []
+			return
+		}
+		try {
+			state.favs = JSON.parse(e.newValue) || []
+		} catch { /* ignore malformed data */ }
+	})
+}
+
 export default {
 	namespaced: true,
 	state: {
@@ -78,6 +97,7 @@ export default {
 					title: session.title,
 					abstract: session.abstract,
 					description: session.description,
+					content_locale: session.content_locale,
 					do_not_record: session.do_not_record,
 					url: session.url,
 					start: moment.tz(session.start, rootState.userTimezone),
@@ -173,7 +193,7 @@ export default {
 		}
 	},
 	actions: {
-		async fetch ({ state }) {
+		async fetch ({ state, dispatch }) {
 			try {
 				state.errorLoading = null
 				if (window.eventyay?.schedule) {
@@ -185,6 +205,8 @@ export default {
 			} catch (error) {
 				state.errorLoading = error
 			}
+			// Load favourites from server / localStorage after schedule data is ready
+			dispatch('loadFavs')
 		},
 		async fav ({ state, rootState }, id) {
 			if (!state.favs.includes(id)) {
@@ -229,6 +251,8 @@ export default {
 		async loadFavs ({ state, rootState }) {
 			const localFavs = loadFavsFromStorage()
 			state.favs = localFavs
+			// Keep favs in sync when the schedule tab updates localStorage
+			bindStorageListener(state)
 			const apiBase = getApiBase()
 			if (apiBase && rootState.user) {
 				try {

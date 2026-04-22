@@ -21,6 +21,11 @@ from eventyay.base.models import (
     QuestionOption,
 )
 from eventyay.base.services.cart import get_fees
+from eventyay.base.services.system_questions import (
+    get_enabled_system_question_fields,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.signals import question_form_fields
@@ -114,12 +119,29 @@ class CartMixin:
             for r, response in sorted(responses, key=lambda r: str(r[0])):
                 if response:
                     for key, value in response.items():
+                        answer = data.get('question_form_data', {}).get(key)
+                        if hasattr(value, 'get_display_value'):
+                            answer = value.get_display_value(answer)
                         pos_additional_fields[cp.pk].append(
                             {
-                                'answer': data.get('question_form_data', {}).get(key),
+                                'answer': answer,
                                 'question': value.label,
                             }
                         )
+
+        base_states = get_system_question_base_states(self.request.event)
+        product_overrides = get_system_question_product_overrides(self.request.event)
+        enabled_system_fields_by_product_id: dict[int, set[str]] = {}
+
+        def get_enabled_system_fields_for_product(product) -> set[str]:
+            if product.pk not in enabled_system_fields_by_product_id:
+                enabled_system_fields_by_product_id[product.pk] = get_enabled_system_question_fields(
+                    self.request.event,
+                    product,
+                    base_states=base_states,
+                    product_overrides=product_overrides,
+                )
+            return enabled_system_fields_by_product_id[product.pk]
 
         # Group products of the same variation
         # We do this by list manipulations instead of a GROUP BY query, as
@@ -136,11 +158,8 @@ class CartMixin:
                 else:
                     i = pos.pk
 
-            has_attendee_data = pos.product.admission and (
-                self.request.event.settings.attendee_names_asked
-                or self.request.event.settings.attendee_emails_asked
-                or pos_additional_fields.get(pos.pk)
-            )
+            enabled_system_fields = get_enabled_system_fields_for_product(pos.product)
+            has_attendee_data = pos.product.admission and (enabled_system_fields or pos_additional_fields.get(pos.pk))
 
             addon_penalty = 1 if pos.addon_to_id else 0
 
@@ -194,6 +213,13 @@ class CartMixin:
             group.has_questions = answers and k[0] != ''
             if not hasattr(group, 'tax_rule'):
                 group.tax_rule = group.product.tax_rule
+
+            enabled_system_fields = get_enabled_system_fields_for_product(group.product)
+            group.ask_attendee_name_parts = 'attendee_name_parts' in enabled_system_fields
+            group.ask_attendee_email = 'attendee_email' in enabled_system_fields
+            group.ask_attendee_company = 'company' in enabled_system_fields
+            group.ask_attendee_job_title = 'job_title' in enabled_system_fields
+            group.ask_attendee_address = 'street' in enabled_system_fields
 
             group.bundle_sum = group.price + sum(a.price for a in has_addons[group.pk])
             group.bundle_sum_net = group.net_price + sum(a.net_price for a in has_addons[group.pk])

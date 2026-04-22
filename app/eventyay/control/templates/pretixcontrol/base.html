@@ -244,7 +244,7 @@
                                         </div>
                                     </a>
                                 {% elif request.organizer %}
-                                    <a href="#" class="dropdown-toggle">
+                                    <a href="{% url 'eventyay_common:organizer.dashboard' organizer=request.organizer.slug %}" class="dropdown-toggle">
                                         <span class="fa-stack fa-lg">
                                           <i class="fa fa-circle fa-stack-2x"></i>
                                           <i class="fa fa-group fa-stack-1x fa-inverse"></i>
@@ -386,16 +386,6 @@
                             </strong>
                         </div>
                     {% endif %}
-                    {% if warning_update_check_active %}
-                        <div class="alert alert-info">
-                            <a href="{% url "eventyay_admin:admin.global.update" %}">
-                                {% blocktrans trimmed %}
-                                The system automatically checks for updates in the background.
-                                {% endblocktrans %}
-                            </a>
-                        </div>
-                    {% endif %}
-
                     {% if debug_warning %}
                         <div class="alert alert-danger">
                             {% trans "system is running in debug mode. For security reasons, please never run debug mode on a production instance." %}

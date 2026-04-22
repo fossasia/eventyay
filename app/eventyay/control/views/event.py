@@ -55,7 +55,7 @@ from eventyay.control.forms.event import (
     ConfirmTextFormset,
     EventDeleteForm,
     EventMetaValueForm,
-    EventSettingsForm,
+    GeneralEventSettingsForm,
     EventUpdateForm,
     InvoiceSettingsForm,
     ProductMetaPropertyForm,
@@ -173,7 +173,7 @@ class EventUpdate(
 
     @cached_property
     def sform(self):
-        return EventSettingsForm(
+        return GeneralEventSettingsForm(
             obj=self.object,
             prefix='settings',
             data=self.request.POST if self.request.method == 'POST' else None,
@@ -257,8 +257,13 @@ class EventUpdate(
         product_meta_property_formset_valid = self.product_meta_property_formset.is_valid()
         confirm_texts_formset_valid = self.confirm_texts_formset.is_valid()
 
-        if (form_valid and sform_valid and meta_forms_valid and
-            product_meta_property_formset_valid and confirm_texts_formset_valid):
+        if (
+            form_valid
+            and sform_valid
+            and meta_forms_valid
+            and product_meta_property_formset_valid
+            and confirm_texts_formset_valid
+        ):
             # Timezone processing for presale_start and presale_end (fields in this form)
             # is now handled within form.clean()
             return self.form_valid(form)
@@ -266,15 +271,15 @@ class EventUpdate(
             # Add specific error messages for each form that failed validation
             error_messages = []
             if not form_valid:
-                error_messages.append("Main form validation failed.")
+                error_messages.append('Main form validation failed.')
             if not sform_valid:
-                error_messages.append("Settings form validation failed.")
+                error_messages.append('Settings form validation failed.')
             if not meta_forms_valid:
-                error_messages.append("Meta data form validation failed.")
+                error_messages.append('Meta data form validation failed.')
             if not product_meta_property_formset_valid:
-                error_messages.append("Product meta property form validation failed.")
+                error_messages.append('Product meta property form validation failed.')
             if not confirm_texts_formset_valid:
-                error_messages.append("Confirmation texts form validation failed.")
+                error_messages.append('Confirmation texts form validation failed.')
 
             if error_messages:
                 for msg in error_messages:
@@ -668,7 +673,7 @@ class CancelSettings(EventSettingsViewMixin, EventSettingsFormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
-        
+
         # Check notification settings with fallback for errors
         try:
             ctx['gets_notification'] = self.request.user.notifications_send and (
@@ -698,10 +703,10 @@ class CancelSettings(EventSettingsViewMixin, EventSettingsFormView):
                 'Error checking notification settings for user %s: %s',
                 getattr(self.request.user, 'pk', 'unknown'),
                 str(e),
-                exc_info=True
+                exc_info=True,
             )
             ctx['gets_notification'] = False
-            
+
         return ctx
 
 
@@ -1318,7 +1323,7 @@ class EventDelete(RecentAuthenticationRequiredMixin, EventPermissionRequiredMixi
             return self.get(self.request, *self.args, **self.kwargs)
 
     def get_success_url(self) -> str:
-        return reverse('control:index')
+        return reverse('eventyay_common:dashboard')
 
 
 class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):

@@ -385,6 +385,18 @@ class RoomModule(BaseModule):
                     setattr(self.room, f, s.validated_data[f])
                     update_fields.add(f)
 
+            # When module_config is updated, ensure open-viewer rooms have participant: [] so
+            # implicit participant-role permissions (chat, questions, polls, BBB/join, etc.) work.
+            # Only upgrade viewer: [] rooms missing participant; trait-restricted rooms unchanged.
+            # Skip when the client sent trait_grants so explicit viewer-only configs stay put.
+            if "module_config" in update_fields and "trait_grants" not in body:
+                trait_grants = dict(self.room.trait_grants or {})
+                viewer_is_open = trait_grants.get("viewer") == []
+                if viewer_is_open and "participant" not in trait_grants:
+                    trait_grants["participant"] = []
+                    self.room.trait_grants = trait_grants
+                    update_fields.add("trait_grants")
+
             new = await save_room(
                 self.consumer.event,
                 self.room,
