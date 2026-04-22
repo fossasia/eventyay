@@ -10,7 +10,7 @@
 
   {% include 'orga/includes/tablist.html' %}
 
-  <section role='tabpanel' id='tabpanel-import' aria-labelledby='tab-import' tabindex='0' aria-hidden='false'>
+  <section role='tabpanel' id='tabpanel-import' aria-labelledby='tab-import' tabindex='0' {% if active_tab == 'export' %}aria-hidden='true'{% else %}aria-hidden='false'{% endif %}>
     <p>
       {% blocktranslate trimmed %}
         Upload a CSV file and choose whether the file contains speakers or schedule.
@@ -64,7 +64,7 @@
     </form>
   </section>
 
-  <section role='tabpanel' id='tabpanel-export' aria-labelledby='tab-export' tabindex='0' aria-hidden='true'>
+  <section role='tabpanel' id='tabpanel-export' aria-labelledby='tab-export' tabindex='0' {% if active_tab == 'export' %}aria-hidden='false'{% else %}aria-hidden='true'{% endif %}>
     <p>
       {% blocktranslate trimmed %}
         Choose whether to export speaker data or schedule data, then select fields and format.
