@@ -669,7 +669,8 @@ $(function () {
         var t = moment.tz($(this).attr("data-time"), tzName)
 
         $(this).tooltip({
-            'title': gettext("Time zone:") + " " + tzName
+            'title': gettext("Time zone:") + " " + tzName,
+            'placement': 'bottom'
         });
         if (t.tz(tzName).format() !== t.tz(local_tz).format()) {
             var $add = $("<span>")
@@ -688,6 +689,7 @@ $(function () {
             $add.insertAfter($(this));
             $add.tooltip({
                 'title': gettext("Time zone:") + " " + local_tz,
+                'placement': 'bottom'
             });
         }
     });
