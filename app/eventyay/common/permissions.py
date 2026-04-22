@@ -1,6 +1,7 @@
 import logging
 
 from django.http import HttpRequest
+from django_scopes import scope
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ def user_has_cfp_submissions(request: HttpRequest, event=None) -> bool:
 
     event_pk = event.pk
     if event_pk not in submission_cache:
-        submission_cache[event_pk] = event.submissions.filter(speakers=request.user).exists()
+        with scope(event=event):
+            submission_cache[event_pk] = event.submissions.filter(speakers=request.user).exists()
 
     return submission_cache[event_pk]
