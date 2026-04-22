@@ -279,6 +279,19 @@ class EventPermissionRequired(PermissionRequired):
         return self.request.event
 
 
+class ImportProcessRedirectMixin:
+    import_process_url_name = ''
+    import_page_url_name = ''
+
+    @cached_property
+    def import_redirect_url(self) -> str:
+        """Return the correct import/error page URL based on entry point."""
+        match = getattr(self.request, 'resolver_match', None)
+        if match and match.url_name == self.import_process_url_name:
+            return self.request.event.orga_urls.import_export_settings + '#tab-import'
+        return getattr(self.request.event.orga_urls, self.import_page_url_name)
+
+
 class SensibleBackWizardMixin:
     def post(self, *args, **kwargs):
         """Don't redirect if user presses the prev.

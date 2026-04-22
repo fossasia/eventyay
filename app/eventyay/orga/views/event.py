@@ -591,6 +591,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             'import': _('Import'),
             'export': _('Export'),
         }
+        result['active_tab'] = kwargs.get('active_tab')
         result['import_choices'] = self.IMPORT_CHOICES
         result['import_target'] = kwargs.get('import_target', TargetChoice.SPEAKER)
         result['export_target'] = kwargs.get('export_target', TargetChoice.SPEAKER)
@@ -663,7 +664,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             target = TargetChoice(export_target)
         except ValueError:
             messages.error(self.request, _('Please choose whether to export speakers or schedule.'))
-            context = self.get_context_data(export_target=TargetChoice.SPEAKER)
+            context = self.get_context_data(export_target=TargetChoice.SPEAKER, active_tab='export')
             return self.render_to_response(context, status=400)
 
         if target == TargetChoice.SPEAKER:
@@ -678,6 +679,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
                     export_target=target,
                     speaker_export_form=speaker_export_form,
                     session_export_form=session_export_form,
+                    active_tab='export',
                 )
                 return self.render_to_response(context, status=400)
             result = speaker_export_form.export_data()
@@ -693,6 +695,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
                     export_target=target,
                     speaker_export_form=speaker_export_form,
                     session_export_form=session_export_form,
+                    active_tab='export',
                 )
                 return self.render_to_response(context, status=400)
             result = session_export_form.export_data()
