@@ -664,14 +664,18 @@ $(function () {
     const localTimeFormat = moment.localeData().longDateFormat('LT') || $("body").attr("data-timeformat") || "h:mm A";
     const localDateTimeFormat = moment.localeData().longDateFormat('LLL') || $("body").attr("data-datetimeformat") || "LL h:mm A";
 
+    const initTimezoneTooltip = function($el, title) {
+        $el.tooltip({
+            'title': title,
+            'placement': 'auto bottom'
+        });
+    };
+
     $("span[data-timezone], small[data-timezone]").each(function() {
         var tzName = $(this).attr("data-timezone")
         var t = moment.tz($(this).attr("data-time"), tzName)
 
-        $(this).tooltip({
-            'title': gettext("Time zone:") + " " + tzName,
-            'placement': 'bottom'
-        });
+        initTimezoneTooltip($(this), gettext("Time zone:") + " " + tzName);
         if (t.tz(tzName).format() !== t.tz(local_tz).format()) {
             var $add = $("<span>")
             $add.append($("<span>").addClass("fa fa-globe"))
@@ -687,10 +691,7 @@ $(function () {
                 }
             }
             $add.insertAfter($(this));
-            $add.tooltip({
-                'title': gettext("Time zone:") + " " + local_tz,
-                'placement': 'bottom'
-            });
+            initTimezoneTooltip($add, gettext("Time zone:") + " " + local_tz);
         }
     });
 
