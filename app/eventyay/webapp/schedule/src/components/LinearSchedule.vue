@@ -22,7 +22,7 @@
 </template>
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString } from '../utils'
+import { getLocalizedString, normalizePopularityCount } from '../utils'
 import Session from './Session'
 
 export default {
@@ -186,19 +186,6 @@ export default {
 		}
 	},
 	methods: {
-		getPopularityScore (session) {
-			const rawCount = Number(
-				session?.fav_count
-				?? session?.favorite_count
-				?? session?.favourites_count
-				?? session?.stars
-				?? 0
-			)
-			if (Number.isFinite(rawCount) && rawCount > 0) return rawCount
-			// Fallback for local/session-state stars so sorting still reacts immediately.
-			if (session?.id && this.favs?.includes?.(session.id)) return 1
-			return 0
-		},
 		titleSortKey (session) {
 			const localizedTitle = getLocalizedString(session?.title)
 			return (localizedTitle || '').toString().toLowerCase()
@@ -212,7 +199,12 @@ export default {
 			if (a?.id && !b?.id) return -1
 			if (!a?.id && !b?.id) return 0
 
-			const direction = this.sortBy === 'title_desc' ? -1 : 1
+			if (this.popularitySortEnabled) {
+				const popularityA = normalizePopularityCount(a)
+				const popularityB = normalizePopularityCount(b)
+				const popCmp = popularityB - popularityA
+				if (popCmp !== 0) return popCmp
+			}
 
 			if (this.includeRoomSortKey) {
 				const roomCmp = this.roomSortKey(a).localeCompare(this.roomSortKey(b))
@@ -224,14 +216,7 @@ export default {
 				if (dateCmp !== 0) return dateCmp
 			}
 
-			if (this.popularitySortEnabled) {
-				const popularityA = this.getPopularityScore(a)
-				const popularityB = this.getPopularityScore(b)
-				const popularityDirection = this.sortBy === 'title_desc' ? -1 : 1
-				const popCmp = (popularityB - popularityA) * popularityDirection
-				if (popCmp !== 0) return popCmp
-			}
-
+			const direction = this.sortBy === 'title_desc' ? -1 : 1
 			const titleCmp = this.titleSortKey(a).localeCompare(this.titleSortKey(b))
 			if (titleCmp !== 0) return titleCmp * direction
 

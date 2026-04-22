@@ -41,34 +41,34 @@
 				.split-right
 					template(v-if="activeRooms && activeRooms.length")
 						.header
-							h3 {{ $t('LandingPage:rooms:header') === 'LandingPage:rooms:header' ? 'Active Rooms' : $t('LandingPage:rooms:header') }}
+							h3 {{ $t('LandingPage:rooms:header') }}
 						.active-rooms.active-rooms-list
 							router-link.room-card(v-for="item of activeRooms", :key="item.room.id", :to="{name: 'room', params: {roomId: item.room.id}}")
 								.room-info
 									.room-name {{ item.room.name }}
 									.current-session(v-if="item.session")
-										span.live-badge(v-if="item.isLive") LIVE
+										span.live-badge(v-if="item.isLive") {{ $t('LandingPage:rooms:live') }}
 										span {{ item.session.title }}
 								svg.room-arrow(viewBox="0 0 24 24", stroke="currentColor", stroke-width="2", fill="none")
 									path(d="M5 12h14M12 5l7 7-7 7")
 					.speakers-section(v-if="schedule && schedule.speakers && schedule.speakers.length")
 						.header
-							h3 {{ $t('LandingPage:speakers:header', {speakers: schedule.speakers.length}) === 'LandingPage:speakers:header' ? 'Speakers' : $t('LandingPage:speakers:header', {speakers: schedule.speakers.length}) }}
-							bunt-link-button(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') === 'LandingPage:speakers:link' ? 'More' : $t('LandingPage:speakers:link') }}
+							h3 {{ $t('LandingPage:speakers:header') }}
+							bunt-link-button(:to="{name: 'schedule:speakers'}") {{ $t('LandingPage:speakers:link') }}
 						speakers-list(:hideToolbar="true", :speakers="schedule.speakers")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
+import moment from 'lib/timetravelMoment'
+import config from 'config'
 import Session from '@schedule/components/Session.vue'
 import SpeakersList from '@schedule/components/SpeakersList.vue'
-import config from 'config'
-import moment from 'lib/timetravelMoment'
 import Identicon from 'components/Identicon'
 import MarkdownContent from 'components/MarkdownContent'
 import RichTextContent from 'components/RichTextContent'
 
 export default {
-	components: { MarkdownContent, Session, RichTextContent, SpeakersList },
+	components: { MarkdownContent, Session, RichTextContent, SpeakersList, Identicon },
 	props: {
 		module: Object
 	},

@@ -85,7 +85,7 @@ import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
-import { getLocalizedString, getSessionTypeLabel, isProperSession } from '../utils'
+import { getLocalizedString, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '../utils'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -105,16 +105,6 @@ function localesMatch (filterValue, sessionValue) {
 	return localePrimary(a) === localePrimary(b)
 }
 
-function normalizePopularityCount (session) {
-	const value = Number(
-		session?.fav_count
-		?? session?.favorite_count
-		?? session?.favourites_count
-		?? session?.stars
-		?? 0
-	)
-	return Number.isFinite(value) ? value : 0
-}
 
 export default {
 	name: 'ScheduleView',

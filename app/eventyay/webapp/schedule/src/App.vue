@@ -127,7 +127,7 @@ import SpeakersList from '~/components/SpeakersList'
 import FeaturedSpeakers from '~/components/FeaturedSpeakers'
 import SpeakerDetail from '~/components/SpeakerDetail'
 import TalkDetail from '~/components/TalkDetail'
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -152,16 +152,6 @@ function localesMatch (filterValue, sessionValue) {
 	return localePrimary(a) === localePrimary(b)
 }
 
-function normalizePopularityCount (session) {
-	const value = Number(
-		session?.fav_count
-		?? session?.favorite_count
-		?? session?.favourites_count
-		?? session?.stars
-		?? 0
-	)
-	return Number.isFinite(value) ? value : 0
-}
 
 const markdownIt = MarkdownIt({
 	linkify: false,
