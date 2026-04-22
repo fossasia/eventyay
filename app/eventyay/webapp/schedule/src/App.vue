@@ -275,6 +275,7 @@ export default {
 			forceScrollDay: 0,
 			currentTimezone: null,
 			favs: [],
+			userCode: null,
 			favsReadOnly: false,
 			allTracks: [],
 			allRooms: [],
@@ -570,6 +571,7 @@ export default {
 		const messagesEl = document.querySelector('#pretalx-messages')
 		if (messagesEl) {
 			this.onHomeServer = true
+			this.userCode = messagesEl.dataset.userCode ?? null
 			if (messagesEl.dataset.loggedIn === 'true') {
 				this.loggedIn = true
 			}
@@ -726,6 +728,21 @@ export default {
 		// TODO destroy observers
 	},
 	methods: {
+		getFavStorageKey (userCode = null) {
+			if (this.loggedIn && userCode) return `${this.eventSlug}_${userCode}_favs`
+			return `${this.eventSlug}_favs`
+		},
+		readLocalFavs (storageKey) {
+			const raw = localStorage.getItem(storageKey)
+			if (!raw) return []
+			try {
+				const parsed = JSON.parse(raw)
+				return Array.isArray(parsed) ? parsed : []
+			} catch {
+				localStorage.setItem(storageKey, '[]')
+				return []
+			}
+		},
 		readRecordingQueryParam () {
 			try {
 				const url = new URL(window.location.href)
@@ -804,16 +821,12 @@ export default {
 		},
 		async loadFavs () {
 			if (!this.loggedIn) return []
-			const storageKey = `${this.eventSlug}_favs`
-			const data = localStorage.getItem(storageKey)
-			let localFavs = []
-			if (data) {
-				try {
-					localFavs = JSON.parse(data) || []
-				} catch {
-					localStorage.setItem(storageKey, '[]')
-				}
-			}
+			const userStorageKey = this.getFavStorageKey(this.userCode)
+			const anonymousStorageKey = this.getFavStorageKey(null)
+			const localFavs = [...new Set([
+				...this.readLocalFavs(userStorageKey),
+				...this.readLocalFavs(anonymousStorageKey),
+			])]
 			if (this.loggedIn) {
 				try {
 					const merged = await this.apiRequest(
@@ -822,7 +835,8 @@ export default {
 						localFavs
 					)
 					if (Array.isArray(merged)) {
-						localStorage.removeItem(storageKey)
+						localStorage.setItem(userStorageKey, JSON.stringify(merged))
+						localStorage.removeItem(anonymousStorageKey)
 						return merged
 					}
 				} catch {
