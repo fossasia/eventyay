@@ -140,7 +140,10 @@ onBeforeUnmount(() => {
 .c-rich-text-editor
 	padding-top: 0
 	position: relative
-	height: 30vh
+	min-height: 30vh
+	display: flex
+	flex-direction: column
+	overflow: hidden
 
 	.uploading
 		position: absolute
@@ -159,6 +162,7 @@ onBeforeUnmount(() => {
 		flex-direction: row
 		flex-wrap: wrap
 		padding: 4px
+		flex: 0 0 auto
 		.buttongroup
 			margin-right: 16px
 		.bunt-icon-button
@@ -170,6 +174,10 @@ onBeforeUnmount(() => {
 			background: #f0f0f0
 		.ql-active .bunt-icon
 			color: var(--clr-primary)
+	.editor
+		flex: 1 1 auto
+		min-height: 0
+		overflow-y: auto
 	.ql-hidden
 		display: none
 	.ql-tooltip  /* based on https://github.com/quilljs/quill/blob/develop/assets/snow/tooltip.styl */
