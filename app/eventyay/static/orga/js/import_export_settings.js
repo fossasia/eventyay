@@ -18,6 +18,29 @@ const updateExportPanelVisibility = (wrapper, selectedTarget) => {
     })
 }
 
+const handleSelectAll = (selectAllCheckbox) => {
+    const panel = selectAllCheckbox.closest("[data-export-panel]")
+    if (!panel) {
+        return
+    }
+    panel.querySelectorAll("input[type='checkbox']:not([data-select-all])").forEach((checkbox) => {
+        checkbox.checked = selectAllCheckbox.checked
+    })
+}
+
+const updateSelectAllState = (panel) => {
+    const selectAllCheckbox = panel.querySelector("[data-select-all]")
+    if (!selectAllCheckbox) {
+        return
+    }
+    const checkboxes = Array.from(panel.querySelectorAll("input[type='checkbox']:not([data-select-all])"))
+    if (checkboxes.length === 0) {
+        return
+    }
+    const allChecked = checkboxes.every((checkbox) => checkbox.checked)
+    selectAllCheckbox.checked = allChecked
+}
+
 const addImportExportSettingsHooks = () => {
     const wrapper = document.querySelector("#unified-export")
     if (!wrapper) {
@@ -29,19 +52,37 @@ const addImportExportSettingsHooks = () => {
         return
     }
 
+    // Initialize visibility
     const initialTarget = wrapper.dataset.exportTarget || targetSelect.value || "speaker"
     targetSelect.value = initialTarget
     updateExportPanelVisibility(wrapper, initialTarget)
 
+    // Handle target change
     targetSelect.addEventListener("change", (event) => {
         const target = event.target.value
         updateExportPanelVisibility(wrapper, target)
     })
 
+    // Handle delimiter visibility change
     wrapper.querySelectorAll("[data-export-panel]").forEach((panel) => {
         panel.querySelectorAll("input[type='radio'][name$='-export_format']").forEach((radio) => {
             radio.addEventListener("change", () => updateDelimiterVisibility(panel))
         })
+        // Initialize select all state for each panel
+        updateSelectAllState(panel)
+    })
+
+    // Delegated event listener for checkboxes (Select All logic)
+    wrapper.addEventListener("change", (event) => {
+        const target = event.target
+        if (target.hasAttribute("data-select-all")) {
+            handleSelectAll(target)
+        } else if (target.type === "checkbox") {
+            const panel = target.closest("[data-export-panel]")
+            if (panel) {
+                updateSelectAllState(panel)
+            }
+        }
     })
 }
 

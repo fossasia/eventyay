@@ -117,6 +117,12 @@
 
           <fieldset>
             <legend>{% translate 'Data fields' %}</legend>
+            <div class='d-flex justify-content-end mb-2'>
+              <div class='form-check'>
+                <input type='checkbox' class='form-check-input' id='select-all-speaker' data-select-all>
+                <label class='form-check-label' for='select-all-speaker'>{% translate 'Select all' %}</label>
+              </div>
+            </div>
             {% for field in speaker_export_form.export_fields %}
               {{ field.as_field_group }}
             {% endfor %}
@@ -254,6 +260,12 @@
 
           <fieldset>
             <legend>{% translate 'Data fields' %}</legend>
+            <div class='d-flex justify-content-end mb-2'>
+              <div class='form-check'>
+                <input type='checkbox' class='form-check-input' id='select-all-session' data-select-all>
+                <label class='form-check-label' for='select-all-session'>{% translate 'Select all' %}</label>
+              </div>
+            </div>
             {% for field in session_export_form.export_fields %}
               {{ field.as_field_group }}
             {% endfor %}
