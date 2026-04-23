@@ -30,12 +30,14 @@ bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
 	.editor.rich-text-content(ref="editor")
 	.uploading(v-if="uploading")
 		bunt-progress-circular(size="huge")
+	.upload-error(v-if="uploadError") {{ uploadError }}
 
 </template>
 <script setup>
 /* global ENV_DEVELOPMENT */
 import { ref, markRaw, onMounted, onBeforeUnmount } from 'vue'
 import Quill from 'quill'
+import i18n from 'i18n'
 import BuntTheme from 'lib/quill/BuntTheme'
 import VideoResponsive from 'lib/quill/VideoResponsive'
 import fullWidthFormat from 'lib/quill/fullWidthFormat'
@@ -56,6 +58,7 @@ const editor = ref(null)
 
 const quill = ref(null)
 const uploading = ref(false)
+const uploadError = ref(null)
 
 const onTextchange = (delta, oldContents, source) => {
 	if (quill.value) emit('update:modelValue', quill.value.getContents())
@@ -69,6 +72,12 @@ const onSelectionchange = (range, oldRange, source) => {
 		outline.value.focus()
 	}
 }
+
+onBeforeUnmount(() => {
+	if (!quill.value) return
+	quill.value.off('selection-change', onSelectionchange)
+	quill.value.off('text-change', onTextchange)
+})
 
 onMounted(() => {
 	Quill.register('themes/bunt', BuntTheme, false)
@@ -90,11 +99,12 @@ onMounted(() => {
 							if (fileInput.files != null && fileInput.files[0] != null) {
 								const file = fileInput.files[0]
 
+								uploadError.value = null
 								uploading.value = true
 								api.uploadFilePromise(file, file.name).then(data => {
 									if (data.error) {
-										alert(`Upload error: ${data.error}`)
-										emit('update:modelValue', '')
+										uploadError.value = i18n.t('RichTextEditor:upload:error')
+										console.error('RichTextEditor image upload failed', data.error)
 									} else {
 										const range = instance.getSelection(true)
 										instance.updateContents(new Delta()
@@ -105,9 +115,8 @@ onMounted(() => {
 									}
 									uploading.value = false
 								}).catch(error => {
-									// TODO: better error handling
-									console.log(error)
-									alert(`error: ${error}`)
+									uploadError.value = i18n.t('RichTextEditor:upload:error')
+									console.error('RichTextEditor image upload failed', error)
 									uploading.value = false
 								})
 							}
@@ -172,6 +181,10 @@ onBeforeUnmount(() => {
 			color: var(--clr-primary)
 	.ql-hidden
 		display: none
+	.upload-error
+		color: $clr-danger
+		font-size: 14px
+		margin-top: 8px
 	.ql-tooltip  /* based on https://github.com/quilljs/quill/blob/develop/assets/snow/tooltip.styl */
 		z-index: 1000
 		position: absolute
