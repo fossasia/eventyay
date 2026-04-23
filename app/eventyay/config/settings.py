@@ -377,6 +377,8 @@ talk_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.mod
 SAFE_TICKET_PLUGINS = tuple(m for m in ticket_plugins if m not in {'pretix_pages'})
 
 INSTALLED_APPS = _LIBRARY_APPS + SAFE_TICKET_PLUGINS + _OURS_APPS
+if IS_TESTING:
+    INSTALLED_APPS += ('tests.talk.dummy_app.PluginApp',)
 
 # TODO: What is it for?
 ALL_PLUGINS = sorted(ticket_plugins + talk_plugins)

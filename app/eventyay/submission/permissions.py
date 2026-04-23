@@ -105,7 +105,7 @@ def has_reviewer_access(user, obj):
 
     obj = getattr(obj, "submission", obj)
     if not isinstance(obj, Submission):
-        raise Exception("Incorrect use of reviewer permissions")
+        return False
     if user in obj.assigned_reviewers.all():
         return True
     phase = obj.event.active_review_phase

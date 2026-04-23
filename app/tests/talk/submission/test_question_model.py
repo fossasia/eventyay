@@ -1,9 +1,9 @@
 import pytest
 from django_countries.fields import Country
 from django_scopes import scope
-from pretalx.submission.forms import TalkQuestionsForm
-from pretalx.submission.models import Answer, Question
 
+from eventyay.base.models import Answer, TalkQuestion as Question
+from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.helpers.countries import get_country_name
 
 
@@ -155,8 +155,7 @@ def test_country_answer_saved_and_round_trips(submission):
         )
         assert form.is_valid()
         cleaned = form.cleaned_data[f'question_{question.pk}']
-        assert isinstance(cleaned, Country)
-        assert cleaned.code == 'DE'
+        assert cleaned == 'DE'
         form.save()
 
         answer = submission.answers.get(question=question)

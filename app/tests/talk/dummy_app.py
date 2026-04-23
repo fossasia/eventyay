@@ -1,8 +1,11 @@
+import pathlib
+
 from django.apps import AppConfig
 
 
 class PluginApp(AppConfig):
     name = "tests"
+    path = str(pathlib.Path(__file__).parent.parent)
     verbose_name = "test app for pretalx"
 
     def ready(self):
@@ -11,7 +14,7 @@ class PluginApp(AppConfig):
     def is_available(self, event):
         return event != "totally hidden"
 
-    class PretalxPluginMeta:
+    class EventyayPluginMeta:
         name = "test plugin for pretalx"
         author = "Tobias Kunze"
         description = "Helps to test plugin related things for pretalx"
