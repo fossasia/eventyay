@@ -51,10 +51,17 @@ from eventyay.base.models import (
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue
 from eventyay.base.services.quotas import QuotaAvailability
+from eventyay.base.services.system_questions import (
+    STATE_DO_NOT_ASK,
+    SYSTEM_QUESTION_FIELDS,
+    get_enabled_system_question_fields,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.base.services.tickets import invalidate_cache
 from eventyay.base.services.waitinglist import assign_automatically
 from eventyay.base.signals import quota_availability
-from eventyay.control.forms.event import OrderFormSettingsForm
+from eventyay.control.forms.event import OrderFormDefaultFieldSettingsForm, OrderFormSettingsForm
 from eventyay.control.forms.product import (
     CategoryForm,
     DescriptionForm,
@@ -1699,7 +1706,8 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
 
         # Build sorted field order list for template rendering
         system_question_order = self.request.event.settings.system_question_order or {}
-        system_fields = ['attendee_name_parts', 'attendee_email', 'company', 'job_title', 'street']
+        system_fields = list(SYSTEM_QUESTION_FIELDS)
+        admission_products = list(self.request.event.products.filter(admission=True).order_by('position', 'id'))
 
         # Create questions lookup map for O(1) access
         questions_by_id = {str(q.id): q for q in questions}
@@ -1741,6 +1749,32 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
                     ordered_fields.append(OrderedField(id=field_id, type='question', question=q))
 
         ctx['ordered_fields'] = ordered_fields
+        base_states = get_system_question_base_states(self.request.event)
+        product_overrides = get_system_question_product_overrides(self.request.event)
+        enabled_system_fields_by_product_id = {
+            product.pk: get_enabled_system_question_fields(
+                self.request.event,
+                product,
+                base_states=base_states,
+                product_overrides=product_overrides,
+            )
+            for product in admission_products
+        }
+        ctx['system_field_products'] = {
+            field_id: [
+                product
+                for product in admission_products
+                if field_id in enabled_system_fields_by_product_id[product.pk]
+            ]
+            for field_id in SYSTEM_QUESTION_FIELDS
+        }
+        ctx['system_field_effective_active'] = {
+            field_id: (
+                base_states.get(field_id) != STATE_DO_NOT_ASK
+                or bool(ctx['system_field_products'][field_id])
+            )
+            for field_id in SYSTEM_QUESTION_FIELDS
+        }
 
         return ctx
 
@@ -1765,5 +1799,53 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
             kwargs={
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,
+            },
+        )
+
+
+class OrderFormDefaultFieldSettings(EventPermissionRequiredMixin, FormView):
+    template_name = 'pretixcontrol/items/orderform_default_field_settings.html'
+    permission = 'can_change_items'
+
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('field') not in SYSTEM_QUESTION_FIELDS:
+            raise Http404(_('The requested default field does not exist.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        kwargs['field_id'] = self.kwargs['field']
+        return kwargs
+
+    def get_form_class(self):
+        return OrderFormDefaultFieldSettingsForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        field_id = self.kwargs['field']
+        form = context.get('form')
+        context['field_id'] = field_id
+        context['field_label'] = OrderFormDefaultFieldSettingsForm.FIELD_LABELS[field_id]
+        context['product_fields'] = [form[name] for name in form.product_field_names] if form else []
+        return context
+
+    def form_valid(self, form):
+        changed_settings = form.save()
+        self.request.event.log_action(
+            'eventyay.event.settings',
+            user=self.request.user,
+            data=changed_settings,
+        )
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            'control:event.products.orderforms.defaultfield',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+                'field': self.kwargs['field'],
             },
         )
