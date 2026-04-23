@@ -19,13 +19,13 @@
       </div>
     {% endif %}
 
-    <form method='post' action='{{ url_for('socialaccount_signup') }}' class='password-form'>
+    <form method='post' action="{{ url_for('socialaccount_signup') }}" class='password-form'>
       <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
       {% if redirect_field_name and redirect_field_value %}
         <input
           type='hidden'
-          name='{{ redirect_field_name }}'
-          value='{{ redirect_field_value }}'
+          name="{{ redirect_field_name }}"
+          value="{{ redirect_field_value }}"
         >
       {% endif %}
 
