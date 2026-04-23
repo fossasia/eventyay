@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from werkzeug.exceptions import PermissionDenied
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
