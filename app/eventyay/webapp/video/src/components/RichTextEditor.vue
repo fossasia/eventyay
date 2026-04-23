@@ -141,9 +141,10 @@ onBeforeUnmount(() => {
 	padding-top: 0
 	position: relative
 	min-height: 30vh
+	height: 30vh
 	display: flex
 	flex-direction: column
-	overflow: hidden
+	overflow: visible
 
 	.uploading
 		position: absolute
