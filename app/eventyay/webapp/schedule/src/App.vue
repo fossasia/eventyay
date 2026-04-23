@@ -35,6 +35,8 @@
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
+			v-model:includeRoomSortKey="sortIncludeRoom",
+			v-model:includeDateSortKey="sortIncludeDate",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
@@ -74,6 +76,8 @@
 			:favs="favs",
 			:showFavCount="showPopularityOnList",
 			:sortBy="effectiveSortBy",
+			:includeRoomSortKey="sortIncludeRoom",
+			:includeDateSortKey="sortIncludeDate",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:showBreaks="!sessionsMode",
@@ -285,6 +289,16 @@ export default {
 			searchQuery: '',
 			recordingFilter: 'all',
 			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
+			sortIncludeRoom: false,
+			sortIncludeDate: (() => {
+				try {
+					const stored = localStorage.getItem('schedule-include-datetime')
+					if (stored === null) return true
+					return stored === 'true'
+				} catch {
+					return true
+				}
+			})(),
 		}
 	},
 	computed: {
@@ -427,6 +441,9 @@ export default {
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
 			days.sort((a, b) => a.diff(b))
+			if (this.sessionsMode && !this.sortIncludeDate && ['title', 'title_desc'].includes(this.effectiveSortBy)) {
+				return days.length ? [days[0]] : []
+			}
 			return days
 		},
 		inEventTimezone () {
@@ -506,6 +523,13 @@ export default {
 		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
+		},
+		sortIncludeDate () {
+			try {
+				localStorage.setItem('schedule-include-datetime', String(this.sortIncludeDate))
+			} catch {
+				// ignore localStorage access errors
+			}
 		}
 	},
 	async created () {
@@ -716,9 +740,12 @@ export default {
 			window.location.hash = day.format('YYYY-MM-DD')
 		},
 		selectDay (dayId) {
-			this.currentDay = dayId
 			window.location.hash = dayId
-			this.forceScrollDay++
+			if (dayId === this.currentDay) {
+				this.forceScrollDay++
+				return
+			}
+			this.currentDay = dayId
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
@@ -1012,6 +1039,7 @@ export default {
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
 	&.grid-schedule
+		overflow-x: clip
 		margin: 0 auto
 	&.list-schedule
 		min-width: 0
