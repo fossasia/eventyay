@@ -145,7 +145,7 @@ class FrabXmlExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-code'
     cors = '*'
 
@@ -184,7 +184,7 @@ class FrabXCalExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-calendar'
     cors = '*'
 
@@ -216,18 +216,29 @@ class FrabJsonExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-code'
     cors = '*'
 
     def speaker_ids(self) -> set[int]:
-        speaker_ids = set()
-        for day in self.data:
-            for room in day['rooms'].values():
-                for talk in room['talks']:
-                    if talk.submission:
-                        speaker_ids.update(talk.submission.speakers.values_list('id', flat=True))
-        return speaker_ids
+        if not self.schedule:
+            return set()
+
+        talks = self.schedule.talks.filter(
+            is_visible=True,
+            start__isnull=False,
+            room__isnull=False,
+            submission__isnull=False,
+        ).exclude(submission__state='deleted')
+
+        if self.favs_retrieve and self.talk_ids:
+            talks = talks.filter(submission__code__in=self.talk_ids)
+
+        return set(
+            talks.exclude(submission__speakers__id__isnull=True)
+            .values_list('submission__speakers__id', flat=True)
+            .distinct()
+        )
 
     @cached_property
     def speaker_profiles(self) -> dict[int, SpeakerProfile]:
@@ -394,7 +405,7 @@ class ICalExporter(BaseExporter):
     show_public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-calendar'
     cors = '*'
 

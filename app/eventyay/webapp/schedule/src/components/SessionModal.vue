@@ -150,6 +150,9 @@ export default {
 		}
 	},
 	computed: {
+		favSet () {
+			return new Set(this.favs || [])
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -165,7 +168,7 @@ export default {
 		isFaved () {
 			const obj = this.modalContent?.contentObject
 			if (!obj) return false
-			return this.favs.includes(obj.id)
+			return this.favSet.has(obj.id)
 		},
 		computedJoinRoomLink () {
 			const obj = this.modalContent?.contentObject

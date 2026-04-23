@@ -292,35 +292,58 @@ export default {
 			if (this.speakers?.length) return this.speakers
 			if (!this.scheduleData) return []
 			const schedule = this.scheduleData.schedule
-			const talks = this.resolvedSessions.length ? this.resolvedSessions : this.rawTalks
-			return (schedule?.speakers || []).map(speaker => {
-				const speakerTalks = this.resolvedSessions.length
-					? talks.filter(sess => (sess.speakers || []).some(sp => this.speakerCodeFromAny(sp) === speaker.code))
-					: talks.filter(t => (t.speakers || []).some(sp => this.speakerCodeFromAny(sp) === speaker.code))
-				return {
-					...speaker,
-					sessions: speakerTalks,
-				}
-			})
+			let sessionsBySpeaker = this.scheduleData.sessionsBySpeaker || {}
+			if (!Object.keys(sessionsBySpeaker).length) {
+				const talks = this.resolvedSessions.length ? this.resolvedSessions : this.rawTalks
+				sessionsBySpeaker = talks
+					.flatMap((talk) => (talk.speakers || []).map((sp) => [this.speakerCodeFromAny(sp), talk]))
+					.reduce((acc, [code, talk]) => {
+						if (!code) return acc
+						if (!acc[code]) acc[code] = []
+						acc[code].push(talk)
+						return acc
+					}, {})
+			}
+			return (schedule?.speakers || []).map(speaker => ({
+				...speaker,
+				sessions: sessionsBySpeaker[speaker.code] || [],
+			}))
 		},
 		viewToggleTitle() {
 			return this.viewMode === 'list' ? this.t.view_details : this.t.view_list
 		},
 		trackFilteredSpeakers() {
 			if (!this.selectedTracks.length) return this.resolvedSpeakers
-			return this.resolvedSpeakers.filter(speaker =>
-				(speaker.sessions || []).some(s => this.selectedTracks.includes(s?.track?.id ?? s?.track))
-			)
+			const trackSet = new Set(this.selectedTracks)
+			return this.resolvedSpeakers.filter(speaker => {
+				for (const s of (speaker.sessions || [])) {
+					if (trackSet.has(s?.track?.id ?? s?.track)) return true
+				}
+				return false
+			})
 		},
 		languageFilteredSpeakers() {
 			if (!this.selectedLanguages.length) return this.trackFilteredSpeakers
 			const fallbackLocale = this.scheduleData?.schedule?.content_locales?.[0] || null
+			const normalize = (code) => (code || '').toString().trim().toLowerCase().replace(/_/g, '-')
+			const selectedExact = new Set(this.selectedLanguages.map(normalize))
+			const selectedPrimary = new Set(
+				this.selectedLanguages
+					.map(normalize)
+					.map((code) => code.split('-')[0])
+					.filter(Boolean)
+			)
 			return this.trackFilteredSpeakers.filter(speaker => {
-				return (speaker.sessions || []).some(s => {
+				for (const s of (speaker.sessions || [])) {
 					const sessionLocale = s?.content_locale || fallbackLocale
-					if (!sessionLocale) return false
-					return this.selectedLanguages.some(sel => localesMatch(sel, sessionLocale))
-				})
+					if (!sessionLocale) continue
+					const normalized = normalize(sessionLocale)
+					if (!normalized) continue
+					if (selectedExact.has(normalized)) return true
+					const primary = normalized.split('-')[0]
+					if (primary && selectedPrimary.has(primary)) return true
+				}
+				return false
 			})
 		},
 		sortedSpeakers() {

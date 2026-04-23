@@ -250,18 +250,18 @@ class Schedule(PretalxModel):
             queryset = queryset.filter(published__lt=self.published)
         return queryset.order_by('-published').first()
 
-    def _handle_submission_move(self, submission, old_slots, new_slots):
+    def _handle_submission_move(self, submission, old_slots, new_slots, all_old_slots=None, all_new_slots=None):
         new = []
         canceled = []
         moved = []
-        all_old_slots = [slot for slot in old_slots.values() if slot.submission_id == submission.pk]
-        all_new_slots = [slot for slot in new_slots.values() if slot.submission_id == submission.pk]
-        old_slots = [
-            slot for slot in all_old_slots if not any(slot.is_same_slot(other_slot) for other_slot in all_new_slots)
-        ]
-        new_slots = [
-            slot for slot in all_new_slots if not any(slot.is_same_slot(other_slot) for other_slot in all_old_slots)
-        ]
+        if all_old_slots is None:
+            all_old_slots = [slot for slot in old_slots.values() if slot.submission_id == submission.pk]
+        if all_new_slots is None:
+            all_new_slots = [slot for slot in new_slots.values() if slot.submission_id == submission.pk]
+        new_sigs = {(slot.room_id, slot.start) for slot in all_new_slots}
+        old_sigs = {(slot.room_id, slot.start) for slot in all_old_slots}
+        old_slots = [slot for slot in all_old_slots if (slot.room_id, slot.start) not in new_sigs]
+        new_slots = [slot for slot in all_new_slots if (slot.room_id, slot.start) not in old_sigs]
         diff = len(old_slots) - len(new_slots)
         if diff > 0:
             canceled = old_slots[:diff]
@@ -333,7 +333,11 @@ class Schedule(PretalxModel):
             if entry.submission not in new_submissions:
                 result['canceled_talks'] += old_by_submission[entry.submission]
             else:
-                new, canceled, moved = self._handle_submission_move(entry.submission, old_slots, new_slots)
+                new, canceled, moved = self._handle_submission_move(
+                    entry.submission, old_slots, new_slots,
+                    all_old_slots=old_by_submission.get(entry.submission, []),
+                    all_new_slots=new_by_submission.get(entry.submission, []),
+                )
                 result['new_talks'] += new
                 result['canceled_talks'] += canceled
                 result['moved_talks'] += moved
@@ -344,7 +348,11 @@ class Schedule(PretalxModel):
             if entry.submission not in old_submissions:
                 result['new_talks'] += new_by_submission[entry.submission]
             else:
-                new, canceled, moved = self._handle_submission_move(entry.submission, old_slots, new_slots)
+                new, canceled, moved = self._handle_submission_move(
+                    entry.submission, old_slots, new_slots,
+                    all_old_slots=old_by_submission.get(entry.submission, []),
+                    all_new_slots=new_by_submission.get(entry.submission, []),
+                )
                 result['new_talks'] += new
                 result['canceled_talks'] += canceled
                 result['moved_talks'] += moved
@@ -788,10 +796,23 @@ class Schedule(PretalxModel):
                 .only('room_id', 'start_time', 'end_time', 'url', 'stream_type')
                 .order_by('start_time')
             )
+        # Pre-normalize stream schedule times to UTC once so the per-talk
+        # overlap check avoids repeated timezone conversions.
         stream_schedules_by_room = defaultdict(list)
         for ss in stream_schedules:
-            if ss.room_id and ss.start_time and ss.end_time:
-                stream_schedules_by_room[ss.room_id].append(ss)
+            if not (ss.room_id and ss.start_time and ss.end_time):
+                continue
+            ss_start = ss.start_time
+            ss_end = ss.end_time
+            if timezone.is_naive(ss_start):
+                ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
+            if timezone.is_naive(ss_end):
+                ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
+            stream_schedules_by_room[ss.room_id].append((
+                ss_start.astimezone(UTC),
+                ss_end.astimezone(UTC),
+                ss,
+            ))
         rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
@@ -867,15 +888,7 @@ class Schedule(PretalxModel):
                         slot_end = slot_end.astimezone(UTC)
 
                         match = None
-                        for ss in schedules:
-                            ss_start = ss.start_time
-                            ss_end = ss.end_time
-                            if timezone.is_naive(ss_start):
-                                ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
-                            if timezone.is_naive(ss_end):
-                                ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
-                            ss_start = ss_start.astimezone(UTC)
-                            ss_end = ss_end.astimezone(UTC)
+                        for ss_start, ss_end, ss in schedules:
                             if ss_start < slot_end and ss_end > slot_start:
                                 match = ss
                                 break
@@ -960,8 +973,7 @@ class Schedule(PretalxModel):
                 'description': room.description if room.description else '',
                 'video_url': getattr(room, 'video_url', ''),
             }
-            for room in self.event.rooms.all()
-            if room in rooms
+            for room in sorted(rooms, key=lambda r: (r.position if r.position is not None else 9999, r.id))
         ]
 
         include_avatar = self.event.cfp.request_avatar

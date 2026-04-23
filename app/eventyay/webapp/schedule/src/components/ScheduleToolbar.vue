@@ -535,14 +535,18 @@ export default {
 		},
 		otherTimezones() {
 			const pinnedIds = new Set(this.pinnedTimezones.map(o => o.id))
-			const knownTimezones = this.availableTimezones.length ? [...this.availableTimezones] : []
-			for (const tz of [this.scheduleTimezone, this.userTimezone]) {
-				if (tz && !knownTimezones.includes(tz)) knownTimezones.push(tz)
+			const seen = new Set()
+			const result = []
+			const candidates = this.availableTimezones.length ? this.availableTimezones : []
+			const addTz = (tz) => {
+				if (!tz || pinnedIds.has(tz) || seen.has(tz)) return
+				seen.add(tz)
+				result.push(tz)
 			}
-			return knownTimezones
-				.filter(Boolean)
-				.filter(tz => !pinnedIds.has(tz))
-				.filter((tz, i, arr) => arr.indexOf(tz) === i)
+			for (const tz of candidates) addTz(tz)
+			addTz(this.scheduleTimezone)
+			addTz(this.userTimezone)
+			return result
 				.sort((a, b) => a.localeCompare(b))
 				.map(tz => ({ id: tz, label: tz }))
 		},

@@ -180,8 +180,13 @@ export default {
 		resolvedTalk() {
 			if (this.talk) return this.talk
 			if (this.talkId && this.scheduleData) {
+				const lu = this.scheduleData.sessionsLookup
+				if (lu && lu[this.talkId]) return lu[this.talkId]
 				const sessions = this.scheduleData.sessions || []
-				return sessions.find(s => s.id === this.talkId) || null
+				for (let i = 0; i < sessions.length; i++) {
+					if (sessions[i].id === this.talkId) return sessions[i]
+				}
+				return null
 			}
 			return null
 		},
@@ -191,6 +196,8 @@ export default {
 		},
 		isFaved() {
 			if (!this.resolvedTalk) return false
+			const favSet = this.scheduleData?.favSet
+			if (favSet && typeof favSet.has === 'function') return favSet.has(this.resolvedTalk.id)
 			const favs = this.scheduleData?.favs || []
 			return favs.includes(this.resolvedTalk.id)
 		},
