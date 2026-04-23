@@ -1,0 +1,64 @@
+{% extends 'account/base.jinja' %}
+
+{% block head_title %}
+  {{ _('Sign Up') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='password-reset-container'>
+    <h1>{{ _('Sign Up') }}</h1>
+
+    <p class='description'>
+      {{ _('You are almost done. Please complete your account details to continue.') }}
+    </p>
+
+    {% if form.errors %}
+      <div class='alert alert-danger'>
+        <i class='fa fa-exclamation-triangle'></i>
+        {{ _('Please correct the errors below.') }}
+      </div>
+    {% endif %}
+
+    <form method='post' action='{{ url_for('socialaccount_signup') }}' class='password-form'>
+      <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+      {% if redirect_field_name and redirect_field_value %}
+        <input
+          type='hidden'
+          name='{{ redirect_field_name }}'
+          value='{{ redirect_field_value }}'
+        >
+      {% endif %}
+
+      {% for field in form %}
+        {% if field.is_hidden %}
+          {{ field }}
+        {% else %}
+          <div class='form-group'>
+            <label for='{{ field.id_for_label }}'>
+              {{ field.label }}
+              {% if field.field.required %}<span class='required'>*</span>{% endif %}
+            </label>
+            {{ field }}
+
+            {% if field.errors %}
+              <div class='field-error'>
+                {% for error in field.errors %}
+                  <span>{{ error }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if field.help_text %}
+              <div class='field-help'>{{ field.help_text }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <button type='submit' class='btn btn-primary btn-lg'>
+        <i class='fa fa-user-plus'></i>
+        {{ _('Continue') }}
+      </button>
+    </form>
+  </div>
+{% endblock content %}
