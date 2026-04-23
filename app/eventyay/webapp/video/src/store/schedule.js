@@ -95,8 +95,11 @@ export default {
 		},
 		sessions (state, getters, rootState) {
 			if (!state.schedule) return
+			const videoModuleTypes = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom']
+			const videoRooms = new Set(rootState.rooms?.filter(r => r.modules?.some(m => videoModuleTypes.includes(m.type))).map(r => r.id))
 			const sessions = []
 			for (const session of state.schedule.talks) {
+				const roomId = session.room
 				sessions.push({
 					id: session.code ? session.code.toString() : null,
 					title: session.title,
@@ -116,7 +119,9 @@ export default {
 					resources: session.resources,
 					answers: session.answers,
 					exporters: session.exporters,
-					recording_iframe: session.recording_iframe
+					recording_iframe: session.recording_iframe,
+					stream_url: session.stream_url || (videoRooms.has(roomId) ? 'true' : null),
+					stream_type: session.stream_type
 				})
 			}
 			sessions.sort((a, b) => (
