@@ -108,6 +108,15 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
     Form for full CfP settings, including specific field requirements and custom questions.
     """
 
+    class Meta(CfPGeneralSettingsForm.Meta):
+        # The boolean feature-flag fields (use_tracks, present_multiple_times, etc.) are
+        # inherited from CfPGeneralSettingsForm but are NOT rendered on the Forms page
+        # template.  If JsonSubfieldMixin.save() were to process them here it would read
+        # False from the missing POST keys and silently overwrite the stored values.
+        # Override to empty so those flags are only written from CfPGeneralSettingsForm
+        # (the Content page), where the checkboxes are actually rendered.
+        json_fields = {}
+
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
         self.length_fields = [
