@@ -25,7 +25,32 @@ class CfPFormMixin:
 
         if self.not_strict:
             for field in self.fields.values():
-                field.required = False
+                # Mark the field so _clean_fields() skips the "required" check,
+                # but keep field.required = True so the * indicator stays visible
+                # in the rendered form — users should still see which fields are
+                # needed before they can do a final (non-draft) submission.
+                field.draft_optional = True
+
+    def _clean_fields(self):
+        """Temporarily relax required fields for draft saves.
+
+        During validation we flip draft_optional fields to required=False so
+        Django's blank-value check doesn't produce an error.  We restore the
+        original value immediately after so that *rendering* still shows the
+        asterisk (field.required is used by widgets / label_tag).
+        """
+        if self.not_strict:
+            for field in self.fields.values():
+                if getattr(field, 'draft_optional', False):
+                    field.required = False
+            try:
+                super()._clean_fields()
+            finally:
+                for field in self.fields.values():
+                    if getattr(field, 'draft_optional', False):
+                        field.required = True
+        else:
+            super()._clean_fields()
 
     def _update_cfp_texts(self, field_name):
         field = self.fields.get(field_name)
