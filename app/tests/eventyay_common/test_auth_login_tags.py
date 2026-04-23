@@ -18,6 +18,7 @@ def test_get_login_context_no_providers(rf):
     assert result['has_oauth_providers'] is False
     assert result['has_secondary_oauth_providers'] is False
     assert isinstance(result['show_native_login'], bool)
+    assert isinstance(result['show_login_form'], bool)
 
 
 @pytest.mark.django_db

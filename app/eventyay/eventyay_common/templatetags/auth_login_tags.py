@@ -35,11 +35,11 @@ def get_login_context(context):
     )
 
     backends = context.get('backends')
-    if backends:
-        native = next((b for b in backends if b.identifier == 'native'), None)
-    else:
-        native = get_auth_backends().get('native')
+    if not backends:
+        backends = list(get_auth_backends().values())
 
+    show_login_form = any(b.visible for b in backends)
+    native = next((b for b in backends if b.identifier == 'native'), None)
     show_native_login = bool(native and native.visible)
 
     can_reset = show_native_login and settings.EVENTYAY_PASSWORD_RESET
@@ -51,6 +51,7 @@ def get_login_context(context):
         'preferred_provider': preferred_provider,
         'can_reset': can_reset,
         'can_register': can_register,
+        'show_login_form': show_login_form,
         'show_native_login': show_native_login,
         'has_oauth_providers': bool(enabled_providers),
         'has_secondary_oauth_providers': has_secondary_oauth_providers,
