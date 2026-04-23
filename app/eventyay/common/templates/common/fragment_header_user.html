@@ -118,16 +118,6 @@
                         </a>
                     {% endif %}
                 {% endif %}
-                {% can_view_featured_sessions_public current_event as show_featured_sessions_menu %}
-                {% if show_featured_sessions_menu %}
-                    {% if not current_event.talks_published or not has_cfp_submissions %}
-                        <hr>
-                    {% endif %}
-                    <a href="{{ current_event.urls.featured }}" class="dropdown-item {% if '/featured/' in request.path_info %}active{% endif %}" role="menuitem" tabindex="-1" title="{% translate 'Featured Sessions' %}">
-                        <i class="fa fa-certificate" aria-hidden="true"></i>
-                        {% translate "Featured" %}
-                    </a>
-                {% endif %}
                 <hr>
                 <a href="{% url 'eventyay_common:account.general' %}" class="dropdown-item" role="menuitem" tabindex="-1">
                     <i class="fa fa-user"></i>
