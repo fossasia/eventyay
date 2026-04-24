@@ -48,7 +48,7 @@
 			{% for organizer in organizers %}
 			<tr>
 				<td><strong>
-                    <a href='{% url "eventyay_common:organizer.edit" organizer=organizer.slug %}'>{{ organizer.name }}</a>
+                    <a href='{% url "eventyay_common:organizer.dashboard" organizer=organizer.slug %}'>{{ organizer.name }}</a>
                 </strong></td>
                 <td>{{ organizer.slug }}</td>
                 <td class="text-right flip">
