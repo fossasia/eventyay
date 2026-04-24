@@ -1430,6 +1430,12 @@ class MailSettingsForm(SettingsForm):
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
     )
+    test_email = forms.CharField(
+        label=_('Send test email to'),
+        help_text=_('Enter one or more email addresses separated by commas to send a test email.'),
+        validators=[multimail_validate],
+        required=False,
+    )
 
     smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
 

@@ -50,12 +50,16 @@ class SendGridEmail:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def test(self, from_addr):
+    def test(self, from_addr, to_addrs=None):
+        to_addrs = to_addrs or ['testdummy@eventyay.com']
+        if isinstance(to_addrs, str):
+            to_addrs = [to_addrs]
+
         message = Mail(
             from_email=from_addr,
-            to_emails='testdummy@eventyay.com',
+            to_emails=to_addrs,
             subject='Eventyay test email',
-            html_content='Eventyay test email',
+            html_content='This is a test email sent from Eventyay. If you received this email, your SendGrid settings are correct.',
         )
         sg = SendGridAPIClient(self.api_key)
         sg.send(message)
@@ -110,20 +114,18 @@ class SendGridEmail:
 
 
 class CustomSMTPBackend(EmailBackend):
-    def test(self, from_addr):
-        try:
-            self.open()
-            self.connection.ehlo_or_helo_if_needed()
-            (code, resp) = self.connection.mail(from_addr, [])
-            if code != 250:
-                logger.warning('Error testing mail settings, code %d, resp: %s', code, resp)
-                raise SMTPResponseException(code, resp)
-            (code, resp) = self.connection.rcpt('test@eventyay.com')
-            if (code != 250) and (code != 251):
-                logger.warning('Error testing mail settings, code %d, resp: %s', code, resp)
-                raise SMTPResponseException(code, resp)
-        finally:
-            self.close()
+    def test(self, from_addr, to_addrs=None):
+        to_addrs = to_addrs or ['test@eventyay.com']
+        if isinstance(to_addrs, str):
+            to_addrs = [to_addrs]
+
+        message = EmailMessage(
+            subject='Eventyay test email',
+            body='This is a test email sent from Eventyay. If you received this email, your SMTP settings are correct.',
+            from_email=from_addr,
+            to=to_addrs,
+        )
+        self.send_messages([message])
 
 
 class FileSavedEmailBackend(_FileBasedEmailBackend):
@@ -167,6 +169,19 @@ class FileSavedEmailBackend(_FileBasedEmailBackend):
         n = super().send_messages(email_messages)
         logger.info('Wrote %d email(s) to %s.', n, subdir.relative_to(Path.cwd()))
         return n
+
+    def test(self, from_addr, to_addrs=None):
+        to_addrs = to_addrs or ['test@eventyay.com']
+        if isinstance(to_addrs, str):
+            to_addrs = [to_addrs]
+
+        message = EmailMessage(
+            subject='Eventyay test email',
+            body='This is a test email sent from Eventyay. If you received this email, your email settings are correct.',
+            from_email=from_addr,
+            to=to_addrs,
+        )
+        self.send_messages([message])
 
     def _get_filename(self):
         """Return a unique file name with .eml extension."""

@@ -811,7 +811,13 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             if request.POST.get('test', '0').strip() == '1':
                 backend = self.request.event.get_mail_backend(force_custom=True, timeout=10)
                 try:
-                    backend.test(self.request.event.settings.mail_from)
+                    to_addrs = None
+                    if form.cleaned_data.get('test_email'):
+                        to_addrs = [a.strip() for a in form.cleaned_data.get('test_email').split(',')]
+                    if hasattr(backend, 'test'):
+                        backend.test(self.request.event.settings.mail_from, to_addrs=to_addrs)
+                    else:
+                        raise AttributeError(_('The active email backend does not support connection testing.'))
                 except Exception as e:
                     messages.warning(
                         self.request,
