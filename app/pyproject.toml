@@ -210,7 +210,7 @@ dependencies = [
     "websockets>=15.0.1",
     "xmlschema>=3.4.3",
     "yarl>=1.22.0",
-    "zipp>=3.21.0",
+    "zipp>=3.23.1",
     "zxcvbn>=4.4.28",
 ]
 
