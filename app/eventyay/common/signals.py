@@ -258,6 +258,7 @@ def process_scheduled_emails(sender, **kwargs):
     """
     from eventyay.plugins.sendmail.models import EmailQueue
     from eventyay.base.models.mail import QueuedMail
+    from eventyay.base.services.mail import SendMailException
 
     # Process QueuedMail (Talk/CfP component)
     while True:
@@ -282,11 +283,17 @@ def process_scheduled_emails(sender, **kwargs):
                         "[ScheduledMail] QueuedMail ID %s sent successfully.",
                         mail.pk
                     )
-                except Exception:
+                except SendMailException:
                     logger.exception(
                         "[ScheduledMail] Failed to send QueuedMail ID %s",
                         mail.pk
                     )
+                except Exception:
+                    logger.exception(
+                        "[ScheduledMail] Unexpected error sending QueuedMail ID %s",
+                        mail.pk
+                    )
+                    raise
 
     # Process EmailQueue (Tickets component)
     while True:
@@ -319,8 +326,14 @@ def process_scheduled_emails(sender, **kwargs):
                         )
                         mail.sent_at = now()
                         mail.save(update_fields=['sent_at'])
-                except Exception:
+                except SendMailException:
                     logger.exception(
                         "[ScheduledMail] Failed to send EmailQueue ID %s",
                         mail.pk
                     )
+                except Exception:
+                    logger.exception(
+                        "[ScheduledMail] Unexpected error sending EmailQueue ID %s",
+                        mail.pk
+                    )
+                    raise

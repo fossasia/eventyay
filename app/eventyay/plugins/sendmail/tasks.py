@@ -26,7 +26,20 @@ def send_queued_mail(self, event_id: int, queued_mail_id: int):
         qm = EmailQueue.objects.get(pk=queued_mail_id, event=event)
 
         if qm.scheduled_at and qm.scheduled_at > now():
-            logger.info("[SendMail] EmailQueue ID %s: scheduled for %s, skipping.", queued_mail_id, qm.scheduled_at)
+            countdown = max(0, int((qm.scheduled_at - now()).total_seconds()))
+            logger.info(
+                "[SendMail] EmailQueue ID %s: scheduled for %s, rescheduling in %s seconds.",
+                queued_mail_id,
+                qm.scheduled_at,
+                countdown,
+            )
+            try:
+                raise self.retry(countdown=countdown, args=[original_event_id, queued_mail_id])
+            except MaxRetriesExceededError:
+                logger.error(
+                    "[SendMail] Max retries exceeded while rescheduling EmailQueue ID %s",
+                    queued_mail_id,
+                )
             return
 
         # Execute the actual mail transport in this task so outbox state reflects real send attempts.

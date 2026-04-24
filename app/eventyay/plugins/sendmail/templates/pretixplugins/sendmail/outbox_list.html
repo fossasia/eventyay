@@ -108,11 +108,11 @@
             <td>{{ mail.recipient_emails_display|split:","|length }}</td>
             <td>
                 {% if mail.scheduled_at %}
-                    <span class="badge badge-info">
+                    <span class="label label-info">
                         {% translate "Scheduled for" %} {{ mail.scheduled_at|timezone:request.timezone|date:"Y-m-d H:i" }}
                     </span>
                 {% else %}
-                    <span class="badge badge-info">{% translate "Immediate" %}</span>
+                    <span class="label label-default">{% translate "Immediate" %}</span>
                 {% endif %}
             </td>
             <td>

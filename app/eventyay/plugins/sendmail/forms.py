@@ -33,7 +33,18 @@ def contains_web_channel_validate(value):
     if 'web' not in value:
         raise ValidationError(_("The 'web' sales channel must be selected."))
 
-class MailForm(forms.Form):
+class ScheduledAtValidationMixin:
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
+                raise ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
+
+class MailForm(ScheduledAtValidationMixin, forms.Form):
     recipients = forms.ChoiceField(label=_('Send email to'), widget=forms.RadioSelect, initial='orders', choices=[])
     order_status = forms.MultipleChoiceField()  # overridden later
     subject = forms.CharField(label=_('Subject'))
@@ -118,16 +129,6 @@ class MailForm(forms.Form):
         required=False,
         initial='UTC',
     )
-
-    def clean_scheduled_at(self):
-        scheduled_at = self.cleaned_data.get('scheduled_at')
-        if scheduled_at is not None:
-            buffer = timedelta(minutes=1)
-            if scheduled_at < timezone.now() - buffer:
-                raise ValidationError(
-                    _('Scheduled time must be in the future.')
-                )
-        return scheduled_at
 
     def clean(self):
         d = super().clean()
@@ -448,7 +449,7 @@ class MailContentSettingsForm(SettingsForm):
                 self._set_field_placeholders(k, v)
 
 
-class EmailQueueEditForm(forms.ModelForm):
+class EmailQueueEditForm(ScheduledAtValidationMixin, forms.ModelForm):
     new_attachment = forms.FileField(
         required=False,
         label=_("New attachment"),
@@ -539,16 +540,6 @@ class EmailQueueEditForm(forms.ModelForm):
             self.fields[fn].help_text = ht
         self.fields[fn].validators.append(PlaceholderValidator(phs))
 
-    def clean_scheduled_at(self):
-        scheduled_at = self.cleaned_data.get('scheduled_at')
-        if scheduled_at is not None:
-            buffer = timedelta(minutes=1)
-            if scheduled_at < timezone.now() - buffer:
-                raise ValidationError(
-                    _('Scheduled time must be in the future.')
-                )
-        return scheduled_at
-
     def clean_emails(self):
         updated_emails = [
             email.strip()
@@ -593,7 +584,7 @@ class EmailQueueEditForm(forms.ModelForm):
         return instance
 
 
-class TeamMailForm(forms.Form):
+class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
     attachment = CachedFileField(
         label=_('Attachment'),
         required=False,
@@ -645,13 +636,3 @@ class TeamMailForm(forms.Form):
             required=False,
             help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
         )
-
-    def clean_scheduled_at(self):
-        scheduled_at = self.cleaned_data.get('scheduled_at')
-        if scheduled_at is not None:
-            buffer = timedelta(minutes=1)
-            if scheduled_at < timezone.now() - buffer:
-                raise ValidationError(
-                    _('Scheduled time must be in the future.')
-                )
-        return scheduled_at
