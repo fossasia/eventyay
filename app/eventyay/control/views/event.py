@@ -32,7 +32,6 @@ from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
-from pytz import timezone
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -55,12 +54,12 @@ from eventyay.control.forms.event import (
     ConfirmTextFormset,
     EventDeleteForm,
     EventMetaValueForm,
-    EventSettingsForm,
+    GeneralEventSettingsForm,
     EventUpdateForm,
     InvoiceSettingsForm,
-    ProductMetaPropertyForm,
     MailSettingsForm,
     PaymentSettingsForm,
+    ProductMetaPropertyForm,
     ProviderForm,
     QuickSetupForm,
     QuickSetupProductFormSet,
@@ -117,7 +116,7 @@ class MetaDataEditorMixin:
 
     def _make_meta_form(self, p, val_instances):
         return self.meta_form(
-            prefix='prop-{}'.format(p.pk),
+            prefix=f'prop-{p.pk}',
             property=p,
             disabled=(
                 p.protected
@@ -173,7 +172,7 @@ class EventUpdate(
 
     @cached_property
     def sform(self):
-        return EventSettingsForm(
+        return GeneralEventSettingsForm(
             obj=self.object,
             prefix='settings',
             data=self.request.POST if self.request.method == 'POST' else None,
@@ -716,7 +715,7 @@ class InvoicePreview(EventPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         fname, ftype, fcontent = build_preview_invoice_pdf(request.event)
         resp = HttpResponse(fcontent, content_type=ftype)
-        resp['Content-Disposition'] = 'attachment; filename="{}"'.format(fname)
+        resp['Content-Disposition'] = f'attachment; filename="{fname}"'
         return resp
 
 
@@ -875,7 +874,7 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
             if s.startswith('*'):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
-                ctx[p.identifier] = '<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>'.format(s, s)
+                ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
             else:
                 ctx[p.identifier] = '<span class="placeholder" title="{}">{}</span>'.format(
                     _('This value will be replaced based on dynamic parameters.'), s
@@ -966,7 +965,7 @@ class TicketSettingsPreview(EventPermissionRequiredMixin, View):
         fname, mimet, data = tickets.preview(self.request.event.pk, self.output.identifier)
         resp = HttpResponse(data, content_type=mimet)
         ftype = fname.split('.')[-1]
-        resp['Content-Disposition'] = 'attachment; filename="ticket-preview.{}"'.format(ftype)
+        resp['Content-Disposition'] = f'attachment; filename="ticket-preview.{ftype}"'
         return resp
 
     def get_error_url(self) -> str:
@@ -1072,12 +1071,12 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             provider = response(self.request.event)
             provider.form = ProviderForm(
                 obj=self.request.event,
-                settingspref='ticketoutput_%s_' % provider.identifier,
+                settingspref=f'ticketoutput_{provider.identifier}_',
                 data=(self.request.POST if self.request.method == 'POST' else None),
                 files=(self.request.FILES if self.request.method == 'POST' else None),
             )
             provider.form.fields = OrderedDict(
-                [('ticketoutput_%s_%s' % (provider.identifier, k), v) for k, v in provider.settings_form_fields.items()]
+                [(f'ticketoutput_{provider.identifier}_{k}', v) for k, v in provider.settings_form_fields.items()]
             )
             provider.settings_content = provider.settings_content_render(self.request)
             provider.form.prepare_fields()
@@ -1088,7 +1087,7 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             else:
                 for k, v in provider.settings_form_fields.items():
                     if v.required and not self.request.event.settings.get(
-                        'ticketoutput_%s_%s' % (provider.identifier, k)
+                        f'ticketoutput_{provider.identifier}_{k}'
                     ):
                         provider.evaluated_preview_allowed = False
                         break
@@ -1667,8 +1666,8 @@ class WidgetSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
         if domain:
             siteurlsplit = urlsplit(settings.SITE_URL)
             if siteurlsplit.port and siteurlsplit.port not in (80, 443):
-                domain = '%s:%d' % (domain, siteurlsplit.port)
-            ctx['urlprefix'] = '%s://%s' % (siteurlsplit.scheme, domain)
+                domain = '%s:%d' % (domain, siteurlsplit.port)  # noqa: UP031
+            ctx['urlprefix'] = f'{siteurlsplit.scheme}://{domain}'
         return ctx
 
 
