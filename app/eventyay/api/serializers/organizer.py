@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from pathlib import PurePosixPath
 
 from django.db.models import Q
 from django.utils.crypto import get_random_string
@@ -28,6 +29,7 @@ from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.base.settings import validate_organizer_settings
 from eventyay.helpers.urls import build_absolute_uri
+
 
 logger = logging.getLogger(__name__)
 
@@ -227,7 +229,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                 self.context['team'].log_action(
                     'eventyay.team.member.added',
                     data={
-                        'email': user.email,
+                        'email': user.primary_email,
                         'user': user.pk,
                     },
                     **self.context['log_kwargs'],
@@ -248,7 +250,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                     is_registered_user=True,
                 )
 
-                return TeamInvite(email=user.email)
+                return TeamInvite(email=user.primary_email)
         else:
             raise ValidationError('No email address given.')
 
@@ -306,11 +308,8 @@ class OrganizerSettingsSerializer(SettingsSerializer):
 
     def get_new_filename(self, name: str) -> str:
         nonce = get_random_string(length=8)
-        fname = '%s/%s.%s.%s' % (
-            self.organizer.slug,
-            name.split('/')[-1],
-            nonce,
-            name.split('.')[-1],
-        )
+        path = PurePosixPath(name)
+        ext = path.suffix.lower() or '.bin'
+        fname = f'{self.organizer.slug}/{path.stem}.{nonce}{ext}'
         # TODO: make sure pub is always correct
         return 'pub/' + fname

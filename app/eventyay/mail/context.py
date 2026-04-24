@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 
 from eventyay.helpers.formats.variants import get_notification_date_format
+from eventyay.mail.signals import talk_register_mail_placeholders
 from eventyay.schedule.notifications import (
     get_current_notifications,
     get_full_notifications,
@@ -14,7 +15,6 @@ from eventyay.schedule.notifications import (
 )
 
 from .placeholders import SimpleFunctionalMailTextPlaceholder
-from eventyay.mail.signals import talk_register_mail_placeholders
 
 
 def get_mail_context(**kwargs):
@@ -273,7 +273,7 @@ def base_placeholders(sender, **kwargs):
         SimpleFunctionalMailTextPlaceholder(
             'email',
             ['user'],
-            lambda user: user.email,
+            lambda user: user.primary_email,
             'jane@example.org',
             _('The addressed user’s email address'),
         ),

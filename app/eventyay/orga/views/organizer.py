@@ -1,22 +1,20 @@
 import logging
 
 from django.contrib import messages
-from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import DetailView, ListView
 from django_context_decorator import context
 from django_scopes import scopes_disabled
 
-from eventyay.common.exceptions import SendMailException
+from eventyay.base.models import Event, User
+from eventyay.base.models.organizer import Organizer
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views import CreateOrUpdateView
-from eventyay.common.views.generic import OrgaCRUDView
 from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     Filterable,
@@ -25,9 +23,8 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.event.forms import OrganizerForm
-from eventyay.base.models import Event, User
-from eventyay.base.models.organizer import Organizer
 from eventyay.person.forms import UserSpeakerFilterForm
+
 
 logger = logging.getLogger(__name__)
 
@@ -180,8 +177,6 @@ def speaker_search(request, *args, **kwargs):
     return JsonResponse(
         {
             "count": len(users),
-            "results": [{"email": user.email, "name": user.fullname} for user in users],
+            "results": [{"email": user.primary_email, "name": user.fullname} for user in users],
         }
     )
-
-

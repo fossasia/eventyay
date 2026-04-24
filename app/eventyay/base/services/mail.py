@@ -49,6 +49,7 @@ from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.celery_app import app
+from eventyay.common.utils.masks import EmailMasker
 from eventyay.consts import SizeKey
 from eventyay.helpers.http import smtp_reachable
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -479,8 +480,8 @@ def mail_send_task(
             email.attach(attach_file_name, attach_file_content, 'application/pdf')
 
         try:
-            logger.info('Try to send email to %s with subject "%s"', to, subject)
-            logger.debug('Email backend: %s', backend)
+            logger.info('Try to send email to %s with subject "%s"', EmailMasker.from_multi(to), subject)
+            logger.debug('Email backend: %s', backend.__class__.__name__)
             backend.send_messages([email])
         except (smtplib.SMTPResponseException, smtplib.SMTPSenderRefused) as e:
             logger.debug('Got error %s. Retry...', e)
@@ -499,7 +500,7 @@ def mail_send_task(
                                 'message': e.smtp_error.decode()
                                 if isinstance(e.smtp_error, bytes)
                                 else str(e.smtp_error),
-                                'recipient': '',
+                                'recipient': EmailMasker.from_multi(to),
                                 'invoices': [],
                             },
                         )
@@ -512,12 +513,12 @@ def mail_send_task(
                     data={
                         'subject': f'SMTP code {e.smtp_code}',
                         'message': e.smtp_error.decode() if isinstance(e.smtp_error, bytes) else str(e.smtp_error),
-                        'recipient': '',
+                        'recipient': EmailMasker.from_multi(to),
                         'invoices': [],
                     },
                 )
 
-            raise SendMailException(f'Failed to send an email to {to}.')
+            raise SendMailException(f'Failed to send an email to {EmailMasker.from_multi(to)}.')
         except smtplib.SMTPRecipientsRefused as e:
             smtp_codes = [a[0] for a in e.recipients.values()]
 
@@ -542,12 +543,12 @@ def mail_send_task(
                     data={
                         'subject': 'SMTP error',
                         'message': '\n'.join(message),
-                        'recipient': '',
+                        'recipient': EmailMasker.from_multi(to),
                         'invoices': [],
                     },
                 )
 
-            raise SendMailException(f'Failed to send an email to {to}.')
+            raise SendMailException(f'Failed to send an email to {EmailMasker.from_multi(to)}.')
         except Exception as e:
             if isinstance(
                 e,
@@ -569,7 +570,7 @@ def mail_send_task(
                             data={
                                 'subject': 'Internal error',
                                 'message': 'Max retries exceeded',
-                                'recipient': '',
+                                'recipient': EmailMasker.from_multi(to),
                                 'invoices': [],
                             },
                         )
@@ -580,12 +581,12 @@ def mail_send_task(
                     data={
                         'subject': 'Internal error',
                         'message': str(e),
-                        'recipient': '',
+                        'recipient': EmailMasker.from_multi(to),
                         'invoices': [],
                     },
                 )
             logger.exception('Error sending email')
-            raise SendMailException(f'Failed to send an email to {to}.')
+            raise SendMailException(f'Failed to send an email to {EmailMasker.from_multi(to)}.')
 
 
 def mail_send(*args, **kwargs):

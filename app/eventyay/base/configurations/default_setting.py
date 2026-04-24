@@ -29,6 +29,7 @@ from eventyay.base.configurations.lazy_i18n_string_list_base import (
 )
 from eventyay.base.forms import I18nAutoExpandingTextarea, I18nURLFormField
 from eventyay.base.models.tax import TaxRule
+from eventyay.consts import AllowModifications
 from eventyay.base.reldate import (
     RelativeDateField,
     RelativeDateTimeField,
@@ -1290,20 +1291,12 @@ DEFAULT_SETTINGS = {
         'form_class': forms.ChoiceField,
         'serializer_class': serializers.ChoiceField,
         'serializer_kwargs': dict(
-            choices=(
-                ('no', _('No modifications after order was submitted')),
-                ('order', _('Only the person who ordered can make changes')),
-                ('attendee', _('Both the attendee and the person who ordered can make changes')),
-            )
+            choices=AllowModifications.choices
         ),
         'form_kwargs': dict(
             label=_('Allow customers to modify their information'),
             widget=forms.RadioSelect,
-            choices=(
-                ('no', _('No modifications after order was submitted')),
-                ('order', _('Only the person who ordered can make changes')),
-                ('attendee', _('Both the attendee and the person who ordered can make changes')),
-            ),
+            choices=AllowModifications.choices
         ),
     },
     'allow_modifications_after_checkin': {

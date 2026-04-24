@@ -12,6 +12,7 @@ from eventyay.control.views import pages
 from eventyay.eventyay_common.views.custom import ConfirmEmailView, SignupView
 
 
+
 base_patterns = [
     path(
         'download/<id>/',

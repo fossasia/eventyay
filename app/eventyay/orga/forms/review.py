@@ -377,8 +377,8 @@ class ReviewExportForm(ExportForm):
     def _get_user_name_value(self, obj):
         return obj.user.fullname
 
-    def _get_user_email_value(self, obj):
-        return obj.user.email
+    def _get_user_email_value(self, obj: Review):
+        return obj.user.primary_email
 
     def get_answer(self, question, obj):
         return question.answers.filter(review=obj).first()

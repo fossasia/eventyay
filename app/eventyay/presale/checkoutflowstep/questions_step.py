@@ -1,4 +1,6 @@
 from decimal import Decimal
+from http import HTTPMethod
+from typing import cast
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -8,7 +10,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
-from eventyay.base.models import TaxRule
+from eventyay.base.models import Event, TaxRule, User
 from eventyay.base.services.cart import update_tax_rates
 from eventyay.base.services.system_questions import (
     get_system_question_asked_required,
@@ -62,9 +64,10 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
     @cached_property
     def contact_form(self):
         wd = self.cart_session.get('widget_data', {})
+        user = cast(User, self.request.user)
         initial = {
             'email': (
-                (self.request.user.email if self.request.user.is_authenticated else '')
+                (user.primary_email if user.is_authenticated else '')
                 or self.cart_session.get('email', '')
                 or wd.get('email', '')
             ),
@@ -77,7 +80,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             initial.update({k: v['initial'] for k, v in overrides.items() if 'initial' in v})
 
         f = ContactForm(
-            data=self.request.POST if self.request.method == 'POST' else None,
+            data=self.request.POST if self.request.method == HTTPMethod.POST else None,
             event=self.request.event,
             request=self.request,
             initial=initial,
@@ -135,7 +138,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
 
         if not self.address_asked and self.request.event.settings.invoice_name_required:
             f = InvoiceNameForm(
-                data=self.request.POST if self.request.method == 'POST' else None,
+                data=self.request.POST if self.request.method == HTTPMethod.POST else None,
                 event=self.request.event,
                 request=self.request,
                 instance=self.invoice_address,
@@ -145,7 +148,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             )
         else:
             f = InvoiceAddressForm(
-                data=self.request.POST if self.request.method == 'POST' else None,
+                data=self.request.POST if self.request.method == HTTPMethod.POST else None,
                 event=self.request.event,
                 request=self.request,
                 initial=initial,
@@ -223,10 +226,11 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
 
     def is_completed(self, request, warn=False):
         self.request = request
-        if request.event.settings.order_email_asked:
+        event = cast(Event, request.event)
+        if event.settings.order_email_asked:
             try:
                 emailval = EmailValidator()
-                if request.event.settings.order_email_required and not self.cart_session.get('email') and not self.all_optional:
+                if event.settings.order_email_required and not self.cart_session.get('email') and not self.all_optional:
                     if warn:
                         messages.warning(request, _('Please enter a valid email address.'))
                     return False
@@ -239,7 +243,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
 
         if not self.all_optional:
             if self.address_asked:
-                if request.event.settings.invoice_address_required and (
+                if event.settings.invoice_address_required and (
                     not self.invoice_address or not self.invoice_address.street
                 ):
                     messages.warning(request, _('Please enter your invoicing address.'))
@@ -365,7 +369,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                     messages.warning(request, _('Please fill in answers to all required questions.'))
                 return False
 
-            responses = question_form_fields.send(sender=self.request.event, position=cp)
+            responses = question_form_fields.send(sender=event, position=cp)
             form_data = cp.meta_info_data.get('question_form_data', {})
             for r, response in sorted(responses, key=lambda r: str(r[0])):
                 for key, value in response.items():

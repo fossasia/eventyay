@@ -23,6 +23,7 @@ from eventyay.helpers.urls import build_absolute_uri
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
+
 logger = logging.getLogger(__name__)
 adapter = get_adapter()
 
@@ -31,6 +32,7 @@ class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
 
+        # Store the 'next' URL in session for redirecting user back after login
         next_url = request.GET.get('next', '')
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             request.session['socialauth_next_url'] = next_url

@@ -8,9 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy as _n
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Organizer
-from eventyay.base.models import SpeakerProfile, User
-from eventyay.base.models import Submission
+from eventyay.base.models import Organizer, SpeakerProfile, Submission, User
 
 
 def serialize_user(user):
@@ -58,11 +56,12 @@ def serialize_speaker(speaker):
     }
 
 
-def serialize_admin_user(user):
+def serialize_admin_user(user: User):
     return {
         'type': 'user.admin',
-        'name': _('User') + f' {user.get_display_name()}',
+        'name': _('User %(name)s') % {'name': user.get_display_name()},
         'email': user.email,
+        'primary_email': user.primary_email,
         'url': user.orga_urls.admin,
     }
 
@@ -115,9 +114,12 @@ def nav_typeahead(request):
                 event__in=full_events,
             ).order_by()
 
+            query_matching = (
+                Q(user__fullname__icontains=query) | Q(user__email__iexact=query) | Q(user__code__istartswith=query)
+            )
             qs_speakers = (
                 SpeakerProfile.objects.filter(
-                    Q(user__fullname__icontains=query) | Q(user__email__iexact=query) | Q(user__code__istartswith=query),
+                    query_matching,
                     event__in=full_events,
                 )
                 .annotate(

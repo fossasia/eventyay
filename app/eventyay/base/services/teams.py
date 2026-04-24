@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.services.mail import SendMailException, mail
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +31,7 @@ def send_team_invitation_email(
     """
     try:
         mail(
-            user.email,
+            user.primary_email,
             _('eventyay account invitation'),
             'pretixcontrol/email/invitation.txt',
             {
@@ -47,7 +48,7 @@ def send_team_invitation_email(
     except SendMailException:
         logger.exception(
             'Failed to send team invitation email to %s for team %s',
-            user.email,
+            user.primary_email,
             team_name,
         )
         return False

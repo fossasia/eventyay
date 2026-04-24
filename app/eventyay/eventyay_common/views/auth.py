@@ -236,7 +236,7 @@ def invite(request: HttpRequest, token):
                 inv.team.log_action(
                     'eventyay.team.member.joined',
                     data={
-                        'email': request.user.email,
+                        'email': request.user.primary_email,
                         'invite_email': inv.email,
                         'user': request.user.pk,
                     },
@@ -258,6 +258,7 @@ def invite(request: HttpRequest, token):
                 )
                 user = authenticate(
                     request=request,
+                    # TODO: Use primary_email when django-allauth backend is enabled.
                     email=user.email,
                     password=form.cleaned_data['password'],
                 )
@@ -272,7 +273,7 @@ def invite(request: HttpRequest, token):
                 inv.team.log_action(
                     'eventyay.team.member.joined',
                     data={
-                        'email': user.email,
+                        'email': user.primary_email,
                         'invite_email': inv.email,
                         'user': user.pk,
                     },

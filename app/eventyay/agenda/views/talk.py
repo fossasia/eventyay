@@ -3,13 +3,13 @@ import logging
 from enum import StrEnum
 from http import HTTPStatus
 from typing import TypeVar
-from urllib.parse import quote, unquote, urljoin, urlparse
+from urllib.parse import unquote, urlencode, urljoin, urlparse
 
 import jwt
 import vobject
 from django.conf import settings
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
@@ -204,8 +204,6 @@ class TalkView(TalkMixin, TemplateView):
         return result
 
     def get_context_data(self, **kwargs):
-        from django.db.models import Prefetch
-
         ctx = super().get_context_data(**kwargs)
         schedule = self.request.event.current_schedule or self.request.event.wip_schedule
         if not self.request.user.has_perm('base.view_schedule', schedule):
@@ -486,12 +484,15 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
         details = localize_event_text(sub.abstract) or ''
+        params = {
+            'action': 'TEMPLATE',
+            'text': title,
+            'dates': dates,
+            'location': location,
+            'details': details,
+        }
         url = (
-            'https://calendar.google.com/calendar/render?action=TEMPLATE'
-            f'&text={quote(str(title))}'
-            f'&dates={dates}'
-            f'&location={quote(str(location))}'
-            f'&details={quote(str(details))}'
+            'https://calendar.google.com/calendar/render?' + urlencode(params)
         )
         return HttpResponseRedirect(url)
 

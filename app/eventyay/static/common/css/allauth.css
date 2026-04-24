@@ -289,6 +289,11 @@
   border-color: #b0bec5;
 }
 
+.btn-lg {
+  padding: 0.9rem 2rem;
+  font-size: 1.1rem;
+  width: 100%;
+}
 
 .btn .fa {
   margin-right: 0.5rem;
