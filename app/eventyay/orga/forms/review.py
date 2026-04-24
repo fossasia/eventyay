@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from collections import defaultdict
 from contextlib import suppress
@@ -9,13 +11,12 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext as _n
 from django_scopes.forms import SafeModelMultipleChoiceField
 
+from eventyay.base.models import Review, Submission, SubmissionStates, TalkQuestion, User
 from eventyay.common.forms.mixins import ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple, MarkdownWidget
 from eventyay.common.text.phrases import phrases
 from eventyay.orga.forms.export import ExportForm
-from eventyay.base.models import User
-from eventyay.base.models import TalkQuestion, Review, Submission, SubmissionStates
 
 
 class TagsForm(ReadOnlyFlag, forms.ModelForm):
@@ -297,7 +298,7 @@ class ReviewExportForm(ExportForm):
         model = Review
         model_fields = ['score', 'text', 'created', 'updated']
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, user: User | None = None, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
         self.fields['text'].label = phrases.base.text_body
