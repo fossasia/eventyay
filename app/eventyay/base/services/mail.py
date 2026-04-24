@@ -187,7 +187,9 @@ def mail(
                 for bcc_mail in event.settings.mail_bcc.split(','):
                     bcc.append(bcc_mail.strip())
 
-            if not auto_email:
+            if event.settings.mail_reply_to and not headers.get('Reply-To'):
+                headers['Reply-To'] = event.settings.mail_reply_to
+            elif not auto_email:
                 if (
                     event_reply_to
                     and not headers.get('Reply-To')

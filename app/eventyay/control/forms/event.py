@@ -1222,6 +1222,7 @@ class MailSettingsForm(SettingsForm):
     auto_fields = [
         'mail_prefix',
         'mail_from',
+        'mail_reply_to',
         'mail_from_name',
         'mail_attach_ical',
         'mail_attach_tickets',
@@ -1475,6 +1476,13 @@ class MailSettingsForm(SettingsForm):
         required=False,
     )
     smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
+    def clean(self):
+        data = super().clean()
+        if data.get('mail_from') and not data.get('smtp_use_custom'):
+            if data.get('mail_from') != settings.MAIL_FROM:
+                self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
+        return data
+
     base_context = {
         'mail_text_order_placed': ['event', 'order', 'payment'],
         'mail_text_order_placed_attendee': ['event', 'order', 'position'],
