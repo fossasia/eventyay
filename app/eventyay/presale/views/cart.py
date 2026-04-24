@@ -445,7 +445,7 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
         kwargs = {}
         if 'cart_namespace' in self.kwargs:
             kwargs['cart_namespace'] = self.kwargs['cart_namespace']
-        
+
         if self.request.event.settings.redirect_to_checkout_directly:
             url = eventreverse(
                 self.request.event,
@@ -454,10 +454,6 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
             )
             if url.startswith('https:'):
                 url = '/' + url.split('/', 3)[3]
-            if '?' in url:
-                url += '&open_cart=true'
-            else:
-                url += '?open_cart=true'
             disclose_cart_id = (
                 'iframe' in self.request.GET or settings.SESSION_COOKIE_NAME not in self.request.COOKIES
             ) and self.kwargs.get('cart_namespace')
