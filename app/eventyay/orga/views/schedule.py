@@ -120,6 +120,9 @@ class ScheduleExportTriggerView(EventPermissionRequired, View):
                 ),
             )
 
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'import-export' in referer:
+            return redirect(f'{self.request.event.orga_urls.import_export_settings}?export_target=session#tab-export')
         return redirect(self.request.event.orga_urls.schedule_export)
 
 
@@ -135,6 +138,9 @@ class ScheduleExportDownloadView(EventPermissionRequired, View):
                 request,
                 _('Could not find the current export, please try to regenerate it. ({error})').format(error=str(e)),
             )
+            referer = request.META.get('HTTP_REFERER')
+            if referer and 'import-export' in referer:
+                return redirect(f'{self.request.event.orga_urls.import_export_settings}?export_target=session#tab-export')
             return redirect(self.request.event.orga_urls.schedule_export)
         response['Content-Disposition'] = 'attachment; filename=' + safe_filename(zip_path.name)
         return response

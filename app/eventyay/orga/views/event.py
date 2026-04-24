@@ -50,6 +50,8 @@ from eventyay.person.forms import UserForm
 from eventyay.base.models import ReviewPhase, ReviewScoreCategory, User
 from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.submission.tasks import recalculate_all_review_scores
+from .speaker import SpeakerImportProcessView
+from .submission import SubmissionImportProcessView
 
 
 class EventSettingsPermission(EventPermissionRequired):
@@ -566,23 +568,38 @@ class TargetChoice(models.TextChoices):
     SPEAKER = 'speaker', _('Speakers')
     SCHEDULE = 'session', _('Schedule')
 
+    @classmethod
+    def import_target_items(cls):
+        return (
+            (
+                cls.SPEAKER,
+                {
+                    'filename': SpeakerImportProcessView.IMPORT_FILENAME,
+                    'process_url_name': f'orga:{SpeakerImportProcessView.import_process_url_name}',
+                },
+            ),
+            (
+                cls.SCHEDULE,
+                {
+                    'filename': SubmissionImportProcessView.IMPORT_FILENAME,
+                    'process_url_name': f'orga:{SubmissionImportProcessView.import_process_url_name}',
+                },
+            ),
+        )
+
+    @classmethod
+    def import_choices(cls):
+        return tuple((target, target.label) for target, _config in cls.import_target_items())
+
+    @classmethod
+    def import_targets(cls):
+        return {target: config for target, config in cls.import_target_items()}
+
 
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
-    IMPORT_CHOICES = (
-        (TargetChoice.SPEAKER, _('Speakers')),
-        (TargetChoice.SCHEDULE, _('Schedule')),
-    )
-    IMPORT_TARGETS = {
-        TargetChoice.SPEAKER: {
-            'filename': 'speaker_import.csv',
-            'process_url_name': 'orga:settings.import_export.speakers_import_process',
-        },
-        TargetChoice.SCHEDULE: {
-            'filename': 'session_import.csv',
-            'process_url_name': 'orga:settings.import_export.submissions_import_process',
-        },
-    }
+    IMPORT_CHOICES = TargetChoice.import_choices()
+    IMPORT_TARGETS = TargetChoice.import_targets()
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
@@ -593,8 +610,8 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
         }
         result['active_tab'] = kwargs.get('active_tab')
         result['import_choices'] = self.IMPORT_CHOICES
-        result['import_target'] = kwargs.get('import_target', TargetChoice.SPEAKER)
-        result['export_target'] = kwargs.get('export_target', TargetChoice.SPEAKER)
+        result['import_target'] = kwargs.get('import_target') or self.request.GET.get('import_target') or TargetChoice.SPEAKER
+        result['export_target'] = kwargs.get('export_target') or self.request.GET.get('export_target') or TargetChoice.SPEAKER
         result['import_form'] = kwargs.get('import_form') or CSVImportForm()
         result['speaker_export_form'] = kwargs.get('speaker_export_form') or SpeakerExportForm(
             event=self.request.event,
