@@ -20,8 +20,9 @@ class CentralMailSettingsForm(SettingsForm):
     Both the Tickets and Talks components share the gateway configured here
     via ``Event.get_mail_backend()``.
 
-    Sender addresses (mail_from, mail_from_name) and other content-level
-    settings remain on each component's own email page.
+    This form configures the shared delivery backend only; component-specific
+    email options (subject prefix, signature, templates) are managed on their
+    respective settings pages.
     """
 
     smtp_use_custom = forms.BooleanField(

@@ -1004,7 +1004,6 @@ class CancelSettingsForm(SettingsForm):
         'cancel_allow_user_paid_adjust_fees_step',
         'cancel_allow_user_paid_refund_as_giftcard',
         'cancel_allow_user_paid_require_approval',
-        'change_allow_user_variation',
         'change_allow_user_price',
         'change_allow_user_until',
     ]

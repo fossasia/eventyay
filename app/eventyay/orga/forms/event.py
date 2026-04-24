@@ -201,7 +201,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     reply_to = forms.EmailField(
         label=_('Reply-To address'),
         help_text=_(
-            'Override the Reply-To header for talk-related outgoing emails. '
+            'Override the Reply-To header for all outgoing event emails (Tickets and Talks). '
             'If left empty and the platform sender is used, the event organizer email is used as Reply-To.'
         ),
         required=False,
