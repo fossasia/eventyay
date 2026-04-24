@@ -52,13 +52,13 @@
                 <legend>{% trans "Email settings" %}</legend>     
                 {% bootstrap_field form.mail_reply_to layout="control" %}
                 {% bootstrap_field form.smtp_use_custom layout="control" %}
-                <div data-display-dependency="#id_smtp_use_custom">
+                <div data-display-dependency="#id_smtp_use_custom" data-disable-dependent>
                     {% bootstrap_field form.mail_from layout="control" %}
                     {% bootstrap_field form.email_vendor layout="control" %}
-                    <div data-display-dependency="#id_email_vendor_0">
+                    <div data-display-dependency="#id_email_vendor_0" data-disable-dependent>
                         {% bootstrap_field form.send_grid_api_key layout="control" %} 
                     </div>
-                    <div data-display-dependency="#id_email_vendor_1">
+                    <div data-display-dependency="#id_email_vendor_1" data-disable-dependent>
                         {% bootstrap_field form.smtp_host layout="control" %}
                         {% bootstrap_field form.smtp_port layout="control" %}
                         {% bootstrap_field form.smtp_username layout="control" %}
@@ -70,7 +70,7 @@
                     <div class="form-group">
                         <div class="col-md-9 col-md-offset-3">
                             <button type="submit" class="btn btn-default" name="test" value="1">
-                                {% trans "Save and test custom SMTP connection" %}
+                                {% trans "Save and send test email" %}
                             </button>
                         </div>
                     </div>

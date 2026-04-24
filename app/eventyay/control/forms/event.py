@@ -1476,11 +1476,39 @@ class MailSettingsForm(SettingsForm):
         required=False,
     )
     smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
+    def save(self, *args, **kwargs):
+        # test_email should not be persisted as a setting.
+        # HierarkeyForm.save() iterates over self.fields and expects them in self.cleaned_data.
+        # We temporarily remove it from self.fields to ensure it's not saved.
+        f = self.fields.pop('test_email', None)
+        try:
+            return super().save(*args, **kwargs)
+        finally:
+            if f:
+                self.fields['test_email'] = f
+
     def clean(self):
         data = super().clean()
         if data.get('mail_from') and not data.get('smtp_use_custom'):
-            if data.get('mail_from') != settings.MAIL_FROM:
+            gs = GlobalSettingsObject()
+            default_from = gs.settings.mail_from or settings.MAIL_FROM
+            if data.get('mail_from') != default_from:
                 self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
+
+        if not data.get('smtp_password') and data.get('smtp_username'):
+            # Leave password unchanged if the username is set and the password field is empty.
+            # This makes it impossible to set an empty password as long as a username is set, but
+            # Python's smtplib does not support password-less schemes anyway.
+            data['smtp_password'] = self.initial.get('smtp_password')
+        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
+            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                msg = _('This field is required when using SendGrid as email vendor.')
+                raise ValidationError({'send_grid_api_key': msg})
+
         return data
 
     base_context = {
@@ -1529,23 +1557,6 @@ class MailSettingsForm(SettingsForm):
                 # the user interface with it
                 del self.fields[k]
 
-    def clean(self):
-        data = self.cleaned_data
-        if not data.get('smtp_password') and data.get('smtp_username'):
-            # Leave password unchanged if the username is set and the password field is empty.
-            # This makes it impossible to set an empty password as long as a username is set, but
-            # Python's smtplib does not support password-less schemes anyway.
-            data['smtp_password'] = self.initial.get('smtp_password')
-        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
-            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
-
-        # Validate SendGrid token is provided when SendGrid is selected
-        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
-            if not data.get('send_grid_api_key'):
-                msg = _('This field is required when using SendGrid as email vendor.')
-                raise ValidationError({'send_grid_api_key': msg})
-
-        return data
 
 
 class TicketSettingsForm(SettingsForm):

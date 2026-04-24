@@ -44,23 +44,39 @@ from eventyay.helpers.i18n import is_rtl
 logger = logging.getLogger(__name__)
 
 
+def _get_test_email_data(from_addr, to_addrs=None, reply_to=None):
+    to_addrs = to_addrs or ['test@eventyay.com']
+    if isinstance(to_addrs, str):
+        to_addrs = [to_addrs]
+
+    subject = _('Eventyay test email')
+    body = _('This is a test email sent from Eventyay. If you received this email, your email settings are correct.')
+
+    headers = {}
+    if reply_to:
+        headers['Reply-To'] = reply_to
+
+    return to_addrs, subject, body, headers
+
+
 class SendGridEmail:
     api_key = ''
 
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def test(self, from_addr, to_addrs=None):
-        to_addrs = to_addrs or ['testdummy@eventyay.com']
-        if isinstance(to_addrs, str):
-            to_addrs = [to_addrs]
+    def test(self, from_addr, to_addrs=None, reply_to=None):
+        to_addrs, subject, body, headers = _get_test_email_data(from_addr, to_addrs, reply_to)
 
         message = Mail(
             from_email=from_addr,
             to_emails=to_addrs,
-            subject='Eventyay test email',
-            html_content='This is a test email sent from Eventyay. If you received this email, your SendGrid settings are correct.',
+            subject=subject,
+            html_content=body,
         )
+        if reply_to:
+            message.reply_to = reply_to
+
         sg = SendGridAPIClient(self.api_key)
         sg.send(message)
 
@@ -114,16 +130,15 @@ class SendGridEmail:
 
 
 class CustomSMTPBackend(EmailBackend):
-    def test(self, from_addr, to_addrs=None):
-        to_addrs = to_addrs or ['test@eventyay.com']
-        if isinstance(to_addrs, str):
-            to_addrs = [to_addrs]
+    def test(self, from_addr, to_addrs=None, reply_to=None):
+        to_addrs, subject, body, headers = _get_test_email_data(from_addr, to_addrs, reply_to)
 
         message = EmailMessage(
-            subject='Eventyay test email',
-            body='This is a test email sent from Eventyay. If you received this email, your SMTP settings are correct.',
+            subject=subject,
+            body=body,
             from_email=from_addr,
             to=to_addrs,
+            headers=headers,
         )
         self.send_messages([message])
 
@@ -170,16 +185,15 @@ class FileSavedEmailBackend(_FileBasedEmailBackend):
         logger.info('Wrote %d email(s) to %s.', n, subdir.relative_to(Path.cwd()))
         return n
 
-    def test(self, from_addr, to_addrs=None):
-        to_addrs = to_addrs or ['test@eventyay.com']
-        if isinstance(to_addrs, str):
-            to_addrs = [to_addrs]
+    def test(self, from_addr, to_addrs=None, reply_to=None):
+        to_addrs, subject, body, headers = _get_test_email_data(from_addr, to_addrs, reply_to)
 
         message = EmailMessage(
-            subject='Eventyay test email',
-            body='This is a test email sent from Eventyay. If you received this email, your email settings are correct.',
+            subject=subject,
+            body=body,
             from_email=from_addr,
             to=to_addrs,
+            headers=headers,
         )
         self.send_messages([message])
 
