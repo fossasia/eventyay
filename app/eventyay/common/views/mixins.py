@@ -283,13 +283,44 @@ class ImportProcessRedirectMixin:
     import_process_url_name = ''
     import_page_url_name = ''
 
+    def get_import_process_url_name(self) -> str:
+        if not self.import_process_url_name:
+            raise ImproperlyConfigured(
+                f'{self.__class__.__name__} must define import_process_url_name.'
+            )
+        return self.import_process_url_name
+
+    def get_import_page_url_name(self) -> str:
+        if not self.import_page_url_name:
+            raise ImproperlyConfigured(
+                f'{self.__class__.__name__} must define import_page_url_name.'
+            )
+        return self.import_page_url_name
+
+    def get_import_page_url(self) -> str:
+        try:
+            orga_urls = self.request.event.orga_urls
+        except AttributeError as exc:
+            raise ImproperlyConfigured(
+                f'{self.__class__.__name__} requires request.event.orga_urls to be available.'
+            ) from exc
+
+        import_page_url_name = self.get_import_page_url_name()
+        try:
+            return getattr(orga_urls, import_page_url_name)
+        except AttributeError as exc:
+            raise ImproperlyConfigured(
+                f'{self.__class__.__name__} sets import_page_url_name to '
+                f'"{import_page_url_name}", but request.event.orga_urls has no such attribute.'
+            ) from exc
+
     @cached_property
     def import_redirect_url(self) -> str:
         """Return the correct import/error page URL based on entry point."""
         match = getattr(self.request, 'resolver_match', None)
-        if match and match.url_name == self.import_process_url_name:
+        if match and match.url_name == self.get_import_process_url_name():
             return self.request.event.orga_urls.import_export_settings + '#tab-import'
-        return getattr(self.request.event.orga_urls, self.import_page_url_name)
+        return self.get_import_page_url()
 
 
 class SensibleBackWizardMixin:

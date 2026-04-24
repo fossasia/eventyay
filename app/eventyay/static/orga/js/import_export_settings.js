@@ -55,7 +55,10 @@ const addImportExportSettingsHooks = () => {
     // Initialize visibility
     const initialTarget = wrapper.dataset.exportTarget || targetSelect.value || "speaker"
     targetSelect.value = initialTarget
-    updateExportPanelVisibility(wrapper, initialTarget)
+    // Fallback if initialTarget was invalid (setting .value to an invalid value clears it)
+    const selectedTarget = targetSelect.value || targetSelect.options[0]?.value || "speaker"
+    targetSelect.value = selectedTarget
+    updateExportPanelVisibility(wrapper, selectedTarget)
 
     // Handle target change
     targetSelect.addEventListener("change", (event) => {

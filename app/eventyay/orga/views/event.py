@@ -719,5 +719,5 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
 
         if not result:
             messages.success(self.request, _('No data to be exported'))
-            return redirect(f'{self.request.path}#tab-export')
+            return redirect(f'{self.request.path}?export_target={target.value}#tab-export')
         return result
