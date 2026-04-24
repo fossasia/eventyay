@@ -240,7 +240,7 @@ DEFAULT_SETTINGS = {
         ),
     },
     'include_wikimedia_username': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'form_class': forms.BooleanField,
         'serializer_class': serializers.BooleanField,

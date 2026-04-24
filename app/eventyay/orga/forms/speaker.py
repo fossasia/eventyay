@@ -2,10 +2,9 @@ from django import forms
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.models import SubmissionStates, User
 from eventyay.common.text.phrases import phrases
 from eventyay.orga.forms.export import ExportForm
-from eventyay.base.models import User
-from eventyay.base.models import SubmissionStates
 
 
 class SpeakerExportForm(ExportForm):
@@ -54,6 +53,11 @@ class SpeakerExportForm(ExportForm):
             label=_('Picture License'),
             help_text=_("The license of the speaker's profile picture"),
         )
+        self.fields['wikimedia_username'] = forms.BooleanField(
+            required=False,
+            label=_('Wikimedia Username'),
+            initial=True,
+        )
 
     @cached_property
     def questions(self):
@@ -74,6 +78,7 @@ class SpeakerExportForm(ExportForm):
             'avatar_license',
             'submission_ids',
             'submission_titles',
+            'wikimedia_username',
         ]
 
     def get_queryset(self):
@@ -98,6 +103,9 @@ class SpeakerExportForm(ExportForm):
 
     def _get_submission_titles_value(self, obj):
         return list(obj.submissions.filter(event=self.event).values_list('title', flat=True))
+
+    def _get_wikimedia_username_value(self, obj):
+        return obj.wikimedia_username
 
     def _prepare_object_data(self, obj):
         obj._profile = obj.event_profile(self.event)
