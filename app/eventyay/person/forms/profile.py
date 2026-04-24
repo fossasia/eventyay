@@ -8,6 +8,9 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.models import Event, SpeakerProfile, TalkQuestion, TalkQuestionTarget, User
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import (
     ImageField,
@@ -32,12 +35,14 @@ from eventyay.common.forms.widgets import (
 )
 from eventyay.common.text.phrases import phrases
 from eventyay.consts import SizeKey
-from eventyay.base.models import Event
-from eventyay.base.models import SpeakerProfile, User
-from eventyay.base.models.information import SpeakerInformation
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.base.models import TalkQuestion, TalkQuestionTarget
-from eventyay.base.models.submission import SubmissionStates
+
+
+AVATAR_LICENSE_TEXT_WORD_LIMIT = 3000
+AVATAR_LICENSE_TEXT_MAX_TOKEN_LENGTH = 500
+AVATAR_LICENSE_TEXT_VALIDATION_ERROR = _(
+    'Please keep this field below 3000 words. Do not paste image files or encoded image data here.'
+)
 
 
 def get_email_address_error():
@@ -46,6 +51,18 @@ def get_email_address_error():
         + ' '
         + _('Please choose a different email address.')
     )
+
+
+def validate_avatar_license_text(value):
+    if not value:
+        return value
+    words = value.split()
+    has_encoded_image_data = value.lstrip().startswith('data:image/') or any(
+        len(word) > AVATAR_LICENSE_TEXT_MAX_TOKEN_LENGTH for word in words
+    )
+    if len(words) > AVATAR_LICENSE_TEXT_WORD_LIMIT or has_encoded_image_data:
+        raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
+    return value
 
 
 class SpeakerProfileForm(
@@ -164,6 +181,12 @@ class SpeakerProfileForm(
             raise ValidationError(get_email_address_error())
         return email
 
+    def clean_avatar_source(self):
+        return validate_avatar_license_text(self.cleaned_data.get('avatar_source'))
+
+    def clean_avatar_license(self):
+        return validate_avatar_license_text(self.cleaned_data.get('avatar_license'))
+
     def clean(self):
         data = super().clean()
         if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
@@ -210,7 +233,7 @@ class SpeakerProfileForm(
                 self.user.get_gravatar = False
             else:
                 setattr(self.user, user_attribute, value)
-            
+
             # Add thumbnail fields to update_fields when avatar changes
             update_fields = [user_attribute]
             if user_attribute == 'avatar':
