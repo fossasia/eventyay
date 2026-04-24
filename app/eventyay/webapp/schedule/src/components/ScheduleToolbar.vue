@@ -7,6 +7,7 @@
 	.toolbar-row
 		.toolbar-left
 			button.toolbar-btn.mobile-toggle-btn.mobile-filter-toggle.icon-only(
+				class="tooltip-align-left"
 				@click="toggleMobileFilters",
 				:class="{active: mobileFiltersOpen || effectiveHasActiveFilters}",
 				:aria-expanded="mobileFiltersOpen ? 'true' : 'false'",
@@ -111,6 +112,16 @@
 						line(x1="18", y1="3", x2="18", y2="15")
 						polyline(points="15 12 18 15 21 12")
 				.sort-dropdown-menu(v-if="sortOpen", role="menu", @keydown.esc.prevent.stop="sortOpen = false")
+					.template-sort-inclusion
+						.sort-inclusion-row
+							span.sort-inclusion-label {{ t.sort_include_room }}
+							button.sort-toggle-slider(type="button", :class="{on: includeRoomSortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_room", :aria-checked="includeRoomSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleRoomSort")
+								span.toggle-slider(aria-hidden="true")
+						.sort-inclusion-row
+							span.sort-inclusion-label {{ t.sort_include_datetime }}
+							button.sort-toggle-slider(type="button", :class="{on: includeDateSortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_datetime", :aria-checked="includeDateSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleDatetimeSort")
+								span.toggle-slider(aria-hidden="true")
+						.sort-menu-divider
 					button.sort-item(
 						v-for="opt in resolvedSortOptions",
 						:key="opt.value",
@@ -159,7 +170,7 @@
 						svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 							path(d="M18 6L6 18M6 6l12 12")
 
-			button.toolbar-btn.icon-only.fullscreen-quick(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
+			button.toolbar-btn.icon-only.fullscreen-quick.tooltip-align-right(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
 				svg.tb-icon(v-if="!isFullscreen", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 					polyline(points="15 3 21 3 21 9")
 					polyline(points="9 21 3 21 3 15")
@@ -291,7 +302,7 @@
 						polyline(points="6 9 6 2 18 2 18 9")
 						path(d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2")
 						rect(x="6", y="14", width="12", height="8")
-				button.toolbar-btn.icon-only.fullscreen-desktop(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
+				button.toolbar-btn.icon-only.fullscreen-desktop.tooltip-align-right(v-if="showFullscreen", @click="toggleFullscreen", :aria-label="isFullscreen ? t.exit_fullscreen : t.fullscreen")
 					svg.tb-icon(v-if="!isFullscreen", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 						polyline(points="15 3 21 3 21 9")
 						polyline(points="9 21 3 21 3 15")
@@ -346,11 +357,13 @@ export default {
 		,
 		showRecordingFilter: { type: Boolean, default: false },
 		recordingFilter: { type: String, default: 'all' },
-		sortBy: { type: String, default: 'room' },
-		sortOptions: { type: Array, default: () => ['room', 'title'] },
+		sortBy: { type: String, default: 'title' },
+		includeRoomSortKey: { type: Boolean, default: false },
+		includeDateSortKey: { type: Boolean, default: true },
+		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
 		timeDensityMinutes: { type: Number, default: 30 }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
 		return {
 			exportOpen: false,
@@ -411,6 +424,10 @@ export default {
 				all_sessions: m.all_sessions || 'All sessions',
 				recorded_only: m.recorded_only || 'Recorded only',
 				not_recorded: m.not_recorded || 'Not recorded',
+				sort_include_room: m.sort_include_room || 'Include room',
+				sort_include_datetime: m.sort_include_datetime || 'Include datetime',
+				on: m.on || 'ON',
+				off: m.off || 'OFF',
 				filters: m.filters || 'Filters',
 				more: m.more || 'More',
 				density_compact_view: m.density_compact_view || 'compact view',
@@ -438,21 +455,28 @@ export default {
 			get() { return this.sortBy },
 			set(value) { this.$emit('update:sortBy', value) }
 		},
+		includeRoomSortKeyModel: {
+			get() { return this.includeRoomSortKey },
+			set(value) { this.$emit('update:includeRoomSortKey', !!value) }
+		},
+		includeDateSortKeyModel: {
+			get() { return this.includeDateSortKey },
+			set(value) { this.$emit('update:includeDateSortKey', !!value) }
+		},
 		resolvedSortOptions() {
 			const allowed = Array.isArray(this.sortOptions) ? this.sortOptions : []
 			const labelMap = {
-				room: this.t.sort_by_room,
 				title: this.t.sort_by_title,
 				title_desc: this.t.sort_by_title_desc,
 				popularity: this.t.sort_by_popularity,
 			}
 			return allowed
-				.filter(v => ['room', 'title', 'title_desc', 'popularity'].includes(v))
+				.filter(v => ['title', 'title_desc', 'popularity'].includes(v))
 				.map(v => ({ value: v, label: labelMap[v] || v }))
 		},
 		currentSortLabel() {
 			const current = this.resolvedSortOptions.find(o => o.value === this.sortModel)
-			return current ? current.label : this.t.sort_by_room
+			return current ? current.label : this.t.sort_by_title
 		},
 		resolvedExporters() {
 			return this.exporters || []
@@ -673,6 +697,12 @@ export default {
 			this.$emit('setTimeDensityMinutes', value)
 			this.densityOpen = false
 			this.$nextTick(() => this.$refs.densityDropdown?.querySelector?.('button')?.focus?.())
+		},
+		toggleRoomSort() {
+			this.$emit('update:includeRoomSortKey', !this.includeRoomSortKey)
+		},
+		toggleDatetimeSort() {
+			this.$emit('update:includeDateSortKey', !this.includeDateSortKey)
 		},
 		selectSort(value) {
 			this.sortModel = value
@@ -1008,6 +1038,54 @@ export default {
 					background-color: #f5f5f5
 				&.active
 					font-weight: 600
+			.template-sort-inclusion
+				padding: 8px 12px 6px
+				.sort-inclusion-row
+					display: flex
+					align-items: center
+					justify-content: space-between
+					gap: 12px
+					&:not(:last-child)
+						margin-bottom: 8px
+				.sort-inclusion-label
+					font-size: 13px
+					color: #333
+				.sort-toggle-slider
+					display: inline-flex
+					align-items: center
+					justify-content: center
+					padding: 0
+					border: 0
+					background: transparent
+					cursor: pointer
+					user-select: none
+					&.on .toggle-slider
+						background-color: var(--pretalx-clr-primary, #3aa57c)
+						&::after
+							transform: translateX(20px)
+					.toggle-slider
+						display: inline-block
+						width: 44px
+						height: 24px
+						background-color: #ccc
+						border-radius: 12px
+						transition: background-color 0.3s
+						position: relative
+						&::after
+							content: ''
+							display: block
+							width: 20px
+							height: 20px
+							background-color: #fff
+							border-radius: 50%
+							transition: transform 0.3s
+							position: absolute
+							top: 2px
+							left: 2px
+			.sort-menu-divider
+				height: 1px
+				background: #ececec
+				margin: 6px 0
 	.toolbar-center
 		display: flex
 		align-items: center
@@ -1370,6 +1448,19 @@ export default {
 				opacity: 1
 				transform: translateX(-50%) translateY(0)
 				transition: opacity 0.05s ease, transform 0.05s ease
+		&.icon-only.tooltip-align-left[aria-label]
+			&::after
+				left: 0
+				transform: translateY(-2px)
+			&:hover::after, &:focus-visible::after
+				transform: translateY(0)
+		&.icon-only.tooltip-align-right[aria-label]
+			&::after
+				left: auto
+				right: 0
+				transform: translateY(-2px)
+			&:hover::after, &:focus-visible::after
+				transform: translateY(0)
 		&.icon-only
 			padding: 0 5px
 			gap: 3px

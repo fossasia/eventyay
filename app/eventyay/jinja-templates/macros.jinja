@@ -1,0 +1,9 @@
+{# Jinja macro for adding a CSS class to a Django form widget #}
+{% macro add_widget_class(field, class_name) %}
+  {%- set widget = field.field.widget %}
+  {%- set attrs = widget.attrs.copy() %}
+  {%- set existing = attrs.class if 'class' in attrs else '' %}
+  {%- set new_class = (existing ~ ' ' ~ class_name).strip() %}
+  {%- set _a = attrs.update({'class': new_class}) %}
+  {{ field.as_widget(attrs=attrs) }}
+{% endmacro %}
