@@ -75,8 +75,9 @@
       <div class='form-group d-flex align-items-center'>
         <label class='mb-0 mr-3 font-weight-bold' for='id_export_target'>{% translate 'Export target' %}</label>
         <select id='id_export_target' class='form-control w-25' data-export-target-select>
-          <option value='speaker' {% if export_target == 'speaker' %}selected{% endif %}>{% translate 'Speakers' %}</option>
-          <option value='session' {% if export_target == 'session' %}selected{% endif %}>{% translate 'Schedule' %}</option>
+          {% for value, label in import_choices %}
+            <option value='{{ value }}' {% if export_target == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
         </select>
       </div>
 
