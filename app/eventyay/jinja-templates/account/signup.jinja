@@ -1,0 +1,107 @@
+{% extends 'account/base.jinja' %}
+{% import 'macros.jinja' as macros %}
+
+{% block head_title %}
+  {{ _('Sign Up') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='signup-container'>
+    <h1>{{ _('Create Account') }}</h1>
+
+    <form method='post' action="{{ url_for('account_signup') }}">
+      <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+      {{ redirect_field }}
+
+      <div class='form-group'>
+        <label for='{{ form.email.id_for_label }}'>
+          {{ form.email.label }}
+          {% if form.email.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ macros.add_widget_class(form.email, 'text-sm') }}
+        {% if form.email.errors %}
+          <div class='field-error'>
+            {% for error in form.email.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class='form-group'>
+        <label for='{{ form.password1.id_for_label }}'>
+          {{ form.password1.label }}
+          {% if form.password1.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ macros.add_widget_class(form.password1, 'text-sm') }}
+        {% if form.password1.errors %}
+          <div class='field-error'>
+            {% for error in form.password1.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% if form.password1.help_text %}
+          <div class='field-help'>{{ form.password1.help_text }}</div>
+        {% endif %}
+      </div>
+
+      <div class='form-group'>
+        <label for='{{ form.password2.id_for_label }}'>
+          {{ form.password2.label }}
+          {% if form.password2.field.required %}<span class='required'>*</span>{% endif %}
+        </label>
+        {{ macros.add_widget_class(form.password2, 'text-sm') }}
+        {% if form.password2.errors %}
+          <div class='field-error'>
+            {% for error in form.password2.errors %}
+              <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      {# This is a tuple of Page #}
+      {% if confirmation_pages %}
+        <div class='form-group'>
+          <label>
+            <input type='checkbox' class='checkbox' name='confirmation_pages_accepted' value='yes' required>
+            {{ _('I have read and agree with the content of the following pages:') }}
+            {% for page in confirmation_pages %}
+              <a href="{{ url_for('page', slug=page.slug) }}">{{ page.title|safe }}</a>{% if not loop.last %}, {% else %}.{% endif %}
+            {% endfor %}
+          </label>
+        </div>
+      {% endif %}
+
+      {% if form.non_field_errors() %}
+        <div class='alert alert-danger'>
+          {% for error in form.non_field_errors() %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if show_keep_logged_in %}
+        <div class='form-group'>
+          <label class='flex items-center'>
+            <input type='checkbox' name='keep_logged_in' value='1' class='checkbox'>
+            <span class='ml-2'>{{ _('Keep me logged in') }}</span>
+          </label>
+        </div>
+      {% endif %}
+
+      <button type='submit' class='btn btn-primary btn-block'>
+        <i class='fa fa-check'></i>
+        {{ _('Create Account') }}
+      </button>
+    </form>
+
+    <div class='additional-links'>
+      <p>
+        {{ _('Already have an account?') }}
+        <a href="{{ url_for('eventyay_common:auth.login') }}">{{ _('Log in') }}</a>
+      </p>
+    </div>
+  </div>
+{% endblock content %}

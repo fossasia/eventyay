@@ -1,0 +1,19 @@
+{% extends 'account/base.jinja' %}
+
+{% block head_title %}
+  {{ _('Verify Your Email Address') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='email-confirm-success-container'>
+    <h1>{{ _('Verify Your Email Address') }}</h1>
+
+    <p>
+      {{ _('We have sent an email to you for verification. Follow the link provided to finalize the signup process. If you do not see the verification email in your main inbox, check your spam folder. Please contact us if you do not receive the verification email within a few minutes.') }}
+    </p>
+
+    <p class='additional-links'>
+      <a href='{{ url_for('eventyay_common:auth.login') }}'>{{ _('Back to Login') }}</a>
+    </p>
+  </div>
+{% endblock content %}
