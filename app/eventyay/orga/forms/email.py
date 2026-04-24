@@ -114,6 +114,16 @@ class CentralMailSettingsForm(SettingsForm):
                     ValidationError(_('An API key is required when using SendGrid.')),
                 )
         else:
+            if not data.get('smtp_host'):
+                self.add_error(
+                    'smtp_host',
+                    ValidationError(_('A hostname is required when using a custom SMTP server.')),
+                )
+            if not data.get('smtp_port'):
+                self.add_error(
+                    'smtp_port',
+                    ValidationError(_('A port number is required when using a custom SMTP server.')),
+                )
             if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
                 self.add_error(
                     'smtp_use_tls',

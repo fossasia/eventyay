@@ -78,9 +78,7 @@ def mail_send_task(
         event = Event.objects.get(pk=event)
         backend = event.get_mail_backend()
 
-        sender = settings.MAIL_FROM
-        if event.settings.smtp_use_custom: 
-            sender = event.settings.mail_from or sender
+        sender = event.settings.mail_from or settings.MAIL_FROM
 
         # Use unified Reply-To resolution
         if not reply_to:
