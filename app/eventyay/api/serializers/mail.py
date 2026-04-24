@@ -3,7 +3,7 @@ from rest_framework import exceptions
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
 from eventyay.mail.context import get_invalid_placeholders
-from eventyay.base.models.mail import MailTemplate
+from eventyay.base.models.mail import MailTemplate, MailTemplateRoles
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -24,10 +24,27 @@ class MailTemplateSerializer(PretalxSerializer):
         return super().create(validated_data)
 
     def _validate_text(self, value):
+        # Build a MailTemplate with the correct role so valid_placeholders
+        # returns only the placeholders available in that role's mail context.
+        # Without this, creating a NEW_SCHEDULE template via API would accept
+        # submission-level placeholders (like {submission_title}) that aren't
+        # available at send time, causing KeyError crashes.
+        role = self.initial_data.get("role", getattr(self.instance, "role", None))
+        # Only use the role for placeholder scoping if it's a known value;
+        # invalid roles are rejected by DRF's own field validation separately.
+        valid_roles = {choice.value for choice in MailTemplateRoles}
+        if role not in valid_roles:
+            role = None
         if not self.instance:
-            valid_placeholders = MailTemplate(event=self.event).valid_placeholders
+            kwargs = {"event": self.event}
+            if role:
+                kwargs["role"] = role
+            valid_placeholders = MailTemplate(**kwargs).valid_placeholders
         else:
-            valid_placeholders = self.instance.valid_placeholders
+            template = self.instance
+            if role and role != template.role:
+                template = MailTemplate(event=self.event, role=role)
+            valid_placeholders = template.valid_placeholders
         try:
             fields = get_invalid_placeholders(value, valid_placeholders)
         except Exception:

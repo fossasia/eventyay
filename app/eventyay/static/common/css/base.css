@@ -56,6 +56,12 @@ legend {
   object-fit: contain;
 }
 
+@media (min-width: 769px) {
+  #main-container.presale-container #event-logo {
+    padding-left: 1rem;
+  }
+}
+
 button,
 [role="button"],
 a.btn,
@@ -1018,6 +1024,7 @@ pl-0 {
 .table-responsive-always {
   display: block;
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }

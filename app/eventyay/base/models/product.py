@@ -420,6 +420,13 @@ class Product(LoggedModel):
             'If this is unchecked, orders containing this product can not be canceled by users but only by you.'
         ),
     )
+    allow_user_variation_change = models.BooleanField(
+        verbose_name=_('Allow customers to change product variations'),
+        default=False,
+        help_text=_(
+            'If this is checked, customers can switch between variations of this product in their order details.'
+        ),
+    )
     min_per_order = models.IntegerField(
         verbose_name=_('Minimum amount per order'),
         null=True,

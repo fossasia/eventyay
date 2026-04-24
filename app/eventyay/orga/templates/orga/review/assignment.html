@@ -47,15 +47,18 @@
                 </tr>
             </thead>
             <tbody>
-                {% for team in review_teams %}
+                {% for row in review_team_rows %}
+                    {% with team=row.team %}
                     <tr>
                         <td>
-                            <a href="{{ team.orga_urls.base }}?next={{ request.path|urlencode }}">
+                            {% if row.can_manage_teams %}
+                                <a href="{{ row.teams_tab_url }}">{{ team.name }}</a>
+                            {% else %}
                                 {{ team.name }}
-                                {% if request.user in team.members.all %}
-                                    <i class="fa fa-star text-warning" title="{% translate "You are a member of this team" %}"></i>
-                                {% endif %}
-                            </a>
+                            {% endif %}
+                            {% if request.user in team.members.all %}
+                                <i class="fa fa-star text-warning" title="{% translate "You are a member of this team" %}"></i>
+                            {% endif %}
                         </td>
                         <td>
                             {% if team.members.count %}
@@ -81,14 +84,26 @@
                             </td>
                         {% endif %}
                         <td class="text-right">
-                            <a href="{{ team.orga_urls.base }}?next={{ request.path|urlencode }}" class="btn btn-sm btn-info" title="{{ phrases.base.edit }}">
-                                <i class="fa fa-edit"></i>
-                            </a>
-                            <a href="{{ team.orga_urls.delete }}?next={{ request.path|urlencode }}" class="btn btn-sm btn-danger" title="{{ phrases.base.delete_button }}">
-                                <i class="fa fa-trash"></i>
-                            </a>
+                            {% if row.can_manage_teams %}
+                                <a href="{{ row.teams_tab_url }}" class="btn btn-sm btn-info" data-toggle="tooltip" data-placement="bottom" title="{{ phrases.base.edit }}">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                {% if row.delete_confirm_url %}
+                                    <a href="{{ row.delete_confirm_url }}" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="bottom-right" title="{{ phrases.base.delete_button }}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                {% else %}
+                                    {% translate "Cannot be deleted as only team left with management privileges" as team_delete_disabled_help %}
+                                    <span class="d-inline-block tooltip-textbox-delete" data-toggle="tooltip" data-placement="bottom-right" title="{{ team_delete_disabled_help }}" tabindex="0">
+                                        <button type="button" class="btn btn-sm btn-danger" disabled aria-label="{{ team_delete_disabled_help }}">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </span>
+                                {% endif %}
+                            {% endif %}
                         </td>
                     </tr>
+                    {% endwith %}
                 {% endfor %}
             </tbody>
         </table>

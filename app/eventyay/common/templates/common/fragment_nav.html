@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load eventsignal %}
 {% load safelink %}
 {% load event_tags %}
 {% load eventurl %}
@@ -13,6 +14,12 @@
     {% if show_tickets_tab %}
         <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+        </a>
+    {% endif %}
+    {% can_view_featured_sessions_public current_event as show_featured_sessions_tab %}
+    {% if show_featured_sessions_tab %}
+        <a href="{{ current_event.urls.featured }}" id="nav-tab-featured" class="header-tab {% if '/featured/' in path %}active{% endif %}" title="{% translate 'Featured Sessions' %}">
+            <i class="fa fa-certificate" aria-hidden="true"></i> {% translate "Featured" %}
         </a>
     {% endif %}
     {% if show_talks_tab %}
@@ -37,6 +44,8 @@
             <i class="fa fa-link"></i> {{ link.label }}
         </a>
     {% endfor %}
+
+    {% eventsignal current_event "eventyay.presale.signals.header_nav_tabs" request=request %}
 
     {% if show_talks_tab %}
         {% with cfp=current_event.cfp %}

@@ -102,7 +102,8 @@
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 			.speaker-info
 				.name {{ speaker.name || t.speaker_fallback }}
-				.biography(v-if="speaker.biography") {{ speaker.biography }}
+				.biography(v-if="speaker.biography")
+					markdown-content(:markdown="speaker.biography")
 				.sessions-list(v-if="speaker.sessions && speaker.sessions.length")
 					span.session-title(v-for="(session, idx) in speaker.sessions", :key="session.id")
 						| {{ getLocalizedString(session.title) }}
@@ -124,9 +125,8 @@
 									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 							.caption.text-center
 								h4 {{ speaker.name || t.speaker_fallback }}
-								p(v-if="speaker.biography") {{ speaker.biography }}
+								markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 					.featured-speaker-details
-						.featured-speaker-bio(v-if="speaker.biography") {{ speaker.biography }}
 						template(v-if="speaker.sessions && speaker.sessions.length")
 							hr.featured-speaker-divider
 							.featured-speaker-sessions
@@ -150,6 +150,7 @@
 <script>
 import moment from 'moment-timezone'
 import { getLocalizedString } from '../utils'
+import MarkdownContent from './MarkdownContent'
 
 function normalizeLocaleCode (code) {
 	if (!code || typeof code !== 'string') return null
@@ -172,6 +173,7 @@ function localesMatch (filterValue, sessionValue) {
 
 export default {
 	name: 'SpeakersList',
+	components: { MarkdownContent },
 	inject: {
 		scheduleData: { default: null },
 		eventUrl: { default: '' },
@@ -698,18 +700,43 @@ export default {
 					h4
 						margin: 8px 0 0
 						color: $clr-primary-text-light
-						font-size: 22px
-						font-weight: 600
-						line-height: 1.2
-					p
+						font-size: 18px
+						font-weight: 500
+						line-height: 1.3
+					.featured-speaker-preview-bio
 						margin: 4px 0 0
 						color: $clr-secondary-text-light
 						font-size: 12px
 						line-height: 1.35
 						display: -webkit-box
-						-webkit-line-clamp: 3
+						-webkit-line-clamp: 2
+						line-clamp: 2
 						-webkit-box-orient: vertical
 						overflow: hidden
+						overflow-wrap: anywhere
+						text-overflow: ellipsis
+						&.c-markdown-content
+							font-size: inherit
+							line-height: inherit
+							color: inherit
+							p, ul, ol, table, pre
+								margin-top: 0.25em
+								margin-bottom: 0.25em
+								&:first-child
+									margin-top: 0
+								&:last-child
+									margin-bottom: 0
+
+		.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
+			display: block
+			-webkit-line-clamp: unset
+			line-clamp: unset
+			-webkit-box-orient: unset
+			overflow: visible
+			white-space: normal
+			text-overflow: clip
+			&.c-markdown-content
+				display: block
 
 		.avatar-placeholder
 			width: 100%
@@ -728,12 +755,6 @@ export default {
 			padding: 12px
 			background: $clr-grey-100
 			border-top: 1px solid $clr-grey-300
-
-		.featured-speaker-bio
-			color: $clr-primary-text-light
-			font-size: 13px
-			line-height: 1.55
-			white-space: pre-wrap
 
 		.featured-speaker-divider
 			margin: 12px 0 8px
@@ -838,10 +859,23 @@ export default {
 			font-size: 14px
 			color: $clr-secondary-text-light
 			display: -webkit-box
-			-webkit-line-clamp: 3
+			-webkit-line-clamp: 1
+			line-clamp: 1
 			-webkit-box-orient: vertical
 			overflow: hidden
+			overflow-wrap: anywhere
+			text-overflow: ellipsis
 			margin-bottom: 4px
+			.c-markdown-content
+				font-size: inherit
+				color: inherit
+				line-height: 1.4
+				p, ul, ol
+					margin: 0.15em 0
+					&:first-child
+						margin-top: 0
+					&:last-child
+						margin-bottom: 0
 		.sessions-list
 			font-size: 13px
 			color: $clr-secondary-text-light
