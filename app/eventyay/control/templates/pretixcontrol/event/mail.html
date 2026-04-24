@@ -52,14 +52,20 @@
             <fieldset>
                 <legend>{% trans "Email settings" %}</legend>     
                 {% bootstrap_field form.smtp_use_custom layout="control" %}
-                {% bootstrap_field form.email_vendor layout="control" %}
-                {% bootstrap_field form.send_grid_api_key layout="control" %} 
-                {% bootstrap_field form.smtp_host layout="control" %}
-                {% bootstrap_field form.smtp_port layout="control" %}
-                {% bootstrap_field form.smtp_username layout="control" %}
-                {% bootstrap_field form.smtp_password layout="control" %}
-                {% bootstrap_field form.smtp_use_tls layout="control" %}
-                {% bootstrap_field form.smtp_use_ssl layout="control" %}
+                <div data-display-dependency="#id_smtp_use_custom">
+                    {% bootstrap_field form.email_vendor layout="control" %}
+                    <div data-display-dependency="#id_email_vendor_0">
+                        {% bootstrap_field form.send_grid_api_key layout="control" %} 
+                    </div>
+                    <div data-display-dependency="#id_email_vendor_1">
+                        {% bootstrap_field form.smtp_host layout="control" %}
+                        {% bootstrap_field form.smtp_port layout="control" %}
+                        {% bootstrap_field form.smtp_username layout="control" %}
+                        {% bootstrap_field form.smtp_password layout="control" %}
+                        {% bootstrap_field form.smtp_use_tls layout="control" %}
+                        {% bootstrap_field form.smtp_use_ssl layout="control" %}
+                    </div>
+                </div>
             </fieldset>
         </div>
         <div class="form-group submit-group">

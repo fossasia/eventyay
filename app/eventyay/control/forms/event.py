@@ -1421,12 +1421,12 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
     smtp_use_custom = forms.BooleanField(
-        label=_('Use Custom Email'),
+        label=_('Use custom email'),
         help_text=_('All mail related to your event will be sent over your specified email gateway.'),
         required=False,
     )
     send_grid_api_key = forms.CharField(
-        label=_('Sendgrid Token'),
+        label=_('Sendgrid token'),
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
     )
