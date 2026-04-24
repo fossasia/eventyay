@@ -507,11 +507,6 @@ aside.sidebar {
     align-items: flex-start;
   }
 
-  #main-title > :not(.navigation-button) {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
   #main-title .navigation-title {
     flex: 1 1 auto;
   }
