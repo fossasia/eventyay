@@ -501,6 +501,27 @@ aside.sidebar {
   line-height: 1;
 }
 
+@media (min-width: 768px) {
+  #main-title {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  #main-title > :not(.navigation-button) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  #main-title .navigation-title {
+    flex: 1 1 auto;
+  }
+
+  #main-title .navigation-button {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
+
 .speaker-info {
   display: flex;
   flex-direction: row;
