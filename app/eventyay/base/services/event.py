@@ -101,6 +101,7 @@ async def get_event(event_id):
 def get_rooms(event, user):
     qs = (
         event.rooms.filter(deleted=False)
+        .order_by('sorting_priority')
         .prefetch_related("channel")
         .annotate(
             current_roomviews=Subquery(
