@@ -7,9 +7,7 @@ from pretalx.submission.models.question import QuestionRequired
 from eventyay.person.forms import SpeakerProfileForm
 
 
-AVATAR_LICENSE_TEXT_VALIDATION_ERROR = (
-    "Please keep this field below 3000 words. Do not paste image files or encoded image data here."
-)
+AVATAR_LICENSE_TEXT_VALIDATION_ERROR = 'below 3000 words'
 
 
 @pytest.mark.django_db
@@ -123,6 +121,35 @@ def test_speaker_profile_rejects_long_avatar_license_text(field_name, speaker, e
 
     assert not form.is_valid()
     assert AVATAR_LICENSE_TEXT_VALIDATION_ERROR in str(form.errors[field_name])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field_name,license_text",
+    (
+        ("avatar_source", " ".join(["word"] * 3000)),
+        ("avatar_license", " ".join(["word"] * 3000)),
+        ("avatar_source", "Photo by Alice Example, used with permission"),
+        ("avatar_license", "Licensed under CC BY-SA 4.0"),
+    ),
+)
+def test_speaker_profile_accepts_valid_avatar_license_text(
+    field_name, license_text, speaker, event
+):
+    with scope(event=event):
+        form = SpeakerProfileForm(
+            data={
+                "fullname": speaker.fullname,
+                "email": speaker.email,
+                "biography": speaker.event_profile(event).biography,
+                field_name: license_text,
+            },
+            event=event,
+            user=speaker,
+        )
+
+    assert form.is_valid()
+    assert form.cleaned_data[field_name] == license_text
 
 
 @pytest.mark.django_db
