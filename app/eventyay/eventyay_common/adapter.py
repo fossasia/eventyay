@@ -1,0 +1,53 @@
+import time
+
+from allauth.account.adapter import DefaultAccountAdapter
+from allauth.core import context
+from django.conf import settings
+from django.http import HttpRequest
+from django.urls import reverse
+
+from eventyay.base.auth import get_auth_backends
+from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION
+
+
+class CustomAccountAdapter(DefaultAccountAdapter):
+    def is_open_for_signup(self, request: HttpRequest) -> bool:
+        # This is another "auth backend" by pretix terminology,
+        # not the same as Django ones.
+        pretix_auth_backends = get_auth_backends()
+        return settings.EVENTYAY_REGISTRATION and 'native' in pretix_auth_backends
+
+    def post_login(
+        self,
+        request: HttpRequest,
+        user,
+        *,
+        email_verification,
+        signal_kwargs,
+        email,
+        signup,
+        redirect_url,
+    ):
+        # Replicate the behavior of previous `eventyay_common.views.auth.register()` view.
+        request.session[KEY_LAST_FORCE_LOGIN] = int(time.time())
+        # LoginForm only includes this field when long sessions are enabled; keep this in sync
+        # with base/forms/auth.py.
+        keep_logged_in = settings.EVENTYAY_LONG_SESSIONS and bool(request.POST.get('keep_logged_in'))
+        request.session[KEY_LONG_SESSION] = keep_logged_in
+        return super().post_login(
+            request,
+            user,
+            email_verification=email_verification,
+            signal_kwargs=signal_kwargs,
+            email=email,
+            signup=signup,
+            redirect_url=redirect_url,
+        )
+
+    def send_account_already_exists_mail(self, email: str) -> None:
+        request = context.request
+        ctx = {
+            'signup_url': request.build_absolute_uri(reverse('account_signup')),
+            'password_reset_url': request.build_absolute_uri(reverse('eventyay_common:auth.forgot')),
+        }
+        self.send_mail('account/email/account_already_exists', email, ctx)
