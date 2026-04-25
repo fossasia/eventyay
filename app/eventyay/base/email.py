@@ -74,8 +74,8 @@ class SendGridEmail:
             subject=subject,
             html_content=body,
         )
-        if reply_to:
-            message.reply_to = reply_to
+        if headers.get('Reply-To'):
+            message.reply_to = headers['Reply-To']
 
         sg = SendGridAPIClient(self.api_key)
         sg.send(message)

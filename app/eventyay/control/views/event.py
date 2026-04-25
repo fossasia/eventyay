@@ -821,25 +821,27 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
                         backend.test(self.request.event.settings.mail_from, to_addrs=to_addrs)
                     else:
                         raise AttributeError(_('The active email backend does not support connection testing.'))
+                except AttributeError as e:
+                    messages.warning(self.request, str(e))
                 except Exception as e:
                     messages.warning(
                         self.request,
-                        _('An error occurred while contacting the SMTP server: %s') % str(e),
+                        _('An error occurred while testing the email configuration: %s') % str(e),
                     )
                 else:
                     if form.cleaned_data.get('smtp_use_custom'):
                         messages.success(
                             self.request,
                             _(
-                                'Your changes have been saved and the connection attempt to '
-                                'your SMTP server was successful.'
+                                'Your changes have been saved and the test email '
+                                'was sent successfully.'
                             ),
                         )
                     else:
                         messages.success(
                             self.request,
                             _(
-                                "We've been able to contact the SMTP server you configured. "
+                                "We've been able to send a test email with the configuration you entered. "
                                 'Remember to check the "use custom SMTP server" checkbox, '
                                 'otherwise your SMTP server will not be used.'
                             ),
