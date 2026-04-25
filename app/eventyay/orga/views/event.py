@@ -598,8 +598,8 @@ class TargetChoice(models.TextChoices):
 
 class ImportExportSettings(EventSettingsPermission, TemplateView):
     template_name = 'orga/settings/import_export.html'
-    IMPORT_CHOICES = TargetChoice.import_choices()
-    IMPORT_TARGETS = TargetChoice.import_targets()
+    import_choices = TargetChoice.import_choices()
+    import_targets = TargetChoice.import_targets()
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
@@ -609,7 +609,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             'export': _('Export'),
         }
         result['active_tab'] = kwargs.get('active_tab')
-        result['import_choices'] = self.IMPORT_CHOICES
+        result['import_choices'] = self.import_choices
         result['import_target'] = kwargs.get('import_target') or self.request.GET.get('import_target') or TargetChoice.SPEAKER
         result['export_target'] = kwargs.get('export_target') or self.request.GET.get('export_target') or TargetChoice.SPEAKER
         result['import_form'] = kwargs.get('import_form') or CSVImportForm()
@@ -657,7 +657,7 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
             messages.error(self.request, _('Could not establish a session for file upload. Please try again.'))
             return redirect(f'{self.request.path}#tab-import')
 
-        target_config = self.IMPORT_TARGETS[target]
+        target_config = self.import_targets[target]
         import_filename = target_config['filename']
         cached_file = CachedFile.objects.create(
             expires=now() + timedelta(days=1),

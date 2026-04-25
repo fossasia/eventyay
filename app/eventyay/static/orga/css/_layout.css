@@ -1746,7 +1746,7 @@ h2 .user-name-display img {
 .import-preview-table table {
   width: 100%;
   min-width: 1200px;
-  margin-bottom: 1rem !important; /* Ensure space for scrollbar */
+  margin-bottom: 1rem; /* Ensure space for scrollbar */
 }
 
 .import-preview-table th {
