@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load eventurl %}
-{% load oauth_tags %}
+{% load auth_login_tags %}
 {% load static %}
 
 <div id="ajaxerr">
@@ -84,52 +84,112 @@
             <button type="button" class="checkout-login-close" aria-label="{% translate 'Close' %}">&times;</button>
         </div>
         <div class="checkout-login-body">
-            <p class="checkout-login-message">{% translate "Please log in to continue." %}</p>
+            {% get_login_context as login_ctx %}
+            <div class="checkout-login-form-signin">
 
-            <!-- Login Form -->
-            <form id="checkout-login-form" method="post" action="{% url 'eventyay_common:auth.login' %}">
-                {% csrf_token %}
-                <input type="hidden" name="next" id="checkout-next-url" value="">
+                {% if login_ctx.preferred_provider %}
+                    <div class="login-options-preferred-group">
+                        <a href="{% url 'plugins:socialauth:social.oauth.login' login_ctx.preferred_provider %}"
+                           class="btn btn-primary btn-block checkout-sso-btn login-option-primary"
+                           rel="noopener noreferrer"
+                           data-provider="{{ login_ctx.preferred_provider }}">
+                            {% with login_ctx.preferred_provider|capfirst as provider_capitalized %}
+                                {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                            {% endwith %}
+                        </a>
+                    </div>
+                {% endif %}
 
-                <div class="form-group">
-                    <label for="checkout-email">{% translate "Email" %}</label>
-                    <input type="email" id="checkout-email" name="email" class="form-control" required autocomplete="email" placeholder="{% translate 'Enter your email' %}">
-                </div>
+                {% if login_ctx.show_native_login %}
+                    {% if login_ctx.preferred_provider %}
+                        <p class="login-separator">
+                            <span class="login-separator-label">{% translate 'or' %}</span>
+                        </p>
+                    {% endif %}
+                        <div id="checkout-login-error" class="alert alert-danger checkout-login-error"></div>
+                        <div id="checkout-login-form-wrap" class="checkout-login-native-wrap">
+                            <form id="checkout-login-form" method="post" action="{% url 'eventyay_common:auth.login' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" id="checkout-next-url" value="">
 
-                <div class="form-group">
-                    <label for="checkout-password">{% translate "Password" %}</label>
-                    <input type="password" id="checkout-password" name="password" class="form-control" required autocomplete="current-password" placeholder="{% translate 'Enter your password' %}">
-                </div>
+                                <div class="form-group">
+                                    <label for="checkout-email">{% translate 'Email' %}</label>
+                                    <input type="email"
+                                           id="checkout-email"
+                                           name="email"
+                                           class="form-control"
+                                           required
+                                           autocomplete="email"
+                                           placeholder="{% translate 'Enter your email' %}">
+                                </div>
 
-                <div class="form-group">
-                    <label class="checkbox-inline">
-                        <input type="checkbox" name="keep_logged_in" value="1"> {% translate "Keep me logged in" %}
-                    </label>
-                </div>
+                                <div class="form-group">
+                                    <label for="checkout-password">{% translate 'Password' %}</label>
+                                    <input type="password"
+                                           id="checkout-password"
+                                           name="password"
+                                           class="form-control"
+                                           required
+                                           autocomplete="current-password"
+                                           placeholder="{% translate 'Enter your password' %}">
+                                </div>
 
-                <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
+                                <div class="form-group">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" name="keep_logged_in" value="1"> {% translate 'Keep me logged in' %}
+                                    </label>
+                                </div>
 
-                <button type="submit" class="btn btn-primary btn-lg btn-block" id="checkout-login-submit">
-                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% translate "Log in" %}
-                </button>
-            </form>
+                                {% if login_ctx.can_reset %}
+                                    <div class="form-group">
+                                        <a href="{% url 'eventyay_common:auth.forgot' %}"
+                                           class="btn btn-link btn-block checkout-forgot-password"
+                                           id="checkout-forgot-password-link"
+                                           rel="noopener noreferrer">
+                                            {% translate 'Lost password?' %}
+                                        </a>
+                                    </div>
+                                {% endif %}
 
-            <div class="checkout-login-divider">
-                <span>{% translate "or" %}</span>
-            </div>
 
-            <!-- SSO Provider Buttons -->
-            <div class="checkout-login-sso">
-                <a href="/oauth_login/mediawiki/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
-                    {% translate "Login with MediaWiki" %}
-                </a>
-                <a href="/oauth_login/google/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
-                    {% translate "Login with Google" %}
-                </a>
-            </div>
+                                <button type="submit" class="btn btn-primary btn-lg btn-block" id="checkout-login-submit">
+                                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% translate 'Log in' %}
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                {% if login_ctx.has_oauth_providers %}
+                    {% if not login_ctx.preferred_provider or login_ctx.has_secondary_oauth_providers %}
+                        {% if login_ctx.show_native_login or login_ctx.preferred_provider %}
+                            <p class="login-separator">
+                                <span class="login-separator-label">{% translate 'or' %}</span>
+                            </p>
+                        {% endif %}
+                        <div class="login-options-secondary-group">
+                            {% for provider, cfg in login_ctx.enabled_providers %}
+                                {% if provider != login_ctx.preferred_provider %}
+                                    <a href="{% url 'plugins:socialauth:social.oauth.login' provider %}"
+                                       class="btn btn-primary btn-block checkout-sso-btn login-option-secondary"
+                                       rel="noopener noreferrer"
+                                       data-provider="{{ provider }}">
+                                        {% with provider|capfirst as provider_capitalized %}
+                                            {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                                        {% endwith %}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endif %}
 
-            <div class="checkout-login-footer">
-                <p>{% translate "Don't have an account?" %} <a href="{% url 'account_signup' %}" class='checkout-login-signup-link'>{% translate "Create one" %}</a></p>
+                {% if login_ctx.can_register %}
+                    <div class="checkout-login-footer">
+                        <p>
+                            {% blocktranslate %}Don't have an account?{% endblocktranslate %}
+                            <a href="{% url 'account_signup' %}" id="checkout-register-link">{% translate 'Create one' %}</a>
+                        </p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
