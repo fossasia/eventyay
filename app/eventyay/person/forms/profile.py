@@ -41,8 +41,8 @@ from eventyay.schedule.forms import AvailabilitiesFormMixin
 AVATAR_LICENSE_TEXT_WORD_LIMIT = 3000
 AVATAR_LICENSE_TEXT_MAX_TOKEN_LENGTH = 500
 AVATAR_LICENSE_TEXT_VALIDATION_ERROR = _(
-    'Please keep this field below 3000 words. Do not paste image files or encoded image data here.'
-)
+    'Please keep this field below %(word_limit)s words. Do not paste image files or encoded image data here.'
+) % {'word_limit': AVATAR_LICENSE_TEXT_WORD_LIMIT}
 
 
 def get_email_address_error():
@@ -56,8 +56,11 @@ def get_email_address_error():
 def validate_avatar_license_text(value):
     if not value:
         return value
-    words = value.split()
-    has_encoded_image_data = value.lstrip().startswith('data:image/') or any(
+    stripped_value = value.lstrip()
+    if stripped_value.startswith('data:image/'):
+        raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
+    words = value.split(maxsplit=AVATAR_LICENSE_TEXT_WORD_LIMIT + 1)
+    has_encoded_image_data = any(
         len(word) > AVATAR_LICENSE_TEXT_MAX_TOKEN_LENGTH for word in words
     )
     if len(words) > AVATAR_LICENSE_TEXT_WORD_LIMIT or has_encoded_image_data:
