@@ -812,8 +812,11 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
                 backend = self.request.event.get_mail_backend(force_custom=True, timeout=10)
                 try:
                     to_addrs = None
-                    if form.cleaned_data.get('test_email'):
-                        to_addrs = [a.strip() for a in form.cleaned_data.get('test_email').split(',')]
+                    test_email = form.cleaned_data.get('test_email')
+                    if test_email:
+                        to_addrs = [address for address in (a.strip() for a in test_email.split(',')) if address]
+                        if not to_addrs:
+                            to_addrs = None
                     if hasattr(backend, 'test'):
                         backend.test(self.request.event.settings.mail_from, to_addrs=to_addrs)
                     else:

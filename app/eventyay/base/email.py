@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 def _get_test_email_data(from_addr, to_addrs=None, reply_to=None):
-    to_addrs = to_addrs or ['test@eventyay.com']
+    to_addrs = to_addrs or [from_addr]
     if isinstance(to_addrs, str):
         to_addrs = [to_addrs]
 

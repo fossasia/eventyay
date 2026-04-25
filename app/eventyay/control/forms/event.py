@@ -1476,6 +1476,13 @@ class MailSettingsForm(SettingsForm):
         required=False,
     )
     smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
+    @property
+    def changed_data(self):
+        data = super().changed_data
+        if 'test_email' in data:
+            return [d for d in data if d != 'test_email']
+        return data
+
     def save(self, *args, **kwargs):
         # test_email should not be persisted as a setting.
         # HierarkeyForm.save() iterates over self.fields and expects them in self.cleaned_data.
@@ -1489,6 +1496,11 @@ class MailSettingsForm(SettingsForm):
 
     def clean(self):
         data = super().clean()
+        if not data.get('smtp_use_custom'):
+            gs = GlobalSettingsObject()
+            default_from = gs.settings.mail_from or settings.MAIL_FROM
+            data['mail_from'] = default_from
+
         if data.get('mail_from') and not data.get('smtp_use_custom'):
             gs = GlobalSettingsObject()
             default_from = gs.settings.mail_from or settings.MAIL_FROM
