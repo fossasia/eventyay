@@ -606,26 +606,14 @@ body.startpage-search-results-page #main-card {
   .startpage-search-content input {
     width: auto;
   }
+
+  .hidden-xs {
+    display: none;
+  }
 }
 
-
-body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown-item {
-  color: var(--color-primary, #2185d0);
-
-  i,
-  .fa {
-    color: var(--color-primary, #2185d0);
-    opacity: 1;
-  }
-
-  &:hover,
-  &:focus {
-    background-color: var(--color-primary, #2185d0);
-    color: #fff;
-
-    i,
-    .fa {
-      color: #fff;
-    }
+@media (min-width:768px) {
+  .hidden-md {
+    display: none;
   }
 }

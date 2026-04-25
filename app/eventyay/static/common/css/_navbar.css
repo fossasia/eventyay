@@ -253,7 +253,7 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
 }
 
 .navbar-top-links li:last-child {
-  margin-right: 15px;
+  margin-right: 5px;
 }
 
 .navbar-top-links li a {
@@ -400,13 +400,19 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   border: 0;
 }
 
+@media (min-width: 768px){
+  .hidden-md {
+    display: none;
+  }
+} 
+
 @media (max-width: 767px) {
   :root {
     --navbar-height: 60px;
   }
 
   .hidden-xs {
-    display: none !important;
+    display: none;
   }
 
   .navbar-top-links.navbar-right {
