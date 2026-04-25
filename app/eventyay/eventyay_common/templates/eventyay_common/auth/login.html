@@ -4,14 +4,60 @@
 {% load static %}
 {% load urlreplace %}
 {% load append_next_url %}
+{% load auth_login_tags %}
+
 {% block content %}
+    {% get_login_context as login_ctx %}
     <form class="form-signin" action="" method="post">
-        {% if preferred_provider %}
-            {% include 'eventyay_common/auth/_login_options.html' %}
-            {% include 'eventyay_common/auth/_login_form.html' %}
-        {% else %}
-            {% include 'eventyay_common/auth/_login_form.html' %}
-            {% include 'eventyay_common/auth/_login_options.html' %}
+        {% if login_ctx.preferred_provider %}
+            <div class='form-group buttons login-options-primary-first'>
+                <a href='{% url 'plugins:socialauth:social.oauth.login' login_ctx.preferred_provider %}{% append_next request.GET.next %}'
+                   data-method='post' class='btn btn-primary btn-block login-option-primary'>
+                    {% with login_ctx.preferred_provider|capfirst as provider_capitalized %}
+                        {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                    {% endwith %}
+                </a>
+            </div>
+            {% if login_ctx.show_login_form %}
+                <p class='login-separator'>
+                    <span class='login-separator-label'>{% translate 'or' %}</span>
+                </p>
+            {% endif %}
+        {% endif %}
+
+        {% if login_ctx.show_login_form %}
+            {% include 'eventyay_common/auth/_login_form.html' with force_show=True %}
+        {% endif %}
+
+        {% if login_ctx.has_secondary_oauth_providers or not login_ctx.preferred_provider and login_ctx.has_oauth_providers %}
+            {% if login_ctx.show_login_form or login_ctx.preferred_provider %}
+                <p class='login-separator'>
+                    <span class='login-separator-label'>{% translate 'or' %}</span>
+                </p>
+            {% endif %}
+            <div class='form-group buttons login-options-secondary-group-wrap'>
+                <div class='login-options-secondary-group'>
+                    {% for provider, cfg in login_ctx.enabled_providers %}
+                        {% if provider != login_ctx.preferred_provider %}
+                            <a href='{% url 'plugins:socialauth:social.oauth.login' provider %}{% append_next request.GET.next %}'
+                               data-method='post' class='btn btn-primary btn-block login-option-secondary'>
+                                {% with provider|capfirst as provider_capitalized %}
+                                    {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                                {% endwith %}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if login_ctx.can_register %}
+            <div class="login-footer text-center" style="margin-top: 20px;">
+                <p>
+                    {% blocktranslate %}Don't have an account?{% endblocktranslate %}
+                    <a href="{% url 'account_signup' %}{% append_next request.GET.next %}">{% translate 'Create one' %}</a>
+                </p>
+            </div>
         {% endif %}
     </form>
 {% endblock %}
