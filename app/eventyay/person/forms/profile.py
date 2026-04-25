@@ -57,7 +57,9 @@ def validate_avatar_license_text(value):
     if not value:
         return value
     words = value.split()
-    has_encoded_image_data = value.lstrip().startswith('data:image/')
+    has_encoded_image_data = value.lstrip().startswith('data:image/') or any(
+        len(word) > AVATAR_LICENSE_TEXT_MAX_TOKEN_LENGTH for word in words
+    )
     if len(words) > AVATAR_LICENSE_TEXT_WORD_LIMIT or has_encoded_image_data:
         raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
     return value

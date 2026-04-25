@@ -1,5 +1,6 @@
 import json
 
+import bs4
 import pytest
 from django_scopes import scope, scopes_disabled
 from pretalx.submission.models.question import QuestionRequired
@@ -154,14 +155,23 @@ def test_speaker_profile_accepts_valid_avatar_license_text(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("field_name", ("avatar_source", "avatar_license"))
-def test_speaker_profile_rejects_encoded_avatar_license_text(field_name, speaker, event):
+@pytest.mark.parametrize(
+    "encoded_value",
+    (
+        "data:image/png;base64," + ("A" * 600),
+        "A" * 600,
+    ),
+)
+def test_speaker_profile_rejects_encoded_avatar_license_text(
+    field_name, encoded_value, speaker, event
+):
     with scope(event=event):
         form = SpeakerProfileForm(
             data={
                 "fullname": speaker.fullname,
                 "email": speaker.email,
                 "biography": speaker.event_profile(event).biography,
-                field_name: "data:image/png;base64," + ("A" * 600),
+                field_name: encoded_value,
             },
             event=event,
             user=speaker,
@@ -173,15 +183,24 @@ def test_speaker_profile_rejects_encoded_avatar_license_text(field_name, speaker
 
 @pytest.mark.django_db
 def test_submission_speakers_wraps_avatar_license_text(orga_client, speaker, event, submission):
+    payload = "data:image/png;base64," + ("A" * 600)
     with scope(event=event):
-        speaker.avatar_source = "data:image/png;base64," + ("A" * 600)
-        speaker.avatar_license = "data:image/png;base64," + ("A" * 600)
+        speaker.avatar_source = payload
+        speaker.avatar_license = payload
         speaker.save(update_fields=["avatar_source", "avatar_license"])
 
     response = orga_client.get(submission.orga_urls.speakers, follow=True)
 
     assert response.status_code == 200
-    assert response.text.count('class="card-text text-break"') == 2
+    doc = bs4.BeautifulSoup(response.content, "lxml")
+    for label in ("Profile Picture Source:", "Profile Picture License:"):
+        element = doc.find("strong", string=label)
+        assert element is not None
+        wrapper = element.find_parent("p")
+        assert wrapper is not None
+        assert "card-text" in wrapper["class"]
+        assert "text-break" in wrapper["class"]
+        assert payload in wrapper.get_text()
 
 
 @pytest.mark.django_db
