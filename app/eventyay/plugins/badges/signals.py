@@ -112,6 +112,8 @@ def event_copy_data_receiver(sender, other, question_map, product_map, **kwargs)
 
 @receiver(question_form_fields, dispatch_uid='badges_question_form_fields')
 def badge_question_form_fields(sender, position, **kwargs):
+     if position.addon_to_id:
+        return {}
     layout = get_badge_layout_for_position(sender, position)
     if not layout or not layout.allow_customization:
         return {}
