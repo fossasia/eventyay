@@ -313,21 +313,44 @@ class FormFlowStep(TemplateFlowStep):
             prev_url = self.get_prev_url(request)
             return redirect(prev_url) if prev_url else redirect(request.path)
 
-        # For "submit" action (Continue button), always allow advancing to the next step,
-        # even if required fields are missing. Save whatever partial data is valid.
-        # Full validation is enforced at the end by wizard.done() before the final submission.
+        # For "submit" action (Continue button), we always allow advancing to the next step
+        # to ensure a smooth navigation UX. If the form is invalid (e.g. missing required
+        # fields), we save the partial data and transition the flow to draft mode by
+        # appending ?draft=1 to the next URL. This allows users to skip fields and
+        # return later, while ensuring that the final "Submit" check will still block.
         if action == 'submit':
-            if form.is_valid():
+            is_valid = form.is_valid()
+            if is_valid:
                 self.set_data(form.cleaned_data)
                 self.set_files(form.files)
             else:
-                # Save partial data: cleaned_data contains only the fields that passed validation
+                # Save partial data for fields that passed validation
                 if hasattr(form, 'cleaned_data') and form.cleaned_data:
                     self.set_data(form.cleaned_data)
                 if form.files:
                     self.set_files(form.files)
-            next_url = self.get_next_url(request)
-            return redirect(next_url) if next_url else None
+
+            next_step = self.get_next_applicable(request)
+            if next_step:
+                query = {}
+                # Transition to draft mode if we are moving forward with invalid data
+                if not is_valid:
+                    query['draft'] = 1
+                return redirect(next_step.get_step_url(request, query=query))
+            
+            # If on the final step and invalid, render errors instead of redirecting
+            if not is_valid:
+                error_message = '\n\n'.join(
+                    (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
+                    for key, values in form.errors.items()
+                )
+                if error_message:
+                    messages.error(
+                        self.request,
+                        _('Please review and fix the errors below before submitting.')
+                    )
+                return self.get(request)
+            return None
 
         # For "draft" action, validate as before (but with relaxed rules via not_strict)
         if not form.is_valid():

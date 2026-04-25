@@ -82,7 +82,11 @@ class RequestRequire:
             if visibility == 'do_not_ask':
                 self.fields.pop(key, None)
             elif field := self.fields.get(key):
-                field.required = False if not_strict else (visibility == 'required')
+                if not_strict and visibility == 'required':
+                    field.required = True
+                    field.draft_optional = True
+                else:
+                    field.required = visibility == 'required'
                 min_value = self.event.cfp.fields.get(key, {}).get('min_length')
                 max_value = self.event.cfp.fields.get(key, {}).get('max_length')
                 if min_value or max_value:
@@ -207,6 +211,9 @@ class QuestionFieldsMixin:
             field.question = question
             field.answer = initial_object
             self.fields[f'question_{question.pk}'] = field
+            if not_strict and question.required:
+                field.required = True
+                field.draft_optional = True
 
     def get_field(self, *, question, initial, initial_object, readonly, not_strict=False):
         from eventyay.base.templatetags.rich_text import rich_text
@@ -232,7 +239,7 @@ class QuestionFieldsMixin:
                 disabled=read_only,
                 help_text=help_text,
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 widget=widget,
                 initial=((initial == 'True') if initial else bool(question.default_answer)),
             )
@@ -243,7 +250,7 @@ class QuestionFieldsMixin:
                 disabled=read_only,
                 help_text=help_text,
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 min_value=question.min_number,
                 max_value=question.max_number,
                 initial=initial,
@@ -261,7 +268,7 @@ class QuestionFieldsMixin:
                     self.event.cfp.settings['count_length_in'],
                 ),
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 initial=initial,
                 min_length=question.min_length if count_chars and not not_strict else None,
                 max_length=question.max_length if count_chars else None,
@@ -281,7 +288,7 @@ class QuestionFieldsMixin:
         if question.variant == TalkQuestionVariant.URL:
             field = forms.URLField(
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 disabled=read_only,
                 help_text=original_help_text,
                 initial=initial,
@@ -292,7 +299,7 @@ class QuestionFieldsMixin:
         if question.variant == TalkQuestionVariant.TEXT:
             field = forms.CharField(
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 widget=forms.Textarea,
                 disabled=read_only,
                 help_text=RequestRequire.get_help_text(
@@ -320,7 +327,7 @@ class QuestionFieldsMixin:
         if question.variant == TalkQuestionVariant.FILE:
             field = ExtensionFileField(
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 disabled=read_only,
                 help_text=help_text,
                 initial=initial,
@@ -370,7 +377,7 @@ class QuestionFieldsMixin:
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 empty_label=None,
                 initial=(initial_object.options.first() if initial_object else question.default_answer),
                 disabled=read_only,
@@ -385,7 +392,7 @@ class QuestionFieldsMixin:
             field = EventLocalizedModelMultipleChoiceField(
                 queryset=choices,
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 widget=(
                     forms.CheckboxSelectMultiple
                     if len(choices) < 8
@@ -406,7 +413,7 @@ class QuestionFieldsMixin:
                 attrs['data-date-end-date'] = question.max_date.isoformat()
             field = forms.DateField(
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 disabled=read_only,
                 help_text=help_text,
                 initial=dateutil.parser.parse(initial).date() if initial else None,
@@ -428,7 +435,7 @@ class QuestionFieldsMixin:
                 attrs['max'] = question.max_datetime.isoformat()
             field = forms.DateTimeField(
                 label=label_text,
-                required=False if not_strict else question.required,
+                required=question.required,
                 disabled=read_only,
                 help_text=help_text,
                 initial=(dateutil.parser.parse(initial).astimezone(self.event.tz) if initial else None),

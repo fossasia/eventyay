@@ -116,7 +116,9 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                self.fields[field_name].required = not self.not_strict
+                self.fields[field_name].required = True
+                if self.not_strict:
+                    self.fields[field_name].draft_optional = True
                 if hasattr(self.fields[field_name].widget, 'is_required'):
                     self.fields[field_name].widget.is_required = not self.not_strict
 

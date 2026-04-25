@@ -25,11 +25,10 @@ class CfPFormMixin:
 
         if self.not_strict:
             for field in self.fields.values():
-                # Mark the field so _clean_fields() skips the "required" check,
-                # but keep field.required = True so the * indicator stays visible
-                # in the rendered form — users should still see which fields are
-                # needed before they can do a final (non-draft) submission.
-                field.draft_optional = True
+                if field.required:
+                    # Mark the field so _clean_fields() skips the "required" check,
+                    # but keep field.required = True so the * indicator stays visible
+                    field.draft_optional = True
 
     def _clean_fields(self):
         """Temporarily relax required fields for draft saves.
