@@ -120,8 +120,8 @@ def test_speaker_profile_rejects_long_avatar_license_text(field_name, speaker, e
             user=speaker,
         )
 
-    assert not form.is_valid()
-    assert AVATAR_LICENSE_TEXT_VALIDATION_ERROR in str(form.errors[field_name])
+        assert not form.is_valid()
+        assert AVATAR_LICENSE_TEXT_VALIDATION_ERROR in str(form.errors[field_name])
 
 
 @pytest.mark.django_db
@@ -149,8 +149,8 @@ def test_speaker_profile_accepts_valid_avatar_license_text(
             user=speaker,
         )
 
-    assert form.is_valid()
-    assert form.cleaned_data[field_name] == license_text
+        assert form.is_valid()
+        assert form.cleaned_data[field_name] == license_text
 
 
 @pytest.mark.django_db
@@ -177,8 +177,8 @@ def test_speaker_profile_rejects_encoded_avatar_license_text(
             user=speaker,
         )
 
-    assert not form.is_valid()
-    assert AVATAR_LICENSE_TEXT_VALIDATION_ERROR in str(form.errors[field_name])
+        assert not form.is_valid()
+        assert AVATAR_LICENSE_TEXT_VALIDATION_ERROR in str(form.errors[field_name])
 
 
 @pytest.mark.django_db
