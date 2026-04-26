@@ -267,12 +267,21 @@ def notify_webhooks(logentry_ids: list):
     _org, _at, webhooks = None, None, None
     for logentry in qs:
         if not logentry.organizer:
-            break  # We need to know the organizer
+            logger.debug(
+                'Skipping webhook notification for log entry %d: no organizer',
+                logentry.id,
+            )
+            continue  # We need to know the organizer, skip this entry
 
         notification_type = logentry.webhook_type
 
         if not notification_type:
-            break  # Ignore, no webhooks for this event type
+            logger.debug(
+                'Skipping webhook notification for log entry %d: no matching webhook event type for %s',
+                logentry.id,
+                logentry.action_type,
+            )
+            continue  # Ignore, no webhooks for this event type
 
         if _org != logentry.organizer or _at != logentry.action_type or webhooks is None:
             _org = logentry.organizer
