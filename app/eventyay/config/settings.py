@@ -191,7 +191,7 @@ class BaseSettings(_BaseSettings):
         )
 
     # Upload size limit in MB, needs to to in accordance with SizeKey
-    upload_size_csv: int = 1
+    upload_size_csv: int = 10
     upload_size_image: int = 10
     upload_size_pdf: int = 10
     upload_size_xlsx: int = 2
@@ -512,9 +512,12 @@ TEMPLATES = (
     },
 )
 
+# See: https://django-allauth.readthedocs.io/en/latest/configuration.html
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
+    # To support multiple email addresses per user, we use django-allauth's authentication backend.
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 # Password validation
@@ -1137,9 +1140,6 @@ ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
 INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
-if IS_DEVELOPMENT and '*' not in ALLOWED_HOSTS:
-    # Android emulators access the host machine via these addresses.
-    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
 
 EMAIL_BACKEND = conf.email_backend
 # Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
@@ -1233,8 +1233,17 @@ LOGGING = {
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# 'mandatory' means allauth's own login view (/accounts/login/) will block unverified users.
+# Existing users who registered before email verification was enforced may be affected if they
+# use that URL. Our custom login view (eventyay_common:auth.login) does not enforce this,
+# so those users remain unaffected. After signup, allauth redirects to
+# account_email_verification_sent (not to the login page), so ACCOUNT_SIGNUP_REDIRECT_URL
+# below is only reached when the user is already verified (e.g. social auth signup).
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 # Prefer Jinja2 templates for django-allauth
 ACCOUNT_TEMPLATE_EXTENSION = 'jinja'
+ACCOUNT_ADAPTER = 'eventyay.eventyay_common.adapter.CustomAccountAdapter'
+ACCOUNT_SIGNUP_REDIRECT_URL = 'eventyay_common:auth.login'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/common/account/email'
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
@@ -1484,3 +1493,10 @@ DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
 
 CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
+ 
+if IS_DEVELOPMENT:
+    # Support for Android emulators and port forwarding
+    if '*' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
+    # Trust standard local and emulator origins for CSRF
+    CSRF_TRUSTED_ORIGINS += ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://10.0.2.2:8000', 'http://10.0.3.2:8000']

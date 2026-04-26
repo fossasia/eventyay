@@ -1,5 +1,5 @@
 <template lang="pug">
-prompt.c-room-edit-prompt(@close="$emit('close')")
+prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 	.content
 		.prompt-header
 			h2 Edit Room

@@ -6,42 +6,45 @@
 {% load static %}
 
 {% load presale_locale %}
+
+{% block title %}{% translate "Featured Sessions" %} ::{% endblock title %}
+{% block meta_title %}{% translate "Featured Sessions" %}{% endblock meta_title %}
+{% block social_title %}{% translate "Featured Sessions" %}{% endblock social_title %}
+
 {% block agenda_content %}
-    <p>
-        {% if request.event.featured_sessions_text %}
-            {{ request.event.featured_sessions_text|event_localize|rich_text }}
-        {% else %}
-            {% if talks %}
-                <strong>{% translate "Welcome to our list of featured sessions!" %}</strong>
-                <br>
-                <br>
-                {% blocktranslate trimmed %}
-                    We prepared a list of exciting sessions, so you can get a feel for our
-                    conference. Please keep in mind that this is not our full schedule.
-                    We will follow up with the full schedule in time, stay tuned!
-                {% endblocktranslate %}
-            {% else %}
-                {% blocktranslate trimmed %}
-                    In the near future you will see a curated list of sessions we’d like
-                    to show off here. Right now we are busy reviewing proposals.<br>
-                    Check back later!
-                {% endblocktranslate %}
-            {% endif %}
-        {% endif %}
-    </p>
+<div class="featured-page">
+    <h3 class="talk-title featured-page-title">{% translate "Featured Sessions" %}</h3>
+    {% if talks %}
+        <p>
+            {% blocktranslate trimmed %}
+                We prepared a list of exciting sessions, so you can get a feel for our
+                conference. Please keep in mind that this is not our full schedule.
+                We will follow up with the full schedule in time, stay tuned!
+            {% endblocktranslate %}
+        </p>
+    {% else %}
+        <p>
+            {% blocktranslate trimmed %}
+                In the near future you will see a curated list of sessions we’d like
+                to show off here. Right now we are busy reviewing proposals.<br>
+                Check back later!
+            {% endblocktranslate %}
+        </p>
+    {% endif %}
     <article id="featured-talks">
         {% for talk in talks %}
             <section>
-                <h3 class="talk-title">
+                <h5 class="talk-title">
                     <div>{{ quotation_open }}{{ talk.title|event_localize }}{{ quotation_close }}</div>
                     <small class="text-muted">
                         {% if talk.display_speaker_names %}{{ talk.display_speaker_names }};{% endif %}
                         <i>{{ talk.submission_type.name|event_localize }}</i>
                     </small>
-                </h3>
-                <p>{{ talk.abstract|default:talk.description|default:""|event_localize|rich_text }}</p>
+                </h5>
+                <div class="featured-talk-abstract">{{ talk.abstract|default:talk.description|default:""|event_localize|rich_text }}</div>
                 {% if not forloop.last %}<hr>{% endif %}
             </section>
         {% endfor %}
     </article>
+</div>
 {% endblock agenda_content %}

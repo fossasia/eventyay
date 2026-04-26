@@ -10,7 +10,7 @@ from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.common.permissions import is_event_organiser
+from eventyay.common.permissions import is_event_organiser, user_has_cfp_submissions
 from eventyay.helpers.i18n import (
     get_javascript_format_without_seconds,
     get_moment_locale,
@@ -27,6 +27,7 @@ from .signals import (
     html_head,
     html_page_header,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,7 @@ def _default_context(request):
             if cache.add(lock_key, True, 60):
                 try:
                     from eventyay.presale.style import regenerate_css
+
                     regenerate_css.apply_async(args=(request.event.pk,))
                 except Exception:
                     cache.delete(lock_key)
@@ -119,10 +121,8 @@ def _default_context(request):
         if request.event.settings.presale_css_file:
             ctx['css_file'] = default_storage.url(request.event.settings.presale_css_file)
 
-        # FIXME: We should avoid hardcoding truncate length here.
-        # It is not flexible because it requires the media folder to be at "/data/media/".
-        ctx['event_logo'] = request.event.settings.get('logo_image', as_type=str, default='')[7:]
-        ctx['event_logo_image'] = request.event.settings.get('event_logo_image', as_type=str, default='')[7:]
+        ctx['event_logo'] = request.event.visible_header_image_url or ''
+        ctx['event_logo_image'] = request.event.visible_logo_url or ''
         try:
             ctx['social_image'] = request.event.cache.get_or_set('social_image_url', request.event.social_image, 60)
         except (ValueError, OSError) as e:
@@ -167,15 +167,13 @@ def _default_context(request):
 
     # Check to show organizer area (only for team members or admins)
     ctx['show_organizer_area'] = False
-    if (
-        request.user
-        and request.user.is_authenticated
-        and hasattr(request, 'event')
-        and request.event
-    ):
-        ctx['show_organizer_area'] = is_event_organiser(
-            request.user, request, request.event
-        )
+    ctx['user_has_cfp_submissions'] = False
+    ctx['talks_published'] = False
+    if request.user and request.user.is_authenticated and hasattr(request, 'event') and request.event:
+        ctx['show_organizer_area'] = is_event_organiser(request.user, request, request.event)
+        ctx['talks_published'] = request.event.talks_published
+        if ctx['talks_published']:
+            ctx['user_has_cfp_submissions'] = user_has_cfp_submissions(request, request.event)
 
     ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
     ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)

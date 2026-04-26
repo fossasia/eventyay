@@ -33,15 +33,17 @@
 			:days="days",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
-			:density="density",
+			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
+			v-model:includeRoomSortKey="sortIncludeRoom",
+			v-model:includeDateSortKey="sortIncludeDate",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
 			@resetFilters="onlyFavs = false; resetAllFilters()",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
-			@setDensity="setDensity($event)")
+			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
 		grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 			:sessions="sessions",
 			:rooms="rooms",
@@ -57,7 +59,8 @@
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:forceScrollDay="forceScrollDay",
-			:density="density",
+			:density="'default'",
+			:timeDensityMinutes="timeDensityMinutes",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -73,10 +76,12 @@
 			:favs="favs",
 			:showFavCount="showPopularityOnList",
 			:sortBy="effectiveSortBy",
+			:includeRoomSortKey="sortIncludeRoom",
+			:includeDateSortKey="sortIncludeDate",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:showBreaks="!sessionsMode",
-			:density="density",
+			:density="'default'",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -201,6 +206,11 @@ export default {
 		joinRoomBaseUrl: {
 			type: String,
 			default: ''
+		},
+		// Fetch the enriched schedule payload used on first-party agenda pages.
+		enrichData: {
+			type: Boolean,
+			default: false
 		}
 	},
 	provide () {
@@ -278,7 +288,17 @@ export default {
 			sessionsMode: false,
 			searchQuery: '',
 			recordingFilter: 'all',
-			density: localStorage.getItem('schedule-density') || 'default',
+			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
+			sortIncludeRoom: false,
+			sortIncludeDate: (() => {
+				try {
+					const stored = localStorage.getItem('schedule-include-datetime')
+					if (stored === null) return true
+					return stored === 'true'
+				} catch {
+					return true
+				}
+			})(),
 		}
 	},
 	computed: {
@@ -290,8 +310,8 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 365) : this.scrollParentWidth
 		},
 		showGrid () {
-			// Changes to the 710px cutoff must also be reflected in the static/agenda/_agenda.css file in pretalx-core
-			return this.scrollParentWidth > 710 && this.format !== 'list' // if we can't fit two rooms together, switch to list
+			// Always allow a distinct calendar grid view when not explicitly in list format
+			return this.format !== 'list'
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}
@@ -421,6 +441,9 @@ export default {
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
 			days.sort((a, b) => a.diff(b))
+			if (this.sessionsMode && !this.sortIncludeDate && ['title', 'title_desc'].includes(this.effectiveSortBy)) {
+				return days.length ? [days[0]] : []
+			}
 			return days
 		},
 		inEventTimezone () {
@@ -500,6 +523,13 @@ export default {
 		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
+		},
+		sortIncludeDate () {
+			try {
+				localStorage.setItem('schedule-include-datetime', String(this.sortIncludeDate))
+			} catch {
+				// ignore localStorage access errors
+			}
 		}
 	},
 	async created () {
@@ -529,7 +559,7 @@ export default {
 			this.translationMessages = PRETALX_MESSAGES
 		}
 
-		// Use inline data if available (on-site), otherwise fetch (external embed)
+		// Use inline data if available, otherwise fetch the schedule JSON.
 		const dataEl = document.getElementById('pretalx-schedule-data')
 		if (dataEl) {
 			try { this.schedule = JSON.parse(dataEl.textContent) } catch (e) { /* ignore parse error, fall through to fetch */ }
@@ -540,8 +570,12 @@ export default {
 			let version = ''
 			if (this.version)
 				version = `v/${this.version}/`
-			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json`
-			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json`
+			const params = new URLSearchParams()
+			if (this.enrichData) params.set('enrich', '1')
+			const query = params.toString()
+			const suffix = query ? `?${query}` : ''
+			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json${suffix}`
+			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json${suffix}`
 			// fetch from url, but fall back to legacyUrl if url fails
 			try {
 				this.schedule = await (await fetch(url)).json()
@@ -706,9 +740,12 @@ export default {
 			window.location.hash = day.format('YYYY-MM-DD')
 		},
 		selectDay (dayId) {
-			this.currentDay = dayId
 			window.location.hash = dayId
-			this.forceScrollDay++
+			if (dayId === this.currentDay) {
+				this.forceScrollDay++
+				return
+			}
+			this.currentDay = dayId
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
@@ -960,9 +997,16 @@ export default {
 			this.allLanguages.forEach(l => l.selected = false)
 			this.recordingFilter = 'all'
 		},
-		setDensity (level) {
-			this.density = level
-			localStorage.setItem('schedule-density', level)
+		setTimeDensityMinutes (minutes) {
+			const parsedMinutes = Number(minutes)
+			const fallbackMinutes = 30
+			const validMinutes = Number.isFinite(parsedMinutes) && parsedMinutes > 0 ? parsedMinutes : fallbackMinutes
+			this.timeDensityMinutes = validMinutes
+			try {
+				localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
+			} catch (e) {
+				// Ignore storage errors (e.g., in restricted environments)
+			}
 		}
 	}
 }
@@ -995,6 +1039,7 @@ export default {
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
 	&.grid-schedule
+		overflow-x: clip
 		margin: 0 auto
 	&.list-schedule
 		min-width: 0

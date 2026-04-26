@@ -85,7 +85,6 @@ class EventModule(BaseModule):
         s = _config_serializer(self.consumer.event, data=body, partial=True)
         if s.is_valid():
             config_fields = (
-                "theme",
                 "date_locale",
                 "connection_limit",
                 "bbb_defaults",

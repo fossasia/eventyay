@@ -117,6 +117,7 @@ const props = defineProps<{
   currentDay: Moment | null
   draggedSession: SessionDatum | null
   density: 'compact' | 'default' | 'comfortable'
+  timeDensityMinutes: number
 }>()
 
 const emit = defineEmits([
@@ -176,7 +177,7 @@ const hoverEndSlice = computed((): Moment | null => {
 })
 
 const timeslices = computed<Timeslice[]>(() => {
-  const minimumSliceMins = 30
+  const minimumSliceMins = props.timeDensityMinutes || 30
   const slices: Timeslice[] = []
   const slicesLookup: Record<string, Timeslice> = {}
 
@@ -255,7 +256,7 @@ const timeslices = computed<Timeslice[]>(() => {
 
   const sliceIsFraction = (slice?: Timeslice): boolean => {
     if (!slice) return false
-    return slice.date.minutes() !== 0 && slice.date.minutes() !== minimumSliceMins
+    return slice.date.minutes() % minimumSliceMins !== 0
   }
 
   const sliceShouldDisplay = (slice?: Timeslice, index?: number): boolean => {
@@ -286,7 +287,7 @@ const timeslices = computed<Timeslice[]>(() => {
     }
 
     const prevSlice = slices[index - 1]
-    if (sliceShouldDisplay(prevSlice, index - 1) && !prevSlice.datebreak) {
+    if (prevSlice && sliceShouldDisplay(prevSlice, index - 1) && !prevSlice.datebreak) {
       prevSlice.gap = true
     }
   }
@@ -295,18 +296,20 @@ const timeslices = computed<Timeslice[]>(() => {
 })
 
 const oddTimeslices = computed<Moment[]>(() => {
+  const minimumSliceMins = props.timeDensityMinutes || 30
   const result: Moment[] = []
   props.sessions.forEach(session => {
-    if (session.start.minute() % 30 !== 0) result.push(session.start)
-    if (session.end.minute() % 30 !== 0) result.push(session.end)
+    if (session.start.minute() % minimumSliceMins !== 0) result.push(session.start)
+    if (session.end.minute() % minimumSliceMins !== 0) result.push(session.end)
   })
   // Remove duplicates by stringifying dates (safe as moment objects)
   return [...new Set(result.map(m => m.format()))].map(f => moment(f))
 })
 
 const visibleTimeslices = computed<Timeslice[]>(() => {
+  const minimumSliceMins = props.timeDensityMinutes || 30
   return timeslices.value.filter(slice =>
-    slice.date.minute() % 30 === 0 ||
+    slice.date.minute() % minimumSliceMins === 0 ||
     expandedTimes.value.some(et => et.isSame(slice.date)) ||
     oddTimeslices.value.some(ot => ot.isSame(slice.date))
   )
@@ -320,16 +323,18 @@ const densityScale = computed(() => {
 
 const gridStyle = computed(() => {
   const scale = densityScale.value
-  let rows = `[header] ${Math.round(52 * scale)}px `
+  const minimumSliceMins = props.timeDensityMinutes || 30
+  const baseSliceHeight = 60 * (minimumSliceMins / 30)
+  let rows = `[header] ${Math.round(52 * (minimumSliceMins / 30) * scale)}px `
   rows += timeslices.value.map((slice, index) => {
     const next = timeslices.value[index + 1]
-    let height = 60
+    let height = baseSliceHeight
     if (slice.gap) {
-      height = 100
+      height = 100 * (minimumSliceMins / 30)
     } else if (slice.datebreak) {
-      height = 60
+      height = baseSliceHeight
     } else if (next) {
-      height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
+      height = Math.min(baseSliceHeight, next.date.diff(slice.date, 'minutes') * 2)
     }
     height = Math.round(height * scale)
     return `[${slice.name}] minmax(${height}px, auto)`
@@ -480,10 +485,12 @@ const stopDragging = (event: PointerEvent) => {
 const expandTimeslice = (slice: Timeslice) => {
   const index = visibleTimeslices.value.indexOf(slice)
   if (index + 1 >= visibleTimeslices.value.length) {
-    expandedTimes.value.push(slice.date.clone().add(5, 'm'))
+    const minimumSliceMins = props.timeDensityMinutes || 30
+    expandedTimes.value.push(slice.date.clone().add(Math.min(5, minimumSliceMins), 'm'))
   } else {
     const end = visibleTimeslices.value[index + 1].date.clone()
-    const interval = end.diff(slice.date, 'minutes') <= 30 ? 5 : 30
+    const minimumSliceMins = props.timeDensityMinutes || 30
+    const interval = end.diff(slice.date, 'minutes') <= minimumSliceMins ? Math.min(5, minimumSliceMins) : minimumSliceMins
     const time = slice.date.clone().add(interval, 'm')
     while (time.isBefore(end)) {
       expandedTimes.value.push(time.clone())

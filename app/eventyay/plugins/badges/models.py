@@ -27,9 +27,14 @@ class BadgeLayout(LoggedModel):
         default=False,
     )
     name = models.CharField(max_length=190, verbose_name=_('Name'))
+    allow_customization = models.BooleanField(
+        verbose_name=_('Allow badge customization'),
+        default=False,
+    )
     layout = models.TextField(
         default='[{"type":"textarea","left":"0","bottom":"85","fontsize":"12.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":true,"italic":false,"width":"80","content":"attendee_name","text":"John Doe","align":"center"},{"type":"barcodearea","left":"24.87","bottom":"34","size":"30.00","content":"secret"},{"type":"textarea","left":"0","bottom":"83","fontsize":"10.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":false,"italic":false,"width":"80.00","downward":true,"content":"attendee_job_title","text":"Developer","align":"center"},{"type":"textarea","left":"0","bottom":"76","fontsize":"12.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":false,"italic":false,"width":"80","downward":true,"content":"attendee_company","text":"FOSSASIA","align":"center"}]'
     )
+    ask_user_fields = models.TextField(default='[]', blank=True)
 
     size = models.TextField(default='[{"width": 148, "height": 105, "orientation": "landscape"}]')
 
@@ -54,6 +59,28 @@ class BadgeLayout(LoggedModel):
             orientation = 'portrait' if height > width else 'landscape'
             self.size = json.dumps([{'width': width, 'height': height, 'orientation': orientation}])
         super().save(*args, **kwargs)
+
+    @property
+    def ask_user_fields_data(self):
+        if self.ask_user_fields:
+            try:
+                return json.loads(self.ask_user_fields)
+            except ValueError:
+                return []
+        return []
+
+    @ask_user_fields_data.setter
+    def ask_user_fields_data(self, values):
+        self.ask_user_fields = json.dumps(list(values or []))
+
+    @property
+    def layout_data(self):
+        if self.layout:
+            try:
+                return json.loads(self.layout)
+            except ValueError:
+                return []
+        return []
 
 
 class BadgeProduct(models.Model):

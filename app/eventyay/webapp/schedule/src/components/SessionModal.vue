@@ -17,12 +17,12 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 					export-dropdown.session-export-area(v-if="talkExportOptions.length", :options="talkExportOptions")
 				.text-content
 					.recording-embed(v-if="modalContent.contentObject.recording_iframe", v-html="modalContent.contentObject.recording_iframe")
-					.abstract(v-if="modalContent.contentObject.abstract", v-html="markdownIt.render(modalContent.contentObject.abstract)")
+					.abstract(v-if="modalContent.contentObject.abstract", v-html="renderRichText(modalContent.contentObject.abstract)")
 					template(v-if="modalContent.contentObject.isLoading")
 						bunt-progress-circular(size="big", :page="true")
 					template(v-else)
 						hr(v-if="(modalContent.contentObject.abstract?.length > 0) && (modalContent.contentObject.apiContent?.description?.length > 0)")
-						.description(v-if="modalContent.contentObject.apiContent?.description?.length > 0", v-html="markdownIt.render(modalContent.contentObject.apiContent.description)")
+						.description(v-if="modalContent.contentObject.apiContent?.description?.length > 0", v-html="renderRichText(modalContent.contentObject.apiContent.description)")
 						template(v-if="shortAnswers.length > 0 || iconAnswers.length > 0")
 							hr
 							.answers
@@ -39,7 +39,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 										a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
 										span(v-else) {{ t.no_file_provided }}
 									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
-									span.answer(v-else-if="answer.answer", v-html="markdownIt.render(answer.answer)")
+									span.answer(v-else-if="answer.answer", v-html="renderRichText(answer.answer)")
 									span.answer(v-else) {{ t.no_response }}
 						.downloads(v-if="modalContent.contentObject.resources && modalContent.contentObject.resources.length > 0")
 							hr
@@ -57,7 +57,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 					.inner-card-content
 						span {{ speaker.name }}
-						p.biography(v-if="speaker.apiContent?.biography?.length > 0", v-html="markdownIt.render(speaker.apiContent.biography)")
+						p.biography(v-if="speaker.apiContent?.biography?.length > 0", v-html="renderRichText(speaker.apiContent.biography)")
 		template(v-if="modalContent && modalContent.contentType === 'speaker'")
 			.speaker-details
 				.speaker-header
@@ -73,7 +73,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 					template(v-if="modalContent.contentObject.isLoading")
 						bunt-progress-circular(size="big", :page="true")
 					template(v-else)
-						.biography(v-if="modalContent.contentObject.apiContent?.biography?.length > 0", v-html="markdownIt.render(modalContent.contentObject.apiContent.biography)")
+						.biography(v-if="modalContent.contentObject.apiContent?.biography?.length > 0", v-html="renderRichText(modalContent.contentObject.apiContent.biography)")
 						.answers(v-if="shortAnswers.length > 0 || iconAnswers.length > 0")
 							hr
 							.icon-group(v-if="iconAnswers.length > 0")
@@ -93,7 +93,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 										a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
 										span(v-else) {{ t.no_file_provided }}
 									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
-									span.answer(v-else-if="answer.answer", v-html="markdownIt.render(answer.answer)")
+									span.answer(v-else-if="answer.answer", v-html="renderRichText(answer.answer)")
 									span.answer(v-else) {{ t.no_response }}
 			.speaker-sessions
 				session(
@@ -112,16 +112,11 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 </template>
 
 <script>
-import MarkdownIt from 'markdown-it'
 import { getLocalizedString, getSessionTime, getIconByFileEnding } from '../utils'
+import { renderEventyayRichText } from '../utils/eventyayRichText'
 import FavButton from './FavButton.vue'
 import Session from './Session.vue'
 import ExportDropdown from './ExportDropdown.vue'
-
-const markdownIt = MarkdownIt({
-	linkify: false,
-	breaks: true
-})
 
 export default {
 	name: 'SessionModal',
@@ -149,7 +144,6 @@ export default {
 	emits: ['toggleFav', 'showSpeaker', 'fav', 'unfav', 'joinRoom'],
 	data () {
 		return {
-			markdownIt,
 			getLocalizedString,
 			getSessionTime,
 			getIconByFileEnding
@@ -227,6 +221,9 @@ export default {
 		}
 	},
 	methods: {
+		renderRichText (text) {
+			return renderEventyayRichText(text || '')
+		},
 		showModal () {
 			this.$refs.modal?.showModal()
 		},

@@ -22,17 +22,19 @@
 			:days="computedDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
-			:density="density",
+			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
 			:sortOptions="sortOptions",
 			v-model:sortBy="internalSortBy",
+			v-model:includeRoomSortKey="sortIncludeRoom",
+			v-model:includeDateSortKey="sortIncludeDate",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone",
 			@toggleSessionsMode="sessionsMode = !sessionsMode",
-			@setDensity="setDensity")
+			@setTimeDensityMinutes="setTimeDensityMinutes($event)")
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid && !sessionsMode",
 				:sessions="filteredSessions",
@@ -46,7 +48,8 @@
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
 				:showFavCount="showFavCountOnCalendar",
-				:density="density",
+				:density="'default'",
+				:timeDensityMinutes="timeDensityMinutes",
 				@changeDay="setCurrentDay",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -62,8 +65,10 @@
 				:favs="resolvedFavs",
 				:showFavCount="showFavCountOnList",
 				:sortBy="effectiveSortBy",
+				:includeRoomSortKey="sortIncludeRoom",
+				:includeDateSortKey="sortIncludeDate",
 				:showBreaks="!linearOnly && !sessionsMode",
-				:density="density",
+				:density="'default'",
 				@changeDay="dayScrolled",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -127,7 +132,7 @@ export default {
 		},
 		sortBy: {
 			type: String,
-			default: 'room'
+			default: 'title'
 		},
 		exporters: {
 			type: Array,
@@ -145,8 +150,18 @@ export default {
 			sessionsMode: this.linearOnly,
 			searchQuery: '',
 			recordingFilter: 'all',
-			density: localStorage.getItem('schedule-density') || 'default',
-			internalSortBy: this.sortBy || 'room',
+			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
+			internalSortBy: this.sortBy || 'title',
+			sortIncludeRoom: false,
+			sortIncludeDate: (() => {
+				try {
+					const stored = localStorage.getItem('schedule-include-datetime')
+					if (stored === null) return true
+					return stored === 'true'
+				} catch {
+					return true
+				}
+			})(),
 			filterState: {
 				tracks: [],
 				rooms: [],
@@ -323,7 +338,11 @@ export default {
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
-			return days.sort((a, b) => a.diff(b))
+			const sortedDays = days.sort((a, b) => a.diff(b))
+			if ((this.linearOnly || this.sessionsMode) && !this.sortIncludeDate && ['title', 'title_desc'].includes(this.effectiveSortBy)) {
+				return sortedDays.length ? [sortedDays[0]] : []
+			}
+			return sortedDays
 		},
 		filterGroups() {
 			const groups = [
@@ -352,17 +371,24 @@ export default {
 			return !!this.resolvedSchedule?.feature_flags?.session_popularity_enabled
 		},
 		sortOptions() {
-			const options = ['room', 'title', 'title_desc']
+			const options = ['title', 'title_desc']
 			if (this.loggedIn && this.popularityFeatureEnabled) options.push('popularity')
 			return options
 		},
 		effectiveSortBy() {
-			return this.sortOptions.includes(this.internalSortBy) ? this.internalSortBy : 'room'
+			return this.sortOptions.includes(this.internalSortBy) ? this.internalSortBy : 'title'
 		}
 	},
 	watch: {
 		recordingFilter() {
 			this.writeRecordingQueryParam()
+		},
+		sortIncludeDate() {
+			try {
+				localStorage.setItem('schedule-include-datetime', String(this.sortIncludeDate))
+			} catch {
+				// ignore localStorage access errors
+			}
 		},
 		sortBy: {
 			handler(val) {
@@ -394,10 +420,13 @@ export default {
 		this._resizeObserver?.disconnect()
 	},
 	methods: {
-		setDensity(density) {
-			this.density = density
+		setTimeDensityMinutes(minutes) {
+			const parsedMinutes = Number(minutes)
+			const fallbackMinutes = 30
+			const validMinutes = Number.isFinite(parsedMinutes) && parsedMinutes > 0 ? parsedMinutes : fallbackMinutes
+			this.timeDensityMinutes = validMinutes
 			try {
-				localStorage.setItem('schedule-density', density)
+				localStorage.setItem('schedule-time-density-minutes', String(this.timeDensityMinutes))
 			} catch {
 				// ignore localStorage access errors
 			}
@@ -536,6 +565,10 @@ export default {
 	flex-direction: column
 	min-height: 0
 	min-width: 0
+	font-size: 14px
+	color: rgb(13, 15, 16)
+	--pretalx-clr-text: rgb(13, 15, 16)
+	overflow: hidden
 	&:fullscreen
 		background: #fff
 		.c-schedule-toolbar
@@ -547,7 +580,7 @@ export default {
 		overflow: auto
 		// The toolbar sits outside this scroll container, so reset
 		// the sticky offset to cancel the +40px baked into GridSchedule.
-		--pretalx-sticky-top-offset: calc(-30px - var(--pretalx-version-warning-height, 0px))
+		--pretalx-sticky-top-offset: calc(-40px - var(--pretalx-version-warning-height, 0px))
 	.schedule-error
 		padding: 32px
 		text-align: center

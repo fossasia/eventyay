@@ -51,6 +51,11 @@ from eventyay.base.models.tax import (
     cc_to_vat_prefix,
     is_eu_country,
 )
+from eventyay.base.services.system_questions import (
+    get_system_question_asked_required,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.base.settings import (
     COUNTRIES_WITH_STATE_IN_ADDRESS,
     PERSON_NAME_SALUTATIONS,
@@ -65,6 +70,7 @@ from eventyay.helpers.escapejson import escapejson_attr
 from eventyay.helpers.http import get_client_ip
 from eventyay.helpers.i18n import get_format_without_seconds
 from eventyay.presale.signals import question_form_fields
+
 
 logger = logging.getLogger(__name__)
 
@@ -239,7 +245,7 @@ class WrappedPhonePrefixSelect(Select):
             for country_code in values:
                 country_name = locale.territories.get(country_code)
                 if country_name:
-                    choices.append((prefix, '{} {}'.format(country_name, prefix)))
+                    choices.append((prefix, f'{country_name} {prefix}'))
         super().__init__(
             choices=sorted(choices, key=lambda product: product[1]),
             attrs={'aria-label': pgettext_lazy('phonenumber', 'International area code')},
@@ -267,7 +273,7 @@ class WrappedPhoneNumberPrefixWidget(PhoneNumberPrefixWidget):
     def __init__(self, attrs=None, initial=None):
         attrs = {
             'aria-label': pgettext_lazy('phonenumber', 'Phone number (without international area code)'),
-            'placeholder': 'Phone',
+            'placeholder': pgettext_lazy('phonenumber', 'Phone'),
         }
         widgets = (WrappedPhonePrefixSelect(initial), forms.TextInput(attrs=attrs))
         super(PhoneNumberPrefixWidget, self).__init__(widgets, attrs)
@@ -401,40 +407,79 @@ class BaseQuestionsForm(forms.Form):
 
         add_fields = {}
 
-        if product.admission and event.settings.attendee_names_asked:
+        base_states = get_system_question_base_states(event)
+        product_overrides = get_system_question_product_overrides(event)
+
+        ask_name, require_name = get_system_question_asked_required(
+            event,
+            'attendee_name_parts',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_email, require_email = get_system_question_asked_required(
+            event,
+            'attendee_email',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_company, require_company = get_system_question_asked_required(
+            event,
+            'company',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_job_title, require_job_title = get_system_question_asked_required(
+            event,
+            'job_title',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_address, require_address = get_system_question_asked_required(
+            event,
+            'street',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+
+        if ask_name:
             add_fields['attendee_name_parts'] = NamePartsFormField(
                 max_length=255,
-                required=event.settings.attendee_names_required and not self.all_optional,
+                required=require_name and not self.all_optional,
                 scheme=event.settings.name_scheme,
                 titles=event.settings.name_scheme_titles,
                 label=_('Attendee name'),
                 initial=(cartpos.attendee_name_parts if cartpos else orderpos.attendee_name_parts),
             )
-        if product.admission and event.settings.attendee_emails_asked:
+        if ask_email:
             add_fields['attendee_email'] = forms.EmailField(
-                required=event.settings.attendee_emails_required and not self.all_optional,
+                required=require_email and not self.all_optional,
                 label=_('Attendee email'),
                 initial=(cartpos.attendee_email if cartpos else orderpos.attendee_email),
                 widget=forms.EmailInput(attrs={'autocomplete': 'email'}),
             )
-        if product.admission and event.settings.attendee_company_asked:
+        if ask_company:
             add_fields['company'] = forms.CharField(
-                required=event.settings.attendee_company_required and not self.all_optional,
+                required=require_company and not self.all_optional,
                 label=_('Company'),
                 max_length=255,
                 initial=(cartpos.company if cartpos else orderpos.company),
             )
-        if product.admission and event.settings.attendee_job_title_asked:
+        if ask_job_title:
             add_fields['job_title'] = forms.CharField(
-                required=event.settings.attendee_job_title_required and not self.all_optional,
+                required=require_job_title and not self.all_optional,
                 label=_('Job title'),
                 max_length=255,
                 initial=(cartpos.job_title if cartpos else orderpos.job_title),
             )
 
-        if product.admission and event.settings.attendee_addresses_asked:
+        if ask_address:
             add_fields['street'] = forms.CharField(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 label=_('Address'),
                 widget=forms.Textarea(
                     attrs={
@@ -446,7 +491,7 @@ class BaseQuestionsForm(forms.Form):
                 initial=(cartpos.street if cartpos else orderpos.street),
             )
             add_fields['zipcode'] = forms.CharField(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 max_length=30,
                 label=_('ZIP code'),
                 initial=(cartpos.zipcode if cartpos else orderpos.zipcode),
@@ -457,7 +502,7 @@ class BaseQuestionsForm(forms.Form):
                 ),
             )
             add_fields['city'] = forms.CharField(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 label=_('City'),
                 max_length=255,
                 initial=(cartpos.city if cartpos else orderpos.city),
@@ -469,7 +514,7 @@ class BaseQuestionsForm(forms.Form):
             )
             country = (cartpos.country if cartpos else orderpos.country) or guess_country(event)
             add_fields['country'] = CountryField(countries=CachedCountries).formfield(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 label=_('Country'),
                 initial=country,
                 widget=forms.Select(
@@ -510,21 +555,29 @@ class BaseQuestionsForm(forms.Form):
 
         # Build field positions using saved order from system_question_order
         system_question_order = event.settings.system_question_order or {}
-        
         field_positions = []
         for field_name in add_fields.keys():
             # State follows country's position
             lookup_name = field_name if field_name != 'state' else 'country'
-            
+
             # Use saved position if available, otherwise use a high default to maintain relative order
             if lookup_name in system_question_order and system_question_order[lookup_name] >= 0:
                 position = system_question_order[lookup_name]
             else:
                 # Default positions for fields not in saved order
-                default_order = ['attendee_name_parts', 'attendee_email', 'company', 'job_title', 'street',
-                                'zipcode', 'city', 'country', 'state']
+                default_order = [
+                    'attendee_name_parts',
+                    'attendee_email',
+                    'company',
+                    'job_title',
+                    'street',
+                    'zipcode',
+                    'city',
+                    'country',
+                    'state',
+                ]
                 position = default_order.index(lookup_name) if lookup_name in default_order else 999
-            
+
             field_positions.append((field_name, position))
 
         for q in questions:
@@ -558,7 +611,7 @@ class BaseQuestionsForm(forms.Form):
                     max_value=q.valid_number_max,
                     help_text=help_text,
                     initial=initial.answer if initial else None,
-                    widget=forms.NumberInput(attrs={'placeholder': 'Your answer'}),
+                    widget=forms.NumberInput(attrs={'placeholder': _('Your answer')}),
                 )
             elif q.type == Question.TYPE_STRING:
                 field = forms.CharField(
@@ -566,14 +619,14 @@ class BaseQuestionsForm(forms.Form):
                     required=required,
                     help_text=help_text,
                     initial=initial.answer if initial else None,
-                    widget=forms.TextInput(attrs={'placeholder': 'Your answer'}),
+                    widget=forms.TextInput(attrs={'placeholder': _('Your answer')}),
                 )
             elif q.type == Question.TYPE_TEXT:
                 field = forms.CharField(
                     label=label,
                     required=required,
                     help_text=help_text,
-                    widget=forms.Textarea(attrs={'placeholder': 'Your answer'}),
+                    widget=forms.Textarea(attrs={'placeholder': _('Your answer')}),
                     initial=initial.answer if initial else None,
                 )
             elif q.type == Question.TYPE_COUNTRYCODE:
@@ -590,15 +643,15 @@ class BaseQuestionsForm(forms.Form):
                     empty_label=' ',
                     initial=(initial.answer if initial else (guess_country(event) if required else None)),
                 )
-            elif q.type == Question.TYPE_CHOICE:
+            elif q.type in Question.SINGLE_CHOICE_TYPES:
                 field = forms.ModelChoiceField(
-                    queryset=q.options,
+                    queryset=q.options.all(),
                     label=label,
                     required=required,
                     help_text=help_text,
-                    widget=forms.Select,
+                    widget=(forms.RadioSelect if q.type == Question.TYPE_CHOICE else forms.Select),
                     to_field_name='identifier',
-                    empty_label='',
+                    empty_label=(None if q.type == Question.TYPE_CHOICE else _('Select an option')),
                     initial=initial.options.first() if initial else None,
                 )
             elif q.type == Question.TYPE_CHOICE_MULTIPLE:
@@ -694,9 +747,7 @@ class BaseQuestionsForm(forms.Form):
                         if str(default_country) in values:
                             default_prefix = prefix
                     try:
-                        initial = (
-                            PhoneNumber().from_string(initial.answer) if initial else '+{}.'.format(default_prefix)
-                        )
+                        initial = PhoneNumber().from_string(initial.answer) if initial else f'+{default_prefix}.'
                     except NumberParseException:
                         initial = None
                     field = PhoneNumberField(
@@ -721,7 +772,7 @@ class BaseQuestionsForm(forms.Form):
             if q.dependency_question_id:
                 field.widget.attrs['data-question-dependency'] = q.dependency_question_id
                 field.widget.attrs['data-question-dependency-values'] = escapejson_attr(json.dumps(q.dependency_values))
-                if q.type != 'M':
+                if q.type != Question.TYPE_CHOICE_MULTIPLE:
                     field.widget.attrs['required'] = q.required and not self.all_optional
                     field._required = q.required and not self.all_optional
                 field.required = False
@@ -738,13 +789,15 @@ class BaseQuestionsForm(forms.Form):
         for r, response in sorted(responses, key=lambda r: str(r[0])):
             for key, value in response.items():
                 self.fields[key] = value
-                value.initial = data.get('question_form_data', {}).get(key)
+                raw_initial = data.get('question_form_data', {}).get(key)
+                if hasattr(value, 'get_meta_initial'):
+                    value.initial = value.get_meta_initial(raw_initial)
+                else:
+                    value.initial = raw_initial
 
         for k, v in self.fields.items():
             if v.widget.attrs.get('autocomplete') or k == 'attendee_name_parts':
-                v.widget.attrs['autocomplete'] = 'section-{} '.format(self.prefix) + v.widget.attrs.get(
-                    'autocomplete', ''
-                )
+                v.widget.attrs['autocomplete'] = f'section-{self.prefix} ' + v.widget.attrs.get('autocomplete', '')
 
     def clean(self):
         d = super().clean()

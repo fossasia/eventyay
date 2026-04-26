@@ -18,13 +18,20 @@ from eventyay.base.signals import (
     register_ticket_outputs,
 )
 from eventyay.control.signals import (
-    product_forms,
     nav_event,
     order_info,
     order_position_buttons,
 )
-from eventyay.plugins.badges.forms import BadgeProductForm
+from eventyay.presale.signals import question_form_fields
+
+from eventyay.plugins.badges.forms import BadgeOptionsField
 from eventyay.plugins.badges.models import BadgeProduct, BadgeLayout
+from eventyay.plugins.badges.utils import (
+    BADGE_HIDDEN_FIELDS_KEY,
+    get_badge_customizable_fields,
+    get_badge_hidden_fields,
+    get_badge_layout_for_position,
+)
 
 
 @receiver(register_ticket_outputs)
@@ -58,20 +65,6 @@ def control_nav_import(sender, request=None, **kwargs):
     ]
 
 
-@receiver(product_forms, dispatch_uid='badges_product_forms')
-def control_product_forms(sender, request, product, **kwargs):
-    try:
-        inst = BadgeProduct.objects.get(product=product)
-    except BadgeProduct.DoesNotExist:
-        inst = BadgeProduct(product=product)
-    return BadgeProductForm(
-        instance=inst,
-        event=sender,
-        data=(request.POST if request.method == 'POST' else None),
-        prefix='badgeproduct',
-    )
-
-
 @receiver(product_copy_data, dispatch_uid='badges_product_copy')
 def copy_product(sender, source, target, **kwargs):
     try:
@@ -97,6 +90,15 @@ def event_copy_data_receiver(sender, other, question_map, product_map, **kwargs)
                     newq = question_map.get(int(o['content'][9:]))
                     if newq:
                         o['content'] = 'question_{}'.format(newq.pk)
+        ask_user_fields = []
+        for field in bl.ask_user_fields_data:
+            if field.startswith('question_'):
+                newq = question_map.get(int(field[9:]))
+                if newq:
+                    ask_user_fields.append('question_{}'.format(newq.pk))
+            else:
+                ask_user_fields.append(field)
+        bl.ask_user_fields_data = ask_user_fields
         bl.save()
 
         if bl.background and bl.background.name:
@@ -106,6 +108,33 @@ def event_copy_data_receiver(sender, other, question_map, product_map, **kwargs)
 
     for bi in BadgeProduct.objects.filter(product__event=other):
         BadgeProduct.objects.create(product=product_map.get(bi.product_id), layout=layout_map.get(bi.layout_id))
+
+
+@receiver(question_form_fields, dispatch_uid='badges_question_form_fields')
+def badge_question_form_fields(sender, position, **kwargs):
+    layout = get_badge_layout_for_position(sender, position)
+    if not layout or not layout.allow_customization:
+        return {}
+
+    ask_user_keys = set(layout.ask_user_fields_data)
+    choices = [
+        (
+            field['key'],
+            field['sample'] if field['key'].startswith('question_') and field.get('sample') else field['label'],
+        )
+        for field in get_badge_customizable_fields(sender, layout)
+        if field['key'] in ask_user_keys
+    ]
+    if not choices:
+        return {}
+
+    return {
+        BADGE_HIDDEN_FIELDS_KEY: BadgeOptionsField(
+            label=_('Badge options'),
+            choices=choices,
+            hidden_initial=get_badge_hidden_fields(position),
+        )
+    }
 
 
 @receiver(register_data_exporters, dispatch_uid='badges_export_all')

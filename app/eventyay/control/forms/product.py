@@ -64,11 +64,7 @@ class QuestionForm(I18nModelForm):
         self.fields['products'].queryset = self.instance.event.products.all()
         self.fields['products'].required = True
         self.fields['dependency_question'].queryset = self.instance.event.questions.filter(
-            type__in=(
-                Question.TYPE_BOOLEAN,
-                Question.TYPE_CHOICE,
-                Question.TYPE_CHOICE_MULTIPLE,
-            ),
+            type__in=(Question.TYPE_BOOLEAN,) + Question.OPTION_TYPES,
             ask_during_checkin=False,
         )
         if self.instance.pk:
@@ -196,7 +192,7 @@ class QuotaForm(I18nModelForm):
         initial = kwargs.get('initial', {})
         if self.instance and self.instance.pk and 'productvars' not in initial:
             initial['productvars'] = [str(i.pk) for i in self.instance.products.all()] + [
-                '{}-{}'.format(v.product_id, v.pk) for v in self.instance.variations.all()
+                f'{v.product_id}-{v.pk}' for v in self.instance.variations.all()
             ]
         kwargs['initial'] = initial
         super().__init__(**kwargs)
@@ -205,9 +201,9 @@ class QuotaForm(I18nModelForm):
         for product in products:
             if len(product.variations.all()) > 0:
                 for v in product.variations.all():
-                    choices.append(('{}-{}'.format(product.pk, v.pk), '{} – {}'.format(product, v.value)))
+                    choices.append((f'{product.pk}-{v.pk}', f'{product} – {v.value}'))
             else:
-                choices.append(('{}'.format(product.pk), str(product)))
+                choices.append((f'{product.pk}', str(product)))
 
         self.fields['productvars'] = forms.MultipleChoiceField(
             label=_('Products'),
@@ -382,6 +378,7 @@ class ProductCreateForm(I18nModelForm):
                 'issue_giftcard',
                 'require_approval',
                 'allow_waitinglist',
+                'allow_user_variation_change',
                 'show_quota_left',
                 'hidden_if_available',
                 'require_bundling',
@@ -533,7 +530,6 @@ class ProductUpdateForm(I18nModelForm):
             ),
         )
         try:
-            from eventyay.base.models.product import ProductMetaValue
             mv = self.instance.meta_values.select_related('property').get(property__name='limit_one_per_user')
             self.fields['limit_one_per_user'].initial = mv.value in (True, 'True', 'true', '1', 1)
         except Exception:
@@ -577,6 +573,8 @@ class ProductUpdateForm(I18nModelForm):
             }
         )
         self.fields['category'].widget.choices = self.fields['category'].choices
+        if not self.instance.has_variations:
+            self.fields.pop('allow_user_variation_change', None)
 
     def clean(self):
         d = super().clean()
@@ -598,7 +596,6 @@ class ProductUpdateForm(I18nModelForm):
     def save(self, *args, **kwargs):
         inst = super().save(*args, **kwargs)
         # Persist meta flag limit_one_per_user via ProductMetaProperty/Value
-        from eventyay.base.models.product import ProductMetaProperty, ProductMetaValue
         pmp, _ = inst.event.product_meta_properties.get_or_create(name='limit_one_per_user', defaults={'default': ''})
         val = '1' if self.cleaned_data.get('limit_one_per_user') else ''
         if val:
@@ -638,6 +635,7 @@ class ProductUpdateForm(I18nModelForm):
             'show_quota_left',
             'hidden_if_available',
             'issue_giftcard',
+            'allow_user_variation_change',
         ]
         field_classes = {
             'available_from': SplitDateTimeField,
