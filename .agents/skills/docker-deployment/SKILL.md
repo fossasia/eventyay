@@ -49,14 +49,17 @@ docker compose down
 
 ```bash
 docker compose exec web python manage.py migrate
-docker compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py create_admin_user
 ```
+
+Use `create_admin_user` as the default onboarding command for least-privilege admin setup.
+Use `createsuperuser` only when full superuser access is explicitly required.
 
 ## Development vs Production
 
 | Aspect | Development (`docker-compose.yml`) | Production (`deployment/docker-compose.yml`) |
 |---|---|---|
-| Web server | Django `runserver` | Gunicorn behind Nginx |
+| Web server | Django `runserver` | Gunicorn behind host-level Nginx |
 | Static files | Served by Django | Pre-built and served by Nginx |
 | Env file | `.env.dev` | `.env` |
 | Hot reload | Yes (volume mount) | No |

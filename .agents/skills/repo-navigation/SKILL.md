@@ -31,14 +31,18 @@ app/
 └── manage.py               # Django management entry point
 ```
 
-## Core Application: `app/eventyay/`
+## Core Application: `app/eventyay/` (selected directories)
 
 | Directory | Purpose |
 |---|---|
 | `api/` | REST API endpoints (Django REST Framework) |
+| `agenda/` | Agenda and timetable domain logic |
 | `base/` | Shared models (`base/models/`), utilities, middleware, and forms (`base/forms/`) |
+| `cfp/` | Call-for-proposals and review workflows |
 | `control/` | Organiser/back-office views, forms, and URLs |
 | `presale/` | Attendee-facing (ticket purchase) views and forms |
+| `orga/` | Organiser-facing event management flows and views |
+| `event/` | Event domain models and related business logic |
 | `common/` | Cross-cutting helpers shared across modules |
 | `config/` | Application configuration and settings |
 | `plugins/` | Plugin infrastructure |
@@ -47,6 +51,8 @@ app/
 | `locale/` | Translation files |
 | `mail/` | Email rendering and sending |
 | `celery.py` / `celery_app.py` | Celery task configuration |
+
+This table is intentionally non-exhaustive and focuses on high-traffic modules.
 
 > **Note:** Models, forms, and templates are distributed inside sub-apps
 > (e.g. `base/models/`, `control/forms/`, `presale/templates/`), not in

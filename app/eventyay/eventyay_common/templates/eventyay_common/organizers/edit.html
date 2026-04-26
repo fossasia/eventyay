@@ -104,21 +104,12 @@
                                     <i class="fa fa-users"></i> {% translate "Members & API" %}
                                 </button>
                             </div>
-                            <form action="" method="post"
-                                  id="team-delete-form-{{ panel.team.pk }}"
-                                  class="team-delete-form hidden"
-                                  data-confirm="{% translate "Are you sure you want to delete this team?" %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="team_action" value="delete">
-                                <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
-                            </form>
                             {% if panel.can_delete %}
                                 <div class="btn-group btn-group-sm">
-                                    <button type="submit"
-                                            form="team-delete-form-{{ panel.team.pk }}"
-                                            class="btn btn-danger btn-sm">
+                                    <a href="{% url 'eventyay_common:organizer.team.delete' organizer=request.organizer.slug team=panel.team.pk %}?next={{ request.get_full_path|urlencode }}"
+                                       class="btn btn-danger btn-sm">
                                         <i class="fa fa-trash"></i> {% translate "Delete" %}
-                                    </button>
+                                    </a>
                                 </div>
                             {% else %}
                                 {% translate "Cannot be deleted as only team left with management privileges" as team_delete_disabled_help %}
@@ -127,13 +118,14 @@
                                      data-toggle="tooltip"
                                      data-placement="bottom"
                                      title="{{ team_delete_disabled_help }}">
-                                    <button type="submit"
-                                           form="team-delete-form-{{ panel.team.pk }}"
-                                           class="btn btn-danger btn-sm"
-                                           disabled
-                                           aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}">
-                                       <i class="fa fa-trash"></i> {% translate "Delete" %}
-                                    </button>
+                                    <span class="d-inline-block" tabindex="0">
+                                        <button type="button"
+                                                class="btn btn-danger btn-sm"
+                                                disabled
+                                                aria-describedby="team-delete-disabled-help-{{ panel.team.pk }}">
+                                            <i class="fa fa-trash"></i> {% translate "Delete" %}
+                                        </button>
+                                    </span>
                                     <span id="team-delete-disabled-help-{{ panel.team.pk }}" class="sr-only">
                                         {{ team_delete_disabled_help }}
                                     </span>
@@ -149,6 +141,9 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="team_action" value="update">
                                 <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
+                                {% if teams_return_next %}
+                                    <input type="hidden" name="next" value="{{ teams_return_next }}">
+                                {% endif %}
                                 {% bootstrap_form_errors panel.form %}
                                 {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=panel.form %}
                                 <div class="form-group submit-group">

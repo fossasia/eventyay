@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-03-30 18:22+0530\n"
-"PO-Revision-Date: 2026-03-30 15:15+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-04-18 13:10+0000\n"
+"Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 5.17.1-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -160,7 +160,7 @@ msgstr "Anda tidak dapat memberikan umpan balik untuk sesi ini sekarang."
 
 #: agenda/templates/agenda/public_starred.html:38
 msgid "This page requires JavaScript to show the starred sessions."
-msgstr ""
+msgstr "Halaman ini menggunakan JavaScript untuk menampilkan sesi favorit."
 
 #: agenda/templates/agenda/schedule.html:33
 #, python-format
@@ -273,7 +273,7 @@ msgstr "Informasi tambahan"
 
 #: agenda/views/public.py:56
 msgid "Anonymous (name not shared)"
-msgstr ""
+msgstr "Anonim (nama tidak dibagikan)"
 
 #: agenda/views/public.py:57
 #, python-format
@@ -306,7 +306,7 @@ msgstr "Favorit Anda hanya dapat disimpan secara lokal di browser Anda."
 
 #: agenda/views/schedule.py:356 multidomain/views.py:140
 msgid "Sorry, no matching options."
-msgstr ""
+msgstr "Maaf, tidak ada pilihan yang sesuai."
 
 #: agenda/views/schedule.py:357 multidomain/views.py:141
 msgid "View Changelog"
@@ -330,15 +330,15 @@ msgstr "Berdasarkan ruangan"
 
 #: agenda/views/schedule.py:362 multidomain/views.py:146
 msgid "A–Z"
-msgstr ""
+msgstr "A–Z"
 
 #: agenda/views/schedule.py:363 multidomain/views.py:147
 msgid "Most popular"
-msgstr ""
+msgstr "Paling Populer"
 
 #: agenda/views/schedule.py:364 multidomain/views.py:148
 msgid "Fullscreen"
-msgstr ""
+msgstr "Layar penuh"
 
 #: agenda/views/schedule.py:365 multidomain/views.py:149
 msgid "Exit Fullscreen"
@@ -362,7 +362,7 @@ msgstr "Anda sedang melihat versi jadwal yang lebih lama."
 
 #: agenda/views/schedule.py:374 multidomain/views.py:156
 msgid "Join room"
-msgstr ""
+msgstr "Masuk sesi"
 
 #: agenda/views/schedule.py:375 multidomain/views.py:157
 msgid "View Video"
@@ -398,15 +398,15 @@ msgstr "iCal"
 
 #: agenda/views/schedule.py:381 multidomain/views.py:163
 msgid "JSON"
-msgstr ""
+msgstr "JSON"
 
 #: agenda/views/schedule.py:382 multidomain/views.py:164
 msgid "XML"
-msgstr ""
+msgstr "XML"
 
 #: agenda/views/schedule.py:383 multidomain/views.py:165
 msgid "XCal"
-msgstr ""
+msgstr "XCal"
 
 #: agenda/views/schedule.py:384 multidomain/views.py:166
 msgid "Google Calendar"
@@ -414,7 +414,7 @@ msgstr "Google Kalender"
 
 #: agenda/views/schedule.py:385 multidomain/views.py:167
 msgid "Webcal"
-msgstr ""
+msgstr "Webcal"
 
 #: agenda/views/schedule.py:386 base/exporters/invoices.py:297
 #: base/exporters/orderlist.py:592 base/exporters/orderlist.py:967
@@ -527,7 +527,7 @@ msgstr "Tampilan Daftar"
 
 #: agenda/views/schedule.py:403 multidomain/views.py:185
 msgid "Calendar View"
-msgstr ""
+msgstr "Tampilan Kalender"
 
 #: agenda/views/schedule.py:404 common/forms/forms.py:12
 #: common/forms/widgets.py:190
@@ -552,7 +552,7 @@ msgstr "Cari"
 #: agenda/views/schedule.py:405 multidomain/views.py:187
 #: presale/templates/pretixpresale/event/index.html:331
 msgid "Featured Speakers"
-msgstr "Pembicara Unggulan"
+msgstr "Pembicara Utama"
 
 #: agenda/views/schedule.py:406 multidomain/views.py:188
 msgid "View speaker profile"
@@ -560,7 +560,7 @@ msgstr "Lihat profil pembicara"
 
 #: agenda/views/schedule.py:407 multidomain/views.py:189
 msgid "No starred sessions."
-msgstr "Tidak ada sesi yang dibintangi."
+msgstr "Tidak ada sesi yang ditandai bintang."
 
 #: agenda/views/speaker.py:55 agenda/views/speaker.py:86
 msgid "No published speakers."
@@ -585,7 +585,7 @@ msgstr "eventyay_checkin"
 
 #: api/auth/devicesecurity.py:57
 msgid "eventyay_checkin (kiosk mode, online only)"
-msgstr "eventyay_checkin (mode kios, hanya online)"
+msgstr "eventyay_checkin (mode kios, hanya daring)"
 
 #: api/models.py:23
 msgid "Application name"
@@ -601,7 +601,7 @@ msgstr "Daftar URI yang diizinkan, dipisahkan dengan spasi"
 
 #: api/models.py:33
 msgid "Allowed list with space separated"
-msgstr "Daftar yang diizinkan, dipisahkan dengan spasi"
+msgstr "Daftar yang diizinkan dengan spasi yang dipisahkan"
 
 #: api/models.py:37 control/forms/global_settings.py:258
 #: control/forms/global_settings.py:336
@@ -783,13 +783,15 @@ msgstr "Waktu selesai harus setelah waktu mulai."
 #: api/serializers/stream_schedule.py:101
 msgid ""
 "Stream schedules must include at least one scheduled session in this room."
-msgstr ""
+msgstr "Jadwal siaran setidaknya memiliki satu jadwal sesi di ruangan ini."
 
 #: api/serializers/stream_schedule.py:130
 msgid ""
 "This stream schedule overlaps with an existing schedule for this room. "
 "Please adjust the time range."
 msgstr ""
+"Jadwal siaran ini bertumpang tindih dengan jadwal yang sudah ada di ruangan "
+"ini. Silakan atur kembali jadwal."
 
 #: api/templates/rest_framework/api.html:18
 #: orga/templates/orga/auth/base.html:29
@@ -4525,7 +4527,7 @@ msgstr "Nomor telepon (tanpa kode negara internasional)"
 #: base/forms/questions.py:271
 msgctxt "phonenumber"
 msgid "Phone"
-msgstr ""
+msgstr "Telepon"
 
 #: base/forms/questions.py:431
 #: control/templates/pretixcontrol/items/orderforms.html:275
@@ -5147,6 +5149,8 @@ msgid ""
 "The default session type for new submissions. Leave empty to show no pre-"
 "selected type in the CFP form."
 msgstr ""
+"Tipe sesi bawaan untuk permohonan baru. Biarkan kosong untuk menunjukkan "
+"tidak ada sesi yang sebelumnya dipilih di formulir CFP."
 
 #: base/models/cfp.py:117 base/models/question.py:142 base/models/type.py:40
 #: orga/views/submission.py:764 orga/views/submission.py:772
@@ -7939,6 +7943,7 @@ msgstr "Gelar"
 #: base/models/stream_schedule.py:20
 msgid "Optional label for this stream (e.g., \"Day 1 Stream\", \"Keynotes\")"
 msgstr ""
+"Label opsional untuk siaran ini (Misalnya: \"Hari 1 Siaran\", \"Sesi Utama\")"
 
 #: base/models/stream_schedule.py:24
 msgid "Stream URL"
@@ -7946,7 +7951,7 @@ msgstr "URL streaming"
 
 #: base/models/stream_schedule.py:25
 msgid "URL of the stream (YouTube, Vimeo, HLS, or other live link)"
-msgstr ""
+msgstr "URL siaran (YouTube, Vimeo, HLS, atau pranala siaran langsung lain)"
 
 #: base/models/stream_schedule.py:28
 msgid "Start Time"
@@ -7954,7 +7959,7 @@ msgstr "Waktu Mulai"
 
 #: base/models/stream_schedule.py:29
 msgid "When this stream becomes active"
-msgstr ""
+msgstr "Ketika siaran ini menjadi aktif"
 
 #: base/models/stream_schedule.py:32
 msgid "End Time"
@@ -7962,7 +7967,7 @@ msgstr "Waktu Berakhir"
 
 #: base/models/stream_schedule.py:33
 msgid "When this stream stops being active"
-msgstr ""
+msgstr "Ketika siaran ini berhenti menjadi aktif"
 
 #: base/models/stream_schedule.py:45
 msgid "Stream Type"
@@ -7977,6 +7982,8 @@ msgid ""
 "Extra configuration for the stream (e.g., YouTube video ID, language "
 "settings)"
 msgstr ""
+"Konfigurasi tambahan untuk siaran (misalnya: ID video Youtube, pengaturan "
+"bahasa)"
 
 #: base/models/stream_schedule.py:60
 msgid "Stream Schedule"
@@ -7991,6 +7998,8 @@ msgid ""
 "This stream schedule overlaps with an existing schedule for this room. "
 "Please ensure stream schedules do not overlap."
 msgstr ""
+"Jadwal siaran ini bertumpang tindih dengan jadwal siaran yang ada di ruangan "
+"ini. Silakan pastikan jadwal siaran tidak bertumpang tindih."
 
 #: base/models/submission.py:76 submission/phrases.py:13
 msgctxt "proposal status"
@@ -8281,6 +8290,7 @@ msgid ""
 "The position field is used to determine the order that session types are "
 "displayed in (lowest first)."
 msgstr ""
+"Posisi kolom digunakan untuk menentukan urutan jenis sesi (dari terendah)"
 
 #: base/models/type.py:81
 #, python-brace-format
@@ -12861,7 +12871,7 @@ msgstr "Bulgaria"
 
 #: config/settings.py:644
 msgid "Bengali"
-msgstr ""
+msgstr "Bengali"
 
 #: config/settings.py:652
 msgid "Catalan"
@@ -12901,7 +12911,7 @@ msgstr "Hungaria"
 
 #: config/settings.py:725
 msgid "Hindi"
-msgstr ""
+msgstr "Hindi"
 
 #: config/settings.py:733
 msgid "Gujarati"
@@ -12925,7 +12935,7 @@ msgstr "Korea"
 
 #: config/settings.py:774
 msgid "Khmer"
-msgstr ""
+msgstr "Khmer"
 
 #: config/settings.py:782
 msgid "Latvian"
@@ -12941,7 +12951,7 @@ msgstr "Malayalam"
 
 #: config/settings.py:806
 msgid "Marathi"
-msgstr ""
+msgstr "Marathi"
 
 #: config/settings.py:814
 msgid "Norwegian Bokmål"
@@ -12997,11 +13007,11 @@ msgstr "Bahasa Swahili"
 
 #: config/settings.py:922
 msgid "Tamil"
-msgstr ""
+msgstr "Tamil"
 
 #: config/settings.py:930
 msgid "Telugu"
-msgstr ""
+msgstr "Telugu"
 
 #: config/settings.py:938
 msgid "Thai"
@@ -13017,7 +13027,7 @@ msgstr "Bahasa Ukraina"
 
 #: config/settings.py:962
 msgid "Urdu"
-msgstr ""
+msgstr "Urdu"
 
 #: config/settings.py:970
 msgid "Vietnamese"
@@ -13025,11 +13035,11 @@ msgstr "Vietnam"
 
 #: config/settings.py:978
 msgid "Chinese Simplified"
-msgstr ""
+msgstr "Han Sederhana"
 
 #: config/settings.py:987
 msgid "Chinese Traditional"
-msgstr ""
+msgstr "Han Tradisional"
 
 #: config/settings.py:1275
 msgid "User profile only"
@@ -17307,7 +17317,7 @@ msgstr "Sistem"
 
 #: control/templates/pretixcontrol/admin/pages/index.html:57
 msgid "Toggle start page visibility"
-msgstr ""
+msgstr "Alihkan visibilitas halaman awal"
 
 #: control/templates/pretixcontrol/admin/pages/index.html:71
 msgid "Toggle system visibility"
@@ -20500,7 +20510,7 @@ msgstr "Opsi Lencana"
 #: presale/templates/pretixpresale/event/checkout_questions.html:182
 #: presale/templates/pretixpresale/event/order_modify.html:79
 msgid "Please select all fields you'd like to appear on your event badge."
-msgstr ""
+msgstr "Silakan pilih semua kolom yang ingin anda tampilkan pada lencana acara."
 
 #: control/templates/pretixcontrol/order/delete.html:4
 #: control/templates/pretixcontrol/order/delete.html:8
@@ -21616,6 +21626,8 @@ msgstr "Cabut akses dan hapus semua perangkat"
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:9
 msgid "This will permanently revoke and remove all connected devices."
 msgstr ""
+"Tindakan ini akan mencabut dan menghapus perangkat yang telah terhubung "
+"secara permanen."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:12
 #, python-format
@@ -21625,6 +21637,8 @@ msgid_plural ""
 "Once confirmed, %(count)s connected devices will be deleted from the "
 "database."
 msgstr[0] ""
+"Setelah dikonfirmasi, %(count)s perangkat yang terhubung akan dihapus dari "
+"pangkalan data."
 
 #: control/templates/pretixcontrol/organizers/device_revoke_all.html:19
 msgid "This action cannot be undone."
@@ -23342,6 +23356,8 @@ msgstr "Setidaknya satu pesanan yang dipilih sudah tidak ada lagi."
 msgid ""
 "Bulk actions are only possible if all selected orders are pending approval."
 msgstr ""
+"Tindakan massal hanya bisa dilakukan jika semua permintaan yang dipilih "
+"menunggu persetujuan."
 
 #: control/views/orders.py:358
 #, python-format
@@ -25535,6 +25551,8 @@ msgstr "Anda yakin ingin menghapus tim ini?"
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:124
 msgid "Cannot be deleted as only team left with management privileges"
 msgstr ""
+"Tidak bisa dihapus karena satu-satunya tim yang tersisa dengan akses "
+"manajemen."
 
 #: eventyay_common/templates/eventyay_common/organizers/edit.html:156
 msgid "Save permissions"
@@ -25622,7 +25640,7 @@ msgstr "Izin Talk"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:53
 msgid "Select event to configure tracks:"
-msgstr ""
+msgstr "Pilih acara untuk mengatur tracks:"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:57
 msgid "— Select an event —"
@@ -25630,11 +25648,11 @@ msgstr "— Pilih acara —"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:67
 msgid "Select an event above to configure its tracks."
-msgstr ""
+msgstr "Pilih salah satu acara di atas untuk mengatur tracks."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:89
 msgid "None"
-msgstr ""
+msgstr "Tidak ada"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/_permissions_fieldsets.html:97
 msgid "No tracks are configured for any events."
@@ -26890,33 +26908,39 @@ msgstr "Peserta akan dapat mengirimkan umpan balik setelah sesi selesai."
 
 #: orga/forms/event.py:83 orga/forms/event.py:378
 msgid "Activate most popular session feature"
-msgstr ""
+msgstr "Aktifkan fitur sesi terpopuler"
 
 #: orga/forms/event.py:84 orga/forms/event.py:379
 msgid ""
 "Enables session popularity (favourites) counts and sorting options in the "
 "schedule webapp."
 msgstr ""
+"Izinkan urutan sesi berdasarkan popularitas (favorit) dan pilihan pengurutan "
+"pada jadwal webapp"
 
 #: orga/forms/event.py:88 orga/forms/event.py:383
 msgid "Show popularity on calendar view"
-msgstr ""
+msgstr "Tunjukkan popularitas pada tampilan kalender"
 
 #: orga/forms/event.py:89 orga/forms/event.py:384
 msgid ""
 "Shows favourite counts on session cards in the calendar/grid view. Only used "
 "if popularity is enabled."
 msgstr ""
+"Tampilkan jumlah favorit pada kartu sesi di kalender/tampilan kisi. Hanya "
+"digunakan jika fitur popularitas diaktifkan."
 
 #: orga/forms/event.py:93 orga/forms/event.py:388
 msgid "Show popularity on list view"
-msgstr ""
+msgstr "Tunjukkan popularitas pada daftar tampilan"
 
 #: orga/forms/event.py:94 orga/forms/event.py:389
 msgid ""
 "Shows favourite counts on session cards in the list view. Only used if "
 "popularity is enabled."
 msgstr ""
+"Tampilkan jumlah favorit pada kartu sesi di tampilan daftar. Hanya digunakan "
+"jika fitur popularitas diaktifkan."
 
 #: orga/forms/event.py:98
 msgid "Generate HTML export on schedule release"
@@ -27878,7 +27902,7 @@ msgstr "Pindahkan jenis sesi"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:64
 msgid "Click to remove default"
-msgstr ""
+msgstr "Klik untuk menghapus default"
 
 #: orga/templates/orga/cfp/submissiontype/list.html:68
 #: plugins/badges/templates/pretixplugins/badges/index.html:70

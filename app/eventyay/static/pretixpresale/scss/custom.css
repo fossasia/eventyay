@@ -219,6 +219,19 @@ header .header-row-right {
     display: none;
 }
 
+@media (min-width: 769px) {
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-join-video-floating-mobile {
+        right: 0;
+    }
+}
+
 @media (max-width: 768px) {
     .presale-sticky-tabs {
         flex-direction: row;
@@ -295,25 +308,6 @@ header .header-row-right {
         display: inline;
     }
 
-    .join-video-link {
-        display: block;
-        width: 100%;
-        text-align: center;
-        padding: 8px 12px;
-        margin: 4px 0 0;
-        background: var(--color-primary);
-        color: white !important;
-        border-radius: var(--size-border-radius, 4px);
-        border-bottom: none !important;
-        font-size: 0.88rem;
-        font-weight: 500;
-    }
-
-    .join-video-link:hover {
-        background: var(--color-primary-dark, var(--color-primary));
-        text-decoration: none;
-        opacity: 0.9;
-    }
 
     .login-link {
         display: flex;
@@ -328,29 +322,30 @@ header .header-row-right {
         opacity: 0.85;
     }
 
-    /* Align hero title/logo and description text with same horizontal padding on mobile.
-     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
+    /* Mobile: hero overlay width (+ padding where set in main bundle) */
     .event-hero-overlay {
         display: flex;
         width: 100%;
     }
 
-    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+    /* Presale event index: full-bleed hero overlay */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     #main-card {
         margin-left: 0;
         margin-right: 0;
     }
 
-    /* Only the OUTER <main> (direct child) gets the 12px — not descendants.
-     * padding-top: 0.15rem controls the gap between nav and text. */
+    /* Outer main only (presale nests two <main>) */
     #main-card > main {
         padding-top: 0.15rem;
         padding-left: 12px;
         padding-right: 12px;
     }
 
-    /* Zero the INNER <main aria-label>: #main-card > main > main has higher
-     * specificity (1,0,2) than _layout.css's #main-card main (1,0,1) anyway. */
     #main-card > main > main {
         padding-left: 0;
         padding-right: 0;
@@ -456,4 +451,116 @@ header .header-row-right {
         padding-left: 15px !important;
         padding-right: 0;
     }
+}
+
+/* Ticket variant toggle and hierarchy fixes for custom CSS mode */
+.item-with-variations > .headline {
+    display: block;
+    width: 100%;
+    text-align: left;
+}
+
+.variation-toggle-box {
+    padding-left: 0;
+    padding-right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.variation-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    max-width: none;
+    height: 36px;
+
+    padding: 0 10px;
+    border: 1px solid var(--color-grey-light, #b8b8b8);
+    border-radius: 4px;
+    box-sizing: border-box;
+    text-decoration: none;
+    white-space: nowrap;
+    word-break: keep-all;
+    color: var(--color-primary);
+}
+
+.variation-toggle:hover,
+.variation-toggle:focus {
+    text-decoration: none;
+    color: var(--color-primary);
+}
+
+.variation-toggle-label {
+    line-height: 1;
+    white-space: nowrap;
+    color: inherit;
+}
+
+.variation-toggle-caret {
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+    line-height: 1;
+}
+
+.variation-toggle-caret::before {
+    content: '\f054';
+    display: inline-block;
+    font-family: 'FontAwesome';
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+/* Support both native <details open> and JS-managed .details-open states. */
+.item-with-variations[open] .variation-toggle-caret::before,
+.item-with-variations.details-open .variation-toggle-caret::before {
+    transform: rotate(90deg);
+}
+
+.variation-option {
+    padding-left: 18px;
+}
+
+.variation-option > div {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.variation-option > div:first-child {
+    position: relative;
+}
+
+.variation-option > div:first-child::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    left: 2px;
+    width: 1px;
+    background: var(--color-grey-light, #d0d0d0);
+}
+
+.variation-option > div:first-child::after {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 2px;
+    width: 10px;
+    height: 1px;
+    background: var(--color-grey-light, #d0d0d0);
+}
+
+.variation-option h5 {
+    padding-left: 16px;
+}
+
+.variation-selector-label.is-exclusive-disabled,
+.item-checkbox-label.is-exclusive-disabled,
+.variation-option.is-exclusive-disabled,
+.product-row.simple.is-exclusive-disabled {
+    opacity: 0.55;
 }

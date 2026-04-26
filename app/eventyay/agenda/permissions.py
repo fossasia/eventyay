@@ -1,6 +1,7 @@
 import rules
 
 from eventyay.person.permissions import can_change_submissions
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
 @rules.predicate
@@ -21,19 +22,6 @@ def is_widget_always_visible(user, event):
 @rules.predicate
 def has_agenda(user, event):
     return bool(event.current_schedule)
-
-
-@rules.predicate
-def are_featured_submissions_visible(user, event):
-    if (
-        not event
-        or not event.talks_published
-        or event.get_feature_flag("show_featured") == "never"
-    ):
-        return False
-    if event.get_feature_flag("show_featured") == "always":
-        return True
-    return (not is_agenda_visible(user, event)) or (not has_agenda(user, event))
 
 
 def is_submission_visible_via_schedule(user, submission):

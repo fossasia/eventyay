@@ -269,16 +269,177 @@ header {
   min-width: 0;
 }
 
+.event-brand--has-logo {
+  padding-left: 1.75rem;
+}
+
+@media (min-width: 769px) {
+  /* Presale info / tickets: align logo block with tab content (tighter than agenda & CFP) */
+  #main-container.presale-container .event-brand--has-logo {
+    padding-left: 0.75rem;
+  }
+}
+
 .event-hero-overlay {
   display: inline-flex;
   border-radius: 14px;
   background: transparent;
+  position: relative;
+}
+
+/* Join online video: button on the event hero (all breakpoints). Nav tab duplicate is hidden. */
+#header-tabs .join-video-link {
+  display: none;
+}
+
+.header-join-video-floating-mobile {
+  position: absolute;
+  bottom: -27.5px;
+  right: 7.5px;
+  z-index: 1050;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 6px;
+  height: 28px;
+  min-width: 0;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+@media (max-width: 319px) {
+  .header-join-video-floating-mobile .btn-join-video-icon-only {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+    display: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only i {
+    font-size: 0.95rem;
+  }
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+  display: inline-block;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only:hover,
+.header-join-video-floating-mobile .btn-join-video-icon-only:focus {
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  color: white !important;
+  background-color: var(--color-primary);
+  filter: none;
+}
+
+@media (min-width: 769px) {
+  body.page-agenda .event-hero-overlay {
+    display: flex;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.page-agenda .header-join-video-floating-mobile {
+    right: 0;
+  }
 }
 
 .event-hero-text {
   color: white;
   display: flex;
   flex-direction: column;
+}
+
+header > .event-home-back {
+  align-self: flex-start;
+  margin: 0 0 6px;
+  padding-left: 28px;
+  box-sizing: border-box;
+  display: inline-block;
+  text-decoration: none;
+  color: #fff;
+}
+
+.event-home-back:hover,
+.event-home-back:focus-visible {
+  color: #fff;
+  text-decoration: none;
+}
+
+.event-home-back-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-height: 32px;
+  padding: 0 11px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  transition: gap 0.18s ease, background 0.18s ease;
+}
+
+.event-home-back:hover .event-home-back-pill,
+.event-home-back:focus-visible .event-home-back-pill {
+  gap: 0.4em;
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.event-home-back:focus-visible {
+  outline: none;
+}
+
+.event-home-back:focus-visible .event-home-back-pill {
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 2px;
+}
+
+/* px: presale root font-size differs from agenda/CFP */
+.event-home-back .event-home-back-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.event-home-back .event-home-back-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.22s ease, opacity 0.18s ease;
+}
+
+.event-home-back:hover .event-home-back-label,
+.event-home-back:focus-visible .event-home-back-label {
+  max-width: 12em;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-home-back-pill,
+  .event-home-back-label {
+    transition: none;
+  }
 }
 
 .event-date-line {
@@ -370,7 +531,7 @@ footer {
   margin-right: auto;
   margin-left: auto;
   max-width: 1600px;
-  margin-top: 3.8rem !important;
+  margin-top: 1.5rem;
 }
 
 .url-links {
@@ -413,7 +574,7 @@ footer {
 @media (max-width: 992px) {
   #main-container {
     max-width: 960px;
-    margin-top: 3.8rem !important;
+    margin-top: 1.5rem;
   }
 }
 
@@ -545,75 +706,31 @@ footer {
   .event-brand {
     flex-wrap: wrap;
     gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .event-brand--has-logo {
+    padding-left: 12px;
+  }
+
+  header > .event-home-back {
+    padding-left: 12px;
   }
 
   .event-hero-text .event-title {
     font-size: 2rem;
   }
 
+  .event-home-back .event-home-back-icon {
+    font-size: 19px;
+  }
+
+  .event-home-back .event-home-back-label {
+    font-size: 13.5px;
+  }
+
   .event-date-line {
     font-size: 0.9rem;
-  }
-
-  /* Hide the navbar join link on mobile, as it is now floating below the hero */
-  #header-tabs .join-video-link {
-    display: none !important;
-  }
-
-  .header-join-video-floating-mobile {
-    position: absolute;
-    bottom: -27.5px;
-    right: 7.5px;
-    z-index: 1050;
-    
-    /* Button for mobile/tablet: compact with icon + text */
-    .btn-join-video-icon-only {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 2px 6px;
-      height: 28px;
-      min-width: 0;
-      border-radius: 6px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
-      background-color: var(--Color-primary, var(--color-primary));
-      color: white;
-      border: none;
-      font-size: 0.82rem;
-      font-weight: 500;
-      line-height: 1;
-    }
-
-    /* Very small screens (phones): make it a compact circular icon-only button */
-    /* Restrict the icon-only behavior to < 320px so 320px devices show the text */
-    @media (max-width: 319px) {
-      .btn-join-video-icon-only {
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        border-radius: 50%;
-        border: none;
-      }
-      .btn-join-video-icon-only .join-video-text {
-        display: none;
-      }
-      .btn-join-video-icon-only i {
-        font-size: 0.95rem;
-      }
-    }
-
-    .btn-join-video-icon-only .join-video-text {
-      display: inline-block;
-    }
-
-    .btn-join-video-icon-only:hover, .btn-join-video-icon-only:focus {
-      transform: scale(1.02);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-      color: white !important;
-      background-color: var(--color-primary);
-      filter: none;
-    }
   }
 
   .event-hero-overlay {
@@ -647,15 +764,21 @@ footer {
     font-size: 1.6rem;
   }
 
+  /* Home control: use same icon/label sizes as @media (max-width: 768px); do not shrink further here */
+
   .event-brand {
     gap: 0.75rem;
   }
 
+  .event-brand--has-logo {
+    padding-left: 12px;
+  }
+
   #main-container {
     padding: 0;
-    padding-top: 20px;
+    padding-top: 24px;
     width: 100%;
-    margin-top: 3.8rem !important;
+    margin-top: 1.5rem;
 
     main {
       width: 100%;
@@ -742,15 +865,19 @@ footer {
       }
     }
   }
+
+  /* Agenda uses its own spacing (e.g. header margin); skip presale-style top padding */
+  body.page-agenda #main-container {
+    padding-top: 0;
+  }
 }
 
-/* Hide mobile-only navbar icons, CfS short text, and floating join button on desktop */
-.nav-icon-mobile, .cfs-short, .header-join-video-floating-mobile {
+.nav-icon-mobile, .cfs-short {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .nav-icon-mobile, .header-join-video-floating-mobile {
+  .nav-icon-mobile {
     display: block;
   }
   .nav-icon-mobile {
