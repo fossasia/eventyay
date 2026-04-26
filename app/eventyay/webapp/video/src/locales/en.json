@@ -169,6 +169,7 @@
 	"LandingPage:speakers:header": "Speakers",
 	"LandingPage:speakers:link": "to full list",
 	"LandingPage:speakers:more": "and {{additional_speakers}} more",
+	"LandingPage:dateRange:to": "To {{date}}",
 	"Livestream:automuted-unmute:text": "Tap to unmute",
 	"Livestream:captions-off:text": "Off",
 	"Livestream:default-source:text": "Default",

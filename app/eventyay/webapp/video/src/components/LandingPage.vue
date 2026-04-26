@@ -63,12 +63,11 @@ import moment from 'lib/timetravelMoment'
 import config from 'config'
 import Session from '@schedule/components/Session.vue'
 import SpeakersList from '@schedule/components/SpeakersList.vue'
-import Identicon from 'components/Identicon'
 import MarkdownContent from 'components/MarkdownContent'
 import RichTextContent from 'components/RichTextContent'
 
 export default {
-	components: { MarkdownContent, Session, RichTextContent, SpeakersList, Identicon },
+	components: { MarkdownContent, Session, RichTextContent, SpeakersList },
 	props: {
 		module: Object
 	},
@@ -171,7 +170,7 @@ export default {
 		},
 		eventEndLine() {
 			if (!this.eventDateRange) return ''
-			return `To ${this.formatEventDateTime(this.eventDateRange.end)}`
+			return this.$t('LandingPage:dateRange:to', { date: this.formatEventDateTime(this.eventDateRange.end) })
 		},
 		featuredSessions() {
 			if (!this.sessions) return

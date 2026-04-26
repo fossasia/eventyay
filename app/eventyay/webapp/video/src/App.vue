@@ -98,8 +98,8 @@ export default {
 			showJoinRoom: true,
 			getJoinRoomLink: (session) => {
 				// Mirror agenda logic: only show join room link when the session
-				// has both a room and a stream_url (i.e. it actually streams live)
-				if (!session?.stream_url || !session?.room) return ''
+				// has both a room and either a stream_url or a video room
+				if ((!session?.stream_url && !session?.has_video_room) || !session?.room) return ''
 				const roomId = typeof session.room === 'object' ? session.room.id : session.room
 				if (!roomId) return ''
 				return this.$router.resolve({name: 'room', params: {roomId}}).href

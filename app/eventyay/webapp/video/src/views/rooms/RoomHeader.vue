@@ -51,7 +51,6 @@ export default {
 				if (infoRoom) return infoRoom
 
 				return {
-					id: 'info',
 					name: 'About',
 					modules: [{
 						type: 'page.landing'
