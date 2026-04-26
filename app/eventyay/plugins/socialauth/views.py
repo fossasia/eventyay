@@ -42,6 +42,8 @@ class OAuthLoginView(View):
             provider not in known_providers
             or provider not in login_providers
             or not login_providers[provider].get('state')
+            or not login_providers[provider].get('client_id')
+            or not login_providers[provider].get('secret')
         ):
             messages.error(request, _('This login method is not available.'))
             return redirect('eventyay_common:auth.login')
