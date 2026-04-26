@@ -53,6 +53,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import User
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.services.locking import NoLockManager
+from eventyay.base.services.system_questions import product_has_system_questions
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import order_gracefully_delete
 
@@ -796,9 +797,8 @@ class Order(LockModel, LoggedModel):
 
         if self.event.settings.get('invoice_address_asked', as_type=bool):
             return True
-        ask_names = self.event.settings.get('attendee_names_asked', as_type=bool)
         for cp in positions:
-            if (cp.product.admission and ask_names) or cp.product.questions.all():
+            if product_has_system_questions(self.event, cp.product) or cp.product.questions.all():
                 return True
 
         return False  # nothing there to modify

@@ -18,6 +18,8 @@
 	"App:fatal-connection-error:else:headline": "Conexión rechazada",
 	"App:fatal-connection-error:world.unknown_world:headline": "Evento no encontrado",
 	"AppBar:user-anonymous": "anónimo",
+	"AppBar:admin-mode:start": "Modo administrador",
+	"AppBar:admin-mode:end": "Finalizar sesión de administrador",
 	"AVDevice:error:notfound": "No se encontró ninguna cámara o micrófono.",
 	"AVDevice:error:notreadable": "Su cámara o micrófono no están disponibles, ¿quizás otro programa los esté utilizando en este momento?",
 	"AVDevice:error:notallowed": "Permisos de cámara o micrófono denegados. Por favor, permita el acceso a la cámara o micrófono en su navegador y recargue la página.",

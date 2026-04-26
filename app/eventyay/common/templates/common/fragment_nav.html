@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load eventsignal %}
 {% load safelink %}
 {% load event_tags %}
 {% load eventurl %}
@@ -45,6 +46,8 @@
             <i class="fa fa-link"></i> {{ link.label }}
         </a>
     {% endfor %}
+
+    {% eventsignal current_event "eventyay.presale.signals.header_nav_tabs" request=request %}
 
     {% if show_talks_tab %}
         {% with cfp=current_event.cfp %}
