@@ -11,7 +11,6 @@ from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
-from django_scopes import ScopedManager
 
 from eventyay.base.signals import logentry_object_link
 
@@ -76,7 +75,7 @@ class LogEntry(models.Model):
     def __str__(self):
         """Custom __str__ to help with debugging."""
         event = getattr(self.event, 'slug', 'None')
-        user = getattr(self.user, 'name', 'None')
+        user = getattr(self.user, 'email', 'None')
         return (
             f'LogEntry(event={event}, user={user}, content_object={self.content_object}, '
             f'action_type={self.action_type})'
@@ -154,7 +153,7 @@ class LogEntry(models.Model):
                 return ''
 
             co = self.content_object
-        except:
+        except Exception:
             return ''
         a_map = None
         a_text = None
@@ -338,7 +337,7 @@ class ActivityLog(models.Model):
     def __str__(self):
         """Custom __str__ to help with debugging."""
         event = getattr(self.event, 'slug', 'None')
-        person = getattr(self.person, 'name', 'None')
+        person = getattr(self.person, 'email', 'None')
         return (
             f'ActivityLog(event={event}, person={person}, content_object={self.content_object}, '
             f'action_type={self.action_type})'
