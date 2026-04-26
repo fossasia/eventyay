@@ -295,6 +295,8 @@ def notify_webhooks(logentry_ids: list):
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
+    WEBHOOK_TIMEOUT = 30  # seconds — connect + read timeout
+
     with scopes_disabled():
         webhook = WebHook.objects.get(id=webhook_id)
     with scope(organizer=webhook.organizer):
@@ -313,7 +315,12 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = requests.post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False,
+                    timeout=WEBHOOK_TIMEOUT,
+                )
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -342,6 +349,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     return_code=0,
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    success=False,
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
