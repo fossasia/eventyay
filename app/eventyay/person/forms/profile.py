@@ -124,9 +124,10 @@ class SpeakerProfileForm(
             self.fields.pop('avatar_source', None)
             self.fields.pop('avatar_license', None)
             self.fields.pop('get_gravatar', None)
-        elif 'avatar' in self.fields:
-            self.fields['avatar'].required = False
-            self.fields['avatar'].widget.is_required = False
+        else:
+            if 'avatar' in self.fields:
+                self.fields['avatar'].required = False
+                self.fields['avatar'].widget.is_required = False
             # Check if Gravatar is allowed by event organizer
             if not self.event.cfp.settings.get('allow_gravatar', True):
                 self.fields.pop('get_gravatar', None)

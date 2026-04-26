@@ -91,7 +91,11 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
             new_count_length_in = current_count_length_in
         self.instance.cfp.settings['count_length_in'] = new_count_length_in
         # Save allow_gravatar setting
-        self.instance.cfp.settings['allow_gravatar'] = self.cleaned_data.get('allow_gravatar', True)
+        current_allow_gravatar = self.instance.cfp.settings.get('allow_gravatar', True)
+        if 'allow_gravatar' in self.cleaned_data:
+            self.instance.cfp.settings['allow_gravatar'] = self.cleaned_data.get('allow_gravatar')
+        else:
+            self.instance.cfp.settings['allow_gravatar'] = current_allow_gravatar
         self.instance.cfp.save()
         persist_cfp = kwargs.pop('persist_cfp', True)
         update_count_length_in = kwargs.pop('update_count_length_in', True)
