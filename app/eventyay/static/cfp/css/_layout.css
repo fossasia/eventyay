@@ -284,6 +284,81 @@ header {
   display: inline-flex;
   border-radius: 14px;
   background: transparent;
+  position: relative;
+}
+
+/* Join online video: button on the event hero (all breakpoints). Nav tab duplicate is hidden. */
+#header-tabs .join-video-link {
+  display: none;
+}
+
+.header-join-video-floating-mobile {
+  position: absolute;
+  bottom: -27.5px;
+  right: 7.5px;
+  z-index: 1050;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 6px;
+  height: 28px;
+  min-width: 0;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+@media (max-width: 319px) {
+  .header-join-video-floating-mobile .btn-join-video-icon-only {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+    display: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only i {
+    font-size: 0.95rem;
+  }
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+  display: inline-block;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only:hover,
+.header-join-video-floating-mobile .btn-join-video-icon-only:focus {
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  color: white !important;
+  background-color: var(--color-primary);
+  filter: none;
+}
+
+@media (min-width: 769px) {
+  body.page-agenda .event-hero-overlay {
+    display: flex;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.page-agenda .header-join-video-floating-mobile {
+    right: 0;
+  }
 }
 
 .event-hero-text {
@@ -658,67 +733,6 @@ footer {
     font-size: 0.9rem;
   }
 
-  /* Hide the navbar join link on mobile, as it is now floating below the hero */
-  #header-tabs .join-video-link {
-    display: none !important;
-  }
-
-  .header-join-video-floating-mobile {
-    position: absolute;
-    bottom: -27.5px;
-    right: 7.5px;
-    z-index: 1050;
-    
-    /* Button for mobile/tablet: compact with icon + text */
-    .btn-join-video-icon-only {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 2px 6px;
-      height: 28px;
-      min-width: 0;
-      border-radius: 6px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
-      background-color: var(--Color-primary, var(--color-primary));
-      color: white;
-      border: none;
-      font-size: 0.82rem;
-      font-weight: 500;
-      line-height: 1;
-    }
-
-    /* Very small screens (phones): make it a compact circular icon-only button */
-    /* Restrict the icon-only behavior to < 320px so 320px devices show the text */
-    @media (max-width: 319px) {
-      .btn-join-video-icon-only {
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        border-radius: 50%;
-        border: none;
-      }
-      .btn-join-video-icon-only .join-video-text {
-        display: none;
-      }
-      .btn-join-video-icon-only i {
-        font-size: 0.95rem;
-      }
-    }
-
-    .btn-join-video-icon-only .join-video-text {
-      display: inline-block;
-    }
-
-    .btn-join-video-icon-only:hover, .btn-join-video-icon-only:focus {
-      transform: scale(1.02);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-      color: white !important;
-      background-color: var(--color-primary);
-      filter: none;
-    }
-  }
-
   .event-hero-overlay {
     position: relative;
     display: flex;
@@ -762,7 +776,7 @@ footer {
 
   #main-container {
     padding: 0;
-    padding-top: 20px;
+    padding-top: 24px;
     width: 100%;
     margin-top: 1.5rem;
 
@@ -858,13 +872,12 @@ footer {
   }
 }
 
-/* Hide mobile-only navbar icons, CfS short text, and floating join button on desktop */
-.nav-icon-mobile, .cfs-short, .header-join-video-floating-mobile {
+.nav-icon-mobile, .cfs-short {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .nav-icon-mobile, .header-join-video-floating-mobile {
+  .nav-icon-mobile {
     display: block;
   }
   .nav-icon-mobile {

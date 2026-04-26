@@ -1,3 +1,4 @@
+import re
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -62,7 +63,10 @@ def test_failed_email_login_keeps_native_form_expanded(client, preferred_login_p
     )
 
     assert response.status_code == 200
-    assert "id='login-form' class='collapse in'" in response.text
+    match = re.search(r"id=['\"]login-form['\"]\s+class=['\"]([^'\"]*)['\"]", response.text)
+    assert match is not None
+    classes = match.group(1).split()
+    assert 'collapse' not in classes or 'in' in classes
     assert 'This combination of credentials is not known to our system.' in response.text
 
 
