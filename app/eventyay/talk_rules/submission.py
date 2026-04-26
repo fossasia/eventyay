@@ -56,7 +56,7 @@ def _show_featured_setting(event):
     if 'show_featured' in flags and flags['show_featured'] is not None:
         raw = flags['show_featured']
     else:
-        raw = defaults.get('show_featured', 'after_schedule')
+        raw = defaults.get('show_featured', 'never')
     if isinstance(raw, bool):
         return 'always' if raw else 'never'
     if isinstance(raw, str):
@@ -66,7 +66,7 @@ def _show_featured_setting(event):
         # Migrate legacy value saved before rename.
         if normalized == 'pre_schedule':
             return 'after_schedule'
-    return defaults.get('show_featured', 'after_schedule')
+    return defaults.get('show_featured', 'never')
 
 
 def _event_has_published_schedule(event):
