@@ -179,6 +179,8 @@ onBeforeUnmount(() => {
 		flex: 1 1 auto
 		min-height: 0
 		overflow-y: auto
+		.ql-editor
+			padding: 12px 16px
 	.ql-hidden
 		display: none
 	.ql-tooltip  /* based on https://github.com/quilljs/quill/blob/develop/assets/snow/tooltip.styl */
