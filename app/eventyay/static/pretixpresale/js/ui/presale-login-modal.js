@@ -3,7 +3,6 @@ if (modal) {
     const i18n = modal.dataset;
     const loginBtn = document.getElementById('checkout-login-btn');
     const closeBtn = modal.querySelector('.checkout-login-close');
-    const loginForm = document.getElementById('checkout-login-form');
     const errorDiv = document.getElementById('checkout-login-error');
     const nextUrlInput = document.getElementById('checkout-next-url');
     let checkoutUrl = '';
@@ -35,11 +34,18 @@ if (modal) {
                 link.href = url.toString();
             });
 
-            const registerLink = modal.querySelector('.checkout-login-footer a[href*="register"]');
-            if (registerLink) {
+            const registerLink = document.getElementById('checkout-register-link');
+            if (registerLink && checkoutUrl) {
                 const url = new URL(registerLink.href, window.location.origin);
                 url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
                 registerLink.href = url.toString();
+            }
+
+            const forgotLink = document.getElementById('checkout-forgot-password-link');
+            if (forgotLink && checkoutUrl) {
+                const u = new URL(forgotLink.href, window.location.origin);
+                u.searchParams.set(REDIRECT_PARAM, checkoutUrl);
+                forgotLink.href = u.toString();
             }
 
             // Clear any previous error state before showing the modal
@@ -51,11 +57,15 @@ if (modal) {
             modal.style.display = 'flex';
 
             // Focus management for accessibility
-            const firstInput = modal.querySelector('#checkout-email');
-            if (firstInput) {
-                // Use setTimeout to ensure modal is fully rendered
-                setTimeout(() => firstInput.focus?.(), 100);
-            }
+            const emailInput = modal.querySelector('#checkout-email');
+            const firstSso = modal.querySelector('.checkout-sso-btn');
+            setTimeout(() => {
+                if (emailInput) {
+                    emailInput.focus?.();
+                } else if (firstSso) {
+                    firstSso.focus?.();
+                }
+            }, 100);
         });
     }
 
@@ -90,7 +100,8 @@ if (modal) {
         }
     });
 
-    // AJAX form submission
+    // AJAX form submission (form may be absent if only SSO is enabled)
+    const loginForm = document.getElementById('checkout-login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
