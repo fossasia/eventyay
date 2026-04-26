@@ -219,6 +219,19 @@ header .header-row-right {
     display: none;
 }
 
+@media (min-width: 769px) {
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-join-video-floating-mobile {
+        right: 0;
+    }
+}
+
 @media (max-width: 768px) {
     .presale-sticky-tabs {
         flex-direction: row;
@@ -295,25 +308,6 @@ header .header-row-right {
         display: inline;
     }
 
-    .join-video-link {
-        display: block;
-        width: 100%;
-        text-align: center;
-        padding: 8px 12px;
-        margin: 4px 0 0;
-        background: var(--color-primary);
-        color: white !important;
-        border-radius: var(--size-border-radius, 4px);
-        border-bottom: none !important;
-        font-size: 0.88rem;
-        font-weight: 500;
-    }
-
-    .join-video-link:hover {
-        background: var(--color-primary-dark, var(--color-primary));
-        text-decoration: none;
-        opacity: 0.9;
-    }
 
     .login-link {
         display: flex;
@@ -328,29 +322,30 @@ header .header-row-right {
         opacity: 0.85;
     }
 
-    /* Align hero title/logo and description text with same horizontal padding on mobile.
-     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
+    /* Mobile: hero overlay width (+ padding where set in main bundle) */
     .event-hero-overlay {
         display: flex;
         width: 100%;
     }
 
-    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+    /* Presale event index: full-bleed hero overlay */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     #main-card {
         margin-left: 0;
         margin-right: 0;
     }
 
-    /* Only the OUTER <main> (direct child) gets the 12px — not descendants.
-     * padding-top: 0.15rem controls the gap between nav and text. */
+    /* Outer main only (presale nests two <main>) */
     #main-card > main {
         padding-top: 0.15rem;
         padding-left: 12px;
         padding-right: 12px;
     }
 
-    /* Zero the INNER <main aria-label>: #main-card > main > main has higher
-     * specificity (1,0,2) than _layout.css's #main-card main (1,0,1) anyway. */
     #main-card > main > main {
         padding-left: 0;
         padding-right: 0;
@@ -507,19 +502,23 @@ header .header-row-right {
 
 .variation-toggle-caret {
     display: inline-block;
-    width: 10px;
+    width: 12px;
     text-align: center;
     line-height: 1;
 }
 
 .variation-toggle-caret::before {
-    content: '>';
+    content: '\f054';
+    display: inline-block;
+    font-family: 'FontAwesome';
+    font-size: 12px;
+    transition: transform 0.2s ease;
 }
 
 /* Support both native <details open> and JS-managed .details-open states. */
 .item-with-variations[open] .variation-toggle-caret::before,
 .item-with-variations.details-open .variation-toggle-caret::before {
-    content: 'v';
+    transform: rotate(90deg);
 }
 
 .variation-option {

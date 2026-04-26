@@ -110,7 +110,7 @@
                     {% for v in formsets.values %}
                         <fieldset>
                             <legend>{{ v.title }}</legend>
-                            {% include v.template with formset=v %}
+                            {% include v.template with formset=v form=form %}
                         </fieldset>
                     {% endfor %}
                     <fieldset>

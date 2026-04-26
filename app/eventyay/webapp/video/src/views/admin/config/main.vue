@@ -7,11 +7,7 @@
 		.error(v-if="error") We could not fetch the current configuration.
 		.ui-form-body(v-if="config")
 			h2 System details
-			bunt-input(v-model="config.title", label="Title", name="title", :validation="v$.config.title")
-			bunt-select(v-model="config.locale", label="Language", name="locale", :options="locales", option-value="code", option-label="nativeLabel")
-			bunt-select(v-model="config.date_locale", label="Date locale", name="date_locale", :options="momentLocales")
-			bunt-input(v-model="config.timezone", label="Time zone", name="timezone", :validation="v$.config.timezone")
-			bunt-input(v-model="config.connection_limit", label="Connection limit", name="connection_limit", hint="Set to 0 to allow unlimited connections per user", :validation="v$.config.connection_limit")
+			bunt-input(v-model="config.connection_limit", label="Max connections", name="connection_limit", hint="Set to 0 to allow unlimited connections per user", :validation="v$.config.connection_limit")
 			template(v-if="$features.enabled('conftool')")
 				h2 Conftool
 				bunt-input(v-model="config.conftool_url", label="Conftool REST API URL", name="conftool_url", :validation="v$.config.conftool_url")
@@ -42,21 +38,7 @@
 import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
 import api from 'lib/api'
-import { locales } from 'locales'
 import { required, integer, isJson, url } from 'lib/validators'
-
-// Static list: don't use moment.locales() as locales are lazy-loaded
-const momentLocaleSet = [
-	'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bn', 'bo', 'br', 'bs',
-	'ca', 'cs', 'cv', 'cy', 'da', 'de', 'de-at', 'de-ch', 'dv', 'el', 'en-au', 'en-ca', 'en-gb', 'en-ie', 'en-il',
-	'en-in', 'en-nz', 'en-sg', 'eo', 'es', 'es-do', 'es-us', 'et', 'eu', 'fa', 'fi', 'fil', 'fo', 'fr', 'fr-ca', 'fr-ch',
-	'fy', 'ga', 'gd', 'gl', 'gom-deva', 'gom-latn', 'gu', 'he', 'hi', 'hr', 'hu', 'hy-am', 'id', 'is', 'it', 'it-ch',
-	'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'lb', 'lo', 'lt', 'lv', 'me', 'mi', 'mk', 'ml',
-	'mn', 'mr', 'ms', 'ms-my', 'mt', 'my', 'nb', 'ne', 'nl', 'nl-be', 'nn', 'oc-lnc', 'pa-in', 'pl', 'pt', 'pt-br',
-	'ro', 'ru', 'sd', 'se', 'si', 'sk', 'sl', 'sq', 'sr', 'sr-cyrl', 'ss', 'sv', 'sw', 'ta', 'te', 'tet',
-	'tg', 'th', 'tk', 'tl-ph', 'tlh', 'tr', 'tzl', 'tzm', 'tzm-latn', 'ug-cn', 'uk', 'ur', 'uz', 'uz-latn', 'vi',
-	'x-pseudo', 'yo', 'zh-cn', 'zh-hk', 'zh-mo', 'zh-tw',
-]
 
 const config = ref(null)
 const hlsConfig = ref('')
@@ -65,19 +47,14 @@ const error = ref(null)
 const instance = getCurrentInstance()
 const features = instance?.proxy?.$features
 
-// Computed replacements for former mixin + option API computeds
-const momentLocales = computed(() => momentLocaleSet)
-// locales already imported; expose as is
 const validationErrors = computed(() => v$.value.$errors?.map(e => e.$message) || [])
 
 // Validation rules
 const rules = {
 	config: {
-		title: {required: required('title is required')},
-		timezone: {required: required('timezone is required')},
 		connection_limit: {
-			required: required('Connection Limit is required'),
-			integer: integer('Connection limit must be a number')
+			required: required('Max connections is required'),
+			integer: integer('Max connections must be a number')
 		},
 		conftool_url: {url: url('Conftool URL must be a URL')}
 	},
@@ -103,10 +80,6 @@ async function save() {
 	saving.value = true
 	try {
 		const patch = {
-			title: config.value.title,
-			locale: config.value.locale,
-			date_locale: config.value.date_locale,
-			timezone: config.value.timezone,
 			connection_limit: config.value.connection_limit,
 			bbb_defaults: config.value.bbb_defaults,
 			track_exhibitor_views: config.value.track_exhibitor_views,
