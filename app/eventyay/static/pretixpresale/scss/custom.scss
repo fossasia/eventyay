@@ -139,7 +139,6 @@
     gap: 16px;
 }
 
-
 .presale-sticky-tabs .header-row-right details.dropdown,
 .presale-sticky-tabs .header-row-right>a {
     display: inline-flex;
@@ -148,6 +147,14 @@
 
 .presale-sticky-tabs .header-row-right details.dropdown summary {
     align-items: center;
+}
+
+.presale-sticky-tabs-wrap *:focus-visible{
+    outline: none;
+}
+
+.presale-sticky-tabs-wrap *:focus{
+    outline: none;
 }
 
 .presale-sticky-tabs .header-row-right .header-nav,

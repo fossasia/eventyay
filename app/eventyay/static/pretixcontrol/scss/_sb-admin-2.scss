@@ -285,6 +285,10 @@ body {
     }
 }
 
+a:focus{
+    outline: none;
+}
+
 .sidebar .fa.arrow {
     line-height: 19px !important;
     width: 10px;
