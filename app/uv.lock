@@ -607,14 +607,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/f1/2a/8c3ac3d8bc94e6de8
 
 [[package]]
 name = "cssutils"
-version = "2.11.1"
+version = "2.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "encutils" },
     { name = "more-itertools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/33/9f/329d26121fe165be44b1dfff21aa0dc348f04633931f1d20ed6cf448a236/cssutils-2.11.1.tar.gz", hash = "sha256:0563a76513b6af6eebbe788c3bf3d01c920e46b3f90c8416738c5cfc773ff8e2", size = 711657, upload-time = "2024-06-04T15:51:39.373Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/73/4ced8c775cd5f64876f0d5b9dfae354dc96e50273c3d904f070965a27ec9/cssutils-2.14.0.tar.gz", hash = "sha256:c33256f0cbc215ad405b647117ace63c9e22af96fe42dcb7861742a591e6464c", size = 714703, upload-time = "2026-04-19T23:51:18.609Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/ec/bb273b7208c606890dc36540fe667d06ce840a6f62f9fae7e658fcdc90fb/cssutils-2.11.1-py3-none-any.whl", hash = "sha256:a67bfdfdff4f3867fab43698ec4897c1a828eca5973f4073321b3bccaf1199b1", size = 385747, upload-time = "2024-06-04T15:51:37.499Z" },
+    { url = "https://files.pythonhosted.org/packages/67/d1/b5e96174be14e4657e5dd148a52af48fc42d3fab35b2cd56202b6473ee2e/cssutils-2.14.0-py3-none-any.whl", hash = "sha256:79ad979e4a383f39f0b3f0ca82ee3f1b01065da9fa02701b63bfed38ac76eb91", size = 180097, upload-time = "2026-04-19T23:51:17.172Z" },
 ]
 
 [[package]]
@@ -1146,6 +1147,18 @@ wheels = [
 ]
 
 [[package]]
+name = "encutils"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "chardet" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/86/24/15d0f368875e53fb02bf7475e8a8c9aec36dee5a3dcb23efc77f585f9eb6/encutils-1.0.0.tar.gz", hash = "sha256:38eca5af18cebabd8be43c17f14c9d3fbba83cc5f7ac8e3ab1c86e24c4b2b91a", size = 22831, upload-time = "2026-04-19T16:27:19.925Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/28/cb/27d1c167d7b6607316c0c4ec5869b256104eb2c9607f76ef2ffa10806d3e/encutils-1.0.0-py3-none-any.whl", hash = "sha256:605297da19a23d1b2da7d3b9bd75513acc979e9facf03aa7ec7ba04b5f567a79", size = 21231, upload-time = "2026-04-19T16:27:18.778Z" },
+]
+
+[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1448,7 +1461,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=46.0.7" },
     { name = "css-inline", specifier = ">=0.20.2" },
     { name = "csscompressor", specifier = ">=0.9.5" },
-    { name = "cssutils", specifier = ">=2.11.1" },
+    { name = "cssutils", specifier = ">=2.14.0" },
     { name = "cycler", specifier = ">=0.12.1" },
     { name = "daphne", specifier = ">=4.2.1" },
     { name = "defusedcsv", specifier = ">=3.0.0" },
