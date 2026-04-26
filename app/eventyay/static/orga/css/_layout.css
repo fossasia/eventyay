@@ -43,6 +43,18 @@ body {
   }
 }
 
+.cfp-forms-page {
+  min-width: 0;
+}
+
+.cfp-forms-page .cfp-forms-new-field-actions {
+  margin-inline-start: 25%;
+}
+
+.cfp-forms-page > h2.d-flex .cfp-forms-heading-actions {
+  margin-inline-start: auto;
+}
+
 .global-top-warning {
   position: absolute;
   background: var(--color-danger);
@@ -1676,6 +1688,28 @@ h2 .user-name-display img {
     span {
       padding-left: 4px;
     }
+  }
+
+  .cfp-forms-page {
+    padding-top: 80px;
+  }
+
+  .cfp-forms-page > h2.d-flex {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5rem 1rem;
+  }
+
+  .cfp-forms-page .cfp-forms-heading-actions,
+  .cfp-forms-page .cfp-forms-new-field-actions {
+    margin-inline-start: 0;
+  }
+
+  .cfp-forms-page .cfp-forms-heading-actions .btn {
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    padding: 0.28rem 0.5rem;
+    white-space: normal;
   }
 
   .dashboard-history .list-group .logentry {

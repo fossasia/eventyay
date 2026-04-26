@@ -1,0 +1,110 @@
+.checkout-login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Use semi-transparent black for overlay, respects system themes */
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkout-login-popup {
+    background: white;
+    border-radius: 8px;
+    max-width: 420px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.checkout-login-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.checkout-login-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+}
+
+.checkout-login-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    line-height: 1;
+}
+
+.checkout-login-close:hover {
+    color: #333;
+}
+
+.checkout-login-body {
+    padding: 20px;
+}
+
+.checkout-login-error {
+    display: none;
+}
+
+/* Align with eventyay_common auth login (auth.scss form-signin patterns) */
+.checkout-login-form-signin .login-separator {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin: 1em 0;
+    text-align: center;
+}
+
+.checkout-login-form-signin .login-separator::before,
+.checkout-login-form-signin .login-separator::after {
+    border-top: 1px solid rgba(33, 133, 208, 0.2);
+    content: "";
+    flex: 1;
+}
+
+.checkout-login-form-signin .login-separator-label {
+    color: #6c7a89;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.checkout-login-form-signin .login-options-secondary-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkout-login-message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.checkout-login-sso .btn {
+    margin-bottom: 10px;
+}
+
+.checkout-login-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    color: #666;
+}
+
+.checkout-login-footer a {
+    color: #337ab7;
+}

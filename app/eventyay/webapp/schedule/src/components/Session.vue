@@ -8,7 +8,7 @@ a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="styl
 			.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer
 		.is-live(v-if="showLiveBadge && isLive") live
-	.info
+	.info(:class="{'has-fav-count': hasFavCount, 'has-icons': hasAnyRightIcons}")
 		.title {{ getLocalizedString(session.title) }}
 		.speakers(v-if="session.speakers")
 			.avatars
@@ -169,6 +169,12 @@ export default {
 			} catch (error) {
 				return this.session.abstract
 			}
+		},
+		hasFavCount () {
+			return this.loggedIn && this.showFavCount && this.session.fav_count > 0
+		},
+		hasAnyRightIcons () {
+			return this.loggedIn || this.canOpenStream
 		}
 	},
 	methods: {
@@ -195,7 +201,8 @@ export default {
 	display: flex
 	min-width: 300px
 	min-height: 96px
-	margin: 8px 6px
+	margin: 8px 0
+	margin-right: 8px
 	overflow: hidden
 	color: rgb(13 15 16)
 	position: relative
@@ -256,7 +263,11 @@ export default {
 		display: flex
 		flex-direction: column
 		padding: 8px
-		padding-right: 72px
+		padding-right: 8px
+		&.has-icons
+			padding-right: 44px
+		&.has-fav-count
+			padding-right: 72px
 		border: border-separator()
 		border-left: none
 		border-radius: 0 6px 6px 0
@@ -380,7 +391,8 @@ export default {
 @media (max-width: 600px)
 	.c-linear-schedule-session, .break
 		min-width: 0
-		margin: 6px 4px
+		margin: 8px 0
+		margin-right: 8px
 		min-height: 80px
 		.time-box
 			width: 56px
@@ -389,7 +401,11 @@ export default {
 				font-size: 14px
 		.info
 			padding: 6px
-			padding-right: 64px
+			padding-right: 6px
+			&.has-icons
+				padding-right: 40px
+			&.has-fav-count
+				padding-right: 64px
 			.title
 				font-size: 14px
 			.abstract
@@ -417,7 +433,11 @@ export default {
 				font-size: 11px
 	.info
 		padding: 4px
-		padding-right: 56px
+		padding-right: 4px
+		&.has-icons
+			padding-right: 36px
+		&.has-fav-count
+			padding-right: 56px
 		.title
 			font-size: 13px
 		.speakers
@@ -442,7 +462,11 @@ export default {
 				font-size: 14px
 	.info
 		padding: 12px
-		padding-right: 80px
+		padding-right: 12px
+		&.has-icons
+			padding-right: 52px
+		&.has-fav-count
+			padding-right: 80px
 		.title
 			font-size: 18px
 		.speakers

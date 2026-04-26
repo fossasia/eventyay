@@ -5,6 +5,27 @@ var async_task_check_url = null;
 var async_task_old_url = null;
 var async_task_is_download = false;
 var async_task_is_long = false;
+var async_task_restored = false;
+
+function _restore_async_old_url_once() {
+    "use strict";
+    if (async_task_restored) {
+        return;
+    }
+    if (async_task_old_url && location.href.indexOf("async_id") !== -1) {
+        try {
+            history.replaceState({}, "pretix", async_task_old_url);
+        } catch (e) {
+            // Log failures to manipulate history for diagnostics (CSP, private mode, etc.)
+            try {
+                console.debug('async_task: failed to restore history URL', e);
+            } catch (_) {
+                // ignore if console is unavailable
+            }
+        }
+        async_task_restored = true;
+    }
+}
 
 function async_task_check() {
     "use strict";
@@ -25,9 +46,7 @@ function async_task_check_callback(data, jqXHR, status) {
     if (data.ready && data.redirect) {
         if (async_task_is_download && data.success) {
             waitingDialog.hide();
-            if (location.href.indexOf("async_id") !== -1) {
-                history.replaceState({}, "pretix", async_task_old_url);
-            }
+            _restore_async_old_url_once();
         }
         location.href = data.redirect;
         return;
@@ -76,9 +95,7 @@ function async_task_check_error(jqXHR, textStatus, errorThrown) {
         // This is some kind of 500/404/403 page, show it in an overlay
         $("body").data('ajaxing', false);
         waitingDialog.hide();
-        if (location.href.indexOf("async_id") !== -1) {
-            history.replaceState({}, "pretix", async_task_old_url);
-        }
+        _restore_async_old_url_once();
         ajaxErrDialog.show(c.first().html());
     } else {
         if (jqXHR.status >= 400 && jqXHR.status < 500) {
@@ -100,9 +117,13 @@ function async_task_callback(data, jqXHR, status) {
     if (data.redirect) {
         if (async_task_is_download && data.success) {
             waitingDialog.hide();
-            if (location.href.indexOf("async_id") !== -1) {
-                history.replaceState({}, "pretix", async_task_old_url);
-            }
+            _restore_async_old_url_once();
+        }
+        // If we pushed a waiting state earlier, restore the original
+        // URL before navigating to the redirect target so the browser's
+        // back/forward history behaves as expected.
+        if (location.href.indexOf("async_id") !== -1) {
+            history.replaceState({}, "pretix", async_task_old_url);
         }
         location.href = data.redirect;
         return;

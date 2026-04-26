@@ -52,6 +52,9 @@
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/main.scss" %}"/>
         {% endcompress %}
     {% endif %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/presale-login-modal.css' %}">
+        {% endcompress %}
 {% endblock %}
 
 {% block scripts %}
@@ -60,6 +63,7 @@
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/popover.js" %}"></script>
         <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
     {% endcompress %}
+    <script type="module" src="{% static 'pretixpresale/js/ui/presale-login-modal.js' %}"></script>
 {% endblock %}
 
 {% block custom_header %}
@@ -95,28 +99,19 @@
     {% if request.event %}
         {{ request.event.organizer.slug|json_script:"organizer_name" }}
         {{ request.event.slug|json_script:"event_slug" }}
+        {{ request.event.pk|json_script:"event_pk" }}
     {% endif %}
     {{ show_organizer_area|json_script:"show_organizer_area" }}
+    {{ user_has_cfp_submissions|json_script:"user_has_cfp_submissions" }}
+    {{ talks_published|json_script:"talks_published" }}
     {{ html_page_header|safe }}
 {% endblock %}
 
 {% block body_bottom %}
     {{ html_foot|safe }}
+    {% include "pretixpresale/fragment_modals.html" %}
 {% endblock %}
 
 {% block header_navigation %}{% endblock header_navigation %}
 
-{% block header_navigation_after %}
-    <div class="presale-sticky-tabs-wrap">
-        <div class="header-wrapper presale-sticky-tabs-inner">
-            <div id="header-tabs" class="presale-sticky-tabs">
-                {% block header_tabs %}{% endblock header_tabs %}
-                <div class="header-row-right">
-                    {% block header_right %}
-                        {% include "common/fragment_header_user.html" with current_event=current_event %}
-                    {% endblock header_right %}
-                </div>
-            </div>
-        </div>
-    </div>
-{% endblock header_navigation_after %}
+

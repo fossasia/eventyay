@@ -10,6 +10,8 @@
 </template>
 <script>
 import store from 'store'
+import { getUrlDomain, getBlockerConfig, isDomainBlocked } from 'lib/iframeConsent'
+import { normalizeIframeConsentDomain } from 'lib/iframeConsentDomain'
 export default {
 	inheritAttrs: false,
 	props: {
@@ -23,31 +25,34 @@ export default {
 	},
 	computed: {
 		domain() {
-			if (typeof this.src !== 'string') return
-			return new URL(this.src).host
+			return getUrlDomain(this.src)
 		},
 		config() {
-			for (const [domain, domainConfig] of Object.entries(store.state.world.iframe_blockers)) {
-				if (this.domain === domain || this.domain.endsWith('.' + domain)) return domainConfig
-			}
-			return store.state.world.iframe_blockers.default
+			return getBlockerConfig(this.domain)
 		},
 		showIframe() {
-			return this.showingOnce ||
-				store.state.unblockedIframeDomains.has(this.domain) ||
-				!this.config.enabled
+			if (!this.domain) return true
+			return this.showingOnce || !isDomainBlocked(this.domain)
 		}
 	},
 	async created() {},
 	async mounted() {
 		await this.$nextTick()
 	},
+	emits: ['consent-given'],
 	methods: {
 		showOnce() {
 			if (this.remember) {
-				store.dispatch('unblockIframeDomain', this.domain)
+				const domain = normalizeIframeConsentDomain(this.domain)
+				if (domain) {
+					store.dispatch('unblockIframeDomain', domain)
+				}
 			}
 			this.showingOnce = true
+			// Pass `this.remember` so the parent knows whether this is persistent
+			// consent (handled by the Vuex watcher) or show-once consent (needs an
+			// explicit initializeIframe call).
+			this.$emit('consent-given', this.remember)
 		}
 	}
 }

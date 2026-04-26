@@ -381,7 +381,7 @@ def variations_select2(request, **kwargs):
 
     q = Q(product__event=request.event)
     for word in query.split():
-        q &= Q(value__icontains=i18ncomp(word)) | Q(product__name__icontains=i18ncomp(ord))
+        q &= Q(value__icontains=i18ncomp(word)) | Q(product__name__icontains=i18ncomp(word))
 
     qs = (
         ProductVariation.objects.filter(q)

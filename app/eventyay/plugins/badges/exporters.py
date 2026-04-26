@@ -28,8 +28,31 @@ from eventyay.base.pdf import Renderer
 from eventyay.base.services.orders import OrderError
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.plugins.badges.models import BadgeProduct, BadgeLayout
+from eventyay.plugins.badges.utils import get_badge_hidden_fields, normalize_badge_content_key
 
 from ...helpers.templatetags.jsonfield import JSONExtract
+
+
+class BadgeRenderer(Renderer):
+    def __init__(self, event, layout, bgf, ask_user_fields=None):
+        super().__init__(event, layout, bgf)
+        self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
+
+    def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):
+        content = normalize_badge_content_key(o.get('content'))
+        if content and content not in ('other', 'other_i18n') and content in self.ask_user_fields:
+            hidden_fields = getattr(op, '_badge_hidden_fields_cache', None)
+            if hidden_fields is None:
+                hidden_fields = {str(value) for value in get_badge_hidden_fields(op)}
+                op._badge_hidden_fields_cache = hidden_fields
+            if content in hidden_fields:
+                return ''
+
+        if content != o.get('content'):
+            o = dict(o)
+            o['content'] = content
+
+        return super()._get_text_content(op, order, o, inner=inner)
 
 
 def _renderer(event, layout):
@@ -39,7 +62,12 @@ def _renderer(event, layout):
         bgf = default_storage.open(layout.background.name, 'rb')
     else:
         bgf = open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
-    return Renderer(event, json.loads(layout.layout), bgf)
+    return BadgeRenderer(
+        event,
+        layout.layout_data,
+        bgf,
+        ask_user_fields=(layout.ask_user_fields_data if layout.allow_customization else []),
+    )
 
 
 OPTIONS = OrderedDict(

@@ -3,7 +3,7 @@ $(function () {
     var popup_check_interval = null;
 
     // Unbind any existing click handlers to avoid double binding
-    $("#join-event-link").off("click").on("click", function (e) {
+    $(".join-video-link").off("click").on("click", function (e) {
         e.preventDefault();  // prevent the default action (redirecting to the href)
         var url = $(this).attr('href');  // get the href attribute
 

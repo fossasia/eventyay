@@ -1,0 +1,46 @@
+{% load bootstrap3 %}
+{% load i18n %}
+{% load urlreplace %}
+{% load append_next_url %}
+<div id='login-form' class='{% if not force_show %}collapse{% if form.errors %} in{% endif %}{% endif %}'>
+  {% if backends|length > 1 %}
+    <ul class='nav nav-pills'>
+      {% for b in backends %}
+        {% if b.visible %}
+          <li class='{% if backend.identifier == b.identifier %}active{% endif %}'>
+            <a href='{% if b.url %}{{ b.url }}{% else %}?{% url_replace request "backend" b.identifier %}{% endif %}'>
+              {{ b.verbose_name }}
+            </a>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    <br>
+  {% endif %}
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  <div class='form-group buttons'>
+    {% if backend.identifier == 'native' %}
+      {% if can_reset %}
+        <a href='{% url "eventyay_common:auth.forgot" %}' class='btn btn-link btn-block'>
+          {% translate 'Lost password?' %}
+        </a>
+      {% endif %}
+    {% endif %}
+    {% if backend.login_form_fields %}
+      <button type='submit' class='btn btn-primary btn-block'>
+        {% translate 'Log in' %}
+      </button>
+    {% endif %}
+    {% if backend.url %}
+      <a href='{{ backend.url }}' class='btn btn-primary btn-block'>
+        {{ backend.verbose_name }}
+      </a>
+    {% endif %}
+    {% if not force_show and can_register %}
+      <a href='{% url "account_signup" %}{% append_next request.GET.next %}' class='btn btn-link btn-block'>
+        {% translate 'Register' %}
+      </a>
+    {% endif %}
+  </div>
+</div>

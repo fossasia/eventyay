@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
 from django.db import transaction
-from django.db.models import Max, Min, Prefetch, ProtectedError
+from django.db.models import Max, Min, Prefetch
 from django.db.models.functions import Coalesce, Greatest
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -13,9 +13,9 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import (
     CreateView,
-    DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
 )
 from rest_framework.decorators import api_view
@@ -37,6 +37,7 @@ from eventyay.control.permissions import (
     OrganizerPermissionRequiredMixin,
 )
 from eventyay.control.signals import nav_organizer
+from eventyay.control.tasks import delete_organizer_data
 from eventyay.control.views import PaginationMixin
 from eventyay.helpers.stripe_utils import (
     create_setup_intent,
@@ -50,6 +51,7 @@ from eventyay.presale.style import regenerate_organizer_css
 from ...forms.organizer_forms.organizer_form import BillingSettingsForm
 from .organizer_detail_view_mixin import OrganizerDetailViewMixin
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +64,9 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         # Check if user has permission to create organizers
         if not self._can_create_organizer(request.user):
-            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
+            raise PermissionDenied(
+                _('You do not have permission to create organizers. Please contact an administrator.')
+            )
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
@@ -220,33 +224,30 @@ class OrganizerDelete(AdministratorPermissionRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        try:
-            with transaction.atomic():
-                self.request.user.log_action(
-                    'pretix.organizer.deleted',
-                    user=self.request.user,
-                    data={
-                        'organizer_id': self.request.organizer.pk,
-                        'name': str(self.request.organizer.name),
-                        'logentries': list(self.request.organizer.all_logentries().values_list('pk', flat=True)),
-                    },
-                )
-                self.request.organizer.delete_sub_objects()
-                self.request.organizer.delete()
-            messages.success(self.request, _('The organizer has been deleted.'))
-            return redirect(self.get_success_url())
-        except ProtectedError:
-            messages.error(
-                self.request,
-                _(
-                    'The organizer could not be deleted as some constraints (e.g. data created by '
-                    'plug-ins) do not allow it.'
-                ),
-            )
-            return self.get(self.request, *self.args, **self.kwargs)
+        organizer_id = self.request.organizer.pk
+        user_id = self.request.user.pk
+
+        self.request.organizer.log_action(
+            'eventyay.organizer.deletion.scheduled',
+            user=self.request.user,
+            data={
+                'name': str(self.request.organizer.name),
+            },
+        )
+        transaction.on_commit(
+            lambda: delete_organizer_data.apply_async(kwargs={'organizer_id': organizer_id, 'user_id': user_id})
+        )
+        messages.success(
+            self.request,
+            _(
+                'The organizer deletion has been scheduled and will continue in the background. '
+                'If the organizer is still visible after a short while, check the organizer logs for the outcome.'
+            ),
+        )
+        return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
-        return reverse('control:index')
+        return reverse('eventyay_common:dashboard')
 
 
 class OrganizerDisplaySettings(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, View):
@@ -299,6 +300,15 @@ class OrganizerSettingsFormView(OrganizerDetailViewMixin, OrganizerPermissionReq
                 _('We could not save your changes. See below for details.'),
             )
             return self.get(request)
+
+
+class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, TemplateView):
+    template_name = 'eventyay_common/organizers/dashboard.html'
+    permission = None
+
+    @property
+    def organizer(self):
+        return self.request.organizer
 
 
 class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):

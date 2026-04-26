@@ -28,13 +28,13 @@
     margin-top: 10px;
     margin-bottom: 3rem;
     overflow: auto;
-    
+
     div {
         font-size: 1.65rem;
         display: flex;
         gap: 2rem;
     }
-    
+
     a {
         cursor: pointer;
         position: relative;
@@ -84,6 +84,16 @@
     border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
     padding: 0 0 2px;
     flex-shrink: 0;
+    /* DO NOT set overflow here - it would clip dropdown menus */
+}
+
+/* Base styles for all breakpoints: keep tab links as flex row.
+ * Mobile overrides add overflow-x:auto for horizontal scrolling. */
+.presale-tabs-scroll {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .presale-sticky-tabs a.header-tab {
@@ -104,7 +114,9 @@
 .presale-sticky-tabs #header-nav-bar {
     flex: 1 1 auto;
     margin: 6px 0 0;
-    overflow: auto;
+    /* Explicitly override global #header-nav-bar { overflow: auto } to avoid clipping.
+     * Scrolling is handled by .presale-tabs-scroll instead. */
+    overflow: visible;
 }
 
 .presale-sticky-tabs #header-nav-bar .navigation {
@@ -124,11 +136,12 @@
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
-    gap: 10px;
+    gap: 16px;
 }
 
+
 .presale-sticky-tabs .header-row-right details.dropdown,
-.presale-sticky-tabs .header-row-right > a {
+.presale-sticky-tabs .header-row-right>a {
     display: inline-flex;
     align-items: center;
 }
@@ -157,31 +170,183 @@
 }
 
 #main-card {
+    /* Sit above hero header (z-index:1000) so its date/title text does not
+     * bleed over page content. Below Bootstrap modal-backdrop (z-index:1040),
+     * modals (z-index:1050) and sticky nav (z-index:1200) so overlays and nav
+     * are on top. */
+    position: relative;
+    z-index: 1030;
     scroll-margin-top: 72px;
 }
 
-@media (max-width: 768px) {
-    .presale-sticky-tabs {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 0 0 2px;
+/* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
+.nav-icon-mobile {
+    display: none;
+}
+
+/* Desktop: hide mobile-only CfS abbreviation */
+.cfs-short {
+    display: none;
+}
+
+/* Desktop: keep hero overlay full-width so floating Join Video aligns to page edge. */
+@media (min-width: 769px) {
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
     }
 
-    .presale-sticky-tabs #header-nav-bar,
-    .presale-sticky-tabs #header-nav-bar .navigation {
-        width: 100%;
+    .header-join-video-floating-mobile {
+        right: 0;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Keep the sticky tabs in a single flex row */
+    .presale-sticky-tabs {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        /* NO overflow here — dropdown must escape this container */
+    }
+
+    /* ONLY the tab links scroll horizontally */
+    .presale-tabs-scroll {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .presale-tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .presale-sticky-tabs-inner {
+        overflow: visible;
+    }
+
+    .presale-sticky-tabs a.header-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 4px 6px 3px 6px;
+        font-size: 0.8rem;
     }
 
     .presale-sticky-tabs .header-row-right {
         margin-left: 0;
-        margin-right: 0;
+        margin-right: 2px;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        gap: 0;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown {
+        position: relative;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 16px);
+    }
+
+    /* Hide text labels for Language and User dropdowns — icon-only on mobile */
+    .mobile-hide-text {
+        display: none;
+    }
+
+    /* Show the mobile-only icons on mobile */
+    .nav-icon-mobile {
+        display: inline;
+        font-size: 1.25rem;
+    }
+
+    /* Remove the caret arrow — redundant when showing icon-only */
+    .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
+        display: none;
+    }
+
+    /* Tighten padding on the summary trigger button */
+    .presale-sticky-tabs .header-row-right details.dropdown summary {
+        padding: 2px 4px;
+    }
+
+    /* Show abbreviated "CfS" instead of "Call for Speakers" */
+    .cfs-full {
+        display: none;
+    }
+
+    .cfs-short {
+        display: inline;
+    }
+
+
+    /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
+    .login-link {
+        display: flex;
+        align-items: center;
+        padding: 0px 8px;
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .login-link:hover {
+        text-decoration: none;
+        opacity: 0.85;
+    }
+
+    /* Mobile: hero overlay width + horizontal padding */
+    .event-hero-overlay {
+        display: flex;
         width: 100%;
-        justify-content: flex-end;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Presale event index: full-bleed hero overlay */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    #main-card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* Outer main only (presale nests two <main> — avoid double horizontal padding) */
+    #main-card>main {
+        padding-top: 0.15rem;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #main-card>main>main {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    #locale-dropdown.dropdown-content {
+        transform: scale(0.75);
+        transform-origin: top right;
+        right: 0;
+        left: auto;
     }
 }
 
 #schedule-nav {
     margin: 16px 0px;
+
     .header-nav {
         border-color: darken($btn-primary-bg, 10%) !important;
         border: 1px solid;
@@ -189,22 +354,27 @@
         font-weight: normal;
         border-radius: 0;
     }
+
     .navigation {
         display: flex;
         flex-wrap: wrap;
+
         .navigation-button {
             margin-right: 8px;
             margin-bottom: 8px;
         }
+
         @media (min-width: 800px) {
             .video-link {
                 margin-left: auto;
             }
         }
+
         a:hover {
             color: #fff;
             background-color: $hover-button-color !important;
         }
+
         .popover-content {
             .options {
                 color: darken($btn-primary-bg, 10%);
@@ -214,21 +384,23 @@
                 font-weight: normal;
                 border-radius: 0;
             }
+
             .options:hover {
                 color: #fff;
                 color: darken($btn-primary-bg, 10%) !important;
             }
+
             div:first-child {
                 margin-bottom: 8px;
             }
         }
-        
+
     }
-    
+
 }
 
-.page-header-links{
-    .header-part{
+.page-header-links {
+    .header-part {
         a {
             color: #FFFFFF !important;
         }
