@@ -763,8 +763,13 @@ the eventyay robot"""
         self.pw_reset_time = None
         self.save()
 
+        if not self.email:
+            # Cannot send confirmation without an email address
+            self.log_action(action='eventyay.user.password.changed', user=self)
+            return
+
         context = {
-            'name': self.name or '',
+            'name': self.fullname or '',
         }
         mail_text = _(
             """Hi {name},
