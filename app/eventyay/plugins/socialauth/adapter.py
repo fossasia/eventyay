@@ -12,7 +12,7 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 
-from .email import ensure_verified_email_for_user
+from .email import ensure_verified_email_for_user, get_verified_mediawiki_sociallogin_email
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +43,16 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         super().pre_social_login(request, sociallogin)
         if sociallogin.provider.id != 'mediawiki':
             return
+
+        email = get_verified_mediawiki_sociallogin_email(sociallogin)
+        if not email:
+            email = self.fetch_mediawiki_profile_email(sociallogin)
+
         if sociallogin.is_existing:
-            ensure_verified_email_for_user(sociallogin.user, self.get_mediawiki_sociallogin_email(sociallogin))
+            ensure_verified_email_for_user(sociallogin.user, email)
             return
         if not app_settings.EMAIL_AUTHENTICATION:
             return
-
-        email = self.get_mediawiki_sociallogin_email(sociallogin)
         if not email:
             return
 
@@ -59,21 +62,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             sociallogin._did_authenticate_by_email = email
             ensure_verified_email_for_user(users[0], email)
 
-    def get_mediawiki_sociallogin_email(self, sociallogin) -> str | None:
-        for address in sociallogin.email_addresses:
-            if address.email:
-                return address.email
-
-        if sociallogin.user and sociallogin.user.email:
-            return sociallogin.user.email
-
-        extra_data = sociallogin.account.extra_data or {}
-        extra_email = extra_data.get('email')
-        if extra_email:
-            return extra_email
-
-        return self.fetch_mediawiki_profile_email(sociallogin)
-
     def fetch_mediawiki_profile_email(self, sociallogin) -> str | None:
         token = sociallogin.token
         if not token or not token.token:
@@ -82,7 +70,11 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         headers = {'Authorization': f'Bearer {token.token}'}
         try:
             with self.get_requests_session() as session:
-                response = session.get(MediaWikiOAuth2Adapter.profile_url, headers=headers)
+                response = session.get(
+                    MediaWikiOAuth2Adapter.profile_url,
+                    headers=headers,
+                    timeout=app_settings.REQUESTS_TIMEOUT,
+                )
                 response.raise_for_status()
                 profile = response.json()
         except requests.RequestException as e:

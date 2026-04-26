@@ -197,12 +197,23 @@ def test_mediawiki_oauth_pre_social_login_links_existing_user_from_profile_email
 
 
 @pytest.mark.django_db
-def test_mediawiki_signup_form_links_existing_user_without_assertion(client):
+def test_mediawiki_oauth_existing_social_user_marks_email_verified_case_insensitively():
     user = User.objects.create_user('existing-mediawiki-signup@example.com', 'dummy')
-    EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
+    EmailAddress.objects.create(
+        user=user,
+        email='Existing-Mediawiki-Signup@Example.com',
+        verified=False,
+        primary=False,
+    )
+    SocialAccount.objects.create(
+        user=user,
+        provider='mediawiki',
+        uid='12345',
+        extra_data={},
+    )
 
     request = RequestFactory().get('/accounts/mediawiki/login/callback/')
-    app = SocialApp.objects.create(
+    app = SocialApp(
         provider='mediawiki',
         name='mediawiki-app',
         client_id='client-id',
@@ -219,17 +230,49 @@ def test_mediawiki_signup_form_links_existing_user_without_assertion(client):
             'realname': 'Example User',
         },
     )
-    social_login.state = {'process': 'login'}
+    social_login.lookup()
+    assert social_login.is_existing
 
-    session = client.session
-    session['socialaccount_sociallogin'] = social_login.serialize()
-    session.save()
+    adapter = CustomSocialAccountAdapter(request)
+    adapter.pre_social_login(request, social_login)
 
-    response = client.post(
-        reverse('socialaccount_signup'),
-        data={'email': user.email},
+    email_addresses = EmailAddress.objects.filter(user=user, email__iexact=user.email).order_by('pk')
+    assert email_addresses.count() == 1
+    assert email_addresses.first().email == user.email
+    assert email_addresses.first().verified
+
+
+@pytest.mark.django_db
+def test_mediawiki_oauth_does_not_link_with_unconfirmed_social_email(monkeypatch):
+    user = User.objects.create_user('victim@example.com', 'dummy')
+
+    request = RequestFactory().get('/accounts/mediawiki/login/callback/')
+    app = SocialApp(
+        provider='mediawiki',
+        name='mediawiki-app',
+        client_id='client-id',
+        secret='client-secret',
     )
+    provider = MediaWikiProvider(request=request, app=app)
+    social_login = provider.sociallogin_from_response(
+        request,
+        {
+            'sub': '12345',
+            'email': user.email,
+            'confirmed_email': False,
+            'username': 'ExampleUser',
+            'realname': 'Example User',
+        },
+    )
+    social_login.lookup()
+    assert not social_login.is_existing
 
-    assert response.status_code == 302
-    assert client.session.get('_auth_user_id') == str(user.pk)
-    assert SocialAccount.objects.filter(user=user, provider='mediawiki').exists()
+    monkeypatch.setattr(
+        CustomSocialAccountAdapter,
+        'fetch_mediawiki_profile_email',
+        lambda self, login: None,
+    )
+    adapter = CustomSocialAccountAdapter(request)
+    adapter.pre_social_login(request, social_login)
+
+    assert not social_login.is_existing
