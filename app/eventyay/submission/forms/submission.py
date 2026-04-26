@@ -59,6 +59,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
                 getattr(self.access_code, 'submission_type', None)
                 or initial.get('submission_type')
                 or self.event.cfp.default_type
+                or ''
             )
         if not instance and self.access_code:
             initial['track'] = self.access_code.track
@@ -144,6 +145,11 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
             self.fields.pop('submission_type')
         else:
             self.fields['submission_type'].queryset = submission_types.filter(pk__in=pks)
+            self.fields['submission_type'].required = True
+            if self.event.cfp.default_type:
+                self.fields['submission_type'].empty_label = None
+            else:
+                self.fields['submission_type'].empty_label = _('Select a session type')
             if 'duration' in self.fields and not self.fields['duration'].required:
                 self.fields['duration'].help_text += ' ' + str(
                     _('Leave empty to use the default duration for the session type.')

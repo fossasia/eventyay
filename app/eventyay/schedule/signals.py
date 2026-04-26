@@ -80,3 +80,31 @@ def register_my_json_exporter(sender, **kwargs):
     from .exporters import MyFrabJsonExporter
 
     return MyFrabJsonExporter
+
+
+@receiver(register_data_exporters, dispatch_uid='exporter_builtin_google_calendar')
+def register_google_calendar_exporter(sender, **kwargs):
+    from .exporters import GoogleCalendarExporter
+
+    return GoogleCalendarExporter
+
+
+@receiver(register_data_exporters, dispatch_uid='exporter_builtin_webcal')
+def register_webcal_exporter(sender, **kwargs):
+    from .exporters import WebcalExporter
+
+    return WebcalExporter
+
+
+@receiver(register_my_data_exporters, dispatch_uid='exporter_builtin_my_google_calendar')
+def register_my_google_calendar_exporter(sender, **kwargs):
+    from .exporters import MyGoogleCalendarExporter
+
+    return MyGoogleCalendarExporter
+
+
+@receiver(register_my_data_exporters, dispatch_uid='exporter_builtin_my_webcal')
+def register_my_webcal_exporter(sender, **kwargs):
+    from .exporters import MyWebcalExporter
+
+    return MyWebcalExporter

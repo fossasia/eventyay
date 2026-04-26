@@ -317,7 +317,7 @@ def test_can_edit_profile(speaker, event, speaker_client):
     with scope(event=event):
         speaker.refresh_from_db()
         assert speaker.profiles.get(event=event).biography == "Ruling since forever."
-        assert speaker.name == "Lady Imperator"
+        assert speaker.fullname == "Lady Imperator"
     response = speaker_client.post(
         event.urls.user,
         data={
@@ -331,7 +331,7 @@ def test_can_edit_profile(speaker, event, speaker_client):
     with scope(event=event):
         speaker.refresh_from_db()
         assert speaker.profiles.get(event=event).biography == "Ruling since forever."
-        assert speaker.name == "Lady Imperator"
+        assert speaker.fullname == "Lady Imperator"
 
 
 @pytest.mark.django_db
@@ -483,7 +483,7 @@ def test_cannot_delete_profile_on_first_try(speaker, event, speaker_client):
     with scope(event=event):
         speaker.refresh_from_db()
         assert speaker.profiles.get(event=event).biography != ""
-        assert speaker.name != "Deleted User"
+        assert speaker.fullname != "Deleted User"
 
 
 @pytest.mark.django_db
@@ -497,7 +497,7 @@ def test_can_delete_profile(speaker, event, speaker_client):
     with scope(event=event):
         speaker.refresh_from_db()
         assert speaker.profiles.get(event=event).biography == ""
-        assert speaker.name == "Deleted User"
+        assert speaker.fullname == "Deleted User"
         assert speaker.email.startswith("deleted_user")
         assert speaker.email.endswith("@localhost")
 

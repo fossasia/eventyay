@@ -1,10 +1,24 @@
 {% extends "orga/base.html" %}
 
+{% load compress %}
 {% load staff_session %}
 {% load i18n %}
 {% load rules %}
+{% load static %}
 
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}submitter{% plural %}submitters{% endblocktranslate %} :: {% endblock extra_title %}
+
+{% block stylesheets %}
+    {% compress css %}
+        <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
+    {% endcompress %}
+{% endblock stylesheets %}
+
+{% block scripts %}
+    {% compress js %}
+        <script defer src="{% static 'orga/js/dragsort.js' %}"></script>
+    {% endcompress %}
+{% endblock scripts %}
 
 {% block content %}
     <div class="d-md-flex justify-content-between">
@@ -35,6 +49,7 @@
     {% endif %}
 
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
+    {% has_event_perm "base.update_speakerprofile" request.user request request.event as can_update_speaker %}
     <div class="table-responsive-md">
         <table class="table table-sm table-flip table-sticky">
             <thead>
@@ -42,12 +57,13 @@
                     <th>{% translate "Name" %}</th>
                     <th class="numeric">{% translate "Accepted Proposals" %}</th>
                     <th class="numeric">{% translate "Proposals" %}</th>
+                    <th class="text-center">{% translate "Featured" %}</th>
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody dragsort-url="{{ request.event.orga_urls.speakers }}">
                 {% for profile in speakers %}
-                    <tr>
+                    <tr dragsort-id="{{ profile.pk }}">
                         <td>
                             <a href="{{ profile.orga_urls.base }}">
                                 {% include "orga/includes/user_name.html" with user=profile.user %}
@@ -55,6 +71,27 @@
                         </td>
                         <td class="numeric">{{ profile.accepted_submission_count }}</td>
                         <td class="numeric">{{ profile.submission_count }}</td>
+                        <td class="speaker_featured text-center">
+                            {% if can_update_speaker %}
+                                <div class="form-check d-inline-block" title="{% translate "Show this speaker in the list of featured speakers." %}">
+                                    <input
+                                        type="checkbox"
+                                        id="featured_speaker_{{ profile.user.code }}"
+                                        data-id="{{ profile.user.code }}"
+                                        data-url="{{ profile.orga_urls.toggle_featured }}"
+                                        class="submission_featured speaker_featured"
+                                        aria-label="{% translate 'Show this speaker in the list of featured speakers.' %}"
+                                        {% if profile.is_featured %}checked{% endif %}
+                                    >
+                                    <label for="featured_speaker_{{ profile.user.code }}" aria-hidden="true"></label>
+                                </div>
+                            {% else %}
+                                <i class="fa fa-{{ profile.is_featured|yesno:'check,times' }}"></i>
+                            {% endif %}
+                            <i class="working fa fa-spinner fa-spin d-none"></i>
+                            <i class="done fa fa-check d-none text-success"></i>
+                            <i class="fail fa fa-times d-none"></i>
+                        </td>
                         <td class="text-right">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
@@ -72,9 +109,18 @@
                                         <a><i class="fa fa-times"></i> {% translate "Not arrived" %}</a>
                                     {% endif %}
                                 {% endif %}
-                                </td>
                             {% endif %}
-                        </tr>
+                            {% if can_update_speaker %}
+                                <button draggable="true" class="btn btn-sm btn-primary ml-1 dragsort-button" title="{% translate "Move item" %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">{% translate "No submitters found." %}</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

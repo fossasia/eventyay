@@ -25,7 +25,7 @@ body {
 @media(min-width:768px) {
     #page-wrapper {
         position: inherit;
-        margin: 0 0 0 250px;
+        margin: 0 0 0 $sidebar-width;
         padding: 0 30px;
         border-left: 1px solid darken($gray-lightest, 6.5%);
     }
@@ -374,7 +374,7 @@ body {
     .sidebar {
         z-index: 1;
         position: fixed;
-        width: 250px;
+        width: $sidebar-width;
         margin-top: 51px;
         top: 0;
         bottom: 0;

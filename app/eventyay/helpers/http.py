@@ -1,9 +1,13 @@
+import random
+import socket
+
 from django.conf import settings
-from django.http import (
-    HttpResponsePermanentRedirect,
-    HttpResponseRedirect,
-    StreamingHttpResponse,
-)
+from django.core.cache import cache
+from django.http import HttpResponsePermanentRedirect, HttpResponseRedirect, StreamingHttpResponse
+
+
+SMTP_REACHABLE_CACHE_TTL_BASE = 300
+SMTP_REACHABLE_CACHE_TTL_JITTER = 30
 
 
 class ChunkBasedFileResponse(StreamingHttpResponse):
@@ -28,3 +32,27 @@ def get_client_ip(request):
 def redirect_to_url(to, permanent=False):
     redirect_class = HttpResponsePermanentRedirect if permanent else HttpResponseRedirect
     return redirect_class(to)
+
+
+def smtp_reachable(host: str | None, port: int | None, timeout: int | float | None = None) -> bool:
+    """Check SMTP TCP reachability and cache the result for ~5 minutes with jitter."""
+    if not host or not port:
+        return False
+
+    connect_timeout = timeout if timeout is not None else 5
+    cache_key = f'smtp_reachable:{host}:{port}'
+    cached_value = cache.get(cache_key)
+    if cached_value is not None:
+        return cached_value
+
+    try:
+        with socket.create_connection((host, port), connect_timeout):
+            reachable = True
+    except (OSError, TypeError, ValueError):
+        reachable = False
+
+    cache_ttl = SMTP_REACHABLE_CACHE_TTL_BASE + random.randint(
+        -SMTP_REACHABLE_CACHE_TTL_JITTER, SMTP_REACHABLE_CACHE_TTL_JITTER
+    )
+    cache.set(cache_key, reachable, timeout=cache_ttl)
+    return reachable

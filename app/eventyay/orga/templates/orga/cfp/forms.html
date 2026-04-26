@@ -24,6 +24,7 @@
 {% endblock scripts %}
 
 {% block content %}
+    <div class="cfp-forms-page">
     <div id="cfp-field-order-data" 
          data-session-field-order='{{ session_field_order|safe }}' 
          data-speaker-field-order='{{ speaker_field_order|safe }}'
@@ -34,7 +35,7 @@
         <span data-dialog-target="#info-dialog" data-toggle="dialog">
             <i class="fa fa-question-circle-o text-info ml-2"></i>
         </span>
-        <div class="ml-auto mb-3">
+        <div class="cfp-forms-heading-actions mb-3">
             {% if question_list %}
                 <a href="{{ request.event.cfp.urls.remind_questions }}" class="btn btn-info">{% translate "Send out reminders for custom fields without responses" %}</a>
             {% endif %}
@@ -57,7 +58,25 @@
 
         {% include "common/forms/errors.html" %}
         {% include "common/forms/errors.html" with form=sform %}
-        {{ sform.count_length_in.as_field_group }}
+        <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right">
+                {{ sform.count_length_in.label }}
+                {% if sform.count_length_in.field.required %}*{% endif %}
+            </label>
+            <div class="col-md-9">
+                {% for radio in sform.count_length_in %}
+                <div class="form-check form-check-inline">
+                    {{ radio.tag }}
+                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                        {{ radio.choice_label }}
+                    </label>
+                </div>
+                {% endfor %}
+                {% if sform.count_length_in.help_text %}
+                <small class="form-text text-muted d-block mt-2">{{ sform.count_length_in.help_text }}</small>
+                {% endif %}
+            </div>
+        </div>
         <fieldset>
                 <legend id="proposal-information">
                     <div>
@@ -73,7 +92,7 @@
                         <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
                     </span></div>
                 </dialog>
-                <div class="table-responsive-sm offset-md-3">
+                <div class="table-responsive table-responsive-always mw-100">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -82,6 +101,8 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Public" %}</th>
+                            <th class="text-center">{% translate "Answers" %}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -105,6 +126,8 @@
                             </td>
                             <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.title }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -139,6 +162,8 @@
                             </td>
                             <td>{{ sform.cfp_abstract_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_abstract_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.abstract }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -174,6 +199,8 @@
                             </td>
                             <td>{{ sform.cfp_description_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_description_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.description }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -209,6 +236,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.notes }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -244,6 +273,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.track }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -279,6 +310,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.duration }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -316,6 +349,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.content_locale }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -352,6 +387,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.image }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -387,6 +424,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.do_not_record }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -424,6 +463,22 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
+                                        data-field="is_public"
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}"
+                                        {% if item.question.answer_count > 0 and not item.question.is_public %}
+                                            title="{% translate 'You cannot make this field public because answers already exist.' %}"
+                                        {% endif %}>
+                                        <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            {% if item.question.answer_count > 0 and not item.question.is_public %}disabled{% endif %}
+                                            aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td class="text-center">
+                                    {{ item.question.answer_count }}
+                                </td>
                                 <td class="text-right">
                                     <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                         <i class="fa fa-arrows"></i>
@@ -441,8 +496,8 @@
                     </table>
                 </div>
                 <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
-                        <a href="{{ create_url }}?target=submission" class="btn btn-success btn-sm">
+                    <div class="col-md-9 d-flex cfp-forms-new-field-actions justify-content-end">
+                        <a href="{{ create_url }}?target=submission" class="btn btn-success">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
                     </div>
@@ -462,7 +517,7 @@
                         {% translate "Select which information should be requested and/or required from speakers." %}
                     </span></div>
                 </dialog>
-                <div class="table-responsive-sm offset-md-3">
+                <div class="table-responsive table-responsive-always mw-100">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -471,14 +526,15 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Public" %}</th>
+                            <th class="text-center">{% translate "Answers" %}</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
-                    <tbody>
                         {# Full Name #}
                         {% with field=sform.cfp_ask_fullname %}
-                        <tr>
+                        <tr dragsort-id="fullname">
                             <th>{% translate "Full Name" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
@@ -499,6 +555,13 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-center"></td>
+                            <td class="text-center">{{ field_counts.name }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
@@ -529,6 +592,8 @@
                             </td>
                             <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.biography }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -564,6 +629,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.avatar }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -599,6 +666,8 @@
                             </td>
                             <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.avatar_source }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -634,6 +703,8 @@
                             </td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.avatar_license }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -669,6 +740,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.availabilities }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -697,13 +770,14 @@
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         aria-label="Required status for Additional speakers">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                            Required</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
                                     </select>
                                 </div>
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.additional_speaker }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
@@ -741,6 +815,22 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
+                                        data-field="is_public"
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}"
+                                        {% if item.question.answer_count > 0 and not item.question.is_public %}
+                                            title="{% translate 'You cannot make this field public because answers already exist.' %}"
+                                        {% endif %}>
+                                        <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            {% if item.question.answer_count > 0 and not item.question.is_public %}disabled{% endif %}
+                                            aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td class="text-center">
+                                    {{ item.question.answer_count }}
+                                </td>
                                 <td class="text-right">
                                     <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                         <i class="fa fa-arrows"></i>
@@ -758,8 +848,8 @@
                     </table>
                 </div>
                 <div class="row">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
-                        <a href="{{ create_url }}?target=speaker" class="btn btn-success btn-sm">
+                    <div class="col-md-9 d-flex cfp-forms-new-field-actions justify-content-end">
+                        <a href="{{ create_url }}?target=speaker" class="btn btn-success">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
                     </div>
@@ -770,7 +860,7 @@
                     {% translate "Reviewer Information" %}
                 </div></legend>
                 {% if custom_reviewer_fields %}
-                <div class="table-responsive-sm offset-md-3">
+                <div class="table-responsive table-responsive-always mw-100">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -779,6 +869,8 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Public" %}</th>
+                            <th class="text-center">{% translate "Answers" %}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -812,6 +904,22 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
+                                        data-field="is_public"
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}"
+                                        {% if item.question.answer_count > 0 and not item.question.is_public %}
+                                            title="{% translate 'You cannot make this field public because answers already exist.' %}"
+                                        {% endif %}>
+                                        <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            {% if item.question.answer_count > 0 and not item.question.is_public %}disabled{% endif %}
+                                            aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td class="text-center">
+                                    {{ item.question.answer_count }}
+                                </td>
                                 <td class="text-right">
                                     <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                         <i class="fa fa-arrows"></i>
@@ -830,8 +938,8 @@
                 </div>
                 {% endif %}
                 <div class="row mb-3">
-                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
-                        <a href="{{ create_url }}?target=reviewer" class="btn btn-success btn-sm">
+                    <div class="col-md-9 d-flex cfp-forms-new-field-actions justify-content-end">
+                        <a href="{{ create_url }}?target=reviewer" class="btn btn-success">
                             <i class="fa fa-plus"></i> {% translate "New custom field" %}
                         </a>
                     </div>
@@ -839,4 +947,5 @@
             </fieldset>
         {% include "orga/includes/submit_row.html" %}
     </form>
+    </div>
 {% endblock %}

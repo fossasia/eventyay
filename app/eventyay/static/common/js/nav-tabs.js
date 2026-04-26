@@ -1,9 +1,10 @@
 const updateTabActiveState = () => {
     const hash = window.location.hash
+    const ticketsSection = document.getElementById('tickets')
     const infoTab = document.getElementById('nav-tab-info')
     const ticketsTab = document.getElementById('nav-tab-tickets')
 
-    if (!infoTab || !ticketsTab) return
+    if (!infoTab || !ticketsTab || !ticketsSection) return
 
     if (hash === '#tickets') {
         infoTab.classList.remove('active', 'underline')
@@ -20,7 +21,11 @@ const initNavTabs = () => {
     window.addEventListener('hashchange', updateTabActiveState)
 }
 
-if (document.getElementById('nav-tab-info') && document.getElementById('nav-tab-tickets')) {
+if (
+    document.getElementById('nav-tab-info')
+    && document.getElementById('nav-tab-tickets')
+    && document.getElementById('tickets')
+) {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initNavTabs)
     } else {

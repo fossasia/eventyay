@@ -1,21 +1,20 @@
-
 ---
-description: 'JavaScript (directly run, non-build) development standards and best practices with Composition API and TypeScript'
-applyTo: 'app/**/*.js'
+description: 'JavaScript & Vue development standards (legacy JS without build step + modern bundled Vue 3 apps)'
+applyTo: 'app/**/*.{js,ts,vue}'
 ---
 
 ## Development Standards
 
 ### Modernization
 
-- Don't use jQuery
-- Use module type, not IIFE.
-- Implemented as external script, don't use inline script, because it is blocked by CSP.
+- Do not use jQuery
+- Use ES modules, not IIFEs.
+- Implement as external scripts; do not use inline scripts because they are blocked by CSP.
 
 ### Error handling
 
-- Always log errors with contextual information, can skip it when you let the error bubble up and handled in higher component / function.
-- Use `try/catch` blocks in async functions to handle exceptions gracefully, can skip it when you let the error bubble up and handled in higher component / function, but you need to add a comment to inform possible error throwing. For example:
+- Always log errors with contextual information. You may skip this when letting the error bubble up to be handled by a higher-level component or function.
+- Use `try/catch` blocks in async functions to handle exceptions gracefully. You may skip this when letting the error bubble up to be handled by a higher-level component or function, but you must add a comment documenting that the function may throw errors. For example:
 
   ```ts
   /**
@@ -27,7 +26,7 @@ applyTo: 'app/**/*.js'
   }
   ```
 
-- When you work with a library that comes with its own error types (like `ky` with `HTTPError`), don't replace this specific error type with a generic one. For example, don't do this:
+- When working with a library that provides its own error types (such as `ky` with `HTTPError`), do not replace this specific error type with a generic one. For example, do not do this:
   ```ts
   try {
     await ky.get('/some-endpoint')
@@ -36,7 +35,7 @@ applyTo: 'app/**/*.js'
   }
   ```
 
-  Instead, just let error bubble up (with a comment), or do this:
+  Instead, let the error bubble up (with a comment), or do this:
 
   ```ts
   try {
@@ -49,3 +48,26 @@ applyTo: 'app/**/*.js'
     throw new Error('An unexpected error occurred') // Handle other errors
   }
   ```
+
+- Do not create empty `catch` blocks.
+
+### DOM access
+
+- Be careful when using `.closest(selector)` because it makes the page fragile to DOM changes. Choose a `selector` carefully so that the code does not break when the DOM changes.
+
+## Comments
+
+- Do not add a comment when the code is already obvious and the comment is almost the same as the code.
+
+## Frontend Code Locations
+
+| Path | Purpose |
+|---|---|
+| `app/eventyay/static/` | Static assets served by Django (CSS, legacy JS) |
+| `app/eventyay/webapp/` | Modern JS applications (Vue 3, built with a bundler) |
+
+Sub-applications inside `webapp/` each have their own `node_modules/` and build pipeline. Check the relevant `package.json` for build commands.
+
+## Vue 3
+
+The project uses Vue 3 for interactive front-end components. Follow Vue 3 Composition API conventions when adding new components.

@@ -6,9 +6,10 @@ import re
 import smtplib
 import ssl
 import warnings
+from collections.abc import Sequence
 from email.mime.image import MIMEImage
 from email.utils import formataddr
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import pytz
@@ -49,8 +50,10 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
+from eventyay.helpers.http import smtp_reachable
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.presale.ical import get_ical
+
 
 logger = logging.getLogger(__name__)
 INVALID_ADDRESS = 'invalid-eventyay-mail-address'
@@ -66,10 +69,10 @@ class SendMailException(Exception):  # NOQA: N818
 
 
 def mail(
-    email: Union[str, Sequence[str]],
+    email: str | Sequence[str],
     subject: str,
-    template: Union[str, LazyI18nString],
-    context: Dict[str, Any] = None,
+    template: str | LazyI18nString,
+    context: dict[str, Any] = None,
     event: Event = None,
     locale: str = None,
     order: Order = None,
@@ -85,6 +88,7 @@ def mail(
     user=None,
     attach_ical=False,
     attach_cached_files: Sequence = None,
+    sync_send: bool = False,
 ):
     """
     Sends out an email to a user. The mail will be sent synchronously or asynchronously depending on the installation.
@@ -188,7 +192,7 @@ def mail(
                     event_reply_to
                     and not headers.get('Reply-To')
                 ):
-                    headers['Reply-To'] = event_reply_to          
+                    headers['Reply-To'] = event_reply_to
             elif (
                 event.settings.mail_from == settings.DEFAULT_FROM_EMAIL
                 and event.settings.contact_mail
@@ -200,7 +204,7 @@ def mail(
             if prefix and prefix.startswith('[') and prefix.endswith(']'):
                 prefix = prefix[1:-1]
             if prefix:
-                subject = '[%s] %s' % (prefix, subject)
+                subject = f'[{prefix}] {subject}'
 
             body_plain += '\r\n\r\n-- \r\n'
 
@@ -302,7 +306,10 @@ def mail(
 
         task_chain.append(send_task)
 
-        if 'locmem' in settings.EMAIL_BACKEND:
+        if sync_send:
+            # Run synchronously in the current process when callers need an immediate and reliable send result.
+            chain(*task_chain).apply(throw=True)
+        elif 'locmem' in settings.EMAIL_BACKEND:
             # This clause is triggered during unit tests, because transaction.on_commit never fires due to the nature
             # Django's unit tests work
             chain(*task_chain).apply_async()
@@ -328,7 +335,7 @@ class CustomEmail(EmailMultiAlternatives):
 def mail_send_task(
     self,
     *args,
-    to: List[str],
+    to: list[str],
     subject: str,
     body: str,
     html: str,
@@ -336,13 +343,13 @@ def mail_send_task(
     event: int = None,
     position: int = None,
     headers: dict = None,
-    bcc: List[str] = None,
-    invoices: List[int] = None,
+    bcc: list[str] = None,
+    invoices: list[int] = None,
     order: int = None,
     attach_tickets=False,
     user=None,
     attach_ical=False,
-    attach_cached_files: List[int] = None,
+    attach_cached_files: list[int] = None,
     attach_file_base64: str = None,
     attach_file_name: str = None,
 ) -> bool:
@@ -431,7 +438,7 @@ def mail_send_task(
                             for i, e in enumerate(ical_events):
                                 cal = get_ical([e])
                                 email.attach(
-                                    'event-{}.ics'.format(i),
+                                    f'event-{i}.ics',
                                     cal.serialize(),
                                     'text/calendar',
                                 )
@@ -472,8 +479,11 @@ def mail_send_task(
             email.attach(attach_file_name, attach_file_content, 'application/pdf')
 
         try:
+            logger.info('Try to send email to %s with subject "%s"', to, subject)
+            logger.debug('Email backend: %s', backend)
             backend.send_messages([email])
         except (smtplib.SMTPResponseException, smtplib.SMTPSenderRefused) as e:
+            logger.debug('Got error %s. Retry...', e)
             if e.smtp_code in (101, 111, 421, 422, 431, 442, 447, 452):
                 # Most likely temporary, retry again (but pretty soon)
                 try:
@@ -485,7 +495,7 @@ def mail_send_task(
                         order.log_action(
                             'eventyay.event.order.email.error',
                             data={
-                                'subject': 'SMTP code {}, max retries exceeded'.format(e.smtp_code),
+                                'subject': f'SMTP code {e.smtp_code}, max retries exceeded',
                                 'message': e.smtp_error.decode()
                                 if isinstance(e.smtp_error, bytes)
                                 else str(e.smtp_error),
@@ -500,14 +510,14 @@ def mail_send_task(
                 order.log_action(
                     'eventyay.event.order.email.error',
                     data={
-                        'subject': 'SMTP code {}'.format(e.smtp_code),
+                        'subject': f'SMTP code {e.smtp_code}',
                         'message': e.smtp_error.decode() if isinstance(e.smtp_error, bytes) else str(e.smtp_error),
                         'recipient': '',
                         'invoices': [],
                     },
                 )
 
-            raise SendMailException('Failed to send an email to {}.'.format(to))
+            raise SendMailException(f'Failed to send an email to {to}.')
         except smtplib.SMTPRecipientsRefused as e:
             smtp_codes = [a[0] for a in e.recipients.values()]
 
@@ -537,7 +547,7 @@ def mail_send_task(
                     },
                 )
 
-            raise SendMailException('Failed to send an email to {}.'.format(to))
+            raise SendMailException(f'Failed to send an email to {to}.')
         except Exception as e:
             if isinstance(
                 e,
@@ -575,7 +585,7 @@ def mail_send_task(
                     },
                 )
             logger.exception('Error sending email')
-            raise SendMailException('Failed to send an email to {}.'.format(to))
+            raise SendMailException(f'Failed to send an email to {to}.')
 
 
 def mail_send(*args, **kwargs):
@@ -593,37 +603,35 @@ def render_mail(template, context):
     return body
 
 
-def replace_images_with_cid_paths(body_html):
-    if body_html:
-        email = BeautifulSoup(body_html, 'lxml')
-        cid_images = []
-        for image in email.findAll('img'):
-            original_image_src = image['src']
-
-            try:
-                cid_id = 'image_%s' % cid_images.index(original_image_src)
-            except ValueError:
-                cid_images.append(original_image_src)
-                cid_id = 'image_%s' % (len(cid_images) - 1)
-
-            image['src'] = 'cid:%s' % cid_id
-
-        return str(email), cid_images
-    else:
+def replace_images_with_cid_paths(body_html: str) -> tuple[str, list[str]]:
+    if not body_html:
         return body_html, []
+    email = BeautifulSoup(body_html, 'lxml')
+    cid_images = []
+    for image in email.findAll('img'):
+        original_image_src = image['src']
+
+        try:
+            cid_id = f'image_{cid_images.index(original_image_src)}'
+        except ValueError:
+            cid_images.append(original_image_src)
+            cid_id = f'image_{len(cid_images) - 1}'
+
+        image['src'] = f'cid:{cid_id}'
+
+    return str(email), cid_images
 
 
-def attach_cid_images(msg, cid_images, verify_ssl=True):
+def attach_cid_images(msg: SafeMIMEMultipart, cid_images: Sequence[str], verify_ssl: bool = True):
     if cid_images and len(cid_images) > 0:
         msg.mixed_subtype = 'mixed'
         for key, image in enumerate(cid_images):
-            cid = 'image_%s' % key
+            cid = f'image_{key}'
             try:
-                mime_image = convert_image_to_cid(image, cid, verify_ssl)
-                if mime_image:
+                if mime_image := convert_image_to_cid(image, cid, verify_ssl):
                     msg.attach(mime_image)
-            except:
-                logger.exception('ERROR attaching CID image %s[%s]' % (cid, image))
+            except (ValueError, IndexError, requests.RequestException, ssl.SSLError):
+                logger.exception('ERROR attaching CID image %s[%s]', cid, image)
 
 
 def encoder_linelength(msg):
@@ -641,34 +649,36 @@ def encoder_linelength(msg):
     msg.set_payload(b'\r\n'.join(pieces))
 
 
-def convert_image_to_cid(image_src, cid_id, verify_ssl=True):
-    try:
-        if image_src.startswith('data:image/'):
-            image_type, image_content = image_src.split(',', 1)
-            image_type = re.findall(r'data:image/(\w+);base64', image_type)[0]
-            mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
-            mime_image.add_header('Content-Transfer-Encoding', 'base64')
-        elif image_src.startswith('data:'):
-            logger.exception('ERROR creating MIME element %s[%s]' % (cid_id, image_src))
-            return None
-        else:
-            image_src = normalize_image_url(image_src)
-
-            path = urlparse(image_src).path
-            guess_subtype = os.path.splitext(path)[1][1:]
-
-            response = requests.get(image_src, verify=verify_ssl)
-            mime_image = MIMEImage(response.content, _subtype=guess_subtype)
-
-        mime_image.add_header('Content-ID', '<%s>' % cid_id)
-
-        return mime_image
-    except:
-        logger.exception('ERROR creating mime_image %s[%s]' % (cid_id, image_src))
+# May raise:
+# - ValueError (If image_src lacks ",")
+# - IndexError (If regex failed)
+# - requests.RequestException
+# - ssl.SSLError
+def convert_image_to_cid(image_src: str, cid_id: str, verify_ssl: bool = True) -> MIMEImage | None:
+    if image_src.startswith('data:image/'):
+        # Let ValueError bubble up here.
+        image_type, image_content = image_src.split(',', 1)
+        image_type = re.findall(r'data:image/(\w+);base64', image_type)[0]
+        mime_image = MIMEImage(image_content, _subtype=image_type, _encoder=encoder_linelength)
+        mime_image.add_header('Content-Transfer-Encoding', 'base64')
+    elif image_src.startswith('data:'):
+        logger.warning('Non-image MIME element %s[%s]', cid_id, image_src)
         return None
+    else:
+        image_src = normalize_image_url(image_src)
+
+        path = urlparse(image_src).path
+        guess_subtype = os.path.splitext(path)[1][1:]
+
+        response = requests.get(image_src, verify=verify_ssl)
+        mime_image = MIMEImage(response.content, _subtype=guess_subtype)
+
+    mime_image.add_header('Content-ID', f'<{cid_id}>')
+
+    return mime_image
 
 
-def normalize_image_url(url):
+def normalize_image_url(url: str) -> str:
     if '://' not in url:
         """
         If we see a relative URL in an email, we can't know if it is meant to be a media file
@@ -700,14 +710,16 @@ def get_mail_backend(timeout=None):
     from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 
     gs = GlobalSettingsObject()
+    smtp_host = gs.settings.smtp_host
+    smtp_port = gs.settings.smtp_port
 
     if gs.settings.email_vendor is not None:
         if gs.settings.email_vendor == 'sendgrid':
             return SendGridEmail(api_key=gs.settings.send_grid_api_key)
-        else:
+        if smtp_reachable(smtp_host, smtp_port, timeout=timeout):
             return CustomSMTPBackend(
-                host=gs.settings.smtp_host,
-                port=gs.settings.smtp_port,
+                host=smtp_host,
+                port=smtp_port,
                 username=gs.settings.smtp_username,
                 password=gs.settings.smtp_password,
                 use_tls=gs.settings.smtp_use_tls,
@@ -715,5 +727,9 @@ def get_mail_backend(timeout=None):
                 fail_silently=False,
                 timeout=timeout,
             )
-    else:
-        return get_connection(fail_silently=False)
+        logger.warning(
+            'Global SMTP %s:%s is not reachable, falling back to system email backend',
+            smtp_host,
+            smtp_port,
+        )
+    return get_connection(fail_silently=False, timeout=timeout)

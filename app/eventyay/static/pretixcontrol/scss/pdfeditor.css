@@ -69,3 +69,7 @@ body {
     margin-top: 10px;
     margin-bottom: 0;
 }
+
+#editor-toolbox-area .colorpicker.colorpicker-2x {
+    min-width: 244px;
+}

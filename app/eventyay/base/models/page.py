@@ -19,6 +19,10 @@ class Page(LoggedModel):
     link_on_website_start_page = models.BooleanField(
         default=False, verbose_name=_('Show link on the website start page')
     )
+    link_in_system = models.BooleanField(
+        default=True,
+        verbose_name=_('Show in header and footer on system pages'),
+    )
     link_in_header = models.BooleanField(default=False, verbose_name=_('Show in header menu on all pages'))
     link_in_footer = models.BooleanField(default=False, verbose_name=_('Show in website footer menu on all pages'))
     confirmation_required = models.BooleanField(

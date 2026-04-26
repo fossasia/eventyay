@@ -10,6 +10,7 @@ import eslint from 'vite-plugin-eslint'
 const stylusOptions = {
   paths: [
     path.resolve(__dirname, './src/styles'),
+    path.resolve(__dirname, '../schedule/src/styles'),
     path.resolve(__dirname, 'node_modules'),
     path.resolve(__dirname, 'node_modules/buntpapier')
   ],
@@ -124,24 +125,33 @@ export default defineConfig(({ mode }) => {
         store: path.resolve(__dirname, 'src/store'),
         styles: path.resolve(__dirname, 'src/styles'),
         views: path.resolve(__dirname, 'src/views'),
+        // Redirect schedule component imports to shared schedule module
+        '@schedule': path.resolve(__dirname, '../schedule/src'),
         features: path.resolve(__dirname, 'src/features'),
         i18n: path.resolve(__dirname, 'src/i18n'),
         theme: path.resolve(__dirname, 'src/theme'),
         'has-emoji': path.resolve(__dirname, 'build/has-emoji/emoji.json'),
         // Reduce moment-timezone data size similar to previous webpack plugin
-  'moment-timezone': 'moment-timezone/builds/moment-timezone-with-data-10-year-range',
-  // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
-  sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
+        'moment-timezone': path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js'),
+        // Ensure schedule component imports resolve from video's node_modules
+        'markdown-it': path.resolve(__dirname, 'node_modules/markdown-it'),
+        'markdown-it-multimd-table': path.resolve(
+          __dirname,
+          'node_modules/markdown-it-multimd-table'
+        ),
+        dompurify: path.resolve(__dirname, 'node_modules/dompurify'),
+        // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
+        sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
       }
     },
     optimizeDeps: {
       include: [
         'color',
-        'buntpapier'
+        'buntpapier',
+        'moment-timezone'
       ],
       exclude: [
-        'pdfjs-dist',
-        '@pretalx/schedule' // excluded pretalx since local components replace its usage
+        'pdfjs-dist'
       ],
       esbuildOptions: {
         target: 'esnext'
@@ -190,7 +200,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('uuid')) return 'vendor-uuid'
               if (id.includes('register-service-worker')) return 'vendor-sw'
               if (id.includes('mux-embed') || id.includes('mux.js')) return 'vendor-mux'
-              if (id.includes('qrcode')) return 'vendor-qrcode'
               if (id.includes('random-js')) return 'vendor-randomjs'
               if (id.includes('web-animations-js')) return 'vendor-webanimations'
               return 'vendor'

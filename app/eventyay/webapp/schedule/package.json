@@ -26,8 +26,10 @@
   },
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.34",
-    "luxon": "^3.5.0",
+    "dompurify": "^3.3.3",
     "markdown-it": "^14.1.0",
+    "markdown-it-multimd-table": "^4.2.3",
+    "moment-timezone": "^0.6.0",
     "vue": "^3.5.0-rc.1"
   },
   "devDependencies": {

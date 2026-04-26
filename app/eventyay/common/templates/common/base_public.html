@@ -7,8 +7,9 @@
 {% load presale_locale %}
 {% load tz %}
 {% load static %}
+{% load eventurl %}
 
-{% with current_event=request.event|default:event %}
+{% with current_event=request.event|default:None %}
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
@@ -19,7 +20,6 @@
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
         <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
-        {{ html_head|safe }}
         {% if current_event and current_event.display_settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
         {% else %}
@@ -41,6 +41,7 @@
         {% endblock %}
 
         <script src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
+        {{ html_head|safe }}
 
         {% block public_head_before_assets %}{% endblock public_head_before_assets %}
 
@@ -87,20 +88,51 @@
             {% block header_background %}{% endblock header_background %}
         </div>
         {% block site_notice %}
-            {% if current_event and not current_event.is_public and not is_html_export %}
+            {% if current_event and not current_event.live and not is_html_export %}
                 <div id="event-nonpublic" class="d-print-none">
                     <i class="fa fa-user-secret"></i>
                     {% blocktranslate trimmed %}
-                        This event is currently non-public. Only organisers can see it.
+                        This event is currently offline. Only event team members and system administrators can see it.
                     {% endblocktranslate %}
                 </div>
+            {% endif %}
+            {% private_testmode_tickets_enabled as tickets_private_testmode %}
+            {% private_testmode_talks_enabled as talks_private_testmode %}
+            {% is_event_team_member as show_testmode_warning %}
+            {% if show_testmode_warning and not is_html_export %}
+                {% if tickets_private_testmode or talks_private_testmode %}
+                    <div id="event-testmode" class="d-print-none">
+                        <i class="fa fa-flask"></i>
+                        {% if tickets_private_testmode and talks_private_testmode %}
+                            {% blocktranslate trimmed %}
+                                Tickets and talk pages are in private test mode. Only event team members and system administrators can see them.
+                            {% endblocktranslate %}
+                        {% elif tickets_private_testmode %}
+                            {% blocktranslate trimmed %}
+                                Tickets are in private test mode. Only event team members and system administrators can see them.
+                            {% endblocktranslate %}
+                        {% else %}
+                            {% blocktranslate trimmed %}
+                                Talk pages are in private test mode. Only event team members and system administrators can see them.
+                            {% endblocktranslate %}
+                        {% endif %}
+                    </div>
+                {% endif %}
             {% endif %}
         {% endblock site_notice %}
         <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
             <header>
+                {% if current_event and not is_html_export %}
+                    <a href="{% url 'presale:index' %}" class="event-home-back d-print-none" aria-label="{% translate 'Home' %}">
+                        <span class="event-home-back-pill">
+                            <i class="fa fa-angle-left event-home-back-icon" aria-hidden="true"></i>
+                            <span class="event-home-back-label" aria-hidden="true">{% translate 'Home' %}</span>
+                        </span>
+                    </a>
+                {% endif %}
                 <div class="event-hero">
                     <div class="event-hero-overlay">
-                        <div class="event-brand">
+                        <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% endif %}">
                             <div class="event-logo">
                                 <a href="{% block nav_link %}{% endblock nav_link %}">
                                     {% block event_logo %}
@@ -130,19 +162,39 @@
                                 </div>
                             {% endif %}
                         </div>
+                        {% if show_online_video_link %}
+                            {% if request.resolver_match.namespace == 'agenda' %}
+                                {% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug as join_event_url %}
+                            {% else %}
+                                {% eventurl current_event 'presale:event.onlinevideo.join' as join_event_url %}
+                            {% endif %}
+                            <div class="header-join-video-floating-mobile">
+                                    <a href="{{ join_event_url }}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{% translate 'Join online video' %}" aria-label="{% translate 'Join online video' %}">
+                                        <i class="fa fa-video-camera" aria-hidden="true"></i>
+                                        <span class="join-video-text">{% translate "Join online video" %}</span>
+                                    </a>
+                                </div>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="header-wrapper">
-                    <div id="header-tabs">
-                        {% block header_tabs %}{% endblock header_tabs %}
-                        <div class="header-row-right">
-                            {% block header_right %}
-                                {% include "common/fragment_header_user.html" with current_event=current_event %}
-                            {% endblock header_right %}
+                {% block header_navigation %}{% endblock header_navigation %}
+            </header>
+            {% block header_navigation_after %}
+                <div class="presale-sticky-tabs-wrap">
+                    <div class="header-wrapper presale-sticky-tabs-inner">
+                        <div id="header-tabs" class="presale-sticky-tabs">
+                            <div class="presale-tabs-scroll">
+                                {% block header_tabs %}{% endblock header_tabs %}
+                            </div>
+                            <div class="header-row-right">
+                                {% block header_right %}
+                                    {% include "common/fragment_header_user.html" with current_event=current_event %}
+                                {% endblock header_right %}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </header>
+            {% endblock header_navigation_after %}
             <div class="card" id="main-card">
                 {% block alerts %}
                     {% if messages %}

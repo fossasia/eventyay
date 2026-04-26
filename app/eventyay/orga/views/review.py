@@ -2,10 +2,13 @@ import statistics
 from collections import defaultdict
 from contextlib import suppress
 
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Max, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView
@@ -218,9 +221,9 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
                 TalkQuestionVariant.BOOLEAN,
                 TalkQuestionVariant.CHOICES,
                 TalkQuestionVariant.MULTIPLE,
+                TalkQuestionVariant.COUNTRY,
                 TalkQuestionVariant.DATE,
                 TalkQuestionVariant.DATETIME,
-                TalkQuestionVariant.BOOLEAN,
                 TalkQuestionVariant.NUMBER,
             ],
         )
@@ -671,7 +674,53 @@ class ReviewAssignment(EventPermissionRequired, FormView):
     @context
     @cached_property
     def review_teams(self):
-        return self.request.event.teams.filter(is_reviewer=True)
+        """Teams that may review (dedicated reviewers or submission managers)."""
+        return (
+            self.request.event.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))
+            .distinct()
+            .order_by('name')
+            .prefetch_related('members', 'limit_tracks')
+        )
+
+    @context
+    @cached_property
+    def review_team_rows(self):
+        """Per-team rows for the assignment table (URLs, delete eligibility)."""
+        org = self.request.event.organizer
+        can_manage_teams = self.request.user.has_organizer_permission(
+            org,
+            'can_change_teams',
+            request=self.request,
+        )
+        return_path = self.request.get_full_path()
+
+        admin_team_ids = set(
+            org.teams.filter(can_change_teams=True, members__isnull=False)
+            .values_list('pk', flat=True)
+            .distinct()
+        )
+
+        rows = []
+        for team in self.review_teams:
+            delete_confirm_url = None
+            if can_manage_teams and bool(admin_team_ids - {team.pk}):
+                delete_confirm_url = (
+                    reverse(
+                        'eventyay_common:organizer.team.delete',
+                        kwargs={'organizer': org.slug, 'team': team.pk},
+                    )
+                    + '?'
+                    + urlencode({'next': return_path})
+                )
+            rows.append(
+                {
+                    'team': team,
+                    'teams_tab_url': team.get_orga_teams_tab_url(next_url=return_path),
+                    'can_manage_teams': can_manage_teams,
+                    'delete_confirm_url': delete_confirm_url,
+                }
+            )
+        return rows
 
     @context
     def tablist(self):

@@ -35,7 +35,7 @@
 
 body.sidebar-minimized {
   .sidebar {
-    width: 45px;
+    width: $sidebar-minimized-width;
     overflow: hidden;
     transition: none;
 
@@ -69,7 +69,8 @@ body.sidebar-minimized {
         align-items: center;
         text-decoration: none;
         position: relative;
-
+        height: 56px;
+        
         span.caret {
           display: none;
         }
@@ -87,13 +88,13 @@ body.sidebar-minimized {
   }
 
   #page-wrapper {
-    margin-left: 45px;
+    margin-left: $sidebar-minimized-width;
   }
 }
 
 // When sidebar is fully expanded (not minimized) on desktop
 body:not(.sidebar-minimized) .sidebar {
-  width: 250px;
+  width: $sidebar-width;
 
   .nav>li>a {
     .sidebar-text {
@@ -146,7 +147,7 @@ body:not(.sidebar-minimized) .sidebar {
 }
 
 body:not(.sidebar-minimized) #page-wrapper {
-  margin-left: 250px;
+  margin-left: $sidebar-width;
 }
 
 @media (max-width: 767px) {
@@ -159,7 +160,7 @@ body:not(.sidebar-minimized) #page-wrapper {
     top: var(--navbar-height, 50px);
     bottom: 0;
     left: 0;
-    width: 250px;
+    width: $sidebar-width;
     background-color: #f8f8f8;
     z-index: 12;
     transform: translateX(-100%);
@@ -210,7 +211,7 @@ body:not(.sidebar-minimized) #page-wrapper {
 
   body:not(.sidebar-minimized) .sidebar {
     transform: translateX(0%);
-    width: 250px;
+    width: $sidebar-width;
 
     .nav>li>a {
       .sidebar-text {
@@ -237,164 +238,6 @@ body:not(.sidebar-minimized) #page-wrapper {
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  body.sidebar-minimized .sidebar:hover {
-    width: 250px;
-    overflow-y: auto;
-    overflow-x: visible;
-    transition: none;
-
-    .nav>li {
-      >a {
-        padding: 10px 15px;
-
-        .sidebar-text {
-          display: inline-block;
-        }
-
-        .fa,
-        svg {
-          margin-right: 5px;
-        }
-      }
-    }
-
-    .nav>li>a.arrow {
-      display: block;
-      position: absolute;
-      right: 0;
-      top: 0;
-
-      .fa.arrow {
-        line-height: 19px;
-        width: 10px;
-        text-align: center;
-
-        &:before {
-          content: "\f104";
-        }
-      }
-    }
-
-    .nav>li.active>a>.fa.arrow:before {
-      content: "\f107";
-    }
-
-    .nav>li>a.has-children {
-      margin-right: 40px;
-    }
-
-    .sidebar-nav .nav-second-level {
-      &.collapse {
-        display: none;
-      }
-
-      &.collapse.in {
-        display: block;
-      }
-
-      li {
-        border-bottom: none;
-
-        a {
-          padding-left: 37px;
-        }
-      }
-    }
-
-    .sidebar-nav .nav-third-level {
-      &.collapse {
-        display: none;
-      }
-
-      &.collapse.in {
-        display: block;
-      }
-
-      li {
-        border-bottom: none;
-
-        a {
-          padding-left: 52px;
-        }
-      }
-    }
-
-    ul li {
-      border-bottom: 1px solid darken($gray-lightest, 6.5%);
-      position: relative;
-
-      a {
-        &.active {
-          background-color: #eeeeee;
-        }
-      }
-    }
-
-    li.active {
-      >ul.nav-second-level {
-        display: block;
-      }
-    }
-
-    .context-selector {
-      .dropdown-toggle {
-        padding: 8px 0 8px 4px;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        text-decoration: none;
-        position: relative;
-
-        span.caret {
-          position: absolute;
-          right: 15px;
-          top: 50%;
-          margin-top: -2px;
-        }
-
-        .context-icon {
-          min-width: 38px;
-          flex-shrink: 0;
-        }
-      }
-
-      border-bottom: 2px solid darken($gray-lightest, 6.5%);
-
-      .context-indicator {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        overflow: hidden;
-        margin-left: 2px;
-
-        span {
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          overflow: hidden;
-          line-height: 17px;
-        }
-
-        span.context-name {
-          font-weight: 600;
-          font-size: 15px;
-          padding-bottom: 2px;
-          margin-bottom: 2px;
-        }
-
-        span.context-meta {
-          font-size: 11px;
-          color: $body-color-light;
-          font-weight: normal;
-        }
-      }
-    }
-  }
-
-  body.sidebar-minimized:has(.sidebar:hover) #page-wrapper {
-    margin-left: 250px;
-  }
-}
 
 body.sidebar-minimized .sidebar {
   min-height: 100vh;

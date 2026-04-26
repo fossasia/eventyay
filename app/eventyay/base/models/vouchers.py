@@ -135,6 +135,14 @@ class Voucher(LoggedModel):
         verbose_name=_('Allow to bypass quota'),
         help_text=_('If activated, a holder of this voucher code can buy tickets, even if there are none left.'),
     )
+    allow_ignore_approval = models.BooleanField(
+        default=False,
+        verbose_name=_('Allow to bypass approval'),
+        help_text=_(
+            'If activated, a holder of this voucher code can buy tickets without awaiting approval by the '
+            'organiser. This is applicable for products that require approval.'
+        ),
+    )
     price_mode = models.CharField(
         verbose_name=_('Price mode'),
         max_length=100,

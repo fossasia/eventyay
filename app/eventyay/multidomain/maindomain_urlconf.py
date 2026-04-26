@@ -3,7 +3,6 @@ import logging
 
 from django.apps import apps
 from django.urls import include, path, re_path
-from django.views.generic import TemplateView
 
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
@@ -15,8 +14,10 @@ from eventyay.presale.urls import (
     locale_patterns,
     organizer_patterns,
 )
+from eventyay.presale.views.startpage import StartPageView
 
-from .views import VideoAssetView, VideoSPAView, AnonymousInviteRedirectView
+from .views import AnonymousInviteRedirectView, VideoAssetView, VideoSPAView
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ presale_patterns_main = [
                     ),
                     path(
                         '',
-                        TemplateView.as_view(template_name='pretixpresale/index.html'),
+                        StartPageView.as_view(),
                         name='index',
                     ),
                 ],

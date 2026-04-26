@@ -24,7 +24,7 @@ def is_submission_visible_via_schedule(user, submission):
 @rules.predicate
 def is_agenda_visible(user, event):
     event = event.event
-    return bool(event and event.is_public and event.get_feature_flag('show_schedule') and event.current_schedule)
+    return bool(event and event.talks_published and event.get_feature_flag('show_schedule') and event.current_schedule)
 
 
 can_view_schedule = is_agenda_visible | orga_can_change_submissions | (is_reviewer & can_view_speaker_names)

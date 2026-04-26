@@ -7,6 +7,8 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
+from eventyay.common.permissions import user_has_cfp_submissions
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 register = template.Library()
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ def cfp_locale_switch_url(context, locale_code):
 @register.filter
 def short_user_label(user):
     """
-    Compact user display: prefer first name, then name, then email local part.
+    Compact user display: prefer first name, then full name, then email local part.
     Truncate to 11 chars with ellipsis when longer.
     """
     if not user:
@@ -152,9 +154,61 @@ def can_view_talks(context, event=None):
 
 
 @register.simple_tag(takes_context=True)
+def can_view_featured_sessions_public(context, event=None):
+    """Whether public UI may link to featured sessions (same gate as :class:`FeaturedView`).
+
+    Uses ``are_featured_submissions_visible`` so org setting "Show featured sessions" applies
+    to everyone (including organizers on the public site). ``has_perm('list_featured')`` is
+    intentionally not used here: it always passes for orga via ``orga_can_change_submissions``.
+    """
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not request or not event:
+        return False
+    user = getattr(request, 'user', None)
+    if user is None:
+        return False
+    return are_featured_submissions_visible(user, event)
+
+
+@register.simple_tag(takes_context=True)
 def private_testmode_tickets_enabled(context, event=None):
     request = context.get('request')
     event = event or getattr(request, 'event', None)
     if not event:
         return False
     return event.private_testmode and event.settings.get('private_testmode_tickets', True, as_type=bool)
+
+
+@register.simple_tag(takes_context=True)
+def private_testmode_talks_enabled(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    return event.private_testmode and event.settings.get('private_testmode_talks', False, as_type=bool)
+
+
+@register.simple_tag(takes_context=True)
+def is_event_team_member(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    user = getattr(request, 'user', None)
+    if not event or not user or user.is_anonymous:
+        return False
+    return user.has_event_permission(event.organizer, event, request=request)
+
+
+@register.simple_tag(takes_context=True)
+def user_has_submissions(context, event=None):
+    """Return True if the authenticated user has submitted proposals for this event."""
+    request = context.get('request')
+    if not request:
+        return False
+    user = request.user
+    if not user.is_authenticated:
+        return False
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    return user_has_cfp_submissions(request, event)

@@ -9,6 +9,7 @@ from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceFie
 from i18nfield.forms import I18nFormMixin, I18nModelForm
 from i18nfield.strings import LazyI18nString
 
+from eventyay.base.forms import I18nMarkdownTextarea
 from eventyay.common.forms.fields import ColorField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
@@ -30,6 +31,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
+from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 
 class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nFormMixin, forms.Form):
@@ -37,6 +39,7 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     Form for general CfP settings stored in event.cfp.settings.
     requires an 'obj' argument in __init__ which must be an Event instance with a related 'cfp' object.
     """
+
     use_tracks = forms.BooleanField(
         label=_('Use tracks'),
         required=False,
@@ -90,6 +93,19 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         # Save allow_gravatar setting
         self.instance.cfp.settings['allow_gravatar'] = self.cleaned_data.get('allow_gravatar', True)
         self.instance.cfp.save()
+        persist_cfp = kwargs.pop('persist_cfp', True)
+        update_count_length_in = kwargs.pop('update_count_length_in', True)
+
+        if update_count_length_in:
+            current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
+            if 'count_length_in' in self.cleaned_data:
+                new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
+            else:
+                new_count_length_in = current_count_length_in
+            self.instance.cfp.settings['count_length_in'] = new_count_length_in
+
+        if persist_cfp:
+            self.instance.cfp.save(update_fields=['settings'])
         super().save(*args, **kwargs)
 
     class Meta:
@@ -106,6 +122,16 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
     """
     Form for full CfP settings, including specific field requirements and custom questions.
     """
+
+    class Meta(CfPGeneralSettingsForm.Meta):
+        # The boolean feature-flag fields (use_tracks, present_multiple_times, etc.) are
+        # inherited from CfPGeneralSettingsForm but are NOT rendered on the Forms page
+        # template.  If JsonSubfieldMixin.save() were to process them here it would read
+        # False from the missing POST keys and silently overwrite the stored values.
+        # Override to empty so those flags are only written from CfPGeneralSettingsForm
+        # (the Content page), where the checkboxes are actually rendered.
+        json_fields = {}
+
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
         self.length_fields = [
@@ -170,7 +196,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                         ('required', _('Ask and require input')),
                     ],
                 )
-        
+
         # Add fields for custom questions
         # We use all_objects because we want to include reviewer questions and inactive questions
         # (so they can be re-activated)
@@ -182,7 +208,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                     initial = 'required'
                 else:
                     initial = 'optional'
-            
+
             self.fields[field_name] = forms.ChoiceField(
                 required=False,
                 initial=initial,
@@ -214,11 +240,11 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 self.instance.cfp.fields[key]['visibility'] = 'required'
             else:
                 self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
-        
+
         for key in self.length_fields:
             self.instance.cfp.fields[key]['min_length'] = self.cleaned_data.get(f'cfp_{key}_min_length')
             self.instance.cfp.fields[key]['max_length'] = self.cleaned_data.get(f'cfp_{key}_max_length')
-            
+
         # Save custom questions
         for question in TalkQuestion.all_objects.filter(event=self.instance):
             field_name = f'question_{question.pk}'
@@ -234,7 +260,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                         question.question_required = TalkQuestionRequired.OPTIONAL
                 question.save()
 
-        super().save(*args, **kwargs)
+        super().save(*args, persist_cfp=False, update_count_length_in=False, **kwargs)
+        self.instance.cfp.save(update_fields=['settings', 'fields'])
 
 
 class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
@@ -246,13 +273,18 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     hide_after_deadline = forms.BooleanField(
         label=_('Do not show Call for Speakers on the menu after the deadline'),
         required=False,
-        help_text=_('If enabled, the Call for Speakers link will be hidden from navigation menus once the submission deadline has passed.'),
+        help_text=_(
+            'If enabled, the Call for Speakers link will be hidden from navigation menus once the submission deadline has passed.'
+        ),
     )
 
     class Meta:
         model = CfP
         fields = ['headline', 'text', 'deadline']
-        widgets = {'deadline': HtmlDateTimeInput}
+        widgets = {
+            'deadline': HtmlDateTimeInput,
+            'text': I18nMarkdownTextarea,
+        }
         # These are JSON fields on cfp.settings
         json_fields = {
             'show_deadline': 'settings',
@@ -284,6 +316,8 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
     def __init__(self, *args, event=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['question'].required = True
+        self.fields['question'].label = _('Custom question')
         instance = getattr(self, 'instance', None)
         if not (instance and instance.pk):
             target = self.initial.get('target')
@@ -460,6 +494,23 @@ class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
+        # Set initial color for new tracks (when creating, not editing)
+        instance = kwargs.get('instance')
+        if not instance or not instance.pk:
+            initial = dict(kwargs.get('initial') or {})
+            if 'color' not in initial or not initial.get('color'):
+                # Prefer an existing color on the instance (if provided) before generating a new one
+                instance_color = getattr(instance, 'color', None) if instance is not None else None
+                if instance_color:
+                    initial['color'] = instance_color
+                elif event:
+                    existing_colors = {color.lower() for color in event.tracks.values_list('color', flat=True) if color}
+                    try:
+                        initial['color'] = generate_random_high_contrast_color(exclude_colors=existing_colors)
+                    except ValueError:
+                        # If we cannot generate a color, fall back to no initial color
+                        pass
+            kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             url = f'{event.cfp.urls.new_access_code}?track={self.instance.pk}'

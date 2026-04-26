@@ -52,7 +52,7 @@ def serialize_submission(submission):
 def serialize_speaker(speaker):
     return {
         'type': 'speaker',
-        'name': _n('Speaker', 'Speakers', 1) + f' {speaker.user.name}',
+        'name': _n('Speaker', 'Speakers', 1) + f' {speaker.user.fullname}',
         'url': speaker.orga_urls.base,
         'event': str(speaker.event.name),
     }
@@ -89,7 +89,7 @@ def nav_typeahead(request):
     show_user = (
         not query
         or (request.user.email and query.lower() in request.user.email.lower())
-        or (request.user.name and query.lower() in request.user.name.lower())
+        or (request.user.fullname and query.lower() in request.user.fullname.lower())
     )
 
     qs_orga = Organizer.objects.filter(pk__in=request.user.teams.values_list('organizer', flat=True))

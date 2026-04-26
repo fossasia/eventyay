@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.forms import CheckboxSelectMultiple, RadioSelect
 
 
@@ -16,8 +17,13 @@ class MultipleLanguagesWidget(CheckboxSelectMultiple):
         super().__init__(*args, **kwargs)
 
     def _sorted_choices(self):
-        # Single combined, alphabetically sorted list (case-insensitive)
-        return sorted(self.choices, key=lambda c: str(c[1]).lower())
+        # Sort by translated language names in the current UI locale.
+        choices = list(self.choices)
+        translated_names = {code: str(name) for code, name in settings.LANGUAGES}
+        return sorted(
+            choices,
+            key=lambda c: (str(translated_names.get(c[0], c[1])).casefold(), str(c[0])),
+        )
 
     def optgroups(self, name, value, attrs=None):
         self.choices = self._sorted_choices()

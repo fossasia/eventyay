@@ -10,11 +10,11 @@
                 {% endif %}
                 <span class="sidebar-text">{{ nav_element.label }}</span>
             </a>
-            <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseSidebar{{ forloop.counter }}" aria-controls="collapse{{ forloop.counter }}">
+            <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseSidebar{{ forloop.counter }}" aria-controls="collapseSidebar{{ forloop.counter }}" aria-expanded="{% if nav_element.active %}true{% else %}false{% endif %}">
                 <i class="fa fa-angle-down"></i>
             </a>
         </span>
-        <div class="collapse in{% if nav_element.active %} show{% endif %}" aria-expand="true" id="collapseSidebar{{ forloop.counter }}">
+        <div class="collapse{% if nav_element.active %} show{% endif %}" aria-hidden="{% if nav_element.active %}false{% else %}true{% endif %}" id="collapseSidebar{{ forloop.counter }}">
             {% for child in nav_element.children %}
                 <a href="{{ child.url }}" class="nav-link nav-link-second-level{% if child.active %} active{% endif %}">
                     <span>{{ child.label }}</span>

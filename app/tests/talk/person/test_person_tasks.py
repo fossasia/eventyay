@@ -26,7 +26,7 @@ def test_gravatar_refetch_called(user, caplog, mocker, event):
     user.refresh_from_db()
     assert user.get_gravatar is False
     assert (
-        f"gravatar returned http 404 when getting avatar for user {user.name}"
+        f"gravatar returned http 404 when getting avatar for user {user.fullname}"
         in caplog.text
     )
 
@@ -43,7 +43,7 @@ def test_gravatar_refetch_called_on_save(user, caplog, mocker):
     assert user.get_gravatar is False
 
     assert (
-        f"gravatar returned http 404 when getting avatar for user {user.name}"
+        f"gravatar returned http 404 when getting avatar for user {user.fullname}"
         in caplog.text
     )
 

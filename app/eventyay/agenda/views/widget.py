@@ -1,17 +1,24 @@
 import hashlib
+import os
 from urllib.parse import unquote
 
 from csp.decorators import csp_exempt
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.staticfiles import finders
 from django.http import Http404, HttpResponse, JsonResponse
-from django.views.decorators.cache import cache_page
 from django.views.decorators.http import condition
 from i18nfield.utils import I18nJSONEncoder
 
-from eventyay.talk_rules.agenda import is_widget_visible
 from eventyay.common.views import conditional_cache_page
+from eventyay.talk_rules.agenda import is_widget_visible
+from eventyay.talk_rules.submission import (
+    are_featured_submissions_visible,
+    schedule_widget_featured_cache_key_part,
+)
+
 
 WIDGET_JS_CHECKSUM = None
+WIDGET_JS_MTIME = None
 WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
@@ -22,11 +29,20 @@ def color_etag(request, organizer=None, event=None, **kwargs):
 def widget_js_etag(request, organizer=None, event=None, **kwargs):
     # The widget is stable across all events, we just return a checksum of the JS file
     # to make sure clients reload the widget when it changes.
-    global WIDGET_JS_CHECKSUM
-    if not WIDGET_JS_CHECKSUM:
-        file_path = finders.find(WIDGET_PATH)
+    global WIDGET_JS_CHECKSUM, WIDGET_JS_MTIME
+    file_path = finders.find(WIDGET_PATH)
+    if not file_path:
+        return 'missing'
+
+    try:
+        mtime = os.path.getmtime(file_path)
+    except OSError:
+        return 'missing'
+
+    if WIDGET_JS_CHECKSUM is None or WIDGET_JS_MTIME != mtime:
         with open(file_path, encoding='utf-8') as fp:
             WIDGET_JS_CHECKSUM = hashlib.md5(fp.read().encode()).hexdigest()
+        WIDGET_JS_MTIME = mtime
     return WIDGET_JS_CHECKSUM
 
 
@@ -42,11 +58,13 @@ def is_public_and_versioned(request, organizer=None, event=None, version=None, *
 
 
 def version_prefix(request, organizer=None, event=None, version=None, **kwargs):
-    """On non-versioned pages, we want cache-invalidation on schedule
-    release."""
+    """On non-versioned pages, invalidate cache on schedule release and featured-setting changes."""
+    featured_part = schedule_widget_featured_cache_key_part(request.event)
     if not version and request.event.current_schedule:
-        return request.event.current_schedule.version
-    return version
+        return f'{request.event.current_schedule.version}-{featured_part}'
+    if version:
+        return f'{version}-{featured_part}'
+    return f'nov-{featured_part}'
 
 
 @conditional_cache_page(
@@ -98,7 +116,12 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
     if not schedule:
         raise Http404()
 
-    result = schedule.build_data(all_talks=not schedule.version)
+    enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
+    result = schedule.build_data(
+        all_talks=not schedule.version,
+        enrich=enrich,
+        include_featured_speaker_metadata=are_featured_submissions_visible(AnonymousUser(), event),
+    )
     response = JsonResponse(result, encoder=I18nJSONEncoder)
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'
     response['Access-Control-Allow-Origin'] = '*'
@@ -113,9 +136,6 @@ def widget_script(request, organizer=None, event=None, **kwargs):
     # /<event>/widget/schedule.js path, as it cuts down the transferred data
     # by about 80% for the schedule.js file, which is the largest file on the
     # main schedule page).
-    if not request.user.has_perm('base.view_widget_schedule', request.event):
-        raise Http404()
-
     file_path = finders.find(WIDGET_PATH)
     with open(file_path, encoding='utf-8') as fp:
         code = fp.read()

@@ -46,7 +46,7 @@
             {% endif %}
             {% if line.has_questions %}
                 <dl>
-                    {% if line.product.admission and event.settings.attendee_names_asked %}
+                    {% if line.ask_attendee_name_parts %}
                         <dt class="sr-only">
                             {% trans "Attendee name" %}
                         </dt>
@@ -56,7 +56,7 @@
                             </span>
                         </dd>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_emails_asked and line.attendee_email %}
+                    {% if line.ask_attendee_email and line.attendee_email %}
                         <dt class="sr-only">
                             {% trans "Attendee email" %}
                         </dt>
@@ -66,10 +66,10 @@
                             </span>
                         </dd>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_addresses_asked %}
+                    {% if line.ask_attendee_address %}
                         <br>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_company_asked and line.company %}
+                    {% if line.ask_attendee_company and line.company %}
                         <dt class="sr-only">
                             {% trans "Attendee company" %}
                         </dt>
@@ -79,7 +79,17 @@
                             </span>
                         </dd>
                     {% endif %}
-                    {% if line.product.admission and event.settings.attendee_addresses_asked %}
+                    {% if line.ask_attendee_job_title and line.job_title %}
+                        <dt class="sr-only">
+                            {% translate "Attendee job title" %}
+                        </dt>
+                        <dd class="toplevel">
+                            <span data-toggle="tooltip" title="{% translate "Attendee job title" %}">
+                                {{ line.job_title }}
+                            </span>
+                        </dd>
+                    {% endif %}
+                    {% if line.ask_attendee_address %}
                         {% if line.street or line.zipcode or line.city %}
                             <dt class="sr-only">
                                 {% trans "Attendee address" %}
@@ -179,11 +189,11 @@
                             value="1" />
                         <input type="hidden" name="price_{{ line.product.id }}_{{ line.variation.id }}"
                                 value="{% if event.settings.display_net_prices %}{{ line.bundle_sum_net }}{% else %}{{ line.bundle_sum }}{% endif %}" />
-                    {% else %}
-                        <input type="hidden" name="product_{{ line.product.id }}"
-                                value="1" />
+                        {% else %}
+                        <input type="hidden" name="item_{{ line.product.id }}"
+                            value="1" />
                         <input type="hidden" name="price_{{ line.product.id }}"
-                                value="{% if event.settings.display_net_prices %}{{ line.bundle_sum_net }}{% else %}{{ line.bundle_sum }}{% endif %}" />
+                            value="{% if event.settings.display_net_prices %}{{ line.bundle_sum_net }}{% else %}{{ line.bundle_sum }}{% endif %}" />
                     {% endif %}
                     <button class="btn btn-mini btn-link {% if line.seat %}btn-invisible{% endif %}" title="{% trans "Add one more" %}" aria-label="{% trans "Add one more" %}" {% if line.seat %}disabled{% endif %}>
                         <i class="fa fa-plus" aria-hidden="true"></i>

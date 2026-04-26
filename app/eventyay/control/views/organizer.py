@@ -104,7 +104,7 @@ class ExportDoView(OrganizerPermissionRequiredMixin, ExportMixin, AsyncAction, T
 
     def get_error_url(self):
         return reverse(
-            'control:organizer.export',
+            'eventyay_common:organizer.export',
             kwargs={'organizer': self.request.organizer.slug},
         )
 
@@ -123,7 +123,7 @@ class ExportDoView(OrganizerPermissionRequiredMixin, ExportMixin, AsyncAction, T
         if not self.exporter:
             messages.error(self.request, _('The selected exporter was not found.'))
             return redirect(
-                'control:organizer.export',
+                'eventyay_common:organizer.export',
                 kwargs={'organizer': self.request.organizer.slug},
             )
 

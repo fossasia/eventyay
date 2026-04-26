@@ -15,6 +15,41 @@ def get_event_language_cookie_name(event_slug: str, organizer_slug: str | None =
     return f"{settings.LANGUAGE_COOKIE_NAME}_event_{safe_organizer}_{safe_event}"
 
 
+def get_event_enforce_ui_language_cookie_name(event_slug: str, organizer_slug: str | None = None) -> str:
+    """Return a stable, per-event cookie name for UI-language enforcement setting."""
+    safe_event = slugify(event_slug or '') or 'event'
+    safe_organizer = slugify(organizer_slug or '') or 'organizer'
+    return f"{settings.LANGUAGE_COOKIE_NAME}_event_enforce_ui_{safe_organizer}_{safe_event}"
+
+
+EVENT_ENFORCE_UI_LANGUAGE_DEFAULT = True
+
+
+def get_event_enforce_ui_language(cookies: dict, event_slug: str, organizer_slug: str | None = None) -> bool:
+    """Read the UI-language enforcement setting from cookies.
+
+    Returns ``True`` (languages linked) by default when the cookie is absent.
+    This ensures that new visitors automatically have the event language and
+    UI language linked without any manual action.
+    """
+    cookie_name = get_event_enforce_ui_language_cookie_name(event_slug, organizer_slug)
+    raw = cookies.get(cookie_name)
+    if raw is None:
+        return EVENT_ENFORCE_UI_LANGUAGE_DEFAULT
+    return raw == '1'
+
+
+def strict_match_language(value: str | None, supported: list[str] | tuple[str, ...] | None) -> str | None:
+    """Return a strictly matching language code from supported locales."""
+    if not value or not supported:
+        return None
+    value_lower = value.lower()
+    for code in supported:
+        if code and code.lower() == value_lower:
+            return code
+    return None
+
+
 def validate_language(value, supported):
     """Validate and normalize a language code against a supported list."""
     with suppress(LookupError):

@@ -1,0 +1,55 @@
+/* Shared mobile styles for component nav */
+
+@media (max-width: 767px) {
+  /* Fix: allow sidebar menu items to expand on mobile */
+  .sidebar .nav > li {
+    min-height: 41px;
+    height: auto;
+  }
+  .sidebar .nav > li > a {
+    min-height: 41px;
+    height: auto;
+  }
+  body:not(.sidebar-minimized) .sidebar .nav > li > a.arrow {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse {
+    display: none;
+  }
+  body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse.in,
+  body:not(.sidebar-minimized) .sidebar .nav-second-level.collapse.show {
+    display: block;
+  }
+  body:not(.sidebar-minimized) .sidebar .nav > li > a.has-children {
+    margin-right: 40px;
+  }
+
+  #event-nav .navigation .navigation-button,
+  #main-title .navigation-button {
+    flex: 1 0 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 10px;
+  }
+
+  #main-title .navigation-button {
+    margin-left: 0;
+  }
+
+  #event-nav .navigation .navigation-button .header-nav,
+  #main-title .navigation-button .header-nav {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}

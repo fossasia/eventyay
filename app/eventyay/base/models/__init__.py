@@ -1,4 +1,5 @@
 import zoneinfo
+
 from .access_code import SubmitterAccessCode
 from .announcement import Announcement
 from .audit import AuditLog
@@ -15,8 +16,8 @@ from .comment import SubmissionComment
 from .devices import Device, Gate
 from .event import (
     Event,
-    EventExtraLink,
     Event_SettingsStore,
+    EventExtraLink,
     EventLock,
     EventMetaProperty,
     EventMetaValue,
@@ -38,21 +39,6 @@ from .exhibitor import (
 from .feedback import Feedback
 from .giftcards import GiftCard, GiftCardAcceptance, GiftCardTransaction
 from .invoices import Invoice, InvoiceLine, invoice_filename
-from .product import (
-    Product,
-    ProductAddOn,
-    ProductBundle,
-    ProductCategory,
-    ProductMetaProperty,
-    ProductMetaValue,
-    ProductVariation,
-    Question,
-    QuestionOption,
-    Quota,
-    SubEventProduct,
-    SubEventProductVariation,
-    productpicture_upload_to,
-)
 from .janus import JanusServer
 from .log import ActivityLog, LogEntry
 from .mail import MailTemplate, MailTemplateRoles, QueuedMail
@@ -85,6 +71,21 @@ from .organizer import (
 )
 from .poll import Poll, PollOption, PollVote
 from .poster import Poster, PosterLink, PosterPresenter, PosterVote
+from .product import (
+    Product,
+    ProductAddOn,
+    ProductBundle,
+    ProductCategory,
+    ProductMetaProperty,
+    ProductMetaValue,
+    ProductVariation,
+    Question,
+    QuestionOption,
+    Quota,
+    SubEventProduct,
+    SubEventProductVariation,
+    productpicture_upload_to,
+)
 from .profile import SpeakerProfile
 from .question import (
     Answer,
@@ -103,6 +104,7 @@ from .schedule import Schedule
 from .seating import Seat, SeatCategoryMapping, SeatingPlan
 from .settings import GlobalSettings
 from .slot import TalkSlot
+from .stream_schedule import StreamSchedule
 from .streaming import StreamingServer
 from .submission import Submission, SubmissionFavourite, SubmissionStates
 from .systemlog import SystemLog
@@ -113,6 +115,7 @@ from .turn import TurnServer
 from .type import SubmissionType
 from .vouchers import InvoiceVoucher, Voucher
 from .waitinglist import WaitingListEntry
+
 
 __all__ = [
     "AbstractPosition",
@@ -213,6 +216,7 @@ __all__ = [
     "RoomQuestion",
     "RoomView",
     "RoulettePairing",
+    "StreamSchedule",
     "RouletteRequest",
     "Schedule",
     "Seat",

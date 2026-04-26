@@ -53,6 +53,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import User
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.services.locking import NoLockManager
+from eventyay.base.services.system_questions import product_has_system_questions
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import order_gracefully_delete
 
@@ -96,10 +97,7 @@ class SecureOrderQuerySet(models.QuerySet):
             raise
 
         order_secret = order.tagged_secret(tag, secret_length) if tag else order.secret
-        valid_digest = hash_compare(order_secret, received_secret)
-        valid_sha1 = tag and hash_compare(hashlib.sha1(order.secret.encode()).hexdigest(), received_secret)
-
-        if not valid_digest and not valid_sha1:
+        if not hash_compare(order_secret, received_secret):
             raise Order.DoesNotExist
 
         return order
@@ -260,21 +258,19 @@ class Order(LockModel, LoggedModel):
     def user_has_existing_order(cls, event, email):
         """
         Check if a user (identified by email) already has an existing order for the event.
-        
+
         Args:
             event: The event to check
             email: The user's email address
-            
+
         Returns:
             bool: True if user has existing order, False otherwise
         """
         if not email:
             return False
-            
+
         return cls.objects.filter(
-            event=event,
-            email__iexact=email,
-            status__in=[cls.STATUS_PENDING, cls.STATUS_PAID]
+            event=event, email__iexact=email, status__in=[cls.STATUS_PENDING, cls.STATUS_PAID]
         ).exists()
 
     @property
@@ -609,7 +605,13 @@ class Order(LockModel, LoggedModel):
         if self.user_change_deadline and now() > self.user_change_deadline:
             return False
 
-        return self.event.settings.change_allow_user_variation and any([op.has_variations for op in positions])
+        legacy_event_setting = self.event.settings.get('change_allow_user_variation', as_type=bool, default=False)
+        return any(
+            [
+                op.has_variations and (op.product.allow_user_variation_change or legacy_event_setting)
+                for op in positions
+            ]
+        )
 
     @property
     @scopes_disabled()
@@ -774,7 +776,7 @@ class Order(LockModel, LoggedModel):
         ):
             return False
 
-        if self.event.settings.allow_modifications not in ("order", "attendee"):
+        if self.event.settings.allow_modifications not in ('order', 'attendee'):
             return False
 
         update_deadline = self.modify_deadline()
@@ -795,9 +797,8 @@ class Order(LockModel, LoggedModel):
 
         if self.event.settings.get('invoice_address_asked', as_type=bool):
             return True
-        ask_names = self.event.settings.get('attendee_names_asked', as_type=bool)
         for cp in positions:
-            if (cp.product.admission and ask_names) or cp.product.questions.all():
+            if product_has_system_questions(self.event, cp.product) or cp.product.questions.all():
                 return True
 
         return False  # nothing there to modify
@@ -816,9 +817,9 @@ class Order(LockModel, LoggedModel):
             return self.email and self.email.lower() == email.lower()
 
         elif setting == 'attendee':
-            return (
-                self.email and self.email.lower() == email.lower()
-            ) or self.positions.filter(attendee_email__iexact=email).exists()
+            return (self.email and self.email.lower() == email.lower()) or self.positions.filter(
+                attendee_email__iexact=email
+            ).exists()
 
         return False
 
@@ -1348,6 +1349,14 @@ class AbstractPosition(models.Model):
         else:
             return {}
 
+    @property
+    def approval_is_bypassed(self):
+        return bool(self.voucher and self.voucher.allow_ignore_approval)
+
+    @property
+    def requires_approval(self):
+        return bool(self.product.require_approval and not self.approval_is_bypassed)
+
     @meta_info_data.setter
     def meta_info_data(self, d):
         self.meta_info = json.dumps(d)
@@ -1364,16 +1373,21 @@ class AbstractPosition(models.Model):
 
         # We need to clone our question objects, otherwise we will override the cached
         # answers of other products in the same cart if the question objects have been
-        # selected via prefetch_related
+        # selected via prefetch_related.
+        # Inactive questions are always excluded for consistency (checkout and backend).
+        def is_active_question(q):
+            return getattr(q, 'active', True)
+
         if not all:
             if getattr(self.product, 'questions_to_ask', None) is not None:
-                questions = list(copy.copy(q) for q in self.product.questions_to_ask if q.active)
+                questions = list(copy.copy(q) for q in self.product.questions_to_ask)
             else:
                 questions = list(
-                    copy.copy(q) for q in self.product.questions.filter(ask_during_checkin=False, hidden=False, active=True)
+                    copy.copy(q)
+                    for q in self.product.questions.filter(ask_during_checkin=False, hidden=False, active=True)
                 )
         else:
-            questions = list(copy.copy(q) for q in self.product.questions.all())
+            questions = list(copy.copy(q) for q in self.product.questions.filter(active=True))
 
         question_cache = {q.pk: q for q in questions}
 
@@ -2285,7 +2299,7 @@ class OrderPosition(AbstractPosition):
                 not self.secret
                 or OrderPosition.all.filter(
                     secret=self.secret,
-                    order__event__organizer_id=self.order.event.organizer_id,
+                    order__event=self.order.event,
                 ).exists()
             ):
                 assign_ticket_secret(

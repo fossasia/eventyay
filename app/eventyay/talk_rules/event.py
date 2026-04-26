@@ -4,7 +4,7 @@ from django.db.models import Q
 
 @rules.predicate
 def is_event_visible(user, event):
-    return event and event.is_public
+    return event and event.talks_published
 
 
 def get_events_for_user(user, queryset=None):
@@ -12,10 +12,10 @@ def get_events_for_user(user, queryset=None):
 
     queryset = queryset or Event.objects.all()
     if user.is_anonymous:
-        queryset = queryset.filter(is_public=True)
+        queryset = queryset.filter(talks_published=True)
     else:
         events = user.get_events_with_any_permission().values_list('pk', flat=True)
-        queryset = queryset.filter(Q(is_public=True) | Q(pk__in=events))
+        queryset = queryset.filter(Q(talks_published=True) | Q(pk__in=events))
     return queryset.order_by('-date_from')
 
 
@@ -58,6 +58,8 @@ def can_change_organizer_settings(user, obj):
 
 @rules.predicate
 def has_any_permission(user, obj):
+    if not user or user.is_anonymous:
+        return False
     return bool(user.get_permissions_for_event(obj.event))
 
 
@@ -80,4 +82,3 @@ def can_create_events(user, obj):
 @rules.predicate
 def is_any_organizer(user, obj):
     return user.is_administrator or user.teams.all().exists()
-

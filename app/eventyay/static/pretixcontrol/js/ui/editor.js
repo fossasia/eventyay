@@ -108,11 +108,13 @@ var editor = {
     pdf_viewport: null,
     _history_pos: 0,
     _history_modification_in_progress: false,
+    _toolbox_update_in_progress: false,
     dirty: false,
     pdf_url: null,
     uploaded_file_id: null,
     _window_loaded: false,
     _fabric_loaded: false,
+    _last_active_object: null,
 
     _px2mm: function (v) {
         return v / editor.pdf_scale / 72 * editor.pdf_page.userUnit * 25.4;
@@ -212,7 +214,7 @@ var editor = {
             o = editor._add_poweredby(d.content);
             o.content = d.content;
             o.scaleToHeight(editor._mm2px(d.size));
-        } else if (d.type === "textarea" || o.type === "text") {
+        } else if (d.type === "textarea" || d.type === "text") {
             o = editor._add_text();
             o.set('fill', 'rgb(' + d.color[0] + ',' + d.color[1] + ',' + d.color[2] + ')');
             o.set('fontSize', editor._pt2px(d.fontsize));
@@ -221,18 +223,20 @@ var editor = {
             o.set('fontWeight', d.bold ? 'bold' : 'normal');
             o.set('fontStyle', d.italic ? 'italic' : 'normal');
             o.downward = d.downward || false;
-            o.content = d.content;
+            o.content = editor._normalize_text_content(d.content);
             o.set('textAlign', d.align);
             if (d.rotation) {
                 o.rotate(d.rotation);
             }
-            if (d.content === "other") {
+            if (o.content === "other") {
                 o.set('text', d.text);
-            } else if (d.content === "other_i18n") {
+            } else if (o.content === "other_i18n") {
                 o.text_i18n = d.text_i18n
                 o.set('text', d.text_i18n[Object.keys(d.text_i18n)[0]]);
-            } else if (d.content) {
-                o.set('text', editor._get_text_sample(d.content));
+            } else if (o.content) {
+                o.set('text', editor._resolve_text_sample(o.content) || d.text || '');
+            } else if (d.text) {
+                o.set('text', d.text);
             }
             o.set('width', editor._mm2px(d.width));
             if (d.locale) {
@@ -261,13 +265,119 @@ var editor = {
         editor._update_toolbox_values();
     },
 
+    _normalize_text_content: function (key) {
+        if (key === 'item') {
+            return 'event_name';
+        }
+        return key;
+    },
+
+    _get_text_option: function (key) {
+        return $('#toolbox-content option').filter(function () {
+            return $(this).val() === key;
+        }).first();
+    },
+
     _get_text_sample: function (key) {
+        key = editor._normalize_text_content(key);
+        if (!key) {
+            return '';
+        }
         if (key.startsWith('itemmeta:')) {
             return key.substr(9);
         } else if (key.startsWith('meta:')) {
             return key.substr(5);
         }
-        return $('#toolbox-content option[value='+key+']').attr('data-sample') || '';
+        var option = editor._get_text_option(key);
+        return (option.length ? option.attr('data-sample') : '') || '';
+    },
+
+    _resolve_text_sample: function (key) {
+        var sample = editor._get_text_sample(key);
+        if (sample) {
+            return sample;
+        }
+
+        var option = editor._get_text_option(key);
+        if (!option.length) {
+            return '';
+        }
+
+        var fallbackLabel = $.trim(option.text() || '');
+        var colonPos = fallbackLabel.indexOf(':');
+        if (colonPos > -1) {
+            return $.trim(fallbackLabel.substr(colonPos + 1));
+        }
+        return fallbackLabel;
+    },
+
+    _set_toolbox_content_value: function (content, fallbackText) {
+        content = editor._normalize_text_content(content);
+        $('#toolbox-content option.editor-temp-option').remove();
+
+        var option = editor._get_text_option(content);
+        if (!option.length && content) {
+            option = $('<option></option>', {
+                value: content,
+                text: fallbackText || content,
+                class: 'editor-temp-option'
+            });
+            if (fallbackText) {
+                option.attr('data-sample', fallbackText);
+            }
+            $('#toolbox-content').append(option);
+        }
+
+        $('#toolbox-content').val(content || 'other');
+        if (!$('#toolbox-content').val()) {
+            $('#toolbox-content').val('other');
+        }
+    },
+
+    _get_toolbox_target_object: function (allowFallback) {
+        var activeObject = editor.fabric ? editor.fabric.getActiveObject() : null;
+        if (activeObject) {
+            editor._last_active_object = activeObject;
+            return activeObject;
+        }
+
+        if (
+            allowFallback !== false &&
+            $("#toolbox").attr("data-type") &&
+            editor._last_active_object &&
+            editor.fabric &&
+            editor.fabric.getObjects().indexOf(editor._last_active_object) !== -1
+        ) {
+            return editor._last_active_object;
+        }
+
+        return null;
+    },
+
+    _apply_text_content_to_object: function (o) {
+        var content = editor._normalize_text_content($("#toolbox-content").val());
+
+        $("#toolbox-content").val(content || 'other');
+        $("#toolbox-content-other").toggle($("#toolbox-content").val() === "other");
+
+        o.content = $("#toolbox-content").val();
+        if (o.content === "other") {
+            o.set('text', $("#toolbox-content-other").val());
+        } else {
+            o.set('text', editor._resolve_text_sample(o.content) || o.text || '');
+        }
+    },
+
+    _sync_active_text_object_from_toolbox: function () {
+        var o = editor._get_toolbox_target_object(true);
+        if (!o || (o.type !== "textarea" && o.type !== "text")) {
+            return false;
+        }
+
+        editor._apply_text_content_to_object(o);
+        o.setCoords();
+        editor.fabric.renderAll();
+        return true;
     },
 
     _load_pdf: function (dump) {
@@ -383,10 +493,11 @@ var editor = {
     },
 
     _update_toolbox_values: function () {
-        var o = editor.fabric.getActiveObject();
+        var o = editor._get_toolbox_target_object(true);
         if (!o) {
             return;
         }
+        editor._toolbox_update_in_progress = true;
         var bottom = editor.pdf_viewport.height - o.height * o.scaleY - o.top;
         if (o.downward) {
             bottom = editor.pdf_viewport.height - o.top;
@@ -405,7 +516,14 @@ var editor = {
             $("#toolbox-poweredby-style").val(o.content);
         } else if (o.type === "text" || o.type === "textarea") {
             var col = (new fabric.Color(o.fill))._source;
-            $("#toolbox-col").val("#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1));
+            var hexColor = "#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1);
+            $("#toolbox-col").val(hexColor);
+            // Update colorpicker's internal state and preview
+            var $colorInput = $("#toolbox-col");
+            if ($colorInput.data('colorpicker')) {
+                $colorInput.colorpicker('setValue', hexColor);
+            }
+            $colorInput.closest('.colorpicker-preview-group').find('.colorpicker-preview').css('background-color', hexColor);
             $("#toolbox-fontsize").val(editor._px2pt(o.fontSize).toFixed(1));
             //$("#toolbox-lineheight").val(o.lineHeight);
             $("#toolbox-fontfamily").val(o.fontFamily);
@@ -418,7 +536,7 @@ var editor = {
             $("#toolbox-textwidth").val(editor._px2mm(o.width).toFixed(2));
             $("#toolbox-textrotation").val((o.angle || 0.0).toFixed(1));
             if (o.type === "textarea") {
-                $("#toolbox-content").val(o.content);
+                editor._set_toolbox_content_value(o.content, o.text);
                 $("#toolbox-content-other").toggle($("#toolbox-content").val() === "other");
                 if (o.content === "other") {
                     $("#toolbox-content-other").val(o.text);
@@ -427,10 +545,14 @@ var editor = {
                 }
             }
         }
+        editor._toolbox_update_in_progress = false;
     },
 
     _update_values_from_toolbox: function () {
-        var o = editor.fabric.getActiveObject();
+        if (editor._toolbox_update_in_progress) {
+            return;
+        }
+        var o = editor._get_toolbox_target_object(true);
         if (!o) {
             return;
         }
@@ -492,13 +614,7 @@ var editor = {
             o.setWidth(editor._mm2px($("#toolbox-textwidth").val()));
             o.downward = $("#toolbox").find("button[data-action=downward]").is('.active');
             o.rotate(parseFloat($("#toolbox-textrotation").val()));
-            $("#toolbox-content-other").toggle($("#toolbox-content").val() === "other");
-            o.content = $("#toolbox-content").val();
-            if ($("#toolbox-content").val() === "other") {
-                o.set('text', $("#toolbox-content-other").val());
-            } else {
-                o.set('text', editor._get_text_sample($("#toolbox-content").val()));
-            }
+            editor._apply_text_content_to_object(o);
         }
 
         o.setCoords();
@@ -512,6 +628,7 @@ var editor = {
             $("#toolbox-heading").text(gettext("Group of objects"));
         } else if (selected.length == 1) {
             var o = selected[0];
+            editor._last_active_object = o;
             $("#toolbox").attr("data-type", o.type);
             if (o.type === "textarea" || o.type === "text") {
                 $("#toolbox-heading").text(gettext("Text object"));
@@ -545,7 +662,7 @@ var editor = {
             lockRotation: false,
             fontFamily: 'Open Sans',
             lineHeight: 1,
-            content: 'item',
+            content: 'event_name',
             editable: false,
             fontSize: editor._pt2px(13)
         });
@@ -562,6 +679,9 @@ var editor = {
             'mtr': true
         });
         editor.fabric.add(text);
+        editor.fabric.setActiveObject(text);
+        editor._last_active_object = text;
+        editor._update_toolbox();
         editor._create_savepoint();
         return text;
     },
@@ -778,6 +898,7 @@ var editor = {
 
     _save: function () {
         $("#editor-save").prop('disabled', true).prepend('<span class="fa fa-cog fa-spin"></span>');
+        editor._sync_active_text_object_from_toolbox();
         var dump = editor.dump();
         $.post(window.location.href, {
             'data': JSON.stringify(dump),
@@ -797,6 +918,7 @@ var editor = {
     },
 
     _preview: function () {
+        editor._sync_active_text_object_from_toolbox();
         $("#preview-form input[name=data]").val(JSON.stringify(editor.dump()));
         $("#preview-form input[name=background]").val(editor.uploaded_file_id);
         $("#preview-form").get(0).submit();
@@ -804,12 +926,14 @@ var editor = {
 
     _replace_pdf_file: function (url) {
         editor.pdf_url = url;
+        editor._sync_active_text_object_from_toolbox();
         d = editor.dump();
         editor.fabric.dispose();
         editor._load_pdf(d);
     },
 
     _source_show: function () {
+        editor._sync_active_text_object_from_toolbox();
         $("#source-textarea").text(JSON.stringify(editor.dump()));
         $("#source-container").show();
     },
@@ -903,12 +1027,15 @@ var editor = {
             }
         }).prop('disabled', !$.support.fileInput).parent().addClass($.support.fileInput ? undefined : 'disabled');
 
-        $("#toolbox input[type=number], #toolbox textarea, #toolbox input[type=text]").bind('change keydown keyup' +
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text]").bind('change keydown keyup' +
             ' input', editor._update_values_from_toolbox);
-        $("#toolbox input[type=number], #toolbox textarea, #toolbox input[type=text], #toolbox input[type=radio]").bind('change', editor._create_savepoint);
+        $("#toolbox input[type=number], #toolbox textarea:not(#toolbox-content-other), #toolbox input[type=text], #toolbox input[type=radio]").bind('change', editor._create_savepoint);
         $("#toolbox label.btn").bind('click change', editor._update_values_from_toolbox);
-        $("#toolbox select").bind('change', editor._update_values_from_toolbox);
-        $("#toolbox select").bind('change', editor._create_savepoint);
+        $("#toolbox select:not(#toolbox-content)").bind('change', editor._update_values_from_toolbox);
+        $("#toolbox select:not(#toolbox-content)").bind('change', editor._create_savepoint);
+        $("#toolbox-content").bind('change', editor._update_values_from_toolbox);
+        $("#toolbox-content-other").bind('change keyup input blur', editor._update_values_from_toolbox);
+        $("#toolbox-content, #toolbox-content-other").bind('change', editor._create_savepoint);
         $("#toolbox button.toggling").bind('click change', function () {
             if ($(this).is(".option")) {
                 $(this).addClass("active");

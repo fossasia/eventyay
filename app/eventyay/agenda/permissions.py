@@ -1,13 +1,14 @@
 import rules
 
 from eventyay.person.permissions import can_change_submissions
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
 @rules.predicate
 def is_agenda_visible(user, event):
     return bool(
         event
-        and event.is_public
+        and event.talks_published
         and event.get_feature_flag("show_schedule")
         and event.current_schedule
     )
@@ -21,19 +22,6 @@ def is_widget_always_visible(user, event):
 @rules.predicate
 def has_agenda(user, event):
     return bool(event.current_schedule)
-
-
-@rules.predicate
-def are_featured_submissions_visible(user, event):
-    if (
-        not event
-        or not event.is_public
-        or event.get_feature_flag("show_featured") == "never"
-    ):
-        return False
-    if event.get_feature_flag("show_featured") == "always":
-        return True
-    return (not is_agenda_visible(user, event)) or (not has_agenda(user, event))
 
 
 def is_submission_visible_via_schedule(user, submission):
@@ -103,4 +91,10 @@ rules.add_perm("agenda.view_feedback_page", event_uses_feedback & is_submission_
 rules.add_perm(
     "agenda.view_widget",
     is_agenda_visible | is_widget_always_visible | can_change_submissions,
+)
+# Used by the favourites REST API and agenda utility views to gate access
+# to schedule data.  Matches the predicate used for agenda.view_schedule.
+rules.add_perm(
+    "base.list_schedule",
+    is_agenda_visible | can_change_submissions,
 )

@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import binascii
 import json
 import logging
 import os
+import time
 import uuid
 from datetime import timedelta
 from hashlib import md5
@@ -18,6 +21,7 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import JSONField, Q
 from django.http import HttpRequest
@@ -44,6 +48,12 @@ from eventyay.talk_rules.person import is_administrator
 from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
 from .mixins import FileCleanupMixin, GenerateCode
+
+
+if TYPE_CHECKING:
+    from .event import Event
+    from .profile import SpeakerProfile
+
 
 # from eventyay.person.signals import delete_user as delete_user_signal
 
@@ -300,16 +310,20 @@ class User(
             'administrator': is_administrator,
         }
 
-    @property
-    def name(self):
-        return self.fullname
-
     def save(self, *args, **kwargs):
         # In some flows (e.g., anonymous/kiosk or external auth), users can be created
         # without an email. Guard against calling lower() on None.
         if self.email:
             self.email = self.email.lower()
         is_new = not self.pk
+
+        # Invalidate avatar_url cache if avatar might have changed
+        if not is_new:
+            update_fields = kwargs.get('update_fields')
+            if update_fields is None or 'avatar' in update_fields:
+                if 'avatar_url' in self.__dict__:
+                    del self.__dict__['avatar_url']
+
         # Check if we need to get the profile picture from gravatar
         update_gravatar = not kwargs.get('update_fields') or 'get_gravatar' in kwargs['update_fields']
         super().save(*args, **kwargs)
@@ -381,7 +395,7 @@ class User(
             mail(
                 email or self.email,
                 _('Account information changed'),
-                'eventyaycontrol/email/security_notice.txt',
+                'pretixcontrol/email/security_notice.txt',
                 {'user': self, 'messages': msg, 'url': build_absolute_uri('eventyay_common:account.general')},
                 event=None,
                 user=self,
@@ -424,16 +438,16 @@ class User(
         return LogEntry.objects.filter(content_type=ContentType.objects.get_for_model(User), object_id=self.pk)
 
     def _get_teams_for_organizer(self, organizer):
-        if 'o{}'.format(organizer.pk) not in self._teamcache:
-            self._teamcache['o{}'.format(organizer.pk)] = list(self.teams.filter(organizer=organizer))
-        return self._teamcache['o{}'.format(organizer.pk)]
+        if f'o{organizer.pk}' not in self._teamcache:
+            self._teamcache[f'o{organizer.pk}'] = list(self.teams.filter(organizer=organizer))
+        return self._teamcache[f'o{organizer.pk}']
 
     def _get_teams_for_event(self, organizer, event):
-        if 'e{}'.format(event.pk) not in self._teamcache:
-            self._teamcache['e{}'.format(event.pk)] = list(
+        if f'e{event.pk}' not in self._teamcache:
+            self._teamcache[f'e{event.pk}'] = list(
                 self.teams.filter(organizer=organizer).filter(Q(all_events=True) | Q(limit_events=event))
             )
-        return self._teamcache['e{}'.format(event.pk)]
+        return self._teamcache[f'e{event.pk}']
 
     def get_event_permission_set(self, organizer, event) -> set:
         """
@@ -479,7 +493,7 @@ class User(
             return True
         teams = self._get_teams_for_event(organizer, event)
         if teams:
-            self._teamcache['e{}'.format(event.pk)] = teams
+            self._teamcache[f'e{event.pk}'] = teams
             if isinstance(perm_name, (tuple, list)):
                 return any([any(team.has_permission(p) for team in teams) for p in perm_name])
             if not perm_name or any([team.has_permission(perm_name) for team in teams]):
@@ -580,7 +594,7 @@ class User(
                 qs = qs.filter(session_key=session_key)
             sess = qs.first()
             if sess:
-                if sess.date_start < now() - timedelta(seconds=settings.PRETIX_SESSION_TIMEOUT_ABSOLUTE):
+                if sess.date_start < now() - timedelta(seconds=settings.EVENTYAY_SESSION_TIMEOUT_ABSOLUTE):
                     sess.date_end = now()
                     sess.save()
                     sess = None
@@ -616,13 +630,13 @@ class User(
         self.permission_cache[(perm, obj)] = result
         return result
 
-    def event_profile(self, event):
+    def event_profile(self, event: Event) -> SpeakerProfile:
         """Retrieve (and/or create) the event.
 
         :class:`~eventyay.base.models.profile.SpeakerProfile` for this user.
 
         :type event: :class:`eventyay.base.models.event.Event`
-        :retval: :class:`eventyay.base.models.profile.EventProfile`
+        :retval: :class:`eventyay.base.models.profile.SpeakerProfile`
         """
         if profile := self.event_profile_cache.get(event.pk):
             return profile
@@ -635,7 +649,7 @@ class User(
 
         try:
             profile = self.profiles.select_related('event').get(event=event)
-        except Exception:
+        except ObjectDoesNotExist:
             from eventyay.base.models.profile import SpeakerProfile
 
             profile = SpeakerProfile(event=event, user=self)
@@ -845,25 +859,64 @@ the eventyay team"""
 
     @cached_property
     def avatar_url(self) -> str:
+        """Returns avatar URL with cache-busting timestamp parameter.
+
+        Uses the avatar file's actual modification time for most accurate cache-busting.
+        Falls back to current time if file doesn't exist or can't be accessed.
+        """
         if self.has_avatar:
-            return self.avatar.url
+            try:
+                # Get the actual file modification time for most accurate cache-busting
+                file_path = self.avatar.path
+                file_mtime = os.path.getmtime(file_path)
+                timestamp = int(file_mtime * 1000)  # milliseconds for precision
+            except (OSError, ValueError, AttributeError):
+                # Fallback to current time if file doesn't exist or can't be accessed
+                timestamp = int(time.time() * 1000)
+
+            return f"{self.avatar.url}?v={timestamp}"
+        return ''
 
     def get_avatar_url(self, event=None, thumbnail=None):
-        """Returns the full avatar URL, where user.avatar_url returns the
-        absolute URL."""
-        if not self.avatar_url:
+        """Returns the full avatar URL with cache-busting parameter.
+
+        Args:
+            event: Optional event for custom domain support
+            thumbnail: Optional thumbnail size ('tiny' or 'default')
+
+        Returns:
+            URL string with cache-busting query parameter
+        """
+        # Check if we have an avatar
+        if not self.has_avatar:
             return ''
+
+        # Determine which image to use
         if not thumbnail:
             image = self.avatar
         else:
             image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
             if not image:
                 image = create_thumbnail(self.avatar, thumbnail)
+
         if not image:
-            return
+            return ''
+
+        # Build base URL with cache-busting
+        try:
+            # Get the actual file modification time for cache-busting
+            file_path = image.path
+            file_mtime = os.path.getmtime(file_path)
+            timestamp = int(file_mtime * 1000)
+        except (OSError, ValueError, AttributeError):
+            # Fallback to current time if file doesn't exist
+            timestamp = int(time.time() * 1000)
+
+        image_url = f"{image.url}?v={timestamp}"
+
         if event and event.custom_domain:
-            return urljoin(event.custom_domain, image.url)
-        return urljoin(settings.SITE_URL, image.url)
+            return urljoin(event.custom_domain, image_url)
+        return urljoin(settings.SITE_URL, image_url)
 
     def regenerate_token(self) -> Token:
         """Generates a new API access token, deleting the old one."""
@@ -1153,7 +1206,7 @@ class U2FDevice(Device):
         # https://www.w3.org/TR/webauthn/#sctn-encoded-credPubKey-examples
         pub_key = pub_key_from_der(websafe_decode(d['publicKey'].replace('+', '-').replace('/', '_')))
         pub_key = binascii.unhexlify(
-            'A5010203262001215820{:064x}225820{:064x}'.format(pub_key.public_numbers().x, pub_key.public_numbers().y)
+            f'A5010203262001215820{pub_key.public_numbers().x:064x}225820{pub_key.public_numbers().y:064x}'
         )
         return pub_key
 

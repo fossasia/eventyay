@@ -32,7 +32,6 @@ from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
-from pytz import timezone
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -55,12 +54,12 @@ from eventyay.control.forms.event import (
     ConfirmTextFormset,
     EventDeleteForm,
     EventMetaValueForm,
-    EventSettingsForm,
+    GeneralEventSettingsForm,
     EventUpdateForm,
     InvoiceSettingsForm,
-    ProductMetaPropertyForm,
     MailSettingsForm,
     PaymentSettingsForm,
+    ProductMetaPropertyForm,
     ProviderForm,
     QuickSetupForm,
     QuickSetupProductFormSet,
@@ -117,7 +116,7 @@ class MetaDataEditorMixin:
 
     def _make_meta_form(self, p, val_instances):
         return self.meta_form(
-            prefix='prop-{}'.format(p.pk),
+            prefix=f'prop-{p.pk}',
             property=p,
             disabled=(
                 p.protected
@@ -173,7 +172,7 @@ class EventUpdate(
 
     @cached_property
     def sform(self):
-        return EventSettingsForm(
+        return GeneralEventSettingsForm(
             obj=self.object,
             prefix='settings',
             data=self.request.POST if self.request.method == 'POST' else None,
@@ -257,8 +256,13 @@ class EventUpdate(
         product_meta_property_formset_valid = self.product_meta_property_formset.is_valid()
         confirm_texts_formset_valid = self.confirm_texts_formset.is_valid()
 
-        if (form_valid and sform_valid and meta_forms_valid and
-            product_meta_property_formset_valid and confirm_texts_formset_valid):
+        if (
+            form_valid
+            and sform_valid
+            and meta_forms_valid
+            and product_meta_property_formset_valid
+            and confirm_texts_formset_valid
+        ):
             # Timezone processing for presale_start and presale_end (fields in this form)
             # is now handled within form.clean()
             return self.form_valid(form)
@@ -266,15 +270,15 @@ class EventUpdate(
             # Add specific error messages for each form that failed validation
             error_messages = []
             if not form_valid:
-                error_messages.append("Main form validation failed.")
+                error_messages.append('Main form validation failed.')
             if not sform_valid:
-                error_messages.append("Settings form validation failed.")
+                error_messages.append('Settings form validation failed.')
             if not meta_forms_valid:
-                error_messages.append("Meta data form validation failed.")
+                error_messages.append('Meta data form validation failed.')
             if not product_meta_property_formset_valid:
-                error_messages.append("Product meta property form validation failed.")
+                error_messages.append('Product meta property form validation failed.')
             if not confirm_texts_formset_valid:
-                error_messages.append("Confirmation texts form validation failed.")
+                error_messages.append('Confirmation texts form validation failed.')
 
             if error_messages:
                 for msg in error_messages:
@@ -668,7 +672,7 @@ class CancelSettings(EventSettingsViewMixin, EventSettingsFormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
-        
+
         # Check notification settings with fallback for errors
         try:
             ctx['gets_notification'] = self.request.user.notifications_send and (
@@ -698,10 +702,10 @@ class CancelSettings(EventSettingsViewMixin, EventSettingsFormView):
                 'Error checking notification settings for user %s: %s',
                 getattr(self.request.user, 'pk', 'unknown'),
                 str(e),
-                exc_info=True
+                exc_info=True,
             )
             ctx['gets_notification'] = False
-            
+
         return ctx
 
 
@@ -711,7 +715,7 @@ class InvoicePreview(EventPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         fname, ftype, fcontent = build_preview_invoice_pdf(request.event)
         resp = HttpResponse(fcontent, content_type=ftype)
-        resp['Content-Disposition'] = 'attachment; filename="{}"'.format(fname)
+        resp['Content-Disposition'] = f'attachment; filename="{fname}"'
         return resp
 
 
@@ -870,7 +874,7 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
             if s.startswith('*'):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
-                ctx[p.identifier] = '<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>'.format(s, s)
+                ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
             else:
                 ctx[p.identifier] = '<span class="placeholder" title="{}">{}</span>'.format(
                     _('This value will be replaced based on dynamic parameters.'), s
@@ -961,7 +965,7 @@ class TicketSettingsPreview(EventPermissionRequiredMixin, View):
         fname, mimet, data = tickets.preview(self.request.event.pk, self.output.identifier)
         resp = HttpResponse(data, content_type=mimet)
         ftype = fname.split('.')[-1]
-        resp['Content-Disposition'] = 'attachment; filename="ticket-preview.{}"'.format(ftype)
+        resp['Content-Disposition'] = f'attachment; filename="ticket-preview.{ftype}"'
         return resp
 
     def get_error_url(self) -> str:
@@ -1067,12 +1071,12 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             provider = response(self.request.event)
             provider.form = ProviderForm(
                 obj=self.request.event,
-                settingspref='ticketoutput_%s_' % provider.identifier,
+                settingspref=f'ticketoutput_{provider.identifier}_',
                 data=(self.request.POST if self.request.method == 'POST' else None),
                 files=(self.request.FILES if self.request.method == 'POST' else None),
             )
             provider.form.fields = OrderedDict(
-                [('ticketoutput_%s_%s' % (provider.identifier, k), v) for k, v in provider.settings_form_fields.items()]
+                [(f'ticketoutput_{provider.identifier}_{k}', v) for k, v in provider.settings_form_fields.items()]
             )
             provider.settings_content = provider.settings_content_render(self.request)
             provider.form.prepare_fields()
@@ -1083,7 +1087,7 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             else:
                 for k, v in provider.settings_form_fields.items():
                     if v.required and not self.request.event.settings.get(
-                        'ticketoutput_%s_%s' % (provider.identifier, k)
+                        f'ticketoutput_{provider.identifier}_{k}'
                     ):
                         provider.evaluated_preview_allowed = False
                         break
@@ -1098,50 +1102,112 @@ class EventPermissions(EventSettingsViewMixin, EventPermissionRequiredMixin, Tem
 
 class EventLive(EventPermissionRequiredMixin, TemplateView):
     permission = 'can_change_event_settings'
-    template_name = 'eventyay_common/event/live.html'
+    template_name = 'pretixcontrol/event/live.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['issues'] = self.request.event.live_issues
         ctx['actual_orders'] = self.request.event.orders.filter(testmode=False).exists()
+        ticketing_ready = self.request.event.products.exists() and self.request.event.quotas.exists()
+        billing_issues = self.request.event.billing_issues()
+        billing_issue_texts = {str(issue) for issue in billing_issues}
+        ctx['ticketing_ready'] = ticketing_ready
+        ctx['ticket_issues'] = (
+            [issue for issue in self.request.event.live_issues if str(issue) not in billing_issue_texts]
+            if ticketing_ready
+            else []
+        )
+        ctx['tickets_published'] = self.request.event.tickets_published
+        private_tickets = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
+        if not self.request.event.private_testmode:
+            private_tickets = False
+        ctx['private_testmode_tickets'] = private_tickets
         return ctx
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get('live') == 'true' and not self.request.event.live_issues:
+        event = request.event
+        ticketing_ready = event.products.exists() and event.quotas.exists()
+        billing_issue_texts = {str(issue) for issue in event.billing_issues()}
+        ticket_issues = [issue for issue in event.live_issues if str(issue) not in billing_issue_texts]
+        if request.POST.get('tickets_published') == 'true':
+            if not event.live:
+                messages.error(self.request, _('Publish the event before publishing tickets.'))
+                return redirect(self.get_success_url())
+            if not ticketing_ready:
+                messages.error(self.request, _('Please set up ticketing before publishing tickets.'))
+                return redirect(self.get_success_url())
+            if ticket_issues:
+                messages.error(self.request, _('Please resolve the ticketing issues before publishing tickets.'))
+                return redirect(self.get_success_url())
             with transaction.atomic():
-                request.event.live = True
-                request.event.save()
-                self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Your shop is live now!'))
-        elif request.POST.get('live') == 'false':
+                previous_private = event.private_testmode
+                event.tickets_published = True
+                event.settings.private_testmode_tickets = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(self.request, _('Tickets are now published.'))
+            return redirect(self.get_success_url())
+        elif request.POST.get('tickets_published') == 'false':
             with transaction.atomic():
-                request.event.live = False
-                request.event.save()
-                self.request.event.log_action('eventyay.event.live.deactivated', user=self.request.user, data={})
-            messages.success(
-                self.request,
-                _("We've taken your shop down. You can re-enable it whenever you want!"),
-            )
-        elif request.POST.get('testmode') == 'true':
+                event.tickets_published = False
+                event.settings.private_testmode_tickets = True
+                event.private_testmode = True
+                if event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+            messages.success(self.request, _('Tickets have been unpublished.'))
+            return redirect(self.get_success_url())
+        if request.POST.get('testmode') == 'true':
+            if not event.tickets_published or not ticketing_ready:
+                messages.error(
+                    self.request,
+                    _('Tickets must be published and set up before enabling test mode.'),
+                )
+                return redirect(self.get_success_url())
             with transaction.atomic():
-                request.event.testmode = True
-                request.event.save()
+                previous_private = event.private_testmode
+                event.testmode = True
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
+                    event.startpage_featured = False
+                if event.settings.get('private_testmode_tickets', True, as_type=bool):
+                    event.settings.private_testmode_tickets = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
                 self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
             messages.success(self.request, _('Your shop is now in test mode!'))
         elif request.POST.get('testmode') == 'false':
             with transaction.atomic():
-                request.event.testmode = False
-                request.event.save()
+                event.testmode = False
+                event.save()
                 self.request.event.log_action(
                     'eventyay.event.testmode.deactivated',
                     user=self.request.user,
                     data={'delete': (request.POST.get('delete') == 'yes')},
                 )
-            request.event.cache.delete('complain_testmode_orders')
+            event.cache.delete('complain_testmode_orders')
             if request.POST.get('delete') == 'yes':
                 try:
                     with transaction.atomic():
-                        for order in request.event.orders.filter(testmode=True):
+                        for order in event.orders.filter(testmode=True):
                             order.gracefully_delete(user=self.request.user)
                 except ProtectedError:
                     messages.error(
@@ -1152,18 +1218,59 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
                         ),
                     )
                 else:
-                    request.event.cache.set('complain_testmode_orders', False, 30)
-            request.event.cartposition_set.filter(addon_to__isnull=False).delete()
-            request.event.cartposition_set.all().delete()
+                    event.cache.set('complain_testmode_orders', False, 30)
+            event.cartposition_set.filter(addon_to__isnull=False).delete()
+            event.cartposition_set.all().delete()
             messages.success(
                 self.request,
                 _("We've disabled test mode for you. Let's sell some real tickets!"),
+            )
+        elif request.POST.get('private_testmode_tickets_action'):
+            enable = request.POST.get('private_testmode_tickets_action') == 'enable'
+            if enable and event.tickets_published:
+                messages.error(self.request, _('Private test mode cannot be enabled while tickets are published.'))
+                return redirect(self.get_success_url())
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.private_testmode_tickets = enable
+                if enable:
+                    event.private_testmode = True
+                    if event.testmode:
+                        event.testmode = False
+                        self.request.event.log_action(
+                            'eventyay.event.testmode.deactivated',
+                            user=self.request.user,
+                            data={'delete': False},
+                        )
+                else:
+                    event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                if event.private_testmode and event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(
+                self.request,
+                _('Private test mode is now enabled for tickets.')
+                if enable
+                else _('Private test mode is now disabled for tickets.'),
             )
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_common:event.live',
+            'control:event.live',
             kwargs={
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,
@@ -1215,7 +1322,7 @@ class EventDelete(RecentAuthenticationRequiredMixin, EventPermissionRequiredMixi
             return self.get(self.request, *self.args, **self.kwargs)
 
     def get_success_url(self) -> str:
-        return reverse('control:index')
+        return reverse('eventyay_common:dashboard')
 
 
 class EventLog(EventPermissionRequiredMixin, PaginationMixin, ListView):
@@ -1559,8 +1666,8 @@ class WidgetSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
         if domain:
             siteurlsplit = urlsplit(settings.SITE_URL)
             if siteurlsplit.port and siteurlsplit.port not in (80, 443):
-                domain = '%s:%d' % (domain, siteurlsplit.port)
-            ctx['urlprefix'] = '%s://%s' % (siteurlsplit.scheme, domain)
+                domain = '%s:%d' % (domain, siteurlsplit.port)  # noqa: UP031
+            ctx['urlprefix'] = f'{siteurlsplit.scheme}://{domain}'
         return ctx
 
 

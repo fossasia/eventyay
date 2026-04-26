@@ -21,7 +21,6 @@ body {
 
 header {
     z-index: 1000;
-    height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -39,14 +38,47 @@ header .header-wrapper {
 }
 
 header .header-row-right {
-    padding-bottom: 4px;
-	color: var(--color-primary);
+    color: var(--color-primary);
     margin-left: auto;
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
+}
+
+#header-nav-bar {
+    margin-top: 10px;
+    margin-bottom: 3rem;
+    overflow: auto;
+}
+
+#header-nav-bar .navigation {
+    font-size: 1.65rem;
+    display: flex;
+    gap: 2rem;
+}
+
+#header-nav-bar a {
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+}
+
+#header-nav-bar a.underline::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    width: calc(100% + 20px);
+    height: 2px;
+    background-color: currentColor;
+}
+
+#header-nav-bar a:not(.underline):hover {
+    border-bottom: 2px dotted currentColor;
 }
 
 .alert::before {
@@ -61,11 +93,272 @@ header .header-row-right {
 }
 
 #main-card {
+    /* Sit above hero header (z-index:1000) so its date/title text does not
+     * bleed over page content. Below Bootstrap modal-backdrop (z-index:1040),
+     * modals (z-index:1050) and sticky nav (z-index:1200) so overlays and nav
+     * are on top. */
+    position: relative;
+    z-index: 1030;
     margin: 0 auto;
 }
 
-.alert {
-    margin: 16px;
+.presale-sticky-tabs-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 1200;
+    width: 100%;
+}
+
+.presale-sticky-tabs-inner {
+    margin: 0;
+    background: var(--color-bg);
+    width: 100%;
+    max-width: 100%;
+    word-break: keep-all;
+    flex-wrap: nowrap;
+    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
+}
+
+.presale-sticky-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    z-index: 400;
+    background: var(--color-bg);
+    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
+    flex-shrink: 0;
+}
+
+.presale-tabs-scroll {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.presale-sticky-tabs a.header-tab {
+    padding: 8px 10px 4px 10px;
+    border-bottom: 2px solid transparent;
+}
+
+.presale-sticky-tabs a.header-tab:hover {
+    text-decoration: none;
+    border-bottom: 2px dotted var(--color-primary);
+}
+
+.presale-sticky-tabs a.header-tab.active,
+.presale-sticky-tabs a.header-tab.underline {
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.presale-sticky-tabs #header-nav-bar {
+    flex: 1 1 auto;
+    margin: 6px 0 0;
+    overflow: visible;
+}
+
+.presale-sticky-tabs #header-nav-bar .navigation {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    font-size: 1.65rem;
+    flex-wrap: nowrap;
+}
+
+.presale-sticky-tabs .header-row-right {
+    color: var(--color-primary);
+    margin-left: auto;
+    margin-right: 10px;
+    display: flex;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    align-items: center;
+    font-size: 1rem;
+    gap: 16px;
+}
+
+
+.presale-sticky-tabs .header-row-right details.dropdown,
+.presale-sticky-tabs .header-row-right>a {
+    display: inline-flex;
+    align-items: center;
+}
+
+.presale-sticky-tabs .header-row-right details.dropdown summary {
+    align-items: center;
+}
+
+.presale-sticky-tabs .header-row-right .header-nav,
+.presale-sticky-tabs .header-row-right .locale-switch-toggle,
+.presale-sticky-tabs .header-row-right a {
+    color: var(--color-primary);
+}
+
+.presale-sticky-tabs .header-row-right .header-nav {
+    border-color: var(--color-primary);
+    background: transparent;
+}
+
+.presale-sticky-tabs .header-row-right .header-nav:hover,
+.presale-sticky-tabs .header-row-right .header-nav:focus {
+    color: white;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    text-decoration: none;
+}
+
+#main-card {
+    scroll-margin-top: 72px;
+}
+
+.nav-icon-mobile {
+    display: none;
+}
+
+.cfs-short {
+    display: none;
+}
+
+@media (min-width: 769px) {
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-join-video-floating-mobile {
+        right: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .presale-sticky-tabs {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .presale-tabs-scroll {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .presale-tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .presale-sticky-tabs-inner {
+        overflow: visible;
+    }
+
+    .presale-sticky-tabs a.header-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 4px 6px 3px 6px;
+        font-size: 0.8rem;
+    }
+
+    .presale-sticky-tabs .header-row-right {
+        margin-left: 0;
+        margin-right: 2px;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        gap: 0;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown {
+        position: relative;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 16px);
+    }
+
+    .mobile-hide-text {
+        display: none;
+    }
+
+    .nav-icon-mobile {
+        display: inline;
+        font-size: 1.25rem;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
+        display: none;
+    }
+
+    .presale-sticky-tabs .header-row-right details.dropdown summary {
+        padding: 2px 4px;
+    }
+
+    .cfs-full {
+        display: none;
+    }
+
+    .cfs-short {
+        display: inline;
+    }
+
+
+    .login-link {
+        display: flex;
+        align-items: center;
+        padding: 0px 8px;
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+
+    .login-link:hover {
+        text-decoration: none;
+        opacity: 0.85;
+    }
+
+    /* Mobile: hero overlay width (+ padding where set in main bundle) */
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+    }
+
+    /* Presale event index: full-bleed hero overlay */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    #main-card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* Outer main only (presale nests two <main>) */
+    #main-card > main {
+        padding-top: 0.15rem;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #main-card > main > main {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    #locale-dropdown.dropdown-content {
+        transform: scale(0.75);
+        transform-origin: top right;
+        right: 0;
+        left: auto;
+    }
 }
 
 .btn-primary {
@@ -75,11 +368,12 @@ header .header-row-right {
     border-color: var(--color-primary);
     color: white;
     text-decoration: none;
-	&:hover {
-	    background: var(--color-primary-text-dark);
-		border-color: var(--color-primary-text-dark);
-	    color: white;
-	}
+
+    &:hover {
+        background: var(--color-primary-text-dark);
+        border-color: var(--color-primary-text-dark);
+        color: white;
+    }
 }
 
 .btn-default {
@@ -89,11 +383,12 @@ header .header-row-right {
     color: var(--color-primary);
     border-color: var(--color-primary);
     box-shadow: none;
-	&:hover {
-	    background: var(--color-primary-text-dark);
-		border-color: var(--color-primary-text-dark);
-	    color: white;
-	}
+
+    &:hover {
+        background: var(--color-primary-text-dark);
+        border-color: var(--color-primary-text-dark);
+        color: white;
+    }
 }
 
 #btn-add-to-cart:disabled {
@@ -104,22 +399,168 @@ header .header-row-right {
     box-shadow: none;
 }
 
-.panel-heading{
-	width: 100%;
+.panel-heading {
+    width: 100%;
 }
 
 .panel-primary {
     border-color: var(--color-primary);
 }
-.panel-primary > .panel-heading,
-.panel-primary > summary.panel-heading {
+
+.panel-primary>.panel-heading,
+.panel-primary>summary.panel-heading {
     background-color: var(--color-primary);
     border-color: var(--color-primary);
     color: #fff;
 }
-.panel-primary > .panel-heading .panel-title,
-.panel-primary > summary.panel-heading .panel-title,
-.panel-primary > .panel-heading .panel-title *,
-.panel-primary > summary.panel-heading .panel-title * {
+
+.panel-primary>.panel-heading .panel-title,
+.panel-primary>summary.panel-heading .panel-title,
+.panel-primary>.panel-heading .panel-title *,
+.panel-primary>summary.panel-heading .panel-title * {
     color: #fff;
+}
+
+.thank-you.thank-you-pending .fa {
+    color: #ffb419;
+}
+
+.thank-you.thank-you-pending h2 {
+    color: #ffb419;
+}
+
+.product-row .row > [class*="col-"]:not(.price),.product-row > [class*="col-"]:not(.price),.product-row [class*="col-"]:not(.price),
+.row-voucher > [class*="col-"]:not(.price),.checkout-button-row .clearfix > [class*="col-"]:not(.price) {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.front-page .col-md-4.col-md-offset-8,
+.front-page #btn-add-to-cart {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.redeem-voucher-container .col-md-4.col-sm-6.col-xs-12 {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+@media (min-width: 768px) {
+    .redeem-voucher-container .col-md-4.col-sm-6.col-xs-12 {
+        padding-left: 15px !important;
+        padding-right: 0;
+    }
+}
+
+/* Ticket variant toggle and hierarchy fixes for custom CSS mode */
+.item-with-variations > .headline {
+    display: block;
+    width: 100%;
+    text-align: left;
+}
+
+.variation-toggle-box {
+    padding-left: 0;
+    padding-right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.variation-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    max-width: none;
+    height: 36px;
+
+    padding: 0 10px;
+    border: 1px solid var(--color-grey-light, #b8b8b8);
+    border-radius: 4px;
+    box-sizing: border-box;
+    text-decoration: none;
+    white-space: nowrap;
+    word-break: keep-all;
+    color: var(--color-primary);
+}
+
+.variation-toggle:hover,
+.variation-toggle:focus {
+    text-decoration: none;
+    color: var(--color-primary);
+}
+
+.variation-toggle-label {
+    line-height: 1;
+    white-space: nowrap;
+    color: inherit;
+}
+
+.variation-toggle-caret {
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+    line-height: 1;
+}
+
+.variation-toggle-caret::before {
+    content: '\f054';
+    display: inline-block;
+    font-family: 'FontAwesome';
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+/* Support both native <details open> and JS-managed .details-open states. */
+.item-with-variations[open] .variation-toggle-caret::before,
+.item-with-variations.details-open .variation-toggle-caret::before {
+    transform: rotate(90deg);
+}
+
+.variation-option {
+    padding-left: 18px;
+}
+
+.variation-option > div {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.variation-option > div:first-child {
+    position: relative;
+}
+
+.variation-option > div:first-child::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    left: 2px;
+    width: 1px;
+    background: var(--color-grey-light, #d0d0d0);
+}
+
+.variation-option > div:first-child::after {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 2px;
+    width: 10px;
+    height: 1px;
+    background: var(--color-grey-light, #d0d0d0);
+}
+
+.variation-option h5 {
+    padding-left: 16px;
+}
+
+.variation-selector-label.is-exclusive-disabled,
+.item-checkbox-label.is-exclusive-disabled,
+.variation-option.is-exclusive-disabled,
+.product-row.simple.is-exclusive-disabled {
+    opacity: 0.55;
 }

@@ -8,7 +8,7 @@
 	.info
 		.title {{ getLocalizedString(session.title) }}
 		.speakers(v-if="hasSpeakersWithNames") {{ speakerNames }}
-		.pending-line(v-if="session.state && session.state !== 'confirmed' && session.state !== 'accepted'")
+		.pending-line(v-if="session.state === 'pending'")
 			i.fa.fa-exclamation-circle
 			span {{ $t('Pending proposal state') }}
 		.bottom-info(v-if="!isBreak")
@@ -69,8 +69,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'startDragging', payload: { session: Session; event: PointerEvent }): void
 }>()
+const isBreak = computed(() => props.session.code == null)
 
-const isBreak = computed(() => !props.session.code)
 
 const hasSpeakersWithNames = computed(() => {
   return props.session.speakers && props.session.speakers.some(speaker => speaker.name)
@@ -86,23 +86,32 @@ const speakerNames = computed(() => {
 
 const classes = computed(() => {
   const cls: string[] = []
+
   if (isBreak.value) {
     cls.push('isbreak')
   } else {
     cls.push('istalk')
-    if (
+
+    if (props.session.state === 'pending') {
+      cls.push('pending')
+    } else if (
+      props.session.state &&
       props.session.state !== 'confirmed' &&
       props.session.state !== 'accepted'
     ) {
-      cls.push('pending')
+      cls.push('unconfirmed')
     } else if (props.session.state !== 'confirmed') {
+      // covers null / undefined / empty state
       cls.push('unconfirmed')
     }
   }
+
   if (props.isDragged) cls.push('dragging')
   if (props.isDragClone) cls.push('clone')
+
   return cls
 })
+
 
 const style = computed(() => ({
   '--track-color': props.session.track?.color || 'var(--color-primary)'
@@ -143,6 +152,7 @@ const durationPretty = computed<string | undefined>(() => {
 })
 
 function onPointerDown(event: PointerEvent): void {
+  if (!event.isPrimary || event.button !== 0) return
   emit('startDragging', { session: props.session, event })
 }
 </script>
@@ -186,7 +196,7 @@ function onPointerDown(event: PointerEvent): void {
 			.duration
 				color: $clr-secondary-text-dark
 		.info
-			border: border-separator()
+			border: 1px solid $clr-dividers-light
 			border-left: none
 			border-radius: 0 6px 6px 0
 			background-color: $clr-white

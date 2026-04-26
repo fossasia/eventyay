@@ -13,8 +13,10 @@
     		<link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static 'lightbox/css/lightbox.scss' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_dropdown.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" href="{% static 'eventyay-common/css/dashboard.css' %}">
             <link rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
 		{% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
@@ -22,6 +24,8 @@
         {% else %}
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
+        {# Keep toastuiLoader outside the compress block so document.currentScript keeps data-toastui-* (see common/js/toastuiLoader.js). #}
+        <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}" data-toastui-lang="{{ request.LANGUAGE_CODE|slice:':2' }}" data-toastui-t-undo="{% translate 'Undo' %}" data-toastui-t-redo="{% translate 'Redo' %}" data-toastui-t-underline="{% translate 'Underline' %}"></script>
 		{% compress js %}
             <script type="text/javascript" src="{% static "jquery/js/jquery-2.1.1.min.js" %}"></script>
             <script type="text/javascript" src="{% static "js/jquery.formset.js" %}"></script>
@@ -36,6 +40,7 @@
             <script type="text/javascript" src="{% static "charts/morris.js" %}"></script>
             <script type="text/javascript" src="{% static "clipboard/clipboard.js" %}"></script>
             <script type="text/javascript" src="{% static "rrule/rrule.js" %}"></script>
+            <script type="text/javascript" src="{% static "pretixcontrol/js/ui/utils.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixpresale/js/ui/questions.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/jquery.qrcode.min.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/clipboard.js" %}"></script>
@@ -66,6 +71,7 @@
             <script type="text/javascript" src="{% static 'utils/js/utils.js' %}"></script>
             <script type="text/javascript" src="{% static 'eventyay-common/js/ui/team.js' %}"></script>
 			<script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
+            <script defer src="{% static 'common/js/formTools.js' %}"></script>
 		{% endcompress %}
         {{ html_head|safe }}
 
@@ -120,7 +126,7 @@
                             </a>
                         {% endif %}
                     {% endif %}
-                    <a class="navbar-brand" href="{% url 'eventyay_common:dashboard' %}">
+                    <a class="navbar-brand" href="{% url 'presale:index' %}">
                         <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
                         {{ settings.INSTANCE_NAME }}
                     </a>
@@ -145,6 +151,15 @@
                     {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                    {% if show_link_in_header_for_all_pages %}
+                        {% for page in show_link_in_header_for_all_pages %}
+                            <li>
+                                <a href='{% url "page" slug=page.slug %}' title='{{ page.title|safe }}'>
+                                    {{ page.title|safe }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    {% endif %}
                     {% if request.user.is_staff and not staff_session %}
                         <li>
                             <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -194,7 +209,7 @@
                                         </div>
                                     </a>
                                 {% elif request.organizer %}
-                                    <a href="#" class="dropdown-toggle">
+                                    <a href="{% url 'eventyay_common:organizer.dashboard' organizer=request.organizer.slug %}" class="dropdown-toggle">
                                         <span class="fa-stack fa-lg">
                                           <i class="fa fa-circle fa-stack-2x"></i>
                                           <i class="fa fa-group fa-stack-1x fa-inverse"></i>
@@ -337,16 +352,6 @@
                             </strong>
                         </div>
                     {% endif %}
-                    {% if warning_update_check_active %}
-                        <div class="alert alert-info">
-                            <a href="{% url "eventyay_admin:admin.global.update" %}">
-                                {% blocktrans trimmed %}
-                                The system automatically checks for updates in the background.
-                                {% endblocktrans %}
-                            </a>
-                        </div>
-                    {% endif %}
-
                     {% if debug_warning %}
                         <div class="alert alert-danger">
                             {% trans "system is running in debug mode. For security reasons, please never run debug mode on a production instance." %}
@@ -370,6 +375,17 @@
                         {% if development_warning %}
                             <span class="text-warning">&middot; {% trans "running in development mode" %}</span>
                         {% endif %}
+                        <ul class="list-inline text-center" style="margin-top: 20px">
+                            {% if show_link_in_footer_for_all_pages %}
+                                {% for page in show_link_in_footer_for_all_pages %}
+                                    <li>
+                                        <a href='{% url "page" slug=page.slug %}' title='{{ page.title|safe }}'>
+                                            {{ page.title|safe }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
                     </footer>
                 </div>
             </div>

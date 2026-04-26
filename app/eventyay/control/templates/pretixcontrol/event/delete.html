@@ -44,7 +44,7 @@
             <p>
                 {% trans "You can instead take your shop offline. This will hide it from everyone except from the organizer teams you configured to have access to the event." %}
             </p>
-            <form action="{% url "eventyay_common:event.live" event=request.event.slug organizer=request.organizer.slug %}"
+            <form action="{% url "control:event.live" event=request.event.slug organizer=request.organizer.slug %}"
                     method="post">
                 {% csrf_token %}
                 <input type="hidden" name="live" value="false">

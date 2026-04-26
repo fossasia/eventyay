@@ -7,6 +7,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 
+from eventyay import consts
 from eventyay.base.models.orders import Order, OrderPayment
 from eventyay.base.services.orders import perform_order
 from eventyay.base.templatetags.rich_text import rich_text_snippet
@@ -51,7 +52,7 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
         if self.payment_provider:
             ctx['payment'] = self.payment_provider.checkout_confirm_render(self.request)
             ctx['payment_provider'] = self.payment_provider
-        ctx['require_approval'] = any(cp.product.require_approval for cp in ctx['cart']['positions'])
+        ctx['require_approval'] = any(cp.requires_approval for cp in ctx['cart']['positions'])
         ctx['addr'] = self.invoice_address
         ctx['confirm_messages'] = self.confirm_messages
         ctx['cart_session'] = self.cart_session
@@ -60,7 +61,7 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
         self.cart_session['shown_total'] = str(ctx['cart']['total'])
 
         email = self.cart_session.get('contact_form_data', {}).get('email')
-        if email and email != settings.EVENTYAY_EMAIL_NONE_VALUE:
+        if email and email != consts.EVENTYAY_EMAIL_NONE_VALUE:
             ctx['contact_info'] = [
                 (_('E-mail'), email),
             ]

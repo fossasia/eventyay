@@ -8,7 +8,7 @@ from eventyay.talk_rules.agenda import is_agenda_visible
 from eventyay.talk_rules.event import can_change_event_settings
 from eventyay.talk_rules.submission import is_cfp_open, orga_can_change_submissions
 
-from .mixins import PretalxModel
+from .mixins import OrderedModel, PretalxModel
 
 
 def pleasing_number(number):
@@ -17,7 +17,7 @@ def pleasing_number(number):
     return number
 
 
-class SubmissionType(PretalxModel):
+class SubmissionType(OrderedModel, PretalxModel):
     """Each :class:`~pretalx.submission.models.submission.Submission` has one
     SubmissionType.
 
@@ -45,11 +45,17 @@ class SubmissionType(PretalxModel):
         help_text=_('This session type will only be shown to submitters with a matching access code.'),
         default=False,
     )
+    position = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_('position'),
+        help_text=_('The position field is used to determine the order that session types are displayed in (lowest first).'),
+    )
 
     log_prefix = 'eventyay.submission_type'
 
     class Meta:
-        ordering = ['default_duration']
+        ordering = ['position', 'default_duration']
         rules_permissions = {
             'list': is_cfp_open | is_agenda_visible | orga_can_change_submissions,
             'view': is_cfp_open | is_agenda_visible | orga_can_change_submissions,
@@ -110,3 +116,18 @@ class SubmissionType(PretalxModel):
             submission.update_duration()
 
     update_duration.alters_data = True
+
+    def save(self, *args, **kwargs):
+        """Auto-assign position for new instances."""
+        if self.position is None and self.event_id:
+            # Get the max position for this event, default to 0 if no types exist
+            max_position = self.event.submission_types.aggregate(
+                models.Max('position')
+            )['position__max']
+            self.position = (max_position or 0) + 1
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def get_order_queryset(event):
+        """Return the queryset used for ordering."""
+        return event.submission_types.all()
