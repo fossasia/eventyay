@@ -82,7 +82,9 @@ class PretalxFavButton extends HTMLElement {
   }
 
   _render () {
-    this._iconWrap.innerHTML = this._isFaved ? this._starFilled : this._starOutline
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(this._isFaved ? this._starFilled : this._starOutline, 'text/html')
+    this._iconWrap.replaceChildren(...doc.body.childNodes)
   }
 
   _spin () {
