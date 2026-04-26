@@ -1531,7 +1531,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.2" },
     { name = "pdf2image", specifier = ">=1.17.0" },
     { name = "pdfrw", specifier = ">=0.4" },
-    { name = "phonenumberslite", specifier = ">=9.0.28" },
+    { name = "phonenumberslite", specifier = ">=9.0.29" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "polib", specifier = ">=1.2.0" },
     { name = "potypo", specifier = ">=0.0.2" },
@@ -2351,11 +2351,11 @@ wheels = [
 
 [[package]]
 name = "phonenumberslite"
-version = "9.0.28"
+version = "9.0.29"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c9/a6/fd7553f283e420525bdf85ee32e540f2c2c33ae241491ac351b3aa05fe41/phonenumberslite-9.0.28.tar.gz", hash = "sha256:ce6cedcdcac214f4bdee0cb88df5c49c020435c82a2f22c7a536887e061a1129", size = 288809, upload-time = "2026-04-13T14:15:54.16Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/14/d8820aaf74275183b207c5cdd6f248ce0adb80fc688f3566602fa423dc94/phonenumberslite-9.0.29.tar.gz", hash = "sha256:9804ecca39a0b8aa735b1797c6dda11ab3e78da1b280e3defdee1a3ea94667b2", size = 288716, upload-time = "2026-04-25T05:35:17.195Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/6c/363ead32abc5a0abc660072e80f788c09b16e94274b5e7afe9868a9591d8/phonenumberslite-9.0.28-py2.py3-none-any.whl", hash = "sha256:ed6d00d17a0e3583101dd4060ae4eac0dc9bf8bcb0daaa7fd3a55d5d36806ff2", size = 473357, upload-time = "2026-04-13T14:15:52.182Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/3d/6faf80eab5640aafb5dcc8d1b398a338677f238e5c0b7ae46655a19a524d/phonenumberslite-9.0.29-py2.py3-none-any.whl", hash = "sha256:572760601cc45ae6578cb7493973b479d5a68ec90ca6e7db2fbce899e4ee393e", size = 473337, upload-time = "2026-04-25T05:35:15.243Z" },
 ]
 
 [[package]]
