@@ -153,7 +153,7 @@ class LogEntry(models.Model):
                 return ''
 
             co = self.content_object
-        except Exception:
+        except Exception:Exception
             return ''
         a_map = None
         a_text = None
