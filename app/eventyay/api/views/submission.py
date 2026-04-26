@@ -1,9 +1,10 @@
 import datetime as dt
 import json
 import logging
+from pathlib import Path
+from urllib.parse import urlparse
 
 import jwt
-import requests
 from django.db import IntegrityError
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -15,8 +16,7 @@ from django_filters import rest_framework as filters
 from django_scopes import scopes_disabled
 from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import serializers, status, viewsets
-from rest_framework.authentication import SessionAuthentication
-from rest_framework.authentication import get_authorization_header
+from rest_framework.authentication import SessionAuthentication, get_authorization_header
 from rest_framework.decorators import (
     action,
     api_view,
@@ -26,7 +26,9 @@ from rest_framework.decorators import (
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from eventyay.api.auth.permission import EventPermission
 from eventyay.api.documentation import build_expand_docs, build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.legacy import (
@@ -42,29 +44,33 @@ from eventyay.api.serializers.submission import (
     TrackSerializer,
 )
 from eventyay.api.versions import LEGACY
-from eventyay.common import exceptions
+from eventyay.base.i18n import language
 from eventyay.base.models.auth import User
-from eventyay.common.auth import TokenAuthentication
-from eventyay.common.exceptions import SubmissionError
 from eventyay.base.models.submission import (
     Submission,
+    SubmissionFavouriteDeprecated,
+    SubmissionFavouriteDeprecatedSerializer,
     SubmissionStates,
 )
 from eventyay.base.models.tag import Tag
 from eventyay.base.models.track import Track
 from eventyay.base.models.type import SubmissionType
+from eventyay.base.services.talkimport import import_submission_records
+from eventyay.common import exceptions
+from eventyay.common.auth import TokenAuthentication
+from eventyay.common.exceptions import SubmissionError
 from eventyay.talk_rules.submission import (
     questions_for_user,
     speaker_profiles_for_user,
     submissions_for_user,
 )
-from eventyay.base.models.submission import (
-    SubmissionFavouriteDeprecated,
-    SubmissionFavouriteDeprecatedSerializer,
-)
 
 
 logger = logging.getLogger(__name__)
+
+
+def is_pdf_url(value: str) -> bool:
+    return Path(urlparse(value).path).suffix.lower() == '.pdf'
 
 
 class AddSpeakerSerializer(serializers.Serializer):
@@ -77,6 +83,92 @@ class RemoveSpeakerSerializer(serializers.Serializer):
     user = serializers.CharField(required=True)
 
 
+class SubmissionImportRecordSerializer(serializers.Serializer):
+    title = serializers.CharField(required=True, allow_blank=False)
+    code = serializers.CharField(required=False, allow_blank=True)
+    abstract = serializers.CharField(required=False, allow_blank=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    submission_type = serializers.CharField(required=False, allow_blank=True)
+    track = serializers.CharField(required=False, allow_blank=True)
+    state = serializers.CharField(required=False, allow_blank=True)
+    tags = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True,
+    )
+    duration = serializers.IntegerField(required=False)
+    content_locale = serializers.CharField(required=False, allow_blank=True)
+    do_not_record = serializers.BooleanField(required=False)
+    is_featured = serializers.BooleanField(required=False)
+    notes = serializers.CharField(required=False, allow_blank=True)
+    internal_notes = serializers.CharField(required=False, allow_blank=True)
+    start = serializers.DateTimeField(required=False)
+    end = serializers.DateTimeField(required=False)
+    linked_speakers = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True,
+    )
+    speakers = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True,
+    )
+    room = serializers.CharField(required=False, allow_blank=True)
+    slides_link = serializers.URLField(required=False, allow_blank=True)
+    slides_links = serializers.ListField(
+        child=serializers.URLField(),
+        required=False,
+        allow_empty=True,
+    )
+    room_metadata = serializers.JSONField(required=False)
+    scheduled_public = serializers.BooleanField(required=False)
+    submission_extras = serializers.JSONField(required=False)
+
+    def validate_slides_link(self, value):
+        if value and not is_pdf_url(value):
+            raise serializers.ValidationError('Slides link must point to a PDF file.')
+        return value
+
+    def validate_slides_links(self, value):
+        for slide_link in value:
+            if slide_link and not is_pdf_url(slide_link):
+                raise serializers.ValidationError('Slides links must point to PDF files.')
+        return value
+
+    def validate_room_metadata(self, value):
+        if value is not None and not isinstance(value, dict):
+            raise serializers.ValidationError('room_metadata must be an object.')
+        return value
+
+    def validate_submission_extras(self, value):
+        if value is not None and not isinstance(value, dict):
+            raise serializers.ValidationError('submission_extras must be an object.')
+        return value
+
+
+class SubmissionImportSerializer(serializers.Serializer):
+    submissions = SubmissionImportRecordSerializer(many=True, required=True)
+
+
+class SubmissionImportView(APIView):
+    permission_classes = (EventPermission,)
+    permission = 'can_change_submissions'
+
+    @extend_schema(summary='Import Submissions', request=SubmissionImportSerializer)
+    def post(self, request, organizer, event):
+        serializer = SubmissionImportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        acting_user = request.user if request.user.is_authenticated else None
+        with language(request.LANGUAGE_CODE, request.event.settings.region):
+            result = import_submission_records(
+                request.event,
+                serializer.validated_data['submissions'],
+                acting_user,
+            )
+        return Response(result, status=status.HTTP_200_OK)
+
+
 with scopes_disabled():
 
     class SubmissionFilter(filters.FilterSet):
@@ -84,75 +176,79 @@ with scopes_disabled():
 
         class Meta:
             model = Submission
-            fields = ("state", "content_locale", "submission_type", "is_featured")
+            fields = ('state', 'content_locale', 'submission_type', 'is_featured')
 
 
 @extend_schema_view(
     list=extend_schema(
-        summary="List Submissions",
+        summary='List Submissions',
         parameters=[
-            build_search_docs("title", "speaker.fullname"),
+            build_search_docs('title', 'speaker.fullname'),
             build_expand_docs(
-                "speakers",
-                "speakers.answers",
-                "track",
-                "submission_type",
-                "tags",
-                "slots",
-                "slots.room",
-                "answers",
-                "answers.question",
-                "resources",
+                'speakers',
+                'speakers.answers',
+                'track',
+                'submission_type',
+                'tags',
+                'slots',
+                'slots.room',
+                'answers',
+                'answers.question',
+                'resources',
             ),
         ],
     ),
     retrieve=extend_schema(
-        summary="Show Submission",
+        summary='Show Submission',
         parameters=[
             build_expand_docs(
-                "speakers",
-                "track",
-                "submission_type",
-                "tags",
-                "slots",
-                "slots.room",
-                "answers",
-                "resources",
+                'speakers',
+                'track',
+                'submission_type',
+                'tags',
+                'slots',
+                'slots.room',
+                'answers',
+                'resources',
             ),
         ],
     ),
     create=extend_schema(
-        summary="Create Submission",
-        description="Note that a submission created via the API will start in the submitted state and without speakers. No notification emails will be sent, and the submission may be in an invalid state (e.g. if the event has required custom fields).",
+        summary='Create Submission',
+        description=(
+            'Note that a submission created via the API will start in the submitted state and without speakers. '
+            'No notification emails will be sent, and the submission may be in an invalid state '
+            '(e.g. if the event has required custom fields).'
+        ),
         request=SubmissionOrgaSerializer,
         responses={200: SubmissionOrgaSerializer},
     ),
     update=extend_schema(
-        summary="Update Submission",
+        summary='Update Submission',
         request=SubmissionOrgaSerializer,
         responses={200: SubmissionOrgaSerializer},
     ),
     partial_update=extend_schema(
-        summary="Update Submission (Partial Update)",
+        summary='Update Submission (Partial Update)',
         request=SubmissionOrgaSerializer,
         responses={200: SubmissionOrgaSerializer},
     ),
     destroy=extend_schema(
-        summary="Delete Submission",
-        description="This endpoint is only available to server administrators.",
+        summary='Delete Submission',
+        description='This endpoint is only available to server administrators.',
     ),
-    accept=extend_schema(summary="Accept Submission"),
-    reject=extend_schema(summary="Reject Submission"),
-    confirm=extend_schema(summary="Confirm Submission"),
-    cancel=extend_schema(summary="Cancel Submission"),
-    make_submitted=extend_schema(summary="Make Submission Submitted"),
+    accept=extend_schema(summary='Accept Submission'),
+    reject=extend_schema(summary='Reject Submission'),
+    confirm=extend_schema(summary='Confirm Submission'),
+    cancel=extend_schema(summary='Cancel Submission'),
+    make_submitted=extend_schema(summary='Make Submission Submitted'),
     add_speaker=extend_schema(
-        summary="Add Speaker to Submission",
+        summary='Add Speaker to Submission',
         request=AddSpeakerSerializer,
         responses={200: SubmissionOrgaSerializer},
     ),
     remove_speaker=extend_schema(
-        summary="Remove Speaker from Submission",
+        summary='Remove Speaker from Submission',
         request=RemoveSpeakerSerializer,
         responses={200: SubmissionOrgaSerializer},
     ),
@@ -160,48 +256,39 @@ with scopes_disabled():
 class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = SubmissionSerializer
     queryset = Submission.objects.none()
-    lookup_field = "code__iexact"
-    search_fields = ("title", "speakers__fullname")
+    lookup_field = 'code__iexact'
+    search_fields = ('title', 'speakers__fullname')
     filterset_class = SubmissionFilter
     permission_map = {
-        "make_submitted": "submission.state_change_submission",
-        "add_speaker": "submission.update_submission",
-        "remove_speaker": "submission.update_submission",
+        'make_submitted': 'submission.state_change_submission',
+        'add_speaker': 'submission.update_submission',
+        'remove_speaker': 'submission.update_submission',
     }
-    endpoint = "submissions"
+    endpoint = 'submissions'
 
     def get_legacy_queryset(self):  # pragma: no cover
-        base_qs = self.event.submissions.all().order_by("code")
-        if not self.request.user.has_perm(
-            "base.orga_list_submission", self.event
-        ):
-            if (
-                not self.request.user.has_perm("base.list_schedule", self.event)
-                or not self.event.current_schedule
-            ):
+        base_qs = self.event.submissions.all().order_by('code')
+        if not self.request.user.has_perm('base.orga_list_submission', self.event):
+            if not self.request.user.has_perm('base.list_schedule', self.event) or not self.event.current_schedule:
                 return Submission.objects.none()
             return base_qs.filter(
-                pk__in=self.event.current_schedule.talks.filter(
-                    is_visible=True
-                ).values_list("submission_id", flat=True)
+                pk__in=self.event.current_schedule.talks.filter(is_visible=True).values_list('submission_id', flat=True)
             )
         return base_qs
 
     def get_legacy_serializer_class(self):  # pragma: no cover
-        if self.request.user.has_perm("base.orga_update_submission", self.event):
+        if self.request.user.has_perm('base.orga_update_submission', self.event):
             return LegacySubmissionOrgaSerializer
-        if self.request.user.has_perm("base.orga_list_submission", self.event):
+        if self.request.user.has_perm('base.orga_list_submission', self.event):
             return LegacySubmissionReviewerSerializer
         return LegacySubmissionSerializer
 
     def get_legacy_serializer(self, *args, **kwargs):  # pragma: no cover
-        serializer_questions = (self.request.query_params.get("questions") or "").split(
-            ","
-        )
+        serializer_questions = (self.request.query_params.get('questions') or '').split(',')
         can_view_speakers = self.request.user.has_perm(
-            "schedule.list_schedule", self.event
-        ) or self.request.user.has_perm("base.orga_list_speakerprofile", self.event)
-        if self.request.query_params.get("anon"):
+            'schedule.list_schedule', self.event
+        ) or self.request.user.has_perm('base.orga_list_speakerprofile', self.event)
+        if self.request.query_params.get('anon'):
             can_view_speakers = False
         return super().get_serializer(
             *args,
@@ -223,9 +310,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     @cached_property
     def is_orga(self):
-        return self.event and self.request.user.has_perm(
-            "base.orga_list_submission", self.event
-        )
+        return self.event and self.request.user.has_perm('base.orga_list_submission', self.event)
 
     def get_serializer(self, *args, **kwargs):
         if self.api_version == LEGACY:  # pragma: no cover
@@ -242,10 +327,10 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         context = super().get_serializer_context()
         if not self.event:
             return context
-        context["questions"] = questions_for_user(self.request, self.event, self.request.user)
-        context["speakers"] = self.speaker_profiles_for_user
-        context["schedule"] = self.event.current_schedule
-        context["public_slots"] = not self.has_perm("delete")
+        context['questions'] = questions_for_user(self.request, self.event, self.request.user)
+        context['speakers'] = self.speaker_profiles_for_user
+        context['schedule'] = self.event.current_schedule
+        context['public_slots'] = not self.has_perm('delete')
         return context
 
     def get_queryset(self):
@@ -256,167 +341,140 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return self.queryset
         queryset = (
             submissions_for_user(self.event, self.request.user)
-            .select_related("event", "track", "submission_type")
-            .prefetch_related("speakers", "answers", "slots")
-            .order_by("code")
+            .select_related('event', 'track', 'submission_type')
+            .prefetch_related('speakers', 'answers', 'slots')
+            .order_by('code')
         )
-        if self.check_expanded_fields("speakers.user"):
-            queryset = queryset.prefetch_related("speakers__profiles")
+        if self.check_expanded_fields('speakers.user'):
+            queryset = queryset.prefetch_related('speakers__profiles')
         if fields := self.check_expanded_fields(
-            "answers.question",
-            "answers.question.tracks",
-            "answers.question.submission_types",
-            "slots.room",
+            'answers.question',
+            'answers.question.tracks',
+            'answers.question.submission_types',
+            'slots.room',
         ):
-            queryset = queryset.prefetch_related(
-                *[field.replace(".", "__") for field in fields]
-            )
+            queryset = queryset.prefetch_related(*[field.replace('.', '__') for field in fields])
         return queryset
 
     def perform_destroy(self, request, *args, **kwargs):
         self.get_object().remove(force=True, person=self.request.user)
 
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=['POST'])
     def accept(self, request, **kwargs):
         try:
             submission = self.get_object()
             submission.accept(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=['POST'])
     def reject(self, request, **kwargs):
         try:
             submission = self.get_object()
             submission.reject(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=['POST'])
     def confirm(self, request, **kwargs):
         try:
             submission = self.get_object()
             submission.confirm(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=['POST'])
     def cancel(self, request, **kwargs):
         try:
             submission = self.get_object()
             submission.cancel(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=["POST"], url_path="make-submitted")
+    @action(detail=True, methods=['POST'], url_path='make-submitted')
     def make_submitted(self, request, **kwargs):
         try:
             submission = self.get_object()
             submission.make_submitted(person=request.user, orga=True)
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=["POST"], url_path="add-speaker")
+    @action(detail=True, methods=['POST'], url_path='add-speaker')
     def add_speaker(self, request, **kwargs):
         serializer = AddSpeakerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         submission = self.get_object()
-        submission.add_speaker(
-            email=data["email"], name=data.get("name"), locale=data.get("locale")
-        )
+        submission.add_speaker(email=data['email'], name=data.get('name'), locale=data.get('locale'))
         submission.refresh_from_db()
         return Response(SubmissionOrgaSerializer(submission).data)
 
-    @action(detail=True, methods=["POST"], url_path="remove-speaker")
+    @action(detail=True, methods=['POST'], url_path='remove-speaker')
     def remove_speaker(self, request, **kwargs):
         serializer = RemoveSpeakerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         submission = self.get_object()
-        speaker = submission.speakers.filter(
-            code=serializer.validated_data["user"]
-        ).first()
+        speaker = submission.speakers.filter(code=serializer.validated_data['user']).first()
         if not speaker:  # pragma: no cover
-            return Response(
-                {"detail": "Speaker not found."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'detail': 'Speaker not found.'}, status=status.HTTP_400_BAD_REQUEST)
         submission.remove_speaker(speaker, user=self.request.user)
         submission.refresh_from_db()
         return Response(SubmissionOrgaSerializer(submission).data)
 
 
 @extend_schema(
-    summary="List favourite submissions",
-    description="This endpoint is used by the schedule widget and uses session authentication.",
+    summary='List favourite submissions',
+    description='This endpoint is used by the schedule widget and uses session authentication.',
     responses={
         status.HTTP_200_OK: list[str],
     },
 )
-@api_view(["GET"])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes((SessionAuthentication, TokenAuthentication))
 def favourites_view(request, event):
-    if not request.user.has_perm("base.list_schedule", request.event):
+    if not request.user.has_perm('base.list_schedule', request.event):
         raise PermissionDenied()
     return Response(
-        [
-            sub.code
-            for sub in Submission.objects.filter(
-                favourites__user__in=[request.user], event=request.event
-            )
-        ]
+        [sub.code for sub in Submission.objects.filter(favourites__user__in=[request.user], event=request.event)]
     )
 
 
 @extend_schema(
-    summary="Add or remove a submission from favourites",
-    description="This endpoint is used by the schedule widget and uses session authentication.",
+    summary='Add or remove a submission from favourites',
+    description='This endpoint is used by the schedule widget and uses session authentication.',
     request=None,
     responses={
         status.HTTP_200_OK: {},
-        status.HTTP_404_NOT_FOUND: OpenApiResponse(description="Submission not found."),
+        status.HTTP_404_NOT_FOUND: OpenApiResponse(description='Submission not found.'),
     },
 )
-@api_view(["POST", "DELETE"])
+@api_view(['POST', 'DELETE'])
 @permission_classes([IsAuthenticated])
 @authentication_classes((SessionAuthentication, TokenAuthentication))
 def favourite_view(request, event, code):
-    if not request.user.has_perm("base.list_schedule", request.event):
+    if not request.user.has_perm('base.list_schedule', request.event):
         raise PermissionDenied()
-    submission = (
-        submissions_for_user(request.event, request.user)
-        .filter(code__iexact=code)
-        .first()
-    )
+    submission = submissions_for_user(request.event, request.user).filter(code__iexact=code).first()
     if not submission:
         raise Http404
 
-    if request.method == "POST":
+    if request.method == 'POST':
         submission.add_favourite(request.user)
     else:
         submission.remove_favourite(request.user)
@@ -424,35 +482,33 @@ def favourite_view(request, event, code):
 
 
 @extend_schema(
-    summary="Merge local favourites with server-side favourites",
+    summary='Merge local favourites with server-side favourites',
     description=(
-        "Accepts a list of submission codes the client collected while "
-        "unauthenticated (localStorage). Returns the full merged list of "
-        "favourite codes for this user + event."
+        'Accepts a list of submission codes the client collected while '
+        'unauthenticated (localStorage). Returns the full merged list of '
+        'favourite codes for this user + event.'
     ),
     request=list[str],
     responses={
         status.HTTP_200_OK: list[str],
     },
 )
-@api_view(["POST"])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes((SessionAuthentication, TokenAuthentication))
 def favourites_merge_view(request, event):
-    if not request.user.has_perm("base.list_schedule", request.event):
+    if not request.user.has_perm('base.list_schedule', request.event):
         raise PermissionDenied()
 
     local_codes = request.data
     if not isinstance(local_codes, list):
         return Response(
-            {"detail": "Expected a JSON array of submission codes."},
+            {'detail': 'Expected a JSON array of submission codes.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     existing = set(
-        Submission.objects.filter(
-            favourites__user=request.user, event=request.event
-        ).values_list("code", flat=True)
+        Submission.objects.filter(favourites__user=request.user, event=request.event).values_list('code', flat=True)
     )
 
     eligible = submissions_for_user(request.event, request.user).filter(
@@ -462,29 +518,27 @@ def favourites_merge_view(request, event):
         sub.add_favourite(request.user)
 
     merged = list(
-        Submission.objects.filter(
-            favourites__user=request.user, event=request.event
-        ).values_list("code", flat=True)
+        Submission.objects.filter(favourites__user=request.user, event=request.event).values_list('code', flat=True)
     )
     return Response(merged)
 
 
 @extend_schema_view(
-    list=extend_schema(summary="List tags", parameters=[build_search_docs("tag")]),
-    retrieve=extend_schema(summary="Show Tags"),
-    create=extend_schema(summary="Create Tags"),
-    update=extend_schema(summary="Update Tags"),
-    partial_update=extend_schema(summary="Update Tags (Partial Update)"),
-    destroy=extend_schema(summary="Delete Tags"),
+    list=extend_schema(summary='List tags', parameters=[build_search_docs('tag')]),
+    retrieve=extend_schema(summary='Show Tags'),
+    create=extend_schema(summary='Create Tags'),
+    update=extend_schema(summary='Update Tags'),
+    partial_update=extend_schema(summary='Update Tags (Partial Update)'),
+    destroy=extend_schema(summary='Delete Tags'),
 )
 class TagViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = TagSerializer
     queryset = Tag.objects.none()
-    endpoint = "tags"
-    search_fields = ("tag",)
+    endpoint = 'tags'
+    search_fields = ('tag',)
 
     def get_queryset(self):
-        return self.event.tags.all().order_by("pk")
+        return self.event.tags.all().order_by('pk')
 
 
 class SubmissionFavouriteDeprecatedView(View):
@@ -501,8 +555,8 @@ class SubmissionFavouriteDeprecatedView(View):
         import warnings
 
         warnings.warn(
-            "SubmissionFavouriteDeprecatedView is deprecated, "
-            "use /submissions/favourites/ and /submissions/{code}/favourite/",
+            'SubmissionFavouriteDeprecatedView is deprecated, '
+            'use /submissions/favourites/ and /submissions/{code}/favourite/',
             DeprecationWarning,
             stacklevel=2,
         )
@@ -521,9 +575,9 @@ class SubmissionFavouriteDeprecatedView(View):
             # As user not have any favourite talk yet
             return JsonResponse([], safe=False)
         except Exception as e:
-            logger.error("unexpected error happened: %s", e)
+            logger.error('unexpected error happened: %s', e)
             return JsonResponse(
-                {"error": str(e)},
+                {'error': str(e)},
                 safe=False,
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
@@ -546,37 +600,31 @@ class SubmissionFavouriteDeprecatedView(View):
                     if Submission.objects.filter(code=talk).exists():
                         talk_list_valid.append(talk)
 
-            data = {"user": user_id, "talk_list": talk_list_valid}
+            data = {'user': user_id, 'talk_list': talk_list_valid}
             serializer = SubmissionFavouriteDeprecatedSerializer(data=data)
             if serializer.is_valid():
                 fav_talks = serializer.save(user_id, talk_list_valid)
                 # Legacy video sync removed — video app now uses the same REST API
             else:
-                logger.error("Validation error: %s", serializer.errors)
+                logger.error('Validation error: %s', serializer.errors)
                 return JsonResponse(
-                    {"error": serializer.errors},
+                    {'error': serializer.errors},
                     safe=False,
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            return JsonResponse(
-                fav_talks.talk_list, safe=False, status=status.HTTP_200_OK
-            )
+            return JsonResponse(fav_talks.talk_list, safe=False, status=status.HTTP_200_OK)
 
         except Http404:
             logger.info("User not login yet, so can't add favourite talks.")
-            return JsonResponse(
-                "user_not_logged_in", safe=False, status=status.HTTP_400_BAD_REQUEST
-            )
+            return JsonResponse('user_not_logged_in', safe=False, status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError as e:
-            logger.error("Integrity error: %s", e)
-            return JsonResponse(
-                {"error": str(e)}, safe=False, status=status.HTTP_400_BAD_REQUEST
-            )
+            logger.error('Integrity error: %s', e)
+            return JsonResponse({'error': str(e)}, safe=False, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error("Unexpected error: %s", e)
+            logger.error('Unexpected error: %s', e)
             return JsonResponse(
-                {"error": str(e)},
+                {'error': str(e)},
                 safe=False,
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
@@ -586,13 +634,13 @@ class SubmissionFavouriteDeprecatedView(View):
         iat = dt.datetime.utcnow()
         exp = iat + dt.timedelta(days=30)
         payload = {
-            "iss": video_settings.issuer,
-            "aud": video_settings.audience,
-            "exp": exp,
-            "iat": iat,
-            "uid": user_code,
+            'iss': video_settings.issuer,
+            'aud': video_settings.audience,
+            'exp': exp,
+            'iat': iat,
+            'uid': user_code,
         }
-        token = jwt.encode(payload, video_settings.secret, algorithm="HS256")
+        token = jwt.encode(payload, video_settings.secret, algorithm='HS256')
         return token
 
     @staticmethod
@@ -600,59 +648,55 @@ class SubmissionFavouriteDeprecatedView(View):
         auth_header = get_authorization_header(request).split()
         if not auth_header:
             raise Http404
-        if auth_header and auth_header[0].lower() == b"bearer":
+        if auth_header and auth_header[0].lower() == b'bearer':
             if len(auth_header) == 1:
-                raise exceptions.AuthenticationFailedError(
-                    "Invalid token header. No credentials provided."
-                )
+                raise exceptions.AuthenticationFailedError('Invalid token header. No credentials provided.')
             elif len(auth_header) > 2:
                 raise exceptions.AuthenticationFailedError(
-                    "Invalid token header. Token string should not contain spaces."
+                    'Invalid token header. Token string should not contain spaces.'
                 )
         token_decode = jwt.decode(
             auth_header[1],
             video_settings.secret,
-            algorithms=["HS256"],
+            algorithms=['HS256'],
             audience=video_settings.audience,
             issuer=video_settings.issuer,
         )
-        user_code = token_decode.get("uid")
+        user_code = token_decode.get('uid')
         return get_object_or_404(User, code=user_code).id
 
 
 @extend_schema_view(
-    list=extend_schema(
-        summary="List Submission Types", parameters=[build_search_docs("name")]
-    ),
-    retrieve=extend_schema(summary="Show Submission Types"),
-    create=extend_schema(summary="Create Submission Types"),
-    update=extend_schema(summary="Update Submission Types"),
-    partial_update=extend_schema(summary="Update Submission Types (Partial Update)"),
-    destroy=extend_schema(summary="Delete Submission Types"),
+    list=extend_schema(summary='List Submission Types', parameters=[build_search_docs('name')]),
+    retrieve=extend_schema(summary='Show Submission Types'),
+    create=extend_schema(summary='Create Submission Types'),
+    update=extend_schema(summary='Update Submission Types'),
+    partial_update=extend_schema(summary='Update Submission Types (Partial Update)'),
+    destroy=extend_schema(summary='Delete Submission Types'),
 )
 class SubmissionTypeViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = SubmissionTypeSerializer
     queryset = SubmissionType.objects.none()
-    endpoint = "submission-types"
-    search_fields = ("name",)
+    endpoint = 'submission-types'
+    search_fields = ('name',)
 
     def get_queryset(self):
         return self.event.submission_types.all()
 
 
 @extend_schema_view(
-    list=extend_schema(summary="List Tracks", parameters=[build_search_docs("name")]),
-    retrieve=extend_schema(summary="Show Tracks"),
-    create=extend_schema(summary="Create Tracks"),
-    update=extend_schema(summary="Update Tracks"),
-    partial_update=extend_schema(summary="Update Tracks (Partial Update)"),
-    destroy=extend_schema(summary="Delete Tracks"),
+    list=extend_schema(summary='List Tracks', parameters=[build_search_docs('name')]),
+    retrieve=extend_schema(summary='Show Tracks'),
+    create=extend_schema(summary='Create Tracks'),
+    update=extend_schema(summary='Update Tracks'),
+    partial_update=extend_schema(summary='Update Tracks (Partial Update)'),
+    destroy=extend_schema(summary='Delete Tracks'),
 )
 class TrackViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = TrackSerializer
     queryset = Track.objects.none()
-    endpoint = "tracks"
-    search_fields = ("name",)
+    endpoint = 'tracks'
+    search_fields = ('name',)
 
     def get_queryset(self):
         return self.event.tracks.all()

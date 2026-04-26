@@ -26,6 +26,7 @@ from eventyay.base.models import (
     Feedback,
     LogEntry,
     Resource,
+    ResourceKind,
     Submission,
     SubmissionComment,
     SubmissionStates,
@@ -363,7 +364,9 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         return formset_class(
             self.request.POST if self.request.method == 'POST' else None,
             files=self.request.FILES if self.request.method == 'POST' else None,
-            queryset=(submission.resources.all() if submission else Resource.objects.none()),
+            queryset=(
+                submission.resources.exclude(kind=ResourceKind.SLIDES) if submission else Resource.objects.none()
+            ),
             prefix='resource',
         )
 
@@ -423,6 +426,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 form.instance.pk = None
             elif form.has_changed():
                 form.instance.submission = obj
+                form.instance.kind = ResourceKind.GENERIC
                 form.save()
                 change_data = {key: form.cleaned_data.get(key) for key in form.changed_data}
                 change_data['id'] = form.instance.pk
@@ -439,6 +443,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         ]
         for form in extra_forms:
             form.instance.submission = obj
+            form.instance.kind = ResourceKind.GENERIC
             form.save()
             obj.log_action(
                 'eventyay.submission.resource.create',
@@ -519,13 +524,13 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
 
 class SubmissionContentView(SubmissionContent):
-    template_name = "orga/submission/content.html"
+    template_name = 'orga/submission/content.html'
     http_method_names = ['get', 'head', 'options']
 
     def get_permission_required(self):
-        if "code" in self.kwargs:
-            return ["base.orga_list_submission"]  # View permission for reviewers
-        return ["base.create_submission"]
+        if 'code' in self.kwargs:
+            return ['base.orga_list_submission']  # View permission for reviewers
+        return ['base.create_submission']
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
