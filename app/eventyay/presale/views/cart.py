@@ -459,7 +459,8 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
             ) and self.kwargs.get('cart_namespace')
             if disclose_cart_id:
                 cart_id = get_or_create_cart_id(self.request)
-                url += '&cart_id={}'.format(cart_id)
+                separator = '&' if '?' in url else '?'
+                url += '{}cart_id={}'.format(separator, quote(cart_id, safe=''))
             return url
         else:
             # Return to event page using 'next' parameter (original behavior)
