@@ -53,7 +53,7 @@
     "vue-advanced-cropper": "^2.8.9",
     "vue-router": "^5.0.6",
     "vue-slicksort": "^2.0.5",
-    "vue-virtual-scroller": "^2.0.1",
+    "vue-virtual-scroller": "^3.0.0",
     "vuex": "^4.1.0",
     "web-animations-js": "^2.3.2",
     "webrtc-adapter": "^9.0.5"
