@@ -17,7 +17,6 @@ export default {
 	flex: auto
 	.content-wrapper
 		width: 100%
-		max-width: 960px
 		margin: 0 auto
 	.rich-text-content .ql-editor
 		margin: 16px 0
