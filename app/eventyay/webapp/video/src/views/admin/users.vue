@@ -35,7 +35,7 @@
 				.ticket-info(@click.stop="")
 					template(v-if="user.order_code && eventRouting.organizer && eventRouting.event")
 						a.order-link(
-							:href="`/control/${eventRouting.organizer}/${eventRouting.event}/orders/${user.order_code}/`",
+							:href="`/control/event/${encodeURIComponent(eventRouting.organizer)}/${encodeURIComponent(eventRouting.event)}/orders/${encodeURIComponent(user.order_code)}/`",
 							target="_blank",
 							rel="noopener noreferrer",
 							:title="user.order_code",

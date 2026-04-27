@@ -10,6 +10,7 @@ import requests
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.core.paginator import InvalidPage, Paginator
+from django.core.cache import cache
 from django.db.models import Q
 from django.db.transaction import atomic
 from django.shortcuts import get_object_or_404
@@ -71,12 +72,13 @@ def resolve_wikimedia_usernames_by_email(emails):
     uniq = list(dict.fromkeys((e or "").strip().lower() for e in emails if e))
     if not uniq:
         return {}
-    rows = (
-        User.objects.filter(event__isnull=True, email__in=uniq)
-        .exclude(wikimedia_username__isnull=True)
-        .exclude(wikimedia_username__exact="")
-        .values("email", "wikimedia_username")
-    )
+    with scopes_disabled():
+        rows = list(
+            User.objects.filter(event__isnull=True, email__in=uniq)
+            .exclude(wikimedia_username__isnull=True)
+            .exclude(wikimedia_username__exact="")
+            .values("email", "wikimedia_username")
+        )
     result = {}
     for row in rows:
         email = (row.get("email") or "").strip().lower()
@@ -129,23 +131,25 @@ def build_admin_ticket_rows_by_token(event_id, token_ids):
             }
     need_hash = [t for t in uniq if t not in result and _is_email_hash_uid_token(t)]
     if need_hash:
-        need_set = {t.upper() for t in need_hash}
-        hash_to_email = {}
-        with scopes_disabled():
-            for email in (
-                Order.objects.filter(event_id=event_id)
-                .filter(status=Order.STATUS_PAID)
-                .exclude(email__isnull=True)
-                .exclude(email__exact="")
-                .values_list("email", flat=True)
-                .iterator(chunk_size=4000)
-            ):
-                h = encode_email(email).upper()
-                if h in need_set and h not in hash_to_email:
-                    hash_to_email[h] = email
-                if len(hash_to_email) >= len(need_set):
-                    break
-        emails = list(dict.fromkeys(hash_to_email.values()))
+        cache_key = f'video:event_email_hashes:{event_id}'
+        hash_to_email = cache.get(cache_key)
+        if hash_to_email is None:
+            hash_to_email = {}
+            with scopes_disabled():
+                for email in (
+                    Order.objects.filter(event_id=event_id)
+                    .filter(status=Order.STATUS_PAID)
+                    .exclude(email__isnull=True)
+                    .exclude(email__exact="")
+                    .values_list('email', flat=True)
+                    .iterator(chunk_size=4000)
+                ):
+                    h = encode_email(email).upper()
+                    if h not in hash_to_email:
+                        hash_to_email[h] = email
+            cache.set(cache_key, hash_to_email, 300)  # 5 minutes
+
+        emails = list(dict.fromkeys(hash_to_email.get(t.upper()) for t in need_hash if t.upper() in hash_to_email))
         positions_by_email = {}
         if emails:
             with scopes_disabled():
@@ -288,10 +292,9 @@ def get_public_users(
             if row.get("email") and not row.get("wikimedia_username")
         ]
         if emails_to_resolve:
-            with scopes_disabled():
-                email_to_wikimedia = resolve_wikimedia_usernames_by_email(
-                    emails_to_resolve
-                )
+            email_to_wikimedia = resolve_wikimedia_usernames_by_email(
+                emails_to_resolve
+            )
 
     return [
         dict(
@@ -793,18 +796,25 @@ def list_users(
         qs = qs.filter(reduce(operator.or_, conditions))
 
     try:
-        p = Paginator(
-            qs.order_by("profile__display_name").values(
-                "id",
-                "profile",
-                "traits",
-                "last_login",
-                "moderation_state",
-                "token_id",
-                "pretalx_id",
+        value_fields = (
+            "id",
+            "profile",
+            "traits",
+            "last_login",
+            "moderation_state",
+            "token_id",
+            "pretalx_id",
+        )
+        if include_admin_info:
+            qs_values = qs.order_by("profile__display_name").values(
+                *value_fields,
                 "email",
                 "wikimedia_username",
-            ),
+            )
+        else:
+            qs_values = qs.order_by("profile__display_name").values(*value_fields)
+        p = Paginator(
+            qs_values,
             page_size,
         ).page(page)
         ticket_by_token = {}
@@ -824,10 +834,9 @@ def list_users(
                 if row.get("email") and not row.get("wikimedia_username")
             ]
             if emails_to_resolve:
-                with scopes_disabled():
-                    email_to_wikimedia = resolve_wikimedia_usernames_by_email(
-                        emails_to_resolve
-                    )
+                email_to_wikimedia = resolve_wikimedia_usernames_by_email(
+                    emails_to_resolve
+                )
         return {
             "results": sorted(
                 (
