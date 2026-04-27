@@ -1164,6 +1164,10 @@ h1 .label {
         margin-bottom: .5rem;
         overflow-wrap: break-word;
     }
+
+    h2 small {
+        white-space: nowrap;
+    }
 }
 
 @media (min-width: $screen-sm-min) {
