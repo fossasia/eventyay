@@ -32,15 +32,20 @@ class PretalxFavButton extends HTMLElement {
       .shift()
     this._isFaved = false
 
+    const parser = new DOMParser()
     const starOutline = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2zm0 3.34L9.86 9.88l-4.58.67 3.32 3.24-.78 4.58L12 16.1l4.18 2.27-.78-4.58 3.32-3.24-4.58-.67L12 5.34z"/></svg>'
     const starFilled = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>'
-    this._starOutline = this._parseSVG(starOutline)
-    this._starFilled = this._parseSVG(starFilled)
 
-    this.innerHTML = '<button class="btn btn-xs btn-link"><span class="fav-icon"></span></button>'
-    this._button = this.querySelector('button')
-    this._iconWrap = this.querySelector('.fav-icon')
-    this._iconWrap.replaceChildren(this._starOutline.cloneNode(true))
+    this._starOutline = parser.parseFromString(starOutline, 'image/svg+xml').documentElement
+    this._starFilled = parser.parseFromString(starFilled, 'image/svg+xml').documentElement
+
+    this._button = document.createElement('button')
+    this._button.className = 'btn btn-xs btn-link'
+    this._iconWrap = document.createElement('span')
+    this._iconWrap.className = 'fav-icon'
+
+    this._button.appendChild(this._iconWrap)
+    this.replaceChildren(this._button)
 
     this._button.addEventListener('click', () => this._toggle())
 

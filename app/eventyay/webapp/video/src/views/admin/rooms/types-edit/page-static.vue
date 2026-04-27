@@ -12,7 +12,6 @@ export default {
 }
 </script>
 <style lang="stylus">
-// HACK
 .c-page-static-settings
-	width: calc(100vw - var(--sidebar-width) - 32px)
+	width: 100%
 </style>
