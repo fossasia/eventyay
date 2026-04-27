@@ -52,6 +52,7 @@ def test_initial_data(event):
 
         event.cfp.delete()
         event.mail_templates.all().delete()
+        event.review_phases.all().delete()
         event.build_initial_data()
 
         assert event.cfp
