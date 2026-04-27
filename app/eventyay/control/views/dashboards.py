@@ -318,7 +318,7 @@ def shop_state_widget(sender, **kwargs):
         icon = (
             'fa-check-circle'
             if sender.live and not is_test_mode
-            else ('fa-warning' if is_test_mode else 'fa-times-circle')
+            else ('fa-warning' if sender.live and is_test_mode else 'fa-times-circle')
         )
         css_class = 'live' if sender.live else 'off'
     else:
