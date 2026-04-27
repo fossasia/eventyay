@@ -66,6 +66,37 @@ def admin_public_fields_from_user_row(user_row, ticket_by_token):
     }
 
 
+def resolve_wikimedia_usernames_by_email(emails):
+    """Return a lowercase email -> Wikimedia username map from account users."""
+    uniq = list(dict.fromkeys((e or "").strip().lower() for e in emails if e))
+    if not uniq:
+        return {}
+    rows = (
+        User.objects.filter(event__isnull=True, email__in=uniq)
+        .exclude(wikimedia_username__isnull=True)
+        .exclude(wikimedia_username__exact="")
+        .values("email", "wikimedia_username")
+    )
+    result = {}
+    for row in rows:
+        email = (row.get("email") or "").strip().lower()
+        if email and email not in result:
+            result[email] = (row.get("wikimedia_username") or "").strip()
+    return result
+
+
+def admin_public_fields_with_email_fallback(
+    user_row, ticket_by_token, email_to_wikimedia
+):
+    data = admin_public_fields_from_user_row(user_row, ticket_by_token)
+    if data.get("wikimedia_username"):
+        return data
+    email = (data.get("email") or "").strip().lower()
+    if email and email in email_to_wikimedia:
+        data["wikimedia_username"] = email_to_wikimedia[email]
+    return data
+
+
 def build_admin_ticket_rows_by_token(event_id, token_ids):
     """
     Map a video user's JWT ``uid`` (stored as ``User.token_id``) to Pretix order data.
@@ -81,6 +112,9 @@ def build_admin_ticket_rows_by_token(event_id, token_ids):
         for row in OrderPosition.objects.filter(
             order__event_id=event_id,
             pseudonymization_id__in=uniq,
+            addon_to__isnull=True,
+            canceled=False,
+            order__status=Order.STATUS_PAID,
         ).values(
             "pseudonymization_id",
             "secret",
@@ -100,6 +134,7 @@ def build_admin_ticket_rows_by_token(event_id, token_ids):
         with scopes_disabled():
             for email in (
                 Order.objects.filter(event_id=event_id)
+                .filter(status=Order.STATUS_PAID)
                 .exclude(email__isnull=True)
                 .exclude(email__exact="")
                 .values_list("email", flat=True)
@@ -118,6 +153,7 @@ def build_admin_ticket_rows_by_token(event_id, token_ids):
                     OrderPosition.objects.filter(
                         order__event_id=event_id,
                         order__email__in=emails,
+                        order__status=Order.STATUS_PAID,
                         addon_to__isnull=True,
                         canceled=False,
                     )
@@ -218,28 +254,44 @@ def get_public_users(
     if not include_banned:
         qs = qs.exclude(moderation_state=User.ModerationState.BANNED)
 
-    users_data = list(
-        qs.values(
-            "id",
-            "type",
-            "profile",
-            "deleted",
-            "moderation_state",
-            "token_id",
-            "traits",
-            "last_login",
-            "pretalx_id",
-            "client_state",
-            "email",
-            "wikimedia_username",
-        )
+    value_fields = (
+        "id",
+        "type",
+        "profile",
+        "deleted",
+        "moderation_state",
+        "token_id",
+        "traits",
+        "last_login",
+        "pretalx_id",
+        "client_state",
     )
 
+    if include_admin_info:
+        users_data = list(qs.values(*value_fields, "email", "wikimedia_username"))
+    else:
+        users_data = qs.values(*value_fields).iterator()
+
     ticket_by_token = {}
+    email_to_wikimedia = {}
     if include_admin_info and users_data:
         token_ids = [u["token_id"] for u in users_data if u["token_id"]]
         if token_ids:
             ticket_by_token = build_admin_ticket_rows_by_token(event_id, token_ids)
+        admin_rows = [
+            admin_public_fields_from_user_row(u, ticket_by_token)
+            for u in users_data
+        ]
+        emails_to_resolve = [
+            row["email"]
+            for row in admin_rows
+            if row.get("email") and not row.get("wikimedia_username")
+        ]
+        if emails_to_resolve:
+            with scopes_disabled():
+                email_to_wikimedia = resolve_wikimedia_usernames_by_email(
+                    emails_to_resolve
+                )
 
     return [
         dict(
@@ -269,7 +321,11 @@ def get_public_users(
                 else {}
             ),
             **(
-                admin_public_fields_from_user_row(u, ticket_by_token)
+                admin_public_fields_with_email_fallback(
+                    u,
+                    ticket_by_token,
+                    email_to_wikimedia,
+                )
                 if include_admin_info
                 else {}
             ),
@@ -756,6 +812,22 @@ def list_users(
             tids = [u["token_id"] for u in p.object_list if u.get("token_id")]
             if tids:
                 ticket_by_token = build_admin_ticket_rows_by_token(event_id, tids)
+        email_to_wikimedia = {}
+        if include_admin_info and p.object_list:
+            admin_rows = [
+                admin_public_fields_from_user_row(u, ticket_by_token)
+                for u in p.object_list
+            ]
+            emails_to_resolve = [
+                row["email"]
+                for row in admin_rows
+                if row.get("email") and not row.get("wikimedia_username")
+            ]
+            if emails_to_resolve:
+                with scopes_disabled():
+                    email_to_wikimedia = resolve_wikimedia_usernames_by_email(
+                        emails_to_resolve
+                    )
         return {
             "results": sorted(
                 (
@@ -779,7 +851,11 @@ def list_users(
                             else []
                         ),
                         **(
-                            admin_public_fields_from_user_row(u, ticket_by_token)
+                            admin_public_fields_with_email_fallback(
+                                u,
+                                ticket_by_token,
+                                email_to_wikimedia,
+                            )
                             if include_admin_info
                             else {}
                         ),

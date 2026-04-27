@@ -22,8 +22,8 @@
 				role="link",
 				:aria-label="userRowAriaLabel(user)",
 				@click="goToUser(user)",
-				@keydown.enter.prevent="goToUser(user)",
-				@keydown.space.prevent="goToUser(user)"
+				@keydown.enter.self.prevent="goToUser(user)",
+				@keydown.space.self.prevent="goToUser(user)"
 			)
 				avatar.avatar(:user="user", :size="24")
 				.id(:title="user.id") {{ user.id }}
