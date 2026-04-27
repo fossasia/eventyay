@@ -184,14 +184,6 @@ header {
   width: 100%;
 }
 
-.presale-sticky-tabs-wrap *:focus-visible{
-    outline: none;
-}
-
-.presale-sticky-tabs-wrap *:focus{
-    outline: none;
-}
-
 .presale-sticky-tabs-inner {
   margin: 0;
   background: var(--color-bg);

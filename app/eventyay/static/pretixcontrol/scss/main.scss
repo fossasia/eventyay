@@ -43,10 +43,6 @@ nav.navbar {
     font-weight: 500;
     
     &.navbar-inverse {
-        :focus,
-        :focus-visible{
-            outline: none;
-        }
         .navbar-top-links a,
         .btn-link {
             color: $navbar-link-color;
