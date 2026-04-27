@@ -1,4 +1,5 @@
 import pytest
+from django.core import mail as djmail
 from django_scopes import scope, scopes_disabled
 
 from pretalx.person.models.user import User, avatar_path
@@ -117,3 +118,41 @@ def test_user_reset_password_without_text(orga_user, event):
         orga_user.reset_password(event)
         orga_user.refresh_from_db()
         assert orga_user.pw_reset_token
+
+
+@pytest.mark.django_db
+def test_user_change_password_sends_mail_and_logs_action(orga_user):
+    djmail.outbox = []
+    old_password = orga_user.password
+    old_log_count = orga_user.own_actions().filter(action_type='eventyay.user.password.changed').count()
+
+    orga_user.change_password('newsecurepassword123')
+    orga_user.refresh_from_db()
+
+    assert orga_user.password != old_password
+    assert orga_user.check_password('newsecurepassword123')
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].to == [orga_user.email]
+    assert (
+        orga_user.own_actions().filter(action_type='eventyay.user.password.changed').count()
+        == old_log_count + 1
+    )
+
+
+@pytest.mark.django_db
+def test_user_change_password_without_email_logs_and_skips_mail(orga_user):
+    orga_user.email = ''
+    orga_user.save(update_fields=['email'])
+
+    djmail.outbox = []
+    old_log_count = orga_user.own_actions().filter(action_type='eventyay.user.password.changed').count()
+
+    orga_user.change_password('newsecurepassword123')
+    orga_user.refresh_from_db()
+
+    assert orga_user.check_password('newsecurepassword123')
+    assert len(djmail.outbox) == 0
+    assert (
+        orga_user.own_actions().filter(action_type='eventyay.user.password.changed').count()
+        == old_log_count + 1
+    )
