@@ -295,7 +295,6 @@ def shop_state_widget(sender, **kwargs):
     is_common = bool(request and request.path.startswith('/common/'))
     label = _('Event is') if is_common else _('Ticket shop is')
     url_name = 'eventyay_common:event.live' if is_common else 'control:event.live'
-    
     is_test_mode = sender.private_testmode or sender.testmode
 
     if is_common:
