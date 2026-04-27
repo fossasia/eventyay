@@ -22,6 +22,7 @@ from eventyay.consts import SizeKey
 
 logger = logging.getLogger(__name__)
 _ALL_EVENTS = None
+WEBHOOK_TIMEOUT = (30, 30)  # seconds: (connect timeout, read timeout)
 
 
 class WebhookEvent:
@@ -295,8 +296,6 @@ def notify_webhooks(logentry_ids: list):
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
-    WEBHOOK_TIMEOUT = 30  # seconds — connect + read timeout
-
     with scopes_disabled():
         webhook = WebHook.objects.get(id=webhook_id)
     with scope(organizer=webhook.organizer):
