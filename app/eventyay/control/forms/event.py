@@ -60,8 +60,9 @@ from eventyay.control.forms import (
 from eventyay.control.forms.widgets import Select2
 from eventyay.helpers.countries import CachedCountries
 from eventyay.multidomain.urlreverse import build_absolute_uri
-from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
+from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.plugins.banktransfer.payment import BankTransfer
+
 
 # Shared constants for require_registered_account_for_tickets field
 REQUIRE_REGISTERED_ACCOUNT_LABEL = _('Only allow registered accounts to get a ticket')
@@ -162,21 +163,23 @@ class EventWizardFoundationForm(forms.Form):
         cleaned_data = super().clean()
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
-        
+
         if not content_locales:
             return cleaned_data
-        
-        if invalid_content_locales := set(content_locales) - set(locales):
+
+        if set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
             })
-        
+
         return cleaned_data
 
 
 class EventWizardBasicsForm(I18nModelForm):
     error_messages = {
-        'duplicate_slug': _('This short name is already taken by another event. Please choose a different one or use the "Set to random" button for an automatic suggestion.'),
+        'duplicate_slug': _('This short name is already taken by another event. '
+                            'Please choose a different one or use the "Set to random" button '
+                            'for an automatic suggestion.'),
     }
     timezone = forms.ChoiceField(
         choices=((a, a) for a in common_timezones),
@@ -197,7 +200,8 @@ class EventWizardBasicsForm(I18nModelForm):
     )
     imprint_url = forms.URLField(
         label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website that has your contact details and legal information.'),
+        help_text=_('This should point e.g. to a part of your website '
+                    'that has your contact details and legal information.'),
         required=False,
     )
 
@@ -460,7 +464,8 @@ class EventWizardInitialForm(forms.Form):
             empty_label=None,
             required=True,
             help_text=_(
-                'The organizer running the event can copy settings from previous events and share team permissions across all or multiple events.'
+                'The organizer running the event can copy settings from previous events and '
+                'share team permissions across all or multiple events.'
             ),
         )
         self.fields['organizer'].initial = self.fields['organizer'].queryset.first()
@@ -470,7 +475,8 @@ class EventWizardTimelineForm(forms.ModelForm):
     deadline = forms.DateTimeField(
         required=False,
         help_text=_(
-            'The default deadline for your Call for Papers. You can assign additional deadlines to individual session types, which will take precedence over this deadline.'
+            'The default deadline for your Call for Papers. You can assign additional deadlines to '
+            'individual session types, which will take precedence over this deadline.'
         ),
         widget=HtmlDateTimeInput,
     )
@@ -1486,7 +1492,7 @@ class MailSettingsForm(SettingsForm):
     }
 
     def _set_field_placeholders(self, fn, base_parameters):
-        phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
+        phs = [f'{{{p}}}' for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
         ht = _('Available placeholders: {list}').format(list=', '.join(phs))
         if self.fields[fn].help_text:
             self.fields[fn].help_text += ' ' + str(ht)
@@ -1522,7 +1528,8 @@ class MailSettingsForm(SettingsForm):
         # Validate SendGrid token is provided when SendGrid is selected
         if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
             if not data.get('send_grid_api_key'):
-                raise ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+                msg = _('This field is required when using SendGrid as email vendor.')
+                raise ValidationError({'send_grid_api_key': msg})
 
         return data
 
