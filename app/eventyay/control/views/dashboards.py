@@ -338,7 +338,7 @@ def shop_state_widget(sender, **kwargs):
                 state=state,
                 icon=icon,
                 cls=css_class,
-                color_cls='text-warning' if is_test_mode else ''
+                color_cls='text-warning' if icon == 'fa-warning' else ''
             ),
             'url': reverse(
                 url_name,
