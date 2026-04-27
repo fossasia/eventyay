@@ -156,6 +156,26 @@ def _zip_speaker_refs_and_names(linked_speakers: str, speakers_val: str) -> list
     return pairs
 
 
+def _speaker_cache_key(speaker_ref: str, speaker_name: str) -> str:
+    normalized_ref = speaker_ref.strip().lower()
+    if normalized_ref:
+        return f'ref:{normalized_ref}'
+    normalized_name = speaker_name.strip().lower()
+    if normalized_name:
+        return f'name:{normalized_name}'
+    return ''
+
+
+def _refetch_speaker_after_conflict(event, speaker_ref: str, normalized_email: str, normalized_name: str):
+    for candidate in (speaker_ref, normalized_email, normalized_name):
+        if not candidate:
+            continue
+        user = _find_user_for_speaker(event, candidate)
+        if user:
+            return user
+    return None
+
+
 def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
     normalized_ref = speaker_ref.strip()
     normalized_name = speaker_name.strip()[:USER_FULLNAME_MAX_LENGTH] if speaker_name else ''
@@ -177,32 +197,56 @@ def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
             user.fullname = normalized_name
             update_fields.append('fullname')
         if normalized_email and not user.email:
-            if not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists():
-                user.email = normalized_email
-                update_fields.append('email')
+            user.email = normalized_email
+            update_fields.append('email')
         if (
             normalized_identifier
             and not user.code
-            and not User.objects.filter(code__iexact=normalized_identifier).exclude(pk=user.pk).exists()
         ):
             user.code = normalized_identifier
             update_fields.append('code')
         if update_fields:
-            user.save(update_fields=update_fields)
+            try:
+                with transaction.atomic():
+                    user.save(update_fields=update_fields)
+            except IntegrityError:
+                conflicting_user = _refetch_speaker_after_conflict(
+                    event,
+                    speaker_ref=normalized_ref,
+                    normalized_email=normalized_email,
+                    normalized_name=normalized_name,
+                )
+                if conflicting_user:
+                    user = conflicting_user
+                else:
+                    raise
     else:
         fallback_name = normalized_name
         if not fallback_name:
             fallback_name = normalized_identifier or (normalized_email.split('@', 1)[0] if normalized_email else '')
         if not fallback_name:
             return None
-        user = User.objects.create_user(
-            password=get_random_string(32),
-            email=normalized_email or None,
-            fullname=fallback_name[:USER_FULLNAME_MAX_LENGTH],
-            code=normalized_identifier or None,
-            pw_reset_token=get_random_string(32),
-            pw_reset_time=now() + dt.timedelta(days=60),
-        )
+        try:
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    password=get_random_string(32),
+                    email=normalized_email or None,
+                    fullname=fallback_name[:USER_FULLNAME_MAX_LENGTH],
+                    code=normalized_identifier or None,
+                    pw_reset_token=get_random_string(32),
+                    pw_reset_time=now() + dt.timedelta(days=60),
+                )
+        except IntegrityError:
+            conflicting_user = _refetch_speaker_after_conflict(
+                event,
+                speaker_ref=normalized_ref,
+                normalized_email=normalized_email,
+                normalized_name=normalized_name,
+            )
+            if conflicting_user:
+                user = conflicting_user
+            else:
+                raise
 
     SpeakerProfile.objects.get_or_create(user=user, event=event)
     return user
@@ -299,6 +343,9 @@ def _import_speaker_row(event, settings, record, acting_user):
 
     if not email:
         raise ImportExecutionError(_('Missing email address.'))
+    normalized_email = _normalize_email_address(email)
+    if not normalized_email:
+        raise ImportExecutionError(_('Invalid email address.'))
 
     name = full_name or f'{first_name} {last_name}'.strip()
     if not name:
@@ -335,7 +382,7 @@ def _import_speaker_row(event, settings, record, acting_user):
             user = User.objects.filter(code__iexact=normalized_identifier).first()
 
     if not user:
-        user = User.objects.filter(email__iexact=email).first()
+        user = User.objects.filter(email__iexact=normalized_email).first()
     if not user:
         profile = SpeakerProfile.objects.filter(event=event, user__fullname__iexact=name).select_related('user').first()
         if profile:
@@ -346,16 +393,19 @@ def _import_speaker_row(event, settings, record, acting_user):
             user.fullname = name
             extra = _apply_user_optional_fields(user, **optional_kwargs)
             update_fields = ['fullname', *extra]
-            normalized_email = email.lower().strip()
             if normalized_email and not user.email:
-                if not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists():
-                    user.email = normalized_email
-                    update_fields.append('email')
-            user.save(update_fields=update_fields)
+                user.email = normalized_email
+                update_fields.append('email')
+            try:
+                user.save(update_fields=update_fields)
+            except IntegrityError:
+                retry_fields = [field for field in update_fields if field not in ('email', 'code')]
+                if retry_fields:
+                    user.save(update_fields=retry_fields)
         else:
             user = User.objects.create_user(
                 password=get_random_string(32),
-                email=email.lower().strip(),
+                email=normalized_email,
                 fullname=name,
                 code=normalized_identifier or None,
                 pw_reset_token=get_random_string(32),
@@ -654,7 +704,9 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                 speaker_cache = {}
             speaker_pairs = _zip_speaker_refs_and_names(linked_speakers, speakers_val)
             for speaker_ref, speaker_name in speaker_pairs:
-                cache_key = f'{speaker_ref.lower()}||{speaker_name.lower()}'
+                cache_key = _speaker_cache_key(speaker_ref, speaker_name)
+                if not cache_key:
+                    continue
                 if cache_key not in speaker_cache:
                     speaker_cache[cache_key] = _upsert_session_speaker(
                         event=event,
