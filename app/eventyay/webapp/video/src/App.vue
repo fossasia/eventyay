@@ -98,8 +98,8 @@ export default {
 			showJoinRoom: true,
 			getJoinRoomLink: (session) => {
 				// Mirror agenda logic: only show join room link when the session
-				// has both a room and a stream_url (i.e. it actually streams live)
-				if (!session?.stream_url || !session?.room) return ''
+				// has both a room and either a stream_url or a video room
+				if ((!session?.stream_url && !session?.has_video_room) || !session?.room) return ''
 				const roomId = typeof session.room === 'object' ? session.room.id : session.room
 				if (!roomId) return ''
 				return this.$router.resolve({name: 'room', params: {roomId}}).href
@@ -143,14 +143,9 @@ export default {
 			if (!routeName) return
 			if (routeName.startsWith && routeName.startsWith('admin')) return
 			const rooms = this.rooms || []
-			const isInitiated = (room) => {
-				if (!room) return false
-				if (Array.isArray(room.module_config)) {
-					return !!inferType({ module_config: room.module_config })
-				}
-				return !!inferRoomType(room)
+			if (routeName === 'about') {
+				return rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
 			}
-			if (routeName === 'home') return rooms.find(isInitiated) || rooms[0]
 			const wantedId = String(this.$route.params.roomId)
 			return rooms.find(room => String(room.id) === wantedId)
 		},
@@ -185,7 +180,7 @@ export default {
 		overrideSidebarCollapse() {
 			return this.$mq.below.l &&
 				this.$mq.above.m &&
-				this.$route.name === 'home' &&
+				this.$route.name === 'about' &&
 				!this.roomHasMedia
 		},
 		// safari cleverly includes the address bar cleverly in 100vh
