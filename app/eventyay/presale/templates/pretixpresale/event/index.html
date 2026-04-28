@@ -27,7 +27,7 @@
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
 
-    <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+    <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
