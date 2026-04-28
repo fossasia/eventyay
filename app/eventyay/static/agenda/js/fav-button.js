@@ -135,12 +135,6 @@ class PretalxFavButton extends HTMLElement {
     }
     localStorage.setItem(`${this._eventSlug}_favs`, JSON.stringify(favs))
   }
-
-  _parseSVG (svgString) {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(svgString, 'image/svg+xml')
-    return doc.documentElement
-  }
 }
 
 customElements.define('pretalx-fav-button', PretalxFavButton)
