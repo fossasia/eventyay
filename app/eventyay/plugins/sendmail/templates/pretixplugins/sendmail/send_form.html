@@ -90,4 +90,5 @@
 {% block custom_header %}
     {{ block.super }}
     {% include 'pretixplugins/sendmail/_markdown_editor_header.html' %}
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}
