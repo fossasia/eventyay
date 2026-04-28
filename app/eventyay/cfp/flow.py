@@ -467,21 +467,43 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                         result[field] = obj
         return result
 
+    def get_draft_submission_type(self):
+        submission_type = self.request.event.cfp.default_type
+        if submission_type and submission_type.event_id == self.request.event.pk:
+            return submission_type
+
+        submission_types = tuple(SubmissionType.objects.filter(event=self.request.event))
+        if len(submission_types) == 1:
+            return submission_types[0]
+        return None
+
     def get_form(self, from_storage=False, not_strict=None):
         form = super().get_form(from_storage=from_storage, not_strict=not_strict)
-        if from_storage and not_strict and not form.data.get('title'):
-            # Inject a default title for drafts before the form is validated,
-            # because Submission.title is a non-blank field and without this,
-            # is_valid() would always fail for title-less drafts.
+        if from_storage and not_strict:
             data = dict(form.data)
-            data['title'] = str(_('Draft Proposal'))
-            return self.form_class(
-                data=data,
-                initial=form.initial,
-                files=form.files,
-                not_strict=not_strict,
-                **self.get_form_kwargs(),
-            )
+            changed = False
+
+            if not form.data.get('title'):
+                # Inject a default title for drafts before the form is validated,
+                # because Submission.title is a non-blank field and without this,
+                # is_valid() would always fail for title-less drafts.
+                data['title'] = str(_('Draft Proposal'))
+                changed = True
+
+            if not form.data.get('submission_type'):
+                submission_type = self.get_draft_submission_type()
+                if submission_type:
+                    data['submission_type'] = submission_type.pk
+                    changed = True
+
+            if changed:
+                return self.form_class(
+                    data=data,
+                    initial=form.initial,
+                    files=form.files,
+                    not_strict=not_strict,
+                    **self.get_form_kwargs(),
+                )
         return form
 
     def done(self, request, draft=False):
