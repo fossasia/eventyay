@@ -114,7 +114,7 @@
 	)
 </template>
 <script>
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import moment from 'moment-timezone'
 import MarkdownIt from 'markdown-it'
 import ScheduleToolbar from '~/components/ScheduleToolbar'
@@ -123,10 +123,10 @@ import GridScheduleWrapper from '~/components/GridScheduleWrapper'
 import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
-import SpeakersList from '~/components/SpeakersList'
-import FeaturedSpeakers from '~/components/FeaturedSpeakers'
-import SpeakerDetail from '~/components/SpeakerDetail'
-import TalkDetail from '~/components/TalkDetail'
+const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersList'))
+const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
+const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
+const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
 import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '~/utils'
 
 function getCsrfToken () {

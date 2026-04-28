@@ -258,10 +258,10 @@ class Schedule(PretalxModel):
             all_old_slots = [slot for slot in old_slots.values() if slot.submission_id == submission.pk]
         if all_new_slots is None:
             all_new_slots = [slot for slot in new_slots.values() if slot.submission_id == submission.pk]
-        new_sigs = {(slot.room_id, slot.start) for slot in all_new_slots}
-        old_sigs = {(slot.room_id, slot.start) for slot in all_old_slots}
-        old_slots = [slot for slot in all_old_slots if (slot.room_id, slot.start) not in new_sigs]
-        new_slots = [slot for slot in all_new_slots if (slot.room_id, slot.start) not in old_sigs]
+        new_sigs = {(slot.room_id, slot.start, slot.end) for slot in all_new_slots}
+        old_sigs = {(slot.room_id, slot.start, slot.end) for slot in all_old_slots}
+        old_slots = [slot for slot in all_old_slots if (slot.room_id, slot.start, slot.end) not in new_sigs]
+        new_slots = [slot for slot in all_new_slots if (slot.room_id, slot.start, slot.end) not in old_sigs]
         diff = len(old_slots) - len(new_slots)
         if diff > 0:
             canceled = old_slots[:diff]
@@ -738,7 +738,16 @@ class Schedule(PretalxModel):
 
         return self != self.event.current_schedule
 
-    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False, *, include_featured_speaker_metadata=True,):
+    def build_data(
+        self,
+        all_talks=False,
+        filter_updated=None,
+        all_rooms=False,
+        enrich=False,
+        *,
+        include_featured_speaker_metadata=True,
+        include_qrcodes=False,
+    ):
         """Build schedule JSON for widgets and exports.
 
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
@@ -927,15 +936,16 @@ class Schedule(PretalxModel):
                         'xcal': f'{base_url}talk/{code}.xcal',
                         'google_calendar': google_url,
                         'webcal': webcal_url,
-                        'qrcodes': {
+                    }
+                    if include_qrcodes:
+                        talk_data['exporters']['qrcodes'] = {
                             'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
                             'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
                             'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
                             'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
                             'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
                             'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
-                        },
-                    }
+                        }
                     # Recording iframe from provider plugins
                     recording_iframe = ''
                     for provider in recording_providers:
@@ -987,7 +997,10 @@ class Schedule(PretalxModel):
             ).select_related('user')
         }
         for user in speakers:
-            profile = speaker_profiles.get(user.pk) or user.event_profile(self.event)
+            # Avoid calling event_profile() here: it can hit the DB (and even create/save
+            # a profile). For schedule JSON, missing profiles should simply result in
+            # empty optional fields.
+            profile = speaker_profiles.get(user.pk)
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
@@ -1018,15 +1031,16 @@ class Schedule(PretalxModel):
                     'xcal': f'{spk_base}/talks.xcal',
                     'google_calendar': spk_google,
                     'webcal': spk_webcal,
-                    'qrcodes': {
+                }
+                if include_qrcodes:
+                    speaker_data['exporters']['qrcodes'] = {
                         'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
                         'json': make_qr_svg(f'{spk_full_base}/talks.json'),
                         'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
                         'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
                         'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
                         'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-                    },
-                }
+                    }
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
         return result

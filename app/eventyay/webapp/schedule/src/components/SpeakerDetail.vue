@@ -10,7 +10,7 @@
 			.speaker-content-area
 				.speaker-title
 					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
+				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
 		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 {{ t.sessions }}
@@ -79,6 +79,12 @@ export default {
 	},
 	emits: ['fav', 'unfav'],
 	computed: {
+		speakerQrcodesUrl() {
+			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
+			if (!code || !this.eventUrl) return ''
+			const base = this.eventUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {

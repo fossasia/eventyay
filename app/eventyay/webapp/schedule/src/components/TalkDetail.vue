@@ -5,7 +5,7 @@
 			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
 				.header-actions
-					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
+					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
 					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
 						fav-button(@toggleFav="toggleFav")
 			.info
@@ -31,7 +31,12 @@
 			.speakers-list
 				.speaker(v-for="speaker of resolvedTalk.speakers", :key="speaker.code")
 					a.speaker-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)")
-						img.avatar-circle(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
+						img.avatar-circle(
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							loading="lazy",
+							decoding="async"
+						)
 						.avatar-placeholder.avatar-circle(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -128,6 +133,11 @@ export default {
 		}
 	},
 	computed: {
+		talkQrcodesUrl() {
+			if (!this.baseUrl || !this.resolvedTalk?.id) return ''
+			const base = this.baseUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/talk/${this.resolvedTalk.id}.json`
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {

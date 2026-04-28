@@ -130,10 +130,11 @@ export default {
 				})
 			}
 			const roomIndexLookup = new Map()
-			state.schedule.rooms.forEach((r, i) => roomIndexLookup.set(r.id, i))
+			// Index by the same key we use in roomsLookup (prefer pretalx_id if present).
+			getters.rooms.forEach((r, i) => roomIndexLookup.set((r?.pretalx_id ?? r?.id), i))
 			sessions.sort((a, b) => (
 				a.start.diff(b.start) ||
-				((roomIndexLookup.get(a.room?.id) ?? Infinity) - (roomIndexLookup.get(b.room?.id) ?? Infinity))
+				((roomIndexLookup.get(a.room?.pretalx_id ?? a.room?.id) ?? Infinity) - (roomIndexLookup.get(b.room?.pretalx_id ?? b.room?.id) ?? Infinity))
 			))
 			return sessions
 		},
@@ -167,7 +168,7 @@ export default {
 				if (s.room && !sessionByRoom.has(s.room)) sessionByRoom.set(s.room, s)
 			}
 			const sessionsLookup = getters.sessionsLookup || {}
-			for (const room of rootState.rooms) {
+			for (const room of rootState.rooms || []) {
 				if (room.schedule_data?.computeSession) {
 					rooms[room.id] = { session: sessionByRoom.get(room) }
 				} else if (room.schedule_data?.session) {

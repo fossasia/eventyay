@@ -17,6 +17,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay import __version__
 from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.submission import Submission
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
@@ -221,22 +222,25 @@ class FrabJsonExporter(ScheduleData):
     cors = '*'
 
     def speaker_ids(self) -> set[int]:
-        if not self.schedule:
+        # Must match the exact talk set that is actually exported via ``self.data``.
+        # (This keeps speaker profile prefetch aligned with the exported schedule.)
+        submission_ids: set[int] = set()
+        for day in self.data:
+            for room in day['rooms']:
+                for talk in room['talks']:
+                    if not talk.submission_id:
+                        continue
+                    if self.favs_retrieve and self.talk_ids and talk.submission and talk.submission.code not in self.talk_ids:
+                        continue
+                    submission_ids.add(talk.submission_id)
+
+        if not submission_ids:
             return set()
 
-        talks = self.schedule.talks.filter(
-            is_visible=True,
-            start__isnull=False,
-            room__isnull=False,
-            submission__isnull=False,
-        ).exclude(submission__state='deleted')
-
-        if self.favs_retrieve and self.talk_ids:
-            talks = talks.filter(submission__code__in=self.talk_ids)
-
         return set(
-            talks.exclude(submission__speakers__id__isnull=True)
-            .values_list('submission__speakers__id', flat=True)
+            Submission.objects.filter(id__in=submission_ids)
+            .values_list('speakers__id', flat=True)
+            .exclude(speakers__id__isnull=True)
             .distinct()
         )
 

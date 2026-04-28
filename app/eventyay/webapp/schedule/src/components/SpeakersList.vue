@@ -96,7 +96,12 @@
 			@click="onSpeakerClick($event, speaker)"
 		)
 			.speaker-avatar
-				img(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url", :alt="speaker.name")
+				img(
+					v-if="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+					:src="speaker.avatar_thumbnail_tiny || speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+					:alt="speaker.name",
+					loading="lazy"
+				)
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -325,22 +330,20 @@ export default {
 		languageFilteredSpeakers() {
 			if (!this.selectedLanguages.length) return this.trackFilteredSpeakers
 			const fallbackLocale = this.scheduleData?.schedule?.content_locales?.[0] || null
-			const normalize = (code) => (code || '').toString().trim().toLowerCase().replace(/_/g, '-')
-			const selectedExact = new Set(this.selectedLanguages.map(normalize))
+			const selectedExact = new Set(this.selectedLanguages.map(normalizeLocaleCode).filter(Boolean))
 			const selectedPrimary = new Set(
 				this.selectedLanguages
-					.map(normalize)
-					.map((code) => code.split('-')[0])
+					.map(localePrimary)
 					.filter(Boolean)
 			)
 			return this.trackFilteredSpeakers.filter(speaker => {
 				for (const s of (speaker.sessions || [])) {
 					const sessionLocale = s?.content_locale || fallbackLocale
 					if (!sessionLocale) continue
-					const normalized = normalize(sessionLocale)
+					const normalized = normalizeLocaleCode(sessionLocale)
 					if (!normalized) continue
 					if (selectedExact.has(normalized)) return true
-					const primary = normalized.split('-')[0]
+					const primary = localePrimary(normalized)
 					if (primary && selectedPrimary.has(primary)) return true
 				}
 				return false

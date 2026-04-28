@@ -7,8 +7,8 @@
 				summary.featured-speaker-summary
 					.thumbnail
 						img(
-							v-if="speaker.avatar || speaker.avatar_url",
-							:src="speaker.avatar || speaker.avatar_url",
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
 							:alt="speaker.name || t.speaker_fallback",
 							loading="lazy"
 						)
@@ -129,10 +129,7 @@ export default {
 				if (s?.code) acc[s.code] = s
 				return acc
 			}, {})
-			const trackById = (schedule.tracks || []).reduce((acc, t) => {
-				if (t?.id != null) acc[t.id] = t
-				return acc
-			}, {})
+			const trackById = this.trackById
 			const roomById = (schedule.rooms || []).reduce((acc, r) => {
 				if (r?.id != null) acc[r.id] = r
 				return acc

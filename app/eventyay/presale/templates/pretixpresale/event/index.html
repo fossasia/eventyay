@@ -364,7 +364,7 @@
         {% if featured_speakers %}
             <section class="front-page" id="featured-speakers" aria-label="{% trans 'Featured Speakers' %}">
                 <script id="pretalx-schedule-data" type="application/json">{{ featured_speakers_widget_schedule_json|safe }}</script>
-                <script type="text/javascript" src="{% static 'schedule/pretalx-schedule.js' %}" async></script>
+                <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
                 <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
             </section>
         {% endif %}

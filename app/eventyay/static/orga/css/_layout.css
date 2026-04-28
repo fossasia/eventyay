@@ -1635,6 +1635,10 @@ h2 .user-name-display img {
   }
 }
 
+#page-content .orga-widget-preview pretalx-schedule {
+  --pretalx-sticky-top-offset: -18px;
+}
+
 @media (max-width: 640px) {
   .timeline {
     margin-right: 8px;
