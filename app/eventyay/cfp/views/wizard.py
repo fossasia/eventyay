@@ -111,7 +111,6 @@ class SubmitWizard(EventPageMixin, View):
                                         missing_required.append(str(form.fields[key].label))
                                 else:
                                     other_errors.append(f"{form.fields[key].label}: {err}")
-                                    
                         if missing_required:
                             error_msg += ' ' + _('The following fields are required: {fields}.').format(
                                 fields=', '.join(missing_required)
