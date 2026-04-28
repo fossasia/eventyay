@@ -31,13 +31,7 @@ class CfPFormMixin:
                     field.draft_optional = True
 
     def _clean_fields(self):
-        """Temporarily relax required fields for draft saves.
-
-        During validation we flip draft_optional fields to required=False so
-        Django's blank-value check doesn't produce an error.  We restore the
-        original value immediately after so that *rendering* still shows the
-        asterisk (field.required is used by widgets / label_tag).
-        """
+        """Temporarily relax required fields for draft saves."""
         if self.not_strict:
             for field in self.fields.values():
                 if getattr(field, 'draft_optional', False):

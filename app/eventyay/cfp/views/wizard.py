@@ -70,15 +70,9 @@ class SubmitWizard(EventPageMixin, View):
             # When clicking Back, the step's POST handler has already saved the data
             # Now redirect to the previous step
             return result
-        # When "Continue" is clicked on the last step, FormFlowStep.post returns None
-        # (no next URL). We need to call done() to finalise. In draft mode, done(draft=True)
-        # is called; otherwise done() enforces full validation.
         action = request.POST.get('action', 'submit')
         is_draft_mode = request.GET.get('draft') == '1'
         if request.method == 'POST' and action == 'submit' and result is None:
-            # On the final step (no next step), "submit" means final submission.
-            # This must be STRICT (draft=False) to ensure no required fields are missing,
-            # even if the user were previously navigating in draft mode.
             is_final_submit = not step.get_next_applicable(request)
             return self.done(request, draft=is_draft_mode and not is_final_submit)
         if request.method == 'GET' or (step.get_next_applicable(request) or not step.is_completed(request)):
@@ -134,5 +128,10 @@ class SubmitWizard(EventPageMixin, View):
             except SendMailException as exception:
                 logging.getLogger('').warning(str(exception))
                 messages.warning(request, phrases.cfp.submission_email_fail)
+
+        if draft and not request.user.is_authenticated:
+            user_step = request.event.cfp_flow.steps_dict.get('user')
+            if user_step:
+                return redirect(user_step.get_step_url(request))
 
         return redirect(reverse('cfp:event.user.submissions', kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug}))

@@ -313,11 +313,6 @@ class FormFlowStep(TemplateFlowStep):
             prev_url = self.get_prev_url(request)
             return redirect(prev_url) if prev_url else redirect(request.path)
 
-        # For "submit" action (Continue button), we always allow advancing to the next step
-        # to ensure a smooth navigation UX. If the form is invalid (e.g. missing required
-        # fields), we save the partial data and transition the flow to draft mode by
-        # appending ?draft=1 to the next URL. This allows users to skip fields and
-        # return later, while ensuring that the final "Submit" check will still block.
         if action == 'submit':
             is_valid = form.is_valid()
             if is_valid:
@@ -333,12 +328,11 @@ class FormFlowStep(TemplateFlowStep):
             next_step = self.get_next_applicable(request)
             if next_step:
                 query = {}
-                # Transition to draft mode if we are moving forward with invalid data
                 if not is_valid:
                     query['draft'] = 1
                 return redirect(next_step.get_step_url(request, query=query))
-            
-            # If on the final step and invalid, render errors instead of redirecting
+
+            # Re-render the form with errors on the final step
             if not is_valid:
                 error_message = '\n\n'.join(
                     (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
@@ -508,8 +502,15 @@ class InfoStep(GenericFlowStep, FormFlowStep):
 
     def done(self, request, draft=False):
         self.request = request
+
+        if draft and not request.user.is_authenticated:
+            messages.success(
+                self.request,
+                _('Your progress has been saved. Please log in or create an account to finalize your draft.'),
+            )
+            return
+
         form = self.get_form(from_storage=True, not_strict=draft)
-        # Ensure the instance is updated with data from session
         is_valid = form.is_valid()
         if not is_valid:
             if draft:
@@ -527,8 +528,7 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         form.instance.event = self.event
         form.save()
         submission = form.instance
-        if request.user.is_authenticated:
-            submission.speakers.add(request.user)
+        submission.speakers.add(request.user)
         if draft:
             submission.state = SubmissionStates.DRAFT
             submission.save()
