@@ -13,11 +13,19 @@ function talkDependenciesToggle(ev) {
         const dependencyValues = JSON.parse(el.dataset.questionDependencyValues);
         const parentName = 'question_' + dependencyId;
 
-        // Check for select (single choice dropdown)
+        // Check for select (single choice dropdown and multi-select)
         const select = document.querySelector('select[name="' + parentName + '"]');
         if (select) {
             const selectContainer = select.closest(".form-group");
             if (selectContainer && !selectContainer.classList.contains("dependency-hidden")) {
+                if (select.multiple) {
+                    const selectedValues = Array.from(select.selectedOptions).map(function(opt) {
+                        return opt.value;
+                    });
+                    return shouldBeShown(select) && selectedValues.some(function(val) {
+                        return dependencyValues.indexOf(val) > -1;
+                    });
+                }
                 return shouldBeShown(select) && dependencyValues.indexOf(select.value) > -1;
             }
         }

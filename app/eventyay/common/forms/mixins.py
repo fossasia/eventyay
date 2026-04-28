@@ -594,7 +594,12 @@ class QuestionFieldsMixin:
             if isinstance(parent_value, str):
                 return parent_value in dep_values
             if hasattr(parent_value, '__iter__'):
-                return any(str(v) in dep_values for v in parent_value)
+                return any(
+                    (str(v.pk) if hasattr(v, 'pk') else str(v)) in dep_values
+                    for v in parent_value
+                )
+            if hasattr(parent_value, 'pk'):
+                return str(parent_value.pk) in dep_values
             return str(parent_value) in dep_values
 
         for field_name, field in self.fields.items():
