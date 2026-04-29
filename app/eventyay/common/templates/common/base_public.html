@@ -170,7 +170,7 @@
                                 {% eventurl current_event 'presale:event.onlinevideo.join' as join_event_url %}
                             {% endif %}
                             {% get_menu_label current_event 'menu_label_join_video' as label %}
-                            <div class="header-join-video-floating-mobile d-md-none">
+                            <div class="header-join-video-floating-mobile">
                                     <a href="{{ join_event_url }}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{{ label|event_localize|default:_('Join Live Event') }}" aria-label="{{ label|event_localize|default:_('Join Live Event') }}">
                                         <i class="fa fa-video-camera" aria-hidden="true"></i>
                                         <span class="join-video-text">{{ label|event_localize|default:_('Join Live Event') }}</span>

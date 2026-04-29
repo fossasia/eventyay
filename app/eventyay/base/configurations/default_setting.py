@@ -2584,7 +2584,10 @@ Your {event} team"""
         'form_kwargs': dict(
             label=_('Tickets'),
             widget=I18nTextInput,
-            help_text=_('Custom label for the "Tickets" menu item. Leave empty to use the default label or locale-specific translation.'),
+            help_text=_(
+                'Custom label for the "Tickets" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
             widget_kwargs={'attrs': {'placeholder': _('Register')}},
             required=False,
         ),
@@ -2597,7 +2600,10 @@ Your {event} team"""
         'form_kwargs': dict(
             label=_('Join Live Event'),
             widget=I18nTextInput,
-            help_text=_('Custom label for the "Join Live Event" menu item. Leave empty to use the default label or locale-specific translation.'),
+            help_text=_(
+                'Custom label for the "Join Live Event" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
             widget_kwargs={'attrs': {'placeholder': _('Live Video')}},
             required=False,
         ),
