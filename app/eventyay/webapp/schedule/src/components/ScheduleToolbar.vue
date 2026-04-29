@@ -98,7 +98,7 @@
 					line(x1="7" y1="9" x2="17" y2="9")
 					line(x1="10" y1="14" x2="14" y2="14")
 					path(d="M17 17l4 4m0-4l-4 4")
-			.sort-area(v-if="sessionsMode && resolvedSortOptions.length", ref="sortDropdown")
+			.sort-area(v-if="sessionsMode", ref="sortDropdown")
 				button.toolbar-btn.icon-only.sort-btn(
 					@click="sortOpen = !sortOpen",
 					:class="{open: sortOpen}",
@@ -112,6 +112,14 @@
 						line(x1="18", y1="3", x2="18", y2="15")
 						polyline(points="15 12 18 15 21 12")
 				.sort-dropdown-menu(v-if="sortOpen", role="menu", @keydown.esc.prevent.stop="sortOpen = false")
+					button.sort-item(
+						v-for="opt in resolvedSortOptions",
+						:key="opt.value",
+						:class="{active: sortModel === opt.value}",
+						role="menuitemradio",
+						:aria-checked="sortModel === opt.value ? 'true' : 'false'",
+						@click="selectSort(opt.value)") {{ opt.label }}
+					.sort-menu-divider
 					.template-sort-inclusion
 						.sort-inclusion-row
 							span.sort-inclusion-label {{ t.sort_include_room }}
@@ -121,14 +129,10 @@
 							span.sort-inclusion-label {{ t.sort_include_datetime }}
 							button.sort-toggle-slider(type="button", :class="{on: includeDateSortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_datetime", :aria-checked="includeDateSortKeyModel ? 'true' : 'false'", @click.prevent.stop="toggleDatetimeSort")
 								span.toggle-slider(aria-hidden="true")
-						.sort-menu-divider
-					button.sort-item(
-						v-for="opt in resolvedSortOptions",
-						:key="opt.value",
-						:class="{active: sortModel === opt.value}",
-						role="menuitemradio",
-						:aria-checked="sortModel === opt.value ? 'true' : 'false'",
-						@click="selectSort(opt.value)") {{ opt.label }}
+						.sort-inclusion-row
+							span.sort-inclusion-label {{ t.sort_include_popularity }}
+							button.sort-toggle-slider(type="button", :class="{on: includePopularitySortKeyModel}", role="menuitemcheckbox", :aria-label="t.sort_include_popularity", :aria-checked="includePopularitySortKeyModel ? 'true' : 'false'", @click.prevent.stop="togglePopularitySort")
+								span.toggle-slider(aria-hidden="true")
 			button.toolbar-btn.sessions-toggle(:class="{active: sessionsMode}", @click="$emit('toggleSessionsMode')", :title="sessionsMode ? t.cal : t.list", :aria-label="sessionsMode ? t.cal : t.list")
 				template(v-if="sessionsMode")
 					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
@@ -359,11 +363,14 @@ export default {
 		recordingFilter: { type: String, default: 'all' },
 		sortBy: { type: String, default: 'title' },
 		includeRoomSortKey: { type: Boolean, default: false },
-		includeDateSortKey: { type: Boolean, default: true },
+		includeDateSortKey: { type: Boolean, default: false },
+		includePopularitySortKey: { type: Boolean, default: false },
+		popularityFeatureEnabled: { type: Boolean, default: false },
+		loggedIn: { type: Boolean, default: false },
 		sortOptions: { type: Array, default: () => ['title', 'title_desc'] },
 		timeDensityMinutes: { type: Number, default: 30 }
 	},
-	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
+	emits: ['fullscreen-change', 'toggleFavs', 'resetFilters', 'saveTimezone', 'update:currentTimezone', 'update:searchQuery', 'update:recordingFilter', 'update:sortBy', 'update:includeRoomSortKey', 'update:includeDateSortKey', 'update:includePopularitySortKey', 'filterToggle', 'selectDay', 'toggleSessionsMode', 'setTimeDensityMinutes'],
 	data() {
 		return {
 			exportOpen: false,
@@ -426,8 +433,7 @@ export default {
 				not_recorded: m.not_recorded || 'Not recorded',
 				sort_include_room: m.sort_include_room || 'Include room',
 				sort_include_datetime: m.sort_include_datetime || 'Include datetime',
-				on: m.on || 'ON',
-				off: m.off || 'OFF',
+				sort_include_popularity: m.sort_include_popularity || 'Most popular first',
 				filters: m.filters || 'Filters',
 				more: m.more || 'More',
 				density_compact_view: m.density_compact_view || 'compact view',
@@ -462,6 +468,10 @@ export default {
 		includeDateSortKeyModel: {
 			get() { return this.includeDateSortKey },
 			set(value) { this.$emit('update:includeDateSortKey', !!value) }
+		},
+		includePopularitySortKeyModel: {
+			get() { return this.includePopularitySortKey },
+			set(value) { this.$emit('update:includePopularitySortKey', !!value) }
 		},
 		resolvedSortOptions() {
 			const allowed = Array.isArray(this.sortOptions) ? this.sortOptions : []
@@ -698,16 +708,22 @@ export default {
 			this.densityOpen = false
 			this.$nextTick(() => this.$refs.densityDropdown?.querySelector?.('button')?.focus?.())
 		},
-		toggleRoomSort() {
-			this.$emit('update:includeRoomSortKey', !this.includeRoomSortKey)
-		},
-		toggleDatetimeSort() {
-			this.$emit('update:includeDateSortKey', !this.includeDateSortKey)
-		},
 		selectSort(value) {
 			this.sortModel = value
 			this.sortOpen = false
 			this.$nextTick(() => this.$refs.sortDropdown?.querySelector?.('button')?.focus?.())
+		},
+		toggleRoomSort() {
+			const newVal = !this.includeRoomSortKey
+			this.$emit('update:includeRoomSortKey', newVal)
+		},
+		toggleDatetimeSort() {
+			const newVal = !this.includeDateSortKey
+			this.$emit('update:includeDateSortKey', newVal)
+		},
+		togglePopularitySort() {
+			const newVal = !this.includePopularitySortKey
+			this.$emit('update:includePopularitySortKey', newVal)
 		},
 		toggleRecordingDropdown() {
 			this.recordingOpen = !this.recordingOpen
