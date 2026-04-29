@@ -301,7 +301,6 @@ export default {
 			margin: -4px 0
 			icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
 	.emoji
-		color: transparent // hide unicode emoji
 		display: inline-block
 		width: 18px
 		height: @width
