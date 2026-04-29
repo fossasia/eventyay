@@ -259,6 +259,39 @@ def register_default_webhook_events(sender, **kwargs):
     )
 
 
+# @app.task(base=TransactionAwareTask, max_retries=9, default_retry_delay=900, acks_late=True)
+# def notify_webhooks(logentry_ids: list):
+#     if not isinstance(logentry_ids, list):
+#         logentry_ids = [logentry_ids]
+#     qs = LogEntry.all.select_related('event', 'event__organizer').filter(id__in=logentry_ids)
+#     _org, _at, webhooks = None, None, None
+#     for logentry in qs:
+#         if not logentry.organizer:
+#             break  # We need to know the organizer
+
+#         notification_type = logentry.webhook_type
+
+#         if not notification_type:
+#             break  # Ignore, no webhooks for this event type
+
+#         if _org != logentry.organizer or _at != logentry.action_type or webhooks is None:
+#             _org = logentry.organizer
+#             _at = logentry.action_type
+
+#             # All webhooks that registered for this notification
+#             event_listener = WebHookEventListener.objects.filter(
+#                 webhook=OuterRef('pk'), action_type=notification_type.action_type
+#             )
+#             webhooks = WebHook.objects.annotate(has_el=Exists(event_listener)).filter(
+#                 organizer=logentry.organizer, has_el=True, enabled=True
+#             )
+#             if logentry.event_id:
+#                 webhooks = webhooks.filter(Q(all_events=True) | Q(limit_events__pk=logentry.event_id))
+
+#         for wh in webhooks:
+#             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
+
+
 @app.task(base=TransactionAwareTask, max_retries=9, default_retry_delay=900, acks_late=True)
 def notify_webhooks(logentry_ids: list):
     if not isinstance(logentry_ids, list):
@@ -267,12 +300,22 @@ def notify_webhooks(logentry_ids: list):
     _org, _at, webhooks = None, None, None
     for logentry in qs:
         if not logentry.organizer:
-            break  # We need to know the organizer
+            logger.debug(
+                'Skipping webhook notification for log entry %d: no organizer',
+                logentry.id,
+            )
+            continue  # We need to know the organizer, skip this entry
 
         notification_type = logentry.webhook_type
 
         if not notification_type:
-            break  # Ignore, no webhooks for this event type
+            logger.debug(
+                'Skipping webhook notification for log entry %d: '
+                'no matching webhook event type for %s',
+                logentry.id,
+                logentry.action_type,
+            )
+            continue  # Ignore, no webhooks for this event type
 
         if _org != logentry.organizer or _at != logentry.action_type or webhooks is None:
             _org = logentry.organizer
@@ -290,7 +333,6 @@ def notify_webhooks(logentry_ids: list):
 
         for wh in webhooks:
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
-
 
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
