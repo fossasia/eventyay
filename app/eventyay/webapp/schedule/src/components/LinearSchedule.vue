@@ -2,8 +2,7 @@
 .c-linear-schedule(v-scrollbar.y="", :class="'density-' + density")
 	.bucket(v-for="({date, sessions}, index) of sessionBuckets")
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISOString()")
-			.day(v-if="index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
-			.time {{ date.clone().tz(timezone).format('h:mm A') }}
+			.day(v-if="showDayHeaders && (index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'days') > 0)")  {{ date.clone().tz(timezone).format('dddd, D MMMM') }}
 			template(v-for="session of sessions")
 				session(
 					v-if="isProperSession(session)",
@@ -23,7 +22,7 @@
 </template>
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString } from '../utils'
+import { getLocalizedString, normalizePopularityCount } from '../utils'
 import Session from './Session'
 
 export default {
@@ -51,8 +50,20 @@ export default {
 		disableAutoScroll: Boolean,
 		sortBy: {
 			type: String,
-			default: 'room',
-			validator: v => ['room', 'title', 'title_desc', 'popularity'].includes(v)
+			default: 'title',
+			validator: v => ['title', 'title_desc', 'popularity'].includes(v)
+		},
+		includeRoomSortKey: {
+			type: Boolean,
+			default: false
+		},
+		includeDateSortKey: {
+			type: Boolean,
+			default: false
+		},
+		includePopularitySortKey: {
+			type: Boolean,
+			default: false
 		},
 		showBreaks: {
 			type: Boolean,
@@ -70,7 +81,22 @@ export default {
 		}
 	},
 	computed: {
+		popularitySortEnabled () {
+			return this.includePopularitySortKey || this.sortBy === 'popularity'
+		},
+		showDayHeaders () {
+			return this.includeDateSortKey
+		},
 		sessionBuckets () {
+			if (!this.includeDateSortKey) {
+				const sortedFlat = this.sortBucketSessions(this.sessions)
+				const fallbackDate = sortedFlat.length ? sortedFlat[0].start.clone().startOf('day') : moment()
+				return [{
+					date: fallbackDate,
+					sessions: sortedFlat
+				}]
+			}
+
 			const buckets = {}
 			for (const session of this.sessions) {
 				const key = this.getBucketName(session.start)
@@ -85,13 +111,38 @@ export default {
 					buckets[key].push(session)
 				}
 			}
-			return Object.entries(buckets).map(([date, sessions]) => ({
+			const groupedBuckets = Object.entries(buckets).map(([date, sessions]) => ({
 				date: sessions[0].start,
 				sessions: this.sortBucketSessions(sessions)
 			}))
+
+			return groupedBuckets
+		},
+		sortObserverKey () {
+			return [this.sortBy, this.includeRoomSortKey, this.includeDateSortKey, this.includePopularitySortKey].join('|')
 		}
 	},
 	watch: {
+		async sortObserverKey () {
+			await this.$nextTick()
+			if (this.observer) {
+				this.observer.disconnect()
+			}
+			this.observer = new IntersectionObserver(this.onIntersect, {
+				root: this.scrollParent,
+				rootMargin: '-45% 0px'
+			})
+			let lastBucket
+			for (const [ref, el] of Object.entries(this.$refs)) {
+				if (!ref.startsWith('bucket')) continue
+				const date = moment(el[0].dataset.date).tz(this.timezone)
+				if (lastBucket) {
+					if (lastBucket.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')) continue
+				}
+				lastBucket = date
+				this.observer.observe(el[0])
+			}
+		},
 		currentDay: 'changeDay'
 	},
 	async mounted () {
@@ -135,28 +186,44 @@ export default {
 		}
 	},
 	methods: {
+		titleSortKey (session) {
+			const localizedTitle = getLocalizedString(session?.title)
+			return (localizedTitle || '').toString().toLowerCase()
+		},
+		roomSortKey (session) {
+			const localizedRoom = getLocalizedString(session?.room?.name)
+			return (localizedRoom || '').toString().toLowerCase()
+		},
+		sessionComparator (a, b) {
+			if (!a?.id && b?.id) return 1
+			if (a?.id && !b?.id) return -1
+			if (!a?.id && !b?.id) return 0
+
+			if (this.popularitySortEnabled) {
+				const popularityA = normalizePopularityCount(a)
+				const popularityB = normalizePopularityCount(b)
+				const popCmp = popularityB - popularityA
+				if (popCmp !== 0) return popCmp
+			}
+
+			if (this.includeRoomSortKey) {
+				const roomCmp = this.roomSortKey(a).localeCompare(this.roomSortKey(b))
+				if (roomCmp !== 0) return roomCmp
+			}
+
+			if (this.includeDateSortKey) {
+				const dateCmp = a.start.diff(b.start)
+				if (dateCmp !== 0) return dateCmp
+			}
+
+			const direction = this.sortBy === 'title_desc' ? -1 : 1
+			const titleCmp = this.titleSortKey(a).localeCompare(this.titleSortKey(b))
+			if (titleCmp !== 0) return titleCmp * direction
+
+			return 0
+		},
 		sortBucketSessions (sessions) {
-			return sessions.sort((a, b) => {
-				if (!a.id && b.id) return 1
-				if (a.id && !b.id) return -1
-				if (!a.id && !b.id) return 0
-				switch (this.sortBy) {
-					case 'title': {
-						const titleA = getLocalizedString(a.title) || ''
-						const titleB = getLocalizedString(b.title) || ''
-						return titleA.localeCompare(titleB)
-					}
-					case 'title_desc': {
-						const titleA = getLocalizedString(a.title) || ''
-						const titleB = getLocalizedString(b.title) || ''
-						return titleB.localeCompare(titleA)
-					}
-					case 'popularity':
-						return (b.fav_count || 0) - (a.fav_count || 0)
-					default:
-						return this.rooms.findIndex(room => room.id === a.room?.id) - this.rooms.findIndex(room => room.id === b.room?.id)
-				}
-			})
+			return [...sessions].sort((a, b) => this.sessionComparator(a, b))
 		},
 		isProperSession (session) {
 			// breaks and such don't have ids
@@ -170,6 +237,7 @@ export default {
 			return rect.top + window.scrollY
 		},
 		changeDay (day) {
+			if (!this.showDayHeaders) return
 			if (this.scrolledDay?.format('YYYY-MM-DD') === day) return
 			const dayBucket = this.sessionBuckets.find(bucket => day === bucket.date.format('YYYY-MM-DD'))
 			if (!dayBucket) return
@@ -183,6 +251,7 @@ export default {
 			}
 		},
 		onIntersect (results) {
+			if (!this.showDayHeaders) return
 			const intersection = results[0]
 			const day = moment(intersection.target.dataset.date).tz(this.timezone).startOf('day')
 			if (intersection.isIntersecting) {
@@ -207,7 +276,7 @@ export default {
 			font-size: 14px
 			font-weight: 500
 			color: $clr-secondary-text-light
-			padding-left: 16px
+			padding-left: 5px
 			.day
 				font-weight: 600
 		.break

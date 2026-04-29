@@ -41,16 +41,66 @@ def is_cfp_open(user, obj):
     return event and event.talks_published and event.cfp.is_open
 
 
+def _show_featured_setting(event):
+    """Normalized value for org setting ``show_featured`` (stored: never / after_schedule / always).
+
+    ``after_schedule`` means: featured is shown only *after* the first **published** schedule
+    version exists (``Schedule.published`` set on a versioned release).
+    """
+    from eventyay.base.models.event import default_feature_flags
+
+    defaults = default_feature_flags()
+    flags = event.feature_flags
+    if not isinstance(flags, dict):
+        flags = {}
+    if 'show_featured' in flags and flags['show_featured'] is not None:
+        raw = flags['show_featured']
+    else:
+        raw = defaults.get('show_featured', 'never')
+    if isinstance(raw, bool):
+        return 'always' if raw else 'never'
+    if isinstance(raw, str):
+        normalized = raw.strip().lower()
+        if normalized in ('never', 'after_schedule', 'always'):
+            return normalized
+        # Migrate legacy value saved before rename.
+        if normalized == 'pre_schedule':
+            return 'after_schedule'
+    return defaults.get('show_featured', 'never')
+
+
+def _event_has_published_schedule(event):
+    """True once at least one schedule version has been published (``published`` is set)."""
+    return event.current_schedule is not None
+
+
+def schedule_widget_featured_cache_key_part(event):
+    """Vary schedule widget JSON cache when featured rules or release state change."""
+    return f'{_show_featured_setting(event)}|rel={int(_event_has_published_schedule(event))}'
+
+
 @rules.predicate
 def are_featured_submissions_visible(user, event):
-    from eventyay.talk_rules.agenda import is_agenda_visible
+    """Whether org "show featured sessions" and schedule state allow public featured content.
 
-    show_featured = event.get_feature_flag('show_featured')
-    if not event.talks_published or show_featured == 'never':
+    This predicate does **not** grant orga-only access; use ``list_featured`` (which ORs
+    ``orga_can_change_submissions``) for API/orga rules. Public pages and nav must use this
+    predicate so "Never" is respected for organizers viewing the public site.
+
+    For ``after_schedule`` ("once the first schedule version is published"), featured is shown
+    only **after** at least one published ``Schedule`` version exists. Before the first release,
+    featured is hidden. Uses a scoped DB check; does not depend on "show schedule publicly".
+    """
+    show_featured = _show_featured_setting(event)
+    if show_featured == 'never':
         return False
+    # "Always" shows regardless of schedule state or talks_published.
     if show_featured == 'always':
         return True
-    return (not is_agenda_visible(user, event)) or not event.current_schedule
+    if not event.talks_published:
+        return False
+    # after_schedule: visible only once the first published schedule version exists
+    return _event_has_published_schedule(event)
 
 
 @rules.predicate

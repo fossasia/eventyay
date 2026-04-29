@@ -231,13 +231,43 @@ After this, hard-refresh the browser (Ctrl + Shift + R).
 
 The database in the dev docker setup is created in a docker volume. If you see
 errors concerning login etc, you can completely reset the database (you will
-lose all configuration/organizers/events!) and removing the database container
-by calling
+lose all configuration/organizers/events!). You must stop the stack first so
+no container is using the volume; otherwise ``docker volume rm`` will fail.
+``docker compose down`` stops and removes the containers but keeps named volumes
+by default:
 
 .. code-block:: bash
 
+   docker compose down
    docker volume rm eventyay-next_postgres_data_dev
-   docker rm eventyay-next-db
+
+
+**Redis issues**
+
+Redis data in the dev docker setup is stored in the ``eventyay-next_rd`` volume
+(``rd`` in *docker-compose.yml*). If you see connection or cache-related errors,
+you can reset Redis the same way: stop the stack, then remove the volume (you
+will lose data held in Redis, such as cache or broker state):
+
+.. code-block:: bash
+
+   docker compose down
+   docker volume rm eventyay-next_rd
+
+
+To wipe **both** Postgres and Redis data in one go, you can run
+``docker compose down -v`` instead of removing volumes individually; that removes
+all named volumes declared for this Compose project (including
+``eventyay-next_postgres_data_dev`` and ``eventyay-next_rd``).
+
+
+**After resetting PostgreSQL and/or Redis**
+
+Bring the development stack back up in detached mode with a rebuild:
+
+.. code-block:: bash
+
+   docker compose up -d --build
 
 
 
@@ -339,6 +369,18 @@ projects and attribution.
 See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
 This project is maintained by **FOSSASIA**.
+
+AI Development
+--------------
+
+This repository includes structured AI development guidance.
+
+AI tools should consult:
+
+- ``.github/instructions/`` — file-scoped coding standards for Python, JavaScript, Django templates, TOML, and Git commits
+- ``.agents/skills/`` — reusable operational knowledge about repository structure, backend conventions, deployment, and workflows
+
+See `agents.md <agents.md>`_ for the recommended reading order for AI agents.
 
 .. _uv: https://docs.astral.sh/uv/getting-started/installation/
 .. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/

@@ -30,6 +30,18 @@ from eventyay.common.utils.language import (
 logger = logging.getLogger(__name__)
 
 
+def _agenda_featured_allowed_without_talks_published(url, request, event):
+    """Let /featured/ load when org settings allow it, even if talks are not published yet."""
+    if 'agenda' not in url.namespaces or url.url_name != 'featured':
+        return False
+    from eventyay.talk_rules.submission import are_featured_submissions_visible
+
+    user = getattr(request, 'user', None)
+    if user is None:
+        return False
+    return are_featured_submissions_visible(user, event)
+
+
 def get_login_redirect(request):
     params = request.GET.copy()
     next_url = params.pop('next', None)
@@ -127,7 +139,8 @@ class EventPermissionMiddleware:
         if event and not event.user_can_view_talks(request.user, request=request):
             if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
                 if url.url_name != 'event.css':
-                    raise Http404()
+                    if not _agenda_featured_allowed_without_talks_published(url, request, event):
+                        raise Http404()
         if event:
             with scope(event=event):
                 response = self.get_response(request)

@@ -184,15 +184,23 @@
     display: none;
 }
 
-/* Align the hero title/logo horizontal edge with the content text below */
-.event-hero-overlay {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
 /* Desktop: hide mobile-only CfS abbreviation */
 .cfs-short {
     display: none;
+}
+
+/* Desktop: keep hero overlay full-width so floating Join Video aligns to page edge. */
+@media (min-width: 769px) {
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-join-video-floating-mobile {
+        right: 0;
+    }
 }
 
 @media (max-width: 768px) {
@@ -258,6 +266,7 @@
     /* Show the mobile-only icons on mobile */
     .nav-icon-mobile {
         display: inline;
+        font-size: 1.25rem;
     }
 
     /* Remove the caret arrow — redundant when showing icon-only */
@@ -279,32 +288,12 @@
         display: inline;
     }
 
-    /* "Join online video" as a full-width button below the nav row */
-    .join-video-link {
-        display: block;
-        width: 100%;
-        text-align: center;
-        padding: 8px 12px;
-        margin: 4px 0 0;
-        background: var(--color-primary);
-        color: white !important;
-        border-radius: var(--size-border-radius, 4px);
-        border-bottom: none !important;
-        font-size: 0.88rem;
-        font-weight: 500;
-    }
-
-    .join-video-link:hover {
-        background: var(--color-primary-dark, var(--color-primary));
-        text-decoration: none;
-        opacity: 0.9;
-    }
 
     /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
     .login-link {
         display: flex;
         align-items: center;
-        padding: 2px 4px;
+        padding: 0px 8px;
         color: var(--color-primary);
         text-decoration: none;
     }
@@ -314,8 +303,7 @@
         opacity: 0.85;
     }
 
-    /* Align hero title/logo and description text with same horizontal padding on mobile.
-     * Force event-hero-overlay to full width so text-align: center doesn't shift the left edge. */
+    /* Mobile: hero overlay width + horizontal padding */
     .event-hero-overlay {
         display: flex;
         width: 100%;
@@ -323,53 +311,36 @@
         padding-right: 12px;
     }
 
-    /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+    /* Presale event index: full-bleed hero overlay */
+    #main-container.page-presale-event-index .event-hero-overlay {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     #main-card {
         margin-left: 0;
         margin-right: 0;
     }
 
-    /* Target only the OUTER <main> (direct child of #main-card) so we apply padding once.
-     * The presale event page has TWO nested <main> elements; without >, both get padded
-     * and the content double-indents. */
+    /* Outer main only (presale nests two <main> — avoid double horizontal padding) */
     #main-card>main {
         padding-top: 0.15rem;
         padding-left: 12px;
         padding-right: 12px;
     }
 
-    /* Zero the INNER <main aria-label> so its inherited 1rem from _layout.css
-     * does not add to the outer main's 12px, keeping description exactly at 12px. */
     #main-card>main>main {
         padding-left: 0;
         padding-right: 0;
     }
 }
 
-/* Mobile: Language locale dropdown uses a 400px 2-column grid by default.
- * On narrow screens this overflows, so collapse to a single scrollable column. */
 @media (max-width: 480px) {
     #locale-dropdown.dropdown-content {
+        transform: scale(0.75);
+        transform-origin: top right;
         right: 0;
         left: auto;
-        max-width: calc(100vw - 8px);
-    }
-
-    #locale-dropdown .language-columns {
-        width: 100%;
-        grid-template-columns: 1fr;
-        max-height: 60vh;
-        overflow-y: auto;
-    }
-
-    #locale-dropdown .language-column {
-        max-width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--color-border, #ced4da);
-    }
-
-    #locale-dropdown .language-enforce-bar {
-        width: 100%;
     }
 }
 

@@ -27,7 +27,6 @@ urlpatterns = [
     path('logout/', auth.logout, name='auth.logout'),
     path('login/', auth.login, name='auth.login'),
     path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
-    path('register/', auth.register, name='auth.register'),
     path('invite/<str:token>/', auth.invite, name='auth.invite'),
     path('forgot/', auth.Forgot.as_view(), name='auth.forgot'),
     path('forgot/recover/', auth.Recover.as_view(), name='auth.forgot.recover'),
@@ -36,6 +35,11 @@ urlpatterns = [
     path('widgets.json/', dashboards.user_index_widgets_lazy, name='dashboard.widgets'),
     path('organizers/', organizer.OrganizerList.as_view(), name='organizers'),
     path('organizers/add', organizer.OrganizerCreate.as_view(), name='organizers.add'),
+    path(
+        'organizer/<str:organizer>/',
+        organizer_views.organizer_view.OrganizerDashboard.as_view(),
+        name='organizer.dashboard',
+    ),
     path(
         'organizer/<str:organizer>/edit',
         organizer_views.organizer_view.OrganizerUpdate.as_view(),

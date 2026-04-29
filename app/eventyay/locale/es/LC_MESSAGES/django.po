@@ -10251,8 +10251,8 @@ msgstr "Orden aprobada y pendiente de pago: %(code)s"
 
 #: base/services/orders.py:399
 #, python-format
-msgid "Order denied: %(code)s"
-msgstr "Orden denegada: %(code)s"
+msgid "Your order request update: %(code)s"
+msgstr "Actualización de tu solicitud de pedido: %(code)s"
 
 #: base/services/orders.py:456 presale/views/order.py:993
 #: presale/views/order.py:1039

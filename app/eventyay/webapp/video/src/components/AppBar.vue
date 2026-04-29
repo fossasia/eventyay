@@ -6,43 +6,53 @@
 			span.bar
 			span.bar
 		a.logo(:href="logoHref", :class="{anonymous: isAnonymous}")
-			img(:src="theme.logo.url", :alt="world.title")
-		span.admin-indicator(
-			v-if="isAdminMode"
-			@mouseenter="onAdminIndicatorEnter"
-			@mouseleave="onAdminIndicatorLeave"
-		) Admin mode ON
-		div.admin-tooltip(
-			v-if="isAdminMode && showAdminTooltip"
-		) Admin mode is ON. Go to the tickets area to disable it and view this event as a staff member.
-	router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
-		bunt-icon-button settings
-	.user-section(v-if="showUser")
-		.user-menu(ref="userMenuEl")
-			div.user-profile(:class="{open: profileMenuOpen}", @click.stop="toggleProfileMenu")
-				avatar(v-if="!isAnonymous", :user="user", :size="32")
-				span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
-				span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
-				span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
-			transition(name="dropdown-reveal")
-				.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
-					template(v-for="item in menuItems", :key="item.key")
-						div.menu-separator(v-if="item.separatorBefore")
-						template(v-if="item.children")
-							div.menu-item.menu-item-parent(:class="{open: dashboardSubmenuOpen}", role="menuitem", tabindex="0", @click.prevent.stop="toggleDashboardSubmenu", @keydown.enter.prevent.stop="toggleDashboardSubmenu", @keydown.space.prevent.stop="toggleDashboardSubmenu")
-								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
-									i(:class="iconClasses[item.icon]")
-								span.menu-item-label {{ item.label }}
-								div.profile-submenu(v-if="dashboardSubmenuOpen", role="menu", @click.stop)
-									a.menu-item(v-for="child in item.children", :key="child.key", :href="getItemHref(child)", role="menuitem", @click.prevent="onMenuItem(child)")
-										span.menu-item-icon(v-if="child.icon" aria-hidden="true")
-											i(:class="iconClasses[child.icon]")
-										span.menu-item-label {{ child.label }}
-						template(v-else)
-							a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
-								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
-									i(:class="iconClasses[item.icon]")
-								span.menu-item-label {{ item.label }}
+			img(:src="brandLogoUrl", :alt="world.title")
+	.nav-actions
+		router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
+			bunt-icon-button settings
+		.admin-session-actions(v-if="showAdminModeStart || showAdminModeEnd")
+			button.admin-mode-btn(
+				v-if="showAdminModeStart"
+				type="button"
+				@click="startAdminSession"
+				:aria-label="$t('AppBar:admin-mode:start')"
+			)
+				i.fa.fa-id-card(aria-hidden="true")
+				span {{ $t('AppBar:admin-mode:start') }}
+			button.admin-mode-btn.admin-mode-btn--end(
+				v-if="showAdminModeEnd"
+				type="button"
+				@click="endAdminSession"
+				:aria-label="$t('AppBar:admin-mode:end')"
+			)
+				i.fa.fa-id-card(aria-hidden="true")
+				span {{ $t('AppBar:admin-mode:end') }}
+		.user-section(v-if="showUser")
+			.user-menu(ref="userMenuEl")
+				div.user-profile(:class="{open: profileMenuOpen}", @click.stop="toggleProfileMenu")
+					avatar(v-if="!isAnonymous", :user="user", :size="32")
+					span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
+					span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
+					span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
+				transition(name="dropdown-reveal")
+					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
+						template(v-for="item in menuItems", :key="item.key")
+							div.menu-separator(v-if="item.separatorBefore")
+							template(v-if="item.children")
+								div.menu-item.menu-item-parent(:class="{open: dashboardSubmenuOpen}", role="menuitem", tabindex="0", @click.prevent.stop="toggleDashboardSubmenu", @keydown.enter.prevent.stop="toggleDashboardSubmenu", @keydown.space.prevent.stop="toggleDashboardSubmenu")
+									span.menu-item-icon(v-if="item.icon" aria-hidden="true")
+										i(:class="iconClasses[item.icon]")
+									span.menu-item-label {{ item.label }}
+									div.profile-submenu(v-if="dashboardSubmenuOpen", role="menu", @click.stop)
+										a.menu-item(v-for="child in item.children", :key="child.key", :href="getItemHref(child)", role="menuitem", @click.prevent="onMenuItem(child)")
+											span.menu-item-icon(v-if="child.icon" aria-hidden="true")
+												i(:class="iconClasses[child.icon]")
+											span.menu-item-label {{ child.label }}
+							template(v-else)
+								a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
+									span.menu-item-icon(v-if="item.icon" aria-hidden="true")
+										i(:class="iconClasses[item.icon]")
+									span.menu-item-label {{ item.label }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
@@ -110,28 +120,74 @@ const hasPermission = computed(() => (permission) => {
 	return store.getters.hasPermission(permission)
 })
 
-const isAdminMode = computed(() => {
-	const rawToken = token.value || localStorage.getItem('token')
-	if (!rawToken) return false
+function decodeTokenPayload(rawToken) {
+	if (!rawToken) return null
 	try {
-		const decoded = jwtDecode(rawToken)
-		return Array.isArray(decoded?.traits) && decoded.traits.includes('admin')
+		return jwtDecode(rawToken)
 	} catch (error) {
 		if (process.env.NODE_ENV === 'development') {
 			console.error('Failed to decode JWT token:', error)
 		}
-		return false
+		return null
 	}
+}
+
+const tokenPayload = computed(() => decodeTokenPayload(token.value || localStorage.getItem('token')))
+
+const isAdminMode = computed(() => {
+	const decoded = tokenPayload.value
+	return Array.isArray(decoded?.traits) && decoded.traits.includes('admin')
 })
+
+const canStartStaffSession = computed(() => {
+	const p = tokenPayload.value
+	return p?.is_staff === true || p?.is_superuser === true
+})
+
+const eventRouting = computed(() => store.getters.eventRouting)
+
+const showAdminModeStart = computed(() => {
+	if (!canStartStaffSession.value || isAdminMode.value) return false
+	const { organizer, event } = eventRouting.value
+	return Boolean(organizer && event)
+})
+
+// End session is shown whenever the token carries admin traits (staff session / issued claims).
+const showAdminModeEnd = computed(() => isAdminMode.value)
 
 const isAnonymous = computed(() => Object.keys(user.value.profile || {}).length === 0)
 
-const logoHref = computed(() => {
-	try {
-		return buildBaseSansVideo() + 'common/'
-	} catch (e) {
-		return '/common/'
+function siteRootHref() {
+	const { protocol, host } = window.location
+	const origin = typeof window.location.origin === 'string' ? window.location.origin : `${protocol}//${host}`
+	return `${origin}/`
+}
+
+function buildMenuExternalHref(item) {
+	if (item.key === 'dashboard:main') {
+		return siteRootHref()
 	}
+	const base = buildBaseSansVideo()
+	return base + item.externalPath
+}
+
+const logoHref = computed(() => siteRootHref())
+
+const defaultBrandLogoUrl = computed(() => {
+	const basePath = config?.basePath ?? ''
+	if (!basePath || basePath === '/') {
+		return '/eventyay-video-logo.png'
+	}
+	const normalized = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+	return `${normalized}/eventyay-video-logo.png`
+})
+
+const brandLogoUrl = computed(() => {
+	const routeName = router.currentRoute.value?.name
+	if (routeName === 'about') {
+		return defaultBrandLogoUrl.value
+	}
+	return theme.logo?.url || defaultBrandLogoUrl.value
 })
 
 const profileMenuOpen = ref(false)
@@ -139,15 +195,86 @@ const dashboardSubmenuOpen = ref(false)
 const menuItems = ref(PROFILE_MENU_ITEMS)
 const iconClasses = ICON_CLASSES
 const userMenuEl = ref(null)
-const showAdminTooltip = ref(false)
 
-function onAdminIndicatorEnter() {
-	if (!isAdminMode.value) return
-	showAdminTooltip.value = true
+function getCsrfToken() {
+	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
+	return match ? decodeURIComponent(match[1]) : null
 }
 
-function onAdminIndicatorLeave() {
-	showAdminTooltip.value = false
+/** SPA path under config.basePath (e.g. rooms/foo or rooms/foo?tab=1) for video-access resume params */
+function getVideoResumeParam() {
+	const basePath = (config.basePath || '').replace(/\/$/, '')
+	let full = router.currentRoute.value.fullPath || '/'
+	const hashIdx = full.indexOf('#')
+	if (hashIdx !== -1) full = full.slice(0, hashIdx)
+	if (basePath && full.startsWith(basePath)) {
+		full = full.slice(basePath.length) || '/'
+	}
+	if (full.startsWith('/')) full = full.slice(1)
+	if (!full || full === '/') return ''
+	return full
+}
+
+function videoAccessRefreshPath() {
+	const { organizer, event } = eventRouting.value
+	if (!organizer || !event) return null
+	const base = `/common/event/${encodeURIComponent(organizer)}/${encodeURIComponent(event)}/video-access/`
+	const resume = getVideoResumeParam()
+	if (!resume) return base
+	const q = resume.indexOf('?')
+	const pathPart = (q === -1 ? resume : resume.slice(0, q)).replace(/^\/+/, '')
+	const queryPart = q === -1 ? '' : resume.slice(q + 1)
+	const params = new URLSearchParams()
+	if (pathPart) params.set('resume_path', pathPart)
+	if (queryPart) params.set('resume_query', queryPart)
+	const qs = params.toString()
+	return qs ? `${base}?${qs}` : base
+}
+
+function startAdminSession() {
+	const nextUrl = videoAccessRefreshPath()
+	const csrf = getCsrfToken()
+	if (!nextUrl || !csrf) {
+		if (process.env.NODE_ENV === 'development') {
+			console.warn('Cannot start admin session: missing next URL or CSRF cookie.')
+		}
+		return
+	}
+	const action = new URL('control/sudo/', buildBaseSansVideo())
+	action.searchParams.set('next', nextUrl)
+	const form = document.createElement('form')
+	form.method = 'POST'
+	form.action = action.toString()
+	const input = document.createElement('input')
+	input.type = 'hidden'
+	input.name = 'csrfmiddlewaretoken'
+	input.value = csrf
+	form.appendChild(input)
+	document.body.appendChild(form)
+	form.submit()
+}
+
+function endAdminSession() {
+	const csrf = getCsrfToken()
+	if (!csrf) {
+		if (process.env.NODE_ENV === 'development') {
+			console.warn('Cannot end admin session: missing CSRF cookie.')
+		}
+		return
+	}
+	const action = new URL('control/sudo/stop/', buildBaseSansVideo())
+	const nextUrl = videoAccessRefreshPath()
+	if (nextUrl) action.searchParams.set('next', nextUrl)
+	const form = document.createElement('form')
+	form.method = 'POST'
+	form.action = action.toString()
+	const input = document.createElement('input')
+	input.type = 'hidden'
+	input.name = 'csrfmiddlewaretoken'
+	input.value = csrf
+	form.appendChild(input)
+	document.body.appendChild(form)
+	form.submit()
 }
 
 function buildBaseSansVideo() {
@@ -201,8 +328,7 @@ function onMenuItem(item) {
 	}
 	if (item.externalPath) {
 		try {
-			const base = buildBaseSansVideo()
-			window.location.assign(base + item.externalPath)
+			window.location.assign(buildMenuExternalHref(item))
 		} catch (e) {
 			window.location.assign('/' + item.externalPath)
 		}
@@ -224,8 +350,7 @@ function getItemHref(item) {
 	if (item.children) return '#dashboard'
 	if (item.externalPath) {
 		try {
-			const base = buildBaseSansVideo()
-			return base + item.externalPath
+			return buildMenuExternalHref(item)
 		} catch (e) {
 			return '/' + item.externalPath
 		}
@@ -277,32 +402,66 @@ onBeforeUnmount(() => {
 	z-index: 120
 	.bunt-icon-button
 		icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
+	.nav-actions
+		display: flex
+		align-items: center
+		align-self: stretch
+		gap: 4px
+		margin-left: auto
+	.admin-session-actions
+		display: flex
+		align-items: stretch
+		align-self: stretch
+		margin: 0 -2px
+		min-height: 0
+		.admin-mode-btn
+			appearance: none
+			background: none
+			border: none
+			padding: 0 12px
+			margin: 0
+			min-height: 48px
+			height: 100%
+			box-sizing: border-box
+			display: inline-flex
+			align-items: center
+			justify-content: center
+			gap: 8px
+			font: inherit
+			font-weight: 400
+			font-size: 14px
+			color: var(--clr-sidebar-text-primary)
+			cursor: pointer
+			white-space: nowrap
+			border-radius: 0
+			transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out
+			i.fa
+				font-size: 15px
+				opacity: 0.92
+				line-height: 1
+			&:hover
+				background-color: rgba(0, 0, 0, 0.08)
+				color: var(--clr-sidebar-text-primary)
+			&:focus-visible
+				outline: 2px solid var(--clr-primary)
+				outline-offset: -2px
+			&.admin-mode-btn--end
+				background-color: var(--clr-danger, #d32f2f)
+				color: #fff
+				i.fa
+					color: #fff
+					opacity: 1
+				&:hover
+					background-color: #b71c1c
+					color: #fff
+				&:focus-visible
+					outline: 2px solid #fff
+					outline-offset: -2px
 	.left
 		display: flex
 		align-items: center
 		gap: 4px
 		position: relative
-		.admin-indicator
-			margin-left: 8px
-			font-size: 11px
-			font-weight: 600
-			text-transform: uppercase
-			letter-spacing: .05em
-			color: #f44336
-			cursor: default
-		.admin-tooltip
-			position: absolute
-			top: 52px
-			left: 8px
-			right: auto
-			max-width: 260px
-			padding: 4px 8px
-			border-radius: 3px
-			background: rgba(0, 0, 0, 0.8)
-			color: #fff
-			font-size: 11px
-			white-space: normal
-			z-index: 130
 		.hamburger
 			appearance: none
 			background: none
@@ -342,7 +501,6 @@ onBeforeUnmount(() => {
 			margin: 0
 			padding: 0
 	.settings
-		margin-left: auto
 		.bunt-icon-button
 			icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
 	.user-section

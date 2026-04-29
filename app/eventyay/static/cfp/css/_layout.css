@@ -1,3 +1,21 @@
+.presale-sticky-tabs .header-row-right details.dropdown,
+.presale-sticky-tabs .header-row-right > a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.presale-sticky-tabs .header-row-right details.dropdown summary {
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--size-border-radius);
+  cursor: pointer;
+}
+
+/* Add padding to username for visual match */
+.presale-sticky-tabs .header-row-right details.dropdown summary .mobile-hide-text {
+  padding-left: 6px;
+  padding-right: 6px;
+}
 body {
   background: var(--color-grey-lightest);
 }
@@ -167,10 +185,13 @@ header {
 }
 
 .presale-sticky-tabs-inner {
+  margin: 0;
+  background: var(--color-bg);
   width: 100%;
   max-width: calc(100vw - 8px);
   word-break: keep-all;
   flex-wrap: nowrap;
+  border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
 }
 
 .presale-sticky-tabs {
@@ -182,6 +203,13 @@ header {
   border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
   padding-bottom: 6px;
   flex-shrink: 0;
+}
+
+.presale-tabs-scroll {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .presale-sticky-tabs a.header-tab {
@@ -208,7 +236,7 @@ header {
   flex-shrink: 0;
   align-items: center;
   font-size: 1rem;
-  gap: 10px;
+  gap: 16px;
 }
 
 .presale-sticky-tabs .header-row-right .header-nav {
@@ -241,18 +269,179 @@ header {
   min-width: 0;
 }
 
+.event-brand--has-logo {
+  padding-left: 1.75rem;
+}
+
+@media (min-width: 769px) {
+  /* Presale info / tickets: align logo block with tab content (tighter than agenda & CFP) */
+  #main-container.presale-container .event-brand--has-logo {
+    padding-left: 0.75rem;
+  }
+}
+
 .event-hero-overlay {
   display: inline-flex;
   border-radius: 14px;
   background: transparent;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  position: relative;
+}
+
+/* Join online video: button on the event hero (all breakpoints). Nav tab duplicate is hidden. */
+#header-tabs .join-video-link {
+  display: none;
+}
+
+.header-join-video-floating-mobile {
+  position: absolute;
+  bottom: -27.5px;
+  right: 7.5px;
+  z-index: 1050;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 6px;
+  height: 28px;
+  min-width: 0;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+@media (max-width: 319px) {
+  .header-join-video-floating-mobile .btn-join-video-icon-only {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+    display: none;
+  }
+
+  .header-join-video-floating-mobile .btn-join-video-icon-only i {
+    font-size: 0.95rem;
+  }
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only .join-video-text {
+  display: inline-block;
+}
+
+.header-join-video-floating-mobile .btn-join-video-icon-only:hover,
+.header-join-video-floating-mobile .btn-join-video-icon-only:focus {
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  color: white !important;
+  background-color: var(--color-primary);
+  filter: none;
+}
+
+@media (min-width: 769px) {
+  body.page-agenda .event-hero-overlay,
+  body.page-cfp .event-hero-overlay {
+    display: flex;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.page-agenda .header-join-video-floating-mobile,
+  body.page-cfp .header-join-video-floating-mobile {
+    right: 0;
+  }
 }
 
 .event-hero-text {
   color: white;
   display: flex;
   flex-direction: column;
+}
+
+header > .event-home-back {
+  align-self: flex-start;
+  margin: 0 0 6px;
+  padding-left: 28px;
+  box-sizing: border-box;
+  display: inline-block;
+  text-decoration: none;
+  color: #fff;
+}
+
+.event-home-back:hover,
+.event-home-back:focus-visible {
+  color: #fff;
+  text-decoration: none;
+}
+
+.event-home-back-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-height: 32px;
+  padding: 0 11px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  transition: gap 0.18s ease, background 0.18s ease;
+}
+
+.event-home-back:hover .event-home-back-pill,
+.event-home-back:focus-visible .event-home-back-pill {
+  gap: 0.4em;
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.event-home-back:focus-visible {
+  outline: none;
+}
+
+.event-home-back:focus-visible .event-home-back-pill {
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 2px;
+}
+
+/* px: presale root font-size differs from agenda/CFP */
+.event-home-back .event-home-back-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.event-home-back .event-home-back-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.22s ease, opacity 0.18s ease;
+}
+
+.event-home-back:hover .event-home-back-label,
+.event-home-back:focus-visible .event-home-back-label {
+  max-width: 12em;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-home-back-pill,
+  .event-home-back-label {
+    transition: none;
+  }
 }
 
 .event-date-line {
@@ -287,6 +476,8 @@ header {
 }
 
 #main-card {
+  position: relative;
+  z-index: 1030;
   min-height: 300px;
   box-shadow: 0 5px 10px rgb(0 0 0 / 0.2);
   padding: 0;
@@ -342,7 +533,7 @@ footer {
   margin-right: auto;
   margin-left: auto;
   max-width: 1600px;
-  margin-top: 3.8rem !important;
+  margin-top: 1.5rem;
 }
 
 .url-links {
@@ -385,22 +576,124 @@ footer {
 @media (max-width: 992px) {
   #main-container {
     max-width: 960px;
-    margin-top: 3.8rem !important;
+    margin-top: 1.5rem;
   }
 }
 
 @media (max-width: 768px) {
   #main-container {
-    max-width: 720px;
-    margin-top: 3.8rem !important;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
   }
 
-  /* NOTE: .presale-sticky-tabs flex-direction is handled in custom.css/custom.scss
-   * (flex-direction: row with .presale-tabs-scroll for horizontal scroll on mobile).
-   * Do NOT override it here with column. */
+  .header-wrapper, .presale-sticky-tabs-inner {
+    max-width: 100%;
+  }
+
+  /* Keep the sticky tabs in a single flex row */
+  .presale-sticky-tabs {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .presale-sticky-tabs-inner {
+    overflow: visible;
+  }
+
+  /* ONLY the tab links scroll horizontally */
+  .presale-tabs-scroll {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .presale-tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .presale-sticky-tabs a.header-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 4px 6px 3px 6px;
+    font-size: 0.8rem;
+  }
 
   .presale-sticky-tabs .header-row-right {
-    margin-left: auto;
+    margin-left: 0;
+    margin-right: 2px;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    gap: 0;
+  }
+
+  .presale-sticky-tabs .header-row-right details.dropdown {
+    position: relative;
+  }
+
+  .presale-sticky-tabs .header-row-right details.dropdown .dropdown-content {
+    right: 0;
+    left: auto;
+    max-width: calc(100vw - 16px);
+  }
+
+  /* Remove the caret arrow — redundant when showing icon-only */
+  .presale-sticky-tabs .header-row-right details.dropdown summary .fa-caret-down {
+    display: none;
+  }
+
+  /* Tighten padding on the summary trigger button */
+  .presale-sticky-tabs .header-row-right details.dropdown summary {
+    padding: 2px 4px;
+  }
+
+  /* "Join online video" as a small icon-only button on mobile */
+  .presale-sticky-tabs a.header-tab.join-video-link {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0 4px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    border-bottom: none;
+    flex-shrink: 0;
+  }
+
+  .presale-sticky-tabs a.header-tab.join-video-link i {
+    font-size: 10px;
+    margin: 0;
+  }
+
+  .join-video-link:hover {
+    background: var(--color-primary-dark, var(--color-primary));
+    text-decoration: none;
+    opacity: 0.9;
+  }
+
+  /* Logged-out login link: icon-only on mobile, like the icon dropdowns */
+  .login-link {
+    display: flex;
+    align-items: center;
+    padding: 0px 8px;
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .login-link:hover {
+    text-decoration: none;
+    opacity: 0.85;
   }
 
   .event-hero {
@@ -410,21 +703,61 @@ footer {
   .event-hero-overlay {
     display: flex;
     width: 100%;
-    padding-left: 12px;
-    padding-right: 12px;
   }
 
   .event-brand {
     flex-wrap: wrap;
     gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .event-brand--has-logo {
+    padding-left: 12px;
+  }
+
+  header > .event-home-back {
+    padding-left: 12px;
   }
 
   .event-hero-text .event-title {
     font-size: 2rem;
   }
 
+  .event-home-back .event-home-back-icon {
+    font-size: 19px;
+  }
+
+  .event-home-back .event-home-back-label {
+    font-size: 13.5px;
+  }
+
   .event-date-line {
     font-size: 0.9rem;
+  }
+
+  .event-hero-overlay {
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-height: 100px;
+    align-items: flex-end;
+  }
+
+  /* Force #main-card to stretch fully to container bounds, avoiding 2x indent */
+  #main-card {
+    margin-left: 0;
+    margin-right: 0;
+    box-shadow: none !important;
+  }
+
+  #main-card>main {
+    padding-top: 0.15rem;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  #main-card>main>main {
+    padding:0;
   }
 }
 
@@ -433,15 +766,21 @@ footer {
     font-size: 1.6rem;
   }
 
+  /* Home control: use same icon/label sizes as @media (max-width: 768px); do not shrink further here */
+
   .event-brand {
     gap: 0.75rem;
   }
 
+  .event-brand--has-logo {
+    padding-left: 12px;
+  }
+
   #main-container {
     padding: 0;
-    padding-top: 20px;
+    padding-top: 24px;
     width: 100%;
-    margin-top: 3.8rem !important;
+    margin-top: 1.5rem;
 
     main {
       width: 100%;
@@ -528,16 +867,23 @@ footer {
       }
     }
   }
+
+  /* Agenda uses its own spacing (e.g. header margin); skip presale-style top padding */
+  body.page-agenda #main-container {
+    padding-top: 0;
+  }
 }
 
-/* Hide mobile-only navbar icons and CfS short text on desktop */
 .nav-icon-mobile, .cfs-short {
   display: none;
 }
 
 @media (max-width: 768px) {
   .nav-icon-mobile {
-    display: inline-block;
+    display: block;
+  }
+  .nav-icon-mobile {
+    font-size: 1.25rem;
   }
   .mobile-hide-text {
     display: none;
@@ -547,5 +893,16 @@ footer {
   }
   .cfs-short {
     display: inline;
+  }
+}
+
+@media (min-width: 992px) {
+  aside .row-voucher .form-control,
+  aside .row-voucher .input-group-addon,
+  aside .row-voucher .btn {
+    height: 40px;
+  }
+  aside .row-voucher .btn {
+    margin-top: 0;
   }
 }
