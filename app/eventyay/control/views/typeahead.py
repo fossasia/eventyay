@@ -682,13 +682,14 @@ def product_meta_values(request, organizer, event):
         or request.user.teams.filter(all_events=True, organizer=organizer, can_change_items=True).exists()
     )
     if not all_access:
+        team_events = request.user.teams.filter(organizer=organizer, can_change_items=True).values_list(
+            'limit_events__id', flat=True
+        )
         defaults = defaults.filter(
-            event__id__in=request.user.teams.filter(can_change_items=True).values_list('limit_events__id', flat=True)
+            event__id__in=team_events
         )
         matches = matches.filter(
-            product__event__id__in=request.user.teams.filter(can_change_items=True).values_list(
-                'limit_events__id', flat=True
-            )
+            product__event__id__in=team_events
         )
 
     return JsonResponse(
