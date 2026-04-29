@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-speakers-list(v-scrollbar.y="")
-	.speakers-toolbar
+	.speakers-toolbar(v-if="!hideToolbar")
 		.search-box
 			svg.search-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				circle(cx="11", cy="11", r="8")
@@ -198,6 +198,10 @@ export default {
 		speakers: {
 			type: Array,
 			default: () => []
+		},
+		hideToolbar: {
+			type: Boolean,
+			default: false
 		}
 	},
 	data() {

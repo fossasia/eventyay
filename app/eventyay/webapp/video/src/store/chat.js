@@ -218,15 +218,15 @@ export default {
 				channel = await api.call('chat.direct.create', {users: users.map(user => user.id), hide: hide})
 				state.joinedChannels.push(channel)
 			}
-			if (router.currentRoute.name !== 'channel' || router.currentRoute.params.channelId !== channel.id) {
+			if (router.currentRoute.value.name !== 'channel' || router.currentRoute.value.params.channelId !== channel.id) {
 				await router.push({name: 'channel', params: {channelId: channel.id}})
 			}
 			return channel
 		},
 		async leaveChannel({state}, {channelId}) {
 			await api.call('chat.leave', {channel: channelId})
-			if (router.currentRoute.name === 'channel' && router.currentRoute.params.channelId === channelId) {
-				await router.push({name: 'home'})
+			if (router.currentRoute.value.name === 'channel' && router.currentRoute.value.params.channelId === channelId) {
+				await router.push({name: 'about'})
 			}
 			const index = state.joinedChannels.findIndex(c => c.id === channelId)
 			if (index > -1) state.joinedChannels.splice(index, 1)
