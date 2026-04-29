@@ -146,13 +146,11 @@ def _split_csv_values(raw_value: str) -> list[str]:
 def _zip_speaker_refs_and_names(linked_speakers: str, speakers_val: str) -> list[tuple[str, str]]:
     refs = _split_csv_values(linked_speakers)
     names = _split_csv_values(speakers_val)
-    count = max(len(refs), len(names))
-    pairs = []
-    for index in range(count):
-        ref = refs[index] if index < len(refs) else ''
-        name = names[index] if index < len(names) else ''
-        if ref or name:
-            pairs.append((ref, name))
+    if refs and names and len(refs) == len(names):
+        return list(zip(refs, names, strict=True))
+    pairs: list[tuple[str, str]] = []
+    pairs.extend((ref, '') for ref in refs)
+    pairs.extend(('', name) for name in names)
     return pairs
 
 
@@ -401,6 +399,7 @@ def _import_speaker_row(event, settings, record, acting_user):
             except IntegrityError:
                 retry_fields = [field for field in update_fields if field not in ('email', 'code')]
                 if retry_fields:
+                    user.refresh_from_db(fields=['email', 'code'])
                     user.save(update_fields=retry_fields)
         else:
             user = User.objects.create_user(
@@ -716,7 +715,6 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                 speaker_user = speaker_cache[cache_key]
                 if speaker_user:
                     SpeakerRole.objects.get_or_create(submission=submission, user=speaker_user)
-                    SpeakerProfile.objects.get_or_create(user=speaker_user, event=event)
 
             # Question answers
             question_mappings = caches.get('question_mappings') if caches else []
