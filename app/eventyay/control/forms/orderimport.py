@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.services.orderimport import get_all_columns
+from eventyay.base.orderimport import _match_header, get_all_columns
 
 
 class ProcessForm(forms.Form):
@@ -23,13 +23,14 @@ class ProcessForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         headers = kwargs.pop('headers')
-        initital = kwargs.pop('initial', {})
+        initial = kwargs.pop('initial', {}) or {}
         self.event = kwargs.pop('event')
-        initital['testmode'] = self.event.testmode
-        kwargs['initial'] = initital
+        initial['testmode'] = self.event.testmode
+        kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
 
         header_choices = [('csv:{}'.format(h), _('CSV column: "{name}"').format(name=h)) for h in headers]
+        valid_csv_values = {v for v, _ in header_choices}
 
         for c in get_all_columns(self.event):
             choices = []
@@ -39,8 +40,27 @@ class ProcessForm(forms.Form):
             for k, v in c.static_choices():
                 choices.append(('static:{}'.format(k), v))
 
-            self.fields[c.identifier] = forms.ChoiceField(
+            all_valid_values = {v for v, _ in choices}
+
+            field = forms.ChoiceField(
                 label=str(c.verbose_name),
                 choices=choices,
                 widget=forms.Select(attrs={'data-static': 'true'}),
             )
+
+            saved = initial.get(c.identifier)
+            if saved and saved in all_valid_values:
+                # Saved mapping is valid for this file — honour it.
+                field.initial = saved
+            else:
+                # No usable saved mapping: auto-match from CSV headers, then fall back to
+                # the column's built-in default (e.g. a static country from guess_country).
+                suggestions = getattr(c, 'suggestions', [])
+                matched = _match_header(headers, suggestions) if suggestions else None
+                if matched:
+                    field.initial = 'csv:{}'.format(matched)
+                elif c.initial is not None and c.initial in all_valid_values:
+                    field.initial = c.initial
+
+            self.fields[c.identifier] = field
+

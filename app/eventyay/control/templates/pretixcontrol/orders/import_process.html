@@ -44,12 +44,37 @@
             </div>
             <div class="panel-body">
                 {% bootstrap_form_errors form %}
-                {% bootstrap_form form layout="horizontal" %}
+                {% bootstrap_field form.orders layout="horizontal" %}
+                {% bootstrap_field form.status layout="horizontal" %}
+                {% bootstrap_field form.testmode layout="horizontal" %}
                 <div class="alert alert-warning">
                     {% blocktrans trimmed %}
                         The import will be performed regardless of your quotas, so it will be possible to overbook your event using this option.
                     {% endblocktrans %}
                 </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {% trans "Column mapping" %}
+                    <small class="text-muted">
+                        {% trans "Columns marked with a CSV column suggestion were automatically matched from your file headers." %}
+                    </small>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <p class="text-muted">
+                    {% blocktrans trimmed %}
+                        For each field below, select which CSV column provides the data, or leave empty to skip.
+                        Suggestions have been pre-filled based on your CSV headers.
+                    {% endblocktrans %}
+                </p>
+                {% for field in form %}
+                    {% if field.name != "orders" and field.name != "status" and field.name != "testmode" %}
+                        {% bootstrap_field field layout="horizontal" %}
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
         <div class="form-group submit-group">
