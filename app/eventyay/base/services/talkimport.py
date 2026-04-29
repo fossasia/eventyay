@@ -164,16 +164,6 @@ def _speaker_cache_key(speaker_ref: str, speaker_name: str) -> str:
     return ''
 
 
-def _refetch_speaker_after_conflict(event, speaker_ref: str, normalized_email: str, normalized_name: str):
-    for candidate in (speaker_ref, normalized_email, normalized_name):
-        if not candidate:
-            continue
-        user = _find_user_for_speaker(event, candidate)
-        if user:
-            return user
-    return None
-
-
 def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
     normalized_ref = speaker_ref.strip()
     normalized_name = speaker_name.strip()[:USER_FULLNAME_MAX_LENGTH] if speaker_name else ''
@@ -194,57 +184,44 @@ def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
         if normalized_name and user.fullname != normalized_name:
             user.fullname = normalized_name
             update_fields.append('fullname')
-        if normalized_email and not user.email:
+        if (
+            normalized_email
+            and not user.email
+            and not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists()
+        ):
             user.email = normalized_email
             update_fields.append('email')
         if (
             normalized_identifier
             and not user.code
+            and not User.objects.filter(code__iexact=normalized_identifier).exclude(pk=user.pk).exists()
         ):
             user.code = normalized_identifier
             update_fields.append('code')
         if update_fields:
-            try:
-                with transaction.atomic():
-                    user.save(update_fields=update_fields)
-            except IntegrityError:
-                conflicting_user = _refetch_speaker_after_conflict(
-                    event,
-                    speaker_ref=normalized_ref,
-                    normalized_email=normalized_email,
-                    normalized_name=normalized_name,
-                )
-                if conflicting_user:
-                    user = conflicting_user
-                else:
-                    raise
+            user.save(update_fields=update_fields)
     else:
         fallback_name = normalized_name
         if not fallback_name:
             fallback_name = normalized_identifier or (normalized_email.split('@', 1)[0] if normalized_email else '')
         if not fallback_name:
             return None
-        try:
-            with transaction.atomic():
-                user = User.objects.create_user(
-                    password=get_random_string(32),
-                    email=normalized_email or None,
-                    fullname=fallback_name[:USER_FULLNAME_MAX_LENGTH],
-                    code=normalized_identifier or None,
-                    pw_reset_token=get_random_string(32),
-                    pw_reset_time=now() + dt.timedelta(days=60),
-                )
-        except IntegrityError:
-            conflicting_user = _refetch_speaker_after_conflict(
-                event,
-                speaker_ref=normalized_ref,
-                normalized_email=normalized_email,
-                normalized_name=normalized_name,
+        # Pre-check uniqueness to avoid IntegrityError inside GenerateCode.save()
+        create_email = normalized_email or None
+        if create_email and User.objects.filter(email__iexact=create_email).exists():
+            user = User.objects.filter(email__iexact=create_email).first()
+        else:
+            create_code = normalized_identifier or None
+            if create_code and User.objects.filter(code__iexact=create_code).exists():
+                create_code = None
+            user = User.objects.create_user(
+                password=get_random_string(32),
+                email=create_email,
+                fullname=fallback_name[:USER_FULLNAME_MAX_LENGTH],
+                code=create_code,
+                pw_reset_token=get_random_string(32),
+                pw_reset_time=now() + dt.timedelta(days=60),
             )
-            if conflicting_user:
-                user = conflicting_user
-            else:
-                raise
 
     SpeakerProfile.objects.get_or_create(user=user, event=event)
     return user
@@ -391,16 +368,14 @@ def _import_speaker_row(event, settings, record, acting_user):
             user.fullname = name
             extra = _apply_user_optional_fields(user, **optional_kwargs)
             update_fields = ['fullname', *extra]
-            if normalized_email and not user.email:
+            if (
+                normalized_email
+                and not user.email
+                and not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists()
+            ):
                 user.email = normalized_email
                 update_fields.append('email')
-            try:
-                user.save(update_fields=update_fields)
-            except IntegrityError:
-                retry_fields = [field for field in update_fields if field not in ('email', 'code')]
-                if retry_fields:
-                    user.refresh_from_db(fields=['email', 'code'])
-                    user.save(update_fields=retry_fields)
+            user.save(update_fields=update_fields)
         else:
             user = User.objects.create_user(
                 password=get_random_string(32),
