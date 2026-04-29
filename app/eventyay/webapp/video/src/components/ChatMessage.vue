@@ -31,13 +31,13 @@
 				.description {{ message.content.preview_card.description }}
 			.reactions(v-if="Object.keys(message.reactions).length > 0")
 				.reaction(v-for="users, emoji of message.reactions", :class="{'reacted-by-me': users.includes(user.id)}", @click="toggleReaction(emoji, users)", @pointerenter="initReactionTooltip($event, {emoji, users})", @pointerleave="reactionTooltip = null")
-					span.emoji(:style="nativeEmojiToStyle(emoji)")
+					img.emoji(:src="nativeEmojiToUrl(emoji)", :alt="emoji")
 					.count {{ users.length }}
 				emoji-picker-button(@selected="addReaction", strategy="fixed", placement="top-start", :offset="[0, 3]", icon-style="plus")
 				.reaction-tooltip(v-if="reactionTooltip", ref="reactionTooltip")
 					.arrow(data-popper-arrow="")
 					.emoji-wrapper
-						.emoji(:style="nativeEmojiToStyle(reactionTooltip.emoji)")
+						img.emoji(:src="nativeEmojiToUrl(reactionTooltip.emoji)", :alt="reactionTooltip.emoji")
 					.description
 						span.users {{ reactionTooltip.usersString }}
 						|  reacted with
@@ -73,7 +73,7 @@
 // - handle editing error
 import moment from 'moment'
 import { mapState, mapGetters } from 'vuex'
-import { nativeToStyle as nativeEmojiToStyle, getEmojiDataFromNative } from 'lib/emoji'
+import { nativeToUrl as nativeEmojiToUrl, getEmojiDataFromNative } from 'lib/emoji'
 import { createPopper } from '@popperjs/core'
 import { getUserName } from 'lib/profile'
 import Avatar from 'components/Avatar'
@@ -109,7 +109,7 @@ export default {
 			showDeletePrompt: false,
 			reactionTooltip: null,
 			getEmojiDataFromNative,
-			nativeEmojiToStyle
+			nativeEmojiToUrl
 		}
 	},
 	computed: {
@@ -265,7 +265,6 @@ export default {
 				max-height: 300px
 		.content, .reactions
 			.emoji
-				color: transparent // hide unicode emoji
 				vertical-align: bottom
 				line-height: 20px
 				width: 20px
