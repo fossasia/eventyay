@@ -294,6 +294,7 @@ def w_order_info(sender: Event, request, order: Order, **kwargs):
         )
         or not order.positions.exists()
         or not sender.settings.venueless_secret
+        or not sender.settings.get('venueless_show_public_link', False)
     ):
         return
 
@@ -336,6 +337,7 @@ def w_pos_info(sender: Event, request, order: Order, position, **kwargs):
             and position.product_id not in (position.event.settings.venueless_products or [])
         )
         or not sender.settings.venueless_secret
+        or not sender.settings.get('venueless_show_public_link', False)
     ):
         return
 
