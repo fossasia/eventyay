@@ -26,7 +26,20 @@ import config from 'config'
 import { loadThemeConfig } from 'theme'
 import 'webrtc-adapter'
 
+function ensureWebsiteFontsLoaded() {
+  if (document.head.querySelector('link[data-eventyay-fonts]')) {
+    return
+  }
+
+  const fontsLink = document.createElement('link')
+  fontsLink.rel = 'stylesheet'
+  fontsLink.href = '/static/common/css/_fonts.css'
+  fontsLink.dataset.eventyayFonts = '1'
+  document.head.appendChild(fontsLink)
+}
+
 async function init({ token, inviteToken }) {
+  ensureWebsiteFontsLoaded()
   await loadThemeConfig()
   const app = createApp(RouterView)
   app.use(store)

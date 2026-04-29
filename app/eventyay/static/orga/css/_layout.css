@@ -1727,6 +1727,7 @@ h2 .user-name-display img {
   }
 }
 
+
 .import-preview-cell {
   max-height: 150px;
   overflow-y: auto;
@@ -1751,4 +1752,8 @@ h2 .user-name-display img {
 
 .import-preview-table th {
   white-space: nowrap;
+
+.avatar-license-text {
+  overflow-wrap: anywhere;
+  word-break: break-all;
 }
