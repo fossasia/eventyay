@@ -157,7 +157,6 @@ export default {
 				ellipsis()
 				// TODO decopypaste
 				.emoji
-					color: transparent // hide unicode emoji
 					display: inline-block
 					vertical-align: middle
 					width: 36px
