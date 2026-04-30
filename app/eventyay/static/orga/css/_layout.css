@@ -499,6 +499,23 @@ aside.sidebar {
   font-size: 65%;
   font-weight: 400;
   line-height: 1;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  #main-title {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  #main-title .navigation-title {
+    flex: 1 1 auto;
+  }
+
+  #main-title .navigation-button {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
 }
 
 .speaker-info {
