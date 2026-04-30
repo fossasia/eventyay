@@ -276,4 +276,4 @@ class EventPublicationForm(JsonSubfieldMixin, forms.Form):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if isinstance(field, forms.BooleanField):
-                self.initial[field_name] = bool(self.initial.get(field_name, False))
+                field.initial = bool(field.initial)

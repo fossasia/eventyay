@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def migrate_meta_noindex(apps, schema_editor):
     Event_SettingsStore = apps.get_model('base', 'Event_SettingsStore')
     for setting in Event_SettingsStore.objects.filter(key='meta_noindex'):
@@ -13,12 +14,14 @@ def migrate_meta_noindex(apps, schema_editor):
             if 'meta_noindex' not in event.display_settings:
                 event.display_settings['meta_noindex'] = True
                 event.save(update_fields=['display_settings'])
-        
+
         # We can also delete the old setting
         setting.delete()
 
+
 def reverse_migrate_meta_noindex(apps, schema_editor):
     pass
+
 
 class Migration(migrations.Migration):
 
