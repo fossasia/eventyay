@@ -221,6 +221,7 @@ def test_notify_webhooks_skip_invalid_keeps_processing_following_entry(order, we
 
     skipped = order.log_action('eventyay.event.order.unknown', {})
     valid = order.log_action('pretix.event.order.paid', {})
+    queued.clear()
 
     notify_webhooks([skipped.id, valid.id])
 
