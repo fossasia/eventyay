@@ -1,16 +1,20 @@
 import asyncio
+import ipaddress
 import logging
 import secrets
+import socket
 import time
 from datetime import timedelta
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
+import asgiref.sync
 import requests as http_requests
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
+from requests import RequestException
 from sentry_sdk import add_breadcrumb, configure_scope
 
 from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer
@@ -62,6 +66,24 @@ class RoomModule(BaseModule):
         super().__init__(*args, **kwargs)
         self.current_views = {}
 
+    @staticmethod
+    def _is_private_url(url):
+        """Check if a URL points to a private/localhost address (SSRF protection)."""
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return True
+        if hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+            return True
+        try:
+            for info in socket.getaddrinfo(hostname, None):
+                addr = info[4][0]
+                if ipaddress.ip_address(addr).is_private:
+                    return True
+        except (socket.gaierror, ValueError):
+            return True
+        return False
+
     async def _verify_webhook_challenges(self, old_module_config, new_module_config):
         """
         When module_config is updated, verify any new webhook URLs via
@@ -80,31 +102,53 @@ class RoomModule(BaseModule):
             secret = cfg.get("webhook_hmac_secret")
             if not url:
                 continue
-            # Only verify if the URL is new or changed
-            if old_urls.get(m["type"]) == url:
-                continue
+            # Always validate secret when URL is set (not just on URL change)
             if not secret:
                 raise ConsumerException(
                     "webhook.missing_secret",
                     "webhook_hmac_secret is required when webhook_url is set.",
                 )
-            # Validate URL scheme (allow HTTP in development)
-            if not url.startswith("https://"):
-                if not (settings.DEBUG and url.startswith("http://")):
+            # Validate URL structure
+            parsed = urlparse(url)
+            scheme = (parsed.scheme or "").lower()
+            if scheme not in ("https", "http"):
+                raise ConsumerException(
+                    "webhook.invalid_url",
+                    "Webhook URL must use HTTPS.",
+                )
+            if scheme != "https" and not settings.DEBUG:
+                raise ConsumerException(
+                    "webhook.insecure_url",
+                    "Webhook URL must use HTTPS in production.",
+                )
+            if parsed.fragment or parsed.username or parsed.password:
+                raise ConsumerException(
+                    "webhook.invalid_url",
+                    "Webhook URL must not contain fragments or credentials.",
+                )
+            # Block private/localhost targets (SSRF protection), skip in DEBUG
+            if not settings.DEBUG:
+                is_private = await asgiref.sync.sync_to_async(
+                    self._is_private_url
+                )(url)
+                if is_private:
                     raise ConsumerException(
-                        "webhook.insecure_url",
-                        "Webhook URL must use HTTPS.",
+                        "webhook.invalid_url",
+                        "Webhook URL must not point to a private network address.",
                     )
+            # Only run challenge verification if the URL is new or changed
+            if old_urls.get(m["type"]) == url:
+                continue
             # Challenge verification
             challenge_token = secrets.token_urlsafe(32)
             try:
-                resp = await database_sync_to_async(http_requests.get)(
+                resp = await asgiref.sync.sync_to_async(http_requests.get)(
                     url,
                     params={"challenge": challenge_token},
                     timeout=5,
                     allow_redirects=False,
                 )
-            except Exception:
+            except RequestException:
                 raise ConsumerException(
                     "webhook.verification_failed",
                     "Could not reach webhook URL for challenge verification.",
@@ -116,7 +160,7 @@ class RoomModule(BaseModule):
                 )
             try:
                 data = resp.json()
-            except Exception:
+            except ValueError:
                 raise ConsumerException(
                     "webhook.verification_failed",
                     "Webhook challenge response is not valid JSON.",

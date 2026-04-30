@@ -119,9 +119,14 @@ class ChatModule(BaseModule):
         self.users_known_to_client = set()
         self.service = ChatService(self.consumer.event)
 
-    async def _dispatch_chat_webhook(self, event_data, message_type="text"):
+    # Webhook payload only supports these message types; skip others (files, deleted, call)
+    _WEBHOOK_MESSAGE_TYPES = {"text", "emoji"}
+
+    async def _dispatch_chat_webhook(self, event_data, message_type="text", reaction=None, reaction_delete=False):
         """Dispatch a webhook POST if the channel's room has a webhook configured."""
         if not self.channel or not self.channel.room:
+            return
+        if message_type not in self._WEBHOOK_MESSAGE_TYPES:
             return
         webhook_url = self.module_config.get("webhook_url")
         hmac_secret = self.module_config.get("webhook_hmac_secret")
@@ -129,12 +134,13 @@ class ChatModule(BaseModule):
             return
 
         sender = self.consumer.user
+        sender_id = event_data.get("sender")  # already a string UUID or None
         payload = {
             "message_id": event_data.get("event_id"),
             "channel": event_data.get("channel"),
             "timestamp": event_data.get("timestamp"),
             "screen_name": (sender.profile or {}).get("display_name", ""),
-            "sender_id": str(sender.id) if sender else None,
+            "sender_id": sender_id,
             "centralauth_id": getattr(sender, "wikimedia_username", None),
             "message": (event_data.get("content") or {}).get("body", ""),
             "message_type": message_type,
@@ -144,6 +150,9 @@ class ChatModule(BaseModule):
         }
         if message_type == "emoji":
             payload["meta"]["target_message_id"] = event_data.get("event_id")
+            payload["meta"]["reaction"] = reaction
+            payload["meta"]["action"] = "remove" if reaction_delete else "add"
+            payload["meta"]["reactions"] = event_data.get("reactions", {})
 
         await asgiref.sync.sync_to_async(send_chat_webhook.apply_async)(
             kwargs={
@@ -493,7 +502,7 @@ class ChatModule(BaseModule):
             GROUP_CHAT.format(channel=self.channel_id), event
         )
 
-        # Dispatch external webhook if configured
+        # Dispatch external webhook if configured (only for text messages)
         await self._dispatch_chat_webhook(event, message_type=content.get("type", "text"))
 
         # Unread notifications
@@ -667,7 +676,12 @@ class ChatModule(BaseModule):
         )
 
         # Dispatch external webhook for reaction
-        await self._dispatch_chat_webhook(event, message_type="emoji")
+        await self._dispatch_chat_webhook(
+            event,
+            message_type="emoji",
+            reaction=reaction,
+            reaction_delete=body.get("delete", False),
+        )
 
     @event(["event", "event.reaction"], refresh_user=30)
     async def publish_event(self, body):
