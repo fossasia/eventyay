@@ -28,13 +28,11 @@ class EventCommonSettingsForm(SettingsForm):
         label=_('Logo URL'),
         required=False,
         help_text=_('Use an external image URL instead of uploading a logo file.'),
-        assume_scheme='http',
     )
     logo_image_url = forms.URLField(
         label=_('Header image URL'),
         required=False,
         help_text=_('Use an external image URL instead of uploading a header image file.'),
-        assume_scheme='http',
     )
     timezone = forms.ChoiceField(
         choices=((a, a) for a in common_timezones),
