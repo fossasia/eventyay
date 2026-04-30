@@ -14,7 +14,7 @@
 	.grid-viewport(ref="gridViewport", @scroll="onViewportScroll")
 		.grid(:style="gridStyle")
 			template(v-for="slice of visibleTimeslices")
-				.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.toISOString()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
+				.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice-day="slice.date.clone().tz(timezone).format('YYYY-MM-DD')", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 				.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 			.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
 				svg(viewBox="0 0 10 10", :title="nowHoverTime")
@@ -369,13 +369,7 @@ export default {
 		if (fragmentIsDate || !this.$refs.now) return
 		// Skip auto-scroll if disabled via prop
 		if (this.disableAutoScroll) return
-		const clearance = this.getStickyHeaderClearance()
-		const rect = this.$refs.now.getBoundingClientRect()
-		if (this.scrollParent) {
-			this.scrollParent.scrollTop += rect.top - clearance
-		} else {
-			window.scrollBy({top: rect.top - clearance})
-		}
+		this.scrollElementIntoViewWithClearance(this.$refs.now)
 	},
 	beforeUnmount () {
 		if (this._gridResizeObserver) {
@@ -430,11 +424,27 @@ export default {
 		},
 		getStickyHeaderClearance () {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
-			const toolbar = this.$el.querySelector('.c-schedule-toolbar')
-			const style = getComputedStyle(this.$el)
-			const navOffset = parseInt(style.getPropertyValue('--pretalx-sticky-top-offset')) || 40
-			const toolbarHeight = toolbar ? toolbar.getBoundingClientRect().height : 0
-			return navOffset + toolbarHeight + (stickyHeader ? stickyHeader.getBoundingClientRect().height : 0) + 10
+			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
+			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
+			let toolbarHeight = 0
+			if (toolbar) {
+				toolbarHeight = toolbar.getBoundingClientRect().height
+			} else if (scheduleRoot) {
+				const parsed = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-toolbar-height'))
+				toolbarHeight = Number.isFinite(parsed) ? parsed : 0
+			}
+			const stickyHeaderHeight = stickyHeader ? stickyHeader.getBoundingClientRect().height : 0
+			let navOffset = 40
+			if (stickyHeader) {
+				const rect = stickyHeader.getBoundingClientRect()
+				navOffset = Math.max(0, rect.top)
+			}
+			let versionWarning = 0
+			if (scheduleRoot) {
+				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
+				versionWarning = Number.isFinite(vh) ? vh : 0
+			}
+			return navOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -475,16 +485,27 @@ export default {
 		changeDay (day) {
 			this.scrollToDayStart(day)
 		},
-		scrollToDayStart (day) {
-			const el = this.$refs[getSliceName(moment.tz(day, this.timezone))]?.[0]
+		scrollElementIntoViewWithClearance (el) {
 			if (!el) return
 			const clearance = this.getStickyHeaderClearance()
 			const rect = el.getBoundingClientRect()
-			if (this.scrollParent) {
-				this.scrollParent.scrollTop += rect.top - clearance
+			const scrollEl = this.scrollParent
+			const isWindowScroll = !scrollEl || scrollEl === document.documentElement || scrollEl === document.body
+			if (!isWindowScroll) {
+				const parentRect = scrollEl.getBoundingClientRect()
+				const delta = rect.top - parentRect.top - clearance
+				scrollEl.scrollTop += delta
 			} else {
-				window.scrollBy({top: rect.top - clearance})
+				window.scrollBy({ top: rect.top - clearance })
 			}
+		},
+		scrollToDayStart (day) {
+			const targetMoment = moment.isMoment(day)
+				? day.clone().tz(this.timezone).startOf('day')
+				: moment.tz(day, this.timezone).startOf('day')
+			const el = this.$refs[getSliceName(targetMoment)]?.[0]
+			if (!el) return
+			this.scrollElementIntoViewWithClearance(el)
 		},
 		initScrollSync () {
 			const viewport = this.$refs.gridViewport
@@ -560,13 +581,12 @@ export default {
 		onIntersect (entries) {
 			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
 			if (!entry) return
-			const day = moment(entry.target.dataset.slice).startOf('day')
-			if (day.format('YYYY-MM-DD') !== this.currentDay) {
-				// Only update the active day indicator — don't trigger a scroll jump.
-				// scrollToDayStart is only called from toolbar clicks (selectDay / forceScrollDay).
-				this._scrollDayUpdate = true
-				this.$emit('changeDay', day)
-			}
+			const dayStr = entry.target.dataset.sliceDay
+			if (!dayStr || dayStr === this.currentDay) return
+			// Only update the active day indicator — don't trigger a scroll jump.
+			// scrollToDayStart is only called from toolbar clicks (selectDay / forceScrollDay).
+			this._scrollDayUpdate = true
+			this.$emit('changeDay', moment.tz(dayStr, this.timezone).startOf('day'))
 		},
 		showRoomTooltip (event, room) {
 			const rect = event.target.getBoundingClientRect()
