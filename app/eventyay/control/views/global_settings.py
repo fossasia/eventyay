@@ -201,6 +201,17 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             )
             return redirect(reverse('eventyay_admin:admin.global.settings'))
 
+        try:
+            validate_email(mail_from)
+        except ValidationError:
+            messages.error(
+                request,
+                _(
+                    'The sender address "%(addr)s" is not a valid email address. '
+                    'Please correct the "Sender address" field and save again.'
+                ) % {'addr': mail_from},
+            )
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
 
         try:
             mail_from.encode('ascii')
@@ -216,7 +227,32 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
             return redirect(reverse('eventyay_admin:admin.global.settings'))
 
         try:
-            backend = get_mail_backend(timeout=10)
+            if gs.settings.email_vendor == 'sendgrid':
+                from eventyay.base.email import SendGridEmail
+
+                if not gs.settings.send_grid_api_key:
+                    messages.error(request, _('SendGrid API key is missing. Please configure it and save.'))
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
+            elif gs.settings.email_vendor == 'smtp':
+                from eventyay.base.email import CustomSMTPBackend
+
+                if not gs.settings.smtp_host or not gs.settings.smtp_port:
+                    messages.error(request, _('SMTP host or port is missing. Please configure them and save.'))
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend = CustomSMTPBackend(
+                    host=gs.settings.smtp_host,
+                    port=gs.settings.smtp_port,
+                    username=gs.settings.smtp_username,
+                    password=gs.settings.smtp_password,
+                    use_tls=gs.settings.smtp_use_tls,
+                    use_ssl=gs.settings.smtp_use_ssl,
+                    fail_silently=False,
+                    timeout=10,
+                )
+            else:
+                backend = get_mail_backend(timeout=10)
+
             email = EmailMessage(
                 subject=_('Eventyay system - test email'),
                 body=_('This is a test email from your Eventyay system email configuration.'),

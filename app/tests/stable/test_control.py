@@ -110,3 +110,47 @@ class TestAdminPages:
             pytest.skip('Orga admin route not present in this configuration')
         # Should load admin dashboard or redirect appropriately
         assert response.status_code in [200, 302]
+
+
+@pytest.mark.django_db
+class TestGlobalSettingsEmail:
+    """Test global settings email functionality."""
+
+    def test_test_email_requires_staff(self, client):
+        """Test test email endpoint requires staff permission."""
+        from django.urls import reverse
+        url = reverse('eventyay_admin:admin.global.settings.test_email')
+        response = client.post(url, {'test_email': 'test@example.com'})
+        assert response.status_code == 302
+
+    def test_test_email_rejects_invalid_recipients(self, staff_client):
+        from django.urls import reverse
+        url = reverse('eventyay_admin:admin.global.settings.test_email')
+        response = staff_client.post(url, {'test_email': 'invalid-email'})
+        assert response.status_code == 302
+
+    def test_test_email_invalid_sender(self, staff_client):
+        from django.urls import reverse
+        from eventyay.base.settings import GlobalSettingsObject
+        
+        gs = GlobalSettingsObject()
+        gs.settings.set('mail_from', 'invalid-email')
+        
+        url = reverse('eventyay_admin:admin.global.settings.test_email')
+        response = staff_client.post(url, {'test_email': 'test@example.com'})
+        assert response.status_code == 302
+
+    def test_test_email_smtp_unreachable(self, staff_client):
+        from django.urls import reverse
+        from eventyay.base.settings import GlobalSettingsObject
+        
+        gs = GlobalSettingsObject()
+        gs.settings.set('mail_from', 'valid@example.com')
+        gs.settings.set('email_vendor', 'smtp')
+        gs.settings.set('smtp_host', 'unreachable.example.com')
+        gs.settings.set('smtp_port', 25)
+        
+        url = reverse('eventyay_admin:admin.global.settings.test_email')
+        response = staff_client.post(url, {'test_email': 'test@example.com'})
+        assert response.status_code == 302
+
