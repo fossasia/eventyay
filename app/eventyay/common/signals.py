@@ -258,7 +258,7 @@ def process_scheduled_emails(sender, **kwargs):
     """
     from eventyay.plugins.sendmail.models import EmailQueue
     from eventyay.base.models.mail import QueuedMail
-    from eventyay.base.services.mail import SendMailException
+    from eventyay.common.exceptions import SendMailException
 
     # Process QueuedMail (Talk/CfP component)
     while True:

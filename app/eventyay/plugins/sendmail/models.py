@@ -88,7 +88,7 @@ class EmailQueue(models.Model):
         null=True,
         blank=True,
         db_index=True,
-        help_text='If set, the email will be sent at this time instead of immediately.',
+        help_text=_('If set, the email will be sent at this time instead of immediately.'),
     )
 
     class Meta:
