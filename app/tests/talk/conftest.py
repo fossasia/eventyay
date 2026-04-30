@@ -510,7 +510,7 @@ def select_question(event):
         question = Question.objects.create(
             event=event,
             question="Which session format do you prefer?",
-            variant="select",
+            variant=QuestionVariant.SELECT,
             target="submission",
             question_required=QuestionRequired.OPTIONAL,
             position=10,

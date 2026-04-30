@@ -2,7 +2,7 @@ import pytest
 from django_countries.fields import Country
 from django_scopes import scope
 from pretalx.submission.forms import TalkQuestionsForm
-from pretalx.submission.models import Answer, Question
+from pretalx.submission.models import Answer, Question, QuestionVariant
 
 from eventyay.helpers.countries import get_country_name
 
@@ -145,7 +145,7 @@ def test_answer_string_property_select_with_option(event, submission):
     with scope(event=event):
         question = Question.objects.create(
             question="Which format?",
-            variant="select",
+            variant=QuestionVariant.SELECT,
             event=event,
             target="submission",
         )
