@@ -25,6 +25,7 @@ from eventyay.features.live.decorators import (
 )
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
+from eventyay.features.live.tasks import send_chat_webhook
 from eventyay.storage.tasks import retrieve_preview_information
 
 logger = logging.getLogger(__name__)
@@ -117,6 +118,40 @@ class ChatModule(BaseModule):
         self.channels_subscribed = set()
         self.users_known_to_client = set()
         self.service = ChatService(self.consumer.event)
+
+    async def _dispatch_chat_webhook(self, event_data, message_type="text"):
+        """Dispatch a webhook POST if the channel's room has a webhook configured."""
+        if not self.channel or not self.channel.room:
+            return
+        webhook_url = self.module_config.get("webhook_url")
+        hmac_secret = self.module_config.get("webhook_hmac_secret")
+        if not webhook_url or not hmac_secret:
+            return
+
+        sender = self.consumer.user
+        payload = {
+            "message_id": event_data.get("event_id"),
+            "channel": event_data.get("channel"),
+            "timestamp": event_data.get("timestamp"),
+            "screen_name": (sender.profile or {}).get("display_name", ""),
+            "sender_id": str(sender.id) if sender else None,
+            "centralauth_id": getattr(sender, "wikimedia_username", None),
+            "message": (event_data.get("content") or {}).get("body", ""),
+            "message_type": message_type,
+            "profile_img": None,
+            "user_language": getattr(sender, "locale", None),
+            "meta": {},
+        }
+        if message_type == "emoji":
+            payload["meta"]["target_message_id"] = event_data.get("event_id")
+
+        await asgiref.sync.sync_to_async(send_chat_webhook.apply_async)(
+            kwargs={
+                "payload": payload,
+                "webhook_url": webhook_url,
+                "hmac_secret": hmac_secret,
+            }
+        )
 
     async def _subscribe(self, volatile=False):
         self.users_known_to_client.clear()  # client implementation nukes cache on channel switch
@@ -458,6 +493,9 @@ class ChatModule(BaseModule):
             GROUP_CHAT.format(channel=self.channel_id), event
         )
 
+        # Dispatch external webhook if configured
+        await self._dispatch_chat_webhook(event, message_type=content.get("type", "text"))
+
         # Unread notifications
         async with aredis() as redis:
 
@@ -627,6 +665,9 @@ class ChatModule(BaseModule):
         await self.consumer.channel_layer.group_send(
             GROUP_CHAT.format(channel=self.channel_id), event
         )
+
+        # Dispatch external webhook for reaction
+        await self._dispatch_chat_webhook(event, message_type="emoji")
 
     @event(["event", "event.reaction"], refresh_user=30)
     async def publish_event(self, body):

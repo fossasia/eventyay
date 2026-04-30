@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import secrets
 import time
 from datetime import timedelta
 from urllib.parse import urljoin
 
+import requests as http_requests
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.conf import settings
@@ -59,6 +61,70 @@ class RoomModule(BaseModule):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.current_views = {}
+
+    async def _verify_webhook_challenges(self, old_module_config, new_module_config):
+        """
+        When module_config is updated, verify any new webhook URLs via
+        challenge-response before allowing them to be saved.
+        """
+        old_urls = {}
+        for m in old_module_config:
+            cfg = m.get("config", {})
+            url = cfg.get("webhook_url")
+            if url:
+                old_urls[m["type"]] = url
+
+        for m in new_module_config:
+            cfg = m.get("config", {})
+            url = cfg.get("webhook_url")
+            secret = cfg.get("webhook_hmac_secret")
+            if not url:
+                continue
+            # Only verify if the URL is new or changed
+            if old_urls.get(m["type"]) == url:
+                continue
+            if not secret:
+                raise ConsumerException(
+                    "webhook.missing_secret",
+                    "webhook_hmac_secret is required when webhook_url is set.",
+                )
+            # Validate URL scheme
+            if not url.startswith("https://"):
+                raise ConsumerException(
+                    "webhook.insecure_url",
+                    "Webhook URL must use HTTPS.",
+                )
+            # Challenge verification
+            challenge_token = secrets.token_urlsafe(32)
+            try:
+                resp = await database_sync_to_async(http_requests.get)(
+                    url,
+                    params={"challenge": challenge_token},
+                    timeout=5,
+                    allow_redirects=False,
+                )
+            except Exception:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "Could not reach webhook URL for challenge verification.",
+                )
+            if resp.status_code != 200:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    f"Webhook challenge returned HTTP {resp.status_code}.",
+                )
+            try:
+                data = resp.json()
+            except Exception:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "Webhook challenge response is not valid JSON.",
+                )
+            if data.get("challenge") != challenge_token:
+                raise ConsumerException(
+                    "webhook.verification_failed",
+                    "Webhook challenge token mismatch.",
+                )
 
     @command("enter")
     @room_action(permission_required=Permission.ROOM_VIEW)
@@ -384,6 +450,22 @@ class RoomModule(BaseModule):
                 if f in body:
                     setattr(self.room, f, s.validated_data[f])
                     update_fields.add(f)
+
+            # Validate webhook URL via challenge verification when module_config changes
+            if "module_config" in update_fields:
+                try:
+                    await self._verify_webhook_challenges(
+                        old.get("module_config") or [],
+                        self.room.module_config or [],
+                    )
+                except ConsumerException:
+                    raise
+                except Exception:
+                    logger.exception("Webhook challenge verification failed")
+                    await self.consumer.send_error(
+                        code="webhook.verification_failed"
+                    )
+                    return
 
             # When module_config is updated, ensure open-viewer rooms have participant: [] so
             # implicit participant-role permissions (chat, questions, polls, BBB/join, etc.) work.
