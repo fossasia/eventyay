@@ -136,3 +136,60 @@ class TestPlatformSearch:
         names = {row['name'] for row in payload}
         assert 'Visible Search Event' in names
         assert 'Hidden Search Event' not in names
+
+@pytest.mark.django_db
+class TestStartPageVisibility:
+    """Test visibility and search exclusion on the platform start page."""
+
+    def test_start_page_hides_excluded_events(self, client, organizer, event):
+        """Events excluded from start page should not appear in the upcoming list."""
+        event.name = 'Visible Start Event'
+        event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Start Event',
+            slug='hidden-start-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            startpage_visible=True,
+            email='hidden-start@example.com',
+        )
+        hidden_event.display_settings['exclude_from_start_page'] = True
+        hidden_event.save(update_fields=['display_settings'])
+
+        response = client.get('/')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Visible Start Event' in content
+        assert 'Hidden Start Event' not in content
+
+    def test_start_page_search_excludes_hidden_events(self, client, organizer, event):
+        """Events excluded from search should not appear in start page search results."""
+        event.name = 'Visible Search Event'
+        event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Search Event',
+            slug='hidden-search-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            email='hidden-search@example.com',
+        )
+        hidden_event.display_settings['exclude_from_search'] = True
+        hidden_event.save(update_fields=['display_settings'])
+
+        response = client.get('/?q=Search')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Visible Search Event' in content
+        assert 'Hidden Search Event' not in content
