@@ -10,8 +10,8 @@ from pytz import common_timezones
 
 from eventyay.base.forms import I18nModelForm, SettingsForm
 from eventyay.base.models import Event
-from eventyay.common.forms.mixins import JsonSubfieldMixin
 from eventyay.base.settings import validate_event_settings
+from eventyay.common.forms.mixins import JsonSubfieldMixin
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.urls import get_file_url_path, is_http_url, normalize_url_scheme
 from eventyay.control.forms import SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
@@ -271,3 +271,9 @@ class EventPublicationForm(JsonSubfieldMixin, forms.Form):
             'exclude_from_start_page': 'display_settings',
             'exclude_from_search': 'display_settings',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if isinstance(field, forms.BooleanField):
+                self.initial[field_name] = bool(self.initial.get(field_name, False))

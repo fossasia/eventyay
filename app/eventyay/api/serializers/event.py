@@ -682,7 +682,6 @@ class EventSettingsSerializer(SettingsSerializer):
         'contact_mail',
         'show_variations_expanded',
         'hide_sold_out',
-        'meta_noindex',
         'redirect_to_checkout_directly',
         'frontpage_subevent_ordering',
         'event_list_type',

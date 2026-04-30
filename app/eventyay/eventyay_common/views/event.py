@@ -1109,9 +1109,9 @@ class EventSearchView(views.APIView):
             if request.user.has_event_permission(event.organizer, event, 'can_view_orders', request=request):
                 results.append(
                     {
-                        'name': str(event.name),
-                        'slug': str(event.slug),
-                        'organizer': str(event.organizer.slug),
+                        'name': event.name,
+                        'slug': event.slug,
+                        'organizer': event.organizer.slug,
                     }
                 )
 
