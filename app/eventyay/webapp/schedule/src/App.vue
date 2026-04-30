@@ -30,13 +30,16 @@
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="schedule.timezone",
 			:userTimezone="userTimezone",
-			:days="days",
+			:days="allDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
 			v-model:includeRoomSortKey="sortIncludeRoom",
 			v-model:includeDateSortKey="sortIncludeDate",
+			v-model:includePopularitySortKey="sortIncludePopularity",
+			:popularityFeatureEnabled="popularityFeatureEnabled",
+			:loggedIn="loggedIn",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
@@ -78,6 +81,7 @@
 			:sortBy="effectiveSortBy",
 			:includeRoomSortKey="sortIncludeRoom",
 			:includeDateSortKey="sortIncludeDate",
+			:includePopularitySortKey="sortIncludePopularity",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:showBreaks="!sessionsMode",
@@ -123,7 +127,7 @@ import SpeakersList from '~/components/SpeakersList'
 import FeaturedSpeakers from '~/components/FeaturedSpeakers'
 import SpeakerDetail from '~/components/SpeakerDetail'
 import TalkDetail from '~/components/TalkDetail'
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -147,6 +151,7 @@ function localesMatch (filterValue, sessionValue) {
 	if (a === b) return true
 	return localePrimary(a) === localePrimary(b)
 }
+
 
 const markdownIt = MarkdownIt({
 	linkify: false,
@@ -261,7 +266,7 @@ export default {
 			getLocalizedString,
 			getSessionTime,
 			markdownIt,
-			sortBy: 'room',
+			sortBy: 'title',
 			scrollParentWidth: Infinity,
 			schedule: null,
 			userTimezone: null,
@@ -270,6 +275,7 @@ export default {
 			forceScrollDay: 0,
 			currentTimezone: null,
 			favs: [],
+			userCode: null,
 			favsReadOnly: false,
 			allTracks: [],
 			allRooms: [],
@@ -290,13 +296,14 @@ export default {
 			recordingFilter: 'all',
 			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
 			sortIncludeRoom: false,
+			sortIncludePopularity: false,
 			sortIncludeDate: (() => {
 				try {
 					const stored = localStorage.getItem('schedule-include-datetime')
-					if (stored === null) return true
+					if (stored === null) return false
 					return stored === 'true'
 				} catch {
-					return true
+					return false
 				}
 			})(),
 		}
@@ -396,7 +403,7 @@ export default {
 						.filter(Boolean),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
-					fav_count: session.fav_count,
+					fav_count: normalizePopularityCount(session),
 					tags: session.tags,
 					session_type: session.session_type,
 					content_locale: session.content_locale,
@@ -433,15 +440,32 @@ export default {
 		rooms () {
 			return this.schedule.rooms.filter(r => this.baseSessions.some(s => s.room === r))
 		},
-		days () {
-			if (!this.baseSessions) return
-			let days = []
+		// allDays: all unique days from baseSessions, always unfiltered by sort.
+		// Passed to the toolbar so day-picker buttons are never hidden by the
+		// 'Include datetime' sort toggle.
+		allDays () {
+			if (!this.baseSessions) return []
+			const days = []
 			for (const session of this.baseSessions) {
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
 			days.sort((a, b) => a.diff(b))
-			if (this.sessionsMode && !this.sortIncludeDate && ['title', 'title_desc'].includes(this.effectiveSortBy)) {
+			return days
+		},
+		// days: collapses to one entry when sorting without date grouping.
+		// Only used by LinearSchedule to control day-header rendering.
+		days () {
+			if (!this.baseSessions) return
+			const days = []
+			for (const session of this.baseSessions) {
+				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
+				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
+			}
+			days.sort((a, b) => a.diff(b))
+			// In session list mode without datetime grouping, collapse to 1 virtual day
+			// so LinearSchedule renders a single flat sorted list.
+			if (this.sessionsMode && !this.sortIncludeDate) {
 				return days.length ? [days[0]] : []
 			}
 			return days
@@ -498,23 +522,22 @@ export default {
 			return this.loggedIn && this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_list
 		},
 		sortOptions () {
-			const options = ['room', 'title', 'title_desc']
-			if (this.loggedIn && this.popularityFeatureEnabled) options.push('popularity')
+			const options = ['title', 'title_desc']
+			if (this.showPopularityOnList) options.push('popularity')
 			return options
 		},
 		effectiveSortBy () {
-			return this.sortOptions.includes(this.sortBy) ? this.sortBy : 'room'
+			return this.sortOptions.includes(this.sortBy) ? this.sortBy : 'title'
 		}
 	},
 	watch: {
 		popularityFeatureEnabled (enabled) {
-			if (!enabled && this.sortBy === 'popularity') {
-				this.sortBy = 'room'
-			}
+			// When the popularity feature is disabled, also disable the popularity sort toggle
+			if (!enabled) this.sortIncludePopularity = false
 		},
 		loggedIn (isLoggedIn) {
-			if (!isLoggedIn && this.sortBy === 'popularity') {
-				this.sortBy = 'room'
+			if (!isLoggedIn) {
+				this.sortIncludePopularity = false
 			}
 			if (!isLoggedIn) {
 				this.onlyFavs = false
@@ -548,6 +571,7 @@ export default {
 		const messagesEl = document.querySelector('#pretalx-messages')
 		if (messagesEl) {
 			this.onHomeServer = true
+			this.userCode = messagesEl.dataset.userCode ?? null
 			if (messagesEl.dataset.loggedIn === 'true') {
 				this.loggedIn = true
 			}
@@ -704,6 +728,21 @@ export default {
 		// TODO destroy observers
 	},
 	methods: {
+		getFavStorageKey (userCode = null) {
+			if (this.loggedIn && userCode) return `${this.eventSlug}_${userCode}_favs`
+			return `${this.eventSlug}_favs`
+		},
+		readLocalFavs (storageKey) {
+			const raw = localStorage.getItem(storageKey)
+			if (!raw) return []
+			try {
+				const parsed = JSON.parse(raw)
+				return Array.isArray(parsed) ? parsed : []
+			} catch {
+				localStorage.setItem(storageKey, '[]')
+				return []
+			}
+		},
 		readRecordingQueryParam () {
 			try {
 				const url = new URL(window.location.href)
@@ -782,16 +821,12 @@ export default {
 		},
 		async loadFavs () {
 			if (!this.loggedIn) return []
-			const storageKey = `${this.eventSlug}_favs`
-			const data = localStorage.getItem(storageKey)
-			let localFavs = []
-			if (data) {
-				try {
-					localFavs = JSON.parse(data) || []
-				} catch {
-					localStorage.setItem(storageKey, '[]')
-				}
-			}
+			const userStorageKey = this.getFavStorageKey(this.userCode)
+			const anonymousStorageKey = this.getFavStorageKey(null)
+			const localFavs = [...new Set([
+				...this.readLocalFavs(userStorageKey),
+				...this.readLocalFavs(anonymousStorageKey),
+			])]
 			if (this.loggedIn) {
 				try {
 					const merged = await this.apiRequest(
@@ -800,7 +835,8 @@ export default {
 						localFavs
 					)
 					if (Array.isArray(merged)) {
-						localStorage.removeItem(storageKey)
+						localStorage.setItem(userStorageKey, JSON.stringify(merged))
+						localStorage.removeItem(anonymousStorageKey)
 						return merged
 					}
 				} catch {
@@ -850,6 +886,10 @@ export default {
 			if (this.favsReadOnly) return
 			if (this.favs.includes(id)) return
 			this.favs.push(id)
+			const talk = this.schedule?.talks?.find(t => t.code === id)
+			if (talk) {
+				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) + 1)
+			}
 			this.saveFavs()
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
@@ -862,6 +902,10 @@ export default {
 			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			this.favs = this.favs.filter(elem => elem !== id)
+			const talk = this.schedule?.talks?.find(t => t.code === id)
+			if (talk) {
+				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) - 1)
+			}
 			this.saveFavs()
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
