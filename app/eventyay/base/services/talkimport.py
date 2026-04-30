@@ -206,10 +206,11 @@ def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
             fallback_name = normalized_identifier or (normalized_email.split('@', 1)[0] if normalized_email else '')
         if not fallback_name:
             return None
-        # Pre-check uniqueness to avoid IntegrityError inside GenerateCode.save()
+        # Pre-check explicit email/code values to avoid unique constraint violations during user creation.
         create_email = normalized_email or None
-        if create_email and User.objects.filter(email__iexact=create_email).exists():
-            user = User.objects.filter(email__iexact=create_email).first()
+        existing_user = User.objects.filter(email__iexact=create_email).first() if create_email else None
+        if existing_user:
+            user = existing_user
         else:
             create_code = normalized_identifier or None
             if create_code and User.objects.filter(code__iexact=create_code).exists():
@@ -359,9 +360,12 @@ def _import_speaker_row(event, settings, record, acting_user):
     if not user:
         user = User.objects.filter(email__iexact=normalized_email).first()
     if not user:
-        profile = SpeakerProfile.objects.filter(event=event, user__fullname__iexact=name).select_related('user').first()
-        if profile:
-            user = profile.user
+        profiles = list(
+            SpeakerProfile.objects.filter(event=event, user__fullname__iexact=name)
+            .select_related('user')[:2]
+        )
+        if len(profiles) == 1:
+            user = profiles[0].user
 
     with transaction.atomic():
         if user:
