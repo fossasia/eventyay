@@ -302,8 +302,6 @@ def notify_webhooks(logentry_ids: list):
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
 
 
-WEBHOOK_TIMEOUT = 30  # seconds
-
 
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
@@ -327,11 +325,13 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
         try:
             try:
                 max_body_size = settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]
+                timeout = getattr(settings, "WEBHOOK_TIMEOUT", 30)
+
                 resp = requests.post(
                     webhook.target_url,
                     json=payload,
                     allow_redirects=False,
-                    timeout=WEBHOOK_TIMEOUT,
+                    timeout=timeout,
                     stream=True,
                 )
                 # Read only up to max_body_size bytes to prevent OOM
