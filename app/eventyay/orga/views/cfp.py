@@ -140,11 +140,48 @@ class CfPForms(EventPermissionRequired, TemplateView):
         )
         context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
         
-        # Pass saved field order to template for JavaScript reordering
+        # Pass saved field order to template for JavaScript reordering.
+        # Normalize each section: if the saved order contains only custom
+        # question IDs (no built-in field names), prepend the built-in
+        # fields so the JS reorderRows doesn't push them to the bottom.
         fields_config = self.request.event.cfp.settings.get('fields_config', {})
-        context['session_field_order'] = json.dumps(fields_config.get('session', []))
-        context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
-        context['reviewer_field_order'] = json.dumps(fields_config.get('reviewer', []))
+        builtin_field_keys = {
+            'session': [
+                'title', 'abstract', 'description', 'notes',
+                'track', 'duration', 'content_locale', 'image',
+                'do_not_record',
+            ],
+            'speaker': [
+                'fullname', 'biography', 'avatar',
+                'avatar_source', 'avatar_license',
+                'availabilities', 'additional_speaker',
+            ],
+            'reviewer': [],
+        }
+
+        def _normalize_field_order(order, config_key):
+            if not order:
+                return order
+            builtin = builtin_field_keys.get(config_key, [])
+            if not builtin:
+                return order
+            builtin_set = set(builtin)
+            has_any_builtin = any(item in builtin_set for item in order)
+            if not has_any_builtin:
+                # Order only has custom question IDs — prepend built-in
+                # fields so they stay at the top in their default order.
+                return builtin + order
+            return order
+
+        context['session_field_order'] = json.dumps(
+            _normalize_field_order(fields_config.get('session', []), 'session')
+        )
+        context['speaker_field_order'] = json.dumps(
+            _normalize_field_order(fields_config.get('speaker', []), 'speaker')
+        )
+        context['reviewer_field_order'] = json.dumps(
+            _normalize_field_order(fields_config.get('reviewer', []), 'reviewer')
+        )
         sform = self.sform
         
         def get_field_data(targets, config_key):

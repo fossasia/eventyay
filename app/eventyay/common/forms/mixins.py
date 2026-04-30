@@ -613,7 +613,16 @@ class ConfiguredFieldOrderMixin:
                     name = item.get('name') or item.get('field')
                 else:
                     logger.warning('Field configuration item %r is ignored (unknown type)', item)
-                if name and name in self.fields and name not in configured_names:
+
+                if not name:
+                    continue
+
+                # Config stores custom question IDs as bare digit strings
+                # (e.g. '42'), but form fields are named 'question_42'.
+                if name.isdigit() and name not in self.fields:
+                    name = f'question_{name}'
+
+                if name in self.fields and name not in configured_names:
                     configured_names.append(name)
 
             if configured_names:
