@@ -219,9 +219,8 @@ def test_notify_webhooks_skip_invalid_keeps_processing_following_entry(order, we
 
     monkeypatch.setattr('pretix.api.webhooks.send_webhook.apply_async', fake_apply_async)
 
-    skipped = order.log_action('eventyay.event.order.unknown', {})
     valid = order.log_action('pretix.event.order.paid', {})
-    queued.clear()
+    skipped = order.log_action('eventyay.event.order.unknown', {})
 
     notify_webhooks([skipped.id, valid.id])
 
