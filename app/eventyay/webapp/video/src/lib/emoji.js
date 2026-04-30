@@ -36,18 +36,16 @@ export function getEmojiDataFromNative(native) {
 	return data.emojis[_getEmojiDataFromNative(native, 'twitter', data).id]
 }
 
-export function nativeToStyle(unicodeEmoji) {
-	// maps multi-codepoint emoji like 🇻🇦 / \uD83C\uDDFB\uD83C\uDDE6 => 1f1fb-1f1e6.svg
+export function nativeToUrl(unicodeEmoji) {
 	let codepoints = Array.from(unicodeEmoji).map(c => c.codePointAt(0).toString(16))
-	// Remove trailing FE0F (variation selector) if present, for Twemoji compatibility
-	if (codepoints.length > 1 && codepoints[codepoints.length - 1] === 'fe0f') {
+	if (codepoints.length === 2 && codepoints[codepoints.length - 1] === 'fe0f') {
 		codepoints = codepoints.slice(0, -1)
 	}
-	function buildCdnUrl(cps) {
-		return `https://twemoji.maxcdn.com/v/latest/svg/${cps.join('-')}.svg`
-	}
-	const src = buildCdnUrl(codepoints)
-	return {'background-image': `url(${src})`}
+	return `https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/${codepoints.join('-')}.svg`
+}
+
+export function nativeToStyle(unicodeEmoji) {
+	return {'background-image': `url(${nativeToUrl(unicodeEmoji)})`}
 }
 
 export function markdownEmoji(md) {
@@ -107,7 +105,7 @@ export function markdownEmoji(md) {
 		const isFirst = idx === 0
 		const needsSpace = tokens[idx + 1] && !tokens[idx + 1].content.startsWith(' ')
 		const emoji = tokens[idx].content
-		return `<span class="emoji${isFirst && needsSpace ? ' needs-space' : ''}" style="${objectToCssString(nativeToStyle(emoji))}">${emoji}</span>`
+		return `<img class="emoji${isFirst && needsSpace ? ' needs-space' : ''}" src="${nativeToUrl(emoji)}" alt="${emoji}">`
 	}
 }
 

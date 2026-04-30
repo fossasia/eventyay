@@ -199,6 +199,32 @@ class OrdersTest(BaseOrdersTest):
         assert 'Peter' in response.content.decode()
         assert 'Lukas' not in response.content.decode()
 
+    def test_order_detail_hides_online_stream_panel_when_public_link_disabled(self):
+        self.order.status = Order.STATUS_PAID
+        self.order.save(update_fields=['status'])
+        self.event.settings.set('venueless_secret', 'secret')
+        self.event.settings.set('venueless_show_public_link', False)
+
+        response = self.client.get(
+            '/%s/%s/order/%s/%s/' % (self.orga.slug, self.event.slug, self.order.code, self.order.secret)
+        )
+
+        assert response.status_code == 200
+        assert 'Join online event stream' not in response.content.decode()
+
+    def test_order_detail_shows_online_stream_panel_when_public_link_enabled(self):
+        self.order.status = Order.STATUS_PAID
+        self.order.save(update_fields=['status'])
+        self.event.settings.set('venueless_secret', 'secret')
+        self.event.settings.set('venueless_show_public_link', True)
+
+        response = self.client.get(
+            '/%s/%s/order/%s/%s/' % (self.orga.slug, self.event.slug, self.order.code, self.order.secret)
+        )
+
+        assert response.status_code == 200
+        assert 'Join online event stream' in response.content.decode()
+
     def test_ticket_detail(self):
         response = self.client.get(
             '/%s/%s/ticket/%s/%s/%s/'

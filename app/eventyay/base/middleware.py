@@ -238,6 +238,8 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
             if origin:
                 sources.append(origin)
 
+    sources.extend(getattr(request, '_external_image_csp_sources', []))
+
     return list(OrderedDict.fromkeys(sources))
 
 

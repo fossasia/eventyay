@@ -1,0 +1,59 @@
+{% extends 'pretixcontrol/items/base.html' %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}{% blocktrans with field=field_label %}Field settings: {{ field }}{% endblocktrans %}{% endblock %}
+
+{% block inside %}
+  <nav id="event-nav" class="header-nav">
+    <div class="navigation">
+      <div class="navigation-title">
+        <h1>{% blocktrans with field=field_label %}Field settings: {{ field }}{% endblocktrans %}</h1>
+      </div>
+      {% include 'pretixcontrol/event/component_link.html' %}
+    </div>
+  </nav>
+
+  <form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+
+    <fieldset>
+      <legend>{% translate 'Default behavior' %}</legend>
+      {% bootstrap_field form.global_state layout='control' %}
+    </fieldset>
+
+    {% if field_id == 'attendee_name_parts' %}
+      <fieldset>
+        <legend>{% translate 'Attendee name settings' %}</legend>
+        {% bootstrap_field form.name_scheme layout='control' %}
+        {% bootstrap_field form.name_scheme_titles layout='control' %}
+      </fieldset>
+    {% endif %}
+
+    <fieldset>
+      <legend>{% translate 'Per-product overrides' %}</legend>
+      <p class="help-block">
+        {% translate 'Override the default behavior for specific admission products. Products set to "Use default setting" follow the default behavior above.' %}
+      </p>
+      {% if product_fields %}
+        {% for field in product_fields %}
+          {% bootstrap_field field layout='control' %}
+        {% endfor %}
+      {% else %}
+        <p class="help-block">{% translate 'No admission products available yet.' %}</p>
+      {% endif %}
+    </fieldset>
+
+    <div class="form-group submit-group">
+      <div class="col-md-offset-3 col-md-9">
+        <button type="submit" class="btn btn-primary btn-save">
+          {% translate 'Save' %}
+        </button>
+        <a href="{% url 'control:event.products.orderforms' organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel">
+          {% translate 'Back to order forms' %}
+        </a>
+      </div>
+    </div>
+  </form>
+{% endblock %}
