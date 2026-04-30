@@ -267,12 +267,22 @@ def notify_webhooks(logentry_ids: list):
     _org, _at, webhooks = None, None, None
     for logentry in qs:
         if not logentry.organizer:
-            break  # We need to know the organizer
+            logger.debug(
+                'Skipping webhook notification for log entry %d: no organizer',
+                logentry.id,
+            )
+            continue  # We need to know the organizer
 
         notification_type = logentry.webhook_type
 
         if not notification_type:
-            break  # Ignore, no webhooks for this event type
+            logger.debug(
+                'Skipping webhook notification for log entry %d: '
+                'no matching webhook event type for %s',
+                logentry.id,
+                logentry.action_type,
+            )
+            continue  # Ignore, no webhooks for this event type
 
         if _org != logentry.organizer or _at != logentry.action_type or webhooks is None:
             _org = logentry.organizer
@@ -290,6 +300,9 @@ def notify_webhooks(logentry_ids: list):
 
         for wh in webhooks:
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
+
+
+WEBHOOK_TIMEOUT = 30  # seconds
 
 
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
@@ -313,7 +326,12 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = requests.post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False,
+                    timeout=WEBHOOK_TIMEOUT,
+                )
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -342,6 +360,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     return_code=0,
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    success=False,
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
