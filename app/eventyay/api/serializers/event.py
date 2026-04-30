@@ -682,6 +682,7 @@ class EventSettingsSerializer(SettingsSerializer):
         'contact_mail',
         'show_variations_expanded',
         'hide_sold_out',
+        'meta_noindex',
         'redirect_to_checkout_directly',
         'frontpage_subevent_ordering',
         'event_list_type',
@@ -787,6 +788,8 @@ class EventSettingsSerializer(SettingsSerializer):
         'og_image',
     ]
 
+    meta_noindex = Field(required=False)
+
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
@@ -795,6 +798,21 @@ class EventSettingsSerializer(SettingsSerializer):
             for fname, field in resp.items():
                 field.required = False
                 self.fields[fname] = field
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # instance is a HierarkeyProxy (event.settings)
+        event = instance._object
+        ret['meta_noindex'] = event.display_settings.get('meta_noindex', False)
+        return ret
+
+    def update(self, instance, validated_data):
+        meta_noindex = validated_data.pop('meta_noindex', None)
+        if meta_noindex is not None:
+            event = instance._object
+            event.display_settings['meta_noindex'] = meta_noindex
+            event.save(update_fields=['display_settings'])
+        return super().update(instance, validated_data)
 
     def validate(self, data):
         data = super().validate(data)

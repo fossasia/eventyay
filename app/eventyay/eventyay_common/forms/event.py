@@ -251,9 +251,10 @@ class EventPublicationForm(JsonSubfieldMixin, forms.Form):
         required=False,
     )
     exclude_from_start_page = forms.BooleanField(
-        label=_('Exclude this event from the start page'),
+        label=_('Exclude this event from start pages'),
         help_text=_(
-            'When enabled, this event will not appear in the public event listing on the organizer start page.'
+            'When enabled, this event will not appear in the public event listings on the platform or '
+            'organizer start pages.'
         ),
         required=False,
     )

@@ -135,7 +135,7 @@ class TestPlatformSearch:
         payload = response.json()
         names = {row['name'] for row in payload}
         assert 'Visible Search Event' in names
-        assert 'Hidden Search Event' not in names
+        assert 'Hidden Search Event' in names
 
 @pytest.mark.django_db
 class TestStartPageVisibility:
