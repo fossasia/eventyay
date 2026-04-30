@@ -15,6 +15,7 @@ class ReturnSettingsForm(SettingsForm):
         label=_('Base redirection URL'),
         help_text=_('Redirection will only be allowed to URLs that start with this prefix.'),
         required=False,
+        assume_scheme='http',
     )
 
 
