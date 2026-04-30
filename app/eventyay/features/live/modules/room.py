@@ -88,12 +88,13 @@ class RoomModule(BaseModule):
                     "webhook.missing_secret",
                     "webhook_hmac_secret is required when webhook_url is set.",
                 )
-            # Validate URL scheme
+            # Validate URL scheme (allow HTTP in development)
             if not url.startswith("https://"):
-                raise ConsumerException(
-                    "webhook.insecure_url",
-                    "Webhook URL must use HTTPS.",
-                )
+                if not (settings.DEBUG and url.startswith("http://")):
+                    raise ConsumerException(
+                        "webhook.insecure_url",
+                        "Webhook URL must use HTTPS.",
+                    )
             # Challenge verification
             challenge_token = secrets.token_urlsafe(32)
             try:
