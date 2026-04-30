@@ -379,7 +379,7 @@ class QuestionFieldsMixin:
                 queryset=choices,
                 label=label_text,
                 required=question.required,
-                empty_label=_('— No selection —'),
+                empty_label=None if question.required else _('— No selection —'),
                 initial=(initial_object.options.first() if initial_object else question.default_answer),
                 disabled=read_only,
                 help_text=help_text,
