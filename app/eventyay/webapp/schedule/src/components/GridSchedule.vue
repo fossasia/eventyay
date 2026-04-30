@@ -424,10 +424,8 @@ export default {
 		},
 		getStickyHeaderClearance () {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
-			const scheduleRoot = this.$el.closest('.pretalx-schedule')
+			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
 			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
-			const style = getComputedStyle(this.$el)
-			const navOffset = parseInt(style.getPropertyValue('--pretalx-sticky-top-offset'), 10) || 40
 			let toolbarHeight = 0
 			if (toolbar) {
 				toolbarHeight = toolbar.getBoundingClientRect().height
@@ -436,6 +434,11 @@ export default {
 				toolbarHeight = Number.isFinite(parsed) ? parsed : 0
 			}
 			const stickyHeaderHeight = stickyHeader ? stickyHeader.getBoundingClientRect().height : 0
+			let navOffset = 40
+			if (stickyHeader) {
+				const rect = stickyHeader.getBoundingClientRect()
+				navOffset = Math.max(0, rect.top)
+			}
 			let versionWarning = 0
 			if (scheduleRoot) {
 				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
