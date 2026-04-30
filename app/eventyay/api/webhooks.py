@@ -326,12 +326,20 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
+                max_body_size = settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]
                 resp = requests.post(
                     webhook.target_url,
                     json=payload,
                     allow_redirects=False,
                     timeout=WEBHOOK_TIMEOUT,
+                    stream=True,
                 )
+                # Read only up to max_body_size bytes to prevent OOM
+                # from oversized responses before truncation
+                response_body = resp.raw.read(max_body_size).decode(
+                    'utf-8', errors='replace'
+                )
+                resp.close()
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -340,7 +348,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    response_body=response_body,
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
