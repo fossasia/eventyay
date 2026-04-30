@@ -43,6 +43,7 @@ from eventyay.orga.forms.cfp import (
 )
 from eventyay.base.models import (
     AnswerOption,
+    BUILTIN_FIELD_KEYS,
     CfP,
     TalkQuestion,
     TalkQuestionRequired,
@@ -145,24 +146,11 @@ class CfPForms(EventPermissionRequired, TemplateView):
         # question IDs (no built-in field names), prepend the built-in
         # fields so the JS reorderRows doesn't push them to the bottom.
         fields_config = self.request.event.cfp.settings.get('fields_config', {})
-        builtin_field_keys = {
-            'session': [
-                'title', 'abstract', 'description', 'notes',
-                'track', 'duration', 'content_locale', 'image',
-                'do_not_record',
-            ],
-            'speaker': [
-                'fullname', 'biography', 'avatar',
-                'avatar_source', 'avatar_license',
-                'availabilities', 'additional_speaker',
-            ],
-            'reviewer': [],
-        }
 
         def _normalize_field_order(order, config_key):
             if not order:
                 return order
-            builtin = builtin_field_keys.get(config_key, [])
+            builtin = BUILTIN_FIELD_KEYS.get(config_key, ())
             if not builtin:
                 return order
             builtin_set = set(builtin)
@@ -170,7 +158,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
             if not has_any_builtin:
                 # Order only has custom question IDs — prepend built-in
                 # fields so they stay at the top in their default order.
-                return builtin + order
+                return list(builtin) + order
             return order
 
         context['session_field_order'] = json.dumps(
@@ -280,10 +268,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
         
         fields_config = event.cfp.settings.get('fields_config', {})
         
-        session_keys = ['title', 'abstract', 'description', 'notes', 'track', 'duration', 
-                       'content_locale', 'image', 'do_not_record']
-        speaker_keys = ['fullname', 'biography', 'avatar', 'avatar_source', 'avatar_license',
-                       'availabilities', 'additional_speaker']
+        session_keys = set(BUILTIN_FIELD_KEYS.get('session', ()))
+        speaker_keys = set(BUILTIN_FIELD_KEYS.get('speaker', ()))
         
         has_session_fields = any(item in session_keys for item in order_list)
         has_speaker_fields = any(item in speaker_keys for item in order_list)

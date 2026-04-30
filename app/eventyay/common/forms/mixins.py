@@ -24,7 +24,7 @@ from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from eventyay.helpers.countries import CachedCountries
-from eventyay.base.models.cfp import default_fields
+from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, default_fields
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
 from django.db.models import Q
 
@@ -603,6 +603,7 @@ class ConfiguredFieldOrderMixin:
     def order_fields_by_config(self, config_key):
         fields_config = self.event.cfp.settings.get('fields_config', {}).get(config_key, [])
         if fields_config:
+            builtin_names = set(BUILTIN_FIELD_KEYS.get(config_key, ()))
             configured_names = []
             for item in fields_config:
                 name = None
@@ -619,8 +620,18 @@ class ConfiguredFieldOrderMixin:
 
                 # Config stores custom question IDs as bare digit strings
                 # (e.g. '42'), but form fields are named 'question_42'.
-                if name.isdigit() and name not in self.fields:
-                    name = f'question_{name}'
+                # Only remap when the entry is not a known built-in field.
+                if name not in builtin_names and name not in self.fields:
+                    question_name = f'question_{name}'
+                    if question_name in self.fields:
+                        name = question_name
+                    else:
+                        logger.warning(
+                            'fields_config[%s] entry %r does not match '
+                            'any form field; skipping.',
+                            config_key, name,
+                        )
+                        continue
 
                 if name in self.fields and name not in configured_names:
                     configured_names.append(name)
