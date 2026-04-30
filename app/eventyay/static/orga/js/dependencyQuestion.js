@@ -47,6 +47,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var optionsUrlTemplate = depContainer.getAttribute('data-options-url-base');
         if (!optionsUrlTemplate) {
+            var unavailableOption = document.createElement('option');
+            unavailableOption.value = '';
+            unavailableOption.textContent = 'Dependency options unavailable';
+            unavailableOption.disabled = true;
+            unavailableOption.selected = true;
+            depValues.appendChild(unavailableOption);
+            depValues.required = false;
             removeLoadingIndicator();
             return;
         }
