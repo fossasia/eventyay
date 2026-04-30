@@ -1,9 +1,10 @@
 import random
 from abc import ABCMeta
 
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
-from django.utils.html import format_html
+
 
 _phrase_book = {}
 

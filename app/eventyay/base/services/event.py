@@ -101,6 +101,7 @@ async def get_event(event_id):
 def get_rooms(event, user):
     qs = (
         event.rooms.filter(deleted=False)
+        .order_by('sorting_priority', 'id')
         .prefetch_related("channel")
         .annotate(
             current_roomviews=Subquery(
@@ -205,6 +206,8 @@ def get_event_config_for_user(event, user):
         "slug": getattr(event, "slug", str(event.id)),
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
         "timezone": event.timezone,
+        "visible_logo_url": event.visible_logo_url,
+        "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
         "profile_fields": cfg.get("profile_fields", []),
         "social_logins": cfg.get("social_logins", []),
