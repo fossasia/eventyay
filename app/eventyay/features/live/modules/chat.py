@@ -28,6 +28,57 @@ from eventyay.features.live.modules.base import BaseModule
 from eventyay.features.live.tasks import send_chat_webhook
 from eventyay.storage.tasks import retrieve_preview_information
 
+
+def _get_centralauth_info(user):
+    """Look up CentralAuth gu_id and gu_name from allauth SocialAccount.
+
+    Video room users are created separately from the main Django user.
+    Their token_id is encode_email(main_user.email), so we can trace back
+    to the main user's SocialAccount by finding users whose email hashes
+    to the same token_id.
+
+    Returns (centralauth_id, centralauth_username) or (None, None).
+    """
+    from allauth.socialaccount.models import SocialAccount
+
+    # Direct lookup: user has a SocialAccount (main user)
+    sa = (
+        SocialAccount.objects.filter(user=user, provider="mediawiki")
+        .values_list("uid", "user__wikimedia_username")
+        .first()
+    )
+    if sa:
+        return _parse_uid(sa[0]), sa[1]
+
+    # Indirect lookup: video room user linked via token_id
+    token_id = getattr(user, "token_id", None)
+    if token_id:
+        for sa_uid, email, wm_username in (
+            SocialAccount.objects.filter(
+                user__email__isnull=False,
+                provider="mediawiki",
+            )
+            .exclude(user__email="")
+            .values_list("uid", "user__email", "user__wikimedia_username")
+        ):
+            if _encode_email(email) == token_id:
+                return _parse_uid(sa_uid), wm_username
+
+    return None, None
+
+
+def _encode_email(email: str) -> str:
+    import hashlib
+    return hashlib.sha256(email.encode()).hexdigest()[:7].upper()
+
+
+def _parse_uid(uid) -> int | None:
+    try:
+        return int(uid)
+    except (ValueError, TypeError):
+        return None
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -135,13 +186,15 @@ class ChatModule(BaseModule):
 
         sender = self.consumer.user
         sender_id = event_data.get("sender")  # already a string UUID or None
+        centralauth_id, centralauth_username = await database_sync_to_async(_get_centralauth_info)(sender)
         payload = {
             "message_id": event_data.get("event_id"),
             "channel": event_data.get("channel"),
             "timestamp": event_data.get("timestamp"),
             "screen_name": (sender.profile or {}).get("display_name", ""),
             "sender_id": sender_id,
-            "centralauth_id": getattr(sender, "wikimedia_username", None),
+            "centralauth_id": centralauth_id,
+            "centralauth_username": centralauth_username,
             "message": (event_data.get("content") or {}).get("body", ""),
             "message_type": message_type,
             "profile_img": None,
