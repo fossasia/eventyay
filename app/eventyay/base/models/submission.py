@@ -984,7 +984,7 @@ class Submission(GenerateCode, PretalxModel):
                     if field in info_fields and info_fields[field].get('label'):
                         field_name = str(info_fields[field]['label'])
                     data.append({'name': field_name, 'value': field_content})
-            for answer in self.answers.all().order_by('question__position'):
+            for answer in self.answers.select_related('question').order_by('question__position'):
                 if answer.question.variant == 'boolean':
                     data.append({'name': answer.question.question, 'value': answer.boolean_answer})
                 elif answer.answer_file:
