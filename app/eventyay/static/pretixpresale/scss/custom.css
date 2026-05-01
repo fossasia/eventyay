@@ -219,6 +219,19 @@ header .header-row-right {
     display: none;
 }
 
+@media (min-width: 769px) {
+    .event-hero-overlay {
+        display: flex;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .header-join-video-floating-mobile {
+        right: 0;
+    }
+}
+
 @media (max-width: 768px) {
     .presale-sticky-tabs {
         flex-direction: row;
@@ -295,25 +308,6 @@ header .header-row-right {
         display: inline;
     }
 
-    .join-video-link {
-        display: block;
-        width: 100%;
-        text-align: center;
-        padding: 8px 12px;
-        margin: 4px 0 0;
-        background: var(--color-primary);
-        color: white !important;
-        border-radius: var(--size-border-radius, 4px);
-        border-bottom: none !important;
-        font-size: 0.88rem;
-        font-weight: 500;
-    }
-
-    .join-video-link:hover {
-        background: var(--color-primary-dark, var(--color-primary));
-        text-decoration: none;
-        opacity: 0.9;
-    }
 
     .login-link {
         display: flex;
@@ -508,19 +502,23 @@ header .header-row-right {
 
 .variation-toggle-caret {
     display: inline-block;
-    width: 10px;
+    width: 12px;
     text-align: center;
     line-height: 1;
 }
 
 .variation-toggle-caret::before {
-    content: '>';
+    content: '\f054';
+    display: inline-block;
+    font-family: 'FontAwesome';
+    font-size: 12px;
+    transition: transform 0.2s ease;
 }
 
 /* Support both native <details open> and JS-managed .details-open states. */
 .item-with-variations[open] .variation-toggle-caret::before,
 .item-with-variations.details-open .variation-toggle-caret::before {
-    content: 'v';
+    transform: rotate(90deg);
 }
 
 .variation-option {

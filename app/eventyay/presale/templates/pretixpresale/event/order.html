@@ -216,12 +216,23 @@
     {% include "pretixpresale/event/fragment_downloads.html" with position_page=False %}
     <div class="panel panel-primary cart">
         <div class="panel-heading">
-            {% if can_modify_order %}
+            {% if user_change_allowed or can_modify_order %}
                 <div class="pull-right flip">
-                    <a href="{% eventurl event "presale:event.order.modify" secret=order.secret order=order.code %}" aria-label="{% trans "Change ordered items" %}">
-                        <span class="fa fa-edit" aria-hidden="true"></span>
-                        {% trans "Change details" %}
-                    </a>
+                    {% if user_change_allowed %}
+                        <a href="{% eventurl event 'presale:event.order.change' secret=order.secret order=order.code %}" aria-label="{% trans 'Change ordered items' %}">
+                            <span class="fa fa-edit" aria-hidden="true"></span>
+                            {% trans "Change order" %}
+                        </a>
+                    {% endif %}
+                    {% if user_change_allowed and can_modify_order %}
+                        &nbsp;|&nbsp;
+                    {% endif %}
+                    {% if can_modify_order %}
+                        <a href="{% eventurl event 'presale:event.order.modify' secret=order.secret order=order.code %}" aria-label="{% trans 'Change details' %}">
+                            <span class="fa fa-edit" aria-hidden="true"></span>
+                            {% trans "Change details" %}
+                        </a>
+                    {% endif %}
                 </div>
             {% endif %}
             <h3 class="panel-title">

@@ -7,7 +7,7 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
-from eventyay.common.permissions import is_admin_mode_active
+from eventyay.common.permissions import user_has_cfp_submissions
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 register = template.Library()
@@ -165,8 +165,6 @@ def can_view_featured_sessions_public(context, event=None):
     event = event or getattr(request, 'event', None)
     if not request or not event:
         return False
-    if is_admin_mode_active(request):
-        return True
     user = getattr(request, 'user', None)
     if user is None:
         return False
@@ -199,3 +197,18 @@ def is_event_team_member(context, event=None):
     if not event or not user or user.is_anonymous:
         return False
     return user.has_event_permission(event.organizer, event, request=request)
+
+
+@register.simple_tag(takes_context=True)
+def user_has_submissions(context, event=None):
+    """Return True if the authenticated user has submitted proposals for this event."""
+    request = context.get('request')
+    if not request:
+        return False
+    user = request.user
+    if not user.is_authenticated:
+        return False
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    return user_has_cfp_submissions(request, event)
