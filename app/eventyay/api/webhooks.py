@@ -302,7 +302,6 @@ def notify_webhooks(logentry_ids: list):
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
 
 
-
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
