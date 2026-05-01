@@ -140,9 +140,13 @@ class TestGlobalSettingsEmail:
         response = staff_client.post(url, {'test_email': 'test@example.com'})
         assert response.status_code == 302
 
-    def test_test_email_smtp_unreachable(self, staff_client):
+    def test_test_email_smtp_unreachable(self, staff_client, monkeypatch):
         from django.urls import reverse
         from eventyay.base.settings import GlobalSettingsObject
+        
+        def mock_open(self):
+            raise OSError("Network is unreachable")
+        monkeypatch.setattr('eventyay.base.email.CustomSMTPBackend.open', mock_open)
         
         gs = GlobalSettingsObject()
         gs.settings.set('mail_from', 'valid@example.com')
@@ -153,4 +157,3 @@ class TestGlobalSettingsEmail:
         url = reverse('eventyay_admin:admin.global.settings.test_email')
         response = staff_client.post(url, {'test_email': 'test@example.com'})
         assert response.status_code == 302
-

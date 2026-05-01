@@ -15,8 +15,10 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DeleteView, FormView, TemplateView
+from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
+from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
@@ -228,15 +230,11 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 
         try:
             if gs.settings.email_vendor == 'sendgrid':
-                from eventyay.base.email import SendGridEmail
-
                 if not gs.settings.send_grid_api_key:
                     messages.error(request, _('SendGrid API key is missing. Please configure it and save.'))
                     return redirect(reverse('eventyay_admin:admin.global.settings'))
                 backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
             elif gs.settings.email_vendor == 'smtp':
-                from eventyay.base.email import CustomSMTPBackend
-
                 if not gs.settings.smtp_host or not gs.settings.smtp_port:
                     messages.error(request, _('SMTP host or port is missing. Please configure them and save.'))
                     return redirect(reverse('eventyay_admin:admin.global.settings'))
@@ -276,6 +274,12 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
                     'character (e.g. a no-break space pasted from the clipboard). '
                     'Please verify these fields and try again.'
                 ),
+            )
+        except HTTPError as e:
+            logger.exception('Admin SendGrid test failed (from=%s)', mail_from)
+            messages.error(
+                request,
+                _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
             )
         except (smtplib.SMTPException, OSError) as e:
             logger.exception(
