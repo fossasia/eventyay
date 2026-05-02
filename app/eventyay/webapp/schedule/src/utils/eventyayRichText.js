@@ -65,11 +65,10 @@ const EVENTYAY_RICH_TEXT_ALLOWED_ATTR = [
  * explicit scheme are prefixed with "https://" so that the browser treats them
  * as absolute URLs.  Relative-path hrefs ("/", "#", "?", ".") and strings that
  * already carry a scheme ("https://", "mailto:", …) are returned unchanged.
- *
  * @param {string} url
  * @returns {string}
  */
-// NOTE: kept minimal — link normalization was removed to keep scope small.
+
 
 /** Browser: markdown + raw HTML, then DOMPurify. Non-browser: markdown only (no embedded HTML) to avoid XSS without a DOM. */
 const markdownItWithHtml = new MarkdownIt({
@@ -98,6 +97,7 @@ const PURIFY_CONFIG = {
 /** @type {ReturnType<typeof createDOMPurify> | null} */
 let domPurifyInstance = null
 let domPurifyPerTagHookInstalled = false
+let domPurifyExternalLinkHookInstalled = false
 
 function installPerTagAttributeHook (purify) {
 	if (domPurifyPerTagHookInstalled) return
@@ -112,11 +112,30 @@ function installPerTagAttributeHook (purify) {
 	})
 }
 
+function installExternalLinkHook (purify) {
+	if (domPurifyExternalLinkHookInstalled) return
+	domPurifyExternalLinkHookInstalled = true
+	purify.addHook('afterSanitizeAttributes', (node) => {
+		if (!node || node.tagName !== 'A') return
+		const href = node.getAttribute('href')
+		if (href && /^https?:\/\//i.test(href)) {
+			node.setAttribute('target', '_blank')
+			const existing = (node.getAttribute('rel') || '').split(/\s+/).filter(Boolean)
+			const relSet = new Set(existing)
+			relSet.add('noopener')
+			relSet.add('noreferrer')
+			relSet.add('nofollow')
+			node.setAttribute('rel', Array.from(relSet).join(' '))
+		}
+	})
+}
+
 function getDomPurify () {
 	if (typeof window === 'undefined') return null
 	if (!domPurifyInstance) {
 		domPurifyInstance = createDOMPurify(window)
 		installPerTagAttributeHook(domPurifyInstance)
+		installExternalLinkHook(domPurifyInstance)
 	}
 	return domPurifyInstance
 }
