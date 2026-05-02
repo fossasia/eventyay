@@ -60,15 +60,6 @@ const EVENTYAY_RICH_TEXT_ALLOWED_ATTR = [
 	...new Set(Object.values(EVENTYAY_RICH_TEXT_ALLOWED_ATTRIBUTES_BY_TAG).flat()),
 ]
 
-/**
- * Normalize a link URL: bare domain names (e.g. "eventyay.com") that lack an
- * explicit scheme are prefixed with "https://" so that the browser treats them
- * as absolute URLs.  Relative-path hrefs ("/", "#", "?", ".") and strings that
- * already carry a scheme ("https://", "mailto:", …) are returned unchanged.
- * @param {string} url
- * @returns {string}
- */
-
 
 /** Browser: markdown + raw HTML, then DOMPurify. Non-browser: markdown only (no embedded HTML) to avoid XSS without a DOM. */
 const markdownItWithHtml = new MarkdownIt({
@@ -88,9 +79,6 @@ const PURIFY_CONFIG = {
 	ALLOWED_ATTR: EVENTYAY_RICH_TEXT_ALLOWED_ATTR,
 	ALLOW_DATA_ATTR: false,
 	ALLOW_UNKNOWN_PROTOCOLS: false,
-	// First alternative: allow full https/http/mailto/tel URLs (scheme + everything after).
-	// Second alternative: allow relative URLs (anything that does NOT start with a scheme-like
-	// pattern "[alpha...]:").  This blocks javascript:, data:, vbscript: etc.
 	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):[\s\S]*|(?![a-z][a-z0-9+.-]*:)[\s\S]*)$/i,
 }
 
