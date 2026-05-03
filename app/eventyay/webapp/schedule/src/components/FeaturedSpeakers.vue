@@ -66,6 +66,12 @@ export default {
 		},
 		translationMessages: { default: () => ({}) }
 	},
+	props: {
+		showAll: {
+			type: Boolean,
+			default: false
+		}
+	},
 	data() {
 		return {
 			getLocalizedString,
@@ -75,7 +81,7 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				featured_speakers: m.featured_speakers || 'Featured Speakers',
+				featured_speakers: this.showAll ? (m.speakers || 'Speakers') : (m.featured_speakers || 'Featured Speakers'),
 				speaker_fallback: m.speaker_fallback || 'Speaker',
 				sessions: m.sessions || 'Sessions',
 				view_profile: m.view_profile || 'View speaker profile',
@@ -98,9 +104,14 @@ export default {
 				return sp.code || null
 			}
 			const featured = schedule.speakers
-				.filter(s => s?.is_featured)
+				.filter(s => this.showAll || s?.is_featured)
 				.slice()
 				.sort((a, b) => {
+					// If showing all, strictly put featured first
+					if (this.showAll) {
+						if (a.is_featured && !b.is_featured) return -1
+						if (!a.is_featured && b.is_featured) return 1
+					}
 					const ap = Number.isFinite(a.featured_position) ? a.featured_position : 1e9
 					const bp = Number.isFinite(b.featured_position) ? b.featured_position : 1e9
 					if (ap !== bp) return ap - bp
