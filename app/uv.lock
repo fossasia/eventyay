@@ -607,15 +607,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/f1/2a/8c3ac3d8bc94e6de8
 
 [[package]]
 name = "cssutils"
-version = "2.14.0"
+version = "2.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "encutils" },
     { name = "more-itertools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/40/73/4ced8c775cd5f64876f0d5b9dfae354dc96e50273c3d904f070965a27ec9/cssutils-2.14.0.tar.gz", hash = "sha256:c33256f0cbc215ad405b647117ace63c9e22af96fe42dcb7861742a591e6464c", size = 714703, upload-time = "2026-04-19T23:51:18.609Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/00/7e89107ea389e952eea73b1b90ac6633e15a519c4a518ee90bb93a2f83dc/cssutils-2.15.0.tar.gz", hash = "sha256:e9739237f3915037dacba787c4b58f280e3ec5d9864953e185bf23d40ff7d021", size = 716080, upload-time = "2026-04-27T20:40:35.615Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/d1/b5e96174be14e4657e5dd148a52af48fc42d3fab35b2cd56202b6473ee2e/cssutils-2.14.0-py3-none-any.whl", hash = "sha256:79ad979e4a383f39f0b3f0ca82ee3f1b01065da9fa02701b63bfed38ac76eb91", size = 180097, upload-time = "2026-04-19T23:51:17.172Z" },
+    { url = "https://files.pythonhosted.org/packages/01/bf/5669e08a6f53e0d4b4648a989e77163ad36d4718195319c8c5af08ded654/cssutils-2.15.0-py3-none-any.whl", hash = "sha256:207faa466810a1aef109261673f2458356d0839ddedaebc0ee553376290fb6a9", size = 180638, upload-time = "2026-04-27T20:40:34.178Z" },
 ]
 
 [[package]]
@@ -1461,7 +1461,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=47.0.0" },
     { name = "css-inline", specifier = ">=0.20.2" },
     { name = "csscompressor", specifier = ">=0.9.5" },
-    { name = "cssutils", specifier = ">=2.14.0" },
+    { name = "cssutils", specifier = ">=2.15.0" },
     { name = "cycler", specifier = ">=0.12.1" },
     { name = "daphne", specifier = ">=4.2.1" },
     { name = "defusedcsv", specifier = ">=3.0.0" },
