@@ -22,7 +22,7 @@
 </template>
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString } from '../utils'
+import { getLocalizedString, normalizePopularityCount } from '../utils'
 import Session from './Session'
 
 export default {
@@ -59,7 +59,11 @@ export default {
 		},
 		includeDateSortKey: {
 			type: Boolean,
-			default: true
+			default: false
+		},
+		includePopularitySortKey: {
+			type: Boolean,
+			default: false
 		},
 		showBreaks: {
 			type: Boolean,
@@ -77,10 +81,22 @@ export default {
 		}
 	},
 	computed: {
+		popularitySortEnabled () {
+			return this.includePopularitySortKey || this.sortBy === 'popularity'
+		},
 		showDayHeaders () {
-			return !(['title', 'title_desc'].includes(this.sortBy) && !this.includeDateSortKey)
+			return this.includeDateSortKey
 		},
 		sessionBuckets () {
+			if (!this.includeDateSortKey) {
+				const sortedFlat = this.sortBucketSessions(this.sessions)
+				const fallbackDate = sortedFlat.length ? sortedFlat[0].start.clone().startOf('day') : moment()
+				return [{
+					date: fallbackDate,
+					sessions: sortedFlat
+				}]
+			}
+
 			const buckets = {}
 			for (const session of this.sessions) {
 				const key = this.getBucketName(session.start)
@@ -100,23 +116,33 @@ export default {
 				sessions: this.sortBucketSessions(sessions)
 			}))
 
-			if (['title', 'title_desc'].includes(this.sortBy) && !this.includeDateSortKey) {
-				return groupedBuckets.sort((a, b) => {
-					const aSession = a.sessions.find(s => this.isProperSession(s)) || a.sessions[0]
-					const bSession = b.sessions.find(s => this.isProperSession(s)) || b.sessions[0]
-					const bySort = this.sessionComparator(aSession, bSession)
-					if (bySort !== 0) return bySort
-					return a.date.diff(b.date)
-				})
-			}
-
 			return groupedBuckets
+		},
+		sortObserverKey () {
+			return [this.sortBy, this.includeRoomSortKey, this.includeDateSortKey, this.includePopularitySortKey].join('|')
 		}
 	},
 	watch: {
-		sortBy() { this.$forceUpdate() },
-		includeRoomSortKey() { this.$forceUpdate() },
-		includeDateSortKey() { this.$forceUpdate() },
+		async sortObserverKey () {
+			await this.$nextTick()
+			if (this.observer) {
+				this.observer.disconnect()
+			}
+			this.observer = new IntersectionObserver(this.onIntersect, {
+				root: this.scrollParent,
+				rootMargin: '-45% 0px'
+			})
+			let lastBucket
+			for (const [ref, el] of Object.entries(this.$refs)) {
+				if (!ref.startsWith('bucket')) continue
+				const date = moment(el[0].dataset.date).tz(this.timezone)
+				if (lastBucket) {
+					if (lastBucket.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')) continue
+				}
+				lastBucket = date
+				this.observer.observe(el[0])
+			}
+		},
 		currentDay: 'changeDay'
 	},
 	async mounted () {
@@ -173,23 +199,26 @@ export default {
 			if (a?.id && !b?.id) return -1
 			if (!a?.id && !b?.id) return 0
 
-			if (this.sortBy === 'popularity') {
-				return (b.fav_count || 0) - (a.fav_count || 0)
+			if (this.popularitySortEnabled) {
+				const popularityA = normalizePopularityCount(a)
+				const popularityB = normalizePopularityCount(b)
+				const popCmp = popularityB - popularityA
+				if (popCmp !== 0) return popCmp
 			}
-
-			const direction = this.sortBy === 'title_desc' ? -1 : 1
-			const titleCmp = this.titleSortKey(a).localeCompare(this.titleSortKey(b))
-			if (titleCmp !== 0) return titleCmp * direction
 
 			if (this.includeRoomSortKey) {
 				const roomCmp = this.roomSortKey(a).localeCompare(this.roomSortKey(b))
-				if (roomCmp !== 0) return roomCmp * direction
+				if (roomCmp !== 0) return roomCmp
 			}
 
 			if (this.includeDateSortKey) {
 				const dateCmp = a.start.diff(b.start)
 				if (dateCmp !== 0) return dateCmp
 			}
+
+			const direction = this.sortBy === 'title_desc' ? -1 : 1
+			const titleCmp = this.titleSortKey(a).localeCompare(this.titleSortKey(b))
+			if (titleCmp !== 0) return titleCmp * direction
 
 			return 0
 		},

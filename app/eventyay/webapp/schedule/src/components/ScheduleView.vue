@@ -28,6 +28,7 @@
 			v-model:sortBy="internalSortBy",
 			v-model:includeRoomSortKey="sortIncludeRoom",
 			v-model:includeDateSortKey="sortIncludeDate",
+			v-model:includePopularitySortKey="sortIncludePopularity",
 			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
@@ -67,6 +68,7 @@
 				:sortBy="effectiveSortBy",
 				:includeRoomSortKey="sortIncludeRoom",
 				:includeDateSortKey="sortIncludeDate",
+				:includePopularitySortKey="sortIncludePopularity",
 				:showBreaks="!linearOnly && !sessionsMode",
 				:density="'default'",
 				@changeDay="dayScrolled",
@@ -83,7 +85,7 @@ import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
-import { getLocalizedString, getSessionTypeLabel, isProperSession } from '../utils'
+import { getLocalizedString, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '../utils'
 
 function normalizeLocaleCode (code) {
 	if (!code) return ''
@@ -102,6 +104,7 @@ function localesMatch (filterValue, sessionValue) {
 	if (a === b) return true
 	return localePrimary(a) === localePrimary(b)
 }
+
 
 export default {
 	name: 'ScheduleView',
@@ -156,12 +159,13 @@ export default {
 			sortIncludeDate: (() => {
 				try {
 					const stored = localStorage.getItem('schedule-include-datetime')
-					if (stored === null) return true
+					if (stored === null) return false
 					return stored === 'true'
 				} catch {
-					return true
+					return false
 				}
 			})(),
+			sortIncludePopularity: false,
 			filterState: {
 				tracks: [],
 				rooms: [],
@@ -241,7 +245,7 @@ export default {
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
-					fav_count: session.fav_count,
+					fav_count: normalizePopularityCount(session),
 					tags: session.tags,
 					session_type: session.session_type,
 					resources: session.resources,
