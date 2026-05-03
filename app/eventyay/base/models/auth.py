@@ -704,9 +704,12 @@ class User(
     def get_password_reset_url(self, event=None, orga=False):
         if event:
             path = 'orga:event.auth.recover' if orga else 'cfp:event.recover'
+            kwargs = {'token': self.pw_reset_token, 'event': event.slug}
+            if not orga:
+                kwargs['organizer'] = event.organizer.slug
             url = build_absolute_uri(
                 path,
-                kwargs={'token': self.pw_reset_token, 'event': event.slug},
+                kwargs=kwargs,
             )
         else:
             url = build_absolute_uri('orga:auth.recover', kwargs={'token': self.pw_reset_token})
