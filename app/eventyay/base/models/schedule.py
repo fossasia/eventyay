@@ -895,7 +895,7 @@ class Schedule(PretalxModel):
                     talk_data['answers'] = [
                         {
                             'question': str(answer.question.question),
-                            'answer': str(answer.answer),
+                            'answer': str(answer.answer_string),
                             'question_id': answer.question_id,
                             'options': [str(opt.answer) for opt in answer.options.all()],
                         }
