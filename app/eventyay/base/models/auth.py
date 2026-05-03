@@ -767,7 +767,7 @@ the eventyay robot"""
         self.save()
 
         context = {
-            'name': self.name or '',
+            'name': self.fullname or '',
         }
         mail_text = _(
             """Hi {name},
