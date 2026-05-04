@@ -68,11 +68,11 @@
     {% if show_online_video_link|default:False %}
         {% if nav_context == "presale" %}
             <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% get_menu_label current_event 'menu_label_join_video' as label %}{{ label|event_localize|default:_('Join Live Event') }}</span>
+                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% get_menu_label current_event 'menu_label_join_video' as label %}{{ label|event_localize|default:_('Join online video') }}</span>
             </a>
         {% else %}
             <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab join-video-link {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% get_menu_label current_event 'menu_label_join_video' as label %}{{ label|event_localize|default:_('Join Live Event') }}</span>
+                <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% get_menu_label current_event 'menu_label_join_video' as label %}{{ label|event_localize|default:_('Join online video') }}</span>
             </a>
         {% endif %}
     {% endif %}
