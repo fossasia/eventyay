@@ -116,7 +116,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "jsonschema>=4.26.0",
     "jsonschema-specifications>=2025.9.1",
-    "jwcrypto>=1.5.6",
+    "jwcrypto>=1.5.7",
     "kiwisolver>=1.4.8",
     "kombu>=5.6.2",
     "libsass>=0.23.0",
@@ -239,7 +239,7 @@ docs = [
     "sphinxemoji>=0.3.2",
 ]
 lint = [
-    "ruff>=0.14.13",
+    "ruff>=0.15.12",
 ]
 test = [
     "coverage>=7.13.1",
