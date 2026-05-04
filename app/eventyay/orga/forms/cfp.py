@@ -84,32 +84,27 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         self.initial['allow_gravatar'] = obj.cfp.settings.get('allow_gravatar', True)
 
     def save(self, *args, **kwargs):
+        # Pop control kwargs early so callers can pass persist_cfp/update_count_length_in
+        persist_cfp = kwargs.pop('persist_cfp', True)
+        update_count_length_in = kwargs.pop('update_count_length_in', True)
+
+        # Update count length preference if requested
         current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
-        if 'count_length_in' in self.cleaned_data:
+        if update_count_length_in and 'count_length_in' in self.cleaned_data:
             new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
-        else:
-            new_count_length_in = current_count_length_in
-        self.instance.cfp.settings['count_length_in'] = new_count_length_in
-        # Save allow_gravatar setting
+            self.instance.cfp.settings['count_length_in'] = new_count_length_in
+
+        # Save allow_gravatar setting only when provided in the form data
         current_allow_gravatar = self.instance.cfp.settings.get('allow_gravatar', True)
         if 'allow_gravatar' in self.cleaned_data:
             self.instance.cfp.settings['allow_gravatar'] = self.cleaned_data.get('allow_gravatar')
         else:
             self.instance.cfp.settings['allow_gravatar'] = current_allow_gravatar
-        self.instance.cfp.save()
-        persist_cfp = kwargs.pop('persist_cfp', True)
-        update_count_length_in = kwargs.pop('update_count_length_in', True)
 
-        if update_count_length_in:
-            current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
-            if 'count_length_in' in self.cleaned_data:
-                new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
-            else:
-                new_count_length_in = current_count_length_in
-            self.instance.cfp.settings['count_length_in'] = new_count_length_in
-
+        # Persist CfP settings only if requested by the caller
         if persist_cfp:
             self.instance.cfp.save(update_fields=['settings'])
+
         super().save(*args, **kwargs)
 
     class Meta:
