@@ -8,7 +8,7 @@ from .availability import Availability
 from .base import CachedFile, LoggedModel, cachedfile_name
 from .bbb import BBBCall, BBBServer
 from .billing import BillingInvoice
-from .cfp import BUILTIN_FIELD_KEYS, BUILTIN_SESSION_FIELDS, BUILTIN_SPEAKER_FIELDS, CfP
+from .cfp import BUILTIN_FIELD_KEYS, BUILTIN_SESSION_FIELDS, BUILTIN_SPEAKER_FIELDS, CfP, normalize_field_order
 from .chat import Channel, ChatEvent, ChatEventReaction, Membership
 from .checkin import Checkin, CheckinList
 from .choices import Choices, PriceModeChoices
@@ -136,6 +136,7 @@ __all__ = [
     "BUILTIN_SESSION_FIELDS",
     "BUILTIN_SPEAKER_FIELDS",
     "CfP",
+    "normalize_field_order",
     "Channel",
     "ChatEvent",
     "ChatEventReaction",

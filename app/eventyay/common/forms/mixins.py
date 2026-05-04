@@ -24,7 +24,7 @@ from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from eventyay.helpers.countries import CachedCountries
-from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, default_fields
+from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
 from django.db.models import Q
 
@@ -604,8 +604,10 @@ class ConfiguredFieldOrderMixin:
         fields_config = self.event.cfp.settings.get('fields_config', {}).get(config_key, [])
         if fields_config:
             builtin_names = set(BUILTIN_FIELD_KEYS.get(config_key, ()))
-            if builtin_names and not any(item in builtin_names for item in fields_config):
-                fields_config = list(BUILTIN_FIELD_KEYS[config_key]) + list(fields_config)
+            # Ensure every built-in field is present at its canonical position.
+            # This handles both config-with-no-builtins and partially-populated
+            # configs (e.g. a new built-in added after the config was saved).
+            fields_config = normalize_field_order(fields_config, config_key)
             configured_names = []
             for item in fields_config:
                 name = None

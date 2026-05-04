@@ -39,6 +39,40 @@ BUILTIN_FIELD_KEYS = {
 }
 
 
+def normalize_field_order(order, config_key):
+    """Return *order* with any missing built-in fields inserted at their
+    canonical positions.
+
+    The canonical position of a missing built-in is determined by finding
+    the last present built-in with a lower canonical index and inserting
+    immediately after it.  If no preceding built-in is present the missing
+    field is inserted at the beginning of the list.
+
+    This handles three cases correctly:
+    - Config has no built-ins at all (newly created custom-only config).
+    - Config has some built-ins but is missing others (e.g. a new built-in
+      was added to the platform after the config was saved).
+    - Config is already complete — returned unchanged.
+    """
+    builtin = list(BUILTIN_FIELD_KEYS.get(config_key, ()))
+    if not builtin:
+        return order
+    builtin_set = set(builtin)
+    missing = [f for f in builtin if f not in order]
+    if not missing:
+        return order
+    result = list(order)
+    for field in missing:
+        canonical_idx = builtin.index(field)
+        # Insert after the last built-in in result with a lower canonical index.
+        insert_after = -1  # -1 → insert at position 0
+        for i, item in enumerate(result):
+            if item in builtin_set and builtin.index(item) < canonical_idx:
+                insert_after = i
+        result.insert(insert_after + 1, field)
+    return result
+
+
 def default_fields():
     return {
         'title': {
