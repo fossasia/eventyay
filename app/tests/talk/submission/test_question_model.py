@@ -185,3 +185,33 @@ def test_country_answer_saved_and_round_trips(submission):
 
         round_trip_form = TalkQuestionsForm(event=event, submission=submission)
         assert round_trip_form.fields[f'question_{question.pk}'].initial == 'DE'
+
+@pytest.mark.django_db
+def test_select_answer_saved_and_round_trips(submission):
+    event = submission.event
+    with scope(event=event):
+        question = Question.objects.create(
+            question='Select option?',
+            variant=QuestionVariant.SELECT,
+            event=event,
+            target='submission',
+        )
+        option1 = question.options.create(answer="Option 1")
+        option2 = question.options.create(answer="Option 2")
+        
+        form = TalkQuestionsForm(
+            event=event,
+            submission=submission,
+            data={f'question_{question.pk}': option2.pk},
+        )
+        assert form.is_valid()
+        form.save()
+
+        answer = submission.answers.get(question=question)
+        assert answer.answer == 'Option 2'
+        assert answer.options.count() == 1
+        assert answer.options.first() == option2
+
+        round_trip_form = TalkQuestionsForm(event=event, submission=submission)
+        # For ModelChoiceField, the initial value is usually the model instance or PK
+        assert round_trip_form.fields[f'question_{question.pk}'].initial == option2

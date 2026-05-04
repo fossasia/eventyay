@@ -209,6 +209,13 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                     raise exceptions.ValidationError(
                         {"options": "Only one option may be selected for this question type."}
                     )
+                # Synchronize answer text to match options for consistency
+                data["answer"] = ", ".join([str(option.answer) for option in options])
+        elif question:
+            if data.get("options"):
+                raise exceptions.ValidationError(
+                    {"options": "This question type does not accept answer options."}
+                )
 
         target = question.target if question else None
         if target:

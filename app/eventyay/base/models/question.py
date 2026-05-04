@@ -106,9 +106,9 @@ class TalkQuestion(OrderedModel, PretalxModel):
     TalkQuestions can have many types, which offers a flexible framework to give organisers
     the opportunity to get all the information they need.
 
-    :param variant: Can be any of 'number', 'string', 'text', 'boolean',
-        'file', 'choices', 'multiple_choice', 'select', or 'country'. Defined in the
-        ``TalkQuestionVariant`` class.
+    :param variant: Can be any of 'number', 'string', 'text', 'url',
+        'date', 'datetime', 'boolean', 'file', 'choices', 'multiple_choice',
+        'select', or 'country'. Defined in the ``TalkQuestionVariant`` class.
     :param target: Can be any of 'submission', 'speaker', or 'reviewer'.
         Defined in the ``TalkQuestionTarget`` class.
     :param deadline: Datetime field. This field is required for 'after deadline' and 'freeze after' options of
