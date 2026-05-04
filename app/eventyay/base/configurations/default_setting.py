@@ -494,7 +494,7 @@ DEFAULT_SETTINGS = {
         ),
     },
     'redirect_to_checkout_directly': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
