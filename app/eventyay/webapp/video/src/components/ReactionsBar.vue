@@ -2,10 +2,10 @@
 .c-reactions-bar(:class="{expanded}")
 	.actions(@click="expand")
 		bunt-icon-button(v-for="reaction of availableReactions", @click.stop="react(reaction.emoji)")
-			.emoji(:style="reaction.style")
+			img.emoji(:src="reaction.url", :alt="reaction.emoji")
 </template>
 <script>
-import { nativeToStyle as nativeEmojiToStyle } from 'lib/emoji'
+import { nativeToUrl as nativeEmojiToUrl } from 'lib/emoji'
 
 export default {
 	props: {
@@ -22,7 +22,7 @@ export default {
 	computed: {
 		availableReactions() {
 			const emoji = ['👏', '❤️', '👍', '🤣', '😮']
-			return emoji.map(e => ({emoji: e, style: nativeEmojiToStyle(e)}))
+			return emoji.map(e => ({emoji: e, url: nativeEmojiToUrl(e)}))
 		}
 	},
 	methods: {
