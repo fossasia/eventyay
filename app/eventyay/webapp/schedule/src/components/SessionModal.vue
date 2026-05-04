@@ -14,15 +14,26 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						span.ampm(v-if="getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
 					.room(v-if="modalContent.contentObject.room") {{ getLocalizedString(modalContent.contentObject.room.name) }}
 					.track(v-if="modalContent.contentObject.track", :style="{ color: modalContent.contentObject.track.color }") {{ getLocalizedString(modalContent.contentObject.track.name) }}
-					export-dropdown.session-export-area(v-if="talkExportOptions.length", :options="talkExportOptions")
+					export-dropdown.session-export-area(v-if="talkExportOptions.length", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
 				.text-content
 					.recording-embed(v-if="modalContent.contentObject.recording_iframe", v-html="modalContent.contentObject.recording_iframe")
-					.abstract(v-if="modalContent.contentObject.abstract", v-html="renderRichText(modalContent.contentObject.abstract)")
+					.field-section(v-if="modalContent.contentObject.abstract")
+						h4.field-heading Abstract
+						.field-content(v-html="renderRichText(modalContent.contentObject.abstract)")
 					template(v-if="modalContent.contentObject.isLoading")
 						bunt-progress-circular(size="big", :page="true")
 					template(v-else)
-						hr(v-if="(modalContent.contentObject.abstract?.length > 0) && (modalContent.contentObject.apiContent?.description?.length > 0)")
-						.description(v-if="modalContent.contentObject.apiContent?.description?.length > 0", v-html="renderRichText(modalContent.contentObject.apiContent.description)")
+						.field-section(v-if="modalContent.contentObject.apiContent?.description?.length > 0 || modalContent.contentObject.description?.length > 0")
+							h4.field-heading Description
+							.field-content(v-html="renderRichText(modalContent.contentObject.apiContent?.description || modalContent.contentObject.description)")
+						template(v-if="textAnswers.length > 0")
+							.field-section(v-for="answer in textAnswers", :key="answer.id || answer.question_id")
+								h4.field-heading {{ getLocalizedString(answer.question.question) }}
+								.field-content(v-html="renderRichText(answer.answer)")
+						template(v-if="publicScheduleAnswers.length > 0")
+							.field-section(v-for="answer in publicScheduleAnswers", :key="answer.question_id")
+								h4.field-heading {{ answer.question }}
+								.field-content(v-html="renderRichText(answer.answer)")
 						template(v-if="shortAnswers.length > 0 || iconAnswers.length > 0")
 							hr
 							.answers
@@ -68,7 +79,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 					.speaker-title
 						h3 {{ modalContent.contentObject.name }}
-						export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
+						export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
 				.speaker-content.card-content
 					template(v-if="modalContent.contentObject.isLoading")
 						bunt-progress-circular(size="big", :page="true")
@@ -150,6 +161,21 @@ export default {
 		}
 	},
 	computed: {
+		talkQrcodesUrl() {
+			const id = this.modalContent?.contentObject?.id
+			if (!this.eventUrl || !id) return ''
+			const base = this.eventUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/talk/${id}.json`
+		},
+		speakerQrcodesUrl() {
+			const code = this.modalContent?.contentObject?.code
+			if (!this.eventUrl || !code) return ''
+			const base = this.eventUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+		},
+		favSet () {
+			return new Set(this.favs || [])
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -165,7 +191,7 @@ export default {
 		isFaved () {
 			const obj = this.modalContent?.contentObject
 			if (!obj) return false
-			return this.favs.includes(obj.id)
+			return this.favSet.has(obj.id)
 		},
 		computedJoinRoomLink () {
 			const obj = this.modalContent?.contentObject
@@ -210,14 +236,26 @@ export default {
 			const apiContent = this.modalContent.contentObject.apiContent
 			if (!apiContent || !apiContent.answers || !apiContent.answers.length) return []
 			return apiContent.answers.filter((answer) => {
-				// Exclude text answers and URL answers with icons (those go to iconAnswers)
-				return answer.question.variant !== 'text' && !(answer.question.variant === 'url' && answer.question.icon)
+				// Exclude text/string answers (those go to textAnswers) and URL answers with icons (iconAnswers)
+				return answer.question.variant !== 'text' && answer.question.variant !== 'string' && !(answer.question.variant === 'url' && answer.question.icon)
 			})
 		},
 		iconAnswers () {
 			const apiContent = this.modalContent.contentObject.apiContent
 			if (!apiContent || !apiContent.answers || !apiContent.answers.length) return []
 			return apiContent.answers.filter((answer) => answer.question.variant === 'url' && answer.question.icon)
+		},
+		textAnswers () {
+			const apiContent = this.modalContent.contentObject.apiContent
+			if (!apiContent || !apiContent.answers || !apiContent.answers.length) return []
+			return apiContent.answers.filter((answer) => answer.question.variant === 'text' || answer.question.variant === 'string')
+		},
+		publicScheduleAnswers () {
+			const apiContent = this.modalContent?.contentObject?.apiContent
+			if (apiContent && apiContent.answers && apiContent.answers.length > 0) return []
+			const answers = this.modalContent?.contentObject?.answers
+			if (!answers || !answers.length) return []
+			return answers
 		}
 	},
 	methods: {
@@ -338,8 +376,21 @@ export default {
 					aspect-ratio: 16 / 9
 					border: none
 					border-radius: 4px
-			.abstract
-				font-weight: bold
+			.field-section
+				margin-bottom: 12px
+				.field-heading
+					margin: 0 0 4px 0
+					font-size: 14px
+					font-weight: 700
+					color: $clr-grey-600
+				.field-content
+					padding: 8px 12px
+					p
+						margin: 0.25em 0
+						&:first-child
+							margin-top: 0
+						&:last-child
+							margin-bottom: 0
 			p
 				font-size: 16px
 			hr
