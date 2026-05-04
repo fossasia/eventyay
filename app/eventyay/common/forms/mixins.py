@@ -604,6 +604,8 @@ class ConfiguredFieldOrderMixin:
         fields_config = self.event.cfp.settings.get('fields_config', {}).get(config_key, [])
         if fields_config:
             builtin_names = set(BUILTIN_FIELD_KEYS.get(config_key, ()))
+            if builtin_names and not any(item in builtin_names for item in fields_config):
+                fields_config = list(BUILTIN_FIELD_KEYS[config_key]) + list(fields_config)
             configured_names = []
             for item in fields_config:
                 name = None
