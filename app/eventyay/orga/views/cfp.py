@@ -393,7 +393,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                 )
 
         extra_forms = [
-            form for form in self.formset.extra_forms if form.has_changed and not self.formset._should_delete_form(form)
+            form for form in self.formset.extra_forms if form.has_changed() and not self.formset._should_delete_form(form)
         ]
         for form in extra_forms:
             form.instance.question = obj
@@ -467,6 +467,24 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                     _('You cannot change the options and upload an option file at the same time.'),
                 )
                 return self.form_invalid(form)
+            
+            if not form.cleaned_data.get('options'):
+                if not self.formset.is_valid():
+                    return self.form_invalid(form)
+                
+                remaining_options = sum(
+                    1 for f in self.formset.initial_forms if f not in self.formset.deleted_forms
+                ) + sum(
+                    1 for f in self.formset.extra_forms if f.has_changed() and not self.formset._should_delete_form(f)
+                )
+                
+                if remaining_options == 0:
+                    messages.error(
+                        self.request,
+                        _('Please provide at least one option for this question type.'),
+                    )
+                    return self.form_invalid(form)
+
         result = super().form_valid(form)
         
         if is_new:
