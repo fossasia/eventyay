@@ -5,26 +5,31 @@ import config from '../../config'
 // Filtering/export/timezone are handled by the shared ScheduleView/ScheduleToolbar.
 // Favs use localStorage with event-scoped key to stay in sync with the agenda side.
 
-function getFavStorageKey () {
+function getFavStorageKey (userCode = null) {
 	const slug = window.eventyay?.eventSlug
-	if (slug) return `${slug}_favs`
+	if (slug) return userCode ? `${slug}_${userCode}_favs` : `${slug}_favs`
 	// Fallback: extract event slug from basePath (e.g. /org/event/video)
 	const basePath = window.eventyay?.basePath || ''
 	const segments = basePath.split('/').filter(s => s.length > 0 && s !== 'video')
 	const eventSlug = segments[segments.length - 1] || ''
-	return eventSlug ? `${eventSlug}_favs` : 'schedule_favs'
+	if (!eventSlug) return 'schedule_favs'
+	return userCode ? `${eventSlug}_${userCode}_favs` : `${eventSlug}_favs`
 }
 
-function loadFavsFromStorage () {
+function loadFavsFromStorage (userCode = null) {
 	try {
-		return JSON.parse(localStorage.getItem(getFavStorageKey())) || []
+		return JSON.parse(localStorage.getItem(getFavStorageKey(userCode))) || []
 	} catch {
 		return []
 	}
 }
 
-function saveFavsToStorage (favs) {
-	localStorage.setItem(getFavStorageKey(), JSON.stringify(favs))
+function saveFavsToStorage (favs, userCode = null) {
+	localStorage.setItem(getFavStorageKey(userCode), JSON.stringify(favs))
+}
+
+function getCurrentUserCode (rootState) {
+	return rootState.user?.pretalx_id ?? rootState.user?.code ?? rootState.user?.id ?? null
 }
 
 function getCsrfToken () {
@@ -42,8 +47,8 @@ let _storageListenerBound = false
 function bindStorageListener (state) {
 	if (_storageListenerBound) return
 	_storageListenerBound = true
-	const key = getFavStorageKey()
 	window.addEventListener('storage', (e) => {
+		const key = getFavStorageKey(state._favUserCode)
 		if (e.key !== key) return
 		if (e.newValue === null) {
 			state.favs = []
@@ -63,7 +68,7 @@ export default {
 		errorLoading: null,
 		now: moment(),
 		currentLanguage: localStorage.getItem('userLanguage') || 'en',
-		favs: loadFavsFromStorage()
+		favs: []
 	},
 	getters: {
 		favs (state) {
@@ -90,8 +95,11 @@ export default {
 		},
 		sessions (state, getters, rootState) {
 			if (!state.schedule) return
+			const videoModuleTypes = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom']
+			const videoRooms = new Set((rootState.rooms || []).filter(r => r.modules?.some(m => videoModuleTypes.includes(m.type))).map(r => r.pretalx_id ? String(r.pretalx_id) : null).filter(Boolean))
 			const sessions = []
 			for (const session of state.schedule.talks) {
+				const roomId = session.room ? String(session.room) : null
 				sessions.push({
 					id: session.code ? session.code.toString() : null,
 					title: session.title,
@@ -111,7 +119,10 @@ export default {
 					resources: session.resources,
 					answers: session.answers,
 					exporters: session.exporters,
-					recording_iframe: session.recording_iframe
+					recording_iframe: session.recording_iframe,
+					stream_url: session.stream_url || null,
+					has_video_room: videoRooms.has(roomId),
+					stream_type: session.stream_type
 				})
 			}
 			sessions.sort((a, b) => (
@@ -211,7 +222,8 @@ export default {
 		async fav ({ state, rootState }, id) {
 			if (!state.favs.includes(id)) {
 				state.favs.push(id)
-				saveFavsToStorage(state.favs)
+				const userCode = getCurrentUserCode(rootState)
+				saveFavsToStorage(state.favs, userCode)
 			}
 			const apiBase = getApiBase()
 			if (apiBase && rootState.user) {
@@ -231,7 +243,8 @@ export default {
 		},
 		async unfav ({ state, rootState }, id) {
 			state.favs = state.favs.filter(fav => fav !== id)
-			saveFavsToStorage(state.favs)
+			const userCode = getCurrentUserCode(rootState)
+			saveFavsToStorage(state.favs, userCode)
 			const apiBase = getApiBase()
 			if (apiBase && rootState.user) {
 				try {
@@ -249,7 +262,12 @@ export default {
 			}
 		},
 		async loadFavs ({ state, rootState }) {
-			const localFavs = loadFavsFromStorage()
+			const userCode = getCurrentUserCode(rootState)
+			state._favUserCode = userCode
+			const localFavs = [...new Set([
+				...loadFavsFromStorage(userCode),
+				...loadFavsFromStorage(null),
+			])]
 			state.favs = localFavs
 			// Keep favs in sync when the schedule tab updates localStorage
 			bindStorageListener(state)
@@ -269,7 +287,8 @@ export default {
 						const merged = await response.json()
 						if (Array.isArray(merged)) {
 							state.favs = merged
-							saveFavsToStorage(merged)
+							saveFavsToStorage(merged, userCode)
+							localStorage.removeItem(getFavStorageKey(null))
 						}
 					}
 				} catch (error) {

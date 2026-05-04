@@ -30,11 +30,16 @@
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="schedule.timezone",
 			:userTimezone="userTimezone",
-			:days="days",
+			:days="allDays",
 			:currentDay="currentDay",
 			:sessionsMode="sessionsMode",
 			:timeDensityMinutes="timeDensityMinutes",
 			v-model:searchQuery="searchQuery",
+			v-model:includeRoomSortKey="sortIncludeRoom",
+			v-model:includeDateSortKey="sortIncludeDate",
+			v-model:includePopularitySortKey="sortIncludePopularity",
+			:popularityFeatureEnabled="popularityFeatureEnabled",
+			:loggedIn="loggedIn",
 			@selectDay="selectDay($event)",
 			@filterToggle="onlyFavs = false",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
@@ -74,6 +79,9 @@
 			:favs="favs",
 			:showFavCount="showPopularityOnList",
 			:sortBy="effectiveSortBy",
+			:includeRoomSortKey="sortIncludeRoom",
+			:includeDateSortKey="sortIncludeDate",
+			:includePopularitySortKey="sortIncludePopularity",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
 			:showBreaks="!sessionsMode",
@@ -119,7 +127,7 @@ import SpeakersList from '~/components/SpeakersList'
 import FeaturedSpeakers from '~/components/FeaturedSpeakers'
 import SpeakerDetail from '~/components/SpeakerDetail'
 import TalkDetail from '~/components/TalkDetail'
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -143,6 +151,7 @@ function localesMatch (filterValue, sessionValue) {
 	if (a === b) return true
 	return localePrimary(a) === localePrimary(b)
 }
+
 
 const markdownIt = MarkdownIt({
 	linkify: false,
@@ -202,6 +211,11 @@ export default {
 		joinRoomBaseUrl: {
 			type: String,
 			default: ''
+		},
+		// Fetch the enriched schedule payload used on first-party agenda pages.
+		enrichData: {
+			type: Boolean,
+			default: false
 		}
 	},
 	provide () {
@@ -252,7 +266,7 @@ export default {
 			getLocalizedString,
 			getSessionTime,
 			markdownIt,
-			sortBy: 'room',
+			sortBy: 'title',
 			scrollParentWidth: Infinity,
 			schedule: null,
 			userTimezone: null,
@@ -261,6 +275,7 @@ export default {
 			forceScrollDay: 0,
 			currentTimezone: null,
 			favs: [],
+			userCode: null,
 			favsReadOnly: false,
 			allTracks: [],
 			allRooms: [],
@@ -280,6 +295,17 @@ export default {
 			searchQuery: '',
 			recordingFilter: 'all',
 			timeDensityMinutes: Number(localStorage.getItem('schedule-time-density-minutes') || 30),
+			sortIncludeRoom: false,
+			sortIncludePopularity: false,
+			sortIncludeDate: (() => {
+				try {
+					const stored = localStorage.getItem('schedule-include-datetime')
+					if (stored === null) return false
+					return stored === 'true'
+				} catch {
+					return false
+				}
+			})(),
 		}
 	},
 	computed: {
@@ -377,7 +403,7 @@ export default {
 						.filter(Boolean),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
-					fav_count: session.fav_count,
+					fav_count: normalizePopularityCount(session),
 					tags: session.tags,
 					session_type: session.session_type,
 					content_locale: session.content_locale,
@@ -414,14 +440,34 @@ export default {
 		rooms () {
 			return this.schedule.rooms.filter(r => this.baseSessions.some(s => s.room === r))
 		},
-		days () {
-			if (!this.baseSessions) return
-			let days = []
+		// allDays: all unique days from baseSessions, always unfiltered by sort.
+		// Passed to the toolbar so day-picker buttons are never hidden by the
+		// 'Include datetime' sort toggle.
+		allDays () {
+			if (!this.baseSessions) return []
+			const days = []
 			for (const session of this.baseSessions) {
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
 				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
 			days.sort((a, b) => a.diff(b))
+			return days
+		},
+		// days: collapses to one entry when sorting without date grouping.
+		// Only used by LinearSchedule to control day-header rendering.
+		days () {
+			if (!this.baseSessions) return
+			const days = []
+			for (const session of this.baseSessions) {
+				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
+				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
+			}
+			days.sort((a, b) => a.diff(b))
+			// In session list mode without datetime grouping, collapse to 1 virtual day
+			// so LinearSchedule renders a single flat sorted list.
+			if (this.sessionsMode && !this.sortIncludeDate) {
+				return days.length ? [days[0]] : []
+			}
 			return days
 		},
 		inEventTimezone () {
@@ -476,23 +522,22 @@ export default {
 			return this.loggedIn && this.popularityFeatureEnabled && !!this.schedule?.feature_flags?.session_popularity_show_on_list
 		},
 		sortOptions () {
-			const options = ['room', 'title', 'title_desc']
-			if (this.loggedIn && this.popularityFeatureEnabled) options.push('popularity')
+			const options = ['title', 'title_desc']
+			if (this.showPopularityOnList) options.push('popularity')
 			return options
 		},
 		effectiveSortBy () {
-			return this.sortOptions.includes(this.sortBy) ? this.sortBy : 'room'
+			return this.sortOptions.includes(this.sortBy) ? this.sortBy : 'title'
 		}
 	},
 	watch: {
 		popularityFeatureEnabled (enabled) {
-			if (!enabled && this.sortBy === 'popularity') {
-				this.sortBy = 'room'
-			}
+			// When the popularity feature is disabled, also disable the popularity sort toggle
+			if (!enabled) this.sortIncludePopularity = false
 		},
 		loggedIn (isLoggedIn) {
-			if (!isLoggedIn && this.sortBy === 'popularity') {
-				this.sortBy = 'room'
+			if (!isLoggedIn) {
+				this.sortIncludePopularity = false
 			}
 			if (!isLoggedIn) {
 				this.onlyFavs = false
@@ -501,6 +546,13 @@ export default {
 		},
 		recordingFilter () {
 			this.writeRecordingQueryParam()
+		},
+		sortIncludeDate () {
+			try {
+				localStorage.setItem('schedule-include-datetime', String(this.sortIncludeDate))
+			} catch {
+				// ignore localStorage access errors
+			}
 		}
 	},
 	async created () {
@@ -519,6 +571,7 @@ export default {
 		const messagesEl = document.querySelector('#pretalx-messages')
 		if (messagesEl) {
 			this.onHomeServer = true
+			this.userCode = messagesEl.dataset.userCode ?? null
 			if (messagesEl.dataset.loggedIn === 'true') {
 				this.loggedIn = true
 			}
@@ -530,7 +583,7 @@ export default {
 			this.translationMessages = PRETALX_MESSAGES
 		}
 
-		// Use inline data if available (on-site), otherwise fetch (external embed)
+		// Use inline data if available, otherwise fetch the schedule JSON.
 		const dataEl = document.getElementById('pretalx-schedule-data')
 		if (dataEl) {
 			try { this.schedule = JSON.parse(dataEl.textContent) } catch (e) { /* ignore parse error, fall through to fetch */ }
@@ -541,8 +594,12 @@ export default {
 			let version = ''
 			if (this.version)
 				version = `v/${this.version}/`
-			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json`
-			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json`
+			const params = new URLSearchParams()
+			if (this.enrichData) params.set('enrich', '1')
+			const query = params.toString()
+			const suffix = query ? `?${query}` : ''
+			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json${suffix}`
+			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json${suffix}`
 			// fetch from url, but fall back to legacyUrl if url fails
 			try {
 				this.schedule = await (await fetch(url)).json()
@@ -671,6 +728,21 @@ export default {
 		// TODO destroy observers
 	},
 	methods: {
+		getFavStorageKey (userCode = null) {
+			if (this.loggedIn && userCode) return `${this.eventSlug}_${userCode}_favs`
+			return `${this.eventSlug}_favs`
+		},
+		readLocalFavs (storageKey) {
+			const raw = localStorage.getItem(storageKey)
+			if (!raw) return []
+			try {
+				const parsed = JSON.parse(raw)
+				return Array.isArray(parsed) ? parsed : []
+			} catch {
+				localStorage.setItem(storageKey, '[]')
+				return []
+			}
+		},
 		readRecordingQueryParam () {
 			try {
 				const url = new URL(window.location.href)
@@ -707,9 +779,12 @@ export default {
 			window.location.hash = day.format('YYYY-MM-DD')
 		},
 		selectDay (dayId) {
-			this.currentDay = dayId
 			window.location.hash = dayId
-			this.forceScrollDay++
+			if (dayId === this.currentDay) {
+				this.forceScrollDay++
+				return
+			}
+			this.currentDay = dayId
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
@@ -746,16 +821,12 @@ export default {
 		},
 		async loadFavs () {
 			if (!this.loggedIn) return []
-			const storageKey = `${this.eventSlug}_favs`
-			const data = localStorage.getItem(storageKey)
-			let localFavs = []
-			if (data) {
-				try {
-					localFavs = JSON.parse(data) || []
-				} catch {
-					localStorage.setItem(storageKey, '[]')
-				}
-			}
+			const userStorageKey = this.getFavStorageKey(this.userCode)
+			const anonymousStorageKey = this.getFavStorageKey(null)
+			const localFavs = [...new Set([
+				...this.readLocalFavs(userStorageKey),
+				...this.readLocalFavs(anonymousStorageKey),
+			])]
 			if (this.loggedIn) {
 				try {
 					const merged = await this.apiRequest(
@@ -764,7 +835,8 @@ export default {
 						localFavs
 					)
 					if (Array.isArray(merged)) {
-						localStorage.removeItem(storageKey)
+						localStorage.setItem(userStorageKey, JSON.stringify(merged))
+						localStorage.removeItem(anonymousStorageKey)
 						return merged
 					}
 				} catch {
@@ -814,6 +886,10 @@ export default {
 			if (this.favsReadOnly) return
 			if (this.favs.includes(id)) return
 			this.favs.push(id)
+			const talk = this.schedule?.talks?.find(t => t.code === id)
+			if (talk) {
+				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) + 1)
+			}
 			this.saveFavs()
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
@@ -826,6 +902,10 @@ export default {
 			if (!this.loggedIn) return
 			if (this.favsReadOnly) return
 			this.favs = this.favs.filter(elem => elem !== id)
+			const talk = this.schedule?.talks?.find(t => t.code === id)
+			if (talk) {
+				talk.fav_count = Math.max(0, Number(talk.fav_count || 0) - 1)
+			}
 			this.saveFavs()
 			try {
 				await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
@@ -1003,6 +1083,7 @@ export default {
 		> .c-schedule-toolbar
 			border-bottom: 1px solid $clr-dividers-light
 	&.grid-schedule
+		overflow-x: clip
 		margin: 0 auto
 	&.list-schedule
 		min-width: 0

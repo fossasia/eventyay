@@ -37,15 +37,15 @@
                 </p>
             {% endif %}
             {% if request.event.cfp.request_avatar_source and speaker.avatar_source %}
-                <p class="card-text">
+                <p class="card-text avatar-license-text">
                     <strong>{% translate "Profile Picture Source" %}:</strong>
-                    {{ speaker.avatar_source }}
+                    {{ speaker.avatar_source|truncatewords:200 }}
                 </p>
             {% endif %}
             {% if request.event.cfp.request_avatar_license and speaker.avatar_license %}
-                <p class="card-text">
+                <p class="card-text avatar-license-text">
                     <strong>{% translate "Profile Picture License" %}:</strong>
-                    {{ speaker.avatar_license }}
+                    {{ speaker.avatar_license|truncatewords:200 }}
                 </p>
             {% endif %}
             {% if speaker.email %}

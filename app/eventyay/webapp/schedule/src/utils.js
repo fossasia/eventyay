@@ -76,3 +76,14 @@ export function getIconByFileEnding(url) {
 	if (/(\.(mp4|mov|webm|avi)$)|\/\/(youtube\.com|youtu\.be|vimeo\.com)\//.test(url)) return 'file-video-outline'
 	return 'file-download-outline'
 }
+
+export function normalizePopularityCount (session) {
+	const value = Number(
+		session?.fav_count
+		?? session?.favorite_count
+		?? session?.favourites_count
+		?? session?.stars
+		?? 0
+	)
+	return Number.isFinite(value) ? value : 0
+}

@@ -8,9 +8,22 @@
 					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
 					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
 						fav-button(@toggleFav="toggleFav")
-			.info {{ datetime }} {{ roomName }}
-			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
-			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
+			.info
+				span.info-main {{ datetime }} {{ roomName }}
+				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
+			.field-section.abstract-section(v-if="resolvedTalk.abstract")
+				h2.field-heading Abstract
+				.field-content
+					markdown-content(:markdown="resolvedTalk.abstract")
+			.field-section.description-section(v-if="resolvedTalk.description")
+				h2.field-heading Description
+				.field-content
+					markdown-content(:markdown="resolvedTalk.description")
+			.public-answers(v-if="resolvedTalk.answers && resolvedTalk.answers.length > 0")
+				.field-section(v-for="answer in resolvedTalk.answers", :key="answer.question_id")
+					h2.field-heading {{ answer.question }}
+					.field-content
+						markdown-content(:markdown="answer.answer")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 				h2 {{ t.downloads }}
 				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
@@ -138,6 +151,26 @@ export default {
 				anonymous_attendee: m.anonymous_attendee || 'Anonymous (name not shared)',
 				view_all: m.view_all || 'View all',
 				hide_list: m.hide_list || 'Hide',
+				session_language: m.session_language || 'Language',
+			}
+		},
+		uiLocale () {
+			if (typeof document === 'undefined') return 'en'
+			return (document.documentElement.lang || 'en').trim().split(',')[0] || 'en'
+		},
+		sessionLanguageLabel () {
+			const code = this.resolvedTalk?.content_locale
+			if (!code || typeof code !== 'string') return ''
+			const tag = code.replace(/_/g, '-')
+			try {
+				return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(tag) || code
+			} catch {
+				try {
+					const primary = tag.split('-')[0] || tag
+					return new Intl.DisplayNames([this.uiLocale], { type: 'language' }).of(primary) || code
+				} catch {
+					return code
+				}
 			}
 		},
 		inlineStarrersLimit() {
@@ -329,10 +362,29 @@ export default {
 		.info
 			font-size: 18px
 			color: $clr-secondary-text-light
-		.abstract
+			.session-language
+				white-space: nowrap
+		.abstract, .description
+			margin: 0
+		.field-section
 			margin: 16px 0 0 0
-			font-size: 16px
-			font-weight: 600
+			.field-heading
+				margin: 0 0 6px 0
+				font-size: 14px
+				font-weight: 700
+				color: $clr-secondary-text-light
+			.field-content
+				padding: 8px 12px
+				p
+					margin: 0.25em 0
+					&:first-child
+						margin-top: 0
+					&:last-child
+						margin-bottom: 0
+			&.abstract-section
+				.field-content
+					font-size: 16px
+					font-weight: 600
 		.downloads
 			border: border-separator()
 			border-radius: 4px

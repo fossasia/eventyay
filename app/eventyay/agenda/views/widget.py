@@ -6,13 +6,16 @@ from csp.decorators import csp_exempt
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.staticfiles import finders
 from django.http import Http404, HttpResponse, JsonResponse
-from django.views.decorators.cache import cache_page
 from django.views.decorators.http import condition
 from i18nfield.utils import I18nJSONEncoder
 
-from eventyay.talk_rules.agenda import is_widget_visible
-from eventyay.talk_rules.submission import (are_featured_submissions_visible, schedule_widget_featured_cache_key_part)
 from eventyay.common.views import conditional_cache_page
+from eventyay.talk_rules.agenda import is_widget_visible
+from eventyay.talk_rules.submission import (
+    are_featured_submissions_visible,
+    schedule_widget_featured_cache_key_part,
+)
+
 
 WIDGET_JS_CHECKSUM = None
 WIDGET_JS_MTIME = None
@@ -119,8 +122,10 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
     if not schedule:
         raise Http404()
 
+    enrich = request.GET.get('enrich') in {'1', 'true', 'True'}
     result = schedule.build_data(
         all_talks=not schedule.version,
+        enrich=enrich,
         include_featured_speaker_metadata=are_featured_submissions_visible(AnonymousUser(), event),
     )
     response = JsonResponse(result, encoder=I18nJSONEncoder)
