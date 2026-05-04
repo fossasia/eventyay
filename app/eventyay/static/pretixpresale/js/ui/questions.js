@@ -11,10 +11,15 @@ function questions_toggle_dependent(ev) {
         var $dependency_el;
 
         if ($("select[name=" + dependency_name + "]").length) {
-            // dependency is type C
             $dependency_el = $("select[name=" + dependency_name + "]");
             if (!$dependency_el.closest(".form-group").hasClass("dependency-hidden")) {  // do not show things that depend on hidden things
                 return q_should_be_shown($dependency_el) && $.inArray($dependency_el.val(), dependency_values) > -1;
+            }
+        } else if ($("input[type=radio][name=" + dependency_name + "]").length) {
+            $dependency_el = $("input[type=radio][name=" + dependency_name + "]");
+            if (!$dependency_el.closest(".form-group").hasClass("dependency-hidden")) {  // do not show things that depend on hidden things
+                return q_should_be_shown($dependency_el.first())
+                    && $.inArray($dependency_el.filter(":checked").val(), dependency_values) > -1;
             }
         } else if ($("input[type=checkbox][name=" + dependency_name + "]").length) {
             // dependency type is B or M

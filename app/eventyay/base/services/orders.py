@@ -396,7 +396,7 @@ def send_order_denied_notifications(order, comment='', user=None, send_mail: boo
         email_template = order.event.settings.mail_text_order_denied
         email_context = get_email_context(event=order.event, order=order, comment=comment)
         with language(order.locale, order.event.settings.region):
-            email_subject = _('Order denied: %(code)s') % {'code': order.code}
+            email_subject = _('Your order request update: %(code)s') % {'code': order.code}
             try:
                 order.send_mail(
                     email_subject,
@@ -1000,7 +1000,7 @@ def _create_order(
             total=total,
             testmode=True if sales_channel.testmode_supported and event.testmode else False,
             meta_info=json.dumps(meta_info or {}),
-            require_approval=any(p.product.require_approval for p in positions),
+            require_approval=any(p.requires_approval for p in positions),
             sales_channel=sales_channel.identifier,
         )
         order.set_expires(now_dt, event.subevents.filter(id__in=[p.subevent_id for p in positions]))
@@ -2235,9 +2235,7 @@ class OrderChangeManager:
         split_order.code = None
         split_order.datetime = now()
         split_order.secret = generate_secret()
-        split_order.require_approval = self.order.require_approval and any(
-            p.product.require_approval for p in split_positions
-        )
+        split_order.require_approval = self.order.require_approval and any(p.requires_approval for p in split_positions)
         split_order.save()
         split_order.log_action(
             'eventyay.event.order.changed.split_from',

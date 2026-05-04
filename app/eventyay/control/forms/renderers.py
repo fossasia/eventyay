@@ -8,7 +8,7 @@ from django.utils.translation import pgettext
 from i18nfield.forms import I18nFormField
 
 
-def render_label(content, label_for=None, label_class=None, label_title='', optional=False):
+def render_label(content, label_for=None, label_class=None, label_title='', optional=False, required=False):
     """
     Render a label with content
     """
@@ -25,11 +25,20 @@ def render_label(content, label_for=None, label_class=None, label_title='', opti
         attrs.setdefault('class', '')
         attrs['class'] += ' label-empty'
 
-    builder = '<{tag}{attrs}>{content}{opt}</{tag}>'
+    builder = '<{tag}{attrs}><span class="label-text">{content}{req}</span>{opt}</{tag}>'
     return format_html(
         builder,
         tag='label',
         attrs=mark_safe(flatatt(attrs)) if attrs else '',
+        req=(
+            format_html(
+                '<span aria-hidden="true" class="required-indicator text-danger"> *</span>'
+                '<span class="sr-only">, {}</span>',
+                pgettext('form', 'required'),
+            )
+            if required
+            else ''
+        ),
         opt=mark_safe('<br><span class="optional">{}</span>'.format(pgettext('form', 'Optional'))) if optional else '',
         content=text_value(content),
     )
@@ -51,12 +60,15 @@ class ControlFieldRenderer(FieldRenderer):
         else:
             required = self.field.field.required
 
+        required_for_label = required and not isinstance(self.widget, CheckboxInput)
+
         html = (
             render_label(
                 label,
                 label_for=self.field.id_for_label,
                 label_class=self.get_label_class(),
                 optional=not required and not isinstance(self.widget, CheckboxInput),
+                required=required_for_label,
             )
             + html
         )

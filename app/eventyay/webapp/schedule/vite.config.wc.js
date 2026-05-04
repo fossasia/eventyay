@@ -55,14 +55,27 @@ export default defineConfig({
 		lib: {
 			entry: path.resolve(__dirname, 'src/main-wc.js'),
 			name: 'PretalxSchedule',
-			fileName: 'pretalx-schedule'
+			fileName: 'pretalx-schedule',
+			formats: ['es']
 		},
 		rollupOptions: {
 			output: {
-				inlineDynamicImports: true,
 				entryFileNames: 'pretalx-schedule.js',
 				chunkFileNames: 'pretalx-schedule-[name].js',
-				assetFileNames: 'pretalx-schedule.[ext]'
+				assetFileNames: 'pretalx-schedule.[ext]',
+				manualChunks(id) {
+					if (id.includes('node_modules')) {
+						if (id.includes('/vue/')) return 'vendor-vue'
+						if (id.includes('moment-timezone')) return 'vendor-moment'
+						if (id.includes('markdown-it')) return 'vendor-markdown'
+						if (id.includes('buntpapier')) return 'vendor-buntpapier'
+						return 'vendor'
+					}
+					if (id.includes('/src/components/GridSchedule')) return 'chunk-grid'
+					if (id.includes('/src/components/ScheduleToolbar')) return 'chunk-toolbar'
+					if (id.includes('/src/components/SessionModal')) return 'chunk-modal'
+					return undefined
+				},
 			}
 		}
 	}

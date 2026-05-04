@@ -107,13 +107,13 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
 
     def test_csv(self):
         with scopes_disabled():
-            self.event.vouchers.create(item=self.ticket, code='ABCDEFG')
+            self.event.vouchers.create(item=self.ticket, code='ABCDEFG', allow_ignore_approval=True)
         doc = self.client.get('/control/event/%s/%s/vouchers/?download=yes' % (self.orga.slug, self.event.slug))
         assert (
             doc.content.decode().strip() == '"Voucher code","Valid until","Product","Reserve quota",'
-            '"Bypass quota","Price effect","Value","Tag","Redeemed",'
+            '"Bypass quota","Bypass approval","Price effect","Value","Tag","Redeemed",'
             '"Maximum usages","Seat","Comment"'
-            '\r\n"ABCDEFG","","Early-bird ticket","No","No","No effect","","","0",'
+            '\r\n"ABCDEFG","","Early-bird ticket","No","No","Yes","No effect","","","0",'
             '"1","",""'
         )
 
@@ -198,9 +198,16 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
         with scopes_disabled():
             v = Voucher.objects.latest('pk')
         assert not v.block_quota
+        assert not v.allow_ignore_approval
         assert v.item.pk == self.ticket.pk
         assert v.variation is None
         assert v.quota is None
+
+    def test_create_approval_bypass_voucher(self):
+        self._create_voucher({'itemvar': '%d' % self.ticket.pk, 'allow_ignore_approval': 'on'})
+        with scopes_disabled():
+            v = Voucher.objects.latest('pk')
+        assert v.allow_ignore_approval
 
     def test_create_non_blocking_variation_voucher(self):
         self._create_voucher({'itemvar': '%d-%d' % (self.shirt.pk, self.shirt_red.pk)})
@@ -494,6 +501,17 @@ class VoucherFormTest(SoupTestMixin, TransactionTestCase):
                 'itemvar': '%d' % self.ticket.pk,
             }
         )
+
+    def test_create_bulk_with_approval_bypass(self):
+        self._create_bulk_vouchers(
+            {
+                'codes': 'ABCDE\nDEFGH',
+                'itemvar': '%d' % self.ticket.pk,
+                'allow_ignore_approval': 'on',
+            }
+        )
+        with scopes_disabled():
+            assert Voucher.objects.filter(code__in=['ABCDE', 'DEFGH'], allow_ignore_approval=True).count() == 2
 
     def test_create_blocking_bulk_quota_full(self):
         self.quota_tickets.size = 0

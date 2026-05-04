@@ -654,7 +654,7 @@ def variables_from_questions(sender, *args, **kwargs):
             continue
         d['question_{}'.format(q.pk)] = {
             'label': _('Question: {question}').format(question=q.question),
-            'editor_sample': _('<Answer: {question}>').format(question=q.question),
+            'editor_sample': str(q.question),
             'evaluate': partial(get_answer, question_id=q.pk),
         }
     return d
@@ -752,7 +752,7 @@ class Renderer:
         ir = ThumbnailingImageReader(img)
         try:
             width, height = ir.resize(None, float(o['size']) * mm, 300)
-        except:
+        except Exception:
             logger.exception('Can not resize image')
             pass
         canvas.drawImage(
@@ -796,18 +796,22 @@ class Renderer:
                 return self._get_text_content(op, order, o, True)
 
         ev = self._get_ev(op, order)
-        if not o['content']:
+        content = o.get('content')
+        if content == 'item':
+            content = 'event_name'
+
+        if not content:
             return '(error)'
-        if o['content'] == 'other':
+        if content == 'other':
             return o['text']
-        elif o['content'].startswith('productmeta:'):
-            return op.product.meta_data.get(o['content'][12:]) or ''
-        elif o['content'].startswith('meta:'):
-            return ev.meta_data.get(o['content'][5:]) or ''
-        elif o['content'] in self.variables:
+        elif content.startswith('productmeta:'):
+            return op.product.meta_data.get(content[12:]) or ''
+        elif content.startswith('meta:'):
+            return ev.meta_data.get(content[5:]) or ''
+        elif content in self.variables:
             try:
-                return self.variables[o['content']]['evaluate'](op, order, ev)
-            except:
+                return self.variables[content]['evaluate'](op, order, ev)
+            except Exception:
                 logger.exception('Failed to process variable.')
                 return '(error)'
         return ''
@@ -819,7 +823,7 @@ class Renderer:
         else:
             try:
                 image_file = self.images[o['content']]['evaluate'](op, order, ev)
-            except:
+            except Exception:
                 logger.exception('Failed to process variable.')
                 image_file = None
 
@@ -827,7 +831,7 @@ class Renderer:
             ir = ThumbnailingImageReader(image_file)
             try:
                 ir.resize(float(o['width']) * mm, float(o['height']) * mm, 300)
-            except:
+            except Exception:
                 logger.exception('Can not resize image')
                 pass
             canvas.drawImage(
@@ -883,7 +887,7 @@ class Renderer:
         reshaper = ArabicReshaper(configuration=configuration)
         try:
             text = '<br/>'.join(get_display(reshaper.reshape(l)) for l in text.split('<br/>'))
-        except:
+        except Exception:
             logger.exception('Reshaping/Bidi fixes failed on string {}'.format(repr(text)))
 
         p = Paragraph(text, style=style)

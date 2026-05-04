@@ -21,24 +21,24 @@
   "main": "dist/schedule-editor.common.js",
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.25",
-    "i18next": "^25.8.18",
-    "lodash": "^4.17.23",
+    "i18next": "^26.0.8",
+    "lodash": "^4.18.1",
     "markdown-it": "^14.1.1",
     "moment": "^2.30.1",
-    "moment-timezone": "^0.6.0",
+    "moment-timezone": "^0.6.2",
     "process": "^0.11.10",
-    "vue": "^3.5.30",
-    "zod": "^4.0.10"
+    "vue": "^3.5.33",
+    "zod": "^4.4.2"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.24",
     "@types/markdown-it": "^14.1.2",
-    "@types/node": "^25.5.0",
-    "@typescript-eslint/eslint-plugin": "^8.57.0",
-    "@typescript-eslint/parser": "^8.57.0",
-    "@vitejs/plugin-vue": "^6.0.5",
+    "@types/node": "^25.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.0",
+    "@vitejs/plugin-vue": "^6.0.6",
     "@vue/eslint-config-typescript": "^14.7.0",
-    "@vue/tsconfig": "^0.9.0",
+    "@vue/tsconfig": "^0.9.1",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^9.25.0",
     "eslint-plugin-vue-pug": "^0.6.2",
@@ -49,11 +49,11 @@
     "stylelint-config-standard": "^36.0.0",
     "stylelint-plugin-stylus": "^1.0.0",
     "stylus": "^0.64.0",
-    "typescript": "^5.3.3",
+    "typescript": "^6.0.3",
     "vite": "^6.3.5",
     "vite-bundle-visualizer": "^1.2.1",
-    "vite-plugin-checker": "^0.12.0",
-    "vue-tsc": "^3.2.5"
+    "vite-plugin-checker": "^0.13.0",
+    "vue-tsc": "^3.2.7"
   },
   "bugs": {
     "url": "https://github.com/pretalx/schedule-editor/issues"

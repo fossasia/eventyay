@@ -15,23 +15,25 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, ListView
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
-from eventyay.base.models import CachedFile, OrderPosition
-from eventyay.base.pdf import Renderer
+from eventyay.base.models import CachedFile, OrderPosition, Question, QuestionAnswer
+from eventyay.base.services.tickets import invalidate_cache
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.pdf import BaseEditorView
 from eventyay.helpers.models import modelcopy
-from eventyay.plugins.badges.forms import BadgeLayoutForm
+from eventyay.plugins.badges.forms import BadgeLayoutForm, BadgeLayoutSettingsForm
 from eventyay.plugins.badges.tasks import badges_create_pdf
+from eventyay.plugins.badges.utils import clear_badge_layout_cache
 
+from .exporters import BadgeRenderer
 from .models import BadgeLayout
 
-class BadgePluginEnabledMixin:
 
+class BadgePluginEnabledMixin:
     def dispatch(self, request, *args, **kwargs):
         if 'eventyay.plugins.badges' not in request.event.get_plugins():
             return redirect(
@@ -41,6 +43,15 @@ class BadgePluginEnabledMixin:
             )
         return super().dispatch(request, *args, **kwargs)
 
+
+def _schedule_badge_cache_invalidation(event):
+    event_pk = event.pk
+    clear_badge_layout_cache(event)
+    transaction.on_commit(
+        lambda event_pk=event_pk: invalidate_cache.apply_async(kwargs={'event': event_pk, 'provider': 'badge'})
+    )
+
+
 class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, ListView):
     model = BadgeLayout
     permission = ('can_change_event_settings', 'can_view_orders')
@@ -49,6 +60,64 @@ class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, List
 
     def get_queryset(self):
         return self.request.event.badge_layouts.prefetch_related('product_assignments')
+
+
+class LayoutSettingsView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, FormView):
+    form_class = BadgeLayoutSettingsForm
+    template_name = 'pretixplugins/badges/settings.html'
+    permission = 'can_change_event_settings'
+
+    @cached_property
+    def layout(self):
+        try:
+            return self.request.event.badge_layouts.get(id=self.kwargs['layout'])
+        except BadgeLayout.DoesNotExist:
+            raise Http404(_('The requested badge layout does not exist.'))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                'event': self.request.event,
+                'layout': self.layout,
+            }
+        )
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['layout'] = self.layout
+        return ctx
+
+    @transaction.atomic
+    def form_valid(self, form):
+        form.save()
+        _schedule_badge_cache_invalidation(self.request.event)
+        self.layout.log_action(
+            action='eventyay.plugins.badges.layout.changed',
+            user=self.request.user,
+            data={
+                'products': list(form.cleaned_data['products'].values_list('pk', flat=True)),
+                'allow_customization': form.cleaned_data['allow_customization'],
+                'ask_user_fields': form.cleaned_data['ask_user_fields'],
+            },
+        )
+        messages.success(self.request, _('Your badge layout settings have been saved.'))
+        return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('We could not save your changes. See below for details.'))
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse(
+            'plugins:badges:settings',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+                'layout': self.layout.pk,
+            },
+        )
 
 
 class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, CreateView):
@@ -68,6 +137,7 @@ class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Create
         super().form_valid(form)
         if form.instance.background and form.instance.background.name:
             form.instance.background.save('background.pdf', form.instance.background)
+        _schedule_badge_cache_invalidation(self.request.event)
         form.instance.log_action(
             'eventyay.plugins.badges.layout.added',
             user=self.request.user,
@@ -128,6 +198,7 @@ class LayoutSetDefault(BadgePluginEnabledMixin, EventPermissionRequiredMixin, De
         self.request.event.badge_layouts.exclude(pk=obj.pk).update(default=False)
         obj.default = True
         obj.save(update_fields=['default'])
+        _schedule_badge_cache_invalidation(self.request.event)
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
@@ -162,6 +233,7 @@ class LayoutDelete(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Delete
             if f:
                 f.default = True
                 f.save(update_fields=['default'])
+        _schedule_badge_cache_invalidation(self.request.event)
         messages.success(self.request, _('The selected badge layout been deleted.'))
         return redirect(self.get_success_url())
 
@@ -187,20 +259,65 @@ class LayoutEditorView(BaseEditorView):
     def title(self):
         return _('Badge layout: {}').format(self.layout)
 
-    def save_layout(self):
-        self.layout.layout = self.request.POST.get('data')
+    def _get_preview_position(self):
+        p = super()._get_preview_position()
+        p.job_title = _('Sample job title')
+        p.company = _('Sample company')
+        p.save(update_fields=['job_title', 'company'])
+
+        sample_answers = {
+            Question.TYPE_BOOLEAN: 'True',
+            Question.TYPE_NUMBER: '42',
+            Question.TYPE_DATE: '2026-01-01',
+            Question.TYPE_TIME: '12:00',
+            Question.TYPE_DATETIME: '2026-01-01T12:00:00+00:00',
+            Question.TYPE_COUNTRYCODE: 'US',
+            Question.TYPE_PHONENUMBER: '+1 202 555 0123',
+        }
+
+        questions = self.request.event.questions.exclude(type=Question.TYPE_FILE).prefetch_related('options')
+        for question in questions:
+            answer_text = sample_answers.get(question.type, str(question.question))
+            answer = QuestionAnswer.objects.get_or_create(
+                orderposition=p,
+                question=question,
+                defaults={'answer': answer_text},
+            )[0]
+
+            if question.type in Question.OPTION_TYPES:
+                option = question.options.first()
+                if option:
+                    answer.answer = option.answer
+                    answer.save(update_fields=['answer'])
+                    answer.options.set([option])
+                else:
+                    answer.answer = ''
+                    answer.save(update_fields=['answer'])
+            elif answer.answer != answer_text:
+                answer.answer = answer_text
+                answer.save(update_fields=['answer'])
+
+        return p
+
+    def save_layout(self, layout_data=None):
+        if layout_data is None:
+            layout_data = self._get_posted_layout_json()
+        if layout_data is None:
+            layout_data = '[]'
+        self.layout.layout = layout_data
         self.layout.save(update_fields=['layout'])
+        _schedule_badge_cache_invalidation(self.request.event)
         self.layout.log_action(
             action='eventyay.plugins.badges.layout.changed',
             user=self.request.user,
-            data={'layout': self.request.POST.get('data')},
+            data={'layout': layout_data},
         )
 
     def get_default_background(self):
         return static('pretixplugins/badges/badge_default_a6l.pdf')
 
     def generate(self, op: OrderPosition, override_layout=None, override_background=None):
-        Renderer._register_fonts()
+        BadgeRenderer._register_fonts()
 
         buffer = BytesIO()
         if override_background:
@@ -209,10 +326,11 @@ class LayoutEditorView(BaseEditorView):
             bgf = default_storage.open(self.layout.background.name, 'rb')
         else:
             bgf = open(finders.find('pretixplugins/badges/badge_default_a6l.pdf'), 'rb')
-        r = Renderer(
+        r = BadgeRenderer(
             self.request.event,
             override_layout or self.get_current_layout(),
             bgf,
+            ask_user_fields=(self.layout.ask_user_fields_data if self.layout.allow_customization else []),
         )
         p = canvas.Canvas(buffer, pagesize=pagesizes.A4)
         r.draw_page(p, op.order, op)
@@ -221,7 +339,7 @@ class LayoutEditorView(BaseEditorView):
         return 'badge.pdf', 'application/pdf', outbuffer.read()
 
     def get_current_layout(self):
-        return json.loads(self.layout.layout)
+        return self._normalize_layout(json.loads(self.layout.layout))
 
     def get_current_background(self):
         return self.layout.background.url if self.layout.background else self.get_default_background()
@@ -230,6 +348,7 @@ class LayoutEditorView(BaseEditorView):
         if self.layout.background:
             self.layout.background.delete()
         self.layout.background.save('background.pdf', f.file)
+        _schedule_badge_cache_invalidation(self.request.event)
 
 
 class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncAction, View):

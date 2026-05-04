@@ -7,8 +7,8 @@
 				summary.featured-speaker-summary
 					.thumbnail
 						img(
-							v-if="speaker.avatar || speaker.avatar_url",
-							:src="speaker.avatar || speaker.avatar_url",
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
 							:alt="speaker.name || t.speaker_fallback",
 							loading="lazy"
 						)
@@ -17,9 +17,8 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.caption.text-center
 							h4 {{ speaker.name || t.speaker_fallback }}
-							p(v-if="speaker.biography") {{ speaker.biography }}
+							markdown-content.featured-speaker-preview-bio(v-if="speaker.biography", :markdown="speaker.biography")
 				.featured-speaker-details
-					.featured-speaker-bio(v-if="speaker.biography") {{ speaker.biography }}
 					template(v-if="speaker.sessions && speaker.sessions.length")
 						hr.featured-speaker-divider
 						.featured-speaker-sessions
@@ -42,9 +41,11 @@
 <script>
 import moment from 'moment-timezone'
 import { getLocalizedString } from '../utils'
+import MarkdownContent from './MarkdownContent'
 
 export default {
 	name: 'FeaturedSpeakers',
+	components: { MarkdownContent },
 	inject: {
 		scheduleData: { default: null },
 		eventUrl: { default: '' },
@@ -65,6 +66,12 @@ export default {
 		},
 		translationMessages: { default: () => ({}) }
 	},
+	props: {
+		showAll: {
+			type: Boolean,
+			default: false
+		}
+	},
 	data() {
 		return {
 			getLocalizedString,
@@ -74,7 +81,7 @@ export default {
 		t() {
 			const m = this.translationMessages || {}
 			return {
-				featured_speakers: m.featured_speakers || 'Featured Speakers',
+				featured_speakers: this.showAll ? (m.speakers || 'Speakers') : (m.featured_speakers || 'Featured Speakers'),
 				speaker_fallback: m.speaker_fallback || 'Speaker',
 				sessions: m.sessions || 'Sessions',
 				view_profile: m.view_profile || 'View speaker profile',
@@ -84,6 +91,13 @@ export default {
 		moreSpeakersUrl() {
 			const base = (this.eventUrl || '').replace(/\/?$/, '/')
 			return `${base}speakers/`
+		},
+		trackById() {
+			const schedule = this.scheduleData?.schedule
+			return (schedule?.tracks || []).reduce((acc, track) => {
+				if (track?.id != null) acc[track.id] = track
+				return acc
+			}, {})
 		},
 		featuredSpeakers() {
 			const schedule = this.scheduleData?.schedule
@@ -97,9 +111,14 @@ export default {
 				return sp.code || null
 			}
 			const featured = schedule.speakers
-				.filter(s => s?.is_featured)
+				.filter(s => this.showAll || s?.is_featured)
 				.slice()
 				.sort((a, b) => {
+					// If showing all, strictly put featured first
+					if (this.showAll) {
+						if (a.is_featured && !b.is_featured) return -1
+						if (!a.is_featured && b.is_featured) return 1
+					}
 					const ap = Number.isFinite(a.featured_position) ? a.featured_position : 1e9
 					const bp = Number.isFinite(b.featured_position) ? b.featured_position : 1e9
 					if (ap !== bp) return ap - bp
@@ -110,10 +129,7 @@ export default {
 				if (s?.code) acc[s.code] = s
 				return acc
 			}, {})
-			const trackById = (schedule.tracks || []).reduce((acc, t) => {
-				if (t?.id != null) acc[t.id] = t
-				return acc
-			}, {})
+			const trackById = this.trackById
 			const roomById = (schedule.rooms || []).reduce((acc, r) => {
 				if (r?.id != null) acc[r.id] = r
 				return acc
@@ -137,20 +153,25 @@ export default {
 				}
 			}
 
+			const normalizedRawSessions = rawTalks
+				.map(normalizeRawTalk)
+				.filter(session => session?.start && session?.end)
+			const sessionsPool = resolvedSessions.length ? resolvedSessions : normalizedRawSessions
+			const sessionsBySpeaker = resolvedSessions.length && this.scheduleData?.sessionsBySpeaker
+				? this.scheduleData.sessionsBySpeaker
+				: sessionsPool
+					.flatMap((session) => (session.speakers || []).map((sp) => [speakerCodeFromAny(sp), session]))
+					.reduce((acc, [code, session]) => {
+						if (!code) return acc
+						if (!acc[code]) acc[code] = []
+						acc[code].push(session)
+						return acc
+					}, {})
+
 			return featured.map(speaker => {
-				let speakerSessions
-				if (resolvedSessions.length) {
-					speakerSessions = resolvedSessions
-						.filter(sess => (sess.speakers || []).some(sp => speakerCodeFromAny(sp) === speaker.code))
-						.slice()
-						.sort((a, b) => (a.start && b.start ? a.start.diff(b.start) : 0))
-				} else {
-					speakerSessions = rawTalks
-						.filter(t => (t?.speakers || []).some(sp => speakerCodeFromAny(sp) === speaker.code))
-						.map(normalizeRawTalk)
-						.filter(t => t?.start && t?.end)
-						.sort((a, b) => a.start.diff(b.start))
-				}
+				const speakerSessions = (sessionsBySpeaker[speaker.code] || [])
+					.slice()
+					.sort((a, b) => (a.start && b.start ? a.start.diff(b.start) : 0))
 				return {
 					...speaker,
 					sessions: speakerSessions,
@@ -177,10 +198,9 @@ export default {
 			this.onSessionLinkClick(event, session)
 		},
 		getSessionStyle(session) {
-			const schedule = this.scheduleData?.schedule
 			const track = typeof session?.track === 'object'
 				? session.track
-				: (schedule?.tracks || []).find(t => t?.id === session?.track)
+				: this.trackById[session?.track]
 			return {
 				'--session-color': track?.color || 'var(--pretalx-clr-primary)'
 			}
@@ -208,12 +228,14 @@ export default {
 
 <style lang="stylus">
 .c-featured-speakers
-	padding: 12px 0
 
 	h3#featured-speakers-heading
-		margin: 0 0 18px
-		font-size: 20px
-		font-weight: 600
+		margin-top: 0px
+		font-family: inherit
+		font-size: 24px
+		font-weight: 500
+		line-height: 1.1
+		color: inherit
 
 	.featured-speakers-grid
 		display: flex
@@ -222,8 +244,14 @@ export default {
 		gap: 18px
 
 	.featured-speaker-column
-		width: 320px
+		/* Default for smaller devices */
+		width: 400px
 		max-width: 100%
+
+		/* Desktop and large / mid tablets: use 350px */
+		@media (min-width: 768px)
+			width: 360px
+			max-width: 100%
 
 	.featured-speaker-card
 		margin: 0
@@ -254,18 +282,43 @@ export default {
 				h4
 					margin: 8px 0 0
 					color: $clr-primary-text-light
-					font-size: 22px
-					font-weight: 600
-					line-height: 1.2
-				p
+					font-size: 18px
+					font-weight: 500
+					line-height: 1.3
+				.featured-speaker-preview-bio
 					margin: 4px 0 0
 					color: $clr-secondary-text-light
 					font-size: 12px
 					line-height: 1.35
 					display: -webkit-box
-					-webkit-line-clamp: 3
+					-webkit-line-clamp: 2
+					line-clamp: 2
 					-webkit-box-orient: vertical
 					overflow: hidden
+					overflow-wrap: anywhere
+					text-overflow: ellipsis
+					&.c-markdown-content
+						font-size: inherit
+						line-height: inherit
+						color: inherit
+						p, ul, ol, table, pre
+							margin-top: 0.25em
+							margin-bottom: 0.25em
+							&:first-child
+								margin-top: 0
+							&:last-child
+								margin-bottom: 0
+
+	.featured-speaker-card[open] .featured-speaker-summary .thumbnail .caption .featured-speaker-preview-bio
+		display: block
+		-webkit-line-clamp: unset
+		line-clamp: unset
+		-webkit-box-orient: unset
+		overflow: visible
+		white-space: normal
+		text-overflow: clip
+		&.c-markdown-content
+			display: block
 
 	.avatar-placeholder
 		width: 100%
@@ -284,12 +337,6 @@ export default {
 		padding: 12px
 		background: $clr-grey-100
 		border-top: 1px solid $clr-grey-300
-
-	.featured-speaker-bio
-		color: $clr-primary-text-light
-		font-size: 13px
-		line-height: 1.55
-		white-space: pre-wrap
 
 	.featured-speaker-divider
 		margin: 12px 0 8px

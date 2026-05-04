@@ -14,7 +14,7 @@
 	.grid-viewport(ref="gridViewport", @scroll="onViewportScroll")
 		.grid(:style="gridStyle")
 			template(v-for="slice of visibleTimeslices")
-				.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.toISOString()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
+				.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice-day="slice.date.clone().tz(timezone).format('YYYY-MM-DD')", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 				.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 			.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
 				svg(viewBox="0 0 10 10", :title="nowHoverTime")
@@ -29,7 +29,7 @@
 					:style="getSessionStyle(session)",
 					:showAbstract="false", :showRoom="false",
 					:showFavCount="showFavCount",
-					:faved="favs.includes(session.id)",
+					:faved="favSet.has(session.id)",
 					:hasAmPm="hasAmPm",
 					:onHomeServer="onHomeServer",
 					@fav="$emit('fav', session.id)",
@@ -66,7 +66,7 @@
 							:style="getChunkSessionStyle(session, chunk)",
 							:showAbstract="false", :showRoom="false",
 							:showFavCount="showFavCount",
-							:faved="favs.includes(session.id)",
+							:faved="favSet.has(session.id)",
 							:hasAmPm="hasAmPm",
 							:onHomeServer="onHomeServer",
 							@fav="$emit('fav', session.id)",
@@ -123,6 +123,10 @@ export default {
 		density: {
 			type: String,
 			default: 'default'
+		},
+		timeDensityMinutes: {
+			type: Number,
+			default: 30
 		}
 	},
 	data () {
@@ -139,6 +143,29 @@ export default {
 		}
 	},
 	computed: {
+		favSet () {
+			return new Set(this.favs || [])
+		},
+		/** Precompute datebreak row span targets; avoids O(n) findIndex per datebreak slice in getSliceStyle. */
+		datebreakGridEndRowByName () {
+			const ts = this.timeslices
+			if (!ts.length) return {}
+			const out = Object.create(null)
+			let j = 0
+			for (let i = 0; i < ts.length; i++) {
+				if (!ts[i].datebreak) continue
+				const d0 = ts[i].date.clone().startOf('day').valueOf()
+				while (j < ts.length && ts[j].date.clone().startOf('day').valueOf() <= d0) j++
+				const endIdx = j < ts.length ? j : ts.length - 1
+				out[ts[i].name] = ts[endIdx].name
+			}
+			return out
+		},
+		roomIndexLookup () {
+			const m = new Map()
+			this.rooms.forEach((room, i) => m.set(room, i))
+			return m
+		},
 		nowHoverTime () {
 			if (!this.now || !this.timezone) return ''
 			const zonedNow = this.now.clone().tz(this.timezone)
@@ -156,7 +183,7 @@ export default {
 			return chunks.length ? chunks : [this.rooms]
 		},
 		timeslices () {
-			const minimumSliceMins = 30
+			const minimumSliceMins = this.timeDensityMinutes || 30
 			const slices = []
 			const slicesLookup = {}
 			const pushSlice = function (date, {hasSession = false, hasBreak = false, hasStart = false, hasEnd = false} = {}) {
@@ -224,7 +251,7 @@ export default {
 
 			const sliceIsFraction = function (slice) {
 				if (!slice) return
-				return slice.date.minute() !== 0 && slice.date.minute() !== minimumSliceMins
+				return slice.date.minute() % minimumSliceMins !== 0
 			}
 
 			const sliceShouldDisplay = function (slice, index) {
@@ -262,10 +289,10 @@ export default {
 					prevSlice.gap = true
 				}
 			}
-			// Only count slice as gap if it is longer than 30 minutes
+			// Only count slice as gap if it is longer than the base interval
 			compactedSlices.forEach((slice, index) => {
 				if (slice.gap && index < compactedSlices.length - 1) {
-					if (compactedSlices[index + 1].date.diff(slice.date, 'minutes') <= 30) slice.gap = false
+					if (compactedSlices[index + 1].date.diff(slice.date, 'minutes') <= minimumSliceMins) slice.gap = false
 				}
 			})
 			// remove gap at the end of the schedule
@@ -273,20 +300,23 @@ export default {
 			return compactedSlices
 		},
 		visibleTimeslices () {
-			return this.timeslices.filter(slice => slice.date.minute() % 30 === 0)
+			const minimumSliceMins = this.timeDensityMinutes || 30
+			return this.timeslices.filter(slice => slice.date.minute() % minimumSliceMins === 0)
 		},
 		gridStyle () {
 			const scale = this.density === 'compact' ? 0.65 : this.density === 'comfortable' ? 1.4 : 1
+			const minimumSliceMins = this.timeDensityMinutes || 30
+			const baseSliceHeight = 60 * (minimumSliceMins / 30)
 			let rows = ''
 			rows += this.timeslices.map((slice, index) => {
 				const next = this.timeslices[index + 1]
-				let height = 60
+				let height = baseSliceHeight
 				if (slice.gap) {
-					height = 100
+					height = 100 * (minimumSliceMins / 30)
 			} else if (slice.datebreak) {
-				height = 36
+					height = 36 * (minimumSliceMins / 30)
 				} else if (next) {
-					height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
+					height = Math.min(baseSliceHeight, next.date.diff(slice.date, 'minutes') * 2)
 				}
 				height = Math.round(height * scale)
 				return `[${slice.name}] minmax(${height}px, auto)`
@@ -297,16 +327,20 @@ export default {
 			}
 		},
 		nowSlice () {
+			const minimumSliceMins = this.timeDensityMinutes || 30
 			let slice
-			for (const s of this.timeslices) {
+			let sliceIdx = -1
+			for (let i = 0; i < this.timeslices.length; i++) {
+				const s = this.timeslices[i]
 				if (this.now.isBefore(s.date)) break
 				slice = s
+				sliceIdx = i
 			}
 			if (slice) {
-				const nextSlice = this.timeslices[this.timeslices.indexOf(slice) + 1]
+				const nextSlice = this.timeslices[sliceIdx + 1]
 				if (!nextSlice) return null
 				// is on daybreak
-				if (nextSlice.date.diff(slice.date, 'minutes') > 30) return {
+				if (nextSlice.date.diff(slice.date, 'minutes') > minimumSliceMins) return {
 					slice: nextSlice,
 					offset: 0,
 					onDaybreak: true
@@ -361,13 +395,7 @@ export default {
 		if (fragmentIsDate || !this.$refs.now) return
 		// Skip auto-scroll if disabled via prop
 		if (this.disableAutoScroll) return
-		const clearance = this.getStickyHeaderClearance()
-		const rect = this.$refs.now.getBoundingClientRect()
-		if (this.scrollParent) {
-			this.scrollParent.scrollTop += rect.top - clearance
-		} else {
-			window.scrollBy({top: rect.top - clearance})
-		}
+		this.scrollElementIntoViewWithClearance(this.$refs.now)
 	},
 	beforeUnmount () {
 		if (this._gridResizeObserver) {
@@ -380,11 +408,12 @@ export default {
 			return !!session.id
 		},
 		getChunkSessions (chunkRooms) {
+			const chunkSet = new Set(chunkRooms)
 			return this.sessions.filter(s => {
 				if (!this.isProperSession(s)) {
-					return !s.room || chunkRooms.includes(s.room)
+					return !s.room || chunkSet.has(s.room)
 				}
-				return chunkRooms.includes(s.room)
+				return chunkSet.has(s.room)
 			})
 		},
 		getChunkSessionStyle (session, chunkRooms) {
@@ -414,7 +443,7 @@ export default {
 			}
 		},
 		getSessionStyle (session) {
-			const roomIndex = this.rooms.indexOf(session.room)
+			const roomIndex = this.roomIndexLookup.has(session.room) ? this.roomIndexLookup.get(session.room) : -1
 			return {
 				'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
 				'grid-column': roomIndex > -1 ? roomIndex + 2 : null
@@ -422,8 +451,27 @@ export default {
 		},
 		getStickyHeaderClearance () {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
-			// 40px page header (when stuck) + 40px toolbar + rooms bar + scrollbar + buffer
-			return 80 + (stickyHeader ? stickyHeader.offsetHeight : 0) + 10
+			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
+			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
+			let toolbarHeight = 0
+			if (toolbar) {
+				toolbarHeight = toolbar.getBoundingClientRect().height
+			} else if (scheduleRoot) {
+				const parsed = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-toolbar-height'))
+				toolbarHeight = Number.isFinite(parsed) ? parsed : 0
+			}
+			const stickyHeaderHeight = stickyHeader ? stickyHeader.getBoundingClientRect().height : 0
+			let navOffset = 40
+			if (stickyHeader) {
+				const rect = stickyHeader.getBoundingClientRect()
+				navOffset = Math.max(0, rect.top)
+			}
+			let versionWarning = 0
+			if (scheduleRoot) {
+				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
+				versionWarning = Number.isFinite(vh) ? vh : 0
+			}
+			return navOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -446,10 +494,12 @@ export default {
 		},
 		getSliceStyle (slice) {
 			if (slice.datebreak) {
-				let index = this.timeslices.findIndex(s => s.date.clone().startOf('day').isAfter(slice.date.clone().startOf('day')))
-				if (index < 0) {
-					index = this.timeslices.length - 1
+				const endName = this.datebreakGridEndRowByName[slice.name]
+				if (endName) {
+					return {'grid-area': `${slice.name} / 1 / ${endName} / auto`}
 				}
+				let index = this.timeslices.findIndex(s => s.date.clone().startOf('day').isAfter(slice.date.clone().startOf('day')))
+				if (index < 0) index = this.timeslices.length - 1
 				return {'grid-area': `${slice.name} / 1 / ${this.timeslices[index].name} / auto`}
 			}
 			return {'grid-area': `${slice.name} / 1 / auto / auto`}
@@ -464,16 +514,27 @@ export default {
 		changeDay (day) {
 			this.scrollToDayStart(day)
 		},
-		scrollToDayStart (day) {
-			const el = this.$refs[getSliceName(moment.tz(day, this.timezone))]?.[0]
+		scrollElementIntoViewWithClearance (el) {
 			if (!el) return
 			const clearance = this.getStickyHeaderClearance()
 			const rect = el.getBoundingClientRect()
-			if (this.scrollParent) {
-				this.scrollParent.scrollTop += rect.top - clearance
+			const scrollEl = this.scrollParent
+			const isWindowScroll = !scrollEl || scrollEl === document.documentElement || scrollEl === document.body
+			if (!isWindowScroll) {
+				const parentRect = scrollEl.getBoundingClientRect()
+				const delta = rect.top - parentRect.top - clearance
+				scrollEl.scrollTop += delta
 			} else {
-				window.scrollBy({top: rect.top - clearance})
+				window.scrollBy({ top: rect.top - clearance })
 			}
+		},
+		scrollToDayStart (day) {
+			const targetMoment = moment.isMoment(day)
+				? day.clone().tz(this.timezone).startOf('day')
+				: moment.tz(day, this.timezone).startOf('day')
+			const el = this.$refs[getSliceName(targetMoment)]?.[0]
+			if (!el) return
+			this.scrollElementIntoViewWithClearance(el)
 		},
 		initScrollSync () {
 			const viewport = this.$refs.gridViewport
@@ -549,13 +610,12 @@ export default {
 		onIntersect (entries) {
 			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
 			if (!entry) return
-			const day = moment(entry.target.dataset.slice).startOf('day')
-			if (day.format('YYYY-MM-DD') !== this.currentDay) {
-				// Only update the active day indicator — don't trigger a scroll jump.
-				// scrollToDayStart is only called from toolbar clicks (selectDay / forceScrollDay).
-				this._scrollDayUpdate = true
-				this.$emit('changeDay', day)
-			}
+			const dayStr = entry.target.dataset.sliceDay
+			if (!dayStr || dayStr === this.currentDay) return
+			// Only update the active day indicator — don't trigger a scroll jump.
+			// scrollToDayStart is only called from toolbar clicks (selectDay / forceScrollDay).
+			this._scrollDayUpdate = true
+			this.$emit('changeDay', moment.tz(dayStr, this.timezone).startOf('day'))
 		},
 		showRoomTooltip (event, room) {
 			const rect = event.target.getBoundingClientRect()
@@ -576,17 +636,18 @@ export default {
 .c-grid-schedule
 	flex: auto
 	background-color: $clr-grey-50
+	--room-col-min: 320px
 	.sticky-header
 		position: sticky
-		top: calc(var(--pretalx-sticky-top-offset, 0px) + 30px + var(--pretalx-version-warning-height, 0px))
+		top: calc(var(--pretalx-sticky-top-offset, 0px) + var(--pretalx-toolbar-height, 30px) + var(--pretalx-version-warning-height, 0px) - 1px)
 		z-index: 25
 		background-color: $clr-white
 	.rooms-bar
 		overflow: hidden
 		.rooms-inner
 			display: grid
-			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
-			min-width: max(min-content, 100%)
+			grid-template-columns: 78px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
+			min-width: max(min-content, calc(78px + (var(--total-rooms) * var(--room-col-min)) + 60px))
 			> .room
 				display: flex
 				justify-content: center
@@ -650,9 +711,9 @@ export default {
 			display: none
 		.grid
 			display: grid
-			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
+			grid-template-columns: 78px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 			position: relative
-			min-width: max(min-content, 100%)
+			min-width: max(min-content, calc(78px + (var(--total-rooms) * var(--room-col-min)) + 60px))
 		.break
 			.time-box
 				background-color: $clr-grey-500
@@ -744,9 +805,9 @@ export default {
 		font-size: 14px
 		padding: 4px 2px
 	.grid
-		grid-template-columns: 60px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 60px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 	.rooms-inner
-		grid-template-columns: 60px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 60px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 
 .c-grid-schedule.density-comfortable
 	.timeslice
@@ -756,9 +817,13 @@ export default {
 		font-size: 20px
 		padding: 12px 6px
 	.grid
-		grid-template-columns: 96px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
 	.rooms-inner
-		grid-template-columns: 96px repeat(var(--total-rooms), 1fr) auto
+		grid-template-columns: 96px repeat(var(--total-rooms), minmax(var(--room-col-min), 1fr)) auto
+
+@media (max-width: 600px)
+	.c-grid-schedule
+		--room-col-min: 240px
 
 @media print
 	.c-grid-schedule
