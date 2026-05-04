@@ -17,6 +17,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay import __version__
 from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.submission import Submission
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
@@ -145,7 +146,7 @@ class FrabXmlExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-code'
     cors = '*'
 
@@ -184,7 +185,7 @@ class FrabXCalExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-calendar'
     cors = '*'
 
@@ -216,18 +217,32 @@ class FrabJsonExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-code'
     cors = '*'
 
     def speaker_ids(self) -> set[int]:
-        speaker_ids = set()
+        # Must match the exact talk set that is actually exported via ``self.data``.
+        # (This keeps speaker profile prefetch aligned with the exported schedule.)
+        submission_ids: set[int] = set()
         for day in self.data:
-            for room in day['rooms'].values():
+            for room in day['rooms']:
                 for talk in room['talks']:
-                    if talk.submission:
-                        speaker_ids.update(talk.submission.speakers.values_list('id', flat=True))
-        return speaker_ids
+                    if not talk.submission_id:
+                        continue
+                    if self.favs_retrieve and self.talk_ids and talk.submission and talk.submission.code not in self.talk_ids:
+                        continue
+                    submission_ids.add(talk.submission_id)
+
+        if not submission_ids:
+            return set()
+
+        return set(
+            Submission.objects.filter(id__in=submission_ids)
+            .values_list('speakers__id', flat=True)
+            .exclude(speakers__id__isnull=True)
+            .distinct()
+        )
 
     @cached_property
     def speaker_profiles(self) -> dict[int, SpeakerProfile]:
@@ -394,7 +409,7 @@ class ICalExporter(BaseExporter):
     show_public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-calendar'
     cors = '*'
 
