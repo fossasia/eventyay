@@ -728,8 +728,13 @@ def _set_question_answer(submission, question_id, answer_text, question_cache=No
             option_lookup = {
                 str(option.answer).strip().casefold(): option for option in question.options.all()
             }
-        for option_text in answer_text.split(','):
-            stripped_option = option_text.strip()
+        
+        if question.variant == TalkQuestionVariant.MULTIPLE:
+            options_to_check = [opt.strip() for opt in answer_text.split(',')]
+        else:
+            options_to_check = [answer_text.strip()]
+            
+        for stripped_option in options_to_check:
             if not stripped_option:
                 continue
             option = option_lookup.get(stripped_option.casefold())

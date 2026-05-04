@@ -182,6 +182,68 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     review = PrimaryKeyRelatedField(read_only=True, required=False)
     answer_file = UploadedFileField(required=False)
 
+    def validate(self, data):
+        question = self.get_with_fallback(data, "question")
+
+        if question and question.variant in (
+            TalkQuestionVariant.CHOICES,
+            TalkQuestionVariant.MULTIPLE,
+            TalkQuestionVariant.SELECT,
+        ):
+            if "options" in data or not self.instance:
+                options = data.get("options", [])
+                if not options:
+                    raise exceptions.ValidationError(
+                        {
+                            "options": "This field is required for choice, select, or multiple-choice questions."
+                        }
+                    )
+                for option in options:
+                    if option.question != question:
+                        raise exceptions.ValidationError(
+                            {
+                                "options": f"Option {option.pk} does not belong to question {question.pk}."
+                            }
+                        )
+                if question.variant in (TalkQuestionVariant.SELECT, TalkQuestionVariant.CHOICES) and len(options) > 1:
+                    raise exceptions.ValidationError(
+                        {"options": "Only one option may be selected for this question type."}
+                    )
+
+        target = question.target if question else None
+        if target:
+            submission = self.get_with_fallback(data, "submission")
+            review = self.get_with_fallback(data, "review")
+            person = self.get_with_fallback(data, "person")
+            if target == TalkQuestionTarget.SUBMISSION and not submission:
+                raise exceptions.ValidationError(
+                    {"submission": "This field is required for submission questions."}
+                )
+            if target == TalkQuestionTarget.REVIEWER and not review:
+                raise exceptions.ValidationError(
+                    {"review": "This field is required for reviewer questions."}
+                )
+            if target == TalkQuestionTarget.SPEAKER and not person:
+                raise exceptions.ValidationError(
+                    {"person": "This field is required for speaker questions."}
+                )
+
+            # Only allow the field matching the question target
+            if target == TalkQuestionTarget.SUBMISSION and review:
+                raise exceptions.ValidationError(
+                    {"review": "Cannot set review for submission question."}
+                )
+            if target == TalkQuestionTarget.REVIEWER and submission:
+                raise exceptions.ValidationError(
+                    {"submission": "Cannot set submission for reviewer question."}
+                )
+            if target == TalkQuestionTarget.SPEAKER and submission:
+                raise exceptions.ValidationError(
+                    {"submission": "Cannot set submission for speaker question."}
+                )
+
+        return data
+
     class Meta:
         model = Answer
         fields = (
@@ -255,66 +317,6 @@ class AnswerCreateSerializer(AnswerSerializer):
         self.fields["options"].queryset = AnswerOption.objects.filter(
             question__in=event_questions
         )
-
-    def validate(self, data):
-        question = self.get_with_fallback(data, "question")
-
-        if question.variant in (
-            TalkQuestionVariant.CHOICES,
-            TalkQuestionVariant.MULTIPLE,
-            TalkQuestionVariant.SELECT,
-        ):
-            options = self.get_with_fallback(data, "options")
-            if not options:
-                raise exceptions.ValidationError(
-                    {
-                        "options": "This field is required for choice, select, or multiple-choice questions."
-                    }
-                )
-            for option in options:
-                if option.question != question:
-                    raise exceptions.ValidationError(
-                        {
-                            "options": f"Option {option.pk} does not belong to question {question.pk}."
-                        }
-                    )
-            if question.variant == TalkQuestionVariant.SELECT and len(options) > 1:
-                raise exceptions.ValidationError(
-                    {"options": "Only one option may be selected for select questions."}
-                )
-
-        target = question.target
-        submission = self.get_with_fallback(data, "submission")
-        review = self.get_with_fallback(data, "review")
-        person = self.get_with_fallback(data, "person")
-        if target == TalkQuestionTarget.SUBMISSION and not submission:
-            raise exceptions.ValidationError(
-                {"submission": "This field is required for submission questions."}
-            )
-        if target == TalkQuestionTarget.REVIEWER and not review:
-            raise exceptions.ValidationError(
-                {"review": "This field is required for reviewer questions."}
-            )
-        if target == TalkQuestionTarget.SPEAKER and not person:
-            raise exceptions.ValidationError(
-                {"person": "This field is required for speaker questions."}
-            )
-
-        # Only allow the field matching the question target
-        if target == TalkQuestionTarget.SUBMISSION and review:
-            raise exceptions.ValidationError(
-                {"review": "Cannot set review for submission question."}
-            )
-        if target == TalkQuestionTarget.REVIEWER and submission:
-            raise exceptions.ValidationError(
-                {"submission": "Cannot set submission for reviewer question."}
-            )
-        if target == TalkQuestionTarget.SPEAKER and submission:
-            raise exceptions.ValidationError(
-                {"submission": "Cannot set submission for speaker question."}
-            )
-
-        return data
 
     class Meta(AnswerSerializer.Meta):
         expandable_fields = None
