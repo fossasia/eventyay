@@ -706,7 +706,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     if action_type.startswith('eventyay.event.product.variation'):
         if 'value' not in data:
             # Backwards compatibility
-            var = ProductVariation.objects.filter(id=data['id']).first()
+            with scopes_disabled():
+                var = ProductVariation.objects.filter(id=data['id']).first()
             if var:
                 data['value'] = str(var.value)
             else:
@@ -719,7 +720,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         return plains[action_type].format_map(data)
 
     if action_type.startswith('eventyay.event.order.changed'):
-        return _display_order_changed(sender, logentry, action_type)
+        with scopes_disabled():
+            return _display_order_changed(sender, logentry, action_type)
 
     if action_type.startswith('eventyay.event.payment.provider.'):
         return _('The settings of a payment provider have been changed.')
