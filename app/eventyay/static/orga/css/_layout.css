@@ -481,6 +481,11 @@ aside.sidebar {
   margin-left: auto;
 }
 
+#main-title .navigation-button .header-nav.active {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  border-color: var(--color-primary-hover);
+}
+
 #main-title .navigation-title {
   text-align: left;
   flex: 0 1 75%;
