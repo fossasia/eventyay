@@ -58,22 +58,18 @@
             <div class="panel-heading">
                 <h3 class="panel-title">
                     {% trans "Column mapping" %}
-                    <small class="text-muted">
-                        {% trans "Columns marked with a CSV column suggestion were automatically matched from your file headers." %}
-                    </small>
                 </h3>
             </div>
             <div class="panel-body">
                 <p class="text-muted">
                     {% blocktrans trimmed %}
-                        For each field below, select which CSV column provides the data, or leave empty to skip.
-                        Suggestions have been pre-filled based on your CSV headers.
+                        For each field below, select which CSV column provides the data.
+                        Fields with a "Keep empty" option can be left unmapped; fields without it are required.
+                        Selections have been pre-filled automatically where your CSV headers match known field names.
                     {% endblocktrans %}
                 </p>
-                {% for field in form %}
-                    {% if field.name != "orders" and field.name != "status" and field.name != "testmode" %}
-                        {% bootstrap_field field layout="horizontal" %}
-                    {% endif %}
+                {% for field in form.mapping_fields %}
+                    {% bootstrap_field field layout="horizontal" %}
                 {% endfor %}
             </div>
         </div>

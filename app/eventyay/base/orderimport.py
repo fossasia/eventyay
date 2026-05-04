@@ -35,26 +35,8 @@ from eventyay.base.settings import (
     COUNTRIES_WITH_STATE_IN_ADDRESS,
     PERSON_NAME_SCHEMES,
 )
+from eventyay.base.import_utils import build_header_map, match_header, normalize_header_value  # noqa: F401
 from eventyay.base.signals import order_import_columns
-
-
-def _normalize_header_value(value):
-    """Normalise a CSV header or suggestion string for fuzzy matching."""
-    if not value:
-        return ''
-    value = value.lower().replace('-', ' ').replace('_', ' ')
-    value = value.replace('\u2019', "'").replace('\u2018', "'").replace('\u201c', '"').replace('\u201d', '"')
-    return ''.join(value.split()).rstrip('.')
-
-
-def _match_header(headers, candidates):
-    """Return the first header that matches any of the candidate suggestion strings."""
-    header_map = {_normalize_header_value(header): header for header in headers}
-    for candidate in candidates:
-        normalized = _normalize_header_value(candidate)
-        if normalized in header_map:
-            return header_map[normalized]
-    return None
 
 
 class ImportColumn:

@@ -1,7 +1,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.orderimport import _match_header, get_all_columns
+from eventyay.base.import_utils import build_header_map, match_header
+from eventyay.base.orderimport import get_all_columns
 
 
 class ProcessForm(forms.Form):
@@ -21,6 +22,9 @@ class ProcessForm(forms.Form):
     )
     testmode = forms.BooleanField(label=_('Create orders as test mode orders'), required=False)
 
+    # Names of the non-mapping fields rendered separately in the "Import settings" panel.
+    _SETTINGS_FIELDS = frozenset({'orders', 'status', 'testmode'})
+
     def __init__(self, *args, **kwargs):
         headers = kwargs.pop('headers')
         initial = kwargs.pop('initial', {}) or {}
@@ -30,7 +34,8 @@ class ProcessForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         header_choices = [('csv:{}'.format(h), _('CSV column: "{name}"').format(name=h)) for h in headers]
-        valid_csv_values = {v for v, _ in header_choices}
+        # Build the normalised header map once; reused for every column below (comment 004).
+        header_map = build_header_map(headers)
 
         for c in get_all_columns(self.event):
             choices = []
@@ -49,18 +54,25 @@ class ProcessForm(forms.Form):
             )
 
             saved = initial.get(c.identifier)
-            if saved and saved in all_valid_values:
-                # Saved mapping is valid for this file — honour it.
+            # Use `is not None` rather than truthiness so that a saved value of
+            # '0' or any other falsy-but-valid string is honoured (comment 002).
+            if saved is not None and saved in all_valid_values:
                 field.initial = saved
             else:
-                # No usable saved mapping: auto-match from CSV headers, then fall back to
-                # the column's built-in default (e.g. a static country from guess_country).
-                suggestions = getattr(c, 'suggestions', [])
-                matched = _match_header(headers, suggestions) if suggestions else None
+                # No usable saved mapping: auto-match from CSV headers using the
+                # pre-built map, then fall back to the column's built-in default.
+                matched = match_header(header_map, getattr(c, 'suggestions', []))
                 if matched:
                     field.initial = 'csv:{}'.format(matched)
                 elif c.initial is not None and c.initial in all_valid_values:
                     field.initial = c.initial
 
             self.fields[c.identifier] = field
+
+    @property
+    def mapping_fields(self):
+        """Yield only the column-mapping fields (excludes the import-settings fields)."""
+        for name, field in self.fields.items():
+            if name not in self._SETTINGS_FIELDS:
+                yield self[name]
 
