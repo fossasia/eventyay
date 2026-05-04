@@ -34,7 +34,7 @@ class ProcessForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         header_choices = [('csv:{}'.format(h), _('CSV column: "{name}"').format(name=h)) for h in headers]
-        # Build the normalised header map once; reused for every column below (comment 004).
+        # Build the normalised header map once; reused for every column below.
         header_map = build_header_map(headers)
 
         for c in get_all_columns(self.event):
@@ -55,7 +55,7 @@ class ProcessForm(forms.Form):
 
             saved = initial.get(c.identifier)
             # Use `is not None` rather than truthiness so that a saved value of
-            # '0' or any other falsy-but-valid string is honoured (comment 002).
+            # '0' or any other falsy-but-valid string is honoured.
             if saved is not None and saved in all_valid_values:
                 field.initial = saved
             else:
