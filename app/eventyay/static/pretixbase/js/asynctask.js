@@ -44,8 +44,8 @@ function async_task_check() {
 function async_task_check_callback(data, jqXHR, status) {
     "use strict";
     if (data.ready && data.redirect) {
+        waitingDialog.hide();
         if (async_task_is_download && data.success) {
-            waitingDialog.hide();
             _restore_async_old_url_once();
         }
         location.href = data.redirect;
@@ -115,8 +115,8 @@ function async_task_callback(data, jqXHR, status) {
     "use strict";
     $("body").data('ajaxing', false);
     if (data.redirect) {
+        waitingDialog.hide();
         if (async_task_is_download && data.success) {
-            waitingDialog.hide();
             _restore_async_old_url_once();
         }
         // If we pushed a waiting state earlier, restore the original

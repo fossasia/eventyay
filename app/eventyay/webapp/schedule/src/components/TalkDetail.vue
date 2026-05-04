@@ -11,8 +11,19 @@
 			.info
 				span.info-main {{ datetime }} {{ roomName }}
 				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
-			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
-			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
+			.field-section.abstract-section(v-if="resolvedTalk.abstract")
+				h2.field-heading Abstract
+				.field-content
+					markdown-content(:markdown="resolvedTalk.abstract")
+			.field-section.description-section(v-if="resolvedTalk.description")
+				h2.field-heading Description
+				.field-content
+					markdown-content(:markdown="resolvedTalk.description")
+			.public-answers(v-if="resolvedTalk.answers && resolvedTalk.answers.length > 0")
+				.field-section(v-for="answer in resolvedTalk.answers", :key="answer.question_id")
+					h2.field-heading {{ answer.question }}
+					.field-content
+						markdown-content(:markdown="answer.answer")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 				h2 {{ t.downloads }}
 				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
@@ -370,10 +381,27 @@ export default {
 			color: $clr-secondary-text-light
 			.session-language
 				white-space: nowrap
-		.abstract
+		.abstract, .description
+			margin: 0
+		.field-section
 			margin: 16px 0 0 0
-			font-size: 16px
-			font-weight: 600
+			.field-heading
+				margin: 0 0 6px 0
+				font-size: 14px
+				font-weight: 700
+				color: $clr-secondary-text-light
+			.field-content
+				padding: 8px 12px
+				p
+					margin: 0.25em 0
+					&:first-child
+						margin-top: 0
+					&:last-child
+						margin-bottom: 0
+			&.abstract-section
+				.field-content
+					font-size: 16px
+					font-weight: 600
 		.downloads
 			border: border-separator()
 			border-radius: 4px
