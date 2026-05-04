@@ -30,7 +30,13 @@ bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
 	.editor.rich-text-content(ref="editor")
 	.uploading(v-if="uploading")
 		bunt-progress-circular(size="huge")
-	.upload-error(v-if="uploadError") {{ uploadError }}
+	error-dialog(
+		v-if="showErrorDialog"
+		:title="$t('RichTextEditor:upload:error-title')"
+		:message="uploadErrorMessage"
+		:button-text="$t('RichTextEditor:upload:error-ok')"
+		@close="closeErrorDialog"
+	)
 
 </template>
 <script setup>
@@ -43,6 +49,7 @@ import VideoResponsive from 'lib/quill/VideoResponsive'
 import fullWidthFormat from 'lib/quill/fullWidthFormat'
 import Emitter from 'quill/core/emitter'
 import api from 'lib/api'
+import ErrorDialog from 'components/ErrorDialog'
 
 const Delta = Quill.import('delta')
 
@@ -58,7 +65,8 @@ const editor = ref(null)
 
 const quill = ref(null)
 const uploading = ref(false)
-const uploadError = ref(null)
+const showErrorDialog = ref(false)
+const uploadErrorMessage = ref('')
 
 const onTextchange = (delta, oldContents, source) => {
 	if (quill.value) emit('update:modelValue', quill.value.getContents())
@@ -71,6 +79,11 @@ const onSelectionchange = (range, oldRange, source) => {
 	} else if (range !== null && oldRange === null) {
 		outline.value.focus()
 	}
+}
+
+const closeErrorDialog = () => {
+	showErrorDialog.value = false
+	uploadErrorMessage.value = ''
 }
 
 onBeforeUnmount(() => {
@@ -99,12 +112,13 @@ onMounted(() => {
 							if (fileInput.files != null && fileInput.files[0] != null) {
 								const file = fileInput.files[0]
 
-								uploadError.value = null
+								showErrorDialog.value = false
 								uploading.value = true
 								api.uploadFilePromise(file, file.name).then(data => {
 									if (data.error) {
-										uploadError.value = i18n.t('RichTextEditor:upload:error')
-										console.error('RichTextEditor image upload failed', data.error)
+										uploadErrorMessage.value = i18n.t('RichTextEditor:upload:error')
+										console.error('RichTextEditor image upload failed', data.error, `File: ${file.name}`)
+										showErrorDialog.value = true
 									} else {
 										const range = instance.getSelection(true)
 										instance.updateContents(new Delta()
@@ -115,8 +129,9 @@ onMounted(() => {
 									}
 									uploading.value = false
 								}).catch(error => {
-									uploadError.value = i18n.t('RichTextEditor:upload:error')
-									console.error('RichTextEditor image upload failed', error)
+									uploadErrorMessage.value = i18n.t('RichTextEditor:upload:error')
+									console.error('RichTextEditor image upload failed', error, `File: ${file.name}`)
+									showErrorDialog.value = true
 									uploading.value = false
 								})
 							}
@@ -137,12 +152,6 @@ onMounted(() => {
 
 	instance.on('selection-change', onSelectionchange)
 	instance.on('text-change', onTextchange)
-})
-
-onBeforeUnmount(() => {
-	if (!quill.value) return
-	quill.value.off('selection-change', onSelectionchange)
-	quill.value.off('text-change', onTextchange)
 })
 </script>
 <style lang="stylus">

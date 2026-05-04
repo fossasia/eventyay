@@ -334,6 +334,8 @@
 	"RichTextEditor:underline:tooltip": "Underline",
 	"RichTextEditor:full-width:tooltip": "Expand to full page width",
 	"RichTextEditor:upload:error": "Failed to upload the image",
+	"RichTextEditor:upload:error-title": "Image Upload Error",
+	"RichTextEditor:upload:error-ok": "OK",
 	"Room:recordings:tooltip": "View recordings",
 	"Room:sidebar:tabs-header:chat": "Chat",
 	"Room:sidebar:tabs-header:questions": "Questions",
