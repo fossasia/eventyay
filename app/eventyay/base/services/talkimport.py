@@ -330,7 +330,7 @@ def import_submissions(event: Event, fileid: str, settings: dict, locale: str, u
                     )
                     for question in questions:
                         option_lookup = None
-                        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+                        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
                             option_lookup = {
                                 str(option.answer).strip().casefold(): option for option in question.options.all()
                             }
@@ -722,7 +722,7 @@ def _set_question_answer(submission, question_id, answer_text, question_cache=No
         defaults={'answer': answer_text, 'person': None},
     )
 
-    if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+    if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
         answer.options.clear()
         if option_lookup is None:
             option_lookup = {
