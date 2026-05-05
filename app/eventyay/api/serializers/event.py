@@ -801,17 +801,16 @@ class EventSettingsSerializer(SettingsSerializer):
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        # instance is a HierarkeyProxy (event.settings)
-        event = instance._object
-        ret['meta_noindex'] = event.display_settings.get('meta_noindex', False)
+        ret['meta_noindex'] = (self.event.display_settings or {}).get('meta_noindex', False)
         return ret
 
     def update(self, instance, validated_data):
         meta_noindex = validated_data.pop('meta_noindex', None)
         if meta_noindex is not None:
-            event = instance._object
-            event.display_settings['meta_noindex'] = meta_noindex
-            event.save(update_fields=['display_settings'])
+            display_settings = self.event.display_settings or {}
+            display_settings['meta_noindex'] = meta_noindex
+            self.event.display_settings = display_settings
+            self.event.save(update_fields=['display_settings'])
         return super().update(instance, validated_data)
 
     def validate(self, data):

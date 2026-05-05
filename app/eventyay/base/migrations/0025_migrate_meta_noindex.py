@@ -10,8 +10,8 @@ def migrate_meta_noindex(apps, schema_editor):
             event = setting.object
             if event.display_settings is None:
                 event.display_settings = {}
-            # Only update if it's not already set
-            if 'meta_noindex' not in event.display_settings:
+            # Only update if not already migrated (avoids overwriting a deliberate True already set)
+            if event.display_settings.get('meta_noindex') is not True:
                 event.display_settings['meta_noindex'] = True
                 event.save(update_fields=['display_settings'])
 

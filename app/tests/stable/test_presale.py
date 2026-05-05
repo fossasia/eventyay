@@ -2,8 +2,9 @@
 Tests for public presale/event pages (agenda, schedule, speakers).
 These pages should be accessible without authentication.
 """
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
 
 from eventyay.base.models import Event
@@ -111,7 +112,9 @@ class TestAgendaPages:
 
 @pytest.mark.django_db
 class TestPlatformSearch:
-    def test_event_search_excludes_hidden_events(self, organizer_client, organizer, event):
+    def test_internal_event_picker_returns_all_matching_events(self, organizer_client, organizer, event):
+        """The internal /common/events/search/ endpoint is an authenticated event picker,
+        not a public search; it returns all matching events regardless of exclude_from_search."""
         event.name = 'Visible Search Event'
         event.save(update_fields=['name'])
 
