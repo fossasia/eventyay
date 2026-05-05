@@ -1,5 +1,10 @@
 /* Shared mobile styles for component nav */
 
+#event-nav .navigation .navigation-button .header-nav,
+#main-title .navigation-button .header-nav {
+  border-radius: 0;
+}
+
 @media (max-width: 767px) {
   /* Fix: allow sidebar menu items to expand on mobile */
   .sidebar .nav > li {

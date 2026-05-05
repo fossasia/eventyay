@@ -704,6 +704,16 @@ $(function () {
     lightbox.init();
 });
 
+window.addEventListener('pageshow', function (event) {
+    if (!event.persisted) return;
+    var btn = document.getElementById('btn-add-to-cart');
+    if (!btn) return;
+    var form = btn.closest('form');
+    if (form && (form.getAttribute('action') || '').includes('checkout')) {
+        window.location.reload();
+    }
+});
+
 function copy_answers(elements, answers) {
    elements.each(function (index) {
         var input = $(this),
