@@ -290,6 +290,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
                 'email': speaker.email,
                 'avatar': speaker.avatar,
+                'avatar_url': speaker.get_avatar_url(event=submission.event),
                 'avatar_source': speaker.avatar_source,
                 'avatar_license': speaker.avatar_license,
                 'reviewer_answers': sorted(

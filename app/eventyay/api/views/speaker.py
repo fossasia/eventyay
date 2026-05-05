@@ -50,8 +50,11 @@ class SpeakerImportRecordSerializer(serializers.Serializer):
         required=False,
         allow_empty=True,
     )
+    avatar_url = serializers.URLField(required=False, allow_blank=True)
     avatar_source = serializers.CharField(required=False, allow_blank=True)
     avatar_license = serializers.CharField(required=False, allow_blank=True)
+    is_featured = serializers.BooleanField(required=False)
+    featured_position = serializers.IntegerField(required=False, allow_null=True, min_value=0)
     speaker_extras = serializers.JSONField(required=False)
 
     def validate_speaker_extras(self, value):

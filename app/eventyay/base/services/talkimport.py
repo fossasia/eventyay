@@ -69,8 +69,11 @@ NORMALIZED_SPEAKER_SETTINGS = {
         'identifier',
         'locale',
         'linked_submissions',
+        'avatar_url',
         'avatar_source',
         'avatar_license',
+        'is_featured',
+        'featured_position',
     )
 }
 NORMALIZED_SUBMISSION_SETTINGS = {
@@ -535,7 +538,7 @@ def import_speakers(event: Event, fileid: str, settings: dict, locale: str, user
     return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
 
 
-def _apply_user_optional_fields(user, *, locale_val, avatar_source, avatar_license, identifier):
+def _apply_user_optional_fields(user, *, locale_val, avatar_url, avatar_source, avatar_license, identifier):
     """Apply optional field updates to a User instance and return changed field names."""
     update_fields = []
     if locale_val:
@@ -547,6 +550,7 @@ def _apply_user_optional_fields(user, *, locale_val, avatar_source, avatar_licen
     if avatar_license:
         user.avatar_license = avatar_license
         update_fields.append('avatar_license')
+    update_fields.extend(_set_external_avatar_url(user, avatar_url))
     if identifier:
         if (
             identifier
@@ -560,6 +564,43 @@ def _apply_user_optional_fields(user, *, locale_val, avatar_source, avatar_licen
             user.code = identifier
             update_fields.append('code')
     return update_fields
+
+
+def _normalize_avatar_url(value: str) -> str:
+    avatar_url = (value or '').strip()
+    if avatar_url.startswith('//'):
+        avatar_url = f'https:{avatar_url}'
+    parsed = urlparse(avatar_url)
+    if parsed.scheme in {'http', 'https'} and parsed.netloc:
+        return avatar_url
+    return ''
+
+
+def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
+    avatar_url = _normalize_avatar_url(avatar_url)
+    if not avatar_url:
+        return []
+
+    profile = dict(user.profile or {})
+    avatar = profile.get('avatar')
+    avatar = dict(avatar) if isinstance(avatar, dict) else {}
+    if avatar.get('url') == avatar_url:
+        return []
+
+    avatar['url'] = avatar_url
+    profile['avatar'] = avatar
+    user.profile = profile
+    return ['profile']
+
+
+def _parse_featured_position(value: str) -> int | None:
+    if not value:
+        return None
+    try:
+        position = int(value)
+    except (TypeError, ValueError):
+        return None
+    return position if position >= 0 else None
 
 
 def _sync_import_answers(*, event: Event, target: str, extras, caches: dict, submission=None, person=None):
@@ -668,8 +709,11 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
     identifier = _resolve_csv(settings.get('identifier'), record)
     locale_val = _resolve_csv(settings.get('locale'), record)
     linked_submissions = _resolve_csv(settings.get('linked_submissions'), record)
+    avatar_url = _resolve_csv(settings.get('avatar_url'), record)
     avatar_source = _resolve_csv(settings.get('avatar_source'), record)
     avatar_license = _resolve_csv(settings.get('avatar_license'), record)
+    is_featured = _resolve_csv(settings.get('is_featured'), record)
+    featured_position = _resolve_csv(settings.get('featured_position'), record)
     speaker_extras = record.get('speaker_extras') if isinstance(record, dict) else None
 
     if not email:
@@ -691,6 +735,7 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
 
     optional_kwargs = dict(
         locale_val=locale_val,
+        avatar_url=avatar_url,
         avatar_source=avatar_source,
         avatar_license=avatar_license,
         identifier=normalized_identifier,
@@ -734,9 +779,20 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
             user=user,
             event=event,
         )
+        profile_update_fields = []
         if biography:
             profile.biography = biography
-            profile.save(update_fields=['biography'])
+            profile_update_fields.append('biography')
+        if is_featured:
+            profile.is_featured = _truthy(is_featured)
+            profile_update_fields.append('is_featured')
+        if featured_position:
+            position = _parse_featured_position(featured_position)
+            if position is not None:
+                profile.position = position
+                profile_update_fields.append('position')
+        if profile_update_fields:
+            profile.save(update_fields=profile_update_fields)
 
         # Link to submissions
         if linked_submissions:
