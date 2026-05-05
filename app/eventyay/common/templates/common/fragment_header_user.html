@@ -12,7 +12,6 @@
             <span class="hidden-xs" aria-hidden="true">{{ active_event_lang|slice:':2'|title }}/{{ request.LANGUAGE_CODE|slice:':2'|title }}</span>
             <i class="fa fa-caret-down ml-1 hidden-xs" aria-hidden="true"></i>
         </summary>
-        {% endwith %}
             <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                 <div class="language-enforce-bar">
                     <span id="language-enforce-label" class="language-enforce-label">{% translate "Link languages" %}</span>
@@ -43,14 +42,12 @@
                     <div class="language-column">
                         <p class="dropdown-heading">{% translate "Event Language" %}</p>
                         <div class="language-column-scroll">
-                        {% with active_event_lang=request.event_language|default_if_none:current_event.locale|default_if_none:request.LANGUAGE_CODE %}
                         {% for l, name in current_event.named_locales %}
                             <a href="{% url 'presale:locale.event' %}?locale={{ l }}&event={{ current_event.slug }}&organizer={{ current_event.organizer.slug }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}"
                                class="dropdown-item {% if l|lower == active_event_lang|lower %}active{% endif %}"
                                role="menuitem"
                                tabindex="-1">{{ name }}</a>
                         {% endfor %}
-                        {% endwith %}
                         </div>
                     </div>
                     <div class="language-column">
@@ -74,6 +71,7 @@
                     </div>
                 </div>
             </div>
+        {% endwith %}
         </details>
     {% endif %}
 
