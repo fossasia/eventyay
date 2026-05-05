@@ -5,7 +5,7 @@ from django.http import HttpRequest
 from eventyay.base.models import OrderPayment, OrderRefund
 from eventyay.base.payment import BasePaymentProvider
 
-logger = logging.getLogger('tests.tickets.testdummy.ticketoutput')
+logger = logging.getLogger('tests.tickets.testdummy.payment')
 
 
 class DummyPaymentProvider(BasePaymentProvider):
