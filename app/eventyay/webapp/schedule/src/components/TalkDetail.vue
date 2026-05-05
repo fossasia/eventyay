@@ -26,7 +26,7 @@
 						markdown-content(:markdown="answer.answer")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 				h2 {{ t.downloads }}
-				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
+				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
 					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
 					.filename {{ description }}
 			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
@@ -64,7 +64,7 @@
 		.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 			.header {{ t.downloads }}
 			.downloads-list
-				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
+				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
 					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
 					.filename {{ description }}
 		.starrers(v-if="popularityFeatureEnabled && loggedIn && starrers && starrers.total > 0")

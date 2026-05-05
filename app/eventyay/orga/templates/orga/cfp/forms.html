@@ -343,9 +343,9 @@
                             <th>{% translate "Slot Count" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Slot Count">
+                                    aria-label="{% translate 'Toggle active state for Slot Count' %}">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Slot Count">
+                                        aria-label="{% translate 'Active toggle for Slot Count' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
@@ -355,7 +355,7 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Slot Count">
+                                        aria-label="{% translate 'Required status for Slot Count' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -459,25 +459,25 @@
 
                         {# Slides #}
                         {% with field=sform.cfp_ask_slides %}
-                        <tr dragsort-id='slides'>
-                            <th>{% translate 'Slides' %}</th>
-                            <td class='text-center'>
-                                <label class='toggle-switch' data-field-id='{{ field.auto_id }}'
-                                    aria-label='Toggle active state for Slides'>
-                                    <input type='checkbox' {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label='Active toggle for Slides'>
-                                    <span class='toggle-slider'></span>
+                        <tr dragsort-id="slides">
+                            <th>{% translate "Slides" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="{% translate 'Toggle active state for Slides' %}">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="{% translate 'Active toggle for Slides' %}">
+                                    <span class="toggle-slider"></span>
                                 </label>
-                                <input type='hidden' name='{{ field.html_name }}' value='{{ field.value }}'
-                                    id='{{ field.auto_id }}' data-is-question-field='true'>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
-                            <td class='text-center'>
-                                <div class='required-status-wrapper' data-current='{% if field.value == 'required' %}required{% else %}optional{% endif %}'>
-                                    <select class='required-status-dropdown' data-field-id='{{ field.auto_id }}'
-                                        data-current='{% if field.value == 'required' %}required{% else %}optional{% endif %}'
-                                        aria-label='Required status for Slides'>
-                                        <option value='optional' {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                        <option value='required' {% if field.value == 'required' %}selected{% endif %}>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="{% translate 'Required status for Slides' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
                                     </select>
                                 </div>
@@ -491,10 +491,10 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>
-                            <td class='text-center'>{{ field_counts.slides }}</td>
-                            <td class='text-right'>
-                                <button type='button' draggable='true' class='btn btn-sm btn-primary dragsort-button' title="{% translate 'Move item' %}">
-                                    <i class='fa fa-arrows'></i>
+                            <td class="text-center">{{ field_counts.slides }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
                                 </button>
                             </td>
                         </tr>

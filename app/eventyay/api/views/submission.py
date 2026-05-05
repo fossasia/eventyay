@@ -267,7 +267,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     endpoint = 'submissions'
 
     def get_legacy_queryset(self):  # pragma: no cover
-        base_qs = self.event.submissions.all().order_by('code')
+        base_qs = self.event.submissions.all().prefetch_related('resources').order_by('code')
         if not self.request.user.has_perm('base.orga_list_submission', self.event):
             if not self.request.user.has_perm('base.list_schedule', self.event) or not self.event.current_schedule:
                 return Submission.objects.none()
@@ -342,7 +342,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         queryset = (
             submissions_for_user(self.event, self.request.user)
             .select_related('event', 'track', 'submission_type')
-            .prefetch_related('speakers', 'answers', 'slots')
+            .prefetch_related('speakers', 'answers', 'slots', 'resources')
             .order_by('code')
         )
         if self.check_expanded_fields('speakers.user'):

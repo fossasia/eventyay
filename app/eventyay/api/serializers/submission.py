@@ -228,7 +228,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             }
             resources = data.get('resources') or []
             if resources and isinstance(resources[0], dict):
-                data['resources'] = [resource for resource in resources if resource.get('kind') != 'slides']
+                data['resources'] = [resource for resource in resources if resource.get('id') in public_resource_ids]
             else:
                 data['resources'] = [resource_id for resource_id in resources if resource_id in public_resource_ids]
         return data

@@ -185,7 +185,10 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
 
         resources = data.get('resources') or []
         if resources and isinstance(resources[0], dict):
-            data['resources'] = [resource for resource in resources if resource.get('kind') != 'slides']
+            public_resource_ids = {
+                resource.pk for resource in instance.resources.all() if instance.event.cfp.is_resource_public(resource)
+            }
+            data['resources'] = [resource for resource in resources if resource.get('id') in public_resource_ids]
         return data
 
     def answers_queryset(self, obj):
