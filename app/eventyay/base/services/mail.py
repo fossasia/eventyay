@@ -187,14 +187,10 @@ def mail(
                 for bcc_mail in event.settings.mail_bcc.split(','):
                     bcc.append(bcc_mail.strip())
 
-            if event.settings.mail_reply_to and not headers.get('Reply-To'):
+            if not auto_email and event_reply_to and not headers.get('Reply-To'):
+                headers['Reply-To'] = event_reply_to
+            elif event.settings.mail_reply_to and not headers.get('Reply-To'):
                 headers['Reply-To'] = event.settings.mail_reply_to
-            elif not auto_email:
-                if (
-                    event_reply_to
-                    and not headers.get('Reply-To')
-                ):
-                    headers['Reply-To'] = event_reply_to
             elif (
                 event.settings.mail_from == settings.DEFAULT_FROM_EMAIL
                 and event.settings.contact_mail
