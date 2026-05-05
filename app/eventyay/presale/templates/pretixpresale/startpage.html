@@ -62,13 +62,13 @@
         {{ html_page_header|safe }}
 
         <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
-            {% if request.user.is_authenticated %}
-                <button type="button" class="navbar-toggle-sidebar navbar-toggle startpage-sidebar-toggle" id="startpage-sidebar-toggle" aria-controls="startpage-sidebar" aria-expanded="false">
-                    <span class="sr-only">{% trans "Toggle sidebar" %}</span>
-                    <i class="fa fa-bars fa-lg" aria-hidden="true"></i>
-                </button>
-            {% endif %}
             <div class="navbar-header">
+                {% if request.user.is_authenticated %}
+                    <button type="button" class="navbar-toggle-sidebar navbar-toggle startpage-sidebar-toggle" id="startpage-sidebar-toggle" aria-controls="startpage-sidebar" aria-expanded="false">
+                        <span class="sr-only">{% trans "Toggle sidebar" %}</span>
+                        <i class="fa fa-bars fa-lg" aria-hidden="true"></i>
+                    </button>
+                {% endif %}
                 <a class="navbar-brand" href="{% url "presale:index" %}">
                     <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
                     {{ site_name }}

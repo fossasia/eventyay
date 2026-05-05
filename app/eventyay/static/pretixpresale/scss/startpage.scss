@@ -8,7 +8,7 @@ nav.navbar {
   border-radius: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   font-weight: 500;
   left: 0;
   margin: 0;
@@ -28,7 +28,7 @@ nav.navbar {
   display: flex;
   height: var(--navbar-height, 50px);
   justify-content: center;
-  margin: 0 0 0 10px;
+  margin: 0;
   padding: 0 8px;
 }
 
@@ -47,7 +47,7 @@ nav.navbar .navbar-header {
   align-items: center;
   display: flex;
   height: var(--navbar-height, 50px);
-  padding: 0 1rem;
+  padding: 0;
 }
 
 nav.navbar .navbar-brand {
@@ -55,13 +55,19 @@ nav.navbar .navbar-brand {
   color: #fff;
   display: flex;
   font-size: 20px;
-  gap: 0.5rem;
-  line-height: 1;
+  font-family: inherit;
+  line-height: inherit;
+  margin-top: 0;
+  padding-bottom: 0.3125rem;
+  padding-top: 0.3125rem;
+  white-space: nowrap;
   text-decoration: none;
 }
 
 nav.navbar .navbar-brand img {
-  height: 28px;
+  height: 30px;
+  margin-right: 0.5rem;
+  margin-top: 2px;
   width: auto;
 }
 
@@ -69,7 +75,7 @@ nav.navbar .navbar-top-links {
   align-items: center;
   display: flex;
   list-style: none;
-  margin: 0;
+  margin: 0 0 0 auto;
   padding: 0 1rem;
 }
 
