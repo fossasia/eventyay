@@ -2758,6 +2758,12 @@ def _cancel_order_positions(
                 canceled_total += addon.price
                 canceled_ids.add(addon.pk)
 
+        active_position_count = order.positions.filter(canceled=False).count()
+        if len(canceled_ids) >= active_position_count:
+            raise OrderError(
+                _('To cancel all remaining tickets, please use the full order cancellation.')
+            )
+
         ocm = OrderChangeManager(
             order=order,
             user=user,
