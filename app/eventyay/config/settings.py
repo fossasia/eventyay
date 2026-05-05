@@ -303,7 +303,7 @@ _LIBRARY_APPS = (
     'django_celery_beat',
     'django.forms',
     'djangoformsetjs',
-    'django_pdb',
+
     'jquery',
     'rest_framework.authtoken',
     'rules.apps.AutodiscoverRulesConfig',
@@ -322,6 +322,9 @@ _LIBRARY_APPS = (
 
 if DEBUG and importlib.util.find_spec('django_extensions'):
     _LIBRARY_APPS += ('django_extensions',)
+
+if DEBUG and importlib.util.find_spec('django_pdb'):
+    _LIBRARY_APPS += ('django_pdb',)
 
 if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
