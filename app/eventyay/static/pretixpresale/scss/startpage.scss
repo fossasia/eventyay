@@ -19,6 +19,30 @@ nav.navbar {
   z-index: 1100;
 }
 
+.startpage-sidebar-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--color-white);
+  cursor: pointer;
+  display: flex;
+  height: var(--navbar-height, 50px);
+  justify-content: center;
+  margin: 0 0 0 10px;
+  padding: 0 8px;
+}
+
+.startpage-sidebar-toggle:hover,
+.startpage-sidebar-toggle:focus {
+  color: rgba(255, 255, 255, 0.8);
+  outline: none;
+}
+
+.startpage-sidebar-toggle:focus-visible {
+  outline: 2px solid var(--color-white);
+  outline-offset: -6px;
+}
+
 nav.navbar .navbar-header {
   align-items: center;
   display: flex;
@@ -81,6 +105,76 @@ nav.navbar .danger:active {
 
 nav.navbar .navbar-top-links .dropdown-content {
   color: var(--color-text);
+}
+
+.startpage-sidebar {
+  background: #f8f8f8;
+  border-right: 1px solid #e7e7e7;
+  bottom: 0;
+  left: 0;
+  overflow-y: auto;
+  position: fixed;
+  top: var(--navbar-height, 50px);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  width: 250px;
+  z-index: 1090;
+}
+
+.startpage-sidebar-open .startpage-sidebar {
+  transform: translateX(0);
+}
+
+.startpage-sidebar-context a,
+.startpage-sidebar-nav a {
+  align-items: center;
+  color: #2185d0;
+  display: flex;
+  gap: 8px;
+  min-height: 50px;
+  padding: 10px 15px;
+  text-decoration: none;
+}
+
+.startpage-sidebar-context {
+  border-bottom: 1px solid #e7e7e7;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.startpage-sidebar-context .fa-circle {
+  color: #2185d0;
+}
+
+.startpage-sidebar-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.startpage-sidebar-nav li {
+  border-bottom: 1px solid #e7e7e7;
+}
+
+.startpage-sidebar-nav a:hover,
+.startpage-sidebar-nav a:focus,
+.startpage-sidebar-nav a.active {
+  background: #eee;
+  color: #0b6eb5;
+}
+
+.startpage-sidebar-backdrop {
+  background: rgba(0, 0, 0, 0.25);
+  bottom: 0;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: var(--navbar-height, 50px);
+  z-index: 1080;
+}
+
+.startpage-sidebar-backdrop[hidden] {
+  display: none;
 }
 
 .startpage-search-nav {

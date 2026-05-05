@@ -1,15 +1,16 @@
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db.models import Q
+from django.utils import timezone
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
-from django.db.models import Q
-from django.utils import timezone
 
 from eventyay.base.models import Event
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
+from eventyay.eventyay_common.navigation import get_global_navigation
 
 
 class StartPageView(TemplateView):
@@ -32,6 +33,7 @@ class StartPageView(TemplateView):
         )
         ctx['site_name'] = settings.INSTANCE_NAME
         ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
+        ctx['nav_items'] = get_global_navigation(self.request)
         ctx['show_link_in_header_for_start_page'] = Page.objects.filter(
             link_on_website_start_page=True,
             link_in_header=True,
