@@ -35,10 +35,15 @@ from eventyay.base.settings import (
     COUNTRIES_WITH_STATE_IN_ADDRESS,
     PERSON_NAME_SCHEMES,
 )
+from eventyay.base.import_utils import build_header_map, match_header, normalize_header_value  # noqa: F401
 from eventyay.base.signals import order_import_columns
 
 
 class ImportColumn:
+    # Subclasses may override this with a list of CSV header name suggestions
+    # used for automatic column matching when the import mapping form is first shown.
+    suggestions = []
+
     @property
     def identifier(self):
         """
@@ -134,6 +139,7 @@ class ImportColumn:
 class EmailColumn(ImportColumn):
     identifier = 'email'
     verbose_name = gettext_lazy('E-mail address')
+    suggestions = ['email', 'e-mail', 'order email', 'customer email', 'email address']
 
     def clean(self, value, previous_values):
         if value:
@@ -148,6 +154,7 @@ class SubeventColumn(ImportColumn):
     identifier = 'subevent'
     verbose_name = pgettext_lazy('subevents', 'Date')
     default_value = None
+    suggestions = ['date', 'subevent', 'sub-event', 'event date', 'subevent date']
 
     @cached_property
     def subevents(self):
@@ -186,6 +193,7 @@ class ProductColumn(ImportColumn):
     identifier = 'product'
     verbose_name = gettext_lazy('Product')
     default_value = None
+    suggestions = ['product', 'ticket', 'item', 'ticket type', 'product name']
 
     @cached_property
     def products(self):
@@ -215,6 +223,7 @@ class ProductColumn(ImportColumn):
 class Variation(ImportColumn):
     identifier = 'variation'
     verbose_name = gettext_lazy('Product variation')
+    suggestions = ['variation', 'product variation', 'ticket variation', 'variant']
 
     @cached_property
     def products(self):
@@ -251,6 +260,7 @@ class Variation(ImportColumn):
 
 class InvoiceAddressCompany(ImportColumn):
     identifier = 'invoice_address_company'
+    suggestions = ['invoice address: company', 'invoice company', 'billing company', 'company']
 
     @property
     def verbose_name(self):
@@ -268,6 +278,17 @@ class InvoiceAddressNamePart(ImportColumn):
         super().__init__(event)
 
     @property
+    def suggestions(self):
+        label_lower = str(self.label).lower()
+        key_with_spaces = self.key.lower().replace('_', ' ')
+        return [
+            f'invoice address name: {label_lower}',
+            f'invoice address name: {key_with_spaces}',
+            f'invoice {label_lower}',
+            f'invoice {key_with_spaces}',
+        ]
+
+    @property
     def verbose_name(self):
         return _('Invoice address') + ': ' + str(self.label)
 
@@ -281,6 +302,7 @@ class InvoiceAddressNamePart(ImportColumn):
 
 class InvoiceAddressStreet(ImportColumn):
     identifier = 'invoice_address_street'
+    suggestions = ['invoice address: address', 'billing address', 'invoice street', 'billing street', 'address', 'street']
 
     @property
     def verbose_name(self):
@@ -292,6 +314,7 @@ class InvoiceAddressStreet(ImportColumn):
 
 class InvoiceAddressZip(ImportColumn):
     identifier = 'invoice_address_zipcode'
+    suggestions = ['invoice address: zip code', 'billing zip code', 'billing postal code', 'invoice zip code', 'zip code', 'zip', 'postal code', 'postcode']
 
     @property
     def verbose_name(self):
@@ -303,6 +326,7 @@ class InvoiceAddressZip(ImportColumn):
 
 class InvoiceAddressCity(ImportColumn):
     identifier = 'invoice_address_city'
+    suggestions = ['invoice address: city', 'billing city', 'invoice city', 'city', 'town']
 
     @property
     def verbose_name(self):
@@ -315,6 +339,7 @@ class InvoiceAddressCity(ImportColumn):
 class InvoiceAddressCountry(ImportColumn):
     identifier = 'invoice_address_country'
     default_value = None
+    suggestions = ['invoice address: country', 'billing country', 'invoice country', 'country']
 
     @property
     def initial(self):
@@ -338,6 +363,7 @@ class InvoiceAddressCountry(ImportColumn):
 
 class InvoiceAddressState(ImportColumn):
     identifier = 'invoice_address_state'
+    suggestions = ['invoice address: state', 'billing state', 'invoice state', 'state', 'province']
 
     @property
     def verbose_name(self):
@@ -364,6 +390,7 @@ class InvoiceAddressState(ImportColumn):
 
 class InvoiceAddressVATID(ImportColumn):
     identifier = 'invoice_address_vat_id'
+    suggestions = ['vat id', 'vat', 'tax id', 'invoice vat id']
 
     @property
     def verbose_name(self):
@@ -375,6 +402,7 @@ class InvoiceAddressVATID(ImportColumn):
 
 class InvoiceAddressReference(ImportColumn):
     identifier = 'invoice_address_internal_reference'
+    suggestions = ['internal reference', 'reference', 'invoice reference']
 
     @property
     def verbose_name(self):
@@ -391,6 +419,19 @@ class AttendeeNamePart(ImportColumn):
         super().__init__(event)
 
     @property
+    def suggestions(self):
+        label_lower = str(self.label).lower()
+        key_with_spaces = self.key.lower().replace('_', ' ')
+        return [
+            f'attendee name: {label_lower}',
+            f'attendee name: {key_with_spaces}',
+            f'attendee {label_lower}',
+            f'attendee {key_with_spaces}',
+            label_lower,
+            key_with_spaces,
+        ]
+
+    @property
     def verbose_name(self):
         return _('Attendee name') + ': ' + str(self.label)
 
@@ -405,6 +446,7 @@ class AttendeeNamePart(ImportColumn):
 class AttendeeEmail(ImportColumn):
     identifier = 'attendee_email'
     verbose_name = gettext_lazy('Attendee e-mail address')
+    suggestions = ['attendee email', 'attendee e-mail', 'attendee email address']
 
     def clean(self, value, previous_values):
         if value:
@@ -417,6 +459,7 @@ class AttendeeEmail(ImportColumn):
 
 class AttendeeCompany(ImportColumn):
     identifier = 'attendee_company'
+    suggestions = ['company', 'attendee company', 'organization', 'organisation']
 
     @property
     def verbose_name(self):
@@ -428,6 +471,7 @@ class AttendeeCompany(ImportColumn):
 
 class AttendeeJobTitle(ImportColumn):
     identifier = 'job_title'
+    suggestions = ['job title', 'title', 'position', 'role', 'occupation']
 
     @property
     def verbose_name(self):
@@ -439,6 +483,7 @@ class AttendeeJobTitle(ImportColumn):
 
 class AttendeeStreet(ImportColumn):
     identifier = 'attendee_street'
+    suggestions = ['address', 'street', 'street address', 'attendee address']
 
     @property
     def verbose_name(self):
@@ -450,6 +495,7 @@ class AttendeeStreet(ImportColumn):
 
 class AttendeeZip(ImportColumn):
     identifier = 'attendee_zipcode'
+    suggestions = ['zip code', 'zip', 'postal code', 'postcode']
 
     @property
     def verbose_name(self):
@@ -461,6 +507,7 @@ class AttendeeZip(ImportColumn):
 
 class AttendeeCity(ImportColumn):
     identifier = 'attendee_city'
+    suggestions = ['city', 'attendee city', 'town']
 
     @property
     def verbose_name(self):
@@ -473,6 +520,7 @@ class AttendeeCity(ImportColumn):
 class AttendeeCountry(ImportColumn):
     identifier = 'attendee_country'
     default_value = None
+    suggestions = ['country', 'attendee country']
 
     @property
     def initial(self):
@@ -496,6 +544,7 @@ class AttendeeCountry(ImportColumn):
 
 class AttendeeState(ImportColumn):
     identifier = 'attendee_state'
+    suggestions = ['state', 'province', 'region', 'attendee state']
 
     @property
     def verbose_name(self):
@@ -524,6 +573,7 @@ class Price(ImportColumn):
     identifier = 'price'
     verbose_name = gettext_lazy('Price')
     default_label = gettext_lazy('Calculate from product')
+    suggestions = ['price', 'amount', 'cost', 'total', 'net price']
 
     def clean(self, value, previous_values):
         if value not in (None, ''):
@@ -563,6 +613,7 @@ class Secret(ImportColumn):
     identifier = 'secret'
     verbose_name = gettext_lazy('Ticket code')
     default_label = gettext_lazy('Generate automatically')
+    suggestions = ['secret', 'ticket code', 'barcode', 'ticket secret']
 
     def __init__(self, *args):
         self._cached = set()
@@ -585,6 +636,7 @@ class Locale(ImportColumn):
     identifier = 'locale'
     verbose_name = gettext_lazy('Order locale')
     default_value = None
+    suggestions = ['locale', 'order locale', 'language', 'order language']
 
     @property
     def initial(self):
@@ -608,6 +660,7 @@ class Locale(ImportColumn):
 class Saleschannel(ImportColumn):
     identifier = 'sales_channel'
     verbose_name = gettext_lazy('Sales channel')
+    suggestions = ['sales channel', 'channel', 'sale channel']
 
     def static_choices(self):
         return [(sc.identifier, sc.verbose_name) for sc in get_all_sales_channels().values()]
@@ -626,6 +679,7 @@ class Saleschannel(ImportColumn):
 class SeatColumn(ImportColumn):
     identifier = 'seat'
     verbose_name = gettext_lazy('Seat ID')
+    suggestions = ['seat id', 'seat', 'seat number', 'seat guid']
 
     def __init__(self, *args):
         self._cached = set()
@@ -655,6 +709,7 @@ class SeatColumn(ImportColumn):
 class Comment(ImportColumn):
     identifier = 'comment'
     verbose_name = gettext_lazy('Comment')
+    suggestions = ['comment', 'order comment', 'notes', 'remarks', 'order notes']
 
     def assign(self, value, order, position, invoice_address, **kwargs):
         order.comment = value or ''
@@ -679,6 +734,10 @@ class QuestionColumn(ImportColumn):
             else:
                 self.option_resolve_cache[opt.answer.strip()].add(opt)
         super().__init__(event)
+
+    @property
+    def suggestions(self):
+        return [str(self.q.question)]
 
     @property
     def verbose_name(self):
