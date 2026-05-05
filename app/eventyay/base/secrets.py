@@ -1,5 +1,7 @@
 import base64
 import inspect
+import logging
+import binascii
 import struct
 
 from cryptography.hazmat.backends.openssl.backend import Backend
@@ -12,14 +14,19 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     load_pem_public_key,
 )
+from cryptography.exceptions import InvalidSignature
 from django.conf import settings
 from django.dispatch import receiver
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+from google.protobuf.message import DecodeError
 
 from eventyay.base.models import Product, ProductVariation, SubEvent
 from eventyay.base.secretgenerators import pretix_sig1_pb2
 from eventyay.base.signals import register_ticket_secret_generators
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseTicketSecretGenerator:
@@ -176,7 +183,8 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
             t = pretix_sig1_pb2.Ticket()
             t.ParseFromString(payload)
             return t
-        except:
+        except (binascii.Error, struct.error, ValueError, TypeError, InvalidSignature, IndexError, DecodeError) as e:
+            logger.debug("Failed to parse ticket secret: %s", e, exc_info=True)
             return None
 
     def generate_secret(
