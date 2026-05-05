@@ -390,6 +390,48 @@ def test_answer_validation_select_question_accepts_one_option(
 
 
 @pytest.mark.django_db
+def test_answer_patch_select_question_without_options_rejected(
+    event, orga_user_write_token, client, select_question, submission
+):
+    """PATCH with only answer text on a select answer must be rejected.
+
+    Sending PATCH {"answer": "arbitrary text"} on an existing select/choices
+    answer previously bypassed option validation and left the stored answer
+    desynchronised from the options M2M relation.  After the fix this must
+    return 400 because the answer cannot be backed by a valid option.
+    """
+    with scope(event=event):
+        option = select_question.options.first()
+
+    # First create a valid answer via POST
+    create_resp = client.post(
+        event.api_urls.answers,
+        data=json.dumps(
+            {
+                "question": select_question.pk,
+                "answer": str(option.answer),
+                "submission": submission.code,
+                "options": [option.pk],
+            }
+        ),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert create_resp.status_code == 201, create_resp.text
+    answer_pk = create_resp.data["id"]
+
+    # Now PATCH with only answer text — must be rejected
+    patch_resp = client.patch(
+        event.api_urls.answers + f"{answer_pk}/",
+        data=json.dumps({"answer": "arbitrary free text"}),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert patch_resp.status_code == 400, patch_resp.text
+    assert "options" in patch_resp.data
+
+
+@pytest.mark.django_db
 def test_answer_validation_speaker_question(
     event, orga_user_write_token, client, speaker
 ):

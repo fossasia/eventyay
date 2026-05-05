@@ -190,27 +190,31 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             TalkQuestionVariant.MULTIPLE,
             TalkQuestionVariant.SELECT,
         ):
-            if "options" in data or not self.instance:
-                options = data.get("options", [])
-                if not options:
+            if "options" in data:
+                options = data["options"]
+            elif self.instance:
+                options = list(self.instance.options.all())
+            else:
+                options = []
+            if not options:
+                raise exceptions.ValidationError(
+                    {
+                        "options": "This field is required for choice, select, or multiple-choice questions."
+                    }
+                )
+            for option in options:
+                if option.question != question:
                     raise exceptions.ValidationError(
                         {
-                            "options": "This field is required for choice, select, or multiple-choice questions."
+                            "options": f"Option {option.pk} does not belong to question {question.pk}."
                         }
                     )
-                for option in options:
-                    if option.question != question:
-                        raise exceptions.ValidationError(
-                            {
-                                "options": f"Option {option.pk} does not belong to question {question.pk}."
-                            }
-                        )
-                if question.variant in (TalkQuestionVariant.SELECT, TalkQuestionVariant.CHOICES) and len(options) > 1:
-                    raise exceptions.ValidationError(
-                        {"options": "Only one option may be selected for this question type."}
-                    )
-                # Synchronize answer text to match options for consistency
-                data["answer"] = ", ".join([str(option.answer) for option in options])
+            if question.variant in (TalkQuestionVariant.SELECT, TalkQuestionVariant.CHOICES) and len(options) > 1:
+                raise exceptions.ValidationError(
+                    {"options": "Only one option may be selected for this question type."}
+                )
+            # Synchronize answer text to match options for consistency
+            data["answer"] = ", ".join(f"{option.answer}" for option in options)
         elif question:
             if data.get("options"):
                 raise exceptions.ValidationError(
