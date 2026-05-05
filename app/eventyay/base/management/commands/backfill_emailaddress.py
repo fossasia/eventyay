@@ -52,9 +52,7 @@ class Command(BaseCommand):
             help='Print how many rows would be created without modifying the database.',
         )
 
-    def handle(self, *args, **options):
-        dry_run = options['dry_run']
-
+    def handle(self, *args, dry_run: bool = False, **options):
         existing_for_user_email = EmailAddress.objects.filter(
             user_id=OuterRef('pk'),
             email=OuterRef('email'),
@@ -77,18 +75,30 @@ class Command(BaseCommand):
             )
             return
 
-        to_create = [
-            EmailAddress(
+        # Users who already have a primary EmailAddress for another address must
+        # not get a second primary — only set primary=True when none exists yet.
+        existing_primary_user_ids = set(
+            EmailAddress.objects.filter(primary=True).values_list('user_id', flat=True)
+        )
+
+        batch_size = 500
+        created = 0
+        batch = []
+        for user in users_missing_email.iterator(chunk_size=batch_size):
+            batch.append(EmailAddress(
                 user=user,
                 email=user.email,
                 verified=True,
-                primary=True,
-            )
-            for user in users_missing_email.iterator()
-        ]
-
-        EmailAddress.objects.bulk_create(to_create, batch_size=500)
+                primary=user.pk not in existing_primary_user_ids,
+            ))
+            if len(batch) >= batch_size:
+                EmailAddress.objects.bulk_create(batch)
+                created += len(batch)
+                batch = []
+        if batch:
+            EmailAddress.objects.bulk_create(batch)
+            created += len(batch)
 
         self.stdout.write(
-            self.style.SUCCESS(f'Created {count} EmailAddress record(s).')
+            self.style.SUCCESS(f'Created {created} EmailAddress record(s).')
         )

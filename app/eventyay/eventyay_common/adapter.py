@@ -74,7 +74,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 domain=get_cookie_domain(request),
                 path=settings.CSRF_COOKIE_PATH,
                 secure=request.scheme == 'https',
-                httponly=settings.CSRF_COOKIE_HTTPONLY,
+                httponly=True,
             )
         return response
 

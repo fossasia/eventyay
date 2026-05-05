@@ -97,9 +97,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         Validate and normalize the login providers stored in global settings.
 
         Pydantic fills in defaults for missing keys (e.g. an empty ``{}``
-        becomes the full three-provider schema), so we always write the
-        normalised result back so that ``get_context_data`` and the template
-        see the complete provider list.
+        becomes the full three-provider schema). When the normalised result
+        differs from what is stored, it is written back so that
+        ``get_context_data`` and the template see the complete provider list.
 
         On a ``ValidationError`` we log and leave the existing DB row
         unchanged rather than silently overwriting with all-disabled defaults,
@@ -113,7 +113,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 'login_providers settings failed validation (not overwriting): %s', e
             )
             return
-        self.gs.settings.set('login_providers', validated.model_dump())
+        normalized = validated.model_dump()
+        if raw != normalized:
+            self.gs.settings.set('login_providers', normalized)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

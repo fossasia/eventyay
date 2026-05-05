@@ -53,10 +53,16 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
     wikimedia_username = extra_data.get('username', '')
     if not wikimedia_username:
         return None
-    try:
-        return User.objects.get(wikimedia_username=wikimedia_username)
-    except User.DoesNotExist:
+    rows = list(User.objects.filter(wikimedia_username=wikimedia_username)[:2])
+    if len(rows) == 0:
         return None
+    if len(rows) > 1:
+        logger.warning(
+            'Multiple users share wikimedia_username=%s; skipping fallback lookup',
+            wikimedia_username,
+        )
+        return None
+    return rows[0]
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -94,9 +100,9 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             user = lookup_by_wikimedia_username(sociallogin)
             if user is not None:
                 sociallogin.user = user
-                # Do not set _did_authenticate_by_email — avoids wiping the
-                # user's password when no verified EmailAddress record exists.
-                sociallogin._did_authenticate_by_email = None
+                # _did_authenticate_by_email is already None here: _lookup_by_email
+                # only sets it when it finds a match, which it didn't (we're in the
+                # not-existing branch).  No password-wipe risk.
 
         if sociallogin.is_existing:
             sync_wikimedia_username(sociallogin.user, sociallogin)
