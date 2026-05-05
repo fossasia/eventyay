@@ -360,12 +360,19 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.CHOICES:
             choices = question.options.all()
+            if initial_object:
+                initial_value = initial_object.options.first()
+            elif question.default_answer:
+                # default_answer is free text; resolve it to an AnswerOption instance
+                initial_value = choices.filter(answer=question.default_answer).first()
+            else:
+                initial_value = None
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
                 required=question.required,
                 empty_label=None,
-                initial=(initial_object.options.first() if initial_object else question.default_answer),
+                initial=initial_value,
                 disabled=read_only,
                 help_text=help_text,
                 widget=(forms.RadioSelect if len(choices) < 4 else forms.Select(attrs={'class': 'enhanced'})),
@@ -375,9 +382,13 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.SELECT:
             choices = question.options.all()
-            initial_value = (
-                initial_object.options.first() if initial_object else question.default_answer
-            )
+            if initial_object:
+                initial_value = initial_object.options.first()
+            elif question.default_answer:
+                # default_answer is free text; resolve it to an AnswerOption instance
+                initial_value = choices.filter(answer=question.default_answer).first()
+            else:
+                initial_value = None
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
