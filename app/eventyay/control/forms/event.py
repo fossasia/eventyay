@@ -1442,7 +1442,7 @@ class MailSettingsForm(SettingsForm):
 
     email_vendor = forms.ChoiceField(
         label=_('Email vendor'),
-        required=True,
+        required=False,
         widget=forms.RadioSelect,
         choices=smtp_select,
     )
@@ -1499,13 +1499,10 @@ class MailSettingsForm(SettingsForm):
         if not data.get('smtp_use_custom'):
             gs = GlobalSettingsObject()
             default_from = gs.settings.mail_from or settings.MAIL_FROM
-            data['mail_from'] = default_from
-
-        if data.get('mail_from') and not data.get('smtp_use_custom'):
-            gs = GlobalSettingsObject()
-            default_from = gs.settings.mail_from or settings.MAIL_FROM
-            if data.get('mail_from') != default_from:
+            submitted_mail_from = data.get('mail_from')
+            if submitted_mail_from and submitted_mail_from != default_from:
                 self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
+            data['mail_from'] = default_from
 
         if not data.get('smtp_password') and data.get('smtp_username'):
             # Leave password unchanged if the username is set and the password field is empty.
@@ -1514,6 +1511,10 @@ class MailSettingsForm(SettingsForm):
             data['smtp_password'] = self.initial.get('smtp_password')
         if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
             raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate email_vendor is selected when custom email is enabled
+        if data.get('smtp_use_custom') and not data.get('email_vendor'):
+            self.add_error('email_vendor', _('This field is required when "Use custom email" is enabled.'))
 
         # Validate SendGrid token is provided when SendGrid is selected
         if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':

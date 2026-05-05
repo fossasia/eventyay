@@ -102,6 +102,7 @@ def test_sendmail_placeholder(env):
         event,
     )
 
+    assert len(djmail.outbox) == 1
     assert djmail.outbox[0].to == [user.email]
     assert djmail.outbox[0].subject == 'Dummy Test subject'
 

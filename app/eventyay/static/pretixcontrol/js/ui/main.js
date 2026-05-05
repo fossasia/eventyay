@@ -376,7 +376,7 @@ var form_handlers = function (el) {
                     enabled = !enabled;
                 }
                 var $toggling = dependent;
-                if (dependent.attr("data-disable-dependent")) {
+                if (dependent.is('[data-disable-dependent]')) {
                     $toggling.prop('disabled', !enabled).trigger("change");
                     $toggling.find('input, select, textarea').prop('disabled', !enabled).trigger("change");
                 }
