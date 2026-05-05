@@ -1504,11 +1504,29 @@ class MailSettingsForm(SettingsForm):
                 self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
             data['mail_from'] = default_from
 
-        if not data.get('smtp_password') and data.get('smtp_username'):
-            # Leave password unchanged if the username is set and the password field is empty.
-            # This makes it impossible to set an empty password as long as a username is set, but
-            # Python's smtplib does not support password-less schemes anyway.
+        if not data.get('smtp_use_custom'):
+            # If custom email is disabled, we restore all previous custom settings to avoid wiping them
+            for field in ('email_vendor', 'send_grid_api_key', 'smtp_host', 'smtp_port',
+                          'smtp_username', 'smtp_password', 'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        elif data.get('email_vendor') == 'smtp':
+            # If SMTP is active, preserve SendGrid settings
+            if not data.get('send_grid_api_key') and self.initial.get('send_grid_api_key'):
+                data['send_grid_api_key'] = self.initial.get('send_grid_api_key')
+
+        elif data.get('email_vendor') == 'sendgrid':
+            # If SendGrid is active, preserve SMTP settings
+            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+                          'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        # Standard password restoration logic (even if username/password are currently active)
+        if not data.get('smtp_password') and data.get('smtp_username') and self.initial.get('smtp_password'):
             data['smtp_password'] = self.initial.get('smtp_password')
+
         if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
             raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
 

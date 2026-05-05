@@ -2,6 +2,7 @@ import json
 import logging
 import operator
 import re
+import smtplib
 from collections import OrderedDict
 from decimal import Decimal
 from itertools import groupby
@@ -14,6 +15,7 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import ProtectedError
 from django.forms import inlineformset_factory
+from python_http_client.exceptions import HTTPError
 from django.http import (
     Http404,
     HttpResponse,
@@ -88,6 +90,8 @@ from ...base.models.product import (
 from ...base.settings import SETTINGS_AFFECTING_CSS
 from ..logdisplay import OVERVIEW_BANLIST
 from . import CreateView, PaginationMixin, UpdateView
+
+logger = logging.getLogger(__name__)
 
 
 class EventSettingsViewMixin:
@@ -817,14 +821,22 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
                         to_addrs = [address for address in (a.strip() for a in test_email.split(',')) if address]
                         if not to_addrs:
                             to_addrs = None
-                    if hasattr(backend, 'test'):
-                        backend.test(self.request.event.settings.mail_from, to_addrs=to_addrs)
-                    else:
-                        raise AttributeError(_('The active email backend does not support connection testing.'))
-                except AttributeError as e:
-                    messages.warning(self.request, str(e))
-                except Exception as e:
+                    backend.test(self.request.event.settings.mail_from, to_addrs=to_addrs)
+                except HTTPError as e:
+                    logger.exception('Event SendGrid test failed (event=%s)', self.request.event.slug)
+                    messages.error(
+                        self.request,
+                        _('SendGrid test email failed to connect or send. HTTP Error: %s') % str(e),
+                    )
+                except (smtplib.SMTPException, OSError) as e:
+                    logger.exception('Event SMTP test failed (event=%s)', self.request.event.slug)
                     messages.warning(
+                        self.request,
+                        _('Test email failed to connect or send: %s') % str(e),
+                    )
+                except Exception as e:
+                    logger.exception('Unexpected error during test email (event=%s)', self.request.event.slug)
+                    messages.error(
                         self.request,
                         _('An error occurred while testing the email configuration: %s') % str(e),
                     )
