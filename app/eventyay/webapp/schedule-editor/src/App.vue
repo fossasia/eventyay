@@ -54,7 +54,8 @@
 							label.data-label.col-form-label.col-md-3 {{ $t('Speakers') }}
 							.col-md-9.data-value
 								span(v-for="speaker, index of editorSession.speakers")
-									a(:href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{speaker.name || speaker.code}}
+									a(v-if="speaker.code", :href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{ speaker.name || speaker.code }}
+									span(v-else) {{ speaker.name }}
 									span(v-if="index != editorSession.speakers.length - 1") {{', '}}
 								span.text-warning(v-if="editorSession.speakers.some(s => !s.name)")  ({{ $t('some speakers have not shared their names') }})
 						.data-row(v-else).form-group.row
@@ -101,7 +102,7 @@ import { getLocalizedString } from '~/utils'
 import type { AvailabilityEntry } from '~/schemas';
 
 interface Speaker {
-  code: string
+  code?: string | null
   name: string
 }
 
@@ -139,7 +140,7 @@ interface Talk {
 
 interface SessionData {
   id: number
-  code: string
+  code?: string
   title: Record<string, string> | string
   abstract?: string
   speakers?: Speaker[]
@@ -246,10 +247,19 @@ const tracksLookup = computed<Record<string, Track>>(() => {
 const speakersLookup = computed<Record<string, Speaker>>(() => {
   if (!schedule.value) return {}
   return schedule.value.speakers.reduce((acc, speaker) => {
-    acc[speaker.code] = speaker
+    if (speaker.code) {
+      acc[speaker.code] = speaker
+    }
     return acc
   }, {} as Record<string, Speaker>)
 })
+
+function resolveSessionSpeakers(speakers?: string[]): Speaker[] {
+  if (!speakers?.length) return []
+  return speakers
+    .map((speakerCode) => speakersLookup.value[speakerCode])
+    .filter((speaker): speaker is Speaker => Boolean(speaker))
+}
 
 // Sort methods for unassigned sessions
 const unassignedSortMethods = computed<SortMethod[]>(() => {
@@ -274,7 +284,7 @@ const unscheduled = computed<SessionData[]>(() => {
       code: session.code,
       title: session.title,
       abstract: session.abstract,
-      speakers: session.speakers?.map((s) => speakersLookup.value[s]) ?? [],
+      speakers: resolveSessionSpeakers(session.speakers),
       track: tracksLookup.value[session.track ?? ''],
       duration: session.duration,
       state: session.state,
@@ -334,7 +344,7 @@ const sessions = computed<SessionData[]>(() => {
     start: moment(session.start),
     end: moment(session.end),
     duration: moment(session.end).diff(moment(session.start), 'minutes'),
-    speakers: session.speakers?.map((s) => speakersLookup.value[s]) ?? [],
+    speakers: resolveSessionSpeakers(session.speakers),
     track: tracksLookup.value[session.track ?? ''],
     state: session.state,
     room: roomsLookup.value[session.room ?? ''],

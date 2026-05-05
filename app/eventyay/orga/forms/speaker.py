@@ -1,11 +1,17 @@
+from __future__ import annotations
+
+import logging
+
 from django import forms
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.models import SubmissionStates, User
 from eventyay.common.text.phrases import phrases
 from eventyay.orga.forms.export import ExportForm
-from eventyay.base.models import User
-from eventyay.base.models import SubmissionStates
+
+
+logger = logging.getLogger(__name__)
 
 
 class SpeakerExportForm(ExportForm):
@@ -19,6 +25,34 @@ class SpeakerExportForm(ExportForm):
         widget=forms.RadioSelect,
         initial='all',
     )
+    submission_ids = forms.BooleanField(
+        required=False,
+        label=_('Proposal IDs'),
+        help_text=phrases.orga.proposal_id_help_text,
+    )
+    submission_titles = forms.BooleanField(
+        required=False,
+        label=_('Proposal titles'),
+    )
+    biography = forms.BooleanField(
+        required=False,
+        label=_('Biography'),
+    )
+    avatar = forms.BooleanField(
+        required=False,
+        label=_('Picture'),
+        help_text=_('The link to the speaker’s profile picture'),
+    )
+    avatar_source = forms.BooleanField(
+        required=False,
+        label=_('Picture Source'),
+        help_text=_("The source of the speaker's profile picture"),
+    )
+    avatar_license = forms.BooleanField(
+        required=False,
+        label=_('Picture License'),
+        help_text=_("The license of the speaker's profile picture"),
+    )
 
     class Meta:
         model = User
@@ -26,34 +60,15 @@ class SpeakerExportForm(ExportForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['submission_ids'] = forms.BooleanField(
-            required=False,
-            label=_('Proposal IDs'),
-            help_text=phrases.orga.proposal_id_help_text,
+        logger.debug(
+            'Event: %s, include_wikimedia_username: %s', self.event, self.event.settings.include_wikimedia_username
         )
-        self.fields['submission_titles'] = forms.BooleanField(
-            required=False,
-            label=_('Proposal titles'),
-        )
-        self.fields['biography'] = forms.BooleanField(
-            required=False,
-            label=_('Biography'),
-        )
-        self.fields['avatar'] = forms.BooleanField(
-            required=False,
-            label=_('Picture'),
-            help_text=_('The link to the speaker’s profile picture'),
-        )
-        self.fields['avatar_source'] = forms.BooleanField(
-            required=False,
-            label=_('Picture Source'),
-            help_text=_("The source of the speaker's profile picture"),
-        )
-        self.fields['avatar_license'] = forms.BooleanField(
-            required=False,
-            label=_('Picture License'),
-            help_text=_("The license of the speaker's profile picture"),
-        )
+        if self.event.settings.include_wikimedia_username:
+            self.fields['wikimedia_username'] = forms.BooleanField(
+                required=False,
+                label=_('Wikimedia Username'),
+                initial=True,
+            )
 
     @cached_property
     def questions(self):
@@ -66,8 +81,8 @@ class SpeakerExportForm(ExportForm):
         return f'{self.event.slug}_speakers'
 
     @cached_property
-    def export_field_names(self):
-        return self.Meta.model_fields + [
+    def export_field_names(self) -> list[str]:
+        field_names = self.Meta.model_fields + [
             'biography',
             'avatar',
             'avatar_source',
@@ -75,6 +90,9 @@ class SpeakerExportForm(ExportForm):
             'submission_ids',
             'submission_titles',
         ]
+        if self.event.settings.include_wikimedia_username:
+            field_names.append('wikimedia_username')
+        return field_names
 
     def get_queryset(self):
         target = self.cleaned_data.get('target')
@@ -99,6 +117,7 @@ class SpeakerExportForm(ExportForm):
     def _get_submission_titles_value(self, obj):
         return list(obj.submissions.filter(event=self.event).values_list('title', flat=True))
 
+    # Called by ExportForm.get_data.
     def _prepare_object_data(self, obj):
         obj._profile = obj.event_profile(self.event)
         return obj
