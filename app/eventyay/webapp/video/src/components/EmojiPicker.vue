@@ -6,7 +6,6 @@ import { h, render } from 'preact'
 import 'emoji-mart/css/emoji-mart.css'
 import data from 'emoji-mart/data/twitter.json'
 import { NimblePicker } from 'emoji-mart'
-import emojiSheet from 'emoji-datasource-twitter/img/twitter/sheets-256/64.png'
 
 export default {
 	emits: ['selected'],
@@ -16,10 +15,7 @@ export default {
 			data,
 			onSelect: this.$emit.bind(this, 'selected'),
 			title: 'Emoji',
-			showPreview: true,
-			backgroundImageFn(set, sheetSize) {
-				return emojiSheet
-			}
+			showPreview: true
 		})
 		render(picker, this.$el)
 	},
@@ -36,4 +32,9 @@ export default {
 			outline-offset: 2px
 		span
 			image-rendering: -webkit-optimize-contrast
+	.emoji-mart-preview-data
+		overflow: hidden
+		text-overflow: ellipsis
+		white-space: nowrap
+		font-size: 0.5em
 </style>
