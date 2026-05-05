@@ -127,6 +127,10 @@ def field_helper(cls):
             'public', default_fields()[field].get('public', False)
         )
 
+    cls.is_field_requested = is_field_requested
+    cls.is_field_required = is_field_required
+    cls.is_field_public = is_field_public
+
     for field in default_fields().keys():
         # Create wrapper functions with clean docstrings to avoid RST formatting issues
         def make_request_getter(field_name):

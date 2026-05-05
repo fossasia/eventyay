@@ -50,7 +50,7 @@ class TagSerializer(PretalxSerializer):
         return value
 
 
-@register_serializer(versions=CURRENT_VERSIONS)
+@register_serializer()
 class SubmissionTypeSerializer(PretalxSerializer):
     class Meta:
         model = SubmissionType
@@ -82,7 +82,7 @@ class SubmissionTypeSerializer(PretalxSerializer):
         return result
 
 
-@register_serializer(versions=CURRENT_VERSIONS)
+@register_serializer()
 class TrackSerializer(PretalxSerializer):
     class Meta:
         model = Track
