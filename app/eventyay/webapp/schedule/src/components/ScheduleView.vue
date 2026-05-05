@@ -276,7 +276,8 @@ export default {
 				sessions = sessions.filter(s => isProperSession(s))
 			}
 			if (this.onlyFavs) {
-				sessions = sessions.filter(s => this.resolvedFavs.includes(s.id))
+				const favSet = new Set(this.resolvedFavs)
+				sessions = sessions.filter(s => favSet.has(s.id))
 			}
 			if (this.showRecordingFilter) {
 				if (this.recordingFilter === 'yes') {
@@ -285,21 +286,26 @@ export default {
 					sessions = sessions.filter(s => s?.do_not_record === true)
 				}
 			}
-			const selectedTracks = this.filterState.tracks.filter(t => t.selected).map(t => t.value)
-			const selectedRooms = this.filterState.rooms.filter(r => r.selected).map(r => r.value)
-			const selectedTypes = this.filterState.types.filter(t => t.selected).map(t => t.value)
+			const selectedTracks = new Set(this.filterState.tracks.filter(t => t.selected).map(t => t.value))
+			const selectedRooms = new Set(this.filterState.rooms.filter(r => r.selected).map(r => r.value))
+			const selectedTypes = new Set(this.filterState.types.filter(t => t.selected).map(t => t.value))
 			const selectedLanguages = this.filterState.languages.filter(l => l.selected).map(l => l.value)
-			if (selectedTracks.length) {
-				sessions = sessions.filter(s => s.track && selectedTracks.includes(s.track.id))
+			if (selectedTracks.size) {
+				sessions = sessions.filter(s => s.track && selectedTracks.has(s.track.id))
 			}
-			if (selectedRooms.length) {
-				sessions = sessions.filter(s => s.room && selectedRooms.includes(s.room.id))
+			if (selectedRooms.size) {
+				sessions = sessions.filter(s => s.room && selectedRooms.has(s.room.id))
 			}
-			if (selectedTypes.length) {
+			if (selectedTypes.size) {
 				sessions = sessions.filter(s => {
 					const st = s.session_type
-					if (typeof st === 'string') return selectedTypes.includes(st)
-					if (typeof st === 'object' && st) return Object.values(st).some(v => selectedTypes.includes(v))
+					if (typeof st === 'string') return selectedTypes.has(st)
+					if (typeof st === 'object' && st) {
+						for (const v of Object.values(st)) {
+							if (selectedTypes.has(v)) return true
+						}
+						return false
+					}
 					return false
 				})
 			}
@@ -308,7 +314,10 @@ export default {
 				sessions = sessions.filter(s => {
 					const sessionLocale = s.content_locale || fallbackLocale
 					if (!sessionLocale) return false
-					return selectedLanguages.some(sel => localesMatch(sel, sessionLocale))
+					for (const sel of selectedLanguages) {
+						if (localesMatch(sel, sessionLocale)) return true
+					}
+					return false
 				})
 			}
 			if (this.searchQuery) {
@@ -338,9 +347,14 @@ export default {
 		computedDays() {
 			if (this.days) return this.days
 			const days = []
+			const seen = new Set()
 			for (const session of this.filteredSessions) {
 				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
-				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
+				const key = day.valueOf()
+				if (!seen.has(key)) {
+					seen.add(key)
+					days.push(day)
+				}
 			}
 			const sortedDays = days.sort((a, b) => a.diff(b))
 			if ((this.linearOnly || this.sessionsMode) && !this.sortIncludeDate && ['title', 'title_desc'].includes(this.effectiveSortBy)) {
