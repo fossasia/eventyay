@@ -97,6 +97,7 @@ class SendGridEmail:
     def send_messages(self, emails):
         for email in emails:
             html_content = None
+            plain_text_content = None
             try:
                 message_context = email.message().as_bytes(linesep='\r\n')
                 msg = BytesParser(policy=policy.default).parsebytes(message_context)
@@ -105,15 +106,21 @@ class SendGridEmail:
                     content_disposition = str(part.get('Content-Disposition'))
 
                     if content_type == 'text/html' and 'attachment' not in content_disposition:
-                        html_content = part.get_payload(decode=True).decode(part.get_content_charset())
-                        break  # Found the HTML content, no need to continue
+                        html_content = part.get_payload(decode=True).decode(part.get_content_charset() or 'utf-8')
+                    elif content_type == 'text/plain' and 'attachment' not in content_disposition:
+                        plain_text_content = part.get_payload(decode=True).decode(part.get_content_charset() or 'utf-8')
             except UnicodeDecodeError:
                 logger.exception('Error happened when trying to parse mail template')
-                html_content = email.body
+                plain_text_content = email.body
+
+            if html_content is None and plain_text_content is None:
+                plain_text_content = email.body
+
             message = Mail(
                 from_email=email.from_email,
                 to_emails=email.to,
                 subject=email.subject,
+                plain_text_content=plain_text_content,
                 html_content=html_content,
             )
             sg = SendGridAPIClient(self.api_key)
