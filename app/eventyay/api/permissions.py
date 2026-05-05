@@ -10,14 +10,6 @@ MODEL_PERMISSION_MAP = {
     "destroy": "delete",
 }
 
-MODEL_PERMISSION_MAP = {
-    "list": "list",
-    "retrieve": "view",
-    "update": "update",
-    "partial_update": "update",
-    "destroy": "delete",
-}
-
 
 class ApiPermission(BasePermission):
 
@@ -80,12 +72,12 @@ class PluginPermission(ApiPermission):  # pragma: no cover
     """
 
     def has_permission(self, request, view):
-        return self._has_permission(view, request)
+        return self._has_permission(view, None, request)
 
     def has_object_permission(self, request, view, obj):
-        return self._has_permission(view, request)
+        return self._has_permission(view, obj, request)
 
-    def _has_permission(self, view, request):
+    def _has_permission(self, view, obj, request):
         event = getattr(request, "event", None)
         if not event:
             # Only events can have plugins
