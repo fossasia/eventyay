@@ -842,8 +842,8 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
                             self.request,
                             _(
                                 "We've been able to send a test email with the configuration you entered. "
-                                'Remember to check the "use custom SMTP server" checkbox, '
-                                'otherwise your SMTP server will not be used.'
+                                'Remember to enable "Use custom email", otherwise your custom '
+                                'email configuration will not be used.'
                             ),
                         )
             else:
