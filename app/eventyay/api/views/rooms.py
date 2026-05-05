@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from django.db import transaction
+from django.db.models import Max
 from rest_framework import viewsets
 
 from eventyay.api.auth.api_auth import (
@@ -10,6 +11,7 @@ from eventyay.api.serializers.rooms import RoomSerializer
 from eventyay.base.models import Channel
 from eventyay.base.models.room import Room
 from eventyay.base.services.event import notify_event_change
+from eventyay.base.services.room import normalize_after_priority_change
 
 
 class RoomViewSet(viewsets.ModelViewSet):
@@ -23,7 +25,16 @@ class RoomViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        serializer.save(event=self.request.event)
+        event = self.request.event
+        provided_priority = serializer.validated_data.get("sorting_priority")
+        if provided_priority is None or event.rooms.filter(
+            deleted=False, sorting_priority=provided_priority
+        ).exists():
+            max_priority = (
+                event.rooms.filter(deleted=False).aggregate(m=Max("sorting_priority"))["m"] or 0
+            )
+            serializer.validated_data["sorting_priority"] = max_priority + 1
+        serializer.save(event=event)
         for m in serializer.instance.module_config:
             if m["type"] == "chat.native":
                 Channel.objects.get_or_create(
@@ -35,6 +46,12 @@ class RoomViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         super().perform_update(serializer)
+        if "sorting_priority" in self.request.data:
+            normalize_after_priority_change(
+                self.request.event,
+                serializer.instance.id,
+                serializer.instance.sorting_priority,
+            )
         for m in serializer.instance.module_config:
             if m["type"] == "chat.native":
                 Channel.objects.get_or_create(

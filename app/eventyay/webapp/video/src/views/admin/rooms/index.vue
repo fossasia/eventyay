@@ -13,8 +13,15 @@
 		.header
 			.drag
 			.name Name
-		SlickList.tbody(v-if="filteredRooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", v-scrollbar.y="", @update:list="onListSort")
-			RoomListItem(v-for="(room, index) of filteredRooms" :index="index", :key="index", :room="room", :disabled="filteredRooms !== rooms")
+		SlickList.tbody(v-if="rooms", :list="rooms", lockAxis="y", :useDragHandle="true", v-scrollbar.y="", @update:list="onListSort")
+			RoomListItem(
+				v-for="(room, index) of rooms",
+				:index="index",
+				:key="room.id",
+				:room="room",
+				:disabled="!!search",
+				v-show="isRoomVisible(room)"
+			)
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
@@ -36,11 +43,11 @@ export default {
 			_unwatchConnected: null
 		}
 	},
-	computed: {
-		filteredRooms() {
-			if (!this.rooms) return
-			if (!this.search) return this.rooms
-			return this.rooms.filter(room => room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase()))
+	watch: {
+		'$store.state.rooms'(storeRooms) {
+			if (this.rooms && storeRooms) {
+				this.fetchRooms()
+			}
 		}
 	},
 	async created() {
@@ -50,6 +57,10 @@ export default {
 		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	methods: {
+		isRoomVisible(room) {
+			if (!this.search) return true
+			return room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase())
+		},
 		async ensureConnectedAndFetch() {
 			if (this.$store.state.connected) return this.fetchRooms()
 			this._unwatchConnected = this.$store.watch(
@@ -74,13 +85,13 @@ export default {
 				console.error(e)
 			}
 		},
-		async onListSort() {
+		async onListSort(newList) {
+			this.rooms = newList
 			try {
 				this.rooms = await api.call('room.config.reorder', this.rooms.map(room => room.id))
 			} catch (e) {
 				console.error(e)
 			}
-			// TODO error handling
 		}
 	}
 }

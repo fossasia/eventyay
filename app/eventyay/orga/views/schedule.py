@@ -9,7 +9,7 @@ from csp.decorators import csp_update
 from django.conf import settings
 from django.contrib import messages
 from django.http import FileResponse, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -515,6 +515,18 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         if self.action == 'create':
             return _('New room')
         return _('Rooms')
+
+    def order_handler(self, request, *args, **kwargs):
+        order = request.POST.get('order')
+        if order:
+            order = order.split(',')
+            queryset = self.get_queryset()
+            for index, pk in enumerate(order):
+                obj = get_object_or_404(queryset, pk=pk)
+                obj.position = index
+                obj.sorting_priority = index + 1
+                obj.save(update_fields=['position', 'sorting_priority'])
+        return self.list(request, *args, **kwargs)
 
     def delete_handler(self, request, *args, **kwargs):
         # Use soft delete to sync with video component
