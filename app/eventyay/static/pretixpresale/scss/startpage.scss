@@ -53,7 +53,7 @@ body.startpage-auth nav.navbar .navbar-header > .navbar-brand {
   display: flex;
   flex-direction: row;
   min-height: 56px;
-  padding: 8px 15px 8px 15px;
+  padding: 8px 15px 8px 4px;
   text-decoration: none;
 }
 
@@ -86,7 +86,7 @@ body.startpage-auth nav.navbar .navbar-header > .navbar-brand {
   color: #428bca;
   display: block;
   font-size: 15px;
-  font-weight: normal;
+  font-weight: 600;
   line-height: 17px;
   margin-bottom: 0;
   overflow: hidden;
