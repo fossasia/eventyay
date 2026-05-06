@@ -47,14 +47,15 @@ export default {
 		room() {
 			if (this.roomId === undefined) {
 				const rooms = this.rooms || []
-				const homeRoom = rooms.find(room => {
-					if (!room) return false
-					if (Array.isArray(room.module_config)) {
-						return !!inferType({ module_config: room.module_config })
-					}
-					return !!inferRoomType(room)
-				})
-				return homeRoom || rooms[0]
+				const infoRoom = rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
+				if (infoRoom) return infoRoom
+
+				return {
+					name: 'About',
+					modules: [{
+						type: 'page.landing'
+					}]
+				}
 			}
 			const wantedId = String(this.roomId)
 			return this.rooms?.find(room => String(room.id) === wantedId)
@@ -118,8 +119,8 @@ export default {
 					: inferRoomType(this.room))
 				: null
 			if (!inferred) {
-				if (this.$route.name === 'home') return
-				this.$router.replace({name: 'home'})
+				if (this.$route.name === 'about') return
+				this.$router.replace({name: 'about'})
 			}
 		}
 	},
@@ -156,7 +157,6 @@ export default {
 				ellipsis()
 				// TODO decopypaste
 				.emoji
-					color: transparent // hide unicode emoji
 					display: inline-block
 					vertical-align: middle
 					width: 36px
