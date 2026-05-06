@@ -2,121 +2,27 @@ body.startpage-body {
   padding-top: var(--navbar-height, 50px);
 }
 
-nav.navbar {
-  background: #2185d0;
+/* Top bar: burger, brand, and link styling match dashboard via common/css/_navbar.css (loaded in template). */
+nav.navbar.navbar-inverse.navbar-static-top {
   border: none;
   border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  font-weight: 500;
-  left: 0;
-  margin: 0;
-  min-height: var(--navbar-height, 50px);
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 1100;
 }
 
-.startpage-sidebar-toggle {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  color: var(--color-white);
-  cursor: pointer;
-  display: flex;
-  height: var(--navbar-height, 50px);
-  justify-content: center;
-  margin: 0;
-  padding: 0 8px;
+/* Logged-out: no burger; align brand with dashboard left gutter (toggle uses 10px margin-left). */
+body.startpage-body:not(.startpage-auth) nav.navbar .navbar-header > .navbar-brand:first-child {
+  margin-left: 10px;
 }
 
-.startpage-sidebar-toggle:hover,
-.startpage-sidebar-toggle:focus {
-  color: rgba(255, 255, 255, 0.8);
-  outline: none;
-}
-
-.startpage-sidebar-toggle:focus-visible {
-  outline: 2px solid var(--color-white);
-  outline-offset: -6px;
-}
-
-nav.navbar .navbar-header {
-  align-items: center;
-  display: flex;
-  height: var(--navbar-height, 50px);
-  padding: 0;
-}
-
-nav.navbar .navbar-brand {
-  align-items: center;
-  color: #fff;
-  display: flex;
-  font-size: 20px;
-  font-family: inherit;
-  line-height: inherit;
-  margin-top: 0;
-  padding-bottom: 0.3125rem;
-  padding-top: 0.3125rem;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-nav.navbar .navbar-brand img {
-  height: 30px;
-  margin-right: 0.5rem;
-  margin-top: 2px;
-  width: auto;
-}
-
-nav.navbar .navbar-top-links {
-  align-items: center;
-  display: flex;
-  list-style: none;
-  margin: 0 0 0 auto;
-  padding: 0 1rem;
-}
-
-nav.navbar .navbar-top-links li {
-  align-items: center;
-  display: inline-flex;
-}
-
-nav.navbar .navbar-top-links li a,
-nav.navbar .navbar-top-links summary,
-nav.navbar .navbar-top-links .header-nav,
-nav.navbar .navbar-top-links .btn-link {
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  min-height: var(--navbar-height, 50px);
-  padding: 15px;
-}
-
-nav.navbar .navbar-top-links li a:hover,
-nav.navbar .navbar-top-links summary:hover,
-nav.navbar .navbar-top-links .btn-link:hover {
-  color: #fff;
-  text-decoration: none;
-}
-
-nav.navbar .danger,
-nav.navbar .danger:hover,
-nav.navbar .danger:active {
-  background: #db2828;
-  font-size: 14px;
-}
-
-nav.navbar .navbar-top-links .dropdown-content {
-  color: var(--color-text);
+/* Logged-in: brand sits after #sidebar-toggle — do not add extra margin (matches /common/ navbar). */
+body.startpage-auth nav.navbar .navbar-header > .navbar-brand {
+  margin-left: 0;
 }
 
 .startpage-sidebar {
   background: #f8f8f8;
   border-right: 1px solid #e7e7e7;
   bottom: 0;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
   left: 0;
   overflow-y: auto;
   position: fixed;
@@ -131,27 +37,71 @@ nav.navbar .navbar-top-links .dropdown-content {
   transform: translateX(0);
 }
 
-.startpage-sidebar-context a,
-.startpage-sidebar-nav a {
+.startpage-sidebar-inner {
+  padding-bottom: 0;
+}
+
+/* Match dashboard context row (pretixcontrol _sb-admin-2 sidebar .context-selector) */
+.startpage-sidebar-context {
+  border-bottom: 1px solid #e7e7e7;
+}
+
+.startpage-sidebar-context .dropdown-toggle {
   align-items: center;
-  color: #2185d0;
+  background-color: transparent;
+  color: #428bca;
   display: flex;
-  gap: 8px;
-  min-height: 50px;
-  padding: 10px 15px;
+  flex-direction: row;
+  min-height: 56px;
+  padding: 8px 15px 8px 15px;
   text-decoration: none;
 }
 
-.startpage-sidebar-context {
-  border-bottom: 1px solid #e7e7e7;
-  font-size: 18px;
-  font-weight: 600;
+.startpage-sidebar-context .dropdown-toggle:hover,
+.startpage-sidebar-context .dropdown-toggle:focus {
+  background-color: #eee;
+  color: #23527c;
+  text-decoration: none;
 }
 
-.startpage-sidebar-context .fa-circle {
+.startpage-sidebar-context .fa-stack {
+  flex-shrink: 0;
+  margin-right: 5px;
+}
+
+.startpage-sidebar-context .fa-stack .fa-circle {
   color: #2185d0;
 }
 
+.startpage-sidebar-context .context-indicator {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin-left: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.startpage-sidebar-context .context-name {
+  color: #428bca;
+  display: block;
+  font-size: 15px;
+  font-weight: normal;
+  line-height: 17px;
+  margin-bottom: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 170px;
+}
+
+.startpage-sidebar-context .dropdown-toggle:hover .context-name,
+.startpage-sidebar-context .dropdown-toggle:focus .context-name {
+  color: #23527c;
+}
+
+/* Match dashboard sidebar nav rows (_sidebar.scss mobile .nav>li>a) */
 .startpage-sidebar-nav {
   list-style: none;
   margin: 0;
@@ -160,13 +110,64 @@ nav.navbar .navbar-top-links .dropdown-content {
 
 .startpage-sidebar-nav li {
   border-bottom: 1px solid #e7e7e7;
+  position: relative;
 }
 
-.startpage-sidebar-nav a:hover,
-.startpage-sidebar-nav a:focus,
-.startpage-sidebar-nav a.active {
-  background: #eee;
-  color: #0b6eb5;
+.startpage-sidebar-nav li > a {
+  align-items: center;
+  box-sizing: border-box;
+  color: #428bca;
+  display: flex;
+  font-size: 14px;
+  font-weight: normal;
+  height: 41px;
+  line-height: 20px;
+  padding: 10px 15px;
+  text-decoration: none;
+}
+
+.startpage-sidebar-nav li > a .fa {
+  align-items: center;
+  box-sizing: content-box;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 14px;
+  height: 14px;
+  justify-content: center;
+  line-height: 1;
+  margin: 0 5px 0 0;
+  text-align: center;
+  width: 18px;
+}
+
+.startpage-sidebar-nav li > a svg {
+  box-sizing: content-box;
+  display: block;
+  flex-shrink: 0;
+  height: 14px;
+  margin: 0 5px 0 0;
+  width: 18px;
+}
+
+.startpage-sidebar-nav li > a .fa.fa-fw {
+  justify-content: center;
+  width: 18px;
+}
+
+.startpage-sidebar-nav li > a .sidebar-text {
+  display: inline-block;
+}
+
+.startpage-sidebar-nav li > a:hover,
+.startpage-sidebar-nav li > a:focus {
+  background-color: #eee;
+  color: #23527c;
+}
+
+.startpage-sidebar-nav li > a.active {
+  background-color: #eee;
+  color: #23527c;
+  font-weight: normal;
 }
 
 .startpage-sidebar-backdrop {
@@ -575,11 +576,6 @@ body.startpage-search-results-page #main-card {
 }
 
 @media (max-width: 767px) {
-  nav.navbar .navbar-header,
-  nav.navbar .navbar-top-links {
-    padding: 0 0.75rem;
-  }
-
   .startpage-search input {
     width: 160px;
   }

@@ -1,7 +1,7 @@
 function initStartpageSidebar() {
   const body = document.body;
   const sidebar = document.getElementById('startpage-sidebar');
-  const toggleButton = document.getElementById('startpage-sidebar-toggle');
+  const toggleButton = document.getElementById('sidebar-toggle');
   const backdrop = document.querySelector('.startpage-sidebar-backdrop');
 
   if (!sidebar || !toggleButton || !backdrop) {

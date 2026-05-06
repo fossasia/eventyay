@@ -96,6 +96,48 @@ nav.navbar.navbar-inverse .btn-link:focus i {
   color: #fff;
 }
 
+/*
+ * Inverse navbar link colors must not apply inside white dropdown panels
+ * (specificity beats nav.navbar.navbar-inverse .navbar-top-links a / a i).
+ */
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content a.dropdown-item,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content button.dropdown-item {
+  color: var(--dropdown-item-accent, var(--color-primary, #2185d0));
+}
+
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content a.dropdown-item i,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content button.dropdown-item i {
+  color: inherit;
+}
+
+/* Dashboard row matches other items by default; highlight only when flyout is open (hover or touch .active). */
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content .dashboard-dropdown:hover .dashboard-dropdown-toggle,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content .dashboard-dropdown.active .dashboard-dropdown-toggle {
+  background-color: var(--dropdown-item-accent, var(--color-primary, #2185d0));
+  color: #fff;
+}
+
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content .dashboard-dropdown:hover .dashboard-dropdown-toggle i,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content .dashboard-dropdown.active .dashboard-dropdown-toggle i {
+  color: #fff;
+}
+
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content a.dropdown-item:hover,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content a.dropdown-item:focus,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content button.dropdown-item:hover,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content button.dropdown-item:focus {
+  background-color: var(--dropdown-item-accent, var(--color-primary, #2185d0));
+  color: #fff;
+  text-decoration: none;
+}
+
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content a.dropdown-item:hover i,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content a.dropdown-item:focus i,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content button.dropdown-item:hover i,
+nav.navbar.navbar-inverse .navbar-top-links details.dropdown .dropdown-content button.dropdown-item:focus i {
+  color: #fff;
+}
+
 /* ============================================
    Navbar header - main.scss
    ============================================ */
