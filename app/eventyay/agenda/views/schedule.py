@@ -6,6 +6,7 @@ from urllib.parse import unquote, urlparse, urlunparse
 
 from django.contrib import messages
 from django.core import signing
+from django.core.cache import cache
 from django.http import (
     Http404,
     HttpResponse,
@@ -23,6 +24,7 @@ from django_context_decorator import context
 
 from eventyay.agenda.views.utils import (
     build_public_schedule_exporters,
+    build_schedule_json,
     escape_json_for_script,
     get_schedule_exporter_content,
     get_schedule_exporters,
@@ -327,10 +329,32 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     def show_talk_list(self):
         return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
 
+    @context
+    def schedule_data_json(self):
+        """Inline non-enriched schedule JSON for all schedule pages.
+
+        Vue reads this directly and skips the widget endpoint fetch entirely,
+        removing a full round-trip from every page load.  Released schedules are
+        cached for 5 minutes; WIP is never cached (and uses all_talks=True).
+        """
+        return build_schedule_json(self.request, self.schedule)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         schedule = ctx.get('schedule')
         version = self.version or (schedule.version if schedule else None)
+        cache_version = schedule.version if schedule else None
+
+        # Cache the entire meta JSON for released schedules (avoids DB + signal dispatch per request).
+        # WIP schedules are never cached so organiser previews are always fresh.
+        if cache_version:
+            meta_cache_key = f'eagenda:meta:{self.request.event.pk}:{cache_version}'
+            cached_meta = cache.get(meta_cache_key)
+            if cached_meta is not None:
+                ctx['schedule_meta_json'] = cached_meta
+                ctx['schedule_page_version'] = version or ''
+                return ctx
+
         released = list(
             self.request.event.schedules.filter(version__isnull=False)
             .order_by('-published')
@@ -349,8 +373,11 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             'versions': versions,
             'exporters': build_public_schedule_exporters(self.request.event, version=version),
         }
-        ctx['schedule_meta_json'] = escape_json_for_script(json.dumps(meta))
+        meta_json = escape_json_for_script(json.dumps(meta))
+        ctx['schedule_meta_json'] = meta_json
         ctx['schedule_page_version'] = version or ''
+        if cache_version:
+            cache.set(meta_cache_key, meta_json, 300)
         return ctx
 
 

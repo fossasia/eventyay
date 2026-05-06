@@ -52,6 +52,7 @@ export default defineConfig({
 		outDir,
 		emptyOutDir: true,
 		cssCodeSplit: false,
+		sourcemap: true,
 		lib: {
 			entry: path.resolve(__dirname, 'src/main-wc.js'),
 			name: 'PretalxSchedule',
@@ -66,8 +67,9 @@ export default defineConfig({
 				manualChunks(id) {
 					if (id.includes('node_modules')) {
 						if (id.includes('/vue/')) return 'vendor-vue'
-						if (id.includes('moment-timezone')) return 'vendor-moment'
+						if (id.includes('moment')) return 'vendor-moment'
 						if (id.includes('markdown-it')) return 'vendor-markdown'
+						if (id.includes('dompurify')) return 'vendor-dompurify'
 						if (id.includes('buntpapier')) return 'vendor-buntpapier'
 						return 'vendor'
 					}

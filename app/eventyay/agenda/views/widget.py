@@ -12,7 +12,7 @@ from django.views.decorators.http import condition
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.models import SpeakerProfile, TalkSlot
-from eventyay.base.models.schedule import make_qr_svg
+from eventyay.base.models.schedule import make_talk_qr_map, make_speaker_qr_map
 from eventyay.common.views import conditional_cache_page
 from eventyay.talk_rules.agenda import (
     can_access_schedule_widget,
@@ -217,24 +217,9 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
 
     full_base = str(event.urls.base.full())
     if kind == 'talk':
-        qrcodes = {
-            'ics': make_qr_svg(f'{full_base}talk/{code}.ics'),
-            'json': make_qr_svg(f'{full_base}talk/{code}.json'),
-            'xml': make_qr_svg(f'{full_base}talk/{code}.xml'),
-            'xcal': make_qr_svg(f'{full_base}talk/{code}.xcal'),
-            'google_calendar': make_qr_svg(f'{full_base}talk/{code}/export/google-calendar'),
-            'webcal': make_qr_svg(f'{full_base}talk/{code}/export/webcal'),
-        }
+        qrcodes = make_talk_qr_map(full_base, code)
     elif kind == 'speaker':
-        spk_full_base = f'{full_base}speakers/{code}'
-        qrcodes = {
-            'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
-            'json': make_qr_svg(f'{spk_full_base}/talks.json'),
-            'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
-            'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
-            'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
-            'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-        }
+        qrcodes = make_speaker_qr_map(f'{full_base}speakers/{code}')
 
     response = JsonResponse({'qrcodes': qrcodes}, encoder=I18nJSONEncoder)
     response['Access-Control-Allow-Headers'] = 'authorization,content-type'

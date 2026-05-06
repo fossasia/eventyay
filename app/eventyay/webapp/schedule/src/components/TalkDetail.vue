@@ -19,11 +19,26 @@
 				h2.field-heading Description
 				.field-content
 					markdown-content(:markdown="resolvedTalk.description")
-			.public-answers(v-if="visibleAnswers.length > 0")
-				.field-section(v-for="answer in visibleAnswers", :key="answer.question_id")
+			.field-section(v-for="answer in longAnswers", :key="answer.id")
+				h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
+				.field-content
+					markdown-content(:markdown="answer.answer")
+			.field-section(v-for="answer in inlineAnswers", :key="answer.id")
+				h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
+				.field-content
+					a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && (answer.answer_file && answer.answer_file.url || answer.answer)", :href="answer.answer_file && answer.answer_file.url || answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer || (answer.answer_file && answer.answer_file.url) }}
+					span(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
+					span(v-else-if="answer.answer") {{ answer.answer }}
+			.public-answers(v-if="publicScheduleAnswers.length > 0")
+				.field-section(v-for="answer in publicScheduleAnswers", :key="answer.question_id")
 					h2.field-heading {{ answer.question }}
 					.field-content
 						markdown-content(:markdown="answer.answer")
+			.downloads(v-if="displayResources.length > 0")
+				h2 {{ t.downloads }}
+				a.download(v-for="{resource, link, description} of displayResources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
+					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
+					.filename {{ description }}
 			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink && isLive")
 				a.view-video-btn(:href="computedJoinRoomLink")
 					svg(viewBox="0 0 24 24", width="18", height="18", fill="currentColor")
@@ -47,12 +62,6 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
-		.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
-			.header {{ t.downloads }}
-			.downloads-list
-				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
-					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
-					.filename {{ description }}
 		.starrers(v-if="popularityFeatureEnabled && loggedIn && starrers && starrers.total > 0")
 			.header
 				span {{ t.starred_by }} ({{ starrers.total }})
@@ -88,7 +97,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, getIconByFileEnding } from '../utils'
+import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import FavButton from './FavButton.vue'
 import ExportDropdown from './ExportDropdown.vue'
@@ -124,7 +133,8 @@ export default {
 		onStarrerLinkClick: { default: () => () => {} },
 		loggedIn: { default: false },
 		translationMessages: { default: () => ({}) },
-		isWipPreview: { default: false }
+		isWipPreview: { default: false },
+		remoteApiUrl: { default: null },
 	},
 	props: {
 		talk: Object,
@@ -132,6 +142,10 @@ export default {
 		baseUrl: {
 			type: String,
 			default: ''
+		},
+		apiContent: {
+			type: Object,
+			default: null
 		}
 	},
 	emits: ['joinRoom'],
@@ -142,6 +156,8 @@ export default {
 			starrers: { total: 0, public_total: 0, items: [] },
 			starrersLoading: false,
 			starrersExpanded: false,
+			fetchedApiContent: null,
+			fetchedSubmission: null,
 		}
 	},
 	computed: {
@@ -163,6 +179,8 @@ export default {
 				view_all: m.view_all || 'View all',
 				hide_list: m.hide_list || 'Hide',
 				session_language: m.session_language || 'Language',
+				yes: m.yes || 'Yes',
+				no: m.no || 'No',
 			}
 		},
 		uiLocale () {
@@ -210,14 +228,8 @@ export default {
 				}
 				return null
 			}
+			if (this.fetchedSubmission) return this.fetchedSubmission
 			return null
-		},
-		visibleAnswers() {
-			const answers = this.resolvedTalk?.answers || []
-			if (!this.resolvedTalk?.resources?.length) return answers
-
-			const downloadsLabel = (this.t.downloads || '').trim().toLowerCase()
-			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
 		},
 		computedJoinRoomLink() {
 			if (!this.resolvedTalk) return ''
@@ -246,27 +258,62 @@ export default {
 			if (!now || !this.resolvedTalk) return false
 			return this.resolvedTalk.start < now && this.resolvedTalk.end > now
 		},
-		talkExportOptions() {
-			const exporters = this.resolvedTalk?.exporters
-			if (!exporters) return []
-			const qr = exporters.qrcodes || {}
-			const items = [
-				{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters.google_calendar, icon: 'fa-google', qrcode_svg: qr.google_calendar },
-				{ id: 'webcal', label: 'Add to Other Calendar', url: exporters.webcal, icon: 'fa-calendar', qrcode_svg: qr.webcal },
-				{ id: 'ics', label: 'iCal', url: exporters.ics, icon: 'fa-calendar', qrcode_svg: qr.ics },
-				{ id: 'json', label: 'JSON (frab compatible)', url: exporters.json, icon: 'fa-code', qrcode_svg: qr.json },
-				{ id: 'xml', label: 'XML (frab compatible)', url: exporters.xml, icon: 'fa-code', qrcode_svg: qr.xml },
-				{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters.xcal, icon: 'fa-calendar', qrcode_svg: qr.xcal },
-			].filter(o => o.url)
+		effectiveApiContent() {
+			return this.apiContent || this.fetchedApiContent
+		},
+		computedApiBaseUrl() {
+			if (this.remoteApiUrl) return this.remoteApiUrl
+			if (!this.baseUrl) return null
+			try {
+				const url = new URL(this.baseUrl)
+				const segments = url.pathname.split('/').filter(s => s.length > 0)
+				const slug = segments[segments.length - 1] || ''
+				return `${url.origin}/api/v1/events/${slug}/`
+			} catch {
+				return null
+			}
+		},
+		longAnswers() {
+			const answers = this.effectiveApiContent?.answers
+			if (!Array.isArray(answers)) return []
+			return answers.filter(a => a.question && a.question.is_public !== false &&
+				(a.question.variant === 'text' || a.question.variant === 'string'))
+		},
+		inlineAnswers() {
+			const answers = this.effectiveApiContent?.answers
+			if (!Array.isArray(answers)) return []
+			return answers.filter(a => a.question && a.question.is_public !== false &&
+				a.question.variant !== 'text' && a.question.variant !== 'string')
+		},
+		publicScheduleAnswers() {
+			if (this.effectiveApiContent?.answers?.length) return []
+			const answers = this.resolvedTalk?.answers || []
+			if (!this.resolvedTalk?.resources?.length && !this.displayResources.length) return answers
 
-			return items
+			const downloadsLabel = (this.t.downloads || '').trim().toLowerCase()
+			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
+		},
+		displayResources() {
+			return this.effectiveApiContent?.resources ?? this.resolvedTalk?.resources ?? []
+		},
+		talkExportOptions() {
+			const exporters = this.resolvedTalk?.exporters ||
+				(this.baseUrl && this.resolvedTalk?.id ? computeTalkExporters(this.baseUrl, this.resolvedTalk.id) : null)
+			return buildExportMenuItems(exporters)
 		}
 	},
 	watch: {
+		talkId: {
+			handler() {
+				this.fetchedApiContent = null
+				this.fetchedSubmission = null
+			}
+		},
 		resolvedTalk: {
 			handler() {
 				this.starrersExpanded = false
 				this.loadStarrers({ limit: this.inlineStarrersLimit })
+				if (!this.apiContent) this.fetchApiContent()
 			},
 			immediate: true
 		}
@@ -351,6 +398,22 @@ export default {
 				await this.scheduleFav(this.resolvedTalk.id)
 			}
 			await this.loadStarrers({ limit: this.starrersExpanded ? 0 : this.inlineStarrersLimit })
+		},
+		async fetchApiContent() {
+			if (this.apiContent || this.fetchedApiContent !== null) return
+			if (!this.computedApiBaseUrl) return
+			const id = this.resolvedTalk?.id || this.talkId
+			if (!id) return
+			try {
+				const url = `${this.computedApiBaseUrl}submissions/${id}/?expand=answers.question,resources`
+				const response = await fetch(url)
+				if (!response.ok) return
+				const data = await response.json()
+				this.fetchedApiContent = data
+				if (!this.talk && !this.scheduleData) this.fetchedSubmission = data
+			} catch {
+				// silently ignore network / auth errors
+			}
 		}
 	}
 }
@@ -408,6 +471,19 @@ export default {
 				.field-content
 					font-size: 16px
 					font-weight: 600
+		.answer-link
+			color: var(--clr-primary)
+			text-decoration: none
+			word-break: break-all
+			&:hover
+				text-decoration: underline
+		.downloads
+			border: border-separator()
+			border-radius: 4px
+			display: flex
+			flex-direction: column
+			font-size: 16px
+			font-weight: 600
 		.video-stream
 			margin-top: 16px
 			.view-video-btn
