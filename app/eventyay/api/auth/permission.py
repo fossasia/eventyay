@@ -58,20 +58,28 @@ class EventPermission(BasePermission):
         request.event = self._resolve_event(event_slug, organizer_slug=organizer_slug)
         if not request.event:
             return False
+
+        request.organizer = request.event.organizer
+
+        # Allow public access for safe methods if no specific permission is required
+        if request.method in SAFE_METHODS and not required_permission:
+            request.eventpermset = set()
+            return True
+
         if not perm_holder.has_event_permission(
             request.event.organizer, request.event, request=request
         ):
             return False
 
-        request.organizer = request.event.organizer
         self._set_eventpermset(request, perm_holder)
         return self._has_required_permission(required_permission, request.eventpermset)
 
     def has_permission(self, request, view):
-        if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
-            return False
-
         required_permission = self._get_required_permission(request, view)
+
+        if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
+            if request.method not in SAFE_METHODS or required_permission:
+                return False
 
         if request.user.is_authenticated:
             try:

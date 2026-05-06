@@ -90,8 +90,8 @@ class EventPermissionMiddleware:
         if event_slug:
             with scopes_disabled():
                 try:
-                    queryset = Event.objects.prefetch_related('submissions', 'extra_links', 'schedules').select_related(
-                        'organizer'
+                    queryset = Event.objects.prefetch_related('extra_links', 'schedules').select_related(
+                        'organizer', 'cfp'
                     )
                     latest_schedule_subquery = (
                         Schedule.objects.filter(event=OuterRef('pk'), published__isnull=False)

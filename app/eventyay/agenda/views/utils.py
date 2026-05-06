@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 
 from django.contrib import messages
 from django.core import signing
+from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -14,6 +15,7 @@ from django.utils.encoding import force_str
 from django.utils.translation import activate
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
@@ -37,17 +39,155 @@ def build_enriched_schedule_json(request: HttpRequest) -> str:
     Some public pages, such as featured talk pages, remain accessible even when the
     standalone widget JSON endpoint is intentionally hidden. Those pages need a
     self-contained payload instead of depending on ``widgets/schedule.json``.
-    """
 
+    The result is cached for 5 minutes (keyed on schedule PK so invalidation is
+    automatic when a new version is published).  WIP schedules are never cached.
+    """
     schedule = request.event.current_schedule
     if not schedule:
         return '{}'
 
+    featured = are_featured_submissions_visible(request.user, request.event)
+    if schedule.version:
+        cache_key = f'eagenda:enriched:{schedule.pk}:{int(featured)}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
     data = schedule.build_data(
         enrich=True,
-        include_featured_speaker_metadata=are_featured_submissions_visible(request.user, request.event),
+        include_featured_speaker_metadata=featured,
     )
-    return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+
+    if schedule.version:
+        cache.set(cache_key, result, 300)
+    return result
+
+
+def build_schedule_json(request: HttpRequest, schedule=None) -> str:
+    """Build non-enriched schedule JSON for inline embedding on all schedule pages.
+
+    Covers WIP and released schedules.  Released schedules are cached for 5 minutes
+    keyed on schedule PK; WIP is never cached.  Callers that view a specific version
+    should pass that ``schedule`` object directly.
+    """
+    if schedule is None:
+        schedule = request.event.current_schedule
+    if not schedule:
+        return '{}'
+
+    featured = are_featured_submissions_visible(request.user, request.event)
+    if schedule.version:
+        cache_key = f'eagenda:schedule:{schedule.pk}:{int(featured)}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+    data = schedule.build_data(
+        all_talks=not bool(schedule.version),
+        enrich=False,
+        include_featured_speaker_metadata=featured,
+    )
+    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+
+    if schedule.version:
+        cache.set(cache_key, result, 300)
+    return result
+
+
+def build_talk_schedule_json(request: HttpRequest, submission_code: str) -> str:
+    """Build a minimal non-enriched schedule JSON scoped to a single talk.
+
+    Only the target talk's slot is included.  Resources, answers, and exporters
+    are intentionally omitted here; the Vue ``TalkDetail`` component fetches them
+    from the submissions API endpoint so the inlined HTML payload stays tiny.
+    """
+    schedule = request.event.current_schedule
+    if not schedule:
+        return '{}'
+
+    featured = are_featured_submissions_visible(request.user, request.event)
+    if schedule.version:
+        cache_key = f'eagenda:talk:{schedule.pk}:{submission_code}:{int(featured)}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+    data = schedule.build_data(
+        enrich=False,
+        submission_codes={submission_code},
+        include_featured_speaker_metadata=featured,
+    )
+    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+
+    if schedule.version:
+        cache.set(cache_key, result, 300)
+    return result
+
+
+def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
+    """Build a minimal non-enriched schedule JSON scoped to a single speaker.
+
+    Only the speaker's visible talk slots are included.  Speaker biography and
+    avatar are present without enrichment so the ``SpeakerDetail`` Vue component
+    can render immediately from inline data without a separate widget fetch.
+    Speaker calendar export URLs are computed client-side by ``speakerExportOptions``
+    in ``SessionModal.vue``, so ``enrich=False`` is safe here.
+    """
+    schedule = request.event.current_schedule
+    if not schedule:
+        return '{}'
+
+    featured = are_featured_submissions_visible(request.user, request.event)
+    if schedule.version:
+        cache_key = f'eagenda:speaker:{schedule.pk}:{speaker_code}:{int(featured)}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+    talk_codes = set(
+        schedule.talks.filter(
+            submission__speakers__code__iexact=speaker_code,
+            is_visible=True,
+        ).values_list('submission__code', flat=True)
+    )
+
+    data = schedule.build_data(
+        enrich=False,
+        submission_codes=talk_codes,
+        include_featured_speaker_metadata=featured,
+    )
+
+    # Ensure the speaker appears in the payload even when they have no visible
+    # sessions (e.g. accepted but not yet scheduled).
+    if not any(s['code'].lower() == speaker_code.lower() for s in data.get('speakers', [])):
+        user = User.objects.filter(code__iexact=speaker_code).first()
+        if user:
+            profile = SpeakerProfile.objects.filter(
+                event=request.event, user=user
+            ).select_related('user').first()
+            include_avatar = request.event.cfp.request_avatar
+            data.setdefault('speakers', []).append({
+                'code': user.code,
+                'name': user.fullname or None,
+                'biography': getattr(profile, 'biography', ''),
+                'avatar': user.get_avatar_url(event=request.event) if include_avatar else None,
+                'avatar_thumbnail_default': (
+                    user.get_avatar_url(event=request.event, thumbnail='default') if include_avatar else None
+                ),
+                'avatar_thumbnail_tiny': (
+                    user.get_avatar_url(event=request.event, thumbnail='tiny') if include_avatar else None
+                ),
+                'is_featured': bool(getattr(profile, 'is_featured', False)),
+                'featured_position': getattr(profile, 'position', None),
+            })
+
+    result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
+
+    if schedule.version:
+        cache.set(cache_key, result, 300)
+    return result
 
 
 def is_email_like(value: str) -> bool:
@@ -162,8 +302,14 @@ def build_public_schedule_exporters(event, version=None):
     Returns a list of dicts suitable for JSON serialization, each with
     identifier, verbose_name, icon, export_url, and qrcode_svg.
     Used by both the agenda view and the video SPA to ensure identical
-    exporter lists in both UIs.
+    exporter lists in both UIs.  Result is cached for 5 minutes per
+    (event.pk, version) to avoid firing Django signals on every request.
     """
+    cache_key = f'eagenda:exporters:{event.pk}:{version or ""}'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     all_exporters = []
     for signal in (register_data_exporters, register_my_data_exporters):
         for _, exporter_cls in signal.send_robust(event):
@@ -215,6 +361,7 @@ def build_public_schedule_exporters(event, version=None):
                 'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
             }
         )
+    cache.set(cache_key, result, 300)
     return result
 
 

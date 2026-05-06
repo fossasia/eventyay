@@ -4,7 +4,7 @@
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="isTalkView && schedule && resolvedTalk")
-		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
+		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl", :apiContent="talkApiContent")
 	template(v-else-if="isSpeakerView && schedule")
 		featured-speakers(v-if="view === 'featured-speakers'")
 		speakers-list(v-else-if="view === 'speakers'")
@@ -127,7 +127,7 @@ const SpeakersList = defineAsyncComponent(() => import('~/components/SpeakersLis
 const FeaturedSpeakers = defineAsyncComponent(() => import('~/components/FeaturedSpeakers'))
 const SpeakerDetail = defineAsyncComponent(() => import('~/components/SpeakerDetail'))
 const TalkDetail = defineAsyncComponent(() => import('~/components/TalkDetail'))
-import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount } from '~/utils'
+import { findScrollParent, getLocalizedString, getSessionTime, getSessionTypeLabel, isProperSession, normalizePopularityCount, computeTalkExporters } from '~/utils'
 
 function getCsrfToken () {
 	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
@@ -295,6 +295,7 @@ export default {
 			displayDates: this.dateFilter?.split(',').filter(d => d.length === 10) || [],
 			modalContent: null,
 			scheduleMeta: null,
+			talkApiContent: null,
 			sessionsMode: false,
 			searchQuery: '',
 			recordingFilter: 'all',
@@ -689,6 +690,14 @@ export default {
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 			}
+			if (this.isTalkView && this.talkCode) {
+				this.remoteApiRequest(`submissions/${this.talkCode}/?expand=answers.question,resources`)
+					.then(data => { this.talkApiContent = data })
+					.catch((e) => { console.error('Failed to fetch initial talk api content:', e) })
+			}
+			if (this.view === 'speaker' && this.speakerCode) {
+				this.fetchSpeakerApiContentIfNeeded(this.speakerCode)
+			}
 			return
 		}
 
@@ -857,8 +866,8 @@ export default {
 			this.scrollParentWidth = entries[0].contentRect.width
 		},
 		async remoteApiRequest (path, method, data) {
-			const eventUrlObj = new URL(this.eventUrl)
-			const baseUrl = `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
+			const eventUrlObj = new URL(this.eventUrl, window.location.origin)
+			const baseUrl = `${eventUrlObj.origin}/api/v1/events/${this.eventSlug}/`
 			return this.apiRequest(path, method, data, baseUrl)
 		},
 		async apiRequest (path, method, data, baseUrl) {
@@ -1036,16 +1045,21 @@ export default {
 				}
 			}
 		},
+		computedExporters(code) {
+			return computeTalkExporters(this.eventUrl, code)
+		},
 		async showSessionDetails(session, ev) {
 			ev.preventDefault()
 
 			const talk = this.talksLookup[session.id]
+			const exporters = session.exporters || (this.onHomeServer ? this.computedExporters(session.id) : null)
 
 			// Show session immediately with loading state
 			this.modalContent = {
 				contentType: 'session',
 				contentObject: {
 					...session,
+					exporters,
 					apiContent: talk.apiContent,
 					isLoading: !talk.apiContent,
 					faved: this.favSet.has(session.id)
@@ -1060,13 +1074,14 @@ export default {
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
 						this.modalContent.contentObject.isLoading = true;
 					}
-					talk.apiContent = await this.remoteApiRequest(`submissions/${session.id}/?expand=answers.question`, 'GET')
+					talk.apiContent = await this.remoteApiRequest(`submissions/${session.id}/?expand=answers.question,resources`, 'GET')
 					// Update content with fetched description if we are still on the same session
 					if (this.modalContent && this.modalContent.contentType === 'session' && this.modalContent.contentObject.id === session.id) {
 						this.modalContent = {
 							contentType: 'session',
 							contentObject: {
 								...session,
+								exporters,
 								apiContent: talk.apiContent,
 								isLoading: false,
 								faved: this.favSet.has(session.id)
