@@ -1,18 +1,20 @@
 import logging
-import re
 from functools import partial
 
 import dateutil.parser
 from django import forms
-from django_countries.fields import Country, CountryField
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
+from django.db.models import Q
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+from django_countries.fields import Country, CountryField
 from hierarkey.forms import HierarkeyForm
 from i18nfield.forms import I18nFormField
 
+from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+from eventyay.base.models.cfp import default_fields
 from eventyay.common.forms.fields import ExtensionFileField
 from eventyay.common.forms.validators import (
     MaxDateTimeValidator,
@@ -64,6 +66,8 @@ class PublicContent:
         if event and not event.get_feature_flag('show_schedule'):
             return
         for field_name in self.Meta.public_fields:
+            if event and not event.cfp.is_field_public(field_name):
+                continue
             field = self.fields.get(field_name)
             if field:
                 field.original_help_text = getattr(field, 'original_help_text', '')
@@ -144,10 +148,25 @@ class RequestRequire:
 
 class QuestionFieldsMixin:
     def get_question_queryset(self, target, event):
-        qs = TalkQuestion.all_objects.filter(event=event, active=True, target=target)
+        qs = TalkQuestion.all_objects.filter(
+            event=event,
+            active=True,
+            is_imported=False,
+            target=target,
+        )
         return qs.order_by('position')
 
-    def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False):
+    def inject_questions_into_fields(
+        self,
+        target,
+        event,
+        submission=None,
+        speaker=None,
+        review=None,
+        track=None,
+        submission_type=None,
+        readonly=False,
+    ):
         """
         Injects custom question fields into the form, filtered by track/type and pre-filled with answers.
 
@@ -164,7 +183,7 @@ class QuestionFieldsMixin:
             questions = questions.filter(Q(tracks__in=[track]) | Q(tracks__isnull=True))
         if submission_type:
             questions = questions.filter(Q(submission_types__in=[submission_type]) | Q(submission_types__isnull=True))
-        
+
         # Pre-fetch existing answers
         target_object = None
         if target == TalkQuestionTarget.SUBMISSION:
@@ -184,14 +203,12 @@ class QuestionFieldsMixin:
         for question in questions.prefetch_related('options'):
             initial_object = None
             initial = question.default_answer
-            
+
             if target_object:
                 answer = answers_by_question.get(question.id)
                 if answer:
                     initial_object = answer
-                    initial = (
-                        answer.answer_file if question.variant == TalkQuestionVariant.FILE else answer.answer
-                    )
+                    initial = answer.answer_file if question.variant == TalkQuestionVariant.FILE else answer.answer
 
             field = self.get_field(
                 question=question,
@@ -204,8 +221,8 @@ class QuestionFieldsMixin:
             self.fields[f'question_{question.pk}'] = field
 
     def get_field(self, *, question, initial, initial_object, readonly):
-        from eventyay.base.templatetags.rich_text import rich_text
         from eventyay.base.models import TalkQuestionVariant
+        from eventyay.base.templatetags.rich_text import rich_text
 
         read_only = readonly or question.read_only
         label_text = localize_event_text(question.question)

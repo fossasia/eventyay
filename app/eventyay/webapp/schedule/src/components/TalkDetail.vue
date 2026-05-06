@@ -26,9 +26,17 @@
 						markdown-content(:markdown="answer.answer")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 				h2 {{ t.downloads }}
-				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
+				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
 					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
 					.filename {{ description }}
+			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
+			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
+			.answers(v-if="publicAnswers.length > 0")
+				.answer(v-for="answer in publicAnswers", :key="`${answer.question_id}-${answer.question}`")
+					strong.question {{ answer.question }}:
+					a.value(v-if="isHttpUrl(answer.answer)", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+					span.value(v-else-if="answer.options && answer.options.length > 0") {{ answer.options.join(', ') }}
+					span.value(v-else) {{ answer.answer }}
 
 			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink && isLive")
 				a.view-video-btn(:href="computedJoinRoomLink")
@@ -53,6 +61,12 @@
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
+		.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
+			.header {{ t.downloads }}
+			.downloads-list
+				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
+					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
+					.filename {{ description }}
 		.starrers(v-if="popularityFeatureEnabled && loggedIn && starrers && starrers.total > 0")
 			.header
 				span {{ t.starred_by }} ({{ starrers.total }})
@@ -195,6 +209,11 @@ export default {
 			const total = this.starrers?.total || 0
 			return Math.max(0, total - this.starrersInlineItems.length)
 		},
+		publicAnswers() {
+			return (this.resolvedTalk?.answers || []).filter((answer) => {
+				return !!(answer.question && (answer.answer || (answer.options && answer.options.length > 0)))
+			})
+		},
 		popularityFeatureEnabled() {
 			return !!this.scheduleData?.schedule?.feature_flags?.session_popularity_enabled
 		},
@@ -325,6 +344,9 @@ export default {
 				return resource
 			}
 		},
+		isHttpUrl(value) {
+			return typeof value === 'string' && /^https?:\/\//.test(value)
+		},
 		getSpeakerLink(speaker) {
 			return this.generateSpeakerLinkUrl({speaker})
 		},
@@ -407,24 +429,20 @@ export default {
 			border-radius: 4px
 			display: flex
 			flex-direction: column
+			font-size: 16px
+			font-weight: 600
+		.answers
 			margin-top: 16px
-			h2
-				margin: 4px 8px
-			.download
-				display: flex
-				align-items: center
-				height: 56px
-				font-weight: 600
-				font-size: 16px
-				border-top: border-separator()
-				text-decoration: none
-				color: $clr-primary-text-light
-				&:hover
-					background-color: $clr-grey-100
-					text-decoration: underline
-				.mdi
-					font-size: 36px
-					margin: 0 4px
+			.answer
+				display: block
+				margin-top: 8px
+				.question
+					margin-right: 6px
+				.value
+					color: $clr-primary-text-light
+					text-decoration: none
+					&:hover
+						text-decoration: underline
 
 		.video-stream
 			margin-top: 16px
@@ -592,8 +610,39 @@ export default {
 				&.no-name
 					color: $clr-secondary-text-light
 					font-style: italic
+	.downloads
+		margin: 0 16px 32px
+		display: flex
+		flex-direction: column
+		border: border-separator()
+		border-radius: 4px
+		.header
+			border-bottom: border-separator()
+			padding: 8px
+		.download
+			display: flex
+			align-items: center
+			gap: 8px
+			padding: 8px
+			text-decoration: none
+			color: $clr-primary-text-light
+			border-top: border-separator()
+			&:first-child
+				border-top: none
+			&:hover
+				background-color: $clr-grey-100
+				.filename
+					text-decoration: underline
+					color: var(--clr-primary)
+			.mdi
+				font-size: 24px
+				flex-shrink: 0
+			.filename
+				font-weight: 600
 	@media (max-width: 768px)
 		.speakers
+			margin: 0 16px 16px
+		.downloads
 			margin: 0 16px 16px
 		.starrers
 			margin: 0 16px 16px
@@ -614,6 +663,8 @@ export default {
 			.abstract
 				font-size: 14px
 		.speakers
+			margin: 0 10px 12px
+		.downloads
 			margin: 0 10px 12px
 		.starrers
 			margin: 0 10px 12px
