@@ -77,11 +77,8 @@ def stripe_webhook_view(request):
 
             # If the charge is fully refunded, mark the order as refunded (canceled)
             if charge.get('refunded'):
-                try:
-                    if order.status != Order.STATUS_CANCELED:
-                        mark_order_refunded(order, user=None)
-                        logger.info('Order %s marked as fully refunded (canceled) via Stripe webhook.', order.code)
-                except Exception as e:
-                    logger.error('Error marking order %s as refunded: %s', order.code, str(e))
+                if order.status != Order.STATUS_CANCELED:
+                    mark_order_refunded(order, user=None)
+                    logger.info('Order %s marked as fully refunded (canceled) via Stripe webhook.', order.code)
 
     return HttpResponse('Success', status=200)
