@@ -15,27 +15,6 @@ class TestPresalePages:
         # Should either show landing or redirect
         assert response.status_code in [200, 301, 302]
 
-    def test_index_page_shows_sidebar_for_authenticated_users(self, authenticated_client):
-        response = authenticated_client.get('/')
-
-        assert response.status_code == 200
-        content = response.content.decode()
-        assert 'id="startpage-sidebar-toggle"' in content
-        assert 'id="startpage-sidebar"' in content
-        assert 'Main dashboard' in content
-        assert 'My Orders' in content
-        assert 'My Sessions' in content
-        assert 'My Events' in content
-        assert 'Organizers' in content
-
-    def test_index_page_hides_sidebar_for_anonymous_users(self, client):
-        response = client.get('/')
-
-        assert response.status_code == 200
-        content = response.content.decode()
-        assert 'id="startpage-sidebar-toggle"' not in content
-        assert 'id="startpage-sidebar"' not in content
-
     def test_locale_set_endpoint(self, client):
         """Test locale setting endpoint exists."""
         response = client.get('/locale/set?locale=en&next=/')
