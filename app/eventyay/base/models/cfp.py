@@ -1,5 +1,4 @@
 import datetime as dt
-from functools import partial
 
 from django.db import models
 from django.utils.functional import cached_property
@@ -79,34 +78,40 @@ def default_fields():
             'visibility': 'required',
             'min_length': None,
             'max_length': None,
+            'public': True,
         },
         'abstract': {
             'visibility': 'required',
             'min_length': None,
             'max_length': None,
+            'public': True,
         },
         'description': {
             'visibility': 'optional',
             'min_length': None,
             'max_length': None,
+            'public': True,
         },
         'biography': {
             'visibility': 'required',
             'min_length': None,
             'max_length': None,
+            'public': True,
         },
-        'avatar': {'visibility': 'optional'},
-        'avatar_source': {'visibility': 'optional'},
-        'avatar_license': {'visibility': 'optional'},
-        'availabilities': {'visibility': 'do_not_ask'},
-        'notes': {'visibility': 'optional'},
-        'do_not_record': {'visibility': 'optional'},
-        'image': {'visibility': 'optional'},
-        'track': {'visibility': 'do_not_ask'},
-        'duration': {'visibility': 'do_not_ask'},
-        'content_locale': {'visibility': 'required'},
-        'additional_speaker': {'visibility': 'optional'},
-        'fullname': {'visibility': 'required'},
+        'avatar': {'visibility': 'optional', 'public': True},
+        'avatar_source': {'visibility': 'optional', 'public': False},
+        'avatar_license': {'visibility': 'optional', 'public': False},
+        'availabilities': {'visibility': 'do_not_ask', 'public': False},
+        'notes': {'visibility': 'optional', 'public': False},
+        'do_not_record': {'visibility': 'optional', 'public': False},
+        'image': {'visibility': 'optional', 'public': True},
+        'slides': {'visibility': 'optional', 'max_count': 1, 'public': True},
+        'track': {'visibility': 'do_not_ask', 'public': False},
+        'duration': {'visibility': 'do_not_ask', 'public': False},
+        'slot_count': {'visibility': 'optional', 'public': False},
+        'content_locale': {'visibility': 'required', 'public': False},
+        'additional_speaker': {'visibility': 'optional', 'public': False},
+        'fullname': {'visibility': 'required', 'public': True},
     }
 
 
@@ -117,22 +122,41 @@ def field_helper(cls):
     def is_field_required(self, field):
         return self.fields.get(field, default_fields()[field])['visibility'] == 'required'
 
+    def is_field_public(self, field):
+        return self.fields.get(field, default_fields()[field]).get(
+            'public', default_fields()[field].get('public', False)
+        )
+
+    cls.is_field_requested = is_field_requested
+    cls.is_field_required = is_field_required
+    cls.is_field_public = is_field_public
+
     for field in default_fields().keys():
         # Create wrapper functions with clean docstrings to avoid RST formatting issues
         def make_request_getter(field_name):
             def getter(self):
                 return is_field_requested(self, field_name)
-            getter.__doc__ = f"Check if {field_name} field is requested."
+
+            getter.__doc__ = f'Check if {field_name} field is requested.'
             return getter
-        
+
         def make_require_getter(field_name):
             def getter(self):
                 return is_field_required(self, field_name)
-            getter.__doc__ = f"Check if {field_name} field is required."
+
+            getter.__doc__ = f'Check if {field_name} field is required.'
             return getter
-        
+
+        def make_public_getter(field_name):
+            def getter(self):
+                return is_field_public(self, field_name)
+
+            getter.__doc__ = f'Check if {field_name} field is public.'
+            return getter
+
         setattr(cls, f'request_{field}', property(make_request_getter(field)))
         setattr(cls, f'require_{field}', property(make_require_getter(field)))
+        setattr(cls, f'public_{field}', property(make_public_getter(field)))
     return cls
 
 
@@ -160,7 +184,9 @@ class CfP(PretalxModel):
         verbose_name=_('Default session type'),
         null=True,
         blank=True,
-        help_text=_('The default session type for new submissions. Leave empty to show no pre-selected type in the CFP form.'),
+        help_text=_(
+            'The default session type for new submissions. Leave empty to show no pre-selected type in the CFP form.'
+        ),
     )
     deadline = models.DateTimeField(
         null=True,
@@ -173,6 +199,7 @@ class CfP(PretalxModel):
 
     class urls(EventUrls):
         """URL patterns for public CfP (Call for Proposals) views."""
+
         base = '{self.event.orga_urls.cfp}'
         editor = '{base}flow/'
         questions = '{base}questions/'
@@ -191,6 +218,9 @@ class CfP(PretalxModel):
     def __str__(self) -> str:
         """Help with debugging."""
         return f'CfP(event={self.event.slug})'
+
+    def is_resource_public(self, resource) -> bool:
+        return resource.kind != 'slides' or self.public_slides
 
     def copy_data_from(self, other_cfp, skip_attributes=None):
         # default_type gets set by event.copy_data_from

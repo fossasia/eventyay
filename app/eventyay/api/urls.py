@@ -113,7 +113,7 @@ question_router = routers.DefaultRouter()
 question_router.register(r'options', product.QuestionOptionViewSet)
 
 room_router = routers.DefaultRouter()
-room_router.register(r"stream-schedules", stream_schedule.StreamScheduleViewSet, basename="stream-schedule")
+room_router.register(r'stream-schedules', stream_schedule.StreamScheduleViewSet, basename='stream-schedule')
 
 product_router = routers.DefaultRouter()
 product_router.register(r'variations', product.ProductVariationViewSet)
@@ -149,6 +149,31 @@ urlpatterns = [
         'organizers/<orgslug:organizer>/events/<slug:event>/settings/',
         event.EventSettingsView.as_view(),
         name='event.settings',
+    ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/publish-talks/',
+        event.EventPublishTalksView.as_view(),
+        name='event.publish-talks',
+    ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/publish-tickets/',
+        event.EventPublishTicketsView.as_view(),
+        name='event.publish-tickets',
+    ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/enable-manual-payment/',
+        event.EventEnableManualPaymentView.as_view(),
+        name='event.enable-manual-payment',
+    ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/speakers/import/',
+        speaker.SpeakerImportView.as_view(),
+        name='speaker.import',
+    ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/submissions/import/',
+        submission.SubmissionImportView.as_view(),
+        name='submission.import',
     ),
     path(
         'organizers/<orgslug:organizer>/events/<slug:event>/',
