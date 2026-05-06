@@ -126,7 +126,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
         },
     )
     @action(detail=False, url_path="by-version")
-    def redirect_version(self, request, event):
+    def redirect_version(self, request, event, organizer=None):
         version = request.query_params.get("version")
         schedule = get_object_or_404(self.event.schedules, version=version)
         if not self.has_perm("view", schedule):
@@ -152,7 +152,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
         },
     )
     @action(detail=False, methods=["POST"])
-    def release(self, request, event):
+    def release(self, request, event, organizer=None):
         wip_schedule = request.event.wip_schedule
         serializer = ScheduleReleaseSerializer(
             data=request.data, context=self.get_serializer_context()
@@ -199,7 +199,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
         },
     )
     @action(detail=True, methods=["get"], url_path="exporters/(?P<name>[^/]+)")
-    def get_exporter(self, request, event, pk=None, name=None):
+    def get_exporter(self, request, event, organizer=None, pk=None, name=None):
         schedule = self.get_object()
         response = get_schedule_exporter_content(request, name, schedule)
         if not response:
