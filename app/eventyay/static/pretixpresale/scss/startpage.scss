@@ -592,3 +592,25 @@ body.startpage-search-results-page #main-card {
     width: auto;
   }
 }
+
+
+body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown-item {
+  color: var(--color-primary, #2185d0);
+
+  i,
+  .fa {
+    color: var(--color-primary, #2185d0);
+    opacity: 1;
+  }
+
+  &:hover,
+  &:focus {
+    background-color: var(--color-primary, #2185d0);
+    color: #fff;
+
+    i,
+    .fa {
+      color: #fff;
+    }
+  }
+}
