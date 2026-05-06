@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0024_remove_event_featured_sessions_text'),
+        ('base', '0025_resource_kind_talkquestion_import_key_and_more'),
     ]
 
     operations = [
