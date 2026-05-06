@@ -5,14 +5,25 @@
 			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
 				.header-actions
-					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
+					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions", :qrcodesUrl="talkQrcodesUrl")
 					.button-container(v-if="loggedIn", :class="isFaved ? 'faved' : ''")
 						fav-button(@toggleFav="toggleFav")
 			.info
 				span.info-main {{ datetime }} {{ roomName }}
 				span.session-language(v-if="sessionLanguageLabel")  · {{ t.session_language }}: {{ sessionLanguageLabel }}
-			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
-			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
+			.field-section.abstract-section(v-if="resolvedTalk.abstract")
+				h2.field-heading Abstract
+				.field-content
+					markdown-content(:markdown="resolvedTalk.abstract")
+			.field-section.description-section(v-if="resolvedTalk.description")
+				h2.field-heading Description
+				.field-content
+					markdown-content(:markdown="resolvedTalk.description")
+			.public-answers(v-if="resolvedTalk.answers && resolvedTalk.answers.length > 0")
+				.field-section(v-for="answer in resolvedTalk.answers", :key="answer.question_id")
+					h2.field-heading {{ answer.question }}
+					.field-content
+						markdown-content(:markdown="answer.answer")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 				h2 {{ t.downloads }}
 				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
@@ -31,7 +42,12 @@
 			.speakers-list
 				.speaker(v-for="speaker of resolvedTalk.speakers", :key="speaker.code")
 					a.speaker-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)")
-						img.avatar-circle(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
+						img.avatar-circle(
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							loading="lazy",
+							decoding="async"
+						)
 						.avatar-placeholder.avatar-circle(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
@@ -128,6 +144,11 @@ export default {
 		}
 	},
 	computed: {
+		talkQrcodesUrl() {
+			if (!this.baseUrl || !this.resolvedTalk?.id) return ''
+			const base = this.baseUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/talk/${this.resolvedTalk.id}.json`
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -180,8 +201,13 @@ export default {
 		resolvedTalk() {
 			if (this.talk) return this.talk
 			if (this.talkId && this.scheduleData) {
+				const lu = this.scheduleData.sessionsLookup
+				if (lu && lu[this.talkId]) return lu[this.talkId]
 				const sessions = this.scheduleData.sessions || []
-				return sessions.find(s => s.id === this.talkId) || null
+				for (let i = 0; i < sessions.length; i++) {
+					if (sessions[i].id === this.talkId) return sessions[i]
+				}
+				return null
 			}
 			return null
 		},
@@ -191,6 +217,8 @@ export default {
 		},
 		isFaved() {
 			if (!this.resolvedTalk) return false
+			const favSet = this.scheduleData?.favSet
+			if (favSet && typeof favSet.has === 'function') return favSet.has(this.resolvedTalk.id)
 			const favs = this.scheduleData?.favs || []
 			return favs.includes(this.resolvedTalk.id)
 		},
@@ -353,10 +381,27 @@ export default {
 			color: $clr-secondary-text-light
 			.session-language
 				white-space: nowrap
-		.abstract
+		.abstract, .description
+			margin: 0
+		.field-section
 			margin: 16px 0 0 0
-			font-size: 16px
-			font-weight: 600
+			.field-heading
+				margin: 0 0 6px 0
+				font-size: 14px
+				font-weight: 700
+				color: $clr-secondary-text-light
+			.field-content
+				padding: 8px 12px
+				p
+					margin: 0.25em 0
+					&:first-child
+						margin-top: 0
+					&:last-child
+						margin-bottom: 0
+			&.abstract-section
+				.field-content
+					font-size: 16px
+					font-weight: 600
 		.downloads
 			border: border-separator()
 			border-radius: 4px
