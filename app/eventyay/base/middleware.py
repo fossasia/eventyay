@@ -226,8 +226,9 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
 
     sources = []
 
-    if hasattr(request, 'event') and request.event:
-        for image_url in (request.event.visible_header_image_url, request.event.visible_logo_url):
+    event = getattr(request, 'event', None)
+    if event and event.pk:
+        for image_url in (event.visible_header_image_url, event.visible_logo_url):
             origin = get_url_origin(image_url)
             if origin:
                 sources.append(origin)

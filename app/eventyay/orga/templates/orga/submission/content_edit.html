@@ -85,6 +85,7 @@
             {{ form.duration.as_field_group }}
             {% if form.slot_count %}{{ form.slot_count.as_field_group }}{% endif %}
             {% if form.image %}{{ form.image.as_field_group }}{% endif %}
+            {% if form.slides %}{{ form.slides.as_field_group }}{% endif %}
             {% if action != "create" %}
                 {% include "cfp/includes/submission_resources_form.html" %}
             {% endif %}
