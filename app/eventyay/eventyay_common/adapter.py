@@ -7,12 +7,14 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from pydantic import ValidationError
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
+from eventyay.plugins.socialauth.schemas.oauth2_params import OAuth2Params
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -24,9 +26,18 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         # Social login → OAuth2 handoff for Talk module.
         oauth2_params = request.session.pop('oauth2_params', None)
         if oauth2_params:
+            try:
+                validated_oauth2_params = OAuth2Params.model_validate(oauth2_params)
+            except ValidationError:
+                validated_oauth2_params = None
+
+        else:
+            validated_oauth2_params = None
+
+        if validated_oauth2_params:
             request.session.pop('socialauth_next_url', None)
             auth_url = reverse('eventyay_common:oauth2_provider.authorize')
-            return f'{auth_url}?{urlencode(oauth2_params)}'
+            return f'{auth_url}?{urlencode(validated_oauth2_params.model_dump())}'
 
         next_url = request.session.pop('socialauth_next_url', None)
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):

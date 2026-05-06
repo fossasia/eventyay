@@ -165,6 +165,29 @@ def test_adapter_get_login_redirect_url_oauth2_handoff(monkeypatch):
 
 
 @pytest.mark.django_db
+def test_adapter_get_login_redirect_url_ignores_invalid_oauth2_params():
+    """Invalid oauth2_params payload is discarded and fallback redirect is used."""
+    user = User.objects.create_user('oauth2-invalid@example.com', 'password')
+    request = RequestFactory().get('/')
+    request.user = user
+    request.session = {
+        'oauth2_params': {
+            'client_id': 'test-client',
+            # Missing required redirect_uri and state keys.
+            'scope': 'profile',
+        },
+        'socialauth_next_url': '/orga/my-event/',
+    }
+
+    adapter = CustomAccountAdapter()
+    url = adapter.get_login_redirect_url(request)
+
+    assert url == '/orga/my-event/'
+    assert 'oauth2_params' not in request.session
+    assert 'socialauth_next_url' not in request.session
+
+
+@pytest.mark.django_db
 def test_adapter_get_login_redirect_url_socialauth_next():
     """socialauth_next_url in session takes priority over default redirect."""
     user = User.objects.create_user('next@example.com', 'password')
