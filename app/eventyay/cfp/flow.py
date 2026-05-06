@@ -10,12 +10,11 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
-from django.db.models import Q
 from django.forms import ValidationError
 from django.http import HttpResponseNotAllowed
-from django.utils.datastructures import MultiValueDict
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDict
 from django.utils.functional import Promise, cached_property
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
@@ -23,19 +22,19 @@ from django.views.generic.base import TemplateResponseMixin
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.base.models import (
+    SubmissionStates,
+    SubmissionType,
+    Track,
+    User,
+)
 from eventyay.cfp.signals import cfp_steps
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.person.forms import SpeakerProfileForm, UserForm
-from eventyay.base.models import User
 from eventyay.submission.forms import InfoForm
-from eventyay.base.models import (
-    TalkQuestionTarget,
-    SubmissionStates,
-    SubmissionType,
-    Track,
-)
+
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +188,7 @@ class BaseCfPStep:
         self.__dict__.update(state)
         self.request = None
 
+
 class TemplateFlowStep(TemplateResponseMixin, BaseCfPStep):
     template_name = 'cfp/event/submission_base.html'
 
@@ -280,7 +280,10 @@ class FormFlowStep(TemplateFlowStep):
         # Add information about uploaded files for display in templates
         saved_files = self.cfp_session.get('files', {}).get(self.identifier, {}) or {}
         result['uploaded_files'] = {
-            field: file_dict.get('name') for field, file_dict in saved_files.items()
+            field: (
+                [entry.get('name') for entry in file_dict] if isinstance(file_dict, list) else file_dict.get('name')
+            )
+            for field, file_dict in saved_files.items()
         }
         return result
 
@@ -327,26 +330,32 @@ class FormFlowStep(TemplateFlowStep):
 
     def get_files(self):
         saved_files = self.cfp_session['files'].get(self.identifier, {})
-        files = {}
+        files = MultiValueDict()
         for field, field_dict in saved_files.items():
-            field_dict = field_dict.copy()
-            tmp_name = field_dict.pop('tmp_name')
-            files[field] = UploadedFile(file=self.file_storage.open(tmp_name), **field_dict)
+            field_entries = field_dict if isinstance(field_dict, list) else [field_dict]
+            for entry in field_entries:
+                field_entry = entry.copy()
+                tmp_name = field_entry.pop('tmp_name')
+                files.appendlist(field, UploadedFile(file=self.file_storage.open(tmp_name), **field_entry))
         return files or None
 
     def set_files(self, files):
-        for field, field_file in files.items():
-            tmp_filename = self.file_storage.save(field_file.name, field_file)
-            file_dict = {
-                'tmp_name': tmp_filename,
-                'name': field_file.name,
-                'content_type': field_file.content_type,
-                'size': field_file.size,
-                'charset': field_file.charset,
-            }
-            data = self.cfp_session['files'].get(self.identifier, {})
-            data[field] = file_dict
-            self.cfp_session['files'][self.identifier] = data
+        data = self.cfp_session['files'].get(self.identifier, {})
+        for field, field_files in files.lists():
+            file_entries = []
+            for field_file in field_files:
+                tmp_filename = self.file_storage.save(field_file.name, field_file)
+                file_entries.append(
+                    {
+                        'tmp_name': tmp_filename,
+                        'name': field_file.name,
+                        'content_type': field_file.content_type,
+                        'size': field_file.size,
+                        'charset': field_file.charset,
+                    }
+                )
+            data[field] = file_entries if len(file_entries) > 1 else file_entries[0]
+        self.cfp_session['files'][self.identifier] = data
 
 
 class GenericFlowStep:
@@ -456,11 +465,9 @@ class InfoStep(GenericFlowStep, FormFlowStep):
     @property
     def _text(self):
         return _(
-            'We’re glad that you want to contribute to our event with your proposal. Let’s get started, this won’t take long.'
+            'We’re glad that you want to contribute to our event with your proposal. '
+            'Let’s get started, this won’t take long.'
         )
-
-
-
 
 
 class UserStep(GenericFlowStep, FormFlowStep):
@@ -503,7 +510,9 @@ class UserStep(GenericFlowStep, FormFlowStep):
     @property
     def _text(self):
         return _(
-            'To create your proposal, you need an account on this page. This not only gives us a way to contact you, it also gives you the possibility to edit your proposal or to view its current state.'
+            'To create your proposal, you need an account on this page. '
+            'This not only gives us a way to contact you, it also gives you the possibility '
+            'to edit your proposal or to view its current state.'
         )
 
 
@@ -555,7 +564,8 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
     @property
     def _text(self):
         return _(
-            'This information will be publicly displayed next to your session - you can always edit for as long as proposals are still open.'
+            'This information will be publicly displayed next to your session - '
+            'you can always edit for as long as proposals are still open.'
         )
 
     def get_csp_update(self, request):

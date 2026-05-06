@@ -4,6 +4,8 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
+from eventyay.base.models import Submission, SubmissionStates, TalkSlot
+from eventyay.base.models.resource import get_slide_resources
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
 from eventyay.common.forms.renderers import InlineFormLabelRenderer, InlineFormRenderer
@@ -15,12 +17,16 @@ from eventyay.common.forms.widgets import (
     TextInputWithAddon,
 )
 from eventyay.common.text.phrases import phrases
-from eventyay.base.models import TalkSlot
-from eventyay.base.models import Submission, SubmissionStates
+from eventyay.submission.forms.resource import (
+    SlidesField,
+    get_slides_max_count,
+    save_slides_resource,
+)
 
 
 class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
     content_locale = forms.ChoiceField(label=phrases.base.language)
+    slides = SlidesField(required=False, label=_('Slides'))
 
     def __init__(self, event, anonymise=False, **kwargs):
         self.event = event
@@ -98,6 +104,11 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             )
         if 'abstract' in self.fields:
             self.fields['abstract'].widget.attrs['rows'] = 2
+        if 'slides' in self.fields:
+            slides_resources = list(get_slide_resources(instance)) if instance and instance.pk else []
+            self.initial['slides'] = slides_resources
+            self.fields['slides'].existing_resources = slides_resources
+            self.fields['slides'].set_max_items(get_slides_max_count(self.event))
         if not event.get_feature_flag('present_multiple_times'):
             self.fields.pop('slot_count', None)
         if not event.get_feature_flag('use_tracks'):
@@ -159,6 +170,8 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             slot.start = self.cleaned_data.get('start')
             slot.end = self.cleaned_data.get('end')
             slot.save()
+        if 'slides' in self.cleaned_data:
+            save_slides_resource(instance, self.cleaned_data['slides'])
         return instance
 
     class Meta:
@@ -177,6 +190,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             'duration',
             'slot_count',
             'image',
+            'slides',
             'is_featured',
         ]
         widgets = {
@@ -199,7 +213,9 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
             'abstract',
             'description',
             'notes',
+            'slot_count',
             'image',
+            'slides',
             'do_not_record',
             'content_locale',
         }
@@ -249,7 +265,9 @@ class SubmissionStateChangeForm(forms.Form):
     pending = forms.BooleanField(
         label=_('Mark the new state as “pending”'),
         help_text=_(
-            'If you mark state changes as pending, they won’t be visible to speakers right away. You can always apply pending changes for some or all proposals in one go once you’re ready to make your decisions public.'
+            'If you mark state changes as pending, they won’t be visible to speakers right away. '
+            'You can always apply pending changes for some or all proposals in one go once '
+            'you’re ready to make your decisions public.'
         ),
         required=False,
         initial=False,
