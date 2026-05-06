@@ -11,8 +11,12 @@ function initStartpageSidebar() {
   function setSidebarOpen(isOpen) {
     body.classList.toggle('startpage-sidebar-open', isOpen);
     toggleButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    sidebar.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    sidebar.toggleAttribute('inert', !isOpen);
     backdrop.hidden = !isOpen;
   }
+
+  setSidebarOpen(false);
 
   toggleButton.addEventListener('click', function () {
     setSidebarOpen(!body.classList.contains('startpage-sidebar-open'));

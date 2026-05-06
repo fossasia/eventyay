@@ -141,7 +141,7 @@
             </ul>
         </nav>
         {% if request.user.is_authenticated %}
-            <aside class="startpage-sidebar" id="startpage-sidebar" aria-label="{% trans 'Main navigation' %}">
+            <aside class="startpage-sidebar" id="startpage-sidebar" aria-label="{% trans 'Main navigation' %}" aria-hidden="true" inert>
                 <div class="startpage-sidebar-inner">
                     <div class="startpage-sidebar-context">
                         <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-toggle">

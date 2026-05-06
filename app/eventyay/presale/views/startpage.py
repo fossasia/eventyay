@@ -33,7 +33,10 @@ class StartPageView(TemplateView):
         )
         ctx['site_name'] = settings.INSTANCE_NAME
         ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
-        ctx['nav_items'] = get_global_navigation(self.request)
+        if self.request.user.is_authenticated:
+            ctx['nav_items'] = get_global_navigation(self.request)
+        else:
+            ctx['nav_items'] = []
         ctx['show_link_in_header_for_start_page'] = Page.objects.filter(
             link_on_website_start_page=True,
             link_in_header=True,
