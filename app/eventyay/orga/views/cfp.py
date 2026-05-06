@@ -486,6 +486,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
             form.instance.position = (max_position or -1) + 1
 
         if form.cleaned_data.get('variant') in ('choices', 'multiple_choice', 'select'):
+        if form.cleaned_data.get('variant') in ('choices', 'multiple_choice'):
             changed_options = [form.changed_data for form in self.formset if form.has_changed()]
             if form.cleaned_data.get('options') and changed_options:
                 messages.error(
