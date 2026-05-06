@@ -184,10 +184,25 @@ body.startpage-auth nav.navbar .navbar-header > .navbar-brand {
   display: none;
 }
 
-.startpage-search-nav {
+/* Wins over .navbar-top-links li { display: inline-block } so the row centers vertically */
+nav.navbar .navbar-top-links li.startpage-search-nav {
+  align-items: center;
+  display: flex;
+  float: left;
+  height: 50px;
+  margin-right: 10px;
+}
+
+@media (max-width: 767px) {
+  nav.navbar .navbar-top-links li.startpage-search-nav {
+    height: auto;
+    min-height: var(--navbar-height, 60px);
+  }
+}
+
+nav.navbar .navbar-top-links li.startpage-search-nav .startpage-search-form {
   display: flex;
   align-items: center;
-  margin-right: 10px;
 }
 
 .startpage-search-form {
