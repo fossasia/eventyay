@@ -18,8 +18,10 @@ function initToggles() {
         dropdown.addEventListener('change', handleRequiredDropdownChange);
     });
 
-    // Binary toggles (active, is_public) - select only those without data-field-id (which are for form page)
-    document.querySelectorAll('.toggle-switch:not([data-field-id]) input').forEach(input => {
+    // Binary toggles (active, is_public) for custom-question list pages only.
+    // Built-in field toggles on the Forms page are plain form controls and should
+    // not trigger the AJAX question toggle endpoint.
+    document.querySelectorAll('.toggle-switch[data-question-id] input').forEach(input => {
         input.addEventListener('change', handleBinaryToggle);
     });
 }
