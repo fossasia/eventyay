@@ -15,8 +15,6 @@ from django_countries.fields import Country, CountryField
 from hierarkey.forms import HierarkeyForm
 from i18nfield.forms import I18nFormField
 
-from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
-from eventyay.base.models.cfp import default_fields
 from eventyay.common.forms.fields import ExtensionFileField
 from eventyay.common.forms.validators import (
     MaxDateTimeValidator,
@@ -29,8 +27,8 @@ from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from eventyay.helpers.countries import CachedCountries
 from eventyay.helpers.escapejson import escapejson_attr
-from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
 
 logger = logging.getLogger(__name__)
 
