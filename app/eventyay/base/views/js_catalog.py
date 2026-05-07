@@ -19,7 +19,27 @@ js_info_dict = {
 @etag(lambda *s, **k: import_date)
 @cache_page(3600, key_prefix='js18n-%s' % import_date)
 def js_catalog(request, lang):
+    """
+    Serve JavaScript translation catalog for the requested language.
+    
+    Falls back through the language chain:
+    1. Try the requested language as-is (e.g., 'pt-br')
+    2. Try the primary subtag (e.g., 'pt' from 'pt-br')
+    3. Fall back to English
+    """
     c = JavaScriptCatalog()
-    c.translation = DjangoTranslation(lang, domain='djangojs')
+    
+    # Try the requested language first
+    try:
+        c.translation = DjangoTranslation(lang, domain='djangojs')
+    except:
+        # Try the primary subtag
+        lang_primary = lang.split('-')[0].lower()
+        try:
+            c.translation = DjangoTranslation(lang_primary, domain='djangojs')
+        except:
+            # Fall back to English
+            c.translation = DjangoTranslation('en', domain='djangojs')
+    
     context = c.get_context_data()
     return c.render_to_response(context)
