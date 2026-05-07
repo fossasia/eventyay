@@ -667,16 +667,42 @@ class Order(LockModel, LoggedModel):
         if self.status != Order.STATUS_PAID or self.total <= Decimal('0.00'):
             return Decimal('0.00')
 
-        fee = self.user_cancel_fee - self.user_existing_cancellation_fee
-        if fee <= Decimal('0.00'):
-            return Decimal('0.00')
+        fee = Decimal('0.00')
 
-        remaining_total = self.total - self.user_existing_cancellation_fee
-        if remaining_total <= Decimal('0.00'):
-            return Decimal('0.00')
+        # Percentage fee: apply directly to canceled_total
+        if self.event.settings.cancel_allow_user_paid_keep_percentage:
+            fee += (
+                self.event.settings.cancel_allow_user_paid_keep_percentage
+                / Decimal('100.0') * canceled_total
+            )
 
-        proportional_fee = round_decimal(fee * canceled_total / remaining_total, self.event.currency)
-        return min(canceled_total, proportional_fee)
+        # Flat fee and keep-existing-fees: prorate from the remaining uncharged amount
+        flat_base = Decimal('0.00')
+        if self.event.settings.cancel_allow_user_paid_keep_fees:
+            flat_base += (
+                self.fees.filter(
+                    fee_type__in=(
+                        OrderFee.FEE_TYPE_PAYMENT,
+                        OrderFee.FEE_TYPE_SHIPPING,
+                        OrderFee.FEE_TYPE_SERVICE,
+                    ),
+                    canceled=False,
+                ).aggregate(s=Sum('value'))['s']
+                or Decimal('0.00')
+            )
+        if self.event.settings.cancel_allow_user_paid_keep:
+            flat_base += self.event.settings.cancel_allow_user_paid_keep
+
+        if flat_base > Decimal('0.00'):
+            already_charged = self.user_existing_cancellation_fee
+            remaining_to_charge = max(Decimal('0.00'), flat_base - already_charged)
+            if remaining_to_charge > Decimal('0.00'):
+                remaining_total = self.total - already_charged
+                if remaining_total > Decimal('0.00'):
+                    fee += remaining_to_charge * canceled_total / remaining_total
+
+        fee = round_decimal(fee, self.event.currency)
+        return min(canceled_total, fee)
 
     @property
     @scopes_disabled()
