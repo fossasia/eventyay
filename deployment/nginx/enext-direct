@@ -57,7 +57,11 @@ server {
 		proxy_read_timeout 86400;
 	}
 
-    # Regular HTTP requests - route to gunicorn
+	location ~ ^/e/(.*)$ {
+		return 301 /ev/$1;
+	}
+
+	# Regular HTTP requests - route to gunicorn
 	location / {
 		add_header Referrer-Policy same-origin always;
 
