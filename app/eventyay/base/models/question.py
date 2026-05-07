@@ -7,9 +7,9 @@ from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import Choices
 from eventyay.common.text.path import path_with_hash
-from eventyay.helpers.countries import get_country_name
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
+from eventyay.helpers.countries import get_country_name
 from eventyay.talk_rules.agenda import is_agenda_visible
 from eventyay.talk_rules.event import can_change_event_settings
 from eventyay.talk_rules.person import is_reviewer
@@ -239,6 +239,18 @@ class TalkQuestion(OrderedModel, PretalxModel):
             'to allow speakers explicit consent before publishing information.'
         ),
     )
+    is_imported = models.BooleanField(
+        default=False,
+        verbose_name=_('Imported field'),
+        help_text=_('Imported fields are managed automatically and hidden from normal form configuration.'),
+    )
+    import_key = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name=_('Import key'),
+    )
     is_visible_to_reviewers = models.BooleanField(
         default=True,
         verbose_name=_('Show answers to reviewers'),
@@ -255,6 +267,13 @@ class TalkQuestion(OrderedModel, PretalxModel):
     class Meta:
         ordering = ('position', 'id')
         rules_permissions = QUESTION_PERMISSIONS
+        constraints = [
+            models.UniqueConstraint(
+                fields=('event', 'target', 'import_key'),
+                condition=models.Q(import_key__isnull=False) & ~models.Q(import_key=''),
+                name='unique_import_question_per_event_target',
+            )
+        ]
 
     @property
     def log_parent(self):
@@ -278,6 +297,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
 
     class urls(EventUrls):
         """URL patterns for question views."""
+
         base = '{self.event.cfp.urls.questions}{self.pk}/'
         edit = '{base}edit/'
         delete = '{base}delete/'

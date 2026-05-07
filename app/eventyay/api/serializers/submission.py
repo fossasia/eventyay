@@ -28,17 +28,17 @@ class ResourceSerializer(ModelSerializer):
 
     class Meta:
         model = Resource
-        fields = ("id", "resource", "description")
+        fields = ('id', 'kind', 'resource', 'description')
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
 class TagSerializer(PretalxSerializer):
     class Meta:
         model = Tag
-        fields = ("id", "tag", "description", "color", "is_public")
+        fields = ('id', 'tag', 'description', 'color', 'is_public')
 
     def create(self, validated_data):
-        validated_data["event"] = self.event
+        validated_data['event'] = self.event
         return super().create(validated_data)
 
     def validate_tag(self, value):
@@ -46,24 +46,24 @@ class TagSerializer(PretalxSerializer):
         if self.instance and self.instance.pk:
             existing_tags = existing_tags.exclude(pk=self.instance.pk)
         if existing_tags.filter(tag=value).exists():
-            raise exceptions.ValidationError("Tag already exists in event.")
+            raise exceptions.ValidationError('Tag already exists in event.')
         return value
 
 
-@register_serializer(versions=CURRENT_VERSIONS)
+@register_serializer()
 class SubmissionTypeSerializer(PretalxSerializer):
     class Meta:
         model = SubmissionType
         fields = (
-            "id",
-            "name",
-            "default_duration",
-            "deadline",
-            "requires_access_code",
+            'id',
+            'name',
+            'default_duration',
+            'deadline',
+            'requires_access_code',
         )
 
     def create(self, validated_data):
-        validated_data["event"] = self.event
+        validated_data['event'] = self.event
         return super().create(validated_data)
 
     def validate_name(self, value):
@@ -71,37 +71,32 @@ class SubmissionTypeSerializer(PretalxSerializer):
         if self.instance and self.instance.pk:
             existing_types = existing_types.exclude(pk=self.instance.pk)
         if any(str(stype.name) == str(value) for stype in existing_types):
-            raise exceptions.ValidationError(
-                "Submission type name already exists in event."
-            )
+            raise exceptions.ValidationError('Submission type name already exists in event.')
         return value
 
     def update(self, instance, validated_data):
-        duration_changed = (
-            "duration" in validated_data
-            and validated_data["duration"] != instance.duration
-        )
+        duration_changed = 'duration' in validated_data and validated_data['duration'] != instance.duration
         result = super().update(instance, validated_data)
         if duration_changed:
             instance.update_duration()
         return result
 
 
-@register_serializer(versions=CURRENT_VERSIONS)
+@register_serializer()
 class TrackSerializer(PretalxSerializer):
     class Meta:
         model = Track
         fields = (
-            "id",
-            "name",
-            "description",
-            "color",
-            "position",
-            "requires_access_code",
+            'id',
+            'name',
+            'description',
+            'color',
+            'position',
+            'requires_access_code',
         )
 
     def create(self, validated_data):
-        validated_data["event"] = self.event
+        validated_data['event'] = self.event
         return super().create(validated_data)
 
     def validate_name(self, value):
@@ -109,7 +104,7 @@ class TrackSerializer(PretalxSerializer):
         if self.instance and self.instance.pk:
             existing_types = existing_types.exclude(pk=self.instance.pk)
         if any(str(track.name) == str(value) for track in existing_types):
-            raise exceptions.ValidationError("Track name already exists in event.")
+            raise exceptions.ValidationError('Track name already exists in event.')
         return value
 
 
@@ -119,18 +114,14 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         queryset=SubmissionType.objects.none(),
         required=True,
     )
-    track = serializers.PrimaryKeyRelatedField(
-        queryset=Track.objects.none(), required=False, allow_null=True
-    )
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.none(), many=True, required=False
-    )
+    track = serializers.PrimaryKeyRelatedField(queryset=Track.objects.none(), required=False, allow_null=True)
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.none(), many=True, required=False)
     image = UploadedFileField(required=False)
     resources = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     duration = serializers.IntegerField(
-        source="get_duration",
+        source='get_duration',
         required=False,
-        help_text="Defaults to the submission type’s duration",
+        help_text='Defaults to the submission type’s duration',
     )
 
     # These fields are SerializerMethodFields rather than direct querysets in order
@@ -147,119 +138,153 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         super().__init__(*args, **kwargs)
         if not self.event:
             return
-        self.fields["submission_type"].queryset = self.event.submission_types.all()
-        self.fields["track"].queryset = self.event.tracks.all()
-        self.fields["tags"].queryset = self.event.tags.all()
+        self.fields['submission_type'].queryset = self.event.submission_types.all()
+        self.fields['track'].queryset = self.event.tracks.all()
+        self.fields['tags'].queryset = self.event.tags.all()
 
-        if not self.event.get_feature_flag("use_tracks"):
-            self.fields.pop("track", None)
+        if not self.event.get_feature_flag('use_tracks'):
+            self.fields.pop('track', None)
         request_require_fields = [
-            "title",
-            "abstract",
-            "description",
-            "notes",
-            "image",
-            "do_not_record",
-            "content_locale",
+            'title',
+            'abstract',
+            'description',
+            'notes',
+            'image',
+            'do_not_record',
+            'content_locale',
         ]
         for field in request_require_fields:
             if field not in self.fields:
                 continue
-            if not getattr(self.event.cfp, f"request_{field}"):
+            if not getattr(self.event.cfp, f'request_{field}'):
                 self.fields.pop(field, None)
             else:
-                self.fields[field].required = getattr(
-                    self.event.cfp, f"require_{field}"
-                )
+                self.fields[field].required = getattr(self.event.cfp, f'require_{field}')
+
+        request = self.context.get('request')
+        is_public_view = bool(request and not request.user.has_perm('base.orga_list_submission', self.event))
+        if is_public_view:
+            if not self.event.cfp.public_abstract:
+                self.fields.pop('abstract', None)
+            if not self.event.cfp.public_description:
+                self.fields.pop('description', None)
+            if not self.event.cfp.public_image:
+                self.fields.pop('image', None)
 
     @extend_schema_field(list[str])
     def get_speakers(self, obj):
         if not self.event:
             return []
-        profiles = SpeakerProfile.objects.filter(
-            event=self.event, user__in=obj.speakers.all()
-        ).distinct()
-        if serializer := self.get_extra_flex_field("speakers", profiles):
+        profiles = SpeakerProfile.objects.filter(event=self.event, user__in=obj.speakers.all()).distinct()
+        if serializer := self.get_extra_flex_field('speakers', profiles):
             return serializer.data
-        return obj.speakers.values_list("code", flat=True)
+        return obj.speakers.values_list('code', flat=True)
 
     @extend_schema_field(list[int])
     def get_answers(self, obj):
-        questions = self.context.get("questions", [])
+        request = self.context.get('request')
+        if self.event and request and not request.user.has_perm('base.orga_list_submission', self.event):
+            qs = obj.answers.filter(
+                question__event=self.event,
+                question__target=TalkQuestionTarget.SUBMISSION,
+                question__is_public=True,
+            )
+            if serializer := self.get_extra_flex_field('answers', qs):
+                return serializer.data
+            return qs.values_list('pk', flat=True)
+
+        questions = self.context.get('questions', [])
         qs = obj.answers.filter(
             question__in=questions,
             question__event=self.event,
             question__target=TalkQuestionTarget.SUBMISSION,
         )
-        if serializer := self.get_extra_flex_field("answers", qs):
+        if serializer := self.get_extra_flex_field('answers', qs):
             return serializer.data
-        return qs.values_list("pk", flat=True)
+        return qs.values_list('pk', flat=True)
 
     @extend_schema_field(list[int])
     def get_slots(self, obj):
-        schedule = self.context.get("schedule")
+        schedule = self.context.get('schedule')
         if not schedule:
             return []
-        public_slots = self.context.get("public_slots", True)
+        public_slots = self.context.get('public_slots', True)
         qs = obj.slots.filter(schedule=schedule)
         if public_slots:
             qs = qs.filter(is_visible=True)
-        if serializer := self.get_extra_flex_field("slots", qs):
+        if serializer := self.get_extra_flex_field('slots', qs):
             return serializer.data
-        return qs.values_list("pk", flat=True)
+        return qs.values_list('pk', flat=True)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if not self.event or not request or request.user.has_perm('base.orga_list_submission', self.event):
+            return data
+
+        if 'resources' in data:
+            public_resource_ids = {
+                resource.pk for resource in instance.resources.all() if self.event.cfp.is_resource_public(resource)
+            }
+            resources = data.get('resources') or []
+            if resources and isinstance(resources[0], dict):
+                data['resources'] = [resource for resource in resources if resource.get('id') in public_resource_ids]
+            else:
+                data['resources'] = [resource_id for resource_id in resources if resource_id in public_resource_ids]
+        return data
 
     class Meta:
         model = Submission
         fields = [
-            "code",
-            "title",
-            "speakers",
-            "submission_type",
-            "track",
-            "tags",
-            "state",
-            "abstract",
-            "description",
-            "duration",
-            "slot_count",
-            "content_locale",
-            "do_not_record",
-            "image",
-            "resources",
-            "slots",
-            "answers",
+            'code',
+            'title',
+            'speakers',
+            'submission_type',
+            'track',
+            'tags',
+            'state',
+            'abstract',
+            'description',
+            'duration',
+            'slot_count',
+            'content_locale',
+            'do_not_record',
+            'image',
+            'resources',
+            'slots',
+            'answers',
         ]
-        read_only_fields = ("code", "state")
+        read_only_fields = ('code', 'state')
         expandable_fields = {
-            "submission_type": (
-                "eventyay.api.serializers.submission.SubmissionTypeSerializer",
-                {"read_only": True},
+            'submission_type': (
+                'eventyay.api.serializers.submission.SubmissionTypeSerializer',
+                {'read_only': True},
             ),
-            "tags": (
-                "eventyay.api.serializers.submission.TagSerializer",
-                {"many": True, "read_only": True},
+            'tags': (
+                'eventyay.api.serializers.submission.TagSerializer',
+                {'many': True, 'read_only': True},
             ),
-            "track": (
-                "eventyay.api.serializers.submission.TrackSerializer",
-                {"read_only": True},
+            'track': (
+                'eventyay.api.serializers.submission.TrackSerializer',
+                {'read_only': True},
             ),
-            "resources": (
-                "eventyay.api.serializers.submission.ResourceSerializer",
-                {"many": True, "read_only": True},
+            'resources': (
+                'eventyay.api.serializers.submission.ResourceSerializer',
+                {'many': True, 'read_only': True},
             ),
         }
         extra_expandable_fields = {
-            "slots": (
-                "eventyay.api.serializers.schedule.TalkSlotSerializer",
-                {"many": True, "read_only": True, "omit": ("submission", "schedule")},
+            'slots': (
+                'eventyay.api.serializers.schedule.TalkSlotSerializer',
+                {'many': True, 'read_only': True, 'omit': ('submission', 'schedule')},
             ),
-            "answers": (
-                "eventyay.api.serializers.question.AnswerSerializer",
-                {"many": True, "read_only": True},
+            'answers': (
+                'eventyay.api.serializers.question.AnswerSerializer',
+                {'many': True, 'read_only': True},
             ),
-            "speakers": (
-                "eventyay.api.serializers.speaker.SpeakerSerializer",
-                {"many": True, "read_only": True},
+            'speakers': (
+                'eventyay.api.serializers.speaker.SpeakerSerializer',
+                {'many': True, 'read_only': True},
             ),
         }
 
@@ -267,7 +292,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 @register_serializer()
 class SubmissionOrgaSerializer(SubmissionSerializer):
     assigned_reviewers = serializers.SlugRelatedField(
-        slug_field="code",
+        slug_field='code',
         queryset=User.objects.none(),
         required=False,
         many=True,
@@ -275,34 +300,30 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["reviews"].required = False
+        self.fields['reviews'].required = False
         if self.event:
-            self.fields["assigned_reviewers"].queryset = self.event.reviewers
+            self.fields['assigned_reviewers'].queryset = self.event.reviewers
 
     def validate_content_locale(self, value):
         if self.event and value not in self.event.content_locales:
             raise serializers.ValidationError(
-                f"Invalid locale. Valid choices are: {', '.join(self.event.content_locales)}"
+                f'Invalid locale. Valid choices are: {", ".join(self.event.content_locales)}'
             )
         return value
 
     def validate_slot_count(self, value):
-        if (
-            value
-            and value != 1
-            and not self.event.get_feature_flag("present_multiple_times")
-        ):
-            raise serializers.ValidationError("Slot count may only be 1 in this event.")
+        if value and value != 1 and not self.event.get_feature_flag('present_multiple_times'):
+            raise serializers.ValidationError('Slot count may only be 1 in this event.')
         return value
 
     def create(self, validated_data):
-        tags_data = validated_data.pop("tags", [])
-        image = validated_data.pop("image", None)
-        validated_data["event"] = self.event
-        if "get_duration" in validated_data:
-            validated_data["duration"] = validated_data.pop("get_duration")
-        if not validated_data.get("content_locale"):
-            validated_data["content_locale"] = self.event.locale
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+        if not validated_data.get('content_locale'):
+            validated_data['content_locale'] = self.event.locale
 
         submission = super().create(validated_data)
 
@@ -310,25 +331,20 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
             submission.tags.set(tags_data)
         if image:
             submission.image.save(Path(image.name).name, image, save=True)
-            submission.save(update_fields=("image",))
-            submission.process_image("image", generate_thumbnail=True)
+            submission.save(update_fields=('image',))
+            submission.process_image('image', generate_thumbnail=True)
         return submission
 
     def update(self, instance, validated_data):
-        tags_data = validated_data.pop("tags", [])
-        image = validated_data.pop("image", None)
-        validated_data["event"] = self.event
+        tags_data = validated_data.pop('tags', [])
+        image = validated_data.pop('image', None)
+        validated_data['event'] = self.event
         duration_changed = False
-        if "get_duration" in validated_data:
-            validated_data["duration"] = validated_data.pop("get_duration")
-            duration_changed = validated_data["duration"] != instance.duration
-        slot_count_changed = (
-            "slot_count" in validated_data
-            and validated_data["slot_count"] != instance.slot_count
-        )
-        track_changed = (
-            "track" in validated_data and validated_data["track"] != instance.track
-        )
+        if 'get_duration' in validated_data:
+            validated_data['duration'] = validated_data.pop('get_duration')
+            duration_changed = validated_data['duration'] != instance.duration
+        slot_count_changed = 'slot_count' in validated_data and validated_data['slot_count'] != instance.slot_count
+        track_changed = 'track' in validated_data and validated_data['track'] != instance.track
 
         submission = super().update(instance, validated_data)
 
@@ -336,7 +352,7 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
             submission.tags.set(tags_data)
         if image:
             submission.image.save(Path(image.name).name, image)
-            submission.process_image("image", generate_thumbnail=True)
+            submission.process_image('image', generate_thumbnail=True)
         if duration_changed:
             submission.update_duration()
         if slot_count_changed:
@@ -347,19 +363,19 @@ class SubmissionOrgaSerializer(SubmissionSerializer):
 
     class Meta(SubmissionSerializer.Meta):
         fields = SubmissionSerializer.Meta.fields + [
-            "pending_state",
-            "is_featured",
-            "notes",
-            "internal_notes",
-            "invitation_token",
-            "access_code",
-            "review_code",
-            "anonymised_data",
-            "reviews",
-            "assigned_reviewers",
-            "is_anonymised",
-            "median_score",
-            "mean_score",
+            'pending_state',
+            'is_featured',
+            'notes',
+            'internal_notes',
+            'invitation_token',
+            'access_code',
+            'review_code',
+            'anonymised_data',
+            'reviews',
+            'assigned_reviewers',
+            'is_anonymised',
+            'median_score',
+            'mean_score',
         ]
         # Reviews and assigned reviewers are currently not expandable because
         # reviewers are also receiving the ReviewerOrgaSerializer, but may
