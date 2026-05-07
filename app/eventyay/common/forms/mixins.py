@@ -28,6 +28,7 @@ from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from eventyay.helpers.countries import CachedCountries
+from eventyay.helpers.escapejson import escapejson_attr
 from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
 
@@ -222,12 +223,9 @@ class QuestionFieldsMixin:
 
             if question.dependency_question_id:
                 field.widget.attrs['data-question-dependency'] = question.dependency_question_id
-                field.widget.attrs['data-question-dependency-values'] = json.dumps(question.dependency_values)
+                field.widget.attrs['data-question-dependency-values'] = escapejson_attr(json.dumps(question.dependency_values))
                 if question.variant != TalkQuestionVariant.MULTIPLE:
-                    if question.required:
-                        field.widget.attrs['required'] = 'required'
-                    else:
-                        field.widget.attrs.pop('required', None)
+                    field.widget.attrs['required'] = question.required
                     field._required = question.required
                 field.required = False
 

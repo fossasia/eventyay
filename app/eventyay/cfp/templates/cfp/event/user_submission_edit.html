@@ -87,8 +87,10 @@
     {% endif %}
         <form method="post" enctype="multipart/form-data" novalidate>
             {% include "common/forms/errors.html" %}
+
             {% csrf_token %}
             {{ form }}
+
             {% if can_edit or form.instance.resources.count %}
                 {% include "cfp/includes/submission_resources_form.html" %}
             {% endif %}
