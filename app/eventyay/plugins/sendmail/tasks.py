@@ -1,5 +1,7 @@
 import logging
 
+from django.utils.timezone import now
+
 from eventyay.base.models import Event
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
@@ -22,6 +24,19 @@ def send_queued_mail(self, event_id: int, queued_mail_id: int):
 
     try:
         qm = EmailQueue.objects.get(pk=queued_mail_id, event=event)
+
+        current_time = now()
+        if qm.scheduled_at and qm.scheduled_at > current_time:
+            countdown = max(1, int((qm.scheduled_at - current_time).total_seconds()))
+            logger.info(
+                "[SendMail] EmailQueue ID %s: scheduled for %s, rescheduling in %s seconds.",
+                queued_mail_id,
+                qm.scheduled_at,
+                countdown,
+            )
+            self.retry(countdown=countdown, args=[original_event_id, queued_mail_id], throw=False)
+            return
+
         # Execute the actual mail transport in this task so outbox state reflects real send attempts.
         result = qm.send(async_send=False)
 

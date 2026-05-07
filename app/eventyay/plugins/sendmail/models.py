@@ -3,6 +3,7 @@ import logging
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from i18nfield.fields import I18nTextField
 
 from eventyay.base.email import get_email_context
@@ -83,6 +84,12 @@ class EmailQueue(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     sent_at = models.DateTimeField(null=True, blank=True)
+    scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_('If set, the email will be sent at this time instead of immediately.'),
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -109,8 +116,13 @@ class EmailQueue(models.Model):
         Sends queued email to each recipients.
         Uses their stored metadata and updates send status individually.
         """
+        from eventyay.common.exceptions import SendMailException
         if self.sent_at:
             return False  # Already sent
+
+        if self.scheduled_at and self.scheduled_at > now():
+            raise SendMailException(_('This email is scheduled for the future and cannot be sent yet.'))
+
         recipients = self.recipients.all()
         if not recipients.exists():
             return False  # Nothing to send
