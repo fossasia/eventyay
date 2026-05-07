@@ -190,12 +190,13 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             TalkQuestionVariant.MULTIPLE,
             TalkQuestionVariant.SELECT,
         ):
-            if "options" in data:
-                options = data["options"]
-            elif self.instance:
-                options = list(self.instance.options.all())
-            else:
-                options = []
+            if "options" not in data:
+                raise exceptions.ValidationError(
+                    {
+                        "options": "This field is required for choice, select, or multiple-choice questions."
+                    }
+                )
+            options = data["options"]
             if not options:
                 raise exceptions.ValidationError(
                     {
@@ -216,7 +217,7 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             # Synchronize answer text to match options for consistency
             data["answer"] = ", ".join(f"{option.answer}" for option in options)
         elif question:
-            if data.get("options"):
+            if "options" in data:
                 raise exceptions.ValidationError(
                     {"options": "This question type does not accept answer options."}
                 )
