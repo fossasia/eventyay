@@ -473,7 +473,7 @@ class QueuedMail(PretalxModel):
 
         if self.pk:
             self.log_action(
-                'pretalx.mail.sent',
+                'eventyay.mail.sent',
                 person=requestor,
                 orga=orga,
                 data={'to_users': [(user.pk, user.email) for user in self.to_users.all()]},
