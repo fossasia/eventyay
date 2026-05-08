@@ -10,10 +10,18 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponseRedirect
 from django.urls import reverse
 
+from eventyay.plugins.socialauth.secrets import decrypt_secret
+
 logger = logging.getLogger(__name__)
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def list_apps(self, request, provider=None, client_id=None):
+        apps = super().list_apps(request, provider=provider, client_id=client_id)
+        for app in apps:
+            app.secret = decrypt_secret(app.secret)
+        return apps
+
     # Override to setup User-Agent to follow Wikimedia policy
     # https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
     def get_requests_session(self):

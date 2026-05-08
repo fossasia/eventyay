@@ -20,6 +20,7 @@ from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.eventyay_common.views.auth import process_login_and_set_cookie
 from eventyay.helpers.urls import build_absolute_uri
 
+from .secrets import encrypt_secret, is_encrypted_secret
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
@@ -187,6 +188,17 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         if login_providers is None or validate_login_providers(login_providers) is None:
             self.gs.settings.set('login_providers', LoginProviders().model_dump())
+            return
+
+        secrets_updated = False
+        for provider_config in login_providers.values():
+            secret = provider_config.get('secret', '')
+            if secret and not is_encrypted_secret(secret):
+                provider_config['secret'] = encrypt_secret(secret)
+                secrets_updated = True
+
+        if secrets_updated:
+            self.gs.settings.set('login_providers', login_providers)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -245,14 +257,15 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         secret_value = request.POST.get(f'{provider}_secret', '')
 
         if client_id_value and secret_value:
+            encrypted_secret = encrypt_secret(secret_value)
             login_providers[provider]['client_id'] = client_id_value
-            login_providers[provider]['secret'] = secret_value
+            login_providers[provider]['secret'] = encrypted_secret
 
             SocialApp.objects.update_or_create(
                 provider=provider,
                 defaults={
                     'client_id': client_id_value,
-                    'secret': secret_value,
+                    'secret': encrypted_secret,
                 },
             )
 
@@ -275,11 +288,13 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 client_id = provider_config.get('client_id')
                 secret = provider_config.get('secret')
                 if client_id and secret:
+                    encrypted_secret = encrypt_secret(secret)
+                    provider_config['secret'] = encrypted_secret
                     SocialApp.objects.update_or_create(
                         provider=provider,
                         defaults={
                             'client_id': client_id,
-                            'secret': secret,
+                            'secret': encrypted_secret,
                         },
                     )
 

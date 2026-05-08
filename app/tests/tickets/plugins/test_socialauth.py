@@ -2,12 +2,16 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from allauth.socialaccount.models import SocialApp
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
+from eventyay.plugins.socialauth.secrets import decrypt_secret, encrypt_secret, is_encrypted_secret
 from eventyay.plugins.socialauth.views import OAuthReturnView
+from eventyay.plugins.socialauth.views import SocialLoginView
 
 
 @pytest.fixture
@@ -116,3 +120,40 @@ def test_oauth_return_keeps_long_session_for_oauth2_handoff(client, monkeypatch)
     parsed_redirect = urlparse(response['Location'])
     assert parsed_redirect.path == '/oauth/authorize/'
     assert parse_qs(parsed_redirect.query) == {key: [value] for key, value in oauth2_params.items()}
+
+
+@pytest.mark.django_db
+def test_social_login_settings_encrypt_existing_plaintext_secrets():
+    gs = GlobalSettingsObject()
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {
+                'state': True,
+                'client_id': 'mediawiki-client',
+                'secret': 'plain-secret',
+                'is_preferred': False,
+            },
+            'github': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+            'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        },
+    )
+
+    SocialLoginView()
+
+    login_providers = gs.settings.get('login_providers', as_type=dict)
+    stored_secret = login_providers['mediawiki']['secret']
+    assert is_encrypted_secret(stored_secret)
+    assert decrypt_secret(stored_secret) == 'plain-secret'
+
+
+@pytest.mark.django_db
+def test_socialapp_secret_is_decrypted_for_runtime_use(rf):
+    secret = 'provider-secret'
+    SocialApp.objects.create(provider='mediawiki', client_id='id', secret=encrypt_secret(secret))
+
+    adapter = CustomSocialAccountAdapter()
+    apps = adapter.list_apps(rf.get('/'), provider='mediawiki')
+
+    assert len(apps) == 1
+    assert apps[0].secret == secret
