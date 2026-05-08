@@ -176,11 +176,10 @@ def normalize_after_priority_change(event, room_id, new_priority):
     if to_update:
         Room.objects.bulk_update(to_update, fields=["sorting_priority", "position"])
 
-    if actual_priority != new_priority:
-        Room.objects.filter(id=room_id).update(
-            sorting_priority=actual_priority,
-            position=actual_priority - 1,
-        )
+    Room.objects.filter(id=room_id).update(
+        sorting_priority=actual_priority,
+        position=actual_priority - 1,
+    )
 
 
 async def broadcast_stream_change(room_id, stream_schedule, reload=False):
