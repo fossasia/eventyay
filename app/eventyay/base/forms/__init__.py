@@ -190,8 +190,6 @@ class SecretKeySettingsWidget(forms.TextInput):
         super().__init__(attrs)
 
     def get_context(self, name, value, attrs):
-        if value:
-            value = SECRET_REDACTED
         context = super().get_context(name, value, attrs)
         return context
 
