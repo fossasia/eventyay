@@ -377,7 +377,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         ctx['schedule_meta_json'] = meta_json
         ctx['schedule_page_version'] = version or ''
         if cache_version:
-            cache.set(meta_cache_key, meta_json, 300)
+            cache.set(meta_cache_key, meta_json, 600)
         return ctx
 
 

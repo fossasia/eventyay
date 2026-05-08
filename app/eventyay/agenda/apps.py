@@ -1,6 +1,9 @@
+import logging
 from contextlib import suppress
 
 from django.apps import AppConfig
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AgendaConfig(AppConfig):
@@ -10,7 +13,6 @@ class AgendaConfig(AppConfig):
         from .phrases import AgendaPhrases  # noqa
         from eventyay.schedule.signals import schedule_release
 
-        @schedule_release.connect
         def on_schedule_release(sender, schedule, **kwargs):
             from django.core.cache import cache
 
@@ -31,7 +33,9 @@ class AgendaConfig(AppConfig):
                 from eventyay.agenda.tasks import warm_schedule_caches
                 warm_schedule_caches.apply_async(kwargs={'schedule_pk': schedule.pk}, countdown=3)
             except Exception:
-                pass
+                LOGGER.exception('Failed to enqueue warm_schedule_caches for schedule pk=%s', schedule.pk)
+
+        schedule_release.connect(on_schedule_release, dispatch_uid='agenda.on_schedule_release')
 
 
 with suppress(ImportError):
