@@ -1,4 +1,5 @@
 import base64
+import functools
 import hashlib
 import logging
 
@@ -12,7 +13,10 @@ SECRET_CONTEXT = 'eventyay.socialauth.secret'
 
 
 def is_encrypted_secret(value: str) -> bool:
-    return bool(value) and value.startswith(SECRET_PREFIX)
+    if not value or not value.startswith(SECRET_PREFIX):
+        return False
+    token = value.removeprefix(SECRET_PREFIX)
+    return _is_probably_fernet_token(token)
 
 
 def encrypt_secret(value: str) -> str:
@@ -33,13 +37,23 @@ def decrypt_secret(value: str) -> str:
     try:
         return get_fernet().decrypt(token.encode('utf-8')).decode('utf-8')
     except InvalidToken:
-        logger.error('Failed to decrypt social auth secret token.')
-        return ''
+        logger.error(
+            'Failed to decrypt social auth secret token with prefix %s and token length %s.',
+            SECRET_PREFIX,
+            len(token),
+        )
+        return value
 
 
+@functools.lru_cache(maxsize=1)
 def get_fernet() -> MultiFernet:
     configured_keys = tuple(getattr(settings, 'SOCIALAUTH_SECRET_ENCRYPTION_KEYS', ()) or ())
-    fernet_keys = tuple(_to_fernet_key(key) for key in configured_keys) or (_derived_default_key(),)
+    configured_fernet_keys = tuple(_to_fernet_key(key) for key in configured_keys)
+    derived_default_key = _derived_default_key()
+    if derived_default_key in configured_fernet_keys:
+        fernet_keys = configured_fernet_keys
+    else:
+        fernet_keys = configured_fernet_keys + (derived_default_key,)
     return MultiFernet(tuple(Fernet(key) for key in fernet_keys))
 
 
@@ -59,3 +73,14 @@ def _derived_default_key() -> bytes:
 def _derive_fernet_key(source: str) -> bytes:
     digest = hashlib.sha256(f'{SECRET_CONTEXT}:{source}'.encode('utf-8')).digest()
     return base64.urlsafe_b64encode(digest)
+
+
+def _is_probably_fernet_token(token: str) -> bool:
+    if not token:
+        return False
+    try:
+        padding = '=' * (-len(token) % 4)
+        decoded = base64.urlsafe_b64decode(f'{token}{padding}'.encode('ascii'))
+    except (UnicodeEncodeError, ValueError):
+        return False
+    return bool(decoded) and decoded.startswith(b'\x80')
