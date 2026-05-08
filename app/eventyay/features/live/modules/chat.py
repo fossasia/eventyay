@@ -29,20 +29,38 @@ from eventyay.features.live.modules.base import BaseModule
 from eventyay.features.live.tasks import send_chat_webhook
 from eventyay.storage.tasks import retrieve_preview_information
 
+_CENTRALAUTH_CACHE_TTL = 3600  # 1 hour — renames are rare
+
 
 def _get_centralauth_info(user):
     """Look up CentralAuth gu_id and gu_name from allauth SocialAccount.
 
+    Results are cached per user for one hour so the DB is not queried on
+    every webhook dispatch. Renames are rare; stale data is acceptable.
+
     Video room users are created separately from the main Django user.
     Their token_id is encode_email(main_user.email), so we can trace back
-    to the main user's SocialAccount by finding users whose email hashes
-    to the same token_id.
+    to the main user's SocialAccount by matching that hash.
 
     Returns (centralauth_id, centralauth_username) or (None, None).
     """
+    from django.core.cache import cache
+
     from allauth.socialaccount.models import SocialAccount
 
-    # Direct lookup: user has a SocialAccount (main user)
+    cache_key = f"centralauth_info:{user.id}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    result = _fetch_centralauth_info(user, SocialAccount)
+    cache.set(cache_key, result, _CENTRALAUTH_CACHE_TTL)
+    return result
+
+
+def _fetch_centralauth_info(user, SocialAccount):
+    """Perform the actual DB lookup for CentralAuth info (uncached)."""
+    # Direct lookup: user has a SocialAccount (main OAuth user)
     sa = (
         SocialAccount.objects.filter(user=user, provider="mediawiki")
         .values_list("uid", "user__wikimedia_username")
@@ -51,7 +69,9 @@ def _get_centralauth_info(user):
     if sa:
         return _parse_uid(sa[0]), sa[1]
 
-    # Indirect lookup: video room user linked via token_id
+    # Indirect lookup: video room user linked via token_id.
+    # token_id = encode_email(main_user.email) — a 7-char email hash.
+    # We scan only the (typically tiny) set of MediaWiki-linked accounts.
     token_id = getattr(user, "token_id", None)
     if token_id:
         for sa_uid, email, wm_username in (
