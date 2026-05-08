@@ -858,7 +858,7 @@ def import_submissions(event: Event, fileid: str, settings: dict, locale: str, u
                     )
                     for question in questions:
                         option_lookup = None
-                        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+                        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
                             option_lookup = {
                                 str(option.answer).strip().casefold(): option for option in question.options.all()
                             }
@@ -1315,12 +1315,19 @@ def _set_question_answer(
         defaults=defaults,
     )
 
-    if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+    if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
         answer.options.clear()
         if option_lookup is None:
-            option_lookup = {str(option.answer).strip().casefold(): option for option in question.options.all()}
-        for option_text in answer_text.split(','):
-            stripped_option = option_text.strip()
+            option_lookup = {
+                str(option.answer).strip().casefold(): option for option in question.options.all()
+            }
+
+        if question.variant == TalkQuestionVariant.MULTIPLE:
+            options_to_check = [opt.strip() for opt in answer_text.split(',')]
+        else:
+            options_to_check = [answer_text.strip()]
+
+        for stripped_option in options_to_check:
             if not stripped_option:
                 continue
             option = option_lookup.get(stripped_option.casefold())
