@@ -1,4 +1,5 @@
 import re
+import time as import_time
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -88,6 +89,35 @@ def test_adapter_post_login_sets_session_fields():
     setattr(request, '_messages', FallbackStorage(request))
 
     adapter = CustomAccountAdapter()
+    response = adapter.post_login(
+        request,
+        user,
+        email_verification=None,
+        signal_kwargs=None,
+        email=None,
+        signup=False,
+        redirect_url=None,
+    )
+
+    assert response.status_code == 302
+    assert isinstance(request.session[KEY_LAST_FORCE_LOGIN], int)
+    assert abs(import_time.time() - request.session[KEY_LAST_FORCE_LOGIN]) < 5
+    assert request.session[KEY_LONG_SESSION] is False
+
+
+@pytest.mark.django_db
+def test_adapter_post_login_long_session_from_post():
+    """post_login() sets KEY_LONG_SESSION=True when keep_logged_in is in POST data."""
+    user = User.objects.create_user('long@example.com', 'password')
+    request = RequestFactory().post('/accounts/login/', data={'keep_logged_in': '1'})
+    request.user = user
+    request.session = {}
+    request.META['SERVER_NAME'] = 'localhost'
+    request.META['SERVER_PORT'] = '80'
+    request.host = 'localhost'
+    setattr(request, '_messages', FallbackStorage(request))
+
+    adapter = CustomAccountAdapter()
     adapter.post_login(
         request,
         user,
@@ -98,8 +128,7 @@ def test_adapter_post_login_sets_session_fields():
         redirect_url=None,
     )
 
-    assert KEY_LAST_FORCE_LOGIN in request.session
-    assert request.session[KEY_LONG_SESSION] is False
+    assert request.session[KEY_LONG_SESSION] is True
 
 
 @pytest.mark.django_db
