@@ -190,13 +190,21 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             TalkQuestionVariant.MULTIPLE,
             TalkQuestionVariant.SELECT,
         ):
+            # For write requests that explicitly set `answer`, `options` must also
+            # be present — otherwise the text field and M2M relation would diverge.
+            # For partial PATCH requests that touch neither field (e.g. updating
+            # only `person` or `submission`), fall back to the existing instance
+            # options so no DB inconsistency is introduced.
             if "options" not in data:
-                raise exceptions.ValidationError(
-                    {
-                        "options": "This field is required for choice, select, or multiple-choice questions."
-                    }
-                )
-            options = data["options"]
+                if "answer" in data:
+                    raise exceptions.ValidationError(
+                        {
+                            "options": "This field is required for choice, select, or multiple-choice questions."
+                        }
+                    )
+                options = list(self.instance.options.all()) if self.instance else []
+            else:
+                options = data["options"]
             if not options:
                 raise exceptions.ValidationError(
                     {
@@ -214,7 +222,9 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 raise exceptions.ValidationError(
                     {"options": "Only one option may be selected for this question type."}
                 )
-            # Synchronize answer text to match options for consistency
+            # Synchronize answer text to match options for consistency.
+            # The Answer model stores both a human-readable text field and a
+            # structured M2M relation; keeping them in sync is intentional.
             data["answer"] = ", ".join(f"{option.answer}" for option in options)
         elif question:
             if "options" in data:
