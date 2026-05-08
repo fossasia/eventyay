@@ -260,80 +260,52 @@ def process_scheduled_emails(sender, **kwargs):
     from eventyay.base.models.mail import QueuedMail
     from eventyay.common.exceptions import SendMailException
 
-    # Process QueuedMail (Talk/CfP component)
+    # Process QueuedMail (Talk/CfP component) — one email per transaction to minimise lock duration
     while True:
         with transaction.atomic():
-            due_queued_mails = list(
-                QueuedMail.objects.filter(
-                    scheduled_at__isnull=False,
-                    scheduled_at__lte=now(),
-                    sent__isnull=True,
-                )
+            mail = (
+                QueuedMail.objects
+                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent__isnull=True)
                 .select_for_update(skip_locked=True)
-                .order_by('pk')[:MAIL_SEND_BATCH_SIZE]
+                .order_by('pk')
+                .first()
             )
-
-            if not due_queued_mails:
+            if mail is None:
                 break
+            try:
+                mail.send()
+                logger.info("[ScheduledMail] QueuedMail ID %s sent successfully.", mail.pk)
+            except SendMailException:
+                logger.exception("[ScheduledMail] Failed to send QueuedMail ID %s", mail.pk)
+            except Exception:
+                logger.exception("[ScheduledMail] Unexpected error sending QueuedMail ID %s", mail.pk)
+                raise
 
-            for mail in due_queued_mails:
-                try:
-                    mail.send()
-                    logger.info(
-                        "[ScheduledMail] QueuedMail ID %s sent successfully.",
-                        mail.pk
-                    )
-                except SendMailException:
-                    logger.exception(
-                        "[ScheduledMail] Failed to send QueuedMail ID %s",
-                        mail.pk
-                    )
-                except Exception:
-                    logger.exception(
-                        "[ScheduledMail] Unexpected error sending QueuedMail ID %s",
-                        mail.pk
-                    )
-                    raise
-
-    # Process EmailQueue (Tickets component)
+    # Process EmailQueue (Tickets component) — one email per transaction to minimise lock duration
     while True:
         with transaction.atomic():
-            due_email_queues = list(
-                EmailQueue.objects.filter(
-                    scheduled_at__isnull=False,
-                    scheduled_at__lte=now(),
-                    sent_at__isnull=True,
-                )
+            mail = (
+                EmailQueue.objects
+                .filter(scheduled_at__isnull=False, scheduled_at__lte=now(), sent_at__isnull=True)
                 .select_for_update(skip_locked=True)
-                .order_by('pk')[:MAIL_SEND_BATCH_SIZE]
+                .order_by('pk')
+                .first()
             )
-
-            if not due_email_queues:
+            if mail is None:
                 break
-
-            for mail in due_email_queues:
-                try:
-                    sent = mail.send()
-                    if sent:
-                        logger.info(
-                            "[ScheduledMail] EmailQueue ID %s sent successfully.",
-                            mail.pk
-                        )
-                    else:
-                        logger.warning(
-                            "[ScheduledMail] EmailQueue ID %s not sent (send() returned False; no recipients or already sent). Marking as sent to avoid reprocessing.",
-                            mail.pk
-                        )
-                        mail.sent_at = now()
-                        mail.save(update_fields=['sent_at'])
-                except SendMailException:
-                    logger.exception(
-                        "[ScheduledMail] Failed to send EmailQueue ID %s",
-                        mail.pk
+            try:
+                sent = mail.send()
+                if sent:
+                    logger.info("[ScheduledMail] EmailQueue ID %s sent successfully.", mail.pk)
+                else:
+                    logger.warning(
+                        "[ScheduledMail] EmailQueue ID %s: send() returned False (no recipients or already sent). Marking as sent to prevent reprocessing.",
+                        mail.pk,
                     )
-                except Exception:
-                    logger.exception(
-                        "[ScheduledMail] Unexpected error sending EmailQueue ID %s",
-                        mail.pk
-                    )
-                    raise
+                    mail.sent_at = now()
+                    mail.save(update_fields=['sent_at'])
+            except SendMailException:
+                logger.exception("[ScheduledMail] Failed to send EmailQueue ID %s", mail.pk)
+            except Exception:
+                logger.exception("[ScheduledMail] Unexpected error sending EmailQueue ID %s", mail.pk)
+                raise

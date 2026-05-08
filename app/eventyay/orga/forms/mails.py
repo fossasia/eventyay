@@ -30,16 +30,19 @@ from eventyay.base.models.submission import Submission, SubmissionStates
 
 class TalkSplitDateTimePickerWidget(SplitDateTimePickerWidget):
     """Talk-specific widget that uses native HTML5 date and time inputs."""
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Preserve any attributes configured by the base widget
         date_attrs = self.widgets[0].attrs.copy()
         time_attrs = self.widgets[1].attrs.copy()
-        # Set HTML5 input types for native date/time pickers
+        date_attrs['class'] = ' '.join(
+            c for c in date_attrs.get('class', '').split() if c != 'datepickerfield'
+        )
+        time_attrs['class'] = ' '.join(
+            c for c in time_attrs.get('class', '').split() if c != 'timepickerfield'
+        )
         date_attrs['type'] = 'date'
         time_attrs['type'] = 'time'
-        # Replace widgets with new instances that have the desired HTML5 types and formats
         self.widgets = (
             forms.DateInput(attrs=date_attrs, format='%Y-%m-%d'),
             forms.TimeInput(attrs=time_attrs, format='%H:%M:%S'),
