@@ -114,7 +114,7 @@ def reorder_rooms(event, id_list, by_user):
     def key(r):
         try:
             return id_list_str.index(str(r.id)), r.sorting_priority, r.name
-        except Exception:
+        except ValueError:
             return sys.maxsize, r.sorting_priority, r.name
 
     all_rooms = list(
@@ -151,7 +151,7 @@ def normalize_after_priority_change(event, room_id, new_priority):
     other_rooms = list(
         event.rooms.filter(deleted=False)
         .exclude(id=room_id)
-        .only("id", "sorting_priority")
+        .only("id", "sorting_priority", "position")
         .order_by("sorting_priority", "id")
     )
     insert_pos = max(0, min(new_priority - 1, len(other_rooms)))
@@ -161,16 +161,26 @@ def normalize_after_priority_change(event, room_id, new_priority):
     to_update = []
     for i, r in enumerate(ordered_all):
         if r is not None:
-            expected = i + 1
-            if r.sorting_priority != expected:
-                r.sorting_priority = expected
+            expected_priority = i + 1
+            expected_position = i
+            changed = False
+            if r.sorting_priority != expected_priority:
+                r.sorting_priority = expected_priority
+                changed = True
+            if r.position != expected_position:
+                r.position = expected_position
+                changed = True
+            if changed:
                 to_update.append(r)
 
     if to_update:
-        Room.objects.bulk_update(to_update, fields=["sorting_priority"])
+        Room.objects.bulk_update(to_update, fields=["sorting_priority", "position"])
 
     if actual_priority != new_priority:
-        Room.objects.filter(id=room_id).update(sorting_priority=actual_priority)
+        Room.objects.filter(id=room_id).update(
+            sorting_priority=actual_priority,
+            position=actual_priority - 1,
+        )
 
 
 async def broadcast_stream_change(room_id, stream_schedule, reload=False):

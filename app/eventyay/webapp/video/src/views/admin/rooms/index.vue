@@ -86,10 +86,12 @@ export default {
 			}
 		},
 		async onListSort(newList) {
+			const previousRooms = this.rooms
 			this.rooms = newList
 			try {
 				this.rooms = await api.call('room.config.reorder', this.rooms.map(room => room.id))
 			} catch (e) {
+				this.rooms = previousRooms
 				console.error(e)
 			}
 		}

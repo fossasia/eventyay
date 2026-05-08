@@ -34,6 +34,8 @@ class RoomViewSet(viewsets.ModelViewSet):
                 event.rooms.filter(deleted=False).aggregate(m=Max("sorting_priority"))["m"] or 0
             )
             serializer.validated_data["sorting_priority"] = max_priority + 1
+        if serializer.validated_data.get("position") is None:
+            serializer.validated_data["position"] = serializer.validated_data["sorting_priority"] - 1
         serializer.save(event=event)
         for m in serializer.instance.module_config:
             if m["type"] == "chat.native":
@@ -52,6 +54,7 @@ class RoomViewSet(viewsets.ModelViewSet):
                 serializer.instance.id,
                 serializer.instance.sorting_priority,
             )
+            serializer.instance.refresh_from_db()
         for m in serializer.instance.module_config:
             if m["type"] == "chat.native":
                 Channel.objects.get_or_create(
