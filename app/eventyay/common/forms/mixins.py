@@ -163,9 +163,6 @@ class QuestionFieldsMixin:
         )
         return qs.order_by('position')
 
-<<<<<<< cfp-draft-submission
-    def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False, not_strict=False):
-=======
     def inject_questions_into_fields(
         self,
         target,
@@ -176,8 +173,8 @@ class QuestionFieldsMixin:
         track=None,
         submission_type=None,
         readonly=False,
+        not_strict=False,
     ):
->>>>>>> dev
         """
         Injects custom question fields into the form, filtered by track/type and pre-filled with answers.
 
@@ -236,12 +233,7 @@ class QuestionFieldsMixin:
                 field.required = True
                 field.draft_optional = True
 
-<<<<<<< cfp-draft-submission
     def get_field(self, *, question, initial, initial_object, readonly, not_strict=False):
-        from eventyay.base.templatetags.rich_text import rich_text
-=======
-    def get_field(self, *, question, initial, initial_object, readonly):
->>>>>>> dev
         from eventyay.base.models import TalkQuestionVariant
         from eventyay.base.templatetags.rich_text import rich_text
 
