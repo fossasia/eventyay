@@ -352,7 +352,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         meta_json = escape_json_for_script(json.dumps(meta))
         ctx['schedule_meta_json'] = meta_json
         if version:
-            cache.set(meta_cache_key, meta_json, 300)
+            cache.set(meta_cache_key, meta_json, 600)
         return ctx
 
 

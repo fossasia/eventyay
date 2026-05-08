@@ -259,6 +259,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     lookup_field = 'code__iexact'
     search_fields = ('title', 'speakers__fullname')
     filterset_class = SubmissionFilter
+    allow_public_read = True
     permission_map = {
         'make_submitted': 'submission.state_change_submission',
         'add_speaker': 'submission.update_submission',

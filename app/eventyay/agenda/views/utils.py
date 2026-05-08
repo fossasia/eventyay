@@ -61,7 +61,7 @@ def build_enriched_schedule_json(request: HttpRequest) -> str:
     result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     if schedule.version:
-        cache.set(cache_key, result, 300)
+        cache.set(cache_key, result, 600)
     return result
 
 
@@ -92,7 +92,7 @@ def build_schedule_json(request: HttpRequest, schedule=None) -> str:
     result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     if schedule.version:
-        cache.set(cache_key, result, 300)
+        cache.set(cache_key, result, 600)
     return result
 
 
@@ -122,7 +122,7 @@ def build_talk_schedule_json(request: HttpRequest, submission_code: str) -> str:
     result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     if schedule.version:
-        cache.set(cache_key, result, 300)
+        cache.set(cache_key, result, 600)
     return result
 
 
@@ -186,7 +186,7 @@ def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
     result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     if schedule.version:
-        cache.set(cache_key, result, 300)
+        cache.set(cache_key, result, 600)
     return result
 
 
@@ -361,7 +361,7 @@ def build_public_schedule_exporters(event, version=None):
                 'qrcode_svg': str(exporter.get_qrcode()) if getattr(exporter, 'show_qrcode', False) else '',
             }
         )
-    cache.set(cache_key, result, 300)
+    cache.set(cache_key, result, 600)
     return result
 
 

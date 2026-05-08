@@ -43,9 +43,19 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 											img(v-if="answer.question.icon && remoteApiUrl", :src="`${remoteApiUrl}questions/${answer.question.id}/icon/`", :alt="getLocalizedString(answer.question.question)", width="16", height="16")
 											span(v-else) {{ getLocalizedString(answer.question.question) }}
 								.inline-answer(v-for="answer in shortAnswers", :key="answer.id")
-									span.question
-										strong {{ getLocalizedString(answer.question.question) }}:
-									span.answer(v-if="answer.question.variant === 'file'")
+									template(v-if="answer.question.variant === 'url' && answer.answer")
+										strong.question
+											a(:href="answer.answer", target="_blank", rel="noopener noreferrer") {{ getLocalizedString(answer.question.question) }}
+									template(v-else)
+										span.question
+											strong {{ getLocalizedString(answer.question.question) }}:
+										span.answer(v-if="answer.question.variant === 'file'")
+											i.fa.fa-file-o
+											a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
+											span(v-else) {{ t.no_file_provided }}
+										span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
+										span.answer(v-else-if="answer.answer", v-html="renderRichText(answer.answer)")
+										span.answer(v-else) {{ t.no_response }}
 						.downloads(v-if="displayResources.length > 0")
 							hr
 							h4 {{ t.downloads }}

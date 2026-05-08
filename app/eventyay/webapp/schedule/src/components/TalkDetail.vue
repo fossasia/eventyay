@@ -269,7 +269,7 @@ export default {
 			if (this.remoteApiUrl) return this.remoteApiUrl
 			if (!this.baseUrl) return null
 			try {
-				const url = new URL(this.baseUrl)
+				const url = new URL(this.baseUrl, window.location.origin)
 				const segments = url.pathname.split('/').filter(s => s.length > 0)
 				const slug = segments[segments.length - 1] || ''
 				return `${url.origin}/api/v1/events/${slug}/`
