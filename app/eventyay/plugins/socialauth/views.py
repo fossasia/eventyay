@@ -1,6 +1,6 @@
 import logging
 from enum import StrEnum
-from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from allauth.socialaccount.adapter import get_adapter
 from allauth.socialaccount.models import SocialApp
@@ -14,17 +14,14 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
 from pydantic import ValidationError
 
-from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
-from eventyay.eventyay_common.views.auth import process_login_and_set_cookie
-from eventyay.helpers.urls import build_absolute_uri
 
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
 logger = logging.getLogger(__name__)
-adapter = get_adapter()
 
 
 class OAuthLoginView(View):
@@ -49,24 +46,19 @@ class OAuthLoginView(View):
             return redirect('eventyay_common:auth.login')
         provider_config = login_providers[provider]
         if provider_config.get('is_preferred'):
-            request.session['socialauth_keep_logged_in'] = True
+            request.session[KEY_SOCIAL_KEEP_LOGGED_IN] = True
         else:
-            request.session.pop('socialauth_keep_logged_in', None)
+            request.session.pop(KEY_SOCIAL_KEEP_LOGGED_IN, None)
         client_id = provider_config.get('client_id')
+        adapter = get_adapter()
         provider_instance = adapter.get_provider(request, provider, client_id=client_id)
 
-        base_url = provider_instance.get_login_url(request)
-        query_params = {'next': build_absolute_uri('plugins:socialauth:social.oauth.return')}
-        parsed_url = urlparse(base_url)
-        updated_url = parsed_url._replace(query=urlencode(query_params))
-        return redirect(urlunparse(updated_url))
+        login_url = provider_instance.get_login_url(request)
+        return redirect(login_url)
 
     @staticmethod
     def set_oauth2_params(request: HttpRequest) -> None:
-        """
-        Handle Login with SSO button from other components
-        This function will set 'oauth2_params' in session for oauth2_callback
-        """
+        """Store OAuth2 params in session for Talk module SSO handoff."""
         next_url = request.GET.get('next', '')
         if not next_url:
             return
@@ -87,76 +79,6 @@ class OAuthLoginView(View):
             logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
 
 
-class OAuthReturnView(View):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        try:
-            user = self.get_or_create_user(request)
-            keep_logged_in = request.session.pop('socialauth_keep_logged_in', False)
-
-            # Check for OAuth2 params first (Talk module integration)
-            oauth2_params = request.session.pop('oauth2_params', {})
-            if oauth2_params:
-                try:
-                    oauth2_params = OAuth2Params.model_validate(oauth2_params)
-                    query_string = urlencode(oauth2_params.model_dump())
-                    auth_url = reverse('eventyay_common:oauth2_provider.authorize')
-                    # OAuth2 flow takes precedence - redirect to authorization endpoint
-                    # Clean up socialauth_next_url to prevent it from being used later
-                    request.session.pop('socialauth_next_url', None)
-                    response = process_login_and_set_cookie(request, user, keep_logged_in)
-                    redirect_response = redirect(f'{auth_url}?{query_string}')
-                    redirect_response.cookies.update(response.cookies)
-                    return redirect_response
-                except ValidationError as e:
-                    logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
-
-            # Retrieve and re-validate the stored 'next' URL from session
-            # Re-validation provides defense against session tampering
-            next_url = request.session.pop('socialauth_next_url', None)
-            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-                request.session['socialauth_next_url'] = next_url
-
-            response = process_login_and_set_cookie(request, user, keep_logged_in)
-            return response
-        except AttributeError as e:
-            messages.error(request, _('Error while authorizing: no email address available.'))
-            logger.error('Error while authorizing: %s', e)
-            return redirect('eventyay_common:auth.login')
-
-    @staticmethod
-    def get_or_create_user(request: HttpRequest) -> User:
-        """
-        Get or create a user from social auth information.
-        """
-        social_account = request.user.socialaccount_set.filter(
-            provider='mediawiki'
-        ).last()  # Fetch only the latest signed in Wikimedia account
-        wikimedia_username = ''
-
-        if social_account:
-            extra_data = social_account.extra_data
-            wikimedia_username = extra_data.get('username', extra_data.get('realname', ''))
-
-        user, created = User.objects.get_or_create(
-            email=request.user.email,
-            defaults={
-                'locale': getattr(request, 'LANGUAGE_CODE', settings.LANGUAGE_CODE),
-                'timezone': getattr(request, 'timezone', settings.TIME_ZONE),
-                'auth_backend': 'native',
-                'password': '',
-                'wikimedia_username': wikimedia_username,
-            },
-        )
-
-        # Update wikimedia_username if the user exists but has no wikimedia_username value set
-        # (basically our existing users), or if the user has updated his username in his wikimedia account
-        if not created and (not user.wikimedia_username or user.wikimedia_username != wikimedia_username):
-            user.wikimedia_username = wikimedia_username
-            user.save()
-
-        return user
-
-
 class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'socialauth/social_auth_settings.html'
 
@@ -172,21 +94,28 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def set_initial_state(self):
         """
-        Set the initial state of the login providers
-        If the login providers are not valid, set them to the default
+        Validate and normalize the login providers stored in global settings.
+
+        Pydantic fills in defaults for missing keys (e.g. an empty ``{}``
+        becomes the full three-provider schema). When the normalised result
+        differs from what is stored, it is written back so that
+        ``get_context_data`` and the template see the complete provider list.
+
+        On a ``ValidationError`` we log and leave the existing DB row
+        unchanged rather than silently overwriting with all-disabled defaults,
+        which would wipe out the admin's configuration.
         """
-
-        def validate_login_providers(login_providers):
-            try:
-                validated_providers = LoginProviders.model_validate(login_providers)
-                return validated_providers
-            except ValidationError as e:
-                logger.error('Error while validating login providers: %s', e)
-                return None
-
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
-        if login_providers is None or validate_login_providers(login_providers) is None:
-            self.gs.settings.set('login_providers', LoginProviders().model_dump())
+        raw = self.gs.settings.get('login_providers', as_type=dict)
+        try:
+            validated = LoginProviders.model_validate(raw or {})
+        except ValidationError as e:
+            logger.error(
+                'login_providers settings failed validation (not overwriting): %s', e
+            )
+            return
+        normalized = validated.model_dump()
+        if raw != normalized:
+            self.gs.settings.set('login_providers', normalized)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
