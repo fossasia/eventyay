@@ -82,7 +82,7 @@ def send_scheduled_queuedmail(self, mail_pk: int):
     from celery.exceptions import MaxRetriesExceededError
 
     try:
-        with transaction.atomic():
+        with scopes_disabled(), transaction.atomic():
             mail = (
                 QueuedMail.objects
                 .select_for_update(skip_locked=True)
@@ -110,8 +110,8 @@ def send_scheduled_queuedmail(self, mail_pk: int):
             mail.send()
             logger.info("[ScheduledMail] QueuedMail ID %s sent successfully.", mail_pk)
 
-    except SendMailException as exc:
-        logger.exception("[ScheduledMail] Failed to send QueuedMail ID %s: %s", mail_pk, exc)
+    except SendMailException:
+        logger.exception("[ScheduledMail] Failed to send QueuedMail ID %s", mail_pk)
     except Exception as exc:
         logger.exception("[ScheduledMail] Unexpected error for QueuedMail ID %s", mail_pk)
         try:

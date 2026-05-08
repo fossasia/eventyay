@@ -11,7 +11,8 @@ from eventyay.base.models.auth import User
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
 from eventyay.base.i18n import LazyI18nString
-from eventyay.base.services.mail import mail
+from eventyay.base.services.mail import mail, SendMailException as MailTransportError
+from eventyay.common.exceptions import SendMailException as ScheduledMailException
 
 
 logger = logging.getLogger(__name__)
@@ -116,12 +117,11 @@ class EmailQueue(models.Model):
         Sends queued email to each recipients.
         Uses their stored metadata and updates send status individually.
         """
-        from eventyay.common.exceptions import SendMailException
         if self.sent_at:
             return False  # Already sent
 
         if self.scheduled_at and self.scheduled_at > now():
-            raise SendMailException(_('This email is scheduled for the future and cannot be sent yet.'))
+            raise ScheduledMailException(_('This email is scheduled for the future and cannot be sent yet.'))
 
         recipients = self.recipients.all()
         if not recipients.exists():
@@ -160,7 +160,6 @@ class EmailQueue(models.Model):
         self.save(update_fields=["sent_at"])
 
     def _send_to_recipient(self, recipient, subject, message, async_send=True):
-        from eventyay.base.services.mail import SendMailException
         email = recipient.email
         if not email:
             return False
@@ -202,7 +201,7 @@ class EmailQueue(models.Model):
             recipient.sent = True
             recipient.error = None
             recipient.save(update_fields=["sent", "error"])
-        except SendMailException as se:
+        except MailTransportError as se:
             recipient.sent = False
             recipient.error = str(se)
             recipient.save(update_fields=["sent", "error"])

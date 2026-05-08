@@ -260,8 +260,7 @@ def process_scheduled_emails(sender, **kwargs):
     from eventyay.base.models.mail import QueuedMail
     from eventyay.common.exceptions import SendMailException
 
-    # Process QueuedMail (Talk/CfP component) — one email per transaction to minimise lock duration
-    while True:
+    for _ in range(MAIL_SEND_BATCH_SIZE):
         with transaction.atomic():
             mail = (
                 QueuedMail.objects
@@ -281,8 +280,7 @@ def process_scheduled_emails(sender, **kwargs):
                 logger.exception("[ScheduledMail] Unexpected error sending QueuedMail ID %s", mail.pk)
                 raise
 
-    # Process EmailQueue (Tickets component) — one email per transaction to minimise lock duration
-    while True:
+    for _ in range(MAIL_SEND_BATCH_SIZE):
         with transaction.atomic():
             mail = (
                 EmailQueue.objects
