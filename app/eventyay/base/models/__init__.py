@@ -95,7 +95,7 @@ from .question import (
     TalkQuestionTarget,
     TalkQuestionVariant,
 )
-from .resource import Resource
+from .resource import Resource, ResourceKind
 from .review import Review, ReviewPhase, ReviewScore, ReviewScoreCategory
 from .room import Reaction, Room, RoomView
 from .roomquestion import QuestionVote, RoomQuestion
