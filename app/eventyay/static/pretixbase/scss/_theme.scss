@@ -159,12 +159,18 @@
   content: "\f0e3";
 }
 
-:where(a, button, summary, [role="button"], .btn, .header-nav):focus,
-:where(a, button, summary, [role="button"], .btn, .header-nav):focus-visible,
-:where(.btn, .header-nav).focus {
-  outline: none !important;
-  box-shadow: none !important;
+a:focus,
+button:focus,
+summary:focus,
+[role="button"]:focus,
+.btn:focus,
+.header-nav:focus,
+.btn.focus,
+.header-nav.focus {
+    outline: none;
+    box-shadow: none;
 }
+
 .alert-danger::before {
   background: $state-danger-border;
   content: "\f071";
