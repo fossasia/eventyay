@@ -13,7 +13,6 @@ This server:
 import hashlib
 import hmac
 import json
-import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 

@@ -78,7 +78,7 @@ class RoomModule(BaseModule):
         try:
             for info in socket.getaddrinfo(hostname, None):
                 addr = info[4][0]
-                if ipaddress.ip_address(addr).is_private:
+                if not ipaddress.ip_address(addr).is_global:
                     return True
         except (socket.gaierror, ValueError):
             return True
@@ -114,7 +114,7 @@ class RoomModule(BaseModule):
             if scheme not in ("https", "http"):
                 raise ConsumerException(
                     "webhook.invalid_url",
-                    "Webhook URL must use HTTPS.",
+                    "Webhook URL must use http or https.",
                 )
             if scheme != "https" and not settings.DEBUG:
                 raise ConsumerException(

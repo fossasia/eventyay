@@ -23,6 +23,7 @@ from eventyay.features.live.decorators import (
     require_event_permission,
     room_action,
 )
+from eventyay.eventyay_common.utils import encode_email as _encode_email
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
 from eventyay.features.live.tasks import send_chat_webhook
@@ -66,10 +67,6 @@ def _get_centralauth_info(user):
 
     return None, None
 
-
-def _encode_email(email: str) -> str:
-    import hashlib
-    return hashlib.sha256(email.encode()).hexdigest()[:7].upper()
 
 
 def _parse_uid(uid) -> int | None:
@@ -185,7 +182,7 @@ class ChatModule(BaseModule):
             return
 
         sender = self.consumer.user
-        sender_id = event_data.get("sender")  # already a string UUID or None
+        sender_id = str(sender.id)  # always the acting user (reactor or author)
         centralauth_id, centralauth_username = await database_sync_to_async(_get_centralauth_info)(sender)
         payload = {
             "message_id": event_data.get("event_id"),

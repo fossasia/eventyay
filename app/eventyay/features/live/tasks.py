@@ -3,6 +3,7 @@ import hmac
 import json
 import logging
 import time
+from urllib.parse import urlparse
 
 import requests
 from requests import RequestException
@@ -33,6 +34,7 @@ def send_chat_webhook(self, payload, webhook_url, hmac_secret):
         "X-Eventyay-Signature": f"sha256={signature}",
     }
 
+    _log_url = urlparse(webhook_url)._replace(query="", fragment="").geturl()
     t = time.time()
     try:
         resp = requests.post(
@@ -46,20 +48,20 @@ def send_chat_webhook(self, payload, webhook_url, hmac_secret):
         if 200 <= resp.status_code <= 299:
             logger.info(
                 "Chat webhook delivered to %s in %.2fs (HTTP %d)",
-                webhook_url,
+                _log_url,
                 elapsed,
                 resp.status_code,
             )
         else:
             logger.warning(
                 "Chat webhook to %s returned HTTP %d in %.2fs",
-                webhook_url,
+                _log_url,
                 resp.status_code,
                 elapsed,
             )
     except RequestException:
         logger.exception(
             "Chat webhook to %s failed after %.2fs",
-            webhook_url,
+            _log_url,
             time.time() - t,
         )
