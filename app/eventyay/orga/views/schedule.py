@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
