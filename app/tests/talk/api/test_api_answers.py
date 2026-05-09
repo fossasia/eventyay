@@ -316,6 +316,122 @@ def test_answer_validation_reviewer_question(
 
 
 @pytest.mark.django_db
+def test_answer_validation_select_question_requires_options(
+    event, orga_user_write_token, client, select_question, submission
+):
+    """Creating an answer for a select question without options must return 400."""
+    response = client.post(
+        event.api_urls.answers,
+        data=json.dumps(
+            {
+                "question": select_question.pk,
+                "answer": "In-person",
+                "submission": submission.code,
+            }
+        ),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400, response.text
+    assert "options" in response.data
+
+
+@pytest.mark.django_db
+def test_answer_validation_select_question_rejects_multiple_options(
+    event, orga_user_write_token, client, select_question, submission
+):
+    """Creating an answer for a select question with >1 option must return 400."""
+    with scope(event=event):
+        option_ids = list(select_question.options.values_list("pk", flat=True))
+    assert len(option_ids) >= 2
+
+    response = client.post(
+        event.api_urls.answers,
+        data=json.dumps(
+            {
+                "question": select_question.pk,
+                "answer": "In-person",
+                "submission": submission.code,
+                "options": option_ids[:2],
+            }
+        ),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 400, response.text
+    assert "options" in response.data
+
+
+@pytest.mark.django_db
+def test_answer_validation_select_question_accepts_one_option(
+    event, orga_user_write_token, client, select_question, submission
+):
+    """Creating an answer for a select question with exactly one option must succeed."""
+    with scope(event=event):
+        option = select_question.options.first()
+        count_before = Answer.objects.filter(question__event=event).count()
+
+    response = client.post(
+        event.api_urls.answers,
+        data=json.dumps(
+            {
+                "question": select_question.pk,
+                "answer": str(option.answer),
+                "submission": submission.code,
+                "options": [option.pk],
+            }
+        ),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert response.status_code == 201, response.text
+    with scope(event=event):
+        assert Answer.objects.filter(question__event=event).count() == count_before + 1
+
+
+@pytest.mark.django_db
+def test_answer_patch_select_question_without_options_rejected(
+    event, orga_user_write_token, client, select_question, submission
+):
+    """PATCH with only answer text on a select answer must be rejected.
+
+    Sending PATCH {"answer": "arbitrary text"} on an existing select/choices
+    answer previously bypassed option validation and left the stored answer
+    desynchronised from the options M2M relation.  After the fix this must
+    return 400 because the answer cannot be backed by a valid option.
+    """
+    with scope(event=event):
+        option = select_question.options.first()
+
+    # First create a valid answer via POST
+    create_resp = client.post(
+        event.api_urls.answers,
+        data=json.dumps(
+            {
+                "question": select_question.pk,
+                "answer": str(option.answer),
+                "submission": submission.code,
+                "options": [option.pk],
+            }
+        ),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert create_resp.status_code == 201, create_resp.text
+    answer_pk = create_resp.data["id"]
+
+    # Now PATCH with only answer text — must be rejected
+    patch_resp = client.patch(
+        event.api_urls.answers + f"{answer_pk}/",
+        data=json.dumps({"answer": "arbitrary free text"}),
+        content_type="application/json",
+        headers={"Authorization": f"Token {orga_user_write_token.token}"},
+    )
+    assert patch_resp.status_code == 400, patch_resp.text
+    assert "options" in patch_resp.data
+
+
+@pytest.mark.django_db
 def test_answer_validation_speaker_question(
     event, orga_user_write_token, client, speaker
 ):

@@ -109,10 +109,27 @@ const createEventyayUnderlinePlugin = () => {
 }
 
 const initToastUiMarkdownTextarea = (textarea) => {
-    if (!textarea || textarea.dataset.toastuiBound === 'true') return
+    if (!textarea || textarea.dataset.toastuiBound === 'true' || textarea.dataset.markdownReadonly === 'true') return
     if (!window.toastui?.Editor) return
 
     if (!textarea.parentNode) return
+
+    // For disabled textareas (read-only forms), don't mount the rich editor.
+    // Instead, render a static read-only view so the toolbar doesn't appear.
+    // Uses a separate flag so the editor can be initialized if the textarea
+    // is later enabled (e.g. via JS toggling edit mode).
+    if (textarea.disabled) {
+        textarea.dataset.markdownReadonly = 'true'
+        const wrapper = textarea.closest('.markdown-wrapper')
+        if (wrapper) {
+            textarea.hidden = true
+            const readonlyDiv = document.createElement('div')
+            readonlyDiv.className = 'markdown-readonly-view'
+            readonlyDiv.textContent = textarea.value || ''
+            wrapper.appendChild(readonlyDiv)
+        }
+        return
+    }
 
     textarea.dataset.toastuiBound = 'true'
 
