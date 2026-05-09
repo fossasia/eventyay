@@ -453,6 +453,11 @@ export default {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
 			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
 			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
+			let stickyTopOffset = 40
+			if (scheduleRoot) {
+				const parsed = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-sticky-top-offset'))
+				if (Number.isFinite(parsed)) stickyTopOffset = parsed
+			}
 			let toolbarHeight = 0
 			if (toolbar) {
 				toolbarHeight = toolbar.getBoundingClientRect().height
@@ -461,17 +466,12 @@ export default {
 				toolbarHeight = Number.isFinite(parsed) ? parsed : 0
 			}
 			const stickyHeaderHeight = stickyHeader ? stickyHeader.getBoundingClientRect().height : 0
-			let navOffset = 40
-			if (stickyHeader) {
-				const rect = stickyHeader.getBoundingClientRect()
-				navOffset = Math.max(0, rect.top)
-			}
 			let versionWarning = 0
 			if (scheduleRoot) {
 				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
 				versionWarning = Number.isFinite(vh) ? vh : 0
 			}
-			return navOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
+			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -529,10 +529,8 @@ export default {
 			}
 		},
 		scrollToDayStart (day) {
-			const targetMoment = moment.isMoment(day)
-				? day.clone().tz(this.timezone).startOf('day')
-				: moment.tz(day, this.timezone).startOf('day')
-			const el = this.$refs[getSliceName(targetMoment)]?.[0]
+			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
+			const el = this.$el.querySelector(`[data-slice-day="${dayStr}"]`)
 			if (!el) return
 			this.scrollElementIntoViewWithClearance(el)
 		},

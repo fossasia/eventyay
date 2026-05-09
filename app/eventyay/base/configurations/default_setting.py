@@ -1615,6 +1615,16 @@ DEFAULT_SETTINGS = {
             help_text=_('Sender address for outgoing emails'),
         ),
     },
+    'mail_reply_to': {
+        'default': None,
+        'type': str,
+        'form_class': forms.EmailField,
+        'serializer_class': serializers.EmailField,
+        'form_kwargs': dict(
+            label=_('Reply-to address'),
+            help_text=_('User replies will be sent to this address.'),
+        ),
+    },
     'mail_from_name': {
         'default': None,
         'type': str,

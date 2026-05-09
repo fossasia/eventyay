@@ -1220,6 +1220,7 @@ class MailSettingsForm(SettingsForm):
     auto_fields = [
         'mail_prefix',
         'mail_from',
+        'mail_reply_to',
         'mail_from_name',
         'mail_attach_ical',
         'mail_attach_tickets',
@@ -1419,21 +1420,27 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
     smtp_use_custom = forms.BooleanField(
-        label=_('Use Custom Email'),
+        label=_('Use custom email'),
         help_text=_('All mail related to your event will be sent over your specified email gateway.'),
         required=False,
     )
     send_grid_api_key = forms.CharField(
-        label=_('Sendgrid Token'),
+        label=_('Sendgrid token'),
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
+    )
+    test_email = forms.CharField(
+        label=_('Send test email to'),
+        help_text=_('Enter one or more email addresses separated by commas to send a test email.'),
+        validators=[multimail_validate],
+        required=False,
     )
 
     smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
 
     email_vendor = forms.ChoiceField(
         label=_('Email vendor'),
-        required=True,
+        required=False,
         widget=forms.RadioSelect,
         choices=smtp_select,
     )
@@ -1467,6 +1474,72 @@ class MailSettingsForm(SettingsForm):
         required=False,
     )
     smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
+    @property
+    def changed_data(self):
+        data = super().changed_data
+        if 'test_email' in data:
+            return [d for d in data if d != 'test_email']
+        return data
+
+    def save(self, *args, **kwargs):
+        # test_email should not be persisted as a setting.
+        # HierarkeyForm.save() iterates over self.fields and expects them in self.cleaned_data.
+        # We temporarily remove it from self.fields to ensure it's not saved.
+        f = self.fields.pop('test_email', None)
+        try:
+            return super().save(*args, **kwargs)
+        finally:
+            if f:
+                self.fields['test_email'] = f
+
+    def clean(self):
+        data = super().clean()
+        if not data.get('smtp_use_custom'):
+            gs = GlobalSettingsObject()
+            default_from = gs.settings.mail_from or settings.MAIL_FROM
+            submitted_mail_from = data.get('mail_from')
+            if submitted_mail_from and submitted_mail_from != default_from:
+                self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
+            data['mail_from'] = default_from
+
+        if not data.get('smtp_use_custom'):
+            # If custom email is disabled, we restore all previous custom settings to avoid wiping them
+            for field in ('email_vendor', 'send_grid_api_key', 'smtp_host', 'smtp_port',
+                          'smtp_username', 'smtp_password', 'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        elif data.get('email_vendor') == 'smtp':
+            # If SMTP is active, preserve SendGrid settings
+            if not data.get('send_grid_api_key') and self.initial.get('send_grid_api_key'):
+                data['send_grid_api_key'] = self.initial.get('send_grid_api_key')
+
+        elif data.get('email_vendor') == 'sendgrid':
+            # If SendGrid is active, preserve SMTP settings
+            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+                          'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        # Standard password restoration logic (even if username/password are currently active)
+        if not data.get('smtp_password') and data.get('smtp_username') and self.initial.get('smtp_password'):
+            data['smtp_password'] = self.initial.get('smtp_password')
+
+        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
+            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate email_vendor is selected when custom email is enabled
+        if data.get('smtp_use_custom') and not data.get('email_vendor'):
+            self.add_error('email_vendor', _('This field is required when "Use custom email" is enabled.'))
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                msg = _('This field is required when using SendGrid as email vendor.')
+                raise ValidationError({'send_grid_api_key': msg})
+
+        return data
+
     base_context = {
         'mail_text_order_placed': ['event', 'order', 'payment'],
         'mail_text_order_placed_attendee': ['event', 'order', 'position'],
@@ -1513,23 +1586,6 @@ class MailSettingsForm(SettingsForm):
                 # the user interface with it
                 del self.fields[k]
 
-    def clean(self):
-        data = self.cleaned_data
-        if not data.get('smtp_password') and data.get('smtp_username'):
-            # Leave password unchanged if the username is set and the password field is empty.
-            # This makes it impossible to set an empty password as long as a username is set, but
-            # Python's smtplib does not support password-less schemes anyway.
-            data['smtp_password'] = self.initial.get('smtp_password')
-        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
-            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
-
-        # Validate SendGrid token is provided when SendGrid is selected
-        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
-            if not data.get('send_grid_api_key'):
-                msg = _('This field is required when using SendGrid as email vendor.')
-                raise ValidationError({'send_grid_api_key': msg})
-
-        return data
 
 
 class TicketSettingsForm(SettingsForm):
