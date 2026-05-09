@@ -73,8 +73,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         for app in apps:
             app.secret = decrypt_secret(app.secret)
         return apps
-
-    # Override to setup User-Agent to follow Wikimedia policy
     # https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
     def get_requests_session(self):
         dj_request = cast(HttpRequest, self.request)
