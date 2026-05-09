@@ -692,7 +692,7 @@ class QuestionFilterForm(forms.Form):
         answers = question.answers.filter(Q(person__in=speakers) | Q(submission__in=talks))
         result['answer_count'] = answers.count()
         result['missing_answers'] = question.missing_answers(filter_speakers=speakers, filter_talks=talks)
-        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
             grouped_answers = (
                 answers.order_by('options')
                 .values('options', 'options__answer')
