@@ -385,7 +385,6 @@ select.required-status-dropdown[data-current="optional"] {
         flex-direction: column;
         align-items: stretch;
         gap: 0.5em;
-        text-align: left;
     }
 
     .order-form-create-buttons .btn {
