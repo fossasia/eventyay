@@ -792,6 +792,9 @@ class CartTest(CartTestMixin, TestCase):
             target_status_code=200,
         )
         assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('20.00', doc.select('.alert-danger')[0].text)
+        self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
         with scopes_disabled():
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
@@ -811,6 +814,9 @@ class CartTest(CartTestMixin, TestCase):
             target_status_code=200,
         )
         assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('30.00', doc.select('.alert-danger')[0].text)
+        self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
         with scopes_disabled():
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
@@ -831,6 +837,10 @@ class CartTest(CartTestMixin, TestCase):
             target_status_code=200,
         )
         assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('20.00', doc.select('.alert-danger')[0].text)
+        self.assertIn('30.00', doc.select('.alert-danger')[0].text)
+        self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
         with scopes_disabled():
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
