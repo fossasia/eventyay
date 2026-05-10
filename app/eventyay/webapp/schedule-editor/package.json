@@ -28,7 +28,7 @@
     "moment-timezone": "^0.6.2",
     "process": "^0.11.10",
     "vue": "^3.5.33",
-    "zod": "^4.4.2"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.24",
