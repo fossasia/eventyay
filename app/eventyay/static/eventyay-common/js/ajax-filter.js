@@ -84,6 +84,13 @@ $(function() {
                     $context.find('.pagination-container').css('opacity', '1');
                 }
 
+                if (window.eventyayInitTimezoneUtilities) {
+                    window.eventyayInitTimezoneUtilities();
+                }
+                if (window.eventyayInitStartpageToggles) {
+                    window.eventyayInitStartpageToggles();
+                }
+
                 if (replaceUrlParams) {
                     history.pushState({}, '', url);
                 }
