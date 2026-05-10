@@ -87,6 +87,8 @@ $(function() {
                 if (replaceUrlParams) {
                     history.pushState({}, '', url);
                 }
+                var normalizedUrl = new URL(url, window.location.origin);
+                $context.find('input[name="next"]').val(normalizedUrl.pathname + normalizedUrl.search);
             },
             error: function() {
                 // Fallback: reload page
@@ -135,6 +137,8 @@ $(function() {
     
     // Handle back/forward navigation
     $(window).on('popstate', function() {
-        fetchAndReplace(window.location.href, false, $forms.first());
+        var $activeTab = $('.tab-pane.active');
+        var $form = $activeTab.length ? $activeTab.find('form').first() : $forms.first();
+        fetchAndReplace(window.location.href, false, $form);
     });
 });
