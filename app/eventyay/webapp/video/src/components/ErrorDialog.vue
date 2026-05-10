@@ -47,7 +47,6 @@ const closeDialog = () => {
 		flex-direction: column
 		padding: 16px
 		max-width: 500px
-		border-left: 4px solid $clr-danger
 		
 		.header
 			display: flex
