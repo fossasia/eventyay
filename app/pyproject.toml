@@ -187,7 +187,7 @@ dependencies = [
     "sortedcontainers>=2.4.0",
     "soupsieve>=2.8.1",
     "sqlparse>=0.5.5",
-    "starkbank-ecdsa>=2.2.0",
+    "starkbank-ecdsa>=2.3.1",
     # Hold back by eventyay-stripe
     "stripe>=11.3.0",
     "text-unidecode>=1.3",

@@ -1594,7 +1594,7 @@ requires-dist = [
     { name = "sortedcontainers", specifier = ">=2.4.0" },
     { name = "soupsieve", specifier = ">=2.8.1" },
     { name = "sqlparse", specifier = ">=0.5.5" },
-    { name = "starkbank-ecdsa", specifier = ">=2.2.0" },
+    { name = "starkbank-ecdsa", specifier = ">=2.3.1" },
     { name = "stripe", specifier = ">=11.3.0" },
     { name = "text-unidecode", specifier = ">=1.3" },
     { name = "textile", specifier = ">=4.0.3" },
@@ -3526,9 +3526,12 @@ wheels = [
 
 [[package]]
 name = "starkbank-ecdsa"
-version = "2.2.0"
+version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a3/f8/a6091be6a60ed4df9ac806c89fbc5fe1a3416d0284f3ba70aa09a3419428/starkbank-ecdsa-2.2.0.tar.gz", hash = "sha256:9399c3371b899d4a235b68a1ed7919d202fbf024bd2c863ae8ebdad343c2a63a", size = 14690, upload-time = "2022-10-24T18:36:05.27Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/90/1a9e28c73a7cef965c6811ff129a20ddd6bec1fc438a99d938261314e913/starkbank_ecdsa-2.3.1.tar.gz", hash = "sha256:712315c87ba7966a963f6f939a773f7a7a15cdc056ece097a30c0a9d393ee513", size = 20588, upload-time = "2026-04-23T20:59:57.736Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/f3/6d0a27fe51ba9cca11a1d5f44616ba384c1326ab704d74e4367839a67219/starkbank_ecdsa-2.3.1-py3-none-any.whl", hash = "sha256:c6dcb0caeb5d7d181c3ef0a6b0185df700d4fa5d5e5669b40bc6d20816aa25a8", size = 22067, upload-time = "2026-04-23T20:59:56.556Z" },
+]
 
 [[package]]
 name = "static3"
