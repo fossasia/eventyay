@@ -201,10 +201,6 @@ onMounted(() => {
 			padding: 12px 16px
 	.ql-hidden
 		display: none
-	.upload-error
-		color: $clr-danger
-		font-size: 14px
-		margin-top: 8px
 	.ql-tooltip  /* based on https://github.com/quilljs/quill/blob/develop/assets/snow/tooltip.styl */
 		z-index: 1000
 		position: absolute

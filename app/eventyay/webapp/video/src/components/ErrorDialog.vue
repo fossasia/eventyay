@@ -11,10 +11,9 @@ prompt.c-error-dialog(@close="allowCancel && closeDialog()", :allow-cancel="allo
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import Prompt from 'components/Prompt'
 
-const props = defineProps({
+defineProps({
 	title: {
 		type: String,
 		default: 'Error'
