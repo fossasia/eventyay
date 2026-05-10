@@ -24,6 +24,15 @@ $(function() {
         return $container;
     }
 
+    // Helper to find pagination container (supports both .pagination-container and .pagination)
+    function getPaginationContainer($context) {
+        var $container = $context.find('.pagination-container').first();
+        if ($container.length === 0) {
+            $container = $context.find('.pagination').first();
+        }
+        return $container;
+    }
+
     function fetchAndReplace(url, replaceUrlParams, $form) {
         // Scope replacements to the current tab if one exists
         var $context = $(document);
@@ -42,7 +51,7 @@ $(function() {
             return;
         }
 
-        var $paginationContainer = $context.find('.pagination-container').first();
+        var $paginationContainer = getPaginationContainer($context);
         
         $tableContainer.css('opacity', '0.5');
         if ($paginationContainer.length) {
@@ -65,8 +74,8 @@ $(function() {
                 }
 
                 // Replace pagination content or remove it if none exists
-                var newPaginationContainer = $newContext.find('.pagination-container').first();
-                $paginationContainer = $context.find('.pagination-container').first(); // re-query in case it changed
+                var newPaginationContainer = getPaginationContainer($newContext);
+                $paginationContainer = getPaginationContainer($context); // re-query in case it changed
                 
                 if (newPaginationContainer.length) {
                     if ($paginationContainer.length) {
@@ -80,8 +89,9 @@ $(function() {
                 }
 
                 $tableContainer.css('opacity', '1');
-                if ($context.find('.pagination-container').length) {
-                    $context.find('.pagination-container').css('opacity', '1');
+                var $updatedPagination = getPaginationContainer($context);
+                if ($updatedPagination.length) {
+                    $updatedPagination.css('opacity', '1');
                 }
 
                 if (window.eventyayInitTimezoneUtilities) {
@@ -94,7 +104,7 @@ $(function() {
                 if (replaceUrlParams) {
                     history.pushState({}, '', url);
                 }
-                var normalizedUrl = new URL(url, window.location.origin);
+                var normalizedUrl = new URL(url, window.location.href);
                 $context.find('input[name="next"]').val(normalizedUrl.pathname + normalizedUrl.search);
             },
             error: function() {
@@ -128,7 +138,7 @@ $(function() {
     });
 
     // Intercept pagination clicks
-    $(document).on('click', '.pagination-container a', function(e) {
+    $(document).on('click', '.pagination-container a, .pagination a', function(e) {
         e.preventDefault();
         var $btn = $(this);
         var url = $btn.attr('href');
