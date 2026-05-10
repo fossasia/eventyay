@@ -13,6 +13,8 @@
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
+	.iframe-error(v-else-if="!iframeEl && !consentBlockedUrl && iframeOffline", :class="{background: background, 'size-tiny': background}")
+		.offline-message {{ $t('Livestream:offline-message:text') }}
 	.error-container(v-else-if="!iframeEl && !consentBlockedUrl && iframeError", :class="{background: background, 'size-tiny': background}")
 		.error-card
 			.error-title {{ iframeError.title || $t('MediaSource:iframe-error:title') }}
@@ -21,8 +23,6 @@
 			.error-actions
 				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="goToProfileSettings()") {{ $t('MediaSource:error-goto-profile:button') }}
 				bunt-button(v-else, @click="retryInitializeIframe()") {{ $t('MediaSource:error-retry:button') }}
-	.iframe-error(v-else-if="!iframeEl && !consentBlockedUrl && iframeOffline", :class="{background: background, 'size-tiny': background}")
-		.offline-message {{ $t('Livestream:offline-message:text') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -268,7 +268,10 @@ function unmuteYouTubePlayer() {
 async function initializeIframe(mute, skipConsentCheck = false) {
 	if (!module.value) return;
 	if (shouldUseLivestream.value) return;
-	if (iframeOffline.value) return;
+	if (iframeOffline.value) {
+		iframeError.value = null;
+		return;
+	}
 	if (iframeEl.value) return; // already initialised
 	if (iframeInitInProgress) return;
 	iframeInitInProgress = true;
