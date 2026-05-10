@@ -42,7 +42,7 @@ $(function() {
             return;
         }
 
-        var $paginationContainer = $context.find('.pagination').first();
+        var $paginationContainer = $context.find('.pagination-container').first();
         
         $tableContainer.css('opacity', '0.5');
         if ($paginationContainer.length) {
@@ -65,23 +65,23 @@ $(function() {
                 }
 
                 // Replace pagination content or remove it if none exists
-                var newPagination = $newContext.find('.pagination').first();
-                $paginationContainer = $context.find('.pagination').first(); // re-query in case it changed
+                var newPaginationContainer = $newContext.find('.pagination-container').first();
+                $paginationContainer = $context.find('.pagination-container').first(); // re-query in case it changed
                 
-                if (newPagination.length) {
+                if (newPaginationContainer.length) {
                     if ($paginationContainer.length) {
-                        $paginationContainer.replaceWith(newPagination);
+                        $paginationContainer.replaceWith(newPaginationContainer);
                     } else {
                         // Insert after the table container if pagination was added
-                        $tableContainer.after($('<div class="pagination text-center"></div>').html(newPagination.html()));
+                        $tableContainer.after(newPaginationContainer);
                     }
                 } else if ($paginationContainer.length) {
                     $paginationContainer.remove();
                 }
 
                 $tableContainer.css('opacity', '1');
-                if ($context.find('.pagination').length) {
-                    $context.find('.pagination').css('opacity', '1');
+                if ($context.find('.pagination-container').length) {
+                    $context.find('.pagination-container').css('opacity', '1');
                 }
 
                 if (replaceUrlParams) {
@@ -110,7 +110,7 @@ $(function() {
         e.preventDefault();
         var $btn = $(this);
         var $form = $btn.closest('form');
-        var url = $btn.attr('data-href') || $btn.attr('href');
+        var url = $btn.attr('href');
         if (url) {
             $form.find('input[type="text"], input[type="search"]').val('');
             $form.find('select').val('').trigger('change');
@@ -119,7 +119,7 @@ $(function() {
     });
 
     // Intercept pagination clicks
-    $(document).on('click', '.pagination a', function(e) {
+    $(document).on('click', '.pagination-container a', function(e) {
         e.preventDefault();
         var $btn = $(this);
         var url = $btn.attr('href');
