@@ -1544,7 +1544,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.2" },
     { name = "pdf2image", specifier = ">=1.17.0" },
     { name = "pdfrw", specifier = ">=0.4" },
-    { name = "phonenumberslite", specifier = ">=9.0.29" },
+    { name = "phonenumberslite", specifier = ">=9.0.30" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "polib", specifier = ">=1.2.0" },
     { name = "potypo", specifier = ">=0.0.2" },
@@ -1559,12 +1559,12 @@ requires-dist = [
     { name = "pycryptodome", specifier = ">=3.20.0" },
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "pydantic-core", specifier = ">=2.46.2" },
-    { name = "pydantic-settings", specifier = ">=2.12.0" },
+    { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "pygments", specifier = ">=2.19.1" },
     { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "pyopenssl", specifier = ">=25.3.0" },
     { name = "pyotp", specifier = ">=2.9.0" },
-    { name = "pypdf", specifier = ">=6.10.2" },
+    { name = "pypdf", specifier = ">=6.11.0" },
     { name = "pypng", specifier = ">=0.20220715.0" },
     { name = "python-bidi", specifier = ">=0.6.7" },
     { name = "python-creole", specifier = ">=1.4.10" },
@@ -2364,11 +2364,11 @@ wheels = [
 
 [[package]]
 name = "phonenumberslite"
-version = "9.0.29"
+version = "9.0.30"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f5/14/d8820aaf74275183b207c5cdd6f248ce0adb80fc688f3566602fa423dc94/phonenumberslite-9.0.29.tar.gz", hash = "sha256:9804ecca39a0b8aa735b1797c6dda11ab3e78da1b280e3defdee1a3ea94667b2", size = 288716, upload-time = "2026-04-25T05:35:17.195Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/81/a03f627d7ec2d6dcf91ba1216cf8b2012f924ed4c040cca8903efeca7c77/phonenumberslite-9.0.30.tar.gz", hash = "sha256:b84fb322efa8fd5b1114868bce8b668f770da70a50354e9c4b21997aa9605c13", size = 288657, upload-time = "2026-05-07T10:20:18Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/3d/6faf80eab5640aafb5dcc8d1b398a338677f238e5c0b7ae46655a19a524d/phonenumberslite-9.0.29-py2.py3-none-any.whl", hash = "sha256:572760601cc45ae6578cb7493973b479d5a68ec90ca6e7db2fbce899e4ee393e", size = 473337, upload-time = "2026-04-25T05:35:15.243Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/5b/8a2811e962212b83d220f0d863077ffb39cedec8271efd3f8b826a774aaa/phonenumberslite-9.0.30-py2.py3-none-any.whl", hash = "sha256:c02bc6459560528c2ad8126d3dbf4286471fbc248843a9e7d7d1e624991c7e9a", size = 473251, upload-time = "2026-05-07T10:20:16.097Z" },
 ]
 
 [[package]]
@@ -2653,16 +2653,16 @@ wheels = [
 
 [[package]]
 name = "pydantic-settings"
-version = "2.13.1"
+version = "2.14.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/52/6d/fffca34caecc4a3f97bda81b2098da5e8ab7efc9a66e819074a11955d87e/pydantic_settings-2.13.1.tar.gz", hash = "sha256:b4c11847b15237fb0171e1462bf540e294affb9b86db4d9aa5c01730bdbe4025", size = 223826, upload-time = "2026-02-19T13:45:08.055Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/07/60/1d1e59c9c90d54591469ada7d268251f71c24bdb765f1a8a832cee8c6653/pydantic_settings-2.14.1.tar.gz", hash = "sha256:e874d3bec7e787b0c9958277956ed9b4dd5de6a80e162188fdaff7c5e26fd5fa", size = 235551, upload-time = "2026-05-08T13:40:06.542Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/4b/ccc026168948fec4f7555b9164c724cf4125eac006e176541483d2c959be/pydantic_settings-2.13.1-py3-none-any.whl", hash = "sha256:d56fd801823dbeae7f0975e1f8c8e25c258eb75d278ea7abb5d9cebb01b56237", size = 58929, upload-time = "2026-02-19T13:45:06.034Z" },
+    { url = "https://files.pythonhosted.org/packages/ae/8d/f1af3832f5e6eb13ba94ee809e72b8ecb5eef226d27ee0bef7d963d943c7/pydantic_settings-2.14.1-py3-none-any.whl", hash = "sha256:6e3c7edfd8277687cdc598f56e5cff0e9bfff0910a3749deaa8d4401c3a2b9de", size = 60964, upload-time = "2026-05-08T13:40:04.958Z" },
 ]
 
 [[package]]
@@ -2745,11 +2745,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "6.10.2"
+version = "6.11.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7b/3f/9f2167401c2e94833ca3b69535bad89e533b5de75fefe4197a2c224baec2/pypdf-6.10.2.tar.gz", hash = "sha256:7d09ce108eff6bf67465d461b6ef352dcb8d84f7a91befc02f904455c6eea11d", size = 5315679, upload-time = "2026-04-15T16:37:36.978Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/58/6dd97d78a4b17a7a6b9d1c6ad23895abc41f0fdc49c553cc05bdfdcc36d0/pypdf-6.11.0.tar.gz", hash = "sha256:062b51c81b0910e6d2755e99e1c5547a0a23b7d0a32322af66240d8edcfabe87", size = 6453975, upload-time = "2026-05-09T13:26:48.955Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/d6/1d5c60cc17bbdf37c1552d9c03862fc6d32c5836732a0415b2d637edc2d0/pypdf-6.10.2-py3-none-any.whl", hash = "sha256:aa53be9826655b51c96741e5d7983ca224d898ac0a77896e64636810517624aa", size = 336308, upload-time = "2026-04-15T16:37:34.851Z" },
+    { url = "https://files.pythonhosted.org/packages/07/b1/68feb7eb3b99f0c020b414234825f4a5d70e0126c18d933770e8c93a35fc/pypdf-6.11.0-py3-none-any.whl", hash = "sha256:769394d5756d5b304c9b6bef88b54b1816b328e7e6fc9254e625529a15ed4ab8", size = 338819, upload-time = "2026-05-09T13:26:46.904Z" },
 ]
 
 [[package]]
