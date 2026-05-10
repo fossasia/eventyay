@@ -5,8 +5,8 @@
         <span class="fa fa-filter"></span>
         <span class="sr-only">{% translate "Filter" %}</span>
     </button>
-    <a href="{{ clear_url|default:request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% translate 'Clear filters' %}" title="{% translate 'Clear filters' %}">
+    <button type="button" data-href="{{ clear_url|default:request.path }}" class="btn btn-default btn-clear-filter" aria-label="{% translate 'Clear filters' %}" title="{% translate 'Clear filters' %}">
         <span class="fa fa-eraser"></span>
         <span class="sr-only">{% translate "Clear filters" %}</span>
-    </a>
+    </button>
 </div>

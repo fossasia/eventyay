@@ -1,21 +1,48 @@
 $(function() {
-    // Find the relevant form
-    var $form = $('form').filter(function() {
+    // Find the relevant forms, excluding those that explicitly redirect (like /go forms)
+    var $forms = $('form').filter(function() {
+        var action = $(this).attr('action');
+        if (action && action.indexOf('/go') !== -1) {
+            return false;
+        }
         return $(this).hasClass('filter-form') || $(this).find('.filter-form').length > 0 || $(this).closest('.filter-form').length > 0;
-    }).first();
+    });
 
-    // Find the target table or container
-    var $tableContainer = $('.table-responsive');
-    if ($tableContainer.length === 0) {
-        $tableContainer = $('table.table').first();
-    }
-
-    if ($form.length === 0 || $tableContainer.length === 0) {
+    if ($forms.length === 0) {
         return;
     }
 
-    function fetchAndReplace(url, replaceUrlParams) {
-        var $paginationContainer = $('.pagination');
+    // Helper to find the container within a context
+    function getTableContainer($context) {
+        var $container = $context.find('.table-responsive').first();
+        if ($container.length === 0) {
+            $container = $context.find('table.table').first();
+        }
+        if ($container.length === 0) {
+            $container = $context.find('.empty-collection').first();
+        }
+        return $container;
+    }
+
+    function fetchAndReplace(url, replaceUrlParams, $form) {
+        // Scope replacements to the current tab if one exists
+        var $context = $(document);
+        var selectorPrefix = '';
+        if ($form && $form.closest('.tab-pane').length > 0) {
+            var tabId = $form.closest('.tab-pane').attr('id');
+            if (tabId) {
+                selectorPrefix = '#' + tabId + ' ';
+                $context = $('#' + tabId);
+            }
+        }
+
+        var $tableContainer = getTableContainer($context);
+        if ($tableContainer.length === 0) {
+            window.location.href = url; // Fallback if no container found
+            return;
+        }
+
+        var $paginationContainer = $context.find('.pagination').first();
         
         $tableContainer.css('opacity', '0.5');
         if ($paginationContainer.length) {
@@ -29,39 +56,32 @@ $(function() {
                 var doc = new DOMParser().parseFromString(data, 'text/html');
                 var $newDoc = $(doc);
                 
-                // Replace table or container content
-                var newTableContainer = $newDoc.find('.table-responsive');
-                if (newTableContainer.length === 0) {
-                    newTableContainer = $newDoc.find('table.table').first();
-                }
+                var $newContext = selectorPrefix ? $newDoc.find(selectorPrefix) : $newDoc;
+                var newTableContainer = getTableContainer($newContext);
 
                 if (newTableContainer.length) {
-                    // If we're replacing the table directly (no wrapper), use replaceWith
-                    if ($tableContainer.is('table')) {
-                        $tableContainer.replaceWith(newTableContainer);
-                        $tableContainer = newTableContainer; // Update reference
-                    } else {
-                        $tableContainer.html(newTableContainer.html());
-                    }
+                    $tableContainer.replaceWith(newTableContainer);
+                    $tableContainer = newTableContainer; // Update reference
                 }
 
                 // Replace pagination content or remove it if none exists
-                var newPagination = $newDoc.find('.pagination');
-                $paginationContainer = $('.pagination'); // re-query in case it changed
+                var newPagination = $newContext.find('.pagination').first();
+                $paginationContainer = $context.find('.pagination').first(); // re-query in case it changed
                 
                 if (newPagination.length) {
                     if ($paginationContainer.length) {
                         $paginationContainer.replaceWith(newPagination);
                     } else {
+                        // Insert after the table container if pagination was added
                         $tableContainer.after($('<div class="pagination text-center"></div>').html(newPagination.html()));
                     }
-                } else {
+                } else if ($paginationContainer.length) {
                     $paginationContainer.remove();
                 }
 
                 $tableContainer.css('opacity', '1');
-                if ($('.pagination').length) {
-                    $('.pagination').css('opacity', '1');
+                if ($context.find('.pagination').length) {
+                    $context.find('.pagination').css('opacity', '1');
                 }
 
                 if (replaceUrlParams) {
@@ -76,37 +96,45 @@ $(function() {
     }
 
     // Intercept form submit
-    $form.on('submit', function(e) {
+    $forms.on('submit', function(e) {
         e.preventDefault();
-        var url = $(this).attr('action') || window.location.pathname;
-        var query = $(this).serialize();
+        var $form = $(this);
+        var url = $form.attr('action') || window.location.pathname;
+        var query = $form.serialize();
         var fullUrl = url + (url.indexOf('?') !== -1 ? '&' : '?') + query;
-        fetchAndReplace(fullUrl, true);
+        fetchAndReplace(fullUrl, true, $form);
     });
 
-    // Intercept clear button (using document on click to catch it inside the form)
-    $form.on('click', '.btn-clear-filter', function(e) {
+    // Intercept clear button
+    $forms.on('click', '.btn-clear-filter', function(e) {
         e.preventDefault();
-        var url = $(this).attr('href');
+        var $btn = $(this);
+        var $form = $btn.closest('form');
+        var url = $btn.attr('data-href') || $btn.attr('href');
         if (url) {
-            // Also reset form fields visually
             $form.find('input[type="text"], input[type="search"]').val('');
             $form.find('select').val('').trigger('change');
-            fetchAndReplace(url, true);
+            fetchAndReplace(url, true, $form);
         }
     });
 
     // Intercept pagination clicks
     $(document).on('click', '.pagination a', function(e) {
         e.preventDefault();
-        var url = $(this).attr('href');
+        var $btn = $(this);
+        var url = $btn.attr('href');
         if (url && url !== '#') {
-            fetchAndReplace(url, true);
+            // Find which form context this pagination belongs to
+            var $form = $btn.closest('.tab-pane').find('form').first();
+            if ($form.length === 0) {
+                $form = $forms.first();
+            }
+            fetchAndReplace(url, true, $form);
         }
     });
     
     // Handle back/forward navigation
     $(window).on('popstate', function() {
-        fetchAndReplace(window.location.href, false);
+        fetchAndReplace(window.location.href, false, $forms.first());
     });
 });
