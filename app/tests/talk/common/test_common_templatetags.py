@@ -1,6 +1,7 @@
 import pytest
 from django_scopes import scope
 
+from eventyay.common.templatetags.event_tags import can_view_featured_sessions_public
 from pretalx.common.templatetags.copyable import copyable
 from pretalx.common.templatetags.html_signal import html_signal
 from pretalx.common.templatetags.rich_text import rich_text
@@ -114,3 +115,26 @@ class MockEncodeDict(dict):
 class FakeRequest:
     def __init__(self, get):
         self.GET = MockEncodeDict(get)
+
+
+@pytest.mark.django_db
+def test_can_view_featured_sessions_public_respects_never_with_staff_session(event, user, rf):
+    with scope(event=event):
+        event.feature_flags['show_featured'] = 'never'
+        event.save()
+
+    request = rf.get('/')
+    request.event = event
+    request.user = user
+
+    class FakeSession:
+        session_key = 'staff-session'
+
+    request.session = FakeSession()
+
+    def always_active_staff_session(session_key):
+        return session_key == 'staff-session'
+
+    user.has_active_staff_session = always_active_staff_session
+
+    assert can_view_featured_sessions_public({'request': request}, event=event) is False

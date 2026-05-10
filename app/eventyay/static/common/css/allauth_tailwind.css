@@ -1,0 +1,99 @@
+/* TailwindCSS-like (v4) utility classes, to be used for django-allauth views */
+
+/* Tailwind v4-like gray background and text utilities */
+.bg-gray-50 { background-color: #f9fafb; }
+.bg-gray-100 { background-color: #f3f4f6; }
+.bg-gray-200 { background-color: #e5e7eb; }
+.bg-gray-300 { background-color: #d1d5db; }
+.bg-gray-400 { background-color: #9ca3af; }
+.bg-gray-500 { background-color: #6b7280; }
+.bg-gray-600 { background-color: #4b5563; }
+.bg-gray-700 { background-color: #374151; }
+.bg-gray-800 { background-color: #1f2937; }
+.bg-gray-900 { background-color: #111827; }
+.bg-white { background-color: #ffffff; }
+.text-gray-50 { color: #f9fafb; }
+.text-gray-100 { color: #f3f4f6; }
+.text-gray-200 { color: #e5e7eb; }
+.text-gray-300 { color: #d1d5db; }
+.text-gray-400 { color: #9ca3af; }
+.text-gray-500 { color: #6b7280; }
+.text-gray-600 { color: #4b5563; }
+.text-gray-700 { color: #374151; }
+.text-gray-800 { color: #1f2937; }
+.text-gray-900 { color: #111827; }
+.border {
+  border-width: 1px;
+  border-style: solid;
+}
+.border-gray-300 { border-color: #d1d5db; }
+.rounded { border-radius: 0.375rem; }
+.transition { transition: background 0.2s, color 0.2s; }
+.hover\:bg-gray-100:hover { background-color: #f3f4f6; }
+.hover\:text-gray-900:hover { color: #111827; }
+
+
+.flex {
+  display: flex;
+}
+.items-center {
+  align-items: center;
+}
+.form-group label.flex {
+  display: flex;
+  flex-direction: row;
+}
+.form-group label.items-center {
+  align-items: center;
+}
+.w-auto {
+  width: auto;
+}
+.ml-2 {
+  margin-left: 0.5rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.form-group input[type='password'].text-sm,
+.form-group input[type='text'].text-sm,
+.form-group select.text-sm,
+.form-group textarea.text-sm {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-base {
+  font-size: 1rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+}
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+.btn-md {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+.btn-lg {
+  padding: 0.9rem 2rem;
+  font-size: 1.1rem;
+}
+.btn-block {
+  display: block;
+  width: 100%;
+}

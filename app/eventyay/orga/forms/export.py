@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from io import StringIO
 
@@ -8,10 +10,19 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from i18nfield.utils import I18nJSONEncoder
 
+from eventyay.base.models import Event
 from eventyay.common.text.phrases import phrases
 
 
 class ExportForm(forms.Form):
+    """Form for exporting data.
+
+    To customize how a field's value is retrieved, subclasses can define a method named `_get_{field_name}_value`.
+    For example, to customize the 'title' field, define `_get_title_value`.
+
+    As a side-note, the `get_object_attribute` method uses this convention: it looks for a method named
+    `_get_{attribute}_value` and calls it if present, otherwise it accesses the attribute directly.
+    """
     export_format = forms.ChoiceField(
         required=True,
         label=_('Export format'),
@@ -27,7 +38,8 @@ class ExportForm(forms.Form):
         required=False,
         label=_('Data delimiter'),
         help_text=_(
-            'How do you want to separate data within a single cell (for example, multiple speakers in one session/multiple sessions for one speaker)?'
+            'How do you want to separate data within a single cell '
+            '(for example, multiple speakers in one session/multiple sessions for one speaker)?'
         ),
         choices=(
             ('comma', _('Comma')),
@@ -36,10 +48,14 @@ class ExportForm(forms.Form):
         widget=forms.RadioSelect,
         initial='comma',
     )
+    event: Event
 
-    def __init__(self, *args, event=None, **kwargs):
-        self.event = event
+    def __init__(self, *args, event: Event, **kwargs):
+        """The ``event`` parameter is required so that we can access the event settings
+        and decide which fields to add / remove.
+        """
         super().__init__(*args, **kwargs)
+        self.event = event
         self._build_model_fields()
         self._build_question_fields()
         if 'data_delimiter' in self.fields:
@@ -84,7 +100,7 @@ class ExportForm(forms.Form):
             data['data_delimiter'] = 'comma'
         return data
 
-    def get_object_attribute(self, obj, attribute):
+    def get_object_attribute(self, obj, attribute: str):
         method = getattr(self, f'_get_{attribute}_value', None)
         if method:
             return method(obj)
@@ -98,9 +114,12 @@ class ExportForm(forms.Form):
             code = getattr(obj, 'code', None)
             if code:
                 object_data['ID'] = code
+            # TODO: Bad OOP design: The parent class has to know about the custom method `_prepare_object_data`
+            # that the child class added. May fix in the future.
             prepare_method = getattr(self, '_prepare_object_data', None)
             if prepare_method:
-                obj = prepare_method(obj)
+                # This method mutates the input `obj`.
+                prepare_method(obj)
             for field in fields:
                 object_data[str(self.fields[field].label)] = self.get_object_attribute(obj, field)
 
