@@ -27,7 +27,7 @@ class RoomViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         event = self.request.event
         provided_priority = serializer.validated_data.get("sorting_priority")
-        if provided_priority is None or event.rooms.filter(
+        if provided_priority is None or provided_priority < 1 or event.rooms.filter(
             deleted=False, sorting_priority=provided_priority
         ).exists():
             max_priority = (

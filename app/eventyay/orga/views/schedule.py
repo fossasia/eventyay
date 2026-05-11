@@ -521,7 +521,9 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
     def order_handler(self, request, *args, **kwargs):
         order = request.POST.get('order')
         if order:
-            pks = order.split(',')
+            pks = [pk.strip() for pk in order.split(',') if pk.strip()]
+            if len(pks) != len(set(pks)):
+                return HttpResponseBadRequest('Duplicate room IDs in order')
             queryset = self.get_queryset()
             rooms_by_pk = {str(r.pk): r for r in queryset.filter(pk__in=pks)}
             to_update = []

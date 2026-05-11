@@ -45,7 +45,13 @@ export default {
 	},
 	watch: {
 		'$store.state.rooms'(storeRooms) {
-			if (this.rooms && storeRooms) {
+			if (!Array.isArray(this.rooms) || !Array.isArray(storeRooms)) return
+			const currentIds = this.rooms.map(r => r.id)
+			const storeIds = storeRooms.map(r => r.id)
+			const changed =
+				currentIds.length !== storeIds.length ||
+				currentIds.some((id, i) => id !== storeIds[i])
+			if (changed) {
 				this.fetchRooms()
 			}
 		}
@@ -86,6 +92,7 @@ export default {
 			}
 		},
 		async onListSort(newList) {
+			if (this.search) return
 			const previousRooms = this.rooms
 			this.rooms = newList
 			try {
