@@ -2742,7 +2742,7 @@ def _cancel_order_positions(
             if position.addon_to_id and position.addon_to_id in selected_positions:
                 continue
 
-            addons = list(position.addons.all())
+            addons = [a for a in position.addons.all() if not a.canceled]
             if any(addon.pk not in cancelable_positions for addon in addons):
                 raise OrderError(_('One of the selected tickets cannot be canceled.'))
 
