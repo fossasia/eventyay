@@ -1067,7 +1067,7 @@ class Event(
         if self.settings.smtp_use_custom or force_custom:
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
-            if not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
+            if not force_custom and not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
                 logger.warning(
                     'Event SMTP %s:%s is not reachable, falling back to system email backend',
                     self.settings.smtp_host,

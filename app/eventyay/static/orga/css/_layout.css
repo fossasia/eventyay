@@ -1,6 +1,7 @@
 body {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   /* Match common/control (Bootstrap) typography defaults */
   font-size: 14px;
@@ -29,9 +30,9 @@ body {
   padding: 18px 44px;
   margin: 0;
   margin-top: var(--navbar-height);
-  height: calc(100vh - var(--navbar-height));
+  min-height: calc(100vh - var(--navbar-height));
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: visible;
   scroll-padding-top: var(--navbar-height);
   display: flex;
   flex-direction: column;
@@ -194,7 +195,9 @@ aside.sidebar {
   background-color: var(--color-grey-ultralight);
   box-shadow: var(--shadow-lighter);
   width: 45px;
-  height: calc(100vh - var(--navbar-height));
+  align-self: stretch;
+  min-height: calc(100vh - var(--navbar-height));
+  height: auto;
   display: flex;
   font-size: 14px;
   flex-grow: 0;
@@ -1655,6 +1658,10 @@ h2 .user-name-display img {
   .pretalx-schedule {
     height: 100% !important;
   }
+}
+
+#page-content .orga-widget-preview pretalx-schedule {
+  --pretalx-sticky-top-offset: -18px;
 }
 
 @media (max-width: 640px) {
