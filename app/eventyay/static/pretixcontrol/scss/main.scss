@@ -1161,6 +1161,29 @@ h1 .label {
     h2 small {
         white-space: nowrap;
     }
+
+    a.event-dashboard-home-link {
+        color: inherit;
+        text-decoration: none;
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        display: inline;
+
+        &:hover,
+        &:active,
+        &:focus,
+        &:focus-visible {
+            color: inherit;
+            background-color: transparent;
+            text-decoration: underline;
+        }
+
+        small.text-muted {
+            color: #777777;
+        }
+    }
 }
 
 @media (min-width: $screen-sm-min) {

@@ -60,6 +60,21 @@
 h2.content-header {
   margin-top: 0;
 }
+
+h2.content-header a.content-header-home-link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+
+  small {
+    color: inherit;
+    opacity: 0.65;
+  }
+}
 @media (max-width: $screen-xs-max) {
   h2.content-header small {
     display: block;

@@ -510,6 +510,21 @@ aside.sidebar {
   white-space: nowrap;
 }
 
+#main-title .navigation-title h2 a.event-dashboard-home-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+#main-title .navigation-title h2 a.event-dashboard-home-link:hover,
+#main-title .navigation-title h2 a.event-dashboard-home-link:focus-visible {
+  text-decoration: underline;
+}
+
+#main-title .navigation-title h2 a.event-dashboard-home-link small.event-date {
+  color: inherit;
+  opacity: 0.65;
+}
+
 @media (min-width: 768px) {
   #main-title {
     flex-wrap: nowrap;

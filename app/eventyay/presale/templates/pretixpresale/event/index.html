@@ -31,6 +31,7 @@
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
+    {% eventurl request.event 'presale:event.index' as event_info_home_url %}
 
     {% autoescape off %}
         <script type="application/ld+json">
@@ -110,7 +111,7 @@
         {% if not subevent %}
             {% if event_logo_image and request.event.settings.logo_show_title %}
                 <h2 class="content-header">
-                    {{ event.name|event_localize }}
+                    <a class="content-header-home-link" href="{{ event_info_home_url }}">{{ event.name|event_localize }}</a>
                 </h2>
             {% endif %}
             {% if frontpage_text and not cart_namespace %}
@@ -171,18 +172,12 @@
     {% else %}
         {% if event_logo_image and request.event.settings.logo_show_title %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
-                {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
-                {% endif %}
+                <a class="content-header-home-link" href="{{ event_info_home_url }}">{{ event.name|event_localize }}{% if request.event.settings.show_dates_on_frontpage %}<small>{{ event.get_date_range_display }}</small>{% endif %}</a>
             </h2>
         {% endif %}
         {% if not event_logo_image %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
-                {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
-                {% endif %}
+                <a class="content-header-home-link" href="{{ event_info_home_url }}">{{ event.name|event_localize }}{% if request.event.settings.show_dates_on_frontpage %}<small>{{ event.get_date_range_display }}</small>{% endif %}</a>
             </h2>
         {% endif %}
         {% if frontpage_text and not cart_namespace %}

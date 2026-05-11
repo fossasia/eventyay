@@ -269,6 +269,34 @@ header {
   min-width: 0;
 }
 
+a.event-brand-home {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: nowrap;
+  text-align: left;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+a.event-brand-home:hover .event-title,
+a.event-brand-home:focus-visible .event-title {
+  text-decoration: underline;
+}
+
+a.event-brand-home:hover .event-date-line,
+a.event-brand-home:focus-visible .event-date-line {
+  text-decoration: underline;
+}
+
+a.event-brand-home:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.9);
+  outline-offset: 3px;
+}
+
 .event-brand--has-logo {
   padding-left: 1.75rem;
 }

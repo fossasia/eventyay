@@ -11,7 +11,7 @@
     {% include 'common/fragment_nav.html' %}
 {% endblock header_tabs %}
 
-{% block nav_link %}{{ request.event.urls.base }}{% endblock nav_link %}
+{% block event_home_href %}{{ request.event.urls.base }}{% endblock event_home_href %}
 
 {% block alerts %}
     {{ block.super }}

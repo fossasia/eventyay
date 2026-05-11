@@ -133,33 +133,37 @@
                 <div class="event-hero">
                     <div class="event-hero-overlay">
                         <div class="event-brand{% if current_event and current_event.visible_logo_url %} event-brand--has-logo{% endif %}">
-                            <div class="event-logo">
-                                <a href="{% block nav_link %}{% endblock nav_link %}">
-                                    {% block event_logo %}
-                                        {% if current_event and current_event.visible_logo_url %}
-                                            <img loading="lazy" src="{{ current_event.visible_logo_url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
-                                        {% endif %}
-                                    {% endblock event_logo %}
-                                </a>
-                            </div>
                             {% if current_event %}
-                                <div class="event-hero-text">
-                                    <div class="event-title">{{ current_event.name|event_localize }}</div>
-                                    {% if current_event.date_from %}
-                                        {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
-                                            {% timezone tz_name %}
-                                                <div class="event-date-line">
-                                                    {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
-                                                </div>
-                                                {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
+                                {% with hero_event_name=current_event.name|event_localize %}
+                                <a class="event-brand-home"
+                                    href="{% block event_home_href %}{% eventurl current_event 'presale:event.index' %}{% endblock event_home_href %}"
+                                    aria-label="{% blocktranslate trimmed with name=hero_event_name %}Event home: {{ name }}{% endblocktranslate %}">
+                                    <div class="event-logo">
+                                        {% block event_logo %}
+                                            {% if current_event.visible_logo_url %}
+                                                <img loading="lazy" src="{{ current_event.visible_logo_url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
+                                            {% endif %}
+                                        {% endblock event_logo %}
+                                    </div>
+                                    <div class="event-hero-text">
+                                        <div class="event-title">{{ current_event.name|event_localize }}</div>
+                                        {% if current_event.date_from %}
+                                            {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
+                                                {% timezone tz_name %}
                                                     <div class="event-date-line">
-                                                        {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                        {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
                                                     </div>
-                                                {% endif %}
-                                            {% endtimezone %}
-                                        {% endwith %}
-                                    {% endif %}
-                                </div>
+                                                    {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
+                                                        <div class="event-date-line">
+                                                            {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                        </div>
+                                                    {% endif %}
+                                                {% endtimezone %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+                                </a>
+                                {% endwith %}
                             {% endif %}
                         </div>
                         {% if show_online_video_link %}

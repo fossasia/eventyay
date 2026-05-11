@@ -17,14 +17,14 @@
     {% block agenda_custom_header %}{% endblock agenda_custom_header %}
 {% endblock custom_header %}
 
-{% block nav_link %}
+{% block event_home_href %}
     {% has_event_perm "base.list_schedule" request.user request request.event as can_view_schedule %}
     {% if can_view_schedule %}
         {{ request.event.urls.schedule }}
     {% else %}
         {{ request.event.urls.base }}
     {% endif %}
-{% endblock nav_link %}
+{% endblock event_home_href %}
 
 {% block header_tabs %}
     {% include "common/fragment_nav.html" with nav_context="agenda" %}

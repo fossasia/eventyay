@@ -11,14 +11,16 @@
         <div class="navigation">
             <div class="navigation-title">
                 <h2>
-                    {{ request.event.name }}
-                    <small class="text-muted small">
-                        {% if request.event.has_subevents %}
-                            {% trans "Event series" %}
-                        {% else %}
-                            {{ request.event.get_date_range_display }}
-                        {% endif %}
-                    </small>
+                    <a class="event-dashboard-home-link" href="{% url 'control:event.index' organizer=request.event.organizer.slug event=request.event.slug %}">
+                        {{ request.event.name }}
+                        <small class="text-muted small">
+                            {% if request.event.has_subevents %}
+                                {% trans "Event series" %}
+                            {% else %}
+                                {{ request.event.get_date_range_display }}
+                            {% endif %}
+                        </small>
+                    </a>
                 </h2>
             </div>
             {% include "pretixcontrol/event/component_link.html" %}

@@ -15,7 +15,10 @@
 <nav id="event-nav" class="header-nav">
     <div class="navigation">
         <div class="navigation-title">
-            <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
+            <h1>
+                <a class="event-dashboard-home-link" href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}">{{ request.event.name }}</a>
+                {% trans "- Settings" %}
+            </h1>
         </div>
         <div class="navigation-button">
             <a href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">

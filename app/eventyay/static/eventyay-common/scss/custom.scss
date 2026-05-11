@@ -4,7 +4,7 @@
     margin-bottom: 18px;
 
     .header-nav {
-        border-color: darken($btn-primary-bg, 10%) !important;
+        border-color: darken($btn-primary-bg, 10%);
         border: 1px solid;
         font-size: 16px;
         font-weight: normal;
@@ -12,7 +12,7 @@
         padding: 7px 7px;
     }
     .header-nav.active {
-        background-color: $hover-button-color !important;
+        background-color: $hover-button-color;
         color: #fff;
     }
     .navigation {
@@ -30,14 +30,15 @@
             gap: 8px;
         }
 
-        a {
+        .navigation-button a {
             pointer-events: auto;
         }
-        a:hover,
-        a:active,
-        a:focus {
-            color: #fff !important;
-            background-color: $hover-button-color !important;
+        /* Only style tab buttons (Home / Tickets / …), not the event title link in .navigation-title */
+        .navigation-button a:hover,
+        .navigation-button a:active,
+        .navigation-button a:focus {
+            color: #fff;
+            background-color: $hover-button-color;
         }
     }
 }
