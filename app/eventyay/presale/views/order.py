@@ -1012,7 +1012,7 @@ class OrderPositionCancel(OrderPositionCancelMixin, EventViewMixin, OrderDetailM
 
         position_rows = []
         for position in positions:
-            addons = list(position.addons.all())
+            addons = [a for a in position.addons.all() if not a.canceled]
             position_total = position.price + sum(addon.price for addon in addons)
             cancellation_fee = self.order.user_partial_cancel_fee(position_total)
             position_rows.append(
