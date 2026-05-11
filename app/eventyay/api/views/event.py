@@ -595,7 +595,7 @@ class EventThemeView(APIView):
             )
             return Response(
                 'error happened when trying to get theme data of event: ' + kwargs['event_id'],
-                status=503,
+                status=404,
             )
 
 
