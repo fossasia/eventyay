@@ -579,7 +579,7 @@ class SubmissionFavouriteDeprecatedView(View):
             return JsonResponse(
                 {'error': str(e)},
                 safe=False,
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @staticmethod
@@ -626,7 +626,7 @@ class SubmissionFavouriteDeprecatedView(View):
             return JsonResponse(
                 {'error': str(e)},
                 safe=False,
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @staticmethod
