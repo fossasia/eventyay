@@ -28,7 +28,7 @@
     <div id="main-title" class="d-md-flex justify-content-between">
         <div class="navigation-title">
             <h2>
-                <a class="event-dashboard-home-link" href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}">
+                <a class="event-dashboard-home-link" href="{% url 'orga:event.dashboard' event=request.event.slug %}">
                     {{ request.event.name }}
                     <small class="event-date text-muted">
                         {{ request.event.get_date_range_display }}

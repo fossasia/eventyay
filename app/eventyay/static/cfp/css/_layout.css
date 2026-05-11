@@ -739,6 +739,12 @@ footer {
     align-items: flex-start;
   }
 
+  a.event-brand-home {
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
   .event-brand--has-logo {
     padding-left: 12px;
   }
@@ -797,6 +803,10 @@ footer {
   /* Home control: use same icon/label sizes as @media (max-width: 768px); do not shrink further here */
 
   .event-brand {
+    gap: 0.75rem;
+  }
+
+  a.event-brand-home {
     gap: 0.75rem;
   }
 
