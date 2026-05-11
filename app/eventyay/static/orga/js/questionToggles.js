@@ -127,7 +127,24 @@ function initFormPageToggles() {
         const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
         const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
 
-        if (!requiredDropdown || !toggleInput) return;
+        if (!requiredDropdown) return;
+
+        // Fields without a toggle are always visible; keep dropdown state in sync.
+        // Always-on toggles (disabled inputs) also fall through here.
+        if (!toggleInput || toggleInput.disabled) {
+            if (toggleInput) {
+                toggleInput.checked = true;
+            }
+            requiredDropdown.disabled = false;
+            requiredDropdown.style.opacity = '1';
+            if (value && value !== 'do_not_ask') {
+                requiredDropdown.value = value;
+                requiredDropdown.dataset.current = value;
+                const wrapper = requiredDropdown.closest('.required-status-wrapper');
+                if (wrapper) wrapper.dataset.current = value;
+            }
+            return;
+        }
 
         if (value === 'do_not_ask') {
             toggleInput.checked = false;
@@ -141,7 +158,7 @@ function initFormPageToggles() {
             // Update dropdown value and data-current attribute for color
             requiredDropdown.value = value;
             requiredDropdown.dataset.current = value;
-            
+
             // Update wrapper data-current for Font Awesome icon color
             const wrapper = requiredDropdown.closest('.required-status-wrapper');
             if (wrapper) {
@@ -162,7 +179,7 @@ function initFormPageToggles() {
             const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
             const checkbox = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
 
-            if (!hiddenInput || !checkbox.checked) {
+            if (!hiddenInput || (checkbox && !checkbox.checked)) {
                 return; // Can't change if inactive
             }
 

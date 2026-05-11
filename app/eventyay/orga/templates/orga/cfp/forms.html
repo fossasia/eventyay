@@ -109,21 +109,8 @@
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
                         <tr dragsort-id="title">
                             <th>{% translate "Title" %}</th>
-                            <td class="text-center">
-                                <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
-                                    <input type="checkbox" checked disabled aria-label="{% translate 'Title always active' %}">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </td>
-                            <td class="text-center">
-                                <div class="required-status-wrapper" data-current="required">
-                                    <select class="required-status-dropdown" disabled aria-readonly="true"
-                                        aria-describedby="title-required-help" data-current="required">
-                                        <option value="required" selected>Required</option>
-                                    </select>
-                                </div>
-                                <span id="title-required-help" class="sr-only">{% translate "The title is always required and cannot be changed." %}</span>
-                            </td>
+                            <td class="text-center"></td>
+                            <td class="text-center"></td>
                             <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
                             <td class="text-center">
@@ -380,12 +367,6 @@
                         <tr dragsort-id="content_locale">
                             <th>{% translate "Content Locale" %}</th>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Content Locale">
-                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Content Locale">
-                                    <span class="toggle-slider"></span>
-                                </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
@@ -393,17 +374,28 @@
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        {% if field.value == 'do_not_ask' %}disabled{% endif %}
                                         aria-label="Required status for Content Locale">
-                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="optional" {% if field.value == 'optional' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
                                     </select>
                                 </div>
                             </td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td colspan="3">
+                                <input type="text"
+                                    name="{{ sform.cfp_content_locale_public_label.html_name }}"
+                                    id="{{ sform.cfp_content_locale_public_label.auto_id }}"
+                                    value="{{ sform.cfp_content_locale_public_label.value|default:'' }}"
+                                    maxlength="100"
+                                    placeholder="{% translate 'Public label (default: Language)' %}"
+                                    class="form-control form-control-sm{% if sform.cfp_content_locale_public_label.errors %} is-invalid{% endif %}"
+                                    aria-label="{{ sform.cfp_content_locale_public_label.label }}">
+                                {% if sform.cfp_content_locale_public_label.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ sform.cfp_content_locale_public_label.errors }}
+                                    </div>
+                                {% endif %}
+                            </td>
                             <td class="text-center">{{ field_counts.content_locale }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -640,22 +632,10 @@
                         <tr dragsort-id="fullname">
                             <th>{% translate "Full Name" %}</th>
                             <td class="text-center">
-                                <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
-                                    <input type="checkbox" checked disabled aria-label="{% translate 'Full Name always active' %}">
-                                    <span class="toggle-slider"></span>
-                                </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="required"
                                     id="{{ field.auto_id }}">
                             </td>
-                            <td class="text-center">
-                                <div class="required-status-wrapper" data-current="required">
-                                    <select class="required-status-dropdown" disabled aria-readonly="true"
-                                        aria-describedby="fullname-required-help" data-current="required">
-                                        <option value="required" selected>Required</option>
-                                    </select>
-                                </div>
-                                <span id="fullname-required-help" class="sr-only">{% translate "Full Name is always required and cannot be changed." %}</span>
-                            </td>
+                            <td class="text-center"></td>
                             <td></td>
                             <td></td>
                             <td class="text-center">

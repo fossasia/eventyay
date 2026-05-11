@@ -179,6 +179,9 @@ class InfoForm(
                 self.fields.pop('content_locale')
             else:
                 self.fields['content_locale'].choices = self.event.named_content_locales
+                custom_label = self.event.cfp.fields.get('content_locale', {}).get('public_label')
+                if custom_label:
+                    self.fields['content_locale'].label = custom_label
 
     def _set_slot_count(self, instance=None):
         if not self.event.get_feature_flag('present_multiple_times'):

@@ -82,8 +82,13 @@ class RequestRequire:
         for key in self.Meta.request_require:
             visibility = self.event.cfp.fields.get(key, default_fields()[key])['visibility']
             if visibility == 'do_not_ask':
-                self.fields.pop(key, None)
-            elif field := self.fields.get(key):
+                if key == 'content_locale' and self.event.is_multilingual:
+                    visibility = 'required'
+                else:
+                    self.fields.pop(key, None)
+                    continue
+            field = self.fields.get(key)
+            if field:
                 field.required = visibility == 'required'
                 min_value = self.event.cfp.fields.get(key, {}).get('min_length')
                 max_value = self.event.cfp.fields.get(key, {}).get('max_length')

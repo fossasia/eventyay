@@ -105,7 +105,11 @@
         {% endif %}
 
         <div class="form-group row">
-            <label class="col-md-3 col-form-label">{% translate "Language" %}</label>
+            <label class="col-md-3 col-form-label">
+                {% with custom_label=submission.event.cfp.fields.content_locale.public_label %}
+                    {% if custom_label %}{{ custom_label }}{% else %}{% translate "Language" %}{% endif %}
+                {% endwith %}
+            </label>
             <div class="col-md-9 mt-1">
                 {{ submission.get_content_locale_display }}
             </div>

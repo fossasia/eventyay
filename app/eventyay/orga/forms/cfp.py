@@ -182,6 +182,25 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                     ],
                     widget=forms.Select(attrs={'disabled': True, 'aria-readonly': 'true'}),
                 )
+            elif attribute == 'content_locale':
+                # Content locale must always be visible for multilingual events;
+                # only optional vs required is configurable.
+                stored = obj.cfp.fields.get(attribute, default_fields()[attribute])['visibility']
+                initial_value = stored if stored in ('optional', 'required') else 'required'
+                self.fields[field_name] = forms.ChoiceField(
+                    required=True,
+                    initial=initial_value,
+                    choices=[
+                        ('optional', _('Ask, but do not require input')),
+                        ('required', _('Ask and require input')),
+                    ],
+                )
+                self.fields['cfp_content_locale_public_label'] = forms.CharField(
+                    required=False,
+                    max_length=100,
+                    initial=obj.cfp.fields.get(attribute, default_fields()[attribute]).get('public_label') or '',
+                    label=_('Public label'),
+                )
             else:
                 self.fields[field_name] = forms.ChoiceField(
                     required=True,
@@ -224,6 +243,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
         if not obj.is_multilingual:
             self.fields.pop('cfp_ask_content_locale', None)
+            self.fields.pop('cfp_content_locale_public_label', None)
 
     def save(self, *args, **kwargs):
         # Preserve fields_config (drag-drop order) before modifying settings
@@ -240,6 +260,15 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             # Full Name is always required and cannot be changed
             if key == 'fullname':
                 self.instance.cfp.fields[key]['visibility'] = 'required'
+            elif key == 'content_locale':
+                # Content locale can only be optional or required, never do_not_ask
+                value = self.cleaned_data.get('cfp_ask_content_locale')
+                if value not in ('optional', 'required'):
+                    value = 'required'
+                self.instance.cfp.fields[key]['visibility'] = value
+                if 'cfp_content_locale_public_label' in self.cleaned_data:
+                    public_label = self.cleaned_data.get('cfp_content_locale_public_label') or None
+                    self.instance.cfp.fields[key]['public_label'] = public_label
             else:
                 self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
 

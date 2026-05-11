@@ -120,6 +120,9 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
                 self.fields.pop('content_locale')
             else:
                 self.fields['content_locale'].choices = self.event.named_content_locales
+                custom_label = event.cfp.fields.get('content_locale', {}).get('public_label')
+                if custom_label:
+                    self.fields['content_locale'].label = custom_label
         # If duration is not required, point out that the default is the session type's duration,
         # but only if there is more than one session type, because otherwise users will be
         # confused what that is.
