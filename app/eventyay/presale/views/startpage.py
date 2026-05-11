@@ -59,6 +59,9 @@ class StartPageView(TemplateView):
                 qs = qs.exclude(display_settings__exclude_from_search=True)
             else:
                 qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+            if search_query:
+                qs = qs.filter(name__icontains=search_query)
 
             events = list(qs.order_by('date_from'))
             visible_events = [event for event in events if not event.has_component_testmode]

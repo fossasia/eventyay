@@ -120,6 +120,8 @@ class EventSerializer(I18nAwareModelSerializer):
             'name',
             'slug',
             'live',
+            'startpage_visible',
+            'startpage_featured',
             'testmode',
             'currency',
             'date_from',
