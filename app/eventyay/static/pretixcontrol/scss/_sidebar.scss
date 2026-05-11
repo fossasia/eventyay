@@ -167,7 +167,7 @@ body:not(.sidebar-minimized) #page-wrapper {
     overflow-y: auto;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
     height: calc(100vh - var(--navbar-height, 50px));
-    
+
     .nav>li {
       height: 41px;
 

@@ -62,28 +62,6 @@ def short_user_label(user):
         label = label[:11] + '…'
     return label
 
-@register.filter
-def user_initial(user):
-    """
-    Returns a single uppercase initial from user.
-    Fallback: email first letter.
-    """
-    if not user:
-        return ''
-
-    first = getattr(user, 'first_name', None) or getattr(user, 'firstname', None)
-
-    if not first:
-        fullname = getattr(user, 'fullname', None) or getattr(user, 'name', None)
-        if fullname:
-            parts = fullname.split()
-            first = parts[0] if parts else fullname
-
-    email = getattr(user, 'email', '') or ''
-
-    label = (first or '').strip() or (email.split('@')[0] if email else '')
-
-    return label[0].upper() if label else ''
 
 @register.simple_tag(takes_context=True)
 def user_has_valid_ticket(context, event=None):
