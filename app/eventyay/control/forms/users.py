@@ -24,6 +24,7 @@ class UserEditForm(forms.ModelForm):
             'There already is an account associated with this e-mail address. Please choose a different one.'
         ),
         'pw_mismatch': _('Please enter the same password twice'),
+        'email_required': _('The e-mail address cannot be removed from this account.'),
     }
 
     new_pw = forms.CharField(
@@ -62,7 +63,12 @@ class UserEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'].required = True
+        if self.instance and self.instance.pk and not self.instance.email:
+            self.fields['email'].required = False
+        else:
+            self.fields['email'].required = True
+        if self.instance and self.instance.email is None:
+            self.initial['email'] = ''
         self.fields['last_login'].disabled = True
         if self.instance and self.instance.auth_backend != 'native':
             del self.fields['new_pw']
@@ -70,7 +76,14 @@ class UserEditForm(forms.ModelForm):
             self.fields['email'].disabled = True
 
     def clean_email(self):
-        email = self.cleaned_data['email']
+        email = self.cleaned_data.get('email') or None
+        if not email and self.instance and self.instance.pk and self.instance.email:
+            raise forms.ValidationError(
+                self.error_messages['email_required'],
+                code='email_required',
+            )
+        if not email:
+            return None
         if User.objects.filter(Q(email__iexact=email) & ~Q(pk=self.instance.pk)).exists():
             raise forms.ValidationError(
                 self.error_messages['duplicate_identifier'],

@@ -29,7 +29,7 @@
                     <a href="{% url "eventyay_admin:admin.user.sudo.edit" id=s.pk %}">{{ s.pk }}</a>
                 </strong></td>
                 <td><strong>
-                    <a href="{% url "eventyay_admin:admin.users.edit" id=s.user.pk %}">{{ s.user.email }}</a>
+                    <a href="{% url "eventyay_admin:admin.users.edit" id=s.user.pk %}">{{ s.user.email|default:"—" }}</a>
                 </strong></td>
                 <td>
                     {{ s.date_start|date:"SHORT_DATETIME_FORMAT" }}

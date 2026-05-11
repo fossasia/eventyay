@@ -3,19 +3,19 @@
 {% load bootstrap3 %}
 {% block title %}{% trans "User" %}{% endblock %}
 {% block content %}
-    <h1>{% trans "User" %} {{ user.email }}</h1>
+    <h1>{% trans "User" %} {{ form.instance.email|default:"—" }}</h1>
     <p>
-        {% if user.auth_backend == "native" %}
-            <form action='{% url "eventyay_admin:admin.users.reset" id=user.pk %}' method="post" class="form-inline helper-display-inline">
+        {% if form.instance.auth_backend == "native" %}
+            <form action='{% url "eventyay_admin:admin.users.reset" id=form.instance.pk %}' method="post" class="form-inline helper-display-inline">
                 {% csrf_token %}
                 <button class="btn btn-default">{% trans "Send password reset email" %}</button>
             </form>
         {% endif %}
-        <form action='{% url "eventyay_admin:admin.users.impersonate" id=user.pk %}' method="post" class="form-inline helper-display-inline">
+        <form action='{% url "eventyay_admin:admin.users.impersonate" id=form.instance.pk %}' method="post" class="form-inline helper-display-inline">
             {% csrf_token %}
             <button class="btn btn-default">{% trans "Impersonate user" %}</button>
         </form>
-        <a href='{% url "eventyay_admin:admin.users.anonymize" id=user.pk %}' class="btn btn-default">{% trans "Anonymize" %}</a>
+        <a href='{% url "eventyay_admin:admin.users.anonymize" id=form.instance.pk %}' class="btn btn-default">{% trans "Anonymize" %}</a>
     </p>
     <div class="row">
         <div class="col-md-10 col-xs-12">
@@ -74,10 +74,10 @@
                         {% trans "User history" %}
                     </h3>
                 </div>
-                {% include "pretixcontrol/includes/logs.html" with obj=user %}
+                {% include "pretixcontrol/includes/logs.html" with obj=form.instance %}
                 <li class="list-group-item logentry">
                     <p class="meta">
-                        <span class="fa fa-clock-o"></span> {{ user.date_joined|date:"SHORT_DATETIME_FORMAT" }}
+                        <span class="fa fa-clock-o"></span> {{ form.instance.date_joined|date:"SHORT_DATETIME_FORMAT" }}
                     </p>
                     <p>
                         {% trans "User created." %}
