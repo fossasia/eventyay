@@ -757,7 +757,7 @@ class Order(LockModel, LoggedModel):
         if not positions:
             return False
 
-        return len(positions) == self.count_positions
+        return len(positions) == self.positions.count()
 
     def propose_auto_refunds(self, amount: Decimal, payments: list = None):
         # Algorithm to choose which payments are to be refunded to create the least hassle
