@@ -44,19 +44,39 @@ from eventyay.helpers.i18n import is_rtl
 logger = logging.getLogger(__name__)
 
 
+def _get_test_email_data(from_addr, to_addrs=None, reply_to=None):
+    to_addrs = to_addrs or [from_addr]
+    if isinstance(to_addrs, str):
+        to_addrs = [to_addrs]
+
+    subject = _('Eventyay test email')
+    body = _('This is a test email sent from Eventyay. If you received this email, your email settings are correct.')
+
+    headers = {}
+    if reply_to:
+        headers['Reply-To'] = reply_to
+
+    return to_addrs, subject, body, headers
+
+
 class SendGridEmail:
     api_key = ''
 
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def test(self, from_addr):
+    def test(self, from_addr, to_addrs=None, reply_to=None):
+        to_addrs, subject, body, headers = _get_test_email_data(from_addr, to_addrs, reply_to)
+
         message = Mail(
             from_email=from_addr,
-            to_emails='testdummy@eventyay.com',
-            subject='Eventyay test email',
-            html_content='Eventyay test email',
+            to_emails=to_addrs,
+            subject=subject,
+            html_content=body,
         )
+        if headers.get('Reply-To'):
+            message.reply_to = headers['Reply-To']
+
         sg = SendGridAPIClient(self.api_key)
         sg.send(message)
 
@@ -117,20 +137,17 @@ class SendGridEmail:
 
 
 class CustomSMTPBackend(EmailBackend):
-    def test(self, from_addr):
-        try:
-            self.open()
-            self.connection.ehlo_or_helo_if_needed()
-            (code, resp) = self.connection.mail(from_addr, [])
-            if code != 250:
-                logger.warning('Error testing mail settings, code %d, resp: %s', code, resp)
-                raise SMTPResponseException(code, resp)
-            (code, resp) = self.connection.rcpt('test@eventyay.com')
-            if (code != 250) and (code != 251):
-                logger.warning('Error testing mail settings, code %d, resp: %s', code, resp)
-                raise SMTPResponseException(code, resp)
-        finally:
-            self.close()
+    def test(self, from_addr, to_addrs=None, reply_to=None):
+        to_addrs, subject, body, headers = _get_test_email_data(from_addr, to_addrs, reply_to)
+
+        message = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=from_addr,
+            to=to_addrs,
+            headers=headers,
+        )
+        self.send_messages([message])
 
 
 class FileSavedEmailBackend(_FileBasedEmailBackend):
@@ -174,6 +191,18 @@ class FileSavedEmailBackend(_FileBasedEmailBackend):
         n = super().send_messages(email_messages)
         logger.info('Wrote %d email(s) to %s.', n, subdir.relative_to(Path.cwd()))
         return n
+
+    def test(self, from_addr, to_addrs=None, reply_to=None):
+        to_addrs, subject, body, headers = _get_test_email_data(from_addr, to_addrs, reply_to)
+
+        message = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=from_addr,
+            to=to_addrs,
+            headers=headers,
+        )
+        self.send_messages([message])
 
     def _get_filename(self):
         """Return a unique file name with .eml extension."""
