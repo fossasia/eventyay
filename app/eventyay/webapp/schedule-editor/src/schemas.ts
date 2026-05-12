@@ -3,8 +3,14 @@ z.config({ jitless: true });
 
 // Helper function to transform title to a record
 const toTitleRecord = (val: unknown): Record<string, string> => {
-  if (val !== null && typeof val === 'object') {
-    return val as Record<string, string>;
+  if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+    const record = Object.fromEntries(
+      Object.entries(val as Record<string, unknown>).map(([key, value]) => [
+        key,
+        value == null ? '' : String(value),
+      ])
+    );
+    return Object.keys(record).length > 0 ? record : { en: '' };
   }
   if (typeof val === 'string') {
     return { en: val };
@@ -12,10 +18,7 @@ const toTitleRecord = (val: unknown): Record<string, string> => {
   return { en: '' };
 };
 
-const LocalizedTextSchema = z.union([
-  z.string(),
-  z.record(z.string(), z.string())
-]).transform(toTitleRecord);
+const LocalizedTextSchema = z.unknown().transform(toTitleRecord);
 
 const NullableTextSchema = z.string().nullable().optional().transform(val => val ?? '');
 

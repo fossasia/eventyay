@@ -38,6 +38,7 @@ from eventyay.base.services.checkin import _save_answers
 from eventyay.base.services.locking import LockTimeoutException, NoLockManager
 from eventyay.base.services.pricing import get_price
 from eventyay.base.services.quotas import QuotaAvailability
+from eventyay.base.services.system_questions import get_system_question_asked_required
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import validate_cart_addons
@@ -1262,11 +1263,16 @@ class CartManager:
                             if op.price_before_voucher is not None
                             else None,
                         )
-                        if self.event.settings.attendee_names_asked:
+                        ask_name, _ = get_system_question_asked_required(self.event, 'attendee_name_parts', op.product)
+                        ask_email, _ = get_system_question_asked_required(self.event, 'attendee_email', op.product)
+
+                        if ask_name:
                             scheme = PERSON_NAME_SCHEMES.get(self.event.settings.name_scheme)
+                            if scheme is None:
+                                scheme = next(iter(PERSON_NAME_SCHEMES.values()), None)
                             if 'attendee-name' in self._widget_data:
                                 cp.attendee_name_parts = {'_legacy': self._widget_data['attendee-name']}
-                            if any(
+                            if scheme and any(
                                 'attendee-name-{}'.format(k.replace('_', '-')) in self._widget_data
                                 for k, l, w in scheme['fields']
                             ):
@@ -1277,7 +1283,7 @@ class CartManager:
                                     )
                                     for k, l, w in scheme['fields']
                                 }
-                        if self.event.settings.attendee_emails_asked and 'email' in self._widget_data:
+                        if ask_email and 'email' in self._widget_data:
                             cp.attendee_email = self._widget_data.get('email')
 
                         cp._answers = {}
@@ -1437,11 +1443,12 @@ def get_fees(event, request, total, invoice_address, provider, positions):
     total = total + sum(f.value for f in fees)
 
     cs = cart_session(request)
+    effective_testmode = event.testmode or event.private_testmode_tickets_enabled
     if cs.get('gift_cards'):
         gcs = cs['gift_cards']
         gc_qs = event.organizer.accepted_gift_cards.filter(pk__in=cs.get('gift_cards'), currency=event.currency)
         for gc in gc_qs:
-            if gc.testmode != event.testmode:
+            if gc.testmode != effective_testmode:
                 gcs.remove(gc.pk)
                 continue
             fval = Decimal(gc.value)  # TODO: don't require an extra query

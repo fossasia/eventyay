@@ -108,6 +108,7 @@ class Schedule(PretalxModel):
 
     class urls(EventUrls):
         """URL patterns for schedule views."""
+
         public = '{self.event.urls.schedule}v/{self.url_version}/'
         widget_data = '{public}widgets/schedule.json'
         nojs = '{public}nojs'
@@ -250,18 +251,18 @@ class Schedule(PretalxModel):
             queryset = queryset.filter(published__lt=self.published)
         return queryset.order_by('-published').first()
 
-    def _handle_submission_move(self, submission, old_slots, new_slots):
+    def _handle_submission_move(self, submission, old_slots, new_slots, all_old_slots=None, all_new_slots=None):
         new = []
         canceled = []
         moved = []
-        all_old_slots = [slot for slot in old_slots.values() if slot.submission_id == submission.pk]
-        all_new_slots = [slot for slot in new_slots.values() if slot.submission_id == submission.pk]
-        old_slots = [
-            slot for slot in all_old_slots if not any(slot.is_same_slot(other_slot) for other_slot in all_new_slots)
-        ]
-        new_slots = [
-            slot for slot in all_new_slots if not any(slot.is_same_slot(other_slot) for other_slot in all_old_slots)
-        ]
+        if all_old_slots is None:
+            all_old_slots = [slot for slot in old_slots.values() if slot.submission_id == submission.pk]
+        if all_new_slots is None:
+            all_new_slots = [slot for slot in new_slots.values() if slot.submission_id == submission.pk]
+        new_sigs = {(slot.room_id, slot.start, slot.end) for slot in all_new_slots}
+        old_sigs = {(slot.room_id, slot.start, slot.end) for slot in all_old_slots}
+        old_slots = [slot for slot in all_old_slots if (slot.room_id, slot.start, slot.end) not in new_sigs]
+        new_slots = [slot for slot in all_new_slots if (slot.room_id, slot.start, slot.end) not in old_sigs]
         diff = len(old_slots) - len(new_slots)
         if diff > 0:
             canceled = old_slots[:diff]
@@ -333,7 +334,11 @@ class Schedule(PretalxModel):
             if entry.submission not in new_submissions:
                 result['canceled_talks'] += old_by_submission[entry.submission]
             else:
-                new, canceled, moved = self._handle_submission_move(entry.submission, old_slots, new_slots)
+                new, canceled, moved = self._handle_submission_move(
+                    entry.submission, old_slots, new_slots,
+                    all_old_slots=old_by_submission.get(entry.submission, []),
+                    all_new_slots=new_by_submission.get(entry.submission, []),
+                )
                 result['new_talks'] += new
                 result['canceled_talks'] += canceled
                 result['moved_talks'] += moved
@@ -344,7 +349,11 @@ class Schedule(PretalxModel):
             if entry.submission not in old_submissions:
                 result['new_talks'] += new_by_submission[entry.submission]
             else:
-                new, canceled, moved = self._handle_submission_move(entry.submission, old_slots, new_slots)
+                new, canceled, moved = self._handle_submission_move(
+                    entry.submission, old_slots, new_slots,
+                    all_old_slots=old_by_submission.get(entry.submission, []),
+                    all_new_slots=new_by_submission.get(entry.submission, []),
+                )
                 result['new_talks'] += new
                 result['canceled_talks'] += canceled
                 result['moved_talks'] += moved
@@ -496,7 +505,6 @@ class Schedule(PretalxModel):
         speaker_avails = None
         speaker_profiles = None
         if with_speakers:
-
             speaker_profiles = {
                 profile.user: profile
                 for profile in SpeakerProfile.objects.filter(event=self.event).select_related('user')
@@ -519,17 +527,17 @@ class Schedule(PretalxModel):
             # sessions conflicting with a scheduled break still produce a
             # room_overlap warning — matching the per-talk ``.exists()`` query
             # at get_talk_warnings() which scans all TalkSlots in the room.
-            extra_slots_qs = self.talks.filter(
-                start__isnull=False, room__isnull=False
-            ).select_related('submission').prefetch_related('submission__speakers')
+            extra_slots_qs = (
+                self.talks.filter(start__isnull=False, room__isnull=False)
+                .select_related('submission')
+                .prefetch_related('submission__speakers')
+            )
             if is_full_scan:
                 extra_slots_qs = extra_slots_qs.filter(submission__isnull=True)
             else:
                 extra_slots_qs = extra_slots_qs.exclude(pk__in=subset_pks)
             scan_set = talk_list + list(extra_slots_qs)
-            room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(
-                scan_set, subset_pks=subset_pks
-            )
+            room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(scan_set, subset_pks=subset_pks)
         else:
             room_overlap_ids, speaker_overlaps_by_talk = set(), {}
         result = {}
@@ -592,13 +600,13 @@ class Schedule(PretalxModel):
             # Full-schedule scan: O(bucket²) pairwise check per room/speaker.
             for entries in by_room.values():
                 for i, (pk_a, start_a, end_a) in enumerate(entries):
-                    for pk_b, start_b, end_b in entries[i + 1:]:
+                    for pk_b, start_b, end_b in entries[i + 1 :]:
                         if is_overlap(start_a, end_a, start_b, end_b):
                             room_overlap_ids.add(pk_a)
                             room_overlap_ids.add(pk_b)
             for speaker_pk, entries in by_speaker.items():
                 for i, (pk_a, start_a, end_a) in enumerate(entries):
-                    for pk_b, start_b, end_b in entries[i + 1:]:
+                    for pk_b, start_b, end_b in entries[i + 1 :]:
                         if is_overlap(start_a, end_a, start_b, end_b):
                             speaker_overlaps_by_talk[pk_a].add(speaker_pk)
                             speaker_overlaps_by_talk[pk_b].add(speaker_pk)
@@ -730,7 +738,16 @@ class Schedule(PretalxModel):
 
         return self != self.event.current_schedule
 
-    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False, *, include_featured_speaker_metadata=True,):
+    def build_data(
+        self,
+        all_talks=False,
+        filter_updated=None,
+        all_rooms=False,
+        enrich=False,
+        *,
+        include_featured_speaker_metadata=True,
+        include_qrcodes=False,
+    ):
         """Build schedule JSON for widgets and exports.
 
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
@@ -788,10 +805,23 @@ class Schedule(PretalxModel):
                 .only('room_id', 'start_time', 'end_time', 'url', 'stream_type')
                 .order_by('start_time')
             )
+        # Pre-normalize stream schedule times to UTC once so the per-talk
+        # overlap check avoids repeated timezone conversions.
         stream_schedules_by_room = defaultdict(list)
         for ss in stream_schedules:
-            if ss.room_id and ss.start_time and ss.end_time:
-                stream_schedules_by_room[ss.room_id].append(ss)
+            if not (ss.room_id and ss.start_time and ss.end_time):
+                continue
+            ss_start = ss.start_time
+            ss_end = ss.end_time
+            if timezone.is_naive(ss_start):
+                ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
+            if timezone.is_naive(ss_end):
+                ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
+            stream_schedules_by_room[ss.room_id].append((
+                ss_start.astimezone(UTC),
+                ss_end.astimezone(UTC),
+                ss,
+            ))
         rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
@@ -809,17 +839,17 @@ class Schedule(PretalxModel):
             },
         }
         show_do_not_record = self.event.cfp.request_do_not_record
+        show_abstract = self.event.cfp.public_abstract
+        show_description = self.event.cfp.public_description
+        show_slides = self.event.cfp.public_slides
+        show_biography = self.event.cfp.public_biography
         base_url = str(self.event.urls.base)
         full_base_url = str(self.event.urls.base.full())
         # Resolve recording providers once; providers are event-level, not per-talk.
         recording_providers = []
         if enrich:
             for __, response in register_recording_provider.send_robust(self.event):
-                if (
-                    response
-                    and not isinstance(response, Exception)
-                    and getattr(response, 'get_recording', None)
-                ):
+                if response and not isinstance(response, Exception) and getattr(response, 'get_recording', None):
                     recording_providers.append(response)
         for talk in talk_list:
             # Only add room if it's not deleted
@@ -833,8 +863,8 @@ class Schedule(PretalxModel):
                     'code': talk.submission.code,
                     'id': talk.id,
                     'title': talk.submission.title,
-                    'abstract': talk.submission.abstract,
-                    'description': talk.submission.description,
+                    'abstract': talk.submission.abstract if show_abstract else '',
+                    'description': talk.submission.description if show_description else '',
                     'speakers': [speaker.code for speaker in talk_speakers],
                     'track': talk.submission.track_id if talk.submission else None,
                     'start': talk.local_start,
@@ -844,9 +874,7 @@ class Schedule(PretalxModel):
                     'updated': talk.updated.isoformat(),
                     'state': talk.submission.state if all_talks else None,
                     'fav_count': (
-                        fav_counts.get(talk.submission.code, 0)
-                        if (popularity_enabled and talk.submission)
-                        else 0
+                        fav_counts.get(talk.submission.code, 0) if (popularity_enabled and talk.submission) else 0
                     ),
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                     'tags': talk.submission.get_tag(),
@@ -867,15 +895,7 @@ class Schedule(PretalxModel):
                         slot_end = slot_end.astimezone(UTC)
 
                         match = None
-                        for ss in schedules:
-                            ss_start = ss.start_time
-                            ss_end = ss.end_time
-                            if timezone.is_naive(ss_start):
-                                ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
-                            if timezone.is_naive(ss_end):
-                                ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
-                            ss_start = ss_start.astimezone(UTC)
-                            ss_end = ss_end.astimezone(UTC)
+                        for ss_start, ss_end, ss in schedules:
                             if ss_start < slot_end and ss_end > slot_start:
                                 match = ss
                                 break
@@ -890,12 +910,12 @@ class Schedule(PretalxModel):
                             'link': resource.link,
                         }
                         for resource in talk.submission.resources.all()
-                        if resource.resource or resource.link
+                        if (resource.resource or resource.link) and (show_slides or resource.kind != 'slides')
                     ]
                     talk_data['answers'] = [
                         {
                             'question': str(answer.question.question),
-                            'answer': str(answer.answer),
+                            'answer': str(answer.answer_string),
                             'question_id': answer.question_id,
                             'options': [str(opt.answer) for opt in answer.options.all()],
                         }
@@ -914,15 +934,16 @@ class Schedule(PretalxModel):
                         'xcal': f'{base_url}talk/{code}.xcal',
                         'google_calendar': google_url,
                         'webcal': webcal_url,
-                        'qrcodes': {
+                    }
+                    if include_qrcodes:
+                        talk_data['exporters']['qrcodes'] = {
                             'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
                             'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
                             'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
                             'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
                             'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
                             'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
-                        },
-                    }
+                        }
                     # Recording iframe from provider plugins
                     recording_iframe = ''
                     for provider in recording_providers:
@@ -960,26 +981,29 @@ class Schedule(PretalxModel):
                 'description': room.description if room.description else '',
                 'video_url': getattr(room, 'video_url', ''),
             }
-            for room in self.event.rooms.all()
-            if room in rooms
+            for room in sorted(rooms, key=lambda r: (r.position if r.position is not None else 9999, r.id))
         ]
 
-        include_avatar = self.event.cfp.request_avatar
+        include_avatar = self.event.cfp.request_avatar and self.event.cfp.public_avatar
         speaker_list = []
         # Prefetch all speaker profiles for this event to avoid N+1 queries
 
         speaker_profiles = {
             profile.user_id: profile
             for profile in SpeakerProfile.objects.filter(
-                event=self.event, user__in=speakers,
+                event=self.event,
+                user__in=speakers,
             ).select_related('user')
         }
         for user in speakers:
-            profile = speaker_profiles.get(user.pk) or user.event_profile(self.event)
+            # Avoid calling event_profile() here: it can hit the DB (and even create/save
+            # a profile). For schedule JSON, missing profiles should simply result in
+            # empty optional fields.
+            profile = speaker_profiles.get(user.pk)
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
-                'biography': getattr(profile, 'biography', ''),
+                'biography': getattr(profile, 'biography', '') if show_biography else '',
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None
@@ -1006,15 +1030,16 @@ class Schedule(PretalxModel):
                     'xcal': f'{spk_base}/talks.xcal',
                     'google_calendar': spk_google,
                     'webcal': spk_webcal,
-                    'qrcodes': {
+                }
+                if include_qrcodes:
+                    speaker_data['exporters']['qrcodes'] = {
                         'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
                         'json': make_qr_svg(f'{spk_full_base}/talks.json'),
                         'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
                         'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
                         'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
                         'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
-                    },
-                }
+                    }
             speaker_list.append(speaker_data)
         result['speakers'] = speaker_list
         return result

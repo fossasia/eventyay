@@ -31,7 +31,7 @@
         
         <fieldset>
             <legend>{% translate "Customer data (once per order)" %}</legend>
-            <div class="table-responsive-sm">
+            <div class="table-responsive-sm order-form-table-scroll">
                 <table class="table table-sm order-form-option-table">
                     <colgroup>
                         <col class="field-col" style="width: auto;">
@@ -134,7 +134,7 @@
 
         <fieldset>
             <legend>{% translate "Attendee data (once per admission ticket)" %}</legend>
-            <div class="table-responsive-sm">
+            <div class="table-responsive-sm order-form-table-scroll">
                 <table class="table table-sm order-form-option-table">
                     <colgroup>
                         <col class="field-col" style="width: auto;">
@@ -163,12 +163,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Attendee names" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="attendee_name_parts"
+                                    data-effective-active="{{ system_field_effective_active.attendee_name_parts|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_attendee_name_parts" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -179,8 +182,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.attendee_name_parts %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_name_parts' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Attendee names' %}" title="{% translate 'Settings for Attendee names' %}"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -213,12 +228,15 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="attendee_email"
+                                    data-effective-active="{{ system_field_effective_active.attendee_email|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_attendee_email" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -229,8 +247,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.attendee_email %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='attendee_email' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Attendee emails' %}" title="{% translate 'Settings for Attendee emails' %}"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -244,12 +274,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Company" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="company"
+                                    data-effective-active="{{ system_field_effective_active.company|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_company" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -260,8 +293,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.company %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='company' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Company' %}" title="{% translate 'Settings for Company' %}"><i class="fa fa-cog fa-fw"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -275,12 +320,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Job title" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="job_title"
+                                    data-effective-active="{{ system_field_effective_active.job_title|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_job_title" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -291,8 +339,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.job_title %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='job_title' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Job title' %}" title="{% translate 'Settings for Job title' %}"><i class="fa fa-cog fa-fw" aria-hidden="true"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -306,12 +366,15 @@
                             <th id="{{ field.auto_id }}_label">{% translate "Postal addresses" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    data-system-field-id="street"
+                                    data-effective-active="{{ system_field_effective_active.street|yesno:'1,0' }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                                <input type="hidden" name="settings-clear_override_street" value="0">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -322,8 +385,20 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="text-center">
+                                <ul class="list-unstyled products-list">
+                                    {% for product in system_field_products.street %}
+                                        <li>
+                                            <a href="{% url 'control:event.product' organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="text-muted">{% translate "No products" %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container text-center text-nowrap">
+                                <a href="{% url 'control:event.products.orderforms.defaultfield' organizer=request.event.organizer.slug event=request.event.slug field='street' %}" class="btn btn-default btn-sm" aria-label="{% translate 'Settings for Postal addresses' %}"><i class="fa fa-cog fa-fw" aria-hidden="true"></i></a>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -416,8 +491,6 @@
 
         <fieldset>
             <legend>{% translate "Form settings" %}</legend>
-            {% bootstrap_field sform.name_scheme layout="control" %}
-            {% bootstrap_field sform.name_scheme_titles layout="control" %}
             {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
             {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
             {% bootstrap_field sform.include_wikimedia_username layout="control" %}

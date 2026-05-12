@@ -105,3 +105,21 @@ def test_sendmail_placeholder(env):
     assert len(djmail.outbox) == 1
     assert djmail.outbox[0].to == [user.email]
     assert djmail.outbox[0].subject == 'Dummy Test subject'
+
+
+@pytest.mark.django_db
+def test_send_mail_with_reply_to_precedence(env):
+    djmail.outbox = []
+    event, user, organizer = env
+    event.settings.set('mail_reply_to', 'reply@example.com')
+
+    # 1. Setting works
+    mail('dummy@dummy.dummy', 'Test subject', 'mailtest.txt', {}, event)
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].extra_headers.get('Reply-To') == 'reply@example.com'
+
+    # 2. Explicit header wins
+    djmail.outbox = []
+    mail('dummy@dummy.dummy', 'Test subject', 'mailtest.txt', {}, event, headers={'Reply-To': 'explicit@example.com'})
+    assert len(djmail.outbox) == 1
+    assert djmail.outbox[0].extra_headers.get('Reply-To') == 'explicit@example.com'

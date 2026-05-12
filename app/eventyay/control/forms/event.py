@@ -29,6 +29,18 @@ from eventyay.base.forms import I18nModelForm, PlaceholderValidator, SettingsFor
 from eventyay.base.models import Event, Organizer, TaxRule, Team
 from eventyay.base.models.event import EventMetaValue, SubEvent
 from eventyay.base.reldate import RelativeDateField, RelativeDateTimeField
+from eventyay.base.services.system_questions import (
+    STATE_DEFAULT,
+    STATE_DO_NOT_ASK,
+    STATE_OPTIONAL,
+    STATE_REQUIRED,
+    SYSTEM_QUESTION_FIELD_SETTING_KEYS,
+    get_system_question_base_state,
+    get_system_question_field_overrides,
+    get_system_question_product_overrides,
+    set_system_question_field_overrides,
+    state_to_asked_required,
+)
 from eventyay.base.settings import (
     GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
@@ -48,8 +60,9 @@ from eventyay.control.forms import (
 from eventyay.control.forms.widgets import Select2
 from eventyay.helpers.countries import CachedCountries
 from eventyay.multidomain.urlreverse import build_absolute_uri
-from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
+from eventyay.orga.forms.widgets import HeaderSelect
 from eventyay.plugins.banktransfer.payment import BankTransfer
+
 
 # Shared constants for require_registered_account_for_tickets field
 REQUIRE_REGISTERED_ACCOUNT_LABEL = _('Only allow registered accounts to get a ticket')
@@ -150,21 +163,23 @@ class EventWizardFoundationForm(forms.Form):
         cleaned_data = super().clean()
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
-        
+
         if not content_locales:
             return cleaned_data
-        
-        if invalid_content_locales := set(content_locales) - set(locales):
+
+        if set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
             })
-        
+
         return cleaned_data
 
 
 class EventWizardBasicsForm(I18nModelForm):
     error_messages = {
-        'duplicate_slug': _('This short name is already taken by another event. Please choose a different one or use the "Set to random" button for an automatic suggestion.'),
+        'duplicate_slug': _('This short name is already taken by another event. '
+                            'Please choose a different one or use the "Set to random" button '
+                            'for an automatic suggestion.'),
     }
     timezone = forms.ChoiceField(
         choices=((a, a) for a in common_timezones),
@@ -185,7 +200,8 @@ class EventWizardBasicsForm(I18nModelForm):
     )
     imprint_url = forms.URLField(
         label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website that has your contact details and legal information.'),
+        help_text=_('This should point e.g. to a part of your website '
+                    'that has your contact details and legal information.'),
         required=False,
     )
 
@@ -448,7 +464,8 @@ class EventWizardInitialForm(forms.Form):
             empty_label=None,
             required=True,
             help_text=_(
-                'The organizer running the event can copy settings from previous events and share team permissions across all or multiple events.'
+                'The organizer running the event can copy settings from previous events and '
+                'share team permissions across all or multiple events.'
             ),
         )
         self.fields['organizer'].initial = self.fields['organizer'].queryset.first()
@@ -458,7 +475,8 @@ class EventWizardTimelineForm(forms.ModelForm):
     deadline = forms.DateTimeField(
         required=False,
         help_text=_(
-            'The default deadline for your Call for Papers. You can assign additional deadlines to individual session types, which will take precedence over this deadline.'
+            'The default deadline for your Call for Papers. You can assign additional deadlines to '
+            'individual session types, which will take precedence over this deadline.'
         ),
         widget=HtmlDateTimeInput,
     )
@@ -831,6 +849,166 @@ class OrderFormSettingsForm(EventSettingsForm):
         'checkout_show_copy_answers_button',
     ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('name_scheme', None)
+        self.fields.pop('name_scheme_titles', None)
+
+    def save(self):
+        fields_with_cleared_overrides = set()
+        for field_id in SYSTEM_QUESTION_FIELD_SETTING_KEYS:
+            clear_override_key = self.add_prefix(f'clear_override_{field_id}')
+            if self.data.get(clear_override_key) == '1':
+                fields_with_cleared_overrides.add(field_id)
+
+        result = super().save()
+
+        for field_id in fields_with_cleared_overrides:
+            set_system_question_field_overrides(self.obj, field_id, {})
+
+        return result
+
+
+class OrderFormDefaultFieldSettingsForm(forms.Form):
+    FIELD_LABELS = {
+        'attendee_name_parts': _('Attendee names'),
+        'attendee_email': _('Attendee emails'),
+        'company': _('Company'),
+        'job_title': _('Job title'),
+        'street': _('Postal addresses'),
+    }
+
+    global_state = forms.ChoiceField(
+        label=_('Default behavior'),
+        help_text=_(
+            'Used for all admission products unless a product-specific override is configured below.'
+        ),
+        choices=[
+            (STATE_DO_NOT_ASK, _('Do not ask')),
+            (STATE_OPTIONAL, _('Ask, but do not require input')),
+            (STATE_REQUIRED, _('Ask and require input')),
+        ],
+        widget=forms.RadioSelect,
+    )
+    name_scheme = forms.ChoiceField(
+        label=_('Name format'),
+        help_text=_(
+            'This defines how eventyay will ask for human names. Changing this after you already received '
+            'orders might lead to unexpected behavior when sorting or changing names.'
+        ),
+        required=True,
+    )
+    name_scheme_titles = forms.ChoiceField(
+        label=_('Allowed titles'),
+        help_text=_(
+            'If the naming scheme you defined above allows users to input a title, you can use this to '
+            'restrict the set of selectable titles.'
+        ),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.event = kwargs.pop('event')
+        self.field_id = kwargs.pop('field_id')
+        self.products = list(self.event.products.filter(admission=True).order_by('position', 'id'))
+        self.product_field_names = []
+        super().__init__(*args, **kwargs)
+
+        self.fields['global_state'].initial = get_system_question_base_state(self.event, self.field_id)
+
+        state_choices = [
+            (STATE_DEFAULT, _('Use default setting')),
+            (STATE_DO_NOT_ASK, _('Do not ask')),
+            (STATE_OPTIONAL, _('Ask, but do not require input')),
+            (STATE_REQUIRED, _('Ask and require input')),
+        ]
+        overrides = get_system_question_field_overrides(self.event, self.field_id)
+
+        for product in self.products:
+            field_name = self._product_field_name(product.pk)
+            self.fields[field_name] = forms.ChoiceField(
+                label=str(product),
+                choices=state_choices,
+                required=True,
+                widget=forms.Select,
+            )
+            self.initial[field_name] = overrides.get(str(product.pk), STATE_DEFAULT)
+            self.product_field_names.append(field_name)
+
+        if self.field_id == 'attendee_name_parts':
+            self.fields['name_scheme'].choices = [
+                (
+                    k,
+                    _('Ask for {fields}, display like {example}').format(
+                        fields=' + '.join(str(vv[1]) for vv in v['fields']),
+                        example=v['concatenation'](v['sample']),
+                    ),
+                )
+                for k, v in PERSON_NAME_SCHEMES.items()
+            ]
+            self.fields['name_scheme_titles'].choices = [('', _('Free text input'))] + [
+                (k, '{scheme}: {samples}'.format(scheme=v[0], samples=', '.join(v[1])))
+                for k, v in PERSON_NAME_TITLE_GROUPS.items()
+            ]
+            self.fields['name_scheme'].initial = self.event.settings.name_scheme
+            self.fields['name_scheme_titles'].initial = self.event.settings.name_scheme_titles
+        else:
+            self.fields.pop('name_scheme')
+            self.fields.pop('name_scheme_titles')
+
+    @staticmethod
+    def _product_field_name(product_id: int) -> str:
+        return f'product_{product_id}'
+
+    def clean_name_scheme(self) -> str:
+        value = self.cleaned_data['name_scheme']
+        if value not in PERSON_NAME_SCHEMES:
+            raise forms.ValidationError(_('Please select a valid name format.'))
+        return value
+
+    def save(self) -> dict:
+        asked_key, required_key = SYSTEM_QUESTION_FIELD_SETTING_KEYS[self.field_id]
+        global_state = self.cleaned_data['global_state']
+        asked, required = state_to_asked_required(global_state)
+        if global_state == STATE_DO_NOT_ASK:
+            required = self.event.settings.get(required_key, as_type=bool)
+
+        settings_dict = self.event.settings.freeze()
+        settings_dict[asked_key] = asked
+        settings_dict[required_key] = required
+        if self.field_id == 'attendee_name_parts':
+            settings_dict['name_scheme'] = self.cleaned_data['name_scheme']
+            settings_dict['name_scheme_titles'] = self.cleaned_data['name_scheme_titles']
+        validate_event_settings(self.event, settings_dict)
+
+        self.event.settings.set(asked_key, asked)
+        self.event.settings.set(required_key, required)
+
+        product_states = {}
+        for product in self.products:
+            state = self.cleaned_data[self._product_field_name(product.pk)]
+            if state != STATE_DEFAULT:
+                product_states[str(product.pk)] = state
+        set_system_question_field_overrides(self.event, self.field_id, product_states)
+
+        if self.field_id == 'attendee_name_parts':
+            self.event.settings.name_scheme = self.cleaned_data['name_scheme']
+            self.event.settings.name_scheme_titles = self.cleaned_data['name_scheme_titles']
+
+        return {
+            asked_key: asked,
+            required_key: required,
+            'system_question_product_overrides': get_system_question_product_overrides(self.event),
+            **(
+                {
+                    'name_scheme': self.cleaned_data['name_scheme'],
+                    'name_scheme_titles': self.cleaned_data['name_scheme_titles'],
+                }
+                if self.field_id == 'attendee_name_parts'
+                else {}
+            ),
+        }
+
 
 class CancelSettingsForm(SettingsForm):
     auto_fields = [
@@ -1044,6 +1222,7 @@ class MailSettingsForm(SettingsForm):
     auto_fields = [
         'mail_prefix',
         'mail_from',
+        'mail_reply_to',
         'mail_from_name',
         'mail_attach_ical',
         'mail_attach_tickets',
@@ -1243,21 +1422,27 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
     smtp_use_custom = forms.BooleanField(
-        label=_('Use Custom Email'),
+        label=_('Use custom email'),
         help_text=_('All mail related to your event will be sent over your specified email gateway.'),
         required=False,
     )
     send_grid_api_key = forms.CharField(
-        label=_('Sendgrid Token'),
+        label=_('Sendgrid token'),
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
+    )
+    test_email = forms.CharField(
+        label=_('Send test email to'),
+        help_text=_('Enter one or more email addresses separated by commas to send a test email.'),
+        validators=[multimail_validate],
+        required=False,
     )
 
     smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
 
     email_vendor = forms.ChoiceField(
         label=_('Email vendor'),
-        required=True,
+        required=False,
         widget=forms.RadioSelect,
         choices=smtp_select,
     )
@@ -1291,6 +1476,72 @@ class MailSettingsForm(SettingsForm):
         required=False,
     )
     smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
+    @property
+    def changed_data(self):
+        data = super().changed_data
+        if 'test_email' in data:
+            return [d for d in data if d != 'test_email']
+        return data
+
+    def save(self, *args, **kwargs):
+        # test_email should not be persisted as a setting.
+        # HierarkeyForm.save() iterates over self.fields and expects them in self.cleaned_data.
+        # We temporarily remove it from self.fields to ensure it's not saved.
+        f = self.fields.pop('test_email', None)
+        try:
+            return super().save(*args, **kwargs)
+        finally:
+            if f:
+                self.fields['test_email'] = f
+
+    def clean(self):
+        data = super().clean()
+        if not data.get('smtp_use_custom'):
+            gs = GlobalSettingsObject()
+            default_from = gs.settings.mail_from or settings.MAIL_FROM
+            submitted_mail_from = data.get('mail_from')
+            if submitted_mail_from and submitted_mail_from != default_from:
+                self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
+            data['mail_from'] = default_from
+
+        if not data.get('smtp_use_custom'):
+            # If custom email is disabled, we restore all previous custom settings to avoid wiping them
+            for field in ('email_vendor', 'send_grid_api_key', 'smtp_host', 'smtp_port',
+                          'smtp_username', 'smtp_password', 'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        elif data.get('email_vendor') == 'smtp':
+            # If SMTP is active, preserve SendGrid settings
+            if not data.get('send_grid_api_key') and self.initial.get('send_grid_api_key'):
+                data['send_grid_api_key'] = self.initial.get('send_grid_api_key')
+
+        elif data.get('email_vendor') == 'sendgrid':
+            # If SendGrid is active, preserve SMTP settings
+            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+                          'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        # Standard password restoration logic (even if username/password are currently active)
+        if not data.get('smtp_password') and data.get('smtp_username') and self.initial.get('smtp_password'):
+            data['smtp_password'] = self.initial.get('smtp_password')
+
+        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
+            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate email_vendor is selected when custom email is enabled
+        if data.get('smtp_use_custom') and not data.get('email_vendor'):
+            self.add_error('email_vendor', _('This field is required when "Use custom email" is enabled.'))
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                msg = _('This field is required when using SendGrid as email vendor.')
+                raise ValidationError({'send_grid_api_key': msg})
+
+        return data
+
     base_context = {
         'mail_text_order_placed': ['event', 'order', 'payment'],
         'mail_text_order_placed_attendee': ['event', 'order', 'position'],
@@ -1314,7 +1565,7 @@ class MailSettingsForm(SettingsForm):
     }
 
     def _set_field_placeholders(self, fn, base_parameters):
-        phs = ['{%s}' % p for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
+        phs = [f'{{{p}}}' for p in sorted(get_available_placeholders(self.event, base_parameters).keys())]
         ht = _('Available placeholders: {list}').format(list=', '.join(phs))
         if self.fields[fn].help_text:
             self.fields[fn].help_text += ' ' + str(ht)
@@ -1337,22 +1588,6 @@ class MailSettingsForm(SettingsForm):
                 # the user interface with it
                 del self.fields[k]
 
-    def clean(self):
-        data = self.cleaned_data
-        if not data.get('smtp_password') and data.get('smtp_username'):
-            # Leave password unchanged if the username is set and the password field is empty.
-            # This makes it impossible to set an empty password as long as a username is set, but
-            # Python's smtplib does not support password-less schemes anyway.
-            data['smtp_password'] = self.initial.get('smtp_password')
-        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
-            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
-
-        # Validate SendGrid token is provided when SendGrid is selected
-        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
-            if not data.get('send_grid_api_key'):
-                raise ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
-
-        return data
 
 
 class TicketSettingsForm(SettingsForm):
