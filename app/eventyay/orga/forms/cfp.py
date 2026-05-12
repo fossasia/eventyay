@@ -267,7 +267,9 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                     value = 'required'
                 self.instance.cfp.fields[key]['visibility'] = value
                 if 'cfp_content_locale_public_label' in self.cleaned_data:
-                    public_label = self.cleaned_data.get('cfp_content_locale_public_label') or None
+                    public_label = self.cleaned_data.get('cfp_content_locale_public_label')
+                    if public_label is not None:
+                        public_label = public_label.strip() or None
                     self.instance.cfp.fields[key]['public_label'] = public_label
             else:
                 self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
