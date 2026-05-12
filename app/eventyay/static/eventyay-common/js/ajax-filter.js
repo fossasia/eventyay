@@ -1,18 +1,24 @@
 $(function() {
     // Find the relevant forms, excluding those that explicitly redirect (like /go forms)
-    var $forms = $('form').filter(function() {
-        var action = $(this).attr('action');
+    function isFilterForm($form) {
+        var action = $form.attr('action');
         if (action && action.indexOf('/go') !== -1) {
             return false;
         }
-        return $(this).hasClass('filter-form') || $(this).find('.filter-form').length > 0 || $(this).closest('.filter-form').length > 0;
-    });
+        return $form.hasClass('filter-form') || $form.find('.filter-form').length > 0 || $form.closest('.filter-form').length > 0;
+    }
 
-    if ($forms.length === 0) {
+    function getFilterForms() {
+        return $('form').filter(function() {
+            return isFilterForm($(this));
+        });
+    }
+
+    if (getFilterForms().length === 0) {
         return;
     }
 
-    // Helper to find the container within a context
+    // Helper to find the base table/empty container within a context
     function getTableContainer($context) {
         var $container = $context.find('.table-responsive').first();
         if ($container.length === 0) {
@@ -24,13 +30,33 @@ $(function() {
         return $container;
     }
 
-    // Helper to find pagination container (supports both .pagination-container and .pagination)
-    function getPaginationContainer($context) {
-        var $container = $context.find('.pagination-container').first();
-        if ($container.length === 0) {
-            $container = $context.find('.pagination').first();
+    // Helper to find the results container (table/empty state + related controls)
+    function getResultsContainer($context) {
+        var $tableContainer = getTableContainer($context);
+        if ($tableContainer.length === 0) {
+            return $tableContainer;
         }
-        return $container;
+
+        var $tabPane = $tableContainer.closest('.tab-pane');
+        if ($tabPane.length) {
+            return $tabPane;
+        }
+
+        var $parentWithPagination = $tableContainer.parents().filter(function() {
+            var $el = $(this);
+            if ($el.is('body') || $el.is('html')) {
+                return false;
+            }
+            var hasResults = $el.find('.table-responsive, table.table, .empty-collection').length > 0;
+            var hasPagination = $el.find('.pagination-container, .pagination').length > 0;
+            return hasResults && hasPagination;
+        }).first();
+
+        if ($parentWithPagination.length) {
+            return $parentWithPagination;
+        }
+
+        return $tableContainer.parent();
     }
 
     function fetchAndReplace(url, replaceUrlParams, $form) {
@@ -45,18 +71,13 @@ $(function() {
             }
         }
 
-        var $tableContainer = getTableContainer($context);
-        if ($tableContainer.length === 0) {
+        var $resultsContainer = getResultsContainer($context);
+        if ($resultsContainer.length === 0) {
             window.location.href = url; // Fallback if no container found
             return;
         }
 
-        var $paginationContainer = getPaginationContainer($context);
-        
-        $tableContainer.css('opacity', '0.5');
-        if ($paginationContainer.length) {
-            $paginationContainer.css('opacity', '0.5');
-        }
+        $resultsContainer.css('opacity', '0.5');
 
         $.ajax({
             url: url,
@@ -66,33 +87,14 @@ $(function() {
                 var $newDoc = $(doc);
                 
                 var $newContext = selectorPrefix ? $newDoc.find(selectorPrefix) : $newDoc;
-                var newTableContainer = getTableContainer($newContext);
+                var $newResultsContainer = getResultsContainer($newContext);
 
-                if (newTableContainer.length) {
-                    $tableContainer.replaceWith(newTableContainer);
-                    $tableContainer = newTableContainer; // Update reference
+                if ($newResultsContainer.length) {
+                    $resultsContainer.replaceWith($newResultsContainer);
+                    $resultsContainer = $newResultsContainer; // Update reference
                 }
 
-                // Replace pagination content or remove it if none exists
-                var newPaginationContainer = getPaginationContainer($newContext);
-                $paginationContainer = getPaginationContainer($context); // re-query in case it changed
-                
-                if (newPaginationContainer.length) {
-                    if ($paginationContainer.length) {
-                        $paginationContainer.replaceWith(newPaginationContainer);
-                    } else {
-                        // Insert after the table container if pagination was added
-                        $tableContainer.after(newPaginationContainer);
-                    }
-                } else if ($paginationContainer.length) {
-                    $paginationContainer.remove();
-                }
-
-                $tableContainer.css('opacity', '1');
-                var $updatedPagination = getPaginationContainer($context);
-                if ($updatedPagination.length) {
-                    $updatedPagination.css('opacity', '1');
-                }
+                $resultsContainer.css('opacity', '1');
 
                 if (window.eventyayInitTimezoneUtilities) {
                     window.eventyayInitTimezoneUtilities();
@@ -115,9 +117,12 @@ $(function() {
     }
 
     // Intercept form submit
-    $forms.on('submit', function(e) {
-        e.preventDefault();
+    $(document).on('submit', 'form', function(e) {
         var $form = $(this);
+        if (!isFilterForm($form)) {
+            return;
+        }
+        e.preventDefault();
         var url = $form.attr('action') || window.location.pathname;
         var query = $form.serialize();
         var fullUrl = url + (url.indexOf('?') !== -1 ? '&' : '?') + query;
@@ -125,10 +130,13 @@ $(function() {
     });
 
     // Intercept clear button
-    $forms.on('click', '.btn-clear-filter', function(e) {
-        e.preventDefault();
+    $(document).on('click', '.btn-clear-filter', function(e) {
         var $btn = $(this);
         var $form = $btn.closest('form');
+        if (!isFilterForm($form)) {
+            return;
+        }
+        e.preventDefault();
         var url = $btn.attr('href');
         if (url) {
             $form.find('input[type="text"], input[type="search"]').val('');
@@ -146,7 +154,7 @@ $(function() {
             // Find which form context this pagination belongs to
             var $form = $btn.closest('.tab-pane').find('form').first();
             if ($form.length === 0) {
-                $form = $forms.first();
+                $form = getFilterForms().first();
             }
             fetchAndReplace(url, true, $form);
         }
@@ -155,7 +163,7 @@ $(function() {
     // Handle back/forward navigation
     $(window).on('popstate', function() {
         var $activeTab = $('.tab-pane.active');
-        var $form = $activeTab.length ? $activeTab.find('form').first() : $forms.first();
+        var $form = $activeTab.length ? $activeTab.find('form').first() : getFilterForms().first();
         fetchAndReplace(window.location.href, false, $form);
     });
 });
