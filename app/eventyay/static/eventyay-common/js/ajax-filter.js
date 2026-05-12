@@ -30,6 +30,15 @@ $(function() {
         return $container;
     }
 
+    // Helper to find pagination container (supports both .pagination-container and .pagination)
+    function getPaginationContainer($context) {
+        var $container = $context.find('.pagination-container').first();
+        if ($container.length === 0) {
+            $container = $context.find('.pagination').first();
+        }
+        return $container;
+    }
+
     // Helper to find the results container (table/empty state + related controls)
     function getResultsContainer($context) {
         var $tableContainer = getTableContainer($context);
@@ -56,7 +65,7 @@ $(function() {
             return $parentWithPagination;
         }
 
-        return $tableContainer.parent();
+        return $tableContainer;
     }
 
     function fetchAndReplace(url, replaceUrlParams, $form) {
@@ -102,6 +111,21 @@ $(function() {
                 if (window.eventyayInitStartpageToggles) {
                     window.eventyayInitStartpageToggles();
                 }
+                if (typeof window.form_handlers === 'function') {
+                    window.form_handlers($resultsContainer);
+                }
+                if ($.fn.tooltip) {
+                    var $tooltipTargets = $resultsContainer.find('[data-toggle="tooltip"]');
+                    if ($tooltipTargets.length) {
+                        $tooltipTargets.tooltip();
+                    }
+                    var $tooltipHtmlTargets = $resultsContainer.find('[data-toggle="tooltip_html"]');
+                    if ($tooltipHtmlTargets.length) {
+                        $tooltipHtmlTargets.tooltip({
+                            'html': false
+                        });
+                    }
+                }
 
                 if (replaceUrlParams) {
                     history.pushState({}, '', url);
@@ -125,7 +149,7 @@ $(function() {
         e.preventDefault();
         var url = $form.attr('action') || window.location.pathname;
         var query = $form.serialize();
-        var fullUrl = url + (url.indexOf('?') !== -1 ? '&' : '?') + query;
+        var fullUrl = query ? url + (url.indexOf('?') !== -1 ? '&' : '?') + query : url;
         fetchAndReplace(fullUrl, true, $form);
     });
 
