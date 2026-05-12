@@ -1,7 +1,7 @@
 import base64
+import binascii
 import inspect
 import logging
-import binascii
 import struct
 
 from cryptography.hazmat.backends.openssl.backend import Backend
@@ -168,6 +168,8 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
     def _parse(self, secret):
         try:
             rawbytes = base64.b64decode(secret[::-1])
+            if len(rawbytes) < 5:
+                raise ValueError('Invalid ticket secret')
             if rawbytes[0] != 1:
                 raise ValueError('Invalid version')
 
@@ -183,7 +185,7 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
             t = pretix_sig1_pb2.Ticket()
             t.ParseFromString(payload)
             return t
-        except (binascii.Error, struct.error, ValueError, TypeError, InvalidSignature, IndexError, DecodeError) as e:
+        except (binascii.Error, struct.error, ValueError, TypeError, InvalidSignature, DecodeError) as e:
             logger.debug("Failed to parse ticket secret: %s", e, exc_info=True)
             return None
 
