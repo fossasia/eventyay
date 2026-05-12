@@ -25,7 +25,7 @@ def default_settings():
 # Every other module should import these instead of hard-coding field names.
 BUILTIN_SESSION_FIELDS = (
     'title', 'abstract', 'description', 'notes', 'track',
-    'duration', 'content_locale', 'image', 'do_not_record',
+    'duration', 'slot_count', 'content_locale', 'image', 'slides', 'do_not_record',
 )
 BUILTIN_SPEAKER_FIELDS = (
     'fullname', 'biography', 'avatar', 'avatar_source',
