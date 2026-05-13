@@ -690,11 +690,6 @@ export default {
 			} else {
 				this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 			}
-			if (this.isTalkView && this.talkCode) {
-				this.remoteApiRequest(`submissions/${this.talkCode}/?expand=answers.question,resources`)
-					.then(data => { this.talkApiContent = data })
-					.catch((e) => { console.error('Failed to fetch initial talk api content:', e) })
-			}
 			if (this.view === 'speaker' && this.speakerCode) {
 				this.fetchSpeakerApiContentIfNeeded(this.speakerCode)
 			}

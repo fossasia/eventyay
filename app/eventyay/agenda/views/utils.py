@@ -167,11 +167,13 @@ def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
             profile = SpeakerProfile.objects.filter(
                 event=request.event, user=user
             ).select_related('user').first()
-            include_avatar = request.event.cfp.request_avatar
+            cfp = request.event.cfp
+            include_avatar = cfp.request_avatar
+            include_biography = getattr(cfp, 'public_biography', False)
             data.setdefault('speakers', []).append({
                 'code': user.code,
                 'name': user.fullname or None,
-                'biography': getattr(profile, 'biography', ''),
+                'biography': getattr(profile, 'biography', '') if include_biography else '',
                 'avatar': user.get_avatar_url(event=request.event) if include_avatar else None,
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=request.event, thumbnail='default') if include_avatar else None
@@ -179,8 +181,8 @@ def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
                 'avatar_thumbnail_tiny': (
                     user.get_avatar_url(event=request.event, thumbnail='tiny') if include_avatar else None
                 ),
-                'is_featured': bool(getattr(profile, 'is_featured', False)),
-                'featured_position': getattr(profile, 'position', None),
+                'is_featured': bool(getattr(profile, 'is_featured', False)) if featured else False,
+                'featured_position': getattr(profile, 'position', None) if featured else None,
             })
 
     result = escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
