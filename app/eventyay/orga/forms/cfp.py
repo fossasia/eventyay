@@ -10,6 +10,16 @@ from i18nfield.forms import I18nFormMixin, I18nModelForm
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.forms import I18nMarkdownTextarea
+from eventyay.base.models import (
+    AnswerOption,
+    SubmissionType,
+    SubmitterAccessCode,
+    TalkQuestion,
+    TalkQuestionVariant,
+    Track,
+)
+from eventyay.base.models.cfp import CfP, default_fields
+from eventyay.base.models.question import TalkQuestionRequired
 from eventyay.common.forms.fields import ColorField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
@@ -21,16 +31,6 @@ from eventyay.common.forms.widgets import (
     TextInputWithAddon,
 )
 from eventyay.common.text.phrases import phrases
-from eventyay.base.models import (
-    AnswerOption,
-    TalkQuestion,
-    TalkQuestionVariant,
-    SubmissionType,
-    SubmitterAccessCode,
-    Track,
-)
-from eventyay.base.models.cfp import CfP, default_fields
-from eventyay.base.models.question import TalkQuestionRequired
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 
@@ -53,7 +53,8 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     mail_on_new_submission = forms.BooleanField(
         label=_('Send mail on new proposal'),
         help_text=_(
-            'If this setting is checked, you will receive an email to the organizer address for every received proposal.'
+            'If this setting is checked, you will receive an email to the organizer address '
+            'for every received proposal.'
         ),
         required=False,
     )
@@ -139,11 +140,14 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'availabilities',
             'do_not_record',
             'image',
+            'slides',
             'track',
             'duration',
+            'slot_count',
             'content_locale',
             'fullname',
         ]
+        self.public_fields = ['title', 'abstract', 'description', 'image', 'slides', 'fullname', 'biography', 'avatar']
         for attribute in self.length_fields:
             field_name = f'cfp_{attribute}_min_length'
             self.fields[field_name] = forms.IntegerField(
@@ -159,6 +163,13 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 initial=obj.cfp.fields.get(attribute, {'max_length': None}).get('max_length'),
             )
             self.fields[field_name].widget.attrs['placeholder'] = ''
+        self.fields['cfp_slides_max_count'] = forms.IntegerField(
+            required=False,
+            min_value=1,
+            initial=obj.cfp.fields.get('slides', default_fields()['slides']).get('max_count', 1),
+            help_text=_('Maximum number of slide links or PDF files per proposal.'),
+        )
+        self.fields['cfp_slides_max_count'].widget.attrs['placeholder'] = ''
         for attribute in self.request_require_fields:
             field_name = f'cfp_ask_{attribute}'
             # Full Name is always required and always active
@@ -181,11 +192,17 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                         ('required', _('Ask and require input')),
                     ],
                 )
+        for attribute in self.public_fields:
+            field_name = f'cfp_public_{attribute}'
+            self.fields[field_name] = forms.BooleanField(
+                required=False,
+                initial=obj.cfp.fields.get(attribute, default_fields()[attribute]).get('public', False),
+            )
 
         # Add fields for custom questions
         # We use all_objects because we want to include reviewer questions and inactive questions
         # (so they can be re-activated)
-        for question in TalkQuestion.all_objects.filter(event=obj):
+        for question in TalkQuestion.all_objects.filter(event=obj, is_imported=False):
             field_name = f'question_{question.pk}'
             initial = 'do_not_ask'
             if question.active:
@@ -230,8 +247,15 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             self.instance.cfp.fields[key]['min_length'] = self.cleaned_data.get(f'cfp_{key}_min_length')
             self.instance.cfp.fields[key]['max_length'] = self.cleaned_data.get(f'cfp_{key}_max_length')
 
+        self.instance.cfp.fields['slides']['max_count'] = self.cleaned_data.get('cfp_slides_max_count') or 1
+        for key in self.public_fields:
+            if key in {'title', 'fullname'}:
+                self.instance.cfp.fields[key]['public'] = True
+            else:
+                self.instance.cfp.fields[key]['public'] = bool(self.cleaned_data.get(f'cfp_public_{key}'))
+
         # Save custom questions
-        for question in TalkQuestion.all_objects.filter(event=self.instance):
+        for question in TalkQuestion.all_objects.filter(event=self.instance, is_imported=False):
             field_name = f'question_{question.pk}'
             if field_name in self.cleaned_data:
                 value = self.cleaned_data[field_name]
@@ -259,7 +283,8 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         label=_('Do not show Call for Speakers on the menu after the deadline'),
         required=False,
         help_text=_(
-            'If enabled, the Call for Speakers link will be hidden from navigation menus once the submission deadline has passed.'
+            'If enabled, the Call for Speakers link will be hidden from navigation menus '
+            'once the submission deadline has passed.'
         ),
     )
 
@@ -667,7 +692,7 @@ class QuestionFilterForm(forms.Form):
         answers = question.answers.filter(Q(person__in=speakers) | Q(submission__in=talks))
         result['answer_count'] = answers.count()
         result['missing_answers'] = question.missing_answers(filter_speakers=speakers, filter_talks=talks)
-        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
             grouped_answers = (
                 answers.order_by('options')
                 .values('options', 'options__answer')

@@ -76,7 +76,11 @@ export default {
 		},
 		rooms (state, getters, rootState) {
 			if (!state.schedule) return
-			return state.schedule.rooms.map(room => rootState.rooms.find(r => r.pretalx_id === room.id) || room)
+			const rootByPretalxId = new Map()
+			for (const r of rootState.rooms || []) {
+				if (r?.pretalx_id != null) rootByPretalxId.set(r.pretalx_id, r)
+			}
+			return state.schedule.rooms.map(room => rootByPretalxId.get(room.id) || room)
 		},
 		roomsLookup (state, getters) {
 			if (!state.schedule) return {}
@@ -125,9 +129,12 @@ export default {
 					stream_type: session.stream_type
 				})
 			}
+			const roomIndexLookup = new Map()
+			// Index by the same key we use in roomsLookup (prefer pretalx_id if present).
+			getters.rooms.forEach((r, i) => roomIndexLookup.set((r?.pretalx_id ?? r?.id), i))
 			sessions.sort((a, b) => (
 				a.start.diff(b.start) ||
-				(state.schedule.rooms.findIndex((r) => r.id === a.room?.id) - state.schedule.rooms.findIndex((r) => r.id === b.room?.id))
+				((roomIndexLookup.get(a.room?.pretalx_id ?? a.room?.id) ?? Infinity) - (roomIndexLookup.get(b.room?.pretalx_id ?? b.room?.id) ?? Infinity))
 			))
 			return sessions
 		},
@@ -156,15 +163,16 @@ export default {
 		currentSessionPerRoom (state, getters, rootState) {
 			if (!getters.sessions) return
 			const rooms = {}
-			for (const room of rootState.rooms) {
+			const sessionByRoom = new Map()
+			for (const s of getters.sessionsScheduledNow || []) {
+				if (s.room && !sessionByRoom.has(s.room)) sessionByRoom.set(s.room, s)
+			}
+			const sessionsLookup = getters.sessionsLookup || {}
+			for (const room of rootState.rooms || []) {
 				if (room.schedule_data?.computeSession) {
-					rooms[room.id] = {
-						session: getters.sessionsScheduledNow.find(session => session.room === room)
-					}
+					rooms[room.id] = { session: sessionByRoom.get(room) }
 				} else if (room.schedule_data?.session) {
-					rooms[room.id] = {
-						session: getters.sessions?.find(session => session.id === room.schedule_data.session)
-					}
+					rooms[room.id] = { session: sessionsLookup[room.schedule_data.session] }
 				}
 			}
 			return rooms
