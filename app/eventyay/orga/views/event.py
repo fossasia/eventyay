@@ -479,7 +479,7 @@ class InvitationView(FormView):
     def post(self, *args, **kwargs):
         if not self.request.user.is_anonymous:
             self.accept_invite(self.request.user)
-            return redirect(reverse('orga:event.list'))
+            return redirect(reverse('eventyay_common:dashboard'))
         return super().post(*args, **kwargs)
 
     def form_valid(self, form):
@@ -494,7 +494,7 @@ class InvitationView(FormView):
 
         self.accept_invite(user)
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect(reverse('orga:event.list'))
+        return redirect(reverse('eventyay_common:dashboard'))
 
     @transaction.atomic()
     def accept_invite(self, user):
@@ -530,7 +530,7 @@ class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         self.get_object().shred(person=self.request.user)
-        return redirect(reverse('orga:event.list'))
+        return redirect(reverse('eventyay_common:dashboard'))
 
 @method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):
