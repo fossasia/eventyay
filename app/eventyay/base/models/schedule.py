@@ -747,12 +747,14 @@ class Schedule(PretalxModel):
         *,
         include_featured_speaker_metadata=True,
         include_qrcodes=False,
+        respect_public_visibility=True,
     ):
         """Build schedule JSON for widgets and exports.
 
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
+        ``respect_public_visibility``: when False, keeps organizer-only field data.
         """
         talks = self.talks.all()
         if not all_talks:
@@ -778,6 +780,7 @@ class Schedule(PretalxModel):
         popularity_enabled = bool(self.event.feature_flags.get('session_popularity_enabled', False))
         show_popularity_calendar = bool(self.event.feature_flags.get('session_popularity_show_on_calendar', True))
         show_popularity_list = bool(self.event.feature_flags.get('session_popularity_show_on_list', True))
+        show_content_locale = not respect_public_visibility or self.event.cfp.public_content_locale
 
         talk_list = list(talks)
         fav_counts: dict[str, int] = {}
@@ -831,7 +834,7 @@ class Schedule(PretalxModel):
             'timezone': self.event.timezone,
             'event_start': self.event.date_from.isoformat(),
             'event_end': self.event.date_to.isoformat(),
-            'content_locales': self.event.content_locales,
+            'content_locales': self.event.content_locales if show_content_locale else [],
             'feature_flags': {
                 'session_popularity_enabled': popularity_enabled,
                 'session_popularity_show_on_calendar': show_popularity_calendar,
@@ -879,7 +882,7 @@ class Schedule(PretalxModel):
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                     'tags': talk.submission.get_tag(),
                     'session_type': talk.submission.submission_type.name,
-                    'content_locale': talk.submission.content_locale,
+                    'content_locale': talk.submission.content_locale if show_content_locale else '',
                 }
                 # Attach stream URL if a stream schedule overlaps this slot.
                 if talk.room_id and talk.start and talk.end:
