@@ -22,8 +22,9 @@
 		.field-section(v-for="answer in inlineAnswers", :key="answer.id")
 			h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
 			.field-content
-				a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && (answer.answer_file && answer.answer_file.url || answer.answer)", :href="answer.answer_file && answer.answer_file.url || answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer || (answer.answer_file && answer.answer_file.url) }}
-				span(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
+				a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer_file && answer.answer_file.url", :href="answer.answer_file.url", target="_blank", rel="noopener noreferrer") {{ answer.answer || answer.answer_file.url }}
+				a.answer-link(v-else-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+				span(v-else-if="answer.question.variant === 'boolean'") {{ parseBooleanAnswer(answer.answer) ? t.yes : t.no }}
 				span(v-else-if="answer.answer_string || answer.answer") {{ answer.answer_string || answer.answer }}
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 {{ t.sessions }}
@@ -46,7 +47,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters } from '../utils'
+import { getLocalizedString, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
 import ExportDropdown from './ExportDropdown.vue'
@@ -97,6 +98,7 @@ export default {
 	data() {
 		return {
 			getLocalizedString,
+			parseBooleanAnswer,
 			fetchedApiContent: null,
 		}
 	},
@@ -189,6 +191,7 @@ export default {
 			return this.resolvedSpeaker?.apiContent || this.fetchedApiContent
 		},
 		computedApiBaseUrl() {
+			if (this.remoteApiUrl) return this.remoteApiUrl
 			if (!this.eventUrl) return null
 			try {
 				const url = new URL(this.eventUrl, window.location.origin)

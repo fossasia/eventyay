@@ -26,8 +26,9 @@
 			.field-section(v-for="answer in inlineAnswers", :key="answer.id")
 				h2.field-heading {{ getLocalizedString(answer.question.question) || String(answer.question.question) }}
 				.field-content
-					a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && (answer.answer_file && answer.answer_file.url || answer.answer)", :href="answer.answer_file && answer.answer_file.url || answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer || (answer.answer_file && answer.answer_file.url) }}
-					span(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
+					a.answer-link(v-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer_file && answer.answer_file.url", :href="answer.answer_file.url", target="_blank", rel="noopener noreferrer") {{ answer.answer || answer.answer_file.url }}
+					a.answer-link(v-else-if="(answer.question.variant === 'url' || answer.question.variant === 'file') && answer.answer", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
+					span(v-else-if="answer.question.variant === 'boolean'") {{ parseBooleanAnswer(answer.answer) ? t.yes : t.no }}
 					span(v-else-if="answer.answer") {{ answer.answer }}
 			.public-answers(v-if="publicScheduleAnswers.length > 0")
 				.field-section(v-for="answer in publicScheduleAnswers", :key="answer.question_id")
@@ -97,7 +98,7 @@
 
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems } from '../utils'
+import { getLocalizedString, getIconByFileEnding, computeTalkExporters, buildExportMenuItems, parseBooleanAnswer } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import FavButton from './FavButton.vue'
 import ExportDropdown from './ExportDropdown.vue'
@@ -153,6 +154,7 @@ export default {
 		return {
 			getLocalizedString,
 			getIconByFileEnding,
+			parseBooleanAnswer,
 			starrers: { total: 0, public_total: 0, items: [] },
 			starrersLoading: false,
 			starrersExpanded: false,

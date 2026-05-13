@@ -114,6 +114,11 @@ export function buildExportMenuItems(exporters) {
 	].filter(o => o.url)
 }
 
+export function parseBooleanAnswer (value) {
+	if (typeof value === 'boolean') return value
+	return ['true', '1', 'yes'].includes(String(value).toLowerCase())
+}
+
 export function normalizePopularityCount (session) {
 	const value = Number(
 		session?.fav_count

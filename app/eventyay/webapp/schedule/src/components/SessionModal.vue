@@ -53,7 +53,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 											i.fa.fa-file-o
 											a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
 											span(v-else) {{ t.no_file_provided }}
-										span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
+										span.answer(v-else-if="answer.question.variant === 'boolean'") {{ parseBooleanAnswer(answer.answer) ? t.yes : t.no }}
 										span.answer(v-else-if="answer.answer", v-html="renderRichText(answer.answer)")
 										span.answer(v-else) {{ t.no_response }}
 						.downloads(v-if="displayResources.length > 0")
@@ -107,7 +107,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 										i.fa.fa-file-o
 										a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
 										span(v-else) {{ t.no_file_provided }}
-									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
+									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ parseBooleanAnswer(answer.answer) ? t.yes : t.no }}
 									span.answer(v-else-if="answer.answer", v-html="renderRichText(answer.answer)")
 									span.answer(v-else) {{ t.no_response }}
 			.speaker-sessions
@@ -127,7 +127,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 </template>
 
 <script>
-import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters } from '../utils'
+import { getLocalizedString, getSessionTime, getIconByFileEnding, buildExportMenuItems, computeSpeakerExporters, parseBooleanAnswer } from '../utils'
 import { renderEventyayRichText } from '../utils/eventyayRichText'
 import FavButton from './FavButton.vue'
 import Session from './Session.vue'
@@ -161,7 +161,8 @@ export default {
 		return {
 			getLocalizedString,
 			getSessionTime,
-			getIconByFileEnding
+			getIconByFileEnding,
+			parseBooleanAnswer,
 		}
 	},
 	computed: {

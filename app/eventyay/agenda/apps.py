@@ -16,17 +16,12 @@ class AgendaConfig(AppConfig):
         def on_schedule_release(sender, schedule, **kwargs):
             from django.core.cache import cache
 
-            prev_schedule = (
+            all_versions = list(
                 sender.schedules.filter(version__isnull=False)
-                .exclude(pk=schedule.pk)
-                .order_by('-published')
-                .values('version')
-                .first()
+                .values_list('version', flat=True)
             )
-            keys_to_delete = [f'eagenda:meta:{sender.pk}:{schedule.version}']
-            if prev_schedule:
-                keys_to_delete.append(f'eagenda:meta:{sender.pk}:{prev_schedule["version"]}')
-                keys_to_delete.append(f'eagenda:exporters:{sender.pk}:{prev_schedule["version"]}')
+            keys_to_delete = [f'eagenda:meta:{sender.pk}:{v}' for v in all_versions]
+            keys_to_delete.append(f'eagenda:exporters:{sender.pk}:{schedule.version}')
             cache.delete_many(keys_to_delete)
 
             try:

@@ -556,7 +556,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             )
 
         if is_google:
-            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url})}'
+            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url.replace("https://", "http://")})}'
             return HttpResponseRedirect(google_url)
 
         parsed = urlparse(ics_url)
