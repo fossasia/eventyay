@@ -1152,6 +1152,11 @@ a.event-public-text-link:visited {
     content: "";
   }
 
+  /* Match pre-linkify print: hero/content title links should not show raw URLs */
+  a.event-public-text-link[href]::after {
+    content: "";
+  }
+
   nav.navbar {
     display: none;
   }
