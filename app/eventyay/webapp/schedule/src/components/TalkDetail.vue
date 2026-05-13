@@ -29,15 +29,6 @@
 				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
 					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
 					.filename {{ description }}
-			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
-			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
-			.answers(v-if="publicAnswers.length > 0")
-				.answer(v-for="answer in publicAnswers", :key="`${answer.question_id}-${answer.question}`")
-					strong.question {{ answer.question }}:
-					a.value(v-if="isHttpUrl(answer.answer)", :href="answer.answer", target="_blank", rel="noopener noreferrer") {{ answer.answer }}
-					span.value(v-else-if="answer.options && answer.options.length > 0") {{ answer.options.join(', ') }}
-					span.value(v-else) {{ answer.answer }}
-
 			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink && isLive")
 				a.view-video-btn(:href="computedJoinRoomLink")
 					svg(viewBox="0 0 24 24", width="18", height="18", fill="currentColor")
@@ -209,11 +200,6 @@ export default {
 			const total = this.starrers?.total || 0
 			return Math.max(0, total - this.starrersInlineItems.length)
 		},
-		publicAnswers() {
-			return (this.resolvedTalk?.answers || []).filter((answer) => {
-				return !!(answer.question && (answer.answer || (answer.options && answer.options.length > 0)))
-			})
-		},
 		popularityFeatureEnabled() {
 			return !!this.scheduleData?.schedule?.feature_flags?.session_popularity_enabled
 		},
@@ -344,9 +330,6 @@ export default {
 				return resource
 			}
 		},
-		isHttpUrl(value) {
-			return typeof value === 'string' && /^https?:\/\//.test(value)
-		},
 		getSpeakerLink(speaker) {
 			return this.generateSpeakerLinkUrl({speaker})
 		},
@@ -403,8 +386,6 @@ export default {
 			color: $clr-secondary-text-light
 			.session-language
 				white-space: nowrap
-		.abstract, .description
-			margin: 0
 		.field-section
 			margin: 16px 0 0 0
 			.field-heading
@@ -431,19 +412,6 @@ export default {
 			flex-direction: column
 			font-size: 16px
 			font-weight: 600
-		.answers
-			margin-top: 16px
-			.answer
-				display: block
-				margin-top: 8px
-				.question
-					margin-right: 6px
-				.value
-					color: $clr-primary-text-light
-					text-decoration: none
-					&:hover
-						text-decoration: underline
-
 		.video-stream
 			margin-top: 16px
 			.view-video-btn
