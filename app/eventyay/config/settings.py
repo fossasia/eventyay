@@ -201,6 +201,7 @@ class BaseSettings(_BaseSettings):
     upload_size_question: int = 20
     upload_size_other: int = 10
     response_size_webhook: int = 1
+    webhook_timeout: int = 30
 
 
 def discover_toml_files() -> list[Path]:
@@ -1346,6 +1347,7 @@ BYTES_IN_MB = 1024 * 1024
 
 # Config for max size limits
 MAX_SIZE_CONFIG = {key: BYTES_IN_MB * cast(int, getattr(conf, key)) for key in SizeKey}
+WEBHOOK_TIMEOUT = conf.webhook_timeout
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
 

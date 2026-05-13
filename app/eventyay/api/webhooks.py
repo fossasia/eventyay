@@ -267,12 +267,22 @@ def notify_webhooks(logentry_ids: list):
     _org, _at, webhooks = None, None, None
     for logentry in qs:
         if not logentry.organizer:
-            break  # We need to know the organizer
+            logger.debug(
+                'Skipping webhook notification for log entry %d: no organizer',
+                logentry.id,
+            )
+            continue  # We need to know the organizer
 
         notification_type = logentry.webhook_type
 
         if not notification_type:
-            break  # Ignore, no webhooks for this event type
+            logger.debug(
+                'Skipping webhook notification for log entry %d: '
+                'no matching webhook event type for %s',
+                logentry.id,
+                logentry.action_type,
+            )
+            continue  # Ignore, no webhooks for this event type
 
         if _org != logentry.organizer or _at != logentry.action_type or webhooks is None:
             _org = logentry.organizer
@@ -313,7 +323,22 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                max_body_size = settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]
+                timeout = getattr(settings, "WEBHOOK_TIMEOUT", 30)
+
+                resp = requests.post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False,
+                    timeout=timeout,
+                    stream=True,
+                )
+                # Read only up to max_body_size bytes to prevent OOM
+                # from oversized responses before truncation
+                response_body = resp.raw.read(max_body_size).decode(
+                    'utf-8', errors='replace'
+                )
+                resp.close()
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -322,7 +347,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    response_body=response_body,
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -342,6 +367,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     return_code=0,
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    success=False,
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
