@@ -522,10 +522,14 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         order = request.POST.get('order')
         if order:
             pks = [pk.strip() for pk in order.split(',') if pk.strip()]
-            if len(pks) != len(set(pks)):
+            try:
+                pk_values = [int(pk) for pk in pks]
+            except ValueError:
+                return HttpResponseBadRequest('Invalid room IDs in order')
+            if len(pk_values) != len(set(pk_values)):
                 return HttpResponseBadRequest('Duplicate room IDs in order')
             queryset = self.get_queryset()
-            rooms_by_pk = {str(r.pk): r for r in queryset.filter(pk__in=pks)}
+            rooms_by_pk = {str(r.pk): r for r in queryset.filter(pk__in=pk_values)}
             to_update = []
             for index, pk in enumerate(pks):
                 room = rooms_by_pk.get(pk)
