@@ -3,7 +3,8 @@
 {% load bootstrap3 %}
 {% block title %}{% trans "Anonymize user" %}{% endblock %}
 {% block content %}
-    <h1>{% trans "Anonymize user" %} {{ edit_user.email|default:"No email" }}</h1>
+    {% trans 'No email' as no_email %}
+    <h1>{% trans "Anonymize user" %} {{ edit_user.email|default:no_email }}</h1>
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
         <div class="form-group submit-group">

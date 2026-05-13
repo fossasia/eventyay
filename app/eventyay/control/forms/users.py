@@ -63,7 +63,10 @@ class UserEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'].required = False
+        if self.instance and self.instance.pk:
+            self.fields['email'].required = False
+        else:
+            self.fields['email'].required = True
         if self.instance and self.instance.email is None:
             self.initial['email'] = ''
         self.fields['last_login'].disabled = True
