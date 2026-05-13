@@ -45,9 +45,9 @@ class InfoForm(
     additional_speaker = forms.EmailField(
         label=_('Additional Speaker'),
         help_text=_(
-            'If you have a co-speaker, please add their email address here, '
-            'and we will invite them to create an account. If you have more than one co-speaker, you '
-            'can add more speakers after finishing the proposal process.'
+            'If you have a co-speaker, please add their email address here, and we will invite them '
+            'to create an account. If you have more than one co-speaker, you can add more speakers '
+            'after finishing the proposal process.'
         ),
         required=False,
     )
