@@ -7,8 +7,8 @@
 {% block mail_content %}
     {% if form.instance.sent %}
         <div class="alert alert-info">
-            {% blocktranslate trimmed with timestamp=form.instance.sent %}
-                This email was sent on {{ timestamp }}.
+            {% blocktranslate trimmed with timestamp=form.instance.sent timezone=request.event.timezone %}
+                This email was sent on {{ timestamp }} ({{ timezone }}).
             {% endblocktranslate %}
         </div>
     {% endif %}

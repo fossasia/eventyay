@@ -180,7 +180,9 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             )
             messages.success(
                 self.request,
-                _('Your email has been scheduled for {datetime}.').format(datetime=scheduled_at)
+                _('Your email has been scheduled for {datetime} ({timezone}).').format(
+                    datetime=scheduled_at, timezone=self.request.event.timezone
+                )
             )
         else:
             messages.success(
@@ -650,7 +652,9 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             )
             messages.success(
                 self.request,
-                _('Your email has been scheduled for {datetime}.').format(datetime=scheduled_at)
+                _('Your email has been scheduled for {datetime} ({timezone}).').format(
+                    datetime=scheduled_at, timezone=self.request.event.timezone
+                )
             )
         else:
             messages.success(

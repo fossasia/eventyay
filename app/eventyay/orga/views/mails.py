@@ -442,8 +442,8 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                 send_scheduled_queuedmail.apply_async(args=[mail.pk], eta=scheduled_at)
             messages.success(
                 self.request,
-                _('{count} emails have been scheduled for {datetime}.').format(
-                    count=len(result), datetime=scheduled_at
+                _('{count} emails have been scheduled for {datetime} ({timezone}).').format(
+                    count=len(result), datetime=scheduled_at, timezone=self.request.event.timezone
                 ),
             )
         else:
