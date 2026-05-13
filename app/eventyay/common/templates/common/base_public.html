@@ -143,18 +143,19 @@
                                 </a>
                             </div>
                             {% if current_event %}
+                                {% eventurl current_event 'presale:event.index' as event_public_presale_home %}
                                 <div class="event-hero-text">
-                                    <div class="event-title">{{ current_event.name|event_localize }}</div>
+                                    <a class="event-title event-public-text-link" href="{{ event_public_presale_home }}">{{ current_event.name|event_localize }}</a>
                                     {% if current_event.date_from %}
                                         {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
                                             {% timezone tz_name %}
-                                                <div class="event-date-line">
+                                                <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                     {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
-                                                </div>
+                                                </a>
                                                 {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
-                                                    <div class="event-date-line">
+                                                    <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                         {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
-                                                    </div>
+                                                    </a>
                                                 {% endif %}
                                             {% endtimezone %}
                                         {% endwith %}
