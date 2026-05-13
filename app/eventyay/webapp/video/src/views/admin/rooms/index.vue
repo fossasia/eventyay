@@ -13,7 +13,7 @@
 		.header
 			.drag
 			.name Name
-		SlickList.tbody(v-if="rooms", :list="rooms", lockAxis="y", :useDragHandle="true", v-scrollbar.y="", @update:list="onListSort")
+		SlickList.tbody(v-if="rooms", :list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(
 				v-for="(room, index) of rooms",
 				:index="index",
@@ -65,7 +65,8 @@ export default {
 	methods: {
 		isRoomVisible(room) {
 			if (!this.search) return true
-			return room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase())
+			const search = this.search.trim()
+			return String(room.id) === search || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase())
 		},
 		async ensureConnectedAndFetch() {
 			if (this.$store.state.connected) return this.fetchRooms()
@@ -143,4 +144,14 @@ export default {
 		.name
 			flex: auto
 			ellipsis()
+
+.sorting-helper
+	height: 48px
+	line-height: 48px
+	background-color: $clr-white
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+	cursor: grabbing
+	z-index: 9999
+	> *
+		padding: 0 24px
 </style>
