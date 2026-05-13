@@ -349,33 +349,17 @@ class FormFlowStep(TemplateFlowStep):
                 return self.get(request)
             return None
 
-        # For "draft" action, validate as before (but with relaxed rules via not_strict)
+        # For "draft" action, save whatever data we can to the session
+        # and return None so the wizard's done() handles messaging.
         if not form.is_valid():
-            warning_messages = getattr(form, 'warning_messages', None) or []
-            for warning in filter(None, warning_messages):
-                messages.warning(self.request, warning)
-
-            error_message = '\n\n'.join(
-                (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
-                for key, values in form.errors.items()
-            )
-            if error_message:
-                messages.error(
-                    self.request,
-                    _(
-                        'Your draft could not be saved because there are errors in your submission. '
-                        'Your current inputs on this step have been kept; please review and fix the errors below.'
-                    ),
-                )
-                if hasattr(form, 'cleaned_data') and form.cleaned_data:
-                    self.set_data(form.cleaned_data)  # Keep valid input in the session
-                if form.files:
-                    self.set_files(form.files)
-            return self.get(request)
+            if hasattr(form, 'cleaned_data') and form.cleaned_data:
+                self.set_data(form.cleaned_data)
+            if form.files:
+                self.set_files(form.files)
+            return None
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
-        next_url = self.get_next_url(request)
-        return redirect(next_url) if next_url else None
+        return None
 
     def set_data(self, data):
         self.cfp_session['data'][self.identifier] = json.loads(
