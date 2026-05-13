@@ -745,8 +745,10 @@ class TestWizard:
             "action": "submit",
         }
         response = client.post(current_url, data=submission_data, follow=True)
-        # Should stay on the info step (not advance) because of missing title
-        assert "/info/" in response.redirect_chain[-1][0] or response.status_code == 200
+        # The wizard must stay on the info step and show validation errors.
+        assert "/info/" in response.wsgi_request.path
+        assert "draft=1" not in response.wsgi_request.META.get("QUERY_STRING", "")
+        assert b"This field is required." in response.content
         with scope(event=event):
             assert Submission.objects.count() == 0
 
