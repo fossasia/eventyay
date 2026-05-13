@@ -48,15 +48,20 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
                 )
         if self.for_reviewers:
             self.queryset = self.queryset.filter(is_visible_to_reviewers=True)
+        answers_by_question = {}
+        if target_object:
+            for answer in target_object.answers.all():
+                answers_by_question.setdefault(answer.question_id, answer)
+
         for question in self.queryset.prefetch_related('options'):
             initial_object = None
             initial = question.default_answer
             if target_object:
-                answers = [answer for answer in target_object.answers.all() if answer.question_id == question.id]
-                if answers:
-                    initial_object = answers[0]
+                answer = answers_by_question.get(question.id)
+                if answer:
+                    initial_object = answer
                     initial = (
-                        answers[0].answer_file if question.variant == TalkQuestionVariant.FILE else answers[0].answer
+                        answer.answer_file if question.variant == TalkQuestionVariant.FILE else answer.answer
                     )
 
             field = self.get_field(

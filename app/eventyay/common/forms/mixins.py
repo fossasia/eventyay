@@ -94,9 +94,9 @@ class RequestRequire:
                 min_value = self.event.cfp.fields.get(key, {}).get('min_length')
                 max_value = self.event.cfp.fields.get(key, {}).get('max_length')
                 if min_value or max_value:
-                    if min_value and count_chars:
+                    if min_value and count_chars and not not_strict:
                         field.widget.attrs['minlength'] = min_value
-                    if max_value and count_chars:
+                    if max_value and count_chars and not not_strict:
                         field.widget.attrs['maxlength'] = max_value
                     if not not_strict:
                         field.validators.append(
@@ -289,7 +289,7 @@ class QuestionFieldsMixin:
                 required=question.required,
                 initial=initial,
                 min_length=question.min_length if count_chars and not not_strict else None,
-                max_length=question.max_length if count_chars else None,
+                max_length=question.max_length if count_chars and not not_strict else None,
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
@@ -328,7 +328,7 @@ class QuestionFieldsMixin:
                 ),
                 initial=initial,
                 min_length=question.min_length if count_chars and not not_strict else None,
-                max_length=question.max_length if count_chars else None,
+                max_length=question.max_length if count_chars and not not_strict else None,
             )
             if not not_strict:
                 field.validators.append(

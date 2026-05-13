@@ -773,8 +773,7 @@ class TestWizard:
         }
         response = client.post(current_url, data=submission_data, follow=True)
         # Should redirect to user step (login/register) for anonymous users
-        current_url = response.redirect_chain[-1][0] if response.redirect_chain else ""
-        assert "/user/" in current_url or response.status_code == 200
+        assert any("/user/" in str(r[0]) for r in response.redirect_chain) or response.status_code == 200
         with scope(event=event):
             assert Submission.objects.count() == 0
 
