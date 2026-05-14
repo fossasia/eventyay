@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, Http
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.encoding import force_str
-from django.utils.translation import activate
+from django.utils.translation import activate, get_language
 from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
 
@@ -177,7 +177,7 @@ def build_speaker_schedule_json(request: HttpRequest, speaker_code: str) -> str:
                 event=request.event, user=user
             ).select_related('user').first()
             cfp = request.event.cfp
-            include_avatar = cfp.request_avatar
+            include_avatar = cfp.request_avatar and cfp.public_avatar
             include_biography = getattr(cfp, 'public_biography', False)
             data.setdefault('speakers', []).append({
                 'code': user.code,
@@ -316,7 +316,8 @@ def build_public_schedule_exporters(event, version=None):
     exporter lists in both UIs.  Result is cached for 5 minutes per
     (event.pk, version) to avoid firing Django signals on every request.
     """
-    cache_key = f'eagenda:exporters:{event.pk}:{version or ""}'
+    language = get_language() or ''
+    cache_key = f'eagenda:exporters:{event.pk}:{version or ""}:{language}'
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
