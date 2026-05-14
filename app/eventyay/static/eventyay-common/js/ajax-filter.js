@@ -5,7 +5,7 @@ $(function() {
         if (action && action.indexOf('/go') !== -1) {
             return false;
         }
-        return $form.hasClass('filter-form') || $form.find('.filter-form').length > 0 || $form.closest('.filter-form').length > 0;
+        return $form.hasClass('filter-form') || $form.find('.filter-form').length > 0 || $form.parents('.filter-form').length > 0;
     }
 
     function getFilterForms() {
@@ -30,15 +30,6 @@ $(function() {
         return $container;
     }
 
-    // Helper to find pagination container (supports both .pagination-container and .pagination)
-    function getPaginationContainer($context) {
-        var $container = $context.find('.pagination-container').first();
-        if ($container.length === 0) {
-            $container = $context.find('.pagination').first();
-        }
-        return $container;
-    }
-
     // Helper to find the results container (table/empty state + related controls)
     function getResultsContainer($context) {
         var $tableContainer = getTableContainer($context);
@@ -46,7 +37,7 @@ $(function() {
             return $tableContainer;
         }
 
-        var $tabPane = $tableContainer.closest('.tab-pane');
+        var $tabPane = $tableContainer.parents('.tab-pane').first();
         if ($tabPane.length) {
             return $tabPane;
         }
@@ -72,8 +63,9 @@ $(function() {
         // Scope replacements to the current tab if one exists
         var $context = $(document);
         var selectorPrefix = '';
-        if ($form && $form.closest('.tab-pane').length > 0) {
-            var tabId = $form.closest('.tab-pane').attr('id');
+        var $formTabPane = $form ? $form.parents('.tab-pane').first() : $();
+        if ($formTabPane.length > 0) {
+            var tabId = $formTabPane.attr('id');
             if (tabId) {
                 selectorPrefix = '#' + tabId + ' ';
                 $context = $('#' + tabId);
@@ -122,7 +114,7 @@ $(function() {
                     var $tooltipHtmlTargets = $resultsContainer.find('[data-toggle="tooltip_html"]');
                     if ($tooltipHtmlTargets.length) {
                         $tooltipHtmlTargets.tooltip({
-                            'html': false
+                            'html': true
                         });
                     }
                 }
@@ -156,7 +148,7 @@ $(function() {
     // Intercept clear button
     $(document).on('click', '.btn-clear-filter', function(e) {
         var $btn = $(this);
-        var $form = $btn.closest('form');
+        var $form = $btn.parents('form').first();
         if (!isFilterForm($form)) {
             return;
         }
@@ -176,7 +168,7 @@ $(function() {
         var url = $btn.attr('href');
         if (url && url !== '#') {
             // Find which form context this pagination belongs to
-            var $form = $btn.closest('.tab-pane').find('form').first();
+            var $form = $btn.parents('.tab-pane').first().find('form').first();
             if ($form.length === 0) {
                 $form = getFilterForms().first();
             }
