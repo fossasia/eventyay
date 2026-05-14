@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 import dateutil.parser
 import nh3
@@ -201,24 +201,32 @@ class CheckInListMixin(BaseExporter):
             qs = qs.filter(subevent=cl.subevent)
 
         if form_data.get('date_from'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_from']).date(),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(subevent__date_from__gte=dt)
+            date_from = form_data['date_from']
+            if isinstance(date_from, str):
+                date_from = dateutil.parser.parse(date_from).date()
+            if isinstance(date_from, date):
+                dt = make_aware(
+                    datetime.combine(
+                        date_from,
+                        time(hour=0, minute=0, second=0),
+                    ),
+                    self.event.tz,
+                )
+                qs = qs.filter(subevent__date_from__gte=dt)
 
         if form_data.get('date_to'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_to']).date() + timedelta(days=1),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(subevent__date_from__lt=dt)
+            date_to = form_data['date_to']
+            if isinstance(date_to, str):
+                date_to = dateutil.parser.parse(date_to).date()
+            if isinstance(date_to, date):
+                dt = make_aware(
+                    datetime.combine(
+                        date_to + timedelta(days=1),
+                        time(hour=0, minute=0, second=0),
+                    ),
+                    self.event.tz,
+                )
+                qs = qs.filter(subevent__date_from__lt=dt)
 
         o = ()
         if self.event.has_subevents and not cl.subevent:
@@ -313,7 +321,6 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
     def get_story(self, doc, form_data):
         if 'list' not in form_data or not form_data['list']:
             # Return empty story instead of None
-            from reportlab.platypus import Paragraph
             return [Paragraph("No check-in list selected.", self.get_style())]
         cl = self.event.checkin_lists.get(pk=form_data['list'])
 
@@ -408,7 +415,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 item += '<br/>{} ({})'.format(
                     op.subevent.name,
                     date_format(
-                        op.subevent.date_from.astimezone(self.event.timezone),
+                        op.subevent.date_from.astimezone(self.event.tz),
                         'SHORT_DATETIME_FORMAT',
                     ),
                 )
@@ -584,13 +591,13 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                 str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''),
                 op.price,
                 date_format(
-                    last_checked_in.astimezone(self.event.timezone),
+                    last_checked_in.astimezone(self.event.tz),
                     'SHORT_DATETIME_FORMAT',
                 )
                 if last_checked_in
                 else '',
                 date_format(
-                    last_checked_out.astimezone(self.event.timezone),
+                    last_checked_out.astimezone(self.event.tz),
                     'SHORT_DATETIME_FORMAT',
                 )
                 if last_checked_out
@@ -607,14 +614,14 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                 row.append(str(op.subevent.name))
                 row.append(
                     date_format(
-                        op.subevent.date_from.astimezone(self.event.timezone),
+                        op.subevent.date_from.astimezone(self.event.tz),
                         'SHORT_DATETIME_FORMAT',
                     )
                 )
                 if op.subevent.date_to:
                     row.append(
                         date_format(
-                            op.subevent.date_to.astimezone(self.event.timezone),
+                            op.subevent.date_to.astimezone(self.event.tz),
                             'SHORT_DATETIME_FORMAT',
                         )
                     )
@@ -641,8 +648,8 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
 
             row.append(op.company or ia.company)
             row.append(op.voucher.code if op.voucher else '')
-            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%Y-%m-%d'))
-            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S %Z'))
+            row.append(op.order.datetime.astimezone(self.event.tz).strftime('%Y-%m-%d'))
+            row.append(op.order.datetime.astimezone(self.event.tz).strftime('%H:%M:%S %Z'))
             row.append(_('Yes') if op.order.checkin_attention or op.product.checkin_attention else _('No'))
             row.append(op.order.comment or '')
 

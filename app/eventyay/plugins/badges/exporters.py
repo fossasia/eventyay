@@ -1,7 +1,7 @@
 import copy
 import json
 from collections import OrderedDict
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from io import BytesIO
 from typing import Tuple
 
@@ -374,24 +374,32 @@ class BadgeExporter(BaseExporter):
             qs = qs.filter(order__status__in=[Order.STATUS_PAID])
 
         if form_data.get('date_from'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_from']).date(),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__gte=dt) | Q(subevent__isnull=True, order__event__date_from__gte=dt))
+            date_from = form_data['date_from']
+            if isinstance(date_from, str):
+                date_from = dateutil.parser.parse(date_from).date()
+            if isinstance(date_from, date):
+                dt = make_aware(
+                    datetime.combine(
+                        date_from,
+                        time(hour=0, minute=0, second=0),
+                    ),
+                    self.event.tz,
+                )
+                qs = qs.filter(Q(subevent__date_from__gte=dt) | Q(subevent__isnull=True, order__event__date_from__gte=dt))
 
         if form_data.get('date_to'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_to']).date() + timedelta(days=1),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__lt=dt) | Q(subevent__isnull=True, order__event__date_from__lt=dt))
+            date_to = form_data['date_to']
+            if isinstance(date_to, str):
+                date_to = dateutil.parser.parse(date_to).date()
+            if isinstance(date_to, date):
+                dt = make_aware(
+                    datetime.combine(
+                        date_to + timedelta(days=1),
+                        time(hour=0, minute=0, second=0),
+                    ),
+                    self.event.tz,
+                )
+                qs = qs.filter(Q(subevent__date_from__lt=dt) | Q(subevent__isnull=True, order__event__date_from__lt=dt))
 
         if form_data.get('order_by') == 'name':
             qs = qs.order_by('attendee_name_cached', 'order__code')

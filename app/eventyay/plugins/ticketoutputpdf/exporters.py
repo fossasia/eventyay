@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from io import BytesIO
 
 import dateutil.parser
@@ -22,6 +22,29 @@ from ...helpers.templatetags.jsonfield import JSONExtract
 from .ticketoutput import PdfTicketOutput
 
 
+def _date_filter_for_event(event, date_from, date_to):
+    event_filter = Q(order__event=event)
+    if isinstance(date_from, date):
+        start_dt = make_aware(
+            datetime.combine(date_from, time(hour=0, minute=0, second=0)),
+            event.tz,
+        )
+        event_filter &= Q(subevent__date_from__gte=start_dt) | Q(
+            subevent__isnull=True,
+            order__event__date_from__gte=start_dt,
+        )
+    if isinstance(date_to, date):
+        end_dt = make_aware(
+            datetime.combine(date_to + timedelta(days=1), time(hour=0, minute=0, second=0)),
+            event.tz,
+        )
+        event_filter &= Q(subevent__date_from__lt=end_dt) | Q(
+            subevent__isnull=True,
+            order__event__date_from__lt=end_dt,
+        )
+    return event_filter
+
+
 class AllTicketsPDF(BaseExporter):
     name = 'alltickets'
     verbose_name = gettext_lazy('All PDF tickets in one file')
@@ -29,7 +52,16 @@ class AllTicketsPDF(BaseExporter):
 
     @property
     def export_form_fields(self):
-        name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme] if not self.is_multievent else None
+        # For multi-event exports, self.event is None, so name_scheme should be None
+        # Only access self.event when self.is_multievent is False
+        if self.is_multievent or self.event is None:
+            name_scheme = None
+        else:
+            try:
+                name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme]
+            except (AttributeError, KeyError):
+                name_scheme = None
+        
         d = OrderedDict(
             [
                 (
@@ -79,7 +111,7 @@ class AllTicketsPDF(BaseExporter):
             ]
         )
 
-        if not self.is_multievent and not self.event.has_subevents:
+        if not self.is_multievent and self.event and not self.event.has_subevents:
             del d['date_from']
             del d['date_to']
 
@@ -98,25 +130,22 @@ class AllTicketsPDF(BaseExporter):
         else:
             qs = qs.filter(order__status__in=[Order.STATUS_PAID])
 
-        if form_data.get('date_from'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_from']).date(),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__gte=dt) | Q(subevent__isnull=True, order__event__date_from__gte=dt))
+        date_from = form_data.get('date_from')
+        date_to = form_data.get('date_to')
+        if date_from or date_to:
+            if isinstance(date_from, str):
+                date_from = dateutil.parser.parse(date_from).date()
+            if isinstance(date_to, str):
+                date_to = dateutil.parser.parse(date_to).date()
 
-        if form_data.get('date_to'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_to']).date() + timedelta(days=1),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__lt=dt) | Q(subevent__isnull=True, order__event__date_from__lt=dt))
+            if isinstance(date_from, date) or isinstance(date_to, date):
+                events = self.events if self.is_multievent else (self.event,)
+                date_filters = Q()
+                for event in events:
+                    if event is None:
+                        continue
+                    date_filters |= _date_filter_for_event(event, date_from, date_to)
+                qs = qs.filter(date_filters)
 
         if form_data.get('order_by') == 'name':
             qs = qs.order_by('attendee_name_cached', 'order__code')

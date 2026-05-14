@@ -45,6 +45,7 @@ function async_task_check_callback(data, jqXHR, status) {
     "use strict";
     if (data.ready && data.redirect) {
         waitingDialog.hide();
+        ajaxErrDialog.hide();
         if (async_task_is_download && data.success) {
             _restore_async_old_url_once();
         }
@@ -114,8 +115,11 @@ function async_task_check_error(jqXHR, textStatus, errorThrown) {
 function async_task_callback(data, jqXHR, status) {
     "use strict";
     $("body").data('ajaxing', false);
+    // Ensure error dialogs are completely cleared on success
+    ajaxErrDialog.hide();
     if (data.redirect) {
         waitingDialog.hide();
+        ajaxErrDialog.hide();
         if (async_task_is_download && data.success) {
             _restore_async_old_url_once();
         }
@@ -214,6 +218,9 @@ $(function () {
         async_task_is_long = $(this).is("[data-asynctask-long]");
         async_task_old_url = location.href;
         $("body").data('ajaxing', true);
+        ajaxErrDialog.hide();
+        // Clear any error messages from the form or page
+        $(".alert-danger").fadeOut('fast').remove();
         if ($(this).is("[data-asynctask-headline]")) {
             waitingDialog.show($(this).attr("data-asynctask-headline"));
         } else {
@@ -269,5 +276,6 @@ var ajaxErrDialog = {
     hide: function () {
         "use strict";
         $("body").removeClass("ajaxerr");
+        $("#ajaxerr").html("");
     }
 };
