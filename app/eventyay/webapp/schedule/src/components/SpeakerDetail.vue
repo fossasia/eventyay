@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-speaker-detail
-	.speaker-wrapper(v-if="resolvedSpeaker")
+	.speaker-wrapper(v-if="speakerDetailReady")
 		.speaker-header(:class="{'has-export': speakerExportOptions.length}")
 			.speaker-avatar
 				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
@@ -99,6 +99,7 @@ export default {
 			getLocalizedString,
 			parseBooleanAnswer,
 			fetchedApiContent: null,
+			apiContentLoaded: false,
 		}
 	},
 	computed: {
@@ -189,6 +190,9 @@ export default {
 		effectiveSpeakerApiContent() {
 			return this.resolvedSpeaker?.apiContent || this.fetchedApiContent
 		},
+		speakerDetailReady() {
+			return this.resolvedSpeaker && (this.effectiveSpeakerApiContent || this.apiContentLoaded || !this.computedApiBaseUrl)
+		},
 		computedApiBaseUrl() {
 			if (this.remoteApiUrl) return this.remoteApiUrl
 			if (!this.eventUrl) return null
@@ -232,6 +236,10 @@ export default {
 				if (!this.effectiveSpeakerApiContent) this.fetchApiContent()
 			},
 			immediate: true
+		},
+		speakerId() {
+			this.fetchedApiContent = null
+			this.apiContentLoaded = false
 		}
 	},
 	methods: {
@@ -244,10 +252,16 @@ export default {
 			this.$emit('unfav', id)
 		},
 		async fetchApiContent() {
-			if (this.effectiveSpeakerApiContent || this.fetchedApiContent !== null) return
-			if (!this.computedApiBaseUrl) return
+			if (this.effectiveSpeakerApiContent || this.fetchedApiContent !== null || this.apiContentLoaded) return
+			if (!this.computedApiBaseUrl) {
+				this.apiContentLoaded = true
+				return
+			}
 			const code = this.speakerId || this.resolvedSpeaker?.code
-			if (!code) return
+			if (!code) {
+				this.apiContentLoaded = true
+				return
+			}
 			try {
 				const url = `${this.computedApiBaseUrl}speakers/${code}/?expand=answers.question`
 				const response = await fetch(url)
@@ -259,6 +273,8 @@ export default {
 				this.fetchedApiContent = data
 			} catch (e) {
 				console.warn('[SpeakerDetail] fetch failed:', e)
+			} finally {
+				this.apiContentLoaded = true
 			}
 		}
 	}
