@@ -82,6 +82,20 @@ def _default_context(request: HttpRequest):
 
     ctx['nav_items'] = get_event_navigation(request, event)
     ctx['has_domain'] = get_event_domain(event, fallback=True) is not None
+    ctx['has_ticket_access'] = request.user.has_event_permission(
+        organizer,
+        event,
+        (
+            'can_view_orders',
+            'can_change_orders',
+            'can_change_items',
+            'can_change_event_settings',
+            'can_checkin_orders',
+            'can_view_vouchers',
+            'can_change_vouchers',
+        ),
+        request=request,
+    )
     if not event.testmode:
         with scope(organizer=organizer):
             complain_testmode_orders = event.cache.get('complain_testmode_orders')

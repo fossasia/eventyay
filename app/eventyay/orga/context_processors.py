@@ -59,6 +59,22 @@ def orga_events(request):
         ]
         return context
 
+    event = request.event
+    context['has_ticket_access'] = request.user.has_event_permission(
+        event.organizer,
+        event,
+        (
+            'can_view_orders',
+            'can_change_orders',
+            'can_change_items',
+            'can_change_event_settings',
+            'can_checkin_orders',
+            'can_view_vouchers',
+            'can_change_vouchers',
+        ),
+        request=request,
+    )
+
     _nav_event = []
     for _, response in nav_event.send_robust(request.event, request=request):
         _nav_event += response if (response and isinstance(response, list)) else []

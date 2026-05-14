@@ -387,6 +387,39 @@ class EventWidgetGenerator:
             </a>
         """
 
+    @staticmethod
+    def generate_ticket_button(event: Event, request: HttpRequest) -> str:
+        """
+        Generate a ticket button based on the user's ticket permissions.
+
+        Users without ticket permissions see a modal trigger instead of a link.
+        """
+        has_ticket_access = request.user.has_event_permission(
+            event.organizer,
+            event,
+            (
+                'can_view_orders',
+                'can_change_orders',
+                'can_change_items',
+                'can_change_event_settings',
+                'can_checkin_orders',
+                'can_view_vouchers',
+                'can_change_vouchers',
+            ),
+            request=request,
+        )
+        if has_ticket_access:
+            ticket_url = reverse(
+                'control:event.index',
+                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+            )
+            return f'<a href="{ticket_url}" class="component">{_("Tickets")}</a>'
+        return (
+            f'<a href="#" class="component"'
+            f' onclick="document.getElementById(\'ticket-permission-dialog\').showModal(); return false;">'
+            f'{_("Tickets")}</a>'
+        )
+
     @classmethod
     def generate_widget(cls, event: Event, request: HttpRequest, lazy: bool = False) -> Dict[str, Any]:
         """
@@ -404,7 +437,7 @@ class EventWidgetGenerator:
                 <div class="times">{times}</div>
             </a>
             <div class="bottomrow">
-                <a href="{ticket_url}" class="component">Tickets</a>
+                {ticket_button}
                 {talk_button}
                 {video_button}
             </div>
@@ -421,10 +454,7 @@ class EventWidgetGenerator:
                         'event': event.slug,
                     },
                 ),
-                ticket_url=reverse(
-                    'control:event.index',
-                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-                ),
+                ticket_button=cls.generate_ticket_button(event, request),
                 video_button=cls.generate_video_button(event),
                 talk_button=cls.generate_talk_button(event),
             )

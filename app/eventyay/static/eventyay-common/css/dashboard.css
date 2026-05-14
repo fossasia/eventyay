@@ -28,3 +28,35 @@
         transform: scale(1.05);
     }
 }
+
+/*
+ * Native <dialog> styling for the ticket "Permission Required" modal.
+ * Mirrors the orga-path dialog appearance so both paths look identical.
+ * Loaded directly (not through django-compressor) so it is always current.
+ */
+dialog#ticket-permission-dialog {
+    border: none;
+    padding: 0;
+    border-radius: 0.3rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.15);
+    max-width: 70vw;
+}
+
+dialog#ticket-permission-dialog[open] {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    animation: ticket-dialog-fade-in 0.3s ease-out;
+}
+
+dialog#ticket-permission-dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(2px);
+}
+
+@keyframes ticket-dialog-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

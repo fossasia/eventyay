@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load static %}
 <div class="dashboard custom">
     <div class="panel panel-default items widget-container widget-full no-padding">
         <div class="panel-heading">
@@ -20,6 +21,7 @@
     {% include "pretixcontrol/event/fragment_info_box.html" %}
 </div>
 <div class="dashboard custom">
+    {% if has_ticket_access %}
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -35,6 +37,23 @@
             </p>
         </div>
     </div>
+    {% else %}
+    <div class="panel panel-default widget-container widget-small no-padding column">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans "Tickets" %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <p>
+                {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
+            </p>
+            <p>
+                {% trans "Go to" %} <a href="#" onclick="document.getElementById('ticket-permission-dialog').showModal(); return false;">{% trans "Tickets Dashboard" %}</a>
+            </p>
+        </div>
+    </div>
+    {% endif %}
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -91,4 +110,17 @@
             </div>
         </div>
     </div>
+    <dialog id="ticket-permission-dialog" aria-labelledby="ticket-perm-frag-title">
+        <div style="padding: 2rem 2rem 1.5rem; max-width: 380px; text-align: center;">
+            <p style="margin: 0 0 1rem; font-size: 2.5rem; color: #d9534f; line-height: 1;">
+                <i class="fa fa-lock" aria-hidden="true"></i>
+            </p>
+            <h3 id="ticket-perm-frag-title" style="margin: 0 0 0.75rem; font-size: 1.15rem; font-weight: 600;">{% trans "Permission Required" %}</h3>
+            <p style="margin: 0 0 1.5rem; line-height: 1.5; color: #555;">
+                {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
+            </p>
+            <button type="button" class="btn btn-primary" style="min-width: 90px;"
+                    onclick="this.closest('dialog').close()">{% trans "Ok" %}</button>
+        </div>
+    </dialog>
 </div>
