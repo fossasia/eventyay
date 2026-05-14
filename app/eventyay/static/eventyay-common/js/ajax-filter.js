@@ -30,8 +30,18 @@ $(function() {
         return $container;
     }
 
+    // Prefer explicitly marked AJAX refresh regions when available
+    function getExplicitResultsRegion($context) {
+        return $context.find('[data-ajax-results-region]').first();
+    }
+
     // Helper to find the results container (table/empty state + related controls)
     function getResultsContainer($context) {
+        var $explicitRegion = getExplicitResultsRegion($context);
+        if ($explicitRegion.length) {
+            return $explicitRegion;
+        }
+
         var $tableContainer = getTableContainer($context);
         if ($tableContainer.length === 0) {
             return $tableContainer;
@@ -40,20 +50,6 @@ $(function() {
         var $tabPane = $tableContainer.parents('.tab-pane').first();
         if ($tabPane.length) {
             return $tabPane;
-        }
-
-        var $parentWithPagination = $tableContainer.parents().filter(function() {
-            var $el = $(this);
-            if ($el.is('body') || $el.is('html')) {
-                return false;
-            }
-            var hasResults = $el.find('.table-responsive, table.table, .empty-collection').length > 0;
-            var hasPagination = $el.find('.pagination-container, .pagination').length > 0;
-            return hasResults && hasPagination;
-        }).first();
-
-        if ($parentWithPagination.length) {
-            return $parentWithPagination;
         }
 
         return $tableContainer;

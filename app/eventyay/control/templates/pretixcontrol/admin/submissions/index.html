@@ -47,9 +47,10 @@
         </div>
     </div>
 
-    {% if submissions %}
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover">
+    <div data-ajax-results-region>
+        {% if submissions %}
+            <div class="table-responsive">
+                <table class="table table-condensed table-hover">
                 <thead>
                     <tr>
                         <th>
@@ -146,16 +147,17 @@
                     {% endfor %}
                 </tbody>
             {% endwith %}
-            </table>
-        </div>
+                </table>
+            </div>
 
-        {% include "pretixcontrol/pagination.html" %}
+            {% include "pretixcontrol/pagination.html" %}
 
-    {% else %}
-        <div class="empty-collection">
-            <p>
-                {% translate "There are no submissions to show." %}
-            </p>
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="empty-collection">
+                <p>
+                    {% translate "There are no submissions to show." %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
