@@ -1,6 +1,7 @@
 import copy
 import datetime
 import json
+import logging
 
 import icalendar
 import jwt
@@ -10,11 +11,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import UserPassesTestMixin
-from eventyay.base.models.auth import User
 from django.db import transaction
 from django.db.models import Count, F, Max, OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -32,20 +33,22 @@ from django.views.generic import (
 from eventyay.base.models import (
     BBBCall,
     BBBServer,
-    SystemLog,
+    Event,
     JanusServer,
     StreamingServer,
+    SystemLog,
     TurnServer,
-    Event,
 )
-
+from eventyay.base.models.auth import User
 from eventyay.base.models.event import EventPlannedUsage as PlannedUsage
+from eventyay.base.models.log import LogEntry
+from eventyay.base.models.mixins import SENSITIVE_KEYS as LOG_MIXIN_SENSITIVE_KEYS
 from eventyay.base.services.bbb import get_url
-from eventyay.features.importers.tasks import conftool_sync_posters
 from eventyay.control.forms.server_management import (
     BBBMoveRoomForm,
     BBBServerForm,
     ConftoolSyncPostersForm,
+    EventForm,
     JanusServerForm,
     PlannedUsageFormSet,
     ProfileForm,
@@ -54,10 +57,72 @@ from eventyay.control.forms.server_management import (
     StreamKeyGeneratorForm,
     TurnServerForm,
     UserForm,
-    EventForm,
 )
-from eventyay.base.models.log import LogEntry
 from eventyay.control.tasks import clear_event_data
+from eventyay.features.importers.tasks import conftool_sync_posters
+from eventyay.helpers.json import CustomJSONEncoder
+
+
+logger = logging.getLogger(__name__)
+
+
+SHARED_SENSITIVE_MARKERS = frozenset(LOG_MIXIN_SENSITIVE_KEYS)
+
+SENSITIVE_KEYS = SHARED_SENSITIVE_MARKERS | frozenset({
+    "secret", "room_create_key", "auth_secret", "token_secret",
+    "jwt_secrets", "password", "new_password", "repeat_password",
+    "venueless_secret", "auth_token", "api_key", "conftool_password",
+    "appspecific_secret", "client_id", "client_secret"
+})
+
+
+def redact_sensitive_data(data, depth=0):
+    """Recursive helper to redact sensitive fields from log data."""
+    if depth > 10:
+        return "<Max Depth Reached>"
+    if isinstance(data, dict):
+        redacted = {}
+        for key, value in data.items():
+            key_lower = str(key).lower()
+            normalized = key_lower.replace("-", "_")
+            collapsed = "".join(ch for ch in normalized if ch.isalnum())
+            tokens = [token for token in normalized.split("_") if token]
+            has_shared_marker = any(marker in normalized for marker in SHARED_SENSITIVE_MARKERS)
+            has_sensitive_token = (
+                "password" in tokens
+                or "secret" in tokens
+                or ("api" in tokens and "key" in tokens)
+                or ("auth" in tokens and "token" in tokens)
+            )
+            has_sensitive_substring = (
+                has_shared_marker
+                or "apikey" in collapsed
+                or "authtoken" in collapsed
+            )
+
+            if key_lower in SENSITIVE_KEYS or has_sensitive_token or has_sensitive_substring:
+                redacted[key] = "*****"
+            else:
+                redacted[key] = redact_sensitive_data(value, depth + 1)
+        return redacted
+    elif isinstance(data, list):
+        return [redact_sensitive_data(item, depth + 1) for item in data]
+    return data
+
+
+def serialize_log_data(data):
+    payload = redact_sensitive_data(data or {})
+    return json.dumps(payload, cls=CustomJSONEncoder, sort_keys=True)
+
+
+class EventQuerysetMixin:
+    def get_queryset(self):
+        return super().get_queryset().select_related("organizer")
+
+
+class EventExclusiveQuerysetMixin:
+    def get_queryset(self):
+        return super().get_queryset().select_related("event_exclusive")
 
 
 class SuperuserBase(UserPassesTestMixin):
@@ -85,7 +150,7 @@ class UserUpdate(SuperuserBase, UpdateView):
             content_object=self.object,
             user=self.request.user,
             action_type="user.changed",
-            data={"changed_keys": form.changed_data},
+            data=serialize_log_data({"changed_keys": form.changed_data}),
         )
         return super().form_valid(form)
 
@@ -129,7 +194,7 @@ class ProfileView(AdminBase, FormView):
             content_object=self.request.user,
             user=self.request.user,
             action_type="profile.changed",
-            data={"changed_keys": form.changed_data},
+            data=serialize_log_data({"changed_keys": form.changed_data}),
         )
         form.save()
         update_session_auth_hash(self.request, self.request.user)
@@ -160,6 +225,7 @@ class EventList(AdminBase, ListView):
             ),
         )
         .prefetch_related("planned_usages")
+        .select_related("organizer")
         .order_by(
             F("last_usage").desc(nulls_last=True),
             F("domain").asc(nulls_last=True),
@@ -176,7 +242,7 @@ class EventList(AdminBase, ListView):
         return ctx
 
 
-class EventAdminToken(AdminBase, DetailView):
+class EventAdminToken(EventQuerysetMixin, AdminBase, DetailView):
     template_name = "control/event_clear.html"
     queryset = Event.objects.all()
     success_url = "/admin/video/events/"
@@ -211,9 +277,6 @@ class EventAdminToken(AdminBase, DetailView):
 
         # Ensure JWT configuration exists
         if not event.config or not event.config.get("JWT_secrets"):
-            from django.utils.crypto import get_random_string
-            from django.conf import settings
-
             secret = get_random_string(length=64)
             event.config = {
                 "JWT_secrets": [
@@ -234,14 +297,14 @@ class EventAdminToken(AdminBase, DetailView):
                 # Point to SPA at /video/<event_slug>
                 base_site = getattr(settings, 'SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
                 event.settings.venueless_url = f"{base_site}/video/{event.slug}"
-            except Exception:
-                pass
+            except (AttributeError, KeyError, TypeError, ValueError) as e:
+                logger.warning("Failed configuring initial video settings for event %s: %s", event.slug, e)
 
         jwt_config = event.config["JWT_secrets"][0]
         secret = jwt_config["secret"]
         audience = jwt_config["audience"]
         issuer = jwt_config["issuer"]
-        iat = datetime.datetime.utcnow()
+        iat = timezone.now()
         exp = iat + datetime.timedelta(days=7)
         payload = {
             "iss": issuer,
@@ -256,19 +319,33 @@ class EventAdminToken(AdminBase, DetailView):
             content_object=event,
             user=self.request.user,
             action_type="event.adminaccess",
-            data={},
+            data=serialize_log_data({}),
         )
 
         # Use the appropriate URL based on environment
         if event.domain:
-            video_url = f"https://{event.domain}#token={token}"
+            # Preserve valid path-based event domains while rejecting unsafe URL parts.
+            domain_value = event.domain.strip()
+            if "://" in domain_value or "?" in domain_value or "#" in domain_value:
+                logger.warning(
+                    "Invalid event domain '%s' for event %s; falling back to request host",
+                    domain_value,
+                    event.slug,
+                )
+                domain_value = ""
+
+            if domain_value:
+                video_url = f"https://{domain_value}#token={token}"
+            else:
+                scheme = 'https' if not settings.DEBUG else ('https' if request.is_secure() else 'http')
+                video_url = f"{scheme}://{request.get_host()}{event.urls.video_base}#token={token}"
         else:
             # For local development, use the current request's host
-            scheme = 'https' if request.is_secure() else 'http'
-            host = request.get_host()
-            video_url = f"{scheme}://{host}{event.urls.video_base}#token={token}"
+            scheme = 'https' if not settings.DEBUG else ('https' if request.is_secure() else 'http')
+            # request.get_host() is safe given ALLOWED_HOSTS is configured.
+            video_url = f"{scheme}://{request.get_host()}{event.urls.video_base}#token={token}"
 
-        return redirect(video_url)
+        return HttpResponseRedirect(video_url)
 
 
 class FormsetMixin:
@@ -371,10 +448,10 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="event.created",
-            data={
+            data=serialize_log_data({
                 "copy_from": self.copy_from.pk if self.copy_from else None,
                 **form.cleaned_data,
-            },
+            }),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -393,7 +470,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
             return self.form_invalid(form)
 
 
-class EventUpdate(FormsetMixin, AdminBase, UpdateView):
+class EventUpdate(FormsetMixin, EventQuerysetMixin, AdminBase, UpdateView):
     template_name = "control/event_update.html"
     form_class = EventForm
     queryset = Event.objects.all()
@@ -411,7 +488,7 @@ class EventUpdate(FormsetMixin, AdminBase, UpdateView):
             content_object=self.get_object(),
             user=self.request.user,
             action_type="event.updated",
-            data=form.cleaned_data,
+            data=serialize_log_data(form.cleaned_data),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -425,7 +502,7 @@ class EventUpdate(FormsetMixin, AdminBase, UpdateView):
             return self.form_invalid(form)
 
 
-class EventClear(AdminBase, DetailView):
+class EventClear(EventQuerysetMixin, AdminBase, DetailView):
     template_name = "control/event_clear.html"
     queryset = Event.objects.all()
     success_url = "/admin/video/events/"
@@ -435,20 +512,20 @@ class EventClear(AdminBase, DetailView):
             content_object=self.get_object(),
             user=self.request.user,
             action_type="event.cleared",
-            data={},
+            data=serialize_log_data({}),
         )
         clear_event_data.apply_async(kwargs={"event": self.get_object().pk})
         messages.success(request, _("The data will soon be deleted."))
         return redirect(self.success_url)
 
 
-class BBBServerList(AdminBase, ListView):
+class BBBServerList(EventExclusiveQuerysetMixin, AdminBase, ListView):
     template_name = "control/bbb_list.html"
-    queryset = BBBServer.objects.select_related("event_exclusive").order_by("url")
+    queryset = BBBServer.objects.all().order_by("url")
     context_object_name = "servers"
 
 
-class BBBServerCreate(AdminBase, CreateView):
+class BBBServerCreate(EventExclusiveQuerysetMixin, AdminBase, CreateView):
     template_name = "control/bbb_form.html"
     form_class = BBBServerForm
     success_url = "/admin/video/bbbs/"
@@ -461,13 +538,13 @@ class BBBServerCreate(AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="bbbserver.created",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
 
 
-class BBBServerUpdate(AdminBase, UpdateView):
+class BBBServerUpdate(EventExclusiveQuerysetMixin, AdminBase, UpdateView):
     template_name = "control/bbb_form.html"
     form_class = BBBServerForm
     queryset = BBBServer.objects.all()
@@ -480,13 +557,13 @@ class BBBServerUpdate(AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="bbbserver.updated",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
 
 
-class BBBServerDelete(AdminBase, DeleteView):
+class BBBServerDelete(EventExclusiveQuerysetMixin, AdminBase, DeleteView):
     template_name = "control/bbb_delete.html"
     queryset = BBBServer.objects.all()
     success_url = "/admin/video/bbbs/"
@@ -498,7 +575,7 @@ class BBBServerDelete(AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="bbbserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
@@ -506,13 +583,13 @@ class BBBServerDelete(AdminBase, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class JanusServerList(AdminBase, ListView):
+class JanusServerList(EventExclusiveQuerysetMixin, AdminBase, ListView):
     template_name = "control/janus_list.html"
-    queryset = JanusServer.objects.select_related("event_exclusive").order_by("url")
+    queryset = JanusServer.objects.all().order_by("url")
     context_object_name = "servers"
 
 
-class JanusServerCreate(AdminBase, CreateView):
+class JanusServerCreate(EventExclusiveQuerysetMixin, AdminBase, CreateView):
     template_name = "control/janus_form.html"
     form_class = JanusServerForm
     success_url = "/admin/video/janus/"
@@ -525,13 +602,13 @@ class JanusServerCreate(AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="janusserver.created",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
 
 
-class JanusServerUpdate(AdminBase, UpdateView):
+class JanusServerUpdate(EventExclusiveQuerysetMixin, AdminBase, UpdateView):
     template_name = "control/janus_form.html"
     form_class = JanusServerForm
     queryset = JanusServer.objects.all()
@@ -544,13 +621,13 @@ class JanusServerUpdate(AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="janusserver.updated",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
 
 
-class JanusServerDelete(AdminBase, DeleteView):
+class JanusServerDelete(EventExclusiveQuerysetMixin, AdminBase, DeleteView):
     template_name = "control/janus_delete.html"
     queryset = JanusServer.objects.all()
     success_url = "/admin/video/janus/"
@@ -562,7 +639,7 @@ class JanusServerDelete(AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="janusserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
@@ -570,13 +647,13 @@ class JanusServerDelete(AdminBase, DeleteView):
         return HttpResponseRedirect(success_url)
 
 
-class TurnServerList(AdminBase, ListView):
+class TurnServerList(EventExclusiveQuerysetMixin, AdminBase, ListView):
     template_name = "control/turn_list.html"
-    queryset = TurnServer.objects.select_related("event_exclusive").order_by("hostname")
+    queryset = TurnServer.objects.all().order_by("hostname")
     context_object_name = "servers"
 
 
-class TurnServerCreate(AdminBase, CreateView):
+class TurnServerCreate(EventExclusiveQuerysetMixin, AdminBase, CreateView):
     template_name = "control/turn_form.html"
     form_class = TurnServerForm
     success_url = "/admin/video/turns/"
@@ -589,13 +666,13 @@ class TurnServerCreate(AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="turnserver.created",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
 
 
-class TurnServerUpdate(AdminBase, UpdateView):
+class TurnServerUpdate(EventExclusiveQuerysetMixin, AdminBase, UpdateView):
     template_name = "control/turn_form.html"
     form_class = TurnServerForm
     queryset = TurnServer.objects.all()
@@ -608,13 +685,13 @@ class TurnServerUpdate(AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="turnserver.updated",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
 
 
-class TurnServerDelete(AdminBase, DeleteView):
+class TurnServerDelete(EventExclusiveQuerysetMixin, AdminBase, DeleteView):
     template_name = "control/turn_delete.html"
     queryset = TurnServer.objects.all()
     success_url = "/admin/video/turns/"
@@ -626,7 +703,7 @@ class TurnServerDelete(AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="turnserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
@@ -685,7 +762,7 @@ class StreamingServerCreate(AdminBase, CreateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="streamingserver.created",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -704,7 +781,7 @@ class StreamingServerUpdate(AdminBase, UpdateView):
             content_object=form.instance,
             user=self.request.user,
             action_type="streamingserver.updated",
-            data={k: str(v) for k, v in form.cleaned_data.items()},
+            data=serialize_log_data({k: str(v) for k, v in form.cleaned_data.items()}),
         )
         messages.success(self.request, _("Ok!"))
         return super().form_valid(form)
@@ -722,7 +799,7 @@ class StreamingServerDelete(AdminBase, DeleteView):
             content_object=self.object,
             user=self.request.user,
             action_type="streamingserver.deleted",
-            data={},
+            data=serialize_log_data({}),
         )
         success_url = self.get_success_url()
         self.object.delete()
