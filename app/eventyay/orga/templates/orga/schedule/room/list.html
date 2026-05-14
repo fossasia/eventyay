@@ -30,34 +30,24 @@
             </thead>
             <tbody dragsort-url="{{ request.event.orga_urls.room_settings }}">
                 {% for room in room_list %}
-                    <tr dragsort-id="{{ room.pk }}" {% if room.deleted %}class="text-muted"{% endif %}>
+                    <tr dragsort-id="{{ room.pk }}">
                         <td>
-                            {% if room.deleted %}
-                                <span>{{ room.name }}</span>
-                            {% else %}
-                                <a href="{{ room.urls.edit }}">{{ room.name }}</a>
-                            {% endif %}
+                            <a href="{{ room.urls.edit }}">{{ room.name }}</a>
                         </td>
                         <td class="numeric">
                             {% if room.capacity %}{{ room.capacity }}{% endif %}
                         </td>
                         <td class="text-right">
-                            {% if room.deleted %}
-                                <a href="{{ room.urls.recover }}" class="btn btn-sm btn-success">
-                                    <i class="fa fa-undo"></i> {% translate "Recover" %}
-                                </a>
-                            {% else %}
-                                <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button" title="{% translate "Move item" %}">
-                                    <i class="fa fa-arrows"></i>
-                                </button>
-    
-                                <a href="{{ room.urls.edit }}" class="btn btn-sm btn-info">
-                                    <i class="fa fa-edit"></i>
-                                </a>
-                                <a href="{{ room.urls.delete }}" class="btn btn-sm btn-danger">
-                                    <i class="fa fa-trash"></i>
-                                </a>
-                            {% endif %}
+                            <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button" title="{% translate "Move item" %}">
+                                <i class="fa fa-arrows"></i>
+                            </button>
+
+                            <a href="{{ room.urls.edit }}" class="btn btn-sm btn-info">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                            <a href="{{ room.urls.delete }}" class="btn btn-sm btn-danger">
+                                <i class="fa fa-trash"></i>
+                            </a>
                         </td>
                     </tr>
                 {% empty %}

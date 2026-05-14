@@ -501,10 +501,7 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
     template_namespace = 'orga/schedule'
 
     def get_queryset(self):
-        # Filter out soft-deleted rooms to sync with video component,
-        # but allow them for recovery and listing
-        if self.action in ('list', 'recover'):
-            return self.request.event.rooms.all()
+        # Filter out soft-deleted rooms to sync with video component
         return self.request.event.rooms.filter(deleted=False)
 
     def get_permission_required(self):
@@ -525,12 +522,4 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         obj.deleted = True
         obj.save(update_fields=['deleted'])
         messages.success(request, _('The selected room has been deleted.'))
-        return redirect(self.get_success_url())
-
-    def recover_handler(self, request, *args, **kwargs):
-        # Use soft delete recovery to sync with video component
-        obj = self.get_object()
-        obj.deleted = False
-        obj.save(update_fields=['deleted'])
-        messages.success(request, _('The selected room has been recovered.'))
         return redirect(self.get_success_url())
