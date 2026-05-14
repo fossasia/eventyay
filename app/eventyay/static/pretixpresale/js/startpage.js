@@ -75,17 +75,21 @@
     }
 
     var emptyText = resultsContainer.dataset.emptyText || 'No matching events';
-    var events = Array.from(document.querySelectorAll('.startpage-event-card')).map(function (card) {
-      var link = card.querySelector('.startpage-event-title a');
-      var date = card.querySelector('.startpage-event-date');
-      var image = card.querySelector('.startpage-event-media img');
-      return {
-        name: (link ? link.textContent.trim() : '') || (card.dataset.eventName || ''),
-        date: date ? date.textContent.trim() : '',
-        url: (link ? link.href : '') || (card.dataset.eventUrl || ''),
-        image: (image ? image.src : '') || (card.dataset.eventImage || '')
-      };
-    });
+    var events = Array.from(document.querySelectorAll('.startpage-event-card'))
+      .filter(function (card) {
+        return card.dataset.excludeFromSearch !== 'true';
+      })
+      .map(function (card) {
+        var link = card.querySelector('.startpage-event-title a');
+        var date = card.querySelector('.startpage-event-date');
+        var image = card.querySelector('.startpage-event-media img');
+        return {
+          name: (link ? link.textContent.trim() : '') || (card.dataset.eventName || ''),
+          date: date ? date.textContent.trim() : '',
+          url: (link ? link.href : '') || (card.dataset.eventUrl || ''),
+          image: (image ? image.src : '') || (card.dataset.eventImage || '')
+        };
+      });
 
     function clearResults() {
       while (resultsContainer.firstChild) {

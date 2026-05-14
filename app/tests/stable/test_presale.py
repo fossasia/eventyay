@@ -140,6 +140,7 @@ class TestPlatformSearch:
         assert 'Visible Search Event' in names
         assert 'Hidden Search Event' in names
 
+
 @pytest.mark.django_db
 class TestStartPageVisibility:
     """Test visibility and search exclusion on the platform start page."""
@@ -170,6 +171,30 @@ class TestStartPageVisibility:
         content = response.content.decode('utf-8')
         assert 'Visible Start Event' in content
         assert 'Hidden Start Event' not in content
+
+    def test_start_page_search_excluded_events_marked_on_event_cards(self, client, organizer, event):
+        """Events excluded from platform search stay listable but carry a flag for nav autocomplete."""
+        listed = Event.objects.create(
+            organizer=organizer,
+            name='ExcludeSearchAutocompleteToken',
+            slug='exclude-search-autocomplete',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            startpage_visible=True,
+            email='exclude-search-auto@example.com',
+        )
+        listed.display_settings['exclude_from_search'] = True
+        listed.save(update_fields=['display_settings'])
+
+        response = client.get('/')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'ExcludeSearchAutocompleteToken' in content
+        assert 'data-exclude-from-search="true"' in content
 
     def test_start_page_search_excludes_hidden_events(self, client, organizer, event):
         """Events excluded from search should not appear in start page search results."""
