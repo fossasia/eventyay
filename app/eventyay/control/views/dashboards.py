@@ -295,6 +295,8 @@ def shop_state_widget(sender, **kwargs):
     is_common = bool(request and request.path.startswith('/common/'))
     label = _('Event is') if is_common else _('Ticket shop is')
     url_name = 'eventyay_common:event.live' if is_common else 'control:event.live'
+    is_test_mode = sender.private_testmode or sender.testmode
+
     if is_common:
         state = (
             _('live (private test mode)')
@@ -315,8 +317,8 @@ def shop_state_widget(sender, **kwargs):
         )
         icon = (
             'fa-check-circle'
-            if sender.live and not sender.testmode and not sender.private_testmode
-            else ('fa-warning' if sender.live else 'fa-times-circle')
+            if sender.live and not is_test_mode
+            else ('fa-warning' if sender.live and is_test_mode else 'fa-times-circle')
         )
         css_class = 'live' if sender.live else 'off'
     else:
@@ -324,20 +326,19 @@ def shop_state_widget(sender, **kwargs):
         state = ticket_status['text']
         icon = ticket_status['icon']
         css_class = ticket_status['class']
+
     return [
         {
             'display_size': 'small',
             'priority': 1000,
-            'content': (
-                '<div class="shopstate">{t1}<br>'
-                '<span class="{cls}"><span class="fa {icon}"></span> {state}</span>'
-                '{t2}</div>'
-            ).format(
+            # We wrapped the inner content in a new span with the color_cls
+            'content': '<div class="shopstate">{t1}<br><span class="{cls}"><span class="{color_cls}"><span class="fa {icon}"></span> {state}</span></span>{t2}</div>'.format(
                 t1=label,
                 t2=_('Click here to change'),
                 state=state,
                 icon=icon,
                 cls=css_class,
+                color_cls='text-warning' if icon == 'fa-warning' else ''
             ),
             'url': reverse(
                 url_name,

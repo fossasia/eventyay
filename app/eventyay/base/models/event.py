@@ -2776,8 +2776,12 @@ class Event(
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule
 
-        if not hasattr(self, 'cfp'):
-            CfP.objects.create(event=self, default_type=self._get_default_submission_type())
+        try:
+            cfp = self.cfp
+        except CfP.DoesNotExist:
+            cfp = CfP.objects.create(
+                event=self, default_type=self._get_default_submission_type()
+            )
 
         with scope(event=self):
             if not self.schedules.filter(version__isnull=True).exists():
@@ -2790,13 +2794,13 @@ class Event(
             if not self.review_phases.all().exists():
                 from eventyay.base.models import ReviewPhase
 
-                cfp_deadline = self.cfp.deadline
+                cfp_deadline = cfp.deadline
                 rp = ReviewPhase.objects.create(
                     event=self,
                     name=_('Review'),
                     start=cfp_deadline,
                     end=self.datetime_from - relativedelta(months=-3),
-                    is_active=bool(not cfp_deadline or cfp_deadline < now()),
+                    is_active=False,
                     position=0,
                 )
                 ReviewPhase.objects.create(
