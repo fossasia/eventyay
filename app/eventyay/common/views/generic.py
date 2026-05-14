@@ -147,7 +147,6 @@ CRUDHandlerMap = {
     'create': {'get': 'form_view', 'post': 'form_handler'},
     'update': {'get': 'form_view', 'post': 'form_handler'},
     'delete': {'get': 'delete_view', 'post': 'delete_handler'},
-    'recover': {'get': 'recover_handler', 'post': 'recover_handler'},
 }
 
 
@@ -305,7 +304,7 @@ class CRUDView(PaginationMixin, Filterable, View):
     def get_success_url(self):
         if next_url := get_next_url(self.request):
             return next_url
-        if self.action in ('delete', 'recover') or self.detail_is_update:
+        if self.action == 'delete' or self.detail_is_update:
             return self.reverse('list')
         return self.reverse('detail', instance=self.object)
 
@@ -449,8 +448,6 @@ class CRUDView(PaginationMixin, Filterable, View):
             return f'{url_base}/edit/'
         if action == 'delete':
             return f'{url_base}/delete/'
-        if action == 'recover':
-            return f'{url_base}/recover/'
 
     @classonlymethod
     def get_urls(cls, url_base, url_name, namespace=None, actions=None):

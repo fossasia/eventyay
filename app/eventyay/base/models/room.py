@@ -237,14 +237,12 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
             'create': can_change_event_settings,
             'update': can_change_event_settings,
             'delete': can_change_event_settings,
-            'recover': can_change_event_settings,
         }
 
     class urls(EventUrls):
         """URL patterns for room views."""
         settings_base = edit = '{self.event.orga_urls.room_settings}{self.pk}/'
         delete = '{settings_base}delete/'
-        recover = '{settings_base}recover/'
 
     def __str__(self) -> str:
         return str(self.name)
