@@ -12,6 +12,11 @@ SECRET_CONTEXT = 'eventyay.socialauth.secret'
 
 
 def is_encrypted_secret(value: str) -> bool:
+    """True if ``value`` looks like a Fernet ciphertext (version byte 0x80 after b64 decode).
+
+    This is a shape heuristic, not a cryptographic proof. A rare plaintext secret could
+    in theory match the same pattern; ``encrypt_secret`` would then leave it unchanged.
+    """
     if not value:
         return False
     return _is_probably_fernet_token(value)
@@ -34,8 +39,9 @@ def decrypt_secret(value: str) -> str:
     try:
         return get_fernet().decrypt(value.encode('utf-8')).decode('utf-8')
     except InvalidToken:
-        logger.error(
-            'Failed to decrypt social auth secret token (length %s).',
+        logger.exception(
+            'Failed to decrypt social auth secret (length %s). '
+            'If encryption keys changed, set SOCIALAUTH_SECRET_ENCRYPTION_KEYS and re-encrypt stored secrets.',
             len(value),
         )
         return ''

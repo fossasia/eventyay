@@ -1,3 +1,4 @@
+import copy
 import functools
 import logging
 from typing import cast
@@ -70,9 +71,15 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def list_apps(self, request, provider=None, client_id=None):
         apps = super().list_apps(request, provider=provider, client_id=client_id)
+        # Do not mutate instances from the parent: allauth may cache SocialApp rows;
+        # in-place decryption could later be persisted as plaintext on save.
+        out = []
         for app in apps:
-            app.secret = decrypt_secret(app.secret)
-        return apps
+            clone = copy.copy(app)
+            clone.secret = decrypt_secret(app.secret)
+            out.append(clone)
+        return out
+
     # https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
     def get_requests_session(self):
         dj_request = cast(HttpRequest, self.request)

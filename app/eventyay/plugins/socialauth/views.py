@@ -137,6 +137,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             safe_config['secret'] = ''
             safe_login_providers[provider] = safe_config
         context['login_providers'] = safe_login_providers
+        # ``login_providers`` still holds ciphertext; only used here for server-side flags.
         context['any_preferred'] = any(
             p.get('state', False) and p.get('is_preferred', False) for p in login_providers.values()
         )
