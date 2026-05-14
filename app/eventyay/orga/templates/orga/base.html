@@ -198,6 +198,9 @@
                                         {% elif request.organizer %}
                                             <span class="context-name font-weight-bold">{{ request.organizer.name }}</span>
                                             <span class="context-meta">{% translate "Organizer account" %}</span>
+                                        {% else %}
+                                            <span class="context-name font-weight-bold">{% translate "Dashboard" %}</span>
+                                            <span class="context-meta">{% translate "All events" %}</span>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -467,7 +470,7 @@
                 {% else %}  {# elif request.organizer #}
                     {% has_event_perm "base.view_any_organizer" request.user request request as can_see_organizer_lists %}
                     {% if can_see_organizer_lists %}
-                        <a class="nav-link" href="{% url "eventyay_common:dashboard" %}">
+                        <a class="nav-link" href="{% url 'eventyay_common:dashboard' %}">
                             <i class="fa fa-calendar-o"></i>
                             <span>{% translate "Events" %}</span>
                         </a>

@@ -10,8 +10,8 @@ from django_scopes import scope
 @pytest.mark.parametrize("test_user", ("orga", "speaker", "None"))
 @pytest.mark.django_db
 def test_main_dashboard_access(orga_user, orga_client, speaker, event, test_user):
-    """Regression: orga:event.list was removed; main dashboard must remain accessible."""
-    url = reverse("eventyay_common:dashboard")
+    '''Regression: orga:event.list was removed; main dashboard must remain accessible.'''
+    url = reverse('eventyay_common:dashboard')
     if test_user == "speaker":
         orga_client.force_login(speaker)
     elif test_user == "None":
@@ -19,9 +19,9 @@ def test_main_dashboard_access(orga_user, orga_client, speaker, event, test_user
 
     response = orga_client.get(url, follow=True)
 
-    if test_user == "None":
+    if test_user == 'None':
         current_url = response.redirect_chain[-1][0]
-        assert "login" in current_url
+        assert 'login' in current_url
     else:
         assert response.status_code == 200
 
