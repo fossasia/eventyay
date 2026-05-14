@@ -170,6 +170,8 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 self.fields.pop('description', None)
             if not self.event.cfp.public_image:
                 self.fields.pop('image', None)
+            if not self.event.cfp.public_content_locale:
+                self.fields.pop('content_locale', None)
 
     @extend_schema_field(list[str])
     def get_speakers(self, obj):
