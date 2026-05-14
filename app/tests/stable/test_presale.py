@@ -196,3 +196,29 @@ class TestStartPageVisibility:
         content = response.content.decode('utf-8')
         assert 'Visible Search Event' in content
         assert 'Hidden Search Event' not in content
+
+    def test_start_page_search_finds_events_not_listed_on_start_page(self, client, organizer, event):
+        """Search matches live events by name even when they are not start-page-visible."""
+        event.name = 'Listed Event'
+        event.save(update_fields=['name'])
+
+        Event.objects.create(
+            organizer=organizer,
+            name='OffStart UniqueQueryToken',
+            slug='off-start-search',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            startpage_visible=False,
+            startpage_featured=False,
+            email='off-start@example.com',
+        )
+
+        response = client.get('/?q=UniqueQueryToken')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'OffStart UniqueQueryToken' in content
+        assert 'Listed Event' not in content
