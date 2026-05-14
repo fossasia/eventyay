@@ -5,17 +5,15 @@ from django.db import migrations
 
 def migrate_meta_noindex(apps, schema_editor):
     Event_SettingsStore = apps.get_model('base', 'Event_SettingsStore')
+    _TRUTHY_VALUES = frozenset({'True', 'true', '"True"', '"true"', '1', 'yes', 'on', '"1"', '"yes"', '"on"'})
     for setting in Event_SettingsStore.objects.filter(key='meta_noindex'):
-        if setting.value in ('True', 'true', '"True"', '"true"'):
+        if setting.value in _TRUTHY_VALUES:
             event = setting.object
             if event.display_settings is None:
                 event.display_settings = {}
-            # Only update if not already migrated (avoids overwriting a deliberate True already set)
             if event.display_settings.get('meta_noindex') is not True:
                 event.display_settings['meta_noindex'] = True
                 event.save(update_fields=['display_settings'])
-
-        # We can also delete the old setting
         setting.delete()
 
 

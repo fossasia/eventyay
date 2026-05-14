@@ -409,12 +409,15 @@ class EventUpdate(
 
     @transaction.atomic
     def form_valid(self, form):
-        self._save_decoupled(self.sform)
-        self.sform.save()
+        if self.sform.has_changed():
+            self._save_decoupled(self.sform)
+            self.sform.save()
         if self.pubform.has_changed():
             self.pubform.save()
-        self.header_links_formset.save()
-        self.footer_links_formset.save()
+        if self.header_links_formset.has_changed():
+            self.header_links_formset.save()
+        if self.footer_links_formset.has_changed():
+            self.footer_links_formset.save()
         # Keep event model timezone in sync with settings
         if 'timezone' in self.sform.cleaned_data:
             self.object.timezone = self.sform.cleaned_data['timezone']

@@ -80,7 +80,7 @@ class TestEventPages:
             live=True,
             email='hidden@example.com',
         )
-        hidden_event.display_settings['exclude_from_start_page'] = True
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_start_page': True}
         hidden_event.save(update_fields=['display_settings'])
 
         response = client.get(f'/{organizer.slug}/')
@@ -130,7 +130,7 @@ class TestPlatformSearch:
             live=True,
             email='hidden-search@example.com',
         )
-        hidden_event.display_settings['exclude_from_search'] = True
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_search': True}
         hidden_event.save(update_fields=['display_settings'])
 
         response = organizer_client.get('/common/events/search/?query=Search')
@@ -163,7 +163,7 @@ class TestStartPageVisibility:
             startpage_visible=True,
             email='hidden-start@example.com',
         )
-        hidden_event.display_settings['exclude_from_start_page'] = True
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_start_page': True}
         hidden_event.save(update_fields=['display_settings'])
 
         response = client.get('/')
@@ -187,7 +187,7 @@ class TestStartPageVisibility:
             startpage_visible=True,
             email='exclude-search-auto@example.com',
         )
-        listed.display_settings['exclude_from_search'] = True
+        listed.display_settings = {**(listed.display_settings or {}), 'exclude_from_search': True}
         listed.save(update_fields=['display_settings'])
 
         response = client.get('/')
@@ -213,7 +213,7 @@ class TestStartPageVisibility:
             live=True,
             email='hidden-search@example.com',
         )
-        hidden_event.display_settings['exclude_from_search'] = True
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_search': True}
         hidden_event.save(update_fields=['display_settings'])
 
         response = client.get('/?q=Search')
