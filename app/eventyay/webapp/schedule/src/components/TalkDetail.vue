@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-talk-detail
-	.talk-wrapper(v-if="resolvedTalk")
+	.talk-wrapper(v-if="talkDetailReady")
 		.talk
 			.talk-header(:class="{'has-actions': talkExportOptions.length || loggedIn}")
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
@@ -160,6 +160,7 @@ export default {
 			starrersExpanded: false,
 			fetchedApiContent: null,
 			fetchedSubmission: null,
+			apiContentLoaded: false,
 		}
 	},
 	computed: {
@@ -263,6 +264,9 @@ export default {
 		effectiveApiContent() {
 			return this.apiContent || this.fetchedApiContent
 		},
+		talkDetailReady() {
+			return this.resolvedTalk && (this.effectiveApiContent || this.apiContentLoaded || !this.computedApiBaseUrl)
+		},
 		computedApiBaseUrl() {
 			if (this.remoteApiUrl) return this.remoteApiUrl
 			if (!this.baseUrl) return null
@@ -309,6 +313,7 @@ export default {
 			handler() {
 				this.fetchedApiContent = null
 				this.fetchedSubmission = null
+				this.apiContentLoaded = false
 			}
 		},
 		resolvedTalk: {
@@ -402,10 +407,16 @@ export default {
 			await this.loadStarrers({ limit: this.starrersExpanded ? 0 : this.inlineStarrersLimit })
 		},
 		async fetchApiContent() {
-			if (this.apiContent || this.fetchedApiContent !== null) return
-			if (!this.computedApiBaseUrl) return
+			if (this.apiContent || this.fetchedApiContent !== null || this.apiContentLoaded) return
+			if (!this.computedApiBaseUrl) {
+				this.apiContentLoaded = true
+				return
+			}
 			const id = this.resolvedTalk?.id || this.talkId
-			if (!id) return
+			if (!id) {
+				this.apiContentLoaded = true
+				return
+			}
 			try {
 				const url = `${this.computedApiBaseUrl}submissions/${id}/?expand=answers.question,resources`
 				const response = await fetch(url)
@@ -415,6 +426,8 @@ export default {
 				if (!this.talk && !this.scheduleData) this.fetchedSubmission = data
 			} catch {
 				// silently ignore network / auth errors
+			} finally {
+				this.apiContentLoaded = true
 			}
 		}
 	}
