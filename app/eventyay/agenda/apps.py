@@ -2,6 +2,7 @@ import logging
 from contextlib import suppress
 
 from django.apps import AppConfig
+from django.conf import settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +21,12 @@ class AgendaConfig(AppConfig):
                 sender.schedules.filter(version__isnull=False)
                 .values_list('version', flat=True)
             )
-            keys_to_delete = [f'eagenda:meta:{sender.pk}:{v}' for v in all_versions]
+            language_codes = [code for code, _name in settings.LANGUAGES]
+            keys_to_delete = []
+            for version in all_versions:
+                keys_to_delete.extend(f'eagenda:meta:{sender.pk}:{version}:{code}' for code in language_codes)
+                keys_to_delete.append(f'eagenda:meta:{sender.pk}:{version}')
+            keys_to_delete.extend(f'eagenda:exporters:{sender.pk}:{schedule.version}:{code}' for code in language_codes)
             keys_to_delete.append(f'eagenda:exporters:{sender.pk}:{schedule.version}')
             cache.delete_many(keys_to_delete)
 

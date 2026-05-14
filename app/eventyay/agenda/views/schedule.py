@@ -17,7 +17,7 @@ from django.urls import resolve, reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
 from django_context_decorator import context
@@ -325,7 +325,8 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         # Cache the entire meta JSON for released schedules (avoids DB + signal dispatch per request).
         # WIP schedules are never cached so organiser previews are always fresh.
         if version:
-            meta_cache_key = f'eagenda:meta:{self.request.event.pk}:{version}'
+            language = get_language() or ''
+            meta_cache_key = f'eagenda:meta:{self.request.event.pk}:{version}:{language}'
             cached_meta = cache.get(meta_cache_key)
             if cached_meta is not None:
                 ctx['schedule_meta_json'] = cached_meta
