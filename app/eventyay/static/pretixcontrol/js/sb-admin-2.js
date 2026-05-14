@@ -14,9 +14,8 @@ $(function () {
 
     const $body = $('body');
     const $sidebar = $('.sidebar');
- toggleSidebar();    const $navbar = $('.navbar');
-    const $pageWrapper = $('#page-wrapper');
-    
+    const $navbar = $('.navbar');
+
     function getNavbarHeight() {
         return $navbar.outerHeight() || 50;
     }
@@ -114,9 +113,7 @@ $(function () {
         function stopPropagationHandler(e) {
             e.stopPropagation();
         }
-        [$sidebar, $pageWrapper].forEach(function($el) {
-            $el.on('wheel', stopPropagationHandler);
-            $el.on('touchmove', stopPropagationHandler);
-        });
+        $sidebar.on('wheel', stopPropagationHandler);
+        $sidebar.on('touchmove', stopPropagationHandler);
     }
 });
