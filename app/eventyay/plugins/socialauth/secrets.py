@@ -8,15 +8,13 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-SECRET_PREFIX = 'enc:v1:'
 SECRET_CONTEXT = 'eventyay.socialauth.secret'
 
 
 def is_encrypted_secret(value: str) -> bool:
-    if not value or not value.startswith(SECRET_PREFIX):
+    if not value:
         return False
-    token = value.removeprefix(SECRET_PREFIX)
-    return _is_probably_fernet_token(token)
+    return _is_probably_fernet_token(value)
 
 
 def encrypt_secret(value: str) -> str:
@@ -26,23 +24,21 @@ def encrypt_secret(value: str) -> str:
         return value
 
     token = get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
-    return f'{SECRET_PREFIX}{token}'
+    return token
 
 
 def decrypt_secret(value: str) -> str:
     if not value or not is_encrypted_secret(value):
         return value
 
-    token = value.removeprefix(SECRET_PREFIX)
     try:
-        return get_fernet().decrypt(token.encode('utf-8')).decode('utf-8')
+        return get_fernet().decrypt(value.encode('utf-8')).decode('utf-8')
     except InvalidToken:
         logger.error(
-            'Failed to decrypt social auth secret token with prefix %s and token length %s.',
-            SECRET_PREFIX,
-            len(token),
+            'Failed to decrypt social auth secret token (length %s).',
+            len(value),
         )
-        return value
+        return ''
 
 
 @functools.lru_cache(maxsize=1)

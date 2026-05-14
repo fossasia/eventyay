@@ -1,11 +1,14 @@
 import re
+from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
 from allauth.socialaccount.models import SocialApp
+from cryptography.fernet import InvalidToken
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
+from django.views.generic import View
 
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
@@ -374,3 +377,49 @@ def test_socialapp_secret_is_decrypted_for_runtime_use(rf):
 
     assert len(apps) == 1
     assert apps[0].secret == secret
+
+
+def test_decrypt_secret_returns_empty_on_invalid_token():
+    from eventyay.plugins.socialauth import secrets as secrets_mod
+
+    fake_fernet = MagicMock()
+    fake_fernet.decrypt.side_effect = InvalidToken()
+    with (
+        patch.object(secrets_mod, 'is_encrypted_secret', return_value=True),
+        patch.object(secrets_mod, 'get_fernet', return_value=fake_fernet),
+    ):
+        assert secrets_mod.decrypt_secret('gAAAAAinvalid') == ''
+
+
+def test_social_login_view_get_context_tolerates_non_mapping_login_providers():
+    view = object.__new__(SocialLoginView)
+    View.__init__(view)
+
+    class DummySettings:
+        def get(self, key, as_type=None):
+            if key == 'login_providers':
+                return None
+            return {}
+
+    view.gs = type('Gs', (), {'settings': DummySettings()})()
+    ctx = view.get_context_data()
+    assert ctx['login_providers'] == {}
+    assert ctx['any_preferred'] is False
+
+
+@pytest.mark.django_db
+def test_socialapp_secret_data_migration_encrypts_plaintext():
+    import importlib
+
+    from django.apps import apps as django_apps
+    from django.db import connection
+
+    SocialApp.objects.create(provider='github', client_id='cid', secret='plain-secret-value')
+    mod = importlib.import_module(
+        'eventyay.plugins.socialauth.migrations.0001_encrypt_existing_socialapp_secrets'
+    )
+    with connection.schema_editor() as schema_editor:
+        mod.encrypt_plaintext_socialapp_secrets(django_apps, schema_editor)
+    row = SocialApp.objects.get(provider='github')
+    assert is_encrypted_secret(row.secret)
+    assert decrypt_secret(row.secret) == 'plain-secret-value'

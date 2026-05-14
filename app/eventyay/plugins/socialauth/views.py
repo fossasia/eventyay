@@ -128,7 +128,8 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
+        raw = self.gs.settings.get('login_providers', as_type=dict)
+        login_providers = raw if isinstance(raw, dict) else {}
         safe_login_providers = {}
         for provider, provider_config in login_providers.items():
             safe_config = dict(provider_config)
@@ -143,7 +144,14 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
+        raw = self.gs.settings.get('login_providers', as_type=dict)
+        if not isinstance(raw, dict):
+            raw = {}
+        try:
+            login_providers = LoginProviders.model_validate(raw).model_dump()
+        except ValidationError:
+            login_providers = LoginProviders.model_validate({}).model_dump()
+
         setting_state = request.POST.get('save_credentials', '').lower()
 
         self._apply_preferred_provider(request, login_providers)
