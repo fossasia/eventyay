@@ -13,7 +13,7 @@
 		.header
 			.drag
 			.name Name
-		SlickList.tbody(v-if="rooms", :list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
+		SlickList.tbody(v-if="rooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(
 				v-for="(room, index) of rooms",
 				:index="index",
@@ -94,10 +94,9 @@ export default {
 		},
 		async onListSort(newList) {
 			if (this.search) return
-			const previousRooms = this.rooms
-			this.rooms = newList
+			const previousRooms = [...this.rooms]
 			try {
-				this.rooms = await api.call('room.config.reorder', this.rooms.map(room => room.id))
+				await api.call('room.config.reorder', newList.map(room => room.id))
 			} catch (e) {
 				this.rooms = previousRooms
 				console.error(e)
