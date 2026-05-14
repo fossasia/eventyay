@@ -1,16 +1,11 @@
 {% extends "pretixcontrol/event/settings_base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% load static %}
 {% load rich_text %}
 {% load sendmail_extras %}
 
 {% block title %}
     {% translate "Mail Editor" %}
-{% endblock %}
-
-{% block custom_header %}
-    {{ block.super }}
 {% endblock %}
 
 {% block inside %}

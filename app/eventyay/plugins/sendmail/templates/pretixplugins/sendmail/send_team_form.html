@@ -1,7 +1,6 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% load static %}
 
 {% block title %}{% translate "Email editor" %}{% endblock %}
 
@@ -61,8 +60,4 @@
         </button>
     </div>
 </form>
-{% endblock %}
-
-{% block custom_header %}
-    {{ block.super }}
 {% endblock %}
