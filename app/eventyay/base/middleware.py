@@ -266,7 +266,16 @@ class SecurityMiddleware(MiddlewareMixin):
         external_img_src = get_external_image_csp_sources(request)
         gs = global_settings_object(request)
         if gs.settings.leaflet_tiles:
-            img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+            try:
+                img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+            except (ValueError, IndexError):
+                pass
+        else:
+            img_src.extend([
+                'https://a.tile.openstreetmap.org',
+                'https://b.tile.openstreetmap.org',
+                'https://c.tile.openstreetmap.org',
+            ])
 
         h = {
             'default-src': ['{static}'],

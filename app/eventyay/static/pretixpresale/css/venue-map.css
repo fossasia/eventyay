@@ -1,0 +1,33 @@
+.public-geodata-group {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.public-geodata-map {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.public-geodata-map .leaflet-control-zoom-in,
+.public-geodata-map .leaflet-control-zoom-out {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    text-indent: 0;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .public-geodata-group {
+        height: 250px;
+    }
+}

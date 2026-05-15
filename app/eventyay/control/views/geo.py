@@ -1,5 +1,5 @@
 import logging
-from urllib.parse import quote
+from urllib.parse import quote_plus
 
 import requests
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,13 +9,17 @@ from django.views.generic.base import View
 
 from eventyay.base.settings import GlobalSettingsObject
 
+
 logger = logging.getLogger(__name__)
 
 
 class GeoCodeView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         q = self.request.GET.get('q')
-        cd = cache.get('geocode:{}'.format(q))
+        if not q:
+            return JsonResponse({'success': False, 'results': []}, status=200)
+
+        cd = cache.get(f'geocode:{q}')
         if cd:
             return JsonResponse({'success': True, 'results': cd}, status=200)
 
@@ -26,19 +30,20 @@ class GeoCodeView(LoginRequiredMixin, View):
             elif gs.settings.mapquest_apikey:
                 res = self._use_mapquest(q)
             else:
-                return JsonResponse({'success': False, 'results': []}, status=200)
-        except IOError:
+                res = self._use_nominatim(q)
+        except (requests.RequestException, TypeError, ValueError, KeyError, IndexError):
             logger.exception('Geocoding failed')
             return JsonResponse({'success': False, 'results': []}, status=200)
 
-        cache.set('geocode:{}'.format(q), res, timeout=3600 * 6)
+        cache.set(f'geocode:{q}', res, timeout=3600 * 6)
         return JsonResponse({'success': True, 'results': res}, status=200)
 
     def _use_opencage(self, q):
         gs = GlobalSettingsObject()
 
         r = requests.get(
-            'https://api.opencagedata.com/geocode/v1/json?q={}&key={}'.format(quote(q), gs.settings.opencagedata_apikey)
+            f'https://api.opencagedata.com/geocode/v1/json?q={quote_plus(q)}&key={gs.settings.opencagedata_apikey}',
+            timeout=10,
         )
         r.raise_for_status()
         d = r.json()
@@ -56,9 +61,8 @@ class GeoCodeView(LoginRequiredMixin, View):
         gs = GlobalSettingsObject()
 
         r = requests.get(
-            'https://www.mapquestapi.com/geocoding/v1/address?location={}&key={}'.format(
-                quote(q), gs.settings.mapquest_apikey
-            )
+            f'https://www.mapquestapi.com/geocoding/v1/address?location={quote_plus(q)}&key={gs.settings.mapquest_apikey}',
+            timeout=10,
         )
         r.raise_for_status()
         d = r.json()
@@ -71,3 +75,27 @@ class GeoCodeView(LoginRequiredMixin, View):
             for r in d['results']
         ]
         return res
+
+    def _use_nominatim(self, q):
+        r = requests.get(
+            'https://nominatim.openstreetmap.org/search',
+            params={
+                'q': q,
+                'format': 'jsonv2',
+                'limit': 5,
+            },
+            headers={
+                'User-Agent': 'eventyay geocoder',
+            },
+            timeout=10,
+        )
+        r.raise_for_status()
+        d = r.json()
+        return [
+            {
+                'formatted': result['display_name'],
+                'lat': float(result['lat']),
+                'lon': float(result['lon']),
+            }
+            for result in d
+        ]

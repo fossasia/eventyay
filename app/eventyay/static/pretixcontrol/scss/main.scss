@@ -27,6 +27,13 @@
     line-height: 1.8em;
 }
 
+/* Keep date picker overlays above Leaflet controls in settings forms. */
+.bootstrap-datetimepicker-widget.dropdown-menu,
+.datepicker.dropdown-menu,
+.datepicker.datepicker-dropdown {
+    z-index: 1101;
+}
+
 footer {
     text-align: center;
     padding: 10px 0;
