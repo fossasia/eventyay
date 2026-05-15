@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 from eventyay.common.text.phrases import CALL_FOR_SPEAKER_LOGIN_BTN_LABELS
+from eventyay.eventyay_common.permissions import user_has_ticket_dashboard_access
 from eventyay.orga.signals import html_head, nav_event, nav_event_settings, nav_global
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
@@ -60,19 +61,8 @@ def orga_events(request):
         return context
 
     event = request.event
-    context['has_ticket_access'] = request.user.has_event_permission(
-        event.organizer,
-        event,
-        (
-            'can_view_orders',
-            'can_change_orders',
-            'can_change_items',
-            'can_change_event_settings',
-            'can_checkin_orders',
-            'can_view_vouchers',
-            'can_change_vouchers',
-        ),
-        request=request,
+    context['has_ticket_access'] = user_has_ticket_dashboard_access(
+        request.user, event.organizer, event, request=request
     )
 
     _nav_event = []

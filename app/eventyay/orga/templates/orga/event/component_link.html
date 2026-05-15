@@ -26,18 +26,7 @@
 </div>
 
 {% if request.event and not has_ticket_access %}
-<dialog id="ticket-permission-dialog" aria-labelledby="ticket-perm-title">
-    <div style="padding: 2rem 2rem 1.5rem; max-width: 380px; text-align: center;">
-        <p style="margin: 0 0 1rem; font-size: 2.5rem; color: #d9534f; line-height: 1;">
-            <i class="fa fa-lock" aria-hidden="true"></i>
-        </p>
-        <h3 id="ticket-perm-title" style="margin: 0 0 0.75rem; font-size: 1.15rem; font-weight: 600;">{% translate "Permission Required" %}</h3>
-        <p style="margin: 0 0 1.5rem; line-height: 1.5; color: #555;">
-            {% translate "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
-        </p>
-        <button type="button" class="btn btn-primary" style="min-width: 90px;"
-                onclick="this.closest('dialog').close()">{% translate "Ok" %}</button>
-    </div>
-</dialog>
-<script defer src="{% static 'common/js/modalDialog.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/dashboard.css' %}">
+    {% include "eventyay_common/includes/ticket_permission_dialog.html" with dialog_title_id="ticket-perm-title" %}
+    <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
 {% endif %}

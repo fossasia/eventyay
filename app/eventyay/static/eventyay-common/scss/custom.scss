@@ -163,45 +163,53 @@
             }
         }
     }
+}
 
-    /* Ticket “Permission Required” modal (stacked card; also mirrored in dashboard.css for dev without compress). */
-    .modal-card-stacked-permission {
-        margin: 50px auto 0;
-        width: 90%;
-        max-width: 460px;
-        background: #fff;
-        border-radius: $border-radius-large;
-        box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
-        padding: 36px 32px 32px;
-        text-align: center;
+/* Ticket “Permission Required” dialog (native <dialog>); mirrored in dashboard.css for dev without compress. */
+.modal-card-stacked-permission {
+    margin: 50px auto 0;
+    width: 90%;
+    max-width: 460px;
+    background: #fff;
+    border-radius: $border-radius-large;
+    box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
+    padding: 36px 32px 32px;
+    text-align: center;
 
-        &__icon {
-            margin: 0 0 18px;
+    &__icon {
+        margin: 0 0 18px;
 
-            .fa {
-                font-size: 52px;
-                color: $brand-danger;
-                line-height: 1;
-                vertical-align: middle;
-            }
-        }
-
-        h3 {
-            margin: 0 0 12px;
-            font-size: ($font-size-base * 1.25);
-            font-weight: 600;
-        }
-
-        &__message {
-            margin: 0 0 24px;
-            line-height: 1.5;
-            color: $text-color;
-        }
-
-        .btn-primary {
-            min-width: 100px;
+        .fa {
+            font-size: 52px;
+            color: $brand-danger;
+            line-height: 1;
+            vertical-align: middle;
         }
     }
+
+    h3 {
+        margin: 0 0 12px;
+        font-size: ($font-size-base * 1.25);
+        font-weight: 600;
+    }
+
+    &__message {
+        margin: 0 0 24px;
+        line-height: 1.5;
+        color: $text-color;
+    }
+
+    .btn-primary {
+        min-width: 100px;
+    }
+}
+
+dialog#ticket-permission-dialog .modal-card-stacked-permission {
+    margin: 0;
+    width: auto;
+    max-width: 380px;
+    box-shadow: none;
+    border-radius: 0;
 }
 
 @media (min-width: $screen-md-min){

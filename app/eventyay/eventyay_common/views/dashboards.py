@@ -50,6 +50,7 @@ from eventyay.helpers.daterange import daterange
 from eventyay.helpers.plugin_enable import is_video_enabled
 
 from ...base.models.orders import CancellationRequest
+from ..permissions import user_has_ticket_dashboard_access
 from ..utils import EventCreatedFor, get_subevent
 
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
@@ -394,19 +395,8 @@ class EventWidgetGenerator:
 
         Users without ticket permissions see a modal trigger instead of a link.
         """
-        has_ticket_access = request.user.has_event_permission(
-            event.organizer,
-            event,
-            (
-                'can_view_orders',
-                'can_change_orders',
-                'can_change_items',
-                'can_change_event_settings',
-                'can_checkin_orders',
-                'can_view_vouchers',
-                'can_change_vouchers',
-            ),
-            request=request,
+        has_ticket_access = user_has_ticket_dashboard_access(
+            request.user, event.organizer, event, request=request
         )
         if has_ticket_access:
             ticket_url = reverse(

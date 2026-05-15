@@ -29,11 +29,7 @@
     }
 }
 
-/*
- * Native <dialog> styling for the ticket "Permission Required" modal.
- * Mirrors the orga-path dialog appearance so both paths look identical.
- * Loaded directly (not through django-compressor) so it is always current.
- */
+/* Native <dialog> shell for ticket permission modal */
 dialog#ticket-permission-dialog {
     border: none;
     padding: 0;
@@ -59,4 +55,51 @@ dialog#ticket-permission-dialog::backdrop {
 @keyframes ticket-dialog-fade-in {
     from { opacity: 0; }
     to   { opacity: 1; }
+}
+
+/* Stacked permission card (mirrors eventyay-common/scss/custom.scss) */
+.modal-card-stacked-permission {
+    margin: 50px auto 0;
+    width: 90%;
+    max-width: 460px;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.07);
+    padding: 36px 32px 32px;
+    text-align: center;
+}
+
+dialog#ticket-permission-dialog .modal-card-stacked-permission {
+    margin: 0;
+    width: auto;
+    max-width: 380px;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.modal-card-stacked-permission__icon {
+    margin: 0 0 18px;
+}
+
+.modal-card-stacked-permission__icon .fa {
+    font-size: 52px;
+    color: #d9534f;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.modal-card-stacked-permission h3 {
+    margin: 0 0 12px;
+    font-size: 1.25em;
+    font-weight: 600;
+}
+
+.modal-card-stacked-permission__message {
+    margin: 0 0 24px;
+    line-height: 1.5;
+    color: #333;
+}
+
+.modal-card-stacked-permission .btn-primary {
+    min-width: 100px;
 }
