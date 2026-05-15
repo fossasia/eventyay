@@ -387,6 +387,9 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
     seat = InlineSeatSerializer(read_only=True)
     country = CompatibleCountryField(source='*')
     attendee_name = serializers.CharField(required=False)
+    validity_mode = serializers.CharField(source='product.validity_mode', read_only=True, default=None)
+    validity_fixed_from = serializers.DateTimeField(source='product.validity_fixed_from', read_only=True, default=None)
+    validity_fixed_until = serializers.DateTimeField(source='product.validity_fixed_until', read_only=True, default=None)
 
     class Meta:
         model = OrderPosition
@@ -421,6 +424,9 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
             'pdf_data',
             'seat',
             'canceled',
+            'validity_mode',
+            'validity_fixed_from',
+            'validity_fixed_until',
         )
         read_only_fields = (
             'id',
@@ -443,6 +449,9 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
             'pdf_data',
             'seat',
             'canceled',
+            'validity_mode',
+            'validity_fixed_from',
+            'validity_fixed_until',
         )
 
     def __init__(self, *args, **kwargs):
