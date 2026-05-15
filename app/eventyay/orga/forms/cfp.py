@@ -134,6 +134,9 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
+        # This setting is edited on the Content page only. Remove it here so the Forms page
+        # cannot silently overwrite the stored value on POST.
+        self.fields.pop('allow_gravatar', None)
         self.length_fields = [
             'title',
             'abstract',
