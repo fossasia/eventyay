@@ -3,6 +3,7 @@
 {% load static %}
 {% load thumbnail %}
 
+
 <div class="avatar-form form-group row">
     <label class="col-md-3 col-form-label">{% translate "Profile picture" %}</label>
     <div class="avatar-form-fields col-md-9">
@@ -15,27 +16,22 @@
                     {{ form.get_gravatar.as_field_group }}
                 {% endif %}
             </div>
-            {% if user.avatar_url %}
-                {% with preview_url=user.avatar_url %}
-                {% with show_preview=True %}
-            {% elif user.get_gravatar and request.event.cfp.enable_gravatar %}
-                {% with preview_url="https://www.gravatar.com/avatar/"|add:user.gravatar_parameter|add:"?s=140&d=identicon" %}
-                {% with show_preview=True %}
-            {% else %}
-                {% with preview_url="" %}
-                {% with show_preview=False %}
-            {% endif %}
-            <div class="form-image-preview {% if not show_preview %}d-none{% endif %}">
-                <a href="{{ preview_url }}" data-lightbox="{{ preview_url }}">
+            {% with gravatar_url="https://www.gravatar.com/avatar/"|add:user.gravatar_parameter|add:"?s=140&d=identicon" %}
+            <div class="form-image-preview {% if not user.avatar_url %}{% if not user.get_gravatar or not request.event.cfp.enable_gravatar %}d-none{% endif %}{% endif %}">
+                <a href="{% if user.avatar_url %}{{ user.avatar_url }}{% elif user.get_gravatar and request.event.cfp.enable_gravatar %}{{ gravatar_url }}{% endif %}"
+                   data-lightbox="{% if user.avatar_url %}{{ user.avatar_url }}{% elif user.get_gravatar and request.event.cfp.enable_gravatar %}{{ gravatar_url }}{% endif %}">
+
                     <img loading="lazy"
                          class="avatar"
                          data-gravatar="{{ user.gravatar_parameter }}"
                          data-avatar="{% if user.avatar_url %}{{ user.avatar_url }}{% endif %}"
                          alt="{% translate "Your avatar" %}"
-                         {% if preview_url %}src="{{ preview_url }}"{% endif %} />
+                         {% if user.avatar_url %}src="{{ user.avatar_url }}"
+                         {% elif user.get_gravatar and request.event.cfp.enable_gravatar %}src="{{ gravatar_url }}"{% endif %} />
+
                 </a>
             </div>
-            {% endwith %}{% endwith %}
+            {% endwith %}
         </div>
     </div>
 </div>
