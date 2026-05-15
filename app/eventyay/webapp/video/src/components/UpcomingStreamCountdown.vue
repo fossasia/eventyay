@@ -1,12 +1,12 @@
 <template lang="pug">
 .upcoming-stream-countdown(v-if="shouldShow")
 	.content
-		.label Up Next:
-		.title {{ upcomingStream.title || 'Upcoming Stream' }}
+		.label {{ $t('UpcomingStreamCountdown:label:text') }}
+		.title {{ upcomingStream.title || $t('UpcomingStreamCountdown:default-title:text') }}
 		.separator |
-		.countdown-label in
+		.countdown-label {{ $t('UpcomingStreamCountdown:in:text') }}
 		.countdown {{ formattedCountdown }}
-		.time-label at
+		.time-label {{ $t('UpcomingStreamCountdown:at:text') }}
 		.time {{ formattedStartTime }}
 </template>
 <script>
@@ -202,6 +202,9 @@ export default {
 			font-size: 14px
 			font-weight: 600
 			color: var(--clr-primary-text-dark)
+			overflow: hidden
+			text-overflow: ellipsis
+			max-width: 200px
 		.separator
 			font-size: 13px
 			color: var(--clr-grey-400)
