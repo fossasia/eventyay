@@ -159,6 +159,8 @@ export default {
 		flex-direction: column
 		min-height: 0
 		flex: auto
+		overflow: hidden
+		position: relative
 	.c-media-source-placeholder
 		flex: auto
 	.room-sidebar
