@@ -139,9 +139,21 @@ class SpeakerProfileForm(
             self.fields.pop('avatar_source', None)
             self.fields.pop('avatar_license', None)
             self.fields.pop('get_gravatar', None)
-        elif 'avatar' in self.fields:
-            self.fields['avatar'].required = False
-            self.fields['avatar'].widget.is_required = False
+        else:
+            allow_gravatar = self.event.cfp.settings.get('allow_gravatar', True)
+            avatar_required = self.event.cfp.require_avatar and not allow_gravatar
+            if 'avatar' in self.fields:
+                self.fields['avatar'].required = avatar_required
+                self.fields['avatar'].widget.is_required = avatar_required
+            # Check if Gravatar is allowed by event organizer
+            if not allow_gravatar:
+                self.fields.pop('get_gravatar', None)
+        if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
+            # Replace self.data with a version that uses initial["availabilities"]
+            # in order to have event and timezone data available
+            data = self.data.copy()
+            data['availabilities'] = initial.get('availabilities', [])
+            self.data = data
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
@@ -187,12 +199,17 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
-        if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
+        allow_gravatar = self.event.cfp.settings.get('allow_gravatar', True)
+        has_avatar = bool(data.get('avatar'))
+        has_gravatar = bool(data.get('get_gravatar')) if allow_gravatar else False
+        if self.event.cfp.require_avatar and not has_avatar and not has_gravatar:
+            if allow_gravatar:
+                message = _('Please provide a profile picture or allow us to load your picture from gravatar!')
+            else:
+                message = _('Please provide a profile picture!')
             self.add_error(
                 'avatar',
-                forms.ValidationError(
-                    _('Please provide a profile picture or allow us to load your picture from gravatar!')
-                ),
+                forms.ValidationError(message),
             )
         fullname = self.cleaned_data.get('fullname')
         if (

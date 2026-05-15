@@ -25,7 +25,7 @@
     </div>
     <dialog class="info-dialog" id="info-dialog">
         <div class="alert alert-info">
-            <span>
+            <div>
                 {% translate "A good Call for Participation will engage potential speakers. Remember to include:" %}
                 <br>
                 <ul>
@@ -38,7 +38,7 @@
                     </li>
                     <li>{% translate "Dates and location" %}</li>
                 </ul>
-            </span>
+            </div>
         </div>
     </dialog>
     <form method="post">
@@ -75,6 +75,7 @@
             {{ sform.use_tracks.as_field_group }}
             {{ sform.present_multiple_times.as_field_group }}
             {{ sform.submission_public_review.as_field_group }}
+            {{ sform.allow_gravatar.as_field_group }}
             {{ sform.mail_on_new_submission.as_field_group }}
         </section>
         {% include "orga/includes/submit_row.html" %}

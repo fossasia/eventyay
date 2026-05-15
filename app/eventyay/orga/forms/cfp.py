@@ -63,6 +63,11 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         help_text=_('Allow submitters to share a secret link to their proposal with others.'),
         required=False,
     )
+    allow_gravatar = forms.BooleanField(
+        label=_('Allow Gravatar for speaker profile pictures'),
+        help_text=_('If enabled, speakers can choose to use their Gravatar for profile pictures. If disabled, speakers must upload their own profile pictures.'),
+        required=False,
+    )
     count_length_in = forms.ChoiceField(
         label=_('Count text length in'),
         choices=(('chars', _('Characters')), ('words', _('Words'))),
@@ -77,21 +82,28 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
+        self.initial['allow_gravatar'] = obj.cfp.settings.get('allow_gravatar', True)
 
     def save(self, *args, **kwargs):
+        # Pop control kwargs early so callers can pass persist_cfp/update_count_length_in
         persist_cfp = kwargs.pop('persist_cfp', True)
         update_count_length_in = kwargs.pop('update_count_length_in', True)
 
-        if update_count_length_in:
-            current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
-            if 'count_length_in' in self.cleaned_data:
-                new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
-            else:
-                new_count_length_in = current_count_length_in
+        # Update count length preference if requested
+        current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
+        if update_count_length_in and 'count_length_in' in self.cleaned_data:
+            new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
             self.instance.cfp.settings['count_length_in'] = new_count_length_in
 
+        # Save allow_gravatar only when the checkbox was actually submitted with the form.
+        allow_gravatar_field_name = self.add_prefix('allow_gravatar')
+        if allow_gravatar_field_name in self.data:
+            self.instance.cfp.settings['allow_gravatar'] = self.cleaned_data.get('allow_gravatar', True)
+
+        # Persist CfP settings only if requested by the caller
         if persist_cfp:
             self.instance.cfp.save(update_fields=['settings'])
+
         super().save(*args, **kwargs)
 
     class Meta:
@@ -120,6 +132,9 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
+        # This setting is edited on the Content page only. Remove it here so the Forms page
+        # cannot silently overwrite the stored value on POST.
+        self.fields.pop('allow_gravatar', None)
         self.length_fields = [
             'title',
             'abstract',
