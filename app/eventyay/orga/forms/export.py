@@ -9,6 +9,11 @@ from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from i18nfield.utils import I18nJSONEncoder
+from eventyay.orga.tasks import run_csv_export
+from eventyay.base.models import CachedFile
+from django.utils.timezone import now
+from datetime import timedelta
+from django.http import JsonResponse
 
 from eventyay.base.models import Event
 from eventyay.common.text.phrases import phrases
@@ -142,7 +147,31 @@ class ExportForm(forms.Form):
         if not data:
             return
         if self.cleaned_data.get('export_format') == 'csv':
-            return self.csv_export(data)
+            cf = CachedFile.objects.create(
+                web_download=False,
+                date=now(),
+                expires=now() + timedelta(hours=24),
+            )
+
+            run_csv_export.delay(
+                self.event.id,
+                str(cf.id),
+                f'{self.__class__.__module__}.{self.__class__.__qualname__}',
+                { 
+                    "fields": fields,
+                    "questions": [q.pk for q in questions],
+                    "delimiter": self.cleaned_data.get("data_delimiter"),
+                } 
+            )
+
+            return JsonResponse(
+                {
+                    "status": "processing",
+                    "file_id": str(cf.id),
+                    "message": "Export started. Use file_id to check status.",
+                },
+                status=202
+            )
         return self.json_export(data)
 
     def csv_export(self, data):
