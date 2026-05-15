@@ -143,7 +143,11 @@
                                 </a>
                             </div>
                             {% if current_event %}
-                                {% eventurl current_event 'presale:event.index' as event_public_presale_home %}
+                                {% if cart_namespace %}
+                                    {% eventurl current_event 'presale:event.index' cart_namespace=cart_namespace as event_public_presale_home %}
+                                {% else %}
+                                    {% eventurl current_event 'presale:event.index' as event_public_presale_home %}
+                                {% endif %}
                                 <div class="event-hero-text">
                                     <a class="event-title event-public-text-link" href="{{ event_public_presale_home }}">{{ current_event.name|event_localize }}</a>
                                     {% if current_event.date_from %}

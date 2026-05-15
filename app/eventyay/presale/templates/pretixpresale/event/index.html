@@ -32,9 +32,17 @@
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
     {% if subevent %}
-        {% eventurl request.event 'presale:event.index' subevent=subevent.pk as event_public_presale_home %}
+        {% if cart_namespace %}
+            {% eventurl request.event 'presale:event.index' subevent=subevent.pk cart_namespace=cart_namespace as event_public_presale_home %}
+        {% else %}
+            {% eventurl request.event 'presale:event.index' subevent=subevent.pk as event_public_presale_home %}
+        {% endif %}
     {% else %}
-        {% eventurl request.event 'presale:event.index' as event_public_presale_home %}
+        {% if cart_namespace %}
+            {% eventurl request.event 'presale:event.index' cart_namespace=cart_namespace as event_public_presale_home %}
+        {% else %}
+            {% eventurl request.event 'presale:event.index' as event_public_presale_home %}
+        {% endif %}
     {% endif %}
 
     {% autoescape off %}
