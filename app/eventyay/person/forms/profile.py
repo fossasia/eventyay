@@ -139,9 +139,12 @@ class SpeakerProfileForm(
             self.fields.pop('avatar_source', None)
             self.fields.pop('avatar_license', None)
             self.fields.pop('get_gravatar', None)
-        elif 'avatar' in self.fields:
-            self.fields['avatar'].required = False
-            self.fields['avatar'].widget.is_required = False
+        else:
+            if not self.event.cfp.enable_gravatar:
+                self.fields.pop('get_gravatar', None)
+            if 'avatar' in self.fields:
+                self.fields['avatar'].required = False
+                self.fields['avatar'].widget.is_required = False
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
@@ -188,12 +191,11 @@ class SpeakerProfileForm(
     def clean(self):
         data = super().clean()
         if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
-            self.add_error(
-                'avatar',
-                forms.ValidationError(
-                    _('Please provide a profile picture or allow us to load your picture from gravatar!')
-                ),
-            )
+            if self.event.cfp.enable_gravatar:
+                msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
+            else:
+                msg = _('Please provide a profile picture!')
+            self.add_error('avatar', forms.ValidationError(msg))
         fullname = self.cleaned_data.get('fullname')
         if (
             self.enforce_account_name_match
@@ -228,7 +230,12 @@ class SpeakerProfileForm(
                     self.user.avatar_thumbnail_tiny = None
                     self.user.avatar = value
             elif value is None and user_attribute == 'get_gravatar':
-                self.user.get_gravatar = False
+                # Only reset get_gravatar if the field was actually present on
+                # the form (i.e. Gravatar is enabled). If the field was popped
+                # because enable_gravatar is False, we must not touch the
+                # user's saved preference.
+                if 'get_gravatar' in self.fields:
+                    self.user.get_gravatar = False
             else:
                 setattr(self.user, user_attribute, value)
 

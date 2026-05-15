@@ -11,19 +11,31 @@
                 <div class="avatar-upload hide-label">
                     {{ form.avatar.as_field_group }}
                 </div>
-                {{ form.get_gravatar.as_field_group }}
+                {% if request.event.cfp.enable_gravatar %}
+                    {{ form.get_gravatar.as_field_group }}
+                {% endif %}
             </div>
-            <div class="form-image-preview {% if not user.avatar_url and not user.get_gravatar %}d-none{% endif %}">
-                <a href="{% if user.avatar %}{{ user.avatar|thumbnail:"default" }}{% elif user.avatar_url %}{{ user.avatar_url }}{% endif %}"
-                   data-lightbox="{% if user.avatar_url %}{{ user.avatar_url }}{% endif %}">
+            {% if user.avatar_url %}
+                {% with preview_url=user.avatar_url %}
+                {% with show_preview=True %}
+            {% elif user.get_gravatar and request.event.cfp.enable_gravatar %}
+                {% with preview_url="https://www.gravatar.com/avatar/"|add:user.gravatar_parameter|add:"?s=140&d=identicon" %}
+                {% with show_preview=True %}
+            {% else %}
+                {% with preview_url="" %}
+                {% with show_preview=False %}
+            {% endif %}
+            <div class="form-image-preview {% if not show_preview %}d-none{% endif %}">
+                <a href="{{ preview_url }}" data-lightbox="{{ preview_url }}">
                     <img loading="lazy"
                          class="avatar"
                          data-gravatar="{{ user.gravatar_parameter }}"
                          data-avatar="{% if user.avatar_url %}{{ user.avatar_url }}{% endif %}"
                          alt="{% translate "Your avatar" %}"
-                         {% if user.avatar_url %}src="{{ user.avatar_url }}"{% endif %} />
+                         {% if preview_url %}src="{{ preview_url }}"{% endif %} />
                 </a>
             </div>
+            {% endwith %}{% endwith %}
         </div>
     </div>
 </div>

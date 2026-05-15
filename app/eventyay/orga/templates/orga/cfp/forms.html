@@ -624,14 +624,15 @@
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
-                            <th></th>
-                            <th class="text-center">{% translate "Active" %}</th>
-                            <th class="text-center">{% translate "Required" %}</th>
-                            <th>{% translate "Minimum length" %}</th>
-                            <th>{% translate "Maximum length" %}</th>
-                            <th class="text-center">{% translate "Public" %}</th>
-                            <th class="text-center">{% translate "Answers" %}</th>
-                            <th></th>
+                            <th style="min-width: 150px;"></th>
+                            <th class="text-center" style="width: 80px;">{% translate "Active" %}</th>
+                            <th class="text-center" style="width: 120px;">{% translate "Required" %}</th>
+                            <th style="width: 90px;">{% translate "Minimum length" %}</th>
+                            <th style="width: 90px;">{% translate "Maximum length" %}</th>
+                            <th class="text-center" style="width: 200px;">{% translate "Settings" %}</th>
+                            <th class="text-center" style="width: 80px;">{% translate "Public" %}</th>
+                            <th class="text-center" style="width: 80px;">{% translate "Answers" %}</th>
+                            <th style="width: 110px;"></th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
@@ -657,13 +658,15 @@
                                 <span id="fullname-required-help" class="sr-only">{% translate "Full Name is always required and cannot be changed." %}</span>
                             </td>
                             <td></td>
-                            <td></td>
+                            <td class="text-center"></td>
+                            <td class="text-center"></td>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always public' %}">
                                     <input type="checkbox" checked disabled aria-label="{% translate 'Full Name always public' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>
+
                             <td class="text-center">{{ field_counts.name }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -700,6 +703,7 @@
                             </td>
                             <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
+                            <td class="text-center"></td>
                             <td class="text-center">
                                 <label class="toggle-switch" aria-label="{% translate 'Toggle public state for Biography' %}">
                                     <input type="checkbox" name="{{ sform.cfp_public_biography.html_name }}" {% if sform.cfp_public_biography.value %}checked{% endif %}
@@ -707,6 +711,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>
+
                             <td class="text-center">{{ field_counts.biography }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -744,12 +749,20 @@
                             <td></td>
                             <td></td>
                             <td class="text-center">
+                                <span class="mr-1">{% translate "Enable Gravatar" %}</span>
+                                <label class="toggle-switch" data-field-id="{{ sform.cfp_enable_gravatar.auto_id }}" aria-label="{% translate 'Enable Gravatar' %}" title="{% translate 'Enable Gravatar' %}">
+                                    {{ sform.cfp_enable_gravatar }}
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-center">
                                 <label class="toggle-switch" aria-label="{% translate 'Toggle public state for Profile picture' %}">
                                     <input type="checkbox" name="{{ sform.cfp_public_avatar.html_name }}" {% if sform.cfp_public_avatar.value %}checked{% endif %}
                                         aria-label="{% translate 'Public toggle for Profile picture' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>
+
                             <td class="text-center">{{ field_counts.avatar }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -786,6 +799,7 @@
                             </td>
                             <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <td class="text-center"></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.avatar_source }}</td>
                             <td class="text-right">
@@ -823,6 +837,7 @@
                             </td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                            <td class="text-center"></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.avatar_license }}</td>
                             <td class="text-right">
@@ -860,6 +875,7 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-center"></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.availabilities }}</td>
                             <td class="text-right">
@@ -896,6 +912,7 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-center"></td>
                             <td></td>
                             <td class="text-center">{{ field_counts.additional_speaker }}</td>
                             <td class="text-right">
@@ -935,6 +952,7 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center"></td>
                                 <td class="text-center">
                                     <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
                                         data-field="is_public"

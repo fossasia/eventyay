@@ -209,10 +209,9 @@ def get_startpage_events(request: HttpRequest):
     search_query = request.GET.get('q', '').strip()
     with scopes_disabled():
         qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
+        qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
         if search_query:
             qs = qs.filter(name__icontains=search_query)
-        else:
-            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
 
         return [event for event in qs.order_by('date_from') if not event.has_component_testmode]
 
@@ -301,7 +300,15 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https:',
                 'blob:',
             ],
-            'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com']
+            'img-src': [
+                '{static}',
+                '{media}',
+                'data:',
+                'https://*.stripe.com',
+                'https://twemoji.maxcdn.com',
+                'https://www.gravatar.com',
+                'https://secure.gravatar.com',
+            ]
             + external_img_src
             + img_src,
             'font-src': [
