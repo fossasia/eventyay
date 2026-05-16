@@ -147,7 +147,19 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'content_locale',
             'fullname',
         ]
-        self.public_fields = ['title', 'abstract', 'description', 'image', 'slides', 'fullname', 'biography', 'avatar']
+        self.public_fields = [
+            'title',
+            'abstract',
+            'description',
+            'track',
+            'duration',
+            'content_locale',
+            'image',
+            'slides',
+            'fullname',
+            'biography',
+            'avatar',
+        ]
         for attribute in self.length_fields:
             field_name = f'cfp_{attribute}_min_length'
             self.fields[field_name] = forms.IntegerField(
@@ -249,7 +261,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
         self.instance.cfp.fields['slides']['max_count'] = self.cleaned_data.get('cfp_slides_max_count') or 1
         for key in self.public_fields:
-            if key in {'title', 'fullname'}:
+            if key in {'title', 'track', 'duration', 'fullname'}:
                 self.instance.cfp.fields[key]['public'] = True
             else:
                 self.instance.cfp.fields[key]['public'] = bool(self.cleaned_data.get(f'cfp_public_{key}'))

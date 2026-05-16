@@ -221,6 +221,7 @@ class Schedule(PretalxModel):
             .prefetch_related('submission__speakers')
             .filter(
                 room__isnull=False,
+                room__deleted=False,
                 start__isnull=False,
                 is_visible=True,
                 submission__isnull=False,
@@ -230,7 +231,7 @@ class Schedule(PretalxModel):
 
     @cached_property
     def breaks(self):
-        return self.talks.select_related('room').filter(submission__isnull=True)
+        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False)
 
     @cached_property
     def slots(self):
@@ -335,7 +336,9 @@ class Schedule(PretalxModel):
                 result['canceled_talks'] += old_by_submission[entry.submission]
             else:
                 new, canceled, moved = self._handle_submission_move(
-                    entry.submission, old_slots, new_slots,
+                    entry.submission,
+                    old_slots,
+                    new_slots,
                     all_old_slots=old_by_submission.get(entry.submission, []),
                     all_new_slots=new_by_submission.get(entry.submission, []),
                 )
@@ -350,7 +353,9 @@ class Schedule(PretalxModel):
                 result['new_talks'] += new_by_submission[entry.submission]
             else:
                 new, canceled, moved = self._handle_submission_move(
-                    entry.submission, old_slots, new_slots,
+                    entry.submission,
+                    old_slots,
+                    new_slots,
                     all_old_slots=old_by_submission.get(entry.submission, []),
                     all_new_slots=new_by_submission.get(entry.submission, []),
                 )
@@ -486,7 +491,12 @@ class Schedule(PretalxModel):
 
     def get_all_talk_warnings(self, ids=None, filter_updated=None):
         talks = (
-            self.talks.filter(submission__isnull=False, start__isnull=False, room__isnull=False)
+            self.talks.filter(
+                submission__isnull=False,
+                start__isnull=False,
+                room__isnull=False,
+                room__deleted=False,
+            )
             .select_related(
                 'submission',
                 'room',
@@ -528,7 +538,7 @@ class Schedule(PretalxModel):
             # room_overlap warning — matching the per-talk ``.exists()`` query
             # at get_talk_warnings() which scans all TalkSlots in the room.
             extra_slots_qs = (
-                self.talks.filter(start__isnull=False, room__isnull=False)
+                self.talks.filter(start__isnull=False, room__isnull=False, room__deleted=False)
                 .select_related('submission')
                 .prefetch_related('submission__speakers')
             )
@@ -747,16 +757,20 @@ class Schedule(PretalxModel):
         *,
         include_featured_speaker_metadata=True,
         include_qrcodes=False,
+        respect_public_visibility=True,
     ):
         """Build schedule JSON for widgets and exports.
 
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
+        ``respect_public_visibility``: when False, keeps organizer-only field data.
         """
         talks = self.talks.all()
         if not all_talks:
             talks = self.talks.filter(is_visible=True)
+        if respect_public_visibility:
+            talks = talks.filter(room__isnull=False).exclude(room__deleted=True)
         if filter_updated:
             talks = talks.filter(updated__gte=filter_updated)
         talks = talks.select_related(
@@ -778,6 +792,7 @@ class Schedule(PretalxModel):
         popularity_enabled = bool(self.event.feature_flags.get('session_popularity_enabled', False))
         show_popularity_calendar = bool(self.event.feature_flags.get('session_popularity_show_on_calendar', True))
         show_popularity_list = bool(self.event.feature_flags.get('session_popularity_show_on_list', True))
+        show_content_locale = not respect_public_visibility or self.event.cfp.public_content_locale
 
         talk_list = list(talks)
         fav_counts: dict[str, int] = {}
@@ -817,11 +832,13 @@ class Schedule(PretalxModel):
                 ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
             if timezone.is_naive(ss_end):
                 ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
-            stream_schedules_by_room[ss.room_id].append((
-                ss_start.astimezone(UTC),
-                ss_end.astimezone(UTC),
-                ss,
-            ))
+            stream_schedules_by_room[ss.room_id].append(
+                (
+                    ss_start.astimezone(UTC),
+                    ss_end.astimezone(UTC),
+                    ss,
+                )
+            )
         rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
@@ -831,7 +848,7 @@ class Schedule(PretalxModel):
             'timezone': self.event.timezone,
             'event_start': self.event.date_from.isoformat(),
             'event_end': self.event.date_to.isoformat(),
-            'content_locales': self.event.content_locales,
+            'content_locales': self.event.content_locales if show_content_locale else [],
             'feature_flags': {
                 'session_popularity_enabled': popularity_enabled,
                 'session_popularity_show_on_calendar': show_popularity_calendar,
@@ -879,7 +896,7 @@ class Schedule(PretalxModel):
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                     'tags': talk.submission.get_tag(),
                     'session_type': talk.submission.submission_type.name,
-                    'content_locale': talk.submission.content_locale,
+                    'content_locale': talk.submission.content_locale if show_content_locale else '',
                 }
                 # Attach stream URL if a stream schedule overlaps this slot.
                 if talk.room_id and talk.start and talk.end:
