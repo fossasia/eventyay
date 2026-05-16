@@ -333,6 +333,9 @@
 	"RichTextEditor:strike:tooltip": "Strike",
 	"RichTextEditor:underline:tooltip": "Underline",
 	"RichTextEditor:full-width:tooltip": "Expand to full page width",
+	"RichTextEditor:upload:error": "Failed to upload the image",
+	"RichTextEditor:upload:error-title": "Image Upload Error",
+	"RichTextEditor:upload:error-ok": "OK",
 	"Room:recordings:tooltip": "View recordings",
 	"Room:sidebar:tabs-header:chat": "Chat",
 	"Room:sidebar:tabs-header:questions": "Questions",
@@ -424,5 +427,9 @@
 	"UserActionPrompt:action.unsilence:question": "Unsilence this user?",
 	"UserListPage:placeholder:text": "Click on a person on the left to view more details or get in touch with them!",
 	"UserListPage:staffed-exhibitions:text": "This person represents",
-	"UserSearch:placeholder:text": "search users"
+	"UserSearch:placeholder:text": "search users",
+	"UpcomingStreamCountdown:at:text": "at",
+	"UpcomingStreamCountdown:default-title:text": "Upcoming Stream",
+	"UpcomingStreamCountdown:in:text": "in",
+	"UpcomingStreamCountdown:label:text": "Up Next:"
 }

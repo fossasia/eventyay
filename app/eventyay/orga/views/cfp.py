@@ -63,6 +63,7 @@ from eventyay.base.models import (
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
+    TalkQuestionVariant,
     SubmissionType,
     SubmitterAccessCode,
     Track,
@@ -420,7 +421,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                 )
 
         extra_forms = [
-            form for form in self.formset.extra_forms if form.has_changed and not self.formset._should_delete_form(form)
+            form for form in self.formset.extra_forms if form.has_changed() and not self.formset._should_delete_form(form)
         ]
         for form in extra_forms:
             form.instance.question = obj
@@ -485,7 +486,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
             )['position__max']
             form.instance.position = (max_position or -1) + 1
 
-        if form.cleaned_data.get('variant') in ('choices', 'multiple_choice'):
+        if form.cleaned_data.get('variant') in ('choices', 'multiple_choice', 'select'):
             changed_options = [form.changed_data for form in self.formset if form.has_changed()]
             if form.cleaned_data.get('options') and changed_options:
                 messages.error(
@@ -493,6 +494,24 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                     _('You cannot change the options and upload an option file at the same time.'),
                 )
                 return self.form_invalid(form)
+
+            if not form.cleaned_data.get('options'):
+                if not self.formset.is_valid():
+                    return self.form_invalid(form)
+
+                remaining_options = sum(
+                    1 for f in self.formset.initial_forms if f not in self.formset.deleted_forms
+                ) + sum(
+                    1 for f in self.formset.extra_forms if f.has_changed() and not self.formset._should_delete_form(f)
+                )
+
+                if remaining_options == 0:
+                    messages.error(
+                        self.request,
+                        _('Please provide at least one option for this question type.'),
+                    )
+                    return self.form_invalid(form)
+
         result = super().form_valid(form)
 
         if is_new:
@@ -518,6 +537,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         if form.cleaned_data.get('variant') in (
             'choices',
             'multiple_choice',
+            'select',
         ) and not form.cleaned_data.get('options'):
             formset = self.save_formset(self.instance)
             if not formset:
@@ -626,6 +646,35 @@ class CfPQuestionToggle(PermissionRequired, View):
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
 
         return JsonResponse({'success': True, 'field': field, 'value': getattr(question, field)})
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class QuestionOptionsAjax(EventPermissionRequired, View):
+    """AJAX endpoint to fetch question options for dependency configuration."""
+    permission_required = 'base.orga_view_talkquestion'
+
+    def get(self, request, *args, **kwargs):
+        question_id = kwargs.get('question')
+        try:
+            question_obj = TalkQuestion.all_objects.get(event=request.event, id=question_id)
+            if question_obj.variant == TalkQuestionVariant.BOOLEAN:
+                options = [
+                    {'id': 'True', 'answer': str(_('Yes'))},
+                    {'id': 'False', 'answer': str(_('No'))}
+                ]
+            else:
+                options = []
+                for option in question_obj.options.all():
+                    options.append({
+                        'id': str(option.pk),
+                        'answer': str(option.answer)
+                    })
+            return JsonResponse({
+                'variant': question_obj.variant,
+                'options': options
+            })
+        except TalkQuestion.DoesNotExist:
+            return JsonResponse({'error': str(_('Question not found'))}, status=404)
 
 
 class CfPQuestionRemind(EventPermissionRequired, FormView):

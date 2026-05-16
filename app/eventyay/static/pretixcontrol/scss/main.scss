@@ -1068,13 +1068,6 @@ h1 .label {
     }
 }
 
-#page-wrapper {
-    height: calc(100vh - var(--navbar-height, 50px));
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    contain: content;
-}
-
 @media (min-width: $screen-sm-min) {
     body[data-event] #page-wrapper > .container-fluid {
         margin-top: 8px;
