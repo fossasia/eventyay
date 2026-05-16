@@ -1,0 +1,48 @@
+{% load i18n %}
+
+<dialog id="contact-organizer-dialog" class="contact-organizer-dialog">
+    <div class="contact-modal-card">
+        <button type="button" class="contact-modal-close" id="contact-modal-close"
+                aria-label="{% translate 'Close' %}">
+            <i class="fa fa-times"></i>
+        </button>
+        <div class="contact-modal-icon">
+            <i class="fa fa-envelope-o"></i>
+        </div>
+        <h2 class="contact-modal-title">{% translate "Contact the Organizer" %}</h2>
+        <p class="contact-modal-description">
+            {% translate "Have a question about the event? You can send a message to the organizer." %}
+        </p>
+        <form id="contact-organizer-form" method="post" data-url="{{ contact_url }}">
+            {% csrf_token %}
+            {% if not request.user.is_authenticated %}
+            <div class="contact-form-group">
+                <input type="email" name="email" id="contact-email"
+                       placeholder="{% translate 'Your email address' %}" required
+                       class="contact-form-input">
+            </div>
+            {% endif %}
+            <div class="contact-form-group">
+                <textarea name="message" id="contact-message" rows="4"
+                          placeholder="{% translate "What's your question for the organizer?" %}" required
+                          class="contact-form-textarea"></textarea>
+            </div>
+            <p class="contact-modal-helper">
+                {% if request.user.is_authenticated %}
+                    {% blocktranslate with email=request.user.email %}
+                        The organizer will send replies to {{ email }}.
+                    {% endblocktranslate %}
+                {% else %}
+                    {% translate "The organizer will send replies to the email address you provide above." %}
+                {% endif %}
+            </p>
+            <button type="submit" class="contact-form-submit" id="contact-submit-btn">
+                {% translate "Send Message" %}
+            </button>
+        </form>
+        <div id="contact-success-message" class="contact-success" style="display: none;">
+            <i class="fa fa-check-circle"></i>
+            <p>{% translate "Your message has been sent successfully!" %}</p>
+        </div>
+    </div>
+</dialog>
