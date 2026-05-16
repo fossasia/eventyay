@@ -22,19 +22,19 @@
 
         <div class="panel-body">
             <form method="get" class="row filter-form">
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.event_query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-2 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.event_status layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-2 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.checkin_status layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-2 col-sm-6 col-xs-12 form-group">
                     {% include "eventyay_common/filter_actions.html" %}
                 </div>
             </form>

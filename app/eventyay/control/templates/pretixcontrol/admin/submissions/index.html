@@ -22,25 +22,25 @@
 
         <div class="panel-body">
             <form method="get" class="row filter-form">
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.event_query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.submission_type layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.track layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.tags layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.proposal_state layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
                     {% include "eventyay_common/filter_actions.html" %}
                 </div>
             </form>
