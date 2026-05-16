@@ -494,7 +494,7 @@ DEFAULT_SETTINGS = {
         ),
     },
     'redirect_to_checkout_directly': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
@@ -1621,6 +1621,16 @@ DEFAULT_SETTINGS = {
         'form_kwargs': dict(
             label=_('Sender address'),
             help_text=_('Sender address for outgoing emails'),
+        ),
+    },
+    'mail_reply_to': {
+        'default': None,
+        'type': str,
+        'form_class': forms.EmailField,
+        'serializer_class': serializers.EmailField,
+        'form_kwargs': dict(
+            label=_('Reply-to address'),
+            help_text=_('User replies will be sent to this address.'),
         ),
     },
     'mail_from_name': {

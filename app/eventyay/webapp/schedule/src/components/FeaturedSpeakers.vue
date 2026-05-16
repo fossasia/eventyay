@@ -7,8 +7,8 @@
 				summary.featured-speaker-summary
 					.thumbnail
 						img(
-							v-if="speaker.avatar || speaker.avatar_url",
-							:src="speaker.avatar || speaker.avatar_url",
+							v-if="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
+							:src="speaker.avatar_thumbnail_default || speaker.avatar || speaker.avatar_url",
 							:alt="speaker.name || t.speaker_fallback",
 							loading="lazy"
 						)
@@ -92,6 +92,13 @@ export default {
 			const base = (this.eventUrl || '').replace(/\/?$/, '/')
 			return `${base}speakers/`
 		},
+		trackById() {
+			const schedule = this.scheduleData?.schedule
+			return (schedule?.tracks || []).reduce((acc, track) => {
+				if (track?.id != null) acc[track.id] = track
+				return acc
+			}, {})
+		},
 		featuredSpeakers() {
 			const schedule = this.scheduleData?.schedule
 			const resolvedSessions = this.scheduleData?.sessions || []
@@ -122,10 +129,7 @@ export default {
 				if (s?.code) acc[s.code] = s
 				return acc
 			}, {})
-			const trackById = (schedule.tracks || []).reduce((acc, t) => {
-				if (t?.id != null) acc[t.id] = t
-				return acc
-			}, {})
+			const trackById = this.trackById
 			const roomById = (schedule.rooms || []).reduce((acc, r) => {
 				if (r?.id != null) acc[r.id] = r
 				return acc
@@ -149,20 +153,25 @@ export default {
 				}
 			}
 
+			const normalizedRawSessions = rawTalks
+				.map(normalizeRawTalk)
+				.filter(session => session?.start && session?.end)
+			const sessionsPool = resolvedSessions.length ? resolvedSessions : normalizedRawSessions
+			const sessionsBySpeaker = resolvedSessions.length && this.scheduleData?.sessionsBySpeaker
+				? this.scheduleData.sessionsBySpeaker
+				: sessionsPool
+					.flatMap((session) => (session.speakers || []).map((sp) => [speakerCodeFromAny(sp), session]))
+					.reduce((acc, [code, session]) => {
+						if (!code) return acc
+						if (!acc[code]) acc[code] = []
+						acc[code].push(session)
+						return acc
+					}, {})
+
 			return featured.map(speaker => {
-				let speakerSessions
-				if (resolvedSessions.length) {
-					speakerSessions = resolvedSessions
-						.filter(sess => (sess.speakers || []).some(sp => speakerCodeFromAny(sp) === speaker.code))
-						.slice()
-						.sort((a, b) => (a.start && b.start ? a.start.diff(b.start) : 0))
-				} else {
-					speakerSessions = rawTalks
-						.filter(t => (t?.speakers || []).some(sp => speakerCodeFromAny(sp) === speaker.code))
-						.map(normalizeRawTalk)
-						.filter(t => t?.start && t?.end)
-						.sort((a, b) => a.start.diff(b.start))
-				}
+				const speakerSessions = (sessionsBySpeaker[speaker.code] || [])
+					.slice()
+					.sort((a, b) => (a.start && b.start ? a.start.diff(b.start) : 0))
 				return {
 					...speaker,
 					sessions: speakerSessions,
@@ -189,10 +198,9 @@ export default {
 			this.onSessionLinkClick(event, session)
 		},
 		getSessionStyle(session) {
-			const schedule = this.scheduleData?.schedule
 			const track = typeof session?.track === 'object'
 				? session.track
-				: (schedule?.tracks || []).find(t => t?.id === session?.track)
+				: this.trackById[session?.track]
 			return {
 				'--session-color': track?.color || 'var(--pretalx-clr-primary)'
 			}
