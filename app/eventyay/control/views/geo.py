@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from urllib.parse import quote_plus
 
@@ -19,7 +20,9 @@ class GeoCodeView(LoginRequiredMixin, View):
         if not q:
             return JsonResponse({'success': False, 'results': []}, status=200)
 
-        cd = cache.get(f'geocode:{q}')
+        q_hash = hashlib.sha256(q.encode('utf-8')).hexdigest()
+        cache_key = f'geocode:{q_hash}'
+        cd = cache.get(cache_key)
         if cd:
             return JsonResponse({'success': True, 'results': cd}, status=200)
 
@@ -31,11 +34,11 @@ class GeoCodeView(LoginRequiredMixin, View):
                 res = self._use_mapquest(q)
             else:
                 res = self._use_nominatim(q)
-        except (requests.RequestException, TypeError, ValueError, KeyError, IndexError):
+        except requests.RequestException:
             logger.exception('Geocoding failed')
             return JsonResponse({'success': False, 'results': []}, status=200)
 
-        cache.set(f'geocode:{q}', res, timeout=3600 * 6)
+        cache.set(cache_key, res, timeout=3600 * 6)
         return JsonResponse({'success': True, 'results': res}, status=200)
 
     def _use_opencage(self, q):
@@ -85,7 +88,7 @@ class GeoCodeView(LoginRequiredMixin, View):
                 'limit': 5,
             },
             headers={
-                'User-Agent': 'eventyay geocoder',
+                'User-Agent': 'eventyay/1.0 (https://eventyay.com)',
             },
             timeout=10,
         )

@@ -160,6 +160,9 @@ $(function () {
         var $grp = $(".geodata-group", this);
         var tiles = $grp.attr("data-tiles");
         var attrib = $grp.attr("data-attrib");
+        
+        var center;
+
         if (tiles) {
             var $map = $("<div>");
             var $mapWrap = $("<div>").addClass("col-md-9 col-md-offset-3").append($map);
@@ -204,7 +207,7 @@ $(function () {
                 $notifications.attr("data-notify", "confirm-pin");
             });
 
-            function center(zoom) {
+            center = function(zoom) {
                 var p = getpoint();
                 if (p) {
                     if (zoom) {
@@ -224,15 +227,14 @@ $(function () {
                         map.removeLayer(marker);
                     }
                 }
-            }
+            };
 
             center(DEFAULT_ZOOM);
         } else {
             if ($notifications.length) {
                 $notifications.appendTo($fallbackLabel);
             }
-            function center(zoom) {
-            }
+            center = function(zoom) {};
         }
 
         if (!getpoint() && cleanup($location.val()) !== "") {

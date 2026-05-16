@@ -28,7 +28,7 @@
     {% endcompress %}
 
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
-    {% if ev.location or ev.geo_lat is not None and ev.geo_lon is not None %}
+    {% if ev.geo_lat is not None and ev.geo_lon is not None %}
         {% compress css %}
             <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
