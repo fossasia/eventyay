@@ -505,6 +505,22 @@ def answered_choice_question(choice_question, submission, speaker):
 
 
 @pytest.fixture
+def select_question(event):
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question="Which session format do you prefer?",
+            variant=QuestionVariant.SELECT,
+            target="submission",
+            question_required=QuestionRequired.OPTIONAL,
+            position=10,
+        )
+        for answer in ("In-person", "Remote", "Pre-recorded"):
+            AnswerOption.objects.create(question=question, answer=answer)
+    return question
+
+
+@pytest.fixture
 def multiple_choice_question(event):
     with scope(event=event):
         question = Question.objects.create(
