@@ -88,5 +88,6 @@
     {% endblock %}
 {% endblock %}
 {% block custom_header %}
+    {{ block.super }}
     <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}

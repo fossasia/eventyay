@@ -189,6 +189,8 @@ class LegacySubmissionSerializer(I18nAwareModelSerializer):
                 resource.pk for resource in instance.resources.all() if instance.event.cfp.is_resource_public(resource)
             }
             data['resources'] = [resource for resource in resources if resource.get('id') in public_resource_ids]
+        if not instance.event.cfp.public_content_locale:
+            data.pop('content_locale', None)
         return data
 
     def answers_queryset(self, obj):

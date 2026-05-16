@@ -106,7 +106,7 @@ class ScheduleData(BaseExporter):
         }
 
         for talk in talks:
-            if not talk.start or not talk.room or (not talk.submission and not self.with_breaks):
+            if not talk.start or not talk.room or talk.room.deleted or (not talk.submission and not self.with_breaks):
                 continue
             talk_date = talk.local_start.date()
             if talk.local_start.hour < 3 and talk_date != event.date_from:
@@ -135,7 +135,7 @@ class ScheduleData(BaseExporter):
         for day in data.values():
             day['rooms'] = sorted(
                 day['rooms'].values(),
-                key=lambda room: (room['position'] if room['position'] is not None else room['id']),
+                key=lambda room: room['position'] if room['position'] is not None else room['id'],
             )
         return tuple(data.values())
 
@@ -230,7 +230,12 @@ class FrabJsonExporter(ScheduleData):
                 for talk in room['talks']:
                     if not talk.submission_id:
                         continue
-                    if self.favs_retrieve and self.talk_ids and talk.submission and talk.submission.code not in self.talk_ids:
+                    if (
+                        self.favs_retrieve
+                        and self.talk_ids
+                        and talk.submission
+                        and talk.submission.code not in self.talk_ids
+                    ):
                         continue
                     submission_ids.add(talk.submission_id)
 
@@ -253,8 +258,9 @@ class FrabJsonExporter(ScheduleData):
 
         return {
             profile.user_id: profile
-            for profile in SpeakerProfile.objects.filter(event=self.event, user_id__in=speaker_ids)
-            .select_related('user', 'event')
+            for profile in SpeakerProfile.objects.filter(event=self.event, user_id__in=speaker_ids).select_related(
+                'user', 'event'
+            )
         }
 
     def get_speaker_profile(self, person):
@@ -269,10 +275,10 @@ class FrabJsonExporter(ScheduleData):
         return {
             'url': self.metadata['url'],
             'version': schedule.version,
-                'base_url': self.metadata['base_url'],
-                'conference': {
-                    'acronym': self.event.slug,
-                    'title': localize_event_text(self.event.name),
+            'base_url': self.metadata['base_url'],
+            'conference': {
+                'acronym': self.event.slug,
+                'title': localize_event_text(self.event.name),
                 'start': self.event.date_from.strftime('%Y-%m-%d'),
                 'end': self.event.date_to.strftime('%Y-%m-%d'),
                 'daysCount': self.event.duration,
@@ -324,15 +330,17 @@ class FrabJsonExporter(ScheduleData):
         persons = []
         for person in talk.submission.speakers.all():
             profile = self.get_speaker_profile(person)
-            persons.append({
-                'code': person.code,
-                'name': person.get_display_name(),
-                'avatar': person.get_avatar_url(self.event) or None,
-                'biography': localize_event_text(profile.biography),
-                'public_name': person.get_display_name(),  # deprecated
-                'guid': person.guid,
-                'url': profile.urls.public.full(),
-            })
+            persons.append(
+                {
+                    'code': person.code,
+                    'name': person.get_display_name(),
+                    'avatar': person.get_avatar_url(self.event) or None,
+                    'biography': localize_event_text(profile.biography),
+                    'public_name': person.get_display_name(),  # deprecated
+                    'guid': person.guid,
+                    'url': profile.urls.public.full(),
+                }
+            )
         return {
             'guid': talk.uuid,
             'code': talk.submission.code,
@@ -346,11 +354,7 @@ class FrabJsonExporter(ScheduleData):
             'url': talk.submission.urls.public.full(),
             'title': localize_event_text(talk.submission.title),
             'subtitle': '',
-            'track': (
-                localize_event_text(talk.submission.track.name)
-                if talk.submission.track
-                else None
-            ),
+            'track': (localize_event_text(talk.submission.track.name) if talk.submission.track else None),
             'type': localize_event_text(talk.submission.submission_type.name),
             'language': talk.submission.content_locale,
             'abstract': localize_event_text(talk.submission.abstract),
