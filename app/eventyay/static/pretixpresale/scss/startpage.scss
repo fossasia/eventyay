@@ -250,7 +250,45 @@ nav.navbar .navbar-top-links li.startpage-search-nav .startpage-search-form {
   outline-offset: 2px;
   padding: 8px 14px 8px 34px;
   transition: width 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  width: 220px;
+}
+
+@media (min-width: 768px){
+  .startpage-search input{
+    width: 160px;
+  }
+
+  .startpage-search:focus-within input {
+    width: 160px;
+  }
+  
+  nav.navbar.navbar-inverse #button-sudo {
+    font-size: 13px;
+    padding: 2px;
+    margin-left: 7px; 
+  }
+
+  .navbar-top-links #profile-dropdown > summary,
+  .navbar-top-links #language-dropdown > summary {
+    padding: 2px;
+    min-height: 40px;
+    margin-left: 10px;
+    font-size: 13px;
+  }
+
+  nav.navbar .navbar-top-links li a{
+    padding: 15px 5px;
+  }
+
+}
+
+@media (min-width: 1024px){
+  .startpage-search input{
+    width: 220px;
+  }
+
+  .startpage-search:focus-within input {
+    width: 220px;
+  }
 }
 
 .startpage-search input:hover {
@@ -261,7 +299,6 @@ nav.navbar .navbar-top-links li.startpage-search-nav .startpage-search-form {
   border-color: rgba(255, 255, 255, 0.5);
   outline: 2px solid transparent;
   outline-offset: 2px;
-  width: 330px;
 }
 
 .startpage-search input:focus-visible {
@@ -591,12 +628,67 @@ body.startpage-search-results-page #main-card {
 }
 
 @media (max-width: 767px) {
+  nav.navbar {
+    display: flex;
+    align-items: center;
+  }
+
+  nav.navbar .navbar-header {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  nav.navbar .navbar-top-links{
+    padding: 0;
+  }
+
+  nav.navbar.navbar-inverse #button-sudo {
+    font-size: 13px;
+    padding: 2px;
+    margin-left: 7px;
+    
+  }
+
+  .mobile-profile-name{
+    max-width: 80px;     
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+  
+  nav.navbar .navbar-top-links li a{
+    min-height: auto;
+    font-size: 13px;
+    padding: 5px;
+    font-weight: normal;
+  }
+
+  .navbar-top-links #profile-dropdown > summary,
+  .navbar-top-links #language-dropdown > summary {
+    padding: 2px;
+    min-height: 40px;
+    margin-left: 7px;
+    font-size: 13px;
+  }
+
   .startpage-search input {
-    width: 160px;
+    width: 40px;
+    padding: 8px 14px 8px 30px;
+  }
+
+  .startpage-search-icon-btn {
+    left: 5px;
+  }
+
+  .hidden-xs {
+    display: none !important;
   }
 
   .startpage-search:focus-within input {
-    width: 220px;
+    width: 110px;
   }
 
   .startpage-event-media {

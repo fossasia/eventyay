@@ -12,10 +12,14 @@
                 <i class="fa fa-globe" aria-hidden="true"></i>
                 {% for option in language_options %}
                     {% if option.code|lower == request.LANGUAGE_CODE|lower %}
+<<<<<<< fix/homepage-navbar
+                        <span class="current-locale hidden-xs">{{ option.label }}</span>
+=======
                         <span class="sr-only">{{ option.label }}</span>
                         <span class="hidden-xs current-locale" aria-hidden="true">
                             {{ option.code|slice:':2'|title }}
                         </span>
+>>>>>>> dev
                     {% endif %}
                 {% endfor %}
                 <i class="fa fa-caret-down hidden-xs" aria-hidden="true"></i>
