@@ -67,6 +67,8 @@ class LogMixin:
         # Ensure user is authenticated
         if user and not getattr(user, 'is_authenticated', True):
             user = None
+        if person and not getattr(person, 'is_authenticated', True):
+            person = None
 
         # Auth / token mapping
         kwargs = {}

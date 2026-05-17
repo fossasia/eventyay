@@ -108,6 +108,7 @@ class Schedule(PretalxModel):
 
     class urls(EventUrls):
         """URL patterns for schedule views."""
+
         public = '{self.event.urls.schedule}v/{self.url_version}/'
         widget_data = '{public}widgets/schedule.json'
         nojs = '{public}nojs'
@@ -220,6 +221,7 @@ class Schedule(PretalxModel):
             .prefetch_related('submission__speakers')
             .filter(
                 room__isnull=False,
+                room__deleted=False,
                 start__isnull=False,
                 is_visible=True,
                 submission__isnull=False,
@@ -229,7 +231,7 @@ class Schedule(PretalxModel):
 
     @cached_property
     def breaks(self):
-        return self.talks.select_related('room').filter(submission__isnull=True)
+        return self.talks.select_related('room').filter(submission__isnull=True, room__deleted=False)
 
     @cached_property
     def slots(self):
@@ -334,7 +336,9 @@ class Schedule(PretalxModel):
                 result['canceled_talks'] += old_by_submission[entry.submission]
             else:
                 new, canceled, moved = self._handle_submission_move(
-                    entry.submission, old_slots, new_slots,
+                    entry.submission,
+                    old_slots,
+                    new_slots,
                     all_old_slots=old_by_submission.get(entry.submission, []),
                     all_new_slots=new_by_submission.get(entry.submission, []),
                 )
@@ -349,7 +353,9 @@ class Schedule(PretalxModel):
                 result['new_talks'] += new_by_submission[entry.submission]
             else:
                 new, canceled, moved = self._handle_submission_move(
-                    entry.submission, old_slots, new_slots,
+                    entry.submission,
+                    old_slots,
+                    new_slots,
                     all_old_slots=old_by_submission.get(entry.submission, []),
                     all_new_slots=new_by_submission.get(entry.submission, []),
                 )
@@ -485,7 +491,12 @@ class Schedule(PretalxModel):
 
     def get_all_talk_warnings(self, ids=None, filter_updated=None):
         talks = (
-            self.talks.filter(submission__isnull=False, start__isnull=False, room__isnull=False)
+            self.talks.filter(
+                submission__isnull=False,
+                start__isnull=False,
+                room__isnull=False,
+                room__deleted=False,
+            )
             .select_related(
                 'submission',
                 'room',
@@ -504,7 +515,6 @@ class Schedule(PretalxModel):
         speaker_avails = None
         speaker_profiles = None
         if with_speakers:
-
             speaker_profiles = {
                 profile.user: profile
                 for profile in SpeakerProfile.objects.filter(event=self.event).select_related('user')
@@ -527,17 +537,17 @@ class Schedule(PretalxModel):
             # sessions conflicting with a scheduled break still produce a
             # room_overlap warning — matching the per-talk ``.exists()`` query
             # at get_talk_warnings() which scans all TalkSlots in the room.
-            extra_slots_qs = self.talks.filter(
-                start__isnull=False, room__isnull=False
-            ).select_related('submission').prefetch_related('submission__speakers')
+            extra_slots_qs = (
+                self.talks.filter(start__isnull=False, room__isnull=False, room__deleted=False)
+                .select_related('submission')
+                .prefetch_related('submission__speakers')
+            )
             if is_full_scan:
                 extra_slots_qs = extra_slots_qs.filter(submission__isnull=True)
             else:
                 extra_slots_qs = extra_slots_qs.exclude(pk__in=subset_pks)
             scan_set = talk_list + list(extra_slots_qs)
-            room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(
-                scan_set, subset_pks=subset_pks
-            )
+            room_overlap_ids, speaker_overlaps_by_talk = self._compute_overlap_maps(scan_set, subset_pks=subset_pks)
         else:
             room_overlap_ids, speaker_overlaps_by_talk = set(), {}
         result = {}
@@ -600,13 +610,13 @@ class Schedule(PretalxModel):
             # Full-schedule scan: O(bucket²) pairwise check per room/speaker.
             for entries in by_room.values():
                 for i, (pk_a, start_a, end_a) in enumerate(entries):
-                    for pk_b, start_b, end_b in entries[i + 1:]:
+                    for pk_b, start_b, end_b in entries[i + 1 :]:
                         if is_overlap(start_a, end_a, start_b, end_b):
                             room_overlap_ids.add(pk_a)
                             room_overlap_ids.add(pk_b)
             for speaker_pk, entries in by_speaker.items():
                 for i, (pk_a, start_a, end_a) in enumerate(entries):
-                    for pk_b, start_b, end_b in entries[i + 1:]:
+                    for pk_b, start_b, end_b in entries[i + 1 :]:
                         if is_overlap(start_a, end_a, start_b, end_b):
                             speaker_overlaps_by_talk[pk_a].add(speaker_pk)
                             speaker_overlaps_by_talk[pk_b].add(speaker_pk)
@@ -747,16 +757,20 @@ class Schedule(PretalxModel):
         *,
         include_featured_speaker_metadata=True,
         include_qrcodes=False,
+        respect_public_visibility=True,
     ):
         """Build schedule JSON for widgets and exports.
 
         ``include_featured_speaker_metadata``: when False, clears ``is_featured`` and
         ``featured_position`` on each speaker so clients respect org "show featured sessions"
         without duplicating that logic in the frontend.
+        ``respect_public_visibility``: when False, keeps organizer-only field data.
         """
         talks = self.talks.all()
         if not all_talks:
             talks = self.talks.filter(is_visible=True)
+        if respect_public_visibility:
+            talks = talks.filter(room__isnull=False).exclude(room__deleted=True)
         if filter_updated:
             talks = talks.filter(updated__gte=filter_updated)
         talks = talks.select_related(
@@ -778,6 +792,7 @@ class Schedule(PretalxModel):
         popularity_enabled = bool(self.event.feature_flags.get('session_popularity_enabled', False))
         show_popularity_calendar = bool(self.event.feature_flags.get('session_popularity_show_on_calendar', True))
         show_popularity_list = bool(self.event.feature_flags.get('session_popularity_show_on_list', True))
+        show_content_locale = not respect_public_visibility or self.event.cfp.public_content_locale
 
         talk_list = list(talks)
         fav_counts: dict[str, int] = {}
@@ -817,11 +832,13 @@ class Schedule(PretalxModel):
                 ss_start = timezone.make_aware(ss_start, timezone.get_current_timezone())
             if timezone.is_naive(ss_end):
                 ss_end = timezone.make_aware(ss_end, timezone.get_current_timezone())
-            stream_schedules_by_room[ss.room_id].append((
-                ss_start.astimezone(UTC),
-                ss_end.astimezone(UTC),
-                ss,
-            ))
+            stream_schedules_by_room[ss.room_id].append(
+                (
+                    ss_start.astimezone(UTC),
+                    ss_end.astimezone(UTC),
+                    ss,
+                )
+            )
         rooms: set[Room] = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks: set[Track] = set()
         speakers: set[User] = set()
@@ -831,7 +848,7 @@ class Schedule(PretalxModel):
             'timezone': self.event.timezone,
             'event_start': self.event.date_from.isoformat(),
             'event_end': self.event.date_to.isoformat(),
-            'content_locales': self.event.content_locales,
+            'content_locales': self.event.content_locales if show_content_locale else [],
             'feature_flags': {
                 'session_popularity_enabled': popularity_enabled,
                 'session_popularity_show_on_calendar': show_popularity_calendar,
@@ -839,17 +856,17 @@ class Schedule(PretalxModel):
             },
         }
         show_do_not_record = self.event.cfp.request_do_not_record
+        show_abstract = self.event.cfp.public_abstract
+        show_description = self.event.cfp.public_description
+        show_slides = self.event.cfp.public_slides
+        show_biography = self.event.cfp.public_biography
         base_url = str(self.event.urls.base)
         full_base_url = str(self.event.urls.base.full())
         # Resolve recording providers once; providers are event-level, not per-talk.
         recording_providers = []
         if enrich:
             for __, response in register_recording_provider.send_robust(self.event):
-                if (
-                    response
-                    and not isinstance(response, Exception)
-                    and getattr(response, 'get_recording', None)
-                ):
+                if response and not isinstance(response, Exception) and getattr(response, 'get_recording', None):
                     recording_providers.append(response)
         for talk in talk_list:
             # Only add room if it's not deleted
@@ -863,8 +880,8 @@ class Schedule(PretalxModel):
                     'code': talk.submission.code,
                     'id': talk.id,
                     'title': talk.submission.title,
-                    'abstract': talk.submission.abstract,
-                    'description': talk.submission.description,
+                    'abstract': talk.submission.abstract if show_abstract else '',
+                    'description': talk.submission.description if show_description else '',
                     'speakers': [speaker.code for speaker in talk_speakers],
                     'track': talk.submission.track_id if talk.submission else None,
                     'start': talk.local_start,
@@ -874,14 +891,12 @@ class Schedule(PretalxModel):
                     'updated': talk.updated.isoformat(),
                     'state': talk.submission.state if all_talks else None,
                     'fav_count': (
-                        fav_counts.get(talk.submission.code, 0)
-                        if (popularity_enabled and talk.submission)
-                        else 0
+                        fav_counts.get(talk.submission.code, 0) if (popularity_enabled and talk.submission) else 0
                     ),
                     'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                     'tags': talk.submission.get_tag(),
                     'session_type': talk.submission.submission_type.name,
-                    'content_locale': talk.submission.content_locale,
+                    'content_locale': talk.submission.content_locale if show_content_locale else '',
                 }
                 # Attach stream URL if a stream schedule overlaps this slot.
                 if talk.room_id and talk.start and talk.end:
@@ -912,7 +927,7 @@ class Schedule(PretalxModel):
                             'link': resource.link,
                         }
                         for resource in talk.submission.resources.all()
-                        if resource.resource or resource.link
+                        if (resource.resource or resource.link) and (show_slides or resource.kind != 'slides')
                     ]
                     talk_data['answers'] = [
                         {
@@ -986,14 +1001,15 @@ class Schedule(PretalxModel):
             for room in sorted(rooms, key=lambda r: (r.position if r.position is not None else 9999, r.id))
         ]
 
-        include_avatar = self.event.cfp.request_avatar
+        include_avatar = self.event.cfp.request_avatar and self.event.cfp.public_avatar
         speaker_list = []
         # Prefetch all speaker profiles for this event to avoid N+1 queries
 
         speaker_profiles = {
             profile.user_id: profile
             for profile in SpeakerProfile.objects.filter(
-                event=self.event, user__in=speakers,
+                event=self.event,
+                user__in=speakers,
             ).select_related('user')
         }
         for user in speakers:
@@ -1004,7 +1020,7 @@ class Schedule(PretalxModel):
             speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
-                'biography': getattr(profile, 'biography', ''),
+                'biography': getattr(profile, 'biography', '') if show_biography else '',
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None

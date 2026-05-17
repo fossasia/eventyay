@@ -19,14 +19,35 @@
   }
 }
 
+/* Static read-only view rendered in place of the rich editor for disabled fields */
+.markdown-readonly-view {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border, #dee2e6);
+  border-radius: var(--size-border-radius, 0.25rem);
+  background-color: var(--color-bg-muted, #e9ecef);
+  min-height: 4em;
+  max-height: 20em;
+  white-space: pre-wrap;
+  color: var(--color-text-input, #495057);
+  cursor: not-allowed;
+  overflow-y: auto;
+}
+
 .markdown-toastui-wrapper {
   width: 100%;
   max-width: 100%;
   overflow: visible;
 }
 
+/* Mail settings + sendmail: i18n body fields sit in .preview-panel > .tab-pane > .form-group.
+   Under .form-horizontal, Bootstrap applies row negative margins to that inner .form-group,
+   which stretches the editor and shifts the Toast toolbar vs. other control forms. */
+.form-horizontal .preview-panel .tab-content > .tab-pane > .form-group {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .markdown-toastui .toastui-editor-defaultUI {
-  border-color: var(--color-border);
   border-radius: var(--size-border-radius);
   display: flex;
   flex-direction: column;
