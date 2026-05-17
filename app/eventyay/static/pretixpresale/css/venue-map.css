@@ -1,11 +1,38 @@
+.venue-map-layout {
+    display: flex;
+    padding: 20px 0;
+    gap: 40px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.venue-map-main {
+    flex: 45 1 300px;
+    max-width: 650px;
+}
+
 .public-geodata-group {
-    margin-top: 10px;
+    margin-top: 0;
     border: 1px solid #ddd;
     border-radius: 4px;
     width: 100%;
     height: 400px;
     position: relative;
     overflow: hidden;
+}
+
+.venue-map-details {
+    flex: 55 1 200px;
+}
+
+.venue-map-heading {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.venue-map-main #venue {
+    margin-top: 0;
+    margin-bottom: 16px;
 }
 
 .public-geodata-map {

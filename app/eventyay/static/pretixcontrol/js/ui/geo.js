@@ -76,15 +76,8 @@ $(function () {
                 lon = res.results[0].lon;
                 if ($lat.val() == lat && $lon.val() == lon) {
                     $notifications.attr("data-notify", "");
-                }
-                else if (touched) {
+                } else {
                     $notifications.attr("data-notify", "confirm");
-                }
-                else {
-                    $notifications.attr("data-notify", "");
-                    $lat.val(lat);
-                    $lon.val(lon);
-                    center(DEFAULT_ZOOM);
                 }
             }).fail(function (jqXHR, textStatus, errorThrown) {
                 if (textStatus !== 'abort') {
