@@ -109,22 +109,32 @@ def delete_room(event, room, by_user):
 @database_sync_to_async
 @atomic
 def reorder_rooms(event, id_list, by_user):
+    id_list_str = [str(i) for i in id_list]
+
     def key(r):
         try:
-            return id_list.index(str(r.id)), r.sorting_priority, r.name
-        except Exception:
+            return id_list_str.index(str(r.id)), r.sorting_priority, r.name
+        except ValueError:
             return sys.maxsize, r.sorting_priority, r.name
 
-    all_rooms = list(event.rooms.filter(deleted=False).only('id', 'name', 'sorting_priority'))
+    all_rooms = list(
+        event.rooms.filter(deleted=False).only('id', 'name', 'sorting_priority', 'position')
+    )
     all_rooms.sort(key=key)
     to_update = []
 
     for i, r in enumerate(all_rooms):
+        changed = False
         if i + 1 != r.sorting_priority:
             r.sorting_priority = i + 1
+            changed = True
+        if i != r.position:
+            r.position = i
+            changed = True
+        if changed:
             to_update.append(r)
 
-    Room.objects.bulk_update(to_update, fields=['sorting_priority'])
+    Room.objects.bulk_update(to_update, fields=['sorting_priority', 'position'])
 
     AuditLog.objects.create(
         event_id=event.id,
@@ -133,6 +143,42 @@ def reorder_rooms(event, id_list, by_user):
         data={
             'id_list': id_list,
         },
+    )
+
+
+@atomic
+def normalize_after_priority_change(event, room_id, new_priority):
+    other_rooms = list(
+        event.rooms.filter(deleted=False)
+        .exclude(id=room_id)
+        .only("id", "sorting_priority", "position")
+        .order_by("sorting_priority", "id")
+    )
+    insert_pos = max(0, min(new_priority - 1, len(other_rooms)))
+    actual_priority = insert_pos + 1
+    ordered_all = other_rooms[:insert_pos] + [None] + other_rooms[insert_pos:]
+
+    to_update = []
+    for i, r in enumerate(ordered_all):
+        if r is not None:
+            expected_priority = i + 1
+            expected_position = i
+            changed = False
+            if r.sorting_priority != expected_priority:
+                r.sorting_priority = expected_priority
+                changed = True
+            if r.position != expected_position:
+                r.position = expected_position
+                changed = True
+            if changed:
+                to_update.append(r)
+
+    if to_update:
+        Room.objects.bulk_update(to_update, fields=["sorting_priority", "position"])
+
+    Room.objects.filter(id=room_id).update(
+        sorting_priority=actual_priority,
+        position=actual_priority - 1,
     )
 
 
