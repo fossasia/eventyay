@@ -239,7 +239,7 @@ docs = [
     "sphinxemoji>=0.3.2",
 ]
 lint = [
-    "ruff>=0.15.12",
+    "ruff>=0.15.13",
 ]
 test = [
     "coverage>=7.13.1",
