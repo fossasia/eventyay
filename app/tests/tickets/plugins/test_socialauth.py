@@ -1,4 +1,5 @@
 import re
+import time as import_time
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -8,7 +9,7 @@ from django.urls import reverse
 
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.common.consts import KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
+from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
 from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
 
@@ -76,8 +77,8 @@ def test_failed_email_login_keeps_native_form_expanded(client, preferred_login_p
 
 
 @pytest.mark.django_db
-def test_adapter_post_login_sets_sso_cookie():
-    """post_login() sets the JWT SSO cookie on the redirect response."""
+def test_adapter_post_login_sets_session_fields():
+    """post_login() sets force-login timestamp and long-session flag."""
     user = User.objects.create_user('sso@example.com', 'password')
     request = RequestFactory().post('/accounts/login/', data={})
     request.user = user
@@ -85,7 +86,6 @@ def test_adapter_post_login_sets_sso_cookie():
     request.META['SERVER_NAME'] = 'localhost'
     request.META['SERVER_PORT'] = '80'
     request.host = 'localhost'
-    # Django messages middleware is not run by RequestFactory; attach storage manually.
     setattr(request, '_messages', FallbackStorage(request))
 
     adapter = CustomAccountAdapter()
@@ -100,7 +100,35 @@ def test_adapter_post_login_sets_sso_cookie():
     )
 
     assert response.status_code == 302
-    assert 'sso_token' in response.cookies
+    assert isinstance(request.session[KEY_LAST_FORCE_LOGIN], int)
+    assert abs(import_time.time() - request.session[KEY_LAST_FORCE_LOGIN]) < 5
+    assert request.session[KEY_LONG_SESSION] is False
+
+
+@pytest.mark.django_db
+def test_adapter_post_login_long_session_from_post():
+    """post_login() sets KEY_LONG_SESSION=True when keep_logged_in is in POST data."""
+    user = User.objects.create_user('long@example.com', 'password')
+    request = RequestFactory().post('/accounts/login/', data={'keep_logged_in': '1'})
+    request.user = user
+    request.session = {}
+    request.META['SERVER_NAME'] = 'localhost'
+    request.META['SERVER_PORT'] = '80'
+    request.host = 'localhost'
+    setattr(request, '_messages', FallbackStorage(request))
+
+    adapter = CustomAccountAdapter()
+    adapter.post_login(
+        request,
+        user,
+        email_verification=None,
+        signal_kwargs=None,
+        email=None,
+        signup=False,
+        redirect_url=None,
+    )
+
+    assert request.session[KEY_LONG_SESSION] is True
 
 
 @pytest.mark.django_db
