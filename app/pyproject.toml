@@ -198,7 +198,7 @@ dependencies = [
     "txaio>=25.12.2",
     "typing-extensions>=4.15.0",
     "tzdata>=2025.3",
-    "urllib3>=2.6.3",
+    "urllib3>=2.7.0",
     "urlman>=2.0.3",
     # This library prevents us from being compatible with Python v3.13+.
     "vat-moss-forked>=2020.3.20.0.11.0",
