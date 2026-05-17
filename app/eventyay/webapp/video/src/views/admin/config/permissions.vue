@@ -165,6 +165,9 @@ export default {
 		min-height: 0
 	.searchbox
 		padding: 0 8px 16px 8px
+	.permission-config
+		flex: auto
+		overflow-y: auto
 	.info
 		padding: 16px 16px 0 16px
 		p

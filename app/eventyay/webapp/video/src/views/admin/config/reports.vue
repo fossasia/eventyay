@@ -275,7 +275,7 @@ export default {
 
 		.room-report-item
 			display: flex
-			align-items: flex-end
+			align-items: baseline
 			gap: 16px
 			margin-bottom: 12px
 
