@@ -5,13 +5,13 @@
 	bunt-progress-circular(size="huge", v-if="!error && !config")
 	.error(v-if="error") We could not fetch the current configuration.
 	bunt-tabs(v-if="config")
-		bunt-tab(header="Global", v-scrollbar.y="")
+		bunt-tab(id="global", header="Global", v-scrollbar.y="")
 			.permission-config
 				.info
 					h3 Roles assigned to traits globally
 					p Users receive the following roles if they have the required traits in their token/ticket. Global roles are valid for #[b all rooms].
 				trait-grants(:trait-grants="config.trait_grants", :config="config")
-		bunt-tab(header="Per Room", v-scrollbar.y="")
+		bunt-tab(id="per-room", header="Per Room", v-scrollbar.y="")
 			.permission-config
 				.info
 					h3 Roles assigned to traits #[i per room]
@@ -21,7 +21,7 @@
 				.room-traits(v-for="room of filteredRooms")
 					h4(v-html="$emojify($localize(room.name))")
 					trait-grants(:trait-grants="room.trait_grants", :config="config", @click.stop="", @changed="roomChanged(room)")
-		bunt-tab(header="Roles", v-scrollbar.y="")
+		bunt-tab(id="roles", header="Roles", v-scrollbar.y="")
 			.permission-config
 				.info-wrapper
 					.info
@@ -39,7 +39,7 @@
 					.role-head
 						bunt-input(label="role name", v-model="newRoleName", name="newRoleName")
 						bunt-button.btn-add-role(@click="addRole", :disabled="!newRoleName || newRoleName in config.roles") Add new role
-		bunt-tab(header="On-site")
+		bunt-tab(id="on-site", header="On-site")
 			.permission-config
 				.ui-form-body
 					h3 Traits enabling on-site behaviour
