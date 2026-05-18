@@ -1,4 +1,5 @@
 import logging
+import smtplib
 
 from django.conf import settings
 from django.core.mail import EmailMessage
@@ -63,7 +64,7 @@ class ContactOrganizerView(EventViewMixin, View):
                 reply_to=[sender_email],
             )
             backend.send_messages([email])
-        except Exception:
+        except (smtplib.SMTPException, ConnectionError, OSError):
             logger.exception('Failed to send contact organizer email')
             return JsonResponse(
                 {'success': False, 'error': _('Failed to send message. Please try again later.')},

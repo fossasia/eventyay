@@ -219,7 +219,7 @@
                 {% include "common/powered_by.html" %}
                 {% if current_event %}
                     ·
-                    <a href="#" class="contact-organizer-btn">{% translate "Contact event organizer" %}</a>
+                    <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
                 {% endif %}
                 {% if current_event and current_event.display_settings.imprint_url %}
                     ·
