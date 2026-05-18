@@ -60,13 +60,16 @@ def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
     subevent = get_subevent(request)
 
     widgets = []
-    for r, result in event_dashboard_widgets.send(
-        sender=request.event,
-        subevent=subevent,
-        lazy=False,
-        request=request,
+    if user_has_ticket_dashboard_access(
+        request.user, request.organizer, request.event, request=request
     ):
-        widgets.extend(result)
+        for r, result in event_dashboard_widgets.send(
+            sender=request.event,
+            subevent=subevent,
+            lazy=False,
+            request=request,
+        ):
+            widgets.extend(result)
 
     return JsonResponse({'widgets': widgets})
 

@@ -1,13 +1,13 @@
 {% load i18n %}
 <dialog id="ticket-permission-dialog" aria-labelledby="{{ dialog_title_id|default:'ticket-permission-dialog-title' }}">
-    <form method="dialog" class="modal-card-stacked-permission">
-        <p class="modal-card-stacked-permission__icon">
-            <i class="fa fa-lock" aria-hidden="true"></i>
-        </p>
-        <h3 id="{{ dialog_title_id|default:'ticket-permission-dialog-title' }}">{% trans "Permission Required" %}</h3>
-        <p class="modal-card-stacked-permission__message">
-            {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
-        </p>
-        <button type="submit" class="btn btn-primary">{% trans "Ok" %}</button>
-    </form>
+  <form method="dialog" class="modal-card-stacked-permission">
+    <p class="modal-card-stacked-permission__icon">
+      <i class="fa fa-lock" aria-hidden="true"></i>
+    </p>
+    <h3 id="{{ dialog_title_id|default:'ticket-permission-dialog-title' }}">{% trans "Permission Required" %}</h3>
+    <p class="modal-card-stacked-permission__message">
+      {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
+    </p>
+    <button type="submit" class="btn btn-primary">{% trans "Ok" %}</button>
+  </form>
 </dialog>

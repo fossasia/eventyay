@@ -15,7 +15,7 @@ def talk_only_team(db, organizer, event, user):
     team = Team.objects.create(
         organizer=organizer,
         name='Talk only',
-        all_events=True,
+        all_events=False,
         can_change_submissions=True,
     )
     team.limit_events.add(event)
@@ -79,6 +79,17 @@ def test_event_dashboard_hides_ticket_links_for_talk_only(talk_only_client, orga
         'control:event.index',
         kwargs={'organizer': organizer.slug, 'event': event.slug},
     ) not in content
+
+
+@pytest.mark.django_db
+def test_event_index_widgets_json_empty_for_talk_only(talk_only_client, organizer, event):
+    url = reverse(
+        'eventyay_common:event.index.widgets',
+        kwargs={'organizer': organizer.slug, 'event': event.slug},
+    )
+    response = talk_only_client.get(url)
+    assert response.status_code == 200
+    assert response.json()['widgets'] == []
 
 
 @pytest.mark.django_db

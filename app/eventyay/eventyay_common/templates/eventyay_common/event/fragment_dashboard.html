@@ -20,7 +20,6 @@
     {% include "pretixcontrol/event/fragment_info_box.html" %}
 </div>
 <div class="dashboard custom">
-    {% if has_ticket_access %}
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -32,27 +31,15 @@
                 {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
-                {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% trans "Go to" %}
+                {% if has_ticket_access %}
+                    <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% else %}
+                    <a href="#" data-dialog-target="#ticket-permission-dialog" data-toggle="dialog">{% trans "Tickets Dashboard" %}</a>
+                {% endif %}
             </p>
         </div>
     </div>
-    {% else %}
-    <div class="panel panel-default widget-container widget-small no-padding column">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                {% trans "Tickets" %}
-            </h3>
-        </div>
-        <div class="panel-body">
-            <p>
-                {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
-            </p>
-            <p>
-                {% trans "Go to" %} <a href="#" data-dialog-target="#ticket-permission-dialog" data-toggle="dialog">{% trans "Tickets Dashboard" %}</a>
-            </p>
-        </div>
-    </div>
-    {% endif %}
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
             <h3 class="panel-title">
