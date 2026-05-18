@@ -30,6 +30,7 @@ from eventyay.base.services.room import (
     delete_room,
     end_view,
     get_viewers,
+    normalize_after_priority_change,
     reorder_rooms,
     save_room,
     start_view,
@@ -532,6 +533,16 @@ class RoomModule(BaseModule):
                 old_data=old,
                 by_user=self.consumer.user,
             )
+            if "sorting_priority" in update_fields:
+                await database_sync_to_async(normalize_after_priority_change)(
+                    self.consumer.event,
+                    self.room.id,
+                    self.room.sorting_priority,
+                )
+                await database_sync_to_async(self.room.refresh_from_db)(
+                    fields=["sorting_priority"]
+                )
+                new = RoomConfigSerializer(self.room).data
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:
