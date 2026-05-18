@@ -5,7 +5,7 @@ from io import StringIO
 
 from defusedcsv import csv
 from django import forms
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from i18nfield.utils import I18nJSONEncoder
@@ -109,7 +109,7 @@ class ExportForm(forms.Form):
     def get_data(self, queryset, fields, questions):
         data = []
 
-        for obj in queryset:
+        for obj in queryset.iterator(chunk_size=200):
             object_data = {}
             code = getattr(obj, 'code', None)
             if code:
@@ -138,39 +138,121 @@ class ExportForm(forms.Form):
     def export_data(self):
         fields = [field_name for field_name in self.export_field_names if self.cleaned_data.get(field_name)]
         questions = [question for question in self.questions if self.cleaned_data.get(f'question_{question.pk}')]
-        data = self.get_data(self.get_queryset(), fields, questions)
-        if not data:
+        queryset = self.get_queryset()
+
+        # Optimize DB queries
+        try:
+            queryset = queryset.select_related()
+        except Exception:
+            pass
+
+        try:
+            queryset = queryset.prefetch_related()
+        except Exception:
+            pass
+
+        # Safety limit
+        if queryset.count() > 10000:
+            return HttpResponse(
+                "Export too large. Please narrow filters or use async export."
+            ) 
+
+        if not queryset.exists():
             return
         if self.cleaned_data.get('export_format') == 'csv':
-            return self.csv_export(data)
+            return self.csv_export_stream(queryset, fields, questions)
+
+        data = self.get_data(queryset, fields, questions)
+
+        if not data:
+            return
+
         return self.json_export(data)
 
-    def csv_export(self, data):
+    def csv_export_stream(self, queryset, fields, questions):
+        # NOTE:
+        # This streaming approach reduces memory usage but does not eliminate
+        # heavy database queries or high concurrency load in production.
+        # A background job system (e.g., Celery) would be the proper long-term solution.
+        from django_scopes import scope
+
         delimiters = {
             'newline': '\n',
             'comma': ', ',
         }
         delimiter = delimiters[self.cleaned_data.get('data_delimiter') or 'newline']
 
-        for row in data:
-            for key, value in row.items():
-                if isinstance(value, list):
-                    row[key] = delimiter.join(str(item) for item in value if item is not None)
+        field_labels = {
+            field: str(self.fields[field].label)
+            for field in fields
+        }
 
-        output = StringIO()
-        writer = csv.DictWriter(output, fieldnames=data[0].keys())
-        writer.writeheader()
-        writer.writerows(data)
-        content = output.getvalue()
-        return HttpResponse(
-            content,
-            content_type='text/plain; charset=utf-8',
+        question_labels = {
+            question: str(question.question)
+            for question in questions
+        }
+
+        def generate():
+            header = None
+
+            with scope(event=self.event):
+                for obj in queryset.iterator(chunk_size=200):
+                    object_data = {}
+
+                    code = getattr(obj, 'code', None)
+                    if code:
+                        object_data['ID'] = code
+
+                    prepare_method = getattr(self, '_prepare_object_data', None)
+                    if prepare_method:
+                        obj = prepare_method(obj)
+
+                    for field in fields:
+                        label = field_labels[field]
+                        object_data[label] = self.get_object_attribute(obj, field)
+
+                    for question in questions:
+                        label = question_labels[question]
+                        answer = self.get_answer(question, obj)
+                        object_data[label] = answer.answer_string if answer else None
+
+                    if hasattr(self, 'get_additional_data'):
+                        object_data.update(**self.get_additional_data(obj))
+
+                    for key, value in object_data.items():
+                        if isinstance(value, list):
+                            object_data[key] = delimiter.join(
+                                str(item) for item in value if item is not None
+                            )
+
+                    buffer = StringIO()
+                    writer = csv.writer(buffer)
+
+                    if header is None:
+                        header = list(object_data.keys())
+                        writer.writerow(header)
+                        yield buffer.getvalue()
+                        buffer.seek(0)
+                        buffer.truncate(0)
+
+                    row = [
+                        "" if object_data.get(col) is None else object_data.get(col)
+                        for col in header
+                    ]
+                    writer.writerow(row)
+                    yield buffer.getvalue()
+                    buffer.seek(0)
+                    buffer.truncate(0)
+ 
+        return StreamingHttpResponse(
+            generate(),
+            content_type='text/csv; charset=utf-8',
             headers={
                 'Content-Disposition': f'attachment; filename="{self.filename}.csv"',
                 'Access-Control-Allow-Origin': '*',
             },
         )
-
+    
     def json_export(self, data):
         content = json.dumps(data, cls=I18nJSONEncoder, indent=2)
         return HttpResponse(
