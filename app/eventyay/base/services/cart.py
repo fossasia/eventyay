@@ -90,7 +90,10 @@ error_messages = {
         'The presale period for one of the events in your cart has ended. The affected '
         'positions have been removed from your cart.'
     ),
-    'price_too_high': _('The entered price is to high.'),
+    'price_too_high': _('The entered price is too high.'),
+    'price_too_low': _('The entered price is too low. The minimum price is %s.'),
+    'price_too_high_max': _('The entered price is too high. The maximum price is %s.'),
+    'price_out_of_bounds': _('The entered price is out of the allowed range. The price must be between %s and %s.'),
     'voucher_invalid': _('This voucher code is not known in our database.'),
     'voucher_redeemed': _('This voucher code has already been used the maximum number of times allowed.'),
     'voucher_redeemed_cart': _(
@@ -444,10 +447,30 @@ class CartManager:
         except TaxRule.SaleNotAllowed:
             raise CartError(error_messages['country_blocked'])
         except ValueError as e:
-            if str(e) == 'price_too_high':
+            code = e.args[0] if e.args else None
+            if code == 'price_too_high':
                 raise CartError(error_messages['price_too_high'])
+            elif (
+                code == 'price_too_low'
+                and len(e.args) >= 2
+            ):
+                min_val = f'{e.args[1]} {e.args[2]}' if len(e.args) >= 3 else e.args[1]
+                raise CartError(error_messages['price_too_low'], min_val)
+            elif (
+                code == 'price_too_high_max'
+                and len(e.args) >= 2
+            ):
+                max_val = f'{e.args[1]} {e.args[2]}' if len(e.args) >= 3 else e.args[1]
+                raise CartError(error_messages['price_too_high_max'], max_val)
+            elif (
+                code == 'price_out_of_bounds'
+                and len(e.args) >= 3
+            ):
+                min_val = f'{e.args[1]} {e.args[3]}' if len(e.args) >= 4 else e.args[1]
+                max_val = f'{e.args[2]} {e.args[3]}' if len(e.args) >= 4 else e.args[2]
+                raise CartError(error_messages['price_out_of_bounds'], (min_val, max_val))
             else:
-                raise e
+                raise
 
     def extend_expired_positions(self):
         requires_seat = Exists(

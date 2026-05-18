@@ -308,6 +308,8 @@ class ProductCreateForm(I18nModelForm):
 
         self.fields['tax_rule'].queryset = self.instance.event.tax_rules.all()
         change_decimal_field(self.fields['default_price'], self.instance.event.currency)
+        change_decimal_field(self.fields['free_price_min'], self.instance.event.currency)
+        change_decimal_field(self.fields['free_price_max'], self.instance.event.currency)
         self.fields['tax_rule'].empty_label = _('No taxation')
         self.fields['copy_from'] = forms.ModelChoiceField(
             label=_('Copy product information'),
@@ -373,6 +375,8 @@ class ProductCreateForm(I18nModelForm):
                 'generate_tickets',
                 'checkin_attention',
                 'free_price',
+                'free_price_min',
+                'free_price_max',
                 'original_price',
                 'sales_channels',
                 'issue_giftcard',
@@ -474,6 +478,24 @@ class ProductCreateForm(I18nModelForm):
                 if not self.cleaned_data.get('quota_add_existing'):
                     raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
 
+        free_price = cleaned_data.get('free_price')
+        if not free_price:
+            cleaned_data['free_price_min'] = None
+            cleaned_data['free_price_max'] = None
+
+        free_price_min = cleaned_data.get('free_price_min')
+        free_price_max = cleaned_data.get('free_price_max')
+        default_price = cleaned_data.get('default_price')
+        if free_price_min is not None and free_price_max is not None:
+            if free_price_min > free_price_max:
+                raise forms.ValidationError({'free_price_max': [_('Maximum price cannot be lower than minimum price.')]})
+        if free_price and free_price_max is not None:
+            effective_min = free_price_min if free_price_min is not None else default_price
+            if effective_min is not None and free_price_max < effective_min:
+                raise forms.ValidationError(
+                    {'free_price_max': [_('Maximum price cannot be lower than the effective minimum price (minimum price if set, otherwise the default price.)')]}
+                )
+
         return cleaned_data
 
     class Meta:
@@ -485,6 +507,9 @@ class ProductCreateForm(I18nModelForm):
             'category',
             'admission',
             'default_price',
+            'free_price',
+            'free_price_min',
+            'free_price_max',
             'tax_rule',
         ]
 
@@ -541,6 +566,8 @@ class ProductUpdateForm(I18nModelForm):
             widget=forms.CheckboxSelectMultiple,
         )
         change_decimal_field(self.fields['default_price'], self.event.currency)
+        change_decimal_field(self.fields['free_price_min'], self.event.currency)
+        change_decimal_field(self.fields['free_price_max'], self.event.currency)
         self.fields['hidden_if_available'].queryset = self.event.quotas.all()
         self.fields['hidden_if_available'].widget = Select2(
             attrs={
@@ -591,6 +618,25 @@ class ProductUpdateForm(I18nModelForm):
                     'admission',
                     _('Gift card products should not be admission products at the same time.'),
                 )
+        free_price = d.get('free_price')
+        if not free_price:
+            d['free_price_min'] = None
+            d['free_price_max'] = None
+
+        free_price_min = d.get('free_price_min')
+        free_price_max = d.get('free_price_max')
+        default_price = d.get('default_price')
+        if free_price_min is not None and free_price_max is not None:
+            if free_price_min > free_price_max:
+                self.add_error('free_price_max', _('Maximum price cannot be lower than minimum price.'))
+        if free_price and free_price_max is not None:
+            effective_min = free_price_min if free_price_min is not None else default_price
+            if effective_min is not None and effective_min > free_price_max:
+                self.add_error(
+                    'free_price_max',
+                    _('Maximum price cannot be lower than the effective minimum price (minimum price if set, otherwise the default price.)'),
+                )
+
         return d
 
     def save(self, *args, **kwargs):
@@ -618,6 +664,8 @@ class ProductUpdateForm(I18nModelForm):
             'picture',
             'default_price',
             'free_price',
+            'free_price_min',
+            'free_price_max',
             'tax_rule',
             'available_from',
             'available_until',

@@ -758,6 +758,92 @@ class CartTest(CartTestMixin, TestCase):
         self.assertIsNone(objs[0].variation)
         self.assertEqual(objs[0].price, 23)
 
+    def test_free_price_too_high_absolute(self):
+        """price_too_high: submitted price exceeds the hard limit of 100,000,000."""
+        self.ticket.free_price = True
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '100000001.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
+    def test_free_price_too_low_with_min(self):
+        """price_too_low: submitted price is below free_price_min; error message must include min value + currency."""
+        self.ticket.free_price = True
+        self.ticket.free_price_min = Decimal('20.00')
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '10.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('20.00', doc.select('.alert-danger')[0].text)
+        self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
+    def test_free_price_too_high_max(self):
+        """price_too_high_max: submitted price exceeds free_price_max; error message must include max value + currency."""
+        self.ticket.free_price = True
+        self.ticket.free_price_max = Decimal('30.00')
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '50.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('30.00', doc.select('.alert-danger')[0].text)
+        self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
+    def test_free_price_out_of_bounds(self):
+        """price_out_of_bounds: both min and max set; price below min triggers two-value range error."""
+        self.ticket.free_price = True
+        self.ticket.free_price_min = Decimal('20.00')
+        self.ticket.free_price_max = Decimal('30.00')
+        self.ticket.save()
+        response = self.client.post(
+            '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '5.00'},
+            follow=True,
+        )
+        self.assertRedirects(
+            response,
+            '/%s/%s/?require_cookie=true' % (self.orga.slug, self.event.slug),
+            target_status_code=200,
+        )
+        assert 'alert-danger' in response.rendered_content
+        doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('20.00', doc.select('.alert-danger')[0].text)
+        self.assertIn('30.00', doc.select('.alert-danger')[0].text)
+        self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
+        with scopes_disabled():
+            assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
+
     def test_variation_inactive(self):
         self.shirt_red.active = False
         self.shirt_red.save()
