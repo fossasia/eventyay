@@ -24,7 +24,7 @@ def reverse_migrate_meta_noindex(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0026_alter_talkquestion_variant_add_select'),
+        ('base', '0027_talkquestion_dependency_question_and_more'),
     ]
 
     operations = [
