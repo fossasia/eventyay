@@ -6,6 +6,7 @@ from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import Choices
+from eventyay.base.models.fields import MultiStringField
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -42,6 +43,7 @@ class TalkQuestionVariant(Choices):
     FILE = 'file'
     CHOICES = 'choices'
     MULTIPLE = 'multiple_choice'
+    SELECT = 'select'
     COUNTRY = 'country'
 
     valid_choices = [
@@ -55,6 +57,7 @@ class TalkQuestionVariant(Choices):
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
+        (SELECT, _('Select (one option)')),
         (COUNTRY, _('Country List')),
     ]
 
@@ -104,9 +107,9 @@ class TalkQuestion(OrderedModel, PretalxModel):
     TalkQuestions can have many types, which offers a flexible framework to give organisers
     the opportunity to get all the information they need.
 
-    :param variant: Can be any of 'number', 'string', 'text', 'boolean',
-        'file', 'choices', 'multiple_choice', or 'country'. Defined in the
-        ``TalkQuestionVariant`` class.
+    :param variant: Can be any of 'number', 'string', 'text', 'url',
+        'date', 'datetime', 'boolean', 'file', 'choices', 'multiple_choice',
+        'select', or 'country'. Defined in the ``TalkQuestionVariant`` class.
     :param target: Can be any of 'submission', 'speaker', or 'reviewer'.
         Defined in the ``TalkQuestionTarget`` class.
     :param deadline: Datetime field. This field is required for 'after deadline' and 'freeze after' options of
@@ -258,6 +261,19 @@ class TalkQuestion(OrderedModel, PretalxModel):
             'Should responses to this field be shown to reviewers? This is helpful if you want to collect '
             'personal information, but use anonymous reviews.'
         ),
+    )
+    dependency_question = models.ForeignKey(
+        'TalkQuestion',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='dependent_questions',
+        verbose_name=_('Custom field dependency'),
+        help_text=_('This field will only be shown if the selected field has one of the specified values.'),
+    )
+    dependency_values = MultiStringField(
+        default=list,
+        verbose_name=_('Dependency values'),
     )
     objects = ScopedManager(event='event', _manager_class=TalkQuestionManager)
     all_objects = ScopedManager(event='event', _manager_class=AllTalkQuestionManager)
@@ -457,7 +473,7 @@ class Answer(PretalxModel):
             return ''
         if self.question.variant == 'file':
             return self.answer_file.url if self.answer_file else ''
-        if self.question.variant in ('choices', 'multiple_choice'):
+        if self.question.variant in ('choices', 'multiple_choice', 'select'):
             return ', '.join(str(option.answer) for option in self.options.all())
         if self.question.variant == TalkQuestionVariant.COUNTRY:
             return get_country_name(self.answer) or self.answer or ''

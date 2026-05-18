@@ -137,8 +137,11 @@ class GlobalSettingsForm(SettingsForm):
                     'send_grid_api_key',
                     forms.CharField(
                         required=False,
-                        label=_('Sendgrid Token'),
-                        widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
+                        label=_('Sendgrid token'),
+                        widget=forms.TextInput(attrs={
+                            'placeholder': 'SG.xxxxxxxx',
+                            'data-display-dependency': '#id_email_vendor_0',
+                        }),
                     ),
                 ),
                 (
@@ -146,7 +149,10 @@ class GlobalSettingsForm(SettingsForm):
                     forms.CharField(
                         label=_('Hostname'),
                         required=False,
-                        widget=forms.TextInput(attrs={'placeholder': 'mail.example.org'}),
+                        widget=forms.TextInput(attrs={
+                            'placeholder': 'mail.example.org',
+                            'data-display-dependency': '#id_email_vendor_1',
+                        }),
                     ),
                 ),
                 (
@@ -154,14 +160,20 @@ class GlobalSettingsForm(SettingsForm):
                     forms.IntegerField(
                         label=_('Port'),
                         required=False,
-                        widget=forms.TextInput(attrs={'placeholder': 'e.g. 587, 465, 25, ...'}),
+                        widget=forms.TextInput(attrs={
+                            'placeholder': 'e.g. 587, 465, 25, ...',
+                            'data-display-dependency': '#id_email_vendor_1',
+                        }),
                     ),
                 ),
                 (
                     'smtp_username',
                     forms.CharField(
                         label=_('Username'),
-                        widget=forms.TextInput(attrs={'placeholder': 'myuser@example.org'}),
+                        widget=forms.TextInput(attrs={
+                            'placeholder': 'myuser@example.org',
+                            'data-display-dependency': '#id_email_vendor_1',
+                        }),
                         required=False,
                     ),
                 ),
@@ -172,7 +184,8 @@ class GlobalSettingsForm(SettingsForm):
                         required=False,
                         widget=forms.PasswordInput(
                             attrs={
-                                'autocomplete': 'new-password'  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
+                                'autocomplete': 'new-password',  # see https://bugs.chromium.org/p/chromium/issues/detail?id=370363#c7
+                                'data-display-dependency': '#id_email_vendor_1',
                             }
                         ),
                     ),
@@ -183,6 +196,9 @@ class GlobalSettingsForm(SettingsForm):
                         label=_('Use STARTTLS'),
                         help_text=_('Commonly enabled on port 587.'),
                         required=False,
+                        widget=forms.CheckboxInput(attrs={
+                            'data-display-dependency': '#id_email_vendor_1',
+                        }),
                     ),
                 ),
                 (
@@ -191,6 +207,9 @@ class GlobalSettingsForm(SettingsForm):
                         label=_('Use SSL'),
                         help_text=_('Commonly enabled on port 465.'),
                         required=False,
+                        widget=forms.CheckboxInput(attrs={
+                            'data-display-dependency': '#id_email_vendor_1',
+                        }),
                     ),
                 ),
             ]

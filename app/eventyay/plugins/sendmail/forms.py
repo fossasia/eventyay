@@ -9,7 +9,7 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
-from eventyay.base.forms import PlaceholderValidator, SettingsForm
+from eventyay.base.forms import I18nMarkdownTextarea, PlaceholderValidator, SettingsForm
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
@@ -162,7 +162,7 @@ class MailForm(forms.Form):
         )
         self.fields['message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=True,
             locales=event.settings.get('locales'),
         )
@@ -493,7 +493,7 @@ class EmailQueueEditForm(forms.ModelForm):
         )
         self.fields['message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=False,
             locales=list(allowed_locales),
             initial=self.instance.message
@@ -592,7 +592,7 @@ class TeamMailForm(forms.Form):
         )
         self.fields['message'] = I18nFormField(
             label=_('Message'),
-            widget=I18nTextarea,
+            widget=I18nMarkdownTextarea,
             required=True,
             locales=locales,
             help_text=placeholder_text
