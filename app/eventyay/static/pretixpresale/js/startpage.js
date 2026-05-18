@@ -33,6 +33,7 @@
     var redditBtn = document.getElementById('share-reddit');
     var urlInput = document.getElementById('share-url-input');
     var copyBtn = document.getElementById('share-copy-btn');
+    var copiedLabel = copyBtn ? (copyBtn.dataset.copiedLabel || 'Copied!') : 'Copied!';
 
     buttons.forEach(function (button) {
       button.addEventListener('click', function () {
@@ -109,7 +110,7 @@
             if (ok) {
               copyBtn.classList.add('is-copied');
               var originalText = copyBtn.innerHTML;
-              copyBtn.innerHTML = 'Copied! <i class="fa fa-check"></i>';
+              copyBtn.innerHTML = copiedLabel + ' <i class="fa fa-check"></i>';
               window.setTimeout(function () {
                 copyBtn.classList.remove('is-copied');
                 copyBtn.innerHTML = originalText;
