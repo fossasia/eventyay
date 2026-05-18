@@ -21,9 +21,18 @@
 
   function initShareButtons() {
     var buttons = document.querySelectorAll('.startpage-event-share');
-    if (!buttons.length) {
+    var dialog = document.getElementById('share-dialog');
+    if (!buttons.length || !dialog) {
       return;
     }
+
+    var closeBtn = document.getElementById('share-dialog-close');
+    var facebookBtn = document.getElementById('share-facebook');
+    var xBtn = document.getElementById('share-x');
+    var linkedinBtn = document.getElementById('share-linkedin');
+    var redditBtn = document.getElementById('share-reddit');
+    var urlInput = document.getElementById('share-url-input');
+    var copyBtn = document.getElementById('share-copy-btn');
 
     buttons.forEach(function (button) {
       button.addEventListener('click', function () {
@@ -31,12 +40,79 @@
         if (!url) {
           return;
         }
+        
+        var eventCard = button.closest('.startpage-event-card');
+        var title = eventCard ? eventCard.dataset.eventName : document.title;
+
+        // Ensure url is absolute
+        var parsedUrl = new URL(url, window.location.origin);
+        parsedUrl.protocol = window.location.protocol;
+        parsedUrl.hostname = window.location.hostname;
+        parsedUrl.port = window.location.port;
+        var absoluteUrl = parsedUrl.href;
+
+        // Set input value
+        urlInput.value = absoluteUrl;
+
+        // Set social URLs
+        if (facebookBtn) {
+          facebookBtn.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(absoluteUrl);
+        }
+        if (xBtn) {
+          xBtn.href = 'https://x.com/intent/tweet?url=' + encodeURIComponent(absoluteUrl) + '&text=' + encodeURIComponent(title);
+        }
+        if (linkedinBtn) {
+          linkedinBtn.href = 'https://www.linkedin.com/shareArticle?mini=true&url=' + encodeURIComponent(absoluteUrl) + '&title=' + encodeURIComponent(title);
+        }
+        if (redditBtn) {
+          redditBtn.href = 'https://www.reddit.com/submit?url=' + encodeURIComponent(absoluteUrl) + '&title=' + encodeURIComponent(title);
+        }
+
+        // Show dialog
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', '');
+        }
+      });
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      });
+    }
+
+    // Close when clicking backdrop
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      }
+    });
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var url = urlInput.value;
+        if (!url) {
+          return;
+        }
         copyText(url)
           .then(function (ok) {
             if (ok) {
-              button.classList.add('is-copied');
+              copyBtn.classList.add('is-copied');
+              var originalText = copyBtn.innerHTML;
+              copyBtn.innerHTML = 'Copied! <i class="fa fa-check"></i>';
               window.setTimeout(function () {
-                button.classList.remove('is-copied');
+                copyBtn.classList.remove('is-copied');
+                copyBtn.innerHTML = originalText;
               }, 1600);
             }
           })
@@ -45,7 +121,7 @@
             console.error(error);
           });
       });
-    });
+    }
   }
 
   function initSearch() {
