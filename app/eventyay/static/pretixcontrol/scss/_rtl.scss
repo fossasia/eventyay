@@ -1,4 +1,15 @@
 html.rtl {
+
+  body:not(.sidebar-minimized) #page-wrapper {
+    margin-right: $sidebar-width;
+    margin-left: 0;    
+  }
+
+  body.sidebar-minimized #page-wrapper {
+    margin-right: $sidebar-minimized-width;
+    margin-left: 0;
+  }
+
   .timeline .col-date {
     float: right;
     text-align: left;
@@ -9,6 +20,10 @@ html.rtl {
     margin-left: 0;
   }
 
+  #page-wrapper{
+    border-right: 1px solid #e7e7e7;
+    border-left: 0;
+  }
 
   .navbar-top-links li:last-child {
     margin-left: 15px;
@@ -109,7 +124,7 @@ html.rtl {
   }
 
   .context-selector .fa-stack {
-    left: -2px  ;
+    left: -3px  ;
   }
   .navbar-toggle-sidebar {
     float: right;
@@ -118,14 +133,29 @@ html.rtl {
   }
   // langdropdown
   .dropdown .dropdown-content-se {
-    right: 20px;
-    left: auto;
+    right: auto;
+    left: 15px;
   }
+
   // maindropdown
   .dropdown .dropdown-content-sw {
-    right: 0;
-    left: auto;
+    right: auto;
+    left: 10px;
   } 
+
+  .dropdown .dropdown-content-sw::after {
+    top: -14px;
+    right: auto;
+    left: 10px;
+    rotate: 90deg;
+    border-color: transparent;
+    border-right-color: #fff;
+  }
+
+  .dropdown .dropdown-content-sw::before {
+    content: none;
+  }
+
   // subdropdown
   .dropdown .dropdown-content-w {
     margin-left: 5px;
@@ -144,18 +174,47 @@ html.rtl {
   .dropdown .dropdown-content-w::before {
     content: none;
   }
-}
 
-@media (min-width: $screen-sm-min) {
-  html.rtl #page-wrapper {
-    margin: 0 $sidebar-width 0 0;
+  nav.navbar{
+    position: fixed;
   }
-  html.rtl body.sidebar-minimized #page-wrapper {
-      margin: 0 $sidebar-minimized-width 0 0;
+
+  .navbar-top-links #profile-dropdown > summary i.fa-caret-down{
+    margin-right: 5px;
+    margin-left: 0;
+  }
+
+  .navbar-top-links #profile-dropdown > summary i.fa-user{
+    margin-right: 0;
+    margin-left: 5px;
+  }
+
+  .navbar-top-links #language-dropdown > summary i.fa-globe{
+    margin-right: 0;
+    margin-left: 5px;
+  }
+
+  .navbar-top-links #language-dropdown > summary i.fa-caret-down{
+    margin-right: 5px;
+    margin-left: 0;
+  }
+
+  nav.navbar.navbar-inverse .navbar-brand img{
+    margin-left: 5px;
+    margin-right: 0px;
+  }
+
+  #event-nav .navigation-title, .header-nav .navigation-title {
+    text-align: right;
   }
 }
 
 @media(max-width: $screen-sm-max) {
+
+  html.rtl #page-wrapper {
+    margin-top: var(--navbar-height);
+  }
+
   html.rtl .timeline {
     .col-date {
       width: 100%;

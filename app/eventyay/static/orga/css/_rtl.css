@@ -1,20 +1,36 @@
-html.rtl {
-  #page-content {
-    margin-right: 250px;
-    margin-left: 0;
-  }
+/*
+  * Navbar RTL Layout - Flexbox Order System
+  * =========================================
+  * In RTL mode with flex-direction: row, items flow right-to-left.
+  * Lower order values appear on the RIGHT (start), higher on the LEFT (end).
+*/
+@media (min-width: 768px) {
+  html.rtl {
 
-  .event-logo-form-fields {
-    text-align: right;
-  }
+    #page-wrapper aside.sidebar {
+      width: 45px;
+    }
 
-  /*
-   * Navbar RTL Layout - Flexbox Order System
-   * =========================================
-   * In RTL mode with flex-direction: row, items flow right-to-left.
-   * Lower order values appear on the RIGHT (start), higher on the LEFT (end).
-   */
-  @media (min-width: 992px) {
+    #page-content{
+      padding: 18px 40px;
+    }
+
+    #page-wrapper aside.sidebar-uncollapsed {
+      width: 250px;
+    }
+
+    .event-logo-form-fields {
+      text-align: right;
+    }
+
+    aside.sidebar {
+      &:hover {
+      #nav-search #search-context-text, .nav-link > span {
+          display: none;
+        }
+      }
+    }
+
     .navbar.navbar-inverse {
       display: flex;
       flex-wrap: nowrap;
@@ -23,28 +39,90 @@ html.rtl {
       align-items: center;
     }
 
-    /* Toggle button goes to the far left (end in RTL) */
-    .navbar-toggle-sidebar {
-      order: 10;
-      margin-left: 0;
-      margin-right: 0;
-    }
-
-    /* Logo/header stays on the right (start in RTL) */
     .navbar-header {
-      order: 1;
+      order: 2;
       flex-shrink: 0;
     }
 
-    /* View event link right next to logo */
+    nav.navbar.navbar-inverse .navbar-brand, .navbar-inverse .navbar-brand{
+      margin-right: 0;
+      padding: 3px 15px;
+    }
+
+    .navbar-toggle-sidebar, .navbar-toggle-sidebar.navbar-toggle, nav.navbar.navbar-inverse #sidebar-toggle, .navbar-inverse #sidebar-toggle {
+      float: right;
+      order: 1;
+      margin-left: 0;
+      margin-right: 15px;
+      padding: 5px 0 5px 5px;
+    }
+
     .navbar .navbar-top-links.navbar-left {
       order: 2;
       margin-left: auto;
-      /* This pushes everything after it to the left */
       margin-right: 15px;
     }
 
-    /* Profile/admin items pushed toward toggle */
+    .dropdown .dropdown-content-sw {
+      right: auto;
+      left: 10px;
+    }
+
+    .dropdown .dropdown-content-w {
+      margin-left: 5px;
+      right: auto;
+      left: 100%;
+    }
+
+    .dropdown .dropdown-content-w::after {
+      top: 11px;
+      right: auto;
+      left: -14px;
+      border-color: transparent;
+      border-right-color: #fff;
+    }
+
+    .dropdown .dropdown-content-w::before {
+      content: none;
+    }
+
+    .dropdown .dropdown-content-sw::after {
+      top: -14px;
+      right: auto;
+      left: 10px;
+      rotate: 90deg;
+      border-color: transparent;
+      border-right-color: #fff;
+    }
+
+    .dropdown .dropdown-content-sw::before {
+      content: none;
+    }
+    .navbar-top-links #profile-dropdown > summary i.fa-caret-down{
+      margin-right: 5px;
+      margin-left: 0;
+    }
+
+    .navbar-top-links #profile-dropdown > summary i.fa-user{
+      margin-right: 0;
+      margin-left: 5px;
+    }
+
+    .navbar-top-links #language-dropdown > summary i.fa-globe{
+      margin-right: 0;
+      margin-left: 5px;
+    }
+
+    .navbar-top-links #language-dropdown > summary i.fa-caret-down{
+      margin-right: 5px;
+      margin-left: 0;
+    }
+
+    nav.navbar.navbar-inverse .navbar-brand img{
+      margin-left: 5px;
+      margin-right: 0px;
+    }
+
     .navbar .navbar-top-links.navbar-right {
       order: 9;
       display: flex;
@@ -52,27 +130,37 @@ html.rtl {
       margin-left: 0;
       margin-right: 0;
     }
-  }
-  .sidebar-text {
-    margin-right: 8px;
-  }
-  .offset-md-3 {
-    margin-left: inherit !important;
-    margin-right: 25%;
-  }
-  .offset-md-9 {
-    margin-left: inherit !important;
-    margin-right: 75%;
-  }
-  .dropdown-menu {
-    right: 0;
-    left: auto;
-    float: left;
-    text-align: right;
-  }
-  [role="tab"] {
-    float: right;
-    margin-left: auto;
-    margin-right: -2px;
+
+    .navbar-top-links li:last-child {
+      margin-right: 0;
+    }
+  
+    .sidebar-text {
+      margin-right: 8px;
+    }
+    .offset-md-3 {
+      margin-left: inherit !important;
+      margin-right: 25%;
+    }
+    .offset-md-9 {
+      margin-left: inherit !important;
+      margin-right: 75%;
+    }
+    .dropdown-menu {
+      right: 0;
+      left: auto;
+      float: left;
+      text-align: right;
+    }
+    [role="tab"] {
+      float: right;
+      margin-left: auto;
+      margin-right: -2px;
+    }
+
+    #search-context-icon.fa-stack {
+      left: -3px;
+    }
+  
   }
 }

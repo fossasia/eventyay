@@ -298,9 +298,6 @@ aside.sidebar {
   }
 
   .nav-link {
-    .fa {
-      margin-right: 5px;
-    }
 
     i+span {
       display: none;
@@ -1685,7 +1682,7 @@ h2 .user-name-display img {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   aside.sidebar {
     position: absolute;
     top: var(--navbar-height);
