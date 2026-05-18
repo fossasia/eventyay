@@ -21,7 +21,7 @@ body {
 }
 
 #top-bg {
-  background-color: var(--color-primary);
+  background-color: var(--color-header-background);
   position: fixed;
   top: 0;
   left: 0;
@@ -37,10 +37,10 @@ body {
 }
 
 h1 a {
-  color: white;
+  color: var(--color-header-text);
 
   &:hover {
-    color: white;
+    color: var(--color-header-text);
     text-decoration: none;
   }
 }
@@ -75,19 +75,22 @@ header {
     padding-bottom: 6px;
     flex-shrink: 0;
     a.header-tab {
+      color: var(--color-header-navigation);
       padding: 8px 10px 4px 10px;
       border-bottom: 2px solid transparent;
       &:hover {
+        color: var(--color-header-navigation);
         text-decoration: none;
         border-bottom: 2px dotted var(--color-primary);
       }
       &.active {
+        color: var(--color-header-navigation);
         border-bottom: 2px solid var(--color-primary);
       }
     }
   }
   .header-row-right {
-    color: var(--color-primary);
+    color: var(--color-header-navigation);
     margin-left: auto;
 	margin-right: 10px;
     display: flex;
@@ -98,8 +101,8 @@ header {
     gap: 10px;
 
     .header-nav {
-      color: var(--color-primary);
-      border-color: var(--color-primary);
+      color: var(--color-header-navigation);
+      border-color: var(--color-header-navigation);
       background: transparent;
     }
 
@@ -118,7 +121,7 @@ header {
     }
 
     .locale-link {
-      color: var(--color-primary);
+      color: var(--color-header-navigation);
       text-decoration: none;
       font-size: 0.9rem;
       opacity: 0.85;
@@ -141,11 +144,11 @@ header {
       
       summary {
         cursor: pointer;
-        color: var(--color-primary);
+        color: var(--color-header-navigation);
       }
       
       summary:focus-visible {
-        outline: 2px solid var(--color-primary);
+        outline: 2px solid var(--color-header-navigation);
         border-radius: var(--size-border-radius);
       }
       
@@ -213,22 +216,25 @@ header {
 }
 
 .presale-sticky-tabs a.header-tab {
+  color: var(--color-header-navigation);
   padding: 8px 10px 4px 10px;
   border-bottom: 2px solid transparent;
 }
 
 .presale-sticky-tabs a.header-tab:hover {
+  color: var(--color-header-navigation);
   text-decoration: none;
   border-bottom: 2px dotted var(--color-primary);
 }
 
 .presale-sticky-tabs a.header-tab.active,
 .presale-sticky-tabs a.header-tab.underline {
+  color: var(--color-header-navigation);
   border-bottom: 2px solid var(--color-primary);
 }
 
 .presale-sticky-tabs .header-row-right {
-  color: var(--color-primary);
+  color: var(--color-header-navigation);
   margin-left: auto;
   margin-right: 10px;
   display: flex;
@@ -240,8 +246,8 @@ header {
 }
 
 .presale-sticky-tabs .header-row-right .header-nav {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--color-header-navigation);
+  border-color: var(--color-header-navigation);
   background: transparent;
 }
 
@@ -364,7 +370,7 @@ header {
 }
 
 .event-hero-text {
-  color: white;
+  color: var(--color-header-text);
   display: flex;
   flex-direction: column;
 }

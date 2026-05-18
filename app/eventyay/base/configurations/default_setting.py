@@ -2024,6 +2024,78 @@ Your {event} team"""
             widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
         ),
     },
+    'header_background_color': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'serializer_class': serializers.CharField,
+        'serializer_kwargs': dict(
+            validators=[
+                RegexValidator(
+                    regex='^#[0-9a-fA-F]{6}$',
+                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+                ),
+            ],
+        ),
+        'form_kwargs': dict(
+            label=_('Header background color'),
+            validators=[
+                RegexValidator(
+                    regex='^#[0-9a-fA-F]{6}$',
+                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+                ),
+            ],
+            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
+        ),
+    },
+    'header_text_color': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'serializer_class': serializers.CharField,
+        'serializer_kwargs': dict(
+            validators=[
+                RegexValidator(
+                    regex='^#[0-9a-fA-F]{6}$',
+                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+                ),
+            ],
+        ),
+        'form_kwargs': dict(
+            label=_('Header text color'),
+            validators=[
+                RegexValidator(
+                    regex='^#[0-9a-fA-F]{6}$',
+                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+                ),
+            ],
+            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
+        ),
+    },
+    'navigation_text_color': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'serializer_class': serializers.CharField,
+        'serializer_kwargs': dict(
+            validators=[
+                RegexValidator(
+                    regex='^#[0-9a-fA-F]{6}$',
+                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+                ),
+            ],
+        ),
+        'form_kwargs': dict(
+            label=_('Navigation text color'),
+            validators=[
+                RegexValidator(
+                    regex='^#[0-9a-fA-F]{6}$',
+                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+                ),
+            ],
+            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
+        ),
+    },
     'theme_color_success': {
         'default': '#50a167',
         'type': str,
@@ -2590,6 +2662,9 @@ Your {event} team"""
 
 CSS_SETTINGS = {
     'primary_color',
+    'header_background_color',
+    'header_text_color',
+    'navigation_text_color',
     'theme_color_success',
     'theme_color_danger',
     'primary_font',

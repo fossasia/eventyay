@@ -210,8 +210,11 @@
             {% bootstrap_field sform.logo_image_large layout="control" %}
             {% bootstrap_field sform.og_image layout="control" %}
             {% url "eventyay_common:organizer.edit" organizer=request.organizer.slug as org_url %}
-            {% propagated request.event org_url "primary_color" "primary_font" "theme_color_success" "theme_color_danger" %}
+            {% propagated request.event org_url "primary_color" "header_background_color" "header_text_color" "navigation_text_color" "primary_font" "theme_color_success" "theme_color_danger" %}
             {% bootstrap_field sform.primary_color layout="control" %}
+            {% bootstrap_field sform.header_background_color layout="control" %}
+            {% bootstrap_field sform.header_text_color layout="control" %}
+            {% bootstrap_field sform.navigation_text_color layout="control" %}
             {% bootstrap_field sform.theme_color_success layout="control" %}
             {% bootstrap_field sform.theme_color_danger layout="control" %}
             {% bootstrap_field sform.theme_color_background layout="control" %}
