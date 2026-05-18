@@ -60,6 +60,7 @@ const EVENTYAY_RICH_TEXT_ALLOWED_ATTR = [
 	...new Set(Object.values(EVENTYAY_RICH_TEXT_ALLOWED_ATTRIBUTES_BY_TAG).flat()),
 ]
 
+
 /** Browser: markdown + raw HTML, then DOMPurify. Non-browser: markdown only (no embedded HTML) to avoid XSS without a DOM. */
 const markdownItWithHtml = new MarkdownIt({
 	html: true,
@@ -78,12 +79,13 @@ const PURIFY_CONFIG = {
 	ALLOWED_ATTR: EVENTYAY_RICH_TEXT_ALLOWED_ATTR,
 	ALLOW_DATA_ATTR: false,
 	ALLOW_UNKNOWN_PROTOCOLS: false,
-	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|(?!(?:[a-z][a-z0-9+.-]*:))[\s\S]*)$/i,
+	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):[\s\S]*|(?![a-z][a-z0-9+.-]*:)[\s\S]*)$/i,
 }
 
 /** @type {ReturnType<typeof createDOMPurify> | null} */
 let domPurifyInstance = null
 let domPurifyPerTagHookInstalled = false
+let domPurifyExternalLinkHookInstalled = false
 
 function installPerTagAttributeHook (purify) {
 	if (domPurifyPerTagHookInstalled) return
@@ -98,11 +100,30 @@ function installPerTagAttributeHook (purify) {
 	})
 }
 
+function installExternalLinkHook (purify) {
+	if (domPurifyExternalLinkHookInstalled) return
+	domPurifyExternalLinkHookInstalled = true
+	purify.addHook('afterSanitizeAttributes', (node) => {
+		if (!node || node.tagName !== 'A') return
+		const href = node.getAttribute('href')
+		if (href && /^https?:\/\//i.test(href)) {
+			node.setAttribute('target', '_blank')
+			const existing = (node.getAttribute('rel') || '').split(/\s+/).filter(Boolean)
+			const relSet = new Set(existing)
+			relSet.add('noopener')
+			relSet.add('noreferrer')
+			relSet.add('nofollow')
+			node.setAttribute('rel', Array.from(relSet).join(' '))
+		}
+	})
+}
+
 function getDomPurify () {
 	if (typeof window === 'undefined') return null
 	if (!domPurifyInstance) {
 		domPurifyInstance = createDOMPurify(window)
 		installPerTagAttributeHook(domPurifyInstance)
+		installExternalLinkHook(domPurifyInstance)
 	}
 	return domPurifyInstance
 }

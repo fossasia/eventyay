@@ -283,6 +283,11 @@ urlpatterns = [
                 ),
                 url(r'^categories/add$', product.CategoryCreate.as_view(), name='event.products.categories.add'),
                 url(r'^orderforms/$', product.OrderFormList.as_view(), name='event.products.orderforms'),
+                url(
+                    r'^orderforms/default-fields/(?P<field>[a-z_]+)/$',
+                    product.OrderFormDefaultFieldSettings.as_view(),
+                    name='event.products.orderforms.defaultfield',
+                ),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),
                 url(

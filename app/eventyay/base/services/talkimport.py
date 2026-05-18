@@ -1,13 +1,16 @@
 import datetime as dt
+import json
 import logging
+import re
+from pathlib import Path
 from typing import TypedDict
+from urllib.parse import urlparse
 
 from django.conf import settings as django_settings
-from django.db import DataError, IntegrityError, OperationalError, transaction
-from django.utils.dateparse import parse_datetime
+from django.db import DataError, IntegrityError, OperationalError, models, transaction
 from django.utils.crypto import get_random_string
-from django.utils.timezone import is_naive, make_aware
-from django.utils.timezone import now
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import is_naive, make_aware, now
 from django.utils.translation import gettext as _
 from django_scopes import scope
 
@@ -23,7 +26,13 @@ from eventyay.base.models import (
     Track,
     User,
 )
-from eventyay.base.models.question import TalkQuestion, TalkQuestionVariant
+from eventyay.base.models.question import (
+    TalkQuestion,
+    TalkQuestionRequired,
+    TalkQuestionTarget,
+    TalkQuestionVariant,
+)
+from eventyay.base.models.resource import create_slide_resource, delete_slide_resources
 from eventyay.base.models.submission import SpeakerRole, SubmissionStates
 from eventyay.base.models.type import SubmissionType
 from eventyay.base.services.orderimport import parse_csv
@@ -31,9 +40,11 @@ from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
 
+
 try:
     from pytz.exceptions import AmbiguousTimeError, NonExistentTimeError
 except ImportError:
+
     class AmbiguousTimeError(ValueError):
         pass
 
@@ -47,6 +58,86 @@ USER_CODE_MAX_LENGTH = User._meta.get_field('code').max_length or 16
 USER_FULLNAME_MAX_LENGTH = User._meta.get_field('fullname').max_length or 255
 SUBMISSION_CODE_MAX_LENGTH = Submission._meta.get_field('code').max_length or 16
 ROOM_NAME_MAX_LENGTH = Room._meta.get_field('name').max_length or 100
+NORMALIZED_SPEAKER_SETTINGS = {
+    key: f'csv:{key}'
+    for key in (
+        'full_name',
+        'first_name',
+        'last_name',
+        'email',
+        'biography',
+        'identifier',
+        'locale',
+        'linked_submissions',
+        'avatar_url',
+        'avatar_source',
+        'avatar_license',
+        'is_featured',
+        'featured_position',
+    )
+}
+NORMALIZED_SUBMISSION_SETTINGS = {
+    key: f'csv:{key}'
+    for key in (
+        'title',
+        'code',
+        'abstract',
+        'description',
+        'submission_type',
+        'track',
+        'state',
+        'tags',
+        'duration',
+        'content_locale',
+        'do_not_record',
+        'is_featured',
+        'notes',
+        'internal_notes',
+        'start',
+        'end',
+        'linked_speakers',
+        'speakers',
+        'room',
+        'slides_link',
+        'slides_links',
+    )
+}
+LEGACY_IMPORT_KEY_PREFIX = 'legacy-import'
+LEGACY_PUBLIC_IMPORT_FIELDS = {'website', 'github', 'linkedin', 'twitter'}
+LEGACY_PRIVATE_IMPORT_FIELDS = {
+    'phone',
+    'address',
+    'city',
+    'country',
+    'location',
+    'state',
+    'zipcode',
+    'zip',
+}
+LEGACY_IMPORT_QUESTION_DEFINITIONS = {
+    TalkQuestionTarget.SPEAKER: {
+        'website': {'label': _('Website'), 'variant': TalkQuestionVariant.URL, 'is_public': True},
+        'github': {'label': _('GitHub'), 'variant': TalkQuestionVariant.URL, 'is_public': True},
+        'linkedin': {'label': _('LinkedIn'), 'variant': TalkQuestionVariant.URL, 'is_public': True},
+        'twitter': {'label': _('Twitter'), 'variant': TalkQuestionVariant.URL, 'is_public': True},
+        'facebook': {'label': _('Facebook'), 'variant': TalkQuestionVariant.URL, 'is_public': False},
+        'instagram': {'label': _('Instagram'), 'variant': TalkQuestionVariant.URL, 'is_public': False},
+        'blog': {'label': _('Blog'), 'variant': TalkQuestionVariant.URL, 'is_public': False},
+        'company': {'label': _('Company'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'job_title': {'label': _('Job title'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'phone': {'label': _('Phone'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'city': {'label': _('City'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'country': {'label': _('Country'), 'variant': TalkQuestionVariant.COUNTRY, 'is_public': False},
+        'location': {'label': _('Location'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+    },
+    TalkQuestionTarget.SUBMISSION: {
+        'subtitle': {'label': _('Subtitle'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'level': {'label': _('Level'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'audience_level': {'label': _('Audience level'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'complexity': {'label': _('Complexity'), 'variant': TalkQuestionVariant.STRING, 'is_public': False},
+        'room_notes': {'label': _('Room notes'), 'variant': TalkQuestionVariant.TEXT, 'is_public': False},
+    },
+}
 
 
 class ImportExecutionError(Exception):
@@ -72,6 +163,284 @@ def _resolve_csv(mapping_value, record):
 
 def _truthy(value):
     return value.lower() in ('yes', 'true', '1', 'ja', 'oui', 'y')
+
+
+def _normalize_import_value(value, *, key=None):
+    if value is None:
+        return ''
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    if isinstance(value, (list, tuple)):
+        normalized_parts = [_normalize_import_value(item, key=key) for item in value]
+        separator = '\n' if key == 'slides_links' else ', '
+        return separator.join(part for part in normalized_parts if part)
+    if isinstance(value, dt.datetime):
+        return value.isoformat()
+    return str(value).strip()
+
+
+def _normalize_import_record(record, settings):
+    return {key: _normalize_import_value(record.get(key), key=key) for key in settings}
+
+
+def _normalize_extra_key(key) -> str:
+    return re.sub(r'[^a-z0-9]+', '_', str(key or '').strip().lower()).strip('_')
+
+
+def _humanize_import_key(key: str) -> str:
+    label_overrides = {
+        'github': 'GitHub',
+        'linkedin': 'LinkedIn',
+        'twitter': 'Twitter',
+        'facebook': 'Facebook',
+        'instagram': 'Instagram',
+    }
+    if key in label_overrides:
+        return label_overrides[key]
+    return key.replace('_', ' ').strip().capitalize()
+
+
+def _normalize_import_extras(extras) -> dict:
+    if not isinstance(extras, dict):
+        return {}
+
+    normalized = {}
+    for key, value in extras.items():
+        normalized_key = _normalize_extra_key(key)
+        if not normalized_key or value in (None, '', [], {}):
+            continue
+        normalized[normalized_key] = value
+    return normalized
+
+
+def _infer_question_variant(key: str, value) -> str:
+    key = key.lower()
+    if isinstance(value, bool):
+        return TalkQuestionVariant.BOOLEAN
+    if key in {'country'} or key.endswith('_country'):
+        return TalkQuestionVariant.COUNTRY
+    if key in {'website', 'github', 'linkedin', 'twitter', 'facebook', 'instagram', 'blog'}:
+        return TalkQuestionVariant.URL
+    if isinstance(value, str) and (value.strip().startswith('http://') or value.strip().startswith('https://')):
+        return TalkQuestionVariant.URL
+    if isinstance(value, str) and ('\n' in value or len(value.strip()) > 200):
+        return TalkQuestionVariant.TEXT
+    return TalkQuestionVariant.STRING
+
+
+def _build_import_question_definition(target: str, key: str, value) -> dict:
+    registry = LEGACY_IMPORT_QUESTION_DEFINITIONS.get(target, {})
+    definition = registry.get(key, {})
+    return {
+        'label': definition.get('label') or _humanize_import_key(key),
+        'variant': definition.get('variant') or _infer_question_variant(key, value),
+        'is_public': definition.get('is_public', key in LEGACY_PUBLIC_IMPORT_FIELDS),
+        'contains_personal_data': definition.get(
+            'contains_personal_data',
+            key in LEGACY_PRIVATE_IMPORT_FIELDS,
+        ),
+    }
+
+
+def _build_import_question_key(target: str, key: str) -> str:
+    return f'{LEGACY_IMPORT_KEY_PREFIX}:{target}:{key}'
+
+
+def _next_import_question_position(event: Event, target: str, caches: dict) -> int:
+    positions = caches.setdefault('import_question_positions', {})
+    if target not in positions:
+        positions[target] = (
+            TalkQuestion.all_objects.filter(event=event, target=target).aggregate(position=models.Max('position'))[
+                'position'
+            ]
+            or 0
+        )
+    positions[target] += 1
+    return positions[target]
+
+
+def _upsert_import_question(event: Event, target: str, key: str, value, caches: dict) -> TalkQuestion:
+    cache_key = (target, key)
+    question_cache = caches.setdefault('import_questions', {})
+    if cache_key in question_cache:
+        return question_cache[cache_key]
+
+    question = TalkQuestion.all_objects.filter(
+        event=event,
+        target=target,
+        import_key=_build_import_question_key(target, key),
+    ).first()
+    definition = _build_import_question_definition(target, key, value)
+
+    if question is None:
+        question = TalkQuestion.objects.create(
+            event=event,
+            target=target,
+            import_key=_build_import_question_key(target, key),
+            is_imported=True,
+            active=True,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            variant=definition['variant'],
+            question=definition['label'],
+            is_public=definition['is_public'],
+            contains_personal_data=definition['contains_personal_data'],
+            position=_next_import_question_position(event, target, caches),
+        )
+    else:
+        update_fields = []
+        desired_values = {
+            'question': definition['label'],
+            'variant': definition['variant'],
+            'is_imported': True,
+            'active': True,
+            'question_required': TalkQuestionRequired.OPTIONAL,
+            'contains_personal_data': definition['contains_personal_data'],
+        }
+        if not question.import_key:
+            desired_values['import_key'] = _build_import_question_key(target, key)
+        for field_name, field_value in desired_values.items():
+            if getattr(question, field_name) != field_value:
+                setattr(question, field_name, field_value)
+                update_fields.append(field_name)
+        if update_fields:
+            question.save(update_fields=update_fields)
+
+    question_cache[cache_key] = question
+    return question
+
+
+def _serialize_answer_value(value, variant: str) -> str:
+    if variant == TalkQuestionVariant.BOOLEAN:
+        if isinstance(value, bool):
+            return 'True' if value else 'False'
+        return 'True' if _truthy(str(value).strip().lower()) else 'False'
+
+    if isinstance(value, dict):
+        return json.dumps(value, sort_keys=True)
+    if isinstance(value, (list, tuple)):
+        return ', '.join(str(item).strip() for item in value if str(item).strip())
+
+    answer_value = str(value).strip()
+    if variant == TalkQuestionVariant.COUNTRY:
+        return answer_value.upper()
+    return answer_value
+
+
+def _split_slide_links(value: str) -> list[str]:
+    if not value:
+        return []
+    slide_links = []
+    for line in value.splitlines():
+        for item in line.split(','):
+            cleaned = item.strip()
+            if cleaned:
+                slide_links.append(cleaned)
+    return slide_links
+
+
+def _dedupe_preserving_order(values: list[str]) -> list[str]:
+    seen = set()
+    result = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
+def _is_pdf_link(value: str) -> bool:
+    return Path(urlparse(value).path).suffix.lower() == '.pdf'
+
+
+def import_speaker_records(event: Event, records, acting_user) -> ImportResult:
+    created = 0
+    updated = 0
+    skipped = 0
+    errors = []
+    caches = {'import_questions': {}, 'import_question_positions': {}}
+
+    with scope(event=event):
+        for row_num, record in enumerate(records, start=1):
+            try:
+                normalized_record = _normalize_import_record(record, NORMALIZED_SPEAKER_SETTINGS)
+                normalized_record['speaker_extras'] = record.get('speaker_extras') if isinstance(record, dict) else None
+                was_created = _import_speaker_row(
+                    event,
+                    NORMALIZED_SPEAKER_SETTINGS,
+                    normalized_record,
+                    acting_user,
+                    caches=caches,
+                )
+                if was_created:
+                    created += 1
+                else:
+                    updated += 1
+            except ImportExecutionError as error:
+                skipped += 1
+                errors.append(_('Row {row}: {error}').format(row=row_num, error=error))
+            except (IntegrityError, DataError):
+                skipped += 1
+                logger.exception('Speaker import database error at row %s for event %s', row_num, event.slug)
+                errors.append(
+                    _('Row {row}: A database error occurred while importing this speaker.').format(row=row_num)
+                )
+
+    return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
+
+
+def import_submission_records(event: Event, records, acting_user) -> ImportResult:
+    submission_types = list(SubmissionType.objects.filter(event=event))
+    tracks = list(Track.objects.filter(event=event))
+    rooms = list(Room.objects.filter(event=event))
+    caches = {
+        'submission_types': submission_types,
+        'tracks': tracks,
+        'rooms': rooms,
+        'valid_states': {choice[0] for choice in SubmissionStates.get_choices()},
+        'default_sub_type': submission_types[0] if submission_types else None,
+        'question_mappings': [],
+        'question_cache': {},
+        'import_questions': {},
+        'import_question_positions': {},
+    }
+    speaker_cache = {}
+    created = 0
+    updated = 0
+    skipped = 0
+    errors = []
+
+    with scope(event=event):
+        for row_num, record in enumerate(records, start=1):
+            try:
+                normalized_record = _normalize_import_record(record, NORMALIZED_SUBMISSION_SETTINGS)
+                if isinstance(record, dict):
+                    normalized_record['submission_extras'] = record.get('submission_extras')
+                    normalized_record['room_metadata'] = record.get('room_metadata')
+                    normalized_record['scheduled_public'] = record.get('scheduled_public')
+                was_created = _import_submission_row(
+                    event,
+                    NORMALIZED_SUBMISSION_SETTINGS,
+                    normalized_record,
+                    acting_user,
+                    speaker_cache,
+                    caches,
+                )
+                if was_created:
+                    created += 1
+                else:
+                    updated += 1
+            except ImportExecutionError as error:
+                skipped += 1
+                errors.append(_('Row {row}: {error}').format(row=row_num, error=error))
+            except (IntegrityError, DataError):
+                skipped += 1
+                logger.exception('Session import database error at row %s for event %s', row_num, event.slug)
+                errors.append(
+                    _('Row {row}: A database error occurred while importing this session.').format(row=row_num)
+                )
+
+    return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
 
 
 def _normalize_speaker_identifier(identifier: str) -> str:
@@ -169,7 +538,7 @@ def import_speakers(event: Event, fileid: str, settings: dict, locale: str, user
     return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
 
 
-def _apply_user_optional_fields(user, *, locale_val, avatar_source, avatar_license, identifier):
+def _apply_user_optional_fields(user, *, locale_val, avatar_url, avatar_source, avatar_license, identifier):
     """Apply optional field updates to a User instance and return changed field names."""
     update_fields = []
     if locale_val:
@@ -181,6 +550,7 @@ def _apply_user_optional_fields(user, *, locale_val, avatar_source, avatar_licen
     if avatar_license:
         user.avatar_license = avatar_license
         update_fields.append('avatar_license')
+    update_fields.extend(_set_external_avatar_url(user, avatar_url))
     if identifier:
         if (
             identifier
@@ -196,7 +566,141 @@ def _apply_user_optional_fields(user, *, locale_val, avatar_source, avatar_licen
     return update_fields
 
 
-def _import_speaker_row(event, settings, record, acting_user):
+def _normalize_avatar_url(value: str) -> str:
+    avatar_url = (value or '').strip()
+    if avatar_url.startswith('//'):
+        avatar_url = f'https:{avatar_url}'
+    parsed = urlparse(avatar_url)
+    if parsed.scheme in {'http', 'https'} and parsed.netloc:
+        return avatar_url
+    return ''
+
+
+def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
+    avatar_url = _normalize_avatar_url(avatar_url)
+    if not avatar_url:
+        return []
+
+    profile = dict(user.profile or {})
+    avatar = profile.get('avatar')
+    avatar = dict(avatar) if isinstance(avatar, dict) else {}
+    if avatar.get('url') == avatar_url:
+        return []
+
+    avatar['url'] = avatar_url
+    profile['avatar'] = avatar
+    user.profile = profile
+    return ['profile']
+
+
+def _parse_featured_position(value: str) -> int | None:
+    if not value:
+        return None
+    try:
+        position = int(value)
+    except (TypeError, ValueError):
+        return None
+    return position if position >= 0 else None
+
+
+def _sync_import_answers(*, event: Event, target: str, extras, caches: dict, submission=None, person=None):
+    if extras is None:
+        return
+
+    normalized_extras = _normalize_import_extras(extras)
+    import_keys = set()
+    for key, value in normalized_extras.items():
+        question = _upsert_import_question(event, target, key, value, caches)
+        import_keys.add(question.import_key)
+        _set_question_answer(
+            question.pk,
+            value,
+            question_cache=caches.get('question_cache'),
+            submission=submission,
+            person=person,
+            event=event,
+        )
+
+    if target == TalkQuestionTarget.SPEAKER and person is not None:
+        stale_answers = person.answers.filter(
+            question__event=event,
+            question__target=target,
+            question__is_imported=True,
+        )
+    elif target == TalkQuestionTarget.SUBMISSION and submission is not None:
+        stale_answers = submission.answers.filter(
+            question__event=event,
+            question__target=target,
+            question__is_imported=True,
+        )
+    else:
+        return
+
+    if import_keys:
+        stale_answers = stale_answers.exclude(question__import_key__in=import_keys)
+    for answer in stale_answers:
+        answer.remove(force=True)
+
+
+def _normalize_room_metadata(metadata) -> dict:
+    if not isinstance(metadata, dict):
+        return {}
+    return {key: value for key, value in metadata.items() if value not in (None, '', [], {})}
+
+
+def _build_room_description(metadata: dict) -> str:
+    parts = []
+    legacy_name = str(metadata.get('name') or '').strip()
+    legacy_room = str(metadata.get('room') or '').strip()
+    floor = str(metadata.get('floor') or '').strip()
+    if legacy_name and legacy_name != legacy_room:
+        parts.append(_('Legacy microlocation: {name}').format(name=legacy_name))
+    if floor:
+        parts.append(_('Floor: {floor}').format(floor=floor))
+    return '\n'.join(parts)
+
+
+def _apply_room_metadata(room: Room, room_metadata: dict):
+    metadata = _normalize_room_metadata(room_metadata)
+    if not metadata:
+        return
+
+    update_fields = []
+    import_id = str(metadata.get('import_id') or metadata.get('id') or '').strip()
+    if import_id and room.import_id != import_id:
+        room.import_id = import_id
+        update_fields.append('import_id')
+
+    description = _build_room_description(metadata)
+    if description and not room.description:
+        room.description = description
+        update_fields.append('description')
+
+    speaker_info = str(metadata.get('speaker_info') or '').strip()
+    if speaker_info and not room.speaker_info:
+        room.speaker_info = speaker_info
+        update_fields.append('speaker_info')
+
+    schedule_data = dict(room.schedule_data or {})
+    if schedule_data.get('legacy_microlocation') != metadata:
+        schedule_data['legacy_microlocation'] = metadata
+        room.schedule_data = schedule_data
+        update_fields.append('schedule_data')
+
+    if update_fields:
+        room.save(update_fields=update_fields)
+
+
+def _append_internal_note(existing: str, line: str) -> str:
+    existing_text = (existing or '').strip()
+    if line in existing_text.splitlines():
+        return existing
+    if not existing_text:
+        return line
+    return f'{existing_text}\n{line}'
+
+
+def _import_speaker_row(event, settings, record, acting_user, caches=None):
     full_name = _resolve_csv(settings.get('full_name'), record)
     first_name = _resolve_csv(settings.get('first_name'), record)
     last_name = _resolve_csv(settings.get('last_name'), record)
@@ -205,8 +709,12 @@ def _import_speaker_row(event, settings, record, acting_user):
     identifier = _resolve_csv(settings.get('identifier'), record)
     locale_val = _resolve_csv(settings.get('locale'), record)
     linked_submissions = _resolve_csv(settings.get('linked_submissions'), record)
+    avatar_url = _resolve_csv(settings.get('avatar_url'), record)
     avatar_source = _resolve_csv(settings.get('avatar_source'), record)
     avatar_license = _resolve_csv(settings.get('avatar_license'), record)
+    is_featured = _resolve_csv(settings.get('is_featured'), record)
+    featured_position = _resolve_csv(settings.get('featured_position'), record)
+    speaker_extras = record.get('speaker_extras') if isinstance(record, dict) else None
 
     if not email:
         raise ImportExecutionError(_('Missing email address.'))
@@ -227,6 +735,7 @@ def _import_speaker_row(event, settings, record, acting_user):
 
     optional_kwargs = dict(
         locale_val=locale_val,
+        avatar_url=avatar_url,
         avatar_source=avatar_source,
         avatar_license=avatar_license,
         identifier=normalized_identifier,
@@ -270,9 +779,20 @@ def _import_speaker_row(event, settings, record, acting_user):
             user=user,
             event=event,
         )
+        profile_update_fields = []
         if biography:
             profile.biography = biography
-            profile.save(update_fields=['biography'])
+            profile_update_fields.append('biography')
+        if is_featured:
+            profile.is_featured = _truthy(is_featured)
+            profile_update_fields.append('is_featured')
+        if featured_position:
+            position = _parse_featured_position(featured_position)
+            if position is not None:
+                profile.position = position
+                profile_update_fields.append('position')
+        if profile_update_fields:
+            profile.save(update_fields=profile_update_fields)
 
         # Link to submissions
         if linked_submissions:
@@ -280,6 +800,14 @@ def _import_speaker_row(event, settings, record, acting_user):
                 sub = _find_submission_by_ref(event, ref)
                 if sub:
                     SpeakerRole.objects.get_or_create(submission=sub, user=user)
+
+        _sync_import_answers(
+            event=event,
+            target=TalkQuestionTarget.SPEAKER,
+            extras=speaker_extras,
+            caches=caches or {},
+            person=user,
+        )
 
         event.log_action(
             'eventyay.speaker.imported',
@@ -330,7 +858,7 @@ def import_submissions(event: Event, fileid: str, settings: dict, locale: str, u
                     )
                     for question in questions:
                         option_lookup = None
-                        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+                        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
                             option_lookup = {
                                 str(option.answer).strip().casefold(): option for option in question.options.all()
                             }
@@ -361,9 +889,7 @@ def import_submissions(event: Event, fileid: str, settings: dict, locale: str, u
                         skipped += 1
                         logger.exception('Session import database error at row %s for event %s', row_num, event.slug)
                         errors.append(
-                            _('Row {row}: A database error occurred while importing this session.').format(
-                                row=row_num
-                            )
+                            _('Row {row}: A database error occurred while importing this session.').format(row=row_num)
                         )
 
                 logger.info(
@@ -435,10 +961,24 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
     linked_speakers = _resolve_csv(settings.get('linked_speakers'), record)
     speakers_val = _resolve_csv(settings.get('speakers'), record)
     room_val = _resolve_csv(settings.get('room'), record)
+    slides_link = _resolve_csv(settings.get('slides_link'), record)
+    slides_links_val = _resolve_csv(settings.get('slides_links'), record)
+    submission_extras = record.get('submission_extras') if isinstance(record, dict) else None
+    room_metadata = record.get('room_metadata') if isinstance(record, dict) else None
+    scheduled_public = bool(record.get('scheduled_public')) if isinstance(record, dict) else False
 
     if not title:
         raise ImportExecutionError(_('Missing session title.'))
     title = title[:200]
+
+    slide_links = []
+    if slides_link:
+        slide_links.append(slides_link)
+    slide_links.extend(_split_slide_links(slides_links_val))
+    slide_links = _dedupe_preserving_order(slide_links)
+    for slide_link in slide_links:
+        if not _is_pdf_link(slide_link):
+            raise ImportExecutionError(_('Slides links must point to PDF files.'))
 
     normalized_code = code.strip().upper() if code else ''
     if normalized_code and len(normalized_code) > SUBMISSION_CODE_MAX_LENGTH:
@@ -471,6 +1011,11 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
         notes=notes,
         internal_notes=internal_notes,
     )
+    if scheduled_public and state == SubmissionStates.ACCEPTED:
+        optional_fields['internal_notes'] = _append_internal_note(
+            internal_notes,
+            _('Legacy original state: accepted'),
+        )
     # Upsert: match by code within this event first, then fall back to title.
     # The title fallback handles cross-event imports where the CSV carries codes
     # from a different event (those codes exist globally, so the first import
@@ -545,7 +1090,7 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                     slot.save(update_fields=update_fields)
 
             if room_val:
-                room = _resolve_or_create_room(room_val, event, caches)
+                room = _resolve_or_create_room(room_val, event, caches, room_metadata=room_metadata)
                 if room and slot and slot.room_id != room.pk:
                     slot.room = room
                     slot.save(update_fields=['room'])
@@ -570,13 +1115,35 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
                     SpeakerRole.objects.get_or_create(submission=submission, user=speaker_user)
                     SpeakerProfile.objects.get_or_create(user=speaker_user, event=event)
 
+            if slide_links:
+                delete_slide_resources(submission)
+                for slide_link in slide_links:
+                    create_slide_resource(submission, link=slide_link)
+
             # Question answers
             question_mappings = caches.get('question_mappings') if caches else []
             question_cache = caches.get('question_cache') if caches else None
             for question_id, mapping_value in question_mappings:
                 answer_text = _resolve_csv(mapping_value, record)
                 if answer_text:
-                    _set_question_answer(submission, question_id, answer_text, question_cache)
+                    _set_question_answer(
+                        question_id,
+                        answer_text,
+                        question_cache=question_cache,
+                        submission=submission,
+                        event=event,
+                    )
+
+            _sync_import_answers(
+                event=event,
+                target=TalkQuestionTarget.SUBMISSION,
+                extras=submission_extras,
+                caches=caches or {},
+                submission=submission,
+            )
+
+            if scheduled_public and submission.state == SubmissionStates.ACCEPTED and slot and slot.start:
+                submission.confirm(person=acting_user, orga=True)
 
             event.log_action(
                 'eventyay.submission.imported',
@@ -661,7 +1228,12 @@ def _resolve_room(room_val: str, caches: dict) -> 'Room | None':
     return None
 
 
-def _resolve_or_create_room(room_val: str, event: Event, caches: dict | None) -> Room | None:
+def _resolve_or_create_room(
+    room_val: str,
+    event: Event,
+    caches: dict | None,
+    room_metadata: dict | None = None,
+) -> Room | None:
     normalized_name = room_val.strip()
     if not normalized_name:
         return None
@@ -675,9 +1247,11 @@ def _resolve_or_create_room(room_val: str, event: Event, caches: dict | None) ->
         if room.deleted:
             room.deleted = False
             room.save(update_fields=['deleted'])
+        _apply_room_metadata(room, room_metadata)
         return room
 
     room = Room.objects.create(event=event, name=normalized_name, description='')
+    _apply_room_metadata(room, room_metadata)
     if caches is not None:
         caches['rooms'].append(room)
     return room
@@ -698,7 +1272,15 @@ def _parse_schedule_datetime(value: str, event: Event) -> dt.datetime | None:
         return None
 
 
-def _set_question_answer(submission, question_id, answer_text, question_cache=None):
+def _set_question_answer(
+    question_id,
+    answer_value,
+    question_cache=None,
+    *,
+    submission=None,
+    person=None,
+    event=None,
+):
     question = None
     option_lookup = None
 
@@ -709,27 +1291,43 @@ def _set_question_answer(submission, question_id, answer_text, question_cache=No
         question, option_lookup = cached_question
     else:
         try:
-            question = TalkQuestion.objects.get(pk=question_id, event=submission.event)
+            question = TalkQuestion.objects.get(pk=question_id, event=event or submission.event)
         except TalkQuestion.DoesNotExist:
             return
 
-    if question.variant == TalkQuestionVariant.BOOLEAN:
-        answer_text = 'True' if _truthy(answer_text) else 'False'
+    answer_text = _serialize_answer_value(answer_value, question.variant)
+    if not answer_text and question.variant != TalkQuestionVariant.BOOLEAN:
+        return
+
+    lookup = {'question': question}
+    defaults = {'answer': answer_text}
+    if question.target == TalkQuestionTarget.SPEAKER:
+        lookup['person'] = person
+        defaults['person'] = person
+        defaults['submission'] = None
+    else:
+        lookup['submission'] = submission
+        defaults['submission'] = submission
+        defaults['person'] = None
 
     answer, _ = Answer.objects.update_or_create(
-        submission=submission,
-        question=question,
-        defaults={'answer': answer_text, 'person': None},
+        **lookup,
+        defaults=defaults,
     )
 
-    if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+    if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE, TalkQuestionVariant.SELECT):
         answer.options.clear()
         if option_lookup is None:
             option_lookup = {
                 str(option.answer).strip().casefold(): option for option in question.options.all()
             }
-        for option_text in answer_text.split(','):
-            stripped_option = option_text.strip()
+
+        if question.variant == TalkQuestionVariant.MULTIPLE:
+            options_to_check = [opt.strip() for opt in answer_text.split(',')]
+        else:
+            options_to_check = [answer_text.strip()]
+
+        for stripped_option in options_to_check:
             if not stripped_option:
                 continue
             option = option_lookup.get(stripped_option.casefold())

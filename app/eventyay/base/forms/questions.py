@@ -51,6 +51,11 @@ from eventyay.base.models.tax import (
     cc_to_vat_prefix,
     is_eu_country,
 )
+from eventyay.base.services.system_questions import (
+    get_system_question_asked_required,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.base.settings import (
     COUNTRIES_WITH_STATE_IN_ADDRESS,
     PERSON_NAME_SALUTATIONS,
@@ -402,40 +407,79 @@ class BaseQuestionsForm(forms.Form):
 
         add_fields = {}
 
-        if product.admission and event.settings.attendee_names_asked:
+        base_states = get_system_question_base_states(event)
+        product_overrides = get_system_question_product_overrides(event)
+
+        ask_name, require_name = get_system_question_asked_required(
+            event,
+            'attendee_name_parts',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_email, require_email = get_system_question_asked_required(
+            event,
+            'attendee_email',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_company, require_company = get_system_question_asked_required(
+            event,
+            'company',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_job_title, require_job_title = get_system_question_asked_required(
+            event,
+            'job_title',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+        ask_address, require_address = get_system_question_asked_required(
+            event,
+            'street',
+            product,
+            base_states=base_states,
+            product_overrides=product_overrides,
+        )
+
+        if ask_name:
             add_fields['attendee_name_parts'] = NamePartsFormField(
                 max_length=255,
-                required=event.settings.attendee_names_required and not self.all_optional,
+                required=require_name and not self.all_optional,
                 scheme=event.settings.name_scheme,
                 titles=event.settings.name_scheme_titles,
                 label=_('Attendee name'),
                 initial=(cartpos.attendee_name_parts if cartpos else orderpos.attendee_name_parts),
             )
-        if product.admission and event.settings.attendee_emails_asked:
+        if ask_email:
             add_fields['attendee_email'] = forms.EmailField(
-                required=event.settings.attendee_emails_required and not self.all_optional,
+                required=require_email and not self.all_optional,
                 label=_('Attendee email'),
                 initial=(cartpos.attendee_email if cartpos else orderpos.attendee_email),
                 widget=forms.EmailInput(attrs={'autocomplete': 'email'}),
             )
-        if product.admission and event.settings.attendee_company_asked:
+        if ask_company:
             add_fields['company'] = forms.CharField(
-                required=event.settings.attendee_company_required and not self.all_optional,
+                required=require_company and not self.all_optional,
                 label=_('Company'),
                 max_length=255,
                 initial=(cartpos.company if cartpos else orderpos.company),
             )
-        if product.admission and event.settings.attendee_job_title_asked:
+        if ask_job_title:
             add_fields['job_title'] = forms.CharField(
-                required=event.settings.attendee_job_title_required and not self.all_optional,
+                required=require_job_title and not self.all_optional,
                 label=_('Job title'),
                 max_length=255,
                 initial=(cartpos.job_title if cartpos else orderpos.job_title),
             )
 
-        if product.admission and event.settings.attendee_addresses_asked:
+        if ask_address:
             add_fields['street'] = forms.CharField(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 label=_('Address'),
                 widget=forms.Textarea(
                     attrs={
@@ -447,7 +491,7 @@ class BaseQuestionsForm(forms.Form):
                 initial=(cartpos.street if cartpos else orderpos.street),
             )
             add_fields['zipcode'] = forms.CharField(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 max_length=30,
                 label=_('ZIP code'),
                 initial=(cartpos.zipcode if cartpos else orderpos.zipcode),
@@ -458,7 +502,7 @@ class BaseQuestionsForm(forms.Form):
                 ),
             )
             add_fields['city'] = forms.CharField(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 label=_('City'),
                 max_length=255,
                 initial=(cartpos.city if cartpos else orderpos.city),
@@ -470,7 +514,7 @@ class BaseQuestionsForm(forms.Form):
             )
             country = (cartpos.country if cartpos else orderpos.country) or guess_country(event)
             add_fields['country'] = CountryField(countries=CachedCountries).formfield(
-                required=event.settings.attendee_addresses_required and not self.all_optional,
+                required=require_address and not self.all_optional,
                 label=_('Country'),
                 initial=country,
                 widget=forms.Select(

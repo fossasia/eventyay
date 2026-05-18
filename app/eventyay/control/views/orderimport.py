@@ -138,6 +138,12 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
         )
 
     def dispatch(self, request, *args, **kwargs):
+        # When we're just polling the Celery result, the CachedFile may already
+        # have been deleted by the task (cf.delete() is its last step).  Skip
+        # the file/parse check so we don't raise a 404 before get_result() can
+        # return the success redirect to the browser.
+        if 'async_id' in request.GET and settings.HAS_CELERY:
+            return super().dispatch(request, *args, **kwargs)
         if not self.parsed:
             messages.error(
                 request,
