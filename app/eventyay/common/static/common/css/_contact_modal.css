@@ -1,3 +1,18 @@
+footer button.contact-organizer-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+footer button.contact-organizer-btn:hover {
+    text-decoration: underline;
+}
+
 .contact-organizer-dialog {
     border: none;
     border-radius: 16px;
