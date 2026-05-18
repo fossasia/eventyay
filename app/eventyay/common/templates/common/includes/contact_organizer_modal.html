@@ -1,6 +1,7 @@
 {% load i18n %}
 
-<dialog id="contact-organizer-dialog" class="contact-organizer-dialog">
+<dialog id="contact-organizer-dialog" class="contact-organizer-dialog"
+        role="dialog" aria-labelledby="contact-modal-title" aria-describedby="contact-modal-desc">
     <div class="contact-modal-card">
         <button type="button" class="contact-modal-close" id="contact-modal-close"
                 aria-label="{% translate 'Close' %}">
@@ -9,8 +10,8 @@
         <div class="contact-modal-icon">
             <i class="fa fa-envelope-o"></i>
         </div>
-        <h2 class="contact-modal-title">{% translate "Contact the Organizer" %}</h2>
-        <p class="contact-modal-description">
+        <h2 class="contact-modal-title" id="contact-modal-title">{% translate "Contact the Organizer" %}</h2>
+        <p class="contact-modal-description" id="contact-modal-desc">
             {% translate "Have a question about the event? You can send a message to the organizer." %}
         </p>
         <form id="contact-organizer-form" method="post" data-url="{{ contact_url }}">

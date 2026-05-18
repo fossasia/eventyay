@@ -245,7 +245,7 @@
                 {% include "common/powered_by.html" %}
                 {% if current_event %}
                     ·
-                    <a href="#" class="contact-organizer-btn">{% translate "Contact event organizer" %}</a>
+                    <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
                 {% elif request.organizer and request.organizer.settings.contact_mail %}
                     ·
                     <a href="mailto:{{ request.organizer.settings.contact_mail }}">{% translate "Contact event organizer" %}</a>
