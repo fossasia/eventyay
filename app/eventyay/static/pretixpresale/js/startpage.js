@@ -36,6 +36,10 @@
     var copiedLabel = copyBtn ? (copyBtn.dataset.copiedLabel || 'Copied!') : 'Copied!';
 
     buttons.forEach(function (button) {
+      var shareLabel = button.dataset.shareLabel || 'Share event';
+      button.setAttribute('aria-label', shareLabel);
+      button.setAttribute('title', shareLabel);
+
       button.addEventListener('click', function () {
         var url = button.dataset.url;
         if (!url) {
@@ -45,12 +49,8 @@
         var eventCard = button.closest('.startpage-event-card');
         var title = eventCard ? eventCard.dataset.eventName : document.title;
 
-        // Ensure url is absolute
-        var parsedUrl = new URL(url, window.location.origin);
-        parsedUrl.protocol = window.location.protocol;
-        parsedUrl.hostname = window.location.hostname;
-        parsedUrl.port = window.location.port;
-        var absoluteUrl = parsedUrl.href;
+        // Ensure relative URLs become absolute without rewriting absolute custom-domain URLs
+        var absoluteUrl = new URL(url, window.location.origin).href;
 
         // Set input value
         urlInput.value = absoluteUrl;
@@ -100,6 +100,7 @@
     });
 
     if (copyBtn) {
+      var originalText = copyBtn.innerHTML;
       copyBtn.addEventListener('click', function () {
         var url = urlInput.value;
         if (!url) {
@@ -109,7 +110,6 @@
           .then(function (ok) {
             if (ok) {
               copyBtn.classList.add('is-copied');
-              var originalText = copyBtn.innerHTML;
               copyBtn.innerHTML = copiedLabel + ' <i class="fa fa-check"></i>';
               window.setTimeout(function () {
                 copyBtn.classList.remove('is-copied');
