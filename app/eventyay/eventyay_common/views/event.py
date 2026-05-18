@@ -42,7 +42,7 @@ from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
 from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin, EventPlugins as ControlEventPlugins
 from eventyay.control.views.product import MetaDataEditorMixin
-from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
+from eventyay.eventyay_common.forms.event import EventCommonSettingsForm, EventPublicationForm
 from eventyay.eventyay_common.utils import (
     EventCreatedFor,
     check_create_permission,
@@ -383,9 +383,18 @@ class EventUpdate(
             instance=self.object,
         )
 
+    @cached_property
+    def pubform(self):
+        return EventPublicationForm(
+            obj=self.object,
+            prefix='publication',
+            data=self.request.POST if self.request.method == 'POST' else None,
+        )
+
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
         context['sform'] = self.sform
+        context['pubform'] = self.pubform
         context['header_links_formset'] = self.header_links_formset
         context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
@@ -400,10 +409,15 @@ class EventUpdate(
 
     @transaction.atomic
     def form_valid(self, form):
-        self._save_decoupled(self.sform)
-        self.sform.save()
-        self.header_links_formset.save()
-        self.footer_links_formset.save()
+        if self.sform.has_changed():
+            self._save_decoupled(self.sform)
+            self.sform.save()
+        if self.pubform.has_changed():
+            self.pubform.save()
+        if self.header_links_formset.has_changed():
+            self.header_links_formset.save()
+        if self.footer_links_formset.has_changed():
+            self.footer_links_formset.save()
         # Keep event model timezone in sync with settings
         if 'timezone' in self.sform.cleaned_data:
             self.object.timezone = self.sform.cleaned_data['timezone']
@@ -426,6 +440,8 @@ class EventUpdate(
                     'active.'
                 ),
             )
+        else:
+            messages.success(self.request, _('Your changes have been saved.'))
 
         return super().form_valid(form)
 
@@ -485,11 +501,12 @@ class EventUpdate(
 
         form = self.get_form()
         has_formset_changes = self.header_links_formset.has_changed() or self.footer_links_formset.has_changed()
-        if form.changed_data or self.sform.changed_data or has_formset_changes:
+        if form.changed_data or self.sform.changed_data or self.pubform.changed_data or has_formset_changes:
             form.instance.sales_channels = ['web']
             if (
                 form.is_valid()
                 and self.sform.is_valid()
+                and self.pubform.is_valid()
                 and self.header_links_formset.is_valid()
                 and self.footer_links_formset.is_valid()
             ):
@@ -1094,6 +1111,12 @@ class EventSearchView(views.APIView):
         results = []
         for event in events:
             if request.user.has_event_permission(event.organizer, event, 'can_view_orders', request=request):
-                results.append({'name': event.name, 'slug': event.slug, 'organizer': event.organizer.slug})
+                results.append(
+                    {
+                        'name': str(event.name),
+                        'slug': event.slug,
+                        'organizer': event.organizer.slug,
+                    }
+                )
 
         return JsonResponse(results, safe=False)

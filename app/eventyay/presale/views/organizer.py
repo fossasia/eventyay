@@ -101,6 +101,7 @@ class EventListMixin:
         query = Q(is_public=True) & Q(live=True)
         qs = self.request.organizer.events.using(settings.DATABASE_REPLICA).filter(query)
         qs = qs.filter(sales_channels__contains=self.request.sales_channel.identifier)
+        qs = qs.exclude(display_settings__exclude_from_start_page=True)
         qs = qs.annotate(
             min_from=Min('subevents__date_from'),
             min_to=Min('subevents__date_to'),

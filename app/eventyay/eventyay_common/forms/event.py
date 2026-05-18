@@ -11,6 +11,7 @@ from pytz import common_timezones
 from eventyay.base.forms import I18nModelForm, SettingsForm
 from eventyay.base.models import Event
 from eventyay.base.settings import validate_event_settings
+from eventyay.common.forms.mixins import JsonSubfieldMixin
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.urls import get_file_url_path, is_http_url, normalize_url_scheme
 from eventyay.control.forms import SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
@@ -238,3 +239,39 @@ class EventUpdateForm(I18nModelForm):
             'date_to': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_date_from_0'}),
             'date_admission': SplitDateTimePickerWidget(attrs={'data-date-default': '#id_date_from_0'}),
         }
+
+
+class EventPublicationForm(JsonSubfieldMixin, forms.Form):
+    meta_noindex = forms.BooleanField(
+        label=_('Ask search engines not to index this event’s public pages, including ticket shop pages'),
+        help_text=_(
+            'When enabled, a noindex/nofollow robots meta tag is added to this event’s public pages, including '
+            'schedule, talk, and ticket shop pages, asking search engines not to index them.'
+        ),
+        required=False,
+    )
+    exclude_from_start_page = forms.BooleanField(
+        label=_('Exclude this event from start pages'),
+        help_text=_(
+            'When enabled, this event will not appear in the public event listings on the platform or '
+            'organizer start pages.'
+        ),
+        required=False,
+    )
+    exclude_from_search = forms.BooleanField(
+        label=_('Exclude this event from platform search results'),
+        help_text=_(
+            'When enabled, this event will not appear in platform-wide event search results.'
+        ),
+        required=False,
+    )
+
+    class Meta:
+        json_fields = {
+            'meta_noindex': 'display_settings',
+            'exclude_from_start_page': 'display_settings',
+            'exclude_from_search': 'display_settings',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

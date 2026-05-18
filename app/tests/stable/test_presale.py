@@ -2,7 +2,12 @@
 Tests for public presale/event pages (agenda, schedule, speakers).
 These pages should be accessible without authentication.
 """
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
+
+from eventyay.base.models import Event
 
 
 @pytest.mark.django_db
@@ -57,6 +62,34 @@ class TestEventPages:
         assert response.status_code == 200
         assert 'text/plain' in response['Content-Type']
 
+    def test_organizer_page_hides_excluded_start_page_events(self, client, organizer, event):
+        """Events excluded from organizer start page should not be listed."""
+        visible_event = event
+        visible_event.name = 'Visible Organizer Event'
+        visible_event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Organizer Event',
+            slug='hidden-organizer-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            email='hidden@example.com',
+        )
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_start_page': True}
+        hidden_event.save(update_fields=['display_settings'])
+
+        response = client.get(f'/{organizer.slug}/')
+
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Visible Organizer Event' in content
+        assert 'Hidden Organizer Event' not in content
+
 
 @pytest.mark.django_db
 class TestAgendaPages:
@@ -75,3 +108,142 @@ class TestAgendaPages:
         response = client.get(url)
         # May 404 if speakers not configured, but shouldn't 500
         assert response.status_code in [200, 404]
+
+
+@pytest.mark.django_db
+class TestPlatformSearch:
+    def test_internal_event_picker_returns_all_matching_events(self, organizer_client, organizer, event):
+        """The internal /common/events/search/ endpoint is an authenticated event picker,
+        not a public search; it returns all matching events regardless of exclude_from_search."""
+        event.name = 'Visible Search Event'
+        event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Search Event',
+            slug='hidden-search-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            email='hidden-search@example.com',
+        )
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_search': True}
+        hidden_event.save(update_fields=['display_settings'])
+
+        response = organizer_client.get('/common/events/search/?query=Search')
+        assert response.status_code == 200
+        payload = response.json()
+        names = {row['name'] for row in payload}
+        assert 'Visible Search Event' in names
+        assert 'Hidden Search Event' in names
+
+
+@pytest.mark.django_db
+class TestStartPageVisibility:
+    """Test visibility and search exclusion on the platform start page."""
+
+    def test_start_page_hides_excluded_events(self, client, organizer, event):
+        """Events excluded from start page should not appear in the upcoming list."""
+        event.name = 'Visible Start Event'
+        event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Start Event',
+            slug='hidden-start-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            startpage_visible=True,
+            email='hidden-start@example.com',
+        )
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_start_page': True}
+        hidden_event.save(update_fields=['display_settings'])
+
+        response = client.get('/')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Visible Start Event' in content
+        assert 'Hidden Start Event' not in content
+
+    def test_start_page_search_excluded_events_marked_on_event_cards(self, client, organizer, event):
+        """Events excluded from platform search stay listable but carry a flag for nav autocomplete."""
+        listed = Event.objects.create(
+            organizer=organizer,
+            name='ExcludeSearchAutocompleteToken',
+            slug='exclude-search-autocomplete',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            startpage_visible=True,
+            email='exclude-search-auto@example.com',
+        )
+        listed.display_settings = {**(listed.display_settings or {}), 'exclude_from_search': True}
+        listed.save(update_fields=['display_settings'])
+
+        response = client.get('/')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'ExcludeSearchAutocompleteToken' in content
+        assert 'data-exclude-from-search="true"' in content
+
+    def test_start_page_search_excludes_hidden_events(self, client, organizer, event):
+        """Events excluded from search should not appear in start page search results."""
+        event.name = 'Visible Search Event'
+        event.save(update_fields=['name'])
+
+        hidden_event = Event.objects.create(
+            organizer=organizer,
+            name='Hidden Search Event',
+            slug='hidden-search-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            email='hidden-search@example.com',
+        )
+        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_search': True}
+        hidden_event.save(update_fields=['display_settings'])
+
+        response = client.get('/?q=Search')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Visible Search Event' in content
+        assert 'Hidden Search Event' not in content
+
+    def test_start_page_search_finds_events_not_listed_on_start_page(self, client, organizer, event):
+        """Search matches live events by name even when they are not start-page-visible."""
+        event.name = 'Listed Event'
+        event.save(update_fields=['name'])
+
+        Event.objects.create(
+            organizer=organizer,
+            name='OffStart UniqueQueryToken',
+            slug='off-start-search',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            startpage_visible=False,
+            startpage_featured=False,
+            email='off-start@example.com',
+        )
+
+        response = client.get('/?q=UniqueQueryToken')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'OffStart UniqueQueryToken' in content
+        assert 'Listed Event' not in content

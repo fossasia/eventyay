@@ -11,6 +11,7 @@
     data-event-date="{{ event.get_date_range_display|escape }}"
     data-event-url="{{ event_url }}"
     data-event-image="{{ event_image_url|default:''|escape }}"
+    {% if event.display_settings.exclude_from_search %}data-exclude-from-search="true"{% endif %}
 >
     <a class="startpage-event-media" href="{{ event_url }}">
         {% if event.visible_header_image_url %}

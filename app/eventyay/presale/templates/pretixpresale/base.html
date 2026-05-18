@@ -67,7 +67,7 @@
 {% endblock %}
 
 {% block custom_header %}
-    {% if event.settings.meta_noindex %}
+    {% if event.display_settings.meta_noindex %}
         <meta name="robots" content="noindex, nofollow">
     {% endif %}
     <link rel="manifest" href="{% url "presale:site.webmanifest" %}">

@@ -41,7 +41,8 @@
 <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
-    {% bootstrap_form_errors sform %} {# Added to show sform errors #}
+    {% bootstrap_form_errors sform %}
+    {% bootstrap_form_errors pubform %}
     {% comment %} TODO: Reintroduce component selection when unified component initialization is stable. {% endcomment %}
     <div class="tabbed-form">
         <fieldset>
@@ -219,6 +220,12 @@
             {% bootstrap_field sform.theme_round_borders layout="control" %}
             {% bootstrap_field sform.primary_font layout="control" %}
             {% endpropagated %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Publication" %}</legend>
+            {% bootstrap_field pubform.meta_noindex layout="control" %}
+            {% bootstrap_field pubform.exclude_from_start_page layout="control" %}
+            {% bootstrap_field pubform.exclude_from_search layout="control" %}
         </fieldset>
     </div>
     <div class="form-group submit-group">

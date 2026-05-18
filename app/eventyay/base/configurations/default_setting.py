@@ -1009,15 +1009,7 @@ DEFAULT_SETTINGS = {
             help_text=_('Publicly show how many tickets of a certain type are still available.'),
         ),
     },
-    'meta_noindex': {
-        'default': 'False',
-        'type': bool,
-        'serializer_class': serializers.BooleanField,
-        'form_class': forms.BooleanField,
-        'form_kwargs': dict(
-            label=_('Ask search engines not to index the ticket shop'),
-        ),
-    },
+
     'show_variations_expanded': {
         'default': 'False',
         'type': bool,

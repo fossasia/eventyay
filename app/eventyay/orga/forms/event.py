@@ -117,8 +117,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         required=False,
         widget=HeaderSelect,
     )
-    meta_noindex = forms.BooleanField(label=_('Ask search engines not to index the event pages'), required=False)
-
     def __init__(self, *args, **kwargs):
         self.is_administrator = kwargs.pop('is_administrator', False)
         super().__init__(*args, **kwargs)
@@ -188,7 +186,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'export_html_on_release': 'feature_flags',
             'html_export_url': 'display_settings',
             'header_pattern': 'display_settings',
-            'meta_noindex': 'display_settings',
         }
 
 

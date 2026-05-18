@@ -49,9 +49,16 @@ class StartPageView(TemplateView):
         ctx['search_query'] = search_query
         with scopes_disabled():
             qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
-            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
+
+            # Respect start page exclusion flag
+            qs = qs.exclude(display_settings__exclude_from_start_page=True)
+
             if search_query:
                 qs = qs.filter(name__icontains=search_query)
+                # Respect search exclusion flag when searching
+                qs = qs.exclude(display_settings__exclude_from_search=True)
+            else:
+                qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
 
             events = list(qs.order_by('date_from'))
             visible_events = [event for event in events if not event.has_component_testmode]
