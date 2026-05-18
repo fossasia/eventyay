@@ -192,9 +192,17 @@ export default {
 				position: relative
 				left: -6px
 			h4, .bunt-input
-				flex: auto 1 1
+				flex: 1
 	.role-add
-		padding: 0 8px
+		margin: 0 8px 16px 8px
+		padding: 0 16px
+		.role-head
+			display: flex
+			flex-direction: row
+			align-items: baseline
+			gap: 16px
+			.bunt-input
+				flex: 1
 	.role-config-permissions
 		margin: 8px 16px
 		display: grid
