@@ -4,16 +4,13 @@ from urllib.parse import urlencode
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.core import context
 from django.conf import settings
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from pydantic import ValidationError
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
-from eventyay.helpers.cookies import set_cookie_without_samesite
-from eventyay.helpers.jwt_generate import generate_sso_token
-from eventyay.multidomain.middlewares import get_cookie_domain
 from eventyay.plugins.socialauth.schemas.oauth2_params import OAuth2Params
 
 
@@ -63,7 +60,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         )
         request.session[KEY_LONG_SESSION] = keep_logged_in
 
-        response = super().post_login(
+        return super().post_login(
             request,
             user,
             email_verification=email_verification,
@@ -72,22 +69,6 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             signup=signup,
             redirect_url=redirect_url,
         )
-
-        # JWT cookie lets the Talk sub-app verify the user without shared sessions.
-        if isinstance(response, HttpResponseRedirect) and request.user.is_authenticated:
-            token = generate_sso_token(request.user)
-            set_cookie_without_samesite(
-                request,
-                response,
-                'sso_token',
-                token,
-                max_age=settings.CSRF_COOKIE_AGE,
-                domain=get_cookie_domain(request),
-                path=settings.CSRF_COOKIE_PATH,
-                secure=request.scheme == 'https',
-                httponly=True,
-            )
-        return response
 
     def send_account_already_exists_mail(self, email: str) -> None:
         request = context.request
