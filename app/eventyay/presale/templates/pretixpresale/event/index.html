@@ -39,6 +39,19 @@
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
+    {% if subevent %}
+        {% if cart_namespace %}
+            {% eventurl request.event 'presale:event.index' subevent=subevent.pk cart_namespace=cart_namespace as event_public_presale_home %}
+        {% else %}
+            {% eventurl request.event 'presale:event.index' subevent=subevent.pk as event_public_presale_home %}
+        {% endif %}
+    {% else %}
+        {% if cart_namespace %}
+            {% eventurl request.event 'presale:event.index' cart_namespace=cart_namespace as event_public_presale_home %}
+        {% else %}
+            {% eventurl request.event 'presale:event.index' as event_public_presale_home %}
+        {% endif %}
+    {% endif %}
 
     {% autoescape off %}
         <script type="application/ld+json">
@@ -118,7 +131,7 @@
         {% if not subevent %}
             {% if event_logo_image and request.event.settings.logo_show_title %}
                 <h2 class="content-header">
-                    {{ event.name|event_localize }}
+                    <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
                 </h2>
             {% endif %}
             {% if frontpage_text and not cart_namespace %}
@@ -169,7 +182,7 @@
             </div>
         </div>
         {% if subevent %}
-            <h2 class="subevent-head">{{ subevent.name|event_localize }}</h2>
+            <h2 class="subevent-head"><a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ subevent.name|event_localize }}</a></h2>
             {% if frontpage_text and not cart_namespace %}
                 <div>
                     {{ frontpage_text|event_localize|rich_text }}
@@ -179,17 +192,17 @@
     {% else %}
         {% if event_logo_image and request.event.settings.logo_show_title %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
+                <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
                 {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
+                    <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
                 {% endif %}
             </h2>
         {% endif %}
         {% if not event_logo_image %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
+                <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
                 {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
+                    <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
                 {% endif %}
             </h2>
         {% endif %}
@@ -236,7 +249,7 @@
                     <div class="info-row">
                         <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
                         <p>
-                            {{ ev.get_date_range_display }}
+                            <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ ev.get_date_range_display }}</a>
                             {% if event.settings.show_times %}
                                 <br>
                                 <span data-time="{{ ev.date_from.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">

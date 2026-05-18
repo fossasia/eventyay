@@ -1,8 +1,12 @@
 <template lang="pug">
 .upcoming-stream-countdown(v-if="shouldShow")
 	.content
-		.title {{ upcomingStream.title || 'Upcoming Stream' }}
+		.label {{ $t('UpcomingStreamCountdown:label:text') }}
+		.title {{ upcomingStream.title || $t('UpcomingStreamCountdown:default-title:text') }}
+		.separator |
+		.countdown-label {{ $t('UpcomingStreamCountdown:in:text') }}
 		.countdown {{ formattedCountdown }}
+		.time-label {{ $t('UpcomingStreamCountdown:at:text') }}
 		.time {{ formattedStartTime }}
 </template>
 <script>
@@ -51,7 +55,7 @@ export default {
 		},
 		formattedStartTime() {
 			if (!this.upcomingStream) return ''
-			return moment.tz(this.upcomingStream.start_time, this.eventTimezone).format('HH:mm')
+			return moment(this.upcomingStream.start_time).format('HH:mm')
 		}
 	},
 	watch: {
@@ -172,27 +176,51 @@ export default {
 </script>
 <style lang="stylus">
 .upcoming-stream-countdown
-	position: fixed
-	bottom: 16px
-	right: 16px
+	position: absolute
+	bottom: 8px
+	left: 8px
 	z-index: 100
-	background: rgba(0, 0, 0, 0.8)
-	color: white
-	padding: 12px 16px
-	border-radius: 8px
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3)
+	background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 250, 255, 0.95) 100%)
+	color: var(--clr-primary-text-dark)
+	padding: 10px 16px
+	border-radius: 6px
+	border: 1px solid var(--clr-grey-300)
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.5)
+	max-width: calc(100% - 16px)
 	.content
 		display: flex
-		flex-direction: column
-		gap: 4px
+		flex-direction: row
+		align-items: center
+		gap: 8px
+		white-space: nowrap
+		.label
+			font-size: 13px
+			font-weight: 700
+			color: var(--clr-primary)
+			text-transform: uppercase
 		.title
 			font-size: 14px
-			font-weight: 500
-		.countdown
-			font-size: 20px
 			font-weight: 600
+			color: var(--clr-primary-text-dark)
+			overflow: hidden
+			text-overflow: ellipsis
+			max-width: 200px
+		.separator
+			font-size: 13px
+			color: var(--clr-grey-400)
+		.countdown-label
+			font-size: 13px
+			color: var(--clr-secondary-text-dark)
+		.countdown
+			font-size: 16px
+			font-weight: 700
 			font-family: monospace
+			color: var(--clr-primary)
+		.time-label
+			font-size: 13px
+			color: var(--clr-secondary-text-dark)
 		.time
-			font-size: 12px
-			opacity: 0.8
+			font-size: 14px
+			font-weight: 600
+			color: var(--clr-primary-text-dark)
 </style>
