@@ -9,8 +9,8 @@
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
         {% else %}
-            <a href="#" class="header-nav btn btn-outline-success"
-               onclick="document.getElementById('ticket-permission-dialog').showModal(); return false;">
+            <a href="#" data-dialog-target="#ticket-permission-dialog" data-toggle="dialog"
+               class="header-nav btn btn-outline-success">
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
         {% endif %}

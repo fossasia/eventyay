@@ -48,7 +48,7 @@
                 {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
-                {% trans "Go to" %} <a href="#" onclick="document.getElementById('ticket-permission-dialog').showModal(); return false;">{% trans "Tickets Dashboard" %}</a>
+                {% trans "Go to" %} <a href="#" data-dialog-target="#ticket-permission-dialog" data-toggle="dialog">{% trans "Tickets Dashboard" %}</a>
             </p>
         </div>
     </div>

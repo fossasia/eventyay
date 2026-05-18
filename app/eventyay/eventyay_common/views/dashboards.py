@@ -50,7 +50,7 @@ from eventyay.helpers.daterange import daterange
 from eventyay.helpers.plugin_enable import is_video_enabled
 
 from ...base.models.orders import CancellationRequest
-from ..permissions import user_has_ticket_dashboard_access
+from ..permissions import filter_timeline_entry_for_ticket_access, user_has_ticket_dashboard_access
 from ..utils import EventCreatedFor, get_subevent
 
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
@@ -253,10 +253,13 @@ class EventIndexView(TemplateView):
             action.display = action.display(request)
 
         # Add timeline information
+        has_ticket_access = user_has_ticket_dashboard_access(
+            request.user, request.organizer, request.event, request=request
+        )
         context['timeline'] = [
             {
                 'date': t.datetime.astimezone(ZoneInfo(request.event.timezone)).date(),
-                'entry': t,
+                'entry': filter_timeline_entry_for_ticket_access(t, has_ticket_access),
                 'time': t.datetime.astimezone(ZoneInfo(request.event.timezone)),
             }
             for t in timeline_for_event(request.event, subevent)
@@ -405,9 +408,8 @@ class EventWidgetGenerator:
             )
             return f'<a href="{ticket_url}" class="component">{_("Tickets")}</a>'
         return (
-            f'<a href="#" class="component"'
-            f' onclick="document.getElementById(\'ticket-permission-dialog\').showModal(); return false;">'
-            f'{_("Tickets")}</a>'
+            f'<a href="#" class="component" data-dialog-target="#ticket-permission-dialog"'
+            f' data-toggle="dialog">{_("Tickets")}</a>'
         )
 
     @classmethod

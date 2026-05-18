@@ -28,3 +28,12 @@ def user_has_ticket_dashboard_access(
         TICKET_DASHBOARD_PERMISSIONS,
         request=request,
     )
+
+
+def filter_timeline_entry_for_ticket_access(entry, has_ticket_access):
+    """Hide ticket control edit links on the common dashboard for talk-only users."""
+    if has_ticket_access or not entry.edit_url:
+        return entry
+    if '/control/' in entry.edit_url:
+        return entry._replace(edit_url=None)
+    return entry

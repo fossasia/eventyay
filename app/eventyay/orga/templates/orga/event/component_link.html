@@ -28,5 +28,4 @@
 {% if request.event and not has_ticket_access %}
     <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/dashboard.css' %}">
     {% include "eventyay_common/includes/ticket_permission_dialog.html" with dialog_title_id="ticket-perm-title" %}
-    <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
 {% endif %}
