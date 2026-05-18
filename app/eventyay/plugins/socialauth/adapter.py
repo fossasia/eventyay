@@ -70,9 +70,12 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def list_apps(self, request, provider=None, client_id=None):
+        """Return shallow copies of SocialApp rows with decrypted ``secret`` for OAuth use.
+
+        Callers always receive plaintext secrets, never stored ciphertext. Instances from
+        ``super().list_apps()`` are not mutated because allauth may cache and re-save them.
+        """
         apps = super().list_apps(request, provider=provider, client_id=client_id)
-        # Do not mutate instances from the parent: allauth may cache SocialApp rows;
-        # in-place decryption could later be persisted as plaintext on save.
         out = []
         for app in apps:
             clone = copy.copy(app)

@@ -11,6 +11,23 @@ logger = logging.getLogger(__name__)
 SECRET_CONTEXT = 'eventyay.socialauth.secret'
 
 
+def _configured_encryption_key_strings() -> tuple[str, ...]:
+    raw = getattr(settings, 'SOCIALAUTH_SECRET_ENCRYPTION_KEYS', ()) or ()
+    if isinstance(raw, str):
+        return (raw,)
+    if isinstance(raw, (bytes, bytearray)):
+        logger.error('SOCIALAUTH_SECRET_ENCRYPTION_KEYS must be strings, not bytes; ignoring.')
+        return ()
+    try:
+        return tuple(str(key) for key in raw)
+    except TypeError:
+        logger.error(
+            'SOCIALAUTH_SECRET_ENCRYPTION_KEYS must be an iterable of strings, got %s.',
+            type(raw).__name__,
+        )
+        return ()
+
+
 def is_encrypted_secret(value: str) -> bool:
     """True if ``value`` looks like a Fernet ciphertext (version byte 0x80 after b64 decode).
 
@@ -49,8 +66,7 @@ def decrypt_secret(value: str) -> str:
 
 @functools.lru_cache(maxsize=1)
 def get_fernet() -> MultiFernet:
-    configured_keys = tuple(getattr(settings, 'SOCIALAUTH_SECRET_ENCRYPTION_KEYS', ()) or ())
-    configured_fernet_keys = tuple(_to_fernet_key(key) for key in configured_keys)
+    configured_fernet_keys = tuple(_to_fernet_key(key) for key in _configured_encryption_key_strings())
     derived_default_key = _derived_default_key()
     if derived_default_key in configured_fernet_keys:
         fernet_keys = configured_fernet_keys
