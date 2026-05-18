@@ -110,7 +110,10 @@
           .then(function (ok) {
             if (ok) {
               copyBtn.classList.add('is-copied');
-              copyBtn.innerHTML = copiedLabel + ' <i class="fa fa-check"></i>';
+              copyBtn.textContent = copiedLabel + ' ';
+              var checkIcon = document.createElement('i');
+              checkIcon.className = 'fa fa-check';
+              copyBtn.appendChild(checkIcon);
               window.setTimeout(function () {
                 copyBtn.classList.remove('is-copied');
                 copyBtn.innerHTML = originalText;
