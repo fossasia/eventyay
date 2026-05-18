@@ -26,3 +26,7 @@
         </a>
     {% endif %}
 </div>
+
+{% if request.organizer and request.event and not has_ticket_access %}
+    {% include "eventyay_common/includes/ticket_permission_dialog.html" with dialog_title_id="ticket-perm-nav-title" %}
+{% endif %}
