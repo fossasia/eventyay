@@ -151,9 +151,10 @@ export default {
 			return now && this.session.start < now && this.session.end > now
 		},
 		canOpenStream () {
-			// Only show when the session is live and the backend indicates there's a stream scheduled.
+			// Only show when the session is live and the backend indicates there's a stream scheduled
+			// or the room itself has video modules enabled.
 			// Always link to the internal video room page (no external redirects).
-			return this.isLive && !!this.session.stream_url && !!this.streamLink
+			return this.isLive && (!!this.session.stream_url || !!this.session.has_video_room) && !!this.streamLink
 		},
 		streamLink () {
 			const joinLink = this.getJoinRoomLink(this.session)

@@ -29,7 +29,7 @@
 					:style="getSessionStyle(session)",
 					:showAbstract="false", :showRoom="false",
 					:showFavCount="showFavCount",
-					:faved="favs.includes(session.id)",
+					:faved="favSet.has(session.id)",
 					:hasAmPm="hasAmPm",
 					:onHomeServer="onHomeServer",
 					@fav="$emit('fav', session.id)",
@@ -66,7 +66,7 @@
 							:style="getChunkSessionStyle(session, chunk)",
 							:showAbstract="false", :showRoom="false",
 							:showFavCount="showFavCount",
-							:faved="favs.includes(session.id)",
+							:faved="favSet.has(session.id)",
 							:hasAmPm="hasAmPm",
 							:onHomeServer="onHomeServer",
 							@fav="$emit('fav', session.id)",
@@ -143,6 +143,29 @@ export default {
 		}
 	},
 	computed: {
+		favSet () {
+			return new Set(this.favs || [])
+		},
+		/** Precompute datebreak row span targets; avoids O(n) findIndex per datebreak slice in getSliceStyle. */
+		datebreakGridEndRowByName () {
+			const ts = this.timeslices
+			if (!ts.length) return {}
+			const out = Object.create(null)
+			let j = 0
+			for (let i = 0; i < ts.length; i++) {
+				if (!ts[i].datebreak) continue
+				const d0 = ts[i].date.clone().startOf('day').valueOf()
+				while (j < ts.length && ts[j].date.clone().startOf('day').valueOf() <= d0) j++
+				const endIdx = j < ts.length ? j : ts.length - 1
+				out[ts[i].name] = ts[endIdx].name
+			}
+			return out
+		},
+		roomIndexLookup () {
+			const m = new Map()
+			this.rooms.forEach((room, i) => m.set(room, i))
+			return m
+		},
 		nowHoverTime () {
 			if (!this.now || !this.timezone) return ''
 			const zonedNow = this.now.clone().tz(this.timezone)
@@ -306,12 +329,15 @@ export default {
 		nowSlice () {
 			const minimumSliceMins = this.timeDensityMinutes || 30
 			let slice
-			for (const s of this.timeslices) {
+			let sliceIdx = -1
+			for (let i = 0; i < this.timeslices.length; i++) {
+				const s = this.timeslices[i]
 				if (this.now.isBefore(s.date)) break
 				slice = s
+				sliceIdx = i
 			}
 			if (slice) {
-				const nextSlice = this.timeslices[this.timeslices.indexOf(slice) + 1]
+				const nextSlice = this.timeslices[sliceIdx + 1]
 				if (!nextSlice) return null
 				// is on daybreak
 				if (nextSlice.date.diff(slice.date, 'minutes') > minimumSliceMins) return {
@@ -382,11 +408,12 @@ export default {
 			return !!session.id
 		},
 		getChunkSessions (chunkRooms) {
+			const chunkSet = new Set(chunkRooms)
 			return this.sessions.filter(s => {
 				if (!this.isProperSession(s)) {
-					return !s.room || chunkRooms.includes(s.room)
+					return !s.room || chunkSet.has(s.room)
 				}
-				return chunkRooms.includes(s.room)
+				return chunkSet.has(s.room)
 			})
 		},
 		getChunkSessionStyle (session, chunkRooms) {
@@ -416,7 +443,7 @@ export default {
 			}
 		},
 		getSessionStyle (session) {
-			const roomIndex = this.rooms.indexOf(session.room)
+			const roomIndex = this.roomIndexLookup.has(session.room) ? this.roomIndexLookup.get(session.room) : -1
 			return {
 				'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
 				'grid-column': roomIndex > -1 ? roomIndex + 2 : null
@@ -424,10 +451,13 @@ export default {
 		},
 		getStickyHeaderClearance () {
 			const stickyHeader = this.$el.querySelector('.sticky-header')
-			const scheduleRoot = this.$el.closest('.pretalx-schedule')
+			const scheduleRoot = this.$el.closest('.pretalx-schedule') || this.$el.closest('.c-schedule-view')
 			const toolbar = scheduleRoot?.querySelector('.c-schedule-toolbar')
-			const style = getComputedStyle(this.$el)
-			const navOffset = parseInt(style.getPropertyValue('--pretalx-sticky-top-offset'), 10) || 40
+			let stickyTopOffset = 40
+			if (scheduleRoot) {
+				const parsed = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-sticky-top-offset'))
+				if (Number.isFinite(parsed)) stickyTopOffset = parsed
+			}
 			let toolbarHeight = 0
 			if (toolbar) {
 				toolbarHeight = toolbar.getBoundingClientRect().height
@@ -441,7 +471,7 @@ export default {
 				const vh = parseFloat(getComputedStyle(scheduleRoot).getPropertyValue('--pretalx-version-warning-height'))
 				versionWarning = Number.isFinite(vh) ? vh : 0
 			}
-			return navOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
+			return stickyTopOffset + toolbarHeight + stickyHeaderHeight + versionWarning + 6
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -464,10 +494,12 @@ export default {
 		},
 		getSliceStyle (slice) {
 			if (slice.datebreak) {
-				let index = this.timeslices.findIndex(s => s.date.clone().startOf('day').isAfter(slice.date.clone().startOf('day')))
-				if (index < 0) {
-					index = this.timeslices.length - 1
+				const endName = this.datebreakGridEndRowByName[slice.name]
+				if (endName) {
+					return {'grid-area': `${slice.name} / 1 / ${endName} / auto`}
 				}
+				let index = this.timeslices.findIndex(s => s.date.clone().startOf('day').isAfter(slice.date.clone().startOf('day')))
+				if (index < 0) index = this.timeslices.length - 1
 				return {'grid-area': `${slice.name} / 1 / ${this.timeslices[index].name} / auto`}
 			}
 			return {'grid-area': `${slice.name} / 1 / auto / auto`}
@@ -497,10 +529,8 @@ export default {
 			}
 		},
 		scrollToDayStart (day) {
-			const targetMoment = moment.isMoment(day)
-				? day.clone().tz(this.timezone).startOf('day')
-				: moment.tz(day, this.timezone).startOf('day')
-			const el = this.$refs[getSliceName(targetMoment)]?.[0]
+			const dayStr = moment.isMoment(day) ? day.clone().tz(this.timezone).startOf('day').format('YYYY-MM-DD') : day
+			const el = this.$el.querySelector(`[data-slice-day="${dayStr}"]`)
 			if (!el) return
 			this.scrollElementIntoViewWithClearance(el)
 		},

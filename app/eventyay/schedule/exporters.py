@@ -17,6 +17,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay import __version__
 from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.submission import Submission
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.urls import get_base_url
 from eventyay.common.utils.language import localize_event_text
@@ -105,7 +106,7 @@ class ScheduleData(BaseExporter):
         }
 
         for talk in talks:
-            if not talk.start or not talk.room or (not talk.submission and not self.with_breaks):
+            if not talk.start or not talk.room or talk.room.deleted or (not talk.submission and not self.with_breaks):
                 continue
             talk_date = talk.local_start.date()
             if talk.local_start.hour < 3 and talk_date != event.date_from:
@@ -134,7 +135,7 @@ class ScheduleData(BaseExporter):
         for day in data.values():
             day['rooms'] = sorted(
                 day['rooms'].values(),
-                key=lambda room: (room['position'] if room['position'] is not None else room['id']),
+                key=lambda room: room['position'] if room['position'] is not None else room['id'],
             )
         return tuple(data.values())
 
@@ -145,7 +146,7 @@ class FrabXmlExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-code'
     cors = '*'
 
@@ -184,7 +185,7 @@ class FrabXCalExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-calendar'
     cors = '*'
 
@@ -216,18 +217,37 @@ class FrabJsonExporter(ScheduleData):
     public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-code'
     cors = '*'
 
     def speaker_ids(self) -> set[int]:
-        speaker_ids = set()
+        # Must match the exact talk set that is actually exported via ``self.data``.
+        # (This keeps speaker profile prefetch aligned with the exported schedule.)
+        submission_ids: set[int] = set()
         for day in self.data:
-            for room in day['rooms'].values():
+            for room in day['rooms']:
                 for talk in room['talks']:
-                    if talk.submission:
-                        speaker_ids.update(talk.submission.speakers.values_list('id', flat=True))
-        return speaker_ids
+                    if not talk.submission_id:
+                        continue
+                    if (
+                        self.favs_retrieve
+                        and self.talk_ids
+                        and talk.submission
+                        and talk.submission.code not in self.talk_ids
+                    ):
+                        continue
+                    submission_ids.add(talk.submission_id)
+
+        if not submission_ids:
+            return set()
+
+        return set(
+            Submission.objects.filter(id__in=submission_ids)
+            .values_list('speakers__id', flat=True)
+            .exclude(speakers__id__isnull=True)
+            .distinct()
+        )
 
     @cached_property
     def speaker_profiles(self) -> dict[int, SpeakerProfile]:
@@ -238,8 +258,9 @@ class FrabJsonExporter(ScheduleData):
 
         return {
             profile.user_id: profile
-            for profile in SpeakerProfile.objects.filter(event=self.event, user_id__in=speaker_ids)
-            .select_related('user', 'event')
+            for profile in SpeakerProfile.objects.filter(event=self.event, user_id__in=speaker_ids).select_related(
+                'user', 'event'
+            )
         }
 
     def get_speaker_profile(self, person):
@@ -254,10 +275,10 @@ class FrabJsonExporter(ScheduleData):
         return {
             'url': self.metadata['url'],
             'version': schedule.version,
-                'base_url': self.metadata['base_url'],
-                'conference': {
-                    'acronym': self.event.slug,
-                    'title': localize_event_text(self.event.name),
+            'base_url': self.metadata['base_url'],
+            'conference': {
+                'acronym': self.event.slug,
+                'title': localize_event_text(self.event.name),
                 'start': self.event.date_from.strftime('%Y-%m-%d'),
                 'end': self.event.date_to.strftime('%Y-%m-%d'),
                 'daysCount': self.event.duration,
@@ -309,15 +330,17 @@ class FrabJsonExporter(ScheduleData):
         persons = []
         for person in talk.submission.speakers.all():
             profile = self.get_speaker_profile(person)
-            persons.append({
-                'code': person.code,
-                'name': person.get_display_name(),
-                'avatar': person.get_avatar_url(self.event) or None,
-                'biography': localize_event_text(profile.biography),
-                'public_name': person.get_display_name(),  # deprecated
-                'guid': person.guid,
-                'url': profile.urls.public.full(),
-            })
+            persons.append(
+                {
+                    'code': person.code,
+                    'name': person.get_display_name(),
+                    'avatar': person.get_avatar_url(self.event) or None,
+                    'biography': localize_event_text(profile.biography),
+                    'public_name': person.get_display_name(),  # deprecated
+                    'guid': person.guid,
+                    'url': profile.urls.public.full(),
+                }
+            )
         return {
             'guid': talk.uuid,
             'code': talk.submission.code,
@@ -331,11 +354,7 @@ class FrabJsonExporter(ScheduleData):
             'url': talk.submission.urls.public.full(),
             'title': localize_event_text(talk.submission.title),
             'subtitle': '',
-            'track': (
-                localize_event_text(talk.submission.track.name)
-                if talk.submission.track
-                else None
-            ),
+            'track': (localize_event_text(talk.submission.track.name) if talk.submission.track else None),
             'type': localize_event_text(talk.submission.submission_type.name),
             'language': talk.submission.content_locale,
             'abstract': localize_event_text(talk.submission.abstract),
@@ -394,7 +413,7 @@ class ICalExporter(BaseExporter):
     show_public = True
     show_qrcode = True
     favs_retrieve = False
-    talk_ids = []
+    talk_ids = frozenset()
     icon = 'fa-calendar'
     cors = '*'
 

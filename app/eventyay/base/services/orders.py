@@ -969,15 +969,19 @@ def _create_order(
     sales_channel = get_all_sales_channels()[sales_channel]
 
     with transaction.atomic():
+        # Determine if this order should be treated as a test mode order
+        # Check both public test mode and private test mode (for tickets specifically)
+        effective_testmode = event.testmode or event.private_testmode_tickets_enabled
+
         checked_gift_cards = []
         if gift_cards:
             gc_qs = GiftCard.objects.select_for_update().filter(pk__in=gift_cards)
             for gc in gc_qs:
                 if gc.currency != event.currency:
                     raise OrderError(_('This gift card does not support this currency.'))
-                if gc.testmode and not event.testmode:
+                if gc.testmode and not effective_testmode:
                     raise OrderError(_('This gift card can only be used in test mode.'))
-                if not gc.testmode and event.testmode:
+                if not gc.testmode and effective_testmode:
                     raise OrderError(_('Only test gift cards can be used in test mode.'))
                 if not gc.accepted_by(event.organizer):
                     raise OrderError(_('This gift card is not accepted by this event organizer.'))
@@ -998,7 +1002,7 @@ def _create_order(
             datetime=now_dt,
             locale=get_language_without_region(locale),
             total=total,
-            testmode=True if sales_channel.testmode_supported and event.testmode else False,
+            testmode=True if sales_channel.testmode_supported and effective_testmode else False,
             meta_info=json.dumps(meta_info or {}),
             require_approval=any(p.requires_approval for p in positions),
             sales_channel=sales_channel.identifier,
