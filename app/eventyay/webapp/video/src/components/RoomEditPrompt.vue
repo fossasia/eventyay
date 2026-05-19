@@ -219,8 +219,6 @@ export default {
 					room: this.config.id,
 					name: this.config.name,
 					description: this.config.description,
-					sorting_priority: this.config.sorting_priority,
-					pretalx_id: this.config.pretalx_id || 0,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
 					module_config: this.config.module_config

@@ -164,9 +164,6 @@ function siteRootHref() {
 }
 
 function buildMenuExternalHref(item) {
-	if (item.key === 'dashboard:main') {
-		return siteRootHref()
-	}
 	const base = buildBaseSansVideo()
 	return base + item.externalPath
 }
