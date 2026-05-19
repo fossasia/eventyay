@@ -1,6 +1,8 @@
 /*globals $*/
 
 $(function () {
+    const DEFAULT_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    const DEFAULT_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
     const DEFAULT_ZOOM = 15;
 
     function cleanup(l) {
@@ -31,8 +33,9 @@ $(function () {
         var xhr;
         var lastLocation = null;
         var pendingPin = null;
+        var center = function () {};
 
-        function getpoint() {
+        function getPoint() {
             if ($lat.val() !== "" && $lon.val() !== "" && !isNaN(parseFloat($lat.val())) && !isNaN(parseFloat($lon.val()))) {
                 var p = [parseFloat($lat.val().replace(",", ".")), parseFloat($lon.val().replace(",", "."))];
                 // Clip to valid ranges. Very invalid lon/lat values can even lead to browser crashes in leaflet apparently
@@ -76,6 +79,12 @@ $(function () {
                 lon = res.results[0].lon;
                 if ($lat.val() == lat && $lon.val() == lon) {
                     $notifications.attr("data-notify", "");
+                } else if (!touched) {
+                    $lat.val(lat);
+                    $lon.val(lon).trigger("change");
+                    touched = false;
+                    pendingPin = null;
+                    showUpdatedConfirmation();
                 } else {
                     $notifications.attr("data-notify", "confirm");
                 }
@@ -144,19 +153,17 @@ $(function () {
                     return;
                 }
                 $lat.val(pendingPin.lat);
-                $lon.val(pendingPin.lon).trigger("change");
+                $lon.val(pendingPin.lon);
                 pendingPin = null;
             });
         }
 
         // Map
         var $grp = $(".geodata-group", this);
-        var tiles = $grp.attr("data-tiles");
-        var attrib = $grp.attr("data-attrib");
-        
-        var center;
+        var tiles = $grp.attr("data-tiles") || DEFAULT_TILES;
+        var attrib = $grp.attr("data-attrib") || DEFAULT_ATTRIB;
 
-        if (tiles) {
+        if (typeof L !== "undefined") {
             var $map = $("<div>");
             var $mapWrap = $("<div>").addClass("col-md-9 col-md-offset-3").append($map);
             if ($notifications.length) {
@@ -169,7 +176,7 @@ $(function () {
                 maxZoom: 18,
             }).addTo(map);
 
-            var marker = L.marker(getpoint() || [0, 0], {
+            var marker = L.marker(getPoint() || [0, 0], {
                 draggable: true,
                 icon: L.icon({
                     iconUrl: $grp.attr("data-icon"),
@@ -181,8 +188,7 @@ $(function () {
                     shadowSize: [41, 41]
                 })
             });
-            
-            var point = getpoint();
+            var point = getPoint();
             if (point) {
                 marker.addTo(map);
             }
@@ -201,7 +207,7 @@ $(function () {
             });
 
             center = function(zoom) {
-                var p = getpoint();
+                var p = getPoint();
                 if (p) {
                     if (zoom) {
                         map.setView(p, zoom);
@@ -230,7 +236,7 @@ $(function () {
             center = function(zoom) {};
         }
 
-        if (!getpoint() && cleanup($location.val()) !== "") {
+        if (!getPoint() && cleanup($location.val()) !== "") {
             load(true);
         }
 

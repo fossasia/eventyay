@@ -54,6 +54,10 @@ function initMap(grp) {
 }
 
 function initGeoMaps() {
+  if (typeof L === "undefined") {
+    console.warn("Leaflet is not available, public venue maps were not initialized.");
+    return;
+  }
   document.querySelectorAll(".public-geodata-group").forEach(initMap);
 }
 
@@ -61,4 +65,8 @@ window.addEventListener("resize", () => {
   maps.forEach((m) => m.invalidateSize());
 });
 
-initGeoMaps();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initGeoMaps);
+} else {
+  initGeoMaps();
+}

@@ -2442,6 +2442,7 @@ Your {event} team"""
     'banner_message_detail': {'default': '', 'type': LazyI18nString},
     'opencagedata_apikey': {'default': None, 'type': str},
     'mapquest_apikey': {'default': None, 'type': str},
+    'nominatim_geocoding_enabled': {'default': False, 'type': bool},
     'leaflet_tiles': {'default': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 'type': str},
     'leaflet_tiles_attribution': {'default': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', 'type': str},
     'frontpage_subevent_ordering': {

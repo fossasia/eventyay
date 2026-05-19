@@ -18,12 +18,12 @@ class GeoCodeView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         q = self.request.GET.get('q')
         if not q:
-            return JsonResponse({'success': False, 'results': []}, status=200)
+            return JsonResponse({'success': False, 'results': []}, status=400)
 
         q_hash = hashlib.sha256(q.encode('utf-8')).hexdigest()
         cache_key = f'geocode:{q_hash}'
         cd = cache.get(cache_key)
-        if cd:
+        if cd is not None:
             return JsonResponse({'success': True, 'results': cd}, status=200)
 
         gs = GlobalSettingsObject()
@@ -32,8 +32,10 @@ class GeoCodeView(LoginRequiredMixin, View):
                 res = self._use_opencage(q)
             elif gs.settings.mapquest_apikey:
                 res = self._use_mapquest(q)
-            else:
+            elif gs.settings.nominatim_geocoding_enabled:
                 res = self._use_nominatim(q)
+            else:
+                res = []
         except requests.RequestException:
             logger.exception('Geocoding failed')
             return JsonResponse({'success': False, 'results': []}, status=200)

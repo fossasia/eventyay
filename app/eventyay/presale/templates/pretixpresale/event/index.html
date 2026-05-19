@@ -28,7 +28,7 @@
     {% endcompress %}
 
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
-    {% if ev.geo_lat is not None and ev.geo_lon is not None %}
+    {% if ev.geo_lat != None and ev.geo_lon != None %}
         {% compress css %}
             <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
@@ -417,7 +417,7 @@
         {% endif %}
     {% endif %}
     {% eventsignal event "eventyay.presale.signals.front_page_after_content" subevent=subevent request=request %}
-    {% if ev.geo_lat is not None and ev.geo_lon is not None %}
+    {% if ev.geo_lat != None and ev.geo_lon != None %}
         <section class="front-page venue-map">
             <div class="venue-map-layout">
                 <div class="venue-map-main">
@@ -425,8 +425,8 @@
                     <div class="public-geodata-group"
                          data-lat="{{ ev.geo_lat|default_if_none:'' }}"
                          data-lon="{{ ev.geo_lon|default_if_none:'' }}"
-                         data-tiles="{{ global_settings.leaflet_tiles|default:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' }}"
-                         data-attrib="{{ global_settings.leaflet_tiles_attribution|default:'&copy; <a href=&quot;https://www.openstreetmap.org/copyright&quot;>OpenStreetMap</a> contributors' }}"
+                         data-tiles="{{ global_settings.leaflet_tiles }}"
+                         data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
                          data-icon="{% static 'leaflet/images/marker-icon.png' %}"
                          data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
                         <div class="public-geodata-map" aria-hidden="true"></div>
