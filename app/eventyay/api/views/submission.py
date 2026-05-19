@@ -259,6 +259,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     lookup_field = 'code__iexact'
     search_fields = ('title', 'speakers__fullname')
     filterset_class = SubmissionFilter
+    allow_public_read = True
     permission_map = {
         'make_submitted': 'submission.state_change_submission',
         'add_speaker': 'submission.update_submission',
@@ -327,10 +328,10 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         context = super().get_serializer_context()
         if not self.event:
             return context
-        context['questions'] = questions_for_user(self.request, self.event, self.request.user)
-        context['speakers'] = self.speaker_profiles_for_user
-        context['schedule'] = self.event.current_schedule
-        context['public_slots'] = not self.has_perm('delete')
+        context["questions"] = questions_for_user(self.request, self.event, self.request.user)
+        context["speakers"] = self.speaker_profiles_for_user
+        context["schedule"] = self.event.current_schedule
+        context["public_slots"] = not self.has_perm("delete")
         return context
 
     def get_queryset(self):
@@ -341,19 +342,30 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return self.queryset
         queryset = (
             submissions_for_user(self.event, self.request.user)
-            .select_related('event', 'track', 'submission_type')
-            .prefetch_related('speakers', 'answers', 'slots', 'resources')
-            .order_by('code')
+            .select_related("event", "track", "submission_type")
+            .prefetch_related("speakers", "slots")
+            .order_by("code")
         )
-        if self.check_expanded_fields('speakers.user'):
-            queryset = queryset.prefetch_related('speakers__profiles')
+        if self.check_expanded_fields("speakers.user"):
+            queryset = queryset.prefetch_related("speakers__profiles")
+        # answers: the serializer filters via .filter(question__event=…) which
+        # crosses a FK boundary and bypasses the prefetch cache unless question
+        # is also prefetched.  Only add the prefetch when the expand is present.
         if fields := self.check_expanded_fields(
-            'answers.question',
-            'answers.question.tracks',
-            'answers.question.submission_types',
-            'slots.room',
+            "answers.question",
+            "answers.question.tracks",
+            "answers.question.submission_types",
+            "slots.room",
         ):
-            queryset = queryset.prefetch_related(*[field.replace('.', '__') for field in fields])
+            prefetch_fields = [field.replace(".", "__") for field in fields]
+            # "answers.question" implies we need answers prefetched first.
+            if any(f.startswith("answers") for f in prefetch_fields):
+                prefetch_fields = ["answers"] + prefetch_fields
+            queryset = queryset.prefetch_related(*prefetch_fields)
+        elif self.check_expanded_fields("answers"):
+            queryset = queryset.prefetch_related("answers")
+        if self.check_expanded_fields("resources"):
+            queryset = queryset.prefetch_related("resources")
         return queryset
 
     def perform_destroy(self, request, *args, **kwargs):

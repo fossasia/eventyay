@@ -6,6 +6,7 @@ from urllib.parse import unquote, urlparse, urlunparse
 
 from django.contrib import messages
 from django.core import signing
+from django.core.cache import cache
 from django.http import (
     Http404,
     HttpResponse,
@@ -16,13 +17,14 @@ from django.urls import resolve, reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import urlencode
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
 from eventyay.agenda.views.utils import (
     build_public_schedule_exporters,
+    build_schedule_json,
     escape_json_for_script,
     get_schedule_exporter_content,
     get_schedule_exporters,
@@ -34,7 +36,6 @@ from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
-from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 
 # Starred-ICS token timing: grace, fallback, refresh buffer.
@@ -306,10 +307,31 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     def show_talk_list(self):
         return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
 
+    @context
+    def schedule_data_json(self):
+        """Inline non-enriched schedule JSON for all schedule pages.
+
+        Vue reads this directly and skips the widget endpoint fetch entirely,
+        removing a full round-trip from every page load.  Released schedules are
+        cached for 5 minutes; WIP is never cached (and uses all_talks=True).
+        """
+        return build_schedule_json(self.request, self.schedule)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         schedule = ctx.get('schedule')
         version = schedule.version if schedule else None
+
+        # Cache the entire meta JSON for released schedules (avoids DB + signal dispatch per request).
+        # WIP schedules are never cached so organiser previews are always fresh.
+        if version:
+            language = get_language() or ''
+            meta_cache_key = f'eagenda:meta:{self.request.event.pk}:{version}:{language}'
+            cached_meta = cache.get(meta_cache_key)
+            if cached_meta is not None:
+                ctx['schedule_meta_json'] = cached_meta
+                return ctx
+
         released = list(
             self.request.event.schedules.filter(version__isnull=False)
             .order_by('-published')
@@ -328,7 +350,10 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             'versions': versions,
             'exporters': build_public_schedule_exporters(self.request.event, version=version),
         }
-        ctx['schedule_meta_json'] = escape_json_for_script(json.dumps(meta))
+        meta_json = escape_json_for_script(json.dumps(meta))
+        ctx['schedule_meta_json'] = meta_json
+        if version:
+            cache.set(meta_cache_key, meta_json, 600)
         return ctx
 
 
@@ -496,7 +521,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             )
 
         if is_google:
-            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url})}'
+            google_url = f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url.replace("https://", "http://")})}'
             return HttpResponseRedirect(google_url)
 
         parsed = urlparse(ics_url)

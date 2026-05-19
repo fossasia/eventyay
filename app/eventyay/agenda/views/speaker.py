@@ -16,7 +16,7 @@ from django.views.generic import DetailView, ListView, TemplateView, View
 from django_context_decorator import context
 from i18nfield.utils import I18nJSONEncoder
 
-from eventyay.agenda.views.utils import is_public_speakers_empty, redirect_to_presale_with_warning
+from eventyay.agenda.views.utils import build_speaker_schedule_json, is_public_speakers_empty, redirect_to_presale_with_warning
 from eventyay.base.models import SpeakerProfile, TalkQuestionTarget, User
 from eventyay.common.text.path import safe_filename
 from eventyay.common.urls import get_base_url
@@ -56,6 +56,10 @@ class SpeakerView(PermissionRequired, TemplateView):
     template_name = 'agenda/speaker.html'
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
+
+    @context
+    def schedule_json(self):
+        return build_speaker_schedule_json(self.request, self.kwargs['code'])
 
     def dispatch(self, request, *args, **kwargs):
         if is_public_speakers_empty(request):

@@ -22,7 +22,7 @@ from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import build_enriched_schedule_json, encode_email, is_email_like
+from eventyay.agenda.views.utils import build_talk_schedule_json, encode_email, is_email_like
 from eventyay.base.models import (
     Event,
     Order,
@@ -164,7 +164,7 @@ class TalkView(TalkMixin, TemplateView):
 
     @context
     def schedule_json(self):
-        return build_enriched_schedule_json(self.request)
+        return build_talk_schedule_json(self.request, self.submission.code)
 
     def get_contrast_color(self, bg_color):
         if not bg_color:
