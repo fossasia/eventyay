@@ -22,6 +22,7 @@ from eventyay.consts import SizeKey
 
 logger = logging.getLogger(__name__)
 _ALL_EVENTS = None
+WEBHOOK_TIMEOUT = (30, 30)  # seconds: (connect timeout, read timeout)
 
 
 class WebhookEvent:
@@ -313,7 +314,12 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = requests.post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False,
+                    timeout=WEBHOOK_TIMEOUT,
+                )
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -342,6 +348,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     return_code=0,
                     payload=json.dumps(payload),
                     response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    success=False,
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
