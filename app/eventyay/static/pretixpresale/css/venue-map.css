@@ -28,11 +28,12 @@
 .venue-map-heading {
     margin-top: 0;
     margin-bottom: 10px;
+    padding-bottom: 12px;
 }
 
 .venue-map-main #venue {
     margin-top: 0;
-    margin-bottom: 16px;
+    padding-bottom: 10px;
 }
 
 .public-geodata-map {
