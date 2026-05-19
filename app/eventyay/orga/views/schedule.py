@@ -3,13 +3,14 @@ import datetime as dt
 import json
 import logging
 
+from asgiref.sync import async_to_sync
 import dateutil.parser
 from celery.exceptions import TaskError
 from csp.decorators import csp_update
 from django.conf import settings
 from django.contrib import messages
-from django.db.models.deletion import ProtectedError
-from django.http import FileResponse, JsonResponse
+from django.db import transaction
+from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
@@ -23,6 +24,7 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.agenda.views.utils import get_schedule_exporters
+from eventyay.base.models import Availability, Room, TalkSlot
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
 from eventyay.common.text.phrases import phrases
@@ -34,7 +36,7 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms.schedule import ScheduleExportForm, ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
-from eventyay.base.models import Availability, Room, TalkSlot
+from eventyay.base.services.event import notify_event_change
 
 SCRIPT_SRC = "'self' 'unsafe-eval'"
 DEFAULT_SRC = "'self'"
@@ -116,7 +118,8 @@ class ScheduleExportTriggerView(EventPermissionRequired, View):
             messages.success(
                 self.request,
                 _(
-                    'A new export will be generated on the next scheduled opportunity – please contact your administrator for details.'
+                    'A new export will be generated on the next scheduled opportunity – '
+                    'please contact your administrator for details.'
                 ),
             )
 
@@ -168,9 +171,8 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        private_talks = (
-            self.request.event.private_testmode
-            and self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        private_talks = self.request.event.private_testmode and self.request.event.settings.get(
+            'private_testmode_talks', False, as_type=bool
         )
         if not self.request.event.talks_published and not private_talks:
             form.add_error(
@@ -321,6 +323,7 @@ class TalkList(EventPermissionRequired, View):
             all_talks=True,
             all_rooms=not bool(filter_updated),
             filter_updated=filter_updated,
+            respect_public_visibility=False,
         )
 
         if request.GET.get('warnings'):
@@ -348,7 +351,11 @@ class TalkList(EventPermissionRequired, View):
         room = room.get('id') if isinstance(room, dict) else room
         slot = TalkSlot.objects.create(
             schedule=request.event.wip_schedule,
-            room=(request.event.rooms.filter(deleted=False).get(pk=room) if room else request.event.rooms.filter(deleted=False).first()),
+            room=(
+                request.event.rooms.filter(deleted=False).get(pk=room)
+                if room
+                else request.event.rooms.filter(deleted=False).first()
+            ),
             description=LazyI18nString(data.get('title')),
             start=start,
             end=end,
@@ -401,16 +408,11 @@ class ScheduleAvailabilities(EventPermissionRequired, View):
             .select_related('submission')
             .prefetch_related('submission__speakers')
         ):
-            if talk.submission.speakers.count() == 1:
-                result[talk.id] = [
-                    av.serialize(full=False) for av in speaker_avails[talk.submission.speakers.first().pk]
-                ]
+            speakers = list(talk.submission.speakers.all())
+            if len(speakers) == 1:
+                result[talk.id] = [av.serialize(full=False) for av in speaker_avails[speakers[0].pk]]
             else:
-                all_speaker_avails = [
-                    speaker_avails[speaker.pk]
-                    for speaker in talk.submission.speakers.all()
-                    if speaker_avails[speaker.pk]
-                ]
+                all_speaker_avails = [speaker_avails[speaker.pk] for speaker in speakers if speaker_avails[speaker.pk]]
                 if not all_speaker_avails:
                     result[talk.id] = []
                 else:
@@ -515,6 +517,34 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         if self.action == 'create':
             return _('New room')
         return _('Rooms')
+
+    def order_handler(self, request, *args, **kwargs):
+        order = request.POST.get('order')
+        if order:
+            pks = [pk.strip() for pk in order.split(',') if pk.strip()]
+            try:
+                pk_values = [int(pk) for pk in pks]
+            except ValueError:
+                return HttpResponseBadRequest('Invalid room IDs in order')
+            if len(pk_values) != len(set(pk_values)):
+                return HttpResponseBadRequest('Duplicate room IDs in order')
+            queryset = self.get_queryset()
+            rooms_by_pk = {str(r.pk): r for r in queryset.filter(pk__in=pk_values)}
+            to_update = []
+            for index, pk in enumerate(pks):
+                room = rooms_by_pk.get(pk)
+                if room is None:
+                    raise Http404
+                room.position = index
+                room.sorting_priority = index + 1
+                to_update.append(room)
+            with transaction.atomic():
+                Room.objects.bulk_update(to_update, fields=['position', 'sorting_priority'])
+                event_id = request.event.id
+                transaction.on_commit(
+                    lambda: async_to_sync(notify_event_change)(event_id)
+                )
+        return self.list(request, *args, **kwargs)
 
     def delete_handler(self, request, *args, **kwargs):
         # Use soft delete to sync with video component

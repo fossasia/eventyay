@@ -1,4 +1,4 @@
-/*global $ */
+/*global $,safeSelector */
 
 function gettext(msgid) {
     if (typeof django !== 'undefined' && typeof django.gettext !== 'undefined') {
@@ -16,9 +16,9 @@ function ngettext(singular, plural, count) {
 
 function interpolate(fmt, object, named) {
     if (named) {
-        return fmt.replace(/%\(\w+\)s/g, function(match){return String(obj[match.slice(2,-2)])});
+        return fmt.replace(/%\(\w+\)s/g, function(match){return String(object[match.slice(2,-2)])});
     } else {
-        return fmt.replace(/%s/g, function(match){return String(obj.shift())});
+        return fmt.replace(/%s/g, function(match){return String(object.shift())});
     }
 }
 
@@ -122,13 +122,90 @@ var form_handlers = function (el) {
         );
     });
 
+    var exclusiveGroups = {};
     el.find("input[data-exclusive-prefix]").each(function () {
-        var $others = $("input[name^=" + $(this).attr("data-exclusive-prefix") + "]:not([name=" + $(this).attr("name") + "])");
-        $(this).on('click change', function () {
-            if ($(this).prop('checked')) {
-                $others.prop('checked', false);
+        var prefix = $(this).attr("data-exclusive-prefix");
+        if (!prefix) {
+            return;
+        }
+        if (!exclusiveGroups[prefix]) {
+            exclusiveGroups[prefix] = [];
+        }
+        exclusiveGroups[prefix].push(this);
+    });
+
+    $.each(exclusiveGroups, function (_prefix, groupInputs) {
+        var $group = $(groupInputs);
+
+        $group.each(function () {
+            var $input = $(this);
+            if (typeof $input.data("exclusive-original-disabled") === "undefined") {
+                $input.data("exclusive-original-disabled", $input.prop("disabled"));
             }
         });
+
+        var isNumberInput = function ($input) {
+            return $input.attr("type") === "number";
+        };
+
+        var numericValue = function ($input) {
+            var parsed = parseInt($input.val() || "0", 10);
+            return isNaN(parsed) ? 0 : parsed;
+        };
+
+        var isActive = function ($input) {
+            if (isNumberInput($input)) {
+                return numericValue($input) > 0;
+            }
+            return $input.prop("checked");
+        };
+
+        var setDisabled = function ($input, disabledByExclusive) {
+            var originallyDisabled = !!$input.data("exclusive-original-disabled");
+            $input.prop("disabled", disabledByExclusive || originallyDisabled);
+        };
+
+        var syncExclusiveState = function (changedInput) {
+            var $active = $group.filter(function () {
+                return isActive($(this));
+            });
+
+            if ($active.length > 1) {
+                var $changed = changedInput ? $(changedInput) : null;
+                var $keep = $changed && isActive($changed) ? $changed : $($active.get(0));
+
+                $group.not($keep).each(function () {
+                    var $other = $(this);
+                    if (isNumberInput($other)) {
+                        $other.val("0");
+                    } else {
+                        $other.prop("checked", false);
+                    }
+                });
+                $active = $keep;
+            }
+
+            var hasSelection = $active.length > 0;
+            $group.each(function () {
+                var $input = $(this);
+                var active = isActive($input);
+                var muted = hasSelection && !active;
+
+                if (isNumberInput($input) && muted && numericValue($input) > 0) {
+                    $input.val("0");
+                }
+
+                setDisabled($input, muted);
+                $input.closest(".variation-selector-label, .item-checkbox-label").toggleClass("is-exclusive-disabled", muted);
+                $input.closest(".product-row").toggleClass("is-exclusive-disabled", muted);
+            });
+        };
+
+        $group.on('change input', function () {
+            syncExclusiveState(this);
+        });
+
+        syncExclusiveState();
     });
 
     el.find("input[name*=question], select[name*=question]").change(questions_toggle_dependent);
@@ -142,8 +219,8 @@ $(function () {
     $("body").removeClass("nojs");
 
     $("input[data-toggle=radiocollapse]").change(function () {
-        $($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
-        $($(this).attr("data-target")).collapse('show');
+        safeSelector($(this).attr("data-parent")).find(".collapse.in").collapse('hide');
+        safeSelector($(this).attr("data-target")).collapse('show');
     });
     $(".js-only").removeClass("js-only");
     $(".js-hidden").hide();
@@ -273,9 +350,162 @@ $(function () {
             $("#btn-add-to-cart").prop("disabled", false).popover("destroy")
         }
     };
+
+    var buildVariationLimitMessage = function ($details, maxTotal) {
+        var productName = $.trim($details.attr("data-product-name") || gettext("this product"));
+        return interpolate(
+            ngettext(
+                "You can only choose a maximum of %(max)s option for %(product)s.",
+                "You can only choose a maximum of %(max)s options for %(product)s.",
+                maxTotal
+            ),
+            {
+                max: maxTotal,
+                product: productName,
+            },
+            true
+        );
+    };
+
+    var getVariationSelectionTotal = function ($details) {
+        var selectedTotal = 0;
+        $details.find(".variations input[type=checkbox], .variations input[type=number]").each(function () {
+            var $input = $(this);
+            if ($input.attr("type") === "checkbox") {
+                if ($input.prop("checked")) {
+                    selectedTotal += 1;
+                }
+                return;
+            }
+
+            var value = parseInt($input.val() || "0", 10);
+            if (!isNaN(value) && value > 0) {
+                selectedTotal += value;
+            }
+        });
+        return selectedTotal;
+    };
+
+    var variationInputs = function ($details) {
+        return $details.find(".variations input[type=checkbox], .variations input[type=number]");
+    };
+
+    var clearVariationValidity = function ($details) {
+        variationInputs($details).each(function () {
+            if (this.setCustomValidity) {
+                this.setCustomValidity("");
+            }
+        });
+    };
+
+    var showVariationValidity = function ($input, message) {
+        if (!$input || !$input.length) {
+            return;
+        }
+        var input = $input.get(0);
+        if (!input || !input.setCustomValidity || !input.reportValidity) {
+            return;
+        }
+        input.setCustomValidity(message);
+        input.reportValidity();
+    };
+
+    var ensureVariationDetailsVisible = function ($details) {
+        if (!$details || !$details.length) {
+            return;
+        }
+
+        if (!$details.prop("open")) {
+            $details.prop("open", true);
+        }
+        $details.addClass("details-open");
+        $details.children(':not(summary)').stop(true, true).show();
+
+        $details.find("a.variation-toggle[data-hide-label]").each(function () {
+            var $toggle = $(this);
+            var hideLabel = $toggle.attr("data-hide-label");
+            var $label = $toggle.find(".variation-toggle-label");
+            if ($label.length) {
+                $label.text(hideLabel);
+            }
+            $toggle.attr("aria-expanded", "true");
+        });
+    };
+
+    var enforceVariationMaximum = function ($details, $changedInput) {
+        var maxTotal = parseInt($details.attr("data-variation-max-total") || "0", 10);
+        if (!maxTotal || maxTotal < 1) {
+            clearVariationValidity($details);
+            return true;
+        }
+
+        clearVariationValidity($details);
+
+        var total = getVariationSelectionTotal($details);
+        if (total <= maxTotal) {
+            return true;
+        }
+
+        var message = buildVariationLimitMessage($details, maxTotal);
+        ensureVariationDetailsVisible($details);
+
+        if ($changedInput && $changedInput.length) {
+            if ($changedInput.attr("type") === "checkbox") {
+                $changedInput.prop("checked", false);
+            } else {
+                var currentValue = parseInt($changedInput.val() || "0", 10);
+                if (isNaN(currentValue) || currentValue < 0) {
+                    currentValue = 0;
+                }
+                var allowedValue = Math.max(0, maxTotal - (total - currentValue));
+                $changedInput.val(String(allowedValue));
+            }
+            update_cart_form();
+            showVariationValidity($changedInput, message);
+            return false;
+        }
+
+        var $target = variationInputs($details).filter(function () {
+            if ($(this).attr("type") === "checkbox") {
+                return $(this).prop("checked");
+            }
+            var value = parseInt($(this).val() || "0", 10);
+            return !isNaN(value) && value > 0;
+        }).first();
+
+        showVariationValidity($target, message);
+        return false;
+    };
+
+    var validateVariationMaximums = function ($form) {
+        var isValid = true;
+        $form.find("details.item-with-variations[data-variation-max-total]").each(function () {
+            var $details = $(this);
+            if (!enforceVariationMaximum($details, null)) {
+                isValid = false;
+                return false;
+            }
+        });
+        return isValid;
+    };
+
+    $("details.item-with-variations[data-variation-max-total]").each(function () {
+        var $details = $(this);
+        variationInputs($details).on("change input", function () {
+            enforceVariationMaximum($details, $(this));
+        });
+    });
+
     update_cart_form();
     $(".product-row input[type=checkbox], .variations input[type=checkbox], .product-row input[type=radio], .variations input[type=radio], .input-product-count, .input-seat-selection")
         .on("change mouseup keyup", update_cart_form);
+
+    $("form").has("details.item-with-variations[data-variation-max-total]").on("submit", function (e) {
+        if (!validateVariationMaximums($(this))) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     $(".table-calendar td.has-events").click(function () {
         var $tr = $(this).closest(".table-calendar").find(".selected-day");
@@ -293,7 +523,7 @@ $(function () {
     $("input[data-required-if], select[data-required-if], textarea[data-required-if]").each(function () {
         var dependent = $(this),
             dependentLabel = $("label[for="+this.id+"]"),
-            dependency = $($(this).attr("data-required-if")),
+            dependency = safeSelector($(this).attr("data-required-if")),
             update = function (ev) {
                 var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
                 if (!dependent.is("[data-no-required-attr]")) {
@@ -314,7 +544,7 @@ $(function () {
 
     $("input[data-display-dependency], div[data-display-dependency], select[data-display-dependency], textarea[data-display-dependency]").each(function () {
         var dependent = $(this),
-            dependency = $($(this).attr("data-display-dependency")),
+            dependency = safeSelector($(this).attr("data-display-dependency")),
             update = function (ev) {
                 var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
                 var $toggling = dependent;
@@ -472,6 +702,16 @@ $(function () {
 
     // Lightbox
     lightbox.init();
+});
+
+window.addEventListener('pageshow', function (event) {
+    if (!event.persisted) return;
+    var btn = document.getElementById('btn-add-to-cart');
+    if (!btn) return;
+    var form = btn.closest('form');
+    if (form && (form.getAttribute('action') || '').includes('checkout')) {
+        window.location.reload();
+    }
 });
 
 function copy_answers(elements, answers) {

@@ -135,6 +135,11 @@ export default defineConfig(({ mode }) => {
         'moment-timezone': path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js'),
         // Ensure schedule component imports resolve from video's node_modules
         'markdown-it': path.resolve(__dirname, 'node_modules/markdown-it'),
+        'markdown-it-multimd-table': path.resolve(
+          __dirname,
+          'node_modules/markdown-it-multimd-table'
+        ),
+        dompurify: path.resolve(__dirname, 'node_modules/dompurify'),
         // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
         sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
       }
@@ -195,7 +200,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('uuid')) return 'vendor-uuid'
               if (id.includes('register-service-worker')) return 'vendor-sw'
               if (id.includes('mux-embed') || id.includes('mux.js')) return 'vendor-mux'
-              if (id.includes('qrcode')) return 'vendor-qrcode'
               if (id.includes('random-js')) return 'vendor-randomjs'
               if (id.includes('web-animations-js')) return 'vendor-webanimations'
               return 'vendor'

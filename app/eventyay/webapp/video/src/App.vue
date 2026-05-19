@@ -46,6 +46,7 @@
 import { mapState } from 'vuex'
 import { computed, reactive } from 'vue'
 import moment from 'lib/timetravelMoment'
+import { inferRoomType, inferType } from 'lib/room-types'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -93,7 +94,27 @@ export default {
 			onSpeakerLinkClick: async (event, speaker) => {
 				event.preventDefault()
 				await this.$router.push({name: 'schedule:speaker', params: {speakerId: speaker.code}})
-			}
+			},
+			showJoinRoom: true,
+			getJoinRoomLink: (session) => {
+				// Mirror agenda logic: only show join room link when the session
+				// has both a room and either a stream_url or a video room
+				if ((!session?.stream_url && !session?.has_video_room) || !session?.room) return ''
+				const roomId = typeof session.room === 'object' ? session.room.id : session.room
+				if (!roomId) return ''
+				return this.$router.resolve({name: 'room', params: {roomId}}).href
+			},
+			generateStarrerLinkUrl: (user) => {
+				if (!user?.url || !user?.code) return ''
+				return this.$router.resolve({name: 'schedule:public-stars', params: {userCode: user.code}}).href
+			},
+			onStarrerLinkClick: async (event, user) => {
+				if (user?.code && user?.url) {
+					event.preventDefault()
+					await this.$router.push({name: 'schedule:public-stars', params: {userCode: user.code}})
+				}
+			},
+			translationMessages: window.eventyay?.translationMessages || {}
 		}
 	},
 	data() {
@@ -121,8 +142,12 @@ export default {
 			const routeName = this.$route?.name
 			if (!routeName) return
 			if (routeName.startsWith && routeName.startsWith('admin')) return
-			if (routeName === 'home') return this.rooms?.[0]
-			return this.rooms?.find(room => room.id === this.$route.params.roomId)
+			const rooms = this.rooms || []
+			if (routeName === 'about') {
+				return rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
+			}
+			const wantedId = String(this.$route.params.roomId)
+			return rooms.find(room => String(room.id) === wantedId)
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {
@@ -155,7 +180,7 @@ export default {
 		overrideSidebarCollapse() {
 			return this.$mq.below.l &&
 				this.$mq.above.m &&
-				this.$route.name === 'home' &&
+				this.$route.name === 'about' &&
 				!this.roomHasMedia
 		},
 		// safari cleverly includes the address bar cleverly in 100vh
@@ -172,6 +197,8 @@ export default {
 			}
 			if (this.mediaSourcePlaceholderRect) {
 				Object.assign(style, {
+					'--mediasource-placeholder-top': this.mediaSourcePlaceholderRect.top + 'px',
+					'--mediasource-placeholder-left': this.mediaSourcePlaceholderRect.left + 'px',
 					'--mediasource-placeholder-height': this.mediaSourcePlaceholderRect.height + 'px',
 					'--mediasource-placeholder-width': this.mediaSourcePlaceholderRect.width + 'px'
 				})

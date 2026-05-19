@@ -39,8 +39,8 @@ class EditorView(BaseEditorView):
     def get_output(self, *args, **kwargs):
         return PdfTicketOutput(self.request.event, *args, **kwargs)
 
-    def save_layout(self):
-        super().save_layout()
+    def save_layout(self, layout_data=None):
+        super().save_layout(layout_data)
         invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'pdf'})
 
     def get_layout_settings_key(self):
@@ -233,13 +233,17 @@ class LayoutEditorView(BaseEditorView):
     def title(self):
         return _('Ticket PDF layout: {}').format(self.layout)
 
-    def save_layout(self):
-        self.layout.layout = self.request.POST.get('data')
+    def save_layout(self, layout_data=None):
+        if layout_data is None:
+            layout_data = self._get_posted_layout_json()
+        if layout_data is None:
+            layout_data = '[]'
+        self.layout.layout = layout_data
         self.layout.save(update_fields=['layout'])
         self.layout.log_action(
             action='eventyay.plugins.ticketoutputpdf.layout.changed',
             user=self.request.user,
-            data={'layout': self.request.POST.get('data')},
+            data={'layout': layout_data},
         )
         invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'provider': 'pdf'})
 

@@ -56,6 +56,12 @@ legend {
   object-fit: contain;
 }
 
+@media (min-width: 769px) {
+  #main-container.presale-container #event-logo {
+    padding-left: 1rem;
+  }
+}
+
 button,
 [role="button"],
 a.btn,
@@ -484,6 +490,11 @@ a {
       margin-bottom: -1px;
     }
   }
+}
+
+#main-card {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .list-group {
@@ -1013,6 +1024,7 @@ pl-0 {
 .table-responsive-always {
   display: block;
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -1063,6 +1075,21 @@ pl-0 {
   }
 }
 
+/* Public event hero / headings: linkify without changing appearance */
+a.event-public-text-link,
+a.event-public-text-link:hover,
+a.event-public-text-link:focus,
+a.event-public-text-link:active,
+a.event-public-text-link:visited {
+  color: inherit;
+  text-decoration: none;
+}
+
+.event-hero-text a.event-title.event-public-text-link,
+.event-hero-text a.event-date-line.event-public-text-link {
+  display: block;
+}
+
 @media print {
   *,
   *::before,
@@ -1082,7 +1109,7 @@ pl-0 {
   .d-print-none {
     display: none !important;
   }
-  a:not([role="button"]) {
+  a:not([role="button"]):not(.event-public-text-link) {
     text-decoration: underline;
   }
   pre {
@@ -1122,6 +1149,11 @@ pl-0 {
     content: " (" attr(href) ")";
   }
   a[href^="#"]::after {
+    content: "";
+  }
+
+  /* Match pre-linkify print: hero/content title links should not show raw URLs */
+  a.event-public-text-link[href]::after {
     content: "";
   }
 

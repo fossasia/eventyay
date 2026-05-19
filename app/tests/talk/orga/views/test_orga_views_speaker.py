@@ -1,9 +1,12 @@
 import json
 
+import bs4
 import pytest
 from django_scopes import scope, scopes_disabled
-
 from pretalx.submission.models.question import QuestionRequired
+
+from eventyay.person.forms import SpeakerProfileForm
+from eventyay.person.forms.profile import AVATAR_LICENSE_TEXT_VALIDATION_ERROR
 
 
 @pytest.mark.django_db
@@ -101,6 +104,96 @@ def test_orga_can_edit_speaker(orga_client, speaker, event, submission):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("field_name", ("avatar_source", "avatar_license"))
+def test_speaker_profile_rejects_long_avatar_license_text(field_name, speaker, event):
+    with scope(event=event):
+        form = SpeakerProfileForm(
+            data={
+                "fullname": speaker.fullname,
+                "email": speaker.email,
+                "biography": speaker.event_profile(event).biography,
+                field_name: " ".join(["word"] * 3001),
+            },
+            event=event,
+            user=speaker,
+        )
+
+        assert not form.is_valid()
+        assert AVATAR_LICENSE_TEXT_VALIDATION_ERROR in str(form.errors[field_name])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field_name,license_text",
+    (
+        ("avatar_source", " ".join(["word"] * 3000)),
+        ("avatar_license", " ".join(["word"] * 3000)),
+        ("avatar_source", "Photo by Alice Example, used with permission"),
+        ("avatar_license", "Licensed under CC BY-SA 4.0"),
+    ),
+)
+def test_speaker_profile_accepts_valid_avatar_license_text(
+    field_name, license_text, speaker, event
+):
+    with scope(event=event):
+        form = SpeakerProfileForm(
+            data={
+                "fullname": speaker.fullname,
+                "email": speaker.email,
+                "biography": speaker.event_profile(event).biography,
+                field_name: license_text,
+            },
+            event=event,
+            user=speaker,
+        )
+
+        assert form.is_valid()
+        assert form.cleaned_data[field_name] == license_text
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("field_name", ("avatar_source", "avatar_license"))
+def test_speaker_profile_rejects_encoded_avatar_license_text(
+    field_name, speaker, event
+):
+    encoded_value = "data:image/png;base64," + ("A" * 600)
+    with scope(event=event):
+        form = SpeakerProfileForm(
+            data={
+                "fullname": speaker.fullname,
+                "email": speaker.email,
+                "biography": speaker.event_profile(event).biography,
+                field_name: encoded_value,
+            },
+            event=event,
+            user=speaker,
+        )
+
+        assert not form.is_valid()
+        assert AVATAR_LICENSE_TEXT_VALIDATION_ERROR in str(form.errors[field_name])
+
+
+@pytest.mark.django_db
+def test_submission_speakers_wraps_avatar_license_text(orga_client, speaker, event, submission):
+    payload = "data:image/png;base64," + ("A" * 600)
+    with scope(event=event):
+        speaker.avatar_source = payload
+        speaker.avatar_license = payload
+        speaker.save(update_fields=["avatar_source", "avatar_license"])
+
+    response = orga_client.get(submission.orga_urls.speakers, follow=True)
+
+    assert response.status_code == 200
+    doc = bs4.BeautifulSoup(response.content, "lxml")
+    for label in ("Profile Picture Source:", "Profile Picture License:"):
+        element = doc.find("strong", string=label)
+        assert element is not None
+        wrapper = element.find_parent("p")
+        assert wrapper is not None
+        assert "avatar-license-text" in wrapper.get("class", [])
+
+
+@pytest.mark.django_db
 def test_orga_can_edit_speaker_unchanged(orga_client, speaker, event, submission):
     with scope(event=event):
         url = speaker.event_profile(event).orga_urls.base
@@ -191,6 +284,78 @@ def test_orga_can_edit_speaker_status(orga_client, speaker, event, submission):
         assert speaker.profiles.first().has_arrived is False
     with scopes_disabled():
         assert speaker.logged_actions().count() == logs + 2
+
+
+@pytest.mark.django_db
+def test_orga_can_toggle_speaker_featured(orga_client, speaker, event, submission):
+    with scope(event=event):
+        profile = speaker.event_profile(event)
+        assert profile.is_featured is False
+        url = profile.orga_urls.toggle_featured
+
+    response = orga_client.post(url)
+    assert response.status_code == 200
+
+    with scope(event=event):
+        profile.refresh_from_db()
+        assert profile.is_featured is True
+
+    response = orga_client.post(url)
+    assert response.status_code == 200
+
+    with scope(event=event):
+        profile.refresh_from_db()
+        assert profile.is_featured is False
+
+
+@pytest.mark.django_db
+def test_reviewer_cannot_toggle_speaker_featured(
+    review_client, speaker, event, submission
+):
+    with scope(event=event):
+        url = speaker.event_profile(event).orga_urls.toggle_featured
+    response = review_client.post(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_orga_can_reorder_speakers(
+    orga_client, speaker, other_speaker, event, submission, other_submission
+):
+    with scope(event=event):
+        first_profile = speaker.event_profile(event)
+        second_profile = other_speaker.event_profile(event)
+        assert first_profile.position is None
+        assert second_profile.position is None
+
+    response = orga_client.post(
+        event.orga_urls.speakers,
+        data={"order": f"{second_profile.pk},{first_profile.pk}"},
+    )
+    assert response.status_code == 204
+
+    with scope(event=event):
+        first_profile.refresh_from_db()
+        second_profile.refresh_from_db()
+        assert second_profile.position == 0
+        assert first_profile.position == 1
+
+    list_response = orga_client.get(event.orga_urls.speakers)
+    assert list_response.status_code == 200
+    assert list_response.text.index(other_speaker.fullname) < list_response.text.index(
+        speaker.fullname
+    )
+
+
+@pytest.mark.django_db
+def test_speaker_list_has_featured_and_drag_controls(
+    orga_client, speaker, event, submission
+):
+    response = orga_client.get(event.orga_urls.speakers, follow=True)
+    assert response.status_code == 200
+    assert f'dragsort-url="{event.orga_urls.speakers}"' in response.text
+    assert f'featured_speaker_{speaker.code}' in response.text
+    assert "dragsort-button" in response.text
 
 
 @pytest.mark.django_db

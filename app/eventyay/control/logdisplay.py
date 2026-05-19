@@ -19,13 +19,14 @@ from eventyay.base.models import (
     Checkin,
     CheckinList,
     Event,
-    ProductVariation,
     LogEntry,
     OrderPosition,
+    ProductVariation,
     TaxRule,
 )
 from eventyay.base.signals import logentry_display
 from eventyay.base.templatetags.money import money_filter
+
 
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
@@ -339,6 +340,7 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.team.member.joined': 'eventyay.team.member.joined',
     'pretix.team.member.left': 'eventyay.team.member.left',
     'pretix.team.token.created': 'eventyay.team.token.created',
+    'pretix.organizer.deleted': 'eventyay.organizer.deleted',
     'pretix.user.settings.changed': 'eventyay.user.settings.changed',
     'pretix.user.settings.2fa.enabled': 'eventyay.user.settings.2fa.enabled',
     'pretix.user.settings.2fa.disabled': 'eventyay.user.settings.2fa.disabled',
@@ -398,7 +400,6 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.event.checkin.reverted': 'eventyay.event.checkin.reverted',
     'pretix.control.views.checkin': 'eventyay.control.views.checkin',
     'pretix.control.views.checkin.reverted': 'eventyay.control.views.checkin.reverted',
-    
     # Additional mappings for complete backward compatibility
     'pretix.event.category.changed': 'eventyay.event.category.changed',
     'pretix.event.question.added': 'eventyay.event.question.added',
@@ -436,7 +437,6 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.gate.changed': 'eventyay.gate.changed',
     'pretix.device.changed': 'eventyay.device.changed',
     'pretix.property.changed': 'eventyay.property.changed',
-    
     # Additional order and email action mappings for complete coverage
     'pretix.event.order.contact.confirmed': 'eventyay.event.order.contact.confirmed',
     'pretix.event.order.comment': 'eventyay.event.order.comment',
@@ -455,7 +455,6 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.event.order.refund.created.externally': 'eventyay.event.order.refund.created.externally',
     'pretix.subevent.canceled': 'eventyay.subevent.canceled',
     'pretix.voucher.sent': 'eventyay.voucher.sent',
-    
     # pretalx.* (old talk system) mappings - map to eventyay equivalents
     'pretalx.room.create': 'eventyay.room.create',
     'pretalx.room.update': 'eventyay.room.update',
@@ -467,11 +466,15 @@ PRETIX_LEGACY_ALIASES = {
 def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs):
     # Map legacy pretix.* prefixes to eventyay.* for backward compatibility
     action_type = PRETIX_LEGACY_ALIASES.get(logentry.action_type, logentry.action_type)
-    
+
     plains = {
         'eventyay.object.cloned': _('This object has been created by cloning.'),
         'eventyay.organizer.changed': _('The organizer has been changed.'),
         'eventyay.organizer.settings': _('The organizer settings have been changed.'),
+        'eventyay.organizer.deletion.scheduled': _('The organizer deletion has been scheduled.'),
+        'eventyay.organizer.deletion.failed': _(
+            'The organizer deletion could not be completed because of protected objects: {reason}.'
+        ),
         'eventyay.giftcards.acceptance.added': _('Gift card acceptance for another organizer has been added.'),
         'eventyay.giftcards.acceptance.removed': _('Gift card acceptance for another organizer has been removed.'),
         'eventyay.webhook.created': _('The webhook has been created.'),
@@ -696,14 +699,15 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     }
 
     try:
-        data = json.loads(logentry.data or "{}")
+        data = json.loads(logentry.data or '{}')
     except (TypeError, json.JSONDecodeError):
         data = {}
 
     if action_type.startswith('eventyay.event.product.variation'):
         if 'value' not in data:
             # Backwards compatibility
-            var = ProductVariation.objects.filter(id=data['id']).first()
+            with scopes_disabled():
+                var = ProductVariation.objects.filter(id=data['id']).first()
             if var:
                 data['value'] = str(var.value)
             else:
@@ -716,7 +720,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         return plains[action_type].format_map(data)
 
     if action_type.startswith('eventyay.event.order.changed'):
-        return _display_order_changed(sender, logentry, action_type)
+        with scopes_disabled():
+            return _display_order_changed(sender, logentry, action_type)
 
     if action_type.startswith('eventyay.event.payment.provider.'):
         return _('The settings of a payment provider have been changed.')

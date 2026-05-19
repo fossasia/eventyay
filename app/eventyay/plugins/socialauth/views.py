@@ -1,6 +1,6 @@
 import logging
 from enum import StrEnum
-from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from allauth.socialaccount.adapter import get_adapter
 from allauth.socialaccount.models import SocialApp
@@ -14,44 +14,51 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
 from pydantic import ValidationError
 
-from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
-from eventyay.eventyay_common.views.auth import process_login_and_set_cookie
-from eventyay.helpers.urls import build_absolute_uri
 
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
 logger = logging.getLogger(__name__)
-adapter = get_adapter()
 
 
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
-        
-        # Store the 'next' URL in session for redirecting user back after login
+
         next_url = request.GET.get('next', '')
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             request.session['socialauth_next_url'] = next_url
 
         gs = GlobalSettingsObject()
-        client_id = gs.settings.get('login_providers', as_type=dict).get(provider, {}).get('client_id')
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+        known_providers = frozenset(LoginProviders.model_fields.keys())
+        if (
+            provider not in known_providers
+            or provider not in login_providers
+            or not login_providers[provider].get('state')
+            or not login_providers[provider].get('client_id')
+            or not login_providers[provider].get('secret')
+        ):
+            messages.error(request, _('This login method is not available.'))
+            return redirect('eventyay_common:auth.login')
+        provider_config = login_providers[provider]
+        if provider_config.get('is_preferred'):
+            request.session[KEY_SOCIAL_KEEP_LOGGED_IN] = True
+        else:
+            request.session.pop(KEY_SOCIAL_KEEP_LOGGED_IN, None)
+        client_id = provider_config.get('client_id')
+        adapter = get_adapter()
         provider_instance = adapter.get_provider(request, provider, client_id=client_id)
 
-        base_url = provider_instance.get_login_url(request)
-        query_params = {'next': build_absolute_uri('plugins:socialauth:social.oauth.return')}
-        parsed_url = urlparse(base_url)
-        updated_url = parsed_url._replace(query=urlencode(query_params))
-        return redirect(urlunparse(updated_url))
+        login_url = provider_instance.get_login_url(request)
+        return redirect(login_url)
 
     @staticmethod
     def set_oauth2_params(request: HttpRequest) -> None:
-        """
-        Handle Login with SSO button from other components
-        This function will set 'oauth2_params' in session for oauth2_callback
-        """
+        """Store OAuth2 params in session for Talk module SSO handoff."""
         next_url = request.GET.get('next', '')
         if not next_url:
             return
@@ -72,74 +79,6 @@ class OAuthLoginView(View):
             logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
 
 
-class OAuthReturnView(View):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        try:
-            user = self.get_or_create_user(request)
-            
-            # Check for OAuth2 params first (Talk module integration)
-            oauth2_params = request.session.pop('oauth2_params', {})
-            if oauth2_params:
-                try:
-                    oauth2_params = OAuth2Params.model_validate(oauth2_params)
-                    query_string = urlencode(oauth2_params.model_dump())
-                    auth_url = reverse('eventyay_common:oauth2_provider.authorize')
-                    # OAuth2 flow takes precedence - redirect to authorization endpoint
-                    # Clean up socialauth_next_url to prevent it from being used later
-                    request.session.pop('socialauth_next_url', None)
-                    response = process_login_and_set_cookie(request, user, False)
-                    return redirect(f'{auth_url}?{query_string}')
-                except ValidationError as e:
-                    logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
-            
-            # Retrieve and re-validate the stored 'next' URL from session
-            # Re-validation provides defense against session tampering
-            next_url = request.session.pop('socialauth_next_url', None)
-            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-                # Store in session with a clear key for process_login to use
-                request.session['socialauth_next_url'] = next_url
-            
-            response = process_login_and_set_cookie(request, user, False)
-            return response
-        except AttributeError as e:
-            messages.error(request, _('Error while authorizing: no email address available.'))
-            logger.error('Error while authorizing: %s', e)
-            return redirect('eventyay_common:auth.login')
-
-    @staticmethod
-    def get_or_create_user(request: HttpRequest) -> User:
-        """
-        Get or create a user from social auth information.
-        """
-        social_account = request.user.socialaccount_set.filter(
-            provider='mediawiki'
-        ).last()  # Fetch only the latest signed in Wikimedia account
-        wikimedia_username = ''
-
-        if social_account:
-            extra_data = social_account.extra_data
-            wikimedia_username = extra_data.get('username', extra_data.get('realname', ''))
-
-        user, created = User.objects.get_or_create(
-            email=request.user.email,
-            defaults={
-                'locale': getattr(request, 'LANGUAGE_CODE', settings.LANGUAGE_CODE),
-                'timezone': getattr(request, 'timezone', settings.TIME_ZONE),
-                'auth_backend': 'native',
-                'password': '',
-                'wikimedia_username': wikimedia_username,
-            },
-        )
-
-        # Update wikimedia_username if the user exists but has no wikimedia_username value set
-        # (basically our existing users), or if the user has updated his username in his wikimedia account
-        if not created and (not user.wikimedia_username or user.wikimedia_username != wikimedia_username):
-            user.wikimedia_username = wikimedia_username
-            user.save()
-
-        return user
-
-
 class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'socialauth/social_auth_settings.html'
 
@@ -155,33 +94,44 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def set_initial_state(self):
         """
-        Set the initial state of the login providers
-        If the login providers are not valid, set them to the default
+        Validate and normalize the login providers stored in global settings.
+
+        Pydantic fills in defaults for missing keys (e.g. an empty ``{}``
+        becomes the full three-provider schema). When the normalised result
+        differs from what is stored, it is written back so that
+        ``get_context_data`` and the template see the complete provider list.
+
+        On a ``ValidationError`` we log and leave the existing DB row
+        unchanged rather than silently overwriting with all-disabled defaults,
+        which would wipe out the admin's configuration.
         """
-
-        def validate_login_providers(login_providers):
-            try:
-                validated_providers = LoginProviders.model_validate(login_providers)
-                return validated_providers
-            except ValidationError as e:
-                logger.error('Error while validating login providers: %s', e)
-                return None
-
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
-        if login_providers is None or validate_login_providers(login_providers) is None:
-            self.gs.settings.set('login_providers', LoginProviders().model_dump())
+        raw = self.gs.settings.get('login_providers', as_type=dict)
+        try:
+            validated = LoginProviders.model_validate(raw or {})
+        except ValidationError as e:
+            logger.error(
+                'login_providers settings failed validation (not overwriting): %s', e
+            )
+            return
+        normalized = validated.model_dump()
+        if raw != normalized:
+            self.gs.settings.set('login_providers', normalized)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['login_providers'] = self.gs.settings.get('login_providers', as_type=dict)
-        # tickets_domain is only used to append /github/..., so make sure we don't have
-        # a trailing /
-        context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip("/")
+        login_providers = self.gs.settings.get('login_providers', as_type=dict)
+        context['login_providers'] = login_providers
+        context['any_preferred'] = any(
+            p.get('state', False) and p.get('is_preferred', False) for p in login_providers.values()
+        )
+        context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip('/')
         return context
 
     def post(self, request, *args, **kwargs):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         setting_state = request.POST.get('save_credentials', '').lower()
+
+        self._apply_preferred_provider(request, login_providers)
 
         for provider in LoginProviders.model_fields.keys():
             if setting_state == self.SettingState.CREDENTIALS:
@@ -191,6 +141,33 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
         self.gs.settings.set('login_providers', login_providers)
         return redirect(self.get_success_url())
+
+    def _apply_preferred_provider(self, request, login_providers):
+        preferred = request.POST.get('preferred_provider', '').strip().lower()
+        valid_providers = set(LoginProviders.model_fields.keys())
+
+        # Explicitly selecting "none" clears all preferred flags.
+        if preferred == 'none':
+            for provider in valid_providers:
+                login_providers.setdefault(provider, {})['is_preferred'] = False
+            return
+
+        # If the field is missing or empty, leave existing preferences unchanged.
+        if not preferred:
+            return
+
+        # Ignore invalid provider values to avoid wiping existing preferences.
+        if preferred not in valid_providers:
+            logger.warning('Ignoring invalid preferred provider value: %s', preferred)
+            return
+
+        # If the selected provider is disabled, do not change the current preference.
+        if not login_providers.get(preferred, {}).get('state'):
+            return
+
+        # Set the selected provider as the only preferred one.
+        for provider in valid_providers:
+            login_providers.setdefault(provider, {})['is_preferred'] = provider == preferred
 
     def update_credentials(self, request, provider, login_providers):
         client_id_value = request.POST.get(f'{provider}_client_id', '')
@@ -211,7 +188,29 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     def update_provider_state(self, request, provider, login_providers):
         setting_state = request.POST.get(f'{provider}_login', '').lower()
         if setting_state in [s.value for s in self.SettingState]:
-            login_providers[provider]['state'] = setting_state == self.SettingState.ENABLED
+            # Ensure provider dict exists
+            provider_config = login_providers.setdefault(provider, {})
+
+            is_enabled = setting_state == self.SettingState.ENABLED
+            provider_config['state'] = is_enabled
+
+            if not is_enabled:
+                # Clear preferred flag when disabling the provider
+                provider_config['is_preferred'] = False
+                # Remove SocialApp so the provider cannot be used via allauth URLs
+                SocialApp.objects.filter(provider=provider).delete()
+            else:
+                # When enabling, if we already have stored credentials, ensure SocialApp exists
+                client_id = provider_config.get('client_id')
+                secret = provider_config.get('secret')
+                if client_id and secret:
+                    SocialApp.objects.update_or_create(
+                        provider=provider,
+                        defaults={
+                            'client_id': client_id,
+                            'secret': secret,
+                        },
+                    )
 
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')

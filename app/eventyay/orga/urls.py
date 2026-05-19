@@ -17,6 +17,7 @@ from eventyay.orga.views import (
     typeahead,
 )
 
+
 app_name = 'orga'
 urlpatterns = [
     path("", RedirectView.as_view(url="event", permanent=False), name="base"),
@@ -30,7 +31,7 @@ urlpatterns = [
         name='invitation.view',
     ),
     path('nav/typeahead/', typeahead.nav_typeahead, name='nav.typeahead'),
-        path(
+    path(
         "organizer/",
         dashboard.DashboardOrganizerListView.as_view(),
         name="organizer.list",
@@ -121,11 +122,6 @@ urlpatterns = [
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
                 path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
-                *cfp.QuestionView.get_urls(
-                    url_base='cfp/questions',
-                    url_name='cfp.questions',
-                    namespace='orga',
-                ),
                 path(
                     'cfp/questions/remind/',
                     cfp.CfPQuestionRemind.as_view(),
@@ -135,6 +131,16 @@ urlpatterns = [
                     'cfp/questions/<int:pk>/toggle/',
                     cfp.CfPQuestionToggle.as_view(),
                     name='cfp.question.toggle',
+                ),
+                path(
+                    'cfp/questions/<int:question>/options/',
+                    cfp.QuestionOptionsAjax.as_view(),
+                    name='cfp.questions.options',
+                ),
+                *cfp.QuestionView.get_urls(
+                    url_base='cfp/questions',
+                    url_name='cfp.questions',
+                    namespace='orga',
                 ),
                 *cfp.TrackView.get_urls(
                     url_base='cfp/tracks',
@@ -200,6 +206,16 @@ urlpatterns = [
                     url_base='submissions/tags',
                     url_name='submissions.tags',
                     namespace='orga',
+                ),
+                path(
+                    'submissions/import/',
+                    submission.SubmissionImportView.as_view(),
+                    name='submissions.import',
+                ),
+                path(
+                    'submissions/import/<uuid:file>/',
+                    submission.SubmissionImportProcessView.as_view(),
+                    name='submissions.import.process',
                 ),
                 path(
                     'submissions/<code>/',
@@ -315,6 +331,16 @@ urlpatterns = [
                     name='speakers.export',
                 ),
                 path(
+                    'speakers/import/',
+                    speaker.SpeakerImportView.as_view(),
+                    name='speakers.import',
+                ),
+                path(
+                    'speakers/import/<uuid:file>/',
+                    speaker.SpeakerImportProcessView.as_view(),
+                    name='speakers.import.process',
+                ),
+                path(
                     'speakers/<code>/',
                     include(
                         [
@@ -332,6 +358,11 @@ urlpatterns = [
                                 'toggle-arrived',
                                 speaker.SpeakerToggleArrived.as_view(),
                                 name='speakers.arrived',
+                            ),
+                            path(
+                                'toggle-featured',
+                                speaker.SpeakerToggleFeatured.as_view(),
+                                name='speakers.featured',
                             ),
                         ]
                     ),

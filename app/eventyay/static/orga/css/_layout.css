@@ -1,6 +1,7 @@
 body {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   /* Match common/control (Bootstrap) typography defaults */
   font-size: 14px;
@@ -29,9 +30,9 @@ body {
   padding: 18px 44px;
   margin: 0;
   margin-top: var(--navbar-height);
-  height: calc(100vh - var(--navbar-height));
+  min-height: calc(100vh - var(--navbar-height));
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: visible;
   scroll-padding-top: var(--navbar-height);
   display: flex;
   flex-direction: column;
@@ -41,6 +42,18 @@ body {
   .flex-content {
     max-width: 100%;
   }
+}
+
+.cfp-forms-page {
+  min-width: 0;
+}
+
+.cfp-forms-page .cfp-forms-new-field-actions {
+  margin-inline-start: 25%;
+}
+
+.cfp-forms-page > h2.d-flex .cfp-forms-heading-actions {
+  margin-inline-start: auto;
 }
 
 .global-top-warning {
@@ -182,7 +195,9 @@ aside.sidebar {
   background-color: var(--color-grey-ultralight);
   box-shadow: var(--shadow-lighter);
   width: 45px;
-  height: 100vh;
+  align-self: stretch;
+  min-height: calc(100vh - var(--navbar-height));
+  height: auto;
   display: flex;
   font-size: 14px;
   flex-grow: 0;
@@ -190,7 +205,7 @@ aside.sidebar {
   flex-wrap: nowrap;
   z-index: 150;
   padding-left: 0;
-  margin-top: 50px;
+  margin-top: var(--navbar-height);
   margin-bottom: 0;
   overflow-y: auto;
 
@@ -384,7 +399,7 @@ aside.sidebar {
     width: 250px;
     transform: unset !important;
     top: 53px !important;
-    max-height: calc(100vh - 53px - 50px);
+    max-height: calc(100vh - 53px - var(--navbar-height));
     margin: 0;
     padding: 0;
 
@@ -469,6 +484,11 @@ aside.sidebar {
   margin-left: auto;
 }
 
+#main-title .navigation-button .header-nav.active {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  border-color: var(--color-primary-hover);
+}
+
 #main-title .navigation-title {
   text-align: left;
   flex: 0 1 75%;
@@ -487,6 +507,23 @@ aside.sidebar {
   font-size: 65%;
   font-weight: 400;
   line-height: 1;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  #main-title {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  #main-title .navigation-title {
+    flex: 1 1 auto;
+  }
+
+  #main-title .navigation-button {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
 }
 
 .speaker-info {
@@ -1623,6 +1660,10 @@ h2 .user-name-display img {
   }
 }
 
+#page-content .orga-widget-preview pretalx-schedule {
+  --pretalx-sticky-top-offset: -18px;
+}
+
 @media (max-width: 640px) {
   .timeline {
     margin-right: 8px;
@@ -1647,11 +1688,14 @@ h2 .user-name-display img {
 @media (max-width: 768px) {
   aside.sidebar {
     position: absolute;
+    top: var(--navbar-height);
+    margin-top: 0;
+    height: calc(100vh - var(--navbar-height));
     display: none;
   }
 
   aside.sidebar-uncollapsed {
-    display: inherit;
+    display: flex;
     z-index: 600;
   }
 
@@ -1675,6 +1719,28 @@ h2 .user-name-display img {
     }
   }
 
+  .cfp-forms-page {
+    padding-top: 80px;
+  }
+
+  .cfp-forms-page > h2.d-flex {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5rem 1rem;
+  }
+
+  .cfp-forms-page .cfp-forms-heading-actions,
+  .cfp-forms-page .cfp-forms-new-field-actions {
+    margin-inline-start: 0;
+  }
+
+  .cfp-forms-page .cfp-forms-heading-actions .btn {
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    padding: 0.28rem 0.5rem;
+    white-space: normal;
+  }
+
   .dashboard-history .list-group .logentry {
     flex-direction: column;
     border-bottom: 1px solid var(--color-grey-light);
@@ -1688,4 +1754,27 @@ h2 .user-name-display img {
       }
     }
   }
+}
+
+.avatar-license-text {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.form-group:has([data-question-dependency]).dependency-hidden {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-bottom: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.form-group:has([data-question-dependency]):not(.dependency-hidden) {
+  max-height: 10000px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0s;
 }

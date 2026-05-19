@@ -7,7 +7,6 @@
 		//- bunt-icon-button(v-if="$features.enabled('schedule-control')", @click="showEditSchedule = true") calendar_edit
 		.actions
 			bunt-icon-button(v-if="modules['call.bigbluebutton'] && hasPermission('room:bbb.recordings')", :tooltip="$t('Room:recordings:tooltip')", tooltipPlacement="bottom-end", @click="showRecordingsPrompt = true") file-video-outline
-			bunt-icon-button(v-if="hasPermission('room:update') || hasPermission('room:invite.anonymous')", :tooltip="$t('Room:anonymous-qrcode:tooltip')", @click="showQRCodePrompt = true") qrcode
 			.button-group(v-if="['stage', 'channel-bbb', 'channel-janus', 'channel-zoom'].includes(roomType) && canManage")
 				// TODO buntpapier does not support replace
 				// hardlink params so home page alias works
@@ -16,15 +15,13 @@
 	router-view(:room="room", :modules="modules")
 	transition(name="prompt")
 		recordings-prompt(v-if="showRecordingsPrompt && room", :room="room", @close="showRecordingsPrompt = false")
-		QRCodePrompt(v-else-if="showQRCodePrompt && room", :room="room", @close="showQRCodePrompt = false")
 </template>
 <script>
 // TODO
 // better ellipsing for room name + session title on small screens
 import {mapGetters, mapState} from 'vuex'
-import { inferRoomType } from 'lib/room-types'
+import { inferRoomType, inferType } from 'lib/room-types'
 import RecordingsPrompt from 'components/RecordingsPrompt'
-import QRCodePrompt from 'components/QRCodePrompt'
 
 const PERMISSIONS_TO_MANAGE = [
 	'room:chat.moderate',
@@ -33,14 +30,14 @@ const PERMISSIONS_TO_MANAGE = [
 ]
 
 export default {
-	components: { RecordingsPrompt, QRCodePrompt },
+	components: { RecordingsPrompt },
 	props: {
 		roomId: String
 	},
 	data() {
 		return {
 			showRecordingsPrompt: false,
-			showQRCodePrompt: false
+			_redirectCheckTimer: null
 		}
 	},
 	computed: {
@@ -48,12 +45,26 @@ export default {
 		...mapState(['rooms']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		room() {
-			if (this.roomId === undefined) return this.rooms[0] // '/' is the first room
-			return this.rooms.find(room => room.id === this.roomId)
+			if (this.roomId === undefined) {
+				const rooms = this.rooms || []
+				const infoRoom = rooms.find(room => room && room.modules && room.modules.some(m => m.type === 'page.landing'))
+				if (infoRoom) return infoRoom
+
+				return {
+					name: 'About',
+					modules: [{
+						type: 'page.landing'
+					}]
+				}
+			}
+			const wantedId = String(this.roomId)
+			return this.rooms?.find(room => String(room.id) === wantedId)
 		},
 		roomType() {
 			if (!this.room) return null
-			const type = inferRoomType(this.room)
+			const type = Array.isArray(this.room.module_config)
+				? inferType({ module_config: this.room.module_config })
+				: inferRoomType(this.room)
 			return type ? type.id : null
 		},
 		modules() {
@@ -72,6 +83,51 @@ export default {
 				if (this.hasPermission(permission)) return true
 			}
 			return false
+		}
+	},
+	watch: {
+		room: {
+			handler: 'scheduleRedirectIfUninitiated',
+			immediate: true
+		},
+		rooms: {
+			handler: 'scheduleRedirectIfUninitiated',
+			deep: true
+		},
+		roomId: 'scheduleRedirectIfUninitiated'
+	},
+	methods: {
+		scheduleRedirectIfUninitiated() {
+			if (this._redirectCheckTimer) {
+				clearTimeout(this._redirectCheckTimer)
+			}
+			this._redirectCheckTimer = setTimeout(() => {
+				this._redirectCheckTimer = null
+				this.redirectIfUninitiated()
+			}, 50)
+		},
+		redirectIfUninitiated() {
+			// Only enforce this for direct room navigation (/rooms/:roomId).
+			// Home ('/') will always show the first available room.
+			if (this.roomId === undefined) return
+			// Wait until rooms have loaded.
+			if (!this.rooms || this.rooms.length === 0) return
+			// If the room does not exist or is unconfigured, redirect to home.
+			const inferred = this.room
+				? (Array.isArray(this.room.module_config)
+					? inferType({ module_config: this.room.module_config })
+					: inferRoomType(this.room))
+				: null
+			if (!inferred) {
+				if (this.$route.name === 'about') return
+				this.$router.replace({name: 'about'})
+			}
+		}
+	},
+	beforeUnmount() {
+		if (this._redirectCheckTimer) {
+			clearTimeout(this._redirectCheckTimer)
+			this._redirectCheckTimer = null
 		}
 	}
 }
@@ -101,7 +157,6 @@ export default {
 				ellipsis()
 				// TODO decopypaste
 				.emoji
-					color: transparent // hide unicode emoji
 					display: inline-block
 					vertical-align: middle
 					width: 36px

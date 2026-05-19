@@ -1,5 +1,4 @@
 import logging
-import sys
 import warnings
 from collections import Counter
 from functools import lru_cache
@@ -144,12 +143,9 @@ def system_information(request):
         context['eventyay_version'] = settings.EVENTYAY_VERSION
 
     context['warning_update_available'] = False
-    context['warning_update_check_active'] = False
     context['base_path'] = settings.BASE_PATH
     if not request.user.is_anonymous and request.user.is_administrator and request.path.startswith('/orga'):
         gs = GlobalSettings()
         if gs.settings.update_check_result_warning:
             context['warning_update_available'] = True
-        if not gs.settings.update_check_ack and 'runserver' not in sys.argv:
-            context['warning_update_check_active'] = True
     return context

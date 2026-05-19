@@ -8,8 +8,19 @@ Welcome to the **Eventyay** project! The ticketing component of the system provi
 
 ENext is the new and updated version of Eventyay with a unified codebase for the Tickets, Talk, and Videos components.
 
-External Dependencies
-----------------------
+Getting Started
+---------------
+
+Python-based development
+------------------------------------------------------------
+
+0. **Clone the repository**:
+
+.. code-block:: bash
+
+  git clone https://github.com/fossasia/eventyay.git
+
+1. **Install external dependencies**:
 
 The *deb-packages.txt* file lists Debian packages we need to install.
 If you are using Debian / Ubuntu, you can install them quickly with this command:
@@ -31,39 +42,11 @@ If you are using other Linux distros, please guess the corresponding package nam
 
 Other than that, please install `uv`_, the Python package manager.
 
-Getting Started
----------------
+2. **Install and run Redis**
 
-1. **Clone the repository**:
+Depending on your distribution.
 
-.. code-block:: bash
-
-  git clone https://github.com/fossasia/eventyay.git
-
-2. **Enter the project directory and app directory**:
-
-.. code-block:: bash
-
-  cd eventyay/app
-
-3. **Switch to the `dev` branch**:
-
-.. code-block:: bash
-
-  git switch dev
-
-
-4. **Install Python packages**
-
-Use ``uv`` to create virtual environment and install Python packages at the same time.
-**Make sure you are in app directory**
-
-.. code-block:: sh
-
-  uv sync --all-extras --all-groups
-
-
-5. **Create a PostgreSQL database**
+3. **Create a PostgreSQL database**
 
 The default database name that the project needs is ``eventyay-db``. If you are using Linux, the simplest way
 to work with database is to use its "peer" mode (no need to remember password).
@@ -97,11 +80,31 @@ In case you cannot take advantage of PostgreSQL *peer* mode, you need to create 
   postgres_host = 'localhost'
   postgres_port = 5432
 
-6. **Install and run Redis**
+
+4. **Enter the project directory and app directory**:
+
+.. code-block:: bash
+
+  cd eventyay/app
+
+5. **Switch to the `dev` branch**:
+
+.. code-block:: bash
+
+  git switch dev
+
+6. **Install Python packages**
+
+Use ``uv`` to create virtual environment and install Python packages at the same time.
+**Make sure you are in app directory**
+
+.. code-block:: sh
+
+  uv sync --all-extras --all-groups
 
 7. **Activate virtual environment**
 
-After running ``uv sync```, activate a virtual environment
+After running ``uv sync``, activate a virtual environment
 
 .. code-block:: sh
 
@@ -113,13 +116,21 @@ After running ``uv sync```, activate a virtual environment
 
   python manage.py migrate
 
-9. **Create a admin user account** (for accessing the admin panel):
+9. **Create an admin user account** (for accessing the admin panel):
 
 .. code-block:: bash
 
   python manage.py create_admin_user
 
-10. **Run the development server**:
+10. **Build Frontend Assets**:
+
+.. code-block:: bash
+
+  make npminstall
+  python manage.py collectstatic --noinput
+  python manage.py compress --force
+
+11. **Run the development server**:
 
 .. code-block:: bash
 
@@ -141,91 +152,124 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-      cp deployment/env.sample .env.dev
+      cp deployment/env.dev.sample .env.dev
 
-2. **Edit .env.dev**
-
-   Change <SERVER_NAME> and the value of `EVY_RUNNING_ENVIRONMENT=production`
-   to `EVY_RUNNING_ENVIRONMENT=development`
-
-3. **Make sure you don't have some old volumes hanging around**
-
-   This is only necessary the first time, or if you have strange behaviour.
-   This removes the database volume and triggers a complete reinitialization.
-   After that, you have to run migrate and createsuperuser again!
-
-   .. code-block:: bash
-
-      docker volume rm eventyay_postgres_data_dev eventyay_static_volume
-
-4. **Build and run the images**
+2. **Build and run the images**
 
    .. code-block:: bash
 
       docker compose up -d --build
 
-5. **Run database migrations**:
+3. **Create an admin account** (for accessing the admin panel):
 
-  .. code-block:: bash
-
-      docker exec -ti eventyay-next-web python manage.py makemigrations
-      docker exec -ti eventyay-next-web python manage.py migrate
-
-6. **Create a superuser account** (for accessing the admin panel):
+   This asks for an email and a password, and this information will be
+   used to log into the system the first time.
 
    This should be necessary only once, since the database is persisted
-   as docker volume. If you see strange behaviour, see the point 3.
+   as docker volume. If you see strange behaviour, see Troubleshooting below
    on how to reset.
-
-  .. code-block:: bash
-
-      docker exec -ti eventyay-next-web python manage.py createsuperuser
-
-7. **Visit the site**
-
-  Open `http://localhost:8000` in a browser.
-
-8. **Troubleshooting: CSS not loading / MIME type errors**
-
-   In some environments (e.g. Docker with WSL), you may encounter cases where
-   pages load without CSS or only some pages load correctly.
-
-   Browser console errors may look like:
-
-   ::
-
-     Refused to apply style because its MIME type is 'text/html'
-
-   This usually means a static asset was requested but an HTML response
-   (e.g. a 404 page) was returned instead.
-
-   To rebuild static assets, run:
 
    .. code-block:: bash
 
-      docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
-      docker exec -ti eventyay-next-web python manage.py compress --force
-      docker restart eventyay-next-web
+      docker exec -ti eventyay-next-web python manage.py create_admin_user
 
-   After this, hard-refresh the browser (Ctrl + Shift + R).
+4. **Visit the site**
+
+   Open `http://localhost:8000` in a browser.
+
+   If there are issues, see Troubleshooting below.
 
 
-9. **Checking the logs**
+5. **Checking the logs**
 
-  .. code-block:: bash
+   .. code-block:: bash
 
       docker compose logs -f
 
 
-10. **Shut down**
+6. **Shut down**
 
    To shut down the development docker deployment, run
 
-  .. code-block:: bash
+   .. code-block:: bash
 
       docker compose down
 
 The directory `app/eventyay` is mounted into the docker, thus live editing is supported.
+
+
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+**CSS not loading / MIME type errors**
+
+In some environments (e.g. Docker with WSL), you may encounter cases where
+pages load without CSS or only some pages load correctly.
+
+Browser console errors may look like:
+
+::
+
+     Refused to apply style because its MIME type is 'text/html'
+
+This usually means a static asset was requested but an HTML response
+(e.g. a 404 page) was returned instead.
+
+To rebuild static assets, run:
+
+.. code-block:: bash
+
+   docker exec -ti eventyay-next-web make npminstall
+   docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
+   docker exec -ti eventyay-next-web python manage.py compress --force
+   docker restart eventyay-next-web
+
+After this, hard-refresh the browser (Ctrl + Shift + R).
+
+
+**Database issues**
+
+The database in the dev docker setup is created in a docker volume. If you see
+errors concerning login etc, you can completely reset the database (you will
+lose all configuration/organizers/events!). You must stop the stack first so
+no container is using the volume; otherwise ``docker volume rm`` will fail.
+``docker compose down`` stops and removes the containers but keeps named volumes
+by default:
+
+.. code-block:: bash
+
+   docker compose down
+   docker volume rm eventyay-next_postgres_data_dev
+
+
+**Redis issues**
+
+Redis data in the dev docker setup is stored in the ``eventyay-next_rd`` volume
+(``rd`` in *docker-compose.yml*). If you see connection or cache-related errors,
+you can reset Redis the same way: stop the stack, then remove the volume (you
+will lose data held in Redis, such as cache or broker state):
+
+.. code-block:: bash
+
+   docker compose down
+   docker volume rm eventyay-next_rd
+
+
+To wipe **both** Postgres and Redis data in one go, you can run
+``docker compose down -v`` instead of removing volumes individually; that removes
+all named volumes declared for this Compose project (including
+``eventyay-next_postgres_data_dev`` and ``eventyay-next_rd``).
+
+
+**After resetting PostgreSQL and/or Redis**
+
+Bring the development stack back up in detached mode with a rebuild:
+
+.. code-block:: bash
+
+   docker compose up -d --build
+
+
 
 Configuration
 -------------
@@ -263,7 +307,7 @@ How to override the configuration values
 
     export EVY_DEBUG=true
 
-- Dotenv (*.env*) file is also supported, but please be aware that the values from *.env* file will be overriden by environment variables.
+- Dotenv (*.env*) file is also supported, but please be aware that the values from *.env* file will be overridden by environment variables.
 
 - Sensitive data like passwords, API keys should be provided via files in *.secrets* directory, each file for a key.
   The file name follows the pattern of environment variable names above (with prefix), the file content is the value.
@@ -325,6 +369,18 @@ projects and attribution.
 See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
 This project is maintained by **FOSSASIA**.
+
+AI Development
+--------------
+
+This repository includes structured AI development guidance.
+
+AI tools should consult:
+
+- ``.github/instructions/`` — file-scoped coding standards for Python, JavaScript, Django templates, TOML, and Git commits
+- ``.agents/skills/`` — reusable operational knowledge about repository structure, backend conventions, deployment, and workflows
+
+See `agents.md <agents.md>`_ for the recommended reading order for AI agents.
 
 .. _uv: https://docs.astral.sh/uv/getting-started/installation/
 .. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/

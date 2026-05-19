@@ -50,7 +50,7 @@ from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
-from eventyay.common.urls import EventUrls
+from eventyay.common.urls import EventUrls, is_http_url
 from eventyay.consts import TIMEZONE_CHOICES
 from eventyay.core.permissions import (
     MAX_PERMISSIONS_IF_SILENCED,
@@ -77,9 +77,10 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
-from .organizer import Organizer, OrganizerBillingModel, Team
+from .organizer import Organizer, Team
 from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
+
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 logger = logging.getLogger(__name__)
@@ -191,8 +192,11 @@ FEATURE_FLAGS = [
 def default_feature_flags():
     return {
         'show_schedule': True,
-        'show_featured': 'pre_schedule',
+        'show_featured': 'never',
         'show_widget_if_not_public': False,
+        'session_popularity_enabled': False,
+        'session_popularity_show_on_calendar': True,
+        'session_popularity_show_on_list': True,
         'export_html_on_release': False,
         'use_tracks': True,
         'use_feedback': True,
@@ -742,14 +746,7 @@ class Event(
         choices=settings.LANGUAGES,
         verbose_name=_('Default language'),
     )
-    featured_sessions_text = I18nTextField(
-        verbose_name=_('Featured sessions text'),
-        help_text=_('This text will be shown at the top of the featured sessions page instead of the default text.')
-        + ' '
-        + phrases.base.use_markdown,
-        null=True,
-        blank=True,
-    )
+
     # Virtual platform fields
     config = models.JSONField(null=True, blank=True)
     roles = models.JSONField(null=True, blank=True, default=default_roles, encoder=CustomJSONEncoder)
@@ -837,6 +834,8 @@ class Event(
         feedback = '{submissions}feedback/'
         apply_pending = '{submissions}apply-pending/'
         speakers = '{base}speakers/'
+        speakers_import = '{speakers}import/'
+        submissions_import = '{submissions}import/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
@@ -932,12 +931,22 @@ class Event(
     def social_image(self):
         from eventyay.multidomain.urlreverse import build_absolute_uri
 
+        def get_image_value(setting_name: str) -> str:
+            value = self.settings.get(setting_name, as_type=str, default='') or ''
+            if value.startswith('file://'):
+                return value[7:]
+            return value
+
         img = None
-        logo_file = self.settings.get('logo_image', as_type=str, default='')[7:]
-        og_file = self.settings.get('og_image', as_type=str, default='')[7:]
+        logo_file = get_image_value('logo_image')
+        og_file = get_image_value('og_image')
         if og_file:
+            if is_http_url(og_file):
+                return og_file
             img = get_thumbnail(og_file, '1200').thumb.url
         elif logo_file:
+            if is_http_url(logo_file):
+                return logo_file
             img = get_thumbnail(logo_file, '5000x120').thumb.url
         if img:
             return urljoin(build_absolute_uri(self, 'presale:event.index'), img)
@@ -1058,7 +1067,7 @@ class Event(
         if self.settings.smtp_use_custom or force_custom:
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
-            if not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
+            if not force_custom and not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
                 logger.warning(
                     'Event SMTP %s:%s is not reachable, falling back to system email backend',
                     self.settings.smtp_host,
@@ -1379,12 +1388,12 @@ class Event(
 
     def _get_trait_grants_with_defaults(self):
         base_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
-        slug = getattr(self, "slug", None) or getattr(self, "id", None)
+        slug = getattr(self, 'slug', None) or getattr(self, 'id', None)
         if not slug:
             return base_trait_grants
         augmented = dict(base_trait_grants)
         for role, trait_name in VIDEO_TRAIT_ROLE_MAP.items():
-            augmented.setdefault(role, [f"eventyay-video-event-{slug}-{trait_name.replace('_', '-')}"])
+            augmented.setdefault(role, [f'eventyay-video-event-{slug}-{trait_name.replace("_", "-")}'])
         return augmented
 
     def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
@@ -1403,10 +1412,7 @@ class Event(
 
         if not has_direct_messaging_trait:
             direct_message_value = Permission.EVENT_CHAT_DIRECT.value
-            result[self] = {
-                p for p in result[self]
-                if normalize_permission_value(p) != direct_message_value
-            }
+            result[self] = {p for p in result[self] if normalize_permission_value(p) != direct_message_value}
 
     def has_permission_implicit(
         self,
@@ -1421,29 +1427,17 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
 
         for role, required_traits in event_trait_grants.items():
-            if (
-                traits_match_required(traits, required_traits)
-                and (required_traits or allow_empty_traits)
-            ):
+            if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                if any(
-                    normalize_permission_value(p) in role_permissions
-                    for p in permissions
-                ):
+                if any(normalize_permission_value(p) in role_permissions for p in permissions):
                     return True
 
         if room:
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
-                if (
-                    traits_match_required(traits, required_traits)
-                    and (required_traits or allow_empty_traits)
-                ):
+                if traits_match_required(traits, required_traits) and (required_traits or allow_empty_traits):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    if any(
-                        normalize_permission_value(p) in role_permissions
-                        for p in permissions
-                    ):
+                    if any(normalize_permission_value(p) in role_permissions for p in permissions):
                         return True
 
         # Return False if no permission was granted
@@ -1523,16 +1517,13 @@ class Event(
         user_traits = user.traits or []
 
         for role, required_traits in event_trait_grants.items():
-            if (
-                traits_match_required(user_traits, required_traits)
-                and (required_traits or allow_empty_traits)
-            ):
+            if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
                 role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                 result[self].update(role_perms)
 
         # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
         # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
-        admin_mode_active = "admin" in user_traits
+        admin_mode_active = 'admin' in user_traits
 
         if admin_mode_active:
             # Grant all video manager permissions when admin mode is active
@@ -1547,10 +1538,7 @@ class Event(
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
-                if (
-                    traits_match_required(user_traits, required_traits)
-                    and (required_traits or allow_empty_traits)
-                ):
+                if traits_match_required(user_traits, required_traits) and (required_traits or allow_empty_traits):
                     result[room].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
 
         for grant in user.room_grants.select_related('room'):
@@ -1883,13 +1871,57 @@ class Event(
         return self.settings.get('talks_testmode', False, as_type=bool)
 
     @property
+    def private_testmode_tickets_enabled(self):
+        return self.private_testmode and self.settings.get('private_testmode_tickets', True, as_type=bool)
+
+    @property
+    def private_testmode_talks_enabled(self):
+        return self.private_testmode and self.settings.get('private_testmode_talks', False, as_type=bool)
+
+    def _component_presale_status(self, *, published: bool, private_testmode_enabled: bool, testmode: bool):
+        if private_testmode_enabled:
+            text = _('live (private test mode)') if self.live else _('in private test mode')
+        elif self.live and testmode:
+            text = _('live and in test mode')
+        elif self.live and published:
+            text = _('live')
+        elif testmode:
+            text = _('in test mode')
+        else:
+            text = _('not yet public')
+
+        is_live = bool(self.live and (published or private_testmode_enabled or testmode))
+        is_plain_live = bool(self.live and published and not private_testmode_enabled and not testmode)
+        return {
+            'class': 'live' if is_live else 'off',
+            'icon': 'fa-check-circle' if is_plain_live else ('fa-warning' if is_live else 'fa-times-circle'),
+            'is_live': is_live,
+            'text': text,
+            'text_class': 'text-success' if is_live else 'text-danger',
+        }
+
+    @property
+    def ticket_component_presale_status(self):
+        return self._component_presale_status(
+            published=self.tickets_published,
+            private_testmode_enabled=self.private_testmode_tickets_enabled,
+            testmode=self.testmode,
+        )
+
+    @property
+    def talk_component_presale_status(self):
+        return self._component_presale_status(
+            published=self.talks_published,
+            private_testmode_enabled=self.private_testmode_talks_enabled,
+            testmode=self.talks_testmode,
+        )
+
+    @property
     def has_component_testmode(self):
         return bool(self.testmode or self.talks_testmode)
 
     def user_can_view_tickets(self, user=None, request=None):
-        private_tickets = self.private_testmode and self.settings.get(
-            'private_testmode_tickets', True, as_type=bool
-        )
+        private_tickets = self.private_testmode_tickets_enabled
         if not self.tickets_published and not private_tickets:
             return False
         if not private_tickets:
@@ -1901,9 +1933,7 @@ class Event(
         return user.has_event_permission(self.organizer, self, request=request)
 
     def user_can_view_talks(self, user=None, request=None):
-        private_talks = self.private_testmode and self.settings.get(
-            'private_testmode_talks', False, as_type=bool
-        )
+        private_talks = self.private_testmode_talks_enabled
         if not self.talks_published and not private_talks:
             return False
         if not private_talks:
@@ -1987,7 +2017,6 @@ class Event(
         return issues
 
     def billing_issues(self):
-        from django.utils.html import format_html
         from django.utils.translation import gettext
 
         from eventyay.base.models.organizer import OrganizerBillingModel
@@ -2048,12 +2077,82 @@ class Event(
     def allow_delete(self):
         return not self.orders.exists() and not self.invoices.exists()
 
+    @scopes_disabled()
     def delete_sub_objects(self):
+        from django.core.exceptions import ObjectDoesNotExist
+
+        from eventyay.base.models.auth import EventGrant, RoomGrant, ShortToken, User
+        from eventyay.base.models.feedback import Feedback
+        from eventyay.base.models.log import ActivityLog, LogEntry
+        from eventyay.base.models.mail import QueuedMail
+        from eventyay.base.models.question import Answer, AnswerOption
+        from eventyay.base.models.resource import Resource
+        from eventyay.base.models.slot import TalkSlot
+        from eventyay.base.models.storage_model import StoredFile
+        from eventyay.base.models.systemlog import SystemLog
+
         self.cartposition_set.filter(addon_to__isnull=False).delete()
         self.cartposition_set.all().delete()
+        self.queued_mails.all().delete()
+
+        answers = Answer.objects.filter(question__event=self)
+        for answer in answers.only('pk', 'answer_file').iterator():
+            answer._delete_files()
+        answers.delete()
+        AnswerOption.objects.filter(question__event=self).delete()
+
+        TalkSlot.objects.filter(schedule__event=self).delete()
+        Feedback.objects.filter(talk__event=self).delete()
+
+        resources = Resource.objects.filter(submission__event=self)
+        for resource in resources.only('pk', 'resource').iterator():
+            resource._delete_files()
+        resources.delete()
+
+        for domain in self.domains.all().iterator():
+            domain.delete()
+
+        for stored_file in StoredFile.objects.filter(event=self).iterator():
+            stored_file.full_delete()
+
+        self.bbbserver_set.update(event_exclusive=None)
+        self.janusserver_set.update(event_exclusive=None)
+        self.turnserver_set.update(event_exclusive=None)
+
         self.vouchers.all().delete()
         self.products.all().delete()
         self.subevents.all().delete()
+        self.talkquestions.all().delete()
+        self.submissions.all().delete()
+        self.rooms.all().delete()
+        self.tracks.all().delete()
+        self.tags.all().delete()
+        self.schedules.all().delete()
+        mail_templates = self.mail_templates.all()
+        QueuedMail.objects.filter(template__in=mail_templates).update(template=None)
+        mail_templates.delete()
+        ActivityLog.objects.filter(event=self).delete()
+        LogEntry.all.filter(event=self).update(event=None)
+        SystemLog.objects.filter(event=self).update(event=None)
+        EventGrant.objects.filter(event=self).delete()
+        RoomGrant.objects.filter(event=self).delete()
+        ShortToken.objects.filter(event=self).delete()
+        User.objects.filter(event=self).delete()
+        EventView.objects.filter(event=self).delete()
+        self.audits.all().delete()
+        self.meta_values.all().delete()
+        self.extra_links.all().delete()
+        self.planned_usages.all().delete()
+        self.requiredaction_set.all().delete()
+        self.settings.flush()
+        try:
+            cfp = self.cfp
+        except ObjectDoesNotExist:
+            cfp = None
+        if cfp is not None and cfp.pk is not None:
+            cfp.delete()
+        self.submitter_access_codes.all().delete()
+        self.submission_types.all().delete()
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins
@@ -2263,11 +2362,7 @@ class Event(
         Prefer the common (event settings) primary color, then fall back to the legacy
         event field, finally defaulting to the installation default.
         """
-        return (
-            self.settings.get('primary_color')
-            or self.primary_color
-            or settings.DEFAULT_EVENT_PRIMARY_COLOR
-        )
+        return self.settings.get('primary_color') or self.primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
 
     @cached_property
     def _visible_logo_path(self):
@@ -2279,6 +2374,7 @@ class Event(
         The logo_image setting is actually used for HEADER images (see default_setting.py),
         so we must NOT use it here to prevent header images from appearing as logos.
         """
+
         def _extract_path(obj):
             if not obj:
                 return None
@@ -2292,19 +2388,19 @@ class Event(
 
         # Only check event_logo_image - NOT logo_image (which is for header images)
         for key in ('event_logo_image',):
-            settings_logo = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            settings_logo = self.settings.get(key, as_type=str, default=None)
             path = _extract_path(settings_logo)
             if not path:
                 continue
 
             # Keep full URLs
-            if path.startswith(('http://', 'https://')):
+            if is_http_url(path):
                 return path
 
             # Strip file:// scheme if present
             parsed = urlparse(path)
             if parsed.scheme == 'file':
-                path = parsed.path
+                path = f'{parsed.netloc}{parsed.path}'
 
             # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
             abs_path = os.path.abspath(path)
@@ -2314,16 +2410,16 @@ class Event(
                 if not rel_to_media.startswith('..'):
                     path = rel_to_media
             except OSError:
-                logger.exception("Failed to relativize path %s against MEDIA_ROOT %s", abs_path, media_root)
+                logger.exception('Failed to relativize path %s against MEDIA_ROOT %s', abs_path, media_root)
 
             # Drop leading media prefixes
             for prefix in ('/media/', 'media/'):
                 if path.startswith(prefix):
-                    path = path[len(prefix):]
+                    path = path[len(prefix) :]
 
             # Collapse to pub/… if present
             if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/'):]
+                path = path[path.index('pub/') :]
 
             path = path.lstrip('/')
             if path:
@@ -2336,6 +2432,7 @@ class Event(
         """
         Resolve a usable header image path/URL from common settings, falling back to the legacy field.
         """
+
         def _extract_path(obj):
             if not obj:
                 return None
@@ -2350,17 +2447,17 @@ class Event(
         # header image for the site is stored in common settings under logo_image (historical)
         # and in the legacy field header_image; prefer the settings value first
         for key in ('logo_image', 'header_image'):
-            settings_header = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            settings_header = self.settings.get(key, as_type=str, default=None)
             path = _extract_path(settings_header)
             if not path:
                 continue
 
-            if path.startswith(('http://', 'https://')):
+            if is_http_url(path):
                 return path
 
             parsed = urlparse(path)
             if parsed.scheme == 'file':
-                path = parsed.path
+                path = f'{parsed.netloc}{parsed.path}'
 
             abs_path = os.path.abspath(path)
             media_root = os.path.abspath(settings.MEDIA_ROOT)
@@ -2369,13 +2466,15 @@ class Event(
                 if not rel_to_media.startswith('..'):
                     path = rel_to_media
             except OSError:
-                logger.exception("Failed to relativize header image path %s against MEDIA_ROOT %s", abs_path, media_root)
+                logger.exception(
+                    'Failed to relativize header image path %s against MEDIA_ROOT %s', abs_path, media_root
+                )
 
             for prefix in ('/media/', 'media/'):
                 if path.startswith(prefix):
-                    path = path[len(prefix):]
+                    path = path[len(prefix) :]
             if '/pub/' in path and not path.startswith('pub/'):
-                path = path[path.index('pub/'):]
+                path = path[path.index('pub/') :]
 
             path = path.lstrip('/')
             if path:
@@ -2394,7 +2493,7 @@ class Event(
             return None
         with suppress(Exception):
             # If already a full URL, return as-is
-            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_logo_path)):
                 return self._visible_logo_path
             return default_storage.url(self._visible_logo_path)
         return None
@@ -2406,7 +2505,7 @@ class Event(
         if not self._visible_logo_path:
             return None
         with suppress(Exception):
-            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_logo_path)):
                 return None
             return default_storage.open(self._visible_logo_path)
 
@@ -2417,7 +2516,7 @@ class Event(
         if not self._visible_header_image_path:
             return None
         with suppress(Exception):
-            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_header_image_path)):
                 return self._visible_header_image_path
             return default_storage.url(self._visible_header_image_path)
 
@@ -2428,7 +2527,7 @@ class Event(
         if not self._visible_header_image_path:
             return None
         with suppress(Exception):
-            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+            if is_http_url(str(self._visible_header_image_path)):
                 return None
             return default_storage.open(self._visible_header_image_path)
         return None
@@ -2555,7 +2654,9 @@ class Event(
     def reviewers(self):
         from eventyay.base.models import User
 
-        return User.objects.filter(teams__in=self.teams.filter(is_reviewer=True)).distinct()
+        return User.objects.filter(
+            teams__in=self.teams.filter(Q(is_reviewer=True) | Q(can_change_submissions=True))
+        ).distinct()
 
     @cached_property
     def active_review_phase(self):
@@ -2585,7 +2686,7 @@ class Event(
         """Reorder the review phases by start date."""
         # first, sort phases so that the ones with no start date come first
         phases = list(self.review_phases.all())
-        placeholder = dt.datetime(1900, 1, 1).astimezone(self.tz)
+        placeholder = dt.datetime(1970, 1, 2, tzinfo=dt.UTC)
         phases.sort(key=lambda x: (x.start or placeholder, x.end or placeholder))
         for i, phase in enumerate(phases):
             phase.position = i

@@ -1,6 +1,6 @@
 ---
-description: 'JavaScript development standards and best practices (run directly, without a build step)'
-applyTo: 'app/**/*.js'
+description: 'JavaScript & Vue development standards (legacy JS without build step + modern bundled Vue 3 apps)'
+applyTo: 'app/**/*.{js,ts,vue}'
 ---
 
 ## Development Standards
@@ -58,3 +58,16 @@ applyTo: 'app/**/*.js'
 ## Comments
 
 - Do not add a comment when the code is already obvious and the comment is almost the same as the code.
+
+## Frontend Code Locations
+
+| Path | Purpose |
+|---|---|
+| `app/eventyay/static/` | Static assets served by Django (CSS, legacy JS) |
+| `app/eventyay/webapp/` | Modern JS applications (Vue 3, built with a bundler) |
+
+Sub-applications inside `webapp/` each have their own `node_modules/` and build pipeline. Check the relevant `package.json` for build commands.
+
+## Vue 3
+
+The project uses Vue 3 for interactive front-end components. Follow Vue 3 Composition API conventions when adding new components.

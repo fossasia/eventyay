@@ -40,6 +40,11 @@ class SpeakerProfile(PretalxModel):
         null=True,
         blank=True,
     )
+    is_featured = models.BooleanField(
+        default=False,
+        verbose_name=_('Show this speaker in public list of featured speakers.'),
+    )
+    position = models.PositiveIntegerField(null=True, blank=True)
     has_arrived = models.BooleanField(default=False, verbose_name=_('The speaker has arrived'))
 
     log_prefix = 'eventyay.user.profile'
@@ -69,6 +74,7 @@ class SpeakerProfile(PretalxModel):
         base = '{self.event.orga_urls.speakers}{self.user.code}/'
         password_reset = '{self.event.orga_urls.speakers}{self.user.code}/reset'
         toggle_arrived = '{self.event.orga_urls.speakers}{self.user.code}/toggle-arrived'
+        toggle_featured = '{self.event.orga_urls.speakers}{self.user.code}/toggle-featured'
 
     def __str__(self):
         """Help when debugging."""

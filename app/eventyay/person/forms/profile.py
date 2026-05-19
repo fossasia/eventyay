@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
@@ -7,6 +8,9 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.models import Event, SpeakerProfile, TalkQuestion, TalkQuestionTarget, User
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import (
     ImageField,
@@ -30,12 +34,14 @@ from eventyay.common.forms.widgets import (
     MarkdownWidget,
 )
 from eventyay.common.text.phrases import phrases
-from eventyay.base.models import Event
-from eventyay.base.models import SpeakerProfile, User
-from eventyay.base.models.information import SpeakerInformation
+from eventyay.consts import SizeKey
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.base.models import TalkQuestion, TalkQuestionTarget
-from eventyay.base.models.submission import SubmissionStates
+
+
+AVATAR_LICENSE_TEXT_WORD_LIMIT = 3000
+AVATAR_LICENSE_TEXT_VALIDATION_ERROR = _(
+    'Please keep this field below %(word_limit)s words. Do not paste image files or encoded image data here.'
+) % {'word_limit': AVATAR_LICENSE_TEXT_WORD_LIMIT}
 
 
 def get_email_address_error():
@@ -44,6 +50,17 @@ def get_email_address_error():
         + ' '
         + _('Please choose a different email address.')
     )
+
+
+def validate_avatar_license_text(value):
+    if not value:
+        return value
+    if value.lstrip().startswith('data:image/'):
+        raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
+    words = value.split(maxsplit=AVATAR_LICENSE_TEXT_WORD_LIMIT + 1)
+    if len(words) > AVATAR_LICENSE_TEXT_WORD_LIMIT:
+        raise ValidationError(AVATAR_LICENSE_TEXT_VALIDATION_ERROR)
+    return value
 
 
 class SpeakerProfileForm(
@@ -85,13 +102,25 @@ class SpeakerProfileForm(
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
         for field in self.user_fields:
             field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
-            self.fields[field] = field_class(
-                initial=initial.get(field),
-                disabled=read_only,
-                help_text=User._meta.get_field(field).help_text,
-            )
-            if self.Meta.widgets.get(field):
-                self.fields[field].widget = self.Meta.widgets.get(field)()
+            field_kwargs = {
+                'initial': initial.get(field),
+                'disabled': read_only,
+                'help_text': User._meta.get_field(field).help_text,
+            }
+            if field == 'avatar':
+                field_kwargs['max_size'] = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE]
+            self.fields[field] = field_class(**field_kwargs)
+            custom_widget_class = self.Meta.widgets.get(field)
+            if custom_widget_class:
+                old_widget = self.fields[field].widget
+                new_widget = custom_widget_class()
+                # Preserve selected attributes (such as data-maxsize, data-sizewarning, accept)
+                # that may have been set on the original widget, without overriding
+                # attributes defined by the new custom widget.
+                for attr_name in ('data-maxsize', 'data-sizewarning', 'accept'):
+                    if attr_name in old_widget.attrs and attr_name not in new_widget.attrs:
+                        new_widget.attrs[attr_name] = old_widget.attrs[attr_name]
+                self.fields[field].widget = new_widget
             self._update_cfp_texts(field)
 
         field_names = list(self.fields)
@@ -150,6 +179,12 @@ class SpeakerProfileForm(
             raise ValidationError(get_email_address_error())
         return email
 
+    def clean_avatar_source(self):
+        return validate_avatar_license_text(self.cleaned_data.get('avatar_source'))
+
+    def clean_avatar_license(self):
+        return validate_avatar_license_text(self.cleaned_data.get('avatar_license'))
+
     def clean(self):
         data = super().clean()
         if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
@@ -196,7 +231,7 @@ class SpeakerProfileForm(
                 self.user.get_gravatar = False
             else:
                 setattr(self.user, user_attribute, value)
-            
+
             # Add thumbnail fields to update_fields when avatar changes
             update_fields = [user_attribute]
             if user_attribute == 'avatar':

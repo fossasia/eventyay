@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from io import StringIO
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 import qrcode
@@ -13,8 +16,11 @@ from eventyay.common.urls import EventUrls
 
 class BaseExporter:
     """The base class for all data exporters."""
+    if TYPE_CHECKING:
+        from ..base.models.event import Event
+        event: Event
 
-    def __init__(self, event):
+    def __init__(self, event: Event):
         self.event = event
 
     def __str__(self):

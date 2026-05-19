@@ -192,6 +192,7 @@ class RoomForm(AvailabilitiesFormMixin, ReadOnlyFlag, I18nModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.resolution = '00:15:00'
+        self.fields['name'].required = True
         self.fields['name'].widget.attrs['placeholder'] = _('Room I')
         self.fields['description'].widget.attrs['placeholder'] = _(
             'Description, e.g.: Our main meeting place, Room I, enter from the right.'
@@ -200,14 +201,10 @@ class RoomForm(AvailabilitiesFormMixin, ReadOnlyFlag, I18nModelForm):
             'Information for speakers, e.g.: Projector has only HDMI input.'
         )
         self.fields['capacity'].widget.attrs['placeholder'] = '300'
-        if self.instance.pk and not self.instance.guid:
-            self.fields['guid'].help_text = _('The current, automatically generated GUID is: {guid}.').format(
-                guid=self.instance.uuid
-            )
 
     class Meta:
         model = Room
-        fields = ['name', 'guid', 'description', 'speaker_info', 'capacity']
+        fields = ['name', 'description', 'speaker_info', 'capacity']
 
 
 class QuickScheduleForm(forms.ModelForm):

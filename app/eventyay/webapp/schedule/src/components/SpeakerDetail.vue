@@ -1,15 +1,16 @@
 <template lang="pug">
 .c-speaker-detail
 	.speaker-wrapper(v-if="resolvedSpeaker")
-		.speaker-header
+		.speaker-header(:class="{'has-export': speakerExportOptions.length}")
 			.speaker-avatar
 				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-			.speaker-title
-				h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
-			export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
+			.speaker-content-area
+				.speaker-title
+					h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
+				export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions", :qrcodesUrl="speakerQrcodesUrl")
 		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 {{ t.sessions }}
@@ -22,7 +23,7 @@
 				:timezone="resolvedTimezone",
 				:locale="locale",
 				:hasAmPm="resolvedHasAmPm",
-				:faved="s.id && resolvedFavs.includes(s.id)",
+				:faved="s.id && resolvedFavSet.has(s.id)",
 				:onHomeServer="onHomeServer",
 				@fav="onFav(s.id)",
 				@unfav="onUnfav(s.id)"
@@ -78,6 +79,12 @@ export default {
 	},
 	emits: ['fav', 'unfav'],
 	computed: {
+		speakerQrcodesUrl() {
+			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
+			if (!code || !this.eventUrl) return ''
+			const base = this.eventUrl.replace(/\/?$/, '/')
+			return `${base}schedule/widgets/qrcodes/speaker/${code}.json`
+		},
 		t() {
 			const m = this.translationMessages || {}
 			return {
@@ -90,15 +97,21 @@ export default {
 		resolvedSpeaker() {
 			if (this.speaker) return this.speaker
 			if (this.speakerId && this.scheduleData) {
+				const lu = this.scheduleData.speakersLookup
+				if (lu && lu[this.speakerId]) return lu[this.speakerId]
 				const schedule = this.scheduleData.schedule
 				if (schedule?.speakers) {
-					return schedule.speakers.find(s => s.code === this.speakerId) || null
+					for (let i = 0; i < schedule.speakers.length; i++) {
+						if (schedule.speakers[i].code === this.speakerId) return schedule.speakers[i]
+					}
 				}
-				const sessions = this.scheduleData.sessions || []
-				for (const session of sessions) {
-					if (!session.speakers) continue
-					const found = session.speakers.find(s => s.code === this.speakerId)
-					if (found) return found
+				const bySpeaker = this.scheduleData.sessionsBySpeaker?.[this.speakerId]
+				if (bySpeaker?.length) {
+					const first = bySpeaker[0]
+					const speakers = first.speakers || []
+					for (let j = 0; j < speakers.length; j++) {
+						if (speakers[j].code === this.speakerId) return speakers[j]
+					}
 				}
 			}
 			return null
@@ -106,16 +119,35 @@ export default {
 		resolvedSessions() {
 			if (this.sessions?.length) return this.sessions
 			const id = this.speakerId || this.speaker?.code
+			if (id && this.scheduleData?.sessionsBySpeaker?.[id]) {
+				return this.scheduleData.sessionsBySpeaker[id]
+			}
 			if (id && this.scheduleData) {
-				return (this.scheduleData.sessions || []).filter(s =>
-					s.speakers?.some(sp => sp.code === id)
-				)
+				const list = this.scheduleData.sessions || []
+				const out = []
+				for (let i = 0; i < list.length; i++) {
+					const s = list[i]
+					const spk = s.speakers
+					if (!spk) continue
+					for (let j = 0; j < spk.length; j++) {
+						if (spk[j].code === id) {
+							out.push(s)
+							break
+						}
+					}
+				}
+				return out
 			}
 			return []
 		},
 		resolvedFavs() {
 			if (this.favs?.length) return this.favs
 			return this.scheduleData?.favs || []
+		},
+		resolvedFavSet() {
+			const favSet = this.scheduleData?.favSet
+			if (favSet && typeof favSet.has === 'function') return favSet
+			return new Set(this.resolvedFavs)
 		},
 		resolvedNow() {
 			return this.now || this.scheduleData?.now || moment()
@@ -179,15 +211,23 @@ export default {
 		align-items: center
 		gap: 16px
 		margin-bottom: 16px
+		position: relative
 		h2
 			margin: 0
-	.speaker-title
+	.speaker-content-area
 		flex: 1
+		min-width: 0
+		display: flex
+		align-items: center
+		justify-content: space-between
+		gap: 12px
+	.speaker-title
+		width: 100%
 		display: flex
 		flex-direction: column
-		gap: 8px
 		h2
 			margin: 0
+			text-align: left
 	.speaker-export
 		flex-shrink: 0
 		align-self: center
@@ -223,11 +263,36 @@ export default {
 	@media (max-width: 768px)
 		.speaker-header
 			flex-direction: column
-			align-items: flex-start
+			align-items: center
+			text-align: center
+			&.has-export
+				padding-top: 32px
+			.speaker-content-area
+				width: 100%
+				flex-direction: column
+				align-items: center
+				gap: 4px
+				.speaker-export
+					position: absolute
+					top: 0
+					right: 0
+				.speaker-title h2
+					text-align: center
 		.speaker-avatar
 			width: 96px
 			height: 96px
 			img, .avatar-placeholder
 				width: 96px
 				height: 96px
+	@media (max-width: 480px)
+		.speaker-wrapper
+			padding: 10px
+		.speaker-avatar
+			width: 72px
+			height: 72px
+			img, .avatar-placeholder
+				width: 72px
+				height: 72px
+		.biography
+			font-size: 14px
 </style>

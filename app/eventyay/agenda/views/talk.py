@@ -1,13 +1,11 @@
-from enum import StrEnum
-import json
-import logging
 import datetime as dt
+import logging
+from enum import StrEnum
 from http import HTTPStatus
-from urllib.parse import unquote, urlparse, urljoin, quote
 from typing import TypeVar
+from urllib.parse import quote, unquote, urljoin, urlparse
 
 import jwt
-import requests
 import vobject
 from django.conf import settings
 from django.contrib import messages
@@ -20,10 +18,21 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView, View
 from django_context_decorator import context
+from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.agenda.views.utils import encode_email
+from eventyay.agenda.views.utils import build_enriched_schedule_json, encode_email, is_email_like
+from eventyay.base.models import (
+    Event,
+    Order,
+    OrderPosition,
+    Submission,
+    SubmissionFavourite,
+    SubmissionStates,
+    TalkSlot,
+    User,
+)
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import get_base_url
@@ -33,9 +42,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.base.models import Event, TalkSlot, User
 from eventyay.submission.forms import FeedbackForm
-from eventyay.base.models import Submission, SubmissionStates
 
 
 logger = logging.getLogger(__name__)
@@ -79,11 +86,85 @@ class TalkMixin(PermissionRequired):
         return self.submission
 
 
-from eventyay.agenda.views.speaker import ScheduleDataMixin
+def talk_starrers(request, event, slug, **kwargs):
+    """Return starrer information for a session.
+
+    This endpoint is intended for the schedule web component and is safe for
+    public use. It exposes identifying information only for users who are
+    public, non-deleted, have a non-email-like display name, and a non-empty
+    code. Other favourites are returned as anonymous placeholders.
+    """
+
+    if not request.event.feature_flags.get('session_popularity_enabled', False):
+        response = JsonResponse({'total': 0, 'public_total': 0, 'items': []})
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        return response
+
+    submission = request.event.submissions.filter(code__iexact=slug).select_related('event', 'event__organizer').first()
+    if not submission or not request.user.has_perm('base.view_public_submission', submission):
+        raise Http404()
+
+    try:
+        limit = int(request.GET.get('limit', 15))
+    except (TypeError, ValueError):
+        limit = 15
+
+    # ``limit=0`` means "return everything" (within a reasonable ceiling).
+    max_limit = 1000
+    if limit < 0:
+        limit = 15
+    if limit == 0:
+        limit = max_limit
+    limit = min(limit, max_limit)
+
+    with scope(event=request.event):
+        qs = SubmissionFavourite.objects.filter(submission=submission)
+        total = qs.count()
+        public_total = qs.filter(user__show_publicly=True, user__deleted=False).count()
+
+        base_url = str(request.event.urls.base)
+        items = []
+        for fav in qs.select_related('user').order_by('-id')[:limit]:
+            user = fav.user
+            display_name = user.get_display_name() if user else ''
+            is_public_user = bool(
+                user and user.show_publicly and not user.deleted and user.code and not is_email_like(display_name)
+            )
+            if is_public_user:
+                items.append(
+                    {
+                        'code': user.code,
+                        'name': display_name,
+                        'avatar_url': user.get_avatar_url(
+                            event=request.event,
+                            thumbnail='tiny',
+                        ),
+                        'url': f'{base_url}people/{user.code}/stars/',
+                    }
+                )
+            else:
+                items.append(
+                    {
+                        'code': f'anon-{fav.id}',
+                        'name': '',
+                        'avatar_url': '',
+                        'url': '',
+                    }
+                )
+
+    response = JsonResponse({'total': total, 'public_total': public_total, 'items': items})
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+    return response
 
 
-class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
+class TalkView(TalkMixin, TemplateView):
     template_name = 'agenda/talk.html'
+
+    @context
+    def schedule_json(self):
+        return build_enriched_schedule_json(self.request)
 
     def get_contrast_color(self, bg_color):
         if not bg_color:
@@ -114,6 +195,14 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         response._csp_update = csp_update
         return response
 
+    def _build_speakers_context(self, speakers_qs):
+        """Enrich a speaker queryset and return a list ready for template context."""
+        result = []
+        for speaker in speakers_qs:
+            speaker.talk_profile = speaker.event_profile(event=self.request.event)
+            result.append(speaker)
+        return result
+
     def get_context_data(self, **kwargs):
         from django.db.models import Prefetch
 
@@ -126,14 +215,14 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
         ctx['submission_tags'] = self.submission.tags.all()
         for tag_item in ctx['submission_tags']:
             tag_item.contrast_color = self.get_contrast_color(tag_item.color)
-        result = []
         other_slots = (
             schedule.talks.exclude(submission_id=self.submission.pk).filter(is_visible=True)
             if schedule
             else TalkSlot.objects.none()
         )
-
-        other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related('event', 'event__organizer')
+        other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related(
+            'event', 'event__organizer'
+        )
         speakers = (
             self.submission.speakers.all()
             .with_profiles(self.request.event)
@@ -145,18 +234,17 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
                 )
             )
         )
-        for speaker in speakers:
-            speaker.talk_profile = speaker.event_profile(event=self.request.event)
-            result.append(speaker)
-        ctx['speakers'] = result
+        ctx['speakers'] = self._build_speakers_context(speakers)
         return ctx
 
     @context
     @cached_property
     def submission_description(self):
+        abstract = self.submission.abstract if self.request.event.cfp.public_abstract else ''
+        description = self.submission.description if self.request.event.cfp.public_description else ''
         return (
-            self.submission.abstract
-            or self.submission.description
+            abstract
+            or description
             or _('The session “{title}” at {event}').format(
                 title=localize_event_text(self.submission.title),
                 event=localize_event_text(self.request.event.name),
@@ -170,7 +258,7 @@ class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
 
 
 class TalkReviewView(TalkView):
-    template_name = 'agenda/talk.html'
+    template_name = 'agenda/talk_review.html'
 
     def has_permission(self):
         return self.request.event.get_feature_flag('submission_public_review')
@@ -196,12 +284,40 @@ class TalkReviewView(TalkView):
     def hide_speaker_links(self):
         return True
 
+    def _build_speakers_context(self, speakers_qs):
+        # Override to avoid calling event_profile(), which can create and save a
+        # SpeakerProfile row when one doesn't exist.  That is an unwanted DB
+        # write on every anonymous GET of a public review link.  Instead, use
+        # the _event_profiles attribute populated by with_profiles() directly.
+        result = []
+        for speaker in speakers_qs:
+            profiles = getattr(speaker, '_event_profiles', [])
+            speaker.talk_profile = profiles[0] if profiles else None
+            result.append(speaker)
+        return result
+
+    def get_context_data(self, **kwargs):
+        # TalkView.get_context_data returns early (skipping speakers) when the
+        # visitor lacks base.view_schedule permission – which is always the case
+        # for anonymous reviewers when the schedule is not yet public.  Fill in
+        # the speaker data unconditionally for the review page.
+        ctx = super().get_context_data(**kwargs)
+        if 'speakers' not in ctx:
+            speakers = self.submission.speakers.all().with_profiles(self.request.event)
+            ctx['speakers'] = self._build_speakers_context(speakers)
+            ctx['submission_tags'] = self.submission.tags.all()
+        return ctx
+
 
 class SingleICalView(EventPageMixin, TalkMixin, View):
     def get(self, request, event, **kwargs):
         code = self.submission.code
         schedule = self.request.event.current_schedule or self.request.event.wip_schedule
-        talk_slots = self.submission.slots.filter(schedule=schedule, is_visible=True) if schedule else self.submission.slots.none()
+        talk_slots = (
+            self.submission.slots.filter(schedule=schedule, is_visible=True)
+            if schedule
+            else self.submission.slots.none()
+        )
 
         netloc = urlparse(settings.SITE_URL).netloc
         cal = vobject.iCalendar()
@@ -226,8 +342,7 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
         if not schedule:
             raise Http404
         talk_slots = (
-            self.submission.slots
-            .filter(schedule=schedule, is_visible=True)
+            self.submission.slots.filter(schedule=schedule, is_visible=True)
             .select_related('room', 'submission', 'submission__track', 'submission__submission_type')
             .prefetch_related('submission__speakers', 'submission__resources')
         )
@@ -260,43 +375,54 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
     def _render_json(self, request, talk_slots):
         event = request.event
         base_url = get_base_url(event)
+        show_abstract = event.cfp.public_abstract
+        show_description = event.cfp.public_description
+        show_biography = event.cfp.public_biography
         talks_data = []
         for slot in talk_slots:
             sub = slot.submission
-            talks_data.append({
-                'guid': slot.uuid,
-                'code': sub.code,
-                'id': sub.id,
-                'date': slot.local_start.isoformat(),
-                'start': slot.local_start.strftime('%H:%M'),
-                'duration': slot.export_duration,
-                'room': localize_event_text(slot.room.name) if slot.room else None,
-                'slug': slot.frab_slug,
-                'url': sub.urls.public.full(),
-                'title': localize_event_text(sub.title),
-                'track': localize_event_text(sub.track.name) if sub.track else None,
-                'type': localize_event_text(sub.submission_type.name),
-                'language': sub.content_locale,
-                'abstract': localize_event_text(sub.abstract),
-                'description': localize_event_text(sub.description),
-                'do_not_record': sub.do_not_record,
-                'persons': [
-                    {
-                        'code': p.code,
-                        'name': p.get_display_name(),
-                        'biography': localize_event_text(p.event_profile(event).biography),
-                    }
-                    for p in sub.speakers.all()
-                ],
-                'links': [
-                    {'title': localize_event_text(r.description), 'url': r.link}
-                    for r in sub.resources.all() if r.link
-                ],
-                'attachments': [
-                    {'title': localize_event_text(r.description), 'url': r.resource.url}
-                    for r in sub.resources.all() if not r.link
-                ],
-            })
+            talks_data.append(
+                {
+                    'guid': slot.uuid,
+                    'code': sub.code,
+                    'id': sub.id,
+                    'date': slot.local_start.isoformat(),
+                    'start': slot.local_start.strftime('%H:%M'),
+                    'duration': slot.export_duration,
+                    'room': localize_event_text(slot.room.name) if slot.room else None,
+                    'slug': slot.frab_slug,
+                    'url': sub.urls.public.full(),
+                    'title': localize_event_text(sub.title),
+                    'track': localize_event_text(sub.track.name) if sub.track else None,
+                    'type': localize_event_text(sub.submission_type.name),
+                    'language': sub.content_locale,
+                    'abstract': localize_event_text(sub.abstract) if show_abstract else '',
+                    'description': localize_event_text(sub.description) if show_description else '',
+                    'do_not_record': sub.do_not_record,
+                    'persons': [
+                        {
+                            'code': p.code,
+                            'name': p.get_display_name(),
+                            'biography': localize_event_text(p.event_profile(event).biography)
+                            if show_biography
+                            else '',
+                        }
+                        for p in sub.speakers.all()
+                    ],
+                    'links': [
+                        {'title': localize_event_text(r.description), 'url': r.link}
+                        for r in sub.resources.all()
+                        if event.cfp.is_resource_public(r)
+                        if r.link
+                    ],
+                    'attachments': [
+                        {'title': localize_event_text(r.description), 'url': r.resource.url}
+                        for r in sub.resources.all()
+                        if event.cfp.is_resource_public(r)
+                        if not r.link
+                    ],
+                }
+            )
         data = {
             'code': self.submission.code,
             'base_url': base_url,
@@ -343,11 +469,14 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
 
         slot = talk_slots.first()
         ical_url = request.build_absolute_uri(
-            reverse('agenda:ical', kwargs={
-                'organizer': request.event.organizer.slug,
-                'event': event,
-                'slug': slug,
-            })
+            reverse(
+                'agenda:ical',
+                kwargs={
+                    'organizer': request.event.organizer.slug,
+                    'event': event,
+                    'slug': slug,
+                },
+            )
         )
 
         if provider == 'google-calendar':
@@ -365,7 +494,7 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         dates = f'{start.strftime(fmt)}/{end.strftime(fmt)}'
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
-        details = localize_event_text(sub.abstract) or ''
+        details = localize_event_text(sub.abstract) if request.event.cfp.public_abstract else ''
         url = (
             'https://calendar.google.com/calendar/render?action=TEMPLATE'
             f'&text={quote(str(title))}'
@@ -440,7 +569,7 @@ class FeedbackView(TalkMixin, FormView):
 
 class TalkSocialMediaCard(SocialMediaCardMixin, TalkView):
     def get_image(self):
-        return self.submission.image
+        return self.submission.image if self.request.event.cfp.public_image else None
 
 
 class OnlineVideoJoin(EventPermissionRequired, View):
@@ -452,17 +581,14 @@ class OnlineVideoJoin(EventPermissionRequired, View):
 
         event = request.event
         logger.info('Checking video settings for event %s', event)
-        if not (venueless_settings := event.venueless_settings):
-            logger.info('venueless settings is missing.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        required_fields = (
-            ('join_url', 'venueless_settings.join_url'),
-            ('secret', 'venueless_settings.secret'),
-            ('issuer', 'venueless_settings.issuer'),
-            ('audience', 'venueless_settings.audience'),
-        )
+        required_fields = [
+            ('venueless_url', 'event.settings.venueless_url'),
+            ('venueless_secret', 'event.settings.venueless_secret'),
+            ('venueless_issuer', 'event.settings.venueless_issuer'),
+            ('venueless_audience', 'event.settings.venueless_audience'),
+        ]
         for attr, label in required_fields:
-            if not getattr(venueless_settings, attr):
+            if not getattr(event.settings, attr):
                 logger.info('%s is missing.', label)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
@@ -479,77 +605,69 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         iat = dt.datetime.now(dt.UTC)
         exp = iat + dt.timedelta(days=30)
         profile = {
-            "display_name": request.user.fullname,
-            "fields": {
-                "pretalx_id": request.user.code,
+            'display_name': request.user.fullname,
+            'fields': {
+                'pretalx_id': request.user.code,
             },
         }
         if request.user.avatar_url:
-            profile["profile_picture"] = request.user.get_avatar_url(request.event)
+            profile['profile_picture'] = request.user.get_avatar_url(request.event)
 
         payload = {
-            "iss": venueless_settings.issuer,
-            "aud": venueless_settings.audience,
-            "exp": exp,
-            "iat": iat,
-            "uid": encode_email(request.user.email),
-            "profile": profile,
-            "traits": list(
+            'iss': event.settings.venueless_issuer,
+            'aud': event.settings.venueless_audience,
+            'exp': exp,
+            'iat': iat,
+            'uid': encode_email(request.user.email),
+            'profile': profile,
+            'traits': list(
                 {
-                    f"eventyay-video-event-{request.event.slug}",
+                    'attendee',
+                    f'eventyay-video-event-{request.event.slug}',
                 }
             ),
         }
-        token = jwt.encode(
-            payload, venueless_settings.secret, algorithm="HS256"
-        )
-        redirect_url = urljoin(venueless_settings.join_url, f'#token={token}')
+        token = jwt.encode(payload, event.settings.venueless_secret, algorithm='HS256')
+        redirect_url = urljoin(event.settings.venueless_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
         return JsonResponse(
-            {
-                'redirect_url': redirect_url
-            },
+            {'redirect_url': redirect_url},
             status=HTTPStatus.OK,
         )
 
 
 _T = TypeVar('_T', str, None)
+
+
 # We use TypeVar because the 2nd and 3rd items must be both `str` or both `None` at the same time.
 # The annotation `tuple[str, str | None, str | None]` doesn't satisfy this requirement.
 def extract_event_info_from_url(url: str) -> tuple[str, _T, _T]:
     parsed_url = urlparse(url)
-    ticket_host = settings.EVENTYAY_TICKET_BASE_PATH
     path = parsed_url.path
-    parts = path.strip("/").split("/")
+    parts = path.strip('/').split('/')
     if len(parts) >= 2:
         organizer, event = parts[-2:]
-        return ticket_host, unquote(organizer), unquote(event)
-    return ticket_host, None, None
+        return None, unquote(organizer), unquote(event)
+    return None, None, None
 
 
 def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
     """
-    Call eventyay-ticket API to check if user owns ticket for this event.
-
-    # NOTE: It doesn't work with the Docker setup for development, because we use fake domain then,
-    and inside the container, the fake domain points to the container itself, not the host.
+    Check if the user owns a valid ticket for this event using the local database, matching presale logic.
     """
-    # Use unified ticket base path and event slugs; no manual URL needed
-    base_url = settings.EVENTYAY_TICKET_BASE_PATH
-    # Normalize base URL to keep urljoin from dropping path segments
-    if not base_url.endswith('/'):
-        base_url = f'{base_url}/'
-    organizer_slug = event.organizer.slug
-    event_slug = event.slug
-    check_payload = {'user_email': user.email}
-    # call to ticket to check if user order ticket yet or not
-    api_url = urljoin(base_url, f'api/v1/{organizer_slug}/{event_slug}/ticket-check')
-    logger.info('To call API %s', api_url)
-    # In development, we disable the SSL verification.
-    response = requests.post(api_url, json=check_payload, verify=(not settings.DEBUG))
-
-    if response.status_code != HTTPStatus.OK:
-        logger.debug('Response from eventyay-ticket: %s', response.text)
-        logger.info('user is not allowed to join online event.')
-        return TicketCheckResult.NO_TICKET
-    return TicketCheckResult.HAS_TICKET
+    allowed_statuses = [Order.STATUS_PAID]
+    if event.settings.venueless_allow_pending:
+        allowed_statuses.append(Order.STATUS_PENDING)
+    with scope(organizer=event.organizer):
+        with scope(event=event):
+            has_ticket = OrderPosition.objects.filter(
+                order__event=event,
+                order__email__iexact=user.email,
+                order__status__in=allowed_statuses,
+                product__admission=True,
+                canceled=False,
+                addon_to__isnull=True,
+            ).exists()
+    if has_ticket:
+        return TicketCheckResult.HAS_TICKET
+    return TicketCheckResult.NO_TICKET

@@ -283,6 +283,11 @@ urlpatterns = [
                 ),
                 url(r'^categories/add$', product.CategoryCreate.as_view(), name='event.products.categories.add'),
                 url(r'^orderforms/$', product.OrderFormList.as_view(), name='event.products.orderforms'),
+                url(
+                    r'^orderforms/default-fields/(?P<field>[a-z_]+)/$',
+                    product.OrderFormDefaultFieldSettings.as_view(),
+                    name='event.products.orderforms.defaultfield',
+                ),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),
                 url(
@@ -477,6 +482,7 @@ urlpatterns = [
                 url(r'^orders/export/do$', orders.ExportDoView.as_view(), name='event.orders.export.do'),
                 url(r'^orders/refunds/$', orders.RefundList.as_view(), name='event.orders.refunds'),
                 url(r'^orders/go$', orders.OrderGo.as_view(), name='event.orders.go'),
+                url(r'^orders/bulk-action$', orders.OrderBulkAction.as_view(), name='event.orders.bulk_action'),
                 url(r'^orders/$', orders.OrderList.as_view(), name='event.orders'),
                 url(r'^orders/search$', orders.OrderSearch.as_view(), name='event.orders.search'),
                 url(r'^dangerzone/$', event.DangerZone.as_view(), name='event.dangerzone'),
