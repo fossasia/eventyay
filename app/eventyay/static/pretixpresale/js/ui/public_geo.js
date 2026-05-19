@@ -61,8 +61,4 @@ window.addEventListener("resize", () => {
   maps.forEach((m) => m.invalidateSize());
 });
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initGeoMaps);
-} else {
-  initGeoMaps();
-}
+initGeoMaps();

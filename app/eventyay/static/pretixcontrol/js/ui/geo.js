@@ -144,7 +144,7 @@ $(function () {
                     return;
                 }
                 $lat.val(pendingPin.lat);
-                $lon.val(pendingPin.lon);
+                $lon.val(pendingPin.lon).trigger("change");
                 pendingPin = null;
             });
         }

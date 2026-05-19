@@ -397,7 +397,7 @@
                          data-lat="{{ ev.geo_lat|default_if_none:'' }}"
                          data-lon="{{ ev.geo_lon|default_if_none:'' }}"
                          data-tiles="{{ global_settings.leaflet_tiles|default:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' }}"
-                         data-attrib="{{ global_settings.leaflet_tiles_attribution|default:'&copy; <a href=&quot;https://www.openstreetmap.org/copyright&quot;>OpenStreetMap</a> contributors'|safe }}"
+                         data-attrib="{{ global_settings.leaflet_tiles_attribution|default:'&copy; <a href=&quot;https://www.openstreetmap.org/copyright&quot;>OpenStreetMap</a> contributors' }}"
                          data-icon="{% static 'leaflet/images/marker-icon.png' %}"
                          data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
                         <div class="public-geodata-map" aria-hidden="true"></div>
