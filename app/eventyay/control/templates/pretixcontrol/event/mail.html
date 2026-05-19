@@ -7,11 +7,24 @@
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
             <div class="navigation-title">
-                <h1>{% trans "E-mail settings" %}</h1>
+                <h1>{% trans "Ticket E-mail Settings" %}</h1>
             </div>
             {% include "pretixcontrol/event/component_link.html" %}
         </div>
     </nav>
+
+    <div class="alert alert-info" role="alert">
+        <strong>{% trans "SMTP is configured centrally" %}</strong> —
+        {% blocktrans trimmed %}
+            The email gateway (SMTP / SendGrid) used for all outgoing event emails is configured
+            in <strong>Event Settings › Email</strong>.
+            The settings on this page control Ticket-specific email content and formatting only.
+        {% endblocktrans %}
+        <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-default" style="margin-left:8px;">
+            {% trans "Go to Email Settings" %}
+        </a>
+    </div>
+
     <form action="" method="post" class="form-horizontal" enctype="multipart/form-data"
             mail-preview-url="{% url "control:event.settings.mail.preview" event=request.event.slug organizer=request.event.organizer.slug %}">
         {% csrf_token %}
@@ -50,13 +63,13 @@
                 </div>
             </fieldset>
             <fieldset>
-                <legend>{% trans "Advanced Settings" %}</legend>     
+                <legend>{% trans "Advanced Settings" %}</legend>
                 {% bootstrap_field form.smtp_use_custom layout="control" %}
                 <div data-display-dependency="#id_smtp_use_custom" data-disable-dependent>
                     {% bootstrap_field form.mail_from layout="control" %}
                     {% bootstrap_field form.email_vendor layout="control" %}
                     <div data-display-dependency="#id_email_vendor_0" data-disable-dependent>
-                        {% bootstrap_field form.send_grid_api_key layout="control" %} 
+                        {% bootstrap_field form.send_grid_api_key layout="control" %}
                     </div>
                     <div data-display-dependency="#id_email_vendor_1" data-disable-dependent>
                         {% bootstrap_field form.smtp_host layout="control" %}
@@ -84,3 +97,4 @@
         </div>
     </form>
 {% endblock %}
+

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 
-from eventyay.base.models import Event
+from eventyay.base.models.event import Event
 from eventyay.celery_app import app
 from eventyay.common.exceptions import SendMailException
 
@@ -78,16 +78,15 @@ def mail_send_task(
         event = Event.objects.get(pk=event)
         backend = event.get_mail_backend()
 
-        sender = settings.MAIL_FROM
-        if event.mail_settings['smtp_use_custom']:  # pragma: no cover
-            sender = event.mail_settings['mail_from'] or sender
+        sender = event.settings.mail_from or settings.MAIL_FROM
 
-        reply_to = reply_to or event.mail_settings['reply_to']
-        if not reply_to and sender == settings.MAIL_FROM:
-            reply_to = event.email
+        # Use unified Reply-To resolution
+        if not reply_to:
+            reply_to = get_reply_to_address(event, sender_email=sender)
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
+        reply_to = reply_to or []
 
         sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
 
@@ -134,3 +133,55 @@ def mail_send_task(
     except Exception as exception:  # pragma: no cover
         logger.exception('Error sending email')
         raise SendMailException(f'Failed to send an email to {to}: {exception}')
+
+
+def get_reply_to_address(
+    event,
+    *,
+    override=None,
+    template=None,
+    sender_email=None
+):
+    """
+    Resolve Reply-To email address with unified precedence across all email flows.
+
+    Event.email is OPTIONAL (may be provided during event creation), and the Reply-To header is OPTIONAL.
+
+    Precedence (highest to lowest):
+    1. Explicit override parameter (manual/individual emails)
+    2. Template-level reply_to (talk-specific templates)
+    3. event.mail_settings['reply_to'] (Talks component configured override)
+    4. event.settings.mail_reply_to (Tickets component configured reply-to)
+    5. event.email (ONLY when using the default system sender)
+    6. None (no Reply-To header — acceptable)
+
+    Event.email is only used as a fallback when the platform default sender is active.
+    Organizers can set either mail_settings['reply_to'] or settings.mail_reply_to to
+    explicitly override Reply-To regardless of which sender is used.
+
+    Args:
+        event: Event instance
+        override: Explicit Reply-To override
+        template: Email template with optional reply_to field
+        sender_email: The actual sender email being used (to determine SMTP context)
+
+    Returns:
+        Reply-To email address or None
+    """
+    if override is not None:
+        return override
+
+    if template and hasattr(template, 'reply_to') and template.reply_to:
+        return template.reply_to
+
+    if event.mail_settings.get('reply_to'):
+        return event.mail_settings['reply_to']
+
+    if event.settings.get('mail_reply_to'):
+        return event.settings.mail_reply_to
+
+    use_default_sender = not event.settings.smtp_use_custom
+    if use_default_sender and sender_email == settings.MAIL_FROM and event.email:
+        return event.email
+
+    return None

@@ -9,6 +9,7 @@
 {{ block.super }}
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
 <script defer src="{% static 'eventyay-common/js/event-image-source.js' %}"></script>
+<script defer src="{% static 'eventyay-common/js/smtp-toggle.js' %}"></script>
 {{ sform.media }}
 {% endblock %}
 {% block inside %}
@@ -41,7 +42,8 @@
 <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
     {% bootstrap_form_errors form %}
-    {% bootstrap_form_errors sform %} {# Added to show sform errors #}
+    {% bootstrap_form_errors sform %}
+    {% bootstrap_form_errors email_form %}
     {% comment %} TODO: Reintroduce component selection when unified component initialization is stable. {% endcomment %}
     <div class="tabbed-form">
         <fieldset>
@@ -219,6 +221,32 @@
             {% bootstrap_field sform.theme_round_borders layout="control" %}
             {% bootstrap_field sform.primary_font layout="control" %}
             {% endpropagated %}
+        </fieldset>
+        <fieldset id="email-settings-tab">
+            <legend>{% trans "Email" %}</legend>
+            <div class="alert alert-info">
+                {% blocktrans trimmed %}
+                    Configure the email gateway (SMTP / SendGrid) used for <strong>all outgoing
+                    event emails</strong> — both the Tickets and Talks components share this
+                    configuration. Subject prefixes, signatures, and templates can still
+                    be customised on each component's own email settings page.
+                {% endblocktrans %}
+            </div>
+            {% bootstrap_field email_form.smtp_use_custom layout="control" %}
+            <div id="smtp-custom-fields">
+                {% bootstrap_field email_form.email_vendor layout="control" %}
+                <div id="sendgrid-fields">
+                    {% bootstrap_field email_form.send_grid_api_key layout="control" %}
+                </div>
+                <div id="smtp-server-fields">
+                    {% bootstrap_field email_form.smtp_host layout="control" %}
+                    {% bootstrap_field email_form.smtp_port layout="control" %}
+                    {% bootstrap_field email_form.smtp_username layout="control" %}
+                    {% bootstrap_field email_form.smtp_password layout="control" %}
+                    {% bootstrap_field email_form.smtp_use_tls layout="control" %}
+                    {% bootstrap_field email_form.smtp_use_ssl layout="control" %}
+                </div>
+            </div>
         </fieldset>
     </div>
     <div class="form-group submit-group">

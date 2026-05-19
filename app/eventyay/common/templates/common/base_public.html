@@ -220,7 +220,7 @@
                     </div>
                 {% endif %}
                 {% include "common/powered_by.html" %}
-                {% if current_event %}
+                {% if current_event and current_event.email %}
                     ·
                     <a href="mailto:{{ current_event.email }}">{% translate "Contact us" %}</a>
                 {% endif %}

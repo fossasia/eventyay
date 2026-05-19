@@ -53,7 +53,7 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
     mail_on_new_submission = forms.BooleanField(
         label=_('Send mail on new proposal'),
         help_text=_(
-            'If this setting is checked, you will receive an email to the organizer address '
+            'If this setting is checked, all event admins will receive an email notification '
             'for every received proposal.'
         ),
         required=False,
@@ -74,8 +74,6 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         kwargs.pop('read_only')  # added in ActionFromUrl view mixin, but not needed here.
         self.instance = obj
         super().__init__(*args, **kwargs)
-        if getattr(obj, 'email', None):
-            self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
 
     def save(self, *args, **kwargs):

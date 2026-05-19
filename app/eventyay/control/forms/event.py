@@ -93,7 +93,7 @@ def normalize_organizer_email_initial(email) -> str:
 
 def clean_organizer_email(email):
     cleaned_email = str(email or '').strip()
-    return cleaned_email or get_default_organizer_email()
+    return cleaned_email or None
 
 
 class EventWizardFoundationForm(forms.Form):
@@ -230,7 +230,6 @@ class EventWizardBasicsForm(I18nModelForm):
             'location',
             'geo_lat',
             'geo_lon',
-            'email',
         ]
         field_classes = {
             'date_from': SplitDateTimeField,
@@ -263,14 +262,6 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
-        self.fields['email'].required = False
-        self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
-        email_initial = self.initial.get('email', self.fields['email'].initial)
-        normalized_email = normalize_organizer_email_initial(email_initial)
-        self.initial['email'] = normalized_email
-        self.fields['email'].initial = normalized_email
-        apply_organizer_email_placeholder(self.fields['email'])
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -333,8 +324,6 @@ class EventWizardBasicsForm(I18nModelForm):
             raise forms.ValidationError(self.error_messages['duplicate_slug'], code='duplicate_slug')
         return slug.lower()
 
-    def clean_email(self):
-        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
     @staticmethod
     def has_control_rights(user, organizer):
@@ -425,20 +414,11 @@ class EventWizardDisplayForm(forms.Form):
         required=False,
         widget=HeaderSelect,
     )
-    email = forms.EmailField(
-        label=_('Organizer email address'),
-        help_text=_("We'll show this publicly to allow attendees to contact you."),
-        required=False,
-    )
 
     def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
-        apply_organizer_email_placeholder(self.fields['email'])
-
-    def clean_email(self):
-        return clean_organizer_email(self.cleaned_data.get('email', ''))
 
 
 class EventWizardInitialForm(forms.Form):
@@ -1476,6 +1456,7 @@ class MailSettingsForm(SettingsForm):
         required=False,
     )
     smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
+
     @property
     def changed_data(self):
         data = super().changed_data
@@ -1541,6 +1522,7 @@ class MailSettingsForm(SettingsForm):
                 raise ValidationError({'send_grid_api_key': msg})
 
         return data
+
 
     base_context = {
         'mail_text_order_placed': ['event', 'order', 'payment'],

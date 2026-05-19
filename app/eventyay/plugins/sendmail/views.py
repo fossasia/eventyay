@@ -1,6 +1,7 @@
 import logging
 import nh3
 import uuid
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Exists, Subquery, OuterRef, Q
@@ -21,6 +22,7 @@ from eventyay.base.models.event import Event
 from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.services.mail import TolerantDict
 from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.common.mail import get_reply_to_address
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.helpers.timezone import get_browser_timezone, attach_timezone_to_naive_clock_time
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
@@ -37,12 +39,27 @@ from . import forms
 logger = logging.getLogger(__name__)
 
 
+class BulkReplyToMixin:
+    """Mixin for bulk email views to resolve Reply-To address."""
+    
+    def _get_reply_to_for_bulk_email(self):
+        # Determine sender for SMTP context
+        event = self.request.event
+        sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
+        sender = sender or settings.MAIL_FROM
+        
+        return get_reply_to_address(
+            event,
+            sender_email=sender
+        )
+
+
 class ComposeMailChoice(EventPermissionRequiredMixin, TemplateView):
     permission_required = 'can_change_orders'
     template_name = 'pretixplugins/sendmail/compose_choice.html'
 
 
-class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
+class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin, FormView):
     template_name = 'pretixplugins/sendmail/send_form.html'
     permission = 'can_change_orders'
     form_class = forms.MailForm
@@ -146,7 +163,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             message=form.cleaned_data['message'].data,
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
             locale=self.request.event.settings.locale,
-            reply_to=self.request.event.settings.get('contact_mail') or '',
+            reply_to=self._get_reply_to_for_bulk_email() or '',
             bcc=self.request.event.settings.get('mail_bcc'),
             composing_for=ComposingFor.ATTENDEES,
         )
@@ -502,7 +519,7 @@ class SentMailView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, ListV
         return ctx
 
 
-class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
+class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin, FormView):
     template_name = 'pretixplugins/sendmail/send_team_form.html'
     permission = 'can_change_orders'
     form_class = TeamMailForm
@@ -590,7 +607,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             subject=subject.data,
             message=message.data,
             locale=event.settings.locale,
-            reply_to=event.settings.get('contact_mail') or '',
+            reply_to=self._get_reply_to_for_bulk_email() or '',
             bcc=event.settings.get('mail_bcc'),
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
         )
