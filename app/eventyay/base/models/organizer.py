@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Q
@@ -46,8 +47,7 @@ def check_access_permissions(organizer):
     warnings = []
     teams = organizer.teams.all().annotate(member_count=models.Count('members')).filter(member_count__gt=0)
     if not [t for t in teams if t.can_change_teams]:
-        # TODO: Should use a concrete exception type
-        raise Exception(
+        raise PermissionDenied(
             _(
                 'There must be at least one team with the permission to change teams, '
                 'as otherwise nobody can create new teams or grant permissions to existing teams.'
@@ -71,8 +71,7 @@ def check_access_permissions(organizer):
     for event in organizer.events.all():
         event_teams = teams.filter(models.Q(limit_events=event) | models.Q(all_events=True)).distinct()
         if not event_teams:
-            # TODO: Should use a concrete exception type
-            raise Exception(
+            raise PermissionDenied(
                 str(
                     _(
                         'There must be at least one team with access to every event. '
