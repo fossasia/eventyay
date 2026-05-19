@@ -94,11 +94,14 @@ class GeoCodeView(LoginRequiredMixin, View):
         )
         r.raise_for_status()
         d = r.json()
-        return [
-            {
-                'formatted': result['display_name'],
-                'lat': float(result['lat']),
-                'lon': float(result['lon']),
-            }
-            for result in d
-        ]
+        try:
+            return [
+                {
+                    'formatted': result['display_name'],
+                    'lat': float(result['lat']),
+                    'lon': float(result['lon']),
+                }
+                for result in d
+            ]
+        except (KeyError, TypeError, ValueError):
+            return []
