@@ -40,7 +40,7 @@ class UserForm(CfPFormMixin, forms.Form):
         required=False,
     )
     register_password_repeat = NewPasswordConfirmationField(
-        label=_('Password (again)'),
+        label=_('Confirm Password'),
         required=False,
         confirm_with='register_password',
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),

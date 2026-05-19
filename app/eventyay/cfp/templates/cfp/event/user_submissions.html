@@ -65,7 +65,7 @@
                                     {% if submission.editable %}
                                         <i class="fa fa-edit" title="{% translate "Edit draft" %}"></i>
                                     {% else %}
-                                        <i class="fa fa-edit" title="{% translate "Open draft" %}"></i>
+                                        <i class="fa fa-eye" title="{% translate "View draft" %}"></i>
                                     {% endif %}
                                 </a>
                             </td>
@@ -109,7 +109,7 @@
                                 {% endif %}
                             </td>
                             <td class="flip text-right">
-                                {% if submission.review_code and request.event|get_feature_flag:"submission_public_review" %}
+                                {% if submission.review_code and request.event|get_feature_flag:"submission_public_review" and submission.state != "withdrawn" and submission.state != "rejected" and submission.state != "canceled" %}
                                     <button data-destination="{{ submission.urls.review.full }}"
                                             class="btn btn-sm btn-info copyable-text"
                                             data-toggle="tooltip"
@@ -124,7 +124,7 @@
                                     {% if submission.editable %}
                                         <i class="fa fa-edit" title="{% translate "Edit proposal" %}"></i>
                                     {% else %}
-                                        <i class="fa fa-edit" title="{% translate "Open proposal" %}"></i>
+                                        <i class="fa fa-eye" title="{% translate "View proposal" %}"></i>
                                     {% endif %}
                                 </a>
                                 {% if submission.state == "accepted" %}

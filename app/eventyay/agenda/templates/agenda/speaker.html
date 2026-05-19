@@ -19,7 +19,7 @@
 {% endblock alternate_link %}
 
 {% block agenda_custom_header %}
-<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+<script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
 {% endblock agenda_custom_header %}
 
 {% block container_width %} main-schedule{% endblock container_width %}
@@ -27,7 +27,7 @@
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_speaker_pages" sender=request.event request=request profile=profile %}
 <div>
-    <script type="text/javascript" src="{% static 'schedule/pretalx-schedule.js' %}" async></script>
+    <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speaker" speaker-code="{{ profile.user.code }}" enrich-data style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}

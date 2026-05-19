@@ -5,6 +5,8 @@
     {% block cfp_header %}{% endblock cfp_header %}
 {% endblock custom_header %}
 
+{% block body_attrs %}{{ block.super }} class="page-cfp"{% endblock %}
+
 {% block header_tabs %}
     {% include 'common/fragment_nav.html' %}
 {% endblock header_tabs %}

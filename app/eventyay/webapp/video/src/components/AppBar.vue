@@ -6,7 +6,7 @@
 			span.bar
 			span.bar
 		a.logo(:href="logoHref", :class="{anonymous: isAnonymous}")
-			img(:src="theme.logo.url", :alt="world.title")
+			img(:src="brandLogoUrl", :alt="world.title")
 	.nav-actions
 		router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
 			bunt-icon-button settings
@@ -157,38 +157,34 @@ const showAdminModeEnd = computed(() => isAdminMode.value)
 
 const isAnonymous = computed(() => Object.keys(user.value.profile || {}).length === 0)
 
-function videoAppRootHref() {
+function siteRootHref() {
 	const { protocol, host } = window.location
-	const basePath = config?.basePath ?? ''
 	const origin = typeof window.location.origin === 'string' ? window.location.origin : `${protocol}//${host}`
-	if (!basePath) {
-		return `${origin}/`
-	}
-	const normalized = basePath.endsWith('/') ? basePath : `${basePath}/`
-	return `${origin}${normalized}`
-}
-
-function isEventConfigAdmin() {
-	return store.getters.hasPermission('world:update')
+	return `${origin}/`
 }
 
 function buildMenuExternalHref(item) {
-	if (item.key === 'dashboard:main' && !isEventConfigAdmin()) {
-		return videoAppRootHref()
-	}
 	const base = buildBaseSansVideo()
 	return base + item.externalPath
 }
 
-const logoHref = computed(() => {
-	try {
-		if (isEventConfigAdmin()) {
-			return buildBaseSansVideo() + 'common/'
-		}
-		return videoAppRootHref()
-	} catch (e) {
-		return isEventConfigAdmin() ? '/common/' : videoAppRootHref()
+const logoHref = computed(() => siteRootHref())
+
+const defaultBrandLogoUrl = computed(() => {
+	const basePath = config?.basePath ?? ''
+	if (!basePath || basePath === '/') {
+		return '/eventyay-video-logo.png'
 	}
+	const normalized = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+	return `${normalized}/eventyay-video-logo.png`
+})
+
+const brandLogoUrl = computed(() => {
+	const routeName = router.currentRoute.value?.name
+	if (routeName === 'about') {
+		return defaultBrandLogoUrl.value
+	}
+	return theme.logo?.url || defaultBrandLogoUrl.value
 })
 
 const profileMenuOpen = ref(false)

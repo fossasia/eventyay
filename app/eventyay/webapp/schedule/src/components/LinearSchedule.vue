@@ -12,7 +12,7 @@
 					:locale="locale",
 					:hasAmPm="hasAmPm",
 					:showFavCount="showFavCount",
-					:faved="session.id && favs.includes(session.id)",
+					:faved="session.id && favSet.has(session.id)",
 					:onHomeServer="onHomeServer",
 					@fav="$emit('fav', session.id)",
 					@unfav="$emit('unfav', session.id)"
@@ -22,7 +22,7 @@
 </template>
 <script>
 import moment from 'moment-timezone'
-import { getLocalizedString } from '../utils'
+import { getLocalizedString, normalizePopularityCount } from '../utils'
 import Session from './Session'
 
 export default {
@@ -59,7 +59,11 @@ export default {
 		},
 		includeDateSortKey: {
 			type: Boolean,
-			default: true
+			default: false
+		},
+		includePopularitySortKey: {
+			type: Boolean,
+			default: false
 		},
 		showBreaks: {
 			type: Boolean,
@@ -77,46 +81,105 @@ export default {
 		}
 	},
 	computed: {
+		popularitySortEnabled () {
+			return this.includePopularitySortKey || this.sortBy === 'popularity'
+		},
+		favSet () {
+			return new Set(this.favs || [])
+		},
+		/** First session bucket per calendar day (for toolbar day jump without scanning all buckets). */
+		bucketFirstByDay () {
+			const map = Object.create(null)
+			for (const b of this.sessionBuckets) {
+				const k = b.date.format('YYYY-MM-DD')
+				if (map[k] === undefined) map[k] = b
+			}
+			return map
+		},
 		showDayHeaders () {
-			return !(['title', 'title_desc'].includes(this.sortBy) && !this.includeDateSortKey)
+			return this.includeDateSortKey
 		},
 		sessionBuckets () {
+			if (!this.includeDateSortKey) {
+				const sortedFlat = this.sortBucketSessions(this.sessions)
+				const fallbackDate = sortedFlat.length ? sortedFlat[0].start.clone().startOf('day') : moment()
+				return [{
+					date: fallbackDate,
+					sessions: sortedFlat
+				}]
+			}
+
 			const buckets = {}
+			const seenBreakIds = {}
 			for (const session of this.sessions) {
 				const key = this.getBucketName(session.start)
 				if (!buckets[key]) {
 					buckets[key] = []
+					seenBreakIds[key] = new Set()
 				}
 				if (!session.id) {
-					// Remove duplicate breaks, meaning same start, end and text
-					session.break_id = `${session.start}${session.end}${session.title}`
-					if (buckets[key].filter(s => s.break_id === session.break_id).length === 0) buckets[key].push(session)
+					// Remove duplicate breaks (same start, end and text) using a Set for O(1) lookup.
+					const breakId = `${session.start}${session.end}${session.title}`
+					session.break_id = breakId
+					if (!seenBreakIds[key].has(breakId)) {
+						seenBreakIds[key].add(breakId)
+						buckets[key].push(session)
+					}
 				} else {
 					buckets[key].push(session)
 				}
 			}
-			const groupedBuckets = Object.entries(buckets).map(([date, sessions]) => ({
-				date: sessions[0].start,
-				sessions: this.sortBucketSessions(sessions)
-			}))
+			const needsTitleSort = ['title', 'title_desc'].includes(this.sortBy) && !this.includeDateSortKey
+			const groupedBuckets = Object.entries(buckets).map(([date, sessions]) => {
+				const sortedSessions = this.sortBucketSessions(sessions)
+				const bucket = {
+					date: sessions[0].start,
+					sessions: sortedSessions
+				}
+				if (needsTitleSort) {
+					let repr = null
+					for (const s of sortedSessions) {
+						if (this.isProperSession(s)) { repr = s; break }
+					}
+					bucket._sortKey = repr || sortedSessions[0]
+				}
+				return bucket
+			})
 
-			if (['title', 'title_desc'].includes(this.sortBy) && !this.includeDateSortKey) {
+			if (needsTitleSort) {
 				return groupedBuckets.sort((a, b) => {
-					const aSession = a.sessions.find(s => this.isProperSession(s)) || a.sessions[0]
-					const bSession = b.sessions.find(s => this.isProperSession(s)) || b.sessions[0]
-					const bySort = this.sessionComparator(aSession, bSession)
+					const bySort = this.sessionComparator(a._sortKey, b._sortKey)
 					if (bySort !== 0) return bySort
 					return a.date.diff(b.date)
 				})
 			}
-
 			return groupedBuckets
+		},
+		sortObserverKey () {
+			return [this.sortBy, this.includeRoomSortKey, this.includeDateSortKey, this.includePopularitySortKey].join('|')
 		}
 	},
 	watch: {
-		sortBy() { this.$forceUpdate() },
-		includeRoomSortKey() { this.$forceUpdate() },
-		includeDateSortKey() { this.$forceUpdate() },
+		async sortObserverKey () {
+			await this.$nextTick()
+			if (this.observer) {
+				this.observer.disconnect()
+			}
+			this.observer = new IntersectionObserver(this.onIntersect, {
+				root: this.scrollParent,
+				rootMargin: '-45% 0px'
+			})
+			let lastBucket
+			for (const [ref, el] of Object.entries(this.$refs)) {
+				if (!ref.startsWith('bucket')) continue
+				const date = moment(el[0].dataset.date).tz(this.timezone)
+				if (lastBucket) {
+					if (lastBucket.format('YYYY-MM-DD') === date.format('YYYY-MM-DD')) continue
+				}
+				lastBucket = date
+				this.observer.observe(el[0])
+			}
+		},
 		currentDay: 'changeDay'
 	},
 	async mounted () {
@@ -173,23 +236,26 @@ export default {
 			if (a?.id && !b?.id) return -1
 			if (!a?.id && !b?.id) return 0
 
-			if (this.sortBy === 'popularity') {
-				return (b.fav_count || 0) - (a.fav_count || 0)
+			if (this.popularitySortEnabled) {
+				const popularityA = normalizePopularityCount(a)
+				const popularityB = normalizePopularityCount(b)
+				const popCmp = popularityB - popularityA
+				if (popCmp !== 0) return popCmp
 			}
-
-			const direction = this.sortBy === 'title_desc' ? -1 : 1
-			const titleCmp = this.titleSortKey(a).localeCompare(this.titleSortKey(b))
-			if (titleCmp !== 0) return titleCmp * direction
 
 			if (this.includeRoomSortKey) {
 				const roomCmp = this.roomSortKey(a).localeCompare(this.roomSortKey(b))
-				if (roomCmp !== 0) return roomCmp * direction
+				if (roomCmp !== 0) return roomCmp
 			}
 
 			if (this.includeDateSortKey) {
 				const dateCmp = a.start.diff(b.start)
 				if (dateCmp !== 0) return dateCmp
 			}
+
+			const direction = this.sortBy === 'title_desc' ? -1 : 1
+			const titleCmp = this.titleSortKey(a).localeCompare(this.titleSortKey(b))
+			if (titleCmp !== 0) return titleCmp * direction
 
 			return 0
 		},
@@ -210,7 +276,7 @@ export default {
 		changeDay (day) {
 			if (!this.showDayHeaders) return
 			if (this.scrolledDay?.format('YYYY-MM-DD') === day) return
-			const dayBucket = this.sessionBuckets.find(bucket => day === bucket.date.format('YYYY-MM-DD'))
+			const dayBucket = this.bucketFirstByDay[day]
 			if (!dayBucket) return
 			const el = this.$refs[this.getBucketName(dayBucket.date)]?.[0]
 			if (!el) return

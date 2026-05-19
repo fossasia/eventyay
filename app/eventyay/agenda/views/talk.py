@@ -240,9 +240,11 @@ class TalkView(TalkMixin, TemplateView):
     @context
     @cached_property
     def submission_description(self):
+        abstract = self.submission.abstract if self.request.event.cfp.public_abstract else ''
+        description = self.submission.description if self.request.event.cfp.public_description else ''
         return (
-            self.submission.abstract
-            or self.submission.description
+            abstract
+            or description
             or _('The session “{title}” at {event}').format(
                 title=localize_event_text(self.submission.title),
                 event=localize_event_text(self.request.event.name),
@@ -373,6 +375,9 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
     def _render_json(self, request, talk_slots):
         event = request.event
         base_url = get_base_url(event)
+        show_abstract = event.cfp.public_abstract
+        show_description = event.cfp.public_description
+        show_biography = event.cfp.public_biography
         talks_data = []
         for slot in talk_slots:
             sub = slot.submission
@@ -391,25 +396,29 @@ class SingleExportView(EventPageMixin, TalkMixin, View):
                     'track': localize_event_text(sub.track.name) if sub.track else None,
                     'type': localize_event_text(sub.submission_type.name),
                     'language': sub.content_locale,
-                    'abstract': localize_event_text(sub.abstract),
-                    'description': localize_event_text(sub.description),
+                    'abstract': localize_event_text(sub.abstract) if show_abstract else '',
+                    'description': localize_event_text(sub.description) if show_description else '',
                     'do_not_record': sub.do_not_record,
                     'persons': [
                         {
                             'code': p.code,
                             'name': p.get_display_name(),
-                            'biography': localize_event_text(p.event_profile(event).biography),
+                            'biography': localize_event_text(p.event_profile(event).biography)
+                            if show_biography
+                            else '',
                         }
                         for p in sub.speakers.all()
                     ],
                     'links': [
                         {'title': localize_event_text(r.description), 'url': r.link}
                         for r in sub.resources.all()
+                        if event.cfp.is_resource_public(r)
                         if r.link
                     ],
                     'attachments': [
                         {'title': localize_event_text(r.description), 'url': r.resource.url}
                         for r in sub.resources.all()
+                        if event.cfp.is_resource_public(r)
                         if not r.link
                     ],
                 }
@@ -485,7 +494,7 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
         dates = f'{start.strftime(fmt)}/{end.strftime(fmt)}'
         title = localize_event_text(sub.title)
         location = localize_event_text(slot.room.name) if slot.room else ''
-        details = localize_event_text(sub.abstract) or ''
+        details = localize_event_text(sub.abstract) if request.event.cfp.public_abstract else ''
         url = (
             'https://calendar.google.com/calendar/render?action=TEMPLATE'
             f'&text={quote(str(title))}'
@@ -560,7 +569,7 @@ class FeedbackView(TalkMixin, FormView):
 
 class TalkSocialMediaCard(SocialMediaCardMixin, TalkView):
     def get_image(self):
-        return self.submission.image
+        return self.submission.image if self.request.event.cfp.public_image else None
 
 
 class OnlineVideoJoin(EventPermissionRequired, View):

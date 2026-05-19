@@ -112,6 +112,11 @@ from eventyay.base.services.orders import (
     send_order_approved_notifications,
     send_order_denied_notifications,
 )
+from eventyay.base.services.system_questions import (
+    get_enabled_system_question_fields,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
+)
 from eventyay.base.services.stats import order_overview
 from eventyay.base.services.tickets import generate
 from eventyay.base.signals import (
@@ -500,6 +505,20 @@ class OrderDetail(OrderView):
         )
 
         positions = []
+        base_states = get_system_question_base_states(self.request.event)
+        product_overrides = get_system_question_product_overrides(self.request.event)
+        enabled_system_fields_by_product_id: dict[int, set[str]] = {}
+
+        def get_enabled_system_fields_for_product(product) -> set[str]:
+            if product.pk not in enabled_system_fields_by_product_id:
+                enabled_system_fields_by_product_id[product.pk] = get_enabled_system_question_fields(
+                    self.request.event,
+                    product,
+                    base_states=base_states,
+                    product_overrides=product_overrides,
+                )
+            return enabled_system_fields_by_product_id[product.pk]
+
         for p in cartpos:
             responses = question_form_fields.send(sender=self.request.event, position=p)
             p.additional_fields = []
@@ -517,12 +536,17 @@ class OrderDetail(OrderView):
                             }
                         )
 
+            enabled_system_fields = get_enabled_system_fields_for_product(p.product)
             p.has_questions = (
                 p.additional_fields
-                or (p.product.admission and self.request.event.settings.attendee_names_asked)
-                or (p.product.admission and self.request.event.settings.attendee_emails_asked)
+                or bool(enabled_system_fields)
                 or p.product.questions.all()
             )
+            p.ask_attendee_name_parts = 'attendee_name_parts' in enabled_system_fields
+            p.ask_attendee_email = 'attendee_email' in enabled_system_fields
+            p.ask_attendee_company = 'company' in enabled_system_fields
+            p.ask_attendee_job_title = 'job_title' in enabled_system_fields
+            p.ask_attendee_address = 'street' in enabled_system_fields
             p.cache_answers()
             p.order = self.order
 
@@ -1078,6 +1102,8 @@ class OrderRefundView(OrderView):
             full_refund = self.order.payment_refund_sum
         else:
             full_refund = self.start_form.cleaned_data.get('partial_amount')
+        full_refund = round_decimal(full_refund, self.request.event.currency)
+
         if self.request.GET.get('giftcard', 'false') == 'true':
             proposals = {None: full_refund}
             giftcard_proposal = full_refund
@@ -1248,6 +1274,7 @@ class OrderRefundView(OrderView):
                         )
 
             any_success = False
+            refund_selected = round_decimal(refund_selected, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
                 for r in refunds:
                     r.save()
