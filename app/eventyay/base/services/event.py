@@ -20,6 +20,7 @@ from eventyay.core.permissions import Permission
 # Add missing imports for models referenced in this module
 from eventyay.base.models.chat import Channel
 from eventyay.base.models.audit import AuditLog
+from eventyay.base.services.video_theme import build_video_theme_for_event
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -100,6 +101,7 @@ async def get_event(event_id):
 def get_rooms(event, user):
     qs = (
         event.rooms.filter(deleted=False)
+        .order_by('sorting_priority', 'id')
         .prefetch_related("channel")
         .annotate(
             current_roomviews=Subquery(
@@ -204,6 +206,8 @@ def get_event_config_for_user(event, user):
         "slug": getattr(event, "slug", str(event.id)),
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
         "timezone": event.timezone,
+        "visible_logo_url": event.visible_logo_url,
+        "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
         "profile_fields": cfg.get("profile_fields", []),
         "social_logins": cfg.get("social_logins", []),
@@ -414,7 +418,7 @@ def _config_serializer(event, *args, **kwargs):
     cfg = event.config or {}
     return EventConfigSerializer(
         instance={
-            "theme": cfg.get("theme", {}),
+            "theme": build_video_theme_for_event(event),
             "title": getattr(event, "title", getattr(event, "name", "")),
             "locale": event.locale,
             "date_locale": cfg.get("date_locale", "en-ie"),

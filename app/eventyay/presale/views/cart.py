@@ -441,6 +441,31 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
     task = add_products_to_cart
     known_errortypes = ['CartError']
 
+    def get_success_url(self, value=None):
+        kwargs = {}
+        if 'cart_namespace' in self.kwargs:
+            kwargs['cart_namespace'] = self.kwargs['cart_namespace']
+
+        if self.request.event.settings.redirect_to_checkout_directly:
+            url = eventreverse(
+                self.request.event,
+                'presale:event.checkout.start',
+                kwargs=kwargs,
+            )
+            if url.startswith('https:'):
+                url = '/' + url.split('/', 3)[3]
+            disclose_cart_id = (
+                'iframe' in self.request.GET or settings.SESSION_COOKIE_NAME not in self.request.COOKIES
+            ) and self.kwargs.get('cart_namespace')
+            if disclose_cart_id:
+                cart_id = get_or_create_cart_id(self.request)
+                separator = '&' if '?' in url else '?'
+                url += '{}cart_id={}'.format(separator, quote(cart_id, safe=''))
+            return url
+        else:
+            # Return to event page using 'next' parameter (original behavior)
+            return self.get_next_url()
+
     def get_success_message(self, value):
         if isinstance(value, dict) and value.get('warning'):
             return value['warning']
@@ -588,14 +613,11 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
                 'presale:event.checkout.start',
                 kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
             )
+            if context['cart_redirect'].startswith('https:'):
+                context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
         else:
-            context['cart_redirect'] = eventreverse(
-                self.request.event,
-                'presale:event.index',
-                kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
-            )
-        if context['cart_redirect'].startswith('https:'):
-            context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
+            # Preserve full path including voucher query params (e.g. ?voucher=CODE)
+            context['cart_redirect'] = self.request.get_full_path()
         return context
 
     def dispatch(self, request, *args, **kwargs):

@@ -704,9 +704,12 @@ class User(
     def get_password_reset_url(self, event=None, orga=False):
         if event:
             path = 'orga:event.auth.recover' if orga else 'cfp:event.recover'
+            kwargs = {'token': self.pw_reset_token, 'event': event.slug}
+            if not orga:
+                kwargs['organizer'] = event.organizer.slug
             url = build_absolute_uri(
                 path,
-                kwargs={'token': self.pw_reset_token, 'event': event.slug},
+                kwargs=kwargs,
             )
         else:
             url = build_absolute_uri('orga:auth.recover', kwargs={'token': self.pw_reset_token})
@@ -764,7 +767,7 @@ the eventyay robot"""
         self.save()
 
         context = {
-            'name': self.name or '',
+            'name': self.fullname or '',
         }
         mail_text = _(
             """Hi {name},
@@ -855,7 +858,18 @@ the eventyay team"""
 
     @cached_property
     def has_avatar(self) -> bool:
-        return bool(self.avatar) and self.avatar != 'False'
+        return (bool(self.avatar) and self.avatar != 'False') or bool(self.external_avatar_url)
+
+    @property
+    def external_avatar_url(self) -> str:
+        profile = self.profile if isinstance(self.profile, dict) else {}
+        avatar = profile.get('avatar')
+        if not isinstance(avatar, dict):
+            return ''
+        avatar_url = avatar.get('url')
+        if not isinstance(avatar_url, str):
+            return ''
+        return avatar_url.strip()
 
     @cached_property
     def avatar_url(self) -> str:
@@ -864,7 +878,7 @@ the eventyay team"""
         Uses the avatar file's actual modification time for most accurate cache-busting.
         Falls back to current time if file doesn't exist or can't be accessed.
         """
-        if self.has_avatar:
+        if self.avatar and self.avatar != 'False':
             try:
                 # Get the actual file modification time for most accurate cache-busting
                 file_path = self.avatar.path
@@ -875,7 +889,7 @@ the eventyay team"""
                 timestamp = int(time.time() * 1000)
 
             return f"{self.avatar.url}?v={timestamp}"
-        return ''
+        return self.external_avatar_url
 
     def get_avatar_url(self, event=None, thumbnail=None):
         """Returns the full avatar URL with cache-busting parameter.
@@ -887,9 +901,15 @@ the eventyay team"""
         Returns:
             URL string with cache-busting query parameter
         """
-        # Check if we have an avatar
-        if not self.has_avatar:
-            return ''
+        if not self.avatar or self.avatar == 'False':
+            external_avatar_url = self.external_avatar_url
+            if not external_avatar_url:
+                return ''
+            if external_avatar_url.startswith(('http://', 'https://')):
+                return external_avatar_url
+            if event and event.custom_domain:
+                return urljoin(event.custom_domain, external_avatar_url)
+            return urljoin(settings.SITE_URL, external_avatar_url)
 
         # Determine which image to use
         if not thumbnail:

@@ -1,0 +1,70 @@
+{% load i18n %}
+
+{% if widget.current_resources %}
+  <div class='mb-3'>
+    <div class='font-weight-bold mb-2'>{% translate 'Current slides' %}</div>
+    {% for resource in widget.current_resources %}
+      <div class='border rounded px-3 py-2 mb-2'>
+        <div>
+          {% if resource.link %}
+            <a href='{{ resource.link }}' target='_blank' rel='noopener'>{{ resource.link }}</a>
+          {% else %}
+            <a href='{{ resource.url }}' target='_blank' rel='noopener'>{{ resource.filename }}</a>
+          {% endif %}
+        </div>
+        {% if not widget.attrs.disabled %}
+          <div class='form-check mt-2'>
+            <input class='form-check-input' type='checkbox' name='{{ widget.clear_name }}' value='{{ resource.pk }}' id='{{ widget.name }}_clear_{{ resource.pk }}'>
+            <label class='form-check-label' for='{{ widget.name }}_clear_{{ resource.pk }}'>
+              {% translate 'Remove this slide' %}
+            </label>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if not widget.attrs.disabled %}
+  <div class='mb-3'>
+    <textarea
+      name='{{ widget.links_name }}'
+      id='{{ widget.links_id }}'
+      rows='4'
+      class='form-control'
+      placeholder='{% if widget.max_items == 1 %}https://example.com/slides.pdf{% else %}https://example.com/slides-1.pdf&#10;https://example.com/slides-2.pdf{% endif %}'>{{ widget.links_value }}</textarea>
+    <small class='form-text text-muted'>
+      {% if widget.max_items == 1 %}
+        {% translate 'Add one direct PDF link.' %}
+      {% else %}
+        {% translate 'Add one direct PDF link per line.' %}
+      {% endif %}
+    </small>
+  </div>
+
+  <div>
+    <input
+      type='file'
+      name='{{ widget.files_name }}'
+      id='{{ widget.files_id }}'
+      class='form-control-file'
+      accept='.pdf,application/pdf'
+      {% if widget.max_items != 1 %}multiple{% endif %}>
+    <small class='form-text text-muted'>
+      {% if widget.remaining_items == 1 %}
+        {% translate 'You can upload 1 PDF file.' %}
+      {% elif widget.remaining_items is not None %}
+        {% blocktranslate count count=widget.remaining_items %}You can upload up to {{ count }} PDF file.{% plural %}You can upload up to {{ count }} PDF files.{% endblocktranslate %}
+      {% else %}
+        {% translate 'You can upload PDF files.' %}
+      {% endif %}
+      {% if widget.max_items %}
+        {% blocktranslate count count=widget.max_items %} You can keep up to {{ count }} slide entry in total.{% plural %} You can keep up to {{ count }} slide entries in total.{% endblocktranslate %}
+      {% endif %}
+      {% if widget.remaining_items is not None and widget.current_count > 0 %}
+        {% blocktranslate count count=widget.remaining_items %} You can add {{ count }} more slide entry across links and uploads combined.{% plural %} You can add {{ count }} more slide entries across links and uploads combined.{% endblocktranslate %}
+      {% endif %}
+      {% translate 'Only PDF is supported right now.' %}
+    </small>
+  </div>
+{% endif %}

@@ -18,6 +18,8 @@
 	"App:fatal-connection-error:else:headline": "تم رفض الاتصال",
 	"App:fatal-connection-error:world.unknown_world:headline": "الحدث غير موجود",
 	"AppBar:user-anonymous": "مجهول",
+	"AppBar:admin-mode:start": "وضع المسؤول",
+	"AppBar:admin-mode:end": "إنهاء جلسة المسؤول",
 	"AVDevice:error:notfound": "لم يتم العثور على كاميرا أو ميكروفون.",
 	"AVDevice:error:notreadable": "الكاميرا أو الميكروفون غير متاح، ربما يستخدمه برنامج آخر حاليًا؟",
 	"AVDevice:error:notallowed": "تم رفض أذونات الكاميرا أو الميكروفون. يرجى السماح بالوصول إلى الكاميرا أو الميكروفون في متصفحك وإعادة تحميل الصفحة.",

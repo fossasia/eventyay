@@ -56,7 +56,7 @@ def _show_featured_setting(event):
     if 'show_featured' in flags and flags['show_featured'] is not None:
         raw = flags['show_featured']
     else:
-        raw = defaults.get('show_featured', 'after_schedule')
+        raw = defaults.get('show_featured', 'never')
     if isinstance(raw, bool):
         return 'always' if raw else 'never'
     if isinstance(raw, str):
@@ -66,7 +66,7 @@ def _show_featured_setting(event):
         # Migrate legacy value saved before rename.
         if normalized == 'pre_schedule':
             return 'after_schedule'
-    return defaults.get('show_featured', 'after_schedule')
+    return defaults.get('show_featured', 'never')
 
 
 def _event_has_published_schedule(event):
@@ -231,22 +231,23 @@ def questions_for_user(request, event, user):
 
     if user.has_perm('base.update_talkquestion', event) or is_admin_mode_active(request):
         # Organizers with edit permissions can see everything
-        return event.talkquestions(manager='all_objects').all()
+        return event.talkquestions(manager='all_objects').filter(is_imported=False)
     if not user.is_anonymous and is_only_reviewer(user, event) and can_view_speaker_names(user, event):
         return event.talkquestions(manager='all_objects').filter(
             Q(is_visible_to_reviewers=True) | Q(target=TalkQuestionTarget.REVIEWER),
             active=True,
+            is_imported=False,
         )
     if user.has_perm('base.orga_list_talkquestion', event):
         # Other team members can either view all active talkquestions
         # or only talkquestions open to reviewers
-        return event.talkquestions(manager='all_objects').all()
+        return event.talkquestions(manager='all_objects').filter(is_imported=False)
 
     # Now we are left with anonymous users or users with very limited permissions.
     # They can see all public (non-reviewer) talkquestions if they are already publicly
     # visible in the schedule. Otherwise, nothing.
     if user.has_perm('base.list_talkquestion', event):
-        return event.talkquestions.all().filter(is_public=True)
+        return event.talkquestions.all().filter(is_public=True, is_imported=False)
     return event.talkquestions.none()
 
 

@@ -15,6 +15,7 @@
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_component_nav_mobile.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
 		{% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
@@ -67,7 +68,11 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/popover.js" %}"></script>
             <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
             <script type="text/javascript" src="{% static "task_management/js/task_management.js" %}"></script>
+            <script defer src="{% static 'common/js/base.js' %}"></script>
+            <script defer src="{% static 'common/js/formTools.js' %}"></script>
 		{% endcompress %}
+        {# Keep toastuiLoader outside the compress block so document.currentScript keeps data-toastui-* (see common/js/toastuiLoader.js). #}
+        <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}" data-toastui-lang="{{ request.LANGUAGE_CODE|slice:':2' }}" data-toastui-t-undo="{% trans 'Undo' %}" data-toastui-t-redo="{% trans 'Redo' %}" data-toastui-t-underline="{% trans 'Underline' %}"></script>
         {{ html_head|safe }}
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -244,7 +249,7 @@
                                         </div>
                                     </a>
                                 {% elif request.organizer %}
-                                    <a href="#" class="dropdown-toggle">
+                                    <a href="{% url 'eventyay_common:organizer.dashboard' organizer=request.organizer.slug %}" class="dropdown-toggle">
                                         <span class="fa-stack fa-lg">
                                           <i class="fa fa-circle fa-stack-2x"></i>
                                           <i class="fa fa-group fa-stack-1x fa-inverse"></i>

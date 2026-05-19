@@ -1,7 +1,7 @@
+import zoneinfo
 from collections import OrderedDict
 from urllib.parse import urlsplit
 
-import pytz
 from django.conf import settings
 from django.http import Http404, HttpRequest, HttpResponse
 from django.middleware.common import CommonMiddleware
@@ -75,10 +75,11 @@ class LocaleMiddleware(MiddlewareMixin):
             tzname = request.user.timezone
         if tzname:
             try:
-                timezone.activate(pytz.timezone(tzname))
+                timezone.activate(zoneinfo.ZoneInfo(tzname))
                 request.timezone = tzname
-            except pytz.UnknownTimeZoneError:
-                pass
+            except zoneinfo.ZoneInfoNotFoundError:
+                timezone.deactivate()
+                request.timezone = None
         else:
             timezone.deactivate()
 
@@ -208,10 +209,9 @@ def get_startpage_events(request: HttpRequest):
     search_query = request.GET.get('q', '').strip()
     with scopes_disabled():
         qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
+        qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
         if search_query:
             qs = qs.filter(name__icontains=search_query)
-        else:
-            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
 
         return [event for event in qs.order_by('date_from') if not event.has_component_testmode]
 
@@ -225,8 +225,9 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
 
     sources = []
 
-    if hasattr(request, 'event') and request.event:
-        for image_url in (request.event.visible_header_image_url, request.event.visible_logo_url):
+    event = getattr(request, 'event', None)
+    if event and event.pk:
+        for image_url in (event.visible_header_image_url, event.visible_logo_url):
             origin = get_url_origin(image_url)
             if origin:
                 sources.append(origin)
@@ -236,6 +237,8 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
             origin = get_url_origin(image_url)
             if origin:
                 sources.append(origin)
+
+    sources.extend(getattr(request, '_external_image_csp_sources', []))
 
     return list(OrderedDict.fromkeys(sources))
 
@@ -269,6 +272,7 @@ class SecurityMiddleware(MiddlewareMixin):
             'default-src': ['{static}'],
             'script-src': [
                 '{static}',
+                'https://static.cloudflareinsights.com',
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
                 'http://localhost:8080',
@@ -288,7 +292,14 @@ class SecurityMiddleware(MiddlewareMixin):
                 '{media}',
                 "'unsafe-inline'",  # allow inline styles
             ],
-            'connect-src': ['{dynamic}', '{media}', 'https://checkout.stripe.com', 'https:', 'blob:'],
+            'connect-src': [
+                '{dynamic}',
+                '{media}',
+                'https://checkout.stripe.com',
+                'https://static.cloudflareinsights.com',
+                'https:',
+                'blob:',
+            ],
             'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com']
             + external_img_src
             + img_src,
@@ -345,7 +356,7 @@ class SecurityMiddleware(MiddlewareMixin):
             if domain:
                 siteurlsplit = urlsplit(settings.SITE_URL)
                 if siteurlsplit.port and siteurlsplit.port not in (80, 443):
-                    domain = '%s:%d' % (domain, siteurlsplit.port)
+                    domain = f'{domain}:{siteurlsplit.port}'
                 dynamicdomain += ' ' + domain
 
         # Add DEBUG mode settings before rendering CSP

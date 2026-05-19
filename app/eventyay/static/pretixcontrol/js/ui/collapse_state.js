@@ -4,20 +4,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const collapseStateKey = 'loginFormCollapseState';
 
     // Restore state from localStorage
-    const storedState = localStorage.getItem(collapseStateKey);
-    console.log(storedState);
-    if (storedState === 'open') {
-        loginForm.classList.add('in');
-    } else {
-        loginForm.classList.remove('in');
+    if (loginForm) {
+        const storedState = localStorage.getItem(collapseStateKey);
+        if (storedState === 'open') {
+            loginForm.classList.add('in');
+        } else if (storedState === 'closed') {
+            loginForm.classList.remove('in');
+        }
     }
 
     // Save state on toggle
-    toggleLogin.addEventListener('click', function () {
-        if (loginForm.classList.contains('in')) {
-            localStorage.setItem(collapseStateKey, 'closed');
-        } else {
-            localStorage.setItem(collapseStateKey, 'open');
-        }
-    });
+    if (toggleLogin && loginForm) {
+        toggleLogin.addEventListener('click', function () {
+            if (loginForm.classList.contains('in')) {
+                localStorage.setItem(collapseStateKey, 'closed');
+            } else {
+                localStorage.setItem(collapseStateKey, 'open');
+            }
+        });
+    }
 });

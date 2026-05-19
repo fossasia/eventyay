@@ -12,7 +12,7 @@
 				:now="resolvedNow",
 				:timezone="resolvedTimezone",
 				:hasAmPm="resolvedHasAmPm",
-				:faved="!!(s.id && resolvedMyFavs.includes(s.id))",
+				:faved="!!(s.id && starredCodesSet.has(s.id))",
 				:onHomeServer="true",
 				@fav="onFav(s.id)",
 				@unfav="onUnfav(s.id)"
@@ -99,10 +99,14 @@ export default {
 		resolvedMyFavs() {
 			return this.scheduleData?.favs || []
 		},
+		starredCodesSet() {
+			return new Set(this.starredCodes || [])
+		},
 		filteredSessions() {
 			if (!this.starredCodes.length) return []
 			const sessions = this.scheduleData?.sessions || []
-			return sessions.filter(s => this.starredCodes.includes(s.id))
+			const want = this.starredCodesSet
+			return sessions.filter(s => want.has(s.id))
 				.sort((a, b) => (a.start?.diff ? a.start.diff(b.start) : 0))
 		}
 	},

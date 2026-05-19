@@ -15,6 +15,7 @@ from django.views.generic import (
     CreateView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
 )
 from rest_framework.decorators import api_view
@@ -299,6 +300,15 @@ class OrganizerSettingsFormView(OrganizerDetailViewMixin, OrganizerPermissionReq
                 _('We could not save your changes. See below for details.'),
             )
             return self.get(request)
+
+
+class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, TemplateView):
+    template_name = 'eventyay_common/organizers/dashboard.html'
+    permission = None
+
+    @property
+    def organizer(self):
+        return self.request.organizer
 
 
 class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):

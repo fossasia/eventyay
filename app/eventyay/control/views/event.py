@@ -2,6 +2,7 @@ import json
 import logging
 import operator
 import re
+import smtplib
 from collections import OrderedDict
 from decimal import Decimal
 from itertools import groupby
@@ -14,6 +15,7 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import ProtectedError
 from django.forms import inlineformset_factory
+from python_http_client.exceptions import HTTPError
 from django.http import (
     Http404,
     HttpResponse,
@@ -32,7 +34,6 @@ from django.views.generic.base import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from i18nfield.strings import LazyI18nString
 from i18nfield.utils import I18nJSONEncoder
-from pytz import timezone
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
@@ -55,12 +56,12 @@ from eventyay.control.forms.event import (
     ConfirmTextFormset,
     EventDeleteForm,
     EventMetaValueForm,
-    EventSettingsForm,
+    GeneralEventSettingsForm,
     EventUpdateForm,
     InvoiceSettingsForm,
-    ProductMetaPropertyForm,
     MailSettingsForm,
     PaymentSettingsForm,
+    ProductMetaPropertyForm,
     ProviderForm,
     QuickSetupForm,
     QuickSetupProductFormSet,
@@ -90,6 +91,8 @@ from ...base.settings import SETTINGS_AFFECTING_CSS
 from ..logdisplay import OVERVIEW_BANLIST
 from . import CreateView, PaginationMixin, UpdateView
 
+logger = logging.getLogger(__name__)
+
 
 class EventSettingsViewMixin:
     def get_context_data(self, **kwargs):
@@ -117,7 +120,7 @@ class MetaDataEditorMixin:
 
     def _make_meta_form(self, p, val_instances):
         return self.meta_form(
-            prefix='prop-{}'.format(p.pk),
+            prefix=f'prop-{p.pk}',
             property=p,
             disabled=(
                 p.protected
@@ -173,7 +176,7 @@ class EventUpdate(
 
     @cached_property
     def sform(self):
-        return EventSettingsForm(
+        return GeneralEventSettingsForm(
             obj=self.object,
             prefix='settings',
             data=self.request.POST if self.request.method == 'POST' else None,
@@ -716,7 +719,7 @@ class InvoicePreview(EventPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         fname, ftype, fcontent = build_preview_invoice_pdf(request.event)
         resp = HttpResponse(fcontent, content_type=ftype)
-        resp['Content-Disposition'] = 'attachment; filename="{}"'.format(fname)
+        resp['Content-Disposition'] = f'attachment; filename="{fname}"'
         return resp
 
 
@@ -812,28 +815,47 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             if request.POST.get('test', '0').strip() == '1':
                 backend = self.request.event.get_mail_backend(force_custom=True, timeout=10)
                 try:
-                    backend.test(self.request.event.settings.mail_from)
-                except Exception as e:
+                    to_addrs = None
+                    test_email = form.cleaned_data.get('test_email')
+                    if test_email:
+                        to_addrs = [address for address in (a.strip() for a in test_email.split(',')) if address]
+                        if not to_addrs:
+                            to_addrs = None
+                    backend.test(self.request.event.settings.mail_from, to_addrs=to_addrs)
+                except HTTPError as e:
+                    logger.exception('Event SendGrid test failed (event=%s)', self.request.event.slug)
+                    messages.error(
+                        self.request,
+                        _('SendGrid test email failed to connect or send. HTTP Error: %s') % str(e),
+                    )
+                except (smtplib.SMTPException, OSError) as e:
+                    logger.exception('Event SMTP test failed (event=%s)', self.request.event.slug)
                     messages.warning(
                         self.request,
-                        _('An error occurred while contacting the SMTP server: %s') % str(e),
+                        _('Test email failed to connect or send: %s') % str(e),
+                    )
+                except Exception as e:
+                    logger.exception('Unexpected error during test email (event=%s)', self.request.event.slug)
+                    messages.error(
+                        self.request,
+                        _('An error occurred while testing the email configuration: %s') % str(e),
                     )
                 else:
                     if form.cleaned_data.get('smtp_use_custom'):
                         messages.success(
                             self.request,
                             _(
-                                'Your changes have been saved and the connection attempt to '
-                                'your SMTP server was successful.'
+                                'Your changes have been saved and the test email '
+                                'was sent successfully.'
                             ),
                         )
                     else:
                         messages.success(
                             self.request,
                             _(
-                                "We've been able to contact the SMTP server you configured. "
-                                'Remember to check the "use custom SMTP server" checkbox, '
-                                'otherwise your SMTP server will not be used.'
+                                "We've been able to send a test email with the configuration you entered. "
+                                'Remember to enable "Use custom email", otherwise your custom '
+                                'email configuration will not be used.'
                             ),
                         )
             else:
@@ -875,7 +897,7 @@ class MailSettingsPreview(EventPermissionRequiredMixin, View):
             if s.startswith('*'):
                 ctx[p.identifier] = s
             elif url_pattern.match(s):
-                ctx[p.identifier] = '<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>'.format(s, s)
+                ctx[p.identifier] = f'<a href="{s}" target="_blank" rel="noopener noreferrer">{s}</a>'
             else:
                 ctx[p.identifier] = '<span class="placeholder" title="{}">{}</span>'.format(
                     _('This value will be replaced based on dynamic parameters.'), s
@@ -966,7 +988,7 @@ class TicketSettingsPreview(EventPermissionRequiredMixin, View):
         fname, mimet, data = tickets.preview(self.request.event.pk, self.output.identifier)
         resp = HttpResponse(data, content_type=mimet)
         ftype = fname.split('.')[-1]
-        resp['Content-Disposition'] = 'attachment; filename="ticket-preview.{}"'.format(ftype)
+        resp['Content-Disposition'] = f'attachment; filename="ticket-preview.{ftype}"'
         return resp
 
     def get_error_url(self) -> str:
@@ -1072,12 +1094,12 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             provider = response(self.request.event)
             provider.form = ProviderForm(
                 obj=self.request.event,
-                settingspref='ticketoutput_%s_' % provider.identifier,
+                settingspref=f'ticketoutput_{provider.identifier}_',
                 data=(self.request.POST if self.request.method == 'POST' else None),
                 files=(self.request.FILES if self.request.method == 'POST' else None),
             )
             provider.form.fields = OrderedDict(
-                [('ticketoutput_%s_%s' % (provider.identifier, k), v) for k, v in provider.settings_form_fields.items()]
+                [(f'ticketoutput_{provider.identifier}_{k}', v) for k, v in provider.settings_form_fields.items()]
             )
             provider.settings_content = provider.settings_content_render(self.request)
             provider.form.prepare_fields()
@@ -1088,7 +1110,7 @@ class TicketSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
             else:
                 for k, v in provider.settings_form_fields.items():
                     if v.required and not self.request.event.settings.get(
-                        'ticketoutput_%s_%s' % (provider.identifier, k)
+                        f'ticketoutput_{provider.identifier}_{k}'
                     ):
                         provider.evaluated_preview_allowed = False
                         break
@@ -1667,8 +1689,8 @@ class WidgetSettings(EventSettingsViewMixin, EventPermissionRequiredMixin, FormV
         if domain:
             siteurlsplit = urlsplit(settings.SITE_URL)
             if siteurlsplit.port and siteurlsplit.port not in (80, 443):
-                domain = '%s:%d' % (domain, siteurlsplit.port)
-            ctx['urlprefix'] = '%s://%s' % (siteurlsplit.scheme, domain)
+                domain = '%s:%d' % (domain, siteurlsplit.port)  # noqa: UP031
+            ctx['urlprefix'] = f'{siteurlsplit.scheme}://{domain}'
         return ctx
 
 

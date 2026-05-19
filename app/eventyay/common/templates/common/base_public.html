@@ -143,18 +143,23 @@
                                 </a>
                             </div>
                             {% if current_event %}
+                                {% if cart_namespace %}
+                                    {% eventurl current_event 'presale:event.index' cart_namespace=cart_namespace as event_public_presale_home %}
+                                {% else %}
+                                    {% eventurl current_event 'presale:event.index' as event_public_presale_home %}
+                                {% endif %}
                                 <div class="event-hero-text">
-                                    <div class="event-title">{{ current_event.name|event_localize }}</div>
+                                    <a class="event-title event-public-text-link" href="{{ event_public_presale_home }}">{{ current_event.name|event_localize }}</a>
                                     {% if current_event.date_from %}
                                         {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
                                             {% timezone tz_name %}
-                                                <div class="event-date-line">
+                                                <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                     {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
-                                                </div>
+                                                </a>
                                                 {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
-                                                    <div class="event-date-line">
+                                                    <a class="event-date-line event-public-text-link" href="{{ event_public_presale_home }}">
                                                         {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
-                                                    </div>
+                                                    </a>
                                                 {% endif %}
                                             {% endtimezone %}
                                         {% endwith %}
@@ -163,8 +168,13 @@
                             {% endif %}
                         </div>
                         {% if show_online_video_link %}
-                            <div class="header-join-video-floating-mobile d-md-none">
-                                    <a href="{% if request.resolver_match.namespace == 'agenda' %}{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}{% else %}{% eventurl current_event 'presale:event.onlinevideo.join' %}{% endif %}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{% translate "Join online video" %}">
+                            {% if request.resolver_match.namespace == 'agenda' %}
+                                {% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug as join_event_url %}
+                            {% else %}
+                                {% eventurl current_event 'presale:event.onlinevideo.join' as join_event_url %}
+                            {% endif %}
+                            <div class="header-join-video-floating-mobile">
+                                    <a href="{{ join_event_url }}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{% translate 'Join online video' %}" aria-label="{% translate 'Join online video' %}">
                                         <i class="fa fa-video-camera" aria-hidden="true"></i>
                                         <span class="join-video-text">{% translate "Join online video" %}</span>
                                     </a>

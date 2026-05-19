@@ -224,6 +224,7 @@ select.required-status-dropdown[data-current="optional"] {
     vertical-align: middle;
     font-weight: 600;
     white-space: normal;
+    word-break: break-word;
 }
 
 /* Center column headers */
@@ -360,4 +361,33 @@ select.required-status-dropdown[data-current="optional"] {
 /* Attendee data explanation spacing */
 .attendee-data-explanation {
     margin-top: 3em;
+}
+
+/* Overflow handling for Mobile view */
+@media (max-width: 768px) {
+    .order-form-table-scroll {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .order-form-option-table {
+        width: 100%;
+        min-width: 540px;
+    }
+
+    .order-form-option-table tbody th {
+        min-width: 280px;
+    }
+
+    .order-form-create-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5em;
+    }
+
+    .order-form-create-buttons .btn {
+        width: 100%;
+    }
 }

@@ -25,6 +25,10 @@
 							i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
 				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", @startDragging="startNewBreak", @click="showNewBreakHint", v-tooltip.fixed="{text: newBreakTooltip, show: newBreakTooltip}", @pointerleave="removeNewBreakHint")
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
+				.deleted-room-sessions(v-if="deletedRoomSessions.length")
+					h3 {{ $t('Deleted Room Sessions') }}
+					p {{ $t('These sessions were assigned to a room that has been deleted. Drag them into another room to restore them to the schedule.') }}
+					session(v-for="session in deletedRoomSessions", :key="session.id", :session="session", @startDragging="startDragging", :isDragged="draggedSession && session.id === draggedSession.id")
 			#schedule-wrapper(v-scrollbar.x.y="")
 				.schedule-controls
 					bunt-tabs.days(v-if="days", :modelValue="currentDay.format()", ref="tabs" :class="['grid-tabs']")
@@ -54,7 +58,8 @@
 							label.data-label.col-form-label.col-md-3 {{ $t('Speakers') }}
 							.col-md-9.data-value
 								span(v-for="speaker, index of editorSession.speakers")
-									a(:href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{speaker.name || speaker.code}}
+									a(v-if="speaker.code", :href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{ speaker.name || speaker.code }}
+									span(v-else) {{ speaker.name }}
 									span(v-if="index != editorSession.speakers.length - 1") {{', '}}
 								span.text-warning(v-if="editorSession.speakers.some(s => !s.name)")  ({{ $t('some speakers have not shared their names') }})
 						.data-row(v-else).form-group.row
@@ -101,17 +106,17 @@ import { getLocalizedString } from '~/utils'
 import type { AvailabilityEntry } from '~/schemas';
 
 interface Speaker {
-  code: string
+  code?: string | null
   name: string
 }
 
 interface Track {
-  id: string
+  id: string | number
   name: Record<string, string> // localized names
 }
 
 interface Room {
-  id: string
+  id: string | number
   name: Record<string, string>
 }
 
@@ -125,8 +130,8 @@ interface Talk {
   title: Record<string, string>
   abstract?: string
   speakers?: string[]
-  track?: string
-  room?: string
+  track?: string | number
+  room?: string | number
   duration: number
   start?: string | null
   end?: string | null
@@ -139,7 +144,7 @@ interface Talk {
 
 interface SessionData {
   id: number
-  code: string
+  code?: string
   title: Record<string, string> | string
   abstract?: string
   speakers?: Speaker[]
@@ -149,6 +154,7 @@ interface SessionData {
   end?: Moment
   state?: string
   room?: Room
+  deletedRoom?: boolean
   uncreated?: boolean
   availabilities?: AvailabilityEntry[]
 }
@@ -226,11 +232,15 @@ const translations = reactive({
   newBreak: $t('New break'),
 })
 
+function lookupKey(value?: string | number | null): string {
+  return value == null ? '' : String(value)
+}
+
 // Lookups
 const roomsLookup = computed<Record<string, Room>>(() => {
   if (!schedule.value) return {}
   return schedule.value.rooms.reduce((acc, room) => {
-    acc[room.id] = room
+    acc[lookupKey(room.id)] = room
     return acc
   }, {} as Record<string, Room>)
 })
@@ -238,7 +248,7 @@ const roomsLookup = computed<Record<string, Room>>(() => {
 const tracksLookup = computed<Record<string, Track>>(() => {
   if (!schedule.value) return {}
   return schedule.value.tracks.reduce((acc, track) => {
-    acc[track.id] = track
+    acc[lookupKey(track.id)] = track
     return acc
   }, {} as Record<string, Track>)
 })
@@ -246,10 +256,19 @@ const tracksLookup = computed<Record<string, Track>>(() => {
 const speakersLookup = computed<Record<string, Speaker>>(() => {
   if (!schedule.value) return {}
   return schedule.value.speakers.reduce((acc, speaker) => {
-    acc[speaker.code] = speaker
+    if (speaker.code) {
+      acc[speaker.code] = speaker
+    }
     return acc
   }, {} as Record<string, Speaker>)
 })
+
+function resolveSessionSpeakers(speakers?: string[]): Speaker[] {
+  if (!speakers?.length) return []
+  return speakers
+    .map((speakerCode) => speakersLookup.value[speakerCode])
+    .filter((speaker): speaker is Speaker => Boolean(speaker))
+}
 
 // Sort methods for unassigned sessions
 const unassignedSortMethods = computed<SortMethod[]>(() => {
@@ -264,18 +283,18 @@ const unassignedSortMethods = computed<SortMethod[]>(() => {
   return sortMethods
 })
 
-// Sessions without start or room (unassigned)
+// Sessions without start (unassigned)
 const unscheduled = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   let sessions: SessionData[] = []
-  for (const session of schedule.value.talks.filter((s) => !s.start || !s.room)) {
+  for (const session of schedule.value.talks.filter((s) => !s.start)) {
     sessions.push({
       id: session.id,
       code: session.code,
       title: session.title,
       abstract: session.abstract,
-      speakers: session.speakers?.map((s) => speakersLookup.value[s]) ?? [],
-      track: tracksLookup.value[session.track ?? ''],
+      speakers: resolveSessionSpeakers(session.speakers),
+      track: tracksLookup.value[lookupKey(session.track)],
       duration: session.duration,
       state: session.state,
     } as SessionData)
@@ -313,6 +332,25 @@ const unscheduled = computed<SessionData[]>(() => {
   return sessions
 })
 
+const deletedRoomSessions = computed<SessionData[]>(() => {
+  if (!schedule.value) return []
+  return schedule.value.talks
+    .filter((session) => session.start && (!session.room || !roomsLookup.value[lookupKey(session.room)]))
+    .map((session) => ({
+      id: session.id,
+      code: session.code,
+      title: session.title,
+      abstract: session.abstract,
+      start: moment(session.start),
+      end: moment(session.end),
+      duration: session.end ? moment(session.end).diff(moment(session.start), 'minutes') : session.duration,
+      speakers: resolveSessionSpeakers(session.speakers),
+      track: tracksLookup.value[lookupKey(session.track)],
+      state: session.state,
+      deletedRoom: true,
+    }))
+})
+
 const sessions = computed<SessionData[]>(() => {
   if (!schedule.value) return []
   const dayStart = days.value[0]
@@ -322,6 +360,8 @@ const sessions = computed<SessionData[]>(() => {
   const filteredSessions = schedule.value.talks.filter(
     (s) =>
       s.start &&
+      s.room &&
+      roomsLookup.value[lookupKey(s.room)] &&
       moment(s.start).isSameOrAfter(dayStart) &&
       moment(s.start).isSameOrBefore(dayEnd),
   )
@@ -334,10 +374,10 @@ const sessions = computed<SessionData[]>(() => {
     start: moment(session.start),
     end: moment(session.end),
     duration: moment(session.end).diff(moment(session.start), 'minutes'),
-    speakers: session.speakers?.map((s) => speakersLookup.value[s]) ?? [],
-    track: tracksLookup.value[session.track ?? ''],
+    speakers: resolveSessionSpeakers(session.speakers),
+    track: tracksLookup.value[lookupKey(session.track)],
     state: session.state,
-    room: roomsLookup.value[session.room ?? ''],
+    room: roomsLookup.value[lookupKey(session.room)],
   }))
 
   sessionList.sort((a, b) => a.start!.diff(b.start!))
@@ -555,7 +595,7 @@ function startDragging({ event, session }: DragStartEvent) {
 async function stopDragging(): Promise<void> {
   try {
     if (isUnassigning.value && draggedSession.value) {
-      if (draggedSession.value.code) {
+      if (draggedSession.value.code && !draggedSession.value.deletedRoom) {
         const movedSession = schedule.value?.talks.find((s) => s.id === draggedSession.value!.id)
         if (movedSession) {
           movedSession.start = null
@@ -856,6 +896,20 @@ onUnmounted(() => {
 				align-items: center
 				&:hover
 					background-color: $clr-dividers-light
+		.deleted-room-sessions
+			margin: 24px 12px 0 8px
+			padding-top: 16px
+			border-top: 4px solid $clr-danger
+			h3
+				margin: 0 0 8px
+				font-size: 18px
+				font-weight: 600
+				color: $clr-danger
+			p
+				margin: 0 8px 8px 0
+				font-size: 13px
+				line-height: 18px
+				color: $clr-secondary-text-light
 	.schedule-controls
 		display: flex
 		align-items: center

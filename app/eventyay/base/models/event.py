@@ -192,7 +192,7 @@ FEATURE_FLAGS = [
 def default_feature_flags():
     return {
         'show_schedule': True,
-        'show_featured': 'after_schedule',
+        'show_featured': 'never',
         'show_widget_if_not_public': False,
         'session_popularity_enabled': False,
         'session_popularity_show_on_calendar': True,
@@ -746,14 +746,7 @@ class Event(
         choices=settings.LANGUAGES,
         verbose_name=_('Default language'),
     )
-    featured_sessions_text = I18nTextField(
-        verbose_name=_('Featured sessions text'),
-        help_text=_('This text will be shown at the top of the featured sessions page instead of the default text.')
-        + ' '
-        + phrases.base.use_markdown,
-        null=True,
-        blank=True,
-    )
+
     # Virtual platform fields
     config = models.JSONField(null=True, blank=True)
     roles = models.JSONField(null=True, blank=True, default=default_roles, encoder=CustomJSONEncoder)
@@ -1074,7 +1067,7 @@ class Event(
         if self.settings.smtp_use_custom or force_custom:
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
-            if not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
+            if not force_custom and not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
                 logger.warning(
                     'Event SMTP %s:%s is not reachable, falling back to system email backend',
                     self.settings.smtp_host,
