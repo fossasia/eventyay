@@ -23,12 +23,14 @@
 
 .venue-map-details {
     flex: 55 1 200px;
+    padding-top: 20px;
 }
 
 .venue-map-heading {
     margin-top: 0;
     margin-bottom: 10px;
-    padding-bottom: 12px;
+    font-size: 24px;
+    font-weight: bold;
 }
 
 .venue-map-main #venue {
@@ -57,5 +59,11 @@
 @media (max-width: 768px) {
     .public-geodata-group {
         height: 250px;
+    }
+}
+
+@media (min-width: 769px) {
+    .venue-map-details {
+        padding-top: 60px;
     }
 }
