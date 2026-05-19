@@ -1,10 +1,17 @@
 import logging
+import os
+from urllib.parse import urlparse
 
 import requests
 from django.core.files.base import ContentFile
 
 from eventyay.base.models import User
 from eventyay.base.models.storage_model import StoredFile
+
+logger = logging.getLogger(__name__)
+
+# Timeout for outbound requests to external services (seconds)
+EXTERNAL_REQUEST_TIMEOUT = 10
 
 
 def update_user_profile_from_social(
@@ -20,11 +27,13 @@ def update_user_profile_from_social(
             "jpg": "image/jpeg",
             "gif": "image/gif",
         }
-        ext = avatar_url.rsplit(".", 1)[-1]
-        if "/" in ext:
-            ext = ".png"  # just a default guess
+        # Extract extension safely from URL path, avoiding query params or malformed URLs
+        path = urlparse(avatar_url).path
+        ext = os.path.splitext(path)[1].lstrip('.')
+        if not ext or '/' in ext or '?' in ext:
+            ext = 'png'  # safe default for ambiguous/malformed URLs
         try:
-            r = requests.get(avatar_url)
+            r = requests.get(avatar_url, timeout=EXTERNAL_REQUEST_TIMEOUT)
             r.raise_for_status()
             c = ContentFile(r.content)
             sf = StoredFile.objects.create(
@@ -35,8 +44,8 @@ def update_user_profile_from_social(
                 public=True,
             )
             sf.file.save(f"avatar.{ext}", c)
-        except:
-            logging.exception("Could not download avatar")
+        except requests.RequestException:
+            logger.exception("Could not download avatar")
         else:
             user.profile["avatar"] = {
                 "url": sf.file.url,
