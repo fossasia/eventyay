@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
+from pretix.api.webhooks import notify_webhooks
 from pretix.base.models import Event, Item, Order, OrderPosition, Organizer
 
 
@@ -207,3 +208,21 @@ def test_webhook_disable_gone(event, order, webhook, monkeypatch_on_commit):
     assert len(responses.calls) == 1
     webhook.refresh_from_db()
     assert not webhook.enabled
+
+
+@pytest.mark.django_db
+def test_notify_webhooks_skip_invalid_keeps_processing_following_entry(order, webhook, monkeypatch):
+    queued = []
+
+    def fake_apply_async(args=None, **kwargs):
+        queued.append(args)
+
+    monkeypatch.setattr('pretix.api.webhooks.send_webhook.apply_async', fake_apply_async)
+
+    valid = order.log_action('pretix.event.order.paid', {})
+    skipped = order.log_action('eventyay.event.order.unknown', {})
+
+    notify_webhooks([skipped.id, valid.id])
+
+    assert (valid.id, 'pretix.event.order.paid', webhook.pk) in queued
+    assert all(call[0] != skipped.id for call in queued)
