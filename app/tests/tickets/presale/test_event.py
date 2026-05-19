@@ -1568,3 +1568,63 @@ class EventLocaleTest(EventTestMixin, SoupTest):
         self.assertEqual(response.status_code, 200)
         self.assertIn('26. Dezember', response.rendered_content)
         self.assertIn('14:00', response.rendered_content)
+
+
+class ContactOrganizerTest(EventTestMixin, TestCase):
+    @property
+    def url(self):
+        return '/%s/%s/contact/' % (self.orga.slug, self.event.slug)
+
+    @scopes_disabled()
+    def setUp(self):
+        super().setUp()
+        self.event.settings.contact_mail = 'contact@example.com'
+
+    def test_get_not_allowed(self):
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 405)
+
+    def test_missing_message(self):
+        resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': ''})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+
+    def test_missing_email_anonymous(self):
+        resp = self.client.post(self.url, {'email': '', 'message': 'Hello there'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+
+    def test_success_anonymous(self):
+        mail.outbox = []
+        resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'Hello organizer!'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()['success'])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['contact@example.com'])
+        self.assertEqual(mail.outbox[0].reply_to, ['visitor@example.com'])
+        self.assertIn('Hello organizer!', mail.outbox[0].body)
+
+    def test_success_authenticated(self):
+        self.client.login(email='dummy@dummy.dummy', password='dummy')
+        mail.outbox = []
+        resp = self.client.post(self.url, {'message': 'Authenticated message'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()['success'])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].reply_to, ['dummy@dummy.dummy'])
+
+    def test_falls_back_to_event_email(self):
+        self.event.settings.contact_mail = ''
+        mail.outbox = []
+        resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'Fallback test'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(mail.outbox[0].to, ['orga@example.com'])
+
+    def test_no_contact_email_configured(self):
+        self.event.settings.contact_mail = ''
+        self.event.email = ''
+        self.event.save()
+        resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'No recipient'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+
