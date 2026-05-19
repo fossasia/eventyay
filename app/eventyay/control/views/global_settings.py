@@ -1,8 +1,13 @@
 import logging
 import secrets
+import smtplib
 
+
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import EmailMessage
+from django.core.validators import validate_email
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, reverse
@@ -10,9 +15,12 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DeleteView, FormView, TemplateView
+from python_http_client.exceptions import HTTPError
 
 from eventyay.api.models import OAuthApplication
+from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
+from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.global_settings import (
@@ -156,6 +164,140 @@ class UpdateCheckView(StaffMemberRequiredMixin, FormView):
 class MessageView(TemplateView):
     template_name = 'pretixcontrol/global_message.html'
 
+
+class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
+    """
+    Tests the current system-level email configuration.
+    """
+
+    def post(self, request, *args, **kwargs):
+        recipients_raw = request.POST.get('test_email', '').strip()
+        recipients = [r.strip() for r in recipients_raw.split(',') if r.strip()]
+
+        if not recipients:
+            messages.error(request, _('Please enter at least one valid recipient email address.'))
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        for recipient in recipients:
+            try:
+                validate_email(recipient)
+            except ValidationError:
+                messages.error(
+                    request,
+                    _('Please enter a valid recipient email address ("%(email)s" is invalid).') % {'email': recipient}
+                )
+                return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        # ── 1. Resolve the sender address ────────────────────────────────────
+        gs = GlobalSettingsObject()
+        raw_from = gs.settings.get('mail_from') or getattr(settings, 'DEFAULT_FROM_EMAIL', '')
+        mail_from = str(raw_from).strip() if raw_from else ''
+
+        if not mail_from:
+            messages.error(
+                request,
+                _(
+                    'No sender address is configured. '
+                    'Please set the "Sender address" field in the Email tab and save first.'
+                ),
+            )
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        try:
+            validate_email(mail_from)
+        except ValidationError:
+            messages.error(
+                request,
+                _(
+                    'The sender address "%(addr)s" is not a valid email address. '
+                    'Please correct the "Sender address" field and save again.'
+                ) % {'addr': mail_from},
+            )
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        try:
+            mail_from.encode('ascii')
+        except UnicodeEncodeError:
+            messages.error(
+                request,
+                _(
+                    'The sender address "%(addr)s" contains non-ASCII characters '
+                    'which are not allowed in SMTP. '
+                    'Please correct the "Sender address" field and save again.'
+                ) % {'addr': mail_from},
+            )
+            return redirect(reverse('eventyay_admin:admin.global.settings'))
+
+        try:
+            if gs.settings.email_vendor == 'sendgrid':
+                if not gs.settings.send_grid_api_key:
+                    messages.error(request, _('SendGrid API key is missing. Please configure it and save.'))
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend = SendGridEmail(api_key=gs.settings.send_grid_api_key)
+            elif gs.settings.email_vendor == 'smtp':
+                if not gs.settings.smtp_host or not gs.settings.smtp_port:
+                    messages.error(request, _('SMTP host or port is missing. Please configure them and save.'))
+                    return redirect(reverse('eventyay_admin:admin.global.settings'))
+                backend = CustomSMTPBackend(
+                    host=gs.settings.smtp_host,
+                    port=gs.settings.smtp_port,
+                    username=gs.settings.smtp_username,
+                    password=gs.settings.smtp_password,
+                    use_tls=gs.settings.smtp_use_tls,
+                    use_ssl=gs.settings.smtp_use_ssl,
+                    fail_silently=False,
+                    timeout=10,
+                )
+            else:
+                backend = get_mail_backend(timeout=10)
+
+            email = EmailMessage(
+                subject=_('Eventyay system - test email'),
+                body=_('This is a test email from your Eventyay system email configuration.'),
+                from_email=mail_from,
+                to=recipients,
+                connection=backend,
+            )
+            email.send(fail_silently=False)
+        except UnicodeEncodeError:
+            # The stored SMTP password, username, or recipient address contains a non-ASCII character
+            # (e.g. a no-break space copied from a Gmail App Password display).
+            logger.warning(
+                'Admin SMTP test failed — credentials or recipient contain non-ASCII characters (from=%s)',
+                mail_from,
+            )
+            messages.error(
+                request,
+                _(
+                    'SMTP authentication or email sending failed because the password, '
+                    'username, or recipient address contains an invisible non-ASCII '
+                    'character (e.g. a no-break space pasted from the clipboard). '
+                    'Please verify these fields and try again.'
+                ),
+            )
+        except HTTPError as e:
+            logger.exception('Admin SendGrid test failed (from=%s)', mail_from)
+            messages.error(
+                request,
+                _('SendGrid test email failed to connect or send. HTTP Error: %(err)s') % {'err': e},
+            )
+        except (smtplib.SMTPException, OSError) as e:
+            logger.exception(
+                'Admin SMTP test failed (from=%s)', mail_from
+            )
+            messages.warning(
+                request,
+                _('Test email failed to connect or send: %(err)s') % {'err': e},
+            )
+        else:
+            recipients_str = ', '.join(recipients)
+            logger.info('Admin test email sent to %d recipient(s)', len(recipients))
+            messages.success(
+                request,
+                _('Test email sent to %(email)s — check inbox.') % {'email': recipients_str},
+            )
+
+        return redirect(reverse('eventyay_admin:admin.global.settings'))
 
 class LogDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
