@@ -422,7 +422,7 @@ export default {
 				}
 				if (filteredTrackIds && !filteredTrackIds.has(session.track)) continue
 				if (filteredRoomIds && !filteredRoomIds.has(session.room)) continue
-				if (filteredTypeValues && !filteredTypeValues.has(session.session_type)) continue
+				if (filteredTypeValues && !filteredTypeValues.has(getSessionTypeLabel(session.session_type))) continue
 				if (langExact) {
 					const fallbackLocale = this.schedule?.content_locales?.[0] || null
 					const sessionLocale = session.content_locale || fallbackLocale
