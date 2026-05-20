@@ -66,7 +66,15 @@
     <div class="dashboard">
         {% for w in widgets %}
             <div class="widget-container widget-{{ w.display_size|default:"small" }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">
-                {% if w.url %}{# backwards compatibility #}
+                {% if w.permission_dialog %}
+                    <a href="#" data-dialog-target="#ticket-permission-dialog" data-toggle="dialog" class="widget">
+                        {% if w.lazy %}
+                            <span class="fa fa-cog fa-4x"></span>
+                        {% else %}
+                            {{ w.content|safe }}
+                        {% endif %}
+                    </a>
+                {% elif w.url %}{# backwards compatibility #}
                     <a href="{{ w.url }}" class="widget">
                         {% if w.lazy %}
                             <span class="fa fa-cog fa-4x"></span>
@@ -94,4 +102,8 @@
             </div>
         {% endfor %}
     </div>
+    {% blocktrans trimmed asvar event_settings_permission_message %}
+        You require additional permissions to change event visibility settings. Please contact the main event organisers.
+    {% endblocktrans %}
+    {% include "eventyay_common/includes/ticket_permission_dialog.html" with dialog_title_id="ticket-perm-event-index" dialog_message=event_settings_permission_message %}
 {% endblock %}

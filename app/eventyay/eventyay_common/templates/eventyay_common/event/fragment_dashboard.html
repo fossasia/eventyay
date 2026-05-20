@@ -20,6 +20,7 @@
     {% include "pretixcontrol/event/fragment_info_box.html" %}
 </div>
 <div class="dashboard custom">
+    {% if has_ticket_access %}
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -32,15 +33,12 @@
             </p>
             <p>
                 {% trans "Go to" %}
-                {% if has_ticket_access %}
-                    <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
-                {% else %}
-                    <a href="#" data-dialog-target="#ticket-permission-dialog" data-toggle="dialog">{% trans "Tickets Dashboard" %}</a>
-                {% endif %}
+                <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
             </p>
         </div>
     </div>
-    <div class="panel panel-default widget-container widget-small no-padding column">
+    {% endif %}
+    <div class="panel panel-default widget-container widget-small no-padding column{% if not has_video_access %} last-column{% endif %}">
         <div class="panel-heading">
             <h3 class="panel-title">
                 {% trans "Talks and Speakers" %}
@@ -61,6 +59,7 @@
             {% endif %}
         </div>
     </div>
+    {% if has_video_access %}
     <div class="panel panel-default widget-container widget-small no-padding last-column">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -77,6 +76,7 @@
             </p>
         </div>
     </div>
+    {% endif %}
 
     <div class="modal popup-modal" id="alert-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">

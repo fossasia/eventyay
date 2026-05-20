@@ -4,6 +4,7 @@ from django.http import HttpRequest
 
 from eventyay.base.models import Event, Organizer
 from eventyay.base.models.auth import User
+from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_DEFINITIONS
 
 TICKET_DASHBOARD_PERMISSIONS = (
     'can_view_orders',
@@ -14,6 +15,13 @@ TICKET_DASHBOARD_PERMISSIONS = (
     'can_view_vouchers',
     'can_change_vouchers',
 )
+
+TALK_DASHBOARD_PERMISSIONS = (
+    'can_change_submissions',
+    'is_reviewer',
+)
+
+VIDEO_DASHBOARD_PERMISSIONS = tuple(VIDEO_PERMISSION_DEFINITIONS.keys())
 
 
 def user_has_ticket_dashboard_access(
@@ -26,6 +34,34 @@ def user_has_ticket_dashboard_access(
         organizer,
         event,
         TICKET_DASHBOARD_PERMISSIONS,
+        request=request,
+    )
+
+
+def user_has_talk_dashboard_access(
+    user: User,
+    organizer: Organizer,
+    event: Event,
+    request: HttpRequest | None = None,
+) -> bool:
+    return user.has_event_permission(
+        organizer,
+        event,
+        TALK_DASHBOARD_PERMISSIONS,
+        request=request,
+    )
+
+
+def user_has_video_dashboard_access(
+    user: User,
+    organizer: Organizer,
+    event: Event,
+    request: HttpRequest | None = None,
+) -> bool:
+    return user.has_event_permission(
+        organizer,
+        event,
+        VIDEO_DASHBOARD_PERMISSIONS,
         request=request,
     )
 
