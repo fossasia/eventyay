@@ -37,4 +37,44 @@ fi
 
 python manage.py migrate
 
+# Start Vite dev servers for live frontend development when EVY_NPM_DEV=1
+if [ "$EVY_NPM_DEV" = "1" ]; then
+  echo "EVY_NPM_DEV=1 — starting Vite dev servers for live frontend development..."
+
+  WEBAPP_DIR=/usr/src/app/eventyay/webapp
+
+  start_vite() {
+    local app=$1 port=$2 config_arg=$3
+    local app_dir="$WEBAPP_DIR/$app"
+    if [ ! -d "$app_dir" ]; then
+      echo "WARNING: $app_dir does not exist, skipping."
+      return
+    fi
+    echo "Starting $app Vite dev server on port $port..."
+    cd "$app_dir" || return
+    if [ -d "node_modules" ]; then
+      echo "  node_modules exists, skipping npm ci for $app"
+    else
+      echo "  Running npm ci for $app..."
+      npm ci || { echo "ERROR: npm ci failed for $app"; return; }
+    fi
+    npx vite --host 0.0.0.0 --port "$port" $config_arg 2>&1 &
+    local vite_pid=$!
+    sleep 2
+    if kill -0 "$vite_pid" 2>/dev/null; then
+      echo "  $app Vite dev server running (PID: $vite_pid)"
+    else
+      echo "  ERROR: $app Vite dev server failed to start (check output above)"
+    fi
+  }
+
+  start_vite "schedule-editor" 8080 ""
+  start_vite "video" 8880 ""
+  start_vite "webcheckin" 8081 ""
+  start_vite "schedule" 8082 "--config vite.config.wc.js"
+
+  cd /usr/src/app
+  echo "All Vite dev servers started."
+fi
+
 exec "$@"

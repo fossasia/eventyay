@@ -18,7 +18,10 @@
 <div>
     <h1>{{ page_title }}</h1>
     <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
-    <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
+    {% if vite_dev_mode %}
+    <script type="module" src="{{ vite_dev_servers.schedule }}/@vite/client"></script>
+    {% endif %}
+    <script type="module" src="{% if vite_dev_mode %}{{ vite_dev_servers.schedule }}/src/main-wc.js{% else %}{% static 'schedule/pretalx-schedule.js' %}{% endif %}"></script>
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule

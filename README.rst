@@ -212,6 +212,45 @@ The directory `app/eventyay` is mounted into the docker, thus live editing is su
    On container startup, the startup script will automatically scan the ``./plugins/`` directory and install all detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
 
 
+8. **Live Frontend Development (Vite HMR)**
+
+   Set ``EVY_NPM_DEV=1`` in ``.env.dev`` to enable hot module replacement for all
+   frontend webapps (video, webcheckin, schedule, schedule-editor). Vite dev servers
+   start automatically inside the container on these ports 
+   (you are not required to visit these exposed ports they will work alongside localhost:8000 with hot module replacement):
+
+   ================= ======
+   Webapp            Port
+   ================= ======
+   schedule-editor   8080
+   video             8880
+   webcheckin        8081
+   schedule          8082
+   ================= ======
+
+   .. code-block:: bash
+
+      # Enable live dev mode
+      EVY_NPM_DEV=1
+
+   When enabled, changes to Vue/JS/CSS source files are reflected instantly without
+   rebuilding. The container must be recreated (not just restarted) for the env
+   change to take effect:
+
+   .. code-block:: bash
+
+      docker compose up -d web
+
+   **Default is ``EVY_NPM_DEV=0``** — Django serves pre-built static files.
+   Always verify your production build works with the default value before
+   submitting changes:
+
+   .. code-block:: bash
+
+      docker exec -ti eventyay-next-web make npminstall
+      docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
+
+
 Troubleshooting
 ~~~~~~~~~~~~~~~
 

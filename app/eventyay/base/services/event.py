@@ -80,17 +80,10 @@ class EventConfigSerializer(serializers.Serializer):
 
 @database_sync_to_async
 def _get_event(event_id):
-    """Retrieve Event by primary key or slug.
-    Frontend passes <event_identifier> in /video/<event_identifier>/ and websocket /ws/event/<event_identifier>/.
-    Previously only numeric primary key worked; now also accept slug.
-    """
-    # Try numeric ID first if it looks like one
+    """Retrieve Event by primary key or slug."""
     if isinstance(event_id, str) and event_id.isdigit():
-        evt = Event.objects.filter(id=int(event_id)).first()
-        if evt:
-            return evt
-    # Fallback: match by slug OR (string) id (covers atypical string PK setups)
-    return Event.objects.filter(Q(slug=event_id) | Q(id=event_id)).first()
+        return Event.objects.filter(Q(slug=event_id) | Q(id=int(event_id))).first()
+    return Event.objects.filter(slug=event_id).first()
 
 
 async def get_event(event_id):

@@ -6,13 +6,11 @@ import logging
 from asgiref.sync import async_to_sync
 import dateutil.parser
 from celery.exceptions import TaskError
-from csp.decorators import csp_update
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
-from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
@@ -38,19 +36,9 @@ from eventyay.orga.forms.schedule import ScheduleExportForm, ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
 from eventyay.base.services.event import notify_event_change
 
-SCRIPT_SRC = "'self' 'unsafe-eval'"
-DEFAULT_SRC = "'self'"
-
-
-if settings.VITE_DEV_MODE:
-    SCRIPT_SRC = (f'{SCRIPT_SRC} {settings.VITE_DEV_SERVER}',)
-    DEFAULT_SRC = (f'{DEFAULT_SRC} {settings.VITE_DEV_SERVER} {settings.VITE_DEV_SERVER.replace("http", "ws")}',)
-
-
 logger = logging.getLogger(__name__)
 
 
-@method_decorator(csp_update({'SCRIPT_SRC': SCRIPT_SRC, 'DEFAULT_SRC': DEFAULT_SRC}), name='dispatch')
 class ScheduleView(EventPermissionRequired, TemplateView):
     template_name = 'orga/schedule/index.html'
     permission_required = 'base.orga_view_schedule'

@@ -18,6 +18,10 @@ services:
       - /usr/src/app/eventyay/webapp/webcheckin/node_modules
     ports:
       - 8000:8000
+      - 8080:8080
+      - 8081:8081
+      - 8082:8082
+      - 8880:8880
     env_file:
       - ./.env.dev
     depends_on:

@@ -142,6 +142,13 @@ def system_information(request):
         context['development_mode'] = True
         context['eventyay_version'] = settings.EVENTYAY_VERSION
 
+    if settings.VITE_DEV_MODE:
+        context['vite_dev_mode'] = True
+        context['vite_dev_servers'] = {
+            app: f'http://localhost:{port}'
+            for app, port in settings.VITE_DEV_SERVER_PORTS.items()
+        }
+
     context['warning_update_available'] = False
     context['base_path'] = settings.BASE_PATH
     if not request.user.is_anonymous and request.user.is_administrator and request.path.startswith('/orga'):

@@ -1,6 +1,6 @@
 import json
 import os
-import re
+from contextlib import suppress
 from pathlib import Path
 from typing import cast
 from urllib.parse import urljoin, urlparse
@@ -23,20 +23,32 @@ from django.views.generic import TemplateView
 from eventyay.base.models import SystemLog, Event
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.models.auth import ShortToken
+from eventyay.base.services.vite import fetch_vite_html
 from eventyay.base.models.room import AnonymousInvite
 
 VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
+VIDEO_DEV_SERVER = f'http://localhost:{settings.VITE_DEV_SERVER_PORTS["video"]}'
 
 
 class SourceCache:
     @cached_property
     def source(self):
+        if settings.VITE_DEV_MODE:
+            try:
+                return fetch_vite_html(VIDEO_DEV_SERVER)
+            except OSError:
+                return f'<!-- Vite dev server at {VIDEO_DEV_SERVER} not reachable --><body></body>'
         wapath = VIDEO_DIST_DIR / 'index.html'
         try:
             with open(wapath) as f:
                 return f.read()
         except OSError:
             return f"<!-- {wapath} not found --><body></body>"
+
+    def bust_cache(self):
+        """Clear the cached source so the next access re-fetches from Vite."""
+        with suppress(KeyError):
+            del self.__dict__['source']
 
 
 sh = SourceCache()

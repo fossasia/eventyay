@@ -20,7 +20,10 @@
 {% html_signal "eventyay.agenda.signals.html_above_schedule_pages" sender=request.event request=request %}
 <div id="fahrplan" class="{% if show_talk_list %}list{% else %}grid{% endif %}">
     <script id="pretalx-schedule-meta" type="application/json">{{ schedule_meta_json|safe }}</script>
-    <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
+    {% if vite_dev_mode %}
+    <script type="module" src="{{ vite_dev_servers.schedule }}/@vite/client"></script>
+    {% endif %}
+    <script type="module" src="{% if vite_dev_mode %}{{ vite_dev_servers.schedule }}/src/main-wc.js{% else %}{% static 'schedule/pretalx-schedule.js' %}{% endif %}"></script>
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" enrich-data {% if is_sessions_page %}view="sessions"{% elif show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
