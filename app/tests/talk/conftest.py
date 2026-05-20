@@ -753,7 +753,7 @@ def default_submission_type(event):
 def speaker(event):
     with scopes_disabled():
         user = User.objects.create_user(
-            password="speakerpwd1!", name="Jane Speaker", email="jane@speaker.org"
+            password="speakerpwd1!", fullname="Jane Speaker", email="jane@speaker.org"
         )
     with scope(event=event):
         SpeakerProfile.objects.create(
