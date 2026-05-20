@@ -17,6 +17,7 @@ from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_S
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
 from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
 from eventyay.plugins.socialauth.secrets import decrypt_secret, encrypt_secret, is_encrypted_secret
+from eventyay.plugins.socialauth.schemas.login_providers import LoginProviders
 from eventyay.plugins.socialauth.views import SocialLoginView
 
 
@@ -419,6 +420,29 @@ def test_decrypt_secret_returns_empty_on_invalid_token():
         assert secrets_mod.decrypt_secret('gAAAAAinvalid') == ''
 
 
+def test_social_login_view_get_context_tolerates_invalid_provider_config_values():
+    view = object.__new__(SocialLoginView)
+    View.__init__(view)
+
+    class DummySettings:
+        def get(self, key, as_type=None):
+            if key == 'login_providers':
+                return {
+                    'github': None,
+                    'google': 'not-a-mapping',
+                    'mediawiki': {'state': True, 'client_id': 'mw-id', 'secret': 'stored'},
+                }
+            return {}
+
+    view.gs = type('Gs', (), {'settings': DummySettings()})()
+    ctx = view.get_context_data()
+    assert ctx['login_providers']['github'] == {'secret': ''}
+    assert ctx['login_providers']['google'] == {'secret': ''}
+    assert ctx['login_providers']['mediawiki']['client_id'] == 'mw-id'
+    assert ctx['login_providers']['mediawiki']['secret'] == ''
+    assert ctx['any_preferred'] is False
+
+
 def test_social_login_view_get_context_tolerates_non_mapping_login_providers():
     view = object.__new__(SocialLoginView)
     View.__init__(view)
@@ -433,6 +457,46 @@ def test_social_login_view_get_context_tolerates_non_mapping_login_providers():
     ctx = view.get_context_data()
     assert ctx['login_providers'] == {}
     assert ctx['any_preferred'] is False
+
+
+@pytest.mark.django_db
+def test_update_credentials_preserves_secret_when_only_client_id_submitted(rf):
+    encrypted = encrypt_secret('existing-secret')
+    gs = GlobalSettingsObject()
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+            'github': {
+                'state': True,
+                'client_id': 'old-client-id',
+                'secret': encrypted,
+                'is_preferred': False,
+            },
+            'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        },
+    )
+
+    request = rf.post(
+        '/',
+        data={
+            'save_credentials': 'credentials',
+            'github_client_id': 'new-client-id',
+            'github_secret': '',
+        },
+    )
+    login_providers = LoginProviders.model_validate(
+        gs.settings.get('login_providers', as_type=dict)
+    ).model_dump()
+
+    view = SocialLoginView()
+    view.update_credentials(request, 'github', login_providers)
+
+    assert login_providers['github']['client_id'] == 'new-client-id'
+    assert login_providers['github']['secret'] == encrypted
+    app = SocialApp.objects.get(provider='github')
+    assert app.client_id == 'new-client-id'
+    assert decrypt_secret(app.secret) == 'existing-secret'
 
 
 @pytest.mark.django_db
