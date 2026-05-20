@@ -1,0 +1,205 @@
+/**
+ * Language Grid Widget
+ *
+ * Initialises every `.language-grid-widget` container on the page:
+ *  - Toggle expand / collapse via the summary bar
+ *  - Live search filtering of language cells
+ *  - Selected-checkbox ↔ badge synchronisation
+ *  - Select-all / Deselect-all toolbar buttons
+ */
+
+(function () {
+  'use strict';
+
+  var MAX_VISIBLE_BADGES = 8;
+
+  function initLanguageGrid(widget) {
+    if (widget.dataset.languageGridInit === 'true') return;
+    widget.dataset.languageGridInit = 'true';
+
+    var summary = widget.querySelector('[data-language-grid-summary]');
+    var panel = widget.querySelector('[data-language-grid-panel]');
+    var searchInput = widget.querySelector('[data-language-grid-search]');
+    var grid = widget.querySelector('[data-language-grid-grid]');
+    var badgesContainer = widget.querySelector('[data-language-grid-badges]');
+    var noResults = widget.querySelector('[data-language-grid-no-results]');
+    var selectAllBtn = widget.querySelector('[data-language-grid-select-all]');
+    var deselectAllBtn = widget.querySelector('[data-language-grid-deselect-all]');
+
+    if (!summary || !panel || !grid) return;
+
+    var cells = [];
+    var checkboxes = [];
+    var cellNodes = grid.querySelectorAll('[data-language-grid-cell]');
+    for (var i = 0; i < cellNodes.length; i++) {
+      cells.push(cellNodes[i]);
+      checkboxes.push(cellNodes[i].querySelector('input[type="checkbox"]'));
+    }
+
+    // -- Toggle expand / collapse --
+    summary.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var isExpanded = widget.classList.toggle('is-expanded');
+      summary.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      if (isExpanded && searchInput) {
+        setTimeout(function () { searchInput.focus(); }, 50);
+      }
+    });
+
+    // -- Keyboard accessibility: Enter/Space toggles --
+    summary.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        summary.click();
+      }
+    });
+
+    // -- Search filtering --
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        var query = searchInput.value.trim().toLowerCase();
+        var visibleCount = 0;
+
+        for (var j = 0; j < cells.length; j++) {
+          var label = (cells[j].getAttribute('data-language-name') || '').toLowerCase();
+          var matches = !query || label.indexOf(query) !== -1;
+          if (matches) {
+            cells[j].classList.remove('is-hidden');
+            visibleCount++;
+          } else {
+            cells[j].classList.add('is-hidden');
+          }
+        }
+
+        if (noResults) {
+          noResults.classList.toggle('is-visible', visibleCount === 0);
+        }
+      });
+
+      // Prevent form submission when pressing Enter in the search box
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') e.preventDefault();
+      });
+    }
+
+    // -- Sync badges + cell highlight --
+    function syncBadges() {
+      if (!badgesContainer) return;
+      badgesContainer.innerHTML = '';
+
+      var selected = [];
+      for (var j = 0; j < cells.length; j++) {
+        var cb = checkboxes[j];
+        if (!cb) continue;
+        if (cb.checked) {
+          cells[j].classList.add('is-checked');
+          selected.push({
+            code: cb.value,
+            name: cells[j].getAttribute('data-language-name') || cb.value,
+          });
+        } else {
+          cells[j].classList.remove('is-checked');
+        }
+      }
+
+      var shown = selected.slice(0, MAX_VISIBLE_BADGES);
+      for (var k = 0; k < shown.length; k++) {
+        var badge = document.createElement('span');
+        badge.className = 'language-grid-badge';
+        badge.textContent = shown[k].name;
+        badgesContainer.appendChild(badge);
+      }
+
+      if (selected.length > MAX_VISIBLE_BADGES) {
+        var overflow = document.createElement('span');
+        overflow.className = 'language-grid-badge-overflow';
+        overflow.textContent = '+' + (selected.length - MAX_VISIBLE_BADGES) + ' more';
+        badgesContainer.appendChild(overflow);
+      }
+
+      // Update the summary label with count
+      var label = widget.querySelector('[data-language-grid-count]');
+      if (label) {
+        if (selected.length === 0) {
+          label.textContent = label.getAttribute('data-empty-text') || 'No languages selected';
+        } else {
+          label.textContent = selected.length + ' language' + (selected.length !== 1 ? 's' : '') + ' selected';
+        }
+      }
+    }
+
+    // Listen for changes on the entire grid (event delegation)
+    grid.addEventListener('change', function (e) {
+      if (e.target && e.target.type === 'checkbox') {
+        syncBadges();
+      }
+    });
+
+    // Clicking a cell (but not the checkbox/label itself) should toggle the checkbox
+    for (var ci = 0; ci < cells.length; ci++) {
+      (function (cell, cb) {
+        cell.addEventListener('click', function (e) {
+          var tag = e.target.tagName.toUpperCase();
+          if (tag === 'INPUT' || tag === 'LABEL') return;
+          if (cb) {
+            cb.checked = !cb.checked;
+            // Manually trigger change event
+            var evt;
+            try {
+              evt = new Event('change', { bubbles: true });
+            } catch (err) {
+              evt = document.createEvent('Event');
+              evt.initEvent('change', true, true);
+            }
+            cb.dispatchEvent(evt);
+          }
+        });
+      })(cells[ci], checkboxes[ci]);
+    }
+
+    // -- Select all / Deselect all --
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        for (var j = 0; j < checkboxes.length; j++) {
+          if (checkboxes[j]) checkboxes[j].checked = true;
+        }
+        syncBadges();
+      });
+    }
+
+    if (deselectAllBtn) {
+      deselectAllBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        for (var j = 0; j < checkboxes.length; j++) {
+          if (checkboxes[j]) checkboxes[j].checked = false;
+        }
+        syncBadges();
+      });
+    }
+
+    // -- Initial state --
+    syncBadges();
+  }
+
+  // Initialise all widgets
+  function initAll() {
+    var widgets = document.querySelectorAll('.language-grid-widget');
+    for (var i = 0; i < widgets.length; i++) {
+      initLanguageGrid(widgets[i]);
+    }
+  }
+
+  // Run init when DOM is ready, using multiple strategies for reliability
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
+  }
+
+  // Also run on window load as a fallback (covers edge cases with compressed bundles)
+  window.addEventListener('load', initAll);
+})();
