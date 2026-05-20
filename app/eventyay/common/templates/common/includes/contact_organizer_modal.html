@@ -16,7 +16,7 @@
         </p>
         <form id="contact-organizer-form" method="post" data-url="{{ contact_url }}">
             {% csrf_token %}
-            {% if not request.user.is_authenticated %}
+            {% if not request.user.is_authenticated or not request.user.email %}
             <div class="contact-form-group">
                 <input type="email" name="email" id="contact-email"
                        placeholder="{% translate 'Your email address' %}" required
@@ -29,7 +29,7 @@
                           class="contact-form-textarea"></textarea>
             </div>
             <p class="contact-modal-helper">
-                {% if request.user.is_authenticated %}
+                {% if request.user.is_authenticated and request.user.email %}
                     {% blocktranslate with email=request.user.email %}
                         The organizer will send replies to {{ email }}.
                     {% endblocktranslate %}
