@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.contact-organizer-btn').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
-            dialog.showModal();
+            if (!dialog.open) {
+                dialog.showModal();
+            }
         });
     });
 

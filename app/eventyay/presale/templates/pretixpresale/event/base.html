@@ -104,7 +104,7 @@
 {% endblock %}
 
 {% block footernav %}
-    {% if request.event.settings.contact_mail %}
+    {% if request.event.settings.contact_mail or request.event.email %}
         <a href="#" class="contact-organizer-btn">{% trans "Contact event organizer" %}</a> &middot;
     {% endif %}
     {% if request.event.settings.imprint_url %}

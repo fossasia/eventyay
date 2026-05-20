@@ -1,4 +1,4 @@
-footer button.contact-organizer-btn {
+footer .contact-organizer-btn {
     background: none;
     border: none;
     padding: 0;
@@ -9,7 +9,7 @@ footer button.contact-organizer-btn {
     text-decoration: none;
 }
 
-footer button.contact-organizer-btn:hover {
+footer .contact-organizer-btn:hover {
     text-decoration: underline;
 }
 
