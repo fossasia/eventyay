@@ -292,6 +292,18 @@
   border-color: #1b6ba8;
 }
 
+.btn.btn-grey {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn.btn-grey:hover,
+.btn.btn-grey:focus {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
 .btn-default {
   color: #333;
   background-color: #fafafa;
