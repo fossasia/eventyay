@@ -5,7 +5,9 @@
 {% block extra_title %}{% translate 'Import sessions' %} :: {% endblock extra_title %}
 
 {% block content %}
-  <h2>{% translate 'Import sessions' %}</h2>
+  <div id='main-title' class='d-md-flex justify-content-between'>
+    <h2>{% translate 'Import sessions' %}</h2>
+  </div>
 
   <p>
     {% blocktranslate trimmed %}
@@ -17,21 +19,28 @@
 
   <form method='post' enctype='multipart/form-data'>
     {% csrf_token %}
+    {% include 'common/forms/errors.html' %}
     {% for field in form %}
-      <div class='form-group'>
-        <label for='{{ field.id_for_label }}'>{{ field.label }}{% if field.field.required %} *{% endif %}</label>
-        {{ field }}
-        {% if field.help_text %}
-          <small class='form-text text-muted'>{{ field.help_text }}</small>
-        {% endif %}
-        {% for error in field.errors %}
-          <div class='invalid-feedback d-block'>{{ error }}</div>
-        {% endfor %}
+      <div class='form-group row'>
+        <label class='col-md-3 col-form-label text-md-right' for='{{ field.id_for_label }}'>
+          {{ field.label }}{% if field.field.required %} *{% endif %}
+        </label>
+        <div class='col-md-9'>
+          {{ field }}
+          {% if field.help_text %}
+            <small class='form-text text-muted d-block mt-2'>{{ field.help_text }}</small>
+          {% endif %}
+          {% for error in field.errors %}
+            <div class='invalid-feedback d-block'>{{ error }}</div>
+          {% endfor %}
+        </div>
       </div>
     {% endfor %}
-    <button type='submit' class='btn btn-success btn-lg'>
-      <i class='fa fa-upload'></i>
-      {% translate 'Upload and continue' %}
-    </button>
+    <div class='submit-group'><span></span><span>
+      <button type='submit' class='btn btn-success btn-lg'>
+        <i class='fa fa-upload'></i>
+        {% translate 'Upload and continue' %}
+      </button>
+    </span></div>
   </form>
 {% endblock content %}
