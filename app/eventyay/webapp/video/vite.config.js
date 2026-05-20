@@ -158,7 +158,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      outDir: env.OUT_DIR ? `${env.OUT_DIR}/video` : 'dist',
+      outDir: process.env.OUT_DIR ? `${process.env.OUT_DIR}/video` : 'dist',
       emptyOutDir: false,
       target: 'esnext',
       sourcemap: true, // Added for debugging vendor-webrtc issue

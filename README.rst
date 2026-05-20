@@ -197,6 +197,20 @@ We assume your current working directory is the checkout of this repo.
 
 The directory `app/eventyay` is mounted into the docker, thus live editing is supported.
 
+7. **Developing Plugins**
+
+   If you are developing plugins (such as ``eventyay-exhibitor``), create a directory named ``plugins`` in the root of this repository (i.e. ``./plugins/``). Place your plugin folders in it:
+
+   .. code-block:: text
+
+      .
+      └── eventyay/                 # This repository root
+          └── plugins/              # Local plugins directory (gitignored)
+              └── eventyay-exhibitor/
+              └── eventyay-flowspace/
+
+   On container startup, the startup script will automatically scan the ``./plugins/`` directory and install all detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
+
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

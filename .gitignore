@@ -80,3 +80,6 @@ app/eventyay/data
 # AI history
 *.aider.*
 
+# Local plugins directory for development
+/plugins
+

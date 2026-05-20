@@ -41,6 +41,11 @@ RUN make npminstall
 # Pre-build static.dist so the image ships with the Vite manifest
 RUN uv run python manage.py collectstatic --noinput
 
+# Back up static.dist so that it can be restored on startup
+RUN mkdir -p /usr/src/app/eventyay/static.dist.backup && \
+    cp -r /usr/src/app/eventyay/static.dist/* /usr/src/app/eventyay/static.dist.backup/ && \
+    date +%s > /usr/src/app/eventyay/static.dist.backup/build_stamp
+
 
 ###########
 # RUNTIME #
@@ -68,6 +73,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nodejs \
     make \
     gettext \
+    rsync \
     && rm -rf /var/lib/apt/lists/*
 
 # esbuild needed by Django-Compressor
@@ -79,6 +85,9 @@ COPY --from=builder /usr/src/app /usr/src/app
 # Normalize line endings and set executable bit AFTER the bulk copy
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
+
+# Copy uv package manager to final stage for runtime plugin installation
+COPY --from=builder /bin/uv /bin/uv
 
 # Expose virtual env
 ENV VIRTUAL_ENV=/usr/src/app/.venv

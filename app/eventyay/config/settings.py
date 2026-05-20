@@ -115,6 +115,7 @@ class BaseSettings(_BaseSettings):
     email_host_user: str = 'info@eventyay.com'
     email_host_password: str = ''
     email_use_tls: bool = True
+    email_use_ssl: bool | None = None
     default_from_email: str = 'info@eventyay.com'
     allowed_hosts: list[str] = []
     # Used by "Talk" (pretalx). Not sure why it is named like this.
@@ -1150,7 +1151,7 @@ EMAIL_HOST_USER = conf.email_host_user
 EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
-EMAIL_USE_SSL = not conf.email_use_tls
+EMAIL_USE_SSL = conf.email_use_ssl if conf.email_use_ssl is not None else (not conf.email_use_tls)
 # TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
 # Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
 MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
