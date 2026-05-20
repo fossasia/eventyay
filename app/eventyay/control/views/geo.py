@@ -3,6 +3,7 @@ import logging
 from urllib.parse import quote_plus
 
 import requests
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.http import JsonResponse
@@ -90,7 +91,7 @@ class GeoCodeView(LoginRequiredMixin, View):
                 'limit': 5,
             },
             headers={
-                'User-Agent': 'eventyay/1.0 (https://eventyay.com)',
+                'User-Agent': f'{settings.INSTANCE_NAME}/1.0 ({settings.SITE_URL})',
             },
             timeout=10,
         )
