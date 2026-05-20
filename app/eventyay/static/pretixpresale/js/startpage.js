@@ -31,9 +31,11 @@
     var xBtn = document.getElementById('share-x');
     var linkedinBtn = document.getElementById('share-linkedin');
     var redditBtn = document.getElementById('share-reddit');
+    var nativeBtn = document.getElementById('share-native');
     var urlInput = document.getElementById('share-url-input');
     var copyBtn = document.getElementById('share-copy-btn');
     var copiedLabel = copyBtn ? (copyBtn.dataset.copiedLabel || 'Copied!') : 'Copied!';
+    var currentShareTitle = '';
 
     buttons.forEach(function (button) {
       var shareLabel = button.dataset.shareLabel || 'Share event';
@@ -48,6 +50,7 @@
         
         var eventCard = button.closest('.startpage-event-card');
         var title = eventCard ? eventCard.dataset.eventName : document.title;
+        currentShareTitle = title;
 
         // Ensure relative URLs become absolute without rewriting absolute custom-domain URLs
         var absoluteUrl = new URL(url, window.location.origin).href;
@@ -125,6 +128,26 @@
             console.error(error);
           });
       });
+    }
+
+    if (nativeBtn) {
+      if (!navigator.share) {
+        nativeBtn.style.display = 'none';
+      } else {
+        nativeBtn.addEventListener('click', function () {
+          var url = urlInput.value;
+          if (!url) {
+            return;
+          }
+          navigator.share({
+            title: currentShareTitle,
+            url: url
+          }).catch(function (error) {
+            // eslint-disable-next-line no-console
+            console.error('Error sharing:', error);
+          });
+        });
+      }
     }
   }
 
