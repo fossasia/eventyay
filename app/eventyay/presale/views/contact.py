@@ -2,7 +2,9 @@ import logging
 import smtplib
 
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.exceptions import ValidationError
+from django.core.mail import BadHeaderError, EmailMessage
+from django.core.validators import validate_email
 from django.http import JsonResponse
 from django.utils.translation import gettext as _
 from django.views import View
@@ -31,6 +33,14 @@ class ContactOrganizerView(EventViewMixin, View):
         if not sender_email:
             return JsonResponse(
                 {'success': False, 'error': _('Please enter your email address.')},
+                status=400,
+            )
+
+        try:
+            validate_email(sender_email)
+        except ValidationError:
+            return JsonResponse(
+                {'success': False, 'error': _('Please enter a valid email address.')},
                 status=400,
             )
 
@@ -64,7 +74,7 @@ class ContactOrganizerView(EventViewMixin, View):
                 reply_to=[sender_email],
             )
             backend.send_messages([email])
-        except (smtplib.SMTPException, ConnectionError, OSError):
+        except (smtplib.SMTPException, BadHeaderError, ConnectionError, OSError):
             logger.exception('Failed to send contact organizer email')
             return JsonResponse(
                 {'success': False, 'error': _('Failed to send message. Please try again later.')},
