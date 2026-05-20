@@ -1,3 +1,5 @@
+import json
+
 from django import forms
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -75,7 +77,23 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
                 continue
             field.question = question
             field.answer = initial_object
-            self.fields[f'question_{question.pk}'] = field
+            if question.dependency_question_id:
+                field.widget.attrs['data-question-dependency'] = question.dependency_question_id
+                field.widget.attrs['data-question-dependency-values'] = json.dumps(question.dependency_values)
+                field._required = field.required
+                if field._required and question.variant != TalkQuestionVariant.MULTIPLE:
+                    existing_classes = field.widget.attrs.get('class', '')
+                    classes = existing_classes.split() if existing_classes else []
+                    if 'required-hidden' not in classes:
+                        classes.append('required-hidden')
+                    field.widget.attrs['class'] = ' '.join(classes)
+                    field.widget.attrs['required'] = 'required'
+                else:
+                    field.widget.attrs.pop('required', None)
+                field.required = False
+            field_name = f'question_{question.pk}'
+            if field_name not in self.fields:
+                self.fields[field_name] = field
 
     @cached_property
     def speaker_fields(self):

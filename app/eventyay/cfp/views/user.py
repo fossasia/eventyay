@@ -344,6 +344,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
         return True
 
+
     @cached_property
     def object(self):
         return self.get_object()

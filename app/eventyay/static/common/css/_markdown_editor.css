@@ -39,8 +39,15 @@
   overflow: visible;
 }
 
+/* Mail settings + sendmail: i18n body fields sit in .preview-panel > .tab-pane > .form-group.
+   Under .form-horizontal, Bootstrap applies row negative margins to that inner .form-group,
+   which stretches the editor and shifts the Toast toolbar vs. other control forms. */
+.form-horizontal .preview-panel .tab-content > .tab-pane > .form-group {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .markdown-toastui .toastui-editor-defaultUI {
-  border-color: var(--color-border);
   border-radius: var(--size-border-radius);
   display: flex;
   flex-direction: column;

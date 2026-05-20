@@ -12,25 +12,27 @@ from django.utils.timezone import now
 from sentry_sdk import add_breadcrumb, configure_scope
 
 from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer
-from eventyay.core.permissions import Permission
-from eventyay.base.services.poll import get_polls, get_voted_polls
-from eventyay.base.services.reactions import store_reaction
-from eventyay.base.services.room import (
-    delete_room,
-    end_view,
-    get_viewers,
-    reorder_rooms,
-    save_room,
-    start_view,
-)
 from eventyay.base.services.event import (
     create_room,
     get_room_config_for_user,
     get_rooms,
     notify_event_change,
 )
+from eventyay.base.services.poll import get_polls, get_voted_polls
+from eventyay.base.services.reactions import store_reaction
+from eventyay.base.services.room import (
+    delete_room,
+    end_view,
+    get_viewers,
+    normalize_after_priority_change,
+    reorder_rooms,
+    save_room,
+    start_view,
+)
+from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
 from eventyay.features.live.channels import (
+    GROUP_EVENT,
     GROUP_ROOM,
     GROUP_ROOM_POLL_ALL_RESULTS,
     GROUP_ROOM_POLL_MANAGE,
@@ -39,7 +41,6 @@ from eventyay.features.live.channels import (
     GROUP_ROOM_QUESTION_MODERATE,
     GROUP_ROOM_QUESTION_READ,
     GROUP_ROOM_VIEWERS,
-    GROUP_EVENT,
 )
 from eventyay.features.live.decorators import (
     command,
@@ -49,6 +50,7 @@ from eventyay.features.live.decorators import (
 )
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
+
 
 logger = logging.getLogger(__name__)
 
@@ -404,6 +406,16 @@ class RoomModule(BaseModule):
                 old_data=old,
                 by_user=self.consumer.user,
             )
+            if "sorting_priority" in update_fields:
+                await database_sync_to_async(normalize_after_priority_change)(
+                    self.consumer.event,
+                    self.room.id,
+                    self.room.sorting_priority,
+                )
+                await database_sync_to_async(self.room.refresh_from_db)(
+                    fields=["sorting_priority"]
+                )
+                new = RoomConfigSerializer(self.room).data
             await self.consumer.send_success(new)
             await notify_event_change(self.consumer.event.id)
         else:
@@ -420,13 +432,13 @@ class RoomModule(BaseModule):
     @command("delete")
     @room_action(permission_required=Permission.ROOM_DELETE)
     async def delete(self, body):
-        self.room.deleted = True
         await delete_room(self.consumer.event, self.room, by_user=self.consumer.user)
         await self.consumer.send_success()
         await get_channel_layer().group_send(
             f"event.{self.consumer.event.id}",
             {"type": "room.delete", "room": str(self.room.id)},
         )
+        await notify_event_change(self.consumer.event.id)
 
     @event("delete")
     async def push_room_delete(self, body):
