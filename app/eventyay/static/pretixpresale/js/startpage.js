@@ -72,11 +72,14 @@
           redditBtn.href = 'https://www.reddit.com/submit?url=' + encodeURIComponent(absoluteUrl) + '&title=' + encodeURIComponent(title);
         }
 
-        // Show dialog
-        if (typeof dialog.showModal === 'function') {
-          dialog.showModal();
-        } else {
-          dialog.setAttribute('open', '');
+        // Show dialog if it is not already open
+        var isOpen = dialog.open || dialog.hasAttribute('open');
+        if (!isOpen) {
+          if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+          } else {
+            dialog.setAttribute('open', '');
+          }
         }
       });
     });

@@ -632,13 +632,19 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
 
 /* Share Event Dialog */
 .startpage-share-dialog {
+  --share-facebook: #4a6ea9;
+  --share-x: #000000;
+  --share-linkedin: #007bb5;
+  --share-reddit: #ff4500;
+  --share-native: var(--color-grey-dark);
+
   border: none;
   border-radius: 8px;
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
   padding: 0;
   width: 550px;
   max-width: 90vw;
-  background: #fff;
+  background: var(--color-white);
   overflow: hidden;
 
   &::backdrop {
@@ -660,13 +666,13 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--color-grey-light);
     padding: 20px 24px;
 
     h3 {
       margin: 0;
       font-weight: 700;
-      color: #2c3e50;
+      color: var(--color-text);
       font-size: 1.45rem;
     }
 
@@ -674,14 +680,14 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
       background: none;
       border: none;
       font-size: 1.25rem;
-      color: #999;
+      color: var(--color-grey-dark);
       cursor: pointer;
       padding: 4px;
       line-height: 1;
       transition: color 0.2s ease;
 
       &:hover {
-        color: #333;
+        color: var(--color-text);
       }
     }
   }
@@ -702,7 +708,7 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: #fff;
+        color: var(--color-white);
         font-size: 1.35rem;
         transition: transform 0.2s ease, opacity 0.2s ease;
         padding: 0;
@@ -715,23 +721,23 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
         }
 
         &.btn-facebook {
-          background-color: #4a6ea9;
+          background-color: var(--share-facebook);
         }
 
         &.btn-x {
-          background-color: #000000;
+          background-color: var(--share-x);
         }
 
         &.btn-linkedin {
-          background-color: #007bb5;
+          background-color: var(--share-linkedin);
         }
 
         &.btn-reddit {
-          background-color: #ff4500;
+          background-color: var(--share-reddit);
         }
 
         &.btn-native {
-          background-color: #7f8c8d;
+          background-color: var(--share-native);
         }
       }
     }
@@ -741,11 +747,11 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
       width: 100%;
       border-radius: 4px;
       overflow: hidden;
-      border: 1px solid #ccc;
+      border: 1px solid var(--color-grey-light);
       transition: border-color 0.2s ease;
 
       &:focus-within {
-        border-color: #2185d0;
+        border-color: var(--color-primary, #2185d0);
       }
 
       input#share-url-input {
@@ -753,8 +759,8 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
         border: none;
         padding: 12px 16px;
         font-size: 0.95rem;
-        color: #333;
-        background-color: #fff;
+        color: var(--color-text);
+        background-color: var(--color-white);
         outline: none;
         box-shadow: none;
         height: auto;
@@ -764,8 +770,8 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
         display: flex;
 
         .btn-inverse {
-          background-color: #1b1c1d;
-          color: #fff;
+          background-color: var(--color-black, #1b1c1d);
+          color: var(--color-white);
           border: none;
           padding: 12px 24px;
           font-weight: 600;
@@ -778,11 +784,11 @@ body.startpage-body .navbar-inverse details.dropdown .dropdown-content .dropdown
           height: auto;
 
           &:hover {
-            background-color: #27292a;
+            background-color: var(--color-black, #1b1c1d);
           }
 
           &.is-copied {
-            background-color: #21ba45;
+            background-color: var(--color-success);
           }
         }
       }
