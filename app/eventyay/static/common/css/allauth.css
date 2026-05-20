@@ -256,6 +256,14 @@
   align-items: center;
 }
 
+.email-confirm-container .btn-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 140px;
+}
+
 .action-buttons {
   justify-content: center;
 }
