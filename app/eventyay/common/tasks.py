@@ -7,9 +7,10 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Submission, User
-from eventyay.common.signals import periodic_task
 from eventyay.celery_app import app
 from eventyay.common.image import process_image
+from eventyay.common.signals import periodic_task
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,9 @@ def task_cleanup_file(*, model: str, pk: int, field: str, path: str):
                 logger.error('Deleting file %s failed.', path)
 
 
-@app.task(bind=True, name='eventyay.common.send_scheduled_queuedmail', max_retries=3, default_retry_delay=60, acks_late=True)
+@app.task(
+    bind=True, name='eventyay.common.send_scheduled_queuedmail', max_retries=3, default_retry_delay=60, acks_late=True
+)
 def send_scheduled_queuedmail(self, mail_pk: int):
     """
     Celery task to send a specific QueuedMail at its scheduled time.
@@ -77,9 +80,10 @@ def send_scheduled_queuedmail(self, mail_pk: int):
     minimum_interval throttle on the periodic poller. Uses select_for_update to
     claim the row exclusively and prevent double-send with the poller fallback.
     """
+    from celery.exceptions import MaxRetriesExceededError
+
     from eventyay.base.models.mail import QueuedMail
     from eventyay.common.exceptions import SendMailException
-    from celery.exceptions import MaxRetriesExceededError
 
     try:
         with scopes_disabled(), transaction.atomic():
@@ -124,17 +128,13 @@ def send_scheduled_queuedmail(self, mail_pk: int):
 def send_periodic_signal():
     """
     Celery task that sends the periodic_task signal.
-    
+
     This task is intended to be run periodically by Celery beat (for example,
     via django-celery-beat's DatabaseScheduler) and triggers all signal receivers
     listening to the periodic_task signal, including process_scheduled_emails.
-    
-    Important:
-    - django-celery-beat does NOT automatically create a schedule for this task.
-    - You must ensure a corresponding PeriodicTask entry exists in the database
-      (e.g. via a data migration, a management command, or by creating it
-      manually through the Django admin) with the desired interval (such as
-      every 60 seconds).
+
+    Celery beat loads this task from CELERY_BEAT_SCHEDULE with a one-minute
+    interval.
     """
     logger.debug('Sending periodic_task signal')
     periodic_task.send(sender=None)
