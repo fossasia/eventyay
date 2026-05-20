@@ -17,28 +17,28 @@
 						bunt-input(v-model="datetimeStart", name="datetime_start", type="datetime-local", label="From")
 						bunt-input(v-model="datetimeEnd", name="datetime_end", type="datetime-local", label="To")
 			.report-buttons
-				bunt-button(@click="generateSummary", :error="task == 'summary' && error") Summary (PDF)
-				bunt-button(@click="generateRoomviews", :error="task == 'roomviews' && error") Room Activity (XLSX)
-				bunt-button(v-if="world.pretalx", @click="generateSessionviews", :error="task == 'sessionviews' && error") Session Activity (XLSX)
-				bunt-button(@click="generateViews", :error="task == 'views' && error") Raw Tracking (XLSX)
+				bunt-button(@click="generateSummary", :error="task == 'summary' && error") Summary
+				bunt-button(@click="generateRoomviews", :error="task == 'roomviews' && error") Room Activity
+				bunt-button(v-if="world.pretalx", @click="generateSessionviews", :error="task == 'sessionviews' && error") Session Activity
+				bunt-button(@click="generateViews", :error="task == 'views' && error") Raw Tracking
 
 		.report-section
 			h3 Attendee Reports
 			.report-buttons
-				bunt-button(@click="run('attendee_list', {})", :error="task == 'attendee_list' && error") All Attendees (XLSX)
-				bunt-button(@click="run('attendee_session_list', {})", :error="task == 'attendee_session_list' && error") By Session (XLSX)
+				bunt-button(@click="run('attendee_list', {})", :error="task == 'attendee_list' && error") All Attendees
+				bunt-button(@click="run('attendee_session_list', {})", :error="task == 'attendee_session_list' && error") By Session
 		
 		.report-section
 			h3 Room-Specific Reports
 			.room-report-item
 				bunt-select(v-model="channel", label="Chat History", name="channel", :options="channels", option-label="name")
-				bunt-button(@click="run('chat_history', {channel})", :disabled="!channel", :error="task == 'chat_history' && error") Generate XLSX
+				bunt-button(@click="run('chat_history', {channel})", :disabled="!channel", :error="task == 'chat_history' && error") Generate
 			.room-report-item
 				bunt-select(v-model="questionRoom", label="Questions", name="questionRoom", :options="questionRooms", option-label="name")
-				bunt-button(@click="run('question_history', {room: questionRoom})", :disabled="!questionRoom", :error="task == 'question_history' && error") Generate XLSX
+				bunt-button(@click="run('question_history', {room: questionRoom})", :disabled="!questionRoom", :error="task == 'question_history' && error") Generate
 			.room-report-item
 				bunt-select(v-model="pollRoom", label="Polls", name="pollRoom", :options="pollRooms", option-label="name")
-				bunt-button(@click="run('poll_history', {room: pollRoom})", :disabled="!pollRoom", :error="task == 'poll_history' && error") Generate XLSX
+				bunt-button(@click="run('poll_history', {room: pollRoom})", :disabled="!pollRoom", :error="task == 'poll_history' && error") Generate
 
 	transition(name="prompt")
 		prompt.report-result-prompt(v-if="running || result", @close="clear")
@@ -269,9 +269,7 @@ export default {
 			button
 				themed-button-secondary()
 				flex-shrink: 0
-
-				&:first-child
-					themed-button-primary()
+				background-color var(--clr-input-secondary-fg-alpha)
 
 		.room-report-item
 			display: flex
@@ -286,6 +284,7 @@ export default {
 			button
 				themed-button-secondary()
 				flex-shrink: 0
+				background-color var(--clr-input-secondary-fg-alpha)
 
 	.report-result-prompt
 		.content
