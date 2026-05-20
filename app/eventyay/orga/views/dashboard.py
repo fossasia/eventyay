@@ -32,7 +32,7 @@ def start_redirect_view(request):
             return redirect(orga_events.pop().orga_urls.base)
         return redirect(speaker_events.pop().urls.user_submissions)
 
-    return redirect(reverse('orga:event.list'))
+    return redirect(reverse('eventyay_common:dashboard'))
 
 
 class DashboardEventListView(TemplateView):

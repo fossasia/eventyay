@@ -6,36 +6,24 @@ from django.utils.timezone import now
 from django_scopes import scope
 
 
-@pytest.mark.parametrize("test_user", ("orga", "speaker", "superuser", "None"))
-@pytest.mark.parametrize("query", ("", "?q=e"))
+
+@pytest.mark.parametrize("test_user", ("orga", "speaker", "None"))
 @pytest.mark.django_db
-def test_dashboard_event_list(
-    orga_user, orga_client, speaker, event, other_event, test_user, slot, query
-):
+def test_main_dashboard_access(orga_user, orga_client, speaker, event, test_user):
+    '''Regression: orga:event.list was removed; main dashboard must remain accessible.'''
+    url = reverse('eventyay_common:dashboard')
     if test_user == "speaker":
         orga_client.force_login(speaker)
     elif test_user == "None":
         orga_client.logout()
-    elif test_user == "superuser":
-        orga_user.is_administrator = True
-        orga_user.save()
 
-    response = orga_client.get(reverse("orga:event.list") + query, follow=True)
+    response = orga_client.get(url, follow=True)
 
-    if test_user == "speaker":
-        assert response.status_code == 200
-        assert event.slug not in response.text
-    elif test_user == "orga":
-        assert response.status_code == 200
-        assert event.slug in response.text
-        assert other_event.slug not in response.text
-    elif test_user == "superuser":
-        assert response.status_code == 200
-        assert event.slug in response.text, response.text
-        assert other_event.slug in response.text, response.text
-    else:
+    if test_user == 'None':
         current_url = response.redirect_chain[-1][0]
-        assert "login" in current_url
+        assert 'login' in current_url
+    else:
+        assert response.status_code == 200
 
 
 @pytest.mark.parametrize(

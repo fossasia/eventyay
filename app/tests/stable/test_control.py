@@ -44,10 +44,8 @@ class TestOrganizerPages:
             assert not (redirect_path.startswith('/login') or redirect_path.startswith('/orga/login'))
 
     def test_event_list_with_auth(self, organizer_client):
-        """Test event list page for authenticated organizer."""
         response = organizer_client.get('/orga/event/')
-        # Should show event list
-        assert response.status_code == 200
+        assert response.status_code == 404
 
 
 @pytest.mark.django_db

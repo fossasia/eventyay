@@ -20,7 +20,7 @@ from eventyay.orga.views import (
 
 app_name = 'orga'
 urlpatterns = [
-    path("", RedirectView.as_view(url="event", permanent=False), name="base"),
+    path('', RedirectView.as_view(pattern_name='eventyay_common:dashboard', permanent=False), name='base'),
     path("reset/", auth.ResetView.as_view(), name="auth.reset"),
     path("reset/<token>", auth.RecoverView.as_view(), name="auth.recover"),
     path('me', person.UserSettings.as_view(), name='user.view'),  # Change this to common/account/general.
@@ -66,7 +66,6 @@ urlpatterns = [
             ]
         ),
     ),
-    path("event/", dashboard.DashboardEventListView.as_view(), name="event.list"),
     path(
         'event/<slug:event>/',
         include(
