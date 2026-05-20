@@ -1628,3 +1628,18 @@ class ContactOrganizerTest(EventTestMixin, TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertFalse(resp.json()['success'])
 
+    def test_authenticated_user_without_email(self):
+        self.user.email = ''
+        self.user.save()
+        self.client.login(email='dummy@dummy.dummy', password='dummy')
+        mail.outbox = []
+        resp = self.client.post(self.url, {'email': 'fallback@example.com', 'message': 'No user email'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()['success'])
+        self.assertEqual(mail.outbox[0].reply_to, ['fallback@example.com'])
+
+    def test_invalid_email_rejected(self):
+        resp = self.client.post(self.url, {'email': 'not-an-email', 'message': 'Test'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+
