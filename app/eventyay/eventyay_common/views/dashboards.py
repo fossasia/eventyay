@@ -74,7 +74,7 @@ def filter_common_event_dashboard_widgets(
         if widget.get('key') == SHOP_STATE_WIDGET_KEY and not can_change_event_settings:
             widget = dict(widget)
             widget.pop('url', None)
-            widget['permission_dialog'] = True
+            widget['permission_dialog_id'] = 'event-settings-permission-dialog'
         filtered.append(widget)
     return filtered
 

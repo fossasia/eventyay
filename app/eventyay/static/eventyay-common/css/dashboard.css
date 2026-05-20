@@ -29,8 +29,8 @@
     }
 }
 
-/* Native <dialog> shell for ticket permission modal */
-dialog#ticket-permission-dialog {
+/* Native <dialog> shell for permission modals */
+dialog.permission-required-dialog {
     border: none;
     padding: 0;
     border-radius: 0.3rem;
@@ -38,21 +38,21 @@ dialog#ticket-permission-dialog {
     max-width: 70vw;
 }
 
-dialog#ticket-permission-dialog[open] {
+dialog.permission-required-dialog[open] {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     margin: 0;
-    animation: ticket-dialog-fade-in 0.3s ease-out;
+    animation: permission-dialog-fade-in 0.3s ease-out;
 }
 
-dialog#ticket-permission-dialog::backdrop {
+dialog.permission-required-dialog::backdrop {
     background-color: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(2px);
 }
 
-@keyframes ticket-dialog-fade-in {
+@keyframes permission-dialog-fade-in {
     from { opacity: 0; }
     to   { opacity: 1; }
 }
@@ -69,7 +69,7 @@ dialog#ticket-permission-dialog::backdrop {
     text-align: center;
 }
 
-dialog#ticket-permission-dialog .modal-card-stacked-permission {
+dialog.permission-required-dialog .modal-card-stacked-permission {
     margin: 0;
     width: auto;
     max-width: 380px;

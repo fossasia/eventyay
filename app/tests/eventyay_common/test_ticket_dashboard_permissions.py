@@ -66,7 +66,7 @@ def test_filter_timeline_entry_keeps_common_edit_urls(event):
 
 
 @pytest.mark.django_db
-def test_event_dashboard_hides_ticket_links_for_talk_only(talk_only_client, organizer, event):
+def test_event_dashboard_hides_ticket_nav_for_talk_only(talk_only_client, organizer, event):
     url = reverse(
         'eventyay_common:event.index',
         kwargs={'organizer': organizer.slug, 'event': event.slug},
@@ -74,22 +74,27 @@ def test_event_dashboard_hides_ticket_links_for_talk_only(talk_only_client, orga
     response = talk_only_client.get(url)
     assert response.status_code == 200
     content = response.content.decode()
-    assert 'data-dialog-target="#ticket-permission-dialog"' in content
     assert reverse(
         'control:event.index',
         kwargs={'organizer': organizer.slug, 'event': event.slug},
     ) not in content
+    assert 'shopstate' in content
+    assert 'event-settings-permission-dialog' in content
+    assert 'Tickets Dashboard' not in content
 
 
 @pytest.mark.django_db
-def test_event_index_widgets_json_empty_for_talk_only(talk_only_client, organizer, event):
+def test_event_index_widgets_json_includes_live_status_for_talk_only(talk_only_client, organizer, event):
     url = reverse(
         'eventyay_common:event.index.widgets',
         kwargs={'organizer': organizer.slug, 'event': event.slug},
     )
     response = talk_only_client.get(url)
     assert response.status_code == 200
-    assert response.json()['widgets'] == []
+    widgets = response.json()['widgets']
+    assert len(widgets) == 1
+    assert 'shopstate' in widgets[0]['content']
+    assert widgets[0].get('permission_dialog_id') == 'event-settings-permission-dialog'
 
 
 @pytest.mark.django_db

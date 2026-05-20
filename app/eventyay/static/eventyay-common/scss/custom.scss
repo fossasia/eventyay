@@ -204,12 +204,33 @@
     }
 }
 
-dialog#ticket-permission-dialog .modal-card-stacked-permission {
-    margin: 0;
-    width: auto;
-    max-width: 380px;
-    box-shadow: none;
-    border-radius: 0;
+dialog.permission-required-dialog {
+    border: none;
+    padding: 0;
+    border-radius: $border-radius-large;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.15);
+    max-width: 70vw;
+
+    &[open] {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+    }
+
+    &::backdrop {
+        background-color: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-card-stacked-permission {
+        margin: 0;
+        width: auto;
+        max-width: 380px;
+        box-shadow: none;
+        border-radius: 0;
+    }
 }
 
 @media (min-width: $screen-md-min){

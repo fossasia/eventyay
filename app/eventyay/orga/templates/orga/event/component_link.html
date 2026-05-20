@@ -1,5 +1,4 @@
 {% load i18n %}
-{% load static %}
 <div class="navigation-button">
     {% if request.event %}
         <a href='{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">

@@ -67,7 +67,7 @@ def user_has_video_dashboard_access(
 
 
 def filter_timeline_entry_for_ticket_access(entry, has_ticket_access):
-    """Hide ticket control edit links on the common dashboard for talk-only users."""
+    """Hide pretix control edit links on the common dashboard timeline for talk-only users."""
     if has_ticket_access or not entry.edit_url:
         return entry
     if '/control/' in entry.edit_url:
