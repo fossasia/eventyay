@@ -115,6 +115,7 @@ class BaseSettings(_BaseSettings):
     email_host_user: str = 'info@eventyay.com'
     email_host_password: str = ''
     email_use_tls: bool = True
+    email_use_ssl: bool | None = None
     default_from_email: str = 'info@eventyay.com'
     allowed_hosts: list[str] = []
     # Used by "Talk" (pretalx). Not sure why it is named like this.
@@ -156,6 +157,8 @@ class BaseSettings(_BaseSettings):
     admin_audit_comments_asked: bool = False
     # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
     call_for_speaker_login_button_label: str = 'default'
+    # Set to 1 to enable Vite dev servers with HMR for live frontend development.
+    npm_dev: bool = False
 
     @classmethod
     def settings_customise_sources(
@@ -1150,7 +1153,7 @@ EMAIL_HOST_USER = conf.email_host_user
 EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
-EMAIL_USE_SSL = not conf.email_use_tls
+EMAIL_USE_SSL = conf.email_use_ssl if conf.email_use_ssl is not None else (not conf.email_use_tls)
 # TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
 # Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
 MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
@@ -1477,10 +1480,15 @@ LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
 
 FRONTEND_DIR = BASE_DIR / 'webapp'
-VITE_DEV_SERVER_PORT = 8080
-VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
-VITE_DEV_MODE = False  # Set to False to use static files instead of dev server
-VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
+VITE_DEV_MODE = conf.npm_dev
+# Per-app Vite dev server ports (must match vite.config.js in each webapp)
+VITE_DEV_SERVER_PORTS = {
+    'schedule-editor': 8080,
+    'video': 8880,
+    'webcheckin': 8081,
+    'schedule': 8082,
+}
+VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORTS["schedule-editor"]}'
 
 # Not sure if they need to be configurable.
 ENTROPY = {

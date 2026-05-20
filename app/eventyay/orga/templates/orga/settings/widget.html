@@ -101,7 +101,12 @@
             </p>
             <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.event.locale }}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color|default:'#2185d0' }}"></pretalx-schedule>
       </div>
+   {% if vite_dev_mode %}
+   <script type="module" src="{{ vite_dev_servers.schedule }}/@vite/client"></script>
+   <script type="module" src="{{ vite_dev_servers.schedule }}/src/main-wc.js" async></script>
+   {% else %}
    <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+   {% endif %}
         <noscript>
            <div class="pretalx-widget">
                 <div class="pretalx-widget-info-message">

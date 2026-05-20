@@ -27,7 +27,10 @@
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_speaker_pages" sender=request.event request=request profile=profile %}
 <div>
-    <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
+    {% if vite_dev_mode %}
+    <script type="module" src="{{ vite_dev_servers.schedule }}/@vite/client"></script>
+    {% endif %}
+    <script type="module" src="{% if vite_dev_mode %}{{ vite_dev_servers.schedule }}/src/main-wc.js{% else %}{% static 'schedule/pretalx-schedule.js' %}{% endif %}"></script>
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speaker" speaker-code="{{ profile.user.code }}" enrich-data style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}

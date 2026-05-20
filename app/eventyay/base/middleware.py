@@ -246,6 +246,16 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
 class SecurityMiddleware(MiddlewareMixin):
     CSP_EXEMPT = ('/api/v1/docs/',)
 
+    @staticmethod
+    def _vite_dev_csp_entries():
+        """Return (http_origins, ws_origins) lists for all Vite dev servers."""
+        http_origins = []
+        ws_origins = []
+        for port in settings.VITE_DEV_SERVER_PORTS.values():
+            http_origins.append(f'http://localhost:{port}')
+            ws_origins.append(f'ws://localhost:{port}')
+        return http_origins, ws_origins
+
     def process_response(self, request, resp):
         if settings.DEBUG and resp.status_code >= 400:
             # Don't use CSP on debug error page as it breaks of Django's fancy error
@@ -268,6 +278,11 @@ class SecurityMiddleware(MiddlewareMixin):
         if gs.settings.leaflet_tiles:
             img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
 
+        vite_http = []
+        vite_ws = []
+        if settings.DEBUG:
+            vite_http, vite_ws = self._vite_dev_csp_entries()
+
         h = {
             'default-src': ['{static}'],
             'script-src': [
@@ -275,7 +290,7 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https://static.cloudflareinsights.com',
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
-                'http://localhost:8080',
+                *vite_http,
                 "'unsafe-eval'",  # Required for buntpapier and other libraries that use eval()
             ],
             'object-src': ["'none'"],
@@ -306,6 +321,7 @@ class SecurityMiddleware(MiddlewareMixin):
             'font-src': [
                 '{static}',
                 'https://fonts.gstatic.com',  # fix Google Fonts
+                *vite_http,
             ],
             'media-src': ['{static}', 'data:', 'https:', 'blob:'],
             # form-action is not only used to match on form actions, but also on URLs
@@ -324,7 +340,8 @@ class SecurityMiddleware(MiddlewareMixin):
                 "'unsafe-inline'",  # Required for server-injected configuration scripts
             ]
             if settings.DEBUG:
-                h['script-src-elem'].insert(1, 'http://localhost:8080')  # Development only
+                for origin in vite_http:
+                    h['script-src-elem'].insert(1, origin)
         if settings.LOG_CSP:
             base_path = settings.BASE_PATH
             h['report-uri'] = [f'{base_path}/csp_report/']
@@ -361,8 +378,8 @@ class SecurityMiddleware(MiddlewareMixin):
 
         # Add DEBUG mode settings before rendering CSP
         if settings.DEBUG:
-            h.setdefault('script-src', []).extend(["'unsafe-inline'", 'http://localhost:8080'])
-            h.setdefault('connect-src', []).extend(['http://localhost:8080', 'ws://localhost:8080'])
+            h.setdefault('script-src', []).extend(["'unsafe-inline'", *vite_http])
+            h.setdefault('connect-src', []).extend([*vite_http, *vite_ws])
 
         if request.path not in self.CSP_EXEMPT and not getattr(resp, '_csp_ignore', False):
             for k, v in h.items():

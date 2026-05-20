@@ -34,7 +34,12 @@
     <script type="text/javascript" src="{% static "moment/moment-timezone-with-data-1970-2030.js" %}"></script>
 {% endcompress %}
 
+{% if vite_dev_mode %}
+<script type="module" src="{{ vite_dev_servers.webcheckin }}/@vite/client"></script>
+<script type="module" src="{{ vite_dev_servers.webcheckin }}/src/webcheckin.js"></script>
+{% else %}
 <script type="module" src="{% static 'webcheckin/webcheckin.js' %}"></script>
+{% endif %}
 <script type="application/json" id="countries">{{ countries|escapejson_dumps }}</script>
 {% csrf_token %}
 </body>
