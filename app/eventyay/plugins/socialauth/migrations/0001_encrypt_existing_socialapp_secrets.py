@@ -8,9 +8,11 @@ import hashlib
 
 from cryptography.fernet import Fernet, MultiFernet
 from django.conf import settings
-from django.db import migrations
+from django.db import migrations, models
 
 _MIGRATION_SECRET_CONTEXT = 'eventyay.socialauth.secret'
+# Keep in sync with SocialAuthApp.ready() (allauth SocialApp.secret max_length patch).
+_MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH = 512
 
 
 def _migration_configured_encryption_key_strings():
@@ -76,13 +78,36 @@ def _migration_encrypt_secret(value: str) -> str:
     return _migration_get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
 
 
+def widen_socialapp_secret_max_length(apps, schema_editor):
+    SocialApp = apps.get_model('socialaccount', 'SocialApp')
+    old_field = SocialApp._meta.get_field('secret')
+    new_field = models.CharField(
+        verbose_name=old_field.verbose_name,
+        max_length=_MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH,
+        blank=True,
+        help_text=getattr(old_field, 'help_text', ''),
+    )
+    new_field.set_attributes_from_name('secret')
+    new_field.model = SocialApp
+    schema_editor.alter_field(SocialApp, old_field, new_field)
+
+
 def encrypt_plaintext_socialapp_secrets(apps, schema_editor):
     SocialApp = apps.get_model('socialaccount', 'SocialApp')
+    secret_field = SocialApp._meta.get_field('secret')
+    max_length = secret_field.max_length or _MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH
     updated = []
     for row in SocialApp.objects.exclude(secret='').iterator():
         secret = row.secret or ''
         if secret and not _migration_is_encrypted_secret(secret):
-            row.secret = _migration_encrypt_secret(secret)
+            encrypted = _migration_encrypt_secret(secret)
+            if len(encrypted) > max_length:
+                raise ValueError(
+                    f'SocialApp pk={row.pk} provider={row.provider!r}: encrypted secret length '
+                    f'{len(encrypted)} exceeds secret max_length={max_length}. '
+                    'Widen socialaccount.SocialApp.secret before running this migration.'
+                )
+            row.secret = encrypted
             updated.append(row)
     if updated:
         SocialApp.objects.bulk_update(updated, ['secret'], batch_size=500)
@@ -97,5 +122,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(widen_socialapp_secret_max_length, migrations.RunPython.noop),
         migrations.RunPython(encrypt_plaintext_socialapp_secrets, migrations.RunPython.noop),
     ]

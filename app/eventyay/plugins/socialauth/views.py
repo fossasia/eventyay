@@ -150,8 +150,15 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             raw = {}
         try:
             login_providers = LoginProviders.model_validate(raw).model_dump()
-        except ValidationError:
-            login_providers = LoginProviders.model_validate({}).model_dump()
+        except ValidationError as e:
+            logger.error(
+                'login_providers settings failed validation during save (not overwriting): %s', e
+            )
+            messages.error(
+                request,
+                _('Stored login provider settings are invalid. Please review the configuration.'),
+            )
+            return redirect(self.get_success_url())
 
         setting_state = request.POST.get('save_credentials', '').lower()
 

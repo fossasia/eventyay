@@ -1,3 +1,15 @@
+"""Encrypt and decrypt OAuth client secrets for the socialauth plugin.
+
+Uses Fernet via ``SOCIALAUTH_SECRET_ENCRYPTION_KEYS`` when that setting is set.
+
+When ``SOCIALAUTH_SECRET_ENCRYPTION_KEYS`` is unset, a key derived from
+``settings.SECRET_KEY`` is used as a fallback. Rotating ``SECRET_KEY`` without
+also configuring and migrating ``SOCIALAUTH_SECRET_ENCRYPTION_KEYS`` makes
+existing ciphertext undecryptable (``decrypt_secret`` then returns ``''`` after
+logging). Production deployments should set explicit encryption keys that are
+managed independently of ``SECRET_KEY``.
+"""
+
 import base64
 import functools
 import hashlib
@@ -85,6 +97,7 @@ def _to_fernet_key(key: str) -> bytes:
 
 
 def _derived_default_key() -> bytes:
+    """Fallback Fernet key derived from ``SECRET_KEY`` (see module docstring)."""
     return _derive_fernet_key(settings.SECRET_KEY)
 
 

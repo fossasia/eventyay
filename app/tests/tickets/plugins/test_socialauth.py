@@ -1,6 +1,6 @@
 import re
-from unittest.mock import MagicMock, patch
 import time as import_time
+from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -433,6 +433,27 @@ def test_social_login_view_get_context_tolerates_non_mapping_login_providers():
     ctx = view.get_context_data()
     assert ctx['login_providers'] == {}
     assert ctx['any_preferred'] is False
+
+
+@pytest.mark.django_db
+def test_social_login_post_preserves_invalid_stored_login_providers(rf):
+    invalid_raw = {'unexpected_provider': {'state': True}}
+    gs = GlobalSettingsObject()
+    gs.settings.set('login_providers', invalid_raw)
+
+    request = rf.post(
+        reverse('plugins:socialauth:admin.global.social.auth.settings'),
+        data={'github_login': 'disabled'},
+    )
+    request.session = {}
+    setattr(request, '_messages', FallbackStorage(request))
+
+    view = SocialLoginView()
+    view.request = request
+    response = view.post(request)
+
+    assert response.status_code == 302
+    assert gs.settings.get('login_providers', as_type=dict) == invalid_raw
 
 
 @pytest.mark.django_db
