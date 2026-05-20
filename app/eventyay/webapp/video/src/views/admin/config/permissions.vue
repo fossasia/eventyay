@@ -167,6 +167,7 @@ export default {
 		padding: 0 8px 16px 8px
 	.permission-config
 		flex: auto
+		min-height: 0
 		overflow-y: auto
 	.info
 		padding: 16px 16px 0 16px
