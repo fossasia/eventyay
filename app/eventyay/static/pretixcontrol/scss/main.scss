@@ -594,7 +594,12 @@ td > .dl-horizontal {
         margin: 0 0 0 250px;
         padding: 15px 30px;
     }
-}
+
+    .hidden-md {
+        display: none;
+    }
+} 
+
 
 .quotabox {
     display: inline-block;

@@ -7,7 +7,7 @@
 {% load rules %}
 {% load static %}
 {% load vite %}
-
+{% load eventurl %}
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
@@ -84,8 +84,25 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="{% url 'presale:index' %}">
                     <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
-                    {{ site_name }}
+                    <span class="hidden-xs">{{ site_name }}</span>
                 </a>
+                {% if request.event %}
+                    {% if has_domain and not request.event.live %}
+                        <form action="{% eventurl request.event "presale:event.auth" %}" method="post"
+                                target="_blank" class="mobile-navbar-view-form visible-xs-block">
+                            {% csrf_token %}
+                            <input type="hidden" value="{{ new_session }}" name="session">
+                            <button type="submit" class="btn btn-link navbar-toggle">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{% eventurl request.event "presale:event.index" %}" title="{% trans "View event" %}"
+                                target="_blank" class="navbar-toggle mobile-navbar-view-link">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    {% endif %}
+                {% endif %}
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
                 {% if request.event %}
@@ -125,16 +142,19 @@
                 {% if request.user.is_staff and not request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
-                            {% csrf_token %}
+                            {% csrf_token %}                   
                             <button type="submit" class="btn btn-link" id="button-sudo">
-                                <i class="fa fa-id-card"></i> {% translate "Admin mode" %}
+                                <i class="fa fa-id-card"></i> <span>{% trans "Admin" %}</span>
+                                    <span class="hidden-xs">{% trans "mode" %}</span>
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                            <i class="fa fa-id-card"></i> {% translate "End admin session" %}
+                            <i class="fa fa-id-card"></i> 
+                            <span>{% trans "End" %}</span>
+                            <span class="hidden-xs">{% trans "admin session" %}</span>
                         </a>
                     </li>
                 {% endif %}

@@ -1,4 +1,4 @@
-/**
+  /**
  * Shared Navbar Styles for Orga
  * Matches Bootstrap 3 navbar + pretixcontrol/main.scss exactly
  * This provides the same navbar styling as control/common areas
@@ -73,6 +73,7 @@ nav.navbar.navbar-inverse {
 
 nav.navbar.navbar-inverse .navbar-top-links a,
 nav.navbar.navbar-inverse .btn-link {
+  padding: 15px 10px;
   color: #f8f9fa;
   font-weight: 500;
 }
@@ -127,6 +128,9 @@ nav.navbar.navbar-inverse .btn-link:focus i {
   outline: 0;
 }
 
+.navbar-toggle.mobile-navbar-view-link{
+  display: none;
+}
 /* ============================================
    Sidebar toggle button - _sidebar.scss
    Overrides .navbar-toggle for sidebar
@@ -142,7 +146,7 @@ nav.navbar.navbar-inverse #sidebar-toggle,
   float: left;
   font-size: 14px;
   margin-top: 12px;
-  margin-right: 10px;
+  margin-right: 0;
   margin-bottom: 8px;
   margin-left: 10px;
   background-color: transparent !important;
@@ -193,6 +197,7 @@ nav.navbar.navbar-inverse .navbar-brand,
   padding-bottom: 5px;
   margin-right: 16px;
   margin-top: 0;
+  margin-left: 10px;
   font-size: 20px;
   line-height: inherit;
   white-space: nowrap;
@@ -248,14 +253,14 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
 }
 
 .navbar-top-links li:last-child {
-  margin-right: 15px;
+  margin-right: 5px;
 }
 
 .navbar-top-links li a {
   display: block;
   padding: 15px;
   min-height: 50px;
-  height: 50px;
+  height: auto;
   font-size: 14px;
   font-weight: normal;
   line-height: 20px;
@@ -395,17 +400,19 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   border: 0;
 }
 
+@media (min-width: 768px){
+  .hidden-md {
+    display: none;
+  }
+} 
+
 @media (max-width: 767px) {
   :root {
     --navbar-height: 60px;
   }
 
   .hidden-xs {
-    display: none !important;
-  }
-
-  nav.navbar {
-    padding-bottom: 10px;
+    display: none;
   }
 
   .navbar-top-links.navbar-right {
@@ -432,6 +439,10 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     padding: 0;
   }
 
+  nav.navbar.navbar-inverse .navbar-top-links a.danger {
+    padding: 3px;
+  }
+
   nav.navbar.navbar-inverse #button-sudo,
   .navbar-inverse #button-sudo {
     padding: 15px;
@@ -442,7 +453,18 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     white-space: nowrap;
   }
 
-  #main-title {
-    margin-top: calc(var(--navbar-height) + 10px);
+  .navbar-toggle.mobile-navbar-view-link{
+    display: block;
+    border: 1px solid black;
+  }
+
+  .mobile-navbar-view-link{
+    color: white;
+  }
+  
+  nav.navbar.navbar-inverse .navbar-brand,
+  .navbar-inverse .navbar-brand{
+    margin-right: 0;
+
   }
 }
