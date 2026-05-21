@@ -1182,3 +1182,18 @@ h1 .label {
         margin-left: auto;
     }
 }
+
+/* Leaflet image path overrides for compressed leaflet.css */
+.leaflet-container {
+    .leaflet-control-layers-toggle {
+        background-image: url(static('leaflet/images/layers.png'));
+    }
+
+    &.leaflet-retina .leaflet-control-layers-toggle {
+        background-image: url(static('leaflet/images/layers-2x.png'));
+    }
+
+    .leaflet-default-icon-path {
+        background-image: url(static('leaflet/images/marker-icon.png'));
+    }
+}
