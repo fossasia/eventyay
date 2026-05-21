@@ -692,6 +692,91 @@ class TestWizard:
             assert event.submissions.count() == 2
             assert speaker_question.answers.count() == 1
 
+    @pytest.mark.django_db
+    def test_wizard_draft_save_with_missing_fields(self, event, client, user):
+        """Logged-in users can save a draft even with missing required fields."""
+        with scope(event=event):
+            submission_type = SubmissionType.objects.filter(event=event).first().pk
+
+        client.force_login(user)
+        response, current_url = self.perform_init_wizard(client, event=event)
+
+        # Submit the info step with action=draft and incomplete data (no abstract)
+        submission_data = {
+            "title": "Draft Proposal",
+            "content_locale": "en",
+            "description": "A description",
+            "abstract": "",
+            "notes": "",
+            "slot_count": 1,
+            "submission_type": submission_type,
+            "additional_speaker": "",
+            "action": "draft",
+        }
+        response = client.post(current_url, data=submission_data, follow=True)
+        # Draft save should succeed (redirect to submissions page)
+        assert response.status_code == 200
+        with scope(event=event):
+            sub = Submission.objects.last()
+            assert sub is not None
+            assert sub.title == "Draft Proposal"
+
+    @pytest.mark.django_db
+    def test_wizard_final_submit_blocks_missing_fields(
+        self, event, client, user
+    ):
+        """Final submission must fail when required fields are missing."""
+        with scope(event=event):
+            submission_type = SubmissionType.objects.filter(event=event).first().pk
+
+        client.force_login(user)
+        response, current_url = self.perform_init_wizard(client, event=event)
+
+        # Submit info step with empty title (required field)
+        submission_data = {
+            "title": "",
+            "content_locale": "en",
+            "description": "",
+            "abstract": "",
+            "notes": "",
+            "slot_count": 1,
+            "submission_type": submission_type,
+            "additional_speaker": "",
+            "action": "submit",
+        }
+        response = client.post(current_url, data=submission_data, follow=True)
+        # The wizard must stay on the info step and show validation errors.
+        assert "/info/" in response.wsgi_request.path
+        assert "draft=1" not in response.wsgi_request.META.get("QUERY_STRING", "")
+        assert b"This field is required." in response.content
+        with scope(event=event):
+            assert Submission.objects.count() == 0
+
+    @pytest.mark.django_db
+    def test_wizard_anonymous_draft_does_not_persist(self, event, client):
+        """Anonymous users saving a draft should not create a Submission in the DB."""
+        with scope(event=event):
+            submission_type = SubmissionType.objects.filter(event=event).first().pk
+
+        response, current_url = self.perform_init_wizard(client, event=event)
+
+        submission_data = {
+            "title": "Anonymous Draft",
+            "content_locale": "en",
+            "description": "A description",
+            "abstract": "An abstract",
+            "notes": "",
+            "slot_count": 1,
+            "submission_type": submission_type,
+            "additional_speaker": "",
+            "action": "draft",
+        }
+        response = client.post(current_url, data=submission_data, follow=True)
+        # Should redirect to user step (login/register) for anonymous users
+        assert any("/user/" in str(r[0]) for r in response.redirect_chain) or response.status_code == 200
+        with scope(event=event):
+            assert Submission.objects.count() == 0
+
 
 @pytest.mark.django_db
 def test_infoform_set_submission_type(event, other_event):

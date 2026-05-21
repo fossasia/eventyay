@@ -137,7 +137,7 @@ class EventPermissionMiddleware:
             response['Access-Control-Allow-Origin'] = '*'
             return response
         if event and not event.user_can_view_talks(request.user, request=request):
-            if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
+            if 'agenda' in url.namespaces:
                 if url.url_name != 'event.css':
                     if not _agenda_featured_allowed_without_talks_published(url, request, event):
                         raise Http404()
