@@ -186,8 +186,13 @@ def get_room_config(room, permissions):
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
-        elif module["type"] == "chat.native" and getattr(room, "channel", None):
-            module_config["channel_id"] = str(room.channel.id)
+        elif module["type"] == "chat.native":
+            # Strip webhook secrets — these are server-side only
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict):
+                cfg.pop("webhook_hmac_secret", None)
+            if getattr(room, "channel", None):
+                module_config["channel_id"] = str(room.channel.id)
         room_config["modules"].append(module_config)
     return room_config
 
