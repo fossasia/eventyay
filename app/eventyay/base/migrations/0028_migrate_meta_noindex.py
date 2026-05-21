@@ -3,18 +3,45 @@
 from django.db import migrations
 
 
+_TRUTHY_VALUES = frozenset({'True', 'true', '"True"', '"true"', '1', 'yes', 'on', '"1"', '"yes"', '"on"'})
+_CHUNK_SIZE = 1000
+
+
+def _chunks(items, size):
+    for index in range(0, len(items), size):
+        yield items[index : index + size]
+
+
 def migrate_meta_noindex(apps, schema_editor):
+    Event = apps.get_model('base', 'Event')
     Event_SettingsStore = apps.get_model('base', 'Event_SettingsStore')
-    _TRUTHY_VALUES = frozenset({'True', 'true', '"True"', '"true"', '1', 'yes', 'on', '"1"', '"yes"', '"on"'})
-    for setting in Event_SettingsStore.objects.filter(key='meta_noindex'):
-        if setting.value in _TRUTHY_VALUES:
-            event = setting.object
-            if event.display_settings is None:
-                event.display_settings = {}
-            if event.display_settings.get('meta_noindex') is not True:
-                event.display_settings['meta_noindex'] = True
-                event.save(update_fields=['display_settings'])
-        setting.delete()
+
+    events_to_update = {}
+    settings_to_delete = []
+
+    for setting in Event_SettingsStore.objects.filter(key='meta_noindex').iterator(chunk_size=_CHUNK_SIZE):
+        settings_to_delete.append(setting.pk)
+        if setting.value not in _TRUTHY_VALUES:
+            continue
+        event = setting.object
+        display_settings = event.display_settings
+        if display_settings is None:
+            display_settings = {}
+        elif not isinstance(display_settings, dict):
+            display_settings = dict(display_settings)
+        else:
+            display_settings = dict(display_settings)
+        if display_settings.get('meta_noindex') is True:
+            continue
+        display_settings['meta_noindex'] = True
+        event.display_settings = display_settings
+        events_to_update[event.pk] = event
+
+    if events_to_update:
+        Event.objects.bulk_update(events_to_update.values(), ['display_settings'], batch_size=_CHUNK_SIZE)
+
+    for chunk in _chunks(settings_to_delete, _CHUNK_SIZE):
+        Event_SettingsStore.objects.filter(pk__in=chunk).delete()
 
 
 def reverse_migrate_meta_noindex(apps, schema_editor):

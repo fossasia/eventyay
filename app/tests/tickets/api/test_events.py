@@ -965,6 +965,27 @@ def test_get_event_settings(token_client, organizer, event):
 
 
 @pytest.mark.django_db
+def test_event_settings_meta_noindex_api(token_client, organizer, event):
+    event.display_settings = {**(event.display_settings or {}), 'meta_noindex': True}
+    event.save(update_fields=['display_settings'])
+    resp = token_client.get(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+    )
+    assert resp.status_code == 200
+    assert resp.data['meta_noindex'] is True
+
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {'meta_noindex': False},
+        format='json',
+    )
+    assert resp.status_code == 200
+    assert resp.data['meta_noindex'] is False
+    event.refresh_from_db()
+    assert event.display_settings.get('meta_noindex') is False
+
+
+@pytest.mark.django_db
 def test_patch_event_settings(token_client, organizer, event):
     with mocker_context() as mocker:
         mocked = mocker.patch('pretix.presale.style.regenerate_css.apply_async')

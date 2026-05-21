@@ -247,3 +247,57 @@ class TestStartPageVisibility:
         content = response.content.decode('utf-8')
         assert 'OffStart UniqueQueryToken' in content
         assert 'Listed Event' not in content
+
+    def test_start_page_shows_event_when_publication_allows_but_startpage_visible_was_off(
+        self, client, organizer, event
+    ):
+        """Saving publication settings re-enables startpage_visible when not excluded."""
+        event.name = 'Sync Visible Event'
+        event.live = True
+        event.is_public = True
+        event.startpage_visible = False
+        event.startpage_featured = False
+        event.display_settings = {
+            **(event.display_settings or {}),
+            'exclude_from_start_page': False,
+        }
+        event.save(
+            update_fields=['name', 'live', 'is_public', 'startpage_visible', 'startpage_featured', 'display_settings']
+        )
+
+        response = client.get('/')
+        assert response.status_code == 200
+        assert 'Sync Visible Event' not in response.content.decode('utf-8')
+
+        event.display_settings = {**(event.display_settings or {}), 'exclude_from_start_page': False}
+        event.startpage_visible = True
+        event.save(update_fields=['startpage_visible', 'display_settings'])
+
+        response = client.get('/')
+        assert response.status_code == 200
+        assert 'Sync Visible Event' in response.content.decode('utf-8')
+
+    def test_start_page_search_hides_non_public_events(self, client, organizer, event):
+        """Live but non-public events must not appear in platform start page search."""
+        event.name = 'Public Search Event'
+        event.is_public = True
+        event.save(update_fields=['name', 'is_public'])
+
+        Event.objects.create(
+            organizer=organizer,
+            name='Private Search UniqueToken',
+            slug='private-search-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=False,
+            live=True,
+            email='private-search@example.com',
+        )
+
+        response = client.get('/?q=UniqueToken')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Public Search Event' not in content
+        assert 'Private Search UniqueToken' not in content

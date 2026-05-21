@@ -9,7 +9,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django_countries.serializers import CountryFieldMixin
 from pytz import common_timezones
-from rest_framework.fields import ChoiceField, Field
+from rest_framework.fields import BooleanField, ChoiceField, Field, empty
 from rest_framework.relations import SlugRelatedField
 
 from eventyay.api.serializers.fields import UploadedFileOrURLField
@@ -652,6 +652,18 @@ class TaxRuleSerializer(CountryFieldMixin, I18nAwareModelSerializer):
         )
 
 
+class DisplaySettingsAPIField(BooleanField):
+    """Maps a boolean API setting to ``Event.display_settings`` for backwards compatibility."""
+
+    def __init__(self, event, setting_key, **kwargs):
+        self.event = event
+        self.setting_key = setting_key
+        super().__init__(**kwargs)
+
+    def get_attribute(self, instance):
+        return bool((self.event.display_settings or {}).get(self.setting_key, False))
+
+
 class EventSettingsSerializer(SettingsSerializer):
     default_fields = [
         'imprint_url',
@@ -795,11 +807,31 @@ class EventSettingsSerializer(SettingsSerializer):
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
+        self.fields['meta_noindex'] = DisplaySettingsAPIField(
+            event=self.event,
+            setting_key='meta_noindex',
+            required=False,
+            allow_null=True,
+        )
 
         for recv, resp in api_event_settings_fields.send(sender=self.event):
             for fname, field in resp.items():
                 field.required = False
                 self.fields[fname] = field
+
+    def update(self, instance, validated_data):
+        meta_noindex = validated_data.pop('meta_noindex', empty)
+        if meta_noindex is not empty:
+            display_settings = dict(self.event.display_settings or {})
+            if meta_noindex is None:
+                display_settings.pop('meta_noindex', None)
+            else:
+                display_settings['meta_noindex'] = meta_noindex
+            if display_settings != self.event.display_settings:
+                self.event.display_settings = display_settings
+                self.event.save(update_fields=['display_settings'])
+            self.changed_data.append('meta_noindex')
+        return super().update(instance, validated_data)
 
     def flush_settings_cache(self):
         self.instance.flush()
@@ -821,7 +853,10 @@ class EventSettingsSerializer(SettingsSerializer):
 
     def get_safe_settings_snapshot(self):
         settings = {}
-        for name in self.fields:
+        for name, field in self.fields.items():
+            if isinstance(field, DisplaySettingsAPIField):
+                settings[name] = field.get_attribute(self.instance)
+                continue
             try:
                 settings[name] = self.instance.get(name)
             except SuspiciousFileOperation:

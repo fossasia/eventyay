@@ -48,7 +48,11 @@ class StartPageView(TemplateView):
         search_query = self.request.GET.get('q', '').strip()
         ctx['search_query'] = search_query
         with scopes_disabled():
-            qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
+            qs = (
+                Event.objects.select_related('organizer')
+                .prefetch_related('_settings_objects')
+                .filter(live=True, is_public=True)
+            )
 
             # Respect start page exclusion flag
             qs = qs.exclude(display_settings__exclude_from_start_page=True)
