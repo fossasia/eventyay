@@ -31,7 +31,7 @@
             </a>
             {% if event.location %}
                 <span class="startpage-event-location">
-                    <i class="fa fa-map-marker"></i>
+                    <i class="fa fa-map-marker" aria-hidden="true"></i>
                     {{ event.location|event_localize }}
                 </span>
             {% endif %}
@@ -42,13 +42,13 @@
             {% trans "View event" %}
         </a>
         {% if event.has_component_testmode %}
-            <span class="startpage-testmode-badge" title="{% trans "Test mode enabled" %}">
+            <span class="startpage-testmode-badge" title="{% trans 'Test mode enabled' %}">
                 <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
-                {% trans "Test Mode" %}
+                {% trans 'Test Mode' %}
             </span>
         {% endif %}
-        <button class="startpage-event-share" type="button" data-url="{{ event_url_abs }}" aria-label="{% trans "Copy event link" %}" title="{% trans "Copy event link" %}">
-            <i class="fa fa-share-alt"></i>
+        <button class="startpage-event-share" type="button" data-url="{{ event_url }}" data-share-label="{% trans 'Share event' %}" aria-label="{% trans 'Share event' %}" title="{% trans 'Share event' %}">
+            <i class="fa fa-share-alt" aria-hidden="true"></i>
         </button>
     </div>
 </article>

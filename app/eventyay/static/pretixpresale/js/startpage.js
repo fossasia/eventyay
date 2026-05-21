@@ -21,22 +21,108 @@
 
   function initShareButtons() {
     var buttons = document.querySelectorAll('.startpage-event-share');
-    if (!buttons.length) {
+    var dialog = document.getElementById('share-dialog');
+    if (!buttons.length || !dialog) {
       return;
     }
 
+    var closeBtn = document.getElementById('share-dialog-close');
+    var facebookBtn = document.getElementById('share-facebook');
+    var xBtn = document.getElementById('share-x');
+    var linkedinBtn = document.getElementById('share-linkedin');
+    var redditBtn = document.getElementById('share-reddit');
+    var nativeBtn = document.getElementById('share-native');
+    var urlInput = document.getElementById('share-url-input');
+    var copyBtn = document.getElementById('share-copy-btn');
+    var copiedLabel = copyBtn ? (copyBtn.dataset.copiedLabel || 'Copied!') : 'Copied!';
+    var currentShareTitle = '';
+
     buttons.forEach(function (button) {
+      var shareLabel = button.dataset.shareLabel || 'Share event';
+      button.setAttribute('aria-label', shareLabel);
+      button.setAttribute('title', shareLabel);
+
       button.addEventListener('click', function () {
         var url = button.dataset.url;
+        if (!url) {
+          return;
+        }
+        
+        var eventCard = button.closest('.startpage-event-card');
+        var title = eventCard ? eventCard.dataset.eventName : document.title;
+        currentShareTitle = title;
+
+        // Ensure relative URLs become absolute without rewriting absolute custom-domain URLs
+        var absoluteUrl = new URL(url, window.location.origin).href;
+
+        // Set input value
+        urlInput.value = absoluteUrl;
+
+        // Set social URLs
+        if (facebookBtn) {
+          facebookBtn.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(absoluteUrl);
+        }
+        if (xBtn) {
+          xBtn.href = 'https://x.com/intent/tweet?url=' + encodeURIComponent(absoluteUrl) + '&text=' + encodeURIComponent(title);
+        }
+        if (linkedinBtn) {
+          linkedinBtn.href = 'https://www.linkedin.com/shareArticle?mini=true&url=' + encodeURIComponent(absoluteUrl) + '&title=' + encodeURIComponent(title);
+        }
+        if (redditBtn) {
+          redditBtn.href = 'https://www.reddit.com/submit?url=' + encodeURIComponent(absoluteUrl) + '&title=' + encodeURIComponent(title);
+        }
+
+        // Show dialog if it is not already open
+        var isOpen = dialog.open || dialog.hasAttribute('open');
+        if (!isOpen) {
+          if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+          } else {
+            dialog.setAttribute('open', '');
+          }
+        }
+      });
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      });
+    }
+
+    // Close when clicking backdrop
+    dialog.addEventListener('click', function (event) {
+      if (event.target === dialog) {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      }
+    });
+
+    if (copyBtn) {
+      var originalText = copyBtn.innerHTML;
+      copyBtn.addEventListener('click', function () {
+        var url = urlInput.value;
         if (!url) {
           return;
         }
         copyText(url)
           .then(function (ok) {
             if (ok) {
-              button.classList.add('is-copied');
+              copyBtn.classList.add('is-copied');
+              copyBtn.textContent = copiedLabel + ' ';
+              var checkIcon = document.createElement('i');
+              checkIcon.className = 'fa fa-check';
+              copyBtn.appendChild(checkIcon);
               window.setTimeout(function () {
-                button.classList.remove('is-copied');
+                copyBtn.classList.remove('is-copied');
+                copyBtn.innerHTML = originalText;
               }, 1600);
             }
           })
@@ -45,7 +131,27 @@
             console.error(error);
           });
       });
-    });
+    }
+
+    if (nativeBtn) {
+      if (!navigator.share) {
+        nativeBtn.style.display = 'none';
+      } else {
+        nativeBtn.addEventListener('click', function () {
+          var url = urlInput.value;
+          if (!url) {
+            return;
+          }
+          navigator.share({
+            title: currentShareTitle,
+            url: url
+          }).catch(function (error) {
+            // eslint-disable-next-line no-console
+            console.error('Error sharing:', error);
+          });
+        });
+      }
+    }
   }
 
   function initSearch() {
