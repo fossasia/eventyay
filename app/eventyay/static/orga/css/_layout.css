@@ -1756,6 +1756,32 @@ h2 .user-name-display img {
   }
 }
 
+
+.import-preview-cell {
+  max-height: 150px;
+  overflow-y: auto;
+  min-width: 150px;
+  max-width: 500px;
+  word-break: break-word;
+  padding-bottom: 4px;
+}
+
+.table-responsive.import-preview-table {
+  overflow-x: auto;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  margin-bottom: 1rem;
+}
+
+.import-preview-table table {
+  width: 100%;
+  min-width: 1200px;
+  margin-bottom: 1rem; /* Ensure space for scrollbar */
+}
+
+.import-preview-table th {
+  white-space: nowrap;
+
 .avatar-license-text {
   overflow-wrap: anywhere;
   word-break: break-all;
