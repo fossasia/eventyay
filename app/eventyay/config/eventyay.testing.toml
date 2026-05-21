@@ -3,3 +3,10 @@
 email_backend = 'django.core.mail.backends.locmem.EmailBackend'
 
 celery_always_eager = true
+debug = true
+
+# PostgreSQL connection settings are intentionally absent here.
+# Local test runs use the default peer-auth connection (postgres_user / postgres_host /
+# postgres_port are None by default, which triggers peer auth).
+# CI jobs supply their own connection details via EVY_POSTGRES_* env vars at the job
+# level in the workflow, keeping this shared TOML file developer-friendly.
