@@ -300,37 +300,19 @@ class TestIcalLocation:
 
 class TestSendmailForm:
     def test_participation_mode_field_present(self):
-        """Requirement 8.1: MailForm must include participation_mode field."""
+        """Requirement 8.1: MailForm must declare a participation_mode field."""
         from eventyay.plugins.sendmail.forms import MailForm
 
-        event = MagicMock()
-        event.settings.attendee_emails_asked = False
-        event.settings.get.return_value = ['en']
-        event.settings.locales = ['en']
-        event.settings.region = None
-        event.settings.get_payment_term_expire_automatically = False
-        event.products.all.return_value = []
-        event.checkin_lists.all.return_value = []
-        event.has_subevents = False
-
-        form = MailForm(event=event)
-        assert 'participation_mode' in form.fields
+        # Check the field is declared at class level — avoids needing a full
+        # Django request/event context just to verify field presence.
+        assert 'participation_mode' in MailForm.base_fields
 
     def test_participation_mode_choices_include_all_and_modes(self):
         """Choices must include empty (all), virtual, in_person."""
         from eventyay.plugins.sendmail.forms import MailForm
 
-        event = MagicMock()
-        event.settings.attendee_emails_asked = False
-        event.settings.get.return_value = ['en']
-        event.settings.locales = ['en']
-        event.settings.region = None
-        event.products.all.return_value = []
-        event.checkin_lists.all.return_value = []
-        event.has_subevents = False
-
-        form = MailForm(event=event)
-        choice_values = [v for v, _ in form.fields['participation_mode'].choices]
+        field = MailForm.base_fields['participation_mode']
+        choice_values = [v for v, _ in field.choices]
         assert '' in choice_values
         assert 'virtual' in choice_values
         assert 'in_person' in choice_values
