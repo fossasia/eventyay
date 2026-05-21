@@ -17,6 +17,11 @@ from eventyay.eventyay_common.navigation import (
 
 from ..helpers.plugin_enable import is_video_enabled
 from ..multidomain.urlreverse import get_event_domain
+from .permissions import (
+    user_has_talk_dashboard_access,
+    user_has_ticket_dashboard_access,
+    user_has_video_dashboard_access,
+)
 from .views.event import EventCreatedFor
 
 logger = logging.getLogger(__name__)
@@ -82,6 +87,15 @@ def _default_context(request: HttpRequest):
 
     ctx['nav_items'] = get_event_navigation(request, event)
     ctx['has_domain'] = get_event_domain(event, fallback=True) is not None
+    ctx['has_ticket_access'] = user_has_ticket_dashboard_access(
+        request.user, organizer, event, request=request
+    )
+    ctx['has_talk_access'] = user_has_talk_dashboard_access(
+        request.user, organizer, event, request=request
+    )
+    ctx['has_video_access'] = user_has_video_dashboard_access(
+        request.user, organizer, event, request=request
+    )
     if not event.testmode:
         with scope(organizer=organizer):
             complain_testmode_orders = event.cache.get('complain_testmode_orders')

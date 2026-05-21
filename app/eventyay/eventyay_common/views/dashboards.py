@@ -50,22 +50,62 @@ from eventyay.helpers.daterange import daterange
 from eventyay.helpers.plugin_enable import is_video_enabled
 
 from ...base.models.orders import CancellationRequest
+from ..permissions import filter_timeline_entry_for_ticket_access, user_has_ticket_dashboard_access
 from ..utils import EventCreatedFor, get_subevent
 
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
+
+SHOP_STATE_WIDGET_KEY = 'shop_state'
+
+
+def filter_common_event_dashboard_widgets(
+    widgets: List[Dict[str, Any]],
+    *,
+    can_view_orders: bool,
+    can_change_event_settings: bool,
+) -> List[Dict[str, Any]]:
+    """Limit dashboard widgets on the common event home for talk-only users."""
+    filtered: List[Dict[str, Any]] = []
+    for widget in widgets:
+        if not isinstance(widget, dict):
+            continue
+        if not can_view_orders and widget.get('key') != SHOP_STATE_WIDGET_KEY:
+            continue
+        if widget.get('key') == SHOP_STATE_WIDGET_KEY and not can_change_event_settings:
+            widget = dict(widget)
+            widget.pop('url', None)
+            widget['permission_dialog_id'] = 'event-settings-permission-dialog'
+        filtered.append(widget)
+    return filtered
 
 
 def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
     subevent = get_subevent(request)
 
-    widgets = []
+    can_view_orders = request.user.has_event_permission(
+        request.organizer, request.event, 'can_view_orders', request=request
+    )
+    can_change_event_settings = request.user.has_event_permission(
+        request.organizer,
+        request.event,
+        'can_change_event_settings',
+        request=request,
+    )
+
+    widgets: List[Dict[str, Any]] = []
     for r, result in event_dashboard_widgets.send(
         sender=request.event,
         subevent=subevent,
         lazy=False,
         request=request,
     ):
-        widgets.extend(result)
+        widgets.extend(
+            filter_common_event_dashboard_widgets(
+                result,
+                can_view_orders=can_view_orders,
+                can_change_event_settings=can_change_event_settings,
+            )
+        )
 
     return JsonResponse({'widgets': widgets})
 
@@ -122,22 +162,29 @@ class EventIndexView(TemplateView):
             ),
         }
 
-    def _collect_dashboard_widgets(self, subevent: Optional[SubEvent], can_view_orders: bool) -> List[Dict[str, Any]]:
+    def _collect_dashboard_widgets(
+        self, subevent: Optional[SubEvent], permissions: Dict[str, bool]
+    ) -> List[Dict[str, Any]]:
         """
         Collect and filter dashboard widgets based on permissions.
-        """
-        if not can_view_orders:
-            return []
 
+        Talk-only users see the event live-status widget but not ticket metrics.
+        """
         request = self.request
-        widgets = []
+        widgets: List[Dict[str, Any]] = []
         for caller, result in event_dashboard_widgets.send(
             sender=request.event,
             subevent=subevent,
             lazy=True,
             request=request,
         ):
-            widgets.extend(result)
+            widgets.extend(
+                filter_common_event_dashboard_widgets(
+                    result,
+                    can_view_orders=permissions['can_view_orders'],
+                    can_change_event_settings=permissions['can_change_event_settings'],
+                )
+            )
         return self.rearrange(widgets)
 
     def _filter_log_entries(self, qs: QuerySet, permissions: Dict[str, bool]) -> QuerySet:
@@ -218,7 +265,7 @@ class EventIndexView(TemplateView):
         permissions = self._get_user_permissions()
 
         # Collect widgets
-        widgets = self._collect_dashboard_widgets(subevent, permissions['can_view_orders'])
+        widgets = self._collect_dashboard_widgets(subevent, permissions)
 
         # Filter log entries
         qs = (
@@ -252,10 +299,13 @@ class EventIndexView(TemplateView):
             action.display = action.display(request)
 
         # Add timeline information
+        has_ticket_access = user_has_ticket_dashboard_access(
+            request.user, request.organizer, request.event, request=request
+        )
         context['timeline'] = [
             {
                 'date': t.datetime.astimezone(ZoneInfo(request.event.timezone)).date(),
-                'entry': t,
+                'entry': filter_timeline_entry_for_ticket_access(t, has_ticket_access),
                 'time': t.datetime.astimezone(ZoneInfo(request.event.timezone)),
             }
             for t in timeline_for_event(request.event, subevent)
@@ -387,6 +437,27 @@ class EventWidgetGenerator:
             </a>
         """
 
+    @staticmethod
+    def generate_ticket_button(event: Event, request: HttpRequest) -> str:
+        """
+        Generate a ticket button based on the user's ticket permissions.
+
+        Users without ticket permissions see a modal trigger instead of a link.
+        """
+        has_ticket_access = user_has_ticket_dashboard_access(
+            request.user, event.organizer, event, request=request
+        )
+        if has_ticket_access:
+            ticket_url = reverse(
+                'control:event.index',
+                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+            )
+            return f'<a href="{ticket_url}" class="component">{_("Tickets")}</a>'
+        return (
+            f'<a href="#" class="component" data-dialog-target="#ticket-permission-dialog"'
+            f' data-toggle="dialog">{_("Tickets")}</a>'
+        )
+
     @classmethod
     def generate_widget(cls, event: Event, request: HttpRequest, lazy: bool = False) -> Dict[str, Any]:
         """
@@ -404,7 +475,7 @@ class EventWidgetGenerator:
                 <div class="times">{times}</div>
             </a>
             <div class="bottomrow">
-                <a href="{ticket_url}" class="component">Tickets</a>
+                {ticket_button}
                 {talk_button}
                 {video_button}
             </div>
@@ -421,10 +492,7 @@ class EventWidgetGenerator:
                         'event': event.slug,
                     },
                 ),
-                ticket_url=reverse(
-                    'control:event.index',
-                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-                ),
+                ticket_button=cls.generate_ticket_button(event, request),
                 video_button=cls.generate_video_button(event),
                 talk_button=cls.generate_talk_button(event),
             )

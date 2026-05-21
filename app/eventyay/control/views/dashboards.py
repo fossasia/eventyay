@@ -326,6 +326,7 @@ def shop_state_widget(sender, **kwargs):
         css_class = ticket_status['class']
     return [
         {
+            'key': 'shop_state',
             'display_size': 'small',
             'priority': 1000,
             'content': (

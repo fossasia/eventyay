@@ -5,6 +5,10 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 from eventyay.common.text.phrases import CALL_FOR_SPEAKER_LOGIN_BTN_LABELS
+from eventyay.eventyay_common.permissions import (
+    user_has_ticket_dashboard_access,
+    user_has_video_dashboard_access,
+)
 from eventyay.orga.signals import html_head, nav_event, nav_event_settings, nav_global
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
@@ -58,6 +62,14 @@ def orga_events(request):
             entry for entry in collect_signal(nav_global, {'sender': None, 'request': request}) if entry
         ]
         return context
+
+    event = request.event
+    context['has_ticket_access'] = user_has_ticket_dashboard_access(
+        request.user, event.organizer, event, request=request
+    )
+    context['has_video_access'] = user_has_video_dashboard_access(
+        request.user, event.organizer, event, request=request
+    )
 
     _nav_event = []
     for _, response in nav_event.send_robust(request.event, request=request):
