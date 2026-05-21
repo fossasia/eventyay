@@ -20,6 +20,7 @@ from django.db.models import (
     Value,
 )
 from django.db.models.functions import Coalesce, Greatest
+from django.db.models.query import prefetch_related_objects
 from django.db.transaction import get_connection
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -2692,6 +2693,146 @@ def _try_auto_refund(
                 'for further information.'
             )
         )
+
+
+def _cancel_order_positions(
+    order,
+    position_ids,
+    user=None,
+    api_token=None,
+    oauth_application=None,
+    device=None,
+):
+    with transaction.atomic():
+        if isinstance(order, int):
+            order = Order.objects.select_for_update().get(pk=order)
+        if isinstance(user, int):
+            user = User.objects.get(pk=user)
+        if isinstance(api_token, int):
+            api_token = TeamAPIToken.objects.get(pk=api_token)
+        if isinstance(device, int):
+            device = Device.objects.get(pk=device)
+        if isinstance(oauth_application, int):
+            oauth_application = OAuthApplication.objects.get(pk=oauth_application)
+
+        if not order.user_partial_cancel_allowed:
+            raise OrderError(_('You cannot cancel individual tickets in this order.'))
+        if not position_ids:
+            raise OrderError(_('Please select at least one ticket to cancel.'))
+
+        try:
+            normalized_position_ids = {int(position_id) for position_id in position_ids}
+        except (TypeError, ValueError):
+            raise OrderError(_('One of the selected tickets cannot be canceled.'))
+
+        if not normalized_position_ids:
+            raise OrderError(_('Please select at least one ticket to cancel.'))
+
+        cancelable_positions = {p.pk: p for p in order.user_cancelable_positions}
+        # Prefetch addons to avoid N+1 queries during cancellation validation
+        prefetch_related_objects(list(cancelable_positions.values()), 'addons')
+        selected_positions = {}
+        for position_id in normalized_position_ids:
+            if position_id not in cancelable_positions:
+                raise OrderError(_('One of the selected tickets cannot be canceled.'))
+
+            selected_positions[position_id] = cancelable_positions[position_id]
+
+        positions_to_cancel = []
+        canceled_total = Decimal('0.00')
+        canceled_ids = set()
+        # Sorting by position ID keeps parent positions before their add-ons.
+        for position in sorted(selected_positions.values(), key=lambda p: p.positionid):
+            if position.addon_to_id and position.addon_to_id in selected_positions:
+                continue
+
+            addons = [a for a in position.addons.all() if not a.canceled]
+            if any(addon.pk not in cancelable_positions for addon in addons):
+                raise OrderError(_('One of the selected tickets cannot be canceled.'))
+
+            positions_to_cancel.append(position)
+
+            if position.pk not in canceled_ids:
+                canceled_total += position.price
+                canceled_ids.add(position.pk)
+
+            for addon in addons:
+                if addon.pk in canceled_ids:
+                    continue
+                canceled_total += addon.price
+                canceled_ids.add(addon.pk)
+
+        active_position_count = order.positions.filter(canceled=False).count()
+        if len(canceled_ids) >= active_position_count:
+            raise OrderError(
+                _('To cancel all remaining tickets, please use the full order cancellation.')
+            )
+
+        ocm = OrderChangeManager(
+            order=order,
+            user=user,
+            auth=api_token or oauth_application or device,
+        )
+        for position in positions_to_cancel:
+            ocm.cancel(position)
+
+        cancellation_fee = order.user_partial_cancel_fee(canceled_total)
+        if cancellation_fee:
+            fee = OrderFee(
+                fee_type=OrderFee.FEE_TYPE_CANCELLATION,
+                value=cancellation_fee,
+                tax_rule=order.event.settings.tax_rate_default,
+                order=order,
+            )
+            ocm.add_fee(fee)
+
+        ocm.commit()
+        return order
+
+
+@app.task(
+    base=ProfiledTask,
+    bind=True,
+    max_retries=5,
+    default_retry_delay=1,
+    throws=(OrderError,),
+)
+@scopes_disabled()
+def cancel_order_positions(
+    self,
+    order: int,
+    position_ids: list[int],
+    user: int = None,
+    api_token=None,
+    oauth_application=None,
+    device=None,
+    try_auto_refund=False,
+    refund_as_giftcard=False,
+    comment=None,
+):
+    try:
+        try:
+            order = _cancel_order_positions(
+                order,
+                position_ids,
+                user,
+                api_token,
+                oauth_application,
+                device,
+            )
+            if try_auto_refund:
+                order.refresh_from_db()
+                _try_auto_refund(
+                    order,
+                    allow_partial=True,
+                    refund_as_giftcard=refund_as_giftcard,
+                    comment=comment,
+                )
+            return order.pk
+        except LockTimeoutException:
+            self.retry()
+    except (MaxRetriesExceededError, LockTimeoutException):
+        raise OrderError(error_messages['busy'])
 
 
 @app.task(
