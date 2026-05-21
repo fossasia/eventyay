@@ -26,9 +26,9 @@
             <a href="{{ event_url }}">{{ event.name|event_localize }}</a>
         </h3>
         <div class="startpage-event-meta">
-            <span class="startpage-event-date">
+            <a class="startpage-event-date event-public-text-link" href="{{ event_url }}">
                 {{ event.get_date_range_display }}
-            </span>
+            </a>
             {% if event.location %}
                 <span class="startpage-event-location">
                     <i class="fa fa-map-marker" aria-hidden="true"></i>

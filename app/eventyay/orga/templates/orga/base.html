@@ -247,6 +247,9 @@
                                     <a href="{{ request.event.orga_urls.widget_settings }}" class="nav-link nav-link-second-level{% if "settings.widget" in url_name %} active{% endif %}">
                                         <span>{% translate "Widget" %}</span>
                                     </a>
+                                    <a href="{{ request.event.orga_urls.import_export_settings }}" class="nav-link nav-link-second-level{% if 'settings.import_export' in url_name %} active{% endif %}">
+                                        <span>{% translate "Import/Export" %}</span>
+                                    </a>
                                     {% for plugin_setting in nav_settings %}
                                         <a href="{{ plugin_setting.url }}" class="nav-link nav-link-second-level{% if plugin_setting.active %} active{% endif %}">
                                             <span>{{ plugin_setting.label }}</span>
