@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 from pytz import UTC
 
-from pretix.base.models import Event, SeatingPlan, Voucher
+from eventyay.base.models import Event, SeatingPlan, Voucher
 
 
 @pytest.fixture
@@ -551,7 +551,7 @@ def test_change_to_item_of_other_event(token_client, organizer, event, item):
             name='Dummy2',
             slug='dummy2',
             date_from=datetime.datetime(2017, 12, 27, 10, 0, 0, tzinfo=UTC),
-            plugins='pretix.plugins.banktransfer,pretix.plugins.ticketoutputpdf',
+            plugins='eventyay.plugins.banktransfer,eventyay.plugins.ticketoutputpdf',
         )
         ticket2 = e2.items.create(name='Late-bird ticket', default_price=23)
         v = event.vouchers.create(item=item)

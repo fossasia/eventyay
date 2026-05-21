@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-from pretix.base.models import CachedFile
+from eventyay.base.models import CachedFile
 
 SAMPLE_EXPORTER_CONFIG = {
     'identifier': 'orderlist',

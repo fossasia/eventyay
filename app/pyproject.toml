@@ -284,8 +284,8 @@ lines-after-imports = 2
 [tool.setuptools]
 packages = ["eventyay"]
 
-[tool.pytest]
-DJANGO_SETTINGS_MODULE = "eventyay.config.settings"
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.tickets.settings"
 testpaths = ["tests"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
