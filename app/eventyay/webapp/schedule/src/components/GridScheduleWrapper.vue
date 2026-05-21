@@ -90,8 +90,6 @@ export default {
 				sessions: new Set(dayToSessions.get(day)),
 				rooms: new Set(dayToSessions.get(day).map((session) => session.room)),
 			}));
-			const dayMap = new Map();
-			dayMap.set(initialGroups[0].days[0], initialGroups[0]);
 
 			// Second pass: merge consecutive groups if they share sessions or their set of rooms is exactly the same
 			const mergedGroups = [];
