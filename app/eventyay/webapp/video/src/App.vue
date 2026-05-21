@@ -72,6 +72,8 @@ export default {
 				timezone: localStorage.getItem('userTimezone') || moment.tz.guess(),
 				hasAmPm: new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12,
 				errorLoading: computed(() => this.$store.state.schedule?.errorLoading),
+				speakersLookup: computed(() => this.$store.getters['schedule/speakersLookup']),
+				sessionsBySpeaker: computed(() => this.$store.getters['schedule/sessionsBySpeaker']),
 			}),
 			scheduleFav: (id) => this.$store.dispatch('schedule/fav', id),
 			scheduleUnfav: (id) => this.$store.dispatch('schedule/unfav', id),
