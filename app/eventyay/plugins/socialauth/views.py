@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Mapping
 from enum import StrEnum
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -18,6 +19,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
+from .secrets import encrypt_secret, is_encrypted_secret
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
@@ -114,21 +116,53 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             )
             return
         normalized = validated.model_dump()
-        if raw != normalized:
+        updated = raw != normalized
+
+        for provider_config in normalized.values():
+            secret = provider_config.get('secret', '')
+            if secret and not is_encrypted_secret(secret):
+                provider_config['secret'] = encrypt_secret(secret)
+                updated = True
+
+        if updated:
             self.gs.settings.set('login_providers', normalized)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
-        context['login_providers'] = login_providers
+        raw = self.gs.settings.get('login_providers', as_type=dict)
+        login_providers = raw if isinstance(raw, dict) else {}
+        safe_login_providers = {}
+        for provider, provider_config in login_providers.items():
+            if not isinstance(provider_config, Mapping):
+                provider_config = {}
+            safe_config = dict(provider_config)
+            # Do not send stored secrets (including ciphertext) back to the browser.
+            safe_config['secret'] = ''
+            safe_login_providers[provider] = safe_config
+        context['login_providers'] = safe_login_providers
         context['any_preferred'] = any(
-            p.get('state', False) and p.get('is_preferred', False) for p in login_providers.values()
+            isinstance(p, Mapping) and p.get('state', False) and p.get('is_preferred', False)
+            for p in login_providers.values()
         )
         context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip('/')
         return context
 
     def post(self, request, *args, **kwargs):
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
+        raw = self.gs.settings.get('login_providers', as_type=dict)
+        if not isinstance(raw, dict):
+            raw = {}
+        try:
+            login_providers = LoginProviders.model_validate(raw).model_dump()
+        except ValidationError as e:
+            logger.error(
+                'login_providers settings failed validation during save (not overwriting): %s', e
+            )
+            messages.error(
+                request,
+                _('Stored login provider settings are invalid. Please review the configuration.'),
+            )
+            return redirect(self.get_success_url())
+
         setting_state = request.POST.get('save_credentials', '').lower()
 
         self._apply_preferred_provider(request, login_providers)
@@ -170,20 +204,33 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             login_providers.setdefault(provider, {})['is_preferred'] = provider == preferred
 
     def update_credentials(self, request, provider, login_providers):
-        client_id_value = request.POST.get(f'{provider}_client_id', '')
-        secret_value = request.POST.get(f'{provider}_secret', '')
+        client_id_value = request.POST.get(f'{provider}_client_id', '').strip()
+        secret_value = request.POST.get(f'{provider}_secret', '').strip()
 
-        if client_id_value and secret_value:
-            login_providers[provider]['client_id'] = client_id_value
-            login_providers[provider]['secret'] = secret_value
+        if not client_id_value and not secret_value:
+            return
 
-            SocialApp.objects.update_or_create(
-                provider=provider,
-                defaults={
-                    'client_id': client_id_value,
-                    'secret': secret_value,
-                },
-            )
+        provider_config = login_providers.setdefault(provider, {})
+
+        if client_id_value:
+            provider_config['client_id'] = client_id_value
+        if secret_value:
+            provider_config['secret'] = encrypt_secret(secret_value)
+
+        client_id = provider_config.get('client_id', '')
+        secret = provider_config.get('secret', '')
+        if not client_id or not secret:
+            return
+
+        encrypted_secret = secret if is_encrypted_secret(secret) else encrypt_secret(secret)
+        provider_config['secret'] = encrypted_secret
+        SocialApp.objects.update_or_create(
+            provider=provider,
+            defaults={
+                'client_id': client_id,
+                'secret': encrypted_secret,
+            },
+        )
 
     def update_provider_state(self, request, provider, login_providers):
         setting_state = request.POST.get(f'{provider}_login', '').lower()
@@ -204,11 +251,13 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 client_id = provider_config.get('client_id')
                 secret = provider_config.get('secret')
                 if client_id and secret:
+                    encrypted_secret = encrypt_secret(secret)
+                    provider_config['secret'] = encrypted_secret
                     SocialApp.objects.update_or_create(
                         provider=provider,
                         defaults={
                             'client_id': client_id,
-                            'secret': secret,
+                            'secret': encrypted_secret,
                         },
                     )
 

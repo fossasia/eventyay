@@ -1,17 +1,24 @@
 import re
 import time as import_time
+from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from allauth.socialaccount.models import SocialApp
+from cryptography.fernet import InvalidToken
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
+from django.views.generic import View
 
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
 from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
+from eventyay.plugins.socialauth.secrets import decrypt_secret, encrypt_secret, is_encrypted_secret
+from eventyay.plugins.socialauth.schemas.login_providers import LoginProviders
+from eventyay.plugins.socialauth.views import SocialLoginView
 
 
 @pytest.fixture
@@ -129,7 +136,6 @@ def test_adapter_post_login_long_session_from_post():
     )
 
     assert request.session[KEY_LONG_SESSION] is True
-
 
 @pytest.mark.django_db
 def test_adapter_post_login_reads_keep_logged_in_from_session():
@@ -363,3 +369,170 @@ def test_social_adapter_rejects_enabled_but_unconfigured_provider():
         adapter.pre_social_login(request, MockSocialLogin(user))
 
     assert exc_info.value.response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_social_login_settings_encrypt_existing_plaintext_secrets():
+    gs = GlobalSettingsObject()
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {
+                'state': True,
+                'client_id': 'mediawiki-client',
+                'secret': 'plain-secret',
+                'is_preferred': False,
+            },
+            'github': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+            'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        },
+    )
+
+    SocialLoginView()
+
+    login_providers = gs.settings.get('login_providers', as_type=dict)
+    stored_secret = login_providers['mediawiki']['secret']
+    assert is_encrypted_secret(stored_secret)
+    assert decrypt_secret(stored_secret) == 'plain-secret'
+
+
+@pytest.mark.django_db
+def test_socialapp_secret_is_decrypted_for_runtime_use(rf):
+    secret = 'provider-secret'
+    SocialApp.objects.create(provider='mediawiki', client_id='id', secret=encrypt_secret(secret))
+
+    adapter = CustomSocialAccountAdapter()
+    apps = adapter.list_apps(rf.get('/'), provider='mediawiki')
+
+    assert len(apps) == 1
+    assert apps[0].secret == secret
+
+
+def test_decrypt_secret_returns_empty_on_invalid_token():
+    from eventyay.plugins.socialauth import secrets as secrets_mod
+
+    fake_fernet = MagicMock()
+    fake_fernet.decrypt.side_effect = InvalidToken()
+    with (
+        patch.object(secrets_mod, 'is_encrypted_secret', return_value=True),
+        patch.object(secrets_mod, 'get_fernet', return_value=fake_fernet),
+    ):
+        assert secrets_mod.decrypt_secret('gAAAAAinvalid') == ''
+
+
+def test_social_login_view_get_context_tolerates_invalid_provider_config_values():
+    view = object.__new__(SocialLoginView)
+    View.__init__(view)
+
+    class DummySettings:
+        def get(self, key, as_type=None):
+            if key == 'login_providers':
+                return {
+                    'github': None,
+                    'google': 'not-a-mapping',
+                    'mediawiki': {'state': True, 'client_id': 'mw-id', 'secret': 'stored'},
+                }
+            return {}
+
+    view.gs = type('Gs', (), {'settings': DummySettings()})()
+    ctx = view.get_context_data()
+    assert ctx['login_providers']['github'] == {'secret': ''}
+    assert ctx['login_providers']['google'] == {'secret': ''}
+    assert ctx['login_providers']['mediawiki']['client_id'] == 'mw-id'
+    assert ctx['login_providers']['mediawiki']['secret'] == ''
+    assert ctx['any_preferred'] is False
+
+
+def test_social_login_view_get_context_tolerates_non_mapping_login_providers():
+    view = object.__new__(SocialLoginView)
+    View.__init__(view)
+
+    class DummySettings:
+        def get(self, key, as_type=None):
+            if key == 'login_providers':
+                return None
+            return {}
+
+    view.gs = type('Gs', (), {'settings': DummySettings()})()
+    ctx = view.get_context_data()
+    assert ctx['login_providers'] == {}
+    assert ctx['any_preferred'] is False
+
+
+@pytest.mark.django_db
+def test_update_credentials_preserves_secret_when_only_client_id_submitted(rf):
+    encrypted = encrypt_secret('existing-secret')
+    gs = GlobalSettingsObject()
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+            'github': {
+                'state': True,
+                'client_id': 'old-client-id',
+                'secret': encrypted,
+                'is_preferred': False,
+            },
+            'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        },
+    )
+
+    request = rf.post(
+        '/',
+        data={
+            'save_credentials': 'credentials',
+            'github_client_id': 'new-client-id',
+            'github_secret': '',
+        },
+    )
+    login_providers = LoginProviders.model_validate(
+        gs.settings.get('login_providers', as_type=dict)
+    ).model_dump()
+
+    view = SocialLoginView()
+    view.update_credentials(request, 'github', login_providers)
+
+    assert login_providers['github']['client_id'] == 'new-client-id'
+    assert login_providers['github']['secret'] == encrypted
+    app = SocialApp.objects.get(provider='github')
+    assert app.client_id == 'new-client-id'
+    assert decrypt_secret(app.secret) == 'existing-secret'
+
+
+@pytest.mark.django_db
+def test_social_login_post_preserves_invalid_stored_login_providers(rf):
+    invalid_raw = {'unexpected_provider': {'state': True}}
+    gs = GlobalSettingsObject()
+    gs.settings.set('login_providers', invalid_raw)
+
+    request = rf.post(
+        reverse('plugins:socialauth:admin.global.social.auth.settings'),
+        data={'github_login': 'disabled'},
+    )
+    request.session = {}
+    setattr(request, '_messages', FallbackStorage(request))
+
+    view = SocialLoginView()
+    view.request = request
+    response = view.post(request)
+
+    assert response.status_code == 302
+    assert gs.settings.get('login_providers', as_type=dict) == invalid_raw
+
+
+@pytest.mark.django_db
+def test_socialapp_secret_data_migration_encrypts_plaintext():
+    import importlib
+
+    from django.apps import apps as django_apps
+    from django.db import connection
+
+    SocialApp.objects.create(provider='github', client_id='cid', secret='plain-secret-value')
+    mod = importlib.import_module(
+        'eventyay.plugins.socialauth.migrations.0001_encrypt_existing_socialapp_secrets'
+    )
+    with connection.schema_editor() as schema_editor:
+        mod.encrypt_plaintext_socialapp_secrets(django_apps, schema_editor)
+    row = SocialApp.objects.get(provider='github')
+    assert is_encrypted_secret(row.secret)
+    assert decrypt_secret(row.secret) == 'plain-secret-value'

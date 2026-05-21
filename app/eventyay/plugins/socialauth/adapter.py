@@ -1,3 +1,4 @@
+import copy
 import functools
 import logging
 from typing import cast
@@ -14,6 +15,8 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
+
+from eventyay.plugins.socialauth.secrets import decrypt_secret
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +69,20 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def list_apps(self, request, provider=None, client_id=None):
+        """Return shallow copies of SocialApp rows with decrypted ``secret`` for OAuth use.
+
+        Callers always receive plaintext secrets, never stored ciphertext. Instances from
+        ``super().list_apps()`` are not mutated because allauth may cache and re-save them.
+        """
+        apps = super().list_apps(request, provider=provider, client_id=client_id)
+        out = []
+        for app in apps:
+            clone = copy.copy(app)
+            clone.secret = decrypt_secret(app.secret)
+            out.append(clone)
+        return out
+
     # https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
     def get_requests_session(self):
         dj_request = cast(HttpRequest, self.request)
