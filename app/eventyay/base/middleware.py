@@ -300,7 +300,15 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https:',
                 'blob:',
             ],
-            'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com']
+            'img-src': [
+                '{static}',
+                '{media}',
+                'data:',
+                'https://*.stripe.com',
+                'https://twemoji.maxcdn.com',
+                'https://www.gravatar.com',
+                'https://secure.gravatar.com',
+            ]
             + external_img_src
             + img_src,
             'font-src': [
