@@ -25,7 +25,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.template.defaultfilters import date as _date
 from django.urls import reverse
@@ -2765,14 +2765,45 @@ class Event(
 
         try:
             with scope(event=self):
-                return self.mail_templates.get(role=role)
+                template = self.mail_templates.get(role=role)
         except MailTemplate.DoesNotExist:
             subject, text = get_default_template(role)
             with scope(event=self):
                 template, __ = MailTemplate.objects.get_or_create(
                     event=self, role=role, defaults={'subject': subject, 'text': text}
                 )
-            return template
+        return self._ensure_mail_template_locales(template, role)
+
+    def _ensure_mail_template_locales(self, template, role):
+        from eventyay.mail.default_templates import get_default_template
+
+        default_subject, default_text = get_default_template(role)
+        with scope(event=self), transaction.atomic():
+            if template.pk:
+                template = template.__class__.objects.select_for_update().get(pk=template.pk)
+
+            changed_fields = []
+            for field_name, default_value in (('subject', default_subject), ('text', default_text)):
+                current_value = getattr(template, field_name)
+                if not (
+                    hasattr(current_value, 'data')
+                    and isinstance(current_value.data, dict)
+                    and hasattr(default_value, 'localize')
+                ):
+                    continue
+
+                field_changed = False
+                for locale in self.locales:
+                    if locale and locale not in current_value.data:
+                        current_value.data[locale] = str(default_value.localize(locale))
+                        field_changed = True
+
+                if field_changed:
+                    changed_fields.append(field_name)
+
+            if changed_fields:
+                template.save(update_fields=changed_fields)
+        return template
 
     def build_initial_data(self):
         from eventyay.base.models import CfP, MailTemplateRoles, Schedule
