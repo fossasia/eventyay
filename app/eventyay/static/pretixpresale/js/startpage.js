@@ -106,7 +106,9 @@
     });
 
     if (copyBtn) {
-      var originalText = copyBtn.innerHTML;
+      var originalNodes = Array.from(copyBtn.childNodes).map(function (node) {
+        return node.cloneNode(true);
+      });
       copyBtn.addEventListener('click', function () {
         var url = urlInput.value;
         if (!url) {
@@ -116,13 +118,15 @@
           .then(function (ok) {
             if (ok) {
               copyBtn.classList.add('is-copied');
-              copyBtn.textContent = copiedLabel + ' ';
+              copyBtn.replaceChildren(document.createTextNode(copiedLabel + ' '));
               var checkIcon = document.createElement('i');
               checkIcon.className = 'fa fa-check';
               copyBtn.appendChild(checkIcon);
               window.setTimeout(function () {
                 copyBtn.classList.remove('is-copied');
-                copyBtn.innerHTML = originalText;
+                copyBtn.replaceChildren.apply(copyBtn, originalNodes.map(function (node) {
+                  return node.cloneNode(true);
+                }));
               }, 1600);
             }
           })
@@ -146,6 +150,9 @@
             title: currentShareTitle,
             url: url
           }).catch(function (error) {
+            if (error && (error.name === 'AbortError' || error.name === 'NotAllowedError')) {
+              return;
+            }
             // eslint-disable-next-line no-console
             console.error('Error sharing:', error);
           });
