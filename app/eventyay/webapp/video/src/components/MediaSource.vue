@@ -13,15 +13,22 @@
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-consent-gate(v-if="consentBlockedUrl && !background")
 		iframe-blocker(:src="consentBlockedUrl", allow="camera *; autoplay *; microphone *; fullscreen *; display-capture *", allowfullscreen, @consent-given="onConsentGiven")
-	.iframe-error(v-if="!iframeEl && !consentBlockedUrl && (iframeError || iframeOffline)", :class="{background: background, 'size-tiny': background}")
-		.offline-message(v-if="iframeOffline") {{ $t('Livestream:offline-message:text') }}
-		.offline-message(v-else) {{ $t('MediaSource:iframe-error:text') }}
+	.iframe-error(v-else-if="!iframeEl && !consentBlockedUrl && iframeOffline", :class="{background: background, 'size-tiny': background}")
+		.offline-message {{ $t('Livestream:offline-message:text') }}
+	.error-container(v-else-if="!iframeEl && !consentBlockedUrl && iframeError", :class="{background: background, 'size-tiny': background}")
+		.error-card
+			.error-title {{ iframeError.title || $t('MediaSource:iframe-error:title') }}
+			.error-message {{ iframeError.message || $t('MediaSource:iframe-error:text') }}
+			.error-code(v-if="iframeError.code") {{ $t('MediaSource:error-code:label') }}: {{ iframeError.code }}
+			.error-actions
+				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="goToProfileSettings()") {{ $t('MediaSource:error-goto-profile:button') }}
+				bunt-button(v-else, @click="retryInitializeIframe()") {{ $t('MediaSource:error-retry:button') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
 // TODO functional component?
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { isEqual } from 'lodash';
 import api from 'lib/api';
@@ -48,6 +55,7 @@ const emit = defineEmits(['close']);
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 
 const iframeError = ref(null);
 const iframeEl = ref(null);
@@ -260,7 +268,10 @@ function unmuteYouTubePlayer() {
 async function initializeIframe(mute, skipConsentCheck = false) {
 	if (!module.value) return;
 	if (shouldUseLivestream.value) return;
-	if (iframeOffline.value) return;
+	if (iframeOffline.value) {
+		iframeError.value = null;
+		return;
+	}
 	if (iframeEl.value) return; // already initialised
 	if (iframeInitInProgress) return;
 	iframeInitInProgress = true;
@@ -279,16 +290,22 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			: module.value.type;
 		switch (effectiveModuleType) {
 			case 'call.bigbluebutton': {
-				({ url: iframeUrl } = await api.call('bbb.room_url', {
-					room: props.room.id,
-				}));
+				try {
+					({ url: iframeUrl } = await api.call('bbb.room_url', { room: props.room.id }));
+				} catch (error) {
+					handleBBBError(error);
+					return;
+				}
 				hideIfBackground = true;
 				break;
 			}
 			case 'call.zoom': {
-				({ url: iframeUrl } = await api.call('zoom.room_url', {
-					room: props.room.id,
-				}));
+				try {
+					({ url: iframeUrl } = await api.call('zoom.room_url', { room: props.room.id }));
+				} catch (error) {
+					handleZoomError(error);
+					return;
+				}
 				hideIfBackground = true;
 				break;
 			}
@@ -409,6 +426,8 @@ async function initializeIframe(mute, skipConsentCheck = false) {
 			};
 		}
 	} catch (error) {
+		// Non-API errors (e.g., iframeError set by error handlers)
+		console.error('Error initializing iframe:', error);
 		iframeError.value = error;
 	} finally {
 		iframeInitInProgress = false;
@@ -429,6 +448,35 @@ function onConsentGiven(persistent) {
 	}
 	consentBlockedUrl.value = null
 	initializeIframe(false, true)
+}
+
+
+function handleBBBError(error) {
+	const errorCode = error.apiError?.code;
+	console.error('[BBB Error]', errorCode, error);
+
+	iframeError.value = {
+		code: errorCode || 'bbb.unknown',
+	};
+}
+
+function handleZoomError(error) {
+	const errorCode = error.apiError?.code;
+	console.error('[Zoom Error]', errorCode, error);
+
+	iframeError.value = {
+		code: errorCode || 'zoom.unknown',
+	};
+}
+
+async function retryInitializeIframe() {
+	iframeError.value = null;
+	await initializeIframe(false);
+}
+
+function goToProfileSettings() {
+	iframeError.value = null;
+	router.push({ name: 'preferences' });
 }
 
 function isPlaying() {
@@ -577,7 +625,7 @@ defineExpose({ isPlaying });
 	// 	transition-delay: .1s
 	.background-room-enter-from, .background-room-leave-to
 		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
-.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, iframe.iframe-media-source
+.c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, .c-media-source .iframe-error, .c-media-source .error-container, iframe.iframe-media-source
 	position: fixed
 	transition: all .3s ease
 	&.size-tiny, &.background
@@ -637,4 +685,60 @@ iframe.iframe-media-source
 		.offline-message
 			font-size: 14px
 			padding: 8px
+.c-media-source .error-container
+	display: flex
+	justify-content: center
+	align-items: center
+	z-index: 1
+	&.size-tiny, &.background
+		width: 86px
+		height: 48px
+		z-index: 101
+.error-card
+	background: white
+	border: 1px solid #e0e0e0
+	border-radius: 8px
+	padding: 24px
+	max-width: 400px
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+	text-align: center
+	.error-container.size-tiny &, .error-container.background &
+		padding: 8px
+		max-width: 86px
+		max-height: 48px
+		overflow: hidden
+.error-title
+	font-size: 18px
+	font-weight: 600
+	color: #d32f2f
+	margin-bottom: 12px
+	.error-container.size-tiny &, .error-container.background &
+		display: none
+.error-message
+	font-size: 14px
+	color: #666
+	margin-bottom: 16px
+	line-height: 1.5
+	.error-container.size-tiny &, .error-container.background &
+		font-size: 11px
+		line-height: 1.2
+		margin-bottom: 0
+.error-code
+	font-size: 12px
+	color: #999
+	margin-bottom: 16px
+	font-family: monospace
+	background: #f5f5f5
+	padding: 8px
+	border-radius: 4px
+	.error-container.size-tiny &, .error-container.background &
+		display: none
+.error-actions
+	display: flex
+	gap: 8px
+	justify-content: center
+	.error-container.size-tiny &, .error-container.background &
+		display: none
+	.bunt-button
+		min-width: 120px
 </style>

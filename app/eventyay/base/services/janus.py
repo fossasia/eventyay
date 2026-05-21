@@ -33,6 +33,7 @@ def choose_server(event):
         # Servers are sorted by cost, let's do a random pick if we have multiple with the smallest cost
         server = random.choice(servers)
         return server
+    raise ValueError("No active Janus server available")
 
 
 async def videoroom_add_token_if_exists(server, room_data, token, audiobridge=False):

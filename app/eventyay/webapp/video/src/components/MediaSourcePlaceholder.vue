@@ -22,10 +22,7 @@ export default {
 	},
 	methods: {
 		onResize() {
-			this.$store.commit(
-				'reportMediaSourcePlaceholderRect',
-				this.$el.getBoundingClientRect(),
-			)
+			this.$store.commit('reportMediaSourcePlaceholderRect', this.$el.getBoundingClientRect())
 		}
 	}
 }
