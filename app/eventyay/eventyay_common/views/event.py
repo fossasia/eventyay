@@ -416,6 +416,15 @@ class EventUpdate(
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
 
+        has_updates = any(
+            (
+                form.has_changed(),
+                self.sform.has_changed(),
+                self.header_links_formset.has_changed(),
+                self.footer_links_formset.has_changed(),
+            )
+        )
+
         if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
             transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
@@ -426,6 +435,8 @@ class EventUpdate(
                     'active.'
                 ),
             )
+        elif has_updates:
+            messages.success(self.request, _('Your changes have been saved.'))
 
         return super().form_valid(form)
 

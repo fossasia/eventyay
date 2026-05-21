@@ -2,7 +2,9 @@
 {% load bootstrap3 %}
 {% load eventurl %}
 {% load event_tags %}
+{% load presale_locale %}
 {% load staff_session %}
+{% load nav_tags %}
 
 <nav id='header-nav-bar'>
     <div class="navigation">
@@ -15,8 +17,9 @@
 
         {% if request.event.live or is_organiser %}
             {% if show_tickets_tab %}
+                {% get_menu_label request.event 'menu_label_tickets' as label %}
                 <a href="{% eventurl request.event 'presale:event.index' %}#tickets" id="nav-tab-tickets" class="header-tab">
-                    <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+                    <i class="fa fa-ticket"></i> {{ label|event_localize|default:_('Tickets') }}
                 </a>
             {% endif %}
         {% endif %}
@@ -57,9 +60,10 @@
 
         {% if show_online_video_link|default:False %}
             <div class="video-link">
+                {% get_menu_label request.event 'menu_label_join_video' as label %}
                 <a id="join-event-link" class="header-tab join-video-link join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
                     href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
-                    <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{% translate "Join online video" %}</span>
+                    <i class="fa fa-video-camera"></i> <span class="mobile-hide-text">{{ label|event_localize|default:_('Join online video') }}</span>
                 </a>
             </div>
         {% endif %}

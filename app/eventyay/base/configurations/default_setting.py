@@ -2586,6 +2586,38 @@ Your {event} team"""
             help_text=_('Short text displayed on the public start page banner.'),
         ),
     },
+    'menu_label_tickets': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Tickets'),
+            widget=I18nTextInput,
+            help_text=_(
+                'Custom label for the "Tickets" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
+            widget_kwargs={'attrs': {'placeholder': _('Register')}},
+            required=False,
+        ),
+    },
+    'menu_label_join_video': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Join Live Event'),
+            widget=I18nTextInput,
+            help_text=_(
+                'Custom label for the "Join online video" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
+            widget_kwargs={'attrs': {'placeholder': _('Live Video')}},
+            required=False,
+        ),
+    },
 }
 
 CSS_SETTINGS = {
