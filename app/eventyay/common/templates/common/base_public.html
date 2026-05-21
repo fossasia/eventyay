@@ -244,8 +244,10 @@
                 {% endif %}
                 {% include "common/powered_by.html" %}
                 {% if current_event %}
-                    ·
-                    <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                    {% if current_event.settings.contact_mail or current_event.email %}
+                        ·
+                        <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                    {% endif %}
                 {% elif request.organizer and request.organizer.settings.contact_mail %}
                     ·
                     <a href="mailto:{{ request.organizer.settings.contact_mail }}">{% translate "Contact event organizer" %}</a>
@@ -265,8 +267,10 @@
         </div>
         {% include "common/includes/modals.html" %}
         {% if current_event %}
-            {% eventurl current_event "presale:event.contact" as contact_url %}
-            {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
+            {% if current_event.settings.contact_mail or current_event.email %}
+                {% eventurl current_event "presale:event.contact" as contact_url %}
+                {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
+            {% endif %}
         {% endif %}
         {% block body_bottom %}{% endblock body_bottom %}
     </body>

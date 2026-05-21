@@ -230,8 +230,10 @@
                 {% endif %}
                 {% include "common/powered_by.html" %}
                 {% if request.event %}
-                    ·
-                    <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                    {% if request.event.settings.contact_mail or request.event.email %}
+                        ·
+                        <button type="button" class="contact-organizer-btn">{% translate "Contact event organizer" %}</button>
+                    {% endif %}
                 {% endif %}
                 {% if request.event.display_settings.imprint_url %}
                     ·
@@ -245,8 +247,10 @@
         </div>
         {% include "common/includes/modals.html" %}
         {% if request.event %}
-            {% eventurl request.event "presale:event.contact" as contact_url %}
-            {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
+            {% if request.event.settings.contact_mail or request.event.email %}
+                {% eventurl request.event "presale:event.contact" as contact_url %}
+                {% include "common/includes/contact_organizer_modal.html" with contact_url=contact_url %}
+            {% endif %}
         {% endif %}
         {% include "pretixpresale/fragment_join_online_video.html" %}
     </body>
