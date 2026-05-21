@@ -63,7 +63,7 @@ $(function() {
         if ($formTabPane.length > 0) {
             var tabId = $formTabPane.attr('id');
             if (tabId) {
-                selectorPrefix = '#' + tabId + ' ';
+                selectorPrefix = '#' + tabId;
                 $context = $('#' + tabId);
             }
         }
@@ -86,10 +86,13 @@ $(function() {
                 var $newContext = selectorPrefix ? $newDoc.find(selectorPrefix) : $newDoc;
                 var $newResultsContainer = getResultsContainer($newContext);
 
-                if ($newResultsContainer.length) {
-                    $resultsContainer.replaceWith($newResultsContainer);
-                    $resultsContainer = $newResultsContainer; // Update reference
+                if (!$newResultsContainer.length) {
+                    $resultsContainer.css('opacity', '1');
+                    window.location.href = url;
+                    return;
                 }
+                $resultsContainer.replaceWith($newResultsContainer);
+                $resultsContainer = $newResultsContainer; // Update reference
 
                 $resultsContainer.css('opacity', '1');
 
@@ -174,7 +177,10 @@ $(function() {
     
     // Handle back/forward navigation
     $(window).on('popstate', function() {
-        var $activeTab = $('.tab-pane.active');
+        var url = new URL(window.location.href, window.location.origin);
+        var tabParam = url.searchParams.get('tab');
+        var $tabPane = tabParam ? $('.tab-pane#' + tabParam).first() : $();
+        var $activeTab = $tabPane.length ? $tabPane : $('.tab-pane.active');
         var $form = $activeTab.length ? $activeTab.find('form').first() : getFilterForms().first();
         fetchAndReplace(window.location.href, false, $form);
     });
