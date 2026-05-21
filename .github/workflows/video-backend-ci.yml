@@ -18,11 +18,8 @@ env:
 jobs:
   python-uv-check:
     name: Backend validation (uv + Django checks)
-    # Pin to a specific Ubuntu LTS to reduce runner drift.
     runs-on: ubuntu-24.04
-    # Most config is read from eventyay.testing.toml via EVY_RUNNING_ENVIRONMENT=testing.
-    # Only the environment selector and secret key are set here; manage.py check does not
-    # connect to services so no database or Redis is needed for this job.
+    # manage.py check imports URL modules that touch the Redis cache backend at load time.
     env:
       EVY_RUNNING_ENVIRONMENT: testing
       EVY_SECRET_KEY: ci-test-secret-key
@@ -30,7 +27,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install system packages
-        run: sudo apt-get update -qq && sudo apt-get install -y gettext
+        run: sudo apt-get update -qq && sudo apt-get install -y gettext redis-server
+
+      - name: Wait for Redis
+        run: timeout 30 bash -c 'until redis-cli ping >/dev/null 2>&1; do sleep 1; done'
 
       - uses: actions/setup-python@v5
         with:
@@ -111,12 +111,6 @@ jobs:
       - name: Run database migrations
         working-directory: app
         run: uv run python manage.py migrate --noinput
-
-      # tests/stable is a curated subset that passes reliably against the current
-      # codebase. The broader tests/ tree contains legacy suites with outstanding
-      # failures inherited from the project's history. The path forward is to fix
-      # those tests incrementally and re-enable them here, or quarantine them
-      # explicitly with pytest markers in a separate slow/legacy CI job.
       - name: Run pytest
         working-directory: app
         run: uv run pytest tests/stable -v --tb=short
@@ -169,9 +163,6 @@ jobs:
           echo $! > server.pid
 
       - name: Wait for server and verify healthcheck
-        # Use `localhost` (not 127.0.0.1) so MultiDomainMiddleware accepts the
-        # request: it compares the Host header against SITE_URL which defaults
-        # to http://localhost:8000.
         run: |
           for _ in {1..30}; do
             if curl -fsS http://localhost:8000/healthcheck/ >/dev/null 2>&1; then
