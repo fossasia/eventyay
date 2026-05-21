@@ -655,6 +655,8 @@ export default {
 			.dropdown-menu
 				left: auto
 				right: 0
+				width: max-content
+				min-width: unset
 			.dropdown-actions
 				border-top: 1px solid #eee
 				padding: 4px 8px
