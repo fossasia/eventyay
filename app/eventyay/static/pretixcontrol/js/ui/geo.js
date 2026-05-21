@@ -1,18 +1,26 @@
 /*globals $*/
 
 $(function () {
+    const DEFAULT_TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    const DEFAULT_ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    const DEFAULT_ZOOM = 15;
+
     function cleanup(l) {
         return $.trim(l.replace(/\n/g, ", "));
     }
     $(".geodata-section").each(function () {
         // Geocoding
-        // detach notifications and append them to first label (should be from location)
-        var $notifications = $(".geodata-autoupdate", this).detach().appendTo($("label", this).first());
+        var $geoLabel = $(".geodata-group label.control-label", this).first();
+        var $fallbackLabel = $geoLabel.length ? $geoLabel : $("label", this).first();
+        var $notifications = $(".geodata-autoupdate", this).detach();
         var $lat = $("input[name$=geo_lat]", this).first();
         var $lon = $("input[name$=geo_lon]", this).first();
         var lat;
         var lon;
-        var $updateButton = $("[data-action=update]", this);
+        var $updateButton = $notifications.find("[data-action=update]");
+        var $savePinButton = $notifications.find("[data-action=save-pin]");
+        var $resetPinButton = $notifications.find("[data-action=reset-pin]");
+        var $form = $(this).closest("form");
         var $location = $("textarea[lang=en], input[lang=en]", this).first();
         if (!$location.length) $location = $("textarea, input[type=text]", this).first();
 
@@ -23,9 +31,32 @@ $(function () {
         var debounceLoad, debounceLatLonChange, delayUpdateDismissal;
         var touched = $lat.val() !== "";
         var xhr;
-        var lastLocation = cleanup($location.val());
+        var lastLocation = null;
+        var pendingPin = null;
+        var center = function () {};
 
-        function load() {
+        function getPoint() {
+            if ($lat.val() !== "" && $lon.val() !== "" && !isNaN(parseFloat($lat.val())) && !isNaN(parseFloat($lon.val()))) {
+                var p = [parseFloat($lat.val().replace(",", ".")), parseFloat($lon.val().replace(",", "."))];
+                // Clip to valid ranges. Very invalid lon/lat values can even lead to browser crashes in leaflet apparently
+                if (p[0] < -90) p[0] = -90;
+                if (p[0] > 90) p[0] = 90;
+                if (p[1] < -180) p[1] = -180;
+                if (p[1] > 180) p[1] = 180;
+                return p;
+            }
+            return null;
+        }
+
+        function showUpdatedConfirmation() {
+            $notifications.attr("data-notify", "updated");
+            window.clearTimeout(delayUpdateDismissal);
+            delayUpdateDismissal = window.setTimeout(function() {
+                if ($notifications.attr("data-notify") === "updated") $notifications.attr("data-notify", "");
+            }, 2500);
+        }
+
+        function load(force) {
             window.clearTimeout(debounceLoad);
             if (xhr) {
                 xhr.abort();
@@ -33,7 +64,7 @@ $(function () {
             }
 
             var q = cleanup($location.val());
-            if (q === "" || q === lastLocation) return;
+            if (q === "" || (!force && q === lastLocation)) return;
 
             lastLocation = q;
             $notifications.attr("data-notify", "loading");
@@ -48,74 +79,105 @@ $(function () {
                 lon = res.results[0].lon;
                 if ($lat.val() == lat && $lon.val() == lon) {
                     $notifications.attr("data-notify", "");
-                }
-                else if (touched) {
+                } else if (!touched) {
+                    $lat.val(lat);
+                    $lon.val(lon).trigger("change");
+                    touched = false;
+                    pendingPin = null;
+                    showUpdatedConfirmation();
+                } else {
                     $notifications.attr("data-notify", "confirm");
                 }
-                else {
-                    $notifications.attr("data-notify", "");
-                    $lat.val(lat);
-                    $lon.val(lon);
-                    center(13);
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                if (textStatus !== 'abort') {
+                    $notifications.attr("data-notify", "error");
                 }
-            })
+            });
         }
 
         $lat.add($lon).change(function () {
             if (this.value !== "") touched = true;
-            center(13);
+            pendingPin = null;
+            if ($notifications.attr("data-notify") === "confirm-pin") {
+                $notifications.attr("data-notify", "");
+            }
+            center(DEFAULT_ZOOM);
         }).keyup(function () {
             window.clearTimeout(debounceLatLonChange);
             debounceLatLonChange = window.setTimeout(center, 300);
         });
 
-        $location.change(load);
+        $location.change(function () {
+            load(false);
+        });
         $location.keyup(function () {
             window.clearTimeout(debounceLoad);
-            debounceLoad = window.setTimeout(load, 1000);
-            if ($notifications.attr("data-notify") == "confirm" && lastLocation !== cleanup(this.value)) $notifications.attr("data-notify", "");
+            debounceLoad = window.setTimeout(function () {
+                load(false);
+            }, 1000);
+            if (($notifications.attr("data-notify") === "confirm" || $notifications.attr("data-notify") === "confirm-pin") && lastLocation !== cleanup(this.value)) {
+                $notifications.attr("data-notify", "");
+            }
         });
 
         $updateButton.click(function() {
             $lat.val(lat);
             $lon.val(lon).trigger("change");// change-event is needed by bulk-edit
             touched = false;
-            center(13);
-            $notifications.attr("data-notify", "updated");
-            delayUpdateDismissal = window.setTimeout(function() {
-                if ($notifications.attr("data-notify") == "updated") $notifications.attr("data-notify", "");
-            }, 2500);
+            center(DEFAULT_ZOOM);
+            pendingPin = null;
+            showUpdatedConfirmation();
         });
+
+        $savePinButton.click(function () {
+            if (!pendingPin) {
+                return;
+            }
+            $lat.val(pendingPin.lat);
+            $lon.val(pendingPin.lon).trigger("change");
+            pendingPin = null;
+            touched = true;
+            center(DEFAULT_ZOOM);
+            showUpdatedConfirmation();
+        });
+
+        $resetPinButton.click(function () {
+            pendingPin = null;
+            center(DEFAULT_ZOOM);
+            $notifications.attr("data-notify", "");
+        });
+
+        if ($form.length) {
+            $form.on("submit", function () {
+                if (!pendingPin) {
+                    return;
+                }
+                $lat.val(pendingPin.lat);
+                $lon.val(pendingPin.lon);
+                pendingPin = null;
+            });
+        }
 
         // Map
         var $grp = $(".geodata-group", this);
-        var tiles = $grp.attr("data-tiles");
-        var attrib = $grp.attr("data-attrib");
-        if (tiles) {
+        var tiles = $grp.attr("data-tiles") || DEFAULT_TILES;
+        var attrib = $grp.attr("data-attrib") || DEFAULT_ATTRIB;
+
+        if (typeof L !== "undefined") {
             var $map = $("<div>");
-            $grp.append($("<div>").addClass("col-md-9 col-md-offset-3").append($map));
+            var $mapWrap = $("<div>").addClass("col-md-9 col-md-offset-3").append($map);
+            if ($notifications.length) {
+                $mapWrap.append($notifications);
+            }
+            $grp.append($mapWrap);
             var map = L.map($map.get(0));
             L.tileLayer(tiles, {
                 attribution: attrib,
                 maxZoom: 18,
             }).addTo(map);
 
-            function getpoint() {
-                if ($lat.val() !== "" && $lon.val() !== "") {
-                    var p = [parseFloat($lat.val().replace(",", ".")), parseFloat($lon.val().replace(",", "."))];
-                    // Clip to valid ranges. Very invalid lon/lat values can even lead to browser crashes in leaflet apparently
-                    if (p[0] < -90) p[0] = -90
-                    if (p[0] > 90) p[0] = 90
-                    if (p[1] < -180) p[1] = -180
-                    if (p[1] > 180) p[1] = 180
-                    return p
-                } else {
-                    return [0.0, 0.0];
-                }
-            }
-
-            var marker = L.marker(getpoint(), {
-                draggable: 'true',
+            var marker = L.marker(getPoint() || [0, 0], {
+                draggable: true,
                 icon: L.icon({
                     iconUrl: $grp.attr("data-icon"),
                     shadowUrl: $grp.attr("data-shadow"),
@@ -126,37 +188,56 @@ $(function () {
                     shadowSize: [41, 41]
                 })
             });
-            marker.addTo(map);
+            var point = getPoint();
+            if (point) {
+                marker.addTo(map);
+            }
+
             marker.on("dragend", function (event) {
                 var position = marker.getLatLng();
                 marker.setLatLng(position, {
-                    draggable: 'true'
-                }).bindPopup(position).update();
-                $lat.val(position.lat.toFixed(7));
-                $lon.val(position.lng.toFixed(7));
+                    draggable: true
+                }).bindPopup(position.lat.toFixed(7) + ", " + position.lng.toFixed(7)).update();
+                pendingPin = {
+                    lat: position.lat.toFixed(7),
+                    lon: position.lng.toFixed(7)
+                };
                 touched = true;
-                center(null);
+                $notifications.attr("data-notify", "confirm-pin");
             });
 
-            function center(zoom) {
-                if ($lat.val() !== "" && $lon.val() !== "") {
+            center = function(zoom) {
+                var p = getPoint();
+                if (p) {
                     if (zoom) {
-                        map.setView(getpoint(), zoom);
+                        map.setView(p, zoom);
                     } else {
-                        map.panTo(getpoint());
+                        map.panTo(p);
                     }
-                    marker.setLatLng(getpoint(), {
-                        draggable: 'true'
-                    }).bindPopup(getpoint()).update();
+                    if (!map.hasLayer(marker)) {
+                        marker.addTo(map);
+                    }
+                    marker.setLatLng(p, {
+                        draggable: true
+                    }).bindPopup(p[0].toFixed(7) + ", " + p[1].toFixed(7)).update();
                 } else {
                     map.fitWorld();
+                    if (map.hasLayer(marker)) {
+                        map.removeLayer(marker);
+                    }
                 }
-            }
+            };
 
-            center(13);
+            center(DEFAULT_ZOOM);
         } else {
-            function center(zoom) {
+            if ($notifications.length) {
+                $notifications.appendTo($fallbackLabel);
             }
+            center = function(zoom) {};
+        }
+
+        if (!getPoint() && cleanup($location.val()) !== "") {
+            load(true);
         }
 
     });
