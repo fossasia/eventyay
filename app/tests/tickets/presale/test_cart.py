@@ -824,15 +824,16 @@ class CartTest(CartTestMixin, TestCase):
         with scopes_disabled():
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
-    def test_free_price_out_of_bounds(self):
-        """price_out_of_bounds: both min and max set; price below min triggers two-value range error."""
+    def test_free_price_too_low_when_default_price_is_effective_minimum(self):
+        """Checkout minimum is max(default_price, free_price_min), not only free_price_min."""
         self.ticket.free_price = True
-        self.ticket.free_price_min = Decimal('20.00')
-        self.ticket.free_price_max = Decimal('30.00')
+        self.ticket.default_price = Decimal('30.00')
+        self.ticket.free_price_min = Decimal('10.00')
+        self.ticket.free_price_max = Decimal('40.00')
         self.ticket.save()
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
-            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '5.00'},
+            {'item_%d' % self.ticket.id: '1', 'price_%d' % self.ticket.id: '25.00'},
             follow=True,
         )
         self.assertRedirects(
@@ -842,8 +843,8 @@ class CartTest(CartTestMixin, TestCase):
         )
         assert 'alert-danger' in response.rendered_content
         doc = BeautifulSoup(response.rendered_content, 'lxml')
-        self.assertIn('20.00', doc.select('.alert-danger')[0].text)
         self.assertIn('30.00', doc.select('.alert-danger')[0].text)
+        self.assertIn('40.00', doc.select('.alert-danger')[0].text)
         self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
         with scopes_disabled():
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()

@@ -40,6 +40,17 @@ from eventyay.helpers.models import modelcopy
 from eventyay.helpers.money import change_decimal_field
 
 
+def effective_free_price_min(default_price, free_price_min):
+    """Match checkout pricing: minimum is the higher of default and configured minimum."""
+    if default_price is None and free_price_min is None:
+        return None
+    if free_price_min is None:
+        return default_price
+    if default_price is None:
+        return free_price_min
+    return max(default_price, free_price_min)
+
+
 class CategoryForm(I18nModelForm):
     class Meta:
         model = ProductCategory
@@ -486,15 +497,31 @@ class ProductCreateForm(I18nModelForm):
         free_price_min = cleaned_data.get('free_price_min')
         free_price_max = cleaned_data.get('free_price_max')
         default_price = cleaned_data.get('default_price')
-        if free_price_min is not None and free_price_max is not None:
-            if free_price_min > free_price_max:
-                raise forms.ValidationError({'free_price_max': [_('Maximum price cannot be lower than minimum price.')]})
-        if free_price and free_price_max is not None:
-            effective_min = free_price_min if free_price_min is not None else default_price
-            if effective_min is not None and free_price_max < effective_min:
-                raise forms.ValidationError(
-                    {'free_price_max': [_('Maximum price cannot be lower than the effective minimum price (minimum price if set, otherwise the default price.)')]}
-                )
+        if (
+            free_price
+            and free_price_min is not None
+            and default_price is not None
+            and free_price_min < default_price
+        ):
+            raise forms.ValidationError(
+                {
+                    'free_price_min': [
+                        _('Minimum price cannot be lower than the default price.'),
+                    ]
+                }
+            )
+        effective_min = effective_free_price_min(default_price, free_price_min)
+        if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
+            raise forms.ValidationError(
+                {
+                    'free_price_max': [
+                        _(
+                            'Maximum price must be greater than or equal to the effective minimum '
+                            '(the higher of the default price and the minimum price, if set).'
+                        )
+                    ]
+                }
+            )
 
         return cleaned_data
 
@@ -626,16 +653,25 @@ class ProductUpdateForm(I18nModelForm):
         free_price_min = d.get('free_price_min')
         free_price_max = d.get('free_price_max')
         default_price = d.get('default_price')
-        if free_price_min is not None and free_price_max is not None:
-            if free_price_min > free_price_max:
-                self.add_error('free_price_max', _('Maximum price cannot be lower than minimum price.'))
-        if free_price and free_price_max is not None:
-            effective_min = free_price_min if free_price_min is not None else default_price
-            if effective_min is not None and effective_min > free_price_max:
-                self.add_error(
-                    'free_price_max',
-                    _('Maximum price cannot be lower than the effective minimum price (minimum price if set, otherwise the default price.)'),
-                )
+        if (
+            free_price
+            and free_price_min is not None
+            and default_price is not None
+            and free_price_min < default_price
+        ):
+            self.add_error(
+                'free_price_min',
+                _('Minimum price cannot be lower than the default price.'),
+            )
+        effective_min = effective_free_price_min(default_price, free_price_min)
+        if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
+            self.add_error(
+                'free_price_max',
+                _(
+                    'Maximum price must be greater than or equal to the effective minimum '
+                    '(the higher of the default price and the minimum price, if set).'
+                ),
+            )
 
         return d
 
