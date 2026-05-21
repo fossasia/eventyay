@@ -727,16 +727,7 @@ class EventLive(TemplateView):
         elif request.POST.get('testmode') == 'false':
             with transaction.atomic():
                 event.testmode = False
-                update_fields = ['testmode']
-                if (
-                    event.live
-                    and not event.has_component_testmode
-                    and not (event.display_settings or {}).get('exclude_from_start_page')
-                    and not event.startpage_visible
-                ):
-                    event.startpage_visible = True
-                    update_fields.append('startpage_visible')
-                event.save(update_fields=update_fields)
+                event.save(update_fields=['testmode'])
                 self.request.event.log_action(
                     'eventyay.event.testmode.deactivated',
                     user=self.request.user,
@@ -826,16 +817,7 @@ class EventLive(TemplateView):
         elif request.POST.get('talk_testmode') == 'false':
             with transaction.atomic():
                 event.settings.talks_testmode = False
-                if (
-                    event.live
-                    and not event.has_component_testmode
-                    and not (event.display_settings or {}).get('exclude_from_start_page')
-                    and not event.startpage_visible
-                ):
-                    event.startpage_visible = True
-                    event.save(update_fields=['startpage_visible'])
-                else:
-                    event.save()
+                event.save()
                 self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
             messages.success(self.request, _('Talk pages are now in production mode.'))
         elif request.POST.get('private_testmode_tickets_action'):

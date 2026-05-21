@@ -248,35 +248,6 @@ class TestStartPageVisibility:
         assert 'OffStart UniqueQueryToken' in content
         assert 'Listed Event' not in content
 
-    def test_start_page_shows_event_when_publication_allows_but_startpage_visible_was_off(
-        self, client, organizer, event
-    ):
-        """Saving publication settings re-enables startpage_visible when not excluded."""
-        event.name = 'Sync Visible Event'
-        event.live = True
-        event.is_public = True
-        event.startpage_visible = False
-        event.startpage_featured = False
-        event.display_settings = {
-            **(event.display_settings or {}),
-            'exclude_from_start_page': False,
-        }
-        event.save(
-            update_fields=['name', 'live', 'is_public', 'startpage_visible', 'startpage_featured', 'display_settings']
-        )
-
-        response = client.get('/')
-        assert response.status_code == 200
-        assert 'Sync Visible Event' not in response.content.decode('utf-8')
-
-        event.display_settings = {**(event.display_settings or {}), 'exclude_from_start_page': False}
-        event.startpage_visible = True
-        event.save(update_fields=['startpage_visible', 'display_settings'])
-
-        response = client.get('/')
-        assert response.status_code == 200
-        assert 'Sync Visible Event' in response.content.decode('utf-8')
-
     def test_start_page_search_hides_non_public_events(self, client, organizer, event):
         """Live but non-public events must not appear in platform start page search."""
         event.name = 'Public Search Event'

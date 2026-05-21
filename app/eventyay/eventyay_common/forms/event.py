@@ -272,22 +272,3 @@ class EventPublicationForm(JsonSubfieldMixin, forms.Form):
             'exclude_from_start_page': 'display_settings',
             'exclude_from_search': 'display_settings',
         }
-
-    def save(self, *args, **kwargs):
-        commit = kwargs.pop('commit', True)
-        instance = super().save(*args, commit=False, **kwargs)
-        update_fields = list({path for path in self.Meta.json_fields.values()})
-        exclude_from_start_page = self.cleaned_data.get('exclude_from_start_page', False)
-        if exclude_from_start_page:
-            if instance.startpage_visible:
-                instance.startpage_visible = False
-                update_fields.append('startpage_visible')
-            if instance.startpage_featured:
-                instance.startpage_featured = False
-                update_fields.append('startpage_featured')
-        elif instance.live and not instance.has_component_testmode and not instance.startpage_visible:
-            instance.startpage_visible = True
-            update_fields.append('startpage_visible')
-        if commit:
-            instance.save(update_fields=list(dict.fromkeys(update_fields)))
-        return instance

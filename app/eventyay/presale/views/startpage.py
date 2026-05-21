@@ -1,13 +1,12 @@
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.db.models import Q
 from django.utils import timezone
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from eventyay.base.models import Event
 from eventyay.base.models.page import Page
+from eventyay.presale.startpage_events import get_startpage_events_queryset
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.eventyay_common.navigation import get_global_navigation
@@ -48,23 +47,7 @@ class StartPageView(TemplateView):
         search_query = self.request.GET.get('q', '').strip()
         ctx['search_query'] = search_query
         with scopes_disabled():
-            qs = (
-                Event.objects.select_related('organizer')
-                .prefetch_related('_settings_objects')
-                .filter(live=True, is_public=True)
-            )
-
-            # Respect start page exclusion flag
-            qs = qs.exclude(display_settings__exclude_from_start_page=True)
-
-            if search_query:
-                qs = qs.filter(name__icontains=search_query)
-                # Respect search exclusion flag when searching
-                qs = qs.exclude(display_settings__exclude_from_search=True)
-            else:
-                qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-
-            events = list(qs.order_by('date_from'))
+            events = list(get_startpage_events_queryset(search_query=search_query))
             visible_events = [event for event in events if not event.has_component_testmode]
 
             if search_query:

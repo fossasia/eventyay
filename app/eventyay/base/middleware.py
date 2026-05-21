@@ -201,19 +201,14 @@ def get_startpage_events(request: HttpRequest):
     if view_name not in ('index', 'presale:index'):
         return []
 
-    from django.db.models import Q
     from django_scopes import scopes_disabled
 
-    from eventyay.base.models import Event
+    from eventyay.presale.startpage_events import get_startpage_events_queryset
 
     search_query = request.GET.get('q', '').strip()
     with scopes_disabled():
-        qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
-        qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
-        if search_query:
-            qs = qs.filter(name__icontains=search_query)
-
-        return [event for event in qs.order_by('date_from') if not event.has_component_testmode]
+        qs = get_startpage_events_queryset(search_query=search_query)
+        return [event for event in qs if not event.has_component_testmode]
 
 
 def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
