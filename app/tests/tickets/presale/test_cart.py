@@ -777,9 +777,10 @@ class CartTest(CartTestMixin, TestCase):
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
     def test_free_price_too_low_with_min(self):
-        """price_too_low: submitted price is below free_price_min; error message must include min value + currency."""
+        """price_too_low: submitted price is below free_price_min; error shows full price range."""
         self.ticket.free_price = True
         self.ticket.free_price_min = Decimal('20.00')
+        self.ticket.free_price_max = Decimal('30.00')
         self.ticket.save()
         response = self.client.post(
             '/%s/%s/cart/add' % (self.orga.slug, self.event.slug),
@@ -794,13 +795,15 @@ class CartTest(CartTestMixin, TestCase):
         assert 'alert-danger' in response.rendered_content
         doc = BeautifulSoup(response.rendered_content, 'lxml')
         self.assertIn('20.00', doc.select('.alert-danger')[0].text)
+        self.assertIn('30.00', doc.select('.alert-danger')[0].text)
         self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
         with scopes_disabled():
             assert not CartPosition.objects.filter(cart_id=self.session_key, event=self.event).exists()
 
     def test_free_price_too_high_max(self):
-        """price_too_high_max: submitted price exceeds free_price_max; error message must include max value + currency."""
+        """price_too_high_max: submitted price exceeds free_price_max; error shows full price range."""
         self.ticket.free_price = True
+        self.ticket.free_price_min = Decimal('20.00')
         self.ticket.free_price_max = Decimal('30.00')
         self.ticket.save()
         response = self.client.post(
@@ -815,6 +818,7 @@ class CartTest(CartTestMixin, TestCase):
         )
         assert 'alert-danger' in response.rendered_content
         doc = BeautifulSoup(response.rendered_content, 'lxml')
+        self.assertIn('20.00', doc.select('.alert-danger')[0].text)
         self.assertIn('30.00', doc.select('.alert-danger')[0].text)
         self.assertIn(self.event.currency, doc.select('.alert-danger')[0].text)
         with scopes_disabled():

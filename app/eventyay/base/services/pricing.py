@@ -82,46 +82,38 @@ def get_price(
         if custom_price > 100000000:
             raise ValueError('price_too_high')
 
-        if product.free_price_max is not None:
-            max_price_obj = tax_rule.tax(product.free_price_max, invoice_address=invoice_address)
-            if custom_price_is_net and custom_price > max_price_obj.net:
-                raise ValueError('price_too_high_max', str(max_price_obj.net), product.event.currency)
-            elif not custom_price_is_net and custom_price > max_price_obj.gross:
-                raise ValueError('price_too_high_max', str(max_price_obj.gross), product.event.currency)
-
         price = tax_rule.tax(price, invoice_address=invoice_address)
+        min_net = price.net
+        min_gross = price.gross
 
         if product.free_price_min is not None:
             min_price_obj = tax_rule.tax(product.free_price_min, invoice_address=invoice_address)
             # Effective minimum: never allow undercuts of voucher/subevent-adjusted base price.
-            min_net = max(min_price_obj.net, price.net)
-            min_gross = max(min_price_obj.gross, price.gross)
+            min_net = max(min_price_obj.net, min_net)
+            min_gross = max(min_price_obj.gross, min_gross)
 
-            if custom_price_is_net and custom_price < min_net:
-                if product.free_price_max is not None:
-                    max_price_obj = tax_rule.tax(product.free_price_max, invoice_address=invoice_address)
-                    raise ValueError(
-                        'price_out_of_bounds',
-                        str(min_net),
-                        str(max_price_obj.net),
-                        product.event.currency,
-                    )
-                else:
-                    raise ValueError('price_too_low', str(min_net), product.event.currency)
-            elif not custom_price_is_net and custom_price < min_gross:
-                if product.free_price_max is not None:
-                    max_price_obj = tax_rule.tax(product.free_price_max, invoice_address=invoice_address)
-                    raise ValueError(
-                        'price_out_of_bounds',
-                        str(min_gross),
-                        str(max_price_obj.gross),
-                        product.event.currency,
-                    )
-                else:
-                    raise ValueError('price_too_low', str(min_gross), product.event.currency)
+        max_net = max_gross = None
+        if product.free_price_max is not None:
+            max_price_obj = tax_rule.tax(product.free_price_max, invoice_address=invoice_address)
+            max_net = max_price_obj.net
+            max_gross = max_price_obj.gross
+
+        currency = product.event.currency
+
+        if custom_price_is_net:
+            if max_net is not None and custom_price > max_net:
+                raise ValueError('price_too_high_max', str(min_net), str(max_net), currency)
+            if custom_price < min_net:
+                if max_net is not None:
+                    raise ValueError('price_too_low', str(min_net), str(max_net), currency)
+                raise ValueError('price_too_low', str(min_net), currency)
         else:
-            min_net = price.net
-            min_gross = price.gross
+            if max_gross is not None and custom_price > max_gross:
+                raise ValueError('price_too_high_max', str(min_gross), str(max_gross), currency)
+            if custom_price < min_gross:
+                if max_gross is not None:
+                    raise ValueError('price_too_low', str(min_gross), str(max_gross), currency)
+                raise ValueError('price_too_low', str(min_gross), currency)
 
         if custom_price_is_net:
             price = tax_rule.tax(
