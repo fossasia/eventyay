@@ -1,8 +1,10 @@
 import logging
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import cast
 from urllib.parse import urljoin
+from urllib.request import urlopen
 
 import msgspec
 from django import template
@@ -12,6 +14,25 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 logger = logging.getLogger(__name__)
+
+VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
+VIDEO_DEV_SERVER = settings.VITE_DEV_SERVER_PORTS['video']
+
+
+def fetch_vite_html(vite_dev_server: str):
+    """Fetch index.html from a Vite dev server and rewrite asset URLs to absolute.
+
+    Returns a fallback HTML comment if the dev server is unreachable.
+    """
+    try:
+        with urlopen(f'{vite_dev_server}/index.html', timeout=5) as resp:
+            html = resp.read().decode('utf-8')
+    except OSError:
+        return f'<!-- Vite dev server at {vite_dev_server} not reachable --><body></body>'
+    html = re.sub(r'(src|href)="(/(?![/#]))', rf'\1="{vite_dev_server}\2', html)
+    html = re.sub(r'(src|href)="(\./)', rf'\1="{vite_dev_server}/', html)
+    return html
+
 
 # The vite_asset tag is only used for schedule-editor app, we only need find manifest.json file
 # for this app.
@@ -49,7 +70,7 @@ def load_mapping() -> ManifestMapping:
 def generate_script_tag(path: str, attrs: dict[str, str]) -> str:
     all_attrs = ' '.join(f'{key}="{value}"' for key, value in attrs.items())
     if settings.VITE_DEV_MODE:
-        src = urljoin(settings.VITE_DEV_SERVER, path)
+        src = urljoin(settings.VITE_DEV_SERVER_PORTS['schedule-editor'], path)
     else:
         src = urljoin(settings.STATIC_URL, f'schedule-editor/{path}')
     return f'<script {all_attrs} src="{src}"></script>'
@@ -114,3 +135,19 @@ def vite_hmr() -> str:
     if not settings.VITE_DEV_MODE:
         return ''
     return generate_script_tag('@vite/client', {'type': 'module'})
+
+
+@register.simple_tag
+@mark_safe
+def vite_app_scripts(app, entry, fallback=None):
+    if not settings.VITE_DEV_MODE:
+        if fallback:
+            src = urljoin(settings.STATIC_URL, fallback)
+        else:
+            src = urljoin(settings.STATIC_URL, f'{app}/{entry}')
+        return f'<script type="module" src="{src}"></script>'
+    server = settings.VITE_DEV_SERVER_PORTS[app]
+    return (
+        f'<script type="module" src="{server}/@vite/client"></script>'
+        f'<script type="module" src="{server}/{entry}"></script>'
+    )
