@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
@@ -9,6 +11,7 @@ from django.utils.translation import pgettext_lazy
 
 from eventyay import consts
 from eventyay.base.models.orders import Order, OrderPayment
+from eventyay.base.services.experience_resolver import ExperienceResolver
 from eventyay.base.services.orders import perform_order
 from eventyay.base.templatetags.rich_text import rich_text_snippet
 from eventyay.base.views.tasks import AsyncAction
@@ -23,6 +26,8 @@ from eventyay.presale.views import CartMixin, get_cart_is_free
 from eventyay.presale.views.cart import create_empty_cart_id
 
 from .template_flow_step import TemplateFlowStep
+
+logger = logging.getLogger(__name__)
 
 
 class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
@@ -156,6 +161,21 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
 
     def get_success_url(self, value):
         order = Order.objects.get(id=value)
+        resolver = ExperienceResolver()
+        try:
+            profiles = [
+                resolver.resolve(pos, order.event)
+                for pos in order.positions.select_related('product').all()
+            ]
+            if profiles and all(p.has_stream_access for p in profiles):
+                stream_url = profiles[0].primary_cta_url
+                if stream_url:
+                    return stream_url
+        except ValueError:
+            logger.warning(
+                'ExperienceResolver failed for order %s; falling back to order URL.',
+                order.code,
+            )
         return self.get_order_url(order)
 
     def get_error_message(self, exception):

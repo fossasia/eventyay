@@ -24,6 +24,7 @@ from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.base.models import fields
 from eventyay.base.models.base import LoggedModel
+from eventyay.base.models.choices import ParticipationMode
 from eventyay.base.models.fields import MultiStringField
 from eventyay.base.models.tax import TaxedPrice
 
@@ -279,6 +280,13 @@ class Product(LoggedModel):
     name = I18nCharField(
         max_length=255,
         verbose_name=_('Product name'),
+    )
+    participation_mode = models.CharField(
+        max_length=50,
+        choices=ParticipationMode.choices,
+        default=ParticipationMode.IN_PERSON,
+        verbose_name=_('Participation mode'),
+        help_text=_('Whether this ticket grants virtual (online) or in-person access.'),
     )
     internal_name = models.CharField(
         verbose_name=_('Internal name'),

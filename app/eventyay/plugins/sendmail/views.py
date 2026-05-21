@@ -108,6 +108,13 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             if form.cleaned_data.get('order_created_to'):
                 opq = opq.filter(order__datetime__lt=attach_timezone(form.cleaned_data['order_created_to']))
 
+        pm_filter = form.cleaned_data.get('participation_mode')
+        if pm_filter:
+            opq = opq.filter(
+                Q(participation_mode_override=pm_filter)
+                | Q(participation_mode_override__isnull=True, product__participation_mode=pm_filter)
+            )
+
         orders = orders.annotate(match_pos=Exists(opq)).filter(match_pos=True).distinct()
 
         if not orders:

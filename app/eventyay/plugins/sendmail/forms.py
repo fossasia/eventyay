@@ -13,6 +13,7 @@ from eventyay.base.forms import I18nMarkdownTextarea, PlaceholderValidator, Sett
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
+from eventyay.base.models.choices import ParticipationMode
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import Product
 from eventyay.base.models.organizer import Team
@@ -107,6 +108,12 @@ class MailForm(forms.Form):
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
         required=False,
         initial='UTC',
+    )
+    participation_mode = forms.ChoiceField(
+        choices=[('', _('All attendees'))] + list(ParticipationMode.choices),
+        required=False,
+        label=_('Participation mode'),
+        help_text=_('Filter recipients by their effective participation mode.'),
     )
 
     def clean(self):

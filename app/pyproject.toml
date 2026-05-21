@@ -247,6 +247,7 @@ test = [
     "faker>=40.15.0",
     "fakeredis>=2.35.1",
     "freezegun>=1.5.5",
+    "hypothesis>=6.131.0",
     "pytest>=9.0.3",
     "pytest-asyncio>=1.3.0",
     "pytest-cache>=1.0",

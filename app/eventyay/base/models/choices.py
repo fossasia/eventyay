@@ -36,3 +36,8 @@ class PriceModeChoices(models.TextChoices):
     SET = 'set', _('Set product price to')
     SUBTRACT = 'subtract', _('Subtract from product price')
     PERCENT = 'percent', _('Reduce product price by (%)')
+
+
+class ParticipationMode(models.TextChoices):
+    VIRTUAL = 'virtual', _('Virtual (online)')
+    IN_PERSON = 'in_person', _('In-person')

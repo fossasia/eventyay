@@ -383,6 +383,7 @@ class ProductCreateForm(I18nModelForm):
                 'hidden_if_available',
                 'require_bundling',
                 'checkin_attention',
+                'participation_mode',
             )
             for f in fields:
                 setattr(self.instance, f, getattr(self.cleaned_data['copy_from'], f))
@@ -636,6 +637,7 @@ class ProductUpdateForm(I18nModelForm):
             'hidden_if_available',
             'issue_giftcard',
             'allow_user_variation_change',
+            'participation_mode',
         ]
         field_classes = {
             'available_from': SplitDateTimeField,

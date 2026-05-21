@@ -1,4 +1,5 @@
 import datetime
+import logging
 from urllib.parse import urlparse
 
 import pytz
@@ -8,10 +9,13 @@ from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 
 from eventyay.base.models import Event
+from eventyay.base.services.experience_resolver import ExperienceResolver
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
+logger = logging.getLogger(__name__)
 
-def get_ical(events):
+
+def get_ical(events, position=None):
     cal = vobject.iCalendar()
     cal.add('prodid').value = '-//eventyay//{}//'.format(settings.INSTANCE_NAME.replace(' ', '_'))
     creation_time = datetime.datetime.now(pytz.utc)
@@ -27,8 +31,24 @@ def get_ical(events):
         vevent = cal.add('vevent')
         vevent.add('summary').value = str(ev.name)
         vevent.add('dtstamp').value = creation_time
-        if ev.location:
-            vevent.add('location').value = str(ev.location)
+
+        # Determine LOCATION: use ExperienceProfile when a position is provided,
+        # otherwise fall back to the event's physical location.
+        location = None
+        if position is not None:
+            try:
+                profile = ExperienceResolver().resolve(position, event)
+                location = profile.calendar_location
+            except ValueError:
+                logger.warning(
+                    'ExperienceResolver failed for position %s in get_ical; falling back to event location.',
+                    getattr(position, 'pk', position),
+                )
+        if location is None and ev.location:
+            location = str(ev.location)
+        if location:
+            vevent.add('location').value = location
+
         vevent.add('uid').value = 'eventyay-{}-{}-{}@{}'.format(
             event.organizer.slug,
             event.slug,

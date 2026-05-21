@@ -5,10 +5,12 @@ from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.utils import translation
 from django.utils.translation import get_language_info
-from django_scopes import get_scope
+from django_scopes import get_scope, scope
 from i18nfield.strings import LazyI18nString
 
+from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.page import Page
+from eventyay.base.services.experience_resolver import ExperienceResolver
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_event_organiser, user_has_cfp_submissions
 from eventyay.helpers.i18n import (
@@ -169,8 +171,35 @@ def _default_context(request):
     ctx['show_organizer_area'] = False
     ctx['user_has_cfp_submissions'] = False
     ctx['talks_published'] = False
+    ctx['show_join_online_nav'] = False
+    ctx['join_online_url'] = None
     if request.user and request.user.is_authenticated and hasattr(request, 'event') and request.event:
         ctx['show_organizer_area'] = is_event_organiser(request.user, request, request.event)
+        ctx['talks_published'] = request.event.talks_published
+        if ctx['talks_published']:
+            ctx['user_has_cfp_submissions'] = user_has_cfp_submissions(request, request.event)
+
+        # Resolve participation mode for the authenticated user's active position
+        with scope(event=request.event):
+            pos = (
+                OrderPosition.objects.filter(
+                    order__event=request.event,
+                    order__status__in=[Order.STATUS_PAID, Order.STATUS_PENDING],
+                    order__email__iexact=request.user.email,
+                    canceled=False,
+                )
+                .select_related('product')
+                .first()
+            )
+        if pos:
+            try:
+                profile = ExperienceResolver().resolve(pos, request.event)
+                ctx['show_join_online_nav'] = profile.show_join_online_nav
+                ctx['join_online_url'] = profile.primary_cta_url
+            except ValueError:
+                pass
+    elif hasattr(request, 'event') and request.event:
+        ctx['show_organizer_area'] = False
         ctx['talks_published'] = request.event.talks_published
         if ctx['talks_published']:
             ctx['user_has_cfp_submissions'] = user_has_cfp_submissions(request, request.event)

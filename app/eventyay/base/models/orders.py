@@ -59,6 +59,7 @@ from eventyay.base.signals import order_gracefully_delete
 
 from ...helpers.countries import CachedCountries, FastCountryField
 from .base import LockModel, LoggedModel
+from .choices import ParticipationMode
 from .event import Event, SubEvent
 from .product import Product, ProductVariation, Question, QuestionOption, Quota
 
@@ -1320,6 +1321,14 @@ class AbstractPosition(models.Model):
     addon_to = models.ForeignKey('self', null=True, blank=True, on_delete=models.PROTECT, related_name='addons')
     meta_info = models.TextField(verbose_name=_('Meta information'), null=True, blank=True)
     seat = models.ForeignKey('Seat', null=True, blank=True, on_delete=models.PROTECT)
+    participation_mode_override = models.CharField(
+        max_length=50,
+        choices=ParticipationMode.choices,
+        null=True,
+        blank=True,
+        verbose_name=_('Participation mode override'),
+        help_text=_('If set, overrides the product-level participation mode for this position.'),
+    )
 
     company = models.CharField(max_length=255, blank=True, verbose_name=_('Company name'), null=True)
     job_title = models.CharField(max_length=255, blank=True, verbose_name=_('Job Title'), null=True)
