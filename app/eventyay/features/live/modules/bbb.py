@@ -1,3 +1,5 @@
+import uuid
+
 from eventyay.core.permissions import Permission
 from eventyay.base.services.bbb import BBBService
 from eventyay.features.live.decorators import command, room_action
@@ -42,9 +44,16 @@ class BBBModule(BaseModule):
         service = BBBService(self.consumer.event)
         if not self.consumer.user.profile.get("display_name"):
             raise ConsumerException("bbb.join.missing_profile")
+        
+        call_id = body.get("call")
+        try:
+            uuid.UUID(str(call_id))
+        except (ValueError, TypeError):
+            raise ConsumerException("bbb.failed")
+        
         try:
             url = await service.get_join_url_for_call_id(
-                body.get("call"),
+                call_id,
                 self.consumer.user,
             )
         except ValueError:
