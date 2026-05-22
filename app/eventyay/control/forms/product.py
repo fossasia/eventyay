@@ -51,6 +51,30 @@ def effective_free_price_min(default_price, free_price_min):
     return max(default_price, free_price_min)
 
 
+def clean_free_price_bounds(cleaned_data, form=None):
+    """Clear or validate free-price min/max; effective minimum matches checkout pricing."""
+    free_price = cleaned_data.get('free_price')
+    if not free_price:
+        cleaned_data['free_price_min'] = None
+        cleaned_data['free_price_max'] = None
+        return
+
+    effective_min = effective_free_price_min(
+        cleaned_data.get('default_price'),
+        cleaned_data.get('free_price_min'),
+    )
+    free_price_max = cleaned_data.get('free_price_max')
+    if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
+        msg = _(
+            'Maximum price must be greater than or equal to the effective minimum '
+            '(the higher of the default price and the minimum price, if set).'
+        )
+        if form is not None:
+            form.add_error('free_price_max', msg)
+        else:
+            raise forms.ValidationError({'free_price_max': [msg]})
+
+
 class CategoryForm(I18nModelForm):
     class Meta:
         model = ProductCategory
@@ -489,39 +513,7 @@ class ProductCreateForm(I18nModelForm):
                 if not self.cleaned_data.get('quota_add_existing'):
                     raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
 
-        free_price = cleaned_data.get('free_price')
-        if not free_price:
-            cleaned_data['free_price_min'] = None
-            cleaned_data['free_price_max'] = None
-
-        free_price_min = cleaned_data.get('free_price_min')
-        free_price_max = cleaned_data.get('free_price_max')
-        default_price = cleaned_data.get('default_price')
-        if (
-            free_price
-            and free_price_min is not None
-            and default_price is not None
-            and free_price_min < default_price
-        ):
-            raise forms.ValidationError(
-                {
-                    'free_price_min': [
-                        _('Minimum price cannot be lower than the default price.'),
-                    ]
-                }
-            )
-        effective_min = effective_free_price_min(default_price, free_price_min)
-        if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
-            raise forms.ValidationError(
-                {
-                    'free_price_max': [
-                        _(
-                            'Maximum price must be greater than or equal to the effective minimum '
-                            '(the higher of the default price and the minimum price, if set).'
-                        )
-                    ]
-                }
-            )
+        clean_free_price_bounds(cleaned_data)
 
         return cleaned_data
 
@@ -645,33 +637,7 @@ class ProductUpdateForm(I18nModelForm):
                     'admission',
                     _('Gift card products should not be admission products at the same time.'),
                 )
-        free_price = d.get('free_price')
-        if not free_price:
-            d['free_price_min'] = None
-            d['free_price_max'] = None
-
-        free_price_min = d.get('free_price_min')
-        free_price_max = d.get('free_price_max')
-        default_price = d.get('default_price')
-        if (
-            free_price
-            and free_price_min is not None
-            and default_price is not None
-            and free_price_min < default_price
-        ):
-            self.add_error(
-                'free_price_min',
-                _('Minimum price cannot be lower than the default price.'),
-            )
-        effective_min = effective_free_price_min(default_price, free_price_min)
-        if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
-            self.add_error(
-                'free_price_max',
-                _(
-                    'Maximum price must be greater than or equal to the effective minimum '
-                    '(the higher of the default price and the minimum price, if set).'
-                ),
-            )
+        clean_free_price_bounds(d, form=self)
 
         return d
 

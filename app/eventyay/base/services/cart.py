@@ -94,7 +94,6 @@ error_messages = {
     'price_too_low': _('The entered price is below the permitted minimum. The price range is %s to %s %s.'),
     'price_too_low_min_only': _('The entered price is below the permitted minimum. The minimum price is %s.'),
     'price_too_high_max': _('The entered price exceeds the permitted maximum. The price range is %s to %s %s.'),
-    'price_out_of_bounds': _('The entered price is outside the permitted range. The price range is %s to %s %s.'),
     'voucher_invalid': _('This voucher code is not known in our database.'),
     'voucher_redeemed': _('This voucher code has already been used the maximum number of times allowed.'),
     'voucher_redeemed_cart': _(
@@ -458,10 +457,6 @@ class CartManager:
                 raise CartError(error_messages['price_too_low_min_only'], min_val)
             elif code == 'price_too_high_max' and len(e.args) >= 4:
                 raise CartError(error_messages['price_too_high_max'], (e.args[1], e.args[2], e.args[3]))
-            elif code == 'price_out_of_bounds' and len(e.args) >= 3:
-                if len(e.args) >= 4:
-                    raise CartError(error_messages['price_out_of_bounds'], (e.args[1], e.args[2], e.args[3]))
-                raise CartError(error_messages['price_out_of_bounds'], (e.args[1], e.args[2], ''))
             else:
                 raise
 
