@@ -1505,6 +1505,7 @@ class OrderChangeManager:
     PriceOperation = namedtuple('PriceOperation', ('position', 'price'))
     TaxRuleOperation = namedtuple('TaxRuleOperation', ('position', 'tax_rule'))
     CancelOperation = namedtuple('CancelOperation', ('position',))
+    ReinstateOperation = namedtuple('ReinstateOperation', ('position',))
     AddOperation = namedtuple('AddOperation', ('product', 'variation', 'price', 'addon_to', 'subevent', 'seat'))
     SplitOperation = namedtuple('SplitOperation', ('position',))
     FeeValueOperation = namedtuple('FeeValueOperation', ('fee', 'value'))
@@ -1717,6 +1718,16 @@ class OrderChangeManager:
         self._operations.append(self.CancelOperation(position))
         if position.seat:
             self._seatdiff.subtract([position.seat])
+
+        if self.order.event.settings.invoice_include_free or position.price != Decimal('0.00'):
+            self._invoice_dirty = True
+
+    def reinstate(self, position: OrderPosition):
+        self._totaldiff += position.price
+        self._quotadiff.update(position.quotas)
+        self._operations.append(self.ReinstateOperation(position))
+        if position.seat:
+            self._seatdiff.update([position.seat])
 
         if self.order.event.settings.invoice_include_free or position.price != Decimal('0.00'):
             self._invoice_dirty = True
@@ -2181,6 +2192,42 @@ class OrderChangeManager:
                     save=False,
                 )
                 op.position.save(update_fields=['canceled', 'secret'])
+            elif isinstance(op, self.ReinstateOperation):
+                for opa in op.position.addons.filter(canceled=True):
+                    self.order.log_action(
+                        'eventyay.event.order.changed.reinstate',
+                        user=self.user,
+                        auth=self.auth,
+                        data={
+                            'position': opa.pk,
+                            'positionid': opa.positionid,
+                            'product': opa.product.pk,
+                            'variation': opa.variation.pk if opa.variation else None,
+                            'addon_to': opa.addon_to_id,
+                            'price': opa.price,
+                        },
+                    )
+                    opa.canceled = False
+                    if opa.voucher:
+                        Voucher.objects.filter(pk=opa.voucher.pk).update(redeemed=F('redeemed') + 1)
+                    opa.save(update_fields=['canceled'])
+                self.order.log_action(
+                    'eventyay.event.order.changed.reinstate',
+                    user=self.user,
+                    auth=self.auth,
+                    data={
+                        'position': op.position.pk,
+                        'positionid': op.position.positionid,
+                        'product': op.position.product.pk,
+                        'variation': op.position.variation.pk if op.position.variation else None,
+                        'price': op.position.price,
+                        'addon_to': None,
+                    },
+                )
+                op.position.canceled = False
+                if op.position.voucher:
+                    Voucher.objects.filter(pk=op.position.voucher.pk).update(redeemed=F('redeemed') + 1)
+                op.position.save(update_fields=['canceled'])
             elif isinstance(op, self.AddOperation):
                 pos = OrderPosition.objects.create(
                     product=op.product,

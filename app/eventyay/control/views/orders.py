@@ -1778,6 +1778,33 @@ class OrderResendLink(OrderView):
         return HttpResponseNotAllowed(['POST'])
 
 
+class OrderPositionReinstate(OrderView):
+    permission = 'can_change_orders'
+
+    def post(self, *args, **kwargs):
+        try:
+            pos = get_object_or_404(
+                OrderPosition.all.filter(order=self.order, canceled=True),
+                pk=kwargs['position'],
+            )
+        except OrderPosition.DoesNotExist:
+            messages.error(self.request, _('Position not found or not canceled.'))
+            return self._redirect_back()
+
+        ocm = OrderChangeManager(self.order, user=self.request.user)
+        try:
+            ocm.reinstate(pos)
+            ocm.commit()
+        except OrderError as e:
+            messages.error(self.request, str(e))
+        else:
+            messages.success(self.request, _('The ticket has been reinstated.'))
+        return self._redirect_back()
+
+    def get(self, *args, **kwargs):
+        return HttpResponseNotAllowed(['POST'])
+
+
 class InvoiceDownload(EventPermissionRequiredMixin, View):
     permission = 'can_view_orders'
 
