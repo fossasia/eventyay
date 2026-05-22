@@ -27,6 +27,7 @@ from eventyay.cfp.forms.auth import ResetForm
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
+from eventyay.common.urls import get_file_url_path, is_file_url, is_http_url
 from eventyay.common.views.mixins import (
     Filterable,
     PaginationMixin,
@@ -146,14 +147,15 @@ class EventSocialMediaCard(SocialMediaCardMixin, View):
     def get_image(self):
         og_image = self.request.event.settings.get('og_image', as_type=str, default='') or ''
         if og_image:
-            if og_image.startswith('file://'):
-                og_image = og_image[7:]
-            if not og_image.startswith('http'):
+            og_image_path = og_image
+            if is_file_url(og_image):
+                og_image_path = get_file_url_path(og_image) or ''
+            if og_image_path and not is_http_url(og_image):
                 try:
-                    if default_storage.exists(og_image):
-                        return default_storage.open(og_image)
+                    if default_storage.exists(og_image_path):
+                        return default_storage.open(og_image_path)
                 except (OSError, SuspiciousFileOperation) as exc:
-                    logger.warning('Failed to open og_image from storage for %s: %s', og_image, exc)
+                    logger.warning('Failed to open og_image from storage for %s: %s', og_image_path, exc)
         return None
 
 
