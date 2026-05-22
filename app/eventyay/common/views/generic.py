@@ -1,9 +1,12 @@
 import datetime as dt
+import logging
 from contextlib import suppress
 from urllib.parse import quote
 
 from django.contrib import messages
 from django.contrib.auth import login
+from django.core.exceptions import SuspiciousFileOperation
+from django.core.files.storage import default_storage
 from django.core.paginator import InvalidPage, Paginator
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
@@ -32,6 +35,8 @@ from eventyay.common.views.mixins import (
 from eventyay.base.forms import user
 from eventyay.base.models import User
 from eventyay.base.forms.auth import LoginForm
+
+logger = logging.getLogger(__name__)
 
 
 def get_next_url(request):
@@ -138,7 +143,18 @@ class GenericResetView(FormView):
 
 
 class EventSocialMediaCard(SocialMediaCardMixin, View):
-    pass
+    def get_image(self):
+        og_image = self.request.event.settings.get('og_image', as_type=str, default='') or ''
+        if og_image:
+            if og_image.startswith('file://'):
+                og_image = og_image[7:]
+            if not og_image.startswith('http'):
+                try:
+                    if default_storage.exists(og_image):
+                        return default_storage.open(og_image)
+                except (OSError, SuspiciousFileOperation) as exc:
+                    logger.warning('Failed to open og_image from storage for %s: %s', og_image, exc)
+        return None
 
 
 CRUDHandlerMap = {
