@@ -452,8 +452,7 @@ class Order(LockModel, LoggedModel):
         An order code which is unique among all events of a single organizer,
         built by concatenating the event name and the order code.
         """
-        event_identifier = re.sub(r'[^a-zA-Z0-9]', '', str(self.event.name)).upper()
-        return '{event}-{code}'.format(event=event_identifier, code=self.code)
+        return '{event}-{code}'.format(event=self.event.slug.upper(), code=self.code)
 
     @property
     def changable(self):
