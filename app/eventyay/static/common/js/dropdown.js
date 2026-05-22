@@ -17,8 +17,15 @@ const scrollActiveItemsIntoView = function(dropdown) {
         const activeItem = container.querySelector('.dropdown-item.active');
         if (!activeItem) return;
 
-        const containerRect = container.getBoundingClientRect();
+        // Force layout flush to ensure all dimensions are correct
+        // This is necessary especially on mobile where responsive styles are applied
+        void container.offsetHeight;
+        void activeItem.offsetHeight;
+
+        // Calculate position of active item relative to the scroll container
+        // This accounts for the current scroll position and the item's actual offset
         const itemRect = activeItem.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
         const itemTopInContainer = itemRect.top - containerRect.top + container.scrollTop;
         const desiredScrollTop = Math.max(0, itemTopInContainer - LANGUAGE_SCROLL_PADDING);
         container.scrollTop = desiredScrollTop;
@@ -77,7 +84,9 @@ const initDropdowns = function() {
             if (!dropdown.open) return;
             closeOtherDropdowns(dropdown);
             requestAnimationFrame(function() {
-                scrollActiveItemsIntoView(dropdown);
+                requestAnimationFrame(function() {
+                    scrollActiveItemsIntoView(dropdown);
+                });
             });
         });
     });
