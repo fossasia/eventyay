@@ -498,6 +498,11 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         verbose_name=_('Video: Can create and edit rooms'),
         help_text=_('Allows editing and deleting rooms inside Eventyay Video.'),
     )
+    can_video_manage_polls_questions = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can manage polls and questions'),
+        help_text=_('Allows managing polls and questions in rooms inside Eventyay Video.'),
+    )
     can_video_manage_kiosks = models.BooleanField(
         default=False,
         verbose_name=_('Video: Can create and edit kiosks'),

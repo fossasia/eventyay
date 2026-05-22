@@ -100,6 +100,10 @@ SYSTEM_ROLES = {
         Permission.ROOM_UPDATE.value,
         Permission.ROOM_DELETE.value,
     ],
+    "video_poll_question_manager": [
+        Permission.ROOM_QUESTION_MODERATE.value,
+        Permission.ROOM_POLL_MANAGE.value,
+    ],
     "video_kiosk_manager": [
         Permission.EVENT_KIOSKS_MANAGE.value,
     ],
@@ -120,6 +124,7 @@ ORGANIZER_ROLES = frozenset({
     'video_user_viewer',
     'video_user_moderator',
     'video_room_manager',
+    'video_poll_question_manager',
     'video_kiosk_manager',
     'video_config_manager',
     'video_direct_messaging',
