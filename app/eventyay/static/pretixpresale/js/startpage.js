@@ -36,6 +36,17 @@
     var copyBtn = document.getElementById('share-copy-btn');
     var copiedLabel = copyBtn ? (copyBtn.dataset.copiedLabel || 'Copied!') : 'Copied!';
     var currentShareTitle = '';
+    var originalCopyNodes = copyBtn ? Array.from(copyBtn.childNodes) : [];
+
+    function resetCopyButton() {
+      if (!copyBtn) {
+        return;
+      }
+      copyBtn.classList.remove('is-copied');
+      copyBtn.replaceChildren.apply(copyBtn, originalCopyNodes.map(function (node) {
+        return node.cloneNode(true);
+      }));
+    }
 
     buttons.forEach(function (button) {
       var shareLabel = button.dataset.shareLabel || 'Share event';
@@ -54,6 +65,7 @@
 
         // Ensure relative URLs become absolute without rewriting absolute custom-domain URLs
         var absoluteUrl = new URL(url, window.location.origin).href;
+        resetCopyButton();
 
         // Set input value
         urlInput.value = absoluteUrl;
@@ -106,9 +118,6 @@
     });
 
     if (copyBtn) {
-      var originalNodes = Array.from(copyBtn.childNodes).map(function (node) {
-        return node.cloneNode(true);
-      });
       copyBtn.addEventListener('click', function () {
         var url = urlInput.value;
         if (!url) {
@@ -121,12 +130,11 @@
               copyBtn.replaceChildren(document.createTextNode(copiedLabel + ' '));
               var checkIcon = document.createElement('i');
               checkIcon.className = 'fa fa-check';
+              checkIcon.setAttribute('aria-hidden', 'true');
+              checkIcon.setAttribute('focusable', 'false');
               copyBtn.appendChild(checkIcon);
               window.setTimeout(function () {
-                copyBtn.classList.remove('is-copied');
-                copyBtn.replaceChildren.apply(copyBtn, originalNodes.map(function (node) {
-                  return node.cloneNode(true);
-                }));
+                resetCopyButton();
               }, 1600);
             }
           })
