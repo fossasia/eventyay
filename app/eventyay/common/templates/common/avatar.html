@@ -13,7 +13,17 @@
                     {{ form.avatar.as_field_group }}
                 </div>
                 {% if request.event.cfp.enable_gravatar %}
-                    {{ form.get_gravatar.as_field_group }}
+                    <div class="form-check mt-3 mb-1">
+                        {{ form.get_gravatar }}
+                        <label class="form-check-label" for="{{ form.get_gravatar.id_for_label }}">
+                            {{ form.get_gravatar.label }}
+                        </label>
+                    </div>
+                    {% if form.get_gravatar.help_text %}
+                        <div class="form-text text-muted mb-2">
+                            {{ form.get_gravatar.help_text }}
+                        </div>
+                    {% endif %}
                 {% endif %}
             </div>
             {% with gravatar_url="https://www.gravatar.com/avatar/"|add:user.gravatar_parameter|add:"?s=140&d=identicon" %}
