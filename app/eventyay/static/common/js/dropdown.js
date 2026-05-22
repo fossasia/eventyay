@@ -85,6 +85,7 @@ const initDropdowns = function() {
             closeOtherDropdowns(dropdown);
             requestAnimationFrame(function() {
                 requestAnimationFrame(function() {
+                    if (!dropdown.open) return;
                     scrollActiveItemsIntoView(dropdown);
                 });
             });
