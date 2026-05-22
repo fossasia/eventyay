@@ -11,19 +11,9 @@
             </summary>
         {% endwith %}
         <div class="dropdown-content dropdown-content-sw">
-            <div class="dashboard-dropdown">
-                <a class="dropdown-item dashboard-dropdown-toggle" href="{{ base_path }}/common/" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-                    <i class="fa fa-tachometer"></i> {% translate "Dashboard" %}
-                </a>
-                <div class="dropdown-content dropdown-content-w" role="menu">
-                    <a class="dropdown-item" href="{{ base_path }}/common/">
-                        <i class="fa fa-tachometer"></i> {% translate "Main dashboard" %}
-                    </a>
-                    <a class="dropdown-item" href="{{ base_path }}/control/">
-                        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-                    </a>
-                </div>
-            </div>
+            <a class="dropdown-item" href="{{ base_path }}/common/">
+                <i class="fa fa-tachometer"></i> {% translate "Dashboard" %}
+            </a>
 
             <a class="dropdown-item" href="{{ base_path }}/common/orders/">
                 <i class="fa fa-shopping-cart"></i> {% translate "My orders" %}

@@ -10,7 +10,6 @@ from django_scopes import scope
 @pytest.mark.parametrize("test_user", ("orga", "speaker", "None"))
 @pytest.mark.django_db
 def test_main_dashboard_access(orga_user, orga_client, speaker, event, test_user):
-    '''Regression: orga:event.list was removed; main dashboard must remain accessible.'''
     url = reverse('eventyay_common:dashboard')
     if test_user == "speaker":
         orga_client.force_login(speaker)

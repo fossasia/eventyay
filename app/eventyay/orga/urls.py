@@ -66,6 +66,7 @@ urlpatterns = [
             ]
         ),
     ),
+    path('event/', dashboard.DashboardEventListView.as_view(), name='event.list'),
     path(
         'event/<slug:event>/',
         include(
