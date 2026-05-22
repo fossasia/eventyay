@@ -369,6 +369,12 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         kwargs['readonly'] = not self.can_edit
         # At this stage, new speakers can be added via the dedicated form
         kwargs['remove_additional_speaker'] = True
+        if self.object.state == SubmissionStates.DRAFT and self.request.POST.get('action') != 'dedraft':
+            kwargs['not_strict'] = True
+            # Clear the placeholder title so the field appears empty when editing.
+            from eventyay.cfp.flow import InfoStep
+            if self.object.title == InfoStep.DRAFT_TITLE_PLACEHOLDER and self.request.method != 'POST':
+                kwargs.setdefault('initial', {})['title'] = ''
         return kwargs
 
     def form_valid(self, form):

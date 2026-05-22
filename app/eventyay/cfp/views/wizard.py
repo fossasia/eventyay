@@ -13,9 +13,6 @@ from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.text.phrases import phrases
 
-logger = logging.getLogger(__name__)
-
-
 class SubmitStartView(EventPageMixin, View):
     @staticmethod
     def get(request, *args, **kwargs):
@@ -56,7 +53,6 @@ class SubmitWizard(EventPageMixin, View):
         if getattr(step, 'is_before', False):  # The current step URL is incorrect
             raise Http404()
         handler = getattr(step, request.method.lower(), self.http_method_not_allowed)
-        logger.debug('Handler: %s', handler)
         result = handler(request)
 
         if request.method == 'POST' and request.POST.get('action', 'submit') == 'draft':
@@ -68,13 +64,17 @@ class SubmitWizard(EventPageMixin, View):
                     for step in request.event.cfp_flow.steps
                     if getattr(step, 'is_before', False)
                     or step.identifier == kwargs['step']
-                    or step.identifier == 'user'
                 ],
             )
         if request.method == 'POST' and request.POST.get('action') == 'back':
             # When clicking Back, the step's POST handler has already saved the data
             # Now redirect to the previous step
             return result
+        action = request.POST.get('action', 'submit')
+        is_draft_mode = request.GET.get('draft') == '1'
+        if request.method == 'POST' and action == 'submit' and result is None:
+            is_final_submit = not step.get_next_applicable(request)
+            return self.done(request, draft=is_draft_mode and not is_final_submit)
         if request.method == 'GET' or (step.get_next_applicable(request) or not step.is_completed(request)):
             if result and (csp_change := step.get_csp_update(request)):
                 result._csp_update = csp_change
@@ -87,13 +87,37 @@ class SubmitWizard(EventPageMixin, View):
         steps = steps or request.event.cfp_flow.steps
         for step in steps:
             if step.is_applicable(request):
-                if not step.is_completed(request):
+                if not step.is_completed(request, not_strict=draft):
                     query = {'draft': 1} if draft else None
+                    # Build a helpful error message listing the specific missing fields
+                    error_msg = _('Please complete the "{step}" step before submitting.').format(step=step.label)
+                    if hasattr(step, 'get_form'):
+                        form = step.get_form(from_storage=True, not_strict=draft)
+                        form.is_valid()  # ensure errors are populated
+                        missing_required = []
+                        other_errors = []
+                        for key, error_list in form.errors.items():
+                            if key == '__all__' or key not in form.fields:
+                                continue
+                            for err in error_list:
+                                if err == form.fields[key].error_messages.get('required'):
+                                    if str(form.fields[key].label) not in missing_required:
+                                        missing_required.append(str(form.fields[key].label))
+                                else:
+                                    other_errors.append(f"{form.fields[key].label}: {err}")
+                        if missing_required:
+                            error_msg += ' ' + _('The following fields are required: {fields}.').format(
+                                fields=', '.join(missing_required)
+                            )
+                        if other_errors:
+                            error_msg += ' ' + ' '.join(other_errors)
+                    messages.error(request, error_msg)
                     return redirect(step.get_step_url(request, query=query))
                 valid_steps.append(step)
 
         # We are done, or at least the data checks out. Time to save results.
-        request.event.cfp_flow.steps_dict['user'].done(request)
+        if not draft:
+            request.event.cfp_flow.steps_dict['user'].done(request, draft=draft)
         for step in valid_steps:
             if step.identifier != 'user':
                 step.done(request, draft=draft)
@@ -104,5 +128,10 @@ class SubmitWizard(EventPageMixin, View):
             except SendMailException as exception:
                 logging.getLogger('').warning(str(exception))
                 messages.warning(request, phrases.cfp.submission_email_fail)
+
+        if draft and not request.user.is_authenticated:
+            user_step = request.event.cfp_flow.steps_dict.get('user')
+            if user_step:
+                return redirect(user_step.get_step_url(request))
 
         return redirect(reverse('cfp:event.user.submissions', kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug}))

@@ -79,6 +79,7 @@ class InfoForm(
         if not instance or not instance.content_locale:
             initial['content_locale'] = self.event.locale
 
+        self.not_strict = getattr(self, 'not_strict', kwargs.pop('not_strict', False))
         super().__init__(initial=initial, **kwargs)
         self.submission = self.instance
 
@@ -104,6 +105,7 @@ class InfoForm(
             track=initial.get('track'),
             submission_type=initial.get('submission_type'),
             readonly=self.readonly,
+            not_strict=self.not_strict,
         )
 
         self.order_fields_by_config('session')
@@ -189,6 +191,42 @@ class InfoForm(
             self.fields['slot_count'].help_text += ' ' + str(
                 _('Please contact the organizers if you want to change how often you’re presenting this proposal.')
             )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        if getattr(self, 'not_strict', False):
+            placeholder_title = '__AUTO_DRAFT_TITLE__'
+            has_user_data = False
+            
+            # These fields are often auto-filled by the browser with defaults.
+            skip_fields = {'content_locale', 'submission_type', 'slot_count', 'track'}
+            
+            for key, value in cleaned_data.items():
+                if key in skip_fields:
+                    continue
+                if isinstance(value, str):
+                    if value.strip() and value.strip() != placeholder_title:
+                        has_user_data = True
+                        break
+                elif isinstance(value, bool):
+                    if value:
+                        has_user_data = True
+                        break
+                elif hasattr(value, 'has_value'):
+                    if value.has_value:
+                        has_user_data = True
+                        break
+                elif value is not None and value != []:
+                    has_user_data = True
+                    break
+                    
+            if not has_user_data:
+                raise forms.ValidationError(
+                    _('Please fill in at least one field before saving a draft.')
+                )
+                
+        return cleaned_data
 
     def save(self, *args, **kwargs):
         for key, value in self.default_values.items():

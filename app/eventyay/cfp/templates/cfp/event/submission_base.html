@@ -67,23 +67,23 @@
             {% block buttons %}
                 <div class="row flex-row-reverse">
                     <div class="col-md-3 flip ml-auto d-flex flex-column">
-                        {% if request.GET.draft == "1" %}
-                            <button type="submit" class="btn btn-block btn-success btn-lg" name="action" value="draft">
-                                {% translate "Save as draft" %}
-                            </button>
-                        {% else %}
-                            <button type="submit" class="btn btn-block btn-success btn-lg" name="action" value="submit">
-                                {% if next_url %}
-                                    {% translate "Continue" %} »
-                                {% else %}
-                                    {% translate "Submit proposal!" %} »
-                                {% endif %}
-                            </button>
+                        <button type="submit" class="btn btn-block btn-success btn-lg" name="action" value="submit">
+                            {% if next_url %}
+                                {% translate "Continue" %} »
+                            {% else %}
+                                {% translate "Submit proposal!" %} »
+                            {% endif %}
+                        </button>
+                        {% if request.GET.draft != "1" %}
                             <button type="submit" class="btn btn-link text-center" name="action" value="draft">
                                 {% translate "or save as draft for now" %}
                                 <span data-toggle="tooltip" data-placement="bottom-left" class="tooltip-textbox" title="{% translate 'You can save your proposal as a draft and submit it later. Organisers will not be able to see your proposal, though they will be able to send you reminder emails about the upcoming deadline.' %}">
                                     <i class="fa fa-question-circle"></i>
                                 </span>
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-link text-center" name="action" value="draft">
+                                {% translate "Save draft and exit" %}
                             </button>
                         {% endif %}
                     </div>

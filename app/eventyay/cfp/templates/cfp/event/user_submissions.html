@@ -40,6 +40,7 @@
                 <thead>
                     <tr>
                         <th>{% translate "Title" %}</th>
+                        <th>{% translate "Last modified" %}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -47,7 +48,15 @@
                     {% for submission in drafts %}
                         <tr>
                             <td>
-                                <a href="{{ submission.urls.user_base }}">{{ submission.title|event_localize }}</a>
+                                {% translate "Draft Proposal" as draft_label %}
+                                {% if submission.title == '__AUTO_DRAFT_TITLE__' or submission.title == draft_label %}
+                                    <a href="{{ submission.urls.user_base }}" class="text-muted font-italic">{{ draft_label }}</a>
+                                {% else %}
+                                    <a href="{{ submission.urls.user_base }}">{{ submission.title|event_localize }}</a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ submission.created|date:"SHORT_DATE_FORMAT" }}
                             </td>
                             <td class="flip text-right">
                                 {% if submission.review_code and request.event|get_feature_flag:"submission_public_review" %}
