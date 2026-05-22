@@ -988,15 +988,47 @@ class Event(
 
     def save(self, *args, **kwargs):
         was_created = not bool(self.pk)
+        locales_changed = False
+        
+        # Check if locales have changed by comparing locale_array directly
+        if not was_created:
+            try:
+                old_instance = self.__class__.objects.get(pk=self.pk)
+                # Compute locales directly from locale_array to avoid cached_property issues
+                old_locales = set(code for code in old_instance.locale_array.split(',') if code)
+                new_locales = set(code for code in self.locale_array.split(',') if code)
+                if old_locales != new_locales:
+                    locales_changed = True
+            except self.__class__.DoesNotExist:
+                pass
+        
         if self.date_from and not self.date_to:
             self.date_to = self.date_from + timedelta(hours=24)
 
         obj = super().save(*args, **kwargs)
         self.cache.clear()
+        
+        # Clear cached_property for locales and related properties to ensure fresh calculation
+        if 'locales' in self.__dict__:
+            del self.__dict__['locales']
+        if 'content_locales' in self.__dict__:
+            del self.__dict__['content_locales']
 
         if was_created:
             self.build_initial_data()
+        elif locales_changed:
+            # Backfill all existing mail templates with new locales
+            self._backfill_all_mail_template_locales()
+        
         return obj
+
+    def _backfill_all_mail_template_locales(self):
+        """Backfill all existing mail templates with newly added locales."""
+        from eventyay.base.models import MailTemplate
+        
+        with scope(event=self):
+            for template in self.mail_templates.all():
+                self._ensure_mail_template_locales(template, template.role)
 
     def get_plugins(self):
         """
@@ -2762,12 +2794,24 @@ class Event(
     def get_mail_template(self, role):
         from eventyay.base.models import MailTemplate
         from eventyay.mail.default_templates import get_default_template
+        from i18nfield.strings import LazyI18nString
 
         try:
             with scope(event=self):
                 template = self.mail_templates.get(role=role)
         except MailTemplate.DoesNotExist:
-            subject, text = get_default_template(role)
+            default_subject, default_text = get_default_template(role)
+            # Initialize with all event locales from the start
+            subject_data = {}
+            text_data = {}
+            for locale in self.locales:
+                if locale:
+                    subject_data[locale] = str(default_subject.localize(locale))
+                    text_data[locale] = str(default_text.localize(locale))
+            
+            subject = LazyI18nString(subject_data) if subject_data else default_subject
+            text = LazyI18nString(text_data) if text_data else default_text
+            
             with scope(event=self):
                 template, __ = MailTemplate.objects.get_or_create(
                     event=self, role=role, defaults={'subject': subject, 'text': text}
@@ -2778,6 +2822,29 @@ class Event(
         from eventyay.mail.default_templates import get_default_template
 
         default_subject, default_text = get_default_template(role)
+        
+        # Pre-check: do we have all locales without needing a write?
+        locales_to_check = set(locale for locale in self.locales if locale)
+        all_locales_present = True
+        
+        for field_name, default_value in (('subject', default_subject), ('text', default_text)):
+            current_value = getattr(template, field_name)
+            if not (
+                hasattr(current_value, 'data')
+                and isinstance(current_value.data, dict)
+                and hasattr(default_value, 'localize')
+            ):
+                continue
+            
+            if locales_to_check - set(current_value.data.keys()):
+                all_locales_present = False
+                break
+        
+        # Early return if all locales are already present
+        if all_locales_present:
+            return template
+        
+        # Only enter transaction if we need to backfill missing locales
         with scope(event=self), transaction.atomic():
             if template.pk:
                 template = template.__class__.objects.select_for_update().get(pk=template.pk)

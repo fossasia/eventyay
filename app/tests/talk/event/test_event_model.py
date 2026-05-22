@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
-from pretalx.event.models import Event
+from eventyay.base.models import Event
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def test_initial_data(event):
 @pytest.mark.django_db
 def test_default_mail_template_is_initialized_for_all_event_locales(event):
     with scope(event=event):
-        template = event.get_mail_template("submission.state.accepted")
+        template = event.get_mail_template('submission.state.accepted')
         assert set(template.subject.data.keys()) == set(event.locales)
         assert set(template.text.data.keys()) == set(event.locales)
 
@@ -75,16 +75,16 @@ def test_default_mail_template_is_initialized_for_all_event_locales(event):
 @pytest.mark.django_db
 def test_default_mail_template_backfills_missing_locale_entries(event):
     with scope(event=event):
-        template = event.get_mail_template("submission.state.accepted")
-        template.subject = LazyI18nString({"en": "custom subject"})
-        template.text = LazyI18nString({"en": "custom text"})
-        template.save(update_fields=["subject", "text"])
+        template = event.get_mail_template('submission.state.accepted')
+        template.subject = LazyI18nString({'en': 'custom subject'})
+        template.text = LazyI18nString({'en': 'custom text'})
+        template.save(update_fields=['subject', 'text'])
 
-        template = event.get_mail_template("submission.state.accepted")
-        assert template.subject.data["en"] == "custom subject"
-        assert template.text.data["en"] == "custom text"
-        assert "de" in template.subject.data
-        assert "de" in template.text.data
+        template = event.get_mail_template('submission.state.accepted')
+        assert template.subject.data['en'] == 'custom subject'
+        assert template.text.data['en'] == 'custom text'
+        assert 'de' in template.subject.data
+        assert 'de' in template.text.data
 
 
 @pytest.mark.parametrize(
