@@ -1576,7 +1576,7 @@ DEFAULT_SETTINGS = {
         'form_class': forms.EmailField,
         'form_kwargs': dict(
             label=_('Contact address'),
-            help_text=_("We'll show this publicly to allow attendees to contact you."),
+            help_text=_("Attendees can reach you through a contact form. Messages will be forwarded to this address."),
         ),
     },
     'imprint_url': {

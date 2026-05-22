@@ -1643,3 +1643,8 @@ class ContactOrganizerTest(EventTestMixin, TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertFalse(resp.json()['success'])
 
+    def test_message_too_long(self):
+        resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'x' * 5001})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+

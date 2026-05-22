@@ -14,19 +14,21 @@
         <p class="contact-modal-description" id="contact-modal-desc">
             {% translate "Have a question about the event? You can send a message to the organizer." %}
         </p>
-        <form id="contact-organizer-form" method="post" data-url="{{ contact_url }}">
+        <form id="contact-organizer-form" method="post" action="{{ contact_url }}" data-url="{{ contact_url }}">
             {% csrf_token %}
             {% if not request.user.is_authenticated or not request.user.email %}
             <div class="contact-form-group">
                 <input type="email" name="email" id="contact-email"
-                       placeholder="{% translate 'Your email address' %}" required
-                       class="contact-form-input">
+                       placeholder="{% translate 'Your email address' %}"
+                       aria-label="{% translate 'Your email address' %}"
+                       required class="contact-form-input">
             </div>
             {% endif %}
             <div class="contact-form-group">
-                <textarea name="message" id="contact-message" rows="4"
-                          placeholder="{% translate 'What\'s your question for the organizer?' %}" required
-                          class="contact-form-textarea"></textarea>
+                <textarea name="message" id="contact-message" rows="4" maxlength="5000"
+                          placeholder="{% translate 'What\'s your question for the organizer?' %}"
+                          aria-label="{% translate 'Your message' %}"
+                          required class="contact-form-textarea"></textarea>
             </div>
             <p class="contact-modal-helper">
                 {% if request.user.is_authenticated and request.user.email %}

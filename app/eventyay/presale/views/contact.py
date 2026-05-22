@@ -30,6 +30,12 @@ class ContactOrganizerView(EventViewMixin, View):
                 status=400,
             )
 
+        if len(message) > 5000:
+            return JsonResponse(
+                {'success': False, 'error': _('Your message is too long (maximum 5000 characters).')},
+                status=400,
+            )
+
         if not sender_email:
             return JsonResponse(
                 {'success': False, 'error': _('Please enter your email address.')},
