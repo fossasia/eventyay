@@ -1,3 +1,4 @@
+from rest_framework import serializers
 from rest_framework.serializers import UUIDField
 
 from eventyay.api.mixins import PretalxSerializer
@@ -15,6 +16,7 @@ class RoomSerializer(AvailabilitiesMixin, PretalxSerializer):
         help_text="The uuid field is equal the the guid field if a guid has been set. Otherwise, it will contain a computed (stable) UUID.",
         read_only=True,
     )
+    has_linked_sessions = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
@@ -26,7 +28,14 @@ class RoomSerializer(AvailabilitiesMixin, PretalxSerializer):
             "guid",
             "capacity",
             "position",
+            "is_unscheduled",
+            "has_linked_sessions",
         )
+
+    def get_has_linked_sessions(self, obj):
+        from django_scopes import scope
+        with scope(event=obj.event):
+            return obj.talks.filter(submission__isnull=False).exists()
 
 
 @register_serializer(versions=CURRENT_VERSIONS)

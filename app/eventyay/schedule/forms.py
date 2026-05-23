@@ -204,7 +204,7 @@ class RoomForm(AvailabilitiesFormMixin, ReadOnlyFlag, I18nModelForm):
 
     class Meta:
         model = Room
-        fields = ['name', 'description', 'speaker_info', 'capacity']
+        fields = ['name', 'description', 'speaker_info', 'capacity', 'is_unscheduled']
 
 
 class QuickScheduleForm(forms.ModelForm):

@@ -223,6 +223,11 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     pretalx_id = models.IntegerField(default=0)
     schedule_data = JSONField(null=True, blank=True)
     force_join = models.BooleanField(default=False)
+    is_unscheduled = models.BooleanField(
+        default=False,
+        verbose_name=_('Unscheduled room'),
+        help_text=_('If enabled, this room will not appear in the schedule or schedule-editor and cannot be linked to talk sessions.')
+    )
 
     objects = RoomQuerySet.as_manager()
 
@@ -331,6 +336,8 @@ class RoomView(models.Model):
 
 
 class RoomConfigSerializer(I18nAwareModelSerializer):
+    has_linked_sessions = serializers.SerializerMethodField()
+
     class Meta:
         model = Room
         fields = (
@@ -344,7 +351,14 @@ class RoomConfigSerializer(I18nAwareModelSerializer):
             "pretalx_id",
             "force_join",
             "schedule_data",
+            "is_unscheduled",
+            "has_linked_sessions",
         )
+
+    def get_has_linked_sessions(self, obj):
+        from django_scopes import scope
+        with scope(event=obj.event):
+            return obj.talks.filter(submission__isnull=False).exists()
 
 
 def approximate_view_number(actual_number):
