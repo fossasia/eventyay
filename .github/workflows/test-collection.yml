@@ -3,16 +3,8 @@ name: Test Collection Check
 on:
   push:
     branches: [migrateImports, enext]
-    paths:
-      - 'app/tests/**'
-      - 'app/eventyay/**'
-      - 'app/pyproject.toml'
   pull_request:
     branches: [enext]
-    paths:
-      - 'app/tests/**'
-      - 'app/eventyay/**'
-      - 'app/pyproject.toml'
 
 jobs:
   collect:
