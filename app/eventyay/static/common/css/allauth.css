@@ -256,6 +256,14 @@
   align-items: center;
 }
 
+.email-confirm-container .btn-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 140px;
+}
+
 .action-buttons {
   justify-content: center;
 }
@@ -282,6 +290,18 @@
 .btn-primary:hover {
   background-color: #1b6ba8;
   border-color: #1b6ba8;
+}
+
+.btn.btn-grey {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn.btn-grey:hover,
+.btn.btn-grey:focus {
+  background-color: #5a6268;
+  border-color: #545b62;
 }
 
 .btn-default {
