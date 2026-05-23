@@ -621,22 +621,35 @@ class EventUpdate(
 
     def _run_email_test(self):
         """Test the central SMTP/SendGrid configuration and add a flash message."""
+        event = self.object
+        if not event.settings.smtp_use_custom:
+            messages.error(self.request, _('Custom email gateway is not enabled.'))
+            return
+        vendor = event.settings.get('email_vendor', 'smtp')
+        if vendor == 'sendgrid' and not event.settings.get('send_grid_api_key'):
+            messages.error(self.request, _('SendGrid API key is missing. Please configure it and save.'))
+            return
+        if vendor != 'sendgrid' and (not event.settings.get('smtp_host') or not event.settings.get('smtp_port')):
+            messages.error(self.request, _('SMTP host or port is missing. Please configure them and save.'))
+            return
+
         test_email = self.email_form.cleaned_data.get('test_email')
-        to_addrs = None
-        if test_email:
-            to_addrs = [a.strip() for a in test_email.split(',') if a.strip()] or None
-        backend = self.object.get_mail_backend(force_custom=True, timeout=10)
+        to_addrs = [a.strip() for a in test_email.split(',') if a.strip()] if test_email else None
+        backend = event.get_mail_backend(force_custom=True, timeout=10)
         try:
-            backend.test(self.object.settings.mail_from, to_addrs=to_addrs)
+            backend.test(event.settings.mail_from, to_addrs=to_addrs)
+        except UnicodeEncodeError:
+            logger.warning('Central email test failed — non-ASCII characters (event=%s)', event.slug)
+            messages.error(
+                self.request,
+                _('Email test failed because a field (password, username, or recipient) contains a non-ASCII character.'),
+            )
         except HTTPError as e:
-            logger.exception('Central SendGrid test failed (event=%s)', self.object.slug)
-            messages.error(self.request, _('SendGrid test failed. HTTP Error: %s') % str(e))
+            logger.exception('Central SendGrid test failed (event=%s)', event.slug)
+            messages.error(self.request, _('SendGrid test failed. HTTP Error: %(err)s') % {'err': e})
         except (smtplib.SMTPException, OSError) as e:
-            logger.exception('Central SMTP test failed (event=%s)', self.object.slug)
-            messages.warning(self.request, _('Test email failed: %s') % str(e))
-        except Exception as e:
-            logger.exception('Unexpected error during email test (event=%s)', self.object.slug)
-            messages.error(self.request, _('Error testing email configuration: %s') % str(e))
+            logger.exception('Central SMTP test failed (event=%s)', event.slug)
+            messages.warning(self.request, _('Test email failed to connect or send: %(err)s') % {'err': e})
         else:
             messages.success(self.request, _('Test email sent successfully.'))
 

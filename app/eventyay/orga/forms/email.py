@@ -144,5 +144,17 @@ class CentralMailSettingsForm(SettingsForm):
                         _('You can activate either SSL or STARTTLS, but not both at the same time.')
                     ),
                 )
+            uses_encryption = data.get('smtp_use_tls') or data.get('smtp_use_ssl')
+            localhost_names = {'127.0.0.1', '::1', '[::1]', 'localhost', 'localhost.localdomain'}
+            if not uses_encryption and data.get('smtp_host') not in localhost_names:
+                self.add_error(
+                    'smtp_host',
+                    ValidationError(
+                        _(
+                            'You must enable SSL or STARTTLS when using a non-local SMTP server '
+                            'to protect credentials and email content in transit.'
+                        )
+                    ),
+                )
 
         return data

@@ -41,16 +41,12 @@ logger = logging.getLogger(__name__)
 
 class BulkReplyToMixin:
     """Mixin for bulk email views to resolve Reply-To address."""
-    
+
     def _get_reply_to_for_bulk_email(self):
         event = self.request.event
         sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
         sender = sender or settings.MAIL_FROM
-        
-        return get_reply_to_address(
-            event,
-            sender_email=sender
-        )
+        return get_reply_to_address(event, sender_email=sender)
 
 
 class ComposeMailChoice(EventPermissionRequiredMixin, TemplateView):
