@@ -64,7 +64,12 @@
         currentShareTitle = title;
 
         // Ensure relative URLs become absolute without rewriting absolute custom-domain URLs
-        var absoluteUrl = new URL(url, window.location.origin).href;
+        var absoluteUrlObject = new URL(url, window.location.origin);
+        var shareImageSignature = button.dataset.shareImageSignature || (eventCard ? eventCard.dataset.shareImageSignature : '') || '';
+        if (shareImageSignature) {
+          absoluteUrlObject.searchParams.set('si', shareImageSignature);
+        }
+        var absoluteUrl = absoluteUrlObject.href;
         resetCopyButton();
 
         // Set input value

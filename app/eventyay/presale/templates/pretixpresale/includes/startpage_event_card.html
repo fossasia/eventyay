@@ -5,12 +5,14 @@
 {% eventurl event "presale:event.index" as event_url %}
 {% abseventurl event "presale:event.index" as event_url_abs %}
 {% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
+{% with event.settings.og_image|default:event.social_image as share_image_signature %}
 <article
     class="startpage-event-card"
     data-event-name="{{ event.name|event_localize|escape }}"
     data-event-date="{{ event.get_date_range_display|escape }}"
     data-event-url="{{ event_url }}"
     data-event-image="{{ event_image_url|default:''|escape }}"
+    data-share-image-signature="{{ share_image_signature|default:''|escape }}"
 >
     <a class="startpage-event-media" href="{{ event_url }}">
         {% if event.visible_header_image_url %}
@@ -47,9 +49,10 @@
                 {% trans 'Test Mode' %}
             </span>
         {% endif %}
-        <button class="startpage-event-share" type="button" data-url="{{ event_url }}" data-share-label="{% trans 'Share event' %}" aria-label="{% trans 'Share event' %}" title="{% trans 'Share event' %}">
+        <button class="startpage-event-share" type="button" data-url="{{ event_url }}" data-share-image-signature="{{ share_image_signature|default:''|escape }}" data-share-label="{% trans 'Share event' %}" aria-label="{% trans 'Share event' %}" title="{% trans 'Share event' %}">
             <i class="fa fa-share-alt" aria-hidden="true"></i>
         </button>
     </div>
 </article>
+{% endwith %}
 {% endwith %}

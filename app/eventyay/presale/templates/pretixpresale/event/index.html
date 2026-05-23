@@ -18,11 +18,7 @@
     {{ block.super }}
     <meta property="og:title" content="{{ ev.name|event_localize }}" />
     <meta property="og:description" content="{{ ev.get_date_range_display }}" />
-    {% if subevent %}
-        <meta property="og:url" content="{% abseventurl request.event "presale:event.index" subevent=subevent.pk %}" />
-    {% else %}
-        <meta property="og:url" content="{% abseventurl request.event "presale:event.index" %}" />
-    {% endif %}
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
