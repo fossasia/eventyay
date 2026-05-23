@@ -2,7 +2,7 @@
 .pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px'}", :class="draggedSession ? ['is-dragging'] : []", @pointerup="stopDragging")
 	template(v-if="schedule")
 		#main-wrapper
-			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="isUnassigning = false")
+			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
 				.density-controls
 					button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
 						i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
@@ -23,7 +23,8 @@
 							span {{ method.label }}
 							i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
 							i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
-				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", @startDragging="startNewBreak", @click="showNewBreakHint", v-tooltip.fixed="{text: newBreakTooltip, show: newBreakTooltip}", @pointerleave="removeNewBreakHint")
+				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", @startDragging="startNewBreak", @click.stop="showNewBreakHint")
+				.new-break-hint(v-if="newBreakTooltip") {{ newBreakTooltip }}
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
 				.deleted-room-sessions(v-if="deletedRoomSessions.length")
 					h3 {{ $t('Deleted Room Sessions') }}
@@ -572,6 +573,11 @@ function removeNewBreakHint() {
   newBreakTooltip.value = ''
 }
 
+function onUnassignedLeave() {
+  isUnassigning.value = false
+  removeNewBreakHint()
+}
+
 interface DragStartEvent {
   event: PointerEvent
   session: Partial<SessionData & Talk>
@@ -875,6 +881,16 @@ onUnmounted(() => {
 					background-color: $clr-dividers-light
 		.new-break.c-linear-schedule-session
 			min-height: 48px
+		.new-break-hint
+			display: block
+			background: rgba(0, 0, 0, 0.6)
+			color: white
+			font-size: 13px
+			line-height: 1.4
+			padding: 6px 10px
+			border-radius: 4px
+			pointer-events: none
+			margin: 0 12px 8px 8px
 		#unassigned-sort-menu
 			color: $clr-primary-text-light
 			display: flex
