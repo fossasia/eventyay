@@ -107,10 +107,10 @@ def default_fields():
         'do_not_record': {'visibility': 'optional', 'public': False},
         'image': {'visibility': 'optional', 'public': True},
         'slides': {'visibility': 'optional', 'max_count': 1, 'public': True},
-        'track': {'visibility': 'do_not_ask', 'public': False},
-        'duration': {'visibility': 'do_not_ask', 'public': False},
+        'track': {'visibility': 'do_not_ask', 'public': True},
+        'duration': {'visibility': 'do_not_ask', 'public': True},
         'slot_count': {'visibility': 'optional', 'public': False},
-        'content_locale': {'visibility': 'required', 'public': False},
+        'content_locale': {'visibility': 'required', 'public': True},
         'additional_speaker': {'visibility': 'optional', 'public': False},
         'fullname': {'visibility': 'required', 'public': True},
     }
@@ -124,6 +124,8 @@ def field_helper(cls):
         return self.fields.get(field, default_fields()[field])['visibility'] == 'required'
 
     def is_field_public(self, field):
+        if field in {'title', 'track', 'duration', 'fullname'}:
+            return True
         return self.fields.get(field, default_fields()[field]).get(
             'public', default_fields()[field].get('public', False)
         )

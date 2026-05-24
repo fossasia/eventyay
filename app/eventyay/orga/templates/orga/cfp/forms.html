@@ -290,7 +290,12 @@
                             </td>
                             <td></td>
                             <td></td>
-                            <td></td>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Track is always public' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Track always public' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
                             <td class="text-center">{{ field_counts.track }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -327,7 +332,12 @@
                             </td>
                             <td></td>
                             <td></td>
-                            <td></td>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Duration is always public' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Duration always public' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
                             <td class="text-center">{{ field_counts.duration }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -378,7 +388,21 @@
                         {% with field=sform.cfp_ask_content_locale %}
                         {% if field %}
                         <tr dragsort-id="content_locale">
-                            <th>{% translate "Content Locale" %}</th>
+                            <th>
+                                <span class="content-locale-label">
+                                    {% translate "Content Locale" %}
+                                    <span class="cfp-inline-help-wrapper">
+                                        <button type="button" class="btn btn-link btn-xs p-0 cfp-inline-help-toggle"
+                                            aria-label="{% translate 'Information about Content Locale' %}"
+                                            aria-describedby="content-locale-help">
+                                            <i class="fa fa-question-circle-o text-info"></i>
+                                        </button>
+                                        <span id="content-locale-help" class="cfp-inline-help-box" role="tooltip">
+                                            {% translate "This is the language the session will be presented in." %}
+                                        </span>
+                                    </span>
+                                </span>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Content Locale">
@@ -403,7 +427,13 @@
                             </td>
                             <td></td>
                             <td></td>
-                            <td></td>
+                            <td class="text-center">
+                                <label class="toggle-switch" aria-label="{% translate 'Toggle public state for Content Locale' %}">
+                                    <input type="checkbox" name="{{ sform.cfp_public_content_locale.html_name }}" {% if sform.cfp_public_content_locale.value %}checked{% endif %}
+                                        aria-label="{% translate 'Public toggle for Content Locale' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
                             <td class="text-center">{{ field_counts.content_locale }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">

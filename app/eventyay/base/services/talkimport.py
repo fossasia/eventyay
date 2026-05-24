@@ -7,6 +7,9 @@ from typing import TypedDict
 from urllib.parse import urlparse
 
 from django.conf import settings as django_settings
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.utils.dateparse import parse_datetime
 from django.db import DataError, IntegrityError, OperationalError, models, transaction
 from django.utils.crypto import get_random_string
 from django.utils.dateparse import parse_datetime
@@ -488,6 +491,113 @@ def _find_user_for_speaker(event, ref):
     return None
 
 
+def _normalize_email_address(value: str) -> str:
+    normalized = value.strip().lower()
+    if not normalized:
+        return ''
+    try:
+        validate_email(normalized)
+    except ValidationError:
+        return ''
+    return normalized
+
+
+def _split_csv_values(raw_value: str) -> list[str]:
+    if not raw_value:
+        return []
+    values = []
+    for value in raw_value.split(','):
+        stripped = value.strip()
+        if stripped:
+            values.append(stripped)
+    return values
+
+
+def _zip_speaker_refs_and_names(linked_speakers: str, speakers_val: str) -> list[tuple[str, str]]:
+    refs = _split_csv_values(linked_speakers)
+    names = _split_csv_values(speakers_val)
+    if refs and names and len(refs) == len(names):
+        return list(zip(refs, names, strict=True))
+    pairs: list[tuple[str, str]] = []
+    pairs.extend((ref, '') for ref in refs)
+    pairs.extend(('', name) for name in names)
+    return pairs
+
+
+def _speaker_cache_key(speaker_ref: str, speaker_name: str) -> str:
+    normalized_ref = speaker_ref.strip().lower()
+    if normalized_ref:
+        return f'ref:{normalized_ref}'
+    normalized_name = speaker_name.strip().lower()
+    if normalized_name:
+        return f'name:{normalized_name}'
+    return ''
+
+
+def _upsert_session_speaker(event, speaker_ref: str, speaker_name: str):
+    normalized_ref = speaker_ref.strip()
+    normalized_name = speaker_name.strip()[:USER_FULLNAME_MAX_LENGTH] if speaker_name else ''
+
+    user = None
+    if normalized_ref:
+        user = _find_user_for_speaker(event, normalized_ref)
+    if not user and normalized_name:
+        user = _find_user_for_speaker(event, normalized_name)
+
+    normalized_email = _normalize_email_address(normalized_ref) if normalized_ref else ''
+    normalized_identifier = ''
+    if normalized_ref and not normalized_email:
+        normalized_identifier = _normalize_speaker_identifier(normalized_ref)
+
+    if user:
+        update_fields = []
+        if normalized_name and user.fullname != normalized_name:
+            user.fullname = normalized_name
+            update_fields.append('fullname')
+        if (
+            normalized_email
+            and not user.email
+            and not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists()
+        ):
+            user.email = normalized_email
+            update_fields.append('email')
+        if (
+            normalized_identifier
+            and not user.code
+            and not User.objects.filter(code__iexact=normalized_identifier).exclude(pk=user.pk).exists()
+        ):
+            user.code = normalized_identifier
+            update_fields.append('code')
+        if update_fields:
+            user.save(update_fields=update_fields)
+    else:
+        fallback_name = normalized_name
+        if not fallback_name:
+            fallback_name = normalized_identifier or (normalized_email.split('@', 1)[0] if normalized_email else '')
+        if not fallback_name:
+            return None
+        # Pre-check explicit email/code values to avoid unique constraint violations during user creation.
+        create_email = normalized_email or None
+        existing_user = User.objects.filter(email__iexact=create_email).first() if create_email else None
+        if existing_user:
+            user = existing_user
+        else:
+            create_code = normalized_identifier or None
+            if create_code and User.objects.filter(code__iexact=create_code).exists():
+                create_code = None
+            user = User.objects.create_user(
+                password=get_random_string(32),
+                email=create_email,
+                fullname=fallback_name[:USER_FULLNAME_MAX_LENGTH],
+                code=create_code,
+                pw_reset_token=get_random_string(32),
+                pw_reset_time=now() + dt.timedelta(days=60),
+            )
+
+    SpeakerProfile.objects.get_or_create(user=user, event=event)
+    return user
+
+
 @app.task(base=ProfiledEventTask, throws=(ImportExecutionError,))
 def import_speakers(event: Event, fileid: str, settings: dict, locale: str, user_id) -> ImportResult:
     try:
@@ -718,6 +828,9 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
 
     if not email:
         raise ImportExecutionError(_('Missing email address.'))
+    normalized_email = _normalize_email_address(email)
+    if not normalized_email:
+        raise ImportExecutionError(_('Invalid email address.'))
 
     name = full_name or f'{first_name} {last_name}'.strip()
     if not name:
@@ -755,17 +868,32 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
             user = User.objects.filter(code__iexact=normalized_identifier).first()
 
     if not user:
-        user = User.objects.filter(email__iexact=email).first()
+        user = User.objects.filter(email__iexact=normalized_email).first()
+    if not user:
+        profiles = list(
+            SpeakerProfile.objects.filter(event=event, user__fullname__iexact=name)
+            .select_related('user')[:2]
+        )
+        if len(profiles) == 1:
+            user = profiles[0].user
 
     with transaction.atomic():
         if user:
             user.fullname = name
             extra = _apply_user_optional_fields(user, **optional_kwargs)
-            user.save(update_fields=['fullname', *extra])
+            update_fields = ['fullname', *extra]
+            if (
+                normalized_email
+                and not user.email
+                and not User.objects.filter(email__iexact=normalized_email).exclude(pk=user.pk).exists()
+            ):
+                user.email = normalized_email
+                update_fields.append('email')
+            user.save(update_fields=update_fields)
         else:
             user = User.objects.create_user(
                 password=get_random_string(32),
-                email=email.lower().strip(),
+                email=normalized_email,
                 fullname=name,
                 code=normalized_identifier or None,
                 pw_reset_token=get_random_string(32),
@@ -1098,22 +1226,20 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
             # Link speakers
             if speaker_cache is None:
                 speaker_cache = {}
-            all_speaker_refs = []
-            if linked_speakers:
-                all_speaker_refs.extend(linked_speakers.split(','))
-            if speakers_val:
-                all_speaker_refs.extend(speakers_val.split(','))
-            for ref in all_speaker_refs:
-                stripped_ref = ref.strip()
-                if not stripped_ref:
+            speaker_pairs = _zip_speaker_refs_and_names(linked_speakers, speakers_val)
+            for speaker_ref, speaker_name in speaker_pairs:
+                cache_key = _speaker_cache_key(speaker_ref, speaker_name)
+                if not cache_key:
                     continue
-                cache_key = stripped_ref.lower()
                 if cache_key not in speaker_cache:
-                    speaker_cache[cache_key] = _find_user_for_speaker(event, stripped_ref)
+                    speaker_cache[cache_key] = _upsert_session_speaker(
+                        event=event,
+                        speaker_ref=speaker_ref,
+                        speaker_name=speaker_name,
+                    )
                 speaker_user = speaker_cache[cache_key]
                 if speaker_user:
                     SpeakerRole.objects.get_or_create(submission=submission, user=speaker_user)
-                    SpeakerProfile.objects.get_or_create(user=speaker_user, event=event)
 
             if slide_links:
                 delete_slide_resources(submission)
