@@ -140,6 +140,14 @@ const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
 
 let observer: IntersectionObserver | null = null
+let layoutObserver: ResizeObserver | null = null
+let sidebarObserver: MutationObserver | null = null
+
+const refreshGridOffset = () => {
+  if (grid.value) {
+    gridOffset.value = grid.value.getBoundingClientRect().left
+  }
+}
 
 const hasValidPosition = (session: SessionDatum): boolean => {
   return !!(session.room && session.start && session.end)
@@ -506,6 +514,8 @@ const updateHoverSlice = (e: PointerEvent) => {
     return
   }
 
+  refreshGridOffset()
+
   if (!dragScrollTimer.value) {
     dragScrollTimer.value = setInterval(dragOnScroll, 100)
   }
@@ -648,9 +658,16 @@ watch(() => props.currentDay, (day) => changeDay(day))
 
 onMounted(async () => {
   await nextTick()
-  
-  if (grid.value) {
-    gridOffset.value = grid.value.getBoundingClientRect().left
+
+  refreshGridOffset()
+  if (rootEl.value) {
+    layoutObserver = new ResizeObserver(refreshGridOffset)
+    layoutObserver.observe(rootEl.value)
+  }
+  const sidebar = document.querySelector('aside.sidebar')
+  if (sidebar) {
+    sidebarObserver = new MutationObserver(refreshGridOffset)
+    sidebarObserver.observe(sidebar, { attributes: true, attributeFilter: ['class'] })
   }
 
   observer = new IntersectionObserver(onIntersect, {
@@ -666,6 +683,14 @@ onMounted(async () => {
 
 onUnmounted(() => {
   timesliceRefs.value = []
+  if (layoutObserver) {
+    layoutObserver.disconnect()
+    layoutObserver = null
+  }
+  if (sidebarObserver) {
+    sidebarObserver.disconnect()
+    sidebarObserver = null
+  }
   if (observer) {
     observer.disconnect()
     observer = null

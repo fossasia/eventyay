@@ -592,6 +592,7 @@ function startNewBreak({ event }: DragStartEvent) {
 }
 
 function startDragging({ event, session }: DragStartEvent) {
+  isUnassigning.value = false
   if (availabilities && availabilities.talks[session.id! ?? 0] && availabilities.talks[session.id! ?? 0].length !== 0) {
     session.availabilities = availabilities.talks[session.id! ?? 0]
   }
