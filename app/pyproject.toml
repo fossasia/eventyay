@@ -18,7 +18,7 @@ classifiers = [
   "Framework :: Django :: 5.2",
 ]
 dependencies = [
-    "aiohappyeyeballs>=2.4.4",
+    "aiohappyeyeballs>=2.6.2",
     "aiohttp>=3.13.5",
     "aiosignal>=1.3.2",
     "amqp>=5.3.1",
