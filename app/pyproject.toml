@@ -197,7 +197,7 @@ dependencies = [
     "twisted>=25.5.0",
     "txaio>=25.12.2",
     "typing-extensions>=4.15.0",
-    "tzdata>=2025.3",
+    "tzdata>=2026.2",
     "urllib3>=2.7.0",
     "urlman>=2.0.3",
     # This library prevents us from being compatible with Python v3.13+.
