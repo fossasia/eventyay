@@ -37,7 +37,7 @@ class GeoCodeView(LoginRequiredMixin, View):
                 res = self._use_nominatim(q)
             else:
                 res = []
-        except requests.RequestException:
+        except (requests.RequestException, ValueError):
             logger.exception('Geocoding failed')
             return JsonResponse({'success': False, 'results': []}, status=200)
 

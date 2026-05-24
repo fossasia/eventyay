@@ -163,7 +163,11 @@ def _default_context(request):
     except KeyError:
         ctx['html_locale'] = translation.get_language()
     ctx['settings'] = eventyay_settings
-    ctx['global_settings'] = GlobalSettingsObject().settings
+    global_settings = GlobalSettingsObject().settings
+    ctx['global_settings'] = {
+        'leaflet_tiles': global_settings.get('leaflet_tiles'),
+        'leaflet_tiles_attribution': global_settings.get('leaflet_tiles_attribution'),
+    }
     ctx['django_settings'] = settings
 
     # Check to show organizer area (only for team members or admins)

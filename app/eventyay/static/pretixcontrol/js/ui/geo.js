@@ -20,7 +20,7 @@ $(function () {
         var $updateButton = $notifications.find("[data-action=update]");
         var $savePinButton = $notifications.find("[data-action=save-pin]");
         var $resetPinButton = $notifications.find("[data-action=reset-pin]");
-        var $form = $(this).closest("form");
+        var $form = $($lat.prop("form"));
         var $location = $("textarea[lang=en], input[lang=en]", this).first();
         if (!$location.length) $location = $("textarea, input[type=text]", this).first();
 
