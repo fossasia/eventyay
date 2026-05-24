@@ -103,7 +103,7 @@ dependencies = [
     "exhibition @ git+https://github.com/fossasia/eventyay-exhibition.git@main",
     "execnet>=2.1.2",
     "fido2>=2.2.0",
-    "fonttools>=4.61.1",
+    "fonttools>=4.63.0",
     "frozenlist>=1.8.0",
     "geoip2>=4.8.1",
     "gunicorn>=26.0.0",
