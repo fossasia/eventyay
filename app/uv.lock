@@ -9,11 +9,11 @@ resolution-markers = [
 
 [[package]]
 name = "aiohappyeyeballs"
-version = "2.6.1"
+version = "2.6.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/26/30/f84a107a9c4331c14b2b586036f40965c128aa4fee4dda5d3d51cb14ad54/aiohappyeyeballs-2.6.1.tar.gz", hash = "sha256:c3f9d0113123803ccadfdf3f0faa505bc78e6a72d1cc4806cbd719826e943558", size = 22760, upload-time = "2025-03-12T01:42:48.764Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/c6/61a2d7b7572279226bb2e7f61d7a19ca7c90da0329c93fa0d560cbf288d8/aiohappyeyeballs-2.6.2.tar.gz", hash = "sha256:e202810ee718bd01fc6ef49e8ea53d023d5cb6b581076d7925aa499fa55dbe64", size = 22591, upload-time = "2026-05-20T15:12:24.631Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/15/5bf3b99495fb160b63f95972b81750f18f7f4e02ad051373b669d17d44f2/aiohappyeyeballs-2.6.1-py3-none-any.whl", hash = "sha256:f349ba8f4b75cb25c99c5c2d84e997e485204d2902a9597802b0371f09331fb8", size = 15265, upload-time = "2025-03-12T01:42:47.083Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/fc/a7bf5b6e4e617b45f90f2d9d2a68519c249c81dd4fc2658c7a2a61c4f4b7/aiohappyeyeballs-2.6.2-py3-none-any.whl", hash = "sha256:4708045e2d7a6c6bdf8aafa8ed39649eaf926a4543b54560659129e3365953c4", size = 15062, upload-time = "2026-05-20T15:12:23.328Z" },
 ]
 
 [[package]]
@@ -863,14 +863,14 @@ wheels = [
 
 [[package]]
 name = "django-formtools"
-version = "2.5.1"
+version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/73/f8/bb9b228fc33230186f3612a6fc96274a81bab3509817498f2632d7aa6367/django-formtools-2.5.1.tar.gz", hash = "sha256:47cb34552c6efca088863d693284d04fc36eaaf350eb21e1a1d935e0df523c93", size = 88637, upload-time = "2023-12-19T10:30:59.78Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/fe/0b3c56822d4ba217a169d5a6493b4e3610c6efcda3081d68dcbb2a3dd994/django_formtools-2.6.1.tar.gz", hash = "sha256:603ebc69a4b76b9bf38534f6e0245face007c7ed31bdfa073f8bf45cff5d7122", size = 91174, upload-time = "2026-05-16T13:30:07.26Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/63/91a107e3aaaf3987bad036494dfd8cc2675f4a66d22e65ffd6711f84ba70/django_formtools-2.5.1-py3-none-any.whl", hash = "sha256:bce9b64eda52cc1eef6961cc649cf75aacd1a707c2fff08d6c3efcbc8e7e761a", size = 170651, upload-time = "2023-12-19T10:30:02.816Z" },
+    { url = "https://files.pythonhosted.org/packages/41/b8/0f711b0953d8234c6084ab071108a73b755da81de445e1296d83f0261ab1/django_formtools-2.6.1-py3-none-any.whl", hash = "sha256:2848516dc66a7acde1cb595d225b30c1b837528948cad32bf0faafc6d8cc7af8", size = 157971, upload-time = "2026-05-16T13:30:06Z" },
 ]
 
 [[package]]
@@ -1426,7 +1426,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohappyeyeballs", specifier = ">=2.4.4" },
+    { name = "aiohappyeyeballs", specifier = ">=2.6.2" },
     { name = "aiohttp", specifier = ">=3.13.5" },
     { name = "aiosignal", specifier = ">=1.3.2" },
     { name = "amqp", specifier = ">=5.3.1" },
@@ -1480,7 +1480,7 @@ requires-dist = [
     { name = "django-csp", specifier = ">=3.8" },
     { name = "django-filter", specifier = ">=25.2" },
     { name = "django-formset-js-improved", specifier = ">=0.5.0.4" },
-    { name = "django-formtools", specifier = ">=2.5.1" },
+    { name = "django-formtools", specifier = ">=2.6.1" },
     { name = "django-hierarkey", specifier = ">=2.0.1" },
     { name = "django-hijack", specifier = ">=3.7.8" },
     { name = "django-i18nfield", specifier = ">=1.11.0" },
@@ -1597,7 +1597,7 @@ requires-dist = [
     { name = "starkbank-ecdsa", specifier = ">=2.3.1" },
     { name = "stripe", specifier = ">=11.3.0" },
     { name = "text-unidecode", specifier = ">=1.3" },
-    { name = "textile", specifier = ">=4.0.3" },
+    { name = "textile", specifier = ">=4.0.4" },
     { name = "tlds", specifier = ">=2026041800" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "twisted", specifier = ">=25.5.0" },
@@ -3572,15 +3572,15 @@ wheels = [
 
 [[package]]
 name = "textile"
-version = "4.0.3"
+version = "4.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nh3" },
     { name = "regex", marker = "implementation_name != 'pypy'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/01/4effe1154982f860121e2a1fa3898b2d51c91aa7674f48027ef2d9e8f390/textile-4.0.3.tar.gz", hash = "sha256:f2b0fa67769051a406020d2fa4d247d16967080aae407139f888c196eb23de6b", size = 56908, upload-time = "2024-09-22T19:16:17.799Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/97/32/3126869580204c8b8fe019a5e43f70e4f36e90d0f530033be2746c2c7a1e/textile-4.0.4.tar.gz", hash = "sha256:89428d848712b041cf4e354c0a6332339810d519a5c3109cb42a0c594f882a0d", size = 57322, upload-time = "2026-05-10T20:55:31.133Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/e9/9cfe163feb2892b2b79dcb5c0a62673418f4a9c4775c015ac33db09748a0/textile-4.0.3-py3-none-any.whl", hash = "sha256:523fe64cd4d45ea0f7a2f9353d854663b6a932dbcb022f2e976daee921b43e2e", size = 30583, upload-time = "2024-09-22T19:16:16.559Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/0a/4c58eea9ef7ccb96e588fddcb9540c1657f944028f8901931003b498b1c5/textile-4.0.4-py3-none-any.whl", hash = "sha256:a09e3696405b82c79e1323ce892c78975943f3ee681b0570dab7878407434da7", size = 30654, upload-time = "2026-05-10T20:55:30.181Z" },
 ]
 
 [[package]]
