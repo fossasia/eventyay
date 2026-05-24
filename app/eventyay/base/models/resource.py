@@ -1,5 +1,6 @@
 from contextlib import suppress
 from pathlib import Path
+from urllib.parse import urljoin
 
 from django.db import models
 from django.utils.functional import cached_property
@@ -7,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
 
 from eventyay.common.text.path import path_with_hash
-from eventyay.common.urls import get_base_url
+from eventyay.common.urls import get_base_url, is_http_url
 
 from .choices import Choices
 from .mixins import PretalxModel
@@ -63,8 +64,9 @@ class Resource(PretalxModel):
         with suppress(ValueError):
             url = getattr(self.resource, 'url', None)
             if url:
-                base_url = get_base_url(self.submission.event)
-                return base_url + url
+                if is_http_url(url):
+                    return url
+                return urljoin(get_base_url(self.submission.event), url)
 
     @cached_property
     def filename(self):
