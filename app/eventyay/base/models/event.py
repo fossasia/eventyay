@@ -840,6 +840,7 @@ class Event(
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
         widget_settings = '{settings}widget'
+        import_export_settings = '{settings}import-export/'
         team_settings = '{settings}team/'
         new_team = '{settings}team/new'
         room_settings = '{schedule}rooms/'
