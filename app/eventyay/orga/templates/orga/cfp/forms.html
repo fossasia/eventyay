@@ -624,15 +624,15 @@
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
-                            <th style="min-width: 150px;"></th>
-                            <th class="text-center" style="width: 80px;">{% translate "Active" %}</th>
-                            <th class="text-center" style="width: 120px;">{% translate "Required" %}</th>
-                            <th style="width: 90px;">{% translate "Minimum length" %}</th>
-                            <th style="width: 90px;">{% translate "Maximum length" %}</th>
-                            <th class="text-center" style="width: 200px;">{% translate "Settings" %}</th>
-                            <th class="text-center" style="width: 80px;">{% translate "Public" %}</th>
-                            <th class="text-center" style="width: 80px;">{% translate "Answers" %}</th>
-                            <th style="width: 110px;"></th>
+                            <th></th>
+                            <th class="text-center">{% translate "Active" %}</th>
+                            <th class="text-center">{% translate "Required" %}</th>
+                            <th>{% translate "Minimum length" %}</th>
+                            <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Settings" %}</th>
+                            <th class="text-center">{% translate "Public" %}</th>
+                            <th class="text-center">{% translate "Answers" %}</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
