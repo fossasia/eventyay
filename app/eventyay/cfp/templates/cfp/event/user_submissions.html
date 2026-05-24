@@ -56,7 +56,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {{ submission.created|date:"SHORT_DATE_FORMAT" }}
+                                {{ submission.updated|date:"SHORT_DATE_FORMAT" }}
                             </td>
                             <td class="flip text-right">
                                 {% if submission.review_code and request.event|get_feature_flag:"submission_public_review" %}
