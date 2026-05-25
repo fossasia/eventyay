@@ -188,6 +188,12 @@ header .header-row-right {
     align-items: center;
 }
 
+#main-container :focus,
+#main-container :focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
 .presale-sticky-tabs .header-row-right .header-nav,
 .presale-sticky-tabs .header-row-right .locale-switch-toggle,
 .presale-sticky-tabs .header-row-right a {
