@@ -40,6 +40,7 @@
                 <thead>
                     <tr>
                         <th>{% translate "Title" %}</th>
+                        <th>{% translate "Last modified" %}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -47,7 +48,12 @@
                     {% for submission in drafts %}
                         <tr>
                             <td>
-                                <a href="{{ submission.urls.user_base }}">{{ submission.title|event_localize }}</a>
+                                <a href="{{ submission.urls.user_base }}">{{ submission.display_title }}</a>
+                            </td>
+                            <td class="text-nowrap text-muted small">
+                                <time datetime="{{ submission.updated|date:"c" }}">
+                                    {{ submission.updated|date:"SHORT_DATETIME_FORMAT" }}
+                                </time>
                             </td>
                             <td class="flip text-right">
                                 {% if submission.review_code and request.event|get_feature_flag:"submission_public_review" %}
@@ -91,7 +97,7 @@
                     {% for submission in submissions %}
                         <tr>
                             <td>
-                                <a href="{{ submission.urls.user_base }}">{{ submission.title|event_localize }}</a>
+                                <a href="{{ submission.urls.user_base }}">{{ submission.display_title }}</a>
                             </td>
                             <td>
 
