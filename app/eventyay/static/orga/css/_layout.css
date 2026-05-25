@@ -1741,6 +1741,11 @@ h2 .user-name-display img {
     white-space: normal;
   }
 
+  .search-form > .form-group {
+    width: 100% !important;
+    margin-right: 0 !important;
+  }
+
   .dashboard-history .list-group .logentry {
     flex-direction: column;
     border-bottom: 1px solid var(--color-grey-light);
