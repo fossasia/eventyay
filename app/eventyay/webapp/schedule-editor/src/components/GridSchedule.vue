@@ -141,7 +141,7 @@ const timesliceRefs = ref<HTMLElement[]>([])
 
 let observer: IntersectionObserver | null = null
 let layoutObserver: ResizeObserver | null = null
-let sidebarObserver: MutationObserver | null = null
+let sidebarResizeObserver: ResizeObserver | null = null
 
 const refreshGridOffset = () => {
   if (grid.value) {
@@ -441,6 +441,7 @@ const setTimesliceRef = (el: HTMLElement | null) => {
 }
 
 const startDragging = ({ session, event }: DragEventPayload) => {
+  refreshGridOffset()
   dragStart.value = {
     x: event.clientX,
     y: event.clientY,
@@ -513,8 +514,6 @@ const updateHoverSlice = (e: PointerEvent) => {
     hoverSlice.value = null
     return
   }
-
-  refreshGridOffset()
 
   if (!dragScrollTimer.value) {
     dragScrollTimer.value = setInterval(dragOnScroll, 100)
@@ -666,8 +665,8 @@ onMounted(async () => {
   }
   const sidebar = document.querySelector('aside.sidebar')
   if (sidebar) {
-    sidebarObserver = new MutationObserver(refreshGridOffset)
-    sidebarObserver.observe(sidebar, { attributes: true, attributeFilter: ['class'] })
+    sidebarResizeObserver = new ResizeObserver(refreshGridOffset)
+    sidebarResizeObserver.observe(sidebar)
   }
 
   observer = new IntersectionObserver(onIntersect, {
@@ -687,9 +686,9 @@ onUnmounted(() => {
     layoutObserver.disconnect()
     layoutObserver = null
   }
-  if (sidebarObserver) {
-    sidebarObserver.disconnect()
-    sidebarObserver = null
+  if (sidebarResizeObserver) {
+    sidebarResizeObserver.disconnect()
+    sidebarResizeObserver = null
   }
   if (observer) {
     observer.disconnect()
