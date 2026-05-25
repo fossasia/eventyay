@@ -231,9 +231,8 @@ class InfoForm(
     def _preserve_auto_draft_title(self):
         if not hasattr(self, 'cleaned_data'):
             return
-        original_title = getattr(self, 'original_instance_title', getattr(self.instance, 'title', None))
         cleaned_title = (self.cleaned_data.get('title') or '').strip()
-        if self.draft_save and not cleaned_title and original_title == AUTO_DRAFT_TITLE:
+        if self.draft_save and not cleaned_title:
             self.cleaned_data['title'] = AUTO_DRAFT_TITLE
             self.instance.title = AUTO_DRAFT_TITLE
 

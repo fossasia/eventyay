@@ -154,6 +154,18 @@ def test_info_form_keeps_explicit_title_when_editing_draft():
     assert form.instance.title == AUTO_DRAFT_TITLE
 
 
+def test_info_form_restores_sentinel_when_clearing_a_non_empty_draft_title():
+    form = InfoForm.__new__(InfoForm)
+    form.draft_save = True
+    form.instance = SimpleNamespace(title='Previously saved title')
+    form.cleaned_data = {'title': ''}
+
+    form._preserve_auto_draft_title()
+
+    assert form.cleaned_data['title'] == AUTO_DRAFT_TITLE
+    assert form.instance.title == AUTO_DRAFT_TITLE
+
+
 def test_question_field_counts_session_roundtrip_content_for_drafts():
     form = InfoForm.__new__(InfoForm)
 
@@ -243,7 +255,8 @@ def test_info_form_hides_auto_draft_title(event):
         content_locale=event.locale,
     )
 
-    form = InfoForm(event, instance=submission)
+    with patch.object(InfoForm, 'inject_questions_into_fields', autospec=True):
+        form = InfoForm(event, instance=submission)
 
     assert form['title'].value() == ''
 
