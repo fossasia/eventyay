@@ -30,5 +30,9 @@
     }
 
     window.setupModals = setupModals
-    onReady(setupModals)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupModals)
+    } else {
+        setupModals()
+    }
 })()
