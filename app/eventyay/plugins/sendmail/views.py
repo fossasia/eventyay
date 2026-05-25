@@ -7,6 +7,7 @@ from django.db.models import Exists, OuterRef, Q, Subquery
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -33,6 +34,10 @@ from .forms import MailContentSettingsForm, TeamMailForm
 
 
 logger = logging.getLogger(__name__)
+
+
+def format_scheduled_mail_datetime(event, scheduled_at):
+    return date_format(scheduled_at.astimezone(event.tz), 'SHORT_DATETIME_FORMAT')
 
 
 class ComposeMailChoice(EventPermissionRequiredMixin, TemplateView):
@@ -179,7 +184,8 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             messages.success(
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
-                    datetime=scheduled_at, timezone=self.request.event.timezone
+                    datetime=format_scheduled_mail_datetime(self.request.event, scheduled_at),
+                    timezone=self.request.event.timezone,
                 )
             )
         else:
@@ -657,7 +663,8 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             messages.success(
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
-                    datetime=scheduled_at, timezone=self.request.event.timezone
+                    datetime=format_scheduled_mail_datetime(self.request.event, scheduled_at),
+                    timezone=self.request.event.timezone,
                 )
             )
         else:

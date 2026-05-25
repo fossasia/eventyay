@@ -3,7 +3,7 @@
 {% load query_replace %}
 {% load sendmail_extras %}
 
-<div id='sendmail-outbox-content' data-pending-mail-count='{{ pending_mail_count }}'>
+<div id='sendmail-outbox-content' data-outbox-refresh data-pending-mail-count='{{ pending_mail_count }}'>
   <nav id='event-nav' class='header-nav'>
     <div class='navigation'>
       <div class='navigation-title'>
