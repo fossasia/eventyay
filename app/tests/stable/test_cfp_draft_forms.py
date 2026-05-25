@@ -24,6 +24,13 @@ from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 from eventyay.base.models.submission import SubmissionStates
 
 
+@pytest.fixture(autouse=True)
+def _disable_scopes():
+    from django_scopes import scopes_disabled
+    with scopes_disabled():
+        yield
+
+
 class SizedValue:
     def __init__(self, size):
         self.size = size
