@@ -130,7 +130,7 @@ export default {
 					const spk = s.speakers
 					if (!spk) continue
 					for (let j = 0; j < spk.length; j++) {
-						if (spk[j].code === id) {
+						if (spk[j] && spk[j].code === id) {
 							out.push(s)
 							break
 						}

@@ -113,7 +113,21 @@ urlpatterns = [
                     event.WidgetSettings.as_view(),
                     name='settings.widget',
                 ),
-
+                path(
+                    'settings/import-export/',
+                    event.ImportExportSettings.as_view(),
+                    name='settings.import_export',
+                ),
+                path(
+                    'settings/import-export/speakers/import/<uuid:file>/',
+                    speaker.SpeakerImportProcessView.as_view(),
+                    name='settings.import_export.speakers_import_process',
+                ),
+                path(
+                    'settings/import-export/submissions/import/<uuid:file>/',
+                    submission.SubmissionImportProcessView.as_view(),
+                    name='settings.import_export.submissions_import_process',
+                ),
                 path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
@@ -122,11 +136,6 @@ urlpatterns = [
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
                 path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
-                *cfp.QuestionView.get_urls(
-                    url_base='cfp/questions',
-                    url_name='cfp.questions',
-                    namespace='orga',
-                ),
                 path(
                     'cfp/questions/remind/',
                     cfp.CfPQuestionRemind.as_view(),
@@ -136,6 +145,16 @@ urlpatterns = [
                     'cfp/questions/<int:pk>/toggle/',
                     cfp.CfPQuestionToggle.as_view(),
                     name='cfp.question.toggle',
+                ),
+                path(
+                    'cfp/questions/<int:question>/options/',
+                    cfp.QuestionOptionsAjax.as_view(),
+                    name='cfp.questions.options',
+                ),
+                *cfp.QuestionView.get_urls(
+                    url_base='cfp/questions',
+                    url_name='cfp.questions',
+                    namespace='orga',
                 ),
                 *cfp.TrackView.get_urls(
                     url_base='cfp/tracks',
