@@ -559,20 +559,20 @@ class TicketFeeCountryForm(forms.Form):
     country = forms.ChoiceField(
         label=_('Country'),
         required=True,
+        help_text=_('Select the country for which this fee override applies.'),
     )
-    currency = forms.CharField(
+    currency = forms.ChoiceField(
         label=_('Currency'),
         required=True,
-        max_length=3,
-        help_text=_('ISO 4217 currency code, e.g. USD, EUR.'),
+        help_text=_('Currency is auto-filled when you select a country. Change only if needed.'),
     )
     service_fee_percentage = forms.DecimalField(
-        label=_('Service fee percentage'),
+        label=_('Service fee %'),
         required=True,
         decimal_places=2,
         max_digits=10,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text=_('Country-specific service fee percentage (0 means no fee).'),
+        help_text=_('Percentage of total order amount charged as a platform fee (0–100). Set 0 for no fee.'),
     )
     max_fee = forms.DecimalField(
         label=_('Maximum fee'),
@@ -580,18 +580,24 @@ class TicketFeeCountryForm(forms.Form):
         decimal_places=2,
         max_digits=13,
         validators=[MinValueValidator(0)],
-        help_text=_('Maximum fee amount for this country (0 means no limit).'),
+        help_text=_('Cap on the fee in the selected currency. Set 0 for no limit.'),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from django.conf import settings as django_settings
         from eventyay.helpers.countries import FastCountryField
         country_field = FastCountryField()
         self.fields['country'].choices = [('', _('— Select country —'))] + list(
             country_field.get_choices(include_blank=False)
         )
+        self.fields['currency'].choices = [('', _('— Select currency —'))] + [
+            (c.alpha_3, f'{c.alpha_3} – {c.name}')
+            for c in django_settings.CURRENCIES
+        ]
         for field in self.fields.values():
             field.widget.attrs.setdefault('form', 'country-fee-add-form')
+            field.widget.attrs.setdefault('class', 'form-control')
 
 
 class StripeKeyValidator:

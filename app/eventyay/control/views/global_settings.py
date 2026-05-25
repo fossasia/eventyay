@@ -20,10 +20,10 @@ from python_http_client.exceptions import HTTPError
 from eventyay.api.models import OAuthApplication
 from eventyay.base.email import CustomSMTPBackend, SendGridEmail
 from eventyay.base.models import LogEntry, OrderPayment, OrderRefund
+from eventyay.base.models.billing import TicketFeeCountrySetting
 from eventyay.base.services.mail import get_mail_backend
 from eventyay.base.services.update_check import check_result_table, update_check
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.base.models.billing import TicketFeeCountrySetting
 from eventyay.control.forms.global_settings import (
     GlobalSettingsForm,
     SSOConfigForm,
@@ -307,24 +307,14 @@ class GlobalSettingsTestEmailView(AdministratorPermissionRequiredMixin, View):
 
         return redirect(reverse('eventyay_admin:admin.global.settings'))
 
-class TicketFeeCountryListView(AdministratorPermissionRequiredMixin, TemplateView):
-    template_name = 'pretixcontrol/global_settings.html'
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['country_fees'] = TicketFeeCountrySetting.objects.all()
-        ctx['country_fee_form'] = TicketFeeCountryForm()
-        return ctx
-
-
 class TicketFeeCountryCreateView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         form = TicketFeeCountryForm(request.POST)
         if form.is_valid():
             TicketFeeCountrySetting.objects.update_or_create(
-                country=form.cleaned_data['country'],
+                currency=form.cleaned_data['currency'].upper(),
                 defaults={
-                    'currency': form.cleaned_data['currency'].upper(),
+                    'country': form.cleaned_data['country'],
                     'service_fee_percentage': form.cleaned_data['service_fee_percentage'],
                     'max_fee': form.cleaned_data['max_fee'],
                 },
@@ -359,3 +349,5 @@ class RefundDetailView(AdministratorPermissionRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         p = get_object_or_404(OrderRefund, pk=request.GET.get('pk'))
         return JsonResponse({'data': p.info_data})
+
+

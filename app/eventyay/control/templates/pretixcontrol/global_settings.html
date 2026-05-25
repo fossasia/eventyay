@@ -224,8 +224,9 @@
                                     <td class="text-right">
                                         <button type="submit"
                                                 form="country-fee-delete-{{ cf.pk }}"
-                                                class="btn btn-xs btn-danger">
-                                            <i class="fa fa-trash"></i>
+                                                class="btn btn-xs btn-danger"
+                                                aria-label="{% blocktranslate with country=cf.get_country_display %}Delete fee override for {{ country }}{% endblocktranslate %}">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -241,17 +242,35 @@
 
                         <p><strong>{% translate "Add country override" %}</strong></p>
                         <div class="row">
-                            <div class="col-md-4">
-                                {% bootstrap_field country_fee_form.country show_help=False layout='vertical' %}
+                            <div class="col-sm-6 col-md-4">
+                                {% bootstrap_field country_fee_form.country show_help=True layout='vertical' %}
                             </div>
-                            <div class="col-md-2">
-                                {% bootstrap_field country_fee_form.currency show_help=False layout='vertical' %}
+                            <div class="col-sm-6 col-md-3">
+                                {% bootstrap_field country_fee_form.currency show_help=True layout='vertical' %}
                             </div>
-                            <div class="col-md-3">
-                                {% bootstrap_field country_fee_form.service_fee_percentage show_help=False layout='vertical' %}
+                            <div class="col-sm-6 col-md-2">
+                                <div class="form-group">
+                                    <label class="control-label" for="{{ country_fee_form.service_fee_percentage.id_for_label }}">{% translate "Service fee %" %}</label>
+                                    <div class="input-group">
+                                        {{ country_fee_form.service_fee_percentage }}
+                                        <span class="input-group-addon">%</span>
+                                    </div>
+                                    <p class="help-block">{{ country_fee_form.service_fee_percentage.help_text }}</p>
+                                </div>
                             </div>
-                            <div class="col-md-3">
-                                {% bootstrap_field country_fee_form.max_fee show_help=False layout='vertical' %}
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label" for="{{ country_fee_form.max_fee.id_for_label }}">{% translate "Maximum fee" %}</label>
+                                    <div class="input-group">
+                                        {{ country_fee_form.max_fee }}
+                                        <span class="input-group-addon"
+                                              data-toggle="tooltip"
+                                              data-placement="top"
+                                              title="{{ country_fee_form.max_fee.help_text }}">
+                                            <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="row">
@@ -286,6 +305,74 @@
           method="post">
         {% csrf_token %}
     </form>
+
+    <script>
+    (function () {
+        var COUNTRY_CURRENCY = {
+            "AC":"SHP","AD":"EUR","AE":"AED","AF":"AFN","AG":"XCD","AI":"XCD",
+            "AL":"ALL","AM":"AMD","AO":"AOA","AR":"ARS","AS":"USD","AT":"EUR",
+            "AU":"AUD","AW":"AWG","AX":"EUR","AZ":"AZN","BA":"BAM","BB":"BBD",
+            "BD":"BDT","BE":"EUR","BF":"XOF","BG":"BGN","BH":"BHD","BI":"BIF",
+            "BJ":"XOF","BL":"EUR","BM":"BMD","BN":"BND","BO":"BOB","BQ":"USD",
+            "BR":"BRL","BS":"BSD","BT":"BTN","BW":"BWP","BY":"BYN","BZ":"BZD",
+            "CA":"CAD","CC":"AUD","CD":"CDF","CF":"XAF","CG":"XAF","CH":"CHF",
+            "CI":"XOF","CK":"NZD","CL":"CLP","CM":"XAF","CN":"CNY","CO":"COP",
+            "CR":"CRC","CU":"CUP","CV":"CVE","CW":"ANG","CX":"AUD","CY":"EUR",
+            "CZ":"CZK","DE":"EUR","DJ":"DJF","DK":"DKK","DM":"XCD","DO":"DOP",
+            "DZ":"DZD","EC":"USD","EE":"EUR","EG":"EGP","ER":"ERN","ES":"EUR",
+            "ET":"ETB","FI":"EUR","FJ":"FJD","FK":"FKP","FM":"USD","FO":"DKK",
+            "FR":"EUR","GA":"XAF","GB":"GBP","GD":"XCD","GE":"GEL","GF":"EUR",
+            "GG":"GBP","GH":"GHS","GI":"GIP","GL":"DKK","GM":"GMD","GN":"GNF",
+            "GP":"EUR","GQ":"XAF","GR":"EUR","GT":"GTQ","GU":"USD","GW":"XOF",
+            "GY":"GYD","HK":"HKD","HN":"HNL","HR":"EUR","HT":"HTG","HU":"HUF",
+            "ID":"IDR","IE":"EUR","IL":"ILS","IM":"GBP","IN":"INR","IO":"USD",
+            "IQ":"IQD","IR":"IRR","IS":"ISK","IT":"EUR","JE":"GBP","JM":"JMD",
+            "JO":"JOD","JP":"JPY","KE":"KES","KG":"KGS","KH":"KHR","KI":"AUD",
+            "KM":"KMF","KN":"XCD","KP":"KPW","KR":"KRW","KW":"KWD","KY":"KYD",
+            "KZ":"KZT","LA":"LAK","LB":"LBP","LC":"XCD","LI":"CHF","LK":"LKR",
+            "LR":"LRD","LS":"LSL","LT":"EUR","LU":"EUR","LV":"EUR","LY":"LYD",
+            "MA":"MAD","MC":"EUR","MD":"MDL","ME":"EUR","MF":"EUR","MG":"MGA",
+            "MH":"USD","MK":"MKD","ML":"XOF","MM":"MMK","MN":"MNT","MO":"MOP",
+            "MP":"USD","MQ":"EUR","MR":"MRU","MS":"XCD","MT":"EUR","MU":"MUR",
+            "MV":"MVR","MW":"MWK","MX":"MXN","MY":"MYR","MZ":"MZN","NA":"NAD",
+            "NC":"XPF","NE":"XOF","NF":"AUD","NG":"NGN","NI":"NIO","NL":"EUR",
+            "NO":"NOK","NP":"NPR","NR":"AUD","NU":"NZD","NZ":"NZD","OM":"OMR",
+            "PA":"PAB","PE":"PEN","PF":"XPF","PG":"PGK","PH":"PHP","PK":"PKR",
+            "PL":"PLN","PM":"EUR","PR":"USD","PS":"ILS","PT":"EUR","PW":"USD",
+            "PY":"PYG","QA":"QAR","RE":"EUR","RO":"RON","RS":"RSD","RU":"RUB",
+            "RW":"RWF","SA":"SAR","SB":"SBD","SC":"SCR","SD":"SDG","SE":"SEK",
+            "SG":"SGD","SI":"EUR","SK":"EUR","SL":"SLE","SM":"EUR","SN":"XOF",
+            "SO":"SOS","SR":"SRD","SS":"SSP","ST":"STN","SV":"USD","SX":"ANG",
+            "SY":"SYP","SZ":"SZL","TC":"USD","TD":"XAF","TG":"XOF","TH":"THB",
+            "TJ":"TJS","TL":"USD","TM":"TMT","TN":"TND","TO":"TOP","TR":"TRY",
+            "TT":"TTD","TV":"AUD","TW":"TWD","TZ":"TZS","UA":"UAH","UG":"UGX",
+            "US":"USD","UY":"UYU","UZ":"UZS","VA":"EUR","VC":"XCD","VE":"VES",
+            "VG":"USD","VI":"USD","VN":"VND","VU":"VUV","WF":"XPF","WS":"WST",
+            "XK":"EUR","YE":"YER","YT":"EUR","ZA":"ZAR","ZM":"ZMW","ZW":"ZWL"
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var countryEl  = document.getElementById('id_country');
+            var currencyEl = document.getElementById('id_currency');
+
+            if (!countryEl || !currencyEl) return;
+
+            countryEl.addEventListener('change', function () {
+                var code = this.value;
+                var iso  = COUNTRY_CURRENCY[code];
+                if (!iso) return;
+                for (var i = 0; i < currencyEl.options.length; i++) {
+                    if (currencyEl.options[i].value === iso) {
+                        currencyEl.selectedIndex = i;
+                        break;
+                    }
+                }
+            });
+
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    }());
+    </script>
 
     {# Country fee add/delete forms — OUTSIDE main form to prevent invalid HTML nesting.      #}
     {# Inputs and buttons in the Ticket fee tab reference these via the HTML5 form= attribute. #}

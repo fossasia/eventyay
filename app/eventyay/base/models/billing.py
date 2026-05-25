@@ -72,8 +72,8 @@ class TicketFeeCountrySetting(models.Model):
     ``ticket_fee_percentage`` / ``ticket_fee_max`` stored in ``GlobalSettingsObject``.
     """
 
-    country = FastCountryField(verbose_name=_('Country'), unique=True)
-    currency = models.CharField(max_length=3, verbose_name=_('Currency'))
+    country = FastCountryField(verbose_name=_('Country'))
+    currency = models.CharField(max_length=3, verbose_name=_('Currency'), unique=True)
     service_fee_percentage = models.DecimalField(
         max_digits=10,
         decimal_places=2,

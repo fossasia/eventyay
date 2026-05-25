@@ -173,6 +173,7 @@ def collect_billing_invoice(
     ticket_rate: Decimal,
     invoice_voucher: Optional[InvoiceVoucher],
     ticket_fee_max: Decimal = Decimal('0'),
+    currency_fee_settings: Optional[dict] = None,
 ) -> CollectBillingResponse:
     """
     Collect billing data for an event on a monthly basis.
@@ -186,6 +187,10 @@ def collect_billing_invoice(
     :param last_month_date: The date of the last month for which to collect billing data.
     :param ticket_rate: The rate of the ticket fee as a decimal.
     :param invoice_voucher: The voucher for which to calculate the ticket fee discount.
+    :param ticket_fee_max: Global maximum fee cap (0 = no limit). Applied before voucher
+        discounts. Overridden by a currency-specific setting when one exists.
+    :param currency_fee_settings: Pre-loaded dict mapping ISO-4217 currency codes to
+        ``TicketFeeCountrySetting`` instances. Pass ``None`` to disable currency overrides.
     :return: A CollectBillingResponse object containing a boolean value
         indicating whether the billing invoice was created successfully and a
         decimal value indicating the voucher discount.
@@ -204,7 +209,7 @@ def collect_billing_invoice(
 
     total_amount = calculate_total_amount_on_monthly(event, last_month_date)
     ticket_fee, final_ticket_fee, voucher_discount = calculate_ticket_fee(
-        total_amount, ticket_rate, event, invoice_voucher, ticket_fee_max
+        total_amount, ticket_rate, event, invoice_voucher, ticket_fee_max, currency_fee_settings
     )
 
     # Create a new billing invoice
@@ -220,11 +225,13 @@ def collect_billing_invoice(
         voucher_price_mode=invoice_voucher.price_mode if invoice_voucher else None,
         voucher_value=invoice_voucher.value if invoice_voucher else 0,
         monthly_bill=last_month_date,
-        reminder_schedule=settings.BILLING_REMINDER_SCHEDULE,
+        reminder_schedule=getattr(settings, 'BILLING_REMINDER_SCHEDULE', [14, 28]),
         created_by=EVENTYAY_EMAIL_NONE_VALUE,
         updated_by=EVENTYAY_EMAIL_NONE_VALUE,
     )
-    billing_invoice.next_reminder_datetime = get_next_reminder_datetime(settings.BILLING_REMINDER_SCHEDULE)
+    billing_invoice.next_reminder_datetime = get_next_reminder_datetime(
+        getattr(settings, 'BILLING_REMINDER_SCHEDULE', [14, 28])
+    )
     billing_invoice.save()
     logger.info('End - completed task to collect billing on a monthly basis.')
 
@@ -256,6 +263,10 @@ def monthly_billing_collect(self):
         ticket_rate = Decimal(str(gs.settings.get('ticket_fee_percentage') or 2.5))
         ticket_fee_max = Decimal(str(gs.settings.get('ticket_fee_max') or 0))
 
+        currency_fee_settings = {
+            s.currency: s for s in TicketFeeCountrySetting.objects.all()
+        }
+
         for organizer in Organizer.objects.all():
             organizer_billing = OrganizerBillingModel.objects.filter(organizer=organizer).first()
             invoice_voucher = organizer_billing.invoice_voucher if organizer_billing else None
@@ -263,7 +274,8 @@ def monthly_billing_collect(self):
 
             for event in organizer.events.all():
                 collect_billing_response = collect_billing_invoice(
-                    event, last_month_date, ticket_rate, invoice_voucher, ticket_fee_max
+                    event, last_month_date, ticket_rate, invoice_voucher,
+                    ticket_fee_max, currency_fee_settings
                 )
                 if collect_billing_response.status:
                     total_voucher_discount += collect_billing_response.voucher_discount
@@ -412,24 +424,26 @@ def calculate_ticket_fee(
     event: Event,
     invoice_voucher: Optional[InvoiceVoucher] = None,
     global_max_fee: Decimal = Decimal('0'),
+    currency_fee_settings: Optional[dict] = None,
 ) -> Tuple[Decimal, Decimal, Decimal]:
     """
     Calculate the ticket fee for an event based on the given rate and amount.
 
-    Country-specific overrides (stored in ``TicketFeeCountrySetting``) take precedence
-    over the global ``rate`` and ``global_max_fee`` values.  The effective rate and max
-    are determined first, then the raw fee is computed and capped if a positive max is set.
-
-    If an invoice voucher is given and it is active, the voucher will be applied to the
-    ticket fee after the max-fee cap has been applied.
+    Currency-specific overrides (stored in ``TicketFeeCountrySetting``, keyed by
+    ``currency``) take precedence over the global ``rate`` and ``global_max_fee`` values.
+    The override is looked up by ``event.currency`` so the fee and its cap are always
+    expressed in the same currency as the event.  The effective rate and max are resolved
+    first, then the raw fee is computed and capped when a positive max is configured.
+    Voucher discounts are applied last.
 
     @param amount: the total amount of paid orders in the event
     @param rate: the global ticket fee rate (percentage)
     @param event: the event to be calculated
     @param invoice_voucher: the invoice voucher to be applied
     @param global_max_fee: the global maximum fee cap (0 = no limit)
-    @return: a tuple containing the ticket fee before applying the voucher, the final
-        ticket fee after applying the voucher, and the voucher discount
+    @param currency_fee_settings: pre-loaded dict mapping currency codes to
+        ``TicketFeeCountrySetting`` instances; pass ``None`` to skip currency overrides
+    @return: a tuple of (raw ticket_fee, final_ticket_fee after voucher, voucher_discount)
     """
 
     def _apply_voucher(
@@ -450,15 +464,15 @@ def calculate_ticket_fee(
         # Check if event is in the limited events list
         return invoice_voucher.limit_events.filter(id=event.id).exists()
 
-    # Resolve effective rate and max from country-specific override (if any)
-    event_country = str(event.country) if getattr(event, 'country', None) else None
+    # Resolve effective rate and max from currency-specific override (if any).
+    # Lookup is by event.currency so the cap is always in the same currency as the fee.
     effective_rate = rate
     effective_max = global_max_fee
-    if event_country:
-        country_setting = TicketFeeCountrySetting.objects.filter(country=event_country).first()
-        if country_setting:
-            effective_rate = country_setting.service_fee_percentage
-            effective_max = country_setting.max_fee
+    if currency_fee_settings:
+        currency_setting = currency_fee_settings.get(event.currency)
+        if currency_setting:
+            effective_rate = currency_setting.service_fee_percentage
+            effective_max = currency_setting.max_fee
 
     ticket_fee = amount * (effective_rate / 100)
 
