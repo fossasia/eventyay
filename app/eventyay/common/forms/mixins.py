@@ -259,9 +259,9 @@ class QuestionFieldsMixin:
             # For some reason, django-bootstrap4 does not set the required attribute
             # itself.
             widget = (
-                forms.CheckboxInput(attrs={'required': 'required', 'placeholder': ''})
+                forms.CheckboxInput(attrs={'required': 'required', 'placeholder': '', 'autocomplete': 'off'})
                 if question.required and not not_strict
-                else forms.CheckboxInput()
+                else forms.CheckboxInput(attrs={'autocomplete': 'off'})
             )
 
             field = forms.BooleanField(
@@ -418,7 +418,7 @@ class QuestionFieldsMixin:
                 initial=initial_value,
                 disabled=read_only,
                 help_text=help_text,
-                widget=(forms.RadioSelect if len(choices) < 4 else forms.Select(attrs={'class': 'enhanced'})),
+                widget=(forms.RadioSelect(attrs={'autocomplete': 'off'}) if len(choices) < 4 else forms.Select(attrs={'class': 'enhanced', 'autocomplete': 'off'})),
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
@@ -444,7 +444,7 @@ class QuestionFieldsMixin:
                 initial=initial_value,
                 disabled=read_only,
                 help_text=help_text,
-                widget=forms.Select(attrs={'class': 'enhanced'}),
+                widget=forms.Select(attrs={'class': 'enhanced', 'autocomplete': 'off'}),
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
@@ -456,9 +456,9 @@ class QuestionFieldsMixin:
                 label=label_text,
                 required=question.required,
                 widget=(
-                    forms.CheckboxSelectMultiple
+                    forms.CheckboxSelectMultiple(attrs={'autocomplete': 'off'})
                     if len(choices) < 8
-                    else forms.SelectMultiple(attrs={'class': 'enhanced'})
+                    else forms.SelectMultiple(attrs={'class': 'enhanced', 'autocomplete': 'off'})
                 ),
                 initial=(
                     list(initial_object.options.all()) if initial_object

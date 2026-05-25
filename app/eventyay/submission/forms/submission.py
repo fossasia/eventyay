@@ -218,6 +218,8 @@ class InfoForm(
                         has_user_data = True
                         break
                 elif value is not None and value != []:
+                    if hasattr(value, 'exists') and not value.exists():
+                        continue
                     has_user_data = True
                     break
                     

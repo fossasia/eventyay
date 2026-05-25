@@ -486,6 +486,10 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                 # the title field will appear empty (see below).
                 form.data['title'] = self.DRAFT_TITLE_PLACEHOLDER
                 changed = True
+            elif form.data.get('title') == self.DRAFT_TITLE_PLACEHOLDER:
+                # Remove it so the user doesn't see it when the form is rendered
+                form.data['title'] = ''
+                changed = True
 
             if not form.data.get('submission_type'):
                 submission_type = self.get_draft_submission_type()
@@ -511,6 +515,52 @@ class InfoStep(GenericFlowStep, FormFlowStep):
 
     def is_completed(self, request, not_strict=None):
         return super().is_completed(request, not_strict=not_strict)
+
+    def _has_meaningful_session_data(self):
+        data = self.cfp_session.get('data', {}).get(self.identifier, {})
+        files = self.cfp_session.get('files', {}).get(self.identifier, {})
+
+        if files:
+            return True
+
+        skip_fields = {'content_locale', 'submission_type', 'slot_count', 'track'}
+
+        for key, value in data.items():
+            if key in skip_fields:
+                continue
+
+            if isinstance(value, str) and value.strip() and value.strip() != self.DRAFT_TITLE_PLACEHOLDER:
+                return True
+            if isinstance(value, bool) and value:
+                return True
+            if isinstance(value, list) and value:
+                return True
+            if isinstance(value, dict):
+                # For i18n fields, check if any translation is meaningful
+                for lang_val in value.values():
+                    if isinstance(lang_val, str) and lang_val.strip() and lang_val.strip() != self.DRAFT_TITLE_PLACEHOLDER:
+                        return True
+
+        return False
+
+    def post(self, request):
+        result = super().post(request)
+        action = request.POST.get('action')
+
+        # When explicitly saving as draft, prevent saving completely empty submissions
+        if action == 'draft' and not self._has_meaningful_session_data():
+            if self.identifier in self.cfp_session.get('data', {}):
+                del self.cfp_session['data'][self.identifier]
+            from django.contrib import messages
+            from django.utils.translation import gettext_lazy as _
+            messages.error(
+                request,
+                _('Please fill in at least one field before saving a draft.')
+            )
+            from django.shortcuts import redirect
+            return redirect(request.path)
+
+        return result
 
     def done(self, request, draft=False):
         self.request = request
