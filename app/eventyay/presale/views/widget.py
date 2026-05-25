@@ -232,7 +232,7 @@ class WidgetAPIProductList(EventListMixin, View):
                     'description': str(rich_text(cat.description))
                     if cat and cat.description
                     else None,
-                    'products': [
+                    'items': [
                         {
                             'id': product.pk,
                             'name': str(product.name),
@@ -783,10 +783,10 @@ class WidgetAPIProductList(EventListMixin, View):
                 fail = True
 
         if not fail and (ev.presale_is_running or request.event.settings.show_products_outside_presale_period):
-            data['products_by_category'], data['display_add_to_cart'], data['productnum'] = self._get_products()
+            data['items_by_category'], data['display_add_to_cart'], data['productnum'] = self._get_products()
             data['display_add_to_cart'] = data['display_add_to_cart'] and ev.presale_is_running
         else:
-            data['products_by_category'] = []
+            data['items_by_category'] = []
             data['display_add_to_cart'] = False
             data['productnum'] = 0
 

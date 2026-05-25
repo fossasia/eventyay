@@ -397,6 +397,8 @@ CORE_MODULES = (
     )
 )
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
 for entry_point in entry_points(group='pretalx.plugin'):
