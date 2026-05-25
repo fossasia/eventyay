@@ -56,6 +56,9 @@ class SubmitWizard(EventPageMixin, View):
         result = handler(request)
 
         if request.method == 'POST' and request.POST.get('action', 'submit') == 'draft':
+            from django.http import HttpResponseBase
+            if isinstance(result, HttpResponseBase):
+                return result
             return self.done(
                 request,
                 draft=True,
