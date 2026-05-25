@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
 
 from eventyay.base.models import LoggedModel
+from eventyay.helpers.countries import FastCountryField
 
 from .choices import PriceModeChoices
 
@@ -63,3 +64,34 @@ class BillingInvoice(LoggedModel):
         verbose_name = 'Billing Invoice'
         verbose_name_plural = 'Billing Invoices'
         ordering = ('-created_at',)
+
+
+class TicketFeeCountrySetting(models.Model):
+    """
+    Country-specific service fee override. Takes precedence over the global
+    ``ticket_fee_percentage`` / ``ticket_fee_max`` stored in ``GlobalSettingsObject``.
+    """
+
+    country = FastCountryField(verbose_name=_('Country'), unique=True)
+    currency = models.CharField(max_length=3, verbose_name=_('Currency'))
+    service_fee_percentage = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_('Service fee percentage'),
+    )
+    max_fee = models.DecimalField(
+        max_digits=13,
+        decimal_places=2,
+        verbose_name=_('Maximum fee'),
+        help_text=_('Set to 0 for no limit.'),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('Country fee setting')
+        verbose_name_plural = _('Country fee settings')
+        ordering = ('country',)
+
+    def __str__(self):
+        return f'{self.country} — {self.service_fee_percentage}% (max {self.max_fee} {self.currency})'

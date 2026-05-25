@@ -3,7 +3,7 @@ from typing import List, Union
 
 from django import forms
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
@@ -381,6 +381,20 @@ class GlobalSettingsForm(SettingsForm):
                         decimal_places=2,
                         max_digits=10,
                         help_text=_('A percentage fee will be charged for each ticket sold.'),
+                        validators=[MinValueValidator(0), MaxValueValidator(100)],
+                    ),
+                ),
+                (
+                    'ticket_fee_max',
+                    forms.DecimalField(
+                        label=_('Maximum fee'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=13,
+                        help_text=_(
+                            'The maximum service fee amount that can be charged per billing cycle. '
+                            'Set to 0 for no limit.'
+                        ),
                         validators=[MinValueValidator(0)],
                     ),
                 ),
@@ -440,6 +454,7 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('ticket_fee', _('Ticket fee'), [
                 'ticket_fee_percentage',
+                'ticket_fee_max',
             ]),
             ('billing_validation', _('Billing validation'), [
                 'billing_validation',
@@ -538,6 +553,45 @@ class StartPageSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
         super().__init__(*args, obj=self.obj, **kwargs)
+
+
+class TicketFeeCountryForm(forms.Form):
+    country = forms.ChoiceField(
+        label=_('Country'),
+        required=True,
+    )
+    currency = forms.CharField(
+        label=_('Currency'),
+        required=True,
+        max_length=3,
+        help_text=_('ISO 4217 currency code, e.g. USD, EUR.'),
+    )
+    service_fee_percentage = forms.DecimalField(
+        label=_('Service fee percentage'),
+        required=True,
+        decimal_places=2,
+        max_digits=10,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text=_('Country-specific service fee percentage (0 means no fee).'),
+    )
+    max_fee = forms.DecimalField(
+        label=_('Maximum fee'),
+        required=True,
+        decimal_places=2,
+        max_digits=13,
+        validators=[MinValueValidator(0)],
+        help_text=_('Maximum fee amount for this country (0 means no limit).'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from eventyay.helpers.countries import FastCountryField
+        country_field = FastCountryField()
+        self.fields['country'].choices = [('', _('— Select country —'))] + list(
+            country_field.get_choices(include_blank=False)
+        )
+        for field in self.fields.values():
+            field.widget.attrs.setdefault('form', 'country-fee-add-form')
 
 
 class StripeKeyValidator:
