@@ -1,5 +1,6 @@
 import copy
 import datetime as dt
+import hashlib
 import logging
 import os
 import string
@@ -960,6 +961,14 @@ class Event(
             if urlparse(img).scheme:
                 return None
             return urljoin(build_absolute_uri(self, 'presale:event.index'), img)
+
+    @property
+    def social_image_signature(self):
+        og_image = self.settings.get('og_image', as_type=str, default='') or ''
+        image_source = og_image or (self.social_image or '')
+        if not image_source:
+            return ''
+        return hashlib.sha1(image_source.encode('utf-8')).hexdigest()[:12]
 
     def _seats(self, ignore_voucher=None):
         from .seating import Seat

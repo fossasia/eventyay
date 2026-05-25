@@ -466,13 +466,6 @@ def get_grouped_products(
 class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     template_name = 'pretixpresale/event/index.html'
 
-    def _social_image_signature(self):
-        og_image = self.request.event.settings.get('og_image', as_type=str, default='') or ''
-        image_source = og_image or (self.request.event.social_image or '')
-        if not image_source:
-            return ''
-        return hashlib.sha1(image_source.encode('utf-8')).hexdigest()[:12]
-
     def _versioned_event_url(self, signature):
         parsed = urlparse(self.request.get_full_path())
         query = dict(parse_qsl(parsed.query, keep_blank_values=True))
@@ -519,7 +512,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             r._csp_ignore = True
             return r
 
-        signature = self._social_image_signature()
+        signature = self.request.event.social_image_signature
         if signature and request.GET.get('si') != signature:
             return redirect(self._versioned_event_url(signature))
 
