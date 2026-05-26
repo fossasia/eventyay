@@ -563,6 +563,7 @@ class EventExtraLinkForm(I18nModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['label'].required = True
         for fname in ('label', 'url'):
             if fname in self.fields:
                 widget = self.fields[fname].widget
