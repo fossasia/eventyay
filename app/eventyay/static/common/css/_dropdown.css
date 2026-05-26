@@ -13,20 +13,22 @@ details.dropdown summary {
   color: inherit;
 }
 
-/* Consistent spacing between user/language icons and labels (public + private headers) */
+/* User/language header triggers (scoped by id or header containers) */
 #profile-dropdown > summary,
 #language-dropdown > summary,
 #user-dropdown-label > summary,
 #locale-dropdown-label > summary,
 .header-row-right details.dropdown > summary,
-.presale-sticky-tabs .header-row-right details.dropdown > summary,
-a.login-link {
+.presale-sticky-tabs .header-row-right details.dropdown > summary {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--header-icon-text-gap, 6px);
 }
 
-a.login-link {
+.header-row-right a.login-link {
   display: inline-flex;
+  align-items: center;
+  gap: var(--header-icon-text-gap, 6px);
 }
 
 details.dropdown summary::before,
