@@ -176,7 +176,18 @@ class InfoForm(
             elif self.event.cfp.default_type and self.event.cfp.default_type.pk in pks:
                 self.default_values['submission_type'] = self.event.cfp.default_type
             elif pks:
-                self.default_values['submission_type'] = submission_types.filter(pk__in=pks).first()
+                self.default_values['submission_type'] = submission_types.filter(pk__in=pks).order_by('pk').first()
+            else:
+                # Event misconfiguration: organizer hid the field, but no valid types exist.
+                # Keep the field visible with a clear message so the user gets feedback.
+                self.fields['submission_type'].queryset = submission_types.none()
+                self.fields['submission_type'].required = False
+                self.fields['submission_type'].empty_label = _('No session type is currently available')
+                self.fields['submission_type'].help_text = _(
+                    'No session type is currently available for submissions. '
+                    'Please contact the event organizers.'
+                )
+                return
             self.fields.pop('submission_type')
             return
 
@@ -202,8 +213,17 @@ class InfoForm(
             default_type = self.event.cfp.default_type
             if default_type and default_type.pk in allowed_pks:
                 return default_type
-            qs = self.fields['submission_type'].queryset
+            qs = self.fields['submission_type'].queryset.order_by('pk')
             return qs.first()
+        if visibility == 'do_not_ask' and value is None:
+            # If the field was kept visible due to misconfiguration, fail fast with
+            # a user-facing validation error instead of a save-time integrity error.
+            raise forms.ValidationError(
+                _(
+                    'No session type is currently available for submissions. '
+                    'Please contact the event organizers.'
+                )
+            )
         return value
 
     def _set_locales(self):
