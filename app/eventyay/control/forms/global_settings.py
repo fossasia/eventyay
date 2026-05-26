@@ -558,8 +558,8 @@ class StartPageSettingsForm(SettingsForm):
 class TicketFeeCountryForm(forms.Form):
     country = forms.ChoiceField(
         label=_('Country'),
-        required=True,
-        help_text=_('Select the country for which this fee override applies.'),
+        required=False,
+        help_text=_('Optional. Selecting a country auto-fills the currency.'),
     )
     currency = forms.ChoiceField(
         label=_('Currency'),

@@ -68,11 +68,16 @@ class BillingInvoice(LoggedModel):
 
 class TicketFeeCountrySetting(models.Model):
     """
-    Country-specific service fee override. Takes precedence over the global
+    Currency-specific service fee override. Takes precedence over the global
     ``ticket_fee_percentage`` / ``ticket_fee_max`` stored in ``GlobalSettingsObject``.
+
+    The override is keyed by ``currency`` (unique) and resolved by matching
+    ``event.currency`` at billing time.  The ``country`` field is optional and
+    informational only — it is used in the admin UI to auto-populate the currency
+    dropdown but plays no role in the billing calculation.
     """
 
-    country = FastCountryField(verbose_name=_('Country'))
+    country = FastCountryField(verbose_name=_('Country'), blank=True)
     currency = models.CharField(max_length=3, verbose_name=_('Currency'), unique=True)
     service_fee_percentage = models.DecimalField(
         max_digits=10,
@@ -89,9 +94,13 @@ class TicketFeeCountrySetting(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _('Country fee setting')
-        verbose_name_plural = _('Country fee settings')
-        ordering = ('country',)
+        verbose_name = _('Currency fee setting')
+        verbose_name_plural = _('Currency fee settings')
+        ordering = ('currency',)
+
+    def save(self, *args, **kwargs):
+        self.currency = self.currency.upper()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.country} — {self.service_fee_percentage}% (max {self.max_fee} {self.currency})'
+        return f'{self.currency} — {self.service_fee_percentage}% (max {self.max_fee})'

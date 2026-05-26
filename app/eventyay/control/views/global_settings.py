@@ -319,9 +319,16 @@ class TicketFeeCountryCreateView(AdministratorPermissionRequiredMixin, View):
                     'max_fee': form.cleaned_data['max_fee'],
                 },
             )
-            messages.success(request, _('Country fee setting saved.'))
+            messages.success(request, _('Currency fee setting saved.'))
         else:
-            messages.error(request, _('Please correct the errors below.'))
+            field_errors = '; '.join(
+                '{}: {}'.format(form.fields[f].label if f in form.fields else f, ', '.join(errs))
+                for f, errs in form.errors.items()
+                if f != '__all__'
+            )
+            non_field = ', '.join(form.non_field_errors())
+            detail = ' | '.join(filter(None, [field_errors, non_field]))
+            messages.error(request, _('Could not save: %(errors)s') % {'errors': detail})
         return redirect(reverse('eventyay_admin:admin.global.settings') + '#tab-ticket_fee')
 
 

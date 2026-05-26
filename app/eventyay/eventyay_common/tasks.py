@@ -229,9 +229,8 @@ def collect_billing_invoice(
         created_by=EVENTYAY_EMAIL_NONE_VALUE,
         updated_by=EVENTYAY_EMAIL_NONE_VALUE,
     )
-    billing_invoice.next_reminder_datetime = get_next_reminder_datetime(
-        getattr(settings, 'BILLING_REMINDER_SCHEDULE', [14, 28])
-    )
+    billing_schedule = sorted(list(getattr(settings, 'BILLING_REMINDER_SCHEDULE', [14, 28])))
+    billing_invoice.next_reminder_datetime = get_next_reminder_datetime(billing_schedule)
     billing_invoice.save()
     logger.info('End - completed task to collect billing on a monthly basis.')
 
@@ -495,7 +494,7 @@ def get_next_reminder_datetime(reminder_schedule):
     @param reminder_schedule:
     @return:
     """
-    reminder_schedule.sort()
+    reminder_schedule = sorted(reminder_schedule)
     today = datetime.now()
     # Find the next scheduled day in the current month
     next_reminder = None
