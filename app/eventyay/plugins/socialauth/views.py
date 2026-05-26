@@ -155,13 +155,17 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             login_providers = LoginProviders.model_validate(raw).model_dump()
         except ValidationError as e:
             logger.error(
-                'login_providers settings failed validation during save (not overwriting): %s', e
+                'login_providers settings failed validation during save; applying POST to defaults: %s',
+                e,
             )
-            messages.error(
+            messages.warning(
                 request,
-                _('Stored login provider settings are invalid. Please review the configuration.'),
+                _(
+                    'Stored login provider settings were invalid and have been reset. '
+                    'Please review and save again.'
+                ),
             )
-            return redirect(self.get_success_url())
+            login_providers = LoginProviders.model_validate({}).model_dump()
 
         setting_state = request.POST.get('save_credentials', '').lower()
 
@@ -222,7 +226,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         if not client_id or not secret:
             return
 
-        encrypted_secret = secret if is_encrypted_secret(secret) else encrypt_secret(secret)
+        encrypted_secret = encrypt_secret(secret)
         provider_config['secret'] = encrypted_secret
         SocialApp.objects.update_or_create(
             provider=provider,

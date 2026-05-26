@@ -5,7 +5,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from allauth.socialaccount.models import SocialApp
-from cryptography.fernet import InvalidToken
+from cryptography.fernet import Fernet, InvalidToken
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
 from django.urls import reverse
@@ -16,7 +16,12 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
 from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
-from eventyay.plugins.socialauth.secrets import decrypt_secret, encrypt_secret, is_encrypted_secret
+from eventyay.plugins.socialauth.secrets import (
+    decrypt_secret,
+    encrypt_secret,
+    is_encrypted_secret,
+    looks_like_encrypted_secret,
+)
 from eventyay.plugins.socialauth.schemas.login_providers import LoginProviders
 from eventyay.plugins.socialauth.views import SocialLoginView
 
@@ -408,6 +413,45 @@ def test_socialapp_secret_is_decrypted_for_runtime_use(rf):
     assert apps[0].secret == secret
 
 
+def test_encrypt_secret_preserves_undecryptable_token_shaped_ciphertext():
+    other_fernet = Fernet(Fernet.generate_key())
+    ciphertext = other_fernet.encrypt(b'rotated-key-secret').decode('utf-8')
+    assert looks_like_encrypted_secret(ciphertext)
+    assert not is_encrypted_secret(ciphertext)
+    assert encrypt_secret(ciphertext) == ciphertext
+
+
+@pytest.mark.django_db
+def test_update_provider_state_enable_preserves_undecryptable_secret(rf):
+    other_fernet = Fernet(Fernet.generate_key())
+    ciphertext = other_fernet.encrypt(b'rotated-key-secret').decode('utf-8')
+    gs = GlobalSettingsObject()
+    gs.settings.set(
+        'login_providers',
+        {
+            'github': {
+                'state': False,
+                'client_id': 'github-client',
+                'secret': ciphertext,
+                'is_preferred': False,
+            },
+            'mediawiki': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+            'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        },
+    )
+    request = rf.post('/', data={'github_login': 'enabled'})
+    login_providers = LoginProviders.model_validate(
+        gs.settings.get('login_providers', as_type=dict)
+    ).model_dump()
+
+    view = SocialLoginView()
+    view.update_provider_state(request, 'github', login_providers)
+
+    assert login_providers['github']['secret'] == ciphertext
+    app = SocialApp.objects.get(provider='github')
+    assert app.secret == ciphertext
+
+
 def test_decrypt_secret_returns_empty_on_invalid_token():
     from eventyay.plugins.socialauth import secrets as secrets_mod
 
@@ -500,7 +544,7 @@ def test_update_credentials_preserves_secret_when_only_client_id_submitted(rf):
 
 
 @pytest.mark.django_db
-def test_social_login_post_preserves_invalid_stored_login_providers(rf):
+def test_social_login_post_recovers_from_invalid_stored_login_providers(rf):
     invalid_raw = {'unexpected_provider': {'state': True}}
     gs = GlobalSettingsObject()
     gs.settings.set('login_providers', invalid_raw)
@@ -517,7 +561,9 @@ def test_social_login_post_preserves_invalid_stored_login_providers(rf):
     response = view.post(request)
 
     assert response.status_code == 302
-    assert gs.settings.get('login_providers', as_type=dict) == invalid_raw
+    saved = gs.settings.get('login_providers', as_type=dict)
+    assert 'unexpected_provider' not in saved
+    assert saved['github']['state'] is False
 
 
 @pytest.mark.django_db

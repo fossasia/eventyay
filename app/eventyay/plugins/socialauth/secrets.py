@@ -40,17 +40,14 @@ def _configured_encryption_key_strings() -> tuple[str, ...]:
         return ()
 
 
-def is_encrypted_secret(value: str) -> bool:
-    """True if ``value`` is a verifiable Fernet ciphertext.
+def looks_like_encrypted_secret(value: str) -> bool:
+    """True if ``value`` has the shape of a Fernet token (may still be undecryptable)."""
+    return _is_probably_fernet_token(value)
 
-    Uses the shape heuristic as a fast pre-filter, then confirms by attempting
-    an actual decryption. A plaintext OAuth secret that coincidentally matches
-    the token shape will raise ``InvalidToken`` and return ``False``, preventing
-    it from being skipped during encryption or blanked out during decryption.
-    """
-    if not value:
-        return False
-    if not _is_probably_fernet_token(value):
+
+def is_encrypted_secret(value: str) -> bool:
+    """True if ``value`` decrypts with the current encryption keys."""
+    if not value or not looks_like_encrypted_secret(value):
         return False
     try:
         get_fernet().decrypt(value.encode('utf-8'))
@@ -64,13 +61,16 @@ def encrypt_secret(value: str) -> str:
         return value
     if is_encrypted_secret(value):
         return value
+    if looks_like_encrypted_secret(value):
+        # Token-shaped but not decryptable with current keys; preserve ciphertext.
+        return value
     return get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
 
 
 def decrypt_secret(value: str) -> str:
     if not value:
         return value
-    if not _is_probably_fernet_token(value):
+    if not looks_like_encrypted_secret(value):
         # Obviously not a Fernet token; return plaintext as-is.
         return value
     try:
@@ -79,7 +79,7 @@ def decrypt_secret(value: str) -> str:
         # Passes the shape check but is not decryptable with current keys.
         # Could be a plaintext secret that matched the heuristic, or ciphertext
         # from a rotated key. Log and return empty rather than exposing raw bytes.
-        logger.exception(
+        logger.warning(
             'Failed to decrypt social auth secret (length %s). '
             'If encryption keys changed, set SOCIALAUTH_SECRET_ENCRYPTION_KEYS and re-encrypt stored secrets.',
             len(value),
