@@ -137,18 +137,23 @@ class SpeakerProfileForm(
                 if hasattr(self.fields[field_name].widget, 'is_required'):
                     self.fields[field_name].widget.is_required = True
 
+        cfp_defaults = default_fields()
         count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
+        count_length_in = self.event.cfp.settings['count_length_in']
         for key in ('avatar_source', 'avatar_license'):
             if key not in self.fields:
                 continue
-            visibility = self.event.cfp.fields.get(key, default_fields()[key])['visibility']
+            config = self.event.cfp.fields.get(key, cfp_defaults[key])
+            visibility = config['visibility']
             if visibility == 'do_not_ask':
                 self.fields.pop(key, None)
                 continue
             field = self.fields[key]
             field.required = visibility == 'required'
-            min_value = self.event.cfp.fields.get(key, {}).get('min_length')
-            max_value = self.event.cfp.fields.get(key, {}).get('max_length')
+            if hasattr(field.widget, 'is_required'):
+                field.widget.is_required = field.required
+            min_value = config.get('min_length')
+            max_value = config.get('max_length')
             if min_value or max_value:
                 if min_value and count_chars:
                     field.widget.attrs['minlength'] = min_value
@@ -159,9 +164,12 @@ class SpeakerProfileForm(
                         self.validate_field_length,
                         min_length=min_value,
                         max_length=max_value,
-                        count_in=self.event.cfp.settings['count_length_in'],
+                        count_in=count_length_in,
                     )
                 )
+                field.original_help_text = getattr(field, 'original_help_text', '')
+                field.added_help_text = self.get_help_text('', min_value, max_value, count_length_in)
+                field.help_text = field.original_help_text + ' ' + field.added_help_text
 
         if not self.event.cfp.request_avatar:
             self.fields.pop('avatar', None)
@@ -294,7 +302,7 @@ class SpeakerProfileForm(
         field_classes = {
             'avatar': ImageField,
         }
-        request_require = {'biography', 'availabilities', 'avatar_source', 'avatar_license'}
+        request_require = {'biography', 'availabilities'}
 
 
 class OrgaProfileForm(forms.ModelForm):
