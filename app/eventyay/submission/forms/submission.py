@@ -160,12 +160,17 @@ class InfoForm(
         if instance and instance.pk:
             pks |= {instance.submission_type.pk}
 
+        self.allowed_submission_type_pks = pks
         defaults = cfp_default_fields()
         visibility = self.event.cfp.fields.get(
             'submission_type', defaults['submission_type']
         )['visibility']
 
         if visibility == 'do_not_ask':
+            if instance and instance.submission_type_id:
+                self.default_values['submission_type'] = submission_types.get(pk=instance.submission_type_id)
+                self.fields.pop('submission_type')
+                return
             if len(pks) == 1:
                 self.default_values['submission_type'] = submission_types.get(pk=list(pks)[0])
             elif self.event.cfp.default_type and self.event.cfp.default_type.pk in pks:
@@ -185,6 +190,21 @@ class InfoForm(
             self.fields['duration'].help_text += ' ' + str(
                 _('Leave empty to use the default duration for the session type.')
             )
+
+    def clean_submission_type(self):
+        value = self.cleaned_data.get('submission_type')
+        defaults = cfp_default_fields()
+        visibility = self.event.cfp.fields.get(
+            'submission_type', defaults['submission_type']
+        )['visibility']
+        if visibility == 'optional' and value is None:
+            allowed_pks = getattr(self, 'allowed_submission_type_pks', set())
+            default_type = self.event.cfp.default_type
+            if default_type and default_type.pk in allowed_pks:
+                return default_type
+            qs = self.fields['submission_type'].queryset
+            return qs.first()
+        return value
 
     def _set_locales(self):
         if 'content_locale' in self.fields:
