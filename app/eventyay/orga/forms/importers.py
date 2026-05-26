@@ -87,6 +87,12 @@ SPEAKER_IMPORT_FIELDS: list[ImportField] = [
         suggestions=['biography', 'bio'],
     ),
     ImportField(
+        identifier='avatar_url',
+        label=_('Profile picture URL'),
+        help_text=_('A URL pointing to the speaker\'s profile picture. The image will be downloaded and saved.'),
+        suggestions=['picture', 'avatar', 'profile picture', 'profile picture url', 'avatar url', 'image', 'image url', 'photo', 'photo url'],
+    ),
+    ImportField(
         identifier='avatar_source',
         label=_('Profile picture source'),
         help_text=_('Name the author or source of the image and include a link if available.'),
