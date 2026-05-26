@@ -1,3 +1,5 @@
+from functools import partial
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -9,6 +11,7 @@ from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceFie
 from i18nfield.forms import I18nModelForm
 
 from eventyay.base.models import Event, SpeakerProfile, TalkQuestion, TalkQuestionTarget, User
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
@@ -133,6 +136,32 @@ class SpeakerProfileForm(
                 self.fields[field_name].required = True
                 if hasattr(self.fields[field_name].widget, 'is_required'):
                     self.fields[field_name].widget.is_required = True
+
+        count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
+        for key in ('avatar_source', 'avatar_license'):
+            if key not in self.fields:
+                continue
+            visibility = self.event.cfp.fields.get(key, default_fields()[key])['visibility']
+            if visibility == 'do_not_ask':
+                self.fields.pop(key, None)
+                continue
+            field = self.fields[key]
+            field.required = visibility == 'required'
+            min_value = self.event.cfp.fields.get(key, {}).get('min_length')
+            max_value = self.event.cfp.fields.get(key, {}).get('max_length')
+            if min_value or max_value:
+                if min_value and count_chars:
+                    field.widget.attrs['minlength'] = min_value
+                if max_value and count_chars:
+                    field.widget.attrs['maxlength'] = max_value
+                field.validators.append(
+                    partial(
+                        self.validate_field_length,
+                        min_length=min_value,
+                        max_length=max_value,
+                        count_in=self.event.cfp.settings['count_length_in'],
+                    )
+                )
 
         if not self.event.cfp.request_avatar:
             self.fields.pop('avatar', None)
@@ -265,7 +294,7 @@ class SpeakerProfileForm(
         field_classes = {
             'avatar': ImageField,
         }
-        request_require = {'biography', 'availabilities'}
+        request_require = {'biography', 'availabilities', 'avatar_source', 'avatar_license'}
 
 
 class OrgaProfileForm(forms.ModelForm):
