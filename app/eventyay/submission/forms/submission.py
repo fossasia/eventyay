@@ -160,8 +160,9 @@ class InfoForm(
         if instance and instance.pk:
             pks |= {instance.submission_type.pk}
 
+        defaults = cfp_default_fields()
         visibility = self.event.cfp.fields.get(
-            'submission_type', cfp_default_fields()['submission_type']
+            'submission_type', defaults['submission_type']
         )['visibility']
 
         if visibility == 'do_not_ask':
@@ -176,7 +177,7 @@ class InfoForm(
 
         self.fields['submission_type'].queryset = submission_types.filter(pk__in=pks)
         self.fields['submission_type'].required = (visibility == 'required')
-        if self.event.cfp.default_type:
+        if self.fields['submission_type'].required and self.event.cfp.default_type:
             self.fields['submission_type'].empty_label = None
         else:
             self.fields['submission_type'].empty_label = _('Select a session type')
