@@ -14,6 +14,7 @@ from eventyay.base.models import (
     TalkQuestionTarget,
     Track,
 )
+from eventyay.base.models.cfp import default_fields as cfp_default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
@@ -158,20 +159,31 @@ class InfoForm(
             pks = set(types.values_list('pk', flat=True))
         if instance and instance.pk:
             pks |= {instance.submission_type.pk}
-        if len(pks) == 1:
-            self.default_values['submission_type'] = submission_types.get(pk=list(pks)[0])
+
+        visibility = self.event.cfp.fields.get(
+            'submission_type', cfp_default_fields()['submission_type']
+        )['visibility']
+
+        if visibility == 'do_not_ask':
+            if len(pks) == 1:
+                self.default_values['submission_type'] = submission_types.get(pk=list(pks)[0])
+            elif self.event.cfp.default_type and self.event.cfp.default_type.pk in pks:
+                self.default_values['submission_type'] = self.event.cfp.default_type
+            elif pks:
+                self.default_values['submission_type'] = submission_types.filter(pk__in=pks).first()
             self.fields.pop('submission_type')
+            return
+
+        self.fields['submission_type'].queryset = submission_types.filter(pk__in=pks)
+        self.fields['submission_type'].required = (visibility == 'required')
+        if self.event.cfp.default_type:
+            self.fields['submission_type'].empty_label = None
         else:
-            self.fields['submission_type'].queryset = submission_types.filter(pk__in=pks)
-            self.fields['submission_type'].required = True
-            if self.event.cfp.default_type:
-                self.fields['submission_type'].empty_label = None
-            else:
-                self.fields['submission_type'].empty_label = _('Select a session type')
-            if 'duration' in self.fields and not self.fields['duration'].required:
-                self.fields['duration'].help_text += ' ' + str(
-                    _('Leave empty to use the default duration for the session type.')
-                )
+            self.fields['submission_type'].empty_label = _('Select a session type')
+        if 'duration' in self.fields and not self.fields['duration'].required:
+            self.fields['duration'].help_text += ' ' + str(
+                _('Leave empty to use the default duration for the session type.')
+            )
 
     def _set_locales(self):
         if 'content_locale' in self.fields:

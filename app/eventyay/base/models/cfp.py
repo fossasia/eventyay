@@ -24,7 +24,7 @@ def default_settings():
 # Canonical lists of built-in CFP field keys, grouped by target.
 # Every other module should import these instead of hard-coding field names.
 BUILTIN_SESSION_FIELDS = (
-    'title', 'abstract', 'description', 'notes', 'track',
+    'title', 'abstract', 'description', 'submission_type', 'notes', 'track',
     'duration', 'slot_count', 'content_locale', 'image', 'slides', 'do_not_record',
 )
 BUILTIN_SPEAKER_FIELDS = (
@@ -112,6 +112,7 @@ def default_fields():
         'content_locale': {'visibility': 'required', 'public': True},
         'additional_speaker': {'visibility': 'optional', 'public': False},
         'fullname': {'visibility': 'required', 'public': True},
+        'submission_type': {'visibility': 'optional', 'public': True},
     }
 
 

@@ -131,6 +131,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         self.request_require_fields = [
             'abstract',
             'description',
+            'submission_type',
             'notes',
             'biography',
             'avatar',

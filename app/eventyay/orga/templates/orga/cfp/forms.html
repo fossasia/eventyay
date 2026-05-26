@@ -226,6 +226,48 @@
                         </tr>
                         {% endwith %}
 
+                        {# Session Type #}
+                        {% with field=sform.cfp_ask_submission_type %}
+                        <tr dragsort-id="submission_type">
+                            <th>{% translate "Session Type" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="{% translate 'Toggle active state for Session Type' %}">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="{% translate 'Active toggle for Session Type' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="{% translate 'Required status for Session Type' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Session Type is always public' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Session Type always public' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
                         {# Notes #}
                         {% with field=sform.cfp_ask_notes %}
                         <tr dragsort-id="notes">
