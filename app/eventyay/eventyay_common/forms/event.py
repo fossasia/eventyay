@@ -221,7 +221,7 @@ class EventUpdateForm(I18nModelForm):
         # Configure email field with canonical label and help text
         self.fields['email'].required = True
         self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        self.fields['email'].help_text = _("Attendees will contact you through this email.")
 
         if self.domain_field_enabled:
             self.fields['domain'] = forms.CharField(
