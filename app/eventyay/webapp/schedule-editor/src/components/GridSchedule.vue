@@ -140,13 +140,22 @@ const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
 
 let observer: IntersectionObserver | null = null
-let layoutObserver: ResizeObserver | null = null
-let sidebarResizeObserver: ResizeObserver | null = null
+const layoutObservers: ResizeObserver[] = []
+let windowResizeListener: (() => void) | null = null
 
 const refreshGridOffset = () => {
   if (grid.value) {
     gridOffset.value = grid.value.getBoundingClientRect().left
   }
+}
+
+const observeElementResize = (element: HTMLElement | null) => {
+  if (!element || typeof ResizeObserver === 'undefined') {
+    return
+  }
+  const resizeObserver = new ResizeObserver(refreshGridOffset)
+  resizeObserver.observe(element)
+  layoutObservers.push(resizeObserver)
 }
 
 const hasValidPosition = (session: SessionDatum): boolean => {
@@ -659,14 +668,14 @@ onMounted(async () => {
   await nextTick()
 
   refreshGridOffset()
-  if (rootEl.value) {
-    layoutObserver = new ResizeObserver(refreshGridOffset)
-    layoutObserver.observe(rootEl.value)
+  observeElementResize(rootEl.value)
+  const layoutRoot = rootEl.value?.closest('#page-content') ?? rootEl.value?.closest('.pretalx-schedule')
+  if (layoutRoot instanceof HTMLElement && layoutRoot !== rootEl.value) {
+    observeElementResize(layoutRoot)
   }
-  const sidebar = document.querySelector('aside.sidebar')
-  if (sidebar) {
-    sidebarResizeObserver = new ResizeObserver(refreshGridOffset)
-    sidebarResizeObserver.observe(sidebar)
+  if (typeof ResizeObserver === 'undefined') {
+    windowResizeListener = refreshGridOffset
+    window.addEventListener('resize', windowResizeListener)
   }
 
   observer = new IntersectionObserver(onIntersect, {
@@ -682,13 +691,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   timesliceRefs.value = []
-  if (layoutObserver) {
-    layoutObserver.disconnect()
-    layoutObserver = null
-  }
-  if (sidebarResizeObserver) {
-    sidebarResizeObserver.disconnect()
-    sidebarResizeObserver = null
+  layoutObservers.forEach((resizeObserver) => resizeObserver.disconnect())
+  layoutObservers.length = 0
+  if (windowResizeListener) {
+    window.removeEventListener('resize', windowResizeListener)
+    windowResizeListener = null
   }
   if (observer) {
     observer.disconnect()
