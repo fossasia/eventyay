@@ -807,20 +807,19 @@ class EventSettingsSerializer(SettingsSerializer):
     def __init__(self, *args, **kwargs):
         self.event = kwargs.pop('event')
         super().__init__(*args, **kwargs)
-        meta_noindex_field = DisplaySettingsAPIField(
+        self.fields['meta_noindex'] = DisplaySettingsAPIField(
             event=self.event,
             setting_key='meta_noindex',
             required=False,
             allow_null=True,
+            label=_(
+                'Ask search engines not to index this event’s public pages, including ticket shop pages'
+            ),
+            help_text=_(
+                'When enabled, a noindex/nofollow robots meta tag is added to this event’s public pages, '
+                'including schedule, talk, and ticket shop pages, asking search engines not to index them.'
+            ),
         )
-        meta_noindex_field._label = _(
-            'Ask search engines not to index this event’s public pages, including ticket shop pages'
-        )
-        meta_noindex_field._help_text = _(
-            'When enabled, a noindex/nofollow robots meta tag is added to this event’s public pages, '
-            'including schedule, talk, and ticket shop pages, asking search engines not to index them.'
-        )
-        self.fields['meta_noindex'] = meta_noindex_field
 
         for recv, resp in api_event_settings_fields.send(sender=self.event):
             for fname, field in resp.items():

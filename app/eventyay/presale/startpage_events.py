@@ -14,7 +14,7 @@ def get_startpage_events_queryset(*, search_query: str = ''):
         .exclude(display_settings__exclude_from_start_page=True)
     )
     if search_query:
-        qs = qs.filter(name__icontains=search_query).exclude(display_settings__exclude_from_search=True)
+        qs = qs.filter(name__icontains=search_query)
     else:
         qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
     return qs.order_by('date_from')

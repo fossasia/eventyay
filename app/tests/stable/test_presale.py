@@ -113,32 +113,29 @@ class TestAgendaPages:
 @pytest.mark.django_db
 class TestPlatformSearch:
     def test_internal_event_picker_returns_all_matching_events(self, organizer_client, organizer, event):
-        """The internal /common/events/search/ endpoint is an authenticated event picker,
-        not a public search; it returns all matching events regardless of exclude_from_search."""
+        """The internal /common/events/search/ endpoint is an authenticated event picker."""
         event.name = 'Visible Search Event'
         event.save(update_fields=['name'])
 
-        hidden_event = Event.objects.create(
+        other_event = Event.objects.create(
             organizer=organizer,
-            name='Hidden Search Event',
-            slug='hidden-search-event',
+            name='Other Search Event',
+            slug='other-search-event',
             date_from=timezone.now() + timedelta(days=30),
             date_to=timezone.now() + timedelta(days=31),
             currency='USD',
             locale='en',
             is_public=True,
             live=True,
-            email='hidden-search@example.com',
+            email='other-search@example.com',
         )
-        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_search': True}
-        hidden_event.save(update_fields=['display_settings'])
 
         response = organizer_client.get('/common/events/search/?query=Search')
         assert response.status_code == 200
         payload = response.json()
         names = {row['name'] for row in payload}
         assert 'Visible Search Event' in names
-        assert 'Hidden Search Event' in names
+        assert 'Other Search Event' in names
 
 
 @pytest.mark.django_db
@@ -171,56 +168,6 @@ class TestStartPageVisibility:
         content = response.content.decode('utf-8')
         assert 'Visible Start Event' in content
         assert 'Hidden Start Event' not in content
-
-    def test_start_page_search_excluded_events_marked_on_event_cards(self, client, organizer, event):
-        """Events excluded from platform search stay listable but carry a flag for nav autocomplete."""
-        listed = Event.objects.create(
-            organizer=organizer,
-            name='ExcludeSearchAutocompleteToken',
-            slug='exclude-search-autocomplete',
-            date_from=timezone.now() + timedelta(days=30),
-            date_to=timezone.now() + timedelta(days=31),
-            currency='USD',
-            locale='en',
-            is_public=True,
-            live=True,
-            startpage_visible=True,
-            email='exclude-search-auto@example.com',
-        )
-        listed.display_settings = {**(listed.display_settings or {}), 'exclude_from_search': True}
-        listed.save(update_fields=['display_settings'])
-
-        response = client.get('/')
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert 'ExcludeSearchAutocompleteToken' in content
-        assert 'data-exclude-from-search="true"' in content
-
-    def test_start_page_search_excludes_hidden_events(self, client, organizer, event):
-        """Events excluded from search should not appear in start page search results."""
-        event.name = 'Visible Search Event'
-        event.save(update_fields=['name'])
-
-        hidden_event = Event.objects.create(
-            organizer=organizer,
-            name='Hidden Search Event',
-            slug='hidden-search-event',
-            date_from=timezone.now() + timedelta(days=30),
-            date_to=timezone.now() + timedelta(days=31),
-            currency='USD',
-            locale='en',
-            is_public=True,
-            live=True,
-            email='hidden-search@example.com',
-        )
-        hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_search': True}
-        hidden_event.save(update_fields=['display_settings'])
-
-        response = client.get('/?q=Search')
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert 'Visible Search Event' in content
-        assert 'Hidden Search Event' not in content
 
     def test_start_page_search_finds_events_not_listed_on_start_page(self, client, organizer, event):
         """Search matches live events by name even when they are not start-page-visible."""

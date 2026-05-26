@@ -217,7 +217,6 @@ def default_display_settings():
         'html_export_url': '',
         'meta_noindex': False,
         'exclude_from_start_page': False,
-        'exclude_from_search': False,
         'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
     }
 

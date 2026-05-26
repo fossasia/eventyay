@@ -258,17 +258,8 @@ class EventPublicationForm(JsonSubfieldMixin, forms.Form):
         ),
         required=False,
     )
-    exclude_from_search = forms.BooleanField(
-        label=_('Exclude this event from platform search results'),
-        help_text=_(
-            'When enabled, this event will not appear in platform-wide event search results.'
-        ),
-        required=False,
-    )
-
     class Meta:
         json_fields = {
             'meta_noindex': 'display_settings',
             'exclude_from_start_page': 'display_settings',
-            'exclude_from_search': 'display_settings',
         }

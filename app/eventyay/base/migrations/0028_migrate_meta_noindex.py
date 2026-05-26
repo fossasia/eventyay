@@ -7,20 +7,13 @@ _TRUTHY_VALUES = frozenset({'True', 'true', '"True"', '"true"', '1', 'yes', 'on'
 _CHUNK_SIZE = 1000
 
 
-def _chunks(items, size):
-    for index in range(0, len(items), size):
-        yield items[index : index + size]
-
-
 def migrate_meta_noindex(apps, schema_editor):
     Event = apps.get_model('base', 'Event')
     Event_SettingsStore = apps.get_model('base', 'Event_SettingsStore')
 
     events_to_update = {}
-    settings_to_delete = []
 
     for setting in Event_SettingsStore.objects.filter(key='meta_noindex').iterator(chunk_size=_CHUNK_SIZE):
-        settings_to_delete.append(setting.pk)
         if setting.value not in _TRUTHY_VALUES:
             continue
         event = setting.object
@@ -40,12 +33,14 @@ def migrate_meta_noindex(apps, schema_editor):
     if events_to_update:
         Event.objects.bulk_update(events_to_update.values(), ['display_settings'], batch_size=_CHUNK_SIZE)
 
-    for chunk in _chunks(settings_to_delete, _CHUNK_SIZE):
-        Event_SettingsStore.objects.filter(pk__in=chunk).delete()
-
-
-def reverse_migrate_meta_noindex(apps, schema_editor):
-    pass
+    while True:
+        pks = list(
+            Event_SettingsStore.objects.filter(key='meta_noindex')
+            .values_list('pk', flat=True)[:_CHUNK_SIZE]
+        )
+        if not pks:
+            break
+        Event_SettingsStore.objects.filter(pk__in=pks).delete()
 
 
 class Migration(migrations.Migration):
@@ -55,5 +50,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_meta_noindex, reverse_migrate_meta_noindex),
+        migrations.RunPython(migrate_meta_noindex, migrations.RunPython.noop),
     ]
