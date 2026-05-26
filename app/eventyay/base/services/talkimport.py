@@ -704,9 +704,34 @@ def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
         ext = '.jpg'
 
     try:
-        response = requests.get(avatar_url, timeout=15)
+        # Disable redirects so we can validate the final destination URL before
+        # following it; this prevents open-redirect-assisted SSRF.
+        response = requests.get(
+            avatar_url,
+            timeout=(5, 10),  # (connect, read) seconds
+            allow_redirects=False,
+            stream=True,
+        )
+        # Follow at most one redirect, but re-validate the Location header.
+        if response.is_redirect:
+            location = response.headers.get('Location', '')
+            location = _normalize_avatar_url(location)
+            if not location:
+                raise ValueError(f'Redirect to disallowed URL: {response.headers.get("Location")}')
+            response = requests.get(location, timeout=(5, 10), allow_redirects=False, stream=True)
+
         response.raise_for_status()
-        content = response.content
+
+        # Guard against huge files (10 MB cap)
+        max_bytes = 10 * 1024 * 1024
+        chunks = []
+        total = 0
+        for chunk in response.iter_content(chunk_size=65536):
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError('Avatar image exceeds 10 MB limit')
+            chunks.append(chunk)
+        content = b''.join(chunks)
         if not content:
             raise ValueError('Empty response body')
     except (requests.exceptions.RequestException, ValueError):
@@ -727,6 +752,7 @@ def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
     # process_image must be called by the caller AFTER user.save() to avoid a race condition
     user.avatar.save(filename, ContentFile(content), save=False)
     return ['avatar']
+
 
 
 def _parse_featured_position(value: str) -> int | None:

@@ -6,7 +6,6 @@ import pytest
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Event, User
-from eventyay.base.models.profile import SpeakerProfile
 from eventyay.base.services.talkimport import (
     _normalize_avatar_url,
     _set_external_avatar_url,
@@ -61,6 +60,19 @@ def test_normalize_avatar_url(input_url, expected):
     assert _normalize_avatar_url(input_url) == expected
 
 
+# --- Helpers ---
+
+
+def _make_mock_response(data: bytes) -> MagicMock:
+    """Return a MagicMock that looks like a non-redirect streaming response."""
+    resp = MagicMock()
+    resp.is_redirect = False
+    resp.raise_for_status = MagicMock()
+    # iter_content must yield chunks; wrap in a list so it works for any chunk_size
+    resp.iter_content.return_value = iter([data])
+    return resp
+
+
 # --- Unit tests for _set_external_avatar_url ---
 
 
@@ -75,14 +87,17 @@ def test_set_external_avatar_url_downloads_image():
         )
 
     fake_png = b'\x89PNG\r\n\x1a\n' + b'\x00' * 100
-    mock_response = MagicMock()
-    mock_response.content = fake_png
-    mock_response.raise_for_status = MagicMock()
+    mock_response = _make_mock_response(fake_png)
 
     with patch('eventyay.base.services.talkimport.requests.get', return_value=mock_response) as mock_get:
         fields = _set_external_avatar_url(user, 'https://example.com/avatars/test.png')
 
-    mock_get.assert_called_once_with('https://example.com/avatars/test.png', timeout=15)
+    mock_get.assert_called_once_with(
+        'https://example.com/avatars/test.png',
+        timeout=(5, 10),
+        allow_redirects=False,
+        stream=True,
+    )
     assert 'avatar' in fields
     assert user.avatar
     assert user.avatar.name.startswith('avatars/')
@@ -132,14 +147,13 @@ def test_set_external_avatar_url_skips_existing_avatar():
     assert fields == []
 
 
-def test_set_external_avatar_url_empty_url():
-    """Empty URL returns no changes without accessing user at all."""
-    from eventyay.base.services.talkimport import _normalize_avatar_url
-
-    # empty/invalid URL normalises to empty string, so the function returns []
-    # before it ever touches the user object
-    assert _normalize_avatar_url('') == ''
-    assert _normalize_avatar_url('not-a-url') == ''
+@pytest.mark.parametrize('input_url', ['', 'not-a-url', 'ftp://example.com/img.png'])
+def test_set_external_avatar_url_invalid_url_returns_empty(input_url):
+    """Empty or invalid URLs return [] and never trigger a download."""
+    with patch('eventyay.base.services.talkimport.requests.get') as mock_get:
+        fields = _set_external_avatar_url(object(), input_url)
+    assert fields == []
+    mock_get.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -153,9 +167,7 @@ def test_set_external_avatar_url_handles_unknown_extension():
         )
 
     fake_img = b'\xff\xd8\xff' + b'\x00' * 100
-    mock_response = MagicMock()
-    mock_response.content = fake_img
-    mock_response.raise_for_status = MagicMock()
+    mock_response = _make_mock_response(fake_img)
 
     with patch('eventyay.base.services.talkimport.requests.get', return_value=mock_response):
         fields = _set_external_avatar_url(user, 'https://example.com/api/avatar?id=123')
@@ -171,9 +183,7 @@ def test_set_external_avatar_url_handles_unknown_extension():
 def test_import_speaker_records_downloads_avatar(_event):
     """Full integration: import_speaker_records downloads avatar when avatar_url is provided."""
     fake_png = b'\x89PNG\r\n\x1a\n' + b'\x00' * 100
-    mock_response = MagicMock()
-    mock_response.content = fake_png
-    mock_response.raise_for_status = MagicMock()
+    mock_response = _make_mock_response(fake_png)
 
     with scopes_disabled():
         acting_user = User.objects.create_user(
@@ -264,9 +274,7 @@ def test_import_speaker_records_no_avatar(_event):
 def test_import_speaker_records_process_image_called_after_save(_event):
     """process_image is called AFTER user.save, not before."""
     fake_png = b'\x89PNG\r\n\x1a\n' + b'\x00' * 100
-    mock_response = MagicMock()
-    mock_response.content = fake_png
-    mock_response.raise_for_status = MagicMock()
+    mock_response = _make_mock_response(fake_png)
 
     with scopes_disabled():
         acting_user = User.objects.create_user(
