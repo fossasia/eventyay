@@ -15,7 +15,6 @@
 @import "mails.scss";
 @import "../../pretixbase/scss/webfont.scss";
 @import "../../fileupload/jquery.fileupload.scss";
-@import "../../leaflet/leaflet.scss";
 @import "../../select2/select2.scss";
 @import "../../select2/select2_bootstrap.scss";
 @import "../../colorpicker/bootstrap-colorpicker.scss";
@@ -25,6 +24,13 @@
 /* See https://github.com/pretix/pretix/pull/761 */
 .bootstrap-datetimepicker-widget table td span {
     line-height: 1.8em;
+}
+
+/* Keep date picker overlays above Leaflet controls in settings forms. */
+.bootstrap-datetimepicker-widget.dropdown-menu,
+.datepicker.dropdown-menu,
+.datepicker.datepicker-dropdown {
+    z-index: 1101;
 }
 
 footer {
@@ -1174,5 +1180,20 @@ h1 .label {
     .header-nav .navigation .navigation-button {
         flex: 0 0 auto;
         margin-left: auto;
+    }
+}
+
+/* Leaflet image path overrides for compressed leaflet.css */
+.leaflet-container {
+    .leaflet-control-layers-toggle {
+        background-image: url(static('leaflet/images/layers.png'));
+    }
+
+    &.leaflet-retina .leaflet-control-layers-toggle {
+        background-image: url(static('leaflet/images/layers-2x.png'));
+    }
+
+    .leaflet-default-icon-path {
+        background-image: url(static('leaflet/images/marker-icon.png'));
     }
 }
