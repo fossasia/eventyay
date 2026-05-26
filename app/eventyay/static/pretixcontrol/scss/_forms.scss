@@ -292,7 +292,8 @@ input[type=number].short {
 [data-notify=error] [data-notification=error],
 [data-notify=loading] [data-notification=loading],
 [data-notify=updated] [data-notification=updated],
-[data-notify=confirm] [data-notification=confirm] {
+[data-notify=confirm] [data-notification=confirm],
+[data-notify=confirm-pin] [data-notification=confirm-pin] {
   display: block;
 }
 
