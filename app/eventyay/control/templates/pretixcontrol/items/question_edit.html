@@ -50,10 +50,14 @@
                 {% bootstrap_field form.valid_datetime_max layout="control" %}
             </div>
             <div id="answer-options">
-                <h3>{% trans "Answer options" %}</h3>
-                <noscript>
-                    <p>{% trans "Only applicable if you choose 'Choose one/multiple from a list' above." %}</p>
-                </noscript>
+                <div class="form-group answer-options-heading">
+                    <label class="col-md-3 control-label">{% trans "Answer options" %}</label>
+                    <div class="col-md-9">
+                        <noscript>
+                            <p class="help-block">{% trans "Only applicable if you choose 'Choose one/multiple from a list' above." %}</p>
+                        </noscript>
+                    </div>
+                </div>
                 <div class="formset" data-formset data-formset-prefix="{{ formset.prefix }}">
                     {{ formset.management_form }}
                     {% bootstrap_formset_errors formset %}
@@ -65,18 +69,17 @@
                                     {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
                                     {% bootstrap_field form.ORDER form_group_class="" layout="inline" %}
                                 </div>
-                                <div class="row question-option-row">
-                                    <div class="col-xs-10">
-                                <span class="text-muted">
-                                    {% blocktrans trimmed with id=form.instance.identifier %}
-                                        Answer option {{ id }}
-                                    {% endblocktrans %}
-                                </span>
+                                <div class="form-group question-option-row">
+                                    <label class="col-md-3 control-label question-option-label">
+                                        {% blocktrans trimmed with id=form.instance.identifier %}
+                                            Answer option {{ id }}
+                                        {% endblocktrans %}
+                                    </label>
+                                    <div class="col-md-7 question-option-field">
                                         {% bootstrap_form_errors form %}
-                                        {% bootstrap_field form.answer layout='inline' form_group_class="" %}
+                                        {% bootstrap_field form.answer layout='inline' form_group_class="" show_label=False %}
                                     </div>
-                                    <div class="col-xs-2 text-right flip">
-                                        <span>&nbsp;</span><br>
+                                    <div class="col-md-2 question-option-actions text-right flip">
                                         <button type="button" class="btn btn-default" data-formset-move-up-button>
                                             <i class="fa fa-arrow-up"></i></button>
                                         <button type="button" class="btn btn-default" data-formset-move-down-button>
@@ -96,15 +99,14 @@
                                     {% bootstrap_field formset.empty_form.DELETE form_group_class="" layout="inline" %}
                                     {% bootstrap_field formset.empty_form.ORDER form_group_class="" layout="inline" %}
                                 </div>
-                                <div class="row question-option-row">
-                                    <div class="col-xs-10">
-                                <span class="text-muted">
-                                    {% trans "New answer option" %}
-                                </span>
-                                        {% bootstrap_field formset.empty_form.answer layout='inline' form_group_class="" %}
+                                <div class="form-group question-option-row">
+                                    <label class="col-md-3 control-label question-option-label">
+                                        {% trans "New answer option" %}
+                                    </label>
+                                    <div class="col-md-7 question-option-field">
+                                        {% bootstrap_field formset.empty_form.answer layout='inline' form_group_class="" show_label=False %}
                                     </div>
-                                    <div class="col-xs-2 text-right flip">
-                                        <span>&nbsp;</span><br>
+                                    <div class="col-md-2 question-option-actions text-right flip">
                                         <button type="button" class="btn btn-default" data-formset-move-up-button>
                                             <i class="fa fa-arrow-up"></i></button>
                                         <button type="button" class="btn btn-default" data-formset-move-down-button>
@@ -116,10 +118,12 @@
                             </div>
                         {% endescapescript %}
                     </script>
-                    <p>
-                        <button type="button" class="btn btn-default" data-formset-add>
-                            <i class="fa fa-plus"></i> {% trans "Add a new option" %}</button>
-                    </p>
+                    <div class="form-group question-option-add">
+                        <div class="col-md-offset-3 col-md-9">
+                            <button type="button" class="btn btn-default" data-formset-add>
+                                <i class="fa fa-plus"></i> {% trans "Add a new option" %}</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% bootstrap_field form.help_text layout="control" %}

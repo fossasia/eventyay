@@ -130,8 +130,35 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   margin-bottom: 0;
 }
 
-.question-option-row {
+.row.question-option-row {
   padding: 5px 0;
+}
+
+#answer-options .question-option-row.form-group {
+  margin-bottom: 15px;
+}
+
+#answer-options .question-option-label {
+  font-weight: normal;
+  color: $text-muted;
+}
+
+#answer-options .question-option-field .form-group {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+#answer-options .question-option-actions {
+  padding-top: 7px;
+  white-space: nowrap;
+
+  .btn + .btn {
+    margin-left: 4px;
+  }
+}
+
+#answer-options .question-option-add {
+  margin-bottom: 0;
 }
 
 .i18n-form-group input,
