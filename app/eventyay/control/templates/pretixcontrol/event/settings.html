@@ -27,6 +27,7 @@
                 <legend>{% trans "Basics" %}</legend>
                 {% bootstrap_field form.currency layout="control" %}
                 {% bootstrap_field form.sales_channels layout="control" %}
+                {% include "pretixcontrol/event/fragment_geodata.html" %}
 
                 {% if meta_forms %}
                     <div class="form-group metadata-group">

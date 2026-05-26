@@ -27,6 +27,8 @@ from eventyay.multidomain.urlreverse import (
 
 _supported = None
 
+DEFAULT_LEAFLET_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+
 
 class LocaleMiddleware(MiddlewareMixin):
     """
@@ -260,8 +262,11 @@ class SecurityMiddleware(MiddlewareMixin):
         img_src = []
         external_img_src = get_external_image_csp_sources(request)
         gs = global_settings_object(request)
-        if gs.settings.leaflet_tiles:
-            img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+        leaflet_tiles = gs.settings.leaflet_tiles or DEFAULT_LEAFLET_TILES
+        try:
+            img_src.append(leaflet_tiles[: leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+        except (ValueError, IndexError):
+            pass
 
         h = {
             'default-src': ['{static}'],
