@@ -28,9 +28,30 @@
     {% endcompress %}
 
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+    {% if ev.geo_lat != None and ev.geo_lon != None %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
+        {% endcompress %}
+        <script type="text/javascript" src="{% static 'leaflet/leaflet.js' %}"></script>
+        <script type="module" src="{% static 'pretixpresale/js/ui/public_geo.js' %}"></script>
+    {% endif %}
 {% endblock %}
 {% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
+    {% if subevent %}
+        {% if cart_namespace %}
+            {% eventurl request.event 'presale:event.index' subevent=subevent.pk cart_namespace=cart_namespace as event_public_presale_home %}
+        {% else %}
+            {% eventurl request.event 'presale:event.index' subevent=subevent.pk as event_public_presale_home %}
+        {% endif %}
+    {% else %}
+        {% if cart_namespace %}
+            {% eventurl request.event 'presale:event.index' cart_namespace=cart_namespace as event_public_presale_home %}
+        {% else %}
+            {% eventurl request.event 'presale:event.index' as event_public_presale_home %}
+        {% endif %}
+    {% endif %}
 
     {% autoescape off %}
         <script type="application/ld+json">
@@ -110,7 +131,7 @@
         {% if not subevent %}
             {% if event_logo_image and request.event.settings.logo_show_title %}
                 <h2 class="content-header">
-                    {{ event.name|event_localize }}
+                    <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
                 </h2>
             {% endif %}
             {% if frontpage_text and not cart_namespace %}
@@ -161,7 +182,7 @@
             </div>
         </div>
         {% if subevent %}
-            <h2 class="subevent-head">{{ subevent.name|event_localize }}</h2>
+            <h2 class="subevent-head"><a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ subevent.name|event_localize }}</a></h2>
             {% if frontpage_text and not cart_namespace %}
                 <div>
                     {{ frontpage_text|event_localize|rich_text }}
@@ -171,17 +192,17 @@
     {% else %}
         {% if event_logo_image and request.event.settings.logo_show_title %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
+                <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
                 {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
+                    <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
                 {% endif %}
             </h2>
         {% endif %}
         {% if not event_logo_image %}
             <h2 class="content-header">
-                {{ event.name|event_localize }}
+                <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ event.name|event_localize }}</a>
                 {% if request.event.settings.show_dates_on_frontpage %}
-                    <small>{{ event.get_date_range_display }}</small>
+                    <a class="event-public-text-link" href="{{ event_public_presale_home }}"><small>{{ event.get_date_range_display }}</small></a>
                 {% endif %}
             </h2>
         {% endif %}
@@ -228,7 +249,7 @@
                     <div class="info-row">
                         <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
                         <p>
-                            {{ ev.get_date_range_display }}
+                            <a class="event-public-text-link" href="{{ event_public_presale_home }}">{{ ev.get_date_range_display }}</a>
                             {% if event.settings.show_times %}
                                 <br>
                                 <span data-time="{{ ev.date_from.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
@@ -396,5 +417,29 @@
         {% endif %}
     {% endif %}
     {% eventsignal event "eventyay.presale.signals.front_page_after_content" subevent=subevent request=request %}
+    {% if ev.geo_lat != None and ev.geo_lon != None %}
+        <section class="front-page venue-map">
+            <div class="venue-map-layout">
+                <div class="venue-map-main">
+                    <h2 id="venue" class="content-header">{% trans "Getting here" %}</h2>
+                    <div class="public-geodata-group"
+                         data-lat="{{ ev.geo_lat|default_if_none:'' }}"
+                         data-lon="{{ ev.geo_lon|default_if_none:'' }}"
+                         data-tiles="{{ global_settings.leaflet_tiles }}"
+                         data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                         data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                         data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                        <div class="public-geodata-map" aria-hidden="true"></div>
+                    </div>
+                </div>
+                {% if ev.location %}
+                <div class="venue-map-details">
+                    <h4 class="venue-map-heading">{% trans "Address" %}</h4>
+                    <p>{{ ev.location|event_localize|linebreaksbr }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
     </main>
 {% endblock %}
