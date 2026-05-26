@@ -853,9 +853,9 @@ the eventyay team"""
         return str(uuid.uuid5(uuid.NAMESPACE_URL, f'acct:{self.email.strip()}'))
 
     @cached_property
-    def gravatar_parameter(self) -> str:
-        if not self.email:
-            return ''
+    def gravatar_parameter(self) -> str | None:
+        if not (self.email or '').strip():
+            return None
         return md5(self.email.strip().encode()).hexdigest()
 
     @cached_property
