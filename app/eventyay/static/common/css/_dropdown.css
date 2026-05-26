@@ -18,17 +18,16 @@ details.dropdown summary {
 #language-dropdown > summary,
 #user-dropdown-label > summary,
 #locale-dropdown-label > summary,
-.header-row-right details.dropdown > summary,
-.presale-sticky-tabs .header-row-right details.dropdown > summary {
+.header-row-right details.dropdown > summary {
   display: inline-flex;
   align-items: center;
-  gap: var(--header-icon-text-gap, 6px);
+  gap: var(--header-icon-text-gap, 0.375rem);
 }
 
 .header-row-right a.login-link {
   display: inline-flex;
   align-items: center;
-  gap: var(--header-icon-text-gap, 6px);
+  gap: var(--header-icon-text-gap, 0.375rem);
 }
 
 details.dropdown summary::before,
