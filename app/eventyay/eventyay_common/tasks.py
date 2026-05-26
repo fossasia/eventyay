@@ -475,15 +475,15 @@ def calculate_ticket_fee(
 
     ticket_fee = amount * (effective_rate / 100)
 
-    # Apply maximum fee cap when a positive limit is configured
+    capped_fee = ticket_fee
     if effective_max > 0:
-        ticket_fee = min(ticket_fee, effective_max)
+        capped_fee = min(ticket_fee, effective_max)
 
-    final_ticket_fee = ticket_fee
+    final_ticket_fee = capped_fee
     voucher_discount = Decimal('0.00')
 
     if _is_voucher_valid_for_event(invoice_voucher, event):
-        final_ticket_fee, voucher_discount = _apply_voucher(ticket_fee, voucher_discount, invoice_voucher)
+        final_ticket_fee, voucher_discount = _apply_voucher(capped_fee, voucher_discount, invoice_voucher)
 
     return ticket_fee, final_ticket_fee, voucher_discount
 
