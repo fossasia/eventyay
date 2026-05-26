@@ -187,18 +187,18 @@ svg.svg-icon {
   top: 2px;
 }
 
-.btn:focus,
-.btn.focus,
-.btn:active:focus,
-.btn:active.focus,
-.btn.active:focus,
-.btn.active.focus,
-.header-nav:focus,
-.header-nav.focus,
-a:focus,
-button:focus,
-summary:focus,
-[role="button"]:focus {
+.btn:focus:not(:focus-visible),
+.btn.focus:not(:focus-visible),
+.btn:active:focus:not(:focus-visible),
+.btn:active.focus:not(:focus-visible),
+.btn.active:focus:not(:focus-visible),
+.btn.active.focus:not(:focus-visible),
+.header-nav:focus:not(:focus-visible),
+.header-nav.focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+summary:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
     outline: none;
     box-shadow: none;
 }

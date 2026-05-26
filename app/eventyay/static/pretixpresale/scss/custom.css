@@ -188,8 +188,7 @@ header .header-row-right {
     align-items: center;
 }
 
-#main-container :focus,
-#main-container :focus-visible {
+#main-container :focus:not(:focus-visible) {
     outline: none;
     box-shadow: none;
 }
