@@ -13,6 +13,22 @@ details.dropdown summary {
   color: inherit;
 }
 
+/* Consistent spacing between user/language icons and labels (public + private headers) */
+#profile-dropdown > summary,
+#language-dropdown > summary,
+#user-dropdown-label > summary,
+#locale-dropdown-label > summary,
+.header-row-right details.dropdown > summary,
+.presale-sticky-tabs .header-row-right details.dropdown > summary,
+a.login-link {
+  align-items: center;
+  gap: 6px;
+}
+
+a.login-link {
+  display: inline-flex;
+}
+
 details.dropdown summary::before,
 details.dropdown summary::marker {
   display: none;
@@ -671,18 +687,6 @@ details.dropdown .dropdown-content-se::after {
 .navbar-inverse #language-dropdown > summary i,
 .navbar #language-dropdown > summary i {
   color: var(--navbar-link-color, #f8f9fa);
-}
-
-.navbar-top-links #profile-dropdown > summary i.fa-user,
-.navbar-inverse #profile-dropdown > summary i.fa-user,
-.navbar #profile-dropdown > summary i.fa-user {
-  margin-right: 5px;
-}
-
-.navbar-top-links #language-dropdown > summary i.fa-globe,
-.navbar-inverse #language-dropdown > summary i.fa-globe,
-.navbar #language-dropdown > summary i.fa-globe {
-  margin-right: 5px;
 }
 
 .navbar-top-links #profile-dropdown > summary i.fa-caret-down,

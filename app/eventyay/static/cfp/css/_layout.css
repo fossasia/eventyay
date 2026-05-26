@@ -11,9 +11,8 @@
   cursor: pointer;
 }
 
-/* Add padding to username for visual match */
+/* Icon/text spacing is handled by shared rules in common/css/_dropdown.css */
 .presale-sticky-tabs .header-row-right details.dropdown summary .mobile-hide-text {
-  padding-left: 6px;
   padding-right: 6px;
 }
 body {
