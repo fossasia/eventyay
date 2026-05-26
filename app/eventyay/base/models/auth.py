@@ -854,6 +854,8 @@ the eventyay team"""
 
     @cached_property
     def gravatar_parameter(self) -> str:
+        if not self.email:
+            return ''
         return md5(self.email.strip().encode()).hexdigest()
 
     @cached_property

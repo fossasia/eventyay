@@ -196,7 +196,7 @@ class MailTemplate(PretalxModel):
         else:
             raise TypeError('First argument to to_mail must be a string or a User, not ' + str(type(user)))
         if users and not commit:
-            address = ','.join(user.email for user in users)
+            address = ','.join(user.email for user in users if user.email)
             users = None
         event = event or self.event
 
