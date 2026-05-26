@@ -21,7 +21,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.formats import date_format
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
@@ -56,6 +56,8 @@ from ..utils import EventCreatedFor, get_subevent
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
 SHOP_STATE_WIDGET_KEY = 'shop_state'
+EVENT_SETTINGS_PERMISSION_DIALOG_ID = 'event-settings-permission-dialog'
+TICKET_PERMISSION_DIALOG_ID = 'ticket-permission-dialog'
 
 
 def filter_common_event_dashboard_widgets(
@@ -74,7 +76,7 @@ def filter_common_event_dashboard_widgets(
         if widget.get('key') == SHOP_STATE_WIDGET_KEY and not can_change_event_settings:
             widget = dict(widget)
             widget.pop('url', None)
-            widget['permission_dialog_id'] = 'event-settings-permission-dialog'
+            widget['permission_dialog_id'] = EVENT_SETTINGS_PERMISSION_DIALOG_ID
         filtered.append(widget)
     return filtered
 
@@ -452,10 +454,15 @@ class EventWidgetGenerator:
                 'control:event.index',
                 kwargs={'event': event.slug, 'organizer': event.organizer.slug},
             )
-            return f'<a href="{ticket_url}" class="component">{_("Tickets")}</a>'
-        return (
-            f'<a href="#" class="component" data-dialog-target="#ticket-permission-dialog"'
-            f' data-toggle="dialog">{_("Tickets")}</a>'
+            return format_html(
+                '<a href="{}" class="component">{}</a>',
+                ticket_url,
+                _('Tickets'),
+            )
+        return format_html(
+            '<a href="#" class="component" data-dialog-target="#{}" data-toggle="dialog">{}</a>',
+            TICKET_PERMISSION_DIALOG_ID,
+            _('Tickets'),
         )
 
     @classmethod

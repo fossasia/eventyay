@@ -21,11 +21,11 @@
                 return
             }
             outerDialogElement.setAttribute("data-dialog-initialized", "")
-            outerDialogElement.addEventListener("click", () => outerDialogElement.close())
-            const inner = outerDialogElement.querySelector("div, form")
-            if (inner) {
-                inner.addEventListener("click", (ev) => ev.stopPropagation())
-            }
+            outerDialogElement.addEventListener("click", (ev) => {
+                if (ev.target === outerDialogElement) {
+                    outerDialogElement.close()
+                }
+            })
         })
     }
 
