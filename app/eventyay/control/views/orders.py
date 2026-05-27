@@ -1787,7 +1787,7 @@ class OrderPositionReinstate(OrderView):
                 OrderPosition.all.filter(order=self.order, canceled=True),
                 pk=kwargs['position'],
             )
-        except OrderPosition.DoesNotExist:
+        except Http404:
             messages.error(self.request, _('Position not found or not canceled.'))
             return self._redirect_back()
 

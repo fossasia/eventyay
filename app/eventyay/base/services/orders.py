@@ -2210,7 +2210,13 @@ class OrderChangeManager:
                     opa.canceled = False
                     if opa.voucher:
                         Voucher.objects.filter(pk=opa.voucher.pk).update(redeemed=F('redeemed') + 1)
-                    opa.save(update_fields=['canceled'])
+                    assign_ticket_secret(
+                        event=self.event,
+                        position=opa,
+                        force_invalidate=True,
+                        save=False,
+                    )
+                    opa.save(update_fields=['canceled', 'secret'])
                 self.order.log_action(
                     'eventyay.event.order.changed.reinstate',
                     user=self.user,
@@ -2227,7 +2233,13 @@ class OrderChangeManager:
                 op.position.canceled = False
                 if op.position.voucher:
                     Voucher.objects.filter(pk=op.position.voucher.pk).update(redeemed=F('redeemed') + 1)
-                op.position.save(update_fields=['canceled'])
+                assign_ticket_secret(
+                    event=self.event,
+                    position=op.position,
+                    force_invalidate=True,
+                    save=False,
+                )
+                op.position.save(update_fields=['canceled', 'secret'])
             elif isinstance(op, self.AddOperation):
                 pos = OrderPosition.objects.create(
                     product=op.product,
