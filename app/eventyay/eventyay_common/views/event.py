@@ -296,7 +296,7 @@ class EventCreateView(SafeSessionWizardView):
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone'])
-            
+
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
             event.settings.set('create_for', create_for)

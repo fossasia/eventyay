@@ -545,10 +545,6 @@ class EventUpdateForm(I18nModelForm):
         kwargs.setdefault('initial', {})
         self.instance = kwargs['instance']
         super().__init__(*args, **kwargs)
-        self.fields['location'].widget.attrs['rows'] = '3'
-        self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
-        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
-        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['sales_channels'] = forms.MultipleChoiceField(
             label=self.fields['sales_channels'].label,
             help_text=self.fields['sales_channels'].help_text,
@@ -571,9 +567,6 @@ class EventUpdateForm(I18nModelForm):
         localized_fields = '__all__'
         fields = [
             'currency',
-            'location',
-            'geo_lat',
-            'geo_lon',
             'presale_start',
             'presale_end',
             'sales_channels',
