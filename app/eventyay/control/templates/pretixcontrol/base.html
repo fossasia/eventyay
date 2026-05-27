@@ -16,6 +16,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_component_nav_mobile.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
 		{% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
@@ -56,6 +57,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/tabs.js" %}"></script>
             <script type="module" src="{% static "pretixcontrol/js/ui/secret-toggle.js" %}"></script>
             <script type="text/javascript" src="{% static "leaflet/leaflet.js" %}"></script>
+            <script type="text/javascript" src="{% static "pretixcontrol/js/ui/geo.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
