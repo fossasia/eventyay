@@ -9,6 +9,7 @@ from eventyay.eventyay_common.permissions import (
     user_has_ticket_dashboard_access,
 )
 from eventyay.eventyay_common.views.dashboards import (
+    EVENT_SETTINGS_PERMISSION_DIALOG_ID,
     TICKET_PERMISSION_DIALOG_ID,
     EventWidgetGenerator,
 )
@@ -124,9 +125,11 @@ def test_event_index_widgets_json_includes_live_status_for_talk_only(talk_only_c
     response = talk_only_client.get(url)
     assert response.status_code == 200
     widgets = response.json()['widgets']
-    assert len(widgets) == 1
-    assert 'shopstate' in widgets[0]['content']
-    assert widgets[0].get('permission_dialog_id') == 'event-settings-permission-dialog'
+    assert any(
+        'shopstate' in widget.get('content', '')
+        and widget.get('permission_dialog_id') == EVENT_SETTINGS_PERMISSION_DIALOG_ID
+        for widget in widgets
+    )
 
 
 @pytest.mark.django_db

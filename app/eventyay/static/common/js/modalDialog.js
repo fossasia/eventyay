@@ -13,10 +13,16 @@
             )
             if (!outerDialogElement) return
             element.setAttribute("data-dialog-initialized", "")
-            element.addEventListener("click", function (ev) {
+            const openDialog = (ev) => {
                 ev.preventDefault()
                 if (typeof outerDialogElement.showModal === "function") {
                     outerDialogElement.showModal()
+                }
+            }
+            element.addEventListener("click", openDialog)
+            element.addEventListener("keydown", (ev) => {
+                if (ev.key === "Enter" || ev.key === " ") {
+                    openDialog(ev)
                 }
             })
             if (outerDialogElement.hasAttribute("data-dialog-initialized")) {
@@ -24,7 +30,10 @@
             }
             outerDialogElement.setAttribute("data-dialog-initialized", "")
             outerDialogElement.addEventListener("click", (ev) => {
-                if (ev.target === outerDialogElement) {
+                if (
+                    ev.target === outerDialogElement &&
+                    typeof outerDialogElement.close === "function"
+                ) {
                     outerDialogElement.close()
                 }
             })

@@ -61,12 +61,18 @@ TICKET_PERMISSION_DIALOG_ID = 'ticket-permission-dialog'
 
 
 def filter_common_event_dashboard_widgets(
-    widgets: List[Dict[str, Any]],
+    widgets: List[Dict[str, Any]] | None,
     *,
     can_view_orders: bool,
     can_change_event_settings: bool,
 ) -> List[Dict[str, Any]]:
     """Limit dashboard widgets on the common event home for talk-only users."""
+    if widgets is None:
+        widgets = []
+    elif isinstance(widgets, dict):
+        widgets = [widgets]
+    elif not isinstance(widgets, (list, tuple)):
+        widgets = []
     filtered: List[Dict[str, Any]] = []
     for widget in widgets:
         if not isinstance(widget, dict):
