@@ -9,6 +9,7 @@ import Schedule from '@schedule/components/ScheduleView'
 import Talk from '@schedule/components/TalkDetail'
 import Speakers from '@schedule/components/SpeakersList'
 import Speaker from '@schedule/components/SpeakerDetail'
+import PublicStars from '@schedule/components/PublicStars'
 import Exhibitor from 'views/exhibitors/item'
 import ContactRequests from 'views/contact-requests'
 import Preferences from 'views/preferences'
@@ -59,10 +60,15 @@ const routes = [
 				// manage view gets linked to room url
 				// use a relative empty path instead of absolute '/' so parent params (like worldName) are preserved
 				path: '',
+				redirect: { name: 'about' }
+			},
+			{
+				path: 'about',
+				alias: 'info',
 				component: RoomHeader,
 				children: [{
 					path: '',
-					name: 'home',
+					name: 'about',
 					component: Room
 				}]
 			},
@@ -95,7 +101,10 @@ const routes = [
 				path: 'schedule/talks/:talkId',
 				name: 'schedule:talk',
 				component: Talk,
-				props: true
+				props: route => ({
+					talkId: route.params.talkId,
+					baseUrl: window.eventyay?.eventUrl || ''
+				})
 			},
 			{
 				path: 'schedule/speakers',
@@ -107,6 +116,15 @@ const routes = [
 				name: 'schedule:speaker',
 				component: Speaker,
 				props: true
+			},
+			{
+				path: 'schedule/people/:userCode/stars',
+				name: 'schedule:public-stars',
+				component: PublicStars,
+				props: route => ({
+					userCode: route.params.userCode,
+					baseUrl: window.eventyay?.eventUrl || ''
+				})
 			},
 			{
 				path: 'exhibitors/:exhibitorId',
@@ -227,16 +245,6 @@ const routes = [
 					path: '',
 					name: 'admin:config',
 					component: () => import('views/admin/config/main')
-				},
-				{
-					path: 'schedule',
-					name: 'admin:config:schedule',
-					component: () => import('views/admin/config/schedule')
-				},
-				{
-					path: 'theme',
-					name: 'admin:config:theme',
-					component: () => import('views/admin/config/theme')
 				},
 				{
 					path: 'permissions',

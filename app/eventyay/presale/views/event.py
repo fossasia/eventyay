@@ -42,6 +42,7 @@ from django_scopes import scope
 from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.views.utils import escape_json_for_script
+from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
@@ -271,6 +272,7 @@ def get_grouped_products(
             max_per_order = sys.maxsize
         else:
             max_per_order = product.max_per_order or int(event.settings.max_products_per_order)
+        product.effective_max_per_order = None if max_per_order == sys.maxsize else max_per_order
 
         if product.hidden_if_available:
             q = product.hidden_if_available.availability(_cache=quota_cache)
@@ -340,6 +342,10 @@ def get_grouped_products(
             display_add_to_cart = display_add_to_cart or product.order_max > 0
         else:
             product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+            product.single_variation_selection = (
+                max_per_order == 1
+                or product.limit_one_per_user
+            )
 
             if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
                 product.min_per_order = 1
@@ -584,7 +590,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             if context['cart_redirect'].startswith('https:'):
                 context['cart_redirect'] = '/' + context['cart_redirect'].split('/', 3)[3]
         else:
-            context['cart_redirect'] = self.request.path
+            context['cart_redirect'] = self.request.get_full_path()
 
         # Get event_name in language code
         event_name_data = self.request.event.name.data
@@ -611,20 +617,25 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['featured_speakers_widget_schedule_json'] = ''
 
         event = self.request.event
-        with scope(event=event):
-            featured_speakers = list(
-                SpeakerProfile.objects.filter(
-                    event=event,
-                    is_featured=True,
+        featured_sessions_visible = are_featured_submissions_visible(self.request.user, event)
+        featured_speaker_profiles = []
+        if featured_sessions_visible:
+            with scope(event=event):
+                featured_speaker_profiles = list(
+                    SpeakerProfile.objects.filter(
+                        event=event,
+                        is_featured=True,
+                    )
+                    .select_related('user')
+                    .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
                 )
-                .select_related('user')
-                .order_by(OrderBy(F('position'), nulls_last=True), 'user__fullname', 'pk')
-            )
 
-        if featured_speakers:
-            context['featured_speakers'] = featured_speakers
+        if featured_speaker_profiles:
+            context['featured_speakers'] = featured_speaker_profiles
 
-            featured_codes = {profile.user.code for profile in featured_speakers if profile.user_id}
+            featured_speaker_user_codes = {
+                profile.user.code for profile in featured_speaker_profiles if profile.user_id
+            }
 
             schedule = event.current_schedule or getattr(event, 'wip_schedule', None)
             can_view_schedule = (
@@ -642,7 +653,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 schedule_speakers = list(schedule_data.get('speakers', []) or [])
                 schedule_speaker_codes = {s.get('code') for s in schedule_speakers if isinstance(s, dict)}
                 include_avatar = event.cfp.request_avatar
-                for speaker_profile in featured_speakers:
+                for speaker_profile in featured_speaker_profiles:
                     if not speaker_profile.user_id:
                         continue
                     user = speaker_profile.user
@@ -670,7 +681,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 filtered_talks = [
                     t
                     for t in all_talks_list
-                    if featured_codes.intersection(set(t.get('speakers') or []))
+                    if featured_speaker_user_codes.intersection(set(t.get('speakers') or []))
                 ]
                 schedule_data['talks'] = filtered_talks
 
@@ -689,7 +700,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             else:
                 include_avatar = event.cfp.request_avatar
                 widget_speakers = []
-                for speaker_profile in featured_speakers:
+                for speaker_profile in featured_speaker_profiles:
                     if not speaker_profile.user_id:
                         continue
                     user = speaker_profile.user

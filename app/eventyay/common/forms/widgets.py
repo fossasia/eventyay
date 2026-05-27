@@ -12,6 +12,7 @@ from django.forms import (
     Textarea,
     TextInput,
     TimeInput,
+    Widget,
 )
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -99,6 +100,11 @@ class ImageInput(ClearableBasenameFileInput):
 
 class MarkdownWidget(Textarea):
     template_name = 'common/widgets/markdown.html'
+
+    def __init__(self, attrs=None):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-markdown-field', 'true')
+        super().__init__(attrs=attrs)
 
 
 class EnhancedSelectMixin(Select):
@@ -204,6 +210,63 @@ class TextInputWithAddon(TextInput):
         context['widget']['addon_before'] = self.addon_before
         context['widget']['addon_after'] = self.addon_after
         return context
+
+
+class SlidesWidget(Widget):
+    template_name = 'common/widgets/slides_input.html'
+
+    def __init__(self, attrs=None):
+        super().__init__(attrs)
+        self.max_items = None
+
+    @staticmethod
+    def links_field_name(name):
+        return f'{name}_links'
+
+    @staticmethod
+    def files_field_name(name):
+        return f'{name}_files'
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if isinstance(value, dict):
+            current_resources = list(value.get('existing_resources', []))
+            links_value = '\n'.join(value.get('links', []))
+        else:
+            current_resources = list(value or [])
+            links_value = ''
+        context['widget']['current_resources'] = current_resources
+        context['widget']['existing_value'] = bool(current_resources)
+        context['widget']['max_items'] = self.max_items
+        context['widget']['current_count'] = len(current_resources)
+        context['widget']['remaining_items'] = (
+            max(self.max_items - len(current_resources), 0) if self.max_items else None
+        )
+        context['widget']['links_name'] = self.links_field_name(name)
+        context['widget']['files_name'] = self.files_field_name(name)
+        context['widget']['links_id'] = f'id_{self.links_field_name(name)}'
+        context['widget']['files_id'] = f'id_{self.files_field_name(name)}'
+        context['widget']['clear_name'] = self.clear_checkbox_name(name)
+        context['widget']['links_value'] = links_value
+        return context
+
+    @staticmethod
+    def clear_checkbox_name(name):
+        return f'{name}_clear_ids'
+
+    def value_from_datadict(self, data, files, name):
+        stored_value = data.get(name)
+        if isinstance(stored_value, dict):
+            links_text = '\n'.join(stored_value.get('links', []))
+            clear_ids = stored_value.get('clear_ids', [])
+        else:
+            links_text = data.get(self.links_field_name(name), '')
+            clear_ids = data.getlist(self.clear_checkbox_name(name))
+        return {
+            'links_text': links_text,
+            'resources': files.getlist(self.files_field_name(name)),
+            'clear_ids': clear_ids,
+        }
 
 
 class HtmlDateInput(DateInput):

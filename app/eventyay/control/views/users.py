@@ -71,7 +71,7 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
 
 class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, UpdateView):
     template_name = 'pretixcontrol/admin/users/form.html'
-    context_object_name = 'user'
+    context_object_name = 'edit_user'
     form_class = UserEditForm
 
     def get_object(self, queryset=None):
@@ -143,7 +143,7 @@ class UserAnonymizeView(
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['user'] = get_object_or_404(User, pk=self.kwargs.get('id'))
+        ctx['edit_user'] = get_object_or_404(User, pk=self.kwargs.get('id'))
         return ctx
 
     def post(self, request, *args, **kwargs):

@@ -292,7 +292,8 @@ input[type=number].short {
 [data-notify=error] [data-notification=error],
 [data-notify=loading] [data-notification=loading],
 [data-notify=updated] [data-notification=updated],
-[data-notify=confirm] [data-notification=confirm] {
+[data-notify=confirm] [data-notification=confirm],
+[data-notify=confirm-pin] [data-notification=confirm-pin] {
   display: block;
 }
 
@@ -393,6 +394,13 @@ label.no-bold {
 label .optional {
   color: $text-muted;
   font-weight: normal;
+}
+.form-horizontal .control-label {
+  pointer-events: none;
+}
+.form-horizontal .control-label .label-text,
+.form-horizontal .control-label .optional {
+  pointer-events: auto;
 }
 @media (max-width: $screen-sm-max) {
   .form-horizontal .control-label {

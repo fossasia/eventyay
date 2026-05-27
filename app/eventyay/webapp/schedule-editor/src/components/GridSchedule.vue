@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-grid-schedule(ref="rootEl")
+.c-grid-schedule(ref="rootEl", :class="'density-' + density")
 	.grid(ref="grid", :style="gridStyle", :class="gridClasses", @pointermove="updateHoverSlice($event)", @pointerup="stopDragging($event)")
 		template(v-for="slice of visibleTimeslices", :key="slice.name")
 			.timeslice(:ref="setTimesliceRef", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)", @click="expandTimeslice(slice)") {{ getSliceLabel(slice) }}
@@ -116,6 +116,8 @@ const props = defineProps<{
   rooms: Room[]
   currentDay: Moment | null
   draggedSession: SessionDatum | null
+  density: 'compact' | 'default' | 'comfortable'
+  timeDensityMinutes: number
 }>()
 
 const emit = defineEmits([
@@ -175,7 +177,7 @@ const hoverEndSlice = computed((): Moment | null => {
 })
 
 const timeslices = computed<Timeslice[]>(() => {
-  const minimumSliceMins = 30
+  const minimumSliceMins = props.timeDensityMinutes || 30
   const slices: Timeslice[] = []
   const slicesLookup: Record<string, Timeslice> = {}
 
@@ -254,7 +256,7 @@ const timeslices = computed<Timeslice[]>(() => {
 
   const sliceIsFraction = (slice?: Timeslice): boolean => {
     if (!slice) return false
-    return slice.date.minutes() !== 0 && slice.date.minutes() !== minimumSliceMins
+    return slice.date.minutes() % minimumSliceMins !== 0
   }
 
   const sliceShouldDisplay = (slice?: Timeslice, index?: number): boolean => {
@@ -285,7 +287,7 @@ const timeslices = computed<Timeslice[]>(() => {
     }
 
     const prevSlice = slices[index - 1]
-    if (sliceShouldDisplay(prevSlice, index - 1) && !prevSlice.datebreak) {
+    if (prevSlice && sliceShouldDisplay(prevSlice, index - 1) && !prevSlice.datebreak) {
       prevSlice.gap = true
     }
   }
@@ -294,35 +296,47 @@ const timeslices = computed<Timeslice[]>(() => {
 })
 
 const oddTimeslices = computed<Moment[]>(() => {
+  const minimumSliceMins = props.timeDensityMinutes || 30
   const result: Moment[] = []
   props.sessions.forEach(session => {
-    if (session.start.minute() % 30 !== 0) result.push(session.start)
-    if (session.end.minute() % 30 !== 0) result.push(session.end)
+    if (session.start.minute() % minimumSliceMins !== 0) result.push(session.start)
+    if (session.end.minute() % minimumSliceMins !== 0) result.push(session.end)
   })
   // Remove duplicates by stringifying dates (safe as moment objects)
   return [...new Set(result.map(m => m.format()))].map(f => moment(f))
 })
 
 const visibleTimeslices = computed<Timeslice[]>(() => {
+  const minimumSliceMins = props.timeDensityMinutes || 30
   return timeslices.value.filter(slice =>
-    slice.date.minute() % 30 === 0 ||
+    slice.date.minute() % minimumSliceMins === 0 ||
     expandedTimes.value.some(et => et.isSame(slice.date)) ||
     oddTimeslices.value.some(ot => ot.isSame(slice.date))
   )
 })
 
+const densityScale = computed(() => {
+  if (props.density === 'compact') return 0.65
+  if (props.density === 'comfortable') return 1.4
+  return 1
+})
+
 const gridStyle = computed(() => {
-  let rows = '[header] 52px '
+  const scale = densityScale.value
+  const minimumSliceMins = props.timeDensityMinutes || 30
+  const baseSliceHeight = 60 * (minimumSliceMins / 30)
+  let rows = `[header] ${Math.round(52 * (minimumSliceMins / 30) * scale)}px `
   rows += timeslices.value.map((slice, index) => {
     const next = timeslices.value[index + 1]
-    let height = 60
+    let height = baseSliceHeight
     if (slice.gap) {
-      height = 100
+      height = 100 * (minimumSliceMins / 30)
     } else if (slice.datebreak) {
-      height = 60
+      height = baseSliceHeight
     } else if (next) {
-      height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
+      height = Math.min(baseSliceHeight, next.date.diff(slice.date, 'minutes') * 2)
     }
+    height = Math.round(height * scale)
     return `[${slice.name}] minmax(${height}px, auto)`
   }).join(' ')
 
@@ -471,10 +485,12 @@ const stopDragging = (event: PointerEvent) => {
 const expandTimeslice = (slice: Timeslice) => {
   const index = visibleTimeslices.value.indexOf(slice)
   if (index + 1 >= visibleTimeslices.value.length) {
-    expandedTimes.value.push(slice.date.clone().add(5, 'm'))
+    const minimumSliceMins = props.timeDensityMinutes || 30
+    expandedTimes.value.push(slice.date.clone().add(Math.min(5, minimumSliceMins), 'm'))
   } else {
     const end = visibleTimeslices.value[index + 1].date.clone()
-    const interval = end.diff(slice.date, 'minutes') <= 30 ? 5 : 30
+    const minimumSliceMins = props.timeDensityMinutes || 30
+    const interval = end.diff(slice.date, 'minutes') <= minimumSliceMins ? Math.min(5, minimumSliceMins) : minimumSliceMins
     const time = slice.date.clone().add(interval, 'm')
     while (time.isBefore(end)) {
       expandedTimes.value.push(time.clone())
@@ -699,6 +715,7 @@ onUnmounted(() => {
 
 		.c-linear-schedule-session
 			z-index: 10
+			transition: padding 0.2s ease, font-size 0.2s ease
 	.timeslice
 		color: $clr-secondary-text-light
 		padding: 8px 10px 0 10px
@@ -709,6 +726,7 @@ onUnmounted(() => {
 		background-color: $clr-grey-50
 		border-top: 1px solid $clr-dividers-light
 		z-index: 20
+		transition: padding 0.2s ease, font-size 0.2s ease
 		.expand
 			display: none
 		&.datebreak
@@ -724,6 +742,62 @@ onUnmounted(() => {
 				margin: 4px auto
 				path
 					fill: $clr-grey-500
+
+	// Density: compact
+	&.density-compact
+		.timeslice
+			padding: 4px 6px 0 6px
+			font-size: 12px
+		.c-linear-schedule-session
+			margin: 4px 3px
+			min-height: 48px
+			font-size: 12px
+			.time-box
+				width: 50px
+				padding: 4px 4px 2px 4px
+				.start
+					font-size: 13px
+					margin-bottom: 4px
+					.duration
+						font-size: 11px
+			.info
+				padding: 4px 6px
+				.title
+					font-size: 13px
+					margin-bottom: 2px
+				.speakers
+					font-size: 11px
+		.grid > .room
+			font-size: 14px
+			padding: 4px
+
+	// Density: comfortable
+	&.density-comfortable
+		.timeslice
+			padding: 12px 14px 0 14px
+			font-size: 15px
+		.c-linear-schedule-session
+			margin: 12px 9px
+			min-height: 120px
+			font-size: 15px
+			.time-box
+				width: 72px
+				padding: 14px 10px 8px 10px
+				.start
+					font-size: 18px
+					margin-bottom: 10px
+					.duration
+						font-size: 14px
+			.info
+				padding: 12px
+				.title
+					font-size: 18px
+					margin-bottom: 6px
+				.speakers
+					font-size: 14px
+		.grid > .room
+			font-size: 20px
+			padding: 12px
 
 	.timeseparator
 		height: 1px

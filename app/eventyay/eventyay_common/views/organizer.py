@@ -7,6 +7,7 @@ from django.db.models import Count, ManyToManyField
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView
 from django_scopes import scopes_disabled
@@ -153,17 +154,26 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 'update': self._handle_team_update,
                 'members': self._handle_team_members,
                 'tokens': self._handle_team_tokens,
-                'delete': self._handle_team_delete,
             }
             handler = handlers.get(action)
             if handler:
                 return handler()
         return super().post(request, *args, **kwargs)
 
+    def _validated_teams_return_next(self, candidate: str | None) -> str | None:
+        if candidate and url_has_allowed_host_and_scheme(
+            candidate,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return candidate
+        return None
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['can_manage_teams'] = self.can_manage_teams
         ctx['active_section'] = 'teams'
+        ctx['teams_return_next'] = self._validated_teams_return_next(self.request.GET.get('next'))
         selected_team_id = self._selected_team_override or self.request.GET.get('team')
         selected_panel = self._selected_panel_override or self.request.GET.get('panel')
         if selected_team_id and not selected_panel:
@@ -390,6 +400,9 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
                 self.request,
                 _("Changes to the team '%(team_name)s' have been saved.") % {'team_name': team_name},
             )
+            return_next = self._validated_teams_return_next(self.request.POST.get('next'))
+            if return_next:
+                return redirect(return_next)
             return redirect(self._teams_tab_url(team.pk, section='permissions'))
 
         messages.error(
@@ -559,9 +572,11 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        token_form_prefix = self._token_form_prefix(team)
+        prefixed_name_field = f'{token_form_prefix}-name'
         token_form = TokenForm(
-            data=(self.request.POST if 'name' in self.request.POST else None),
-            prefix=self._token_form_prefix(team),
+            data=(self.request.POST if prefixed_name_field in self.request.POST else None),
+            prefix=token_form_prefix,
         )
 
         post = self.request.POST
@@ -569,7 +584,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
         with transaction.atomic():
             if 'remove-token' in post:
                 return self._handle_remove_token(team, post)
-            if 'name' in post and token_form.is_valid() and token_form.has_changed():
+            if prefixed_name_field in post and token_form.is_valid() and token_form.has_changed():
                 return self._handle_create_token(team, token_form)
 
         messages.error(self.request, _('Your changes could not be saved.'))
@@ -612,26 +627,6 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             ).format(token.token),
         )
         return self._redirect_to_team_permissions(team.pk)
-
-    def _handle_team_delete(self):
-        team = self._get_team_from_post()
-        self._forced_section = 'teams'
-
-        if not self._can_delete_team(team):
-            messages.error(
-                self.request,
-                _("The team '%(team_name)s' cannot be deleted.") % {'team_name': team.name},
-            )
-            return redirect(self._teams_tab_url(anchor=None))
-
-        team_name = team.name
-        team.log_action('eventyay.team.deleted', user=self.request.user)
-        team.delete()
-        messages.success(
-            self.request,
-            _("The team '%(team_name)s' has been deleted.") % {'team_name': team_name},
-        )
-        return redirect(self._teams_tab_url(anchor=None))
 
     def _send_invite(self, instance):
         try:

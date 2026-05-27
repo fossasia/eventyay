@@ -1,28 +1,19 @@
 {% load i18n %}
+{% load event_tags %}
 
 <li class="nav-item">
     <details class="dropdown fix-height" id="profile-dropdown">
-        <summary class="header-nav">
-            <i class="fa fa-user"></i> {{ request.user.get_full_name }}
-            <i class="fa fa-caret-down"></i>
-        </summary>
+        {% with user_label=request.user|short_user_label %}
+            <summary class="header-nav" aria-label="{% translate 'User menu' %} - {{ user_label }}">
+                <i class="fa fa-user" aria-hidden="true"></i>
+                <span class="hidden-xs" aria-hidden="true">{{ user_label }}</span>
+                <i class="fa fa-caret-down ml-1 hidden-xs" aria-hidden="true"></i>
+            </summary>
+        {% endwith %}
         <div class="dropdown-content dropdown-content-sw">
-            <div class="dashboard-dropdown">
-                <a class="dropdown-item dashboard-dropdown-toggle" href="{{ base_path }}/common/" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-                    <i class="fa fa-tachometer"></i> {% translate "Dashboard" %}
-                </a>
-                <div class="dropdown-content dropdown-content-w" role="menu">
-                    <a class="dropdown-item" href="{{ base_path }}/common/">
-                        <i class="fa fa-tachometer"></i> {% translate "Main dashboard" %}
-                    </a>
-                    <a class="dropdown-item" href="{{ base_path }}/control/">
-                        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-                    </a>
-                    <a class="dropdown-item" href="{{ base_path }}/orga/event/">
-                        <i class="fa fa-microphone"></i> {% translate "Talks" %}
-                    </a>
-                </div>
-            </div>
+            <a class="dropdown-item" href="{{ base_path }}/common/">
+                <i class="fa fa-tachometer"></i> {% translate "Dashboard" %}
+            </a>
 
             <a class="dropdown-item" href="{{ base_path }}/common/orders/">
                 <i class="fa fa-shopping-cart"></i> {% translate "My orders" %}

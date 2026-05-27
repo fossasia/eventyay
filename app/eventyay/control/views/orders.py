@@ -38,7 +38,7 @@ from django.utils import formats
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme as is_safe_url
 from django.utils.timezone import make_aware, now
-from django.utils.translation import gettext
+from django.utils.translation import gettext, ngettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import (
     DetailView,
@@ -100,13 +100,22 @@ from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
     approve_order,
+    approve_order_without_side_effects,
     cancel_order,
     deny_order,
+    deny_order_without_side_effects,
     extend_order,
     mark_order_expired,
     mark_order_refunded,
     notify_user_changed_order,
     reactivate_order,
+    send_order_approved_notifications,
+    send_order_denied_notifications,
+)
+from eventyay.base.services.system_questions import (
+    get_enabled_system_question_fields,
+    get_system_question_base_states,
+    get_system_question_product_overrides,
 )
 from eventyay.base.services.stats import order_overview
 from eventyay.base.services.tickets import generate
@@ -279,6 +288,100 @@ class OrderList(OrderSearchMixin, EventPermissionRequiredMixin, PaginationMixin,
         return EventOrderFilterForm(data=self.request.GET, event=self.request.event)
 
 
+class OrderBulkAction(EventPermissionRequiredMixin, View):
+    permission = 'can_change_orders'
+
+    def _redirect_back(self):
+        if 'next' in self.request.POST and is_safe_url(self.request.POST.get('next'), allowed_hosts=None):
+            return redirect(self.request.POST.get('next'))
+        return redirect(
+            'control:event.orders',
+            event=self.request.event.slug,
+            organizer=self.request.event.organizer.slug,
+        )
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        if action not in ('approve', 'deny'):
+            messages.error(self.request, _('Please select a valid action.'))
+            return self._redirect_back()
+
+        selected_codes = [code.strip().upper() for code in self.request.POST.getlist('order') if code.strip()]
+        selected_codes = list(dict.fromkeys(selected_codes))
+        selected_orders = []
+
+        if not selected_codes:
+            messages.error(self.request, _('Please select at least one order.'))
+            return self._redirect_back()
+
+        try:
+            with transaction.atomic():
+                selected_orders = list(self.request.event.orders.select_for_update().filter(code__in=selected_codes))
+                if len(selected_orders) != len(selected_codes):
+                    messages.error(self.request, _('At least one selected order does not exist anymore.'))
+                    return self._redirect_back()
+
+                selected_by_code = {order.code: order for order in selected_orders}
+                selected_orders = [selected_by_code[code] for code in selected_codes]
+
+                invalid = [
+                    order.code
+                    for order in selected_orders
+                    if order.status != Order.STATUS_PENDING or not order.require_approval
+                ]
+                if invalid:
+                    messages.error(
+                        self.request,
+                        _('Bulk actions are only possible if all selected orders are pending approval.'),
+                    )
+                    return self._redirect_back()
+
+                for order in selected_orders:
+                    if action == 'approve':
+                        invoice = approve_order_without_side_effects(order, user=self.request.user)
+                        # Signals and emails must only run after the bulk transaction commits.
+                        transaction.on_commit(
+                            lambda order=order, invoice=invoice: send_order_approved_notifications(
+                                order,
+                                invoice=invoice,
+                                user=self.request.user,
+                            )
+                        )
+                    else:
+                        deny_order_without_side_effects(order, user=self.request.user)
+                        transaction.on_commit(
+                            lambda order=order: send_order_denied_notifications(order, user=self.request.user)
+                        )
+        except OrderError as e:
+            messages.error(self.request, str(e))
+            return self._redirect_back()
+
+        if action == 'approve':
+            messages.success(
+                self.request,
+                ngettext(
+                    '%(count)d order has been approved.',
+                    '%(count)d orders have been approved.',
+                    len(selected_orders),
+                )
+                % {'count': len(selected_orders)},
+            )
+        else:
+            messages.success(
+                self.request,
+                ngettext(
+                    '%(count)d order has been denied and is now canceled.',
+                    '%(count)d orders have been denied and are now canceled.',
+                    len(selected_orders),
+                )
+                % {'count': len(selected_orders)},
+            )
+        return self._redirect_back()
+
+    def get(self, *args, **kwargs):
+        return HttpResponseNotAllowed(['POST'])
+
+
 class OrderView(EventPermissionRequiredMixin, DetailView):
     context_object_name = 'order'
     model = Order
@@ -336,7 +439,7 @@ class OrderDetail(OrderView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['products'] = self.get_products()
+        ctx['items'] = self.get_products()
         ctx['event'] = self.request.event
         ctx['payments'] = self.order.payments.order_by('-created')
         ctx['refunds'] = self.order.refunds.select_related('payment').order_by('-created')
@@ -402,6 +505,20 @@ class OrderDetail(OrderView):
         )
 
         positions = []
+        base_states = get_system_question_base_states(self.request.event)
+        product_overrides = get_system_question_product_overrides(self.request.event)
+        enabled_system_fields_by_product_id: dict[int, set[str]] = {}
+
+        def get_enabled_system_fields_for_product(product) -> set[str]:
+            if product.pk not in enabled_system_fields_by_product_id:
+                enabled_system_fields_by_product_id[product.pk] = get_enabled_system_question_fields(
+                    self.request.event,
+                    product,
+                    base_states=base_states,
+                    product_overrides=product_overrides,
+                )
+            return enabled_system_fields_by_product_id[product.pk]
+
         for p in cartpos:
             responses = question_form_fields.send(sender=self.request.event, position=p)
             p.additional_fields = []
@@ -409,19 +526,27 @@ class OrderDetail(OrderView):
             for r, response in sorted(responses, key=lambda r: str(r[0])):
                 if response:
                     for key, value in response.items():
+                        answer = data.get('question_form_data', {}).get(key)
+                        if hasattr(value, 'get_display_value'):
+                            answer = value.get_display_value(answer)
                         p.additional_fields.append(
                             {
-                                'answer': data.get('question_form_data', {}).get(key),
+                                'answer': answer,
                                 'question': value.label,
                             }
                         )
 
+            enabled_system_fields = get_enabled_system_fields_for_product(p.product)
             p.has_questions = (
                 p.additional_fields
-                or (p.product.admission and self.request.event.settings.attendee_names_asked)
-                or (p.product.admission and self.request.event.settings.attendee_emails_asked)
+                or bool(enabled_system_fields)
                 or p.product.questions.all()
             )
+            p.ask_attendee_name_parts = 'attendee_name_parts' in enabled_system_fields
+            p.ask_attendee_email = 'attendee_email' in enabled_system_fields
+            p.ask_attendee_company = 'company' in enabled_system_fields
+            p.ask_attendee_job_title = 'job_title' in enabled_system_fields
+            p.ask_attendee_address = 'street' in enabled_system_fields
             p.cache_answers()
             p.order = self.order
 
@@ -977,6 +1102,8 @@ class OrderRefundView(OrderView):
             full_refund = self.order.payment_refund_sum
         else:
             full_refund = self.start_form.cleaned_data.get('partial_amount')
+        full_refund = round_decimal(full_refund, self.request.event.currency)
+
         if self.request.GET.get('giftcard', 'false') == 'true':
             proposals = {None: full_refund}
             giftcard_proposal = full_refund
@@ -1147,6 +1274,7 @@ class OrderRefundView(OrderView):
                         )
 
             any_success = False
+            refund_selected = round_decimal(refund_selected, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
                 for r in refunds:
                     r.save()
@@ -2500,7 +2628,9 @@ class ExportMixin:
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
             if test_form.is_valid():
-                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
+                initial = {
+                    k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET
+                }
             else:
                 initial = {}
 
@@ -2535,11 +2665,14 @@ class ExportDoView(EventPermissionRequiredMixin, ExportMixin, AsyncAction, Templ
         query: dict[str, str] = {}
         if self.exporter:
             query['identifier'] = self.exporter.identifier
-        base_url = reverse('control:event.orders.export', kwargs={
-            'event': self.request.event.slug,
-            'organizer': self.request.event.organizer.slug,
-        })
-        return f"{base_url}?{urlencode(query)}" if query else base_url
+        base_url = reverse(
+            'control:event.orders.export',
+            kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+            },
+        )
+        return f'{base_url}?{urlencode(query)}' if query else base_url
 
     @cached_property
     def exporter(self) -> BaseExporter | None:

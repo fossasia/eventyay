@@ -25,7 +25,7 @@ def register_account_url(next_url: Optional[str] = None) -> str:
     Generate the registration URL with an optional next parameter.
     Usage: {% register_account_url next_url %}
     """
-    base_url = reverse("eventyay_common:auth.register")
+    base_url = reverse("account_signup")
     if next_url:
         return f"{base_url}?next={quote(next_url)}"
     return base_url

@@ -59,7 +59,7 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         #{{ position.positionid }} –
-                        <strong>{{ position.item }}</strong>
+                        <strong>{{ position.product }}</strong>
                         {% if position.variation %}
                             – {{ position.variation }}
                         {% endif %}
@@ -130,7 +130,7 @@
                                 <strong>{% trans "Product" %}</strong>
                             </div>
                             <div class="col-sm-5">
-                                {{ position.item }}
+                                {{ position.product }}
                                 {% if position.variation %}
                                     – {{ position.variation }}
                                 {% endif %}

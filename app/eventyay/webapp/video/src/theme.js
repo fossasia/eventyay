@@ -50,6 +50,7 @@ const DEFAULT_COLORS = {
 	primary: '#2185d0',
 	sidebar: '#2185d0',
 	bbb_background: '#ffffff',
+	danger: '#d32f2f',
 }
 
 const resolveAssetPath = (relativePath) => {

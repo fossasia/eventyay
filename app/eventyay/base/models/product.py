@@ -3,7 +3,6 @@ import uuid
 from collections import Counter, OrderedDict
 from datetime import date, datetime, time
 from decimal import Decimal, DecimalException
-from typing import Tuple
 
 import dateutil.parser
 import pytz
@@ -419,6 +418,13 @@ class Product(LoggedModel):
         help_text=_(
             'If this is checked, the usual cancellation and order change settings of this event apply. '
             'If this is unchecked, orders containing this product can not be canceled by users but only by you.'
+        ),
+    )
+    allow_user_variation_change = models.BooleanField(
+        verbose_name=_('Allow customers to change product variations'),
+        default=False,
+        help_text=_(
+            'If this is checked, customers can switch between variations of this product in their order details.'
         ),
     )
     min_per_order = models.IntegerField(
@@ -859,7 +865,7 @@ class ProductVariation(models.Model):
         include_bundled=False,
         trust_parameters=False,
         fail_on_no_quotas=False,
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """
         This method is used to determine whether this ProductVariation is currently
         available for sale in terms of quotas.
@@ -1053,14 +1059,14 @@ class ProductBundle(models.Model):
     def describe(self):
         if self.count == 1:
             if self.bundled_variation_id:
-                return '{} – {}'.format(self.bundled_product.name, self.bundled_variation.value)
+                return f'{self.bundled_product.name} – {self.bundled_variation.value}'
             else:
                 return self.bundled_product.name
         else:
             if self.bundled_variation_id:
-                return '{}× {} – {}'.format(self.count, self.bundled_product.name, self.bundled_variation.value)
+                return f'{self.count}× {self.bundled_product.name} – {self.bundled_variation.value}'
             else:
-                return '{}x {}'.format(self.count, self.bundled_product.name)
+                return f'{self.count}x {self.bundled_product.name}'
 
     @staticmethod
     def clean_productvar(event, bundled_product, bundled_variation):
@@ -1088,7 +1094,7 @@ class Question(LoggedModel):
     * a one-line string (``TYPE_STRING``)
     * a multi-line string (``TYPE_TEXT``)
     * a boolean (``TYPE_BOOLEAN``)
-    * a multiple choice option (``TYPE_CHOICE`` and ``TYPE_CHOICE_MULTIPLE``)
+    * a predefined choice option (``TYPE_CHOICE``, ``TYPE_CHOICE_DROPDOWN`` and ``TYPE_CHOICE_MULTIPLE``)
     * a file upload (``TYPE_FILE``)
     * a date (``TYPE_DATE``)
     * a time (``TYPE_TIME``)
@@ -1126,6 +1132,7 @@ class Question(LoggedModel):
     TYPE_TEXT = 'T'
     TYPE_BOOLEAN = 'B'
     TYPE_CHOICE = 'C'
+    TYPE_CHOICE_DROPDOWN = 'L'
     TYPE_CHOICE_MULTIPLE = 'M'
     TYPE_FILE = 'F'
     TYPE_DATE = 'D'
@@ -1134,12 +1141,15 @@ class Question(LoggedModel):
     TYPE_COUNTRYCODE = 'CC'
     TYPE_PHONENUMBER = 'TEL'
     TYPE_DESCRIPTION = 'DES'
+    SINGLE_CHOICE_TYPES = (TYPE_CHOICE, TYPE_CHOICE_DROPDOWN)
+    OPTION_TYPES = SINGLE_CHOICE_TYPES + (TYPE_CHOICE_MULTIPLE,)
     TYPE_CHOICES = (
         (TYPE_NUMBER, _('Number')),
         (TYPE_STRING, _('Text (one line)')),
         (TYPE_TEXT, _('Multiline text')),
         (TYPE_BOOLEAN, _('Confirm Checkbox')),
         (TYPE_CHOICE, _('Radio button (Choose one option)')),
+        (TYPE_CHOICE_DROPDOWN, _('Dropdown (Choose one option)')),
         (TYPE_CHOICE_MULTIPLE, _('Checkbox (Choose one or several options)')),
         (TYPE_FILE, _('File upload')),
         (TYPE_DATE, _('Date')),
@@ -1161,7 +1171,7 @@ class Question(LoggedModel):
             'Inactive questions are not shown to customers during checkout or check-in. '
             'Unlike hidden questions (which are system-level), active controls visibility '
             'and can be toggled by event organizers.'
-        )
+        ),
     )
     description = I18nTextField(
         verbose_name=_('Description'),
@@ -1312,7 +1322,7 @@ class Question(LoggedModel):
                 return False
             return None
 
-        if self.type == Question.TYPE_CHOICE:
+        if self.type in self.SINGLE_CHOICE_TYPES:
             if isinstance(answer, QuestionOption):
                 return answer
             q = Q(identifier=answer)
@@ -1585,7 +1595,7 @@ class Quota(LoggedModel):
         count_waitinglist=True,
         _cache=None,
         allow_cache=False,
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """
         This method is used to determine whether Products or ProductVariations belonging
         to this quota should currently be available for sale.

@@ -3,8 +3,8 @@ from collections import Counter, defaultdict
 from decimal import Decimal
 
 import pycountry
-
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.files import File
 from django.db.models import F, Q
 from django.utils.timezone import now
@@ -30,10 +30,10 @@ from eventyay.base.models import (
     Invoice,
     InvoiceAddress,
     InvoiceLine,
-    Product,
-    ProductVariation,
     Order,
     OrderPosition,
+    Product,
+    ProductVariation,
     Question,
     QuestionAnswer,
     Seat,
@@ -119,7 +119,7 @@ class InvoiceAddressSerializer(I18nAwareModelSerializer):
         if data.get('state'):
             cc = str(data.get('country') or self.instance.country or '')
             if cc not in COUNTRIES_WITH_STATE_IN_ADDRESS:
-                raise ValidationError({'state': ['States are not supported in country "{}".'.format(cc)]})
+                raise ValidationError({'state': [f'States are not supported in country "{cc}".']})
             if not pycountry.subdivisions.get(code=cc + '-' + data.get('state')):
                 raise ValidationError(
                     {'state': ['"{}" is not a known subdivision of the country "{}".'.format(data.get('state'), cc)]}
@@ -181,25 +181,29 @@ class AnswerSerializer(I18nAwareModelSerializer):
         return q
 
     def _handle_file_upload(self, data):
+        submitted_file_id = data.get('answer', '')
+        if isinstance(submitted_file_id, str) and submitted_file_id.startswith('file:'):
+            submitted_file_id = submitted_file_id[len('file:') :]
+
         try:
             ao = self.context['request'].user or self.context['request'].auth
             cf = CachedFile.objects.get(
                 session_key=f'api-upload-{str(type(ao))}-{ao.pk}',
                 file__isnull=False,
-                pk=data['answer'][len('file:') :],
+                pk=submitted_file_id,
             )
-        except (ValidationError, IndexError):  # invalid uuid
-            raise ValidationError('The submitted file ID "{fid}" was not found.'.format(fid=data))
+        except (DjangoValidationError, IndexError):  # invalid uuid
+            raise ValidationError(f'The submitted file ID "{submitted_file_id}" was not found.')
         except CachedFile.DoesNotExist:
-            raise ValidationError('The submitted file ID "{fid}" was not found.'.format(fid=data))
+            raise ValidationError(f'The submitted file ID "{submitted_file_id}" was not found.')
 
         allowed_types = ('image/png', 'image/jpeg', 'image/gif', 'application/pdf')
         if cf.type not in allowed_types:
             raise ValidationError(
-                'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
+                f'The submitted file "{submitted_file_id}" has a file type that is not allowed in this field.'
             )
         if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:
-            raise ValidationError('The submitted file "{fid}" is too large to be used in this field.'.format(fid=data))
+            raise ValidationError(f'The submitted file "{submitted_file_id}" is too large to be used in this field.')
 
         data['options'] = []
         data['answer'] = cf.file
@@ -208,13 +212,10 @@ class AnswerSerializer(I18nAwareModelSerializer):
     def validate(self, data):
         if data.get('question').type == Question.TYPE_FILE:
             return self._handle_file_upload(data)
-        elif data.get('question').type in (
-            Question.TYPE_CHOICE,
-            Question.TYPE_CHOICE_MULTIPLE,
-        ):
+        elif data.get('question').type in Question.OPTION_TYPES:
             if not data.get('options'):
                 raise ValidationError('You need to specify options if the question is of a choice type.')
-            if data.get('question').type == Question.TYPE_CHOICE and len(data.get('options')) > 1:
+            if data.get('question').type in Question.SINGLE_CHOICE_TYPES and len(data.get('options')) > 1:
                 raise ValidationError('You can specify at most one option for this question.')
             for o in data.get('options'):
                 if o.question_id != data.get('question').pk:
@@ -469,7 +470,7 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
         if data.get('state'):
             cc = str(data.get('country') or self.instance.country or '')
             if cc not in COUNTRIES_WITH_STATE_IN_ADDRESS:
-                raise ValidationError({'state': ['States are not supported in country "{}".'.format(cc)]})
+                raise ValidationError({'state': [f'States are not supported in country "{cc}".']})
             if not pycountry.subdivisions.get(code=cc + '-' + data.get('state')):
                 raise ValidationError(
                     {'state': ['"{}" is not a known subdivision of the country "{}".'.format(data.get('state'), cc)]}
@@ -481,6 +482,7 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
         # (hopefully), we'll be extra careful here and be explicit about the model fields we update.
         update_fields = [
             'attendee_name_parts',
+            'job_title',
             'company',
             'street',
             'zipcode',
@@ -587,6 +589,7 @@ class CheckinListOrderPositionSerializer(OrderPositionSerializer):
             'price',
             'attendee_name',
             'attendee_name_parts',
+            'job_title',
             'company',
             'street',
             'zipcode',
@@ -803,7 +806,7 @@ class OrderSerializer(I18nAwareModelSerializer):
 
     def validate_locale(self, l):
         if l not in set(k for k in self.instance.event.settings.locales):
-            raise ValidationError('"{}" is not a supported locale for this event.'.format(l))
+            raise ValidationError(f'"{l}" is not a supported locale for this event.')
         return l
 
     def update(self, instance, validated_data):
@@ -930,6 +933,7 @@ class OrderPositionCreateSerializer(I18nAwareModelSerializer):
             'attendee_name_parts',
             'attendee_email',
             'company',
+            'job_title',
             'street',
             'zipcode',
             'city',
@@ -999,7 +1003,7 @@ class OrderPositionCreateSerializer(I18nAwareModelSerializer):
         if data.get('state'):
             cc = str(data.get('country') or self.instance.country or '')
             if cc not in COUNTRIES_WITH_STATE_IN_ADDRESS:
-                raise ValidationError({'state': ['States are not supported in country "{}".'.format(cc)]})
+                raise ValidationError({'state': [f'States are not supported in country "{cc}".']})
             if not pycountry.subdivisions.get(code=cc + '-' + data.get('state')):
                 raise ValidationError(
                     {'state': ['"{}" is not a known subdivision of the country "{}".'.format(data.get('state'), cc)]}
@@ -1282,8 +1286,8 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                             v_budget[v] -= new_disc
                             if new_disc == Decimal('0.00') or pos_data.get('price') is not None:
                                 errs[i]['voucher'] = [
-                                    'The voucher has a remaining budget of {}, therefore a discount of {} can not be '
-                                    'given.'.format(v_budget[v] + new_disc, disc)
+                                    f'The voucher has a remaining budget of {v_budget[v] + new_disc}, therefore a discount of {disc} can not be '
+                                    'given.'
                                 ]
                                 continue
                             pos_data['price'] = price + (disc - new_disc)

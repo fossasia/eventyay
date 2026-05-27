@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import binascii
 import json
 import logging
@@ -19,6 +21,7 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import JSONField, Q
 from django.http import HttpRequest
@@ -45,6 +48,12 @@ from eventyay.talk_rules.person import is_administrator
 from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
 from .mixins import FileCleanupMixin, GenerateCode
+
+
+if TYPE_CHECKING:
+    from .event import Event
+    from .profile import SpeakerProfile
+
 
 # from eventyay.person.signals import delete_user as delete_user_signal
 
@@ -307,7 +316,7 @@ class User(
         if self.email:
             self.email = self.email.lower()
         is_new = not self.pk
-        
+
         # Invalidate avatar_url cache if avatar might have changed
         if not is_new:
             update_fields = kwargs.get('update_fields')
@@ -386,7 +395,7 @@ class User(
             mail(
                 email or self.email,
                 _('Account information changed'),
-                'eventyaycontrol/email/security_notice.txt',
+                'pretixcontrol/email/security_notice.txt',
                 {'user': self, 'messages': msg, 'url': build_absolute_uri('eventyay_common:account.general')},
                 event=None,
                 user=self,
@@ -429,16 +438,16 @@ class User(
         return LogEntry.objects.filter(content_type=ContentType.objects.get_for_model(User), object_id=self.pk)
 
     def _get_teams_for_organizer(self, organizer):
-        if 'o{}'.format(organizer.pk) not in self._teamcache:
-            self._teamcache['o{}'.format(organizer.pk)] = list(self.teams.filter(organizer=organizer))
-        return self._teamcache['o{}'.format(organizer.pk)]
+        if f'o{organizer.pk}' not in self._teamcache:
+            self._teamcache[f'o{organizer.pk}'] = list(self.teams.filter(organizer=organizer))
+        return self._teamcache[f'o{organizer.pk}']
 
     def _get_teams_for_event(self, organizer, event):
-        if 'e{}'.format(event.pk) not in self._teamcache:
-            self._teamcache['e{}'.format(event.pk)] = list(
+        if f'e{event.pk}' not in self._teamcache:
+            self._teamcache[f'e{event.pk}'] = list(
                 self.teams.filter(organizer=organizer).filter(Q(all_events=True) | Q(limit_events=event))
             )
-        return self._teamcache['e{}'.format(event.pk)]
+        return self._teamcache[f'e{event.pk}']
 
     def get_event_permission_set(self, organizer, event) -> set:
         """
@@ -484,7 +493,7 @@ class User(
             return True
         teams = self._get_teams_for_event(organizer, event)
         if teams:
-            self._teamcache['e{}'.format(event.pk)] = teams
+            self._teamcache[f'e{event.pk}'] = teams
             if isinstance(perm_name, (tuple, list)):
                 return any([any(team.has_permission(p) for team in teams) for p in perm_name])
             if not perm_name or any([team.has_permission(perm_name) for team in teams]):
@@ -621,13 +630,13 @@ class User(
         self.permission_cache[(perm, obj)] = result
         return result
 
-    def event_profile(self, event):
+    def event_profile(self, event: Event) -> SpeakerProfile:
         """Retrieve (and/or create) the event.
 
         :class:`~eventyay.base.models.profile.SpeakerProfile` for this user.
 
         :type event: :class:`eventyay.base.models.event.Event`
-        :retval: :class:`eventyay.base.models.profile.EventProfile`
+        :retval: :class:`eventyay.base.models.profile.SpeakerProfile`
         """
         if profile := self.event_profile_cache.get(event.pk):
             return profile
@@ -640,7 +649,7 @@ class User(
 
         try:
             profile = self.profiles.select_related('event').get(event=event)
-        except Exception:
+        except ObjectDoesNotExist:
             from eventyay.base.models.profile import SpeakerProfile
 
             profile = SpeakerProfile(event=event, user=self)
@@ -695,9 +704,12 @@ class User(
     def get_password_reset_url(self, event=None, orga=False):
         if event:
             path = 'orga:event.auth.recover' if orga else 'cfp:event.recover'
+            kwargs = {'token': self.pw_reset_token, 'event': event.slug}
+            if not orga:
+                kwargs['organizer'] = event.organizer.slug
             url = build_absolute_uri(
                 path,
-                kwargs={'token': self.pw_reset_token, 'event': event.slug},
+                kwargs=kwargs,
             )
         else:
             url = build_absolute_uri('orga:auth.recover', kwargs={'token': self.pw_reset_token})
@@ -755,7 +767,7 @@ the eventyay robot"""
         self.save()
 
         context = {
-            'name': self.name or '',
+            'name': self.fullname or '',
         }
         mail_text = _(
             """Hi {name},
@@ -846,16 +858,27 @@ the eventyay team"""
 
     @cached_property
     def has_avatar(self) -> bool:
-        return bool(self.avatar) and self.avatar != 'False'
+        return (bool(self.avatar) and self.avatar != 'False') or bool(self.external_avatar_url)
+
+    @property
+    def external_avatar_url(self) -> str:
+        profile = self.profile if isinstance(self.profile, dict) else {}
+        avatar = profile.get('avatar')
+        if not isinstance(avatar, dict):
+            return ''
+        avatar_url = avatar.get('url')
+        if not isinstance(avatar_url, str):
+            return ''
+        return avatar_url.strip()
 
     @cached_property
     def avatar_url(self) -> str:
         """Returns avatar URL with cache-busting timestamp parameter.
-        
+
         Uses the avatar file's actual modification time for most accurate cache-busting.
         Falls back to current time if file doesn't exist or can't be accessed.
         """
-        if self.has_avatar:
+        if self.avatar and self.avatar != 'False':
             try:
                 # Get the actual file modification time for most accurate cache-busting
                 file_path = self.avatar.path
@@ -864,24 +887,30 @@ the eventyay team"""
             except (OSError, ValueError, AttributeError):
                 # Fallback to current time if file doesn't exist or can't be accessed
                 timestamp = int(time.time() * 1000)
-            
+
             return f"{self.avatar.url}?v={timestamp}"
-        return ''
+        return self.external_avatar_url
 
     def get_avatar_url(self, event=None, thumbnail=None):
         """Returns the full avatar URL with cache-busting parameter.
-        
+
         Args:
             event: Optional event for custom domain support
             thumbnail: Optional thumbnail size ('tiny' or 'default')
-        
+
         Returns:
             URL string with cache-busting query parameter
         """
-        # Check if we have an avatar
-        if not self.has_avatar:
-            return ''
-        
+        if not self.avatar or self.avatar == 'False':
+            external_avatar_url = self.external_avatar_url
+            if not external_avatar_url:
+                return ''
+            if external_avatar_url.startswith(('http://', 'https://')):
+                return external_avatar_url
+            if event and event.custom_domain:
+                return urljoin(event.custom_domain, external_avatar_url)
+            return urljoin(settings.SITE_URL, external_avatar_url)
+
         # Determine which image to use
         if not thumbnail:
             image = self.avatar
@@ -889,10 +918,10 @@ the eventyay team"""
             image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
             if not image:
                 image = create_thumbnail(self.avatar, thumbnail)
-        
+
         if not image:
             return ''
-        
+
         # Build base URL with cache-busting
         try:
             # Get the actual file modification time for cache-busting
@@ -902,9 +931,9 @@ the eventyay team"""
         except (OSError, ValueError, AttributeError):
             # Fallback to current time if file doesn't exist
             timestamp = int(time.time() * 1000)
-        
+
         image_url = f"{image.url}?v={timestamp}"
-        
+
         if event and event.custom_domain:
             return urljoin(event.custom_domain, image_url)
         return urljoin(settings.SITE_URL, image_url)
@@ -1197,7 +1226,7 @@ class U2FDevice(Device):
         # https://www.w3.org/TR/webauthn/#sctn-encoded-credPubKey-examples
         pub_key = pub_key_from_der(websafe_decode(d['publicKey'].replace('+', '-').replace('/', '_')))
         pub_key = binascii.unhexlify(
-            'A5010203262001215820{:064x}225820{:064x}'.format(pub_key.public_numbers().x, pub_key.public_numbers().y)
+            f'A5010203262001215820{pub_key.public_numbers().x:064x}225820{pub_key.public_numbers().y:064x}'
         )
         return pub_key
 

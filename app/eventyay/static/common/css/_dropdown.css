@@ -467,7 +467,7 @@ details.dropdown .dropdown-content-se::after {
 }
 
 #locale-dropdown .language-columns {
-  width: 400px;
+  width: 350px;
   max-height: 350px;
   display: grid;
   grid-template-columns: repeat(2, minmax(160px, 1fr));
@@ -475,7 +475,7 @@ details.dropdown .dropdown-content-se::after {
 }
 
 #locale-dropdown .language-enforce-bar {
-  width: 400px;
+  width: 350px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -649,7 +649,7 @@ details.dropdown .dropdown-content-se::after {
 .navbar-inverse #language-dropdown > summary,
 .navbar #language-dropdown > summary {
   box-sizing: border-box;
-  padding: 15px;
+  padding: 16px;
   min-height: 50px;
   height: 50px;
   display: inline-flex;

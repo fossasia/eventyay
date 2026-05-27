@@ -39,6 +39,10 @@ export default {
 		options: {
 			type: Array,
 			default: () => []
+		},
+		qrcodesUrl: {
+			type: String,
+			default: ''
 		}
 	},
 	emits: ['export'],
@@ -46,8 +50,19 @@ export default {
 		return {
 			isOpen: false,
 			hoveredOption: null,
+			loadedQrcodes: false,
+			loadingQrcodes: false,
+			qrcodes: {},
 			menuStyle: {},
 			qrStyle: {}
+		}
+	},
+	watch: {
+		qrcodesUrl() {
+			this.loadedQrcodes = false
+			this.loadingQrcodes = false
+			this.qrcodes = {}
+			this.hoveredOption = null
 		}
 	},
 	computed: {
@@ -58,8 +73,14 @@ export default {
 			}
 		},
 		exportOptions() {
-			return this.options
-		}
+			const q = this.qrcodes || {}
+			return (this.options || []).map((o) => {
+				if (!o || o.divider) return o
+				if (o.qrcode_svg) return o
+				if (o.id && q[o.id]) return { ...o, qrcode_svg: q[o.id] }
+				return o
+			})
+		},
 	},
 	mounted() {
 		document.addEventListener('click', this.outsideClick)
@@ -75,9 +96,27 @@ export default {
 		toggle() {
 			this.isOpen = !this.isOpen
 			if (this.isOpen) {
+				this.ensureQrcodesLoaded()
 				this.$nextTick(() => this.positionMenu())
 			} else {
 				this.hoveredOption = null
+			}
+		},
+		async ensureQrcodesLoaded() {
+			if (this.loadedQrcodes) return
+			if (!this.qrcodesUrl) return
+			if (this.loadingQrcodes) return
+			this.loadingQrcodes = true
+			try {
+				const resp = await fetch(this.qrcodesUrl)
+				if (!resp.ok) return
+				const data = await resp.json()
+				this.qrcodes = data?.qrcodes || {}
+				this.loadedQrcodes = true
+			} catch {
+				// ignore network errors, dropdown still works without qrcodes
+			} finally {
+				this.loadingQrcodes = false
 			}
 		},
 		positionMenu() {

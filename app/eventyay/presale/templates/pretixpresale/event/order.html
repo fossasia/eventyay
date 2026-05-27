@@ -10,13 +10,18 @@
 {% load presale_locale %}
 {% block title %}
     {% if "thanks" in request.GET or "paid" in request.GET %}
-        {% trans "Thank you!" %}
-        {% if order.status != 'p' %}
-            {% trans "Your order has been placed successfully. See below for details." %}
-        {% elif order.total == 0 %}
-            {% trans "Your order has been processed successfully! See below for details." %}
+        {% if order.require_approval %}
+            {% trans "Pending" %}
+            {% trans "Your request has been submitted and is awaiting approval by the event organizer. See below for details." %}
         {% else %}
-            {% trans "We successfully received your payment. See below for details." %}
+            {% trans "Thank you!" %}
+            {% if order.status != 'p' %}
+                {% trans "Your order has been placed successfully. See below for details." %}
+            {% elif order.total == 0 %}
+                {% trans "Your order has been processed successfully! See below for details." %}
+            {% else %}
+                {% trans "We successfully received your payment. See below for details." %}
+            {% endif %}
         {% endif %}
     {% endif %}
     {% trans "Order details" %}
@@ -24,41 +29,67 @@
 {% block content %}
 <main>
     {% if "thanks" in request.GET or "paid" in request.GET %}
-        <div class="thank-you">
-            <span class="fa fa-check-circle" aria-hidden="true"></span>
-
-            <h2>{% trans "Thank you!" %}</h2>
-            {% if order.status != 'p' %}
+        {% if order.require_approval %}
+            <div class="thank-you thank-you-pending">
+                <span class="fa fa-exclamation-circle" aria-hidden="true"></span>
+                <h2>{% trans "Pending" %}</h2>
                 <p>
-                    {% trans "Your order has been placed successfully. See below for details." %}<br>
-                    {% if order.require_approval %}
-                        <strong>
-                            {% trans "Please note that we still await approval by the event organizer before you can pay and complete this order." %}
-                        </strong>
-                    {% else %}
+                    {% blocktrans trimmed %}
+                        Your request has been submitted and is awaiting approval by the event organizer. See below for details.
+                    {% endblocktrans %}
+                    <br>
+                    <strong>
+                        {% if order.total == 0 %}
+                            {% trans "After approval, your registration will be completed automatically." as approval_suffix %}
+                        {% else %}
+                            {% trans "After approval, you can proceed with payment to complete your registration." as approval_suffix %}
+                        {% endif %}
+                        {% blocktrans trimmed with suffix=approval_suffix %}
+                            You will receive an email once your request has been reviewed. {{ suffix }}
+                        {% endblocktrans %}
+                    </strong>
+                </p>
+                <p>
+                    {% blocktrans trimmed %}
+                        You can access this page from your orders page or use the link sent to your email to return to it later.
+                    {% endblocktrans %}
+                </p>
+                {% if request.event.settings.checkout_success_text %}
+                    {{ request.event.settings.checkout_success_text|event_localize|rich_text }}
+                {% endif %}
+                <div class="clearfix"></div>
+            </div>
+        {% else %}
+            <div class="thank-you">
+                <span class="fa fa-check-circle" aria-hidden="true"></span>
+
+                <h2>{% trans "Thank you!" %}</h2>
+                {% if order.status != 'p' %}
+                    <p>
+                        {% trans "Your order has been placed successfully. See below for details." %}<br>
                         <strong>
                             {% trans "Please note that we still await your payment to complete the process." %}
                         </strong>
-                    {% endif %}
-                </p>
-            {% elif order.total == 0 %}
-                <p>{% trans "Your order has been processed successfully! See below for details." %}</p>
-            {% else %}
-                <p>{% trans "We successfully received your payment. See below for details." %}</p>
-            {% endif %}
-            {% if request.event.settings.checkout_success_text %}
-                {{ request.event.settings.checkout_success_text|event_localize|rich_text }}
-            {% endif %}
-            <p class="iframe-hidden">{% blocktrans trimmed %}
-                Please bookmark or save the link to this exact page if you want to access your order later. We also sent you an email containing the link to the address you specified.
-            {% endblocktrans %}</p>
-            <p class="iframe-only">{% blocktrans trimmed %}
-                Please save the following link if you want to access your order later. We
-                also sent you an email containing the link to the address you specified.
-            {% endblocktrans %}<br>
-                <code>{{ url }}</code></p>
-            <div class="clearfix"></div>
-        </div>
+                    </p>
+                {% elif order.total == 0 %}
+                    <p>{% trans "Your order has been processed successfully! See below for details." %}</p>
+                {% else %}
+                    <p>{% trans "We successfully received your payment. See below for details." %}</p>
+                {% endif %}
+                {% if request.event.settings.checkout_success_text %}
+                    {{ request.event.settings.checkout_success_text|event_localize|rich_text }}
+                {% endif %}
+                <p class="iframe-hidden">{% blocktrans trimmed %}
+                    Please bookmark or save the link to this exact page if you want to access your order later. We also sent you an email containing the link to the address you specified.
+                {% endblocktrans %}</p>
+                <p class="iframe-only">{% blocktrans trimmed %}
+                    Please save the following link if you want to access your order later. We
+                    also sent you an email containing the link to the address you specified.
+                {% endblocktrans %}<br>
+                    <code>{{ url }}</code></p>
+                <div class="clearfix"></div>
+            </div>
+        {% endif %}
     {% endif %}
     <h2>
         {% blocktrans trimmed with code=order.code %}
@@ -68,7 +99,7 @@
             <span class="label label-warning">{% trans "TEST MODE" %}</span>
         {% endif %}
         {% if backend_user %}
-            <a href="{% url "control:event.order" event=request.event.slug organizer=request.organizer.slug code=order.code %}" class="btn btn-default">
+            <a href="{% url 'control:event.order' event=request.event.slug organizer=request.organizer.slug code=order.code %}" class="btn btn-default">
                 {% trans "View in backend" %}
             </a>
         {% endif %}
@@ -185,12 +216,23 @@
     {% include "pretixpresale/event/fragment_downloads.html" with position_page=False %}
     <div class="panel panel-primary cart">
         <div class="panel-heading">
-            {% if can_modify_order %}
+            {% if user_change_allowed or can_modify_order %}
                 <div class="pull-right flip">
-                    <a href="{% eventurl event "presale:event.order.modify" secret=order.secret order=order.code %}" aria-label="{% trans "Change ordered items" %}">
-                        <span class="fa fa-edit" aria-hidden="true"></span>
-                        {% trans "Change details" %}
-                    </a>
+                    {% if user_change_allowed %}
+                        <a href="{% eventurl event 'presale:event.order.change' secret=order.secret order=order.code %}" aria-label="{% trans 'Change ordered items' %}">
+                            <span class="fa fa-edit" aria-hidden="true"></span>
+                            {% trans "Change order" %}
+                        </a>
+                    {% endif %}
+                    {% if user_change_allowed and can_modify_order %}
+                        &nbsp;|&nbsp;
+                    {% endif %}
+                    {% if can_modify_order %}
+                        <a href="{% eventurl event 'presale:event.order.modify' secret=order.secret order=order.code %}" aria-label="{% trans 'Change details' %}">
+                            <span class="fa fa-edit" aria-hidden="true"></span>
+                            {% trans "Change details" %}
+                        </a>
+                    {% endif %}
                 </div>
             {% endif %}
             <h3 class="panel-title">

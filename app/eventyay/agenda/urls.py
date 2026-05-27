@@ -3,7 +3,7 @@ from django.views.generic import RedirectView
 
 from eventyay.common.views import EventSocialMediaCard, get_static
 
-from .views import featured, feed, schedule, speaker, talk, widget
+from .views import featured, feed, public, schedule, speaker, talk, widget
 
 
 def get_schedule_urls(regex_prefix, name_prefix=''):
@@ -51,6 +51,7 @@ def get_schedule_urls(regex_prefix, name_prefix=''):
             ),
             ('/export/<name>', schedule.ExporterView.as_view(), 'export'),
             ('/widgets/schedule.json', widget.widget_data, 'widget.data'),
+            ('/widgets/qrcodes/<str:kind>/<str:code>.json', widget.widget_qrcodes, 'widget.qrcodes'),
             # Legacy widget data URL, but expected in old widget code.
             # Keep at least until end of 2024, reconsider afterwards.
             ('/widget/v2.json', widget.widget_data, 'widget.data.legacy'),
@@ -99,7 +100,10 @@ urlpatterns = [
         name='speaker.redirect',
     ),
     path('sessions/', RedirectView.as_view(url='../schedule/', permanent=True), name='talks'),
+    path('people/<code>/stars/', public.PublicStarredScheduleView.as_view(), name='public-stars'),
+    path('people/<code>/stars.json', public.PublicStarredScheduleDataView.as_view(), name='public-stars-json'),
     path('talk/<slug>/', talk.TalkView.as_view(), name='talk.detail'),
+    path('talk/<slug>/starrers.json', talk.talk_starrers, name='talk.starrers'),
     path(
         'talk/<slug>/og-image',
         talk.TalkSocialMediaCard.as_view(),

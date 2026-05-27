@@ -12,9 +12,12 @@
 		:locale="locale",
 		:scrollParent="scrollParent",
 		:favs="favs",
+		:showFavCount="showFavCount",
 		:onHomeServer="onHomeServer",
 		:disableAutoScroll="disableAutoScroll",
 		:forceScrollDay="forceScrollDay",
+		:density="density",
+		:timeDensityMinutes="timeDensityMinutes"
 		@changeDay="$emit('changeDay', $event)",
 		@fav="$emit('fav', $event)",
 		@unfav="$emit('unfav', $event)"
@@ -42,8 +45,20 @@ export default {
 		hasAmPm: Boolean,
 		scrollParent: Element,
 		onHomeServer: Boolean,
+		showFavCount: {
+			type: Boolean,
+			default: false,
+		},
 		disableAutoScroll: Boolean,
-		forceScrollDay: { type: Number, default: 0 }
+		forceScrollDay: { type: Number, default: 0 },
+		density: {
+			type: String,
+			default: 'default'
+		},
+		timeDensityMinutes: {
+			type: Number,
+			default: 30
+		}
 	},
 	computed: {
 		gridGroups () {
@@ -75,8 +90,6 @@ export default {
 				sessions: new Set(dayToSessions.get(day)),
 				rooms: new Set(dayToSessions.get(day).map((session) => session.room)),
 			}));
-			const dayMap = new Map();
-			dayMap.set(initialGroups[0].days[0], initialGroups[0]);
 
 			// Second pass: merge consecutive groups if they share sessions or their set of rooms is exactly the same
 			const mergedGroups = [];

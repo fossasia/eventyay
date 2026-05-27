@@ -1,5 +1,5 @@
 <template lang="pug">
-prompt.c-room-edit-prompt(@close="$emit('close')")
+prompt.c-room-edit-prompt(:scrollable="false", @close="$emit('close')")
 	.content
 		.prompt-header
 			h2 Edit Room
@@ -9,6 +9,19 @@ prompt.c-room-edit-prompt(@close="$emit('close')")
 			bunt-button(@click="fetchConfig") Retry
 		template(v-else-if="config")
 			.edit-body(v-scrollbar.y="")
+				.reset-section(v-if="wasConfigured")
+					.section-header
+						h3 Reset Room
+						bunt-button.btn-reset(
+							v-if="!confirmingReset",
+							@click="confirmingReset = true",
+						) Reset
+					p Return this room to the unconfigured state. The room itself and assigned sessions stay in place.
+					.confirmation(v-if="confirmingReset")
+						p Are you sure you want to reset this room to the unconfigured state?
+						.confirmation-actions
+							bunt-button.btn-cancel(@click="confirmingReset = false") Cancel
+							bunt-button.btn-reset(@click="resetRoom", :loading="resetting", :error-message="resetError") Confirm reset
 				.type-section
 					h3 Room Type
 					.current-type(v-if="inferredType")
@@ -35,6 +48,16 @@ prompt.c-room-edit-prompt(@close="$emit('close')")
 					:config="config",
 					:modules="modules"
 				)
+				.danger-zone(v-if="wasConfigured && hasPermission('room:delete')")
+					h3 Danger Zone
+					p #[b Deleting this room will remove it from the schedule, but the sessions will remain safe.] Sessions assigned to this room will no longer have a room assigned.
+					bunt-button.btn-delete-room(v-if="!confirmingDelete", @click="confirmingDelete = true") Delete
+					.delete-confirmation(v-else)
+						p Please type #[b {{ localizedRoomName }}] to confirm deletion.
+						bunt-input(name="deletingRoomName", label="Room name", v-model="deletingRoomName", @keypress.enter="deleteRoom")
+						.confirmation-actions
+							bunt-button.btn-cancel(@click="cancelDelete") Cancel
+							bunt-button.btn-delete-room(icon="delete", :disabled="deletingRoomName !== localizedRoomName", @click="deleteRoom", :loading="deleting", :error-message="deleteError") Delete this room
 			.edit-actions
 				bunt-button.btn-cancel(@click="$emit('close')") Cancel
 				bunt-button.btn-save(@click="save", :loading="saving", :error-message="saveError") Save
@@ -64,14 +87,22 @@ export default {
 			required: true
 		}
 	},
-	emits: ['close'],
+	emits: ['close', 'deleted'],
 	data () {
 		return {
 			loading: true,
 			error: null,
 			config: null,
+			wasConfigured: false,
 			saving: false,
 			saveError: null,
+			confirmingReset: false,
+			resetting: false,
+			resetError: null,
+			confirmingDelete: false,
+			deletingRoomName: '',
+			deleting: false,
+			deleteError: null,
 			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
@@ -117,6 +148,9 @@ export default {
 			set (value) {
 				this.config.description = value
 			}
+		},
+		localizedRoomName () {
+			return this.$localize(this.config?.name)
 		}
 	},
 	async created () {
@@ -128,6 +162,7 @@ export default {
 			this.error = null
 			try {
 				this.config = await api.call('room.config.get', { room: this.room.id })
+				this.wasConfigured = !!inferType(this.config)
 			} catch (err) {
 				this.error = err.code === 'protocol.denied'
 					? 'You do not have permission to edit this room.'
@@ -140,6 +175,41 @@ export default {
 			if (this.inferredType && this.inferredType.id === type.id) return
 			this.config.module_config = [{ type: type.startingModule, config: {} }]
 		},
+		async resetRoom () {
+			this.resetError = null
+			this.resetting = true
+			try {
+				await api.call('room.config.patch', {
+					room: this.config.id,
+					module_config: []
+				})
+				this.$emit('close')
+			} catch (err) {
+				console.error('Failed to reset room: %o', err)
+				this.resetError = err.message || String(err)
+			} finally {
+				this.resetting = false
+			}
+		},
+		cancelDelete () {
+			this.confirmingDelete = false
+			this.deletingRoomName = ''
+			this.deleteError = null
+		},
+		async deleteRoom () {
+			if (this.deletingRoomName !== this.localizedRoomName) return
+			this.deleteError = null
+			this.deleting = true
+			try {
+				await api.call('room.delete', { room: this.config.id })
+				this.$emit('deleted')
+			} catch (err) {
+				console.error('Failed to delete room: %o', err)
+				this.deleteError = err.message || String(err)
+			} finally {
+				this.deleting = false
+			}
+		},
 		async save () {
 			this.saveError = null
 			this.$refs.settings?.beforeSave?.()
@@ -149,8 +219,6 @@ export default {
 					room: this.config.id,
 					name: this.config.name,
 					description: this.config.description,
-					sorting_priority: this.config.sorting_priority,
-					pretalx_id: this.config.pretalx_id || 0,
 					picture: this.config.picture,
 					force_join: this.config.force_join,
 					module_config: this.config.module_config
@@ -191,6 +259,36 @@ export default {
 		display: flex
 		flex-direction: column
 		gap: 16px
+	.reset-section
+		padding: 12px
+		border: border-separator()
+		border-radius: 4px
+		background-color: $clr-grey-50
+		p
+			margin: 0
+			font-size: 13px
+			line-height: 18px
+			color: $clr-secondary-text-light
+	.section-header
+		display: flex
+		align-items: center
+		justify-content: space-between
+		gap: 12px
+		h3
+			margin: 0
+			font-size: 16px
+			font-weight: 500
+	.confirmation
+		margin-top: 12px
+		padding-top: 12px
+		border-top: border-separator()
+	.confirmation-actions
+		display: flex
+		justify-content: flex-end
+		gap: 8px
+		margin-top: 12px
+	.btn-reset
+		button-style(color: $clr-orange)
 	.type-section
 		h3
 			margin: 0 0 8px
@@ -245,6 +343,26 @@ export default {
 		gap: 8px
 	.type-settings
 		margin-top: 8px
+	.danger-zone
+		padding: 12px
+		border: 1px solid $clr-danger
+		border-radius: 4px
+		background-color: rgba($clr-danger, 0.05)
+		h3
+			margin: 0 0 8px
+			font-size: 16px
+			font-weight: 600
+			color: $clr-danger
+		p
+			margin: 0 0 12px
+			font-size: 13px
+			line-height: 18px
+	.delete-confirmation
+		margin-top: 12px
+		padding-top: 12px
+		border-top: border-separator()
+	.btn-delete-room
+		button-style(color: $clr-danger)
 	.edit-actions
 		display: flex
 		justify-content: flex-end
