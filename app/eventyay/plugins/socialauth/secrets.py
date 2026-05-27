@@ -30,14 +30,26 @@ def _configured_encryption_key_strings() -> tuple[str, ...]:
     if isinstance(raw, (bytes, bytearray)):
         logger.error('SOCIALAUTH_SECRET_ENCRYPTION_KEYS must be strings, not bytes; ignoring.')
         return ()
-    try:
-        return tuple(str(key) for key in raw)
-    except TypeError:
+    if not isinstance(raw, (list, tuple)):
         logger.error(
             'SOCIALAUTH_SECRET_ENCRYPTION_KEYS must be an iterable of strings, got %s.',
             type(raw).__name__,
         )
         return ()
+    keys: list[str] = []
+    for index, key in enumerate(raw):
+        if not isinstance(key, str):
+            logger.error(
+                'SOCIALAUTH_SECRET_ENCRYPTION_KEYS[%s] must be a string, got %s; skipping.',
+                index,
+                type(key).__name__,
+            )
+            continue
+        if not key:
+            logger.error('SOCIALAUTH_SECRET_ENCRYPTION_KEYS[%s] must be non-empty; skipping.', index)
+            continue
+        keys.append(key)
+    return tuple(keys)
 
 
 def looks_like_encrypted_secret(value: str) -> bool:

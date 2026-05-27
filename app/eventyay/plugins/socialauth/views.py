@@ -26,6 +26,14 @@ from .schemas.oauth2_params import OAuth2Params
 logger = logging.getLogger(__name__)
 
 
+def _validation_error_summary(error: ValidationError) -> str:
+    """Return a log-safe summary without Pydantic input_value payloads."""
+    return ', '.join(
+        f"{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'invalid')}"
+        for err in error.errors()
+    )
+
+
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
@@ -112,7 +120,8 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             validated = LoginProviders.model_validate(raw or {})
         except ValidationError as e:
             logger.error(
-                'login_providers settings failed validation (not overwriting): %s', e
+                'login_providers settings failed validation (not overwriting): %s',
+                _validation_error_summary(e),
             )
             return
         normalized = validated.model_dump()
@@ -121,8 +130,10 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         for provider_config in normalized.values():
             secret = provider_config.get('secret', '')
             if secret and not is_encrypted_secret(secret):
-                provider_config['secret'] = encrypt_secret(secret)
-                updated = True
+                encrypted = encrypt_secret(secret)
+                if encrypted != secret:
+                    provider_config['secret'] = encrypted
+                    updated = True
 
         if updated:
             self.gs.settings.set('login_providers', normalized)
@@ -156,7 +167,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         except ValidationError as e:
             logger.error(
                 'login_providers settings failed validation during save; applying POST to defaults: %s',
-                e,
+                _validation_error_summary(e),
             )
             messages.warning(
                 request,
@@ -209,7 +220,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def update_credentials(self, request, provider, login_providers):
         client_id_value = request.POST.get(f'{provider}_client_id', '').strip()
-        secret_value = request.POST.get(f'{provider}_secret', '').strip()
+        secret_value = request.POST.get(f'{provider}_secret', '')
 
         if not client_id_value and not secret_value:
             return
