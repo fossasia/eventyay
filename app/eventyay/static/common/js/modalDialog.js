@@ -15,7 +15,9 @@
             element.setAttribute("data-dialog-initialized", "")
             element.addEventListener("click", function (ev) {
                 ev.preventDefault()
-                outerDialogElement.showModal()
+                if (typeof outerDialogElement.showModal === "function") {
+                    outerDialogElement.showModal()
+                }
             })
             if (outerDialogElement.hasAttribute("data-dialog-initialized")) {
                 return

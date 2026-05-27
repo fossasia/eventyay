@@ -8,6 +8,10 @@ from eventyay.eventyay_common.permissions import (
     filter_timeline_entry_for_ticket_access,
     user_has_ticket_dashboard_access,
 )
+from eventyay.eventyay_common.views.dashboards import (
+    TICKET_PERMISSION_DIALOG_ID,
+    EventWidgetGenerator,
+)
 
 
 @pytest.fixture
@@ -37,6 +41,34 @@ def test_user_has_ticket_dashboard_access_for_ticket_team(user, organizer, event
 @pytest.mark.django_db
 def test_user_has_ticket_dashboard_access_denied_for_talk_only(user, organizer, event, talk_only_team):
     assert user_has_ticket_dashboard_access(user, organizer, event) is False
+
+
+@pytest.mark.django_db
+def test_generate_ticket_button_shows_permission_dialog_for_talk_only(
+    user, organizer, event, talk_only_team, rf
+):
+    request = rf.get('/')
+    request.user = user
+    html = EventWidgetGenerator.generate_ticket_button(event, request)
+    assert f'data-dialog-target="#{TICKET_PERMISSION_DIALOG_ID}"' in html
+    assert f'aria-controls="{TICKET_PERMISSION_DIALOG_ID}"' in html
+    assert reverse(
+        'control:event.index',
+        kwargs={'organizer': organizer.slug, 'event': event.slug},
+    ) not in html
+
+
+@pytest.mark.django_db
+def test_generate_ticket_button_links_to_control_for_ticket_team(user, organizer, event, team, rf):
+    request = rf.get('/')
+    request.user = user
+    html = EventWidgetGenerator.generate_ticket_button(event, request)
+    control_url = reverse(
+        'control:event.index',
+        kwargs={'organizer': organizer.slug, 'event': event.slug},
+    )
+    assert control_url in html
+    assert TICKET_PERMISSION_DIALOG_ID not in html
 
 
 @pytest.mark.django_db

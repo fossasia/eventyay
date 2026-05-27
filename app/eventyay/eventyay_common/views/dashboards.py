@@ -460,7 +460,9 @@ class EventWidgetGenerator:
                 _('Tickets'),
             )
         return format_html(
-            '<a href="#" class="component" data-dialog-target="#{}" data-toggle="dialog">{}</a>',
+            '<a href="#" class="component" role="button" aria-haspopup="dialog" '
+            'aria-controls="{}" data-dialog-target="#{}" data-toggle="dialog">{}</a>',
+            TICKET_PERMISSION_DIALOG_ID,
             TICKET_PERMISSION_DIALOG_ID,
             _('Tickets'),
         )
