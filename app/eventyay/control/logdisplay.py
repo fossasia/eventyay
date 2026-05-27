@@ -153,6 +153,19 @@ def _display_order_changed(event: Event, logentry: LogEntry, action_type: str):
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
             )
         )
+    elif action_type == 'eventyay.event.order.changed.reinstate':
+        product = str(event.products.get(pk=data['product']))
+        if data.get('variation'):
+            product += ' - ' + str(ProductVariation.objects.get(pk=data['variation']))
+        return (
+            text
+            + ' '
+            + _('Position #{posid} ({product}, {price}) reinstated.').format(
+                posid=data.get('positionid', '?'),
+                product=product,
+                price=money_filter(Decimal(data['price']), event.currency),
+            )
+        )
     elif action_type == 'eventyay.event.order.changed.add':
         product = str(event.products.get(pk=data['product']))
         if data['variation']:
