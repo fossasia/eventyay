@@ -114,7 +114,7 @@ export default {
 		} else if (this.modules.poll) {
 			this.activeSidebarTab = 'polls'
 		}
-		if (this.room) {
+		if (this.room?.id) {
 			await this.$nextTick()
 			this.$store.dispatch('startStreamPolling', this.room.id)
 		}
@@ -159,6 +159,8 @@ export default {
 		flex-direction: column
 		min-height: 0
 		flex: auto
+		overflow: hidden
+		position: relative
 	.c-media-source-placeholder
 		flex: auto
 	.room-sidebar

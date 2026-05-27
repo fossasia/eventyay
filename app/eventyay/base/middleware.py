@@ -27,6 +27,8 @@ from eventyay.multidomain.urlreverse import (
 
 _supported = None
 
+DEFAULT_LEAFLET_TILES = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+
 
 class LocaleMiddleware(MiddlewareMixin):
     """
@@ -209,10 +211,9 @@ def get_startpage_events(request: HttpRequest):
     search_query = request.GET.get('q', '').strip()
     with scopes_disabled():
         qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
+        qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
         if search_query:
             qs = qs.filter(name__icontains=search_query)
-        else:
-            qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
 
         return [event for event in qs.order_by('date_from') if not event.has_component_testmode]
 
@@ -226,8 +227,9 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
 
     sources = []
 
-    if hasattr(request, 'event') and request.event:
-        for image_url in (request.event.visible_header_image_url, request.event.visible_logo_url):
+    event = getattr(request, 'event', None)
+    if event and event.pk:
+        for image_url in (event.visible_header_image_url, event.visible_logo_url):
             origin = get_url_origin(image_url)
             if origin:
                 sources.append(origin)
@@ -237,6 +239,8 @@ def get_external_image_csp_sources(request: HttpRequest) -> list[str]:
             origin = get_url_origin(image_url)
             if origin:
                 sources.append(origin)
+
+    sources.extend(getattr(request, '_external_image_csp_sources', []))
 
     return list(OrderedDict.fromkeys(sources))
 
@@ -263,8 +267,11 @@ class SecurityMiddleware(MiddlewareMixin):
         img_src = []
         external_img_src = get_external_image_csp_sources(request)
         gs = global_settings_object(request)
-        if gs.settings.leaflet_tiles:
-            img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+        leaflet_tiles = gs.settings.leaflet_tiles or DEFAULT_LEAFLET_TILES
+        try:
+            img_src.append(leaflet_tiles[: leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+        except (ValueError, IndexError):
+            pass
 
         h = {
             'default-src': ['{static}'],

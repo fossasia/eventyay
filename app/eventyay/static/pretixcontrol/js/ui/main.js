@@ -376,8 +376,9 @@ var form_handlers = function (el) {
                     enabled = !enabled;
                 }
                 var $toggling = dependent;
-                if (dependent.attr("data-disable-dependent")) {
-                    $toggling.attr('disabled', !enabled).trigger("change");
+                if (dependent.is('[data-disable-dependent]')) {
+                    $toggling.prop('disabled', !enabled).trigger("change");
+                    $toggling.find('input, select, textarea').prop('disabled', !enabled).trigger("change");
                 }
                 if (dependent.get(0).tagName.toLowerCase() !== "div") {
                     $toggling = dependent.closest('.form-group');

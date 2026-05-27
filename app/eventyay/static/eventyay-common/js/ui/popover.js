@@ -10,8 +10,6 @@ $(function () {
 
     // TODO: The URL hardcode here is ugly, but we will implement a new dropdown menu in the future.
 
-    const ticketsPath = `/control/`;
-    const talksPath = `/orga/event/`;
     const mainDashboardPath = `/common/`;
     const orderPath = `/common/orders/`;
     const sessionPath = `/common/sessions/`;
@@ -27,27 +25,10 @@ $(function () {
     html: true,
     content: `
         <div data-name="popover-profile-menu">
-            <div class="dashboard-item">
-               <div class="btn btn-outline-succes dashboard-content">
+            <div class="profile-menu">
+                <a href="${mainDashboardPath}" class="btn btn-outline-success">
                     <i class="fa fa-tachometer"></i> ${window.gettext('Dashboard')}
-               </div>
-                <div id="submenu">
-                    <div class="submenu-item">
-                        <a href="${mainDashboardPath}" class="btn btn-outline-success">
-                            <i class="fa fa-tachometer"></i> ${window.gettext('Main dashboard')}
-                        </a>
-                    </div>
-                    <div class="submenu-item">
-                        <a href="${basePath}${ticketsPath}" class="btn btn-outline-success">
-                            <i class="fa fa-ticket"></i> ${window.gettext('Tickets')}
-                        </a>
-                    </div>
-                    <div class="submenu-item">
-                        <a href="${talksPath}" class="btn btn-outline-success">
-                            <i class="fa fa-microphone"></i> ${window.gettext('Talks')}
-                        </a>
-                    </div>
-                </div>
+                </a>
             </div>
 
             <div class="profile-menu">

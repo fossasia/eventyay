@@ -5,26 +5,31 @@ import config from '../../config'
 // Filtering/export/timezone are handled by the shared ScheduleView/ScheduleToolbar.
 // Favs use localStorage with event-scoped key to stay in sync with the agenda side.
 
-function getFavStorageKey () {
+function getFavStorageKey (userCode = null) {
 	const slug = window.eventyay?.eventSlug
-	if (slug) return `${slug}_favs`
+	if (slug) return userCode ? `${slug}_${userCode}_favs` : `${slug}_favs`
 	// Fallback: extract event slug from basePath (e.g. /org/event/video)
 	const basePath = window.eventyay?.basePath || ''
 	const segments = basePath.split('/').filter(s => s.length > 0 && s !== 'video')
 	const eventSlug = segments[segments.length - 1] || ''
-	return eventSlug ? `${eventSlug}_favs` : 'schedule_favs'
+	if (!eventSlug) return 'schedule_favs'
+	return userCode ? `${eventSlug}_${userCode}_favs` : `${eventSlug}_favs`
 }
 
-function loadFavsFromStorage () {
+function loadFavsFromStorage (userCode = null) {
 	try {
-		return JSON.parse(localStorage.getItem(getFavStorageKey())) || []
+		return JSON.parse(localStorage.getItem(getFavStorageKey(userCode))) || []
 	} catch {
 		return []
 	}
 }
 
-function saveFavsToStorage (favs) {
-	localStorage.setItem(getFavStorageKey(), JSON.stringify(favs))
+function saveFavsToStorage (favs, userCode = null) {
+	localStorage.setItem(getFavStorageKey(userCode), JSON.stringify(favs))
+}
+
+function getCurrentUserCode (rootState) {
+	return rootState.user?.pretalx_id ?? rootState.user?.code ?? rootState.user?.id ?? null
 }
 
 function getCsrfToken () {
@@ -42,8 +47,8 @@ let _storageListenerBound = false
 function bindStorageListener (state) {
 	if (_storageListenerBound) return
 	_storageListenerBound = true
-	const key = getFavStorageKey()
 	window.addEventListener('storage', (e) => {
+		const key = getFavStorageKey(state._favUserCode)
 		if (e.key !== key) return
 		if (e.newValue === null) {
 			state.favs = []
@@ -63,7 +68,7 @@ export default {
 		errorLoading: null,
 		now: moment(),
 		currentLanguage: localStorage.getItem('userLanguage') || 'en',
-		favs: loadFavsFromStorage()
+		favs: []
 	},
 	getters: {
 		favs (state) {
@@ -71,7 +76,11 @@ export default {
 		},
 		rooms (state, getters, rootState) {
 			if (!state.schedule) return
-			return state.schedule.rooms.map(room => rootState.rooms.find(r => r.pretalx_id === room.id) || room)
+			const rootByPretalxId = new Map()
+			for (const r of rootState.rooms || []) {
+				if (r?.pretalx_id != null) rootByPretalxId.set(r.pretalx_id, r)
+			}
+			return state.schedule.rooms.map(room => rootByPretalxId.get(room.id) || room)
 		},
 		roomsLookup (state, getters) {
 			if (!state.schedule) return {}
@@ -90,8 +99,11 @@ export default {
 		},
 		sessions (state, getters, rootState) {
 			if (!state.schedule) return
+			const videoModuleTypes = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom']
+			const videoRooms = new Set((rootState.rooms || []).filter(r => r.modules?.some(m => videoModuleTypes.includes(m.type))).map(r => r.pretalx_id ? String(r.pretalx_id) : null).filter(Boolean))
 			const sessions = []
 			for (const session of state.schedule.talks) {
+				const roomId = session.room ? String(session.room) : null
 				sessions.push({
 					id: session.code ? session.code.toString() : null,
 					title: session.title,
@@ -102,7 +114,7 @@ export default {
 					url: session.url,
 					start: moment.tz(session.start, rootState.userTimezone),
 					end: moment.tz(session.end, rootState.userTimezone),
-					speakers: session.speakers?.map(s => getters.speakersLookup[s]),
+					speakers: (session.speakers || []).map(s => getters.speakersLookup[s] || { code: s }).filter(Boolean),
 					track: getters.tracksLookup[session.track],
 					room: getters.roomsLookup[session.room],
 					fav_count: session.fav_count,
@@ -111,18 +123,36 @@ export default {
 					resources: session.resources,
 					answers: session.answers,
 					exporters: session.exporters,
-					recording_iframe: session.recording_iframe
+					recording_iframe: session.recording_iframe,
+					stream_url: session.stream_url || null,
+					has_video_room: videoRooms.has(roomId),
+					stream_type: session.stream_type
 				})
 			}
+			const roomIndexLookup = new Map()
+			// Index by the same key we use in roomsLookup (prefer pretalx_id if present).
+			getters.rooms.forEach((r, i) => roomIndexLookup.set((r?.pretalx_id ?? r?.id), i))
 			sessions.sort((a, b) => (
 				a.start.diff(b.start) ||
-				(state.schedule.rooms.findIndex((r) => r.id === a.room?.id) - state.schedule.rooms.findIndex((r) => r.id === b.room?.id))
+				((roomIndexLookup.get(a.room?.pretalx_id ?? a.room?.id) ?? Infinity) - (roomIndexLookup.get(b.room?.pretalx_id ?? b.room?.id) ?? Infinity))
 			))
 			return sessions
 		},
 		sessionsLookup (state, getters) {
 			if (!state.schedule) return {}
 			return getters.sessions.reduce((acc, s) => { acc[s.id] = s; return acc }, {})
+		},
+		sessionsBySpeaker (state, getters) {
+			if (!getters.sessions) return {}
+			return getters.sessions.reduce((acc, session) => {
+				(session.speakers || []).forEach((speaker) => {
+					const code = typeof speaker === 'string' ? speaker : speaker?.code
+					if (!code) return
+					if (!acc[code]) acc[code] = []
+					acc[code].push(session)
+				})
+				return acc
+			}, {})
 		},
 		days (state, getters) {
 			if (!getters.sessions) return
@@ -145,15 +175,16 @@ export default {
 		currentSessionPerRoom (state, getters, rootState) {
 			if (!getters.sessions) return
 			const rooms = {}
-			for (const room of rootState.rooms) {
+			const sessionByRoom = new Map()
+			for (const s of getters.sessionsScheduledNow || []) {
+				if (s.room && !sessionByRoom.has(s.room)) sessionByRoom.set(s.room, s)
+			}
+			const sessionsLookup = getters.sessionsLookup || {}
+			for (const room of rootState.rooms || []) {
 				if (room.schedule_data?.computeSession) {
-					rooms[room.id] = {
-						session: getters.sessionsScheduledNow.find(session => session.room === room)
-					}
+					rooms[room.id] = { session: sessionByRoom.get(room) }
 				} else if (room.schedule_data?.session) {
-					rooms[room.id] = {
-						session: getters.sessions?.find(session => session.id === room.schedule_data.session)
-					}
+					rooms[room.id] = { session: sessionsLookup[room.schedule_data.session] }
 				}
 			}
 			return rooms
@@ -211,7 +242,8 @@ export default {
 		async fav ({ state, rootState }, id) {
 			if (!state.favs.includes(id)) {
 				state.favs.push(id)
-				saveFavsToStorage(state.favs)
+				const userCode = getCurrentUserCode(rootState)
+				saveFavsToStorage(state.favs, userCode)
 			}
 			const apiBase = getApiBase()
 			if (apiBase && rootState.user) {
@@ -231,7 +263,8 @@ export default {
 		},
 		async unfav ({ state, rootState }, id) {
 			state.favs = state.favs.filter(fav => fav !== id)
-			saveFavsToStorage(state.favs)
+			const userCode = getCurrentUserCode(rootState)
+			saveFavsToStorage(state.favs, userCode)
 			const apiBase = getApiBase()
 			if (apiBase && rootState.user) {
 				try {
@@ -249,7 +282,12 @@ export default {
 			}
 		},
 		async loadFavs ({ state, rootState }) {
-			const localFavs = loadFavsFromStorage()
+			const userCode = getCurrentUserCode(rootState)
+			state._favUserCode = userCode
+			const localFavs = [...new Set([
+				...loadFavsFromStorage(userCode),
+				...loadFavsFromStorage(null),
+			])]
 			state.favs = localFavs
 			// Keep favs in sync when the schedule tab updates localStorage
 			bindStorageListener(state)
@@ -269,7 +307,8 @@ export default {
 						const merged = await response.json()
 						if (Array.isArray(merged)) {
 							state.favs = merged
-							saveFavsToStorage(merged)
+							saveFavsToStorage(merged, userCode)
+							localStorage.removeItem(getFavStorageKey(null))
 						}
 					}
 				} catch (error) {

@@ -6,7 +6,7 @@
 			span.bar
 			span.bar
 		a.logo(:href="logoHref", :class="{anonymous: isAnonymous}")
-			img(:src="theme.logo.url", :alt="world.title")
+			img(:src="brandLogoUrl", :alt="world.title")
 	.nav-actions
 		router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
 			bunt-icon-button settings
@@ -38,21 +38,10 @@
 					.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
 						template(v-for="item in menuItems", :key="item.key")
 							div.menu-separator(v-if="item.separatorBefore")
-							template(v-if="item.children")
-								div.menu-item.menu-item-parent(:class="{open: dashboardSubmenuOpen}", role="menuitem", tabindex="0", @click.prevent.stop="toggleDashboardSubmenu", @keydown.enter.prevent.stop="toggleDashboardSubmenu", @keydown.space.prevent.stop="toggleDashboardSubmenu")
-									span.menu-item-icon(v-if="item.icon" aria-hidden="true")
-										i(:class="iconClasses[item.icon]")
-									span.menu-item-label {{ item.label }}
-									div.profile-submenu(v-if="dashboardSubmenuOpen", role="menu", @click.stop)
-										a.menu-item(v-for="child in item.children", :key="child.key", :href="getItemHref(child)", role="menuitem", @click.prevent="onMenuItem(child)")
-											span.menu-item-icon(v-if="child.icon" aria-hidden="true")
-												i(:class="iconClasses[child.icon]")
-											span.menu-item-label {{ child.label }}
-							template(v-else)
-								a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
-									span.menu-item-icon(v-if="item.icon" aria-hidden="true")
-										i(:class="iconClasses[item.icon]")
-									span.menu-item-label {{ item.label }}
+							a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
+								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
+									i(:class="iconClasses[item.icon]")
+								span.menu-item-label {{ item.label }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
@@ -83,22 +72,12 @@ const ICON_CLASSES = {
 	admin: 'fa fa-cog',
 	logout: 'fa fa-sign-out',
 	tickets: 'fa fa-ticket',
-	talks: 'fa fa-microphone',
 	control: 'fa fa-cogs',
 	profile: 'fa fa-user-circle'
 }
 
 const PROFILE_MENU_ITEMS = [
-	{
-		key: 'dashboard',
-		label: 'Dashboard',
-		icon: 'dashboard',
-		children: [
-			{ key: 'dashboard:main', label: 'Main dashboard', icon: 'dashboard', externalPath: 'common/' },
-			{ key: 'dashboard:tickets', label: 'Tickets', icon: 'tickets', externalPath: 'control/' },
-			{ key: 'dashboard:talks', label: 'Talks', icon: 'talks', externalPath: 'orga/event/' }
-		]
-	},
+	{ key: 'dashboard', label: 'Dashboard', icon: 'dashboard', externalPath: 'common/' },
 	{ key: 'orders', label: 'My Orders', externalPath: 'common/orders/', icon: 'orders' },
 	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
 	{ key: 'events', label: 'My Events', externalPath: 'common/events/', icon: 'events' },
@@ -157,42 +136,37 @@ const showAdminModeEnd = computed(() => isAdminMode.value)
 
 const isAnonymous = computed(() => Object.keys(user.value.profile || {}).length === 0)
 
-function videoAppRootHref() {
+function siteRootHref() {
 	const { protocol, host } = window.location
-	const basePath = config?.basePath ?? ''
 	const origin = typeof window.location.origin === 'string' ? window.location.origin : `${protocol}//${host}`
-	if (!basePath) {
-		return `${origin}/`
-	}
-	const normalized = basePath.endsWith('/') ? basePath : `${basePath}/`
-	return `${origin}${normalized}`
-}
-
-function isEventConfigAdmin() {
-	return store.getters.hasPermission('world:update')
+	return `${origin}/`
 }
 
 function buildMenuExternalHref(item) {
-	if (item.key === 'dashboard:main' && !isEventConfigAdmin()) {
-		return videoAppRootHref()
-	}
 	const base = buildBaseSansVideo()
 	return base + item.externalPath
 }
 
-const logoHref = computed(() => {
-	try {
-		if (isEventConfigAdmin()) {
-			return buildBaseSansVideo() + 'common/'
-		}
-		return videoAppRootHref()
-	} catch (e) {
-		return isEventConfigAdmin() ? '/common/' : videoAppRootHref()
+const logoHref = computed(() => siteRootHref())
+
+const defaultBrandLogoUrl = computed(() => {
+	const basePath = config?.basePath ?? ''
+	if (!basePath || basePath === '/') {
+		return '/eventyay-video-logo.png'
 	}
+	const normalized = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+	return `${normalized}/eventyay-video-logo.png`
+})
+
+const brandLogoUrl = computed(() => {
+	const routeName = router.currentRoute.value?.name
+	if (routeName === 'about') {
+		return defaultBrandLogoUrl.value
+	}
+	return theme.logo?.url || defaultBrandLogoUrl.value
 })
 
 const profileMenuOpen = ref(false)
-const dashboardSubmenuOpen = ref(false)
 const menuItems = ref(PROFILE_MENU_ITEMS)
 const iconClasses = ICON_CLASSES
 const userMenuEl = ref(null)
@@ -299,16 +273,9 @@ function buildBaseSansVideo() {
 }
 function toggleProfileMenu() {
 	profileMenuOpen.value = !profileMenuOpen.value
-	if (!profileMenuOpen.value) {
-		dashboardSubmenuOpen.value = false
-	}
 }
 function closeProfileMenu() {
 	profileMenuOpen.value = false
-	dashboardSubmenuOpen.value = false
-}
-function toggleDashboardSubmenu() {
-	dashboardSubmenuOpen.value = !dashboardSubmenuOpen.value
 }
 function logout() {
 	localStorage.removeItem('token')
@@ -348,7 +315,6 @@ function onMenuItem(item) {
 function getItemHref(item) {
 	if (item.action === 'logout') return '#logout'
 	if (item.route) return router.resolve(item.route).href
-	if (item.children) return '#dashboard'
 	if (item.externalPath) {
 		try {
 			return buildMenuExternalHref(item)
