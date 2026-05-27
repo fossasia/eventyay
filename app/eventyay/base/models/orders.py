@@ -645,6 +645,9 @@ class Order(LockModel, LoggedModel):
         """
         Returns whether or not this order can be partially canceled by the user.
         """
+        if self.event.settings.allow_modifications == 'no':
+            return False
+
         if self.status == Order.STATUS_PAID and self.total != Decimal('0.00'):
             # Partial cancellation currently executes immediately.
             # In approval mode, only full-order cancellation requests are supported.
