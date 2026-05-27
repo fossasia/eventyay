@@ -238,7 +238,6 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
 
 
 @condition(etag_func=widget_js_etag)
-@condition(etag_func=widget_js_etag)
 @gzip_page
 @csp_exempt()
 def widget_script(request, organizer=None, event=None, **kwargs):

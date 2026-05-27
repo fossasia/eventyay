@@ -783,12 +783,12 @@ class WidgetAPIProductList(EventListMixin, View):
                 fail = True
 
         if not fail and (ev.presale_is_running or request.event.settings.show_products_outside_presale_period):
-            data['items_by_category'], data['display_add_to_cart'], data['productnum'] = self._get_products()
+            data['items_by_category'], data['display_add_to_cart'], data['itemnum'] = self._get_products()
             data['display_add_to_cart'] = data['display_add_to_cart'] and ev.presale_is_running
         else:
             data['items_by_category'] = []
             data['display_add_to_cart'] = False
-            data['productnum'] = 0
+            data['itemnum'] = 0
 
         data['has_seating_plan'] = ev.seating_plan is not None
 
