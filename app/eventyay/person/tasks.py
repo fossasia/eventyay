@@ -27,9 +27,11 @@ def gravatar_cache(person_id: int):
 
     if not user.gravatar_parameter:
         logger.warning(
-            'gravatar_cache() was called for user %s, but user has no valid email for Gravatar',
+            'gravatar_cache() was called for user %s, but user has no valid email for Gravatar; disabling get_gravatar',
             person_id,
         )
+        user.get_gravatar = False
+        user.save(update_fields=['get_gravatar'])
         return
 
     response = get(

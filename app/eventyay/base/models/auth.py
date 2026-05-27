@@ -850,7 +850,8 @@ the eventyay team"""
 
     @cached_property
     def guid(self) -> str:
-        return str(uuid.uuid5(uuid.NAMESPACE_URL, f'acct:{self.email.strip()}'))
+        identifier = (self.email or '').strip() or (self.code or str(self.pk))
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, f'acct:{identifier}'))
 
     @cached_property
     def gravatar_parameter(self) -> str | None:
