@@ -138,13 +138,14 @@ class SpeakerProfileForm(
                     self.fields[field_name].widget.is_required = True
 
         cfp_defaults = default_fields()
-        count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
-        count_length_in = self.event.cfp.settings['count_length_in']
+        count_length_in = self.event.cfp.settings.get('count_length_in', 'chars')
+        count_chars = count_length_in == 'chars'
         for key in ('avatar_source', 'avatar_license'):
             if key not in self.fields:
                 continue
-            config = self.event.cfp.fields.get(key, cfp_defaults[key])
-            visibility = config['visibility']
+            default_config = cfp_defaults.get(key, {})
+            config = self.event.cfp.fields.get(key, default_config)
+            visibility = config.get('visibility', default_config.get('visibility', 'optional'))
             if visibility == 'do_not_ask':
                 self.fields.pop(key, None)
                 continue
@@ -167,9 +168,11 @@ class SpeakerProfileForm(
                         count_in=count_length_in,
                     )
                 )
-                field.original_help_text = getattr(field, 'original_help_text', '')
+                field.original_help_text = getattr(field, 'original_help_text', field.help_text)
                 field.added_help_text = self.get_help_text('', min_value, max_value, count_length_in)
-                field.help_text = field.original_help_text + ' ' + field.added_help_text
+                field.help_text = ' '.join(
+                    part for part in (field.original_help_text, field.added_help_text) if part
+                )
 
         if not self.event.cfp.request_avatar:
             self.fields.pop('avatar', None)
