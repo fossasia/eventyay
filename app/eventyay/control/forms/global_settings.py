@@ -107,6 +107,16 @@ class GlobalSettingsForm(SettingsForm):
                     ),
                 ),
                 (
+                    'nominatim_geocoding_enabled',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Use public Nominatim for geocoding when no API key is configured'),
+                        help_text=_(
+                            'Only enable this if your deployment can comply with the public Nominatim usage policy.'
+                        ),
+                    ),
+                ),
+                (
                     'leaflet_tiles',
                     forms.CharField(
                         required=False,
@@ -445,7 +455,7 @@ class GlobalSettingsForm(SettingsForm):
                 'billing_validation',
             ]),
             ('maps', _('Maps'), [
-                'opencagedata_apikey', 'mapquest_apikey', 'leaflet_tiles', 'leaflet_tiles_attribution',
+                'opencagedata_apikey', 'mapquest_apikey', 'nominatim_geocoding_enabled', 'leaflet_tiles', 'leaflet_tiles_attribution',
             ]),
             ('organizers', _('Organizers'), [
                 'allow_all_users_create_organizer',
