@@ -198,13 +198,6 @@ class EventWizardBasicsForm(I18nModelForm):
         ),
         required=False,
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website '
-                    'that has your contact details and legal information.'),
-        required=False,
-    )
-
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
         help_text=_(
