@@ -421,6 +421,18 @@ def test_encrypt_secret_preserves_undecryptable_token_shaped_ciphertext():
     assert encrypt_secret(ciphertext) == ciphertext
 
 
+def test_get_fernet_reflects_secret_key_changes(settings):
+    settings.SECRET_KEY = 'socialauth-cache-key-one'
+    token_one = encrypt_secret('shared-secret')
+
+    settings.SECRET_KEY = 'socialauth-cache-key-two'
+    token_two = encrypt_secret('shared-secret')
+
+    assert token_one != token_two
+    assert decrypt_secret(token_two) == 'shared-secret'
+    assert decrypt_secret(token_one) == ''
+
+
 @pytest.mark.django_db
 def test_update_provider_state_enable_preserves_undecryptable_secret(rf):
     other_fernet = Fernet(Fernet.generate_key())
@@ -548,6 +560,7 @@ def test_social_login_post_recovers_from_invalid_stored_login_providers(rf):
     invalid_raw = {'unexpected_provider': {'state': True}}
     gs = GlobalSettingsObject()
     gs.settings.set('login_providers', invalid_raw)
+    SocialApp.objects.create(provider='github', client_id='stale-client', secret='stale-secret')
 
     request = rf.post(
         reverse('plugins:socialauth:admin.global.social.auth.settings'),
@@ -564,6 +577,7 @@ def test_social_login_post_recovers_from_invalid_stored_login_providers(rf):
     saved = gs.settings.get('login_providers', as_type=dict)
     assert 'unexpected_provider' not in saved
     assert saved['github']['state'] is False
+    assert not SocialApp.objects.filter(provider='github').exists()
 
 
 @pytest.mark.django_db

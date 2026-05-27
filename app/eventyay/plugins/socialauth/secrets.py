@@ -99,15 +99,22 @@ def decrypt_secret(value: str) -> str:
         return ''
 
 
-@functools.lru_cache(maxsize=1)
-def get_fernet() -> MultiFernet:
-    configured_fernet_keys = tuple(_to_fernet_key(key) for key in _configured_encryption_key_strings())
-    derived_default_key = _derived_default_key()
+@functools.lru_cache(maxsize=8)
+def _get_fernet_for_settings(secret_key: str, configured_keys: tuple[str, ...]) -> MultiFernet:
+    configured_fernet_keys = tuple(_to_fernet_key(key) for key in configured_keys)
+    derived_default_key = _derive_fernet_key(secret_key)
     if derived_default_key in configured_fernet_keys:
         fernet_keys = configured_fernet_keys
     else:
         fernet_keys = configured_fernet_keys + (derived_default_key,)
     return MultiFernet(tuple(Fernet(key) for key in fernet_keys))
+
+
+def get_fernet() -> MultiFernet:
+    return _get_fernet_for_settings(
+        settings.SECRET_KEY,
+        _configured_encryption_key_strings(),
+    )
 
 
 def _to_fernet_key(key: str) -> bytes:

@@ -176,6 +176,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                     'Please review and save again.'
                 ),
             )
+            SocialApp.objects.filter(provider__in=LoginProviders.model_fields.keys()).delete()
             login_providers = LoginProviders.model_validate({}).model_dump()
 
         setting_state = request.POST.get('save_credentials', '').lower()
