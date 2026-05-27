@@ -49,7 +49,7 @@
                 {% trans 'Test Mode' %}
             </span>
         {% endif %}
-        <button class="startpage-event-share" type="button" data-url="{{ event_url }}" data-share-image-signature="{{ share_image_signature|default:''|escape }}" data-share-label="{% trans 'Share event' %}" aria-label="{% trans 'Share event' %}" title="{% trans 'Share event' %}">
+        <button class="startpage-event-share" type="button" data-url="{{ event_url_abs }}" data-share-image-signature="{{ share_image_signature|default:''|escape }}" data-share-label="{% trans 'Share event' %}" aria-label="{% trans 'Share event' %}" title="{% trans 'Share event' %}">
             <i class="fa fa-share-alt" aria-hidden="true"></i>
         </button>
     </div>

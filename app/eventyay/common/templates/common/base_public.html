@@ -28,8 +28,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="{% if current_event %}{{ current_event.visible_primary_color }}{% else %}#2185d0{% endif %}">
         <meta name="HandheldFriendly" content="True"/>
-        {% block meta_image %}{% if current_event %}{% with event_social_image=current_event.social_image|default:current_event.urls.social_image.full %}<meta property="thumbnail" content="{{ event_social_image }}{% if request.GET.si %}{% if '?' in event_social_image %}&{% else %}?{% endif %}si={{ request.GET.si|urlencode }}{% endif %}">
-            <meta property="og:image" content="{{ event_social_image }}{% if request.GET.si %}{% if '?' in event_social_image %}&{% else %}?{% endif %}si={{ request.GET.si|urlencode }}{% endif %}">
+        {% block meta_image %}{% if current_event %}{% with event_social_image=current_event.social_image|default:current_event.urls.social_image.full %}<meta property="thumbnail" content="{{ event_social_image }}{% if request.GET.si %}{% if '?' in event_social_image %}&amp;{% else %}?{% endif %}si={{ request.GET.si|urlencode }}{% endif %}">
+            <meta property="og:image" content="{{ event_social_image }}{% if request.GET.si %}{% if '?' in event_social_image %}&amp;{% else %}?{% endif %}si={{ request.GET.si|urlencode }}{% endif %}">
         {% endwith %}{% endif %}{% endblock meta_image %}
         <meta property="og:title" content="{% block social_title %}{% endblock social_title %}{% if current_event %} {{ current_event.name|event_localize }}{% endif %}">
         <meta property="og:description" content="{% block social_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock social_description %}">

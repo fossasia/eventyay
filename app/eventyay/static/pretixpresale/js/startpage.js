@@ -33,6 +33,9 @@
     var redditBtn = document.getElementById('share-reddit');
     var nativeBtn = document.getElementById('share-native');
     var urlInput = document.getElementById('share-url-input');
+    if (!urlInput) {
+      return;
+    }
     var copyBtn = document.getElementById('share-copy-btn');
     var copiedLabel = copyBtn ? (copyBtn.dataset.copiedLabel || 'Copied!') : 'Copied!';
     var currentShareTitle = '';
