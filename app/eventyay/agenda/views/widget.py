@@ -5,7 +5,7 @@ from urllib.parse import unquote
 from csp.decorators import csp_exempt
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.staticfiles import finders
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.templatetags.static import static
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.http import condition
@@ -238,20 +238,18 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
 
 
 @condition(etag_func=widget_js_etag)
-@gzip_page
 @csp_exempt()
 def widget_script(request, organizer=None, event=None, **kwargs):
     # Serve the ESM bundle directly so the response goes through Django's middleware
     # stack (CorsMiddleware adds Access-Control-Allow-Origin). Serving via a static-file
     # loader would bypass middleware and break cross-origin embeds because module scripts
     # always enforce CORS.
+    # The Access-Control-Allow-Origin header is applied by CorsMiddleware because this
+    # URL is matched by CORS_URLS_REGEX; no manual header is needed here.
     file_path = finders.find(WIDGET_PATH)
     if not file_path:
         raise Http404
-    with open(file_path, 'rb') as f:
-        content = f.read()
-    response = HttpResponse(content, content_type='application/javascript; charset=utf-8')
-    response['Access-Control-Allow-Origin'] = '*'
+    response = FileResponse(open(file_path, 'rb'), content_type='application/javascript; charset=utf-8')
     response['Cache-Control'] = 'public, max-age=86400'
     return response
 

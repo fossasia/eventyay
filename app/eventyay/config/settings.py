@@ -398,7 +398,7 @@ CORE_MODULES = (
 )
 
 # Restrict CORS to widget and event-CSS endpoints only
-CORS_URLS_REGEX = r'^.*/widget[s]?/|^.*/static/event\.css$|^.*/schedule/widget/'
+CORS_URLS_REGEX = r'^(?:.*/widget[s]?/.*|.*/static/event\.css|.*/schedule/widget/.*)$'
 
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
