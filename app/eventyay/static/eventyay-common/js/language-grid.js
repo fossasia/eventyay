@@ -15,18 +15,26 @@
 
   function initLanguageGrid(widget) {
     if (widget.dataset.languageGridInit === 'true') return;
-    widget.dataset.languageGridInit = 'true';
 
     var summary = widget.querySelector('[data-language-grid-summary]');
     var panel = widget.querySelector('[data-language-grid-panel]');
     var searchInput = widget.querySelector('[data-language-grid-search]');
     var grid = widget.querySelector('[data-language-grid-grid]');
     var badgesContainer = widget.querySelector('[data-language-grid-badges]');
+    var countLabel = widget.querySelector('[data-language-grid-count]');
     var noResults = widget.querySelector('[data-language-grid-no-results]');
     var selectAllBtn = widget.querySelector('[data-language-grid-select-all]');
     var deselectAllBtn = widget.querySelector('[data-language-grid-deselect-all]');
 
     if (!summary || !panel || !grid) return;
+    widget.dataset.languageGridInit = 'true';
+    widget.classList.add('is-ready');
+    panel.hidden = true;
+
+    var emptyText = (countLabel && countLabel.getAttribute('data-empty-text')) || (countLabel ? countLabel.textContent.trim() : '');
+    var selectedSingularText = (countLabel && countLabel.getAttribute('data-selected-singular-text')) || '';
+    var selectedPluralText = (countLabel && countLabel.getAttribute('data-selected-plural-text')) || selectedSingularText;
+    var overflowText = (countLabel && countLabel.getAttribute('data-overflow-text')) || '';
 
     var cells = [];
     var checkboxes = [];
@@ -42,6 +50,7 @@
       e.stopPropagation();
       var isExpanded = widget.classList.toggle('is-expanded');
       summary.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      panel.hidden = !isExpanded;
       if (isExpanded && searchInput) {
         setTimeout(function () { searchInput.focus(); }, 50);
       }
@@ -96,7 +105,7 @@
           cells[j].classList.add('is-checked');
           selected.push({
             code: cb.value,
-            name: cells[j].getAttribute('data-language-name') || cb.value,
+            name: cells[j].getAttribute('data-language-name') || cb.value
           });
         } else {
           cells[j].classList.remove('is-checked');
@@ -114,19 +123,29 @@
       if (selected.length > MAX_VISIBLE_BADGES) {
         var overflow = document.createElement('span');
         overflow.className = 'language-grid-badge-overflow';
-        overflow.textContent = '+' + (selected.length - MAX_VISIBLE_BADGES) + ' more';
+        overflow.textContent = '+' + (selected.length - MAX_VISIBLE_BADGES) + (overflowText ? ' ' + overflowText : '');
         badgesContainer.appendChild(overflow);
       }
 
-      // Update the summary label with count
-      var label = widget.querySelector('[data-language-grid-count]');
-      if (label) {
+      if (countLabel) {
         if (selected.length === 0) {
-          label.textContent = label.getAttribute('data-empty-text') || 'No languages selected';
+          countLabel.textContent = emptyText;
         } else {
-          label.textContent = selected.length + ' language' + (selected.length !== 1 ? 's' : '') + ' selected';
+          var selectedText = selected.length === 1 ? selectedSingularText : selectedPluralText;
+          countLabel.textContent = selected.length + (selectedText ? ' ' + selectedText : '');
         }
       }
+    }
+
+    function dispatchCheckboxChange(checkbox) {
+      var evt;
+      try {
+        evt = new Event('change', { bubbles: true });
+      } catch (err) {
+        evt = document.createEvent('Event');
+        evt.initEvent('change', true, true);
+      }
+      checkbox.dispatchEvent(evt);
     }
 
     // Listen for changes on the entire grid (event delegation)
@@ -144,15 +163,7 @@
           if (tag === 'INPUT' || tag === 'LABEL') return;
           if (cb) {
             cb.checked = !cb.checked;
-            // Manually trigger change event
-            var evt;
-            try {
-              evt = new Event('change', { bubbles: true });
-            } catch (err) {
-              evt = document.createEvent('Event');
-              evt.initEvent('change', true, true);
-            }
-            cb.dispatchEvent(evt);
+            dispatchCheckboxChange(cb);
           }
         });
       })(cells[ci], checkboxes[ci]);
@@ -164,7 +175,10 @@
         e.preventDefault();
         e.stopPropagation();
         for (var j = 0; j < checkboxes.length; j++) {
-          if (checkboxes[j]) checkboxes[j].checked = true;
+          if (checkboxes[j] && !checkboxes[j].checked) {
+            checkboxes[j].checked = true;
+            dispatchCheckboxChange(checkboxes[j]);
+          }
         }
         syncBadges();
       });
@@ -175,7 +189,10 @@
         e.preventDefault();
         e.stopPropagation();
         for (var j = 0; j < checkboxes.length; j++) {
-          if (checkboxes[j]) checkboxes[j].checked = false;
+          if (checkboxes[j] && checkboxes[j].checked) {
+            checkboxes[j].checked = false;
+            dispatchCheckboxChange(checkboxes[j]);
+          }
         }
         syncBadges();
       });

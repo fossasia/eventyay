@@ -30,6 +30,20 @@
     background: #f0f0f0;
 }
 
+.language-grid-summary:focus {
+    outline: 2px solid #2185d0;
+    outline-offset: 2px;
+}
+
+.language-grid-summary:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.language-grid-summary:focus-visible {
+    outline: 2px solid #2185d0;
+    outline-offset: 2px;
+}
+
 .language-grid-toggle-icon {
     margin-left: auto;
     font-size: 14px;
@@ -78,9 +92,12 @@
 
 /* -- Collapsible panel -- */
 .language-grid-panel {
-    display: none;
     border-top: 1px solid #ddd;
     padding: 12px;
+}
+
+.language-grid-widget.is-ready .language-grid-panel {
+    display: none;
 }
 
 .language-grid-widget.is-expanded .language-grid-panel {
