@@ -32,6 +32,7 @@ from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
     EventPermissionRequired,
+    ImportProcessRedirectMixin,
     Filterable,
     PaginationMixin,
     PermissionRequired,
@@ -403,13 +404,16 @@ class SpeakerImportView(EventPermissionRequired, FormView):
         return redirect(self.request.event.orga_urls.speakers_import + str(cf.id) + '/')
 
 
-class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
+class SpeakerImportProcessView(ImportProcessRedirectMixin, EventPermissionRequired, AsyncAction, FormView):
     permission_required = 'base.update_event'
     template_name = 'orga/speaker/import_process.html'
     form_class = SpeakerImportProcessForm
     task = import_speakers
     known_errortypes = ['ImportExecutionError']
     IMPORT_FILENAME = 'speaker_import.csv'
+
+    import_process_url_name = 'settings.import_export.speakers_import_process'
+    import_page_url_name = 'speakers_import'
 
     def dispatch(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -418,7 +422,7 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
             _ = self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self.import_redirect_url)
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -462,13 +466,13 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
             return self.get_result(request)
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self.import_redirect_url)
         return FormView.get(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.speakers_import)
+            return redirect(self.import_redirect_url)
         return FormView.post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -482,10 +486,12 @@ class SpeakerImportProcessView(EventPermissionRequired, AsyncAction, FormView):
         )
 
     def get_success_url(self, value):
+        if self.import_redirect_url != self.request.event.orga_urls.speakers_import:
+            return self.import_redirect_url
         return self.request.event.orga_urls.speakers
 
     def get_error_url(self):
-        return self.request.event.orga_urls.speakers_import
+        return self.import_redirect_url
 
     def get_success_message(self, value):
         if isinstance(value, dict):

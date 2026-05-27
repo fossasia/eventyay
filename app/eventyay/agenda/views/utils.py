@@ -254,14 +254,14 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         activate(request.event.locale)
     if '-my' in exporter.identifier and request.user.id is None and not token:
         if request.GET.get('talks'):
-            exporter.talk_ids = request.GET.get('talks').split(',')
+            exporter.talk_ids = set(request.GET.get('talks').split(','))
         else:
             return HttpResponseRedirect(request.event.urls.login)
     if token and '-my' in exporter.identifier:
         user_id = parse_ics_token(token, event=request.event)
         if not user_id:
             return
-        talk_ids = list(
+        talk_ids = set(
             SubmissionFavourite.objects.filter(
                 user_id=user_id,
                 submission__event=request.event,
@@ -270,7 +270,7 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         if talk_ids:
             exporter.talk_ids = talk_ids
     elif '-my' in exporter.identifier:
-        talk_ids = list(
+        talk_ids = set(
             SubmissionFavourite.objects.filter(
                 user_id=request.user.id,
                 submission__event=request.event,

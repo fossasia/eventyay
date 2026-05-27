@@ -1623,6 +1623,16 @@ DEFAULT_SETTINGS = {
             help_text=_('Sender address for outgoing emails'),
         ),
     },
+    'mail_reply_to': {
+        'default': None,
+        'type': str,
+        'form_class': forms.EmailField,
+        'serializer_class': serializers.EmailField,
+        'form_kwargs': dict(
+            label=_('Reply-to address'),
+            help_text=_('User replies will be sent to this address.'),
+        ),
+    },
     'mail_from_name': {
         'default': None,
         'type': str,
@@ -2504,8 +2514,9 @@ Your {event} team"""
     'banner_message_detail': {'default': '', 'type': LazyI18nString},
     'opencagedata_apikey': {'default': None, 'type': str},
     'mapquest_apikey': {'default': None, 'type': str},
-    'leaflet_tiles': {'default': None, 'type': str},
-    'leaflet_tiles_attribution': {'default': None, 'type': str},
+    'nominatim_geocoding_enabled': {'default': False, 'type': bool},
+    'leaflet_tiles': {'default': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 'type': str},
+    'leaflet_tiles_attribution': {'default': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', 'type': str},
     'frontpage_subevent_ordering': {
         'default': 'date_ascending',
         'type': str,

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
+from urllib.parse import urljoin
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
@@ -92,7 +93,7 @@ class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateVi
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
         ctx['locales'] = []
-        ctx['url'] = f'{settings.SITE_URL}/{settings.BASE_PATH}page/{self.object.slug}'
+        ctx['url'] = urljoin(settings.SITE_URL.rstrip('/') + '/', f'{settings.BASE_PATH}page/{self.object.slug}')
 
         for lng_code, lng_name in settings.LANGUAGES:
             ctx['locales'].append((lng_code, lng_name))
