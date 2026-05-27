@@ -1,6 +1,5 @@
 import calendar
 import datetime as dt
-import hashlib
 import importlib.util
 import json
 import logging
@@ -511,10 +510,6 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             )
             r._csp_ignore = True
             return r
-
-        signature = self.request.event.social_image_signature
-        if signature and request.GET.get('si') != signature:
-            return redirect(self._versioned_event_url(signature))
 
         if request.sales_channel.identifier not in request.event.sales_channels:
             raise Http404(_('Tickets for this event cannot be purchased on this sales channel.'))

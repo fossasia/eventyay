@@ -46,9 +46,10 @@
         return;
       }
       copyBtn.classList.remove('is-copied');
-      copyBtn.replaceChildren.apply(copyBtn, originalCopyNodes.map(function (node) {
-        return node.cloneNode(true);
-      }));
+      copyBtn.replaceChildren();
+      for (var i = 0; i < originalCopyNodes.length; i++) {
+        copyBtn.appendChild(originalCopyNodes[i].cloneNode(true));
+      }
     }
 
     buttons.forEach(function (button) {
@@ -115,15 +116,18 @@
     }
 
     // Close when clicking backdrop
-    dialog.addEventListener('click', function (event) {
-      if (event.target === dialog) {
-        if (typeof dialog.close === 'function') {
-          dialog.close();
-        } else {
-          dialog.removeAttribute('open');
+    if (!dialog.dataset.shareBackdropInit) {
+      dialog.addEventListener('click', function (event) {
+        if (event.target === dialog) {
+          if (typeof dialog.close === 'function') {
+            dialog.close();
+          } else {
+            dialog.removeAttribute('open');
+          }
         }
-      }
-    });
+      });
+      dialog.dataset.shareBackdropInit = 'true';
+    }
 
     if (copyBtn) {
       copyBtn.addEventListener('click', function () {

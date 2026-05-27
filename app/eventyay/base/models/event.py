@@ -965,7 +965,7 @@ class Event(
     @property
     def social_image_signature(self):
         og_image = self.settings.get('og_image', as_type=str, default='') or ''
-        image_source = og_image or (self.social_image or '')
+        image_source = og_image or self.visible_logo_url or self.visible_header_image_url or ''
         if not image_source:
             return ''
         return hashlib.sha1(image_source.encode('utf-8')).hexdigest()[:12]
