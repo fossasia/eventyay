@@ -89,7 +89,7 @@ class OrganizerDelete(PermissionRequired, ActionConfirmMixin, DetailView):
         messages.success(
             self.request, _("The organizer and all related data have been deleted.")
         )
-        return HttpResponseRedirect(reverse("orga:event.list"))
+        return HttpResponseRedirect(reverse('eventyay_common:dashboard'))
 
 
 def get_speaker_access_events_for_user(*, user, organizer):
