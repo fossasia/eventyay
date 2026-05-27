@@ -107,12 +107,12 @@
         {% endif %}
         <fieldset>
             <legend>{% trans "Price settings" %}</legend>
-            {% bootstrap_field form.default_price layout="control" %}
+            {% bootstrap_field form.default_price layout="control" addon_after=request.event.currency %}
             {% bootstrap_field form.free_price layout="control" %}
 
             <div id="free-price-bounds" data-display-dependency="#id_free_price">
-                {% bootstrap_field form.free_price_min layout="control" %}
-                {% bootstrap_field form.free_price_max layout="control" %}
+                {% bootstrap_field form.free_price_min layout="control" addon_after=request.event.currency %}
+                {% bootstrap_field form.free_price_max layout="control" addon_after=request.event.currency %}
             </div>
 
             {% bootstrap_field form.tax_rule layout="control" %}
