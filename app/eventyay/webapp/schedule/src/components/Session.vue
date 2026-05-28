@@ -209,18 +209,18 @@ export default {
 	position: relative
 	font-size: 14px
 	.time-box
-		width: 62px
+		width: 80px
 		box-sizing: border-box
 		background-color: var(--track-color)
-		padding: 10px 8px 6px 8px
+		padding: 12px 10px 8px
 		border-radius: 6px 0 0 6px
 		display: flex
 		flex-direction: column
 		align-items: center
 		.start
 			color: $clr-primary-text-dark
-			font-size: 16px
-			font-weight: 600
+			font-size: 18px
+			font-weight: 700
 			margin-bottom: 8px
 			.date
 				margin-bottom: 4px
@@ -258,7 +258,7 @@ export default {
 			text-transform: uppercase
 	&.has-date
 		.time-box
-			width: 88px
+			width: 100px
 	.info
 		flex: auto
 		display: flex
@@ -330,6 +330,18 @@ export default {
 			text-align: center
 			background-color: var(--track-color)
 			color: $clr-primary-text-dark
+.break
+	.info
+		justify-content: center
+		align-items: center
+		.title
+			margin-bottom: 0
+			text-align: center
+	.time-box
+		.start
+			font-size: 20px
+
+.c-linear-schedule-session
 	.do_not_record
 		margin: 10px 0px
 	.tags-box
@@ -396,10 +408,10 @@ export default {
 		margin-right: 8px
 		min-height: 80px
 		.time-box
-			width: 56px
+			width: 70px
 			padding: 8px 6px
 			.start
-				font-size: 14px
+				font-size: 16px
 		.info
 			padding: 6px
 			padding-right: 6px
@@ -415,7 +427,7 @@ export default {
 				font-size: 12px
 	.c-linear-schedule-session.has-date
 		.time-box
-			width: 76px
+			width: 90px
 
 .density-compact .c-linear-schedule-session,
 .density-compact .break
@@ -423,10 +435,10 @@ export default {
 	margin: 4px 4px
 	font-size: 12px
 	.time-box
-		width: 50px
-		padding: 6px 4px 4px 4px
+		width: 65px
+		padding: 6px 5px 4px
 		.start
-			font-size: 13px
+			font-size: 15px
 			margin-bottom: 4px
 			.duration
 				font-size: 11px
@@ -452,10 +464,10 @@ export default {
 	margin: 12px 8px
 	font-size: 16px
 	.time-box
-		width: 76px
-		padding: 14px 10px 8px 10px
+		width: 90px
+		padding: 14px 12px 10px
 		.start
-			font-size: 18px
+			font-size: 22px
 			margin-bottom: 10px
 			.duration
 				font-size: 14px

@@ -713,22 +713,50 @@ export default {
 			position: relative
 			min-width: max(min-content, calc(78px + (var(--total-rooms) * var(--room-col-min)) + 60px))
 		.break
+			display: flex
+			min-height: 96px
+			margin: 8px 8px 8px 0
+			overflow: hidden
+			border-radius: 6px
 			.time-box
+				width: 80px
+				box-sizing: border-box
 				background-color: $clr-grey-500
+				padding: 12px 10px 8px
+				border-radius: 6px 0 0 6px
+				display: flex
+				flex-direction: column
+				align-items: center
 				.start
 					color: $clr-primary-text-dark
+					font-size: 18px
+					font-weight: 700
+					display: flex
+					flex-direction: column
+					align-items: center
+					text-align: center
 				.duration
 					color: $clr-secondary-text-dark
+					font-weight: 400
+					font-size: 13px
+					margin-top: 2px
+				.buffer
+					flex: auto
 			.info
-				background-color: $clr-grey-200
-				border: none
+				flex: auto
+				display: flex
+				flex-direction: column
 				justify-content: center
 				align-items: center
+				background-color: $clr-grey-200
+				border: none
+				border-radius: 0 6px 6px 0
+				padding: 8px
 				.title
 					font-size: 16px
 					font-weight: 500
 					color: $clr-secondary-text-light
-					align: center
+					text-align: center
 	.timeslice
 		color: $clr-secondary-text-light
 		padding: 8px 10px 0 16px

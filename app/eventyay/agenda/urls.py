@@ -66,6 +66,11 @@ urlpatterns = [
         widget.widget_script,
         name='widget.script',
     ),
+    re_path(
+        r'^widgets/(?P<filename>pretalx-schedule[-\w]+\.js)$',
+        widget.widget_schedule_chunk,
+        name='widget.schedule.chunk',
+    ),
     path('static/event.css', widget.event_css, name='event.css'),
     path(
         'schedule/changelog/',

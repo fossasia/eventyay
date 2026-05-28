@@ -23,7 +23,7 @@
     <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
-    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" enrich-data {% if is_sessions_page %}view="sessions"{% elif show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
+    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" enrich-data {% if is_sessions_page %}view="sessions"{% elif show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="min-height: 400px; --pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
     {% endwith %}
     <noscript class="d-block">
         <div class="alert alert-info m-4">
