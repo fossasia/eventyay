@@ -3,7 +3,6 @@
 from urllib.parse import urlparse
 
 from django.http import HttpRequest
-from django.urls import Resolver404, resolve
 
 from eventyay.base.models import Event, Organizer
 from eventyay.base.models.auth import User
@@ -33,11 +32,13 @@ def user_has_ticket_dashboard_access(
     event: Event,
     request: HttpRequest | None = None,
 ) -> bool:
-    return user.has_event_permission(
-        organizer,
-        event,
-        TICKET_DASHBOARD_PERMISSIONS,
-        request=request,
+    return bool(
+        user.has_event_permission(
+            organizer,
+            event,
+            TICKET_DASHBOARD_PERMISSIONS,
+            request=request,
+        )
     )
 
 
@@ -47,11 +48,13 @@ def user_has_talk_dashboard_access(
     event: Event,
     request: HttpRequest | None = None,
 ) -> bool:
-    return user.has_event_permission(
-        organizer,
-        event,
-        TALK_DASHBOARD_PERMISSIONS,
-        request=request,
+    return bool(
+        user.has_event_permission(
+            organizer,
+            event,
+            TALK_DASHBOARD_PERMISSIONS,
+            request=request,
+        )
     )
 
 
@@ -61,25 +64,24 @@ def user_has_video_dashboard_access(
     event: Event,
     request: HttpRequest | None = None,
 ) -> bool:
-    return user.has_event_permission(
-        organizer,
-        event,
-        VIDEO_DASHBOARD_PERMISSIONS,
-        request=request,
+    return bool(
+        user.has_event_permission(
+            organizer,
+            event,
+            VIDEO_DASHBOARD_PERMISSIONS,
+            request=request,
+        )
     )
 
 
 def _is_control_url(url: str) -> bool:
+    """True when ``url`` points at the pretix control mount (``/control/``)."""
     if not url:
         return False
     path = urlparse(url).path if '://' in url else url
     if not path.startswith('/'):
         path = f'/{path}'
-    try:
-        match = resolve(path)
-    except Resolver404:
-        return False
-    return match.namespace == 'control'
+    return path == '/control' or path.startswith('/control/')
 
 
 def filter_timeline_entry_for_ticket_access(entry, has_ticket_access):

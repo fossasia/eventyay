@@ -127,7 +127,7 @@ def test_event_dashboard_hides_ticket_nav_for_talk_only(talk_only_client, organi
         'control:event.index',
         kwargs={'organizer': organizer.slug, 'event': event.slug},
     ) not in content
-    assert 'shopstate' in content
+    assert 'class="shopstate"' in content
     assert 'event-settings-permission-dialog' in content
     assert 'Tickets Dashboard' not in content
 

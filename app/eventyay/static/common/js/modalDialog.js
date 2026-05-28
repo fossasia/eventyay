@@ -20,11 +20,13 @@
                 }
             }
             element.addEventListener("click", openDialog)
-            element.addEventListener("keydown", (ev) => {
-                if (ev.key === "Enter" || ev.key === " ") {
-                    openDialog(ev)
-                }
-            })
+            if (element.tagName !== "BUTTON") {
+                element.addEventListener("keydown", (ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                        openDialog(ev)
+                    }
+                })
+            }
             if (outerDialogElement.hasAttribute("data-dialog-backdrop-initialized")) {
                 return
             }

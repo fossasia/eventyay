@@ -1,13 +1,3 @@
 {% load i18n %}
-<dialog id="{{ dialog_id|default:'event-settings-permission-dialog' }}" class="permission-required-dialog" aria-labelledby="{{ dialog_title_id|default:'event-settings-permission-dialog-title' }}" aria-describedby="{{ dialog_message_id|default:'event-settings-permission-dialog-message' }}">
-  <form method="dialog" class="modal-card-stacked-permission">
-    <p class="modal-card-stacked-permission__icon">
-      <i class="fa fa-lock" aria-hidden="true"></i>
-    </p>
-    <h3 id="{{ dialog_title_id|default:'event-settings-permission-dialog-title' }}">{% trans "Permission Required" %}</h3>
-    <p id="{{ dialog_message_id|default:'event-settings-permission-dialog-message' }}" class="modal-card-stacked-permission__message">
-      {% trans "You require additional permissions to change event visibility settings. Please contact the main event organisers." %}
-    </p>
-    <button type="submit" class="btn btn-primary">{% trans "Ok" %}</button>
-  </form>
-</dialog>
+{% trans "You require additional permissions to change event visibility settings. Please contact the main event organisers." as default_message %}
+{% include "eventyay_common/includes/permission_required_dialog.html" with dialog_id=dialog_id|default:"event-settings-permission-dialog" dialog_title_id=dialog_title_id|default:"event-settings-permission-dialog-title" dialog_message_id=dialog_message_id|default:"event-settings-permission-dialog-message" dialog_message=dialog_message|default:default_message %}
