@@ -41,12 +41,6 @@
         {% endif %}
     {% endif %}
 
-    {% for link in header_links %}
-        <a href="{% safelink link.url %}" target="_blank" rel="noopener" class="header-tab">
-            <i class="fa fa-link"></i> {{ link.label }}
-        </a>
-    {% endfor %}
-
     {% eventsignal current_event "eventyay.presale.signals.header_nav_tabs" request=request %}
 
     {% if show_talks_tab %}
@@ -64,6 +58,12 @@
             {% endif %}
         {% endwith %}
     {% endif %}
+
+    {% for link in header_links %}
+        <a href="{% safelink link.url %}" target="_blank" rel="noopener" class="header-tab">
+            <i class="fa fa-link"></i> {{ link.label }}
+        </a>
+    {% endfor %}
 
     {% if show_online_video_link|default:False %}
         {% if nav_context == "presale" %}
