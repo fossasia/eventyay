@@ -258,6 +258,7 @@ class EventPublicationForm(JsonSubfieldMixin, forms.Form):
         ),
         required=False,
     )
+
     class Meta:
         json_fields = {
             'meta_noindex': 'display_settings',

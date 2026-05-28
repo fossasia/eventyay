@@ -1009,7 +1009,6 @@ DEFAULT_SETTINGS = {
             help_text=_('Publicly show how many tickets of a certain type are still available.'),
         ),
     },
-
     'show_variations_expanded': {
         'default': 'False',
         'type': bool,

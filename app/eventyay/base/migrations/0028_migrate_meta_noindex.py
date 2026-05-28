@@ -18,12 +18,7 @@ def migrate_meta_noindex(apps, schema_editor):
             continue
         event = setting.object
         display_settings = event.display_settings
-        if display_settings is None:
-            display_settings = {}
-        elif not isinstance(display_settings, dict):
-            display_settings = dict(display_settings)
-        else:
-            display_settings = dict(display_settings)
+        display_settings = dict(display_settings) if display_settings is not None else {}
         if display_settings.get('meta_noindex') is True:
             continue
         display_settings['meta_noindex'] = True

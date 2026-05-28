@@ -1,10 +1,14 @@
 """
 Tests for common pages and utilities (redirects, CSP reporting, etc).
 """
-import pytest
 import json
+from datetime import timedelta
 
+import pytest
 from django.urls import reverse
+from django.utils import timezone
+
+from eventyay.base.models import Event
 
 
 @pytest.mark.django_db
@@ -107,3 +111,33 @@ class TestJavaScriptHelpers:
         response = client.get('/js_helpers/states/')
         # Should return state data
         assert response.status_code in [200, 400]  # 400 if no country specified
+
+
+@pytest.mark.django_db
+class TestPlatformSearch:
+    """Authenticated common views (event picker, etc.)."""
+
+    def test_internal_event_picker_returns_all_matching_events(self, organizer_client, organizer, event):
+        """The internal /common/events/search/ endpoint is an authenticated event picker."""
+        event.name = 'Visible Search Event'
+        event.save(update_fields=['name'])
+
+        other_event = Event.objects.create(
+            organizer=organizer,
+            name='Other Search Event',
+            slug='other-search-event',
+            date_from=timezone.now() + timedelta(days=30),
+            date_to=timezone.now() + timedelta(days=31),
+            currency='USD',
+            locale='en',
+            is_public=True,
+            live=True,
+            email='other-search@example.com',
+        )
+
+        response = organizer_client.get('/common/events/search/?query=Search')
+        assert response.status_code == 200
+        payload = response.json()
+        names = {row['name'] for row in payload}
+        assert 'Visible Search Event' in names
+        assert 'Other Search Event' in names
