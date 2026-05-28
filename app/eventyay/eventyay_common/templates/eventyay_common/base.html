@@ -17,6 +17,7 @@
             <link rel="stylesheet" href="{% static 'eventyay-common/css/dashboard.css' %}">
             <link rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_markdown_editor.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
 		{% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
@@ -47,7 +48,6 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/menu.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/sb-admin-2.js" %}"></script>
 		    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
-            <script type="text/javascript" src="{% static 'pretixcontrol/js/ui/geo.js' %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quota.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/subevent.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/question.js" %}"></script>
@@ -59,6 +59,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/dashboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/tabs.js" %}"></script>
             <script type="text/javascript" src="{% static "leaflet/leaflet.js" %}"></script>
+            <script type="text/javascript" src="{% static "pretixcontrol/js/ui/geo.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
