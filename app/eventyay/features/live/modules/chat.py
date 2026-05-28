@@ -23,9 +23,78 @@ from eventyay.features.live.decorators import (
     require_event_permission,
     room_action,
 )
+from eventyay.eventyay_common.utils import encode_email as _encode_email
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
+from eventyay.features.live.tasks import send_chat_webhook
 from eventyay.storage.tasks import retrieve_preview_information
+
+_CENTRALAUTH_CACHE_TTL = 3600  # 1 hour — renames are rare
+
+
+def _get_centralauth_info(user):
+    """Look up CentralAuth gu_id and gu_name from allauth SocialAccount.
+
+    Results are cached per user for one hour so the DB is not queried on
+    every webhook dispatch. Renames are rare; stale data is acceptable.
+
+    Video room users are created separately from the main Django user.
+    Their token_id is encode_email(main_user.email), so we can trace back
+    to the main user's SocialAccount by matching that hash.
+
+    Returns (centralauth_id, centralauth_username) or (None, None).
+    """
+    from django.core.cache import cache
+
+    from allauth.socialaccount.models import SocialAccount
+
+    cache_key = f"centralauth_info:{user.id}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    result = _fetch_centralauth_info(user, SocialAccount)
+    cache.set(cache_key, result, _CENTRALAUTH_CACHE_TTL)
+    return result
+
+
+def _fetch_centralauth_info(user, SocialAccount):
+    """Perform the actual DB lookup for CentralAuth info (uncached)."""
+    # Direct lookup: user has a SocialAccount (main OAuth user)
+    sa = (
+        SocialAccount.objects.filter(user=user, provider="mediawiki")
+        .values_list("uid", "user__wikimedia_username")
+        .first()
+    )
+    if sa:
+        return _parse_uid(sa[0]), sa[1]
+
+    # Indirect lookup: video room user linked via token_id.
+    # token_id = encode_email(main_user.email) — a 7-char email hash.
+    # We scan only the (typically tiny) set of MediaWiki-linked accounts.
+    token_id = getattr(user, "token_id", None)
+    if token_id:
+        for sa_uid, email, wm_username in (
+            SocialAccount.objects.filter(
+                user__email__isnull=False,
+                provider="mediawiki",
+            )
+            .exclude(user__email="")
+            .values_list("uid", "user__email", "user__wikimedia_username")
+        ):
+            if _encode_email(email) == token_id:
+                return _parse_uid(sa_uid), wm_username
+
+    return None, None
+
+
+
+def _parse_uid(uid) -> int | None:
+    try:
+        return int(uid)
+    except (ValueError, TypeError):
+        return None
+
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +186,51 @@ class ChatModule(BaseModule):
         self.channels_subscribed = set()
         self.users_known_to_client = set()
         self.service = ChatService(self.consumer.event)
+
+    # Webhook payload only supports these message types; skip others (files, deleted, call)
+    _WEBHOOK_MESSAGE_TYPES = {"text", "emoji"}
+
+    async def _dispatch_chat_webhook(self, event_data, message_type="text", reaction=None, reaction_delete=False):
+        """Dispatch a webhook POST if the channel's room has a webhook configured."""
+        if not self.channel or not self.channel.room:
+            return
+        if message_type not in self._WEBHOOK_MESSAGE_TYPES:
+            return
+        webhook_url = self.module_config.get("webhook_url")
+        hmac_secret = self.module_config.get("webhook_hmac_secret")
+        if not webhook_url or not hmac_secret:
+            return
+
+        sender = self.consumer.user
+        sender_id = str(sender.id)  # always the acting user (reactor or author)
+        centralauth_id, centralauth_username = await database_sync_to_async(_get_centralauth_info)(sender)
+        payload = {
+            "message_id": event_data.get("event_id"),
+            "channel": event_data.get("channel"),
+            "timestamp": event_data.get("timestamp"),
+            "screen_name": (sender.profile or {}).get("display_name", ""),
+            "sender_id": sender_id,
+            "centralauth_id": centralauth_id,
+            "centralauth_username": centralauth_username,
+            "message": (event_data.get("content") or {}).get("body", ""),
+            "message_type": message_type,
+            "profile_img": None,
+            "user_language": getattr(sender, "locale", None),
+            "meta": {},
+        }
+        if message_type == "emoji":
+            payload["meta"]["target_message_id"] = event_data.get("event_id")
+            payload["meta"]["reaction"] = reaction
+            payload["meta"]["action"] = "remove" if reaction_delete else "add"
+            payload["meta"]["reactions"] = event_data.get("reactions", {})
+
+        await asgiref.sync.sync_to_async(send_chat_webhook.apply_async)(
+            kwargs={
+                "payload": payload,
+                "webhook_url": webhook_url,
+                "hmac_secret": hmac_secret,
+            }
+        )
 
     async def _subscribe(self, volatile=False):
         self.users_known_to_client.clear()  # client implementation nukes cache on channel switch
@@ -458,6 +572,9 @@ class ChatModule(BaseModule):
             GROUP_CHAT.format(channel=self.channel_id), event
         )
 
+        # Dispatch external webhook if configured (only for text messages)
+        await self._dispatch_chat_webhook(event, message_type=content.get("type", "text"))
+
         # Unread notifications
         async with aredis() as redis:
 
@@ -626,6 +743,14 @@ class ChatModule(BaseModule):
         await self.consumer.send_success(event)
         await self.consumer.channel_layer.group_send(
             GROUP_CHAT.format(channel=self.channel_id), event
+        )
+
+        # Dispatch external webhook for reaction
+        await self._dispatch_chat_webhook(
+            event,
+            message_type="emoji",
+            reaction=reaction,
+            reaction_delete=body.get("delete", False),
         )
 
     @event(["event", "event.reaction"], refresh_user=30)

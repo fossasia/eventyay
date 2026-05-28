@@ -26,6 +26,7 @@ from eventyay.base.models import (
     Feedback,
     LogEntry,
     Resource,
+    ResourceKind,
     Submission,
     SubmissionComment,
     SubmissionStates,
@@ -46,6 +47,7 @@ from eventyay.common.views.mixins import (
     ActionConfirmMixin,
     ActionFromUrl,
     EventPermissionRequired,
+    ImportProcessRedirectMixin,
     PaginationMixin,
     PermissionRequired,
     Sortable,
@@ -289,6 +291,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 'other_submissions': [s for s in speaker._event_submissions if s.code != submission.code],
                 'email': speaker.email,
                 'avatar': speaker.avatar,
+                'avatar_url': speaker.get_avatar_url(event=submission.event),
                 'avatar_source': speaker.avatar_source,
                 'avatar_license': speaker.avatar_license,
                 'reviewer_answers': sorted(
@@ -363,7 +366,9 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         return formset_class(
             self.request.POST if self.request.method == 'POST' else None,
             files=self.request.FILES if self.request.method == 'POST' else None,
-            queryset=(submission.resources.all() if submission else Resource.objects.none()),
+            queryset=(
+                submission.resources.exclude(kind=ResourceKind.SLIDES) if submission else Resource.objects.none()
+            ),
             prefix='resource',
         )
 
@@ -423,6 +428,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                 form.instance.pk = None
             elif form.has_changed():
                 form.instance.submission = obj
+                form.instance.kind = ResourceKind.GENERIC
                 form.save()
                 change_data = {key: form.cleaned_data.get(key) for key in form.changed_data}
                 change_data['id'] = form.instance.pk
@@ -439,6 +445,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         ]
         for form in extra_forms:
             form.instance.submission = obj
+            form.instance.kind = ResourceKind.GENERIC
             form.save()
             obj.log_action(
                 'eventyay.submission.resource.create',
@@ -519,13 +526,13 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
 
 class SubmissionContentView(SubmissionContent):
-    template_name = "orga/submission/content.html"
+    template_name = 'orga/submission/content.html'
     http_method_names = ['get', 'head', 'options']
 
     def get_permission_required(self):
-        if "code" in self.kwargs:
-            return ["base.orga_list_submission"]  # View permission for reviewers
-        return ["base.create_submission"]
+        if 'code' in self.kwargs:
+            return ['base.orga_list_submission']  # View permission for reviewers
+        return ['base.create_submission']
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
@@ -1073,13 +1080,16 @@ class SubmissionImportView(EventPermissionRequired, FormView):
         return redirect(self.request.event.orga_urls.submissions_import + str(cf.id) + '/')
 
 
-class SubmissionImportProcessView(EventPermissionRequired, AsyncAction, FormView):
+class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionRequired, AsyncAction, FormView):
     permission_required = 'base.update_event'
     template_name = 'orga/submission/import_process.html'
     form_class = SessionImportProcessForm
     task = import_submissions
     known_errortypes = ['ImportExecutionError']
     IMPORT_FILENAME = 'session_import.csv'
+
+    import_process_url_name = 'settings.import_export.submissions_import_process'
+    import_page_url_name = 'submissions_import'
 
     def dispatch(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -1088,7 +1098,7 @@ class SubmissionImportProcessView(EventPermissionRequired, AsyncAction, FormView
             _ = self.file
         except Http404:
             messages.error(request, _('The uploaded CSV file is missing or expired. Please upload it again.'))
-            return redirect(self.request.event.orga_urls.submissions_import)
+            return redirect(self.import_redirect_url)
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -1132,13 +1142,13 @@ class SubmissionImportProcessView(EventPermissionRequired, AsyncAction, FormView
             return self.get_result(request)
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.submissions_import)
+            return redirect(self.import_redirect_url)
         return FormView.get(self, request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.parsed:
             messages.error(request, _('Could not parse the uploaded CSV file.'))
-            return redirect(self.request.event.orga_urls.submissions_import)
+            return redirect(self.import_redirect_url)
         return FormView.post(self, request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -1152,10 +1162,12 @@ class SubmissionImportProcessView(EventPermissionRequired, AsyncAction, FormView
         )
 
     def get_success_url(self, value):
+        if self.import_redirect_url != self.request.event.orga_urls.submissions_import:
+            return self.import_redirect_url
         return self.request.event.orga_urls.submissions
 
     def get_error_url(self):
-        return self.request.event.orga_urls.submissions_import
+        return self.import_redirect_url
 
     def get_success_message(self, value):
         if isinstance(value, dict):

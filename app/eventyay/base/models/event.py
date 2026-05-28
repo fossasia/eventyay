@@ -840,6 +840,7 @@ class Event(
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
         widget_settings = '{settings}widget'
+        import_export_settings = '{settings}import-export/'
         team_settings = '{settings}team/'
         new_team = '{settings}team/new'
         room_settings = '{schedule}rooms/'
@@ -1067,7 +1068,7 @@ class Event(
         if self.settings.smtp_use_custom or force_custom:
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
-            if not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
+            if not force_custom and not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
                 logger.warning(
                     'Event SMTP %s:%s is not reachable, falling back to system email backend',
                     self.settings.smtp_host,
