@@ -69,6 +69,7 @@
 
   --size-border-radius: 0.25rem;
   --size-spacer: 1rem;
+  --header-icon-text-gap: 0.375rem;
 
   --shadow-lightest: 0 1px 2px rgb(0 0 0 / 0.24);
   --shadow-lighter: 0 1px 3px rgb(0 0 0 / 0.12), var(--shadow-lightest);
