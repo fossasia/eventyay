@@ -186,8 +186,13 @@ def get_room_config(room, permissions):
         module_config = copy.deepcopy(module)
         if module["type"] == "call.bigbluebutton":
             module_config["config"] = {}
-        elif module["type"] == "chat.native" and getattr(room, "channel", None):
-            module_config["channel_id"] = str(room.channel.id)
+        elif module["type"] == "chat.native":
+            # Strip webhook secrets — these are server-side only
+            cfg = module_config.get("config")
+            if isinstance(cfg, dict):
+                cfg.pop("webhook_hmac_secret", None)
+            if getattr(room, "channel", None):
+                module_config["channel_id"] = str(room.channel.id)
         room_config["modules"].append(module_config)
     return room_config
 
@@ -206,6 +211,8 @@ def get_event_config_for_user(event, user):
         "slug": getattr(event, "slug", str(event.id)),
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
         "timezone": event.timezone,
+        "visible_logo_url": event.visible_logo_url,
+        "visible_header_image_url": event.visible_header_image_url,
         "pretalx": pretalx_public,
         "profile_fields": cfg.get("profile_fields", []),
         "social_logins": cfg.get("social_logins", []),

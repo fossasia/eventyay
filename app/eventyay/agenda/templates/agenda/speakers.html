@@ -13,7 +13,7 @@
 {% block agenda_content %}
 {% html_signal "eventyay.agenda.signals.html_above_speakers_list" sender=request.event request=request %}
 <div>
-    <script type="text/javascript" src="{% static 'schedule/pretalx-schedule.js' %}" async></script>
+    <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}

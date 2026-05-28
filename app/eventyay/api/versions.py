@@ -47,7 +47,8 @@ def get_api_version_from_request(request):
     if api_version not in SUPPORTED_VERSIONS:
         raise exceptions.APIException(f'Unsupported version: {api_version}')
 
-    if request.auth and not request.auth.version:
+    auth_version = getattr(request.auth, 'version', None)
+    if request.auth and hasattr(request.auth, 'version') and not auth_version:
         request.auth.version = api_version
         request.auth.save()
 

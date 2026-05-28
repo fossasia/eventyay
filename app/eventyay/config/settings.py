@@ -1254,8 +1254,14 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 SOCIALACCOUNT_PROVIDERS = {
-    # We need this to tell django-allauth that user email address is verified and not make password unusable.
-    'mediawiki': {'VERIFIED_EMAIL': True},
+    'mediawiki': {
+        # VERIFIED_EMAIL=True trusts the email even when confirmed_email=False.
+        # No custom SCOPE — WikiMedia's default scope returns the full profile.
+        # Email may be null if the OAuth consumer lacks "View email" permission;
+        # the username fallback in CustomSocialAccountAdapter handles that case.
+        'VERIFIED_EMAIL': True,
+        'provider_class': 'eventyay.plugins.socialauth.mediawiki_provider.EventyayMediaWikiProvider',
+    },
 }
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'api.OAuthApplication'

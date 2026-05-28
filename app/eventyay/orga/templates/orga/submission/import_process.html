@@ -9,7 +9,7 @@
 
   {% if preview_rows %}
     <h3>{% translate 'CSV preview (first rows)' %}</h3>
-    <div class='table-responsive mb-4'>
+    <div class='table-responsive import-preview-table mb-4'>
       <table class='table table-sm table-bordered table-hover'>
         <thead class='thead-dark'>
           <tr>
@@ -22,7 +22,11 @@
           {% for row in preview_rows %}
             <tr>
               {% for cell in row %}
-                <td>{{ cell }}</td>
+                <td>
+                  <div class="import-preview-cell">
+                    {{ cell }}
+                  </div>
+                </td>
               {% endfor %}
             </tr>
           {% endfor %}
