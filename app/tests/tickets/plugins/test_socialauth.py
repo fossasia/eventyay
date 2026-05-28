@@ -17,6 +17,7 @@ from eventyay.common.consts import KEY_LAST_FORCE_LOGIN, KEY_LONG_SESSION, KEY_S
 from eventyay.eventyay_common.adapter import CustomAccountAdapter
 from eventyay.plugins.socialauth.adapter import CustomSocialAccountAdapter
 from eventyay.plugins.socialauth.secrets import (
+    ENCRYPTED_PREFIX,
     decrypt_secret,
     encrypt_secret,
     is_encrypted_secret,
@@ -413,6 +414,12 @@ def test_socialapp_secret_is_decrypted_for_runtime_use(rf):
     assert apps[0].secret == secret
 
 
+def test_encrypt_secret_adds_prefix_for_plaintext():
+    encrypted = encrypt_secret('plain-secret')
+    assert encrypted.startswith(ENCRYPTED_PREFIX)
+    assert decrypt_secret(encrypted) == 'plain-secret'
+
+
 def test_encrypt_secret_preserves_undecryptable_token_shaped_ciphertext():
     other_fernet = Fernet(Fernet.generate_key())
     ciphertext = other_fernet.encrypt(b'rotated-key-secret').decode('utf-8')
@@ -513,6 +520,40 @@ def test_social_login_view_get_context_tolerates_non_mapping_login_providers():
     ctx = view.get_context_data()
     assert ctx['login_providers'] == {}
     assert ctx['any_preferred'] is False
+
+
+@pytest.mark.django_db
+def test_update_credentials_treats_whitespace_only_secret_as_empty(rf):
+    encrypted = encrypt_secret('existing-secret')
+    gs = GlobalSettingsObject()
+    gs.settings.set(
+        'login_providers',
+        {
+            'github': {
+                'state': True,
+                'client_id': 'client-id',
+                'secret': encrypted,
+                'is_preferred': False,
+            },
+            'mediawiki': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+            'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        },
+    )
+    request = rf.post(
+        '/',
+        data={
+            'save_credentials': 'credentials',
+            'github_client_id': 'client-id',
+            'github_secret': '   ',
+        },
+    )
+    login_providers = LoginProviders.model_validate(
+        gs.settings.get('login_providers', as_type=dict)
+    ).model_dump()
+    view = SocialLoginView()
+    view.update_credentials(request, 'github', login_providers)
+
+    assert login_providers['github']['secret'] == encrypted
 
 
 @pytest.mark.django_db

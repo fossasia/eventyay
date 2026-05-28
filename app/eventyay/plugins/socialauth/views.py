@@ -222,6 +222,8 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     def update_credentials(self, request, provider, login_providers):
         client_id_value = request.POST.get(f'{provider}_client_id', '').strip()
         secret_value = request.POST.get(f'{provider}_secret', '')
+        if not secret_value.strip():
+            secret_value = ''
 
         if not client_id_value and not secret_value:
             return

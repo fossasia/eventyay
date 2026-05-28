@@ -8,9 +8,10 @@ import hashlib
 
 from cryptography.fernet import Fernet, MultiFernet
 from django.conf import settings
-from django.db import migrations, models
+from django.db import migrations
 
 _MIGRATION_SECRET_CONTEXT = 'eventyay.socialauth.secret'
+_MIGRATION_ENCRYPTED_PREFIX = 'fernet:'
 # Keep in sync with SocialAuthApp.ready() (allauth SocialApp.secret max_length patch).
 _MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH = 512
 
@@ -18,13 +19,12 @@ _MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH = 512
 def _migration_configured_encryption_key_strings():
     raw = getattr(settings, 'SOCIALAUTH_SECRET_ENCRYPTION_KEYS', ()) or ()
     if isinstance(raw, str):
-        return (raw,)
+        return (raw,) if raw else ()
     if isinstance(raw, (bytes, bytearray)):
         return ()
-    try:
-        return tuple(str(key) for key in raw)
-    except TypeError:
+    if not isinstance(raw, (list, tuple)):
         return ()
+    return tuple(key for key in raw if isinstance(key, str) and key)
 
 
 def _migration_derive_fernet_key(source: str) -> bytes:
@@ -67,26 +67,28 @@ def _migration_is_probably_fernet_token(token: str) -> bool:
 def _migration_is_encrypted_secret(value: str) -> bool:
     if not value:
         return False
+    if value.startswith(_MIGRATION_ENCRYPTED_PREFIX):
+        return True
     return _migration_is_probably_fernet_token(value)
 
 
 def _migration_encrypt_secret(value: str) -> str:
     if not value:
         return value
-    if _migration_is_encrypted_secret(value):
+    if value.startswith(_MIGRATION_ENCRYPTED_PREFIX):
         return value
-    return _migration_get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
+    if _migration_is_probably_fernet_token(value):
+        return value
+    token = _migration_get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
+    return f'{_MIGRATION_ENCRYPTED_PREFIX}{token}'
 
 
 def widen_socialapp_secret_max_length(apps, schema_editor):
     SocialApp = apps.get_model('socialaccount', 'SocialApp')
     old_field = SocialApp._meta.get_field('secret')
-    new_field = models.CharField(
-        verbose_name=old_field.verbose_name,
-        max_length=_MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH,
-        blank=True,
-        help_text=getattr(old_field, 'help_text', ''),
-    )
+    _, _, args, kwargs = old_field.deconstruct()
+    kwargs['max_length'] = _MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH
+    new_field = old_field.__class__(*args, **kwargs)
     new_field.set_attributes_from_name('secret')
     new_field.model = SocialApp
     schema_editor.alter_field(SocialApp, old_field, new_field)
