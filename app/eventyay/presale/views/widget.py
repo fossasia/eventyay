@@ -210,8 +210,9 @@ def get_picture(event, picture):
 class WidgetAPIProductList(EventListMixin, View):
     def _get_products(self):
         qs = self.request.event.products
-        if 'products' in self.request.GET:
-            qs = qs.filter(pk__in=self.request.GET.get('products').split(','))
+        item_filter = self.request.GET.get('items') or self.request.GET.get('products')
+        if item_filter:
+            qs = qs.filter(pk__in=item_filter.split(','))
         if 'categories' in self.request.GET:
             qs = qs.filter(category__pk__in=self.request.GET.get('categories').split(','))
 

@@ -249,7 +249,11 @@ def widget_script(request, organizer=None, event=None, **kwargs):
     file_path = finders.find(WIDGET_PATH)
     if not file_path:
         raise Http404
-    response = FileResponse(open(file_path, 'rb'), content_type='application/javascript; charset=utf-8')
+    try:
+        f = open(file_path, 'rb')
+    except OSError:
+        raise Http404
+    response = FileResponse(f, content_type='application/javascript; charset=utf-8')
     response['Cache-Control'] = 'public, max-age=86400'
     return response
 
