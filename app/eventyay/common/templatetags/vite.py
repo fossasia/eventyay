@@ -100,7 +100,6 @@ def generate_css_tags(asset: str, already_processed: list[str], static_files_map
 
 
 @register.simple_tag
-@mark_safe
 def vite_asset(path: str) -> str:
     """
     Generates one <script> tag and <link> tags for each of the CSS dependencies.
@@ -112,7 +111,7 @@ def vite_asset(path: str) -> str:
         return ''
 
     if settings.VITE_DEV_MODE:
-        return generate_script_tag(path, {'type': 'module'})
+        return mark_safe(generate_script_tag(path, {'type': 'module'}))
 
     static_files_mapping = load_mapping()
     manifest_entry = static_files_mapping.get(path)
@@ -126,28 +125,26 @@ def vite_asset(path: str) -> str:
 
     tags = generate_css_tags(path, [], static_files_mapping)
     tags.append(generate_script_tag(manifest_entry.file, {'type': 'module', 'crossorigin': ''}))
-    return ''.join(tags)
+    return mark_safe(''.join(tags))
 
 
 @register.simple_tag
-@mark_safe
 def vite_hmr() -> str:
     if not settings.VITE_DEV_MODE:
         return ''
-    return generate_script_tag('@vite/client', {'type': 'module'})
+    return mark_safe(generate_script_tag('@vite/client', {'type': 'module'}))
 
 
 @register.simple_tag
-@mark_safe
 def vite_app_scripts(app, entry, fallback=None):
     if not settings.VITE_DEV_MODE:
         if fallback:
             src = urljoin(settings.STATIC_URL, fallback)
         else:
             src = urljoin(settings.STATIC_URL, f'{app}/{entry}')
-        return f'<script type="module" src="{src}"></script>'
+        return mark_safe(f'<script type="module" src="{src}"></script>')
     server = settings.VITE_DEV_SERVER_PORTS[app]
-    return (
+    return mark_safe(
         f'<script type="module" src="{server}/@vite/client"></script>'
         f'<script type="module" src="{server}/{entry}"></script>'
     )

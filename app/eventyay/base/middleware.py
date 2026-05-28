@@ -254,8 +254,13 @@ class SecurityMiddleware(MiddlewareMixin):
         http_origins = []
         ws_origins = []
         for url in settings.VITE_DEV_SERVER_PORTS.values():
-            http_origins.append(url)
-            ws_origins.append(url.replace('http://', 'ws://'))
+            split = urlsplit(url)
+            if not split.scheme or not split.netloc:
+                continue
+
+            http_origins.append(f'{split.scheme}://{split.netloc}')
+            ws_scheme = 'wss' if split.scheme == 'https' else 'ws'
+            ws_origins.append(f'{ws_scheme}://{split.netloc}')
         return http_origins, ws_origins
 
     def process_response(self, request, resp):
@@ -381,8 +386,8 @@ class SecurityMiddleware(MiddlewareMixin):
                     domain = f'{domain}:{siteurlsplit.port}'
                 dynamicdomain += ' ' + domain
 
-        # Add DEBUG mode settings before rendering CSP
-        if settings.DEBUG:
+        # Add development mode settings before rendering CSP
+        if settings.DEBUG or settings.VITE_DEV_MODE:
             h.setdefault('script-src', []).extend(["'unsafe-inline'", *vite_http])
             h.setdefault('connect-src', []).extend([*vite_http, *vite_ws])
 
