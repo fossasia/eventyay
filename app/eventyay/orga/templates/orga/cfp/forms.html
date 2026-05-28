@@ -101,7 +101,7 @@
                         {% for code, name in all_languages %}
                             <div class="checkbox">
                                 <label>
-                                    <input type="checkbox" name="settings-content_locales" value="{{ code }}"
+                                    <input type="checkbox" class="content-locale-checkbox" name="{{ sform.content_locales.html_name }}" value="{{ code }}"
                                            {% if code in effective_content_locales %}checked{% endif %}>
                                     {{ name }}
                                 </label>

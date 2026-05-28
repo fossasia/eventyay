@@ -161,7 +161,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['all_languages'] = get_language_choices_native_with_ui_name()
         event_languages = list(self.request.event.settings.locales or [])
         context['event_languages'] = event_languages
-        selected_content_locales = self.request.event.content_locales
+        selected_content_locales = self.request.event.settings.content_locales
         context['selected_content_locales'] = selected_content_locales
         context['effective_content_locales'] = selected_content_locales or event_languages
 

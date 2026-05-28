@@ -19,9 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (contentLocaleToggle && dialog) {
         let initialCheckedStates = [];
+        let initialToggleState = false;
 
         const openDialog = () => {
-            initialCheckedStates = Array.from(dialog.querySelectorAll("input[name='settings-content_locales']")).map(checkbox => ({
+            initialToggleState = contentLocaleToggle.checked;
+            initialCheckedStates = Array.from(dialog.querySelectorAll(".content-locale-checkbox")).map(checkbox => ({
                 checkbox: checkbox,
                 checked: checkbox.checked
             }));
@@ -45,6 +47,12 @@ document.addEventListener("DOMContentLoaded", () => {
             initialCheckedStates.forEach(item => {
                 item.checkbox.checked = item.checked;
             });
+            contentLocaleToggle.checked = initialToggleState;
+            if (initialToggleState) {
+                if (settingsBtn) settingsBtn.classList.remove("hidden");
+            } else {
+                if (settingsBtn) settingsBtn.classList.add("hidden");
+            }
             closeDialog();
         };
 
