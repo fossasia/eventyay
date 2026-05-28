@@ -206,7 +206,7 @@ input.language-grid-search:focus {
     margin-left: 4px;
 }
 
-/* -- Toolbar (select/deselect all) -- */
+/* -- Toolbar (deselect all) -- */
 .language-grid-toolbar {
     display: flex;
     justify-content: flex-end;

@@ -5,7 +5,8 @@
  *  - Toggle expand / collapse via the summary bar
  *  - Live search filtering of language cells
  *  - Selected-checkbox ↔ badge synchronisation
- *  - Select-all / Deselect-all toolbar buttons
+ *  - Deselect-all toolbar button
+
  */
 
 (function () {
@@ -23,8 +24,8 @@
     var badgesContainer = widget.querySelector('[data-language-grid-badges]');
     var countLabel = widget.querySelector('[data-language-grid-count]');
     var noResults = widget.querySelector('[data-language-grid-no-results]');
-    var selectAllBtn = widget.querySelector('[data-language-grid-select-all]');
     var deselectAllBtn = widget.querySelector('[data-language-grid-deselect-all]');
+
 
     if (!summary || !panel || !grid) return;
     widget.dataset.languageGridInit = 'true';
@@ -169,21 +170,8 @@
       })(cells[ci], checkboxes[ci]);
     }
 
-    // -- Select all / Deselect all --
-    if (selectAllBtn) {
-      selectAllBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        for (var j = 0; j < checkboxes.length; j++) {
-          if (checkboxes[j] && !checkboxes[j].checked) {
-            checkboxes[j].checked = true;
-            dispatchCheckboxChange(checkboxes[j]);
-          }
-        }
-        syncBadges();
-      });
-    }
 
+    // -- Deselect all --
     if (deselectAllBtn) {
       deselectAllBtn.addEventListener('click', function (e) {
         e.preventDefault();
