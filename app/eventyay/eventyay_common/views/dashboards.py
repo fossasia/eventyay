@@ -66,7 +66,12 @@ def filter_common_event_dashboard_widgets(
     can_view_orders: bool,
     can_change_event_settings: bool,
 ) -> List[Dict[str, Any]]:
-    """Limit dashboard widgets on the common event home for talk-only users."""
+    """Limit dashboard widgets on the common event home for talk-only users.
+
+    Users without ``can_view_orders`` only see widgets whose ``key`` is
+    ``shop_state`` (ticket shop live status). Other widgets are omitted unless
+    they declare that key or the user gains ticket permissions.
+    """
     if widgets is None:
         widgets = []
     elif isinstance(widgets, dict):

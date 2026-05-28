@@ -1,5 +1,5 @@
 {% load i18n %}
-<dialog id="event-settings-permission-dialog" class="permission-required-dialog" aria-labelledby="{{ dialog_title_id|default:'event-settings-permission-dialog-title' }}" aria-describedby="{{ dialog_message_id|default:'event-settings-permission-dialog-message' }}">
+<dialog id="{{ dialog_id|default:'event-settings-permission-dialog' }}" class="permission-required-dialog" aria-labelledby="{{ dialog_title_id|default:'event-settings-permission-dialog-title' }}" aria-describedby="{{ dialog_message_id|default:'event-settings-permission-dialog-message' }}">
   <form method="dialog" class="modal-card-stacked-permission">
     <p class="modal-card-stacked-permission__icon">
       <i class="fa fa-lock" aria-hidden="true"></i>

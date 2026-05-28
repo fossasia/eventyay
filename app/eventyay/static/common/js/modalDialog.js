@@ -7,12 +7,12 @@
     window.__eventyayModalDialogLoaded = true
 
     const setupModals = () => {
-        document.querySelectorAll("[data-dialog-target]:not([data-dialog-initialized])").forEach((element) => {
+        document.querySelectorAll("[data-dialog-target]:not([data-dialog-trigger-initialized])").forEach((element) => {
             const outerDialogElement = document.querySelector(
                 element.dataset.dialogTarget,
             )
             if (!outerDialogElement) return
-            element.setAttribute("data-dialog-initialized", "")
+            element.setAttribute("data-dialog-trigger-initialized", "")
             const openDialog = (ev) => {
                 ev.preventDefault()
                 if (typeof outerDialogElement.showModal === "function") {
@@ -25,10 +25,10 @@
                     openDialog(ev)
                 }
             })
-            if (outerDialogElement.hasAttribute("data-dialog-initialized")) {
+            if (outerDialogElement.hasAttribute("data-dialog-backdrop-initialized")) {
                 return
             }
-            outerDialogElement.setAttribute("data-dialog-initialized", "")
+            outerDialogElement.setAttribute("data-dialog-backdrop-initialized", "")
             outerDialogElement.addEventListener("click", (ev) => {
                 if (
                     ev.target === outerDialogElement &&
