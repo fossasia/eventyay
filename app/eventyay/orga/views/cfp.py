@@ -35,6 +35,7 @@ from eventyay.base.models import (
 )
 from eventyay.cfp.flow import CfPFlow
 from eventyay.common.forms import I18nFormSet
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
 from eventyay.common.text.serialize import I18nStrJSONEncoder
 from eventyay.common.views.generic import OrgaCRUDView
@@ -156,7 +157,14 @@ class CfPForms(EventPermissionRequired, TemplateView):
             .order_by('position')
         )
         context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
-        
+
+        context['all_languages'] = get_language_choices_native_with_ui_name()
+        event_languages = list(self.request.event.settings.locales or [])
+        context['event_languages'] = event_languages
+        selected_content_locales = self.request.event.content_locales
+        context['selected_content_locales'] = selected_content_locales
+        context['effective_content_locales'] = selected_content_locales or event_languages
+
         # Pass saved field order to template for JavaScript reordering.
         # normalize_field_order ensures every built-in field is present at
         # its canonical position — covering both configs with no built-ins

@@ -1,0 +1,47 @@
+#content-locale-dialog {
+    min-width: 400px;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.content-locale-dialog-footer {
+    text-align: right;
+    margin-top: 1rem;
+}
+
+.content-locale-settings-btn.hidden {
+    display: none;
+}
+
+.content-locale-checkbox-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-locale-checkbox-list .checkbox {
+    display: block;
+    width: 100%;
+    margin: 5px 0;
+}
+
+.content-locale-checkbox-list label {
+    font-weight: normal;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.content-locale-checkbox-list input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}

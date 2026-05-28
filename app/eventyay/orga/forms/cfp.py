@@ -30,7 +30,9 @@ from eventyay.common.forms.widgets import (
     HtmlDateTimeInput,
     TextInputWithAddon,
 )
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
+from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 
@@ -234,8 +236,11 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 ],
             )
 
-        if not obj.is_multilingual:
-            self.fields.pop('cfp_ask_content_locale', None)
+        self.fields['content_locales'] = forms.MultipleChoiceField(
+            choices=get_language_choices_native_with_ui_name(),
+            widget=MultipleLanguagesWidget(),
+            required=False,
+        )
 
     def save(self, *args, **kwargs):
         # Preserve fields_config (drag-drop order) before modifying settings
@@ -246,6 +251,10 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         # Restore fields_config after setting other values (also when it is an empty dict)
         if fields_config is not None:
             self.instance.cfp.settings['fields_config'] = fields_config
+
+        if 'content_locales' in self.cleaned_data:
+            self.instance.settings.set('content_locales', self.cleaned_data['content_locales'])
+
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
