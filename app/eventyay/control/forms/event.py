@@ -164,9 +164,7 @@ class EventWizardFoundationForm(forms.Form):
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
 
-        if not content_locales:
-            pass
-        elif set(content_locales) - set(locales):
+        if content_locales and set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
             })
