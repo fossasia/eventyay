@@ -5,7 +5,7 @@ from urllib.parse import unquote
 from csp.decorators import csp_exempt
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.staticfiles import finders
-from django.http import FileResponse, Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.templatetags.static import static
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.http import condition
@@ -238,22 +238,29 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
 
 
 @condition(etag_func=widget_js_etag)
+@gzip_page
 @csp_exempt()
 def widget_script(request, organizer=None, event=None, **kwargs):
-    # Serve the ESM bundle directly so the response goes through Django's middleware
-    # stack (CorsMiddleware adds Access-Control-Allow-Origin). Serving via a static-file
-    # loader would bypass middleware and break cross-origin embeds because module scripts
-    # always enforce CORS.
-    # The Access-Control-Allow-Origin header is applied by CorsMiddleware because this
-    # URL is matched by CORS_URLS_REGEX; no manual header is needed here.
-    file_path = finders.find(WIDGET_PATH)
-    if not file_path:
-        raise Http404
-    try:
-        f = open(file_path, 'rb')
-    except OSError:
-        raise Http404
-    response = FileResponse(f, content_type='application/javascript; charset=utf-8')
+    # Keep this endpoint backwards-compatible for third-party embeds that use a classic
+    # <script src=".../widgets/schedule.js"></script> tag. We serve a tiny loader that
+    # injects the actual ESM widget bundle from the static URL.
+    # IMPORTANT: this endpoint is typically embedded cross-origin. A relative /static/ URL would
+    # resolve against the embedding page's origin, not ours. We therefore build an absolute URL
+    # based on the current script's URL at runtime.
+    module_src = static(WIDGET_PATH)
+    loader = (
+        "(function(){"
+        f"var staticPath={module_src!r};"
+        "var base=(document.currentScript&&document.currentScript.src)?document.currentScript.src:window.location.href;"
+        "var u=(function(){try{return new URL(staticPath, base).href;}catch(e){return staticPath;}})();"
+        "var s=document.createElement('script');"
+        "s.type='module';"
+        "s.crossOrigin='anonymous';"
+        "s.src=u;"
+        "(document.head||document.documentElement).appendChild(s);"
+        "})();"
+    )
+    response = HttpResponse(loader, content_type='text/javascript; charset=utf-8')
     response['Cache-Control'] = 'public, max-age=86400'
     return response
 
