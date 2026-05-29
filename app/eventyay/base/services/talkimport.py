@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import TypedDict
 from urllib.parse import urlparse
 
+import requests
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.core.validators import validate_email
 from django.utils.dateparse import parse_datetime
 from django.db import DataError, IntegrityError, OperationalError, models, transaction
@@ -691,16 +693,66 @@ def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
     if not avatar_url:
         return []
 
-    profile = dict(user.profile or {})
-    avatar = profile.get('avatar')
-    avatar = dict(avatar) if isinstance(avatar, dict) else {}
-    if avatar.get('url') == avatar_url:
+    # Skip if user already has a locally stored avatar
+    if user.avatar:
         return []
 
-    avatar['url'] = avatar_url
-    profile['avatar'] = avatar
-    user.profile = profile
-    return ['profile']
+    # Determine file extension from URL
+    url_path = urlparse(avatar_url).path
+    ext = Path(url_path).suffix.lower()
+    if ext not in {'.jpg', '.jpeg', '.png', '.gif', '.webp'}:
+        ext = '.jpg'
+
+    try:
+        # Disable redirects so we can validate the final destination URL before
+        # following it; this prevents open-redirect-assisted SSRF.
+        response = requests.get(
+            avatar_url,
+            timeout=(5, 10),  # (connect, read) seconds
+            allow_redirects=False,
+            stream=True,
+        )
+        # Follow at most one redirect, but re-validate the Location header.
+        if response.is_redirect:
+            location = response.headers.get('Location', '')
+            location = _normalize_avatar_url(location)
+            if not location:
+                raise ValueError(f'Redirect to disallowed URL: {response.headers.get("Location")}')
+            response = requests.get(location, timeout=(5, 10), allow_redirects=False, stream=True)
+
+        response.raise_for_status()
+
+        # Guard against huge files (10 MB cap)
+        max_bytes = 10 * 1024 * 1024
+        chunks = []
+        total = 0
+        for chunk in response.iter_content(chunk_size=65536):
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError('Avatar image exceeds 10 MB limit')
+            chunks.append(chunk)
+        content = b''.join(chunks)
+        if not content:
+            raise ValueError('Empty response body')
+    except (requests.exceptions.RequestException, ValueError):
+        logger.warning('Could not download avatar for user %s from %s', user.pk, avatar_url)
+        # Fall back: store the external URL in profile so it can still be displayed
+        profile = dict(user.profile or {})
+        avatar = profile.get('avatar')
+        avatar = dict(avatar) if isinstance(avatar, dict) else {}
+        if avatar.get('url') == avatar_url:
+            return []
+        avatar['url'] = avatar_url
+        profile['avatar'] = avatar
+        user.profile = profile
+        return ['profile']
+
+    filename = f'avatar_{user.code or user.pk}{ext}'
+    # save=False: we return ['avatar'] so the caller includes it in user.save(update_fields=...)
+    # process_image must be called by the caller AFTER user.save() to avoid a race condition
+    user.avatar.save(filename, ContentFile(content), save=False)
+    return ['avatar']
+
 
 
 def _parse_featured_position(value: str) -> int | None:
@@ -890,6 +942,8 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
                 user.email = normalized_email
                 update_fields.append('email')
             user.save(update_fields=update_fields)
+            if 'avatar' in update_fields:
+                user.process_image('avatar', generate_thumbnail=True)
         else:
             user = User.objects.create_user(
                 password=get_random_string(32),
@@ -902,6 +956,8 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
             extra = _apply_user_optional_fields(user, **optional_kwargs)
             if extra:
                 user.save(update_fields=extra)
+            if 'avatar' in extra:
+                user.process_image('avatar', generate_thumbnail=True)
 
         profile, profile_created = SpeakerProfile.objects.get_or_create(
             user=user,
