@@ -1,12 +1,10 @@
 from collections import defaultdict
 from contextlib import suppress
-from datetime import timedelta
 
 from bs4 import BeautifulSoup
 from django import forms
 from django.db import transaction
 from django.db.models import Count, Q
-from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
@@ -16,7 +14,7 @@ from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.control.forms import SplitDateTimeField
 
 from eventyay.common.exceptions import SendMailException
-from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag
+from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag, ScheduledAtValidationMixin
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
 from eventyay.common.forms.widgets import EnhancedSelectMultiple, SelectMultipleWithCount
 from eventyay.common.language import language
@@ -167,7 +165,7 @@ class DraftRemindersForm(MailTemplateForm):
         fields = ['subject', 'text']
 
 
-class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
+class MailDetailForm(ScheduledAtValidationMixin, ReadOnlyFlag, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance or not self.instance.to_users.all().count():
@@ -215,18 +213,8 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
             'scheduled_at': _('If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
         }
 
-    def clean_scheduled_at(self):
-        scheduled_at = self.cleaned_data.get('scheduled_at')
-        if scheduled_at is not None:
-            buffer = timedelta(minutes=1)
-            if scheduled_at < timezone.now() - buffer:
-                raise forms.ValidationError(
-                    _('Scheduled time must be in the future.')
-                )
-        return scheduled_at
 
-
-class WriteMailBaseForm(MailTemplateForm):
+class WriteMailBaseForm(ScheduledAtValidationMixin, MailTemplateForm):
     skip_queue = forms.BooleanField(
         label=_('Send immediately'),
         required=False,
@@ -266,6 +254,7 @@ class WriteMailBaseForm(MailTemplateForm):
                     _('Scheduled time must be in the future.')
                 )
         return scheduled_at
+
 
     def clean(self):
         cleaned_data = super().clean()

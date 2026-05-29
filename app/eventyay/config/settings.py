@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 
 import django.conf.locale
 import importlib_metadata
-from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue

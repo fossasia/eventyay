@@ -439,7 +439,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
             self.success_url = self.request.event.orga_urls.outbox
             for mail in result:
                 mail.log_action(
-                    'pretalx.mail.scheduled',
+                    'eventyay.mail.scheduled',
                     person=self.request.user,
                     orga=True,
                     data={'scheduled_at': scheduled_at.isoformat()},
