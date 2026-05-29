@@ -28,7 +28,6 @@ from rest_framework import views
 from django.views import View
 from django.apps import apps
 
-from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.consts import DEFAULT_PLUGINS
@@ -155,39 +154,59 @@ class EventList(PaginationMixin, ListView):
         return EventFilterForm(data=self.request.GET, request=self.request)
 
 
-class EventCreateView(SafeSessionWizardView):
-    form_list = [
-        ('foundation', EventWizardFoundationForm),
-        ('basics', EventWizardBasicsForm),
-    ]
-    templates = {
-        'foundation': 'eventyay_common/events/create_foundation.html',
-        'basics': 'eventyay_common/events/create_basics.html',
-    }
-    condition_dict = {}
+class EventCreateView(TemplateView):
+    template_name = 'eventyay_common/events/create.html'
+    legacy_session_key = 'event_create_legacy_wizard_data'
 
-    def get_form_initial(self, step):
-        initial_form = super().get_form_initial(step)
+    def get_foundation_initial(self):
+        initial_form = {}
         request_user = self.request.user
         request_get = self.request.GET
 
-        if step == 'foundation':
-            initial_form['is_video_creation'] = True
-            initial_form['locales'] = ['en']
-            initial_form['content_locales'] = ['en']
-            initial_form['create_for'] = EventCreatedFor.BOTH
-            if 'organizer' in request_get:
-                try:
-                    queryset = Organizer.objects.all()
-                    if not request_user.has_active_staff_session(self.request.session.session_key):
-                        queryset = queryset.filter(
-                            id__in=request_user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
-                        )
-                    initial_form['organizer'] = queryset.get(slug=request_get.get('organizer'))
-                except Organizer.DoesNotExist:
-                    pass
+        initial_form['is_video_creation'] = True
+        initial_form['locales'] = ['en']
+        initial_form['content_locales'] = ['en']
+        initial_form['create_for'] = EventCreatedFor.BOTH.value
+        queryset = Organizer.objects.all()
+        if not request_user.has_active_staff_session(self.request.session.session_key):
+            queryset = queryset.filter(
+                id__in=request_user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
+            )
+        if 'organizer' in request_get:
+            try:
+                initial_form['organizer'] = queryset.get(slug=request_get.get('organizer'))
+            except Organizer.DoesNotExist:
+                pass
+        elif queryset.count() == 1:
+            initial_form['organizer'] = queryset.first()
 
-        elif step == 'basics':
+        return initial_form
+
+    def get_basics_initial(self, foundation_data=None):
+        if foundation_data is None:
+            foundation_data = {}
+
+        clone_from = self.clone_from
+        initial_form = {}
+        if clone_from:
+            initial_form.update(
+                {
+                    'name': clone_from.name,
+                    'currency': clone_from.currency,
+                    'date_from': clone_from.date_from,
+                    'date_to': clone_from.date_to,
+                    'presale_start': clone_from.presale_start,
+                    'presale_end': clone_from.presale_end,
+                    'location': clone_from.location,
+                    'geo_lat': clone_from.geo_lat,
+                    'geo_lon': clone_from.geo_lon,
+                    'email': clone_from.email,
+                    'imprint_url': clone_from.settings.get('imprint_url', ''),
+                    'timezone': clone_from.settings.get('timezone') or clone_from.timezone,
+                    'locale': clone_from.settings.get('locale') or clone_from.locale,
+                }
+            )
+        else:
             initial_form['locale'] = 'en'
 
             # Set default dates: 3 months from now, 9 AM to 5 PM in user's timezone
@@ -203,62 +222,170 @@ class EventCreateView(SafeSessionWizardView):
             # Set default timezone to user's system timezone (consistent with manual entry)
             initial_form['timezone'] = get_current_timezone_name()
 
+        locales = foundation_data.get('locales') or self.get_foundation_initial().get('locales') or ['en']
+        if initial_form.get('locale') not in locales:
+            initial_form['locale'] = locales[0]
+
         return initial_form
 
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    @cached_property
+    def clone_from(self):
+        if hasattr(self, '_clone_from'):
+            return self._clone_from
+        if self.request.GET.get('clone'):
+            try:
+                return Event.objects.get(pk=self.request.GET.get('clone'))
+            except Event.DoesNotExist:
+                pass
+        return None
 
-    def get_context_data(self, form, **kwargs):
-        context = super().get_context_data(form, **kwargs)
-        context['create_for'] = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
+    def get_foundation_form(self):
+        return EventWizardFoundationForm(
+            data=self.request.POST if self.request.method == 'POST' else None,
+            initial=self.get_foundation_initial(),
+            prefix='foundation',
+            user=self.request.user,
+            session=self.request.session,
+        )
+
+    def get_basics_form(self, foundation_data=None):
+        if foundation_data is None:
+            foundation_data = self.get_foundation_initial()
+        return EventWizardBasicsForm(
+            data=self.request.POST if self.request.method == 'POST' else None,
+            initial=self.get_basics_initial(foundation_data),
+            prefix='basics',
+            user=self.request.user,
+            session=self.request.session,
+            organizer=foundation_data.get('organizer') or Organizer(slug='_nonexisting'),
+            has_subevents=foundation_data.get('has_subevents', False),
+            locales=foundation_data.get('locales') or ['en'],
+            content_locales=foundation_data.get('content_locales'),
+            is_video_creation=foundation_data.get('is_video_creation', True),
+            restrict_locale_choices=False,
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        foundation_form = kwargs.get('foundation_form') or self.get_foundation_form()
+        foundation_data = foundation_form.cleaned_data if foundation_form.is_bound and foundation_form.is_valid() else None
+        basics_form = kwargs.get('basics_form') or self.get_basics_form(foundation_data)
+        organizer = foundation_data.get('organizer') if foundation_data else foundation_form.initial.get('organizer')
+
+        context['foundation_form'] = foundation_form
+        context['basics_form'] = basics_form
+        context['create_for'] = EventCreatedFor.BOTH.value
         context['has_organizer'] = self.request.user.teams.filter(can_create_events=True).exists()
-        if self.steps.current == 'basics':
-            context['organizer'] = self.get_cleaned_data_for_step('foundation').get('organizer')
+        context['organizer'] = organizer
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
+        context['clone_from'] = self.clone_from
         return context
 
-    def render(self, form=None, **kwargs):
-        if self.steps.current == 'basics' and 'create_for' in self.request.POST:
-            self.storage.extra_data['create_for'] = self.request.POST.get('create_for')
-        if self.steps.current != 'foundation':
-            form_data = self.get_cleaned_data_for_step('foundation')
-            if form_data is None:
-                return self.render_goto_step('foundation')
+    def post(self, request, *args, **kwargs):
+        if 'event_wizard-current_step' in request.POST:
+            return self.post_legacy_wizard(request)
 
-        return super().render(form, **kwargs)
+        foundation_form = self.get_foundation_form()
+        foundation_valid = foundation_form.is_valid()
+        foundation_data = foundation_form.cleaned_data if foundation_valid else {}
+        basics_form = self.get_basics_form(foundation_data)
 
-    def get_form_kwargs(self, step=None):
-        kwargs = {
-            'user': self.request.user,
-            'session': self.request.session,
+        if foundation_valid and basics_form.is_valid():
+            return self.create_event(foundation_form, basics_form)
+
+        messages.error(self.request, _('We could not create the event. See below for details.'))
+        return self.render_to_response(
+            self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+        )
+
+    def post_legacy_wizard(self, request):
+        step = request.POST.get('event_wizard-current_step')
+        if step == 'foundation':
+            foundation_form = self.get_foundation_form()
+            if foundation_form.is_valid():
+                request.session[self.legacy_session_key] = {'foundation': self.serialize_post_data(request.POST)}
+                basics_form = self.get_basics_form(foundation_form.cleaned_data)
+                return self.render_to_response(
+                    self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+                )
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=self.get_basics_form({}))
+            )
+
+        legacy_data = request.session.get(self.legacy_session_key, {})
+        foundation_post = legacy_data.get('foundation')
+        if not foundation_post:
+            return redirect(request.path)
+
+        foundation_form = EventWizardFoundationForm(
+            data=foundation_post,
+            initial=self.get_foundation_initial(),
+            prefix='foundation',
+            user=self.request.user,
+            session=self.request.session,
+        )
+        if not foundation_form.is_valid():
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=self.get_basics_form({}))
+            )
+
+        if step == 'basics':
+            basics_form = self.get_basics_form(foundation_form.cleaned_data)
+            if basics_form.is_valid():
+                legacy_data['basics'] = self.serialize_post_data(request.POST)
+                request.session[self.legacy_session_key] = legacy_data
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+            )
+
+        if step == 'copy':
+            basics_post = legacy_data.get('basics')
+            if not basics_post:
+                return redirect(request.path)
+            basics_form = EventWizardBasicsForm(
+                data=basics_post,
+                initial=self.get_basics_initial(foundation_form.cleaned_data),
+                prefix='basics',
+                user=self.request.user,
+                session=self.request.session,
+                organizer=foundation_form.cleaned_data['organizer'],
+                has_subevents=foundation_form.cleaned_data.get('has_subevents', False),
+                locales=foundation_form.cleaned_data.get('locales') or ['en'],
+                content_locales=foundation_form.cleaned_data.get('content_locales'),
+                is_video_creation=foundation_form.cleaned_data.get('is_video_creation', True),
+                restrict_locale_choices=False,
+            )
+            copy_from_event = request.POST.get('copy-copy_from_event')
+            if copy_from_event:
+                try:
+                    self._clone_from = Event.objects.get(pk=copy_from_event)
+                except Event.DoesNotExist:
+                    self._clone_from = None
+            if basics_form.is_valid():
+                request.session.pop(self.legacy_session_key, None)
+                return self.create_event(foundation_form, basics_form)
+            return self.render_to_response(
+                self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
+            )
+
+        return redirect(request.path)
+
+    @staticmethod
+    def serialize_post_data(post_data):
+        return {
+            key: values if len(values) > 1 else values[0]
+            for key, values in ((key, post_data.getlist(key)) for key in post_data)
         }
-        if step != 'foundation':
-            form_data = self.get_cleaned_data_for_step('foundation')
-            if form_data is None:
-                form_data = {
-                    'organizer': Organizer(slug='_nonexisting'),
-                    'has_subevents': False,
-                    'locales': ['en'],
-                    'is_video_creation': True,
-                }
-            kwargs.update(form_data)
-        return kwargs
 
-    def get_template_names(self):
-        return [self.templates[self.steps.current]]
-
-    def done(self, form_list, form_dict, **kwargs):
-        foundation_data = self.get_cleaned_data_for_step('foundation')
-        basics_data = self.get_cleaned_data_for_step('basics')
-
-        create_for = self.storage.extra_data.get('create_for')
-
+    def create_event(self, foundation_form, basics_form):
+        foundation_data = foundation_form.cleaned_data
+        basics_data = basics_form.cleaned_data
         self.request.organizer = foundation_data['organizer']
         has_permission = check_create_permission(self.request)
         final_is_video_creation = foundation_data.get('is_video_creation', True) and has_permission
 
         with transaction.atomic(), language(basics_data['locale']):
-            event = form_dict['basics'].instance
+            event = basics_form.instance
             event.organizer = foundation_data['organizer']
 
             default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
@@ -282,7 +409,9 @@ class EventCreateView(SafeSessionWizardView):
             event.is_video_creation = final_is_video_creation
             event.testmode = False
             event.private_testmode = True
-            form_dict['basics'].save()
+            basics_form.save()
+            if self.clone_from:
+                event.clone_from(self.clone_from, new_secrets=True)
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
@@ -302,11 +431,11 @@ class EventCreateView(SafeSessionWizardView):
                 event.settings.set('imprint_url', basics_data['imprint_url'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
-            create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
+            create_for = EventCreatedFor.BOTH.value
             event.settings.set('create_for', create_for)
 
             # Smart defaults work for all event types
-            if create_for in [EventCreatedFor.BOTH, EventCreatedFor.TICKET, EventCreatedFor.TALK]:
+            if create_for in [EventCreatedFor.BOTH.value, EventCreatedFor.TICKET.value, EventCreatedFor.TALK.value]:
                 event_dict = {
                     'organiser_slug': event.organizer.slug,
                     'name': event.name.data,
