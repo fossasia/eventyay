@@ -9,8 +9,10 @@ from eventyay.agenda.views.widget import color_etag, event_css
 class DummySettings:
     def __init__(self, values):
         self.values = values
+        self.lookups = {}
 
     def get(self, key):
+        self.lookups[key] = self.lookups.get(key, 0) + 1
         return self.values.get(key)
 
 
@@ -134,6 +136,24 @@ def test_event_css_exposes_separate_header_and_navigation_colors(rf):
     assert '--color-header-background: #ffee00;' in response.text
     assert '--color-header-text: #111111;' in response.text
     assert '--color-header-navigation: #222222;' in response.text
+
+
+def test_event_css_reads_each_header_setting_once(rf):
+    request = rf.get('/settings.css')
+    request.event = make_event(
+        header_background_color='#ffee00',
+        header_text_color='#111111',
+        navigation_text_color='#222222',
+    )
+
+    response = event_css(request)
+
+    assert response.status_code == 200
+    assert request.event.settings.lookups == {
+        'header_background_color': 1,
+        'header_text_color': 1,
+        'navigation_text_color': 1,
+    }
 
 
 def test_event_css_etag_changes_when_header_colors_change(rf):
