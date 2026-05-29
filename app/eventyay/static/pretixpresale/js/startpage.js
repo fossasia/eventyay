@@ -69,7 +69,7 @@
 
         // Ensure relative URLs become absolute without rewriting absolute custom-domain URLs
         var absoluteUrlObject = new URL(url, window.location.origin);
-        var shareImageSignature = button.dataset.shareImageSignature || (eventCard ? eventCard.dataset.shareImageSignature : '') || '';
+        var shareImageSignature = button.dataset.shareImageSignature || '';
         if (shareImageSignature) {
           absoluteUrlObject.searchParams.set('si', shareImageSignature);
         }
