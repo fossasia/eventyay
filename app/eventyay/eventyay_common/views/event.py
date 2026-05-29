@@ -33,7 +33,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS, GlobalSettingsObject
 from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
@@ -215,6 +215,10 @@ class EventCreateView(SafeSessionWizardView):
         if self.steps.current == 'basics':
             context['organizer'] = self.get_cleaned_data_for_step('foundation').get('organizer')
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
+        gs = GlobalSettingsObject()
+        context['event_series_creation_enabled'] = gs.settings.get(
+            'event_series_creation_enabled', as_type=bool, default=True
+        )
         return context
 
     def render(self, form=None, **kwargs):

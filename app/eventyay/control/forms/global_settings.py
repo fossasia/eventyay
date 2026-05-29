@@ -22,6 +22,8 @@ class GlobalSettingsForm(SettingsForm):
         global_settings = self.obj.settings
         if global_settings.get('billing_validation') is None:
             global_settings.set('billing_validation', True)
+        if global_settings.get('event_series_creation_enabled') is None:
+            global_settings.set('event_series_creation_enabled', True)
         if global_settings.get('smtp_port') is None or global_settings.get('smtp_port') == '':
             self.obj.settings.set('smtp_port', settings.EMAIL_PORT)
         if global_settings.get('smtp_host') is None or global_settings.get('smtp_host') == '':
@@ -55,6 +57,17 @@ class GlobalSettingsForm(SettingsForm):
                         help_text=_(
                             'Billing validation lets you require organizers to set up a billing method before they can create events. '
                             'When this option is enabled, no new event can be created until a valid billing method has been added.'
+                        ),
+                    ),
+                ),
+                (
+                    'event_series_creation_enabled',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Allow event series creation'),
+                        help_text=_(
+                            'When enabled, organizers can create event series or time slot bookings in addition to singular events. '
+                            'Disable this to restrict event creation to singular events and non-event shops only.'
                         ),
                     ),
                 ),
@@ -460,6 +473,9 @@ class GlobalSettingsForm(SettingsForm):
             ('organizers', _('Organizers'), [
                 'allow_all_users_create_organizer',
                 'allow_payment_users_create_organizer',
+            ]),
+            ('event_creation', _('Event Creation'), [
+                'event_series_creation_enabled',
             ]),
         ]
 

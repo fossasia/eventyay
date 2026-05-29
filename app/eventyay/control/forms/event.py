@@ -165,11 +165,17 @@ class EventWizardFoundationForm(forms.Form):
         content_locales = cleaned_data.get('content_locales')
 
         if not content_locales:
-            return cleaned_data
-
-        if set(content_locales) - set(locales):
+            pass
+        elif set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
+            })
+
+        gs = GlobalSettingsObject()
+        series_enabled = gs.settings.get('event_series_creation_enabled', as_type=bool, default=True)
+        if not series_enabled and cleaned_data.get('has_subevents'):
+            raise ValidationError({
+                'has_subevents': _('Event series creation is disabled by the administrator.')
             })
 
         return cleaned_data
