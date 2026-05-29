@@ -12,7 +12,7 @@ from eventyay.base.models.event import Event
 from eventyay.base.models.orders import InvoiceAddress, Order, OrderPosition
 from eventyay.base.i18n import LazyI18nString
 from eventyay.base.services.mail import mail, SendMailException as MailTransportError
-from eventyay.common.exceptions import SendMailException as ScheduledMailException
+from eventyay.common.exceptions import SendMailException as SchedulingError
 
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,7 @@ class EmailQueue(models.Model):
             return False  # Already sent
 
         if self.scheduled_at and self.scheduled_at > now():
-            raise ScheduledMailException(_('This email is scheduled for the future and cannot be sent yet.'))
+            raise SchedulingError(_('This email is scheduled for the future and cannot be sent yet.'))
 
         recipients = self.recipients.all()
         if not recipients.exists():
@@ -205,7 +205,7 @@ class EmailQueue(models.Model):
             recipient.sent = False
             recipient.error = str(se)
             recipient.save(update_fields=["sent", "error"])
-            logger.exception("SendMailException error while sending to %s", email)
+            logger.exception("Mail transport error while sending to %s", email)
         except Exception as e:
             recipient.sent = False
             recipient.error = f"Internal error: {str(e)}"

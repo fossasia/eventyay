@@ -1,9 +1,11 @@
 import json
 import logging
+from datetime import timedelta
 from functools import partial
 
 import dateutil.parser
 from django import forms
+from django.utils import timezone
 
 from django.core.files import File
 from django.core.files.storage import default_storage
@@ -771,3 +773,15 @@ class ConfiguredFieldOrderMixin:
                 # Preserve any fields not mentioned in the configuration at the end
                 remaining = [n for n in self.fields if n not in configured_names]
                 self.order_fields(configured_names + remaining)
+
+
+class ScheduledAtValidationMixin:
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
+                raise forms.ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at

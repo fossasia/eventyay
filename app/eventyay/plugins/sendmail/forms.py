@@ -1,10 +1,7 @@
-from datetime import timedelta
-
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -21,6 +18,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import Product
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.orders import Order
+from eventyay.common.forms.mixins import ScheduledAtValidationMixin
 from eventyay.consts import SizeKey
 from eventyay.control.forms import CachedFileField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
@@ -32,17 +30,6 @@ MAIL_SEND_ORDER_PLACED_ATTENDEE_HELP = _( 'If the order contains attendees with 
 def contains_web_channel_validate(value):
     if 'web' not in value:
         raise ValidationError(_("The 'web' sales channel must be selected."))
-
-class ScheduledAtValidationMixin:
-    def clean_scheduled_at(self):
-        scheduled_at = self.cleaned_data.get('scheduled_at')
-        if scheduled_at is not None:
-            buffer = timedelta(minutes=1)
-            if scheduled_at < timezone.now() - buffer:
-                raise ValidationError(
-                    _('Scheduled time must be in the future.')
-                )
-        return scheduled_at
 
 class MailForm(ScheduledAtValidationMixin, forms.Form):
     recipients = forms.ChoiceField(label=_('Send email to'), widget=forms.RadioSelect, initial='orders', choices=[])

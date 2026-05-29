@@ -1,10 +1,12 @@
+import datetime
+
 import pytest
+from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
+from eventyay.base.models import QueuedMail, User
+from eventyay.base.services.mail import TolerantDict
 from eventyay.common.exceptions import SendMailException
-from pretalx.common.mail import TolerantDict
-from pretalx.mail.models import QueuedMail
-from pretalx.person.models import User
 
 
 @pytest.mark.parametrize(
@@ -119,3 +121,11 @@ def test_to_mail_valid_email_used_when_mixed(mail_template):
     user = User(email="valid@example.com", locale="en")
     mail = mail_template.to_mail(user, None, commit=False)
     assert mail.to == "valid@example.com"
+
+
+@pytest.mark.django_db
+def test_queuedmail_send_raises_for_future_scheduled_at():
+    """QueuedMail.send() must raise SendMailException when scheduled_at is in the future."""
+    qm = QueuedMail(scheduled_at=now() + datetime.timedelta(hours=1))
+    with pytest.raises(SendMailException):
+        qm.send()
