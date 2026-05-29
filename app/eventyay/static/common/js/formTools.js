@@ -226,13 +226,37 @@ const initToastUiMarkdownTextarea = (textarea) => {
     textarea.__eventyayToastUiEditor = editor
     mount.__eventyayToastUiEditor = editor
 
-    const fieldLang = textarea.getAttribute('lang') || textarea.lang
-    if (fieldLang) {
-        const ww = mount.querySelector?.('.toastui-editor-ww-container')
-        if (ww) ww.setAttribute('lang', fieldLang)
-        const md = mount.querySelector?.('.toastui-editor-md-container')
-        if (md) md.setAttribute('lang', fieldLang)
+    const applyLanguageDirection = () => {
+        const fieldLang = textarea.getAttribute('lang') || textarea.lang
+        const fieldDir = textarea.getAttribute('dir') || textarea.dir
+
+        const flagTargets = mount.querySelectorAll?.([
+            '.toastui-editor-ww-container',
+            '.toastui-editor-md-container',
+        ].join(',')) || []
+
+        flagTargets.forEach((element) => {
+            if (fieldLang) element.setAttribute('lang', fieldLang)
+            if (fieldDir) element.setAttribute('dir', fieldDir)
+        })
+
+        if (!fieldDir) return
+
+        const editorTargets = mount.querySelectorAll?.([
+            '.toastui-editor-contents',
+            '.ProseMirror',
+            '.toastui-editor-md-preview',
+            '.toastui-editor-md-code',
+            '.cm-editor',
+            '.cm-content',
+        ].join(',')) || []
+
+        editorTargets.forEach((element) => {
+            element.setAttribute('dir', fieldDir)
+        })
     }
+    applyLanguageDirection()
+    requestAnimationFrame(applyLanguageDirection)
 
     const installAbsoluteLinkOnlyValidation = () => {
         if (!window.MutationObserver) return () => { }
@@ -427,6 +451,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
             if (typeof editor.changeMode === 'function') {
                 editor.changeMode(isMarkdownMode ? 'markdown' : 'wysiwyg', true)
             }
+
+            requestAnimationFrame(applyLanguageDirection)
 
             syncToTextarea()
         })
