@@ -3,6 +3,40 @@
 
 let eventyayToastuiIdSeq = 0
 
+/** Base language codes with right-to-left scripts (aligned with settings.LANGUAGES_RTL). */
+const EVENTYAY_RTL_LANG_BASES = new Set(['ar', 'fa', 'he', 'ur', 'yi', 'ps', 'ku', 'sd', 'ug', 'dv'])
+
+const isRtlLanguage = (lang) => {
+    if (!lang) return false
+    const base = String(lang).trim().toLowerCase().split(/[-_]/)[0]
+    return EVENTYAY_RTL_LANG_BASES.has(base)
+}
+
+const applyToastUiFieldLanguage = (mount, textarea) => {
+    if (!mount || !textarea) return
+
+    const fieldLang = textarea.getAttribute('lang') || textarea.lang
+    if (!fieldLang) return
+
+    const dir = isRtlLanguage(fieldLang) ? 'rtl' : 'ltr'
+    // lang only on outer shells: nested div[lang] inside ProseMirror would each get a flag icon.
+    const langTargets = mount.querySelectorAll?.(
+        '.toastui-editor-ww-container, .toastui-editor-md-container',
+    )
+    langTargets?.forEach?.((el) => {
+        el.setAttribute('lang', fieldLang)
+        el.setAttribute('dir', dir)
+    })
+    // dir on editable surfaces (no lang — avoids global div[lang] flag backgrounds).
+    const dirTargets = mount.querySelectorAll?.(
+        '.toastui-editor-md-preview, .toastui-editor-contents, .ProseMirror, .toastui-editor .CodeMirror',
+    )
+    dirTargets?.forEach?.((el) => {
+        el.setAttribute('dir', dir)
+        el.removeAttribute('lang')
+    })
+}
+
 const createEventyayUnderlinePlugin = () => {
     const convertUnderlineSyntax = (src) => {
         const input = String(src || '')
@@ -226,13 +260,9 @@ const initToastUiMarkdownTextarea = (textarea) => {
     textarea.__eventyayToastUiEditor = editor
     mount.__eventyayToastUiEditor = editor
 
-    const fieldLang = textarea.getAttribute('lang') || textarea.lang
-    if (fieldLang) {
-        const ww = mount.querySelector?.('.toastui-editor-ww-container')
-        if (ww) ww.setAttribute('lang', fieldLang)
-        const md = mount.querySelector?.('.toastui-editor-md-container')
-        if (md) md.setAttribute('lang', fieldLang)
-    }
+    const syncToastUiFieldLanguage = () => applyToastUiFieldLanguage(mount, textarea)
+    syncToastUiFieldLanguage()
+    requestAnimationFrame(syncToastUiFieldLanguage)
 
     const installAbsoluteLinkOnlyValidation = () => {
         if (!window.MutationObserver) return () => { }
@@ -429,6 +459,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
             }
 
             syncToTextarea()
+            syncToastUiFieldLanguage()
+            requestAnimationFrame(syncToastUiFieldLanguage)
         })
         updateModeToggleUi(toggleButton)
     }

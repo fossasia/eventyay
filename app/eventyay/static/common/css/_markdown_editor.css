@@ -74,19 +74,49 @@
   cursor: text;
 }
 
+/* One locale flag on the editor shell (hidden textarea no longer shows it). */
+/* Flag stays on the left like other i18n fields; only text direction changes for RTL. */
 .markdown-toastui .toastui-editor-ww-container[lang],
 .markdown-toastui .toastui-editor-md-container[lang] {
   background-repeat: no-repeat;
   background-position: 10px 12px;
   background-size: 18px 12px;
-}
-
-.markdown-toastui .toastui-editor-ww-container[lang] {
   padding-left: 34px;
 }
 
-.markdown-toastui .toastui-editor-md-container[lang] {
-  padding-left: 34px;
+/* Never show i18n flag backgrounds inside the editor document tree. */
+.markdown-toastui .toastui-editor-contents,
+.markdown-toastui .toastui-editor-md-preview,
+.markdown-toastui .ProseMirror,
+.markdown-toastui .toastui-editor .CodeMirror,
+.markdown-toastui .toastui-editor-contents * {
+  background-image: none !important;
+}
+
+/* Toast UI replaces the textarea; apply RTL on editor surfaces via lang/dir from formTools.js */
+.markdown-toastui .toastui-editor-ww-container[dir="rtl"],
+.markdown-toastui .toastui-editor-md-container[dir="rtl"],
+.markdown-toastui .toastui-editor-md-preview[dir="rtl"],
+.markdown-toastui .ProseMirror[dir="rtl"],
+.markdown-toastui .toastui-editor-contents[dir="rtl"],
+.markdown-toastui .toastui-editor .CodeMirror[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Per-locale email preview panes (sendmail / mail settings) */
+.mail-preview-group .mail-preview[lang="ar"],
+.mail-preview-group .mail-preview[lang="he"],
+.mail-preview-group .mail-preview[lang="fa"],
+.mail-preview-group .mail-preview[lang="fa-ir"],
+.mail-preview-group .mail-preview[lang="ur"],
+.mail-preview-group div[lang="ar"].mail-preview,
+.mail-preview-group div[lang="he"].mail-preview,
+.mail-preview-group div[lang="fa"].mail-preview,
+.mail-preview-group div[lang="fa-ir"].mail-preview,
+.mail-preview-group div[lang="ur"].mail-preview {
+  direction: rtl;
+  text-align: right;
 }
 
 .markdown-hint {
