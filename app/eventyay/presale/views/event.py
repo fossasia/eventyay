@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse
 
 import isoweek
 import jwt
@@ -464,12 +464,6 @@ def get_grouped_products(
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     template_name = 'pretixpresale/event/index.html'
-
-    def _versioned_event_url(self, signature):
-        parsed = urlparse(self.request.get_full_path())
-        query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-        query['si'] = signature
-        return urlunparse(parsed._replace(query=urlencode(query)))
 
     def get(self, request, *args, **kwargs):
         from eventyay.presale.views.cart import get_or_create_cart_id
