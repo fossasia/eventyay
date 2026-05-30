@@ -1,13 +1,9 @@
 """Encrypt and decrypt OAuth client secrets for the socialauth plugin.
 
-Uses Fernet via ``SOCIALAUTH_SECRET_ENCRYPTION_KEYS`` when that setting is set.
-
-When ``SOCIALAUTH_SECRET_ENCRYPTION_KEYS`` is unset, a key derived from
-``settings.SECRET_KEY`` is used as a fallback. Rotating ``SECRET_KEY`` without
-also configuring and migrating ``SOCIALAUTH_SECRET_ENCRYPTION_KEYS`` makes
-existing ciphertext undecryptable (``decrypt_secret`` then returns ``''`` after
-logging). Production deployments should set explicit encryption keys that are
-managed independently of ``SECRET_KEY``.
+Uses Fernet via ``SOCIALAUTH_SECRET_ENCRYPTION_KEYS`` when configured. When that
+setting is empty, a key derived from ``settings.SECRET_KEY`` is used as a
+fallback. Production deployments should configure explicit encryption keys that
+are managed independently of ``SECRET_KEY``.
 """
 
 import base64
@@ -24,8 +20,8 @@ SECRET_CONTEXT = 'eventyay.socialauth.secret'
 ENCRYPTED_PREFIX = 'fernet:'
 
 
-def _configured_encryption_key_strings() -> tuple[str, ...]:
-    raw = getattr(settings, 'SOCIALAUTH_SECRET_ENCRYPTION_KEYS', ()) or ()
+def configured_encryption_key_strings() -> tuple[str, ...]:
+    raw = settings.SOCIALAUTH_SECRET_ENCRYPTION_KEYS
     if isinstance(raw, str):
         return (raw,)
     if isinstance(raw, (bytes, bytearray)):
@@ -59,16 +55,9 @@ def _encrypted_token(value: str) -> str:
     return value
 
 
-def looks_like_encrypted_secret(value: str) -> bool:
-    """True if ``value`` is marked or shaped like Fernet ciphertext (may still be undecryptable)."""
-    if value.startswith(ENCRYPTED_PREFIX):
-        return True
-    return _is_probably_fernet_token(value)
-
-
 def is_encrypted_secret(value: str) -> bool:
-    """True if ``value`` decrypts with the current encryption keys."""
-    if not value or not looks_like_encrypted_secret(value):
+    """True if ``value`` has the storage prefix and decrypts with current keys."""
+    if not value or not value.startswith(ENCRYPTED_PREFIX):
         return False
     try:
         get_fernet().decrypt(_encrypted_token(value).encode('utf-8'))
@@ -80,12 +69,7 @@ def is_encrypted_secret(value: str) -> bool:
 def encrypt_secret(value: str) -> str:
     if not value:
         return value
-    if value.startswith(ENCRYPTED_PREFIX):
-        return value
     if is_encrypted_secret(value):
-        return f'{ENCRYPTED_PREFIX}{_encrypted_token(value)}'
-    if _is_probably_fernet_token(value):
-        # Legacy ciphertext from another key; preserve without re-encrypting.
         return value
     token = get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
     return f'{ENCRYPTED_PREFIX}{token}'
@@ -94,24 +78,14 @@ def encrypt_secret(value: str) -> str:
 def decrypt_secret(value: str) -> str:
     if not value:
         return value
-    if value.startswith(ENCRYPTED_PREFIX):
-        try:
-            return get_fernet().decrypt(_encrypted_token(value).encode('utf-8')).decode('utf-8')
-        except InvalidToken:
-            logger.warning(
-                'Failed to decrypt social auth secret (length %s). '
-                'If encryption keys changed, set SOCIALAUTH_SECRET_ENCRYPTION_KEYS and re-encrypt stored secrets.',
-                len(value),
-            )
-            return ''
-    if not _is_probably_fernet_token(value):
+    if not value.startswith(ENCRYPTED_PREFIX):
         return value
     try:
-        return get_fernet().decrypt(value.encode('utf-8')).decode('utf-8')
+        return get_fernet().decrypt(_encrypted_token(value).encode('utf-8')).decode('utf-8')
     except InvalidToken:
         logger.warning(
             'Failed to decrypt social auth secret (length %s). '
-            'If encryption keys changed, set SOCIALAUTH_SECRET_ENCRYPTION_KEYS and re-encrypt stored secrets.',
+            'If encryption keys changed, set SOCIALAUTH_SECRET_ENCRYPTION_KEYS and re-save provider secrets.',
             len(value),
         )
         return ''
@@ -131,7 +105,7 @@ def _get_fernet_for_settings(secret_key: str, configured_keys: tuple[str, ...]) 
 def get_fernet() -> MultiFernet:
     return _get_fernet_for_settings(
         settings.SECRET_KEY,
-        _configured_encryption_key_strings(),
+        configured_encryption_key_strings(),
     )
 
 
@@ -144,22 +118,6 @@ def _to_fernet_key(key: str) -> bytes:
         return _derive_fernet_key(key)
 
 
-def _derived_default_key() -> bytes:
-    """Fallback Fernet key derived from ``SECRET_KEY`` (see module docstring)."""
-    return _derive_fernet_key(settings.SECRET_KEY)
-
-
 def _derive_fernet_key(source: str) -> bytes:
     digest = hashlib.sha256(f'{SECRET_CONTEXT}:{source}'.encode('utf-8')).digest()
     return base64.urlsafe_b64encode(digest)
-
-
-def _is_probably_fernet_token(token: str) -> bool:
-    if not token:
-        return False
-    try:
-        padding = '=' * (-len(token) % 4)
-        decoded = base64.urlsafe_b64decode(f'{token}{padding}'.encode('ascii'))
-    except (UnicodeEncodeError, ValueError):
-        return False
-    return bool(decoded) and decoded.startswith(b'\x80')

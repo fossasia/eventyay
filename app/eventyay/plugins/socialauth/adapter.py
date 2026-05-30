@@ -1,6 +1,7 @@
 import copy
 import functools
 import logging
+from collections.abc import Mapping
 from typing import cast
 
 import requests
@@ -16,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from eventyay.base.models import User
 from eventyay.base.settings import GlobalSettingsObject
 
-from eventyay.plugins.socialauth.secrets import decrypt_secret
+from eventyay.plugins.socialauth.secrets import decrypt_secret, encrypt_secret
 
 logger = logging.getLogger(__name__)
 
@@ -69,17 +70,35 @@ def lookup_by_wikimedia_username(sociallogin) -> User | None:
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
-    def list_apps(self, request, provider=None, client_id=None):
-        """Return shallow copies of SocialApp rows with decrypted ``secret`` for OAuth use.
+    def encrypt(self, text: str) -> str:
+        """Encrypt OAuth client secrets before storing them in global settings."""
+        return encrypt_secret(text)
 
-        Callers always receive plaintext secrets, never stored ciphertext. Instances from
-        ``super().list_apps()`` are not mutated because allauth may cache and re-save them.
+    def decrypt(self, encrypted_text: str) -> str:
+        """Decrypt stored OAuth client secrets for runtime OAuth use."""
+        return decrypt_secret(encrypted_text)
+
+    def list_apps(self, request, provider=None, client_id=None):
+        """Return apps with decrypted secrets from encrypted global settings.
+
+        SocialApp rows are kept for allauth compatibility but must not hold
+        secrets; credentials live in ``login_providers`` global settings.
         """
         apps = super().list_apps(request, provider=provider, client_id=client_id)
+        login_providers = GlobalSettingsObject().settings.get('login_providers', as_type=dict) or {}
         out = []
         for app in apps:
             clone = copy.copy(app)
-            clone.secret = decrypt_secret(app.secret)
+            clone._state = copy.copy(app._state)
+
+            provider_config = login_providers.get(app.provider)
+            stored_secret = ''
+            if isinstance(provider_config, Mapping):
+                stored_secret = provider_config.get('secret') or ''
+            if not stored_secret:
+                stored_secret = app.secret or ''
+
+            clone.secret = self.decrypt(stored_secret)
             out.append(clone)
         return out
 
@@ -117,9 +136,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             user = lookup_by_wikimedia_username(sociallogin)
             if user is not None:
                 sociallogin.user = user
-                # _did_authenticate_by_email is already None here: _lookup_by_email
-                # only sets it when it finds a match, which it didn't (we're in the
-                # not-existing branch).  No password-wipe risk.
 
         if sociallogin.is_existing:
             sync_wikimedia_username(sociallogin.user, sociallogin)

@@ -19,7 +19,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.consts import KEY_SOCIAL_KEEP_LOGGED_IN
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 
-from .secrets import encrypt_secret, is_encrypted_secret
+from .secrets import is_encrypted_secret
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
@@ -130,7 +130,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         for provider_config in normalized.values():
             secret = provider_config.get('secret', '')
             if secret and not is_encrypted_secret(secret):
-                encrypted = encrypt_secret(secret)
+                encrypted = get_adapter().encrypt(secret)
                 if encrypted != secret:
                     provider_config['secret'] = encrypted
                     updated = True
@@ -221,9 +221,8 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def update_credentials(self, request, provider, login_providers):
         client_id_value = request.POST.get(f'{provider}_client_id', '').strip()
-        secret_value = request.POST.get(f'{provider}_secret', '')
-        if not secret_value.strip():
-            secret_value = ''
+        secret_value = request.POST.get(f'{provider}_secret', '').strip()
+        adapter = get_adapter(request)
 
         if not client_id_value and not secret_value:
             return
@@ -233,20 +232,19 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         if client_id_value:
             provider_config['client_id'] = client_id_value
         if secret_value:
-            provider_config['secret'] = encrypt_secret(secret_value)
+            provider_config['secret'] = adapter.encrypt(secret_value)
 
         client_id = provider_config.get('client_id', '')
         secret = provider_config.get('secret', '')
         if not client_id or not secret:
             return
 
-        encrypted_secret = encrypt_secret(secret)
-        provider_config['secret'] = encrypted_secret
+        provider_config['secret'] = adapter.encrypt(adapter.decrypt(secret))
         SocialApp.objects.update_or_create(
             provider=provider,
             defaults={
                 'client_id': client_id,
-                'secret': encrypted_secret,
+                'secret': '',
             },
         )
 
@@ -269,13 +267,13 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 client_id = provider_config.get('client_id')
                 secret = provider_config.get('secret')
                 if client_id and secret:
-                    encrypted_secret = encrypt_secret(secret)
-                    provider_config['secret'] = encrypted_secret
+                    adapter = get_adapter(request)
+                    provider_config['secret'] = adapter.encrypt(adapter.decrypt(secret))
                     SocialApp.objects.update_or_create(
                         provider=provider,
                         defaults={
                             'client_id': client_id,
-                            'secret': encrypted_secret,
+                            'secret': '',
                         },
                     )
 

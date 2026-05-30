@@ -21,7 +21,6 @@ from eventyay.plugins.socialauth.secrets import (
     decrypt_secret,
     encrypt_secret,
     is_encrypted_secret,
-    looks_like_encrypted_secret,
 )
 from eventyay.plugins.socialauth.schemas.login_providers import LoginProviders
 from eventyay.plugins.socialauth.views import SocialLoginView
@@ -405,7 +404,21 @@ def test_social_login_settings_encrypt_existing_plaintext_secrets():
 @pytest.mark.django_db
 def test_socialapp_secret_is_decrypted_for_runtime_use(rf):
     secret = 'provider-secret'
-    SocialApp.objects.create(provider='mediawiki', client_id='id', secret=encrypt_secret(secret))
+    gs = GlobalSettingsObject()
+    gs.settings.set(
+        'login_providers',
+        {
+            'mediawiki': {
+                'state': True,
+                'client_id': 'id',
+                'secret': encrypt_secret(secret),
+                'is_preferred': False,
+            },
+            'github': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+            'google': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
+        },
+    )
+    SocialApp.objects.create(provider='mediawiki', client_id='id', secret='')
 
     adapter = CustomSocialAccountAdapter()
     apps = adapter.list_apps(rf.get('/'), provider='mediawiki')
@@ -414,18 +427,24 @@ def test_socialapp_secret_is_decrypted_for_runtime_use(rf):
     assert apps[0].secret == secret
 
 
+def test_adapter_encrypt_decrypt_roundtrip():
+    adapter = CustomSocialAccountAdapter()
+    encrypted = adapter.encrypt('plain-secret')
+    assert encrypted.startswith(ENCRYPTED_PREFIX)
+    assert adapter.decrypt(encrypted) == 'plain-secret'
+
+
 def test_encrypt_secret_adds_prefix_for_plaintext():
     encrypted = encrypt_secret('plain-secret')
     assert encrypted.startswith(ENCRYPTED_PREFIX)
     assert decrypt_secret(encrypted) == 'plain-secret'
 
 
-def test_encrypt_secret_preserves_undecryptable_token_shaped_ciphertext():
-    other_fernet = Fernet(Fernet.generate_key())
-    ciphertext = other_fernet.encrypt(b'rotated-key-secret').decode('utf-8')
-    assert looks_like_encrypted_secret(ciphertext)
-    assert not is_encrypted_secret(ciphertext)
-    assert encrypt_secret(ciphertext) == ciphertext
+def test_encrypt_secret_encrypts_token_shaped_plaintext():
+    token_shaped = Fernet.generate_key().decode('ascii')
+    encrypted = encrypt_secret(token_shaped)
+    assert encrypted.startswith(ENCRYPTED_PREFIX)
+    assert decrypt_secret(encrypted) == token_shaped
 
 
 def test_get_fernet_reflects_secret_key_changes(settings):
@@ -441,9 +460,8 @@ def test_get_fernet_reflects_secret_key_changes(settings):
 
 
 @pytest.mark.django_db
-def test_update_provider_state_enable_preserves_undecryptable_secret(rf):
-    other_fernet = Fernet(Fernet.generate_key())
-    ciphertext = other_fernet.encrypt(b'rotated-key-secret').decode('utf-8')
+def test_update_provider_state_enable_keeps_encrypted_settings_secret(rf):
+    encrypted = encrypt_secret('rotated-key-secret')
     gs = GlobalSettingsObject()
     gs.settings.set(
         'login_providers',
@@ -451,7 +469,7 @@ def test_update_provider_state_enable_preserves_undecryptable_secret(rf):
             'github': {
                 'state': False,
                 'client_id': 'github-client',
-                'secret': ciphertext,
+                'secret': encrypted,
                 'is_preferred': False,
             },
             'mediawiki': {'state': False, 'client_id': '', 'secret': '', 'is_preferred': False},
@@ -466,9 +484,9 @@ def test_update_provider_state_enable_preserves_undecryptable_secret(rf):
     view = SocialLoginView()
     view.update_provider_state(request, 'github', login_providers)
 
-    assert login_providers['github']['secret'] == ciphertext
+    assert login_providers['github']['secret'] == encrypted
     app = SocialApp.objects.get(provider='github')
-    assert app.secret == ciphertext
+    assert app.secret == ''
 
 
 def test_decrypt_secret_returns_empty_on_invalid_token():
@@ -476,11 +494,8 @@ def test_decrypt_secret_returns_empty_on_invalid_token():
 
     fake_fernet = MagicMock()
     fake_fernet.decrypt.side_effect = InvalidToken()
-    with (
-        patch.object(secrets_mod, 'is_encrypted_secret', return_value=True),
-        patch.object(secrets_mod, 'get_fernet', return_value=fake_fernet),
-    ):
-        assert secrets_mod.decrypt_secret('gAAAAAinvalid') == ''
+    with patch.object(secrets_mod, 'get_fernet', return_value=fake_fernet):
+        assert secrets_mod.decrypt_secret('fernet:gAAAAAinvalid') == ''
 
 
 def test_social_login_view_get_context_tolerates_invalid_provider_config_values():
@@ -593,7 +608,7 @@ def test_update_credentials_preserves_secret_when_only_client_id_submitted(rf):
     assert login_providers['github']['secret'] == encrypted
     app = SocialApp.objects.get(provider='github')
     assert app.client_id == 'new-client-id'
-    assert decrypt_secret(app.secret) == 'existing-secret'
+    assert app.secret == ''
 
 
 @pytest.mark.django_db
@@ -622,18 +637,22 @@ def test_social_login_post_recovers_from_invalid_stored_login_providers(rf):
 
 
 @pytest.mark.django_db
-def test_socialapp_secret_data_migration_encrypts_plaintext():
+def test_socialapp_secret_data_migration_moves_secrets_to_global_settings():
     import importlib
 
     from django.apps import apps as django_apps
     from django.db import connection
 
+    gs = GlobalSettingsObject()
+    gs.settings.set('login_providers', LoginProviders.model_validate({}).model_dump())
     SocialApp.objects.create(provider='github', client_id='cid', secret='plain-secret-value')
     mod = importlib.import_module(
         'eventyay.plugins.socialauth.migrations.0001_encrypt_existing_socialapp_secrets'
     )
     with connection.schema_editor() as schema_editor:
-        mod.encrypt_plaintext_socialapp_secrets(django_apps, schema_editor)
+        mod.move_socialapp_secrets_to_encrypted_settings(django_apps, schema_editor)
     row = SocialApp.objects.get(provider='github')
-    assert is_encrypted_secret(row.secret)
-    assert decrypt_secret(row.secret) == 'plain-secret-value'
+    assert row.secret == ''
+    login_providers = gs.settings.get('login_providers', as_type=dict)
+    assert is_encrypted_secret(login_providers['github']['secret'])
+    assert decrypt_secret(login_providers['github']['secret']) == 'plain-secret-value'

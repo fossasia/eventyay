@@ -5,19 +5,20 @@
 
 import base64
 import hashlib
+import json
 
-from cryptography.fernet import Fernet, MultiFernet
+from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 from django.conf import settings
 from django.db import migrations
 
-_MIGRATION_SECRET_CONTEXT = 'eventyay.socialauth.secret'
-_MIGRATION_ENCRYPTED_PREFIX = 'fernet:'
-# Keep in sync with SocialAuthApp.ready() (allauth SocialApp.secret max_length patch).
-_MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH = 512
+MIGRATION_SECRET_CONTEXT = 'eventyay.socialauth.secret'
+MIGRATION_ENCRYPTED_PREFIX = 'fernet:'
+MANAGED_PROVIDERS = frozenset({'github', 'google', 'mediawiki'})
+CHUNK_SIZE = 500
 
 
-def _migration_configured_encryption_key_strings():
-    raw = getattr(settings, 'SOCIALAUTH_SECRET_ENCRYPTION_KEYS', ()) or ()
+def migration_configured_encryption_key_strings():
+    raw = settings.SOCIALAUTH_SECRET_ENCRYPTION_KEYS
     if isinstance(raw, str):
         return (raw,) if raw else ()
     if isinstance(raw, (bytes, bytearray)):
@@ -27,25 +28,25 @@ def _migration_configured_encryption_key_strings():
     return tuple(key for key in raw if isinstance(key, str) and key)
 
 
-def _migration_derive_fernet_key(source: str) -> bytes:
-    digest = hashlib.sha256(f'{_MIGRATION_SECRET_CONTEXT}:{source}'.encode('utf-8')).digest()
+def migration_derive_fernet_key(source: str) -> bytes:
+    digest = hashlib.sha256(f'{MIGRATION_SECRET_CONTEXT}:{source}'.encode('utf-8')).digest()
     return base64.urlsafe_b64encode(digest)
 
 
-def _migration_to_fernet_key(key: str) -> bytes:
+def migration_to_fernet_key(key: str) -> bytes:
     try:
         normalized = key.encode('ascii')
         Fernet(normalized)
         return normalized
     except (UnicodeEncodeError, ValueError):
-        return _migration_derive_fernet_key(key)
+        return migration_derive_fernet_key(key)
 
 
-def _migration_get_fernet() -> MultiFernet:
+def migration_get_fernet() -> MultiFernet:
     configured_fernet_keys = tuple(
-        _migration_to_fernet_key(key) for key in _migration_configured_encryption_key_strings()
+        migration_to_fernet_key(key) for key in migration_configured_encryption_key_strings()
     )
-    derived_default_key = _migration_derive_fernet_key(settings.SECRET_KEY)
+    derived_default_key = migration_derive_fernet_key(settings.SECRET_KEY)
     if derived_default_key in configured_fernet_keys:
         fernet_keys = configured_fernet_keys
     else:
@@ -53,77 +54,123 @@ def _migration_get_fernet() -> MultiFernet:
     return MultiFernet(tuple(Fernet(key) for key in fernet_keys))
 
 
-def _migration_is_probably_fernet_token(token: str) -> bool:
-    if not token:
+def migration_is_encrypted_secret(value: str) -> bool:
+    if not value or not value.startswith(MIGRATION_ENCRYPTED_PREFIX):
         return False
+    token = value[len(MIGRATION_ENCRYPTED_PREFIX) :]
     try:
-        padding = '=' * (-len(token) % 4)
-        decoded = base64.urlsafe_b64decode(f'{token}{padding}'.encode('ascii'))
-    except (UnicodeEncodeError, ValueError):
-        return False
-    return bool(decoded) and decoded.startswith(b'\x80')
-
-
-def _migration_is_encrypted_secret(value: str) -> bool:
-    if not value:
-        return False
-    if value.startswith(_MIGRATION_ENCRYPTED_PREFIX):
+        migration_get_fernet().decrypt(token.encode('utf-8'))
         return True
-    return _migration_is_probably_fernet_token(value)
+    except InvalidToken:
+        return False
 
 
-def _migration_encrypt_secret(value: str) -> str:
+def migration_encrypt_secret(value: str) -> str:
     if not value:
         return value
-    if value.startswith(_MIGRATION_ENCRYPTED_PREFIX):
+    if migration_is_encrypted_secret(value):
         return value
-    if _migration_is_probably_fernet_token(value):
+    token = migration_get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
+    return f'{MIGRATION_ENCRYPTED_PREFIX}{token}'
+
+
+def migration_decrypt_secret(value: str) -> str:
+    if not value:
         return value
-    token = _migration_get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
-    return f'{_MIGRATION_ENCRYPTED_PREFIX}{token}'
+    if not value.startswith(MIGRATION_ENCRYPTED_PREFIX):
+        return value
+    token = value[len(MIGRATION_ENCRYPTED_PREFIX) :]
+    try:
+        return migration_get_fernet().decrypt(token.encode('utf-8')).decode('utf-8')
+    except InvalidToken:
+        return ''
 
 
-def widen_socialapp_secret_max_length(apps, schema_editor):
+def migration_load_login_providers(SettingsStore):
+    setting = SettingsStore.objects.filter(key='login_providers').first()
+    if not setting or not setting.value:
+        return {}
+    try:
+        loaded = json.loads(setting.value)
+    except (TypeError, ValueError):
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def migration_save_login_providers(SettingsStore, login_providers):
+    payload = json.dumps(login_providers)
+    setting = SettingsStore.objects.filter(key='login_providers').first()
+    if setting:
+        setting.value = payload
+        setting.save(update_fields=['value'])
+    else:
+        SettingsStore.objects.create(key='login_providers', value=payload)
+
+
+def move_socialapp_secrets_to_encrypted_settings(apps, schema_editor):
+    """Move provider secrets into encrypted global settings; clear SocialApp.secret.
+
+    One-way migration: legacy SocialApp.secret values are copied into
+    ``login_providers`` and then cleared. SocialApp rows remain for allauth
+    compatibility but no longer store secrets at rest.
+    """
     SocialApp = apps.get_model('socialaccount', 'SocialApp')
-    old_field = SocialApp._meta.get_field('secret')
-    _, _, args, kwargs = old_field.deconstruct()
-    kwargs['max_length'] = _MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH
-    new_field = old_field.__class__(*args, **kwargs)
-    new_field.set_attributes_from_name('secret')
-    new_field.model = SocialApp
-    schema_editor.alter_field(SocialApp, old_field, new_field)
+    SettingsStore = apps.get_model('base', 'GlobalSettingsObject_SettingsStore')
 
+    login_providers = migration_load_login_providers(SettingsStore)
+    apps_to_clear = []
 
-def encrypt_plaintext_socialapp_secrets(apps, schema_editor):
-    SocialApp = apps.get_model('socialaccount', 'SocialApp')
-    secret_field = SocialApp._meta.get_field('secret')
-    max_length = secret_field.max_length or _MIGRATION_SOCIALAPP_SECRET_MAX_LENGTH
-    updated = []
-    for row in SocialApp.objects.exclude(secret='').iterator():
-        secret = row.secret or ''
-        if secret and not _migration_is_encrypted_secret(secret):
-            encrypted = _migration_encrypt_secret(secret)
-            if len(encrypted) > max_length:
-                raise ValueError(
-                    f'SocialApp pk={row.pk} provider={row.provider!r}: encrypted secret length '
-                    f'{len(encrypted)} exceeds secret max_length={max_length}. '
-                    'Widen socialaccount.SocialApp.secret before running this migration.'
-                )
-            row.secret = encrypted
-            updated.append(row)
-    if updated:
-        SocialApp.objects.bulk_update(updated, ['secret'], batch_size=500)
+    for row in SocialApp.objects.filter(provider__in=MANAGED_PROVIDERS).exclude(secret='').iterator():
+        provider_config = login_providers.setdefault(row.provider, {})
+        if not isinstance(provider_config, dict):
+            provider_config = {}
+            login_providers[row.provider] = provider_config
+
+        stored_secret = provider_config.get('secret') or ''
+        if stored_secret and migration_is_encrypted_secret(stored_secret):
+            plaintext = migration_decrypt_secret(stored_secret)
+        elif stored_secret:
+            plaintext = migration_decrypt_secret(stored_secret) or stored_secret
+        else:
+            db_secret = row.secret or ''
+            if migration_is_encrypted_secret(db_secret):
+                plaintext = migration_decrypt_secret(db_secret)
+            elif db_secret.startswith(MIGRATION_ENCRYPTED_PREFIX):
+                plaintext = ''
+            else:
+                plaintext = db_secret
+
+        if plaintext:
+            provider_config['secret'] = migration_encrypt_secret(plaintext)
+
+        row.secret = ''
+        apps_to_clear.append(row)
+
+    for provider, provider_config in login_providers.items():
+        if provider not in MANAGED_PROVIDERS or not isinstance(provider_config, dict):
+            continue
+        secret = provider_config.get('secret') or ''
+        if secret and not migration_is_encrypted_secret(secret):
+            plaintext = migration_decrypt_secret(secret) or secret
+            provider_config['secret'] = migration_encrypt_secret(plaintext)
+
+    migration_save_login_providers(SettingsStore, login_providers)
+
+    if apps_to_clear:
+        SocialApp.objects.bulk_update(apps_to_clear, ['secret'], batch_size=CHUNK_SIZE)
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
         ('socialaccount', '0006_alter_socialaccount_extra_data'),
+        ('base', '0027_talkquestion_dependency_question_and_more'),
     ]
 
     operations = [
-        migrations.RunPython(widen_socialapp_secret_max_length, migrations.RunPython.noop),
-        migrations.RunPython(encrypt_plaintext_socialapp_secrets, migrations.RunPython.noop),
+        migrations.RunPython(
+            move_socialapp_secrets_to_encrypted_settings,
+            migrations.RunPython.noop,
+        ),
     ]
