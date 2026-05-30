@@ -175,13 +175,14 @@ class TestStartPageVisibility:
 
     def test_start_page_search_hides_non_public_events(self, client, organizer, event):
         """Live but non-public events must not appear in platform start page search."""
-        event.name = 'Public Search Event'
+        event.name = 'SharedSearchToken Public Event'
         event.is_public = True
-        event.save(update_fields=['name', 'is_public'])
+        event.startpage_visible = True
+        event.save(update_fields=['name', 'is_public', 'startpage_visible'])
 
         Event.objects.create(
             organizer=organizer,
-            name='Private Search UniqueToken',
+            name='SharedSearchToken Private Event',
             slug='private-search-event',
             date_from=timezone.now() + timedelta(days=30),
             date_to=timezone.now() + timedelta(days=31),
@@ -189,11 +190,12 @@ class TestStartPageVisibility:
             locale='en',
             is_public=False,
             live=True,
+            startpage_visible=True,
             email='private-search@example.com',
         )
 
-        response = client.get('/?q=UniqueToken')
+        response = client.get('/?q=SharedSearchToken')
         assert response.status_code == 200
         content = response.content.decode('utf-8')
-        assert 'Public Search Event' not in content
-        assert 'Private Search UniqueToken' not in content
+        assert 'SharedSearchToken Public Event' in content
+        assert 'SharedSearchToken Private Event' not in content

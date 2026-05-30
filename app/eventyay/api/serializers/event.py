@@ -841,7 +841,7 @@ class EventSettingsSerializer(SettingsSerializer):
                 if display_settings != self.event.display_settings:
                     self.event.display_settings = display_settings
                     self.event.save(update_fields=['display_settings'])
-                    self.changed_data.append('meta_noindex')
+                self.changed_data.append('meta_noindex')
         return instance
 
     def flush_settings_cache(self):

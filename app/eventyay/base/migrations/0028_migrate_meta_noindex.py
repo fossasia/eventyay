@@ -17,7 +17,20 @@ def _setting_is_truthy(value: str) -> bool:
         return json.loads(value) is True
     except (TypeError, ValueError):
         return False
+
+
 _CHUNK_SIZE = 1000
+
+
+def _flush_events_to_update(Event, events_to_update):
+    if not events_to_update:
+        return
+    Event.objects.bulk_update(
+        events_to_update.values(),
+        ['display_settings'],
+        batch_size=_CHUNK_SIZE,
+    )
+    events_to_update.clear()
 
 
 def migrate_meta_noindex(apps, schema_editor):
@@ -41,9 +54,10 @@ def migrate_meta_noindex(apps, schema_editor):
         display_settings['meta_noindex'] = True
         event.display_settings = display_settings
         events_to_update[event.pk] = event
+        if len(events_to_update) >= _CHUNK_SIZE:
+            _flush_events_to_update(Event, events_to_update)
 
-    if events_to_update:
-        Event.objects.bulk_update(events_to_update.values(), ['display_settings'], batch_size=_CHUNK_SIZE)
+    _flush_events_to_update(Event, events_to_update)
 
     while True:
         pks = list(
@@ -56,6 +70,8 @@ def migrate_meta_noindex(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # One-way migration: forward copies meta_noindex into display_settings and
+    # deletes legacy Event_SettingsStore rows. Reversing cannot restore the rows.
 
     dependencies = [
         ('base', '0027_talkquestion_dependency_question_and_more'),

@@ -409,8 +409,8 @@ class EventUpdate(
 
     @transaction.atomic
     def form_valid(self, form):
+        self._save_decoupled(self.sform)
         if self.sform.has_changed():
-            self._save_decoupled(self.sform)
             self.sform.save()
         if self.pubform.has_changed():
             self.pubform.save()
