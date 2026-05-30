@@ -63,6 +63,21 @@ USER_CODE_MAX_LENGTH = User._meta.get_field('code').max_length or 16
 USER_FULLNAME_MAX_LENGTH = User._meta.get_field('fullname').max_length or 255
 SUBMISSION_CODE_MAX_LENGTH = Submission._meta.get_field('code').max_length or 16
 ROOM_NAME_MAX_LENGTH = Room._meta.get_field('name').max_length or 100
+TRACK_NAME_MAX_LENGTH = Track._meta.get_field('name').max_length or 200
+
+# A rotating palette of distinct colours used when auto-creating tracks during import.
+_TRACK_AUTO_COLORS = [
+    '#3498db',
+    '#2ecc71',
+    '#e67e22',
+    '#9b59b6',
+    '#e74c3c',
+    '#1abc9c',
+    '#f39c12',
+    '#2980b9',
+    '#27ae60',
+    '#8e44ad',
+]
 NORMALIZED_SPEAKER_SETTINGS = {
     key: f'csv:{key}'
     for key in (
@@ -1175,8 +1190,8 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
     if not sub_type:
         raise ImportExecutionError(_('No session type found for this event.'))
 
-    # Resolve track (use pre-fetched cache)
-    track = _resolve_track(track_val, caches) if track_val and caches else None
+    # Resolve track (auto-create if not found)
+    track = _resolve_or_create_track(track_val, event, caches) if track_val else None
 
     # Resolve state (use pre-fetched valid_states set)
     valid_states = caches['valid_states'] if caches else {choice[0] for choice in SubmissionStates.get_choices()}
@@ -1386,6 +1401,33 @@ def _resolve_track(track_val: str, caches: dict) -> 'Track | None':
     except (ValueError, TypeError):
         pass
     return None
+
+
+def _resolve_or_create_track(
+    track_val: str,
+    event: Event,
+    caches: dict | None,
+) -> 'Track | None':
+    """Find an existing Track by name or pk, or create one when not found."""
+    normalized_name = track_val.strip() if track_val else ''
+    if not normalized_name:
+        return None
+    normalized_name = str(normalized_name)[:TRACK_NAME_MAX_LENGTH]
+
+    track = _resolve_track(normalized_name, caches) if caches else None
+    if not track:
+        track = Track.objects.filter(event=event, name__iexact=normalized_name).first()
+
+    if track:
+        return track
+
+    # Auto-create the track with a colour from the rotating palette.
+    existing_count = len(caches['tracks']) if caches else Track.objects.filter(event=event).count()
+    color = _TRACK_AUTO_COLORS[existing_count % len(_TRACK_AUTO_COLORS)]
+    track = Track.objects.create(event=event, name=normalized_name, color=color)
+    if caches is not None:
+        caches['tracks'].append(track)
+    return track
 
 
 def _resolve_room(room_val: str, caches: dict) -> 'Room | None':

@@ -187,6 +187,16 @@ svg.svg-icon {
   top: 2px;
 }
 
+.btn:focus:not(:focus-visible),
+.header-nav:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+summary:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
 @include table-row-variant('success', lighten($brand-success, 40%));
 @include table-row-variant('info', lighten($brand-info, 30%));
 @include table-row-variant('warning', lighten($brand-warning, 40%));
