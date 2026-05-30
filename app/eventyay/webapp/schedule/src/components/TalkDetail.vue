@@ -19,16 +19,11 @@
 				h2.field-heading Description
 				.field-content
 					markdown-content(:markdown="resolvedTalk.description")
-			.public-answers(v-if="resolvedTalk.answers && resolvedTalk.answers.length > 0")
-				.field-section(v-for="answer in resolvedTalk.answers", :key="answer.question_id")
+			.public-answers(v-if="visibleAnswers.length > 0")
+				.field-section(v-for="answer in visibleAnswers", :key="answer.question_id")
 					h2.field-heading {{ answer.question }}
 					.field-content
 						markdown-content(:markdown="answer.answer")
-			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
-				h2 {{ t.downloads }}
-				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank", rel="noopener noreferrer")
-					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
-					.filename {{ description }}
 			.video-stream(v-if="resolvedTalk.stream_url && computedJoinRoomLink && isLive")
 				a.view-video-btn(:href="computedJoinRoomLink")
 					svg(viewBox="0 0 24 24", width="18", height="18", fill="currentColor")
@@ -215,6 +210,13 @@ export default {
 				return null
 			}
 			return null
+		},
+		visibleAnswers() {
+			const answers = this.resolvedTalk?.answers || []
+			if (!this.resolvedTalk?.resources?.length) return answers
+
+			const downloadsLabel = (this.t.downloads || '').trim().toLowerCase()
+			return answers.filter((answer) => (answer.question || '').trim().toLowerCase() !== downloadsLabel)
 		},
 		computedJoinRoomLink() {
 			if (!this.resolvedTalk) return ''
@@ -405,13 +407,6 @@ export default {
 				.field-content
 					font-size: 16px
 					font-weight: 600
-		.downloads
-			border: border-separator()
-			border-radius: 4px
-			display: flex
-			flex-direction: column
-			font-size: 16px
-			font-weight: 600
 		.video-stream
 			margin-top: 16px
 			.view-video-btn

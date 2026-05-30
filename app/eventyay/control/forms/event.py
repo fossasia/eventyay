@@ -42,6 +42,7 @@ from eventyay.base.services.system_questions import (
     state_to_asked_required,
 )
 from eventyay.base.settings import (
+    EVENT_SERIES_CREATION_ENABLED,
     GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
     PERSON_NAME_TITLE_GROUPS,
@@ -164,12 +165,16 @@ class EventWizardFoundationForm(forms.Form):
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
 
-        if not content_locales:
-            return cleaned_data
-
-        if set(content_locales) - set(locales):
+        if content_locales and set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
+            })
+
+        gs = GlobalSettingsObject()
+        series_enabled = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+        if not series_enabled and cleaned_data.get('has_subevents'):
+            raise ValidationError({
+                'has_subevents': _('Event series creation is disabled by the administrator.')
             })
 
         return cleaned_data
@@ -198,13 +203,6 @@ class EventWizardBasicsForm(I18nModelForm):
         ),
         required=False,
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website '
-                    'that has your contact details and legal information.'),
-        required=False,
-    )
-
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
         help_text=_(
@@ -552,6 +550,10 @@ class EventUpdateForm(I18nModelForm):
         kwargs.setdefault('initial', {})
         self.instance = kwargs['instance']
         super().__init__(*args, **kwargs)
+        self.fields['location'].widget.attrs['rows'] = '3'
+        self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
+        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
+        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['sales_channels'] = forms.MultipleChoiceField(
             label=self.fields['sales_channels'].label,
             help_text=self.fields['sales_channels'].help_text,
@@ -574,6 +576,9 @@ class EventUpdateForm(I18nModelForm):
         localized_fields = '__all__'
         fields = [
             'currency',
+            'location',
+            'geo_lat',
+            'geo_lon',
             'presale_start',
             'presale_end',
             'sales_channels',
