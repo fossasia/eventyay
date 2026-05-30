@@ -203,13 +203,6 @@ class EventWizardBasicsForm(I18nModelForm):
         ),
         required=False,
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website '
-                    'that has your contact details and legal information.'),
-        required=False,
-    )
-
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
         help_text=_(
@@ -687,6 +680,8 @@ class EventSettingsForm(SettingsForm):
         'event_logo_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def clean(self):
