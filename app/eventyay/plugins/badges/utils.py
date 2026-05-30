@@ -51,10 +51,28 @@ def get_badge_layout_for_position(event, position):
 
 
 def get_badge_hidden_fields(position):
-    hidden_fields = position.meta_info_data.get('question_form_data', {}).get(BADGE_HIDDEN_FIELDS_KEY, [])
+    config_position = get_badge_config_position(position)
+    root_question_form_data = config_position.meta_info_data.get('question_form_data', {})
+    if BADGE_HIDDEN_FIELDS_KEY in root_question_form_data:
+        hidden_fields = root_question_form_data[BADGE_HIDDEN_FIELDS_KEY]
+    else:
+        hidden_fields = position.meta_info_data.get('question_form_data', {}).get(BADGE_HIDDEN_FIELDS_KEY, [])
     if isinstance(hidden_fields, str):
         return [hidden_fields]
     return hidden_fields
+
+
+def get_badge_bundle_root(position):
+    return position.addon_to if position.addon_to_id else position
+
+
+def get_badge_config_position(position):
+    return get_badge_bundle_root(position)
+
+
+def get_badge_bundle_positions(position):
+    root = get_badge_bundle_root(position)
+    return [root, *list(root.addons.all())]
 
 
 def get_badge_customizable_fields(event, layout):
@@ -102,6 +120,34 @@ def get_badge_customizable_fields(event, layout):
     if isinstance(layout, BadgeLayout):
         layout._badge_customizable_fields_cache = fields
     return fields
+
+
+def get_badge_bundle_option_choices(event, position):
+    """
+    Return all configurable badge choices for one attendee bundle.
+
+    The bundle is defined as a base position plus all attached add-ons.
+    Choices are deduplicated by key while preserving discovery order.
+    """
+    seen_keys = set()
+    choices = []
+    for bundle_position in get_badge_bundle_positions(position):
+        layout = get_badge_layout_for_position(event, bundle_position)
+        if not layout or not layout.allow_customization:
+            continue
+
+        ask_user_keys = set(layout.ask_user_fields_data)
+        for field in get_badge_customizable_fields(event, layout):
+            if field['key'] not in ask_user_keys or field['key'] in seen_keys:
+                continue
+            choices.append(
+                (
+                    field['key'],
+                    field['sample'] if field['key'].startswith('question_') and field.get('sample') else field['label'],
+                )
+            )
+            seen_keys.add(field['key'])
+    return choices
 
 
 def get_badge_visible_field_labels(event, position, hidden_fields=None):

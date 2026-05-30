@@ -55,8 +55,10 @@ class PaginationMixin:
         if self.request.GET.get('page_size'):
             try:
                 size = min(250, int(self.request.GET.get('page_size')))
+                if size <= 0:
+                    return default
                 self.request.session[skey] = size
-                return min(250, int(self.request.GET.get('page_size')))
+                return size
             except ValueError:
                 return default
         return default
