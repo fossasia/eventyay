@@ -23,7 +23,7 @@ ENCRYPTED_PREFIX = 'fernet:'
 def configured_encryption_key_strings() -> tuple[str, ...]:
     raw = settings.SOCIALAUTH_SECRET_ENCRYPTION_KEYS
     if isinstance(raw, str):
-        return (raw,)
+        return (raw,) if raw.strip() else ()
     if isinstance(raw, (bytes, bytearray)):
         logger.error('SOCIALAUTH_SECRET_ENCRYPTION_KEYS must be strings, not bytes; ignoring.')
         return ()
@@ -70,6 +70,13 @@ def encrypt_secret(value: str) -> str:
     if not value:
         return value
     if is_encrypted_secret(value):
+        return value
+    if value.startswith(ENCRYPTED_PREFIX):
+        logger.warning(
+            'Social auth secret has %r prefix but cannot be decrypted with current keys; '
+            'leaving unchanged so admins can re-enter the secret.',
+            ENCRYPTED_PREFIX,
+        )
         return value
     token = get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
     return f'{ENCRYPTED_PREFIX}{token}'

@@ -70,8 +70,21 @@ def migration_encrypt_secret(value: str) -> str:
         return value
     if migration_is_encrypted_secret(value):
         return value
+    if value.startswith(MIGRATION_ENCRYPTED_PREFIX):
+        return value
     token = migration_get_fernet().encrypt(value.encode('utf-8')).decode('utf-8')
     return f'{MIGRATION_ENCRYPTED_PREFIX}{token}'
+
+
+def migration_plaintext_from_stored(value: str) -> str | None:
+    """Return plaintext to encrypt, or None when the stored value is unrecoverable."""
+    if not value:
+        return None
+    if migration_is_encrypted_secret(value):
+        return migration_decrypt_secret(value) or None
+    if value.startswith(MIGRATION_ENCRYPTED_PREFIX):
+        return None
+    return value
 
 
 def migration_decrypt_secret(value: str) -> str:
@@ -127,18 +140,10 @@ def move_socialapp_secrets_to_encrypted_settings(apps, schema_editor):
             login_providers[row.provider] = provider_config
 
         stored_secret = provider_config.get('secret') or ''
-        if stored_secret and migration_is_encrypted_secret(stored_secret):
-            plaintext = migration_decrypt_secret(stored_secret)
-        elif stored_secret:
-            plaintext = migration_decrypt_secret(stored_secret) or stored_secret
+        if stored_secret:
+            plaintext = migration_plaintext_from_stored(stored_secret)
         else:
-            db_secret = row.secret or ''
-            if migration_is_encrypted_secret(db_secret):
-                plaintext = migration_decrypt_secret(db_secret)
-            elif db_secret.startswith(MIGRATION_ENCRYPTED_PREFIX):
-                plaintext = ''
-            else:
-                plaintext = db_secret
+            plaintext = migration_plaintext_from_stored(row.secret or '')
 
         if plaintext:
             provider_config['secret'] = migration_encrypt_secret(plaintext)
@@ -150,8 +155,10 @@ def move_socialapp_secrets_to_encrypted_settings(apps, schema_editor):
         if provider not in MANAGED_PROVIDERS or not isinstance(provider_config, dict):
             continue
         secret = provider_config.get('secret') or ''
-        if secret and not migration_is_encrypted_secret(secret):
-            plaintext = migration_decrypt_secret(secret) or secret
+        if not secret or migration_is_encrypted_secret(secret):
+            continue
+        plaintext = migration_plaintext_from_stored(secret)
+        if plaintext:
             provider_config['secret'] = migration_encrypt_secret(plaintext)
 
     migration_save_login_providers(SettingsStore, login_providers)

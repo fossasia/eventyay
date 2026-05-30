@@ -22,9 +22,13 @@ from eventyay.plugins.socialauth.secrets import decrypt_secret, encrypt_secret
 logger = logging.getLogger(__name__)
 
 
+def _login_providers_settings() -> dict:
+    raw = GlobalSettingsObject().settings.get('login_providers', as_type=dict) or {}
+    return raw if isinstance(raw, Mapping) else {}
+
+
 def require_provider_enabled(request, provider):
-    gs = GlobalSettingsObject()
-    login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+    login_providers = _login_providers_settings()
     cfg = login_providers.get(provider)
     if (
         not isinstance(cfg, dict)
@@ -85,7 +89,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         secrets; credentials live in ``login_providers`` global settings.
         """
         apps = super().list_apps(request, provider=provider, client_id=client_id)
-        login_providers = GlobalSettingsObject().settings.get('login_providers', as_type=dict) or {}
+        login_providers = _login_providers_settings()
         out = []
         for app in apps:
             clone = copy.copy(app)

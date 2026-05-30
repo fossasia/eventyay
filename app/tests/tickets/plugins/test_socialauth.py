@@ -447,6 +447,22 @@ def test_encrypt_secret_encrypts_token_shaped_plaintext():
     assert decrypt_secret(encrypted) == token_shaped
 
 
+def test_encrypt_secret_preserves_undecryptable_prefixed_ciphertext():
+    undecryptable = f'{ENCRYPTED_PREFIX}gAAAAAinvalid-token'
+    assert encrypt_secret(undecryptable) == undecryptable
+
+
+def test_configured_encryption_key_strings_ignores_empty_string(settings):
+    settings.SOCIALAUTH_SECRET_ENCRYPTION_KEYS = ''
+    from eventyay.plugins.socialauth import secrets as secrets_mod
+
+    secrets_mod._get_fernet_for_settings.cache_clear()
+    try:
+        assert secrets_mod.configured_encryption_key_strings() == ()
+    finally:
+        secrets_mod._get_fernet_for_settings.cache_clear()
+
+
 def test_get_fernet_reflects_secret_key_changes(settings):
     settings.SECRET_KEY = 'socialauth-cache-key-one'
     token_one = encrypt_secret('shared-secret')
@@ -633,7 +649,9 @@ def test_social_login_post_recovers_from_invalid_stored_login_providers(rf):
     saved = gs.settings.get('login_providers', as_type=dict)
     assert 'unexpected_provider' not in saved
     assert saved['github']['state'] is False
-    assert not SocialApp.objects.filter(provider='github').exists()
+    app = SocialApp.objects.get(provider='github')
+    assert app.client_id == 'stale-client'
+    assert app.secret == ''
 
 
 @pytest.mark.django_db

@@ -165,8 +165,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         try:
             login_providers = LoginProviders.model_validate(raw).model_dump()
         except ValidationError as e:
-            logger.error(
-                'login_providers settings failed validation during save; applying POST to defaults: %s',
+            logger.warning(
+                'Invalid login_providers settings during save; resetting provider config and '
+                'clearing SocialApp secrets for managed providers (SocialApp rows are kept): %s',
                 _validation_error_summary(e),
             )
             messages.warning(
@@ -176,7 +177,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                     'Please review and save again.'
                 ),
             )
-            SocialApp.objects.filter(provider__in=LoginProviders.model_fields.keys()).delete()
+            SocialApp.objects.filter(provider__in=LoginProviders.model_fields.keys()).update(secret='')
             login_providers = LoginProviders.model_validate({}).model_dump()
 
         setting_state = request.POST.get('save_credentials', '').lower()
