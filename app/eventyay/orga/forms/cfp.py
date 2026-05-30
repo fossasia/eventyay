@@ -243,6 +243,20 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             initial=obj.settings.get('content_locales') or [],
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        ask_content_locale = cleaned_data.get('cfp_ask_content_locale')
+        content_locales = cleaned_data.get('content_locales')
+
+        if ask_content_locale and ask_content_locale != 'do_not_ask' and not content_locales:
+            self.add_error(
+                'content_locales',
+                forms.ValidationError(
+                    _('You must select at least one content language if the Content Locale field is active.')
+                )
+            )
+        return cleaned_data
+
     def save(self, *args, **kwargs):
         # Preserve fields_config (drag-drop order) before modifying settings
         fields_config = self.instance.cfp.settings.get('fields_config')

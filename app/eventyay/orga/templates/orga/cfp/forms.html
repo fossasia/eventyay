@@ -94,6 +94,13 @@
                     </span></div>
                 </dialog>
                 <dialog class="info-dialog" id="content-locale-dialog">
+                    {% if sform.content_locales.errors %}
+                        <div class="alert alert-danger mb-3">
+                            {% for error in sform.content_locales.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     <div class="alert alert-info"><span>
                         {% translate "Activating Content Locale will allow proposal submissions in different languages. The languages that are available as Event Languages are preselected below. If you would like to allow proposal submissions in other languages, please select them from the dropdown list. You can change your selection later in the Settings area of Content Locale." %}
                     </span></div>

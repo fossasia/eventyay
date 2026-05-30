@@ -76,5 +76,24 @@ document.addEventListener("DOMContentLoaded", () => {
         if (saveBtn) {
             saveBtn.addEventListener("click", closeDialog);
         }
+
+        dialog.addEventListener("click", (event) => {
+            if (event.target === dialog) {
+                const rect = dialog.getBoundingClientRect();
+                const isInDialog = (
+                    rect.top <= event.clientY &&
+                    event.clientY <= rect.top + rect.height &&
+                    rect.left <= event.clientX &&
+                    event.clientX <= rect.left + rect.width
+                );
+                if (!isInDialog) {
+                    cancelDialog();
+                }
+            }
+        });
+
+        if (dialog.querySelector(".alert-danger")) {
+            openDialog();
+        }
     }
 });
