@@ -89,6 +89,25 @@ def test_filter_timeline_entry_strips_control_edit_urls(event):
 
 
 @pytest.mark.django_db
+def test_filter_timeline_entry_strips_control_urls_with_query_string(event):
+    entry = TimelineEvent(
+        event=event,
+        subevent=None,
+        datetime=now(),
+        description='Ticket sales',
+        edit_url=(
+            reverse(
+                'control:event.settings.tickets',
+                kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+            )
+            + '?next=/common/'
+        ),
+    )
+    filtered = filter_timeline_entry_for_ticket_access(entry, has_ticket_access=False)
+    assert filtered.edit_url is None
+
+
+@pytest.mark.django_db
 def test_filter_timeline_entry_keeps_urls_with_control_only_in_query(event):
     entry = TimelineEvent(
         event=event,

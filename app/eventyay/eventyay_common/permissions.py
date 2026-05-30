@@ -78,7 +78,7 @@ def _is_control_url(url: str) -> bool:
     """True when ``url`` points at the pretix control mount (``/control/``)."""
     if not url:
         return False
-    path = urlparse(url).path if '://' in url else url
+    path = urlparse(url).path
     if not path.startswith('/'):
         path = f'/{path}'
     return path == '/control' or path.startswith('/control/')

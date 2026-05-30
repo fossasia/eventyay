@@ -49,6 +49,19 @@
   text-decoration: none;
 }
 
+.dashboard button.widget {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: inherit;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
 .dashboard .numwidget {
   .num {
     display: block;

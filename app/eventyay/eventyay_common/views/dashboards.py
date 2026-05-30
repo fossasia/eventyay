@@ -56,8 +56,36 @@ from ..utils import EventCreatedFor, get_subevent
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
 SHOP_STATE_WIDGET_KEY = 'shop_state'
+# Widget producers that should remain visible to talk-only users must set
+# ``key='shop_state'`` on their dashboard widget payload (see shop_state_widget).
 EVENT_SETTINGS_PERMISSION_DIALOG_ID = 'event-settings-permission-dialog'
 TICKET_PERMISSION_DIALOG_ID = 'ticket-permission-dialog'
+
+
+def get_event_dashboard_widget_permissions(request: HttpRequest) -> dict[str, bool]:
+    return {
+        'can_view_orders': request.user.has_event_permission(
+            request.organizer, request.event, 'can_view_orders', request=request
+        ),
+        'can_change_event_settings': request.user.has_event_permission(
+            request.organizer,
+            request.event,
+            'can_change_event_settings',
+            request=request,
+        ),
+    }
+
+
+def filter_event_dashboard_widgets_for_request(
+    request: HttpRequest,
+    widgets: List[Dict[str, Any]] | None,
+) -> List[Dict[str, Any]]:
+    permissions = get_event_dashboard_widget_permissions(request)
+    return filter_common_event_dashboard_widgets(
+        widgets,
+        can_view_orders=permissions['can_view_orders'],
+        can_change_event_settings=permissions['can_change_event_settings'],
+    )
 
 
 def filter_common_event_dashboard_widgets(
@@ -96,16 +124,6 @@ def filter_common_event_dashboard_widgets(
 def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
     subevent = get_subevent(request)
 
-    can_view_orders = request.user.has_event_permission(
-        request.organizer, request.event, 'can_view_orders', request=request
-    )
-    can_change_event_settings = request.user.has_event_permission(
-        request.organizer,
-        request.event,
-        'can_change_event_settings',
-        request=request,
-    )
-
     widgets: List[Dict[str, Any]] = []
     for r, result in event_dashboard_widgets.send(
         sender=request.event,
@@ -113,13 +131,7 @@ def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
         lazy=False,
         request=request,
     ):
-        widgets.extend(
-            filter_common_event_dashboard_widgets(
-                result,
-                can_view_orders=can_view_orders,
-                can_change_event_settings=can_change_event_settings,
-            )
-        )
+        widgets.extend(filter_event_dashboard_widgets_for_request(request, result))
 
     return JsonResponse({'widgets': widgets})
 
@@ -192,13 +204,7 @@ class EventIndexView(TemplateView):
             lazy=True,
             request=request,
         ):
-            widgets.extend(
-                filter_common_event_dashboard_widgets(
-                    result,
-                    can_view_orders=permissions['can_view_orders'],
-                    can_change_event_settings=permissions['can_change_event_settings'],
-                )
-            )
+            widgets.extend(filter_event_dashboard_widgets_for_request(request, result))
         return self.rearrange(widgets)
 
     def _filter_log_entries(self, qs: QuerySet, permissions: Dict[str, bool]) -> QuerySet:
