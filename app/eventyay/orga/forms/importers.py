@@ -222,7 +222,7 @@ SESSION_IMPORT_FIELDS: list[ImportField] = [
     ImportField(
         identifier='track',
         label=_('Track'),
-        help_text=_('Must match an existing track name or ID.'),
+        help_text=_('Must match an existing track name or ID. A new track will be created automatically if no match is found.'),
         suggestions=['track', 'category'],
     ),
     ImportField(
