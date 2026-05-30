@@ -33,7 +33,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject
 from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
@@ -215,6 +215,10 @@ class EventCreateView(SafeSessionWizardView):
         if self.steps.current == 'basics':
             context['organizer'] = self.get_cleaned_data_for_step('foundation').get('organizer')
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
+        gs = GlobalSettingsObject()
+        context['event_series_creation_enabled'] = gs.settings.get(
+            EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True
+        )
         return context
 
     def render(self, form=None, **kwargs):
@@ -296,10 +300,6 @@ class EventCreateView(SafeSessionWizardView):
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone'])
-            
-            # Save imprint_url to settings (consistent with EventCommonSettingsForm)
-            if basics_data.get('imprint_url'):
-                event.settings.set('imprint_url', basics_data['imprint_url'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
