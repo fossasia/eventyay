@@ -70,9 +70,10 @@ def mail_send_task(
         to = [addr for addr in to if not any([addr.endswith(domain) for domain in DEBUG_DOMAINS])]
     if not to:
         return
-    reply_to = reply_to.split(',') if isinstance(reply_to, str) else (reply_to or [])
-    reply_to = [addr for addr in reply_to if addr]
-    reply_to = reply_to or []
+    if isinstance(reply_to, str):
+        reply_to = [addr.strip() for addr in reply_to.split(',') if addr.strip()]
+    elif reply_to is not None:
+        reply_to = [addr for addr in reply_to if addr]
 
     if event:
         event = Event.objects.get(pk=event)
@@ -80,7 +81,7 @@ def mail_send_task(
 
         sender = event.settings.mail_from or settings.MAIL_FROM
 
-        if not reply_to:
+        if reply_to is None:
             reply_to = get_reply_to_address(event, sender_email=sender)
 
         if isinstance(reply_to, str):

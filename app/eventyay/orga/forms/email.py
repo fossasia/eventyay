@@ -7,6 +7,8 @@ from eventyay.base.forms import SettingsForm
 
 
 def multimail_validate(val):
+    if not val:
+        return
     for addr in val.split(','):
         validate_email(addr.strip())
 
@@ -74,7 +76,10 @@ class CentralMailSettingsForm(SettingsForm):
     send_grid_api_key = forms.CharField(
         label=_('SendGrid API key'),
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
+        widget=forms.PasswordInput(
+            attrs={'placeholder': 'SG.xxxxxxxx', 'autocomplete': 'new-password'},
+            render_value=True,
+        ),
     )
     smtp_host = forms.CharField(
         label=_('SMTP hostname'),
@@ -126,6 +131,8 @@ class CentralMailSettingsForm(SettingsForm):
             ]
         if self.fields['smtp_password'].initial:
             self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
+        if self.fields['send_grid_api_key'].initial:
+            self.fields['send_grid_api_key'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
 
     def save(self, *args, **kwargs):
         f = self.fields.pop('test_email', None)
@@ -140,11 +147,26 @@ class CentralMailSettingsForm(SettingsForm):
         data = super().changed_data
         return [d for d in data if d != 'test_email']
 
+    _GATEWAY_FIELDS = (
+        'email_vendor', 'send_grid_api_key', 'smtp_host', 'smtp_port',
+        'smtp_username', 'smtp_password', 'smtp_use_tls', 'smtp_use_ssl',
+    )
+
     def clean(self):
-        data = self.cleaned_data
+        data = super().clean()
 
         if not data.get('smtp_use_custom'):
+            for field in self._GATEWAY_FIELDS:
+                stored = self.initial.get(field)
+                if stored is not None:
+                    data[field] = stored
             return data
+
+        if not data.get('mail_from'):
+            self.add_error(
+                'mail_from',
+                ValidationError(_('A sender email address is required when using a custom email gateway.')),
+            )
 
         password = data.get('smtp_password')
         username = data.get('smtp_username')
@@ -161,6 +183,9 @@ class CentralMailSettingsForm(SettingsForm):
         vendor = data.get('email_vendor', 'smtp')
 
         if vendor == 'sendgrid':
+            api_key = data.get('send_grid_api_key')
+            if api_key == ENCRYPTED_PASSWORD_PLACEHOLDER:
+                data['send_grid_api_key'] = self.initial.get('send_grid_api_key', '')
             if not data.get('send_grid_api_key'):
                 self.add_error(
                     'send_grid_api_key',

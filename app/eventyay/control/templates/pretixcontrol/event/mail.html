@@ -25,10 +25,5 @@
         </a>
     </div>
 
-    <form action="" method="post" class="form-horizontal" enctype="multipart/form-data"
-            mail-preview-url="{% url "control:event.settings.mail.preview" event=request.event.slug organizer=request.event.organizer.slug %}">
-        {% csrf_token %}
-        {% bootstrap_form_errors form %}
-    </form>
 {% endblock %}
 
