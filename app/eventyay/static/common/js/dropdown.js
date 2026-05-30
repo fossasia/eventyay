@@ -7,7 +7,16 @@
 
 const GLOBAL_INIT_FLAG = 'eventyayDropdownGlobalInit';
 const initializedDropdowns = new WeakSet();
-const LANGUAGE_SCROLL_PADDING = 12;
+
+const getElementTopInContainer = function(element, container) {
+    if (element.offsetParent === container) {
+        return element.offsetTop;
+    }
+
+    const itemRect = element.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    return itemRect.top - containerRect.top + container.scrollTop;
+};
 
 const scrollActiveItemsIntoView = function(dropdown) {
     const scrollContainers = dropdown.querySelectorAll('.language-column-scroll');
@@ -17,18 +26,10 @@ const scrollActiveItemsIntoView = function(dropdown) {
         const activeItem = container.querySelector('.dropdown-item.active');
         if (!activeItem) return;
 
-        // Force layout flush to ensure all dimensions are correct
-        // This is necessary especially on mobile where responsive styles are applied
         void container.offsetHeight;
         void activeItem.offsetHeight;
 
-        // Calculate position of active item relative to the scroll container
-        // This accounts for the current scroll position and the item's actual offset
-        const itemRect = activeItem.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        const itemTopInContainer = itemRect.top - containerRect.top + container.scrollTop;
-        const desiredScrollTop = Math.max(0, itemTopInContainer - LANGUAGE_SCROLL_PADDING);
-        container.scrollTop = desiredScrollTop;
+        container.scrollTop = Math.max(0, getElementTopInContainer(activeItem, container));
     });
 };
 

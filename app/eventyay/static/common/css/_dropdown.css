@@ -633,6 +633,7 @@ details.dropdown .dropdown-content-se::after {
 }
 
 #locale-dropdown .language-column .language-column-scroll {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
