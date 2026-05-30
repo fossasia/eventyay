@@ -42,6 +42,7 @@ from eventyay.base.services.system_questions import (
     state_to_asked_required,
 )
 from eventyay.base.settings import (
+    EVENT_SERIES_CREATION_ENABLED,
     GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
     PERSON_NAME_TITLE_GROUPS,
@@ -170,7 +171,7 @@ class EventWizardFoundationForm(forms.Form):
             })
 
         gs = GlobalSettingsObject()
-        series_enabled = gs.settings.get('event_series_creation_enabled', as_type=bool, default=True)
+        series_enabled = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
         if not series_enabled and cleaned_data.get('has_subevents'):
             raise ValidationError({
                 'has_subevents': _('Event series creation is disabled by the administrator.')
