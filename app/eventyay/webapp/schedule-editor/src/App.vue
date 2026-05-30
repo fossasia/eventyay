@@ -23,7 +23,7 @@
 							span {{ method.label }}
 							i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
 							i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
-				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
+				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
 				.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
 				.deleted-room-sessions(v-if="deletedRoomSessions.length")
@@ -573,6 +573,12 @@ function removeNewBreakHint() {
   newBreakTooltip.value = ''
 }
 
+function onNewBreakKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    removeNewBreakHint()
+  }
+}
+
 function onUnassignedLeave() {
   isUnassigning.value = false
   removeNewBreakHint()
@@ -882,6 +888,9 @@ onUnmounted(() => {
 					background-color: $clr-dividers-light
 		.new-break.c-linear-schedule-session
 			min-height: 48px
+			&:focus-visible
+				outline: 2px solid var(--color-primary, #3b82f6)
+				outline-offset: 2px
 		.new-break-hint
 			display: block
 			background: rgba(0, 0, 0, 0.6)

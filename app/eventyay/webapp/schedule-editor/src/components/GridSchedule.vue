@@ -142,6 +142,7 @@ const timesliceRefs = ref<HTMLElement[]>([])
 let observer: IntersectionObserver | null = null
 const layoutObservers: ResizeObserver[] = []
 let windowResizeListener: (() => void) | null = null
+let gridOffsetFrame: number | null = null
 
 const refreshGridOffset = () => {
   if (grid.value) {
@@ -149,11 +150,21 @@ const refreshGridOffset = () => {
   }
 }
 
+const scheduleRefreshGridOffset = () => {
+  if (gridOffsetFrame !== null) {
+    return
+  }
+  gridOffsetFrame = requestAnimationFrame(() => {
+    gridOffsetFrame = null
+    refreshGridOffset()
+  })
+}
+
 const observeElementResize = (element: HTMLElement | null) => {
   if (!element || typeof ResizeObserver === 'undefined') {
     return
   }
-  const resizeObserver = new ResizeObserver(refreshGridOffset)
+  const resizeObserver = new ResizeObserver(scheduleRefreshGridOffset)
   resizeObserver.observe(element)
   layoutObservers.push(resizeObserver)
 }
@@ -674,7 +685,7 @@ onMounted(async () => {
     observeElementResize(layoutRoot)
   }
   if (typeof ResizeObserver === 'undefined') {
-    windowResizeListener = refreshGridOffset
+    windowResizeListener = scheduleRefreshGridOffset
     window.addEventListener('resize', windowResizeListener)
   }
 
@@ -691,6 +702,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   timesliceRefs.value = []
+  if (gridOffsetFrame !== null) {
+    cancelAnimationFrame(gridOffsetFrame)
+    gridOffsetFrame = null
+  }
   layoutObservers.forEach((resizeObserver) => resizeObserver.disconnect())
   layoutObservers.length = 0
   if (windowResizeListener) {
