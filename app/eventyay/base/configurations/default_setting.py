@@ -62,6 +62,28 @@ def primary_font_kwargs():
     }
 
 
+def hex_color_field_config(label, default='', help_text=None, widget_class='colorpickerfield'):
+    validator = RegexValidator(
+        regex='^#[0-9a-fA-F]{6}$',
+        message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
+    )
+    form_kwargs = dict(
+        label=label,
+        validators=[validator],
+        widget=forms.TextInput(attrs={'class': widget_class}),
+    )
+    if help_text:
+        form_kwargs['help_text'] = help_text
+    return {
+        'default': default,
+        'type': str,
+        'form_class': forms.CharField,
+        'serializer_class': serializers.CharField,
+        'serializer_kwargs': dict(validators=[validator]),
+        'form_kwargs': form_kwargs,
+    }
+
+
 DEFAULT_SETTINGS = {
     'max_products_per_order': {
         'default': '10',
@@ -2000,200 +2022,33 @@ Your {event} team"""
     'smtp_password': {'default': '', 'type': str},
     'smtp_use_tls': {'default': 'True', 'type': bool},
     'smtp_use_ssl': {'default': 'False', 'type': bool},
-    'primary_color': {
-        'default': settings.EVENTYAY_PRIMARY_COLOR,
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Primary color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'header_background_color': {
-        'default': '',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Header background color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'header_text_color': {
-        'default': '',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Header text color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'navigation_text_color': {
-        'default': '',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Navigation text color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'theme_color_success': {
-        'default': '#50a167',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Accent color for success'),
-            help_text=_('We strongly suggest to use a shade of green.'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'theme_color_danger': {
-        'default': '#c44f4f',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Accent color for errors'),
-            help_text=_('We strongly suggest to use a shade of red.'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield'}),
-        ),
-    },
-    'theme_color_background': {
-        'default': '#f5f5f5',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Page background color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield no-contrast'}),
-        ),
-    },
-    'hover_button_color': {
-        'default': '#2185d0',
-        'type': str,
-        'form_class': forms.CharField,
-        'serializer_class': serializers.CharField,
-        'serializer_kwargs': dict(
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-        ),
-        'form_kwargs': dict(
-            label=_('Scroll-over color'),
-            validators=[
-                RegexValidator(
-                    regex='^#[0-9a-fA-F]{6}$',
-                    message=_('Please enter the hexadecimal code of a color, e.g. #990000.'),
-                ),
-            ],
-            widget=forms.TextInput(attrs={'class': 'colorpickerfield no-contrast'}),
-        ),
-    },
+    'primary_color': hex_color_field_config(
+        _('Primary color'),
+        default=settings.EVENTYAY_PRIMARY_COLOR,
+    ),
+    'header_background_color': hex_color_field_config(_('Header background color')),
+    'header_text_color': hex_color_field_config(_('Header text color')),
+    'navigation_text_color': hex_color_field_config(_('Navigation text color')),
+    'theme_color_success': hex_color_field_config(
+        _('Accent color for success'),
+        default='#50a167',
+        help_text=_('We strongly suggest to use a shade of green.'),
+    ),
+    'theme_color_danger': hex_color_field_config(
+        _('Accent color for errors'),
+        default='#c44f4f',
+        help_text=_('We strongly suggest to use a shade of red.'),
+    ),
+    'theme_color_background': hex_color_field_config(
+        _('Page background color'),
+        default='#f5f5f5',
+        widget_class='colorpickerfield no-contrast',
+    ),
+    'hover_button_color': hex_color_field_config(
+        _('Scroll-over color'),
+        default='#2185d0',
+        widget_class='colorpickerfield no-contrast',
+    ),
     'theme_round_borders': {
         'default': 'True',
         'type': bool,
