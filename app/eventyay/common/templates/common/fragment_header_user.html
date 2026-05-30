@@ -86,10 +86,6 @@
             </summary>
             {% endwith %}
             <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-                <a href="{% url 'presale:index' %}" class="dropdown-item" role="menuitem" tabindex="-1">
-                    <i class="fa fa-home"></i>
-                    {% translate "Home" %}
-                </a>
                 <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-item" role="menuitem" tabindex="-1">
                     <i class="fa fa-dashboard"></i>
                     {% translate "Dashboard" %}
