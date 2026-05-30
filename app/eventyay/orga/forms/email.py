@@ -19,7 +19,42 @@ SMTP_VENDOR_CHOICES = (
 
 
 class CentralMailSettingsForm(SettingsForm):
-    """Shared SMTP / email-gateway form; saves to event.settings for Event.get_mail_backend()."""
+    """
+    Central email settings form covering:
+    - General email settings (sender, reply-to, BCC, prefix, signature)
+    - Email design (HTML renderer)
+    - Email gateway (custom SMTP / SendGrid)
+    Saves all fields to event.settings via hierarkey.
+    """
+
+    auto_fields = [
+        'mail_from',
+        'mail_from_name',
+        'mail_reply_to',
+        'mail_prefix',
+    ]
+
+    mail_bcc = forms.CharField(
+        label=_('Bcc address'),
+        help_text=_('All emails will be sent to this address as a Bcc copy.'),
+        validators=[multimail_validate],
+        required=False,
+        max_length=255,
+    )
+    mail_text_signature = forms.CharField(
+        label=_('Email signature'),
+        help_text=_(
+            'This text will be appended to every outgoing email (both Tickets and Talks). '
+            'You can use Markdown.'
+        ),
+        required=False,
+        widget=forms.Textarea(attrs={'rows': '4'}),
+    )
+    mail_html_renderer = forms.ChoiceField(
+        label=_('HTML mail renderer'),
+        required=True,
+        choices=[],
+    )
 
     smtp_use_custom = forms.BooleanField(
         label=_('Use custom email gateway'),
@@ -84,6 +119,11 @@ class CentralMailSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         kwargs.pop('read_only', None)
         super().__init__(*args, **kwargs)
+        if self.obj:
+            self.fields['mail_html_renderer'].choices = [
+                (r.identifier, r.verbose_name)
+                for r in self.obj.get_html_mail_renderers().values()
+            ]
         if self.fields['smtp_password'].initial:
             self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
 

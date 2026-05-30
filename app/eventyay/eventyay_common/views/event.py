@@ -607,6 +607,7 @@ class EventUpdate(
         context = super().get_context_data(*args, **kwargs)
         context['sform'] = self.sform
         context['email_form'] = self.email_form
+        context['renderers'] = self.object.get_html_mail_renderers()
         context['header_links_formset'] = self.header_links_formset
         context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)

@@ -143,7 +143,13 @@ def get_reply_to_address(
 ):
     """
     Resolve Reply-To with unified precedence:
-    override → template.reply_to → mail_settings['reply_to'] → settings.mail_reply_to → event.email (platform sender only) → None
+    override
+    → template.reply_to
+    → settings.mail_reply_to  (canonical common setting for both Tickets and Talks)
+    → event.email             (organizer email set on the event)
+    → organizer.settings.contact_mail  (fallback to organizer-level contact address)
+    → mail_settings['reply_to']        (legacy Talks field, kept for backwards compat)
+    → None
     """
     if override is not None:
         return override
@@ -151,14 +157,18 @@ def get_reply_to_address(
     if template and hasattr(template, 'reply_to') and template.reply_to:
         return template.reply_to
 
-    if event.mail_settings.get('reply_to'):
-        return event.mail_settings['reply_to']
-
     if event.settings.get('mail_reply_to'):
         return event.settings.mail_reply_to
 
     use_default_sender = not event.settings.smtp_use_custom
-    if use_default_sender and sender_email == settings.MAIL_FROM and event.email:
-        return event.email
+    if use_default_sender and sender_email == settings.MAIL_FROM:
+        if event.email:
+            return event.email
+        contact_mail = event.organizer.settings.get('contact_mail')
+        if contact_mail:
+            return contact_mail
+
+    if event.mail_settings.get('reply_to'):
+        return event.mail_settings['reply_to']
 
     return None
