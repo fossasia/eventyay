@@ -11,11 +11,6 @@
   cursor: pointer;
 }
 
-/* Add padding to username for visual match */
-.presale-sticky-tabs .header-row-right details.dropdown summary .mobile-hide-text {
-  padding-left: 6px;
-  padding-right: 6px;
-}
 body {
   background: var(--color-grey-lightest);
 }
