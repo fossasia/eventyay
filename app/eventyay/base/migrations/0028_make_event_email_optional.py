@@ -19,9 +19,9 @@ class Migration(migrations.Migration):
             field=models.EmailField(
                 blank=True,
                 help_text=(
-                    'Optional organizer contact email. '
-                    'When the platform sender is used, this address will be used as the Reply-To header. '
-                    'If left empty, no Reply-To is added automatically and replies go to the platform sender.'
+                    'Enter an organizer email address for event-related emails. '
+                    'If set, this address will be used as the Reply-To when the platform sender address is used. '
+                    'If left empty, no Reply-To will be added automatically and replies will go to the sender address (platform default if not customized).'
                 ),
                 max_length=254,
                 null=True,

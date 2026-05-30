@@ -769,6 +769,7 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             'mail_attach_tickets',
             'mail_attach_ical',
             'mail_sales_channel_placed_paid',
+            'mail_sales_channel_download_reminder',
             # Email-content template fields (edited per-email on dedicated pages)
             'mail_text_order_placed',
             'mail_send_order_placed_attendee',
