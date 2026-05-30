@@ -292,6 +292,9 @@ def notify_webhooks(logentry_ids: list):
             send_webhook.apply_async(args=(logentry.id, notification_type.action_type, wh.pk))
 
 
+WEBHOOK_TIMEOUT = 30  # seconds
+
+
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
 def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
     # 9 retries with 2**(2*x) timing is roughly 72 hours
@@ -309,11 +312,26 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
             # Content object deleted?
             return
 
+        max_body_size = settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]
         t = time.time()
 
         try:
             try:
-                resp = requests.post(webhook.target_url, json=payload, allow_redirects=False)
+                resp = requests.post(
+                    webhook.target_url,
+                    json=payload,
+                    allow_redirects=False,
+                    timeout=WEBHOOK_TIMEOUT,
+                    stream=True,
+                )
+                raw_chunks = []
+                bytes_read = 0
+                for chunk in resp.iter_content(chunk_size=4096):
+                    raw_chunks.append(chunk)
+                    bytes_read += len(chunk)
+                    if bytes_read >= max_body_size:
+                        break
+                response_body = b''.join(raw_chunks)[:max_body_size].decode('utf-8', errors='replace')
                 WebHookCall.objects.create(
                     webhook=webhook,
                     action_type=logentry.action_type,
@@ -322,7 +340,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    response_body=response_body,
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -341,7 +359,8 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=0,
                     payload=json.dumps(payload),
-                    response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
+                    response_body=str(e)[:max_body_size],
+                    success=False,
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
