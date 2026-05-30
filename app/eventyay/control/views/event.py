@@ -754,16 +754,22 @@ class MailSettings(EventSettingsViewMixin, EventSettingsFormView):
             },
         )
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['renderers'] = self.request.event.get_html_mail_renderers()
-        return ctx
-
     def get_form(self):
         form = super().get_form()
 
-        # List of email-content fields to exclude
         exclude_fields = [
+            # Fields now managed in the common Email settings tab
+            'mail_prefix',
+            'mail_from',
+            'mail_from_name',
+            'mail_reply_to',
+            'mail_bcc',
+            'mail_text_signature',
+            'mail_html_renderer',
+            'mail_attach_tickets',
+            'mail_attach_ical',
+            'mail_sales_channel_placed_paid',
+            # Email-content template fields (edited per-email on dedicated pages)
             'mail_text_order_placed',
             'mail_send_order_placed_attendee',
             'mail_text_order_placed_attendee',

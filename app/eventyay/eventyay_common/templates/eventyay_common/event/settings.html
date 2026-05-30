@@ -205,12 +205,45 @@
             <legend>{% trans "Email" %}</legend>
             <div class="alert alert-info">
                 {% blocktrans trimmed %}
-                    Configure the email gateway (SMTP / SendGrid) used for <strong>all outgoing
-                    event emails</strong> — both the Tickets and Talks components share this
-                    configuration. Subject prefixes, signatures, and templates can still
-                    be customised on each component's own email settings page.
+                    All outgoing event emails — both <strong>Tickets</strong> and <strong>Talks</strong> —
+                    share the settings on this page. Component-specific email templates can still be
+                    customised on each component's own email settings page.
                 {% endblocktrans %}
             </div>
+
+            <h4 class="settings-sub-heading">{% trans "General" %}</h4>
+            {% bootstrap_field email_form.mail_from layout="control" %}
+            {% bootstrap_field email_form.mail_from_name layout="control" %}
+            {% bootstrap_field email_form.mail_reply_to layout="control" %}
+            {% bootstrap_field email_form.mail_bcc layout="control" %}
+            {% bootstrap_field email_form.mail_prefix layout="control" %}
+            {% bootstrap_field email_form.mail_text_signature layout="control" %}
+
+            <h4 class="settings-sub-heading">{% trans "Email design" %}</h4>
+            <div class="form-group">
+                <label class="col-md-3 control-label">{% trans "HTML mail renderer" %}</label>
+                <div class="col-md-9">
+                    <div class="row">
+                        {% for r in renderers.values %}
+                        <div class="col-md-4">
+                            <div class="well maildesignpreview text-center">
+                                <label class="radio">
+                                    <input type="radio"
+                                           name="{{ email_form.mail_html_renderer.html_name }}"
+                                           value="{{ r.identifier }}"
+                                           {% if email_form.mail_html_renderer.value == r.identifier %}checked{% endif %}>
+                                    {{ r.verbose_name }}
+                                </label>
+                                {% load static %}
+                                <img src="{% static r.thumbnail_filename %}" class="img-responsive" alt="{{ r.verbose_name }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="settings-sub-heading">{% trans "Email gateway" %}</h4>
             {% bootstrap_field email_form.smtp_use_custom layout="control" %}
             <div id="smtp-custom-fields">
                 {% bootstrap_field email_form.email_vendor layout="control" %}

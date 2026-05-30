@@ -234,33 +234,14 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
 
 
 class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMixin, forms.Form):
-    reply_to = forms.EmailField(
-        label=_('Reply-To address'),
-        help_text=_(
-            'Override the Reply-To header for all outgoing event emails (Tickets and Talks). '
-            'If left empty and the platform sender is used, the event organizer email is used as Reply-To.'
-        ),
-        required=False,
-    )
-    subject_prefix = forms.CharField(
-        label=_('Mail subject prefix'),
-        help_text=_('The prefix will be prepended to outgoing mail subjects in [brackets].'),
-        required=False,
-    )
-    signature = forms.CharField(
-        label=_('Mail signature'),
-        help_text=_('The signature will be added to outgoing mails, preceded by "-- ". ')
-        + phrases.base.use_markdown,
-        required=False,
-        widget=forms.Textarea,
-    )
+    """
+    Talks-specific email settings. The fields reply_to, subject_prefix, and signature
+    have been moved to the central Email settings tab (CentralMailSettingsForm).
+    This form is kept for backward compatibility but currently has no fields.
+    """
 
     class Meta:
-        json_fields = {
-            'reply_to': 'mail_settings',
-            'subject_prefix': 'mail_settings',
-            'signature': 'mail_settings',
-        }
+        json_fields = {}
 
 
 class ReviewSettingsForm(

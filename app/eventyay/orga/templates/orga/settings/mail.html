@@ -14,49 +14,22 @@
 {% block extra_title %}{% translate "Email settings" %} :: {% endblock extra_title %}
 
 {% block settings_content %}
-    <form method="post">
-        {% csrf_token %}
-        <div id="main-title" class="d-md-flex justify-content-between">
-            <h2>
-            {% translate "Talk Email Settings" %}
-            <span data-dialog-target="#info-dialog" data-toggle="dialog">
-                <i class="fa fa-question-circle-o text-info"></i>
-            </span>
-            </h2>
-            {% include "orga/event/component_link.html" %}
-        </div>
-        <dialog id="info-dialog">
-            <div class="alert alert-info">
-                {% blocktranslate trimmed %}
-                    Most settings on this page apply to emails sent in the context of the Talks component
-                    (e.g. speaker notifications, review emails). The <strong>Reply-To override</strong> is
-                    shared and also affects ticket and bulk emails.
-                {% endblocktranslate %}
-            </div>
-        </dialog>
+    <div id="main-title" class="d-md-flex justify-content-between">
+        <h2>{% translate "Talk Email Settings" %}</h2>
+        {% include "orga/event/component_link.html" %}
+    </div>
 
-        <div class="alert alert-info" role="alert">
-            <strong>{% translate "SMTP is configured centrally" %}</strong> —
-            {% blocktranslate trimmed %}
-                The SMTP server used for all outgoing emails (including talk emails) is configured centrally
-                under <strong>Event Settings › Email</strong>.
-                Changes made there affect all event components.
-            {% endblocktranslate %}
-            <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info" style="margin-left:8px;">
-                {% translate "Go to Email Settings" %}
-            </a>
-        </div>
-
-        {{ form }}
-
-        <div class="submit-group panel">
-            <span></span>
-            <span>
-                {% if action == "edit" or action == "create" %}
-                    <button type="submit" class="btn btn-lg btn-info">{{ phrases.base.save }}</button>
-                {% endif %}
-            </span>
-        </div>
-    </form>
+    <div class="alert alert-info" role="alert">
+        <strong>{% translate "Email settings have moved" %}</strong> —
+        {% blocktranslate trimmed %}
+            All shared email settings — sender address, Reply-To, BCC, subject prefix, signature,
+            HTML renderer, and the email gateway (SMTP / SendGrid) — are now configured centrally
+            under <strong>Event Settings › Email</strong> and apply to both the Tickets and Talks
+            components.
+        {% endblocktranslate %}
+        <a href="{% url 'eventyay_common:event.update' organizer=request.event.organizer.slug event=request.event.slug %}#email-settings-tab" class="btn btn-sm btn-outline-info" style="margin-left:8px;">
+            {% translate "Go to Email Settings" %}
+        </a>
+    </div>
 {% endblock settings_content %}
 

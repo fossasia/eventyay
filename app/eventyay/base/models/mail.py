@@ -44,7 +44,11 @@ def _should_warn_missing_placeholders(template_pk, missing) -> bool:
 
 
 def get_prefixed_subject(event, subject):
-    if not (prefix := event.mail_settings['subject_prefix']):
+    prefix = (
+        event.settings.get('mail_prefix')
+        or event.mail_settings.get('subject_prefix', '')
+    )
+    if not prefix:
         return subject
     if not (prefix.startswith('[') and prefix.endswith(']')):
         prefix = f'[{prefix}]'
@@ -413,8 +417,11 @@ class QueuedMail(PretalxModel):
         event = getattr(self, 'event', None)
         sig = None
         if event:
-            sig = event.mail_settings['signature']
-            if sig.strip().startswith('-- '):
+            sig = (
+                str(event.settings.get('mail_text_signature') or '')
+                or event.mail_settings.get('signature', '')
+            )
+            if sig and sig.strip().startswith('-- '):
                 sig = sig.strip()[3:].strip()
         body_md = render_markdown_abslinks(self.text)
         html_context = {
@@ -430,9 +437,14 @@ class QueuedMail(PretalxModel):
 
     def make_text(self):
         event = getattr(self, 'event', None)
-        if not event or not event.mail_settings['signature']:
+        sig = None
+        if event:
+            sig = (
+                str(event.settings.get('mail_text_signature') or '')
+                or event.mail_settings.get('signature', '')
+            ) or None
+        if not sig:
             return self.text
-        sig = event.mail_settings['signature']
         if not sig.strip().startswith('-- '):
             sig = f'-- \n{sig}'
         return f'{self.text}\n{sig}'
