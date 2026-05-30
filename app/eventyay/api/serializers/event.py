@@ -828,6 +828,7 @@ class EventSettingsSerializer(SettingsSerializer):
 
     def update(self, instance, validated_data):
         meta_noindex = validated_data.pop('meta_noindex', empty)
+        instance = super().update(instance, validated_data)
         if meta_noindex is not empty:
             display_settings = dict(self.event.display_settings or {})
             if meta_noindex is None:
@@ -838,7 +839,7 @@ class EventSettingsSerializer(SettingsSerializer):
                 self.event.display_settings = display_settings
                 self.event.save(update_fields=['display_settings'])
                 self.changed_data.append('meta_noindex')
-        return super().update(instance, validated_data)
+        return instance
 
     def flush_settings_cache(self):
         self.instance.flush()

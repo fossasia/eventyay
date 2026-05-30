@@ -13,7 +13,11 @@ def migrate_meta_noindex(apps, schema_editor):
 
     events_to_update = {}
 
-    for setting in Event_SettingsStore.objects.filter(key='meta_noindex').iterator(chunk_size=_CHUNK_SIZE):
+    for setting in (
+        Event_SettingsStore.objects.filter(key='meta_noindex')
+        .select_related('object')
+        .iterator(chunk_size=_CHUNK_SIZE)
+    ):
         if setting.value not in _TRUTHY_VALUES:
             continue
         event = setting.object

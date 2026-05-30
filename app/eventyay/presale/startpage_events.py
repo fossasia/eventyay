@@ -6,6 +6,13 @@ from eventyay.base.models import Event
 def get_startpage_events_queryset(*, search_query: str = ''):
     """
     Shared queryset for platform start page listings and related consumers (e.g. CSP).
+
+    Without ``search_query``, only events marked ``startpage_visible`` or
+    ``startpage_featured`` are returned (plus ``exclude_from_start_page`` opt-out).
+
+    With ``search_query``, any live public event matching the name is returned unless
+    it opted out via ``exclude_from_start_page`` — including events not shown on the
+    default start page listing.
     """
     qs = (
         Event.objects.select_related('organizer')

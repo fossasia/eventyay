@@ -6,10 +6,10 @@ from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models.page import Page
-from eventyay.presale.startpage_events import get_startpage_events_queryset
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.eventyay_common.navigation import get_global_navigation
+from eventyay.presale.startpage_events import get_startpage_events_queryset
 
 
 class StartPageView(TemplateView):

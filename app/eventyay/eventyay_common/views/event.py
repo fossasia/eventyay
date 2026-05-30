@@ -437,7 +437,7 @@ class EventUpdate(
             or self.footer_links_formset.has_changed()
             or form.has_changed()
         )
-        if settings_changed and self.sform.has_changed() and any(
+        if self.sform.has_changed() and any(
             p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS
         ):
             transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
