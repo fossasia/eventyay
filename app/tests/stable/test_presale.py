@@ -80,11 +80,17 @@ class TestEventPages:
             live=True,
             email='hidden@example.com',
         )
+
+        response = client.get(f'/{organizer.slug}/')
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Visible Organizer Event' in content
+        assert 'Hidden Organizer Event' in content
+
         hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_start_page': True}
         hidden_event.save(update_fields=['display_settings'])
 
         response = client.get(f'/{organizer.slug}/')
-
         assert response.status_code == 200
         content = response.content.decode('utf-8')
         assert 'Visible Organizer Event' in content

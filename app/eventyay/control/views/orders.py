@@ -492,6 +492,7 @@ class OrderDetail(OrderView):
             .prefetch_related(
                 'product__questions',
                 'issued_gift_cards',
+                'addons',
                 Prefetch(
                     'answers',
                     queryset=QuestionAnswer.objects.prefetch_related('options').select_related('question'),

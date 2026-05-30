@@ -300,10 +300,6 @@ class EventCreateView(SafeSessionWizardView):
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone'])
-            
-            # Save imprint_url to settings (consistent with EventCommonSettingsForm)
-            if basics_data.get('imprint_url'):
-                event.settings.set('imprint_url', basics_data['imprint_url'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -434,16 +430,17 @@ class EventUpdate(
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
 
-        settings_changed = (
-            self.sform.has_changed()
-            or self.pubform.has_changed()
-            or self.header_links_formset.has_changed()
-            or self.footer_links_formset.has_changed()
-            or form.has_changed()
+        has_updates = any(
+            (
+                form.has_changed(),
+                self.sform.has_changed(),
+                self.pubform.has_changed(),
+                self.header_links_formset.has_changed(),
+                self.footer_links_formset.has_changed(),
+            )
         )
-        if self.sform.has_changed() and any(
-            p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS
-        ):
+
+        if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
             transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
@@ -453,7 +450,7 @@ class EventUpdate(
                     'active.'
                 ),
             )
-        elif settings_changed:
+        elif has_updates:
             messages.success(self.request, _('Your changes have been saved.'))
 
         return super().form_valid(form)

@@ -802,6 +802,8 @@ class EventSettingsSerializer(SettingsSerializer):
         'event_logo_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -828,17 +830,18 @@ class EventSettingsSerializer(SettingsSerializer):
 
     def update(self, instance, validated_data):
         meta_noindex = validated_data.pop('meta_noindex', empty)
-        instance = super().update(instance, validated_data)
-        if meta_noindex is not empty:
-            display_settings = dict(self.event.display_settings or {})
-            if meta_noindex is None:
-                display_settings.pop('meta_noindex', None)
-            else:
-                display_settings['meta_noindex'] = meta_noindex
-            if display_settings != self.event.display_settings:
-                self.event.display_settings = display_settings
-                self.event.save(update_fields=['display_settings'])
-                self.changed_data.append('meta_noindex')
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if meta_noindex is not empty:
+                display_settings = dict(self.event.display_settings or {})
+                if meta_noindex is None:
+                    display_settings.pop('meta_noindex', None)
+                else:
+                    display_settings['meta_noindex'] = meta_noindex
+                if display_settings != self.event.display_settings:
+                    self.event.display_settings = display_settings
+                    self.event.save(update_fields=['display_settings'])
+                    self.changed_data.append('meta_noindex')
         return instance
 
     def flush_settings_cache(self):
