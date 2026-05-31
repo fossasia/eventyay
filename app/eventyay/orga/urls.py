@@ -222,16 +222,6 @@ urlpatterns = [
                     namespace='orga',
                 ),
                 path(
-                    'submissions/import/',
-                    submission.SubmissionImportView.as_view(),
-                    name='submissions.import',
-                ),
-                path(
-                    'submissions/import/<uuid:file>/',
-                    submission.SubmissionImportProcessView.as_view(),
-                    name='submissions.import.process',
-                ),
-                path(
                     'submissions/<code>/',
                     include(
                         [
@@ -339,21 +329,6 @@ urlpatterns = [
                     ),
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
-                path(
-                    'speakers/export/',
-                    speaker.SpeakerExport.as_view(),
-                    name='speakers.export',
-                ),
-                path(
-                    'speakers/import/',
-                    speaker.SpeakerImportView.as_view(),
-                    name='speakers.import',
-                ),
-                path(
-                    'speakers/import/<uuid:file>/',
-                    speaker.SpeakerImportProcessView.as_view(),
-                    name='speakers.import.process',
-                ),
                 path(
                     'speakers/<code>/',
                     include(
