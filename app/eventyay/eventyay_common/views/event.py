@@ -201,7 +201,6 @@ class EventCreateView(TemplateView):
                     'geo_lat': clone_from.geo_lat,
                     'geo_lon': clone_from.geo_lon,
                     'email': clone_from.email,
-                    'imprint_url': clone_from.settings.get('imprint_url', ''),
                     'timezone': clone_from.settings.get('timezone') or clone_from.timezone,
                     'locale': clone_from.settings.get('locale') or clone_from.locale,
                 }
