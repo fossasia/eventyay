@@ -134,7 +134,7 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   margin-bottom: 0;
 
   > .control-label {
-    padding-top: 4px;
+    padding-top: 0;
   }
 }
 
@@ -154,7 +154,8 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
 
 #answer-options .question-option-row {
   display: flex;
-  align-items: flex-start;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 8px;
 }
 
@@ -180,7 +181,7 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
 
 #answer-options .question-option-actions {
   flex: 0 0 auto;
-  padding-top: 7px;
+  padding: 0;
   white-space: nowrap;
 
   .btn + .btn {
@@ -459,6 +460,11 @@ label .optional {
 }
 .form-horizontal .control-label {
   pointer-events: none;
+}
+@media (min-width: $screen-sm-min) {
+  .form-horizontal .control-label {
+    padding-top: 0;
+  }
 }
 .form-horizontal .control-label .label-text,
 .form-horizontal .control-label .optional {
