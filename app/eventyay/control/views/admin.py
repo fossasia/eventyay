@@ -81,7 +81,14 @@ class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
             ctx['events_total'] = Event.objects.count()
             ctx['events_live'] = Event.objects.filter(live=True).count()
             ctx['events_draft'] = Event.objects.filter(live=False).count()
-            ctx['events_past'] = Event.objects.filter(live=True, date_from__lt=n).count()
+            ctx['events_past'] = (
+                Event.objects.filter(live=True, has_subevents=False)
+                .filter(
+                    Q(Q(date_to__isnull=True) & Q(date_from__lt=n))
+                    | Q(Q(date_to__isnull=False) & Q(date_to__lt=n))
+                )
+                .count()
+            )
             ctx['events_series'] = Event.objects.filter(has_subevents=True).count()
 
             # Order KPIs
