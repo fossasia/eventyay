@@ -11,11 +11,15 @@
 
     {% block field_content_right %}
         {% if field.use_fieldset %}<fieldset{% if field.help_text and field.auto_id and "aria-describedby" not in field.field.widget.attrs %} aria-describedby="{{ field.auto_id }}_helptext"{% endif %}>{% endif %}
-        {{ field }}
         {% if field.field.widget.input_type == "checkbox" and not field.field.widget.allow_multiple_selected %}
-            <label class="form-check-label" for="{{ field.auto_id }}">
-                {{ field.label }}
-            </label>
+            <div class="form-check">
+                {{ field }}
+                <label class="form-check-label" for="{{ field.auto_id }}">
+                    {{ field.label }}
+                </label>
+            </div>
+        {% else %}
+            {{ field }}
         {% endif %}
         {% if field.use_fieldset %}</fieldset>{% endif %}
         {% if field.errors %}

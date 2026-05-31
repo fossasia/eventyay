@@ -26,6 +26,69 @@ function debounce(func, wait) {
     };
 }
 
+function getFieldElements(form, name) {
+    const elements = form.elements[name];
+    if (!elements) return [];
+    if (typeof elements.length === 'number' && !elements.tagName) {
+        return Array.from(elements);
+    }
+    return [elements];
+}
+
+function getFieldValue(form, name) {
+    const elements = getFieldElements(form, name);
+    if (!elements.length) return undefined;
+
+    const [element] = elements;
+
+    if (element.type === 'checkbox') {
+        if (elements.length > 1) {
+            return elements.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+        }
+        return element.checked;
+    }
+
+    if (element.type === 'radio') {
+        const checkedElement = elements.find((radio) => radio.checked);
+        return checkedElement ? checkedElement.value : '';
+    }
+
+    if (element.tagName === 'SELECT' && element.multiple) {
+        return Array.from(element.options).filter((option) => option.selected).map((option) => option.value);
+    }
+
+    return element.value ?? '';
+}
+
+function normalizeFieldValue(value) {
+    if (Array.isArray(value)) {
+        return value.map((item) => String(item).trim()).sort();
+    }
+    if (typeof value === 'boolean') {
+        return value;
+    }
+    if (value == null) {
+        return '';
+    }
+    return String(value).trim();
+}
+
+function fieldValuesMatch(currentValue, savedValue) {
+    const normalizedCurrent = normalizeFieldValue(currentValue);
+    const normalizedSaved = normalizeFieldValue(savedValue);
+
+    if (Array.isArray(normalizedCurrent) || Array.isArray(normalizedSaved)) {
+        const currentArray = Array.isArray(normalizedCurrent) ? normalizedCurrent : [normalizedCurrent];
+        const savedArray = Array.isArray(normalizedSaved) ? normalizedSaved : [normalizedSaved];
+        if (currentArray.length !== savedArray.length) {
+            return false;
+        }
+        return currentArray.every((value, index) => value === savedArray[index]);
+    }
+
+    return normalizedCurrent === normalizedSaved;
+}
+
 // Save form data to sessionStorage
 function saveFormData() {
     const form = document.getElementById('cfp-submission-form');
@@ -55,15 +118,16 @@ function saveFormData() {
         }
     }
 
-    // FormData doesn't include unchecked checkboxes, so we need to add them
-    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach((checkbox) => {
-        if (checkbox.name && checkbox.name !== 'csrfmiddlewaretoken' && !formData.hasOwnProperty(checkbox.name)) {
-            formData[checkbox.name] = false;
-        } else if (checkbox.name && formData.hasOwnProperty(checkbox.name)) {
-            // Checkbox is checked (already in formData from FormData)
-            formData[checkbox.name] = true;
+    // FormData doesn't include unchecked checkboxes. For single checkboxes we
+    // store a boolean, and for checkbox groups we store the selected values.
+    const checkboxNames = new Set();
+    form.querySelectorAll('input[type="checkbox"][name]').forEach((checkbox) => {
+        if (checkbox.name && checkbox.name !== 'csrfmiddlewaretoken' && checkbox.name !== 'action') {
+            checkboxNames.add(checkbox.name);
         }
+    });
+    checkboxNames.forEach((name) => {
+        formData[name] = getFieldValue(form, name);
     });
 
     try {
@@ -90,15 +154,10 @@ function restoreFormData() {
         let checkedFields = 0;
 
         for (const [name, savedValue] of Object.entries(formData)) {
-            const elements = form.elements[name];
-            if (!elements) continue;
-
-            const element = elements.length !== undefined ? elements[0] : elements;
-            const currentValue = element.value || '';
-            const savedValueStr = String(savedValue || '');
-
+            const currentValue = getFieldValue(form, name);
+            if (currentValue === undefined) continue;
             checkedFields++;
-            if (currentValue.trim() !== savedValueStr.trim()) {
+            if (!fieldValuesMatch(currentValue, savedValue)) {
                 allFieldsMatch = false;
                 break;
             }
@@ -113,35 +172,34 @@ function restoreFormData() {
 
         // Otherwise, restore from sessionStorage
         for (const [name, value] of Object.entries(formData)) {
-            const elements = form.elements[name];
-            if (!elements) continue;
+            const elements = getFieldElements(form, name);
+            if (!elements.length) continue;
 
-            // Get the actual element(s)
-            const element = elements.length !== undefined ? elements[0] : elements;
+            const [element] = elements;
 
             if (element.type === 'checkbox') {
-                // Handle checkboxes (value is boolean)
                 if (elements.length > 1) {
-                    // Multiple checkboxes with same name
-                    for (let i = 0; i < elements.length; i++) {
-                        elements[i].checked = value;
-                    }
+                    const selectedValues = Array.isArray(value)
+                        ? value.map((entry) => String(entry))
+                        : value
+                            ? [String(value)]
+                            : [];
+                    elements.forEach((checkbox) => {
+                        checkbox.checked = selectedValues.includes(checkbox.value);
+                    });
                 } else {
-                    element.checked = value;
+                    element.checked = Boolean(value);
                 }
             } else if (element.type === 'radio') {
-                // Handle radio buttons
-                for (let i = 0; i < elements.length; i++) {
-                    elements[i].checked = (elements[i].value === value);
-                }
+                elements.forEach((radio) => {
+                    radio.checked = (radio.value === value);
+                });
             } else if (element.tagName === 'SELECT' && element.multiple) {
-                // Handle multi-select
                 const values = Array.isArray(value) ? value : [value];
-                for (let i = 0; i < element.options.length; i++) {
-                    element.options[i].selected = values.includes(element.options[i].value);
-                }
+                Array.from(element.options).forEach((option) => {
+                    option.selected = values.includes(option.value);
+                });
             } else {
-                // Handle text inputs, textareas, single selects
                 element.value = value;
             }
         }
@@ -190,4 +248,3 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
-
