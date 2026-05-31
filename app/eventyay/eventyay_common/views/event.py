@@ -651,10 +651,17 @@ class EventUpdate(
             )
         except HTTPError as e:
             logger.exception('Central SendGrid test failed (event=%s)', event.slug)
-            messages.error(self.request, _('SendGrid test failed. HTTP Error: %(err)s') % {'err': e})
-        except (smtplib.SMTPException, OSError) as e:
+            messages.error(
+                self.request,
+                _('SendGrid test failed with HTTP error %(code)s. Check your API key and try again.')
+                % {'code': e.response.status_code if hasattr(e, 'response') and e.response is not None else '?'},
+            )
+        except (smtplib.SMTPException, OSError):
             logger.exception('Central SMTP test failed (event=%s)', event.slug)
-            messages.warning(self.request, _('Test email failed to connect or send: %(err)s') % {'err': e})
+            messages.warning(
+                self.request,
+                _('Test email could not be delivered. Check the SMTP host, port, and credentials and try again.'),
+            )
         else:
             messages.success(self.request, _('Test email sent successfully.'))
 

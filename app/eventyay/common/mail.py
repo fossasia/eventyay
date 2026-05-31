@@ -71,9 +71,10 @@ def mail_send_task(
     if not to:
         return
     if isinstance(reply_to, str):
-        reply_to = [addr.strip() for addr in reply_to.split(',') if addr.strip()]
+        addrs = [addr.strip() for addr in reply_to.split(',') if addr.strip()]
+        reply_to = addrs if addrs else None
     elif reply_to is not None:
-        reply_to = [addr for addr in reply_to if addr]
+        reply_to = [addr for addr in reply_to if addr] or None
 
     if event:
         event = Event.objects.get(pk=event)
