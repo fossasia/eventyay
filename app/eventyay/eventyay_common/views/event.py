@@ -407,12 +407,18 @@ class EventUpdate(
             context['is_talk_event_created'] = True
         return context
 
+    def _needs_publication_settings_sync(self) -> bool:
+        if self.pubform.has_changed():
+            return True
+        display_settings = self.object.display_settings or {}
+        return any(field not in display_settings for field in self.pubform.Meta.json_fields)
+
     @transaction.atomic
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         if self.sform.has_changed():
             self.sform.save()
-        if self.pubform.is_valid():
+        if self.pubform.is_valid() and self._needs_publication_settings_sync():
             self.pubform.save()
         if self.header_links_formset.has_changed():
             self.header_links_formset.save()

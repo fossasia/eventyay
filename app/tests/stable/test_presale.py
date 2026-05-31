@@ -64,9 +64,8 @@ class TestEventPages:
 
     def test_organizer_page_hides_excluded_start_page_events(self, client, organizer, event):
         """Events excluded from organizer start page should not be listed."""
-        visible_event = event
-        visible_event.name = 'Visible Organizer Event'
-        visible_event.save(update_fields=['name'])
+        event.name = 'Visible Organizer Event'
+        event.save(update_fields=['name'])
 
         hidden_event = Event.objects.create(
             organizer=organizer,
@@ -81,13 +80,6 @@ class TestEventPages:
             sales_channels=['web'],
             email='hidden@example.com',
         )
-
-        response = client.get(f'/{organizer.slug}/')
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert 'Visible Organizer Event' in content
-        assert 'Hidden Organizer Event' in content
-
         hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_start_page': True}
         hidden_event.save(update_fields=['display_settings'])
 

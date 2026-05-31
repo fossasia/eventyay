@@ -866,7 +866,7 @@ class EventSettingsSerializer(SettingsSerializer):
         settings = {}
         for name, field in self.fields.items():
             if isinstance(field, DisplaySettingsAPIField):
-                settings[name] = field.get_attribute(self.instance)
+                settings[name] = bool((self.event.display_settings or {}).get(field.setting_key, False))
                 continue
             try:
                 settings[name] = self.instance.get(name)
