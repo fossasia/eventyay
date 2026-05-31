@@ -130,25 +130,56 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   margin-bottom: 0;
 }
 
-.row.question-option-row {
-  padding: 5px 0;
+#answer-options .answer-options-group {
+  margin-bottom: 0;
+
+  > .control-label {
+    padding-top: 4px;
+  }
 }
 
-#answer-options .question-option-row.form-group {
-  margin-bottom: 15px;
+#answer-options .question-option-item {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 #answer-options .question-option-label {
-  font-weight: normal;
+  font-size: $font-size-small;
   color: $text-muted;
+  margin-bottom: 4px;
 }
 
-#answer-options .question-option-field .form-group {
-  margin-bottom: 0;
-  width: 100%;
+#answer-options .question-option-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+#answer-options .question-option-field {
+  flex: 1 1 0;
+  min-width: 0;
+
+  .form-group {
+    margin-bottom: 0;
+    width: 100%;
+  }
+
+  .i18n-form-group {
+    width: 100%;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 #answer-options .question-option-actions {
+  flex: 0 0 auto;
   padding-top: 7px;
   white-space: nowrap;
 
@@ -158,7 +189,11 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
 }
 
 #answer-options .question-option-add {
-  margin-bottom: 0;
+  margin-top: 10px;
+}
+
+#answer-options .answer-options-after-gap {
+  min-height: 10px;
 }
 
 .i18n-form-group input,

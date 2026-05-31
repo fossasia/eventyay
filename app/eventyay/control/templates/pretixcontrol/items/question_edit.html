@@ -49,81 +49,83 @@
                 {% bootstrap_field form.valid_datetime_min layout="control" %}
                 {% bootstrap_field form.valid_datetime_max layout="control" %}
             </div>
-            <div id="answer-options">
-                <div class="form-group answer-options-heading">
+            <div id="answer-options" class="clearfix">
+                <div class="form-group answer-options-group">
                     <label class="col-md-3 control-label">{% trans "Answer options" %}</label>
-                    <div class="col-md-9">
+                    <div class="col-md-9 answer-options-content">
                         <noscript>
                             <p class="help-block">{% trans "Only applicable if you choose 'Choose one/multiple from a list' above." %}</p>
                         </noscript>
-                    </div>
-                </div>
-                <div class="formset" data-formset data-formset-prefix="{{ formset.prefix }}">
-                    {{ formset.management_form }}
-                    {% bootstrap_formset_errors formset %}
-                    <div data-formset-body>
-                        {% for form in formset %}
-                            <div data-formset-form>
-                                <div class="sr-only">
-                                    {{ form.id }}
-                                    {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
-                                    {% bootstrap_field form.ORDER form_group_class="" layout="inline" %}
-                                </div>
-                                <div class="form-group question-option-row">
-                                    <label class="col-md-3 control-label question-option-label">
-                                        {% blocktrans trimmed with id=form.instance.identifier %}
-                                            Answer option {{ id }}
-                                        {% endblocktrans %}
-                                    </label>
-                                    <div class="col-md-7 question-option-field">
-                                        {% bootstrap_form_errors form %}
-                                        {% bootstrap_field form.answer layout='inline' form_group_class="" show_label=False %}
+                        <div class="formset" data-formset data-formset-prefix="{{ formset.prefix }}">
+                            {{ formset.management_form }}
+                            {% bootstrap_formset_errors formset %}
+                            <div data-formset-body>
+                                {% for form in formset %}
+                                    <div data-formset-form class="question-option-item">
+                                        <div class="sr-only">
+                                            {{ form.id }}
+                                            {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
+                                            {% bootstrap_field form.ORDER form_group_class="" layout="inline" %}
+                                        </div>
+                                        <div class="question-option-label">
+                                            {% blocktrans trimmed with id=form.instance.identifier %}
+                                                Answer option {{ id }}
+                                            {% endblocktrans %}
+                                        </div>
+                                        <div class="question-option-row">
+                                            <div class="question-option-field">
+                                                {% bootstrap_form_errors form %}
+                                                {% bootstrap_field form.answer layout='inline' form_group_class="" show_label=False %}
+                                            </div>
+                                            <div class="question-option-actions text-right flip">
+                                                <button type="button" class="btn btn-default" data-formset-move-up-button>
+                                                    <i class="fa fa-arrow-up"></i></button>
+                                                <button type="button" class="btn btn-default" data-formset-move-down-button>
+                                                    <i class="fa fa-arrow-down"></i></button>
+                                                <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
+                                                    <i class="fa fa-trash"></i></button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-md-2 question-option-actions text-right flip">
-                                        <button type="button" class="btn btn-default" data-formset-move-up-button>
-                                            <i class="fa fa-arrow-up"></i></button>
-                                        <button type="button" class="btn btn-default" data-formset-move-down-button>
-                                            <i class="fa fa-arrow-down"></i></button>
-                                        <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                            <i class="fa fa-trash"></i></button>
-                                    </div>
-                                </div>
+                                {% endfor %}
                             </div>
-                        {% endfor %}
-                    </div>
-                    <script type="form-template" data-formset-empty-form>
-                        {% escapescript %}
-                            <div data-formset-form>
-                                <div class="sr-only">
-                                    {{ formset.empty_form.id }}
-                                    {% bootstrap_field formset.empty_form.DELETE form_group_class="" layout="inline" %}
-                                    {% bootstrap_field formset.empty_form.ORDER form_group_class="" layout="inline" %}
-                                </div>
-                                <div class="form-group question-option-row">
-                                    <label class="col-md-3 control-label question-option-label">
-                                        {% trans "New answer option" %}
-                                    </label>
-                                    <div class="col-md-7 question-option-field">
-                                        {% bootstrap_field formset.empty_form.answer layout='inline' form_group_class="" show_label=False %}
+                            <script type="form-template" data-formset-empty-form>
+                                {% escapescript %}
+                                    <div data-formset-form class="question-option-item">
+                                        <div class="sr-only">
+                                            {{ formset.empty_form.id }}
+                                            {% bootstrap_field formset.empty_form.DELETE form_group_class="" layout="inline" %}
+                                            {% bootstrap_field formset.empty_form.ORDER form_group_class="" layout="inline" %}
+                                        </div>
+                                        <div class="question-option-label">
+                                            {% trans "New answer option" %}
+                                        </div>
+                                        <div class="question-option-row">
+                                            <div class="question-option-field">
+                                                {% bootstrap_field formset.empty_form.answer layout='inline' form_group_class="" show_label=False %}
+                                            </div>
+                                            <div class="question-option-actions text-right flip">
+                                                <button type="button" class="btn btn-default" data-formset-move-up-button>
+                                                    <i class="fa fa-arrow-up"></i></button>
+                                                <button type="button" class="btn btn-default" data-formset-move-down-button>
+                                                    <i class="fa fa-arrow-down"></i></button>
+                                                <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
+                                                    <i class="fa fa-trash"></i></button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-md-2 question-option-actions text-right flip">
-                                        <button type="button" class="btn btn-default" data-formset-move-up-button>
-                                            <i class="fa fa-arrow-up"></i></button>
-                                        <button type="button" class="btn btn-default" data-formset-move-down-button>
-                                            <i class="fa fa-arrow-down"></i></button>
-                                        <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                            <i class="fa fa-trash"></i></button>
-                                    </div>
-                                </div>
+                                {% endescapescript %}
+                            </script>
+                            <div class="question-option-add">
+                                <button type="button" class="btn btn-default" data-formset-add>
+                                    <i class="fa fa-plus"></i> {% trans "Add a new option" %}
+                                </button>
                             </div>
-                        {% endescapescript %}
-                    </script>
-                    <div class="form-group question-option-add">
-                        <div class="col-md-offset-3 col-md-9">
-                            <button type="button" class="btn btn-default" data-formset-add>
-                                <i class="fa fa-plus"></i> {% trans "Add a new option" %}</button>
                         </div>
                     </div>
+                </div>
+                <div class="form-group answer-options-after-gap">
+                    <div class="col-md-offset-3 col-md-9"></div>
                 </div>
             </div>
             {% bootstrap_field form.help_text layout="control" %}
