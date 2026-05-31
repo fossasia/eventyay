@@ -33,7 +33,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject
+from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject, is_event_series_creation_enabled
 from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
@@ -149,6 +149,10 @@ class EventList(PaginationMixin, ListView):
                     100,
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
+        gs = GlobalSettingsObject()
+        ctx['event_series_creation_enabled'] = gs.settings.get(
+            EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True
+        )
         return ctx
 
     @cached_property
@@ -191,6 +195,7 @@ class EventCreateView(TemplateView):
         initial_form['locales'] = ['en']
         initial_form['content_locales'] = ['en']
         initial_form['create_for'] = EventCreatedFor.BOTH.value
+        initial_form['has_subevents'] = request_get.get('series') == '1'
         queryset = self.get_create_organizer_queryset()
         if 'organizer' in request_get:
             try:
@@ -257,6 +262,11 @@ class EventCreateView(TemplateView):
             except Event.DoesNotExist:
                 pass
         return None
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.GET.get('series') == '1' and not is_event_series_creation_enabled(request):
+            raise PermissionDenied(_('Event series creation is currently disabled.'))
+        return super().dispatch(request, *args, **kwargs)
 
     def get_foundation_form(self):
         return EventWizardFoundationForm(

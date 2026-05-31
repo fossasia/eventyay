@@ -46,6 +46,7 @@ from eventyay.base.models import (
     WaitingListEntry,
 )
 from eventyay.base.services.quotas import QuotaAvailability
+from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, GlobalSettingsObject
 from eventyay.base.timeline import timeline_for_event
 from eventyay.control.forms.event import CommentForm
 from eventyay.control.signals import (
@@ -743,9 +744,11 @@ def user_index(request):
     for r, result in user_dashboard_widgets.send(request, user=request.user):
         widgets.extend(result)
 
+    gs = GlobalSettingsObject()
     ctx = {
         'widgets': rearrange(widgets),
         'can_create_event': request.user.teams.filter(can_create_events=True).exists(),
+        'event_series_creation_enabled': gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True),
         'upcoming': widgets_for_event_qs(
             request,
             annotated_event_query(request, lazy=True)
