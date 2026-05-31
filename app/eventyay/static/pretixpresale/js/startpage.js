@@ -62,7 +62,7 @@
         if (!url) {
           return;
         }
-
+        
         var eventCard = button.closest('.startpage-event-card');
         var title = eventCard ? eventCard.dataset.eventName : document.title;
         currentShareTitle = title;
