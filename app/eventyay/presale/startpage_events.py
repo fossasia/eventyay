@@ -2,6 +2,11 @@ from django.db.models import Q
 
 from eventyay.base.models import Event
 
+# Only hide events that explicitly set exclude_from_start_page to true.
+# .exclude(display_settings__exclude_from_start_page=True) wrongly drops rows
+# where the key is missing (SQL NULL / three-valued logic).
+NOT_EXCLUDED_FROM_START_PAGE = ~Q(display_settings__contains={'exclude_from_start_page': True})
+
 
 def get_startpage_events_queryset(*, search_query: str = ''):
     """
@@ -18,7 +23,7 @@ def get_startpage_events_queryset(*, search_query: str = ''):
         Event.objects.select_related('organizer')
         .prefetch_related('_settings_objects')
         .filter(live=True, is_public=True)
-        .exclude(display_settings__exclude_from_start_page=True)
+        .filter(NOT_EXCLUDED_FROM_START_PAGE)
     )
     if search_query:
         qs = qs.filter(name__icontains=search_query)
