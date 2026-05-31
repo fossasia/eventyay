@@ -14,6 +14,7 @@ from django.forms import (
     TimeInput,
     Widget,
 )
+from django.utils.datastructures import MultiValueDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
@@ -261,7 +262,10 @@ class SlidesWidget(Widget):
             clear_ids = stored_value.get('clear_ids', [])
         else:
             links_text = data.get(self.links_field_name(name), '')
-            clear_ids = data.getlist(self.clear_checkbox_name(name))
+            if isinstance(data, MultiValueDict):
+                clear_ids = data.getlist(self.clear_checkbox_name(name))
+            else:
+                clear_ids = data.get(self.clear_checkbox_name(name), [])
         return {
             'links_text': links_text,
             'resources': files.getlist(self.files_field_name(name)),
