@@ -158,7 +158,13 @@ class CfPForms(EventPermissionRequired, TemplateView):
         )
         context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
 
-        context['all_languages'] = get_language_choices_native_with_ui_name()
+        available_codes = [code for code, _ in self.request.event.available_content_locales]
+        choices = get_language_choices_native_with_ui_name(codes=available_codes)
+        existing_codes = {c[0] for c in choices}
+        for code, name in self.request.event.available_content_locales:
+            if code not in existing_codes:
+                choices.append((code, name))
+        context['all_languages'] = choices
         event_languages = list(self.request.event.settings.locales or [])
         context['event_languages'] = event_languages
         selected_content_locales = self.request.event.settings.content_locales

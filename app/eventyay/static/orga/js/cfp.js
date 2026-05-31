@@ -11,7 +11,7 @@ document
     });
 
 document.addEventListener("DOMContentLoaded", () => {
-    const contentLocaleToggles = document.querySelectorAll("tr[dragsort-id='content_locale'] .toggle-switch input[type='checkbox']");
+    const contentLocaleToggles = document.querySelectorAll("tr[dragsort-id='content_locale'] .toggle-switch[data-field-id] input[type='checkbox']");
     const settingsBtns = document.querySelectorAll(".content-locale-settings-btn");
     const dialog = document.getElementById("content-locale-dialog");
     const cancelBtn = document.getElementById("content-locale-dialog-cancel");
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let initialToggleState = false;
 
         const isToggleChecked = () => {
-            const firstToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch input[type='checkbox']");
+            const firstToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch[data-field-id] input[type='checkbox']");
             return firstToggle ? firstToggle.checked : false;
         };
 
