@@ -52,7 +52,7 @@
     "typescript": "^6.0.3",
     "vite": "^6.3.5",
     "vite-bundle-visualizer": "^1.2.1",
-    "vite-plugin-checker": "^0.13.0",
+    "vite-plugin-checker": "^0.14.1",
     "vue-tsc": "^3.3.3"
   },
   "bugs": {
