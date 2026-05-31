@@ -1,17 +1,24 @@
 import sys
 import json
-from datetime import UTC
+from datetime import UTC, timedelta
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
+from allauth.account.models import EmailAddress
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
+<<<<<<< HEAD
 from django.db.models import Prefetch, Q
+=======
+from django.db.models import Q, Sum
+>>>>>>> f7e40ba44 (Add platform KPI overview to unified admin dashboard.)
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
+from django.utils.timezone import make_aware, is_aware, now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import (
@@ -24,18 +31,17 @@ from django.views.generic import (
 )
 from django_celery_beat.models import PeriodicTask, PeriodicTasks
 from django_context_decorator import context
-
-from django.utils.timezone import make_aware, is_aware
-from django.utils.functional import cached_property
+from django_scopes import scopes_disabled
 from redis.exceptions import RedisError
 
 from eventyay.celery_app import app
 from eventyay.control.forms.filter import AttendeeFilterForm
 from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
+from eventyay.base.models.auth import User
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.event import Event
-from eventyay.base.models.orders import OrderPosition
+from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models.submission import Submission
@@ -55,9 +61,53 @@ logger = logging.getLogger(__name__)
 class AdminDashboard(AdministratorPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/admin/dashboard.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
+    def get_context_data(self, **kwargs) -> dict:
+        ctx = super().get_context_data(**kwargs)
+        n = now()
+
+        # User KPIs
+        ctx['users_total'] = User.objects.count()
+        ctx['users_verified'] = EmailAddress.objects.filter(verified=True, primary=True).count()
+        ctx['users_unverified'] = ctx['users_total'] - ctx['users_verified']
+        ctx['users_new_24h'] = User.objects.filter(date_joined__gte=n - timedelta(hours=24)).count()
+        ctx['users_new_7d'] = User.objects.filter(date_joined__gte=n - timedelta(days=7)).count()
+        ctx['users_new_30d'] = User.objects.filter(date_joined__gte=n - timedelta(days=30)).count()
+
+        # Organizer KPIs
+        ctx['organizers_total'] = Organizer.objects.count()
+
+        with scopes_disabled():
+            # Event KPIs
+            ctx['events_total'] = Event.objects.count()
+            ctx['events_live'] = Event.objects.filter(live=True).count()
+            ctx['events_draft'] = Event.objects.filter(live=False).count()
+            ctx['events_past'] = Event.objects.filter(live=True, date_from__lt=n).count()
+            ctx['events_series'] = Event.objects.filter(has_subevents=True).count()
+
+            # Order KPIs
+            ctx['orders_total'] = Order.objects.count()
+            ctx['orders_paid'] = Order.objects.filter(status=Order.STATUS_PAID).count()
+            ctx['orders_pending'] = Order.objects.filter(status=Order.STATUS_PENDING).count()
+            ctx['orders_revenue'] = (
+                Order.objects.filter(status=Order.STATUS_PAID)
+                .aggregate(total=Sum('total'))['total']
+            ) or Decimal('0.00')
+
+            # Programme KPIs — align with admin submissions list ("All Sessions")
+            ctx['sessions_total'] = Submission.objects.count()
+            ctx['speakers_total'] = (
+                User.objects.filter(submissions__in=Submission.objects.values('pk'))
+                .distinct()
+                .count()
+            )
+
+            # Attendee / ticket KPIs (paid order positions, not add-ons)
+            ctx['attendees_total'] = OrderPosition.objects.filter(
+                order__status=Order.STATUS_PAID,
+                addon_to__isnull=True,
+            ).count()
+
+        return ctx
 
 
 class OrganizerList(PaginationMixin, ListView):

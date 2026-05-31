@@ -1,0 +1,32 @@
+// Reusable admin page helpers.
+// Prefer existing pretixcontrol patterns: .dashboard, .numwidget, .panel, .table.
+
+.admin-section {
+  margin-top: 16px;
+  margin-bottom: 16px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.dashboard-panels {
+  margin-top: 0;
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .panel {
+    margin-bottom: 0;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+}
