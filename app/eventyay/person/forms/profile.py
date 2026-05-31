@@ -133,9 +133,9 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                self.fields[field_name].required = True
+                self.fields[field_name].required = not self.not_strict
                 if hasattr(self.fields[field_name].widget, 'is_required'):
-                    self.fields[field_name].widget.is_required = True
+                    self.fields[field_name].widget.is_required = not self.not_strict
 
         cfp_defaults = default_fields()
         count_length_in = self.event.cfp.settings.get('count_length_in', 'chars')
@@ -227,7 +227,7 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
-        if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
+        if not self.not_strict and self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
             self.add_error(
                 'avatar',
                 forms.ValidationError(
