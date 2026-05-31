@@ -35,7 +35,7 @@ from eventyay.base.services import tickets
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject
 from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
+from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
@@ -158,20 +158,29 @@ class EventCreateView(TemplateView):
     template_name = 'eventyay_common/events/create.html'
     legacy_session_key = 'event_create_legacy_wizard_data'
 
+    def get_create_organizer_queryset(self):
+        queryset = Organizer.objects.all()
+        if not self.request.user.has_active_staff_session(self.request.session.session_key):
+            queryset = queryset.filter(
+                id__in=self.request.user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
+            )
+        return queryset
+
+    def get_fallback_organizer(self):
+        return self.get_create_organizer_queryset().first()
+
+    def get_clone_queryset(self):
+        return EventWizardCopyForm.copy_from_queryset(self.request.user, self.request.session)
+
     def get_foundation_initial(self):
         initial_form = {}
-        request_user = self.request.user
         request_get = self.request.GET
 
         initial_form['is_video_creation'] = True
         initial_form['locales'] = ['en']
         initial_form['content_locales'] = ['en']
         initial_form['create_for'] = EventCreatedFor.BOTH.value
-        queryset = Organizer.objects.all()
-        if not request_user.has_active_staff_session(self.request.session.session_key):
-            queryset = queryset.filter(
-                id__in=request_user.teams.filter(can_create_events=True).values_list('organizer', flat=True)
-            )
+        queryset = self.get_create_organizer_queryset()
         if 'organizer' in request_get:
             try:
                 initial_form['organizer'] = queryset.get(slug=request_get.get('organizer'))
@@ -233,7 +242,7 @@ class EventCreateView(TemplateView):
             return self._clone_from
         if self.request.GET.get('clone'):
             try:
-                return Event.objects.get(pk=self.request.GET.get('clone'))
+                return self.get_clone_queryset().get(pk=self.request.GET.get('clone'))
             except Event.DoesNotExist:
                 pass
         return None
@@ -250,13 +259,14 @@ class EventCreateView(TemplateView):
     def get_basics_form(self, foundation_data=None):
         if foundation_data is None:
             foundation_data = self.get_foundation_initial()
+        organizer = foundation_data.get('organizer') or self.get_fallback_organizer()
         return EventWizardBasicsForm(
             data=self.request.POST if self.request.method == 'POST' else None,
             initial=self.get_basics_initial(foundation_data),
             prefix='basics',
             user=self.request.user,
             session=self.request.session,
-            organizer=foundation_data.get('organizer') or Organizer(slug='_nonexisting'),
+            organizer=organizer,
             has_subevents=foundation_data.get('has_subevents', False),
             locales=foundation_data.get('locales') or ['en'],
             content_locales=foundation_data.get('content_locales'),
@@ -268,13 +278,16 @@ class EventCreateView(TemplateView):
         context = super().get_context_data(**kwargs)
         foundation_form = kwargs.get('foundation_form') or self.get_foundation_form()
         foundation_data = foundation_form.cleaned_data if foundation_form.is_bound and foundation_form.is_valid() else None
-        basics_form = kwargs.get('basics_form') or self.get_basics_form(foundation_data)
         organizer = foundation_data.get('organizer') if foundation_data else foundation_form.initial.get('organizer')
+        has_organizer = self.request.user.teams.filter(can_create_events=True).exists()
+        basics_form = kwargs.get('basics_form')
+        if has_organizer and basics_form is None:
+            basics_form = self.get_basics_form(foundation_data)
 
         context['foundation_form'] = foundation_form
         context['basics_form'] = basics_form
         context['create_for'] = EventCreatedFor.BOTH.value
-        context['has_organizer'] = self.request.user.teams.filter(can_create_events=True).exists()
+        context['has_organizer'] = has_organizer
         context['organizer'] = organizer
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
         context['clone_from'] = self.clone_from
@@ -361,7 +374,7 @@ class EventCreateView(TemplateView):
             copy_from_event = request.POST.get('copy-copy_from_event')
             if copy_from_event:
                 try:
-                    self._clone_from = Event.objects.get(pk=copy_from_event)
+                    self._clone_from = self.get_clone_queryset().get(pk=copy_from_event)
                 except Event.DoesNotExist:
                     self._clone_from = None
             if basics_form.is_valid():
