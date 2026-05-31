@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
     # deletes legacy Event_SettingsStore rows. Reversing cannot restore the rows.
 
     dependencies = [
-        ('base', '0027_talkquestion_dependency_question_and_more'),
+        ('base', '0028_product_free_price_max_product_free_price_min'),
     ]
 
     operations = [
