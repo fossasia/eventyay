@@ -48,6 +48,9 @@
         font-size: 12px;
         margin: 0 0 5px;
     }
+    p {
+        word-break: break-word;
+    }
     p:last-child {
         margin-bottom: 0;
     }
