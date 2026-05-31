@@ -11,15 +11,20 @@ document
     });
 
 document.addEventListener("DOMContentLoaded", () => {
-    const contentLocaleToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch input[type='checkbox']");
-    const settingsBtn = document.querySelector(".content-locale-settings-btn");
+    const contentLocaleToggles = document.querySelectorAll("tr[dragsort-id='content_locale'] .toggle-switch input[type='checkbox']");
+    const settingsBtns = document.querySelectorAll(".content-locale-settings-btn");
     const dialog = document.getElementById("content-locale-dialog");
     const cancelBtn = document.getElementById("content-locale-dialog-cancel");
     const saveBtn = document.getElementById("content-locale-dialog-save");
 
-    if (contentLocaleToggle && dialog) {
+    if (dialog) {
         let initialCheckedStates = [];
         let initialToggleState = false;
+
+        const isToggleChecked = () => {
+            const firstToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch input[type='checkbox']");
+            return firstToggle ? firstToggle.checked : false;
+        };
 
         const resetSearch = () => {
             const searchInput = document.getElementById("content-locale-search");
@@ -33,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const openDialog = () => {
             resetSearch();
-            initialToggleState = contentLocaleToggle.checked;
+            initialToggleState = isToggleChecked();
             initialCheckedStates = Array.from(dialog.querySelectorAll(".content-locale-checkbox")).map(checkbox => ({
                 checkbox: checkbox,
                 checked: checkbox.checked
@@ -59,27 +64,34 @@ document.addEventListener("DOMContentLoaded", () => {
             initialCheckedStates.forEach(item => {
                 item.checkbox.checked = item.checked;
             });
-            contentLocaleToggle.checked = initialToggleState;
+            contentLocaleToggles.forEach(toggle => {
+                toggle.checked = initialToggleState;
+            });
             if (initialToggleState) {
-                if (settingsBtn) settingsBtn.classList.remove("hidden");
+                settingsBtns.forEach(btn => btn.classList.remove("hidden"));
             } else {
-                if (settingsBtn) settingsBtn.classList.add("hidden");
+                settingsBtns.forEach(btn => btn.classList.add("hidden"));
             }
             closeDialog();
         };
 
-        contentLocaleToggle.addEventListener("change", (ev) => {
-            if (ev.target.checked) {
-                openDialog();
-                if (settingsBtn) settingsBtn.classList.remove("hidden");
-            } else {
-                if (settingsBtn) settingsBtn.classList.add("hidden");
-            }
+        contentLocaleToggles.forEach(toggle => {
+            toggle.addEventListener("change", (ev) => {
+                contentLocaleToggles.forEach(t => {
+                    t.checked = ev.target.checked;
+                });
+                if (ev.target.checked) {
+                    openDialog();
+                    settingsBtns.forEach(btn => btn.classList.remove("hidden"));
+                } else {
+                    settingsBtns.forEach(btn => btn.classList.add("hidden"));
+                }
+            });
         });
 
-        if (settingsBtn) {
-            settingsBtn.addEventListener("click", openDialog);
-        }
+        settingsBtns.forEach(btn => {
+            btn.addEventListener("click", openDialog);
+        });
 
         if (cancelBtn) {
             cancelBtn.addEventListener("click", cancelDialog);
@@ -106,16 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dialog.addEventListener("click", (event) => {
             if (event.target === dialog) {
-                const rect = dialog.getBoundingClientRect();
-                const isInDialog = (
-                    rect.top <= event.clientY &&
-                    event.clientY <= rect.top + rect.height &&
-                    rect.left <= event.clientX &&
-                    event.clientX <= rect.left + rect.width
-                );
-                if (!isInDialog) {
-                    cancelDialog();
-                }
+                cancelDialog();
             }
         });
 

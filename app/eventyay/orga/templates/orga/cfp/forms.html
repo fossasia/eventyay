@@ -94,33 +94,35 @@
                     </span></div>
                 </dialog>
                 <dialog class="info-dialog" id="content-locale-dialog">
-                    {% if sform.content_locales.errors %}
-                        <div class="alert alert-danger mb-3">
-                            {% for error in sform.content_locales.errors %}
-                                <div>{{ error }}</div>
+                    <div class="dialog-content">
+                        {% if sform.content_locales.errors %}
+                            <div class="alert alert-danger mb-3">
+                                {% for error in sform.content_locales.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="alert alert-info"><span>
+                            {% translate "Activating Content Locale will allow proposal submissions in different languages. The languages that are available as Event Languages are preselected below. If you would like to allow proposal submissions in other languages, please select them from the dropdown list. You can change your selection later in the Settings area of Content Locale." %}
+                        </span></div>
+                        <div class="form-group">
+                            <input type="text" id="content-locale-search" class="form-control" placeholder="{% translate 'Search languages...' %}" aria-label="{% translate 'Search languages' %}">
+                        </div>
+                        <div class="form-group content-locale-checkbox-list">
+                            {% for code, name in all_languages %}
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" class="content-locale-checkbox" name="{{ sform.content_locales.html_name }}" value="{{ code }}"
+                                               {% if code in effective_content_locales %}checked{% endif %}>
+                                        {{ name }}
+                                    </label>
+                                </div>
                             {% endfor %}
                         </div>
-                    {% endif %}
-                    <div class="alert alert-info"><span>
-                        {% translate "Activating Content Locale will allow proposal submissions in different languages. The languages that are available as Event Languages are preselected below. If you would like to allow proposal submissions in other languages, please select them from the dropdown list. You can change your selection later in the Settings area of Content Locale." %}
-                    </span></div>
-                    <div class="form-group">
-                        <input type="text" id="content-locale-search" class="form-control" placeholder="{% translate 'Search languages...' %}" aria-label="{% translate 'Search languages' %}">
-                    </div>
-                    <div class="form-group content-locale-checkbox-list">
-                        {% for code, name in all_languages %}
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" class="content-locale-checkbox" name="{{ sform.content_locales.html_name }}" value="{{ code }}"
-                                           {% if code in effective_content_locales %}checked{% endif %}>
-                                    {{ name }}
-                                </label>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <div class="text-right mt-3">
-                        <button type="button" class="btn btn-default" id="content-locale-dialog-cancel">{% translate "Cancel" %}</button>
-                        <button type="button" class="btn btn-primary" id="content-locale-dialog-save">{% translate "Save & Close" %}</button>
+                        <div class="text-right mt-3">
+                            <button type="button" class="btn btn-default" id="content-locale-dialog-cancel">{% translate "Cancel" %}</button>
+                            <button type="button" class="btn btn-primary" id="content-locale-dialog-save">{% translate "Save & Close" %}</button>
+                        </div>
                     </div>
                 </dialog>
                 <div class="table-responsive table-responsive-always mw-100">
