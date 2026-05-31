@@ -49,9 +49,9 @@
     "roboto-fontface": "^0.10.0",
     "sanitize-html": "^2.17.4",
     "uuid": "^14.0.0",
-    "vue": "^3.5.34",
+    "vue": "^3.5.35",
     "vue-advanced-cropper": "^2.8.9",
-    "vue-router": "^5.0.7",
+    "vue-router": "^5.1.0",
     "vue-slicksort": "^2.0.5",
     "vue-virtual-scroller": "^3.0.4",
     "vuex": "^4.1.0",
@@ -59,8 +59,8 @@
     "webrtc-adapter": "^9.0.5"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.28.6",
-    "@rollup/plugin-commonjs": "^29.0.2",
+    "@babel/eslint-parser": "^7.29.7",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-inject": "^5.0.5",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue-macros/reactivity-transform": "^0.4.3",
