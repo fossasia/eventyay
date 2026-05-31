@@ -21,7 +21,18 @@ document.addEventListener("DOMContentLoaded", () => {
         let initialCheckedStates = [];
         let initialToggleState = false;
 
+        const resetSearch = () => {
+            const searchInput = document.getElementById("content-locale-search");
+            if (searchInput) {
+                searchInput.value = "";
+            }
+            dialog.querySelectorAll(".content-locale-checkbox-list .checkbox").forEach((div) => {
+                div.classList.remove("d-none");
+            });
+        };
+
         const openDialog = () => {
+            resetSearch();
             initialToggleState = contentLocaleToggle.checked;
             initialCheckedStates = Array.from(dialog.querySelectorAll(".content-locale-checkbox")).map(checkbox => ({
                 checkbox: checkbox,
@@ -36,6 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         const closeDialog = () => {
+            resetSearch();
             if (typeof dialog.close === "function") {
                 dialog.close();
             } else {
@@ -75,6 +87,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (saveBtn) {
             saveBtn.addEventListener("click", closeDialog);
+        }
+
+        const searchInput = document.getElementById("content-locale-search");
+        if (searchInput) {
+            searchInput.addEventListener("input", (ev) => {
+                const query = ev.target.value.toLowerCase().trim();
+                dialog.querySelectorAll(".content-locale-checkbox-list .checkbox").forEach((div) => {
+                    const labelText = div.textContent.toLowerCase();
+                    if (labelText.includes(query)) {
+                        div.classList.remove("d-none");
+                    } else {
+                        div.classList.add("d-none");
+                    }
+                });
+            });
         }
 
         dialog.addEventListener("click", (event) => {

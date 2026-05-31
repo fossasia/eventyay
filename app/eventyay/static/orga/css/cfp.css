@@ -16,7 +16,7 @@
 }
 
 .content-locale-checkbox-list {
-    max-height: 250px;
+    height: 250px;
     overflow-y: auto;
     border: 1px solid #ccc;
     padding: 10px;
@@ -44,4 +44,8 @@
 .content-locale-checkbox-list input[type="checkbox"] {
     margin-right: 8px;
     cursor: pointer;
+}
+
+#content-locale-search {
+    margin-top: 14px;
 }

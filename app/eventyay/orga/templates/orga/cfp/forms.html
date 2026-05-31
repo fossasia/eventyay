@@ -104,6 +104,9 @@
                     <div class="alert alert-info"><span>
                         {% translate "Activating Content Locale will allow proposal submissions in different languages. The languages that are available as Event Languages are preselected below. If you would like to allow proposal submissions in other languages, please select them from the dropdown list. You can change your selection later in the Settings area of Content Locale." %}
                     </span></div>
+                    <div class="form-group">
+                        <input type="text" id="content-locale-search" class="form-control" placeholder="{% translate 'Search languages...' %}" aria-label="{% translate 'Search languages' %}">
+                    </div>
                     <div class="form-group content-locale-checkbox-list">
                         {% for code, name in all_languages %}
                             <div class="checkbox">
