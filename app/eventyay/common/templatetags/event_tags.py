@@ -1,5 +1,7 @@
 import logging
+from urllib.parse import quote, urlsplit
 
+from django.conf import settings
 from django import template
 from django.http import QueryDict
 from django.urls import reverse
@@ -7,6 +9,7 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
+from eventyay.common.urls import is_http_url
 from eventyay.common.permissions import user_has_cfp_submissions
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
@@ -114,6 +117,27 @@ def startswith(value, arg):
     if isinstance(value, str):
         return value.startswith(arg)
     return False
+
+
+@register.simple_tag(takes_context=True)
+def append_si(context, url: str | None, signature: str | None) -> str:
+    if not url:
+        return ''
+    if not signature:
+        return url
+
+    if is_http_url(url):
+        url_netloc = urlsplit(url).netloc.lower()
+        site_netloc = urlsplit(settings.SITE_URL).netloc.lower()
+        request = context.get('request')
+        request_netloc = request.get_host().lower() if request else ''
+        if url_netloc and url_netloc not in {site_netloc, request_netloc}:
+            return url
+    elif urlsplit(url).scheme:
+        return url
+
+    separator = '&' if '?' in url else '?'
+    return f"{url}{separator}si={quote(str(signature))}"
 
 
 @register.simple_tag(takes_context=True)

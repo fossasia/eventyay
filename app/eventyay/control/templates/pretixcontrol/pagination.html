@@ -23,13 +23,11 @@
                 </li>
             {% endif %}
         {% else %}
-        {% if page_obj.paginator.count > 1 %}
-                <li class="page-current"><a>
-                    {% blocktrans trimmed with count=page_obj.paginator.count %}
-                        {{ count }} elements
-                    {% endblocktrans %}
-                </a></li>
-            {% endif %}
+            <li class="page-current"><a>
+                {% blocktrans trimmed with count=page_obj.paginator.count %}
+                    {{ count }} elements
+                {% endblocktrans %}
+            </a></li>
         {% endif %}
     </ul>
     {% if page_size %}

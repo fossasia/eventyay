@@ -8,6 +8,7 @@
 {% load tz %}
 {% load static %}
 {% load eventurl %}
+{% load nav_tags %}
 
 {% with current_event=request.event|default:None %}
 <!DOCTYPE html>
@@ -28,13 +29,19 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="{% if current_event %}{{ current_event.visible_primary_color }}{% else %}#2185d0{% endif %}">
         <meta name="HandheldFriendly" content="True"/>
-        {% block meta_image %}{% if current_event %}<meta property="thumbnail" content="{{ current_event.urls.social_image.full }}">
-            <meta property="og:image" content="{{ current_event.urls.social_image.full }}">
-        {% endif %}{% endblock meta_image %}
+        {% block meta_image %}
+            {% if current_event %}
+                {% with event_social_image=current_event.social_image|default:current_event.urls.social_image.full %}
+                    {% append_si event_social_image request.GET.si as event_social_image_url %}
+                    <meta property="thumbnail" content="{{ event_social_image_url }}">
+                    <meta property="og:image" content="{{ event_social_image_url }}">
+                {% endwith %}
+            {% endif %}
+        {% endblock meta_image %}
         <meta property="og:title" content="{% block social_title %}{% endblock social_title %}{% if current_event %} {{ current_event.name|event_localize }}{% endif %}">
         <meta property="og:description" content="{% block social_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock social_description %}">
         <meta property="og:url" content="{% if current_event and current_event.display_settings.html_export_url %}{{ current_event.display_settings.html_export_url }}{{ request.path|slice:"1:" }}{% else %}{{ request.build_absolute_uri }}{% endif %}">
-        <meta property="twitter:card" content="summary">
+        <meta property="twitter:card" content="summary_large_image">
 
         {% block favicons %}
             {% include "common/includes/favicon.html" %}
@@ -173,10 +180,11 @@
                             {% else %}
                                 {% eventurl current_event 'presale:event.onlinevideo.join' as join_event_url %}
                             {% endif %}
+                            {% get_localized_menu_label current_event 'menu_label_join_video' as label %}
                             <div class="header-join-video-floating-mobile">
-                                    <a href="{{ join_event_url }}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{% translate 'Join online video' %}" aria-label="{% translate 'Join online video' %}">
+                                    <a href="{{ join_event_url }}" class="btn btn-primary btn-join-video-icon-only join-video-link d-flex align-items-center justify-content-center" title="{{ label }}" aria-label="{{ label }}">
                                         <i class="fa fa-video-camera" aria-hidden="true"></i>
-                                        <span class="join-video-text">{% translate "Join online video" %}</span>
+                                        <span class="join-video-text">{{ label }}</span>
                                     </a>
                                 </div>
                         {% endif %}
