@@ -10,7 +10,9 @@ def multimail_validate(val):
     if not val:
         return
     for addr in val.split(','):
-        validate_email(addr.strip())
+        addr = addr.strip()
+        if addr:
+            validate_email(addr)
 
 ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
 
@@ -168,21 +170,14 @@ class CentralMailSettingsForm(SettingsForm):
                 ValidationError(_('A sender email address is required when using a custom email gateway.')),
             )
 
-        password = data.get('smtp_password')
-        username = data.get('smtp_username')
-        if password == ENCRYPTED_PASSWORD_PLACEHOLDER:
-            data['smtp_password'] = self.initial.get('smtp_password', '')
-        elif not password:
-            if username:
-                data['smtp_password'] = self.initial.get('smtp_password', '')
-            else:
-                data['smtp_password'] = ''
-        elif not username:
-            data['smtp_password'] = ''
-
         vendor = data.get('email_vendor', 'smtp')
 
         if vendor == 'sendgrid':
+            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+                          'smtp_use_tls', 'smtp_use_ssl'):
+                stored = self.initial.get(field)
+                if stored is not None:
+                    data[field] = stored
             api_key = data.get('send_grid_api_key')
             if api_key == ENCRYPTED_PASSWORD_PLACEHOLDER:
                 data['send_grid_api_key'] = self.initial.get('send_grid_api_key', '')
@@ -192,6 +187,20 @@ class CentralMailSettingsForm(SettingsForm):
                     ValidationError(_('An API key is required when using SendGrid.')),
                 )
         else:
+            stored_api_key = self.initial.get('send_grid_api_key')
+            if stored_api_key is not None:
+                data['send_grid_api_key'] = stored_api_key
+            password = data.get('smtp_password')
+            username = data.get('smtp_username')
+            if password == ENCRYPTED_PASSWORD_PLACEHOLDER:
+                data['smtp_password'] = self.initial.get('smtp_password', '')
+            elif not password:
+                if username:
+                    data['smtp_password'] = self.initial.get('smtp_password', '')
+                else:
+                    data['smtp_password'] = ''
+            elif not username:
+                data['smtp_password'] = ''
             if not data.get('smtp_host'):
                 self.add_error(
                     'smtp_host',

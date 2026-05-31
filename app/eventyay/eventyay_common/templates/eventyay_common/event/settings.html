@@ -234,7 +234,6 @@
                                            {% if email_form.mail_html_renderer.value == r.identifier %}checked{% endif %}>
                                     {{ r.verbose_name }}
                                 </label>
-                                {% load static %}
                                 <img src="{% static r.thumbnail_filename %}" class="img-responsive" alt="{{ r.verbose_name }}">
                             </div>
                         </div>
