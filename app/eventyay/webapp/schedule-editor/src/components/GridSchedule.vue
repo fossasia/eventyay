@@ -140,6 +140,34 @@ const hiddenRooms = ref<Room[]>([])
 const timesliceRefs = ref<HTMLElement[]>([])
 
 let observer: IntersectionObserver | null = null
+const layoutObservers: ResizeObserver[] = []
+let windowResizeListener: (() => void) | null = null
+let gridOffsetFrame: number | null = null
+
+const refreshGridOffset = () => {
+  if (grid.value) {
+    gridOffset.value = grid.value.getBoundingClientRect().left
+  }
+}
+
+const scheduleRefreshGridOffset = () => {
+  if (gridOffsetFrame !== null) {
+    return
+  }
+  gridOffsetFrame = requestAnimationFrame(() => {
+    gridOffsetFrame = null
+    refreshGridOffset()
+  })
+}
+
+const observeElementResize = (element: HTMLElement | null) => {
+  if (!element || typeof ResizeObserver === 'undefined') {
+    return
+  }
+  const resizeObserver = new ResizeObserver(scheduleRefreshGridOffset)
+  resizeObserver.observe(element)
+  layoutObservers.push(resizeObserver)
+}
 
 const hasValidPosition = (session: SessionDatum): boolean => {
   return !!(session.room && session.start && session.end)
@@ -433,6 +461,7 @@ const setTimesliceRef = (el: HTMLElement | null) => {
 }
 
 const startDragging = ({ session, event }: DragEventPayload) => {
+  refreshGridOffset()
   dragStart.value = {
     x: event.clientX,
     y: event.clientY,
@@ -648,9 +677,16 @@ watch(() => props.currentDay, (day) => changeDay(day))
 
 onMounted(async () => {
   await nextTick()
-  
-  if (grid.value) {
-    gridOffset.value = grid.value.getBoundingClientRect().left
+
+  refreshGridOffset()
+  observeElementResize(rootEl.value)
+  const layoutRoot = rootEl.value?.closest('#page-content') ?? rootEl.value?.closest('.pretalx-schedule')
+  if (layoutRoot instanceof HTMLElement && layoutRoot !== rootEl.value) {
+    observeElementResize(layoutRoot)
+  }
+  if (typeof ResizeObserver === 'undefined') {
+    windowResizeListener = scheduleRefreshGridOffset
+    window.addEventListener('resize', windowResizeListener)
   }
 
   observer = new IntersectionObserver(onIntersect, {
@@ -666,6 +702,16 @@ onMounted(async () => {
 
 onUnmounted(() => {
   timesliceRefs.value = []
+  if (gridOffsetFrame !== null) {
+    cancelAnimationFrame(gridOffsetFrame)
+    gridOffsetFrame = null
+  }
+  layoutObservers.forEach((resizeObserver) => resizeObserver.disconnect())
+  layoutObservers.length = 0
+  if (windowResizeListener) {
+    window.removeEventListener('resize', windowResizeListener)
+    windowResizeListener = null
+  }
   if (observer) {
     observer.disconnect()
     observer = null

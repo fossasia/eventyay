@@ -96,6 +96,9 @@ class GlobalSettingsObject(GlobalSettingsBase):
     slug = '_global'
 
 
+EVENT_SERIES_CREATION_ENABLED = 'event_series_creation_enabled'
+
+
 class SettingsSandbox:
     """
     Transparently proxied access to event settings, handling your prefixes for you.
