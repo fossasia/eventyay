@@ -49,7 +49,8 @@
   text-decoration: none;
 }
 
-.dashboard button.widget {
+.dashboard button.widget,
+.dashboard .widget[role="button"] {
   display: block;
   width: 100%;
   height: 100%;
@@ -117,13 +118,19 @@
     display: flex;
     flex-direction: row;
 
-    a {
+    a,
+    button.component {
       flex-grow: 1;
       flex-basis: 50%;
       font-size: 14px;
       padding: 10px;
       text-align: center;
       color: white;
+    }
+    button.component {
+      background: $brand-primary;
+      border: none;
+      cursor: pointer;
     }
     a.orders {
       background: $navbar-inverse-bg;
@@ -140,7 +147,8 @@
     a.status-danger {
       background: $brand-danger;
     }
-    a.component {
+    a.component,
+    button.component {
       background: $brand-primary;
     }
     a.middle-component {

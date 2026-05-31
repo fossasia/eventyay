@@ -1,4 +1,5 @@
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -51,6 +52,7 @@ def test_generate_ticket_button_shows_permission_dialog_for_talk_only(
     request = rf.get('/')
     request.user = user
     html = EventWidgetGenerator.generate_ticket_button(event, request)
+    assert '<button type="button"' in html
     assert f'data-dialog-target="#{TICKET_PERMISSION_DIALOG_ID}"' in html
     assert f'aria-controls="{TICKET_PERMISSION_DIALOG_ID}"' in html
     assert reverse(
@@ -70,6 +72,25 @@ def test_generate_ticket_button_links_to_control_for_ticket_team(user, organizer
     )
     assert control_url in html
     assert TICKET_PERMISSION_DIALOG_ID not in html
+
+
+@pytest.mark.django_db
+def test_filter_timeline_entry_strips_control_edit_urls_with_base_path(event):
+    with override_settings(FORCE_SCRIPT_NAME='/tickets', BASE_PATH='/tickets'):
+        edit_url = reverse(
+            'control:event.settings.tickets',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        entry = TimelineEvent(
+            event=event,
+            subevent=None,
+            datetime=now(),
+            description='Ticket sales',
+            edit_url=edit_url,
+        )
+        filtered = filter_timeline_entry_for_ticket_access(entry, has_ticket_access=False)
+        assert filtered.edit_url is None
+        assert edit_url.startswith('/tickets/control/')
 
 
 @pytest.mark.django_db
@@ -134,6 +155,16 @@ def test_filter_timeline_entry_keeps_common_edit_urls(event):
 
 
 @pytest.mark.django_db
+def test_common_dashboard_includes_ticket_permission_dialog_for_talk_only(
+    talk_only_client, organizer, event
+):
+    url = reverse('eventyay_common:dashboard')
+    response = talk_only_client.get(url)
+    assert response.status_code == 200
+    assert 'ticket-permission-dialog' in response.content.decode()
+
+
+@pytest.mark.django_db
 def test_event_dashboard_hides_ticket_nav_for_talk_only(talk_only_client, organizer, event):
     url = reverse(
         'eventyay_common:event.index',
@@ -148,6 +179,7 @@ def test_event_dashboard_hides_ticket_nav_for_talk_only(talk_only_client, organi
     ) not in content
     assert 'class="shopstate"' in content
     assert 'event-settings-permission-dialog' in content
+    assert 'Click here to change' not in content
     assert 'Tickets Dashboard' not in content
 
 

@@ -1,3 +1,5 @@
+import logging
+import re
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -23,6 +25,7 @@ from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.html import escape, format_html
 from django.utils.timezone import now
+from django.utils.translation import gettext as gettext_now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 from pytz.tzinfo import DstTzInfo
@@ -53,6 +56,8 @@ from ...base.models.orders import CancellationRequest
 from ..permissions import filter_timeline_entry_for_ticket_access, user_has_ticket_dashboard_access
 from ..utils import EventCreatedFor, get_subevent
 
+logger = logging.getLogger(__name__)
+
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
 SHOP_STATE_WIDGET_KEY = 'shop_state'
@@ -60,6 +65,16 @@ SHOP_STATE_WIDGET_KEY = 'shop_state'
 # ``key='shop_state'`` on their dashboard widget payload (see shop_state_widget).
 EVENT_SETTINGS_PERMISSION_DIALOG_ID = 'event-settings-permission-dialog'
 TICKET_PERMISSION_DIALOG_ID = 'ticket-permission-dialog'
+
+_ANCHOR_TAG_RE = re.compile(r'<a\b[^>]*>|</a>', re.IGNORECASE)
+
+
+def _sanitize_widget_content_for_permission_dialog(content: str) -> str:
+    """Return widget HTML safe to show inside a permission-dialog trigger."""
+    if not content:
+        return content
+    content = _ANCHOR_TAG_RE.sub('', content)
+    return content.replace(gettext_now('Click here to change'), '')
 
 
 def get_event_dashboard_widget_permissions(request: HttpRequest) -> dict[str, bool]:
@@ -105,6 +120,10 @@ def filter_common_event_dashboard_widgets(
     elif isinstance(widgets, dict):
         widgets = [widgets]
     elif not isinstance(widgets, (list, tuple)):
+        logger.warning(
+            'Expected list of dashboard widgets, got %s',
+            type(widgets).__name__,
+        )
         widgets = []
     filtered: List[Dict[str, Any]] = []
     for widget in widgets:
@@ -116,6 +135,7 @@ def filter_common_event_dashboard_widgets(
             widget = dict(widget)
             widget.pop('url', None)
             widget.pop('link', None)
+            widget['content'] = _sanitize_widget_content_for_permission_dialog(widget.get('content', ''))
             widget['permission_dialog_id'] = EVENT_SETTINGS_PERMISSION_DIALOG_ID
         filtered.append(widget)
     return filtered
@@ -478,8 +498,8 @@ class EventWidgetGenerator:
                 _('Tickets'),
             )
         return format_html(
-            '<a href="#" class="component" role="button" aria-haspopup="dialog" '
-            'aria-controls="{}" data-dialog-target="#{}" data-toggle="dialog">{}</a>',
+            '<button type="button" class="component" aria-haspopup="dialog" '
+            'aria-controls="{}" data-dialog-target="#{}" data-toggle="dialog">{}</button>',
             TICKET_PERMISSION_DIALOG_ID,
             TICKET_PERMISSION_DIALOG_ID,
             _('Tickets'),

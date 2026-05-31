@@ -3,6 +3,7 @@
 from urllib.parse import urlparse
 
 from django.http import HttpRequest
+from django.urls import Resolver404, resolve, reverse
 
 from eventyay.base.models import Event, Organizer
 from eventyay.base.models.auth import User
@@ -74,14 +75,24 @@ def user_has_video_dashboard_access(
     )
 
 
+def _control_path_prefix() -> str:
+    """Path prefix for URLs in the ``control`` namespace (includes ``FORCE_SCRIPT_NAME``)."""
+    return urlparse(reverse('control:index')).path.rstrip('/')
+
+
 def _is_control_url(url: str) -> bool:
-    """True when ``url`` points at the pretix control mount (``/control/``)."""
+    """True when ``url`` resolves to a view in the ``control`` URL namespace."""
     if not url:
         return False
     path = urlparse(url).path
     if not path.startswith('/'):
         path = f'/{path}'
-    return path == '/control' or path.startswith('/control/')
+    try:
+        match = resolve(path)
+    except Resolver404:
+        prefix = _control_path_prefix()
+        return path == prefix or path.startswith(f'{prefix}/')
+    return bool(match.namespaces and match.namespaces[0] == 'control')
 
 
 def filter_timeline_entry_for_ticket_access(entry, has_ticket_access):
