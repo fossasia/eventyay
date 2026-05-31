@@ -645,8 +645,8 @@ class JsonSubfieldMixin:
             instance = self.instance
         modified_paths = set()
         for field, path in self.Meta.json_fields.items():
-            # We don't need nested data for now
-            data_dict = getattr(instance, path) or {}
+            # Copy to avoid mutating a shared dict reference on the model instance.
+            data_dict = dict(getattr(instance, path) or {})
             data_dict[field] = self.cleaned_data.get(field)
             setattr(instance, path, data_dict)
             modified_paths.add(path)

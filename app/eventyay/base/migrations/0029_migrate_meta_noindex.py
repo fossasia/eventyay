@@ -59,6 +59,8 @@ def migrate_meta_noindex(apps, schema_editor):
 
     _flush_events_to_update(Event, events_to_update)
 
+    # Remove all legacy meta_noindex rows, including falsy values skipped above.
+    # False is the default in display_settings; those rows are obsolete after migration.
     while True:
         pks = list(
             Event_SettingsStore.objects.filter(key='meta_noindex')

@@ -132,6 +132,7 @@ class TestPlatformSearch:
             locale='en',
             is_public=True,
             live=True,
+            sales_channels=['web'],
             email='other-search@example.com',
         )
 

@@ -412,7 +412,7 @@ class EventUpdate(
         self._save_decoupled(self.sform)
         if self.sform.has_changed():
             self.sform.save()
-        if self.pubform.has_changed():
+        if self.pubform.is_valid():
             self.pubform.save()
         if self.header_links_formset.has_changed():
             self.header_links_formset.save()

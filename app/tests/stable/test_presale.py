@@ -78,6 +78,7 @@ class TestEventPages:
             locale='en',
             is_public=True,
             live=True,
+            sales_channels=['web'],
             email='hidden@example.com',
         )
 
@@ -120,6 +121,17 @@ class TestAgendaPages:
 class TestStartPageVisibility:
     """Test visibility and search exclusion on the platform start page."""
 
+    def test_start_page_shows_events_without_exclude_flag(self, client, organizer, event):
+        """Events without exclude_from_start_page in display_settings should still list."""
+        event.name = 'Default Display Settings Event'
+        event.startpage_visible = True
+        event.display_settings = {'schedule': 'grid'}
+        event.save(update_fields=['name', 'startpage_visible', 'display_settings'])
+
+        response = client.get('/')
+        assert response.status_code == 200
+        assert 'Default Display Settings Event' in response.content.decode('utf-8')
+
     def test_start_page_hides_excluded_events(self, client, organizer, event):
         """Events excluded from start page should not appear in the upcoming list."""
         event.name = 'Visible Start Event'
@@ -136,6 +148,7 @@ class TestStartPageVisibility:
             is_public=True,
             live=True,
             startpage_visible=True,
+            sales_channels=['web'],
             email='hidden-start@example.com',
         )
         hidden_event.display_settings = {**(hidden_event.display_settings or {}), 'exclude_from_start_page': True}
@@ -164,6 +177,7 @@ class TestStartPageVisibility:
             live=True,
             startpage_visible=False,
             startpage_featured=False,
+            sales_channels=['web'],
             email='off-start@example.com',
         )
 
@@ -191,6 +205,7 @@ class TestStartPageVisibility:
             is_public=False,
             live=True,
             startpage_visible=True,
+            sales_channels=['web'],
             email='private-search@example.com',
         )
 
