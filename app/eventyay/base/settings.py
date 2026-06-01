@@ -99,6 +99,11 @@ class GlobalSettingsObject(GlobalSettingsBase):
 EVENT_SERIES_CREATION_ENABLED = 'event_series_creation_enabled'
 
 
+def is_event_series_creation_enabled() -> bool:
+    gs = GlobalSettingsObject()
+    return gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+
+
 class SettingsSandbox:
     """
     Transparently proxied access to event settings, handling your prefixes for you.

@@ -14,7 +14,7 @@ from eventyay.base.models import Submission, SubmissionStates
 from eventyay.base.models.event import Event
 from eventyay.base.models.log import LogEntry
 from eventyay.base.models.organizer import Organizer
-from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, GlobalSettingsObject
+from eventyay.base.settings import is_event_series_creation_enabled
 from eventyay.common.text.phrases import phrases
 from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
@@ -76,10 +76,7 @@ class DashboardEventListView(TemplateView):
         context['speaker_events'] = (
             Event.objects.filter(submissions__speakers__in=[self.request.user]).distinct().order_by('-date_from')
         )
-        gs = GlobalSettingsObject()
-        context['event_series_creation_enabled'] = gs.settings.get(
-            EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True
-        )
+        context['event_series_creation_enabled'] = is_event_series_creation_enabled()
         return context
 
 

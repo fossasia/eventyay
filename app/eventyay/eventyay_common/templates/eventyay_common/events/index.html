@@ -19,7 +19,7 @@
             </a>
             {% if event_series_creation_enabled %}
             <a href='{% url "eventyay_common:events.add" %}?series=1' class="btn btn-default btn-lg">
-                <span class="fa fa-calendar"></span>
+                <span class="fa fa-calendar" aria-hidden="true"></span>
                 {% trans "Create Event Series" %}
             </a>
             {% endif %}

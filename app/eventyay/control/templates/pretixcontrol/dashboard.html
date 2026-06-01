@@ -23,7 +23,7 @@
             {% if event_series_creation_enabled %}
             <div class="widget-small widget-container">
                 <a href="{% url "eventyay_common:events.add" %}?series=1" class="widget">
-                    <div class="newevent"><span class="fa fa-calendar"></span>{% trans "Create Event Series" %}</div>
+                    <div class="newevent"><span class="fa fa-calendar" aria-hidden="true"></span>{% trans "Create Event Series" %}</div>
                 </a>
             </div>
             {% endif %}

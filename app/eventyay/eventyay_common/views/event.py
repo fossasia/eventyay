@@ -33,7 +33,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject, is_event_series_creation_enabled
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
 from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
@@ -149,10 +149,7 @@ class EventList(PaginationMixin, ListView):
                     100,
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
-        gs = GlobalSettingsObject()
-        ctx['event_series_creation_enabled'] = gs.settings.get(
-            EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True
-        )
+        ctx['event_series_creation_enabled'] = is_event_series_creation_enabled()
         return ctx
 
     @cached_property
@@ -264,7 +261,11 @@ class EventCreateView(TemplateView):
         return None
 
     def dispatch(self, request, *args, **kwargs):
-        if request.GET.get('series') == '1' and not is_event_series_creation_enabled(request):
+        foundation_prefix = self.get_form_prefix('foundation')
+        is_series = request.GET.get('series') == '1' or bool(
+            request.POST.get(f'{foundation_prefix}-has_subevents')
+        )
+        if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
         return super().dispatch(request, *args, **kwargs)
 
@@ -318,10 +319,7 @@ class EventCreateView(TemplateView):
         )
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
         context['clone_from'] = self.clone_from
-        gs = GlobalSettingsObject()
-        context['event_series_creation_enabled'] = gs.settings.get(
-            EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True
-        )
+        context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
