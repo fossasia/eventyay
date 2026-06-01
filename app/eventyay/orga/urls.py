@@ -129,6 +129,16 @@ urlpatterns = [
                     name='settings.import_export.submissions_import_process',
                 ),
                 path(
+                    'settings/import-export/schedule/export/trigger',
+                    schedule.ScheduleExportTriggerView.as_view(),
+                    name='settings.import_export_schedule_export_trigger',
+                ),
+                path(
+                    'settings/import-export/schedule/export/download',
+                    schedule.ScheduleExportDownloadView.as_view(),
+                    name='settings.import_export_schedule_export_download',
+                ),
+                path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
                     name='cfp',
@@ -392,21 +402,6 @@ urlpatterns = [
                     name='reviews.export',
                 ),
                 path('schedule/', schedule.ScheduleView.as_view(), name='schedule.main'),
-                path(
-                    'schedule/export/',
-                    schedule.ScheduleExportView.as_view(),
-                    name='schedule.export',
-                ),
-                path(
-                    'schedule/export/trigger',
-                    schedule.ScheduleExportTriggerView.as_view(),
-                    name='schedule.export.trigger',
-                ),
-                path(
-                    'schedule/export/download',
-                    schedule.ScheduleExportDownloadView.as_view(),
-                    name='schedule.export.download',
-                ),
                 path(
                     'schedule/release',
                     schedule.ScheduleReleaseView.as_view(),
