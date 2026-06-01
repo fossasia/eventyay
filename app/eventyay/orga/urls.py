@@ -131,12 +131,12 @@ urlpatterns = [
                 path(
                     'settings/import-export/schedule/export/trigger',
                     schedule.ScheduleExportTriggerView.as_view(),
-                    name='settings.import_export_schedule_export_trigger',
+                    name='settings.import_export.schedule_export_trigger',
                 ),
                 path(
                     'settings/import-export/schedule/export/download',
                     schedule.ScheduleExportDownloadView.as_view(),
-                    name='settings.import_export_schedule_export_download',
+                    name='settings.import_export.schedule_export_download',
                 ),
                 path(
                     'cfp/',

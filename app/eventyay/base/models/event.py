@@ -849,7 +849,7 @@ class Event(
         room_settings = '{schedule}rooms/'
         new_room = '{room_settings}new/'
         schedule = '{base}schedule/'
-        schedule_export = '{schedule}export/'
+        schedule_export = '{import_export_settings}?export_target=session#tab-export'
         schedule_export_trigger = '{import_export_schedule_export_trigger}'
         schedule_export_download = '{import_export_schedule_export_download}'
         release_schedule = '{schedule}release'
