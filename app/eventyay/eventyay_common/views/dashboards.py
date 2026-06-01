@@ -503,7 +503,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
     ctx = {
         'widgets': rearrange(widgets),
         'can_create_event': request.user.teams.filter(can_create_events=True).exists(),
-        'event_series_creation_enabled': is_event_series_creation_enabled(),
+        'event_series_creation_enabled': is_event_series_creation_enabled(request),
         'upcoming': widgets_for_event_qs(
             request,
             annotated_event_query(request, lazy=True)

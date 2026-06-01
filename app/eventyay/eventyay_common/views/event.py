@@ -149,7 +149,7 @@ class EventList(PaginationMixin, ListView):
                     100,
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
-        ctx['event_series_creation_enabled'] = is_event_series_creation_enabled()
+        ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return ctx
 
     @cached_property

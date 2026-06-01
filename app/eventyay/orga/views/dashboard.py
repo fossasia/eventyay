@@ -76,7 +76,7 @@ class DashboardEventListView(TemplateView):
         context['speaker_events'] = (
             Event.objects.filter(submissions__speakers__in=[self.request.user]).distinct().order_by('-date_from')
         )
-        context['event_series_creation_enabled'] = is_event_series_creation_enabled()
+        context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return context
 
 
