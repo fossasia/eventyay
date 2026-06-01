@@ -147,6 +147,28 @@ class RequestRequire:
 
 
 class QuestionFieldsMixin:
+    @staticmethod
+    def _resolve_single_choice_initial(initial_object, choices, default_answer):
+        """Return a valid AnswerOption initial, ignoring removed options."""
+        if initial_object:
+            initial_value = initial_object.options.first()
+            if initial_value and not choices.filter(pk=initial_value.pk).exists():
+                return None
+            return initial_value
+        if default_answer:
+            return choices.filter(answer=default_answer).first()
+        return None
+
+    @staticmethod
+    def _resolve_multiple_choice_initial(initial_object, choices, default_answer):
+        """Return valid AnswerOption instances for checkboxes, ignoring removed options."""
+        if initial_object:
+            valid_pks = set(choices.values_list('pk', flat=True))
+            return [option for option in initial_object.options.all() if option.pk in valid_pks]
+        if default_answer:
+            return default_answer
+        return []
+
     def get_question_queryset(self, target, event):
         qs = TalkQuestion.all_objects.filter(
             event=event,
@@ -388,35 +410,31 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.CHOICES:
             choices = question.options.all()
-            if initial_object:
-                initial_value = initial_object.options.first()
-            elif question.default_answer:
-                # default_answer is free text; resolve it to an AnswerOption instance
-                initial_value = choices.filter(answer=question.default_answer).first()
-            else:
-                initial_value = None
+            initial_value = self._resolve_single_choice_initial(
+                initial_object, choices, question.default_answer
+            )
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
                 required=question.required,
-                empty_label=None,
+                empty_label=(
+                    None
+                    if question.required and initial_value is not None
+                    else _('— No selection —')
+                ),
                 initial=initial_value,
                 disabled=read_only,
                 help_text=help_text,
-                widget=(forms.RadioSelect if len(choices) < 4 else forms.Select(attrs={'class': 'enhanced'})),
+                widget=forms.RadioSelect,
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
             return field
         if question.variant == TalkQuestionVariant.SELECT:
             choices = question.options.all()
-            if initial_object:
-                initial_value = initial_object.options.first()
-            elif question.default_answer:
-                # default_answer is free text; resolve it to an AnswerOption instance
-                initial_value = choices.filter(answer=question.default_answer).first()
-            else:
-                initial_value = None
+            initial_value = self._resolve_single_choice_initial(
+                initial_object, choices, question.default_answer
+            )
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
@@ -445,9 +463,8 @@ class QuestionFieldsMixin:
                     if len(choices) < 8
                     else forms.SelectMultiple(attrs={'class': 'enhanced'})
                 ),
-                initial=(
-                    list(initial_object.options.all()) if initial_object
-                    else (question.default_answer if question.default_answer else [])
+                initial=self._resolve_multiple_choice_initial(
+                    initial_object, choices, question.default_answer
                 ),
                 disabled=read_only,
                 help_text=help_text,
