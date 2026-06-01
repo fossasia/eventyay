@@ -25,7 +25,7 @@ from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.html import escape, format_html
 from django.utils.timezone import now
-from django.utils.translation import gettext as gettext_now
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 from pytz.tzinfo import DstTzInfo
@@ -74,7 +74,7 @@ def _sanitize_widget_content_for_permission_dialog(content: str) -> str:
     if not content:
         return content
     content = _ANCHOR_TAG_RE.sub('', content)
-    return content.replace(gettext_now('Click here to change'), '')
+    return content.replace(gettext('Click here to change'), '')
 
 
 def get_event_dashboard_widget_permissions(request: HttpRequest) -> dict[str, bool]:

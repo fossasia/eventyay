@@ -33,6 +33,8 @@ def user_has_ticket_dashboard_access(
     event: Event,
     request: HttpRequest | None = None,
 ) -> bool:
+    if not user.is_authenticated:
+        return False
     return bool(
         user.has_event_permission(
             organizer,
@@ -49,6 +51,8 @@ def user_has_talk_dashboard_access(
     event: Event,
     request: HttpRequest | None = None,
 ) -> bool:
+    if not user.is_authenticated:
+        return False
     return bool(
         user.has_event_permission(
             organizer,
@@ -65,6 +69,8 @@ def user_has_video_dashboard_access(
     event: Event,
     request: HttpRequest | None = None,
 ) -> bool:
+    if not user.is_authenticated:
+        return False
     return bool(
         user.has_event_permission(
             organizer,
@@ -87,10 +93,17 @@ def _is_control_url(url: str) -> bool:
     path = urlparse(url).path
     if not path.startswith('/'):
         path = f'/{path}'
+    prefix = _control_path_prefix()
+    resolve_path = path
+    if prefix and resolve_path.startswith(f'{prefix}/'):
+        resolve_path = resolve_path[len(prefix) :]
+        if not resolve_path.startswith('/'):
+            resolve_path = f'/{resolve_path}'
+    elif resolve_path == prefix:
+        resolve_path = '/'
     try:
-        match = resolve(path)
+        match = resolve(resolve_path)
     except Resolver404:
-        prefix = _control_path_prefix()
         return path == prefix or path.startswith(f'{prefix}/')
     return bool(match.namespaces and match.namespaces[0] == 'control')
 

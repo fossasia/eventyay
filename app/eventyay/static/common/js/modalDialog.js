@@ -23,6 +23,9 @@
             if (element.tagName !== "BUTTON") {
                 element.addEventListener("keydown", (ev) => {
                     if (ev.key === "Enter" || ev.key === " ") {
+                        if (ev.key === " ") {
+                            ev.preventDefault()
+                        }
                         openDialog(ev)
                     }
                 })

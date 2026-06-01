@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import AnonymousUser
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
@@ -7,7 +8,9 @@ from eventyay.base.models import Team
 from eventyay.base.timeline import TimelineEvent
 from eventyay.eventyay_common.permissions import (
     filter_timeline_entry_for_ticket_access,
+    user_has_talk_dashboard_access,
     user_has_ticket_dashboard_access,
+    user_has_video_dashboard_access,
 )
 from eventyay.eventyay_common.views.dashboards import (
     EVENT_SETTINGS_PERMISSION_DIALOG_ID,
@@ -43,6 +46,14 @@ def test_user_has_ticket_dashboard_access_for_ticket_team(user, organizer, event
 @pytest.mark.django_db
 def test_user_has_ticket_dashboard_access_denied_for_talk_only(user, organizer, event, talk_only_team):
     assert user_has_ticket_dashboard_access(user, organizer, event) is False
+
+
+@pytest.mark.django_db
+def test_user_has_dashboard_access_denied_for_anonymous_user(organizer, event):
+    anonymous = AnonymousUser()
+    assert user_has_ticket_dashboard_access(anonymous, organizer, event) is False
+    assert user_has_talk_dashboard_access(anonymous, organizer, event) is False
+    assert user_has_video_dashboard_access(anonymous, organizer, event) is False
 
 
 @pytest.mark.django_db
