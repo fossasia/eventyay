@@ -87,50 +87,62 @@
         </div>
     </div>
 
-    <form class="form-inline helper-display-inline filter-form" action="" method="get">
-        <select name="status" class="form-control">
-            <option value="a"
-                    {% if request.GET.status == "p" %}selected="selected"{% endif %}>{% trans "All entries" %}</option>
-            <option value="w"
-                    {% if request.GET.status == "w" or not request.GET.status %}selected="selected"{% endif %}>
-                {% trans "Waiting for a voucher" %}</option>
-            <option value="s"
-                    {% if request.GET.status == "s" %}selected="selected"{% endif %}>{% trans "Voucher assigned" %}</option>
-            <option value="v"
-                    {% if request.GET.status == "v" %}selected="selected"{% endif %}>
-                {% trans "Waiting for redemption" %}</option>
-            <option value="r"
-                    {% if request.GET.status == "r" %}selected="selected"{% endif %}>
-                {% trans "Successfully redeemed" %}</option>
-            <option value="e"
-                    {% if request.GET.status == "e" %}selected="selected"{% endif %}>
-                {% trans "Voucher expired" %}</option>
-        </select>
-        <select name="item" class="form-control">
-            <option value="">{% trans "All products" %}</option>
-            {% for item in items %}
-                <option value="{{ item.id }}"
-                        {% if request.GET.item|add:0 == item.id %}selected="selected"{% endif %}>
-                    {{ item }}
-                </option>
-            {% endfor %}
-        </select>
-        {% if request.event.has_subevents %}
-            <select name="subevent" class="form-control">
-                <option value="">{% trans "All dates" context "subevent" %}</option>
-                {% for se in request.event.subevents.all %}
-                    <option value="{{ se.id }}"
-                            {% if request.GET.subevent|add:0 == se.id %}selected="selected"{% endif %}>
-                        {{ se.name }} – {{ se.get_date_range_display }}
-                    </option>
-                {% endfor %}
-            </select>
-        {% endif %}
-        <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
-        <a href="?{% url_replace request "download" "yes" %}"
-                class="btn btn-default"><i class="fa fa-download"></i>
-            {% trans "Download list" %}</a>
-    </form>
+    <div class="row filter-form">
+        <form class="" action="" method="get">
+            <div class="col-md-3 col-sm-6 col-xs-6">
+                <select name="status" class="form-control">
+                    <option value=""
+                            {% if request.GET.status == "a" or not request.GET.status %}selected="selected"{% endif %}>{% trans "All entries" %}</option>
+                    <option value="w"
+                            {% if request.GET.status == "w" %}selected="selected"{% endif %}>
+                        {% trans "Waiting for a voucher" %}</option>
+                    <option value="s"
+                            {% if request.GET.status == "s" %}selected="selected"{% endif %}>{% trans "Voucher assigned" %}</option>
+                    <option value="v"
+                            {% if request.GET.status == "v" %}selected="selected"{% endif %}>
+                        {% trans "Waiting for redemption" %}</option>
+                    <option value="r"
+                            {% if request.GET.status == "r" %}selected="selected"{% endif %}>
+                        {% trans "Successfully redeemed" %}</option>
+                    <option value="e"
+                            {% if request.GET.status == "e" %}selected="selected"{% endif %}>
+                        {% trans "Voucher expired" %}</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6 col-xs-6">
+                <select name="item" class="form-control">
+                    <option value="">{% trans "All products" %}</option>
+                    {% for item in items %}
+                        <option value="{{ item.id }}"
+                                {% if request.GET.item|add:0 == item.id %}selected="selected"{% endif %}>
+                            {{ item }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if request.event.has_subevents %}
+                <div class="col-md-3 col-sm-6 col-xs-6">
+                    <select name="subevent" class="form-control">
+                        <option value="">{% trans "All dates" context "subevent" %}</option>
+                        {% for se in request.event.subevents.all %}
+                            <option value="{{ se.id }}"
+                                    {% if request.GET.subevent|add:0 == se.id %}selected="selected"{% endif %}>
+                                {{ se.name }} – {{ se.get_date_range_display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="filter-actions">
+                    {% include 'eventyay_common/filter_actions.html' %}
+                    <a href="?{% url_replace request "download" "yes" %}"
+                            class="btn btn-default"><i class="fa fa-download"></i>
+                        {% trans "Download list" %}</a>
+                </div>
+            </div>
+        </form>
+    </div>
     <div data-ajax-results-region>
         <form method="post" action="?next={{ request.get_full_path|urlencode }}">
             {% csrf_token %}

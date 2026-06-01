@@ -13,6 +13,12 @@ const getFilterForms = function(root = document) {
     });
 };
 
+const hasAjaxResultsRegion = function(root = document) {
+    return !!root.querySelector('[data-ajax-results-region]');
+};
+
+let activeRequestController = null;
+
 const getTableContainer = function(context) {
     return context.querySelector('.table-responsive') || context.querySelector('table.table') || context.querySelector('.empty-collection');
 };
@@ -66,25 +72,12 @@ const reinitializeBehaviors = function(resultsContainer) {
         window.eventyayInitStartpageToggles();
     }
 
-    if (typeof window.form_handlers === 'function') {
-        if (typeof window.jQuery === 'function') {
-            window.form_handlers(window.jQuery(resultsContainer));
-        }
-    }
-
-    if (typeof window.jQuery === 'function' && window.jQuery.fn && window.jQuery.fn.tooltip) {
-        const tooltipTargets = resultsContainer.querySelectorAll('[data-toggle="tooltip"]');
-        if (tooltipTargets.length) {
-            window.jQuery(tooltipTargets).tooltip();
-        }
-
-        const tooltipHtmlTargets = resultsContainer.querySelectorAll('[data-toggle="tooltip_html"]');
-        if (tooltipHtmlTargets.length) {
-            window.jQuery(tooltipHtmlTargets).tooltip({
-                html: true,
-            });
-        }
-    }
+    resultsContainer.dispatchEvent(new CustomEvent('eventyay:ajax-results-replaced', {
+        bubbles: true,
+        detail: {
+            container: resultsContainer,
+        },
+    }));
 };
 
 const updateNextInputs = function(url, tabId) {
@@ -104,6 +97,7 @@ const updateNextInputs = function(url, tabId) {
 const fetchAndReplace = async function(url, replaceUrlParams, form) {
     const tabContext = getTabContextFromForm(form);
     let resultsContainer = getResultsContainer(tabContext.context);
+    let requestController = null;
     if (!resultsContainer) {
         window.location.href = url;
         return;
@@ -112,10 +106,22 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
     resultsContainer.style.opacity = '0.5';
 
     try {
+        if (activeRequestController) {
+            activeRequestController.abort();
+        }
+
+        requestController = new AbortController();
+        activeRequestController = requestController;
+
         const response = await fetch(url, {
             method: 'GET',
             credentials: 'same-origin',
+            signal: requestController.signal,
         });
+
+        if (activeRequestController !== requestController) {
+            return;
+        }
 
         if (!response.ok) {
             throw new Error('Unexpected response status: ' + response.status);
@@ -143,11 +149,19 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
 
         updateNextInputs(url, tabContext.tabId);
     } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+            return;
+        }
+
         console.error('AJAX filter update failed', {
             url: url,
             error: error,
         });
         window.location.href = url;
+    } finally {
+        if (requestController && activeRequestController === requestController) {
+            activeRequestController = null;
+        }
     }
 };
 
@@ -233,7 +247,7 @@ const handlePopState = function() {
 };
 
 const initAjaxFilter = function() {
-    if (!getFilterForms().length) {
+    if (!getFilterForms().length && !hasAjaxResultsRegion()) {
         return;
     }
 
