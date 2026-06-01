@@ -18,6 +18,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
+from urllib.parse import urlencode
 
 from eventyay.base.models import (
     Answer,
@@ -1067,10 +1068,9 @@ class SubmissionImportProcessView(ImportProcessRedirectMixin, EventPermissionReq
 
     @cached_property
     def import_settings_url(self):
-        return (
-            f'{self.request.event.orga_urls.import_export_settings}'
-            f'?import_target={self.import_target}#tab-import'
-        )
+        base = self.request.event.orga_urls.import_export_settings
+        query = urlencode({'import_target': self.import_target})
+        return f'{base}?{query}#tab-import'
 
     def dispatch(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
