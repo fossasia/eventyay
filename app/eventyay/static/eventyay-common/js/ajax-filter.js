@@ -1,187 +1,250 @@
-$(function() {
-    // Find the relevant forms, excluding those that explicitly redirect (like /go forms)
-    function isFilterForm($form) {
-        var action = $form.attr('action');
-        if (action && action.indexOf('/go') !== -1) {
-            return false;
+const isFilterForm = function(form) {
+    const action = form.getAttribute('action');
+    if (action && action.includes('/go')) {
+        return false;
+    }
+
+    return form.classList.contains('filter-form') || !!form.querySelector('.filter-form') || !!form.closest('.filter-form');
+};
+
+const getFilterForms = function(root = document) {
+    return Array.from(root.querySelectorAll('form')).filter(function(form) {
+        return isFilterForm(form);
+    });
+};
+
+const getTableContainer = function(context) {
+    return context.querySelector('.table-responsive') || context.querySelector('table.table') || context.querySelector('.empty-collection');
+};
+
+const getExplicitResultsRegion = function(context) {
+    return context.querySelector('[data-ajax-results-region]');
+};
+
+const getResultsContainer = function(context) {
+    const explicitRegion = getExplicitResultsRegion(context);
+    if (explicitRegion) {
+        return explicitRegion;
+    }
+
+    const tableContainer = getTableContainer(context);
+    if (!tableContainer) {
+        return null;
+    }
+
+    return tableContainer.closest('.tab-pane') || tableContainer;
+};
+
+const getTabContextFromForm = function(form) {
+    if (!form) {
+        return {
+            context: document,
+            tabId: null,
+        };
+    }
+
+    const tabPane = form.closest('.tab-pane');
+    if (!tabPane || !tabPane.id) {
+        return {
+            context: document,
+            tabId: null,
+        };
+    }
+
+    return {
+        context: tabPane,
+        tabId: tabPane.id,
+    };
+};
+
+const reinitializeBehaviors = function(resultsContainer) {
+    if (typeof window.eventyayInitTimezoneUtilities === 'function') {
+        window.eventyayInitTimezoneUtilities();
+    }
+
+    if (typeof window.eventyayInitStartpageToggles === 'function') {
+        window.eventyayInitStartpageToggles();
+    }
+
+    if (typeof window.form_handlers === 'function') {
+        if (typeof window.jQuery === 'function') {
+            window.form_handlers(window.jQuery(resultsContainer));
         }
-        return $form.hasClass('filter-form') || $form.find('.filter-form').length > 0 || $form.parents('.filter-form').length > 0;
     }
 
-    function getFilterForms() {
-        return $('form').filter(function() {
-            return isFilterForm($(this));
-        });
-    }
+    if (typeof window.jQuery === 'function' && window.jQuery.fn && window.jQuery.fn.tooltip) {
+        const tooltipTargets = resultsContainer.querySelectorAll('[data-toggle="tooltip"]');
+        if (tooltipTargets.length) {
+            window.jQuery(tooltipTargets).tooltip();
+        }
 
-    if (getFilterForms().length === 0) {
+        const tooltipHtmlTargets = resultsContainer.querySelectorAll('[data-toggle="tooltip_html"]');
+        if (tooltipHtmlTargets.length) {
+            window.jQuery(tooltipHtmlTargets).tooltip({
+                html: true,
+            });
+        }
+    }
+};
+
+const updateNextInputs = function(url, tabId) {
+    const normalizedUrl = new URL(url, window.location.href);
+    const nextValue = normalizedUrl.pathname + normalizedUrl.search;
+    const root = tabId ? document.getElementById(tabId) : document;
+
+    if (!root) {
         return;
     }
 
-    // Helper to find the base table/empty container within a context
-    function getTableContainer($context) {
-        var $container = $context.find('.table-responsive').first();
-        if ($container.length === 0) {
-            $container = $context.find('table.table').first();
-        }
-        if ($container.length === 0) {
-            $container = $context.find('.empty-collection').first();
-        }
-        return $container;
+    root.querySelectorAll('input[name="next"]').forEach(function(input) {
+        input.value = nextValue;
+    });
+};
+
+const fetchAndReplace = async function(url, replaceUrlParams, form) {
+    const tabContext = getTabContextFromForm(form);
+    let resultsContainer = getResultsContainer(tabContext.context);
+    if (!resultsContainer) {
+        window.location.href = url;
+        return;
     }
 
-    // Prefer explicitly marked AJAX refresh regions when available
-    function getExplicitResultsRegion($context) {
-        return $context.find('[data-ajax-results-region]').first();
-    }
+    resultsContainer.style.opacity = '0.5';
 
-    // Helper to find the results container (table/empty state + related controls)
-    function getResultsContainer($context) {
-        var $explicitRegion = getExplicitResultsRegion($context);
-        if ($explicitRegion.length) {
-            return $explicitRegion;
-        }
-
-        var $tableContainer = getTableContainer($context);
-        if ($tableContainer.length === 0) {
-            return $tableContainer;
-        }
-
-        var $tabPane = $tableContainer.parents('.tab-pane').first();
-        if ($tabPane.length) {
-            return $tabPane;
-        }
-
-        return $tableContainer;
-    }
-
-    function fetchAndReplace(url, replaceUrlParams, $form) {
-        // Scope replacements to the current tab if one exists
-        var $context = $(document);
-        var selectorPrefix = '';
-        var $formTabPane = $form ? $form.parents('.tab-pane').first() : $();
-        if ($formTabPane.length > 0) {
-            var tabId = $formTabPane.attr('id');
-            if (tabId) {
-                selectorPrefix = '#' + tabId;
-                $context = $('#' + tabId);
-            }
-        }
-
-        var $resultsContainer = getResultsContainer($context);
-        if ($resultsContainer.length === 0) {
-            window.location.href = url; // Fallback if no container found
-            return;
-        }
-
-        $resultsContainer.css('opacity', '0.5');
-
-        $.ajax({
-            url: url,
-            type: 'GET',
-            success: function(data) {
-                var doc = new DOMParser().parseFromString(data, 'text/html');
-                var $newDoc = $(doc);
-                
-                var $newContext = selectorPrefix ? $newDoc.find(selectorPrefix) : $newDoc;
-                var $newResultsContainer = getResultsContainer($newContext);
-
-                if (!$newResultsContainer.length) {
-                    $resultsContainer.css('opacity', '1');
-                    window.location.href = url;
-                    return;
-                }
-                $resultsContainer.replaceWith($newResultsContainer);
-                $resultsContainer = $newResultsContainer; // Update reference
-
-                $resultsContainer.css('opacity', '1');
-
-                if (window.eventyayInitTimezoneUtilities) {
-                    window.eventyayInitTimezoneUtilities();
-                }
-                if (window.eventyayInitStartpageToggles) {
-                    window.eventyayInitStartpageToggles();
-                }
-                if (typeof window.form_handlers === 'function') {
-                    window.form_handlers($resultsContainer);
-                }
-                if ($.fn.tooltip) {
-                    var $tooltipTargets = $resultsContainer.find('[data-toggle="tooltip"]');
-                    if ($tooltipTargets.length) {
-                        $tooltipTargets.tooltip();
-                    }
-                    var $tooltipHtmlTargets = $resultsContainer.find('[data-toggle="tooltip_html"]');
-                    if ($tooltipHtmlTargets.length) {
-                        $tooltipHtmlTargets.tooltip({
-                            'html': true
-                        });
-                    }
-                }
-
-                if (replaceUrlParams) {
-                    history.pushState({}, '', url);
-                }
-                var normalizedUrl = new URL(url, window.location.href);
-                $context.find('input[name="next"]').val(normalizedUrl.pathname + normalizedUrl.search);
-            },
-            error: function() {
-                // Fallback: reload page
-                window.location.href = url;
-            }
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
         });
+
+        if (!response.ok) {
+            throw new Error('Unexpected response status: ' + response.status);
+        }
+
+        const data = await response.text();
+        const doc = new DOMParser().parseFromString(data, 'text/html');
+        const newContext = tabContext.tabId ? doc.getElementById(tabContext.tabId) : doc;
+        const newResultsContainer = newContext ? getResultsContainer(newContext) : null;
+
+        if (!newResultsContainer) {
+            window.location.href = url;
+            return;
+        }
+
+        resultsContainer.replaceWith(newResultsContainer);
+        resultsContainer = newResultsContainer;
+        resultsContainer.style.opacity = '1';
+
+        reinitializeBehaviors(resultsContainer);
+
+        if (replaceUrlParams) {
+            history.pushState({}, '', url);
+        }
+
+        updateNextInputs(url, tabContext.tabId);
+    } catch (error) {
+        console.error('AJAX filter update failed', {
+            url: url,
+            error: error,
+        });
+        window.location.href = url;
+    }
+};
+
+const buildFormUrl = function(form) {
+    const url = form.getAttribute('action') || window.location.pathname;
+    const query = new URLSearchParams(new FormData(form)).toString();
+    if (!query) {
+        return url;
     }
 
-    // Intercept form submit
-    $(document).on('submit', 'form', function(e) {
-        var $form = $(this);
-        if (!isFilterForm($form)) {
-            return;
-        }
-        e.preventDefault();
-        var url = $form.attr('action') || window.location.pathname;
-        var query = $form.serialize();
-        var fullUrl = query ? url + (url.indexOf('?') !== -1 ? '&' : '?') + query : url;
-        fetchAndReplace(fullUrl, true, $form);
+    return url + (url.includes('?') ? '&' : '?') + query;
+};
+
+const handleSubmit = function(event) {
+    const form = event.target.closest('form');
+    if (!form || !isFilterForm(form)) {
+        return;
+    }
+
+    event.preventDefault();
+    fetchAndReplace(buildFormUrl(form), true, form);
+};
+
+const handleClearFilter = function(event) {
+    const clearButton = event.target.closest('.btn-clear-filter');
+    if (!clearButton) {
+        return;
+    }
+
+    const form = clearButton.closest('form');
+    if (!form || !isFilterForm(form)) {
+        return;
+    }
+
+    const url = clearButton.getAttribute('href');
+    if (!url) {
+        return;
+    }
+
+    event.preventDefault();
+
+    form.querySelectorAll('input[type="text"], input[type="search"]').forEach(function(input) {
+        input.value = '';
     });
 
-    // Intercept clear button
-    $(document).on('click', '.btn-clear-filter', function(e) {
-        var $btn = $(this);
-        var $form = $btn.parents('form').first();
-        if (!isFilterForm($form)) {
-            return;
-        }
-        e.preventDefault();
-        var url = $btn.attr('href');
-        if (url) {
-            $form.find('input[type="text"], input[type="search"]').val('');
-            $form.find('select').val('').trigger('change');
-            fetchAndReplace(url, true, $form);
-        }
+    form.querySelectorAll('select').forEach(function(select) {
+        select.value = '';
+        select.dispatchEvent(new Event('change', {
+            bubbles: true,
+        }));
     });
 
-    // Intercept pagination clicks
-    $(document).on('click', '.pagination-container a, .pagination a', function(e) {
-        e.preventDefault();
-        var $btn = $(this);
-        var url = $btn.attr('href');
-        if (url && url !== '#') {
-            // Find which form context this pagination belongs to
-            var $form = $btn.parents('.tab-pane').first().find('form').first();
-            if ($form.length === 0) {
-                $form = getFilterForms().first();
-            }
-            fetchAndReplace(url, true, $form);
-        }
-    });
-    
-    // Handle back/forward navigation
-    $(window).on('popstate', function() {
-        var url = new URL(window.location.href, window.location.origin);
-        var tabParam = url.searchParams.get('tab');
-        var $tabPane = tabParam ? $('.tab-pane#' + tabParam).first() : $();
-        var $activeTab = $tabPane.length ? $tabPane : $('.tab-pane.active');
-        var $form = $activeTab.length ? $activeTab.find('form').first() : getFilterForms().first();
-        fetchAndReplace(window.location.href, false, $form);
-    });
-});
+    fetchAndReplace(url, true, form);
+};
+
+const handlePaginationClick = function(event) {
+    const paginationLink = event.target.closest('.pagination-container a, .pagination a');
+    if (!paginationLink) {
+        return;
+    }
+
+    const url = paginationLink.getAttribute('href');
+    if (!url || url === '#') {
+        return;
+    }
+
+    event.preventDefault();
+
+    const tabPane = paginationLink.closest('.tab-pane');
+    const formInTab = tabPane ? tabPane.querySelector('form') : null;
+    const defaultForm = getFilterForms()[0] || null;
+    fetchAndReplace(url, true, formInTab || defaultForm);
+};
+
+const handlePopState = function() {
+    const url = new URL(window.location.href, window.location.origin);
+    const tabParam = url.searchParams.get('tab');
+    const tabPane = tabParam ? document.getElementById(tabParam) : null;
+    const activeTab = tabPane || document.querySelector('.tab-pane.active');
+    const form = activeTab ? activeTab.querySelector('form') : getFilterForms()[0] || null;
+
+    fetchAndReplace(window.location.href, false, form);
+};
+
+const initAjaxFilter = function() {
+    if (!getFilterForms().length) {
+        return;
+    }
+
+    document.addEventListener('submit', handleSubmit);
+    document.addEventListener('click', handleClearFilter);
+    document.addEventListener('click', handlePaginationClick);
+    window.addEventListener('popstate', handlePopState);
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAjaxFilter);
+} else {
+    initAjaxFilter();
+}

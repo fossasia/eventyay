@@ -87,8 +87,7 @@
         </div>
     </div>
 
-    <p>
-    <form class="form-inline helper-display-inline" action="" method="get">
+    <form class="form-inline helper-display-inline filter-form" action="" method="get">
         <select name="status" class="form-control">
             <option value="a"
                     {% if request.GET.status == "p" %}selected="selected"{% endif %}>{% trans "All entries" %}</option>
@@ -132,114 +131,115 @@
                 class="btn btn-default"><i class="fa fa-download"></i>
             {% trans "Download list" %}</a>
     </form>
-    </p>
-    <form method="post" action="?next={{ request.get_full_path|urlencode }}">
-        {% csrf_token %}
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover">
-                <thead>
-                <tr>
-                    {% if request.event.settings.waiting_list_names_asked %}
-                    <th>{% trans "Name" %}</th>
-                    {% endif %}
-                    <th>{% trans "Email" %}</th>
-                    {% if request.event.settings.waiting_list_phones_asked %}
-                    <th>{% trans "Phone number" %}</th>
-                    {% endif %}
-                    <th>{% trans "Product" %}</th>
-                    {% if request.event.has_subevents %}
-                        <th>{% trans "Date" context "subevent" %}</th>
-                    {% endif %}
-                    <th>{% trans "On the list since" %}</th>
-                    <th>{% trans "Status" %}</th>
-                    <th>{% trans "Voucher" %}</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for e in entries %}
+    <div data-ajax-results-region>
+        <form method="post" action="?next={{ request.get_full_path|urlencode }}">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-condensed table-hover">
+                    <thead>
                     <tr>
                         {% if request.event.settings.waiting_list_names_asked %}
-                        <td>{{ e.name|default:"" }}</td>
+                        <th>{% trans "Name" %}</th>
                         {% endif %}
-                        <td>{{ e.email }}</td>
+                        <th>{% trans "Email" %}</th>
                         {% if request.event.settings.waiting_list_phones_asked %}
-                        <td>{{ e.phone|default:"" }}</td>
+                        <th>{% trans "Phone number" %}</th>
                         {% endif %}
-                        <td>
-                            {{ e.item }}
-                            {% if e.variation %}
-                                – {{ e.variation }}
-                            {% endif %}
-                        </td>
+                        <th>{% trans "Product" %}</th>
                         {% if request.event.has_subevents %}
-                            <td>{{ e.subevent.name }} – {{ e.subevent.get_date_range_display }}</td>
+                            <th>{% trans "Date" context "subevent" %}</th>
                         {% endif %}
-                        <td>
-                            {{ e.created|date:"SHORT_DATETIME_FORMAT" }}
-                            {% if e.priority != 0 %}
-                                <span class="label label-info" data-toggle="tooltip"
-                                    title="{% trans "This entry has a modified priority. The higher this number is, the earlier this person will be assigned a voucher." %}">
-                                    {% if e.priority > 0 %}+{% endif %}{{ e.priority }}
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if e.voucher %}
-                                {% if e.voucher.redeemed >= e.voucher.max_usages %}
-                                    <span class="label label-success">{% trans "Voucher redeemed" %}</span>
-                                {% elif not e.voucher.is_active %}
-                                    <span class="label label-danger">{% trans "Voucher expired" %}</span>
-                                {% else %}
-                                    <span class="label label-warning">{% trans "Voucher assigned" %}</span>
-                                {% endif %}
-                            {% elif e.availability.0 == 100 %}
-                                <span class="label label-warning">
-                                {% blocktrans with num=e.availability.1 %}
-                                    Waiting, product {{ num }}x available
-                                {% endblocktrans %}
-                            </span>
-                            {% else %}
-                                <span class="label label-danger">{% trans "Waiting, product unavailable" %}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if e.voucher %}
-                                <a href="{% url "control:event.voucher" organizer=request.event.organizer.slug event=request.event.slug voucher=e.voucher.pk %}">
-                                    {{ e.voucher }}
-                                </a>
-                            {% elif not e.voucher and e.availability.0 == 100 %}
-                                <button name="assign" value="{{ e.pk }}" class="btn btn-default btn-xs">
-                                    {% trans "Send a voucher" %}
-                                </button>
-                            {% endif %}
-                        </td>
-                        <td class="text-right flip">
-                            {% if not e.voucher %}
-                                <button name="move_top" value="{{ e.pk }}" class="btn btn-default btn-sm"
-                                        data-toggle="tooltip" title="{% trans "Move to the top of the list" %}">
-                                    <span class="fa fa-thumbs-up"></span>
-                                </button>
-                                <button name="move_end" value="{{ e.pk }}" class="btn btn-default btn-sm"
-                                    data-toggle="tooltip" title="{% trans "Move to the end of the list" %}">
-                                    <span class="fa fa-thumbs-down"></span>
-                                </button>
-                                <a href="{% url "control:event.orders.waitinglist.delete" organizer=request.event.organizer.slug event=request.event.slug entry=e.id %}?next={{ request.get_full_path|urlencode }}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
-                            {% else %}
-                                <button class="btn btn-default btn-sm disabled">
-                                    <span class="fa fa-thumbs-up"></span>
-                                </button>
-                                <button class="btn btn-default btn-sm disabled">
-                                    <span class="fa fa-thumbs-down"></span>
-                                </button>
-                                <span class="btn btn-delete btn-danger btn-sm disabled"><i class="fa fa-trash"></i></span>
-                            {% endif %}
-                        </td>
+                        <th>{% trans "On the list since" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Voucher" %}</th>
+                        <th></th>
                     </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </form>
-    {% include "pretixcontrol/pagination.html" %}
+                    </thead>
+                    <tbody>
+                    {% for e in entries %}
+                        <tr>
+                            {% if request.event.settings.waiting_list_names_asked %}
+                            <td>{{ e.name|default:"" }}</td>
+                            {% endif %}
+                            <td>{{ e.email }}</td>
+                            {% if request.event.settings.waiting_list_phones_asked %}
+                            <td>{{ e.phone|default:"" }}</td>
+                            {% endif %}
+                            <td>
+                                {{ e.item }}
+                                {% if e.variation %}
+                                    – {{ e.variation }}
+                                {% endif %}
+                            </td>
+                            {% if request.event.has_subevents %}
+                                <td>{{ e.subevent.name }} – {{ e.subevent.get_date_range_display }}</td>
+                            {% endif %}
+                            <td>
+                                {{ e.created|date:"SHORT_DATETIME_FORMAT" }}
+                                {% if e.priority != 0 %}
+                                    <span class="label label-info" data-toggle="tooltip"
+                                        title="{% trans "This entry has a modified priority. The higher this number is, the earlier this person will be assigned a voucher." %}">
+                                        {% if e.priority > 0 %}+{% endif %}{{ e.priority }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if e.voucher %}
+                                    {% if e.voucher.redeemed >= e.voucher.max_usages %}
+                                        <span class="label label-success">{% trans "Voucher redeemed" %}</span>
+                                    {% elif not e.voucher.is_active %}
+                                        <span class="label label-danger">{% trans "Voucher expired" %}</span>
+                                    {% else %}
+                                        <span class="label label-warning">{% trans "Voucher assigned" %}</span>
+                                    {% endif %}
+                                {% elif e.availability.0 == 100 %}
+                                    <span class="label label-warning">
+                                    {% blocktrans with num=e.availability.1 %}
+                                        Waiting, product {{ num }}x available
+                                    {% endblocktrans %}
+                                </span>
+                                {% else %}
+                                    <span class="label label-danger">{% trans "Waiting, product unavailable" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if e.voucher %}
+                                    <a href="{% url "control:event.voucher" organizer=request.event.organizer.slug event=request.event.slug voucher=e.voucher.pk %}">
+                                        {{ e.voucher }}
+                                    </a>
+                                {% elif not e.voucher and e.availability.0 == 100 %}
+                                    <button name="assign" value="{{ e.pk }}" class="btn btn-default btn-xs">
+                                        {% trans "Send a voucher" %}
+                                    </button>
+                                {% endif %}
+                            </td>
+                            <td class="text-right flip">
+                                {% if not e.voucher %}
+                                    <button name="move_top" value="{{ e.pk }}" class="btn btn-default btn-sm"
+                                            data-toggle="tooltip" title="{% trans "Move to the top of the list" %}">
+                                        <span class="fa fa-thumbs-up"></span>
+                                    </button>
+                                    <button name="move_end" value="{{ e.pk }}" class="btn btn-default btn-sm"
+                                        data-toggle="tooltip" title="{% trans "Move to the end of the list" %}">
+                                        <span class="fa fa-thumbs-down"></span>
+                                    </button>
+                                    <a href="{% url "control:event.orders.waitinglist.delete" organizer=request.event.organizer.slug event=request.event.slug entry=e.id %}?next={{ request.get_full_path|urlencode }}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                                {% else %}
+                                    <button class="btn btn-default btn-sm disabled">
+                                        <span class="fa fa-thumbs-up"></span>
+                                    </button>
+                                    <button class="btn btn-default btn-sm disabled">
+                                        <span class="fa fa-thumbs-down"></span>
+                                    </button>
+                                    <span class="btn btn-delete btn-danger btn-sm disabled"><i class="fa fa-trash"></i></span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+        {% include "pretixcontrol/pagination.html" %}
+    </div>
 {% endblock %}

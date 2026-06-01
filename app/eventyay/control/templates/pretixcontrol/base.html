@@ -72,7 +72,7 @@
             <script type="text/javascript" src="{% static "task_management/js/task_management.js" %}"></script>
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/formTools.js' %}"></script>
-            <script type="text/javascript" src="{% static 'eventyay-common/js/ajax-filter.js' %}"></script>
+            <script type="module" src="{% static 'eventyay-common/js/ajax-filter.js' %}"></script>
 		{% endcompress %}
         {# Keep toastuiLoader outside the compress block so document.currentScript keeps data-toastui-* (see common/js/toastuiLoader.js). #}
         <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}" data-toastui-lang="{{ request.LANGUAGE_CODE|slice:':2' }}" data-toastui-t-undo="{% trans 'Undo' %}" data-toastui-t-redo="{% trans 'Redo' %}" data-toastui-t-underline="{% trans 'Underline' %}"></script>
