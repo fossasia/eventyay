@@ -1791,6 +1791,13 @@ class OrderPositionReinstate(OrderView):
             messages.error(self.request, _('Position not found or not canceled.'))
             return self._redirect_back()
 
+        if pos.addon_to_id and OrderPosition.all.filter(pk=pos.addon_to_id, canceled=True).exists():
+            messages.error(
+                self.request,
+                _('This is an add-on ticket whose base ticket is still canceled. Please reinstate the base ticket instead.'),
+            )
+            return self._redirect_back()
+
         ocm = OrderChangeManager(self.order, user=self.request.user)
         try:
             ocm.reinstate(pos)
