@@ -161,10 +161,13 @@ class QuestionFieldsMixin:
 
     @staticmethod
     def _resolve_multiple_choice_initial(initial_object, choices, default_answer):
-        """Return valid AnswerOption instances for checkboxes, ignoring removed options."""
+        """Return initial values for checkboxes, ignoring removed options.
+
+        Returns a list of AnswerOption instances when loading a saved answer,
+        or ``default_answer`` unchanged when no saved answer exists.
+        """
         if initial_object:
-            valid_pks = set(choices.values_list('pk', flat=True))
-            return [option for option in initial_object.options.all() if option.pk in valid_pks]
+            return list(initial_object.options.filter(pk__in=choices.values('pk')))
         if default_answer:
             return default_answer
         return []
@@ -417,11 +420,7 @@ class QuestionFieldsMixin:
                 queryset=choices,
                 label=label_text,
                 required=question.required,
-                empty_label=(
-                    None
-                    if question.required and initial_value is not None
-                    else _('— No selection —')
-                ),
+                empty_label=None if question.required else _('— No selection —'),
                 initial=initial_value,
                 disabled=read_only,
                 help_text=help_text,

@@ -155,6 +155,26 @@ def test_choices_field_always_uses_radio_select(event):
 
 
 @pytest.mark.django_db
+def test_choices_required_field_has_no_empty_label(event):
+    with scopes_disabled():
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick one?',
+            variant=TalkQuestionVariant.CHOICES,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.REQUIRED,
+            active=True,
+            position=1,
+        )
+        AnswerOption.objects.create(question=question, answer='Only option')
+
+    with scope(event=event):
+        form = TalkQuestionsForm(event=event)
+        field = form.fields[f'question_{question.pk}']
+        assert field.empty_label is None
+
+
+@pytest.mark.django_db
 def test_choices_optional_field_has_no_initial_without_answer(event):
     with scopes_disabled():
         question = TalkQuestion.all_objects.create(
