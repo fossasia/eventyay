@@ -1728,9 +1728,16 @@ class OrderChangeManager:
         self._operations.append(self.ReinstateOperation(position))
         if position.seat:
             self._seatdiff.update([position.seat])
-
         if self.order.event.settings.invoice_include_free or position.price != Decimal('0.00'):
             self._invoice_dirty = True
+
+        for opa in position.addons.filter(canceled=True):
+            self._totaldiff += opa.price
+            self._quotadiff.update(opa.quotas)
+            if opa.seat:
+                self._seatdiff.update([opa.seat])
+            if self.order.event.settings.invoice_include_free or opa.price != Decimal('0.00'):
+                self._invoice_dirty = True
 
     def add_position(
         self,
@@ -2193,6 +2200,15 @@ class OrderChangeManager:
                 )
                 op.position.save(update_fields=['canceled', 'secret'])
             elif isinstance(op, self.ReinstateOperation):
+                for pos_to_check in [op.position] + list(op.position.addons.filter(canceled=True)):
+                    if pos_to_check.voucher_id:
+                        v = Voucher.objects.select_for_update().get(pk=pos_to_check.voucher_id)
+                        if v.redeemed >= v.max_usages:
+                            raise OrderError(
+                                _('Position #{posid} cannot be reinstated because voucher {code} has reached its maximum usage limit.').format(
+                                    posid=pos_to_check.positionid, code=v.code
+                                )
+                            )
                 for opa in op.position.addons.filter(canceled=True):
                     self.order.log_action(
                         'eventyay.event.order.changed.reinstate',
