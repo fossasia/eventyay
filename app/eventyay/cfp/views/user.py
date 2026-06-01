@@ -148,7 +148,7 @@ class SubmissionsListView(LoggedInEventPageMixin, ListView):
             event=self.request.event,
             speakers__in=[self.request.user],
             state=SubmissionStates.DRAFT,
-        )
+        ).order_by('-updated')
 
     def get_queryset(self):
         return self.request.event.submissions.filter(speakers__in=[self.request.user])
@@ -360,6 +360,13 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def can_edit(self):
         return self.object.editable
 
+    def is_draft_action(self):
+        return (
+            self.object.state == SubmissionStates.DRAFT
+            and self.request.method == 'POST'
+            and self.request.POST.get('action', 'submit') != 'dedraft'
+        )
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
@@ -367,6 +374,8 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
             self.request.event.cfp_flow.config.get('steps', {}).get('info', {}).get('fields')
         )
         kwargs['readonly'] = not self.can_edit
+        kwargs['not_strict'] = self.is_draft_action()
+        kwargs['draft_save'] = self.is_draft_action()
         # At this stage, new speakers can be added via the dedicated form
         kwargs['remove_additional_speaker'] = True
         return kwargs
