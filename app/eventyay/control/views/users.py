@@ -2,6 +2,7 @@ import json
 import logging
 from contextlib import contextmanager
 
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import (
@@ -12,6 +13,7 @@ from django.contrib.auth import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import DatabaseError, transaction
+from django.db.models import Exists, OuterRef
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -62,7 +64,12 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        qs = User.objects.all()
+        verified_emails = EmailAddress.objects.filter(
+            user_id=OuterRef('pk'),
+            verified=True,
+            primary=True,
+        )
+        qs = User.objects.all().annotate(has_verified_email=Exists(verified_emails))
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
         return qs
@@ -306,6 +313,171 @@ class UserCreateView(AdministratorPermissionRequiredMixin, RecentAuthenticationR
     def form_valid(self, form):
         messages.success(self.request, _('The new user has been created.'))
         return super().form_valid(form)
+
+
+class UserToggleVerifiedView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        target_user.is_verified = not target_user.is_verified
+        target_user.save(update_fields=['is_verified'])
+        if target_user.email:
+            EmailAddress.objects.update_or_create(
+                user=target_user,
+                email=target_user.email,
+                defaults={'primary': True, 'verified': target_user.is_verified}
+            )
+
+        target_user.log_action(
+            'eventyay.user.settings.changed',
+            user=request.user,
+            data={'is_verified': target_user.is_verified},
+        )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            has_verified_email = target_user.emailaddress_set.filter(verified=True).exists()
+            return JsonResponse({
+                'status': 'ok',
+                'is_verified': target_user.is_verified,
+                'has_verified_email': has_verified_email,
+            })
+        action_label = _('verified') if target_user.is_verified else _('unverified')
+        messages.success(
+            request,
+            _('User %(email)s has been marked as %(action)s.') % {
+                'email': target_user.email or str(target_user),
+                'action': action_label,
+            },
+        )
+        return redirect(reverse('eventyay_admin:admin.users'))
+
+
+class UserToggleAdminView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        target_user.is_staff = not target_user.is_staff
+        target_user.save(update_fields=['is_staff'])
+        target_user.log_action(
+            'eventyay.user.settings.changed',
+            user=request.user,
+            data={'is_staff': target_user.is_staff},
+        )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok', 'is_staff': target_user.is_staff})
+        action_label = _('granted admin') if target_user.is_staff else _('removed admin')
+        messages.success(
+            request,
+            _('Admin status for %(email)s has been %(action)s.') % {
+                'email': target_user.email or str(target_user),
+                'action': action_label,
+            },
+        )
+        return redirect(reverse('eventyay_admin:admin.users'))
+
+
+class UserToggleSpamView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        if target_user.is_staff:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('Administrators cannot be marked as spam.'))},
+                    status=400,
+                )
+            messages.error(request, _('Administrators cannot be marked as spam.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
+        target_user.is_spam = not target_user.is_spam
+        target_user.save(update_fields=['is_spam'])
+        target_user.log_action(
+            'eventyay.user.settings.changed',
+            user=request.user,
+            data={'is_spam': target_user.is_spam},
+        )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok', 'is_spam': target_user.is_spam})
+        action_label = _('marked as spam') if target_user.is_spam else _('unmarked as spam')
+        messages.success(
+            request,
+            _('User %(email)s has been %(action)s.') % {
+                'email': target_user.email or str(target_user),
+                'action': action_label,
+            },
+        )
+        return redirect(reverse('eventyay_admin:admin.users'))
+
+
+class UserResendVerificationView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        if not target_user.email:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('This user has no email address.'))},
+                    status=400,
+                )
+            messages.error(request, _('This user has no email address.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
+        try:
+            email_address, created = EmailAddress.objects.update_or_create(
+                user=target_user,
+                email=target_user.email,
+                defaults={'primary': True, 'verified': False}
+            )
+            email_address.send_confirmation(request)
+        except Exception:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('There was an error sending the verification email.'))},
+                    status=500,
+                )
+            messages.error(request, _('There was an error sending the verification email.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
+        target_user.log_action(
+            'eventyay.control.auth.user.verification_email_sent',
+            user=request.user,
+            data={'target_user': target_user.pk},
+        )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok'})
+        messages.success(
+            request,
+            _('Verification email sent to %(email)s.') % {'email': target_user.email},
+        )
+        return redirect(reverse('eventyay_admin:admin.users'))
+
+
+class UserResetPasswordListView(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        if not target_user.email:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('This user has no email address.'))},
+                    status=400,
+                )
+            messages.error(request, _('This user has no email address.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
+        try:
+            target_user.send_password_reset(request)
+        except SendMailException:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('There was an error sending the mail. Please try again later.'))},
+                    status=500,
+                )
+            messages.error(request, _('There was an error sending the mail. Please try again later.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
+        target_user.log_action('eventyay.control.auth.user.forgot_password.mail_sent', user=request.user)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'ok'})
+        messages.success(
+            request,
+            _('Password reset email sent to %(email)s.') % {'email': target_user.email},
+        )
+        return redirect(reverse('eventyay_admin:admin.users'))
 
 
 @require_http_methods(['GET'])

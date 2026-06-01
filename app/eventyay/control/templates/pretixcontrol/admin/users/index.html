@@ -2,18 +2,31 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load urlreplace %}
+{% load static %}
 {% block title %}{% trans "Users" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
+    <script type="module" src="{% static 'pretixcontrol/js/ui/admin-users.js' %}"></script>
+    <script defer src="{% static 'cfp/js/localDateTime.js' %}"></script>
+{% endblock %}
 {% block content %}
     <h1>{% trans "Users" %}</h1>
     <form class="row filter-form" action="" method="get">
-        <div class="col-md-4 col-sm-6 col-xs-12">
+        <div class="col-md-3 col-sm-6 col-xs-12">
             {% bootstrap_field filter_form.query layout='inline' %}
         </div>
-        <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="col-md-2 col-sm-6 col-xs-12">
             {% bootstrap_field filter_form.status layout='inline' %}
         </div>
-        <div class="col-md-3 col-sm-6 col-xs-12">
+        <div class="col-md-2 col-sm-6 col-xs-12">
             {% bootstrap_field filter_form.superuser layout='inline' %}
+        </div>
+        <div class="col-md-2 col-sm-6 col-xs-12">
+            {% bootstrap_field filter_form.verified layout='inline' %}
+        </div>
+        <div class="col-md-1 col-sm-6 col-xs-12">
+            {% bootstrap_field filter_form.spam layout='inline' %}
         </div>
         <div class="col-md-2 col-sm-6 col-xs-12">
             {% include "eventyay_common/filter_actions.html" %}
@@ -26,41 +39,237 @@
         </a>
     </p>
     <div data-ajax-results-region>
-        <table class="table table-condensed table-hover">
-            <thead>
-            <tr>
-            <th>
-                {% trans "E-mail address" %}
-                <a href="?{% url_replace request 'ordering' '-email' %}"><i class="fa fa-caret-down"></i></a>
-                <a href="?{% url_replace request 'ordering' 'email' %}"><i class="fa fa-caret-up"></i></a>
-            </th>
-            <th>
-                {% trans "Full name" %}
-                <a href="?{% url_replace request 'ordering' '-fullname' %}"><i class="fa fa-caret-down"></i></a>
-                <a href="?{% url_replace request 'ordering' 'fullname' %}"><i class="fa fa-caret-up"></i></a>
-            </th>
-            <th>{% trans "Active" %}</th>
-            <th>{% trans "Administrator" %}</th>
-            <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            {% trans 'No email' as no_email %}
-            {% for u in users %}
+        <div class="table-responsive">
+            <table class="table table-condensed table-hover admin-users-table">
+                <thead>
                 <tr>
-                <td><strong>
-                    <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.email|default:no_email }}</a>
-                </strong></td>
-                <td>{{ u.fullname|default_if_none:"" }}</td>
-                <td>{% if u.is_active %}<span class="fa fa-check-circle"></span>{% endif %}</td>
-                <td>{% if u.is_staff %}<span class="fa fa-check-circle"></span>{% endif %}</td>
-                <td class="text-right flip">
-                    <a href='{% url "eventyay_admin:admin.users.edit" id=u.id %}' class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
-                </td>
+                    <th>
+                        {% trans "E-mail address" %}
+                        <a href="?{% url_replace request 'ordering' '-email' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'email' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th>
+                        {% trans "Full name" %}
+                        <a href="?{% url_replace request 'ordering' '-fullname' %}"><i class="fa fa-caret-down"></i></a>
+                        <a href="?{% url_replace request 'ordering' 'fullname' %}"><i class="fa fa-caret-up"></i></a>
+                    </th>
+                    <th class="text-center">{% trans "Active" %}</th>
+                    <th class="text-center">{% trans "Verified" %}</th>
+                    <th class="text-center">{% trans "Admin" %}</th>
+                    <th class="text-center">{% trans "Mark as Spam" %}</th>
+                    <th class="text-nowrap">
+                        {% trans "Member Since" %}
+                        <span class="text-muted small" data-browser-timezone-label></span>
+                    </th>
+                    <th class="text-nowrap">
+                        {% trans "Last Accessed" %}
+                        <span class="text-muted small" data-browser-timezone-label></span>
+                    </th>
+                    <th class="text-right">{% trans "Actions" %}</th>
+                    <th class="text-right"></th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% trans 'No email' as no_email %}
+                {% for u in users %}
+                    <tr data-user-id="{{ u.pk }}">
+                        <td><strong>
+                            <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.email|default:no_email }}</a>
+                        </strong></td>
+                        <td>{{ u.fullname|default_if_none:"" }}</td>
+
+                        {# Active column #}
+                        <td class="text-center">
+                            {% if u.is_active %}
+                                <span class="fa fa-check-circle text-success" title="{% trans 'Active' %}"></span>
+                            {% else %}
+                                <span class="fa fa-times-circle text-muted" title="{% trans 'Inactive' %}"></span>
+                            {% endif %}
+                        </td>
+
+                        {# Verified column #}
+                        <td class="text-center">
+                            <form
+                                action='{% url "eventyay_admin:admin.users.toggle_verified" id=u.pk %}'
+                                method="post"
+                                class="user-toggle-form"
+                                data-toggle-type="verified"
+                                data-user-id="{{ u.pk }}"
+                            >
+                                {% csrf_token %}
+                                {% if not u.email %}
+                                    <label class="toggle-switch always-on" title="{% trans 'Users without an email address cannot be verified.' %}">
+                                        <input
+                                            type="checkbox"
+                                            class="js-user-toggle"
+                                            disabled
+                                            aria-label="{% trans 'Toggle verification status (disabled)' %}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                {% else %}
+                                    <label class="toggle-switch" title="{% if u.is_email_verified %}{% trans 'Unverify' %}{% else %}{% trans 'Verify' %}{% endif %}">
+                                        <input
+                                            type="checkbox"
+                                            class="js-user-toggle"
+                                            {% if u.is_email_verified %}checked{% endif %}
+                                            aria-label="{% trans 'Toggle verification status' %}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                {% endif %}
+                            </form>
+                        </td>
+
+                        {# Admin column #}
+                        <td class="text-center">
+                            <form
+                                action='{% url "eventyay_admin:admin.users.toggle_admin" id=u.pk %}'
+                                method="post"
+                                class="user-toggle-form"
+                                data-toggle-type="admin"
+                                data-user-id="{{ u.pk }}"
+                                data-confirm-message="{% trans 'Please confirm that this account should be a site admin.' %}"
+                            >
+                                {% csrf_token %}
+                                {% if u.pk == request.user.pk %}
+                                    <label class="toggle-switch always-on" title="{% trans 'You cannot change your own admin status.' %}">
+                                        <input
+                                            type="checkbox"
+                                            class="js-user-toggle"
+                                            disabled
+                                            checked
+                                            aria-label="{% trans 'Toggle admin status (disabled)' %}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                {% else %}
+                                    <label class="toggle-switch" title="{% if u.is_staff %}{% trans 'Remove admin' %}{% else %}{% trans 'Make admin' %}{% endif %}">
+                                        <input
+                                            type="checkbox"
+                                            class="js-user-toggle"
+                                            {% if u.is_staff %}checked{% endif %}
+                                            aria-label="{% trans 'Toggle admin status' %}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                {% endif %}
+                            </form>
+                        </td>
+
+                        {# Spam column #}
+                        <td class="text-center">
+                            <form
+                                action='{% url "eventyay_admin:admin.users.toggle_spam" id=u.pk %}'
+                                method="post"
+                                class="user-toggle-form"
+                                data-toggle-type="spam"
+                                data-user-id="{{ u.pk }}"
+                            >
+                                {% csrf_token %}
+                                {% if u.is_staff or u.is_superuser or u.pk == request.user.pk %}
+                                    <label class="toggle-switch always-on" title="{% if u.pk == request.user.pk %}{% trans 'You cannot mark yourself as spam.' %}{% else %}{% trans 'Administrators cannot be marked as spam.' %}{% endif %}">
+                                        <input
+                                            type="checkbox"
+                                            class="js-user-toggle"
+                                            disabled
+                                            {% if u.is_spam %}checked{% endif %}
+                                            aria-label="{% trans 'Toggle spam status (disabled)' %}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                {% else %}
+                                    <label class="toggle-switch" title="{% if u.is_spam %}{% trans 'Unmark spam' %}{% else %}{% trans 'Mark as spam' %}{% endif %}">
+                                        <input
+                                            type="checkbox"
+                                            class="js-user-toggle"
+                                            {% if u.is_spam %}checked{% endif %}
+                                            aria-label="{% trans 'Toggle spam status' %}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                {% endif %}
+                            </form>
+                        </td>
+
+                        {# Member Since #}
+                        <td class="text-nowrap text-muted small">
+                            <time datetime="{{ u.date_joined|date:"c" }}" data-browser-local-datetime>
+                                {{ u.date_joined|date:"SHORT_DATETIME_FORMAT" }}
+                            </time>
+                        </td>
+
+                        {# Last Accessed #}
+                        <td class="text-nowrap text-muted small">
+                            {% if u.last_login %}
+                                <time datetime="{{ u.last_login|date:"c" }}" data-browser-local-datetime>
+                                    {{ u.last_login|date:"SHORT_DATETIME_FORMAT" }}
+                                </time>
+                            {% else %}
+                                <time datetime="{{ u.date_joined|date:"c" }}" data-browser-local-datetime>
+                                    {{ u.date_joined|date:"SHORT_DATETIME_FORMAT" }}
+                                </time>
+                            {% endif %}
+                        </td>
+
+                        {# Actions column #}
+                        <td class="text-right flip">
+                            {% if u.email and u.auth_backend == "native" %}
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <span class="fa fa-envelope"></span>
+                                        <span class="caret"></span>
+                                        <span class="sr-only">{% trans "Email actions" %}</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li>
+                                            <form
+                                                action='{% url "eventyay_admin:admin.users.resend_verification" id=u.pk %}'
+                                                method="post"
+                                                class="user-action-form"
+                                            >
+                                                {% csrf_token %}
+                                                <button type="button" class="btn btn-link btn-block text-left btn-dropdown-link">
+                                                    <span class="fa fa-envelope-o"></span>
+                                                    {% trans "Resend Verification Email" %}
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form
+                                                action='{% url "eventyay_admin:admin.users.reset_password" id=u.pk %}'
+                                                method="post"
+                                                class="user-action-form"
+                                            >
+                                                {% csrf_token %}
+                                                <button type="button" class="btn btn-link btn-block text-left btn-dropdown-link">
+                                                    <span class="fa fa-key"></span>
+                                                    {% trans "Reset Password Email" %}
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        {# Edit column #}
+                        <td class="text-right">
+                            <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}' class="btn btn-default btn-sm" title="{% trans 'Edit user' %}">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% include "pretixcontrol/pagination.html" %}
     </div>
+
+    {# Admin Confirmation Dialog #}
+    <dialog id="admin-confirm-dialog" class="admin-confirm-dialog">
+        <div class="modal-card-content">
+            <h4 class="modal-title">{% trans "Confirm Admin Status" %}</h4>
+            <p id="admin-confirm-message"></p>
+            <div class="text-right">
+                <button type="button" class="btn btn-default" id="admin-cancel-btn">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" id="admin-confirm-btn">{% trans "Confirm" %}</button>
+            </div>
+        </div>
+    </dialog>
 {% endblock %}

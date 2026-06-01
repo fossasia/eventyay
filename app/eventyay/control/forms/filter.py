@@ -1459,6 +1459,24 @@ class UserFilterForm(FilterForm):
         ),
         required=False,
     )
+    verified = forms.ChoiceField(
+        label=_('Verified'),
+        choices=(
+            ('', _('All')),
+            ('yes', _('Verified')),
+            ('no', _('Unverified')),
+        ),
+        required=False,
+    )
+    spam = forms.ChoiceField(
+        label=_('Spam'),
+        choices=(
+            ('', _('All')),
+            ('yes', _('Spam')),
+            ('no', _('Not spam')),
+        ),
+        required=False,
+    )
     query = forms.CharField(
         label=_('Search query'),
         widget=forms.TextInput(attrs={'placeholder': _('Search query'), 'autofocus': 'autofocus'}),
@@ -1477,6 +1495,16 @@ class UserFilterForm(FilterForm):
             qs = qs.filter(is_staff=True)
         elif fdata.get('superuser') == 'no':
             qs = qs.filter(is_staff=False)
+
+        if fdata.get('verified') == 'yes':
+            qs = qs.filter(is_verified=True)
+        elif fdata.get('verified') == 'no':
+            qs = qs.filter(is_verified=False)
+
+        if fdata.get('spam') == 'yes':
+            qs = qs.filter(is_spam=True)
+        elif fdata.get('spam') == 'no':
+            qs = qs.filter(is_spam=False)
 
         if fdata.get('query'):
             qs = qs.filter(Q(email__icontains=fdata.get('query')) | Q(fullname__icontains=fdata.get('query')))
