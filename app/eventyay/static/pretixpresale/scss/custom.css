@@ -216,6 +216,10 @@ header .header-row-right {
     scroll-margin-top: 72px;
 }
 
+#tickets + .alert {
+    margin-inline: 0;
+}
+
 .nav-icon-mobile {
     display: none;
 }
