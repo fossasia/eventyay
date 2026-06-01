@@ -67,6 +67,7 @@
                         </div>
                     </label>
                 </div>
+                {% if event_series_creation_enabled %}
                 <div class="big-radio radio">
                     <label>
                         <input type="radio" value="on" name="{{ form.has_subevents.html_name }}" {% if form.has_subevents.avalue %}checked{% endif %}>
@@ -87,6 +88,7 @@
                         </div>
                     </label>
                 </div>
+                {% endif %}
             </div>
         </div>
     <fieldset>

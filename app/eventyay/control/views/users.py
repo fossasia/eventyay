@@ -21,9 +21,13 @@ from django.views.generic import ListView, TemplateView
 from hijack import signals
 from oauth2_provider.decorators import protected_resource
 
+from allauth.socialaccount import providers
+from allauth.socialaccount.models import SocialAccount
+
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.filter import UserFilterForm
 from eventyay.control.forms.users import UserEditForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
@@ -84,6 +88,31 @@ class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationReq
         ctx['backend'] = (
             b[self.object.auth_backend].verbose_name if self.object.auth_backend in b else self.object.auth_backend
         )
+
+        gs = GlobalSettingsObject()
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+        active_providers = {
+            key for key, cfg in login_providers.items()
+            if isinstance(cfg, dict) and cfg.get('state') and cfg.get('client_id') and cfg.get('secret')
+        }
+        ctx['sso_providers_active'] = bool(active_providers)
+
+        provider_labels = dict(providers.registry.as_choices())
+        social_accounts = SocialAccount.objects.filter(user=self.object).order_by('provider')
+        connected_accounts = []
+        for sa in social_accounts:
+            extra = sa.extra_data or {}
+            connected_accounts.append({
+                'provider': sa.provider,
+                'provider_label': provider_labels.get(sa.provider, sa.provider),
+                'uid': sa.uid,
+                'username': extra.get('username', ''),
+                'email': extra.get('email', ''),
+                'date_joined': sa.date_joined,
+                'is_active_provider': sa.provider in active_providers,
+            })
+        ctx['connected_accounts'] = connected_accounts
+
         return ctx
 
     def get_success_url(self):
