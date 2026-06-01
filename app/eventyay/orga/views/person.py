@@ -106,4 +106,4 @@ class SubuserView(View):
         url = urllib.parse.unquote(params.pop('next', [''])[0])
         if url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
             return redirect(url + ('?' + params.urlencode() if params else ''))
-        return redirect(reverse('orga:event.list'))
+        return redirect(reverse('eventyay_common:dashboard'))

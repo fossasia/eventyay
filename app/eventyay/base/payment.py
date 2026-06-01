@@ -1253,7 +1253,8 @@ class GiftCardPayment(BasePaymentProvider):
                 return
 
         cs = cart_session(request)
-        
+        effective_testmode = self.event.testmode or self.event.private_testmode_tickets_enabled
+
         gift_card_code = request.POST.get('giftcard', '').strip()
         if not gift_card_code:
             messages.error(request, _('Please enter a gift card code.'))
@@ -1264,10 +1265,10 @@ class GiftCardPayment(BasePaymentProvider):
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
-            if gc.testmode and not self.event.testmode:
+            if gc.testmode and not effective_testmode:
                 messages.error(request, _('This gift card can only be used in test mode.'))
                 return
-            if not gc.testmode and self.event.testmode:
+            if not gc.testmode and effective_testmode:
                 messages.error(request, _('Only test gift cards can be used in test mode.'))
                 return
             if gc.expires and gc.expires < now():

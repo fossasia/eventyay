@@ -850,15 +850,29 @@ the eventyay team"""
 
     @cached_property
     def guid(self) -> str:
-        return str(uuid.uuid5(uuid.NAMESPACE_URL, f'acct:{self.email.strip()}'))
+        identifier = (self.email or '').strip() or (self.code or str(self.pk))
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, f'acct:{identifier}'))
 
     @cached_property
-    def gravatar_parameter(self) -> str:
+    def gravatar_parameter(self) -> str | None:
+        if not (self.email or '').strip():
+            return None
         return md5(self.email.strip().encode()).hexdigest()
 
     @cached_property
     def has_avatar(self) -> bool:
-        return bool(self.avatar) and self.avatar != 'False'
+        return (bool(self.avatar) and self.avatar != 'False') or bool(self.external_avatar_url)
+
+    @property
+    def external_avatar_url(self) -> str:
+        profile = self.profile if isinstance(self.profile, dict) else {}
+        avatar = profile.get('avatar')
+        if not isinstance(avatar, dict):
+            return ''
+        avatar_url = avatar.get('url')
+        if not isinstance(avatar_url, str):
+            return ''
+        return avatar_url.strip()
 
     @cached_property
     def avatar_url(self) -> str:
@@ -867,7 +881,7 @@ the eventyay team"""
         Uses the avatar file's actual modification time for most accurate cache-busting.
         Falls back to current time if file doesn't exist or can't be accessed.
         """
-        if self.has_avatar:
+        if self.avatar and self.avatar != 'False':
             try:
                 # Get the actual file modification time for most accurate cache-busting
                 file_path = self.avatar.path
@@ -878,7 +892,7 @@ the eventyay team"""
                 timestamp = int(time.time() * 1000)
 
             return f"{self.avatar.url}?v={timestamp}"
-        return ''
+        return self.external_avatar_url
 
     def get_avatar_url(self, event=None, thumbnail=None):
         """Returns the full avatar URL with cache-busting parameter.
@@ -890,9 +904,15 @@ the eventyay team"""
         Returns:
             URL string with cache-busting query parameter
         """
-        # Check if we have an avatar
-        if not self.has_avatar:
-            return ''
+        if not self.avatar or self.avatar == 'False':
+            external_avatar_url = self.external_avatar_url
+            if not external_avatar_url:
+                return ''
+            if external_avatar_url.startswith(('http://', 'https://')):
+                return external_avatar_url
+            if event and event.custom_domain:
+                return urljoin(event.custom_domain, external_avatar_url)
+            return urljoin(settings.SITE_URL, external_avatar_url)
 
         # Determine which image to use
         if not thumbnail:

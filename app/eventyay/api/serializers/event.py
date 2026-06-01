@@ -1,7 +1,8 @@
 import logging
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import SuspiciousFileOperation, ValidationError
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -11,6 +12,7 @@ from pytz import common_timezones
 from rest_framework.fields import ChoiceField, Field
 from rest_framework.relations import SlugRelatedField
 
+from eventyay.api.serializers.fields import UploadedFileOrURLField
 from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.api.serializers.settings import SettingsSerializer
 from eventyay.base.models import Device, Event, TaxRule, TeamAPIToken
@@ -23,6 +25,7 @@ from eventyay.base.services.seating import (
 )
 from eventyay.base.settings import validate_event_settings
 from eventyay.base.signals import api_event_settings_fields
+from eventyay.common.urls import get_file_url_path
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +120,8 @@ class EventSerializer(I18nAwareModelSerializer):
             'name',
             'slug',
             'live',
+            'startpage_visible',
+            'startpage_featured',
             'testmode',
             'currency',
             'date_from',
@@ -786,6 +791,8 @@ class EventSettingsSerializer(SettingsSerializer):
         'event_logo_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def __init__(self, *args, **kwargs):
@@ -797,9 +804,45 @@ class EventSettingsSerializer(SettingsSerializer):
                 field.required = False
                 self.fields[fname] = field
 
+    def flush_settings_cache(self):
+        self.instance.flush()
+        parent = self.instance._parent
+        if parent:
+            getattr(parent, self.instance._h.attribute_name).flush()
+
+    def delete_invalid_file_settings(self, instance):
+        for name, field in self.fields.items():
+            if not isinstance(field, UploadedFileOrURLField):
+                continue
+            current_file = get_file_url_path(instance.get(name, as_type=str, default=None))
+            if not current_file:
+                continue
+            try:
+                default_storage.path(current_file)
+            except SuspiciousFileOperation:
+                instance.delete(name)
+
+    def get_safe_settings_snapshot(self):
+        settings = {}
+        for name in self.fields:
+            try:
+                settings[name] = self.instance.get(name)
+            except SuspiciousFileOperation:
+                raw_value = self.instance.get(name, as_type=str, default=None)
+                settings[name] = None if get_file_url_path(raw_value) else raw_value
+        return settings
+
     def validate(self, data):
         data = super().validate(data)
-        settings_dict = self.instance.freeze()
+        self.flush_settings_cache()
+        try:
+            settings_dict = self.instance.freeze()
+        except SuspiciousFileOperation:
+            self.delete_invalid_file_settings(self.instance)
+            parent = self.instance._parent
+            if parent:
+                self.delete_invalid_file_settings(getattr(parent, self.instance._h.attribute_name))
+            settings_dict = self.get_safe_settings_snapshot()
         settings_dict.update(data)
         validate_event_settings(self.event, settings_dict)
         return data

@@ -136,6 +136,25 @@
   line-height: 1.4;
 }
 
+.field-help ul {
+  padding-left: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.field-help li {
+  margin: 0.25rem 0;
+  padding-left: 1.2rem;
+  position: relative;
+}
+
+.field-help li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #7f8c8d;
+}
+
 /* Description and message text */
 .description,
 .password-reset-done-container p,
@@ -237,6 +256,14 @@
   align-items: center;
 }
 
+.email-confirm-container .btn-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 140px;
+}
+
 .action-buttons {
   justify-content: center;
 }
@@ -263,6 +290,18 @@
 .btn-primary:hover {
   background-color: #1b6ba8;
   border-color: #1b6ba8;
+}
+
+.btn.btn-grey {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn.btn-grey:hover,
+.btn.btn-grey:focus {
+  background-color: #5a6268;
+  border-color: #545b62;
 }
 
 .btn-default {
