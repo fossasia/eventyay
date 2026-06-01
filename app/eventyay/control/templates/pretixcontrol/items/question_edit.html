@@ -51,8 +51,8 @@
             </div>
             <div id="answer-options" class="clearfix">
                 <div class="form-group answer-options-group">
-                    <label class="col-md-3 control-label">{% trans "Answer options" %}</label>
-                    <div class="col-md-9 answer-options-content">
+                    <div id="answer-options-heading" class="col-md-3 control-label">{% trans "Answer options" %}</div>
+                    <div class="col-md-9 answer-options-content" role="group" aria-labelledby="answer-options-heading">
                         <noscript>
                             <p class="help-block">{% trans "Only applicable if you choose 'Choose one/multiple from a list' above." %}</p>
                         </noscript>
@@ -78,12 +78,18 @@
                                                 {% bootstrap_field form.answer layout='inline' form_group_class="" show_label=False %}
                                             </div>
                                             <div class="question-option-actions text-right flip">
-                                                <button type="button" class="btn btn-default" data-formset-move-up-button>
-                                                    <i class="fa fa-arrow-up"></i></button>
-                                                <button type="button" class="btn btn-default" data-formset-move-down-button>
-                                                    <i class="fa fa-arrow-down"></i></button>
-                                                <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                                    <i class="fa fa-trash"></i></button>
+                                                <button type="button" class="btn btn-default" data-formset-move-up-button aria-label="{% trans 'Move option up' %}">
+                                                    <i class="fa fa-arrow-up" aria-hidden="true"></i>
+                                                    <span class="sr-only">{% trans "Move option up" %}</span>
+                                                </button>
+                                                <button type="button" class="btn btn-default" data-formset-move-down-button aria-label="{% trans 'Move option down' %}">
+                                                    <i class="fa fa-arrow-down" aria-hidden="true"></i>
+                                                    <span class="sr-only">{% trans "Move option down" %}</span>
+                                                </button>
+                                                <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button aria-label="{% trans 'Delete option' %}">
+                                                    <i class="fa fa-trash" aria-hidden="true"></i>
+                                                    <span class="sr-only">{% trans "Delete option" %}</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -105,12 +111,18 @@
                                                 {% bootstrap_field formset.empty_form.answer layout='inline' form_group_class="" show_label=False %}
                                             </div>
                                             <div class="question-option-actions text-right flip">
-                                                <button type="button" class="btn btn-default" data-formset-move-up-button>
-                                                    <i class="fa fa-arrow-up"></i></button>
-                                                <button type="button" class="btn btn-default" data-formset-move-down-button>
-                                                    <i class="fa fa-arrow-down"></i></button>
-                                                <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                                    <i class="fa fa-trash"></i></button>
+                                                <button type="button" class="btn btn-default" data-formset-move-up-button aria-label="{% trans 'Move option up' %}">
+                                                    <i class="fa fa-arrow-up" aria-hidden="true"></i>
+                                                    <span class="sr-only">{% trans "Move option up" %}</span>
+                                                </button>
+                                                <button type="button" class="btn btn-default" data-formset-move-down-button aria-label="{% trans 'Move option down' %}">
+                                                    <i class="fa fa-arrow-down" aria-hidden="true"></i>
+                                                    <span class="sr-only">{% trans "Move option down" %}</span>
+                                                </button>
+                                                <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button aria-label="{% trans 'Delete option' %}">
+                                                    <i class="fa fa-trash" aria-hidden="true"></i>
+                                                    <span class="sr-only">{% trans "Delete option" %}</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

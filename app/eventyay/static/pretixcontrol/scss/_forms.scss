@@ -461,11 +461,6 @@ label .optional {
 .form-horizontal .control-label {
   pointer-events: none;
 }
-@media (min-width: $screen-sm-min) {
-  .form-horizontal .control-label {
-    padding-top: 0;
-  }
-}
 .form-horizontal .control-label .label-text,
 .form-horizontal .control-label .optional {
   pointer-events: auto;
