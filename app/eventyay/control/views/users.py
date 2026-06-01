@@ -64,12 +64,7 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        verified_emails = EmailAddress.objects.filter(
-            user_id=OuterRef('pk'),
-            verified=True,
-            primary=True,
-        )
-        qs = User.objects.all().annotate(has_verified_email=Exists(verified_emails))
+        qs = User.objects.all()
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
         return qs
@@ -320,24 +315,15 @@ class UserToggleVerifiedView(AdministratorPermissionRequiredMixin, View):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
         target_user.is_verified = not target_user.is_verified
         target_user.save(update_fields=['is_verified'])
-        if target_user.email:
-            EmailAddress.objects.update_or_create(
-                user=target_user,
-                email=target_user.email,
-                defaults={'primary': True, 'verified': target_user.is_verified}
-            )
-
         target_user.log_action(
             'eventyay.user.settings.changed',
             user=request.user,
             data={'is_verified': target_user.is_verified},
         )
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            has_verified_email = target_user.emailaddress_set.filter(verified=True).exists()
             return JsonResponse({
                 'status': 'ok',
                 'is_verified': target_user.is_verified,
-                'has_verified_email': has_verified_email,
             })
         action_label = _('verified') if target_user.is_verified else _('unverified')
         messages.success(
@@ -424,7 +410,7 @@ class UserResendVerificationView(AdministratorPermissionRequiredMixin, View):
                 defaults={'primary': True, 'verified': False}
             )
             email_address.send_confirmation(request)
-        except Exception:
+        except SendMailException:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse(
                     {'status': 'error', 'message': str(_('There was an error sending the verification email.'))},

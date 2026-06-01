@@ -3,6 +3,7 @@ import time
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.urls import reverse
 
 from eventyay.base.models import User
 from eventyay.control.forms.filter import UserFilterForm
@@ -58,18 +59,20 @@ class SpamLoginBlockingTest(TestCase):
 
     def test_normal_user_can_login(self):
         response = self.client.post(
-            '/common/login/',
+            reverse('eventyay_common:auth.login'),
             {'email': 'spam@example.com', 'password': 'good_pw_123!'},
         )
         self.assertEqual(response.status_code, 302)
 
     def test_spam_user_blocked(self):
         response = self.client.post(
-            '/common/login/',
+            reverse('eventyay_common:auth.login'),
             {'email': 'markedspam@example.com', 'password': 'good_pw_123!'},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'suspended', response.content)
+        form = response.context['form']
+        self.assertTrue(form.errors)
+        self.assertEqual(form.errors.get('__all__').as_data()[0].code, 'spam')
 
     def test_spam_error_code_in_form(self):
         from django import forms as django_forms
@@ -139,19 +142,21 @@ class AdminUserListViewTest(TestCase):
     def test_list_view_requires_staff_session(self):
         regular = _make_user('reg@example.com')
         self.client.force_login(regular)
-        response = self.client.get('/admin/users/')
+        response = self.client.get(reverse('eventyay_admin:admin.users'))
         self.assertIn(response.status_code, [301, 302, 403])
 
     def test_new_columns_present(self):
         self._login_as_admin()
         with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
-            response = self.client.get('/admin/users/')
+            response = self.client.get(reverse('eventyay_admin:admin.users'))
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
         self.assertIn('Member Since', content)
         self.assertIn('Last Accessed', content)
         self.assertIn('Verified', content)
         self.assertIn('Spam', content)
+        self.assertIn(reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk}), content)
+        self.assertIn(reverse('eventyay_admin:admin.users.toggle_spam', kwargs={'id': self.target_user.pk}), content)
 
 
 class UserToggleViewsTest(TestCase):
@@ -172,7 +177,7 @@ class UserToggleViewsTest(TestCase):
     def test_toggle_verified_flips_field(self):
         self.assertFalse(self.target_user.is_verified)
         response = self._post_as_admin(
-            f'/admin/users/{self.target_user.pk}/toggle-verified/'
+            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk})
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -183,7 +188,7 @@ class UserToggleViewsTest(TestCase):
     def test_toggle_spam_flips_field(self):
         self.assertFalse(self.target_user.is_spam)
         response = self._post_as_admin(
-            f'/admin/users/{self.target_user.pk}/toggle-spam/'
+            reverse('eventyay_admin:admin.users.toggle_spam', kwargs={'id': self.target_user.pk})
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -194,7 +199,7 @@ class UserToggleViewsTest(TestCase):
     def test_toggle_spam_on_admin_is_blocked(self):
         other_admin = _make_admin(email='otheradmin@example.com')
         response = self._post_as_admin(
-            f'/admin/users/{other_admin.pk}/toggle-spam/'
+            reverse('eventyay_admin:admin.users.toggle_spam', kwargs={'id': other_admin.pk})
         )
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
@@ -204,7 +209,7 @@ class UserToggleViewsTest(TestCase):
     def test_toggle_admin_flips_field(self):
         self.assertFalse(self.target_user.is_staff)
         response = self._post_as_admin(
-            f'/admin/users/{self.target_user.pk}/toggle-admin/'
+            reverse('eventyay_admin:admin.users.toggle_admin', kwargs={'id': self.target_user.pk})
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -219,7 +224,7 @@ class UserToggleViewsTest(TestCase):
         session['pretix_auth_login_time'] = int(time.time())
         session.save()
         response = self.client.post(
-            f'/admin/users/{self.target_user.pk}/toggle-verified/',
+            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk}),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         )
         self.assertIn(response.status_code, [301, 302, 403])

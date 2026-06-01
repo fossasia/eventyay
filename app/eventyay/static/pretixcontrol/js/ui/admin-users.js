@@ -59,7 +59,15 @@ async function handleToggleChange(event) {
             body: new FormData(form),
         });
 
-        const data = await response.json();
+        const contentType = response.headers.get('content-type');
+        let data = {};
+        if (contentType && contentType.indexOf('application/json') !== -1) {
+            data = await response.json();
+        } else {
+            checkbox.checked = !isChecked;
+            showAlert('Session expired or access denied. Please refresh the page.', 'danger');
+            return;
+        }
 
         if (response.ok && data.status === 'ok') {
             let newValue;
@@ -116,7 +124,14 @@ async function handleActionSubmit(event) {
             body: new FormData(form),
         });
 
-        const data = await response.json();
+        const contentType = response.headers.get('content-type');
+        let data = {};
+        if (contentType && contentType.indexOf('application/json') !== -1) {
+            data = await response.json();
+        } else {
+            showAlert('Session expired or access denied. Please refresh the page.', 'danger');
+            return;
+        }
 
         if (response.ok && data.status === 'ok') {
             showAlert('Email sent successfully.', 'success');
