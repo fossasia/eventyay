@@ -167,7 +167,7 @@ class QuestionFieldsMixin:
         or ``default_answer`` unchanged when no saved answer exists.
         """
         if initial_object:
-            return list(initial_object.options.filter(pk__in=choices.values('pk')))
+            return list(initial_object.options.filter(pk__in=choices.values_list('pk', flat=True)))
         if default_answer:
             return default_answer
         return []

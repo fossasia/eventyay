@@ -2,7 +2,7 @@ import datetime as dt
 
 import pytest
 from django import forms
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, override
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models import Answer, Submission
@@ -188,11 +188,11 @@ def test_choices_optional_field_has_no_initial_without_answer(event):
         )
         AnswerOption.objects.create(question=question, answer='Only option')
 
-    with scope(event=event):
+    with scope(event=event), override('en'):
         form = TalkQuestionsForm(event=event)
         field = form.fields[f'question_{question.pk}']
         assert field.initial is None
-        assert field.empty_label == _('— No selection —')
+        assert str(field.empty_label) == gettext('— No selection —')
 
 
 @pytest.mark.django_db
