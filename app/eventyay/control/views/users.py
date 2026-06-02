@@ -11,7 +11,7 @@ from django.contrib.auth import (
     login,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -198,13 +198,13 @@ class UserAnonymizeView(
                     le.data = json.dumps(d)
                     le.shredded = True
                     le.save(update_fields=['data', 'shredded'])
-        except Exception:
+        except DatabaseError:
             logger.exception('Failed to anonymize user %s from admin user page.', self.object.pk)
             messages.error(request, _('The user could not be anonymized. Please try again later.'))
+            return redirect(reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs))
         else:
             messages.success(request, _('User has been anonymized successfully.'))
-
-        return redirect(reverse('eventyay_admin:admin.users'))
+            return redirect(reverse('eventyay_admin:admin.users'))
 
 
 class UserImpersonateView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, View):
