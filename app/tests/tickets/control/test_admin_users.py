@@ -217,6 +217,24 @@ class UserToggleViewsTest(TestCase):
         self.target_user.refresh_from_db()
         self.assertTrue(self.target_user.is_staff)
 
+    def test_toggle_admin_clears_spam_status(self):
+        self.target_user.is_spam = True
+        self.target_user.save()
+        self.assertTrue(self.target_user.is_spam)
+        self.assertFalse(self.target_user.is_staff)
+
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.toggle_admin', kwargs={'id': self.target_user.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'ok')
+        self.assertFalse(data['is_spam'])
+
+        self.target_user.refresh_from_db()
+        self.assertTrue(self.target_user.is_staff)
+        self.assertFalse(self.target_user.is_spam)
+
     def test_toggle_requires_admin(self):
         regular = _make_user('reg2@example.com')
         self.client.force_login(regular)

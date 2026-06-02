@@ -80,6 +80,20 @@ async function handleToggleChange(event) {
             }
 
             checkbox.checked = newValue;
+
+            if (toggleType === 'admin' && data.is_spam === false) {
+                const row = checkbox.closest('tr') || checkbox.closest(`[data-user-id]`);
+                if (row) {
+                    const spamForm = row.querySelector('.user-toggle-form[data-toggle-type="spam"]');
+                    if (spamForm) {
+                        const spamCheckbox = spamForm.querySelector('.js-user-toggle');
+                        if (spamCheckbox) {
+                            spamCheckbox.checked = false;
+                        }
+                    }
+                }
+            }
+
             showAlert(getSuccessMessage(toggleType, newValue), 'success');
         } else {
             checkbox.checked = !isChecked;

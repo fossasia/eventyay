@@ -340,14 +340,22 @@ class UserToggleAdminView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
         target_user.is_staff = not target_user.is_staff
-        target_user.save(update_fields=['is_staff'])
+        update_fields = ['is_staff']
+        if target_user.is_staff and target_user.is_spam:
+            target_user.is_spam = False
+            update_fields.append('is_spam')
+        target_user.save(update_fields=update_fields)
         target_user.log_action(
             'eventyay.user.settings.changed',
             user=request.user,
-            data={'is_staff': target_user.is_staff},
+            data={'is_staff': target_user.is_staff, 'is_spam': target_user.is_spam},
         )
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'ok', 'is_staff': target_user.is_staff})
+            return JsonResponse({
+                'status': 'ok',
+                'is_staff': target_user.is_staff,
+                'is_spam': target_user.is_spam,
+            })
         action_label = _('granted admin') if target_user.is_staff else _('removed admin')
         messages.success(
             request,
@@ -404,11 +412,23 @@ class UserResendVerificationView(AdministratorPermissionRequiredMixin, View):
             return redirect(reverse('eventyay_admin:admin.users'))
 
         try:
-            email_address, created = EmailAddress.objects.update_or_create(
+            email_address, created = EmailAddress.objects.get_or_create(
                 user=target_user,
                 email=target_user.email,
-                defaults={'primary': True, 'verified': False}
+                defaults={
+                    'primary': not target_user.emailaddress_set.filter(primary=True).exists(),
+                    'verified': False
+                }
             )
+            if target_user.is_verified:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse(
+                        {'status': 'error', 'message': str(_('This user is already verified.'))},
+                        status=400,
+                    )
+                messages.warning(request, _('This user is already verified.'))
+                return redirect(reverse('eventyay_admin:admin.users'))
+
             email_address.send_confirmation(request)
         except SendMailException:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
