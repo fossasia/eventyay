@@ -18,12 +18,14 @@ from django.utils.translation import (
 )
 from django_countries import countries
 from django_countries.fields import Country
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.forms.questions import guess_country
 from eventyay.base.models import (
     OrderPosition,
+    Product,
     ProductVariation,
     Question,
     QuestionAnswer,
@@ -37,6 +39,16 @@ from eventyay.base.settings import (
 )
 from eventyay.base.import_utils import build_header_map, match_header, normalize_header_value  # noqa: F401
 from eventyay.base.signals import order_import_columns
+
+
+def setting_is_truthy(value) -> bool:
+    if value is True:
+        return True
+    if value in (False, None, '', 0):
+        return False
+    if isinstance(value, str):
+        return value.lower() in ('true', '1', 'on', 'yes')
+    return bool(value)
 
 
 class ImportColumn:
@@ -195,8 +207,12 @@ class ProductColumn(ImportColumn):
     default_value = None
     suggestions = ['product', 'ticket', 'item', 'ticket type', 'product name']
 
+    def __init__(self, event, create_missing: bool = False):
+        self.create_missing = create_missing
+        super().__init__(event)
+
     @cached_property
-    def products(self):
+    def products(self) -> list[Product]:
         return list(self.event.products.filter(active=True))
 
     def static_choices(self):
@@ -211,6 +227,17 @@ class ProductColumn(ImportColumn):
             or any((v and v == value) for v in i18n_flat(p.name))
         ]
         if len(matches) == 0:
+            if self.create_missing and value:
+                with scope(event=self.event):
+                    product = Product.objects.create(
+                        event=self.event,
+                        name=LazyI18nString(value),
+                        default_price=Decimal('0.00'),
+                        active=True,
+                        admission=True,
+                    )
+                self.products.append(product)
+                return product
             raise ValidationError(_('No matching product was found.'))
         if len(matches) > 1:
             raise ValidationError(_('Multiple matching products were found.'))
@@ -794,13 +821,14 @@ class QuestionColumn(ImportColumn):
                 a.options.add(*a._options)
 
 
-def get_all_columns(event):
+def get_all_columns(event, settings: dict | None = None):
+    create_missing = setting_is_truthy(settings.get('create_missing_products')) if settings else False
     default = []
     if event.has_subevents:
         default.append(SubeventColumn(event))
     default += [
         EmailColumn(event),
-        ProductColumn(event),
+        ProductColumn(event, create_missing=create_missing),
         Variation(event),
         InvoiceAddressCompany(event),
     ]

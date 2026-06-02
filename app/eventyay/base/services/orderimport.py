@@ -72,7 +72,7 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
     cf = CachedFile.objects.get(id=fileid)
     user = User.objects.get(pk=user)
     with language(locale, event.settings.region):
-        cols = get_all_columns(event)
+        cols = get_all_columns(event, settings)
         parsed = parse_csv(cf.file)
         orders = []
         order = None

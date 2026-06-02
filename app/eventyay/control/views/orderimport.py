@@ -103,11 +103,14 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
         return k
 
     def form_valid(self, form):
-        self.request.event.settings.order_import_settings = form.cleaned_data
+        import_settings = dict(form.cleaned_data)
+        # jQuery serialize() only sends checked checkboxes; read explicitly from POST.
+        import_settings['create_missing_products'] = 'create_missing_products' in self.request.POST
+        self.request.event.settings.order_import_settings = import_settings
         return self.do(
             self.request.event.pk,
             self.file.id,
-            form.cleaned_data,
+            import_settings,
             self.request.LANGUAGE_CODE,
             self.request.user.pk,
         )

@@ -1,0 +1,161 @@
+import csv
+from decimal import Decimal
+from io import StringIO
+
+import pytest
+from django.core.files.base import ContentFile
+from django.utils.timezone import now
+from django_scopes import scopes_disabled
+from i18nfield.strings import LazyI18nString
+
+from eventyay.base.models import (
+    CachedFile,
+    Event,
+    OrderPosition,
+    Organizer,
+    Product,
+    User,
+)
+from eventyay.base.services.orderimport import DataImportError, import_orders
+
+
+@pytest.fixture
+def event():
+    organizer = Organizer.objects.create(name='Dummy', slug='dummy')
+    return Event.objects.create(
+        organizer=organizer,
+        name='Dummy',
+        slug='dummy',
+        date_from=now(),
+        plugins='pretix.plugins.banktransfer',
+    )
+
+
+@pytest.fixture
+def user():
+    return User.objects.create_user('test@localhost', 'test')
+
+
+def make_import_settings(**overrides):
+    settings = {
+        'orders': 'many',
+        'testmode': False,
+        'status': 'paid',
+        'create_missing_products': False,
+        'email': 'csv:Email',
+        'product': 'csv:Product',
+        'variation': 'empty',
+        'price': 'csv:Price',
+        'invoice_address_company': 'empty',
+        'invoice_address_name_full_name': 'empty',
+        'invoice_address_street': 'empty',
+        'invoice_address_zipcode': 'empty',
+        'invoice_address_city': 'empty',
+        'invoice_address_country': 'static:DE',
+        'invoice_address_state': 'empty',
+        'invoice_address_vat_id': 'empty',
+        'invoice_address_internal_reference': 'empty',
+        'attendee_name_full_name': 'empty',
+        'attendee_email': 'empty',
+        'secret': 'empty',
+        'locale': 'static:en',
+        'sales_channel': 'static:web',
+        'comment': 'empty',
+    }
+    settings.update(overrides)
+    return settings
+
+
+def make_csv_file(rows):
+    buffer = StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=['Email', 'Product', 'Price'], dialect=csv.excel)
+    writer.writeheader()
+    writer.writerows(rows)
+    buffer.seek(0)
+    cached = CachedFile.objects.create(type='text/csv', filename='input.csv')
+    cached.file.save('input.csv', ContentFile(buffer.read()))
+    return cached
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_import_creates_missing_products_when_enabled(event, user):
+    assert event.products.count() == 0
+
+    cached = make_csv_file(
+        [
+            {'Email': 'a@example.com', 'Product': 'VIP', 'Price': '0.00'},
+            {'Email': 'b@example.com', 'Product': 'Standard', 'Price': '0.00'},
+            {'Email': 'c@example.com', 'Product': 'VIP', 'Price': '0.00'},
+        ]
+    )
+    settings = make_import_settings(create_missing_products=True)
+
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk))
+
+    products = list(event.products.all())
+    assert len(products) == 2
+    assert all(p.default_price == Decimal('0.00') for p in products)
+    assert all(p.admission is True for p in products)
+    product_names = {str(p) for p in products}
+    assert product_names == {'VIP', 'Standard'}
+    assert event.orders.count() == 3
+    assert OrderPosition.objects.count() == 3
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_import_unknown_product_fails_without_create_missing(event, user):
+    cached = make_csv_file([{'Email': 'a@example.com', 'Product': 'VIP', 'Price': '0.00'}])
+    settings = make_import_settings(create_missing_products=False)
+
+    with pytest.raises(DataImportError) as excinfo:
+        import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
+
+    assert 'No matching product was found.' in str(excinfo.value)
+    assert event.products.count() == 0
+    assert event.orders.count() == 0
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_import_reuses_existing_product_and_creates_only_missing(event, user):
+    existing = Product.objects.create(
+        event=event,
+        name=LazyI18nString('VIP'),
+        default_price=Decimal('10.00'),
+        admission=True,
+    )
+    cached = make_csv_file(
+        [
+            {'Email': 'a@example.com', 'Product': 'VIP', 'Price': '0.00'},
+            {'Email': 'b@example.com', 'Product': 'Standard', 'Price': '0.00'},
+        ]
+    )
+    settings = make_import_settings(create_missing_products=True)
+
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk))
+
+    assert event.products.count() == 2
+    assert OrderPosition.objects.filter(product=existing).count() == 1
+    new_product = event.products.exclude(pk=existing.pk).get()
+    assert str(new_product) == 'Standard'
+    assert OrderPosition.objects.filter(product=new_product).count() == 1
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_import_matches_existing_product_by_internal_name(event, user):
+    Product.objects.create(
+        event=event,
+        name=LazyI18nString('Display name'),
+        internal_name='vip-internal',
+        default_price=Decimal('5.00'),
+    )
+    cached = make_csv_file([{'Email': 'a@example.com', 'Product': 'vip-internal', 'Price': '0.00'}])
+    settings = make_import_settings(create_missing_products=True)
+
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk))
+
+    assert event.products.count() == 1
+    assert event.orders.count() == 1
