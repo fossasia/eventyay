@@ -9,9 +9,10 @@ from django.db import DatabaseError
 from eventyay.base.models import User
 from eventyay.base.models.storage_model import StoredFile
 
+
 logger = logging.getLogger(__name__)
 
-# Timeout for outbound requests to external services (seconds)
+# Timeout for outbound requests to external services (seconds).
 EXTERNAL_REQUEST_TIMEOUT = 10
 
 
@@ -28,11 +29,10 @@ def update_user_profile_from_social(
             "jpg": "image/jpeg",
             "gif": "image/gif",
         }
-        # Extract extension safely from URL path, avoiding query params or malformed URLs
         path = urlparse(avatar_url).path
-        ext = os.path.splitext(path)[1].lstrip('.')
-        if not ext or '/' in ext or '?' in ext:
-            ext = 'png'  # safe default for ambiguous/malformed URLs
+        ext = os.path.splitext(path)[1].lstrip(".").lower()
+        if ext not in content_types:
+            ext = "png"  # safe default for ambiguous or malformed URLs
         try:
             r = requests.get(avatar_url, timeout=EXTERNAL_REQUEST_TIMEOUT)
             r.raise_for_status()
@@ -40,6 +40,9 @@ def update_user_profile_from_social(
             logger.exception("Could not download avatar")
         else:
             try:
+                if not r.content:
+                    logger.warning("Could not save avatar: empty response body")
+                    return
                 c = ContentFile(r.content)
                 sf = StoredFile.objects.create(
                     event=user.event,
