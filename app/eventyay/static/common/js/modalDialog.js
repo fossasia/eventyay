@@ -15,7 +15,10 @@
             element.setAttribute("data-dialog-trigger-initialized", "")
             const openDialog = (ev) => {
                 ev.preventDefault()
-                if (typeof outerDialogElement.showModal === "function") {
+                if (
+                    typeof outerDialogElement.showModal === "function" &&
+                    !outerDialogElement.open
+                ) {
                     outerDialogElement.showModal()
                 }
             }

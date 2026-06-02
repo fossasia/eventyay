@@ -3,7 +3,7 @@
 from urllib.parse import urlparse
 
 from django.http import HttpRequest
-from django.urls import Resolver404, resolve, reverse
+from django.urls import Resolver404, get_script_prefix, resolve, reverse
 
 from eventyay.base.models import Event, Organizer
 from eventyay.base.models.auth import User
@@ -93,18 +93,21 @@ def _is_control_url(url: str) -> bool:
     path = urlparse(url).path
     if not path.startswith('/'):
         path = f'/{path}'
-    prefix = _control_path_prefix()
+    control_prefix = _control_path_prefix()
+    script_prefix = get_script_prefix().rstrip('/')
+
+    if path == control_prefix or path == f'{control_prefix}/':
+        return True
+
     resolve_path = path
-    if prefix and resolve_path.startswith(f'{prefix}/'):
-        resolve_path = resolve_path[len(prefix) :]
+    if script_prefix and resolve_path.startswith(f'{script_prefix}/'):
+        resolve_path = resolve_path[len(script_prefix) :]
         if not resolve_path.startswith('/'):
             resolve_path = f'/{resolve_path}'
-    elif resolve_path == prefix:
-        resolve_path = '/'
     try:
         match = resolve(resolve_path)
     except Resolver404:
-        return path == prefix or path.startswith(f'{prefix}/')
+        return path.startswith(f'{control_prefix}/')
     return bool(match.namespaces and match.namespaces[0] == 'control')
 
 

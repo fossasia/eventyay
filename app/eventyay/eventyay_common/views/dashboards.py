@@ -92,10 +92,12 @@ def get_event_dashboard_widget_permissions(request: HttpRequest) -> dict[str, bo
 
 
 def filter_event_dashboard_widgets_for_request(
-    request: HttpRequest,
+    request: HttpRequest,  # kept for backward compatibility at call sites
     widgets: List[Dict[str, Any]] | None,
+    permissions: dict[str, bool] | None = None,
 ) -> List[Dict[str, Any]]:
-    permissions = get_event_dashboard_widget_permissions(request)
+    if permissions is None:
+        permissions = get_event_dashboard_widget_permissions(request)
     return filter_common_event_dashboard_widgets(
         widgets,
         can_view_orders=permissions['can_view_orders'],
@@ -143,6 +145,7 @@ def filter_common_event_dashboard_widgets(
 
 def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
     subevent = get_subevent(request)
+    permissions = get_event_dashboard_widget_permissions(request)
 
     widgets: List[Dict[str, Any]] = []
     for r, result in event_dashboard_widgets.send(
@@ -151,7 +154,7 @@ def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
         lazy=False,
         request=request,
     ):
-        widgets.extend(filter_event_dashboard_widgets_for_request(request, result))
+        widgets.extend(filter_event_dashboard_widgets_for_request(request, result, permissions))
 
     return JsonResponse({'widgets': widgets})
 
@@ -224,7 +227,7 @@ class EventIndexView(TemplateView):
             lazy=True,
             request=request,
         ):
-            widgets.extend(filter_event_dashboard_widgets_for_request(request, result))
+            widgets.extend(filter_event_dashboard_widgets_for_request(request, result, permissions))
         return self.rearrange(widgets)
 
     def _filter_log_entries(self, qs: QuerySet, permissions: Dict[str, bool]) -> QuerySet:
