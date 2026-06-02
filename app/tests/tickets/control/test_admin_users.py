@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from eventyay.base.models import User
 from eventyay.control.forms.filter import UserFilterForm
+from eventyay.base.services.mail import SendMailException
 
 
 def _make_admin(email='admin@example.com', password='admin_pw_123!'):
@@ -246,3 +247,95 @@ class UserToggleViewsTest(TestCase):
             HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         )
         self.assertIn(response.status_code, [301, 302, 403])
+
+
+class UserEmailActionsTest(TestCase):
+
+    def setUp(self):
+        self.admin = _make_admin()
+        self.target_user = _make_user('emailtarget@example.com')
+
+    def _post_as_admin(self, url):
+        self.client.force_login(self.admin)
+        session = self.client.session
+        session['pretix_auth_login_time'] = int(time.time())
+        session['pretix_auth_long_session'] = False
+        session.save()
+        with patch.object(self.admin.__class__, 'has_active_staff_session', return_value=True):
+            return self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+    @patch('allauth.account.models.EmailAddress.send_confirmation')
+    def test_resend_verification_success(self, mock_send):
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': self.target_user.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'ok')
+        mock_send.assert_called_once()
+
+    def test_resend_verification_missing_email(self):
+        no_email_user = _make_user('')
+        # Temporarily clear the email
+        no_email_user.email = ''
+        no_email_user.save()
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': no_email_user.pk})
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertIn('has no email address', data['message'])
+
+    @patch('allauth.account.models.EmailAddress.send_confirmation', side_effect=SendMailException())
+    def test_resend_verification_mail_error(self, mock_send):
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': self.target_user.pk})
+        )
+        self.assertEqual(response.status_code, 500)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertIn('error sending the verification email', data['message'])
+
+    def test_resend_verification_already_verified_guard(self):
+        self.target_user.is_verified = True
+        self.target_user.save()
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': self.target_user.pk})
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertIn('already verified', data['message'])
+
+    @patch('eventyay.base.models.User.send_password_reset')
+    def test_reset_password_success(self, mock_send):
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.reset_password_list', kwargs={'id': self.target_user.pk})
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'ok')
+        mock_send.assert_called_once()
+
+    def test_reset_password_missing_email(self):
+        no_email_user = _make_user('')
+        no_email_user.email = ''
+        no_email_user.save()
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.reset_password_list', kwargs={'id': no_email_user.pk})
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertIn('has no email address', data['message'])
+
+    @patch('eventyay.base.models.User.send_password_reset', side_effect=SendMailException())
+    def test_reset_password_mail_error(self, mock_send):
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.reset_password_list', kwargs={'id': self.target_user.pk})
+        )
+        self.assertEqual(response.status_code, 500)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertIn('error sending the mail', data['message'])
