@@ -24,7 +24,7 @@
     {% endcompress %}
 
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
-    {% if ev.geo_lat != None and ev.geo_lon != None %}
+    {% if venue_map_location %}
         {% compress css %}
             <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
@@ -413,26 +413,31 @@
         {% endif %}
     {% endif %}
     {% eventsignal event "eventyay.presale.signals.front_page_after_content" subevent=subevent request=request %}
-    {% if ev.geo_lat != None and ev.geo_lon != None %}
+    {% if ev.location or venue_map_location %}
         <section class="front-page venue-map">
+            <h2 id="venue" class="content-header">{% trans "Getting here" %}</h2>
             <div class="venue-map-layout">
-                <div class="venue-map-main">
-                    <h2 id="venue" class="content-header">{% trans "Getting here" %}</h2>
-                    <div class="public-geodata-group"
-                         data-lat="{{ ev.geo_lat|default_if_none:'' }}"
-                         data-lon="{{ ev.geo_lon|default_if_none:'' }}"
-                         data-tiles="{{ global_settings.leaflet_tiles }}"
-                         data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
-                         data-icon="{% static 'leaflet/images/marker-icon.png' %}"
-                         data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
-                        <div class="public-geodata-map" aria-hidden="true"></div>
+                {% if venue_map_location %}
+                    <div class="venue-map-main">
+                        <div class="public-geodata-group"
+                             data-lat="{{ venue_map_location.lat }}"
+                             data-lon="{{ venue_map_location.lon }}"
+                             data-tiles="{{ global_settings.leaflet_tiles }}"
+                             data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                             data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                             data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                            <div class="public-geodata-map" aria-hidden="true"></div>
+                        </div>
                     </div>
-                </div>
+                {% endif %}
                 {% if ev.location %}
-                <div class="venue-map-details">
-                    <h4 class="venue-map-heading">{% trans "Address" %}</h4>
-                    <p>{{ ev.location|event_localize|linebreaksbr }}</p>
-                </div>
+                    <div class="venue-map-details{% if not venue_map_location %} venue-map-details-only{% endif %}">
+                        <h3 class="venue-map-heading">{% trans "Address" %}</h3>
+                        <p>{{ ev.location|event_localize|linebreaksbr }}</p>
+                        {% if not venue_map_location %}
+                            <p class="venue-map-unavailable">{% trans "Map location is currently unavailable for this address." %}</p>
+                        {% endif %}
+                    </div>
                 {% endif %}
             </div>
         </section>
