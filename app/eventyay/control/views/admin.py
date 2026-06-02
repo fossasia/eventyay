@@ -2,12 +2,11 @@ import sys
 import json
 from datetime import UTC
 from zoneinfo import ZoneInfo
-import dateutil.parser
 
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -163,8 +162,6 @@ class AttendeeListView(ListView):
         return AttendeeFilterForm(data=self.request.GET)
 
     def get_queryset(self):
-        from django.db.models import Prefetch
-
         qs = (
             OrderPosition.objects.select_related('order', 'product', 'order__event', 'order__event__organizer')
             .prefetch_related(
@@ -209,8 +206,6 @@ class AttendeeListView(ListView):
         def parse_dt(dt):
             if not dt:
                 return None
-            if isinstance(dt, str):
-                return make_aware(dateutil.parser.parse(dt), UTC)
             return dt if is_aware(dt) else make_aware(dt, UTC)
 
         checkins = pos.checkins.all()
