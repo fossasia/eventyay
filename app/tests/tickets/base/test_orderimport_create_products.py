@@ -92,7 +92,7 @@ def test_import_creates_missing_products_when_enabled(event, user):
     )
     settings = make_import_settings(create_missing_products=True)
 
-    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk))
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
 
     products = list(event.products.all())
     assert len(products) == 2
@@ -135,7 +135,7 @@ def test_import_reuses_existing_product_and_creates_only_missing(event, user):
     )
     settings = make_import_settings(create_missing_products=True)
 
-    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk))
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
 
     assert event.products.count() == 2
     assert OrderPosition.objects.filter(product=existing).count() == 1
@@ -209,7 +209,7 @@ def test_import_matches_existing_product_by_internal_name(event, user):
     cached = make_csv_file([{'Email': 'a@example.com', 'Product': 'vip-internal', 'Price': '0.00'}])
     settings = make_import_settings(create_missing_products=True)
 
-    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk))
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
 
     assert event.products.count() == 1
     assert event.orders.count() == 1

@@ -143,9 +143,10 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
 
     @cached_property
     def parsed_records(self):
-        if not self.parsed:
+        parsed = self.parsed
+        if not parsed:
             return []
-        return list(self.parsed)
+        return list(parsed)
 
     def get(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -200,16 +201,18 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         form = kwargs.get('form') or self.get_form()
+        parsed = self.parsed
+        parsed_records = self.parsed_records
         import_settings = import_settings_from_form(form)
         product_preview = get_product_import_preview(
             self.request.event,
-            self.parsed_records,
+            parsed_records,
             import_settings,
-            fieldnames=self.parsed.fieldnames if self.parsed else [],
+            fieldnames=parsed.fieldnames if parsed else [],
         )
         ctx['file'] = self.file
-        ctx['parsed'] = self.parsed
-        ctx['sample_rows'] = self.parsed_records[:3]
+        ctx['parsed'] = parsed
+        ctx['sample_rows'] = parsed_records[:3]
         ctx['product_preview'] = product_preview
         ctx['product_preview_labels'] = {
             'matched_heading': str(_('Existing products (will be matched)')),

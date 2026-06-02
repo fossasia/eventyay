@@ -9,10 +9,6 @@ function renderProductPreview(previewData, productMapping, createMissing, labels
 
   const items = previewData[productMapping] || [];
   container.replaceChildren();
-  if (!items) {
-    appendMessage(container, labels.empty_values, 'text-muted');
-    return;
-  }
 
   const matched = items.filter((item) => item.status === 'matched');
   const ambiguous = items.filter((item) => item.status === 'ambiguous');
