@@ -136,24 +136,30 @@ def product_move(request, product, up=True):
     messages.success(request, _('The order of products has been updated.'))
 
 
+def product_list_redirect(request):
+    url = reverse(
+        'control:event.products',
+        kwargs={
+            'organizer': request.event.organizer.slug,
+            'event': request.event.slug,
+        },
+    )
+    query = request.GET.urlencode()
+    if query:
+        url = f'{url}?{query}'
+    return HttpResponseRedirect(url)
+
+
 @event_permission_required('can_change_items')
 def product_move_up(request, organizer, event, product):
     product_move(request, product, up=True)
-    return redirect(
-        'control:event.products',
-        organizer=request.event.organizer.slug,
-        event=request.event.slug,
-    )
+    return product_list_redirect(request)
 
 
 @event_permission_required('can_change_items')
 def product_move_down(request, organizer, event, product):
     product_move(request, product, up=False)
-    return redirect(
-        'control:event.products',
-        organizer=request.event.organizer.slug,
-        event=request.event.slug,
-    )
+    return product_list_redirect(request)
 
 
 class CategoryDelete(EventPermissionRequiredMixin, DeleteView):
