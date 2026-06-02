@@ -16,6 +16,7 @@ from eventyay.base.models import (
     Product,
     User,
 )
+from eventyay.base.orderimport import get_product_import_preview
 from eventyay.base.services.orderimport import DataImportError, import_orders
 
 
@@ -141,6 +142,59 @@ def test_import_reuses_existing_product_and_creates_only_missing(event, user):
     new_product = event.products.exclude(pk=existing.pk).get()
     assert str(new_product) == 'Standard'
     assert OrderPosition.objects.filter(product=new_product).count() == 1
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_product_import_preview_matched_and_create(event):
+    Product.objects.create(
+        event=event,
+        name=LazyI18nString('VIP'),
+        default_price=Decimal('10.00'),
+    )
+    records = [
+        {'Email': 'a@example.com', 'Product': 'VIP', 'Price': '0.00'},
+        {'Email': 'b@example.com', 'Product': 'Workshop', 'Price': '0.00'},
+    ]
+    settings = make_import_settings(create_missing_products=True, product='csv:Product')
+
+    preview = get_product_import_preview(event, records, settings, fieldnames=['Email', 'Product', 'Price'])
+
+    assert preview['unmapped'] is False
+    assert len(preview['matched']) == 1
+    assert preview['matched'][0]['csv_value'] == 'VIP'
+    assert len(preview['to_create']) == 1
+    assert preview['to_create'][0]['csv_value'] == 'Workshop'
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_product_import_preview_missing_without_create(event):
+    records = [{'Email': 'a@example.com', 'Product': 'New Ticket', 'Price': '0.00'}]
+    settings = make_import_settings(create_missing_products=False, product='csv:Product')
+
+    preview = get_product_import_preview(event, records, settings, fieldnames=['Email', 'Product', 'Price'])
+
+    assert len(preview['missing']) == 1
+    assert preview['missing'][0]['csv_value'] == 'New Ticket'
+    assert preview['to_create'] == []
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_import_validation_failure_does_not_create_products(event, user):
+    cached = make_csv_file(
+        [
+            {'Email': 'valid@example.com', 'Product': 'New Product', 'Price': '0.00'},
+            {'Email': 'not-an-email', 'Product': 'Another New', 'Price': '0.00'},
+        ]
+    )
+    settings = make_import_settings(create_missing_products=True, email='csv:Email')
+
+    with pytest.raises(DataImportError):
+        import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
+
+    assert event.products.count() == 0
 
 
 @pytest.mark.django_db

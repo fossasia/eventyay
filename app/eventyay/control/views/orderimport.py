@@ -11,6 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView
 
 from eventyay.base.models import CachedFile
+from eventyay.base.import_utils import setting_is_truthy
+from eventyay.base.orderimport import get_product_import_preview
 from eventyay.base.services.orderimport import import_orders, parse_csv
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.consts import SizeKey
@@ -18,6 +20,24 @@ from eventyay.control.forms.orderimport import ProcessForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 
 logger = logging.getLogger(__name__)
+
+
+def import_settings_from_form(form):
+    import_settings = {}
+    for name in form.fields:
+        if form.is_bound:
+            import_settings[name] = form.data.get(name)
+        else:
+            import_settings[name] = form[name].value()
+    if form.is_bound and 'create_missing_products' in form.cleaned_data:
+        import_settings['create_missing_products'] = form.cleaned_data['create_missing_products']
+    elif form.is_bound:
+        import_settings['create_missing_products'] = setting_is_truthy(form.data.get('create_missing_products'))
+    else:
+        import_settings['create_missing_products'] = setting_is_truthy(
+            form.initial.get('create_missing_products')
+        )
+    return import_settings
 
 
 class ImportView(EventPermissionRequiredMixin, TemplateView):
@@ -104,8 +124,6 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
 
     def form_valid(self, form):
         import_settings = dict(form.cleaned_data)
-        # jQuery serialize() only sends checked checkboxes; read explicitly from POST.
-        import_settings['create_missing_products'] = 'create_missing_products' in self.request.POST
         self.request.event.settings.order_import_settings = import_settings
         return self.do(
             self.request.event.pk,
@@ -122,6 +140,14 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
     @cached_property
     def parsed(self):
         return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+
+    @cached_property
+    def parsed_records(self):
+        self.file.file.seek(0)
+        reader = parse_csv(self.file.file)
+        if not reader:
+            return []
+        return list(reader)
 
     def get(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -175,7 +201,30 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        form = kwargs.get('form') or self.get_form()
+        import_settings = import_settings_from_form(form)
+        product_preview = get_product_import_preview(
+            self.request.event,
+            self.parsed_records,
+            import_settings,
+            fieldnames=self.parsed.fieldnames if self.parsed else [],
+        )
         ctx['file'] = self.file
         ctx['parsed'] = self.parsed
-        ctx['sample_rows'] = list(self.parsed)[:3]
+        ctx['sample_rows'] = self.parsed_records[:3]
+        ctx['product_preview'] = product_preview
+        ctx['product_preview_labels'] = {
+            'matched_heading': str(_('Existing products (will be matched)')),
+            'create_heading': str(_('New products (will be created)')),
+            'missing_heading': str(_('Unknown products (import will fail)')),
+            'ambiguous_heading': str(_('Ambiguous matches (import will fail)')),
+            'col_csv_value': str(_('Value in CSV')),
+            'col_matched_product': str(_('Matched product')),
+            'col_result': str(_('Result')),
+            'col_rows': str(_('Rows')),
+            'col_matching_products': str(_('Matching products')),
+            'result_will_create': str(_('Will be created')),
+            'result_no_match': str(_('No matching product')),
+            'empty_values': str(_('No product values found in the selected column.')),
+        }
         return ctx

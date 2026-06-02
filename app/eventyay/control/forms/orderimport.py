@@ -25,7 +25,7 @@ class ProcessForm(forms.Form):
         label=_('Automatically create missing products'),
         help_text=_(
             'If a product referenced in the CSV does not exist, it will be created automatically. '
-            'Existing products continue to be matched by name or ID.'
+            'Existing products are matched by product name, internal name, or ID.'
         ),
         required=False,
     )

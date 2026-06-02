@@ -17,7 +17,7 @@ from eventyay.base.models import (
     OrderPosition,
     User,
 )
-from eventyay.base.orderimport import get_all_columns
+from eventyay.base.orderimport import NewImportProduct, ProductColumn, get_all_columns
 from eventyay.base.services.invoices import generate_invoice, invoice_qualified
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.base.signals import order_paid, order_placed
@@ -74,8 +74,6 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
     with language(locale, event.settings.region):
         cols = get_all_columns(event, settings)
         parsed = parse_csv(cf.file)
-        orders = []
-        order = None
         data = []
 
         # Run validation
@@ -98,36 +96,47 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
                     )
             data.append(values)
 
-        # Prepare model objects. Yes, this might consume lots of RAM, but allows us to make the actual SQL transaction
-        # shorter. We'll see what works better in reality…
-        for i, record in enumerate(data):
-            try:
-                if order is None or settings['orders'] == 'many':
-                    order = Order(
-                        event=event,
-                        testmode=settings['testmode'],
-                    )
-                    order.meta_info = {}
-                    order._positions = []
-                    order._address = InvoiceAddress()
-                    order._address.name_parts = {'_scheme': event.settings.name_scheme}
-                    orders.append(order)
-
-                position = OrderPosition(positionid=len(order._positions) + 1)
-                position.attendee_name_parts = {'_scheme': event.settings.name_scheme}
-                position.meta_info = {}
-                order._positions.append(position)
-                position.assign_pseudonymization_id()
-
-                for c in cols:
-                    c.assign(record.get(c.identifier), order, position, order._address)
-
-            except ImportError as e:
-                raise ImportError(_('Invalid data in row {row}: {message}').format(row=i, message=str(e)))
+        product_columns = [c for c in cols if isinstance(c, ProductColumn)]
 
         # quota check?
         with event.lock():
             with transaction.atomic():
+                if len(product_columns) == 1:
+                    product_map = product_columns[0].materialize_pending_products()
+                    for record in data:
+                        product = record.get('product')
+                        if isinstance(product, NewImportProduct):
+                            record['product'] = product_map[product.name]
+
+                # Prepare model objects. Yes, this might consume lots of RAM, but allows us to make the actual SQL
+                # transaction shorter. We'll see what works better in reality…
+                orders = []
+                order = None
+                for i, record in enumerate(data):
+                    try:
+                        if order is None or settings['orders'] == 'many':
+                            order = Order(
+                                event=event,
+                                testmode=settings['testmode'],
+                            )
+                            order.meta_info = {}
+                            order._positions = []
+                            order._address = InvoiceAddress()
+                            order._address.name_parts = {'_scheme': event.settings.name_scheme}
+                            orders.append(order)
+
+                        position = OrderPosition(positionid=len(order._positions) + 1)
+                        position.attendee_name_parts = {'_scheme': event.settings.name_scheme}
+                        position.meta_info = {}
+                        order._positions.append(position)
+                        position.assign_pseudonymization_id()
+
+                        for c in cols:
+                            c.assign(record.get(c.identifier), order, position, order._address)
+
+                    except ImportError as e:
+                        raise ImportError(_('Invalid data in row {row}: {message}').format(row=i, message=str(e)))
+
                 for o in orders:
                     o.total = sum([c.price for c in o._positions])  # currently no support for fees
                     if o.total == Decimal('0.00'):

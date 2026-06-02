@@ -1,0 +1,105 @@
+{% load i18n %}
+{% if product_preview.unmapped %}
+    <p class="alert alert-warning">
+        {% blocktrans trimmed %}
+            Select a CSV column or existing product for the Product field in the column mapping
+            section below to preview which products will be matched or created.
+        {% endblocktrans %}
+    </p>
+{% else %}
+    <p class="text-muted">
+        {% blocktrans trimmed %}
+            This summary is based on all rows in your CSV file. It updates when you change the
+            product mapping or the “Automatically create missing products” option.
+        {% endblocktrans %}
+    </p>
+    <div id="product-import-preview-body">
+        {% if product_preview.matched %}
+            <h4 class="text-success">{% trans "Existing products (will be matched)" %}</h4>
+            <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>{% trans "Value in CSV" %}</th>
+                    <th>{% trans "Matched product" %}</th>
+                    <th class="text-right">{% trans "Rows" %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in product_preview.matched %}
+                    <tr>
+                        <td>{{ item.csv_value }}</td>
+                        <td>{{ item.product_label }}</td>
+                        <td class="text-right">{{ item.rows }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        {% if product_preview.to_create %}
+            <h4 class="text-info">{% trans "New products (will be created)" %}</h4>
+            <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>{% trans "Value in CSV" %}</th>
+                    <th>{% trans "Result" %}</th>
+                    <th class="text-right">{% trans "Rows" %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in product_preview.to_create %}
+                    <tr>
+                        <td>{{ item.csv_value }}</td>
+                        <td>{% trans "Will be created" %}</td>
+                        <td class="text-right">{{ item.rows }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        {% if product_preview.missing %}
+            <h4 class="text-danger">{% trans "Unknown products (import will fail)" %}</h4>
+            <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>{% trans "Value in CSV" %}</th>
+                    <th>{% trans "Result" %}</th>
+                    <th class="text-right">{% trans "Rows" %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in product_preview.missing %}
+                    <tr>
+                        <td>{{ item.csv_value }}</td>
+                        <td>{% trans "No matching product" %}</td>
+                        <td class="text-right">{{ item.rows }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        {% if product_preview.ambiguous %}
+            <h4 class="text-warning">{% trans "Ambiguous matches (import will fail)" %}</h4>
+            <table class="table table-condensed table-striped">
+                <thead>
+                <tr>
+                    <th>{% trans "Value in CSV" %}</th>
+                    <th>{% trans "Matching products" %}</th>
+                    <th class="text-right">{% trans "Rows" %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in product_preview.ambiguous %}
+                    <tr>
+                        <td>{{ item.csv_value }}</td>
+                        <td>{{ item.product_label }}</td>
+                        <td class="text-right">{{ item.rows }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        {% if not product_preview.matched and not product_preview.to_create and not product_preview.missing and not product_preview.ambiguous %}
+            <p class="text-muted">{% trans "No product values found in the selected column." %}</p>
+        {% endif %}
+    </div>
+{% endif %}

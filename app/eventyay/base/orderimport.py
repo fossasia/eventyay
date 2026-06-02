@@ -37,18 +37,24 @@ from eventyay.base.settings import (
     COUNTRIES_WITH_STATE_IN_ADDRESS,
     PERSON_NAME_SCHEMES,
 )
-from eventyay.base.import_utils import build_header_map, match_header, normalize_header_value  # noqa: F401
+from eventyay.base.import_utils import build_header_map, match_header, normalize_header_value, setting_is_truthy  # noqa: F401
 from eventyay.base.signals import order_import_columns
 
 
-def setting_is_truthy(value) -> bool:
-    if value is True:
-        return True
-    if value in (False, None, '', 0):
-        return False
-    if isinstance(value, str):
-        return value.lower() in ('true', '1', 'on', 'yes')
-    return bool(value)
+class NewImportProduct:
+    """Placeholder returned during validation when a product will be created on import."""
+
+    __slots__ = ('name',)
+
+    def __init__(self, name: str):
+        self.name = name
+
+
+def resolve_import_product(product):
+    """Return a persisted Product or None when *product* is a pending import placeholder."""
+    if isinstance(product, NewImportProduct):
+        return None
+    return product
 
 
 class ImportColumn:
@@ -201,6 +207,120 @@ def i18n_flat(l):
     return [l.data]
 
 
+def find_matching_products(value, products):
+    if not value:
+        return []
+    return [
+        p
+        for p in products
+        if str(p.pk) == value
+        or (p.internal_name and p.internal_name == value)
+        or any((v and v == value) for v in i18n_flat(p.name))
+    ]
+
+
+def _product_values_from_records(column, settings, records):
+    counter = defaultdict(int)
+    for record in records:
+        val = column.resolve(settings, record)
+        if val:
+            counter[val] += 1
+    return counter
+
+
+def _preview_entry_for_value(value, row_count, products, create_missing):
+    matches = find_matching_products(value, products)
+    if len(matches) == 1:
+        product = matches[0]
+        return {
+            'csv_value': value,
+            'rows': row_count,
+            'status': 'matched',
+            'product_label': str(product),
+            'product_id': product.pk,
+        }
+    if len(matches) > 1:
+        return {
+            'csv_value': value,
+            'rows': row_count,
+            'status': 'ambiguous',
+            'product_label': ', '.join(str(p) for p in matches),
+        }
+    if create_missing:
+        return {
+            'csv_value': value,
+            'rows': row_count,
+            'status': 'create',
+        }
+    return {
+        'csv_value': value,
+        'rows': row_count,
+        'status': 'missing',
+    }
+
+
+def build_product_preview_by_mapping(event, records, fieldnames, create_missing=False):
+    products = list(event.products.filter(active=True))
+    column = ProductColumn(event, create_missing=create_missing)
+    by_mapping = {}
+
+    for header in fieldnames:
+        settings = {'product': f'csv:{header}'}
+        values = _product_values_from_records(column, settings, records)
+        by_mapping[f'csv:{header}'] = [
+            _preview_entry_for_value(value, count, products, create_missing)
+            for value, count in sorted(values.items())
+        ]
+
+    for product in products:
+        settings = {'product': f'static:{product.pk}'}
+        by_mapping[f'static:{product.pk}'] = [
+            _preview_entry_for_value(str(product.pk), len(records), products, create_missing)
+        ]
+
+    return by_mapping
+
+
+def get_product_import_preview(event, records, settings, fieldnames=None):
+    product_setting = settings.get('product')
+    create_missing = setting_is_truthy(settings.get('create_missing_products'))
+
+    if not product_setting or product_setting in (None, 'empty'):
+        return {
+            'unmapped': True,
+            'create_missing': create_missing,
+            'matched': [],
+            'to_create': [],
+            'missing': [],
+            'ambiguous': [],
+            'items': [],
+        }
+
+    products = list(event.products.filter(active=True))
+    column = ProductColumn(event, create_missing=create_missing)
+    values = _product_values_from_records(column, settings, records)
+    items = [
+        _preview_entry_for_value(value, count, products, create_missing)
+        for value, count in sorted(values.items())
+    ]
+
+    return {
+        'unmapped': False,
+        'create_missing': create_missing,
+        'product_mapping': product_setting,
+        'matched': [i for i in items if i['status'] == 'matched'],
+        'to_create': [i for i in items if i['status'] == 'create'],
+        'missing': [i for i in items if i['status'] == 'missing'],
+        'ambiguous': [i for i in items if i['status'] == 'ambiguous'],
+        'items': items,
+        'by_mapping': build_product_preview_by_mapping(
+            event, records, fieldnames or [], create_missing=create_missing
+        )
+        if fieldnames
+        else {},
+    }
+
+
 class ProductColumn(ImportColumn):
     identifier = 'product'
     verbose_name = gettext_lazy('Product')
@@ -209,6 +329,7 @@ class ProductColumn(ImportColumn):
 
     def __init__(self, event, create_missing: bool = False):
         self.create_missing = create_missing
+        self._pending_product_names: set[str] = set()
         super().__init__(event)
 
     @cached_property
@@ -219,29 +340,35 @@ class ProductColumn(ImportColumn):
         return [(str(p.pk), str(p)) for p in self.products]
 
     def clean(self, value, previous_values):
-        matches = [
-            p
-            for p in self.products
-            if str(p.pk) == value
-            or (p.internal_name and p.internal_name == value)
-            or any((v and v == value) for v in i18n_flat(p.name))
-        ]
+        matches = find_matching_products(value, self.products)
         if len(matches) == 0:
             if self.create_missing and value:
-                with scope(event=self.event):
-                    product = Product.objects.create(
-                        event=self.event,
-                        name=LazyI18nString(value),
-                        default_price=Decimal('0.00'),
-                        active=True,
-                        admission=True,
-                    )
-                self.products.append(product)
-                return product
+                self._pending_product_names.add(value)
+                return NewImportProduct(value)
             raise ValidationError(_('No matching product was found.'))
         if len(matches) > 1:
             raise ValidationError(_('Multiple matching products were found.'))
         return matches[0]
+
+    def materialize_pending_products(self) -> dict[str, Product]:
+        created: dict[str, Product] = {}
+        for name in sorted(self._pending_product_names):
+            matches = find_matching_products(name, self.products)
+            if len(matches) == 1:
+                created[name] = matches[0]
+                continue
+            with scope(event=self.event):
+                product = Product.objects.create(
+                    event=self.event,
+                    name=LazyI18nString(name),
+                    default_price=Decimal('0.00'),
+                    active=True,
+                    admission=True,
+                )
+            self.products.append(product)
+            created[name] = product
+        self._pending_product_names.clear()
+        return created
 
     def assign(self, value, order, position, invoice_address, **kwargs):
         position.product = value
@@ -264,20 +391,23 @@ class Variation(ImportColumn):
         return [(str(p.pk), f'{p.product} – {p.value}') for p in self.products]
 
     def clean(self, value, previous_values):
+        product = resolve_import_product(previous_values.get('product'))
         if value:
+            if product is None:
+                raise ValidationError(_('No matching variation was found.'))
             matches = [
                 p
                 for p in self.products
                 if str(p.pk) == value
                 or any((v and v == value) for v in i18n_flat(p.value))
-                and p.product_id == previous_values['product'].pk
+                and p.product_id == product.pk
             ]
             if len(matches) == 0:
                 raise ValidationError(_('No matching variation was found.'))
             if len(matches) > 1:
                 raise ValidationError(_('Multiple matching variations were found.'))
             return matches[0]
-        elif previous_values['product'].variations.exists():
+        elif product is not None and product.variations.exists():
             raise ValidationError(_('You need to select a variation for this product.'))
         return value
 
@@ -723,10 +853,13 @@ class SeatColumn(ImportColumn):
                     _('The seat you selected has already been taken. Please select a different seat.')
                 )
             self._cached.add(value)
-        elif (
-            previous_values['product'].seat_category_mappings.filter(subevent=previous_values.get('subevent')).exists()
-        ):
-            raise ValidationError(_('You need to select a specific seat.'))
+        else:
+            product = resolve_import_product(previous_values.get('product'))
+            if (
+                product is not None
+                and product.seat_category_mappings.filter(subevent=previous_values.get('subevent')).exists()
+            ):
+                raise ValidationError(_('You need to select a specific seat.'))
         return value
 
     def assign(self, value, order, position, invoice_address, **kwargs):
