@@ -1,4 +1,5 @@
 import json
+import logging
 from contextlib import contextmanager
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.contrib.auth import (
     login,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -33,6 +35,8 @@ from eventyay.control.forms.users import UserEditForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.views import CreateView, UpdateView
 from eventyay.control.views.user import RecentAuthenticationRequiredMixin
+
+logger = logging.getLogger(__name__)
 
 
 def get_used_backend(request):
@@ -177,23 +181,30 @@ class UserAnonymizeView(
 
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
-        self.object.log_action('eventyay.user.anonymized', user=request.user)
-        self.object.email = '{}@disabled.eventyay.com'.format(self.object.pk)
-        self.object.fullname = ''
-        self.object.is_active = False
-        self.object.notifications_send = False
-        self.object.save()
-        for le in self.object.all_logentries.filter(action_type='eventyay.user.settings.changed'):
-            d = le.parsed_data
-            if 'email' in d:
-                d['email'] = '█'
-            if 'fullname' in d:
-                d['fullname'] = '█'
-            le.data = json.dumps(d)
-            le.shredded = True
-            le.save(update_fields=['data', 'shredded'])
+        try:
+            with transaction.atomic():
+                self.object.log_action('eventyay.user.anonymized', user=request.user)
+                self.object.email = '{}@disabled.eventyay.com'.format(self.object.pk)
+                self.object.fullname = ''
+                self.object.is_active = False
+                self.object.notifications_send = False
+                self.object.save()
+                for le in self.object.all_logentries.filter(action_type='eventyay.user.settings.changed'):
+                    d = le.parsed_data
+                    if 'email' in d:
+                        d['email'] = '█'
+                    if 'fullname' in d:
+                        d['fullname'] = '█'
+                    le.data = json.dumps(d)
+                    le.shredded = True
+                    le.save(update_fields=['data', 'shredded'])
+        except Exception:
+            logger.exception('Failed to anonymize user %s from admin user page.', self.object.pk)
+            messages.error(request, _('The user could not be anonymized. Please try again later.'))
+        else:
+            messages.success(request, _('User has been anonymized successfully.'))
 
-        return redirect(reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs))
+        return redirect(reverse('eventyay_admin:admin.users'))
 
 
 class UserImpersonateView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, View):
