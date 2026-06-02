@@ -225,8 +225,11 @@ var editor = {
             o.downward = d.downward || false;
             o.content = editor._normalize_text_content(d.content);
             o.set('textAlign', d.align);
-            if (d.rotation) {
-                o.rotate(d.rotation);
+            var rotationVal = parseFloat(d.rotation);
+            if (!isNaN(rotationVal)) {
+                o.set('angle', rotationVal);
+            } else {
+                o.set('angle', 0);
             }
             if (o.content === "other") {
                 o.set('text', d.text);
@@ -238,7 +241,8 @@ var editor = {
             } else if (d.text) {
                 o.set('text', d.text);
             }
-            o.set('width', editor._mm2px(d.width));
+            var widthVal = parseFloat(d.width);
+            o.set('width', editor._mm2px(isNaN(widthVal) ? 50 : widthVal));
             if (d.locale) {
                 // The data format allows to set the locale per text field but we currently only expose a global field
                 $("#pdf-info-locale").val(d.locale);
@@ -533,8 +537,10 @@ var editor = {
             $("#toolbox").find("button[data-action=left]").toggleClass('active', o.textAlign === 'left');
             $("#toolbox").find("button[data-action=center]").toggleClass('active', o.textAlign === 'center');
             $("#toolbox").find("button[data-action=right]").toggleClass('active', o.textAlign === 'right');
-            $("#toolbox-textwidth").val(editor._px2mm(o.width).toFixed(2));
-            $("#toolbox-textrotation").val((o.angle || 0.0).toFixed(1));
+            var pxWidth = editor._px2mm(o.width);
+            $("#toolbox-textwidth").val(isNaN(pxWidth) ? "13.00" : pxWidth.toFixed(2));
+            var angleVal = typeof o.angle === "number" ? o.angle : 0.0;
+            $("#toolbox-textrotation").val(isNaN(angleVal) ? "0.0" : angleVal.toFixed(1));
             if (o.type === "textarea") {
                 editor._set_toolbox_content_value(o.content, o.text);
                 $("#toolbox-content-other").toggle($("#toolbox-content").val() === "other");
@@ -611,9 +617,21 @@ var editor = {
             if (align) {
                 o.set('textAlign', align);
             }
-            o.setWidth(editor._mm2px($("#toolbox-textwidth").val()));
+            var w = parseFloat($("#toolbox-textwidth").val());
+            if (!isNaN(w)) {
+                o.set('width', editor._mm2px(w));
+                o.set('scaleX', 1);
+                o.set('scaleY', 1);
+                if (o.initDimensions) o.initDimensions();
+                if (o._clearCache) o._clearCache();
+                o.dirty = true;
+            }
             o.downward = $("#toolbox").find("button[data-action=downward]").is('.active');
-            o.rotate(parseFloat($("#toolbox-textrotation").val()));
+            var r = parseFloat($("#toolbox-textrotation").val());
+            if (!isNaN(r)) {
+                o.set('angle', r);
+                o.dirty = true;
+            }
             editor._apply_text_content_to_object(o);
         }
 
