@@ -24,10 +24,14 @@
     {% endcompress %}
 
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" data-user-code="{% if request.user.is_authenticated %}{{ request.user.code }}{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+    {% if ev.location or venue_map_location %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
+        {% endcompress %}
+    {% endif %}
     {% if venue_map_location %}
         {% compress css %}
             <link rel="stylesheet" type="text/css" href="{% static 'leaflet/leaflet.css' %}" />
-            <link rel="stylesheet" type="text/css" href="{% static 'pretixpresale/css/venue-map.css' %}" />
         {% endcompress %}
         <script type="text/javascript" src="{% static 'leaflet/leaflet.js' %}"></script>
         <script type="module" src="{% static 'pretixpresale/js/ui/public_geo.js' %}"></script>

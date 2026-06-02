@@ -60,7 +60,7 @@ from eventyay.base.models.product import (
     SubEventProduct,
     SubEventProductVariation,
 )
-from eventyay.control.views.geo import resolve_venue_map_coordinates
+from eventyay.base.services.geo import resolve_venue_map_coordinates
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.helpers.compat import date_fromisocalendar
 from eventyay.helpers.formats.en.formats import WEEK_FORMAT

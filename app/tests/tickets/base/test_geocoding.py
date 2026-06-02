@@ -6,7 +6,7 @@ from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer
-from eventyay.control.views import geo as geocoding
+from eventyay.base.services import geo as geocoding
 
 
 @pytest.fixture
@@ -115,6 +115,16 @@ class TestGeocodeAddress:
 
         assert results == []
         cache_set_mock.assert_not_called()
+
+    def test_returns_cached_results_when_geocoding_unavailable(self):
+        cached = [{'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS}]
+        with patch.object(geocoding, 'geocoding_is_available', return_value=False):
+            with patch.object(geocoding, '_geocode_with_configured_providers') as provider_mock:
+                with patch.object(geocoding.cache, 'get', return_value=cached):
+                    results = geocoding.geocode_address(BANGKOK_ADDRESS)
+
+        assert results == cached
+        provider_mock.assert_not_called()
 
 
 class TestResolveVenueMapCoordinates:
