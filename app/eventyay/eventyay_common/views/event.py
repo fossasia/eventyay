@@ -51,6 +51,7 @@ from eventyay.eventyay_common.utils import (
 from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
+from eventyay.multidomain.urlreverse import build_absolute_uri
 from ..forms.event import EventUpdateForm
 
 logger = logging.getLogger(__name__)
@@ -169,6 +170,15 @@ class EventCreateView(TemplateView):
     def get_fallback_organizer(self):
         return self.get_create_organizer_queryset().first()
 
+    def get_organizer_slug_options(self):
+        return {
+            str(organizer.pk): {
+                'prefix': build_absolute_uri(organizer, 'presale:organizer.index'),
+                'rngUrl': reverse('control:events.add.slugrng', kwargs={'organizer': organizer.slug}),
+            }
+            for organizer in self.get_create_organizer_queryset()
+        }
+
     def get_clone_queryset(self):
         return EventWizardCopyForm.copy_from_queryset(self.request.user, self.request.session)
 
@@ -279,16 +289,22 @@ class EventCreateView(TemplateView):
         foundation_form = kwargs.get('foundation_form') or self.get_foundation_form()
         foundation_data = foundation_form.cleaned_data if foundation_form.is_bound and foundation_form.is_valid() else None
         organizer = foundation_data.get('organizer') if foundation_data else foundation_form.initial.get('organizer')
-        has_organizer = self.request.user.teams.filter(can_create_events=True).exists()
+        has_organizer = self.get_create_organizer_queryset().exists()
         basics_form = kwargs.get('basics_form')
         if has_organizer and basics_form is None:
             basics_form = self.get_basics_form(foundation_data)
+        if basics_form and not organizer:
+            basics_form.fields['slug'].widget.prefix = ''
 
         context['foundation_form'] = foundation_form
         context['basics_form'] = basics_form
         context['create_for'] = EventCreatedFor.BOTH.value
         context['has_organizer'] = has_organizer
         context['organizer'] = organizer
+        context['organizer_slug_options'] = self.get_organizer_slug_options()
+        context['organizer_slug_rng_url'] = (
+            reverse('control:events.add.slugrng', kwargs={'organizer': organizer.slug}) if organizer else ''
+        )
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
         context['clone_from'] = self.clone_from
         gs = GlobalSettingsObject()

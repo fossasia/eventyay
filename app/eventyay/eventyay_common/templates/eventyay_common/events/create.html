@@ -12,6 +12,7 @@
 {% block content %}
     <h1>{% trans "Create a new event" %}</h1>
     {% if has_organizer %}
+        {{ organizer_slug_options|json_script:"event-create-organizers" }}
         <form action="" method="post" class="form-horizontal">
             {% csrf_token %}
             {% bootstrap_form_errors foundation_form %}
@@ -132,13 +133,12 @@
                 <div class="form-group">
                     <label class="col-md-3 control-label" for="{{ basics_form.slug.id_for_label }}">{{ basics_form.slug.label }}</label>
                     <div class="col-md-9 form-inline">
-                        {% if organizer %}
-                            <button class="btn btn-default pull-right flip" type="button" id="event-slug-random-generate"
-                                    data-rng-url="{% url "control:events.add.slugrng" organizer=organizer.slug %}">
-                                {% trans "Set to random" %}
-                            </button>
-                        {% endif %}
-                        {% bootstrap_field basics_form.slug form_group_class="helper-display-inline" show_label=False layout="inline" %}
+                        <button class="btn btn-default pull-right flip" type="button" id="event-slug-random-generate"
+                                data-rng-url="{{ organizer_slug_rng_url }}"
+                                {% if not organizer_slug_rng_url %}disabled{% endif %}>
+                            {% trans "Set to random" %}
+                        </button>
+                        {{ basics_form.slug }}
                         {% if basics_form.slug.errors %}
                             <span class="text-danger ml-2"><small>{% trans "Slug not available" %}</small></span>
                         {% endif %}

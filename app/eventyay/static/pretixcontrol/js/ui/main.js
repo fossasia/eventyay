@@ -561,7 +561,7 @@ var form_handlers = function (el) {
             },
         }).on("select2:select", function () {
             // Allow continuing to select
-            if ($s.hasAttribute("multiple")) {
+            if ($s.prop("multiple")) {
                 window.setTimeout(function () {
                     $s.parent().find('.select2-search__field').focus();
                 }, 50);

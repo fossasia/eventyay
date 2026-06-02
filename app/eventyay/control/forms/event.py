@@ -150,7 +150,7 @@ class EventWizardFoundationForm(forms.Form):
                     'data-placeholder': _('Organizer'),
                 }
             ),
-            empty_label=None,
+            empty_label=_('Organizer') if is_required else None,
             required=is_required,
         )
         self.fields['organizer'].widget.choices = self.fields['organizer'].choices
@@ -265,6 +265,7 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
+        self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
         self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
         self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
