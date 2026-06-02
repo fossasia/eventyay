@@ -92,12 +92,9 @@ from . import ChartContainingView, CreateView, PaginationMixin, UpdateView
 logger = logging.getLogger(__name__)
 
 
-class ProductList(ListView):
+class ProductList(PaginationMixin, ListView):
     model = Product
     context_object_name = 'products'
-    # paginate_by = 30
-    # Pagination is disabled as it is very unlikely to be necessary
-    # here and could cause problems with the "reorder-within-category" feature
     template_name = 'pretixcontrol/items/index.html'
 
     def get_queryset(self):
