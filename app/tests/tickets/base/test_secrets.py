@@ -82,3 +82,10 @@ def test_change_if_invalid(event, scheme):
     second = g.generate_secret(item, None, None, current_secret=first, force_invalidate=False)
     if input_dependent:
         assert first != second
+
+
+@pytest.mark.django_db
+def test_sig1_parse_invalid_secret_returns_none(event):
+    generator = Sig1TicketSecretGenerator(event)
+
+    assert generator._parse('') is None
