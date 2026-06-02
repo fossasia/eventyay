@@ -1,6 +1,20 @@
 import pytest
+from django import forms
 from django_scopes import scope
 from eventyay.orga.forms.cfp import CfPSettingsForm
+
+
+def cfp_settings_form_data(event, **overrides):
+    form = CfPSettingsForm(obj=event, read_only=False)
+    data = {}
+    for name, field in form.fields.items():
+        initial = form.initial.get(name, field.initial)
+        if isinstance(field, forms.BooleanField):
+            data[name] = bool(initial)
+        else:
+            data[name] = initial if initial is not None else ''
+    data.update(overrides)
+    return data
 
 
 @pytest.mark.django_db
@@ -46,14 +60,8 @@ def test_cfp_enable_gravatar_missing_key(event):
 def test_cfp_settings_form_toggle_gravatar(event):
     """Test that CfPSettingsForm correctly updates enable_gravatar setting."""
     with scope(event=event):
-        # Build a minimal valid payload for CfPSettingsForm.
-        # Only fields required for the form to be valid are listed explicitly;
-        # cfp_enable_gravatar is the field under test.
-        form_data = {
-            'cfp_enable_gravatar': False,
-        }
-
         # Test disabling Gravatar
+        form_data = cfp_settings_form_data(event, cfp_enable_gravatar=False)
         form = CfPSettingsForm(obj=event, read_only=False, data=form_data)
         if form.is_valid():
             form.save()
@@ -62,7 +70,7 @@ def test_cfp_settings_form_toggle_gravatar(event):
             pytest.fail(f"Form invalid: {form.errors}")
 
         # Test re-enabling Gravatar
-        form_data['cfp_enable_gravatar'] = True
+        form_data = cfp_settings_form_data(event, cfp_enable_gravatar=True)
         form = CfPSettingsForm(obj=event, read_only=False, data=form_data)
         if form.is_valid():
             form.save()
