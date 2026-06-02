@@ -3,7 +3,6 @@ import textwrap
 import urllib
 
 from django.contrib import messages
-from django.contrib.auth import logout
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.forms.models import BaseModelFormSet, inlineformset_factory
@@ -19,10 +18,10 @@ from django.views.generic import (
     ListView,
     TemplateView,
     UpdateView,
-    View,
 )
 from django_context_decorator import context
 
+from eventyay.base.models import Resource, ResourceKind, Submission, SubmissionStates
 from eventyay.cfp.forms.submissions import SubmissionInvitationForm
 from eventyay.cfp.views.event import LoggedInEventPageMixin
 from eventyay.common.exceptions import SendMailException
@@ -32,10 +31,10 @@ from eventyay.common.middleware.event import get_login_redirect
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views import is_form_bound
 from eventyay.person.forms import SpeakerProfileForm
-from eventyay.talk_rules.person import can_view_information
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.submission.forms import InfoForm, TalkQuestionsForm, ResourceForm
-from eventyay.base.models import Resource, Submission, SubmissionStates
+from eventyay.submission.forms import InfoForm, ResourceForm, TalkQuestionsForm
+from eventyay.talk_rules.person import can_view_information
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,16 +97,16 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
             return super().get(request, *args, **kwargs)
 
         messages.success(self.request, phrases.base.saved)
-        return redirect('cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
+        return redirect(
+            'cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug
+        )
 
 
 class SubmissionViewMixin:
     permission_required = 'base.update_submission'
 
     def has_permission(self):
-        return super().has_permission() or self.request.user.has_perm(
-            'base.orga_list_submission', self.request.event
-        )
+        return super().has_permission() or self.request.user.has_perm('base.orga_list_submission', self.request.event)
 
     def dispatch(self, request, *args, **kwargs):
         if self.request.user not in self.object.speakers.all():
@@ -149,7 +148,7 @@ class SubmissionsListView(LoggedInEventPageMixin, ListView):
             event=self.request.event,
             speakers__in=[self.request.user],
             state=SubmissionStates.DRAFT,
-        )
+        ).order_by('-updated')
 
     def get_queryset(self):
         return self.request.event.submissions.filter(speakers__in=[self.request.user])
@@ -197,7 +196,9 @@ class SubmissionsWithdrawView(LoggedInEventPageMixin, SubmissionViewMixin, Detai
             messages.success(self.request, phrases.cfp.submission_withdrawn)
         else:
             messages.error(self.request, phrases.cfp.submission_not_withdrawn)
-        return redirect('cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
+        return redirect(
+            'cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug
+        )
 
 
 class SubmissionConfirmView(LoggedInEventPageMixin, SubmissionViewMixin, FormView):
@@ -210,7 +211,7 @@ class SubmissionConfirmView(LoggedInEventPageMixin, SubmissionViewMixin, FormVie
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_anonymous:
             return get_login_redirect(request)
-        
+
         if not request.user.has_perm('base.is_speaker_submission', self.submission):
             self.template_name = 'cfp/event/user_submission_confirm_error.html'
         return super().dispatch(request, *args, **kwargs)
@@ -244,7 +245,9 @@ class SubmissionConfirmView(LoggedInEventPageMixin, SubmissionViewMixin, FormVie
             messages.success(self.request, phrases.cfp.submission_was_confirmed)
         else:
             messages.error(self.request, phrases.cfp.submission_not_confirmed)
-        return redirect('cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
+        return redirect(
+            'cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug
+        )
 
 
 class SubmissionDraftDiscardView(LoggedInEventPageMixin, SubmissionViewMixin, TemplateView):
@@ -260,7 +263,9 @@ class SubmissionDraftDiscardView(LoggedInEventPageMixin, SubmissionViewMixin, Te
     def post(self, request, *args, **kwargs):
         self.submission.delete()
         messages.success(self.request, _('Your draft was discarded.'))
-        return redirect('cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
+        return redirect(
+            'cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug
+        )
 
 
 class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateView):
@@ -293,7 +298,9 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         return formset_class(
             self.request.POST if self.request.method == 'POST' else None,
             files=self.request.FILES if self.request.method == 'POST' else None,
-            queryset=(submission.resources.all() if submission else Resource.objects.none()),
+            queryset=(
+                submission.resources.exclude(kind=ResourceKind.SLIDES) if submission else Resource.objects.none()
+            ),
             prefix='resource',
         )
 
@@ -314,6 +321,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
                 form.instance.pk = None
             elif form.has_changed():
                 form.instance.submission = obj
+                form.instance.kind = ResourceKind.GENERIC
                 form.save()
                 change_data = {key: form.cleaned_data.get(key) for key in form.changed_data}
                 change_data['id'] = form.instance.pk
@@ -322,10 +330,11 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         extra_forms = [
             form
             for form in self.formset.extra_forms
-            if form.has_changed and not self.formset._should_delete_form(form) and form.is_valid()
+            if form.has_changed() and not self.formset._should_delete_form(form)
         ]
         for form in extra_forms:
             form.instance.submission = obj
+            form.instance.kind = ResourceKind.GENERIC
             form.save()
             obj.log_action(
                 'eventyay.submission.resource.create',
@@ -334,7 +343,6 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
             )
 
         return True
-
 
 
     @cached_property
@@ -352,6 +360,13 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def can_edit(self):
         return self.object.editable
 
+    def is_draft_action(self):
+        return (
+            self.object.state == SubmissionStates.DRAFT
+            and self.request.method == 'POST'
+            and self.request.POST.get('action', 'submit') != 'dedraft'
+        )
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
@@ -359,16 +374,20 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
             self.request.event.cfp_flow.config.get('steps', {}).get('info', {}).get('fields')
         )
         kwargs['readonly'] = not self.can_edit
+        kwargs['not_strict'] = self.is_draft_action()
+        kwargs['draft_save'] = self.is_draft_action()
         # At this stage, new speakers can be added via the dedicated form
         kwargs['remove_additional_speaker'] = True
         return kwargs
 
     def form_valid(self, form):
         if self.can_edit:
-            form.save()
+            # Validate formset before saving form to prevent partial persistence
             result = self.save_formset(form.instance)
             if not result:
                 return self.get(self.request, *self.args, **self.kwargs)
+            # Save form only after formset validation succeeds
+            form.save()
             if form.has_changed():
                 if form.instance.pk and 'duration' in form.changed_data:
                     form.instance.update_duration()
@@ -459,7 +478,9 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
         submission.log_action('eventyay.submission.speakers.add', person=self.request.user)
         submission.save()
         messages.success(self.request, phrases.cfp.invite_accepted)
-        return redirect('cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
+        return redirect(
+            'cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug
+        )
 
 
 class MailListView(LoggedInEventPageMixin, TemplateView):

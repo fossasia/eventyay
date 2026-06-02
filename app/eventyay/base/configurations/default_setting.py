@@ -1623,6 +1623,16 @@ DEFAULT_SETTINGS = {
             help_text=_('Sender address for outgoing emails'),
         ),
     },
+    'mail_reply_to': {
+        'default': None,
+        'type': str,
+        'form_class': forms.EmailField,
+        'serializer_class': serializers.EmailField,
+        'form_kwargs': dict(
+            label=_('Reply-to address'),
+            help_text=_('User replies will be sent to this address.'),
+        ),
+    },
     'mail_from_name': {
         'default': None,
         'type': str,
@@ -2432,8 +2442,9 @@ Your {event} team"""
     'banner_message_detail': {'default': '', 'type': LazyI18nString},
     'opencagedata_apikey': {'default': None, 'type': str},
     'mapquest_apikey': {'default': None, 'type': str},
-    'leaflet_tiles': {'default': None, 'type': str},
-    'leaflet_tiles_attribution': {'default': None, 'type': str},
+    'nominatim_geocoding_enabled': {'default': False, 'type': bool},
+    'leaflet_tiles': {'default': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 'type': str},
+    'leaflet_tiles_attribution': {'default': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', 'type': str},
     'frontpage_subevent_ordering': {
         'default': 'date_ascending',
         'type': str,
@@ -2574,6 +2585,38 @@ Your {event} team"""
             label=_('Start page header text'),
             widget=I18nTextInput,
             help_text=_('Short text displayed on the public start page banner.'),
+        ),
+    },
+    'menu_label_tickets': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Tickets'),
+            widget=I18nTextInput,
+            help_text=_(
+                'Custom label for the "Tickets" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
+            widget_kwargs={'attrs': {'placeholder': _('Register')}},
+            required=False,
+        ),
+    },
+    'menu_label_join_video': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Join Live Event'),
+            widget=I18nTextInput,
+            help_text=_(
+                'Custom label for the "Join online video" menu item. Leave empty to use the default label or '
+                'locale-specific translation.'
+            ),
+            widget_kwargs={'attrs': {'placeholder': _('Live Video')}},
+            required=False,
         ),
     },
 }

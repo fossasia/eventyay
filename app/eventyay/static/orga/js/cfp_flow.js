@@ -144,7 +144,7 @@ const FieldComponent = {
                 markedOptions
             );
         const labelContent = [];
-        if (this.field.widget !== 'CheckboxInput') {
+        if (this.field.widget !== 'CheckboxInput' || this.isModal) {
             if (this.isModal) {
                 labelContent.push(
                     h('div', { class: 'i18n-form-group mb-2 title-input', onClick: (e) => e.stopPropagation() }, 
@@ -244,7 +244,7 @@ const FieldComponent = {
             }
         }, [
             h('label', { class: 'col-md-3 col-form-label pt-0' }, 
-                this.field.widget === 'CheckboxInput' ? [
+                this.field.widget === 'CheckboxInput' && !this.isModal ? [
                     h('div', { class: 'form-check' }, [
                         h('input', { type: 'checkbox', class: 'form-check-input' }),
                         h('label', { class: 'form-check-label' }, this.field.label[this.currentLanguage])

@@ -1,0 +1,69 @@
+.venue-map-layout {
+    display: flex;
+    padding: 20px 0;
+    gap: 40px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.venue-map-main {
+    flex: 45 1 300px;
+    max-width: 650px;
+}
+
+.public-geodata-group {
+    margin-top: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.venue-map-details {
+    flex: 55 1 200px;
+    padding-top: 20px;
+}
+
+.venue-map-heading {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.venue-map-main #venue {
+    margin-top: 0;
+    padding-bottom: 10px;
+}
+
+.public-geodata-map {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.public-geodata-map .leaflet-control-zoom-in,
+.public-geodata-map .leaflet-control-zoom-out {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    text-indent: 0;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .public-geodata-group {
+        height: 250px;
+    }
+}
+
+@media (min-width: 769px) {
+    .venue-map-details {
+        padding-top: 60px;
+    }
+}

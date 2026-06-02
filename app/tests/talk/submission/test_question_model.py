@@ -2,7 +2,7 @@ import pytest
 from django_countries.fields import Country
 from django_scopes import scope
 from pretalx.submission.forms import TalkQuestionsForm
-from pretalx.submission.models import Answer, Question
+from pretalx.submission.models import Answer, Question, QuestionVariant
 
 from eventyay.helpers.countries import get_country_name
 
@@ -126,6 +126,7 @@ def test_question_base_properties(submission, question):
         ("boolean", "None", ""),
         ("file", "answer", ""),
         ("choices", "answer", ""),
+        ("select", "answer", ""),
         ("country", "DE", get_country_name("DE") or "DE"),
         ("lol", "lol", None),
     ),
@@ -136,6 +137,26 @@ def test_answer_string_property(event, variant, answer, expected):
         question = Question.objects.create(question="?", variant=variant, event=event)
         answer = Answer.objects.create(question=question, answer=answer)
         assert answer.answer_string == expected
+
+
+@pytest.mark.django_db
+def test_answer_string_property_select_with_option(event, submission):
+    """answer_string for select variant returns the selected option text."""
+    with scope(event=event):
+        question = Question.objects.create(
+            question="Which format?",
+            variant=QuestionVariant.SELECT,
+            event=event,
+            target="submission",
+        )
+        option = question.options.create(answer="In-person")
+        answer = Answer.objects.create(
+            question=question,
+            submission=submission,
+            answer=str(option.answer),
+        )
+        answer.options.add(option)
+        assert answer.answer_string == "In-person"
 
 
 @pytest.mark.django_db
@@ -164,3 +185,33 @@ def test_country_answer_saved_and_round_trips(submission):
 
         round_trip_form = TalkQuestionsForm(event=event, submission=submission)
         assert round_trip_form.fields[f'question_{question.pk}'].initial == 'DE'
+
+@pytest.mark.django_db
+def test_select_answer_saved_and_round_trips(submission):
+    event = submission.event
+    with scope(event=event):
+        question = Question.objects.create(
+            question='Select option?',
+            variant=QuestionVariant.SELECT,
+            event=event,
+            target='submission',
+        )
+        option1 = question.options.create(answer="Option 1")
+        option2 = question.options.create(answer="Option 2")
+        
+        form = TalkQuestionsForm(
+            event=event,
+            submission=submission,
+            data={f'question_{question.pk}': option2.pk},
+        )
+        assert form.is_valid()
+        form.save()
+
+        answer = submission.answers.get(question=question)
+        assert answer.answer == 'Option 2'
+        assert answer.options.count() == 1
+        assert answer.options.first() == option2
+
+        round_trip_form = TalkQuestionsForm(event=event, submission=submission)
+        # For ModelChoiceField, the initial value is usually the model instance or PK
+        assert round_trip_form.fields[f'question_{question.pk}'].initial == option2

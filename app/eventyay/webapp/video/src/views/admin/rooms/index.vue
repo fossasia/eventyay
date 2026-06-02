@@ -13,8 +13,15 @@
 		.header
 			.drag
 			.name Name
-		SlickList.tbody(v-if="filteredRooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", v-scrollbar.y="", @update:list="onListSort")
-			RoomListItem(v-for="(room, index) of filteredRooms" :index="index", :key="index", :room="room", :disabled="filteredRooms !== rooms")
+		SlickList.tbody(v-if="rooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", helperClass="sorting-helper", v-scrollbar.y="", @update:list="onListSort")
+			RoomListItem(
+				v-for="(room, index) of rooms",
+				:index="index",
+				:key="room.id",
+				:room="room",
+				:disabled="!!search",
+				v-show="isRoomVisible(room)"
+			)
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
@@ -36,11 +43,17 @@ export default {
 			_unwatchConnected: null
 		}
 	},
-	computed: {
-		filteredRooms() {
-			if (!this.rooms) return
-			if (!this.search) return this.rooms
-			return this.rooms.filter(room => room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase()))
+	watch: {
+		'$store.state.rooms'(storeRooms) {
+			if (!Array.isArray(this.rooms) || !Array.isArray(storeRooms)) return
+			const currentIds = this.rooms.map(r => r.id)
+			const storeIds = storeRooms.map(r => r.id)
+			const changed =
+				currentIds.length !== storeIds.length ||
+				currentIds.some((id, i) => id !== storeIds[i])
+			if (changed) {
+				this.fetchRooms()
+			}
 		}
 	},
 	async created() {
@@ -50,6 +63,11 @@ export default {
 		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	methods: {
+		isRoomVisible(room) {
+			if (!this.search) return true
+			const search = this.search.trim()
+			return String(room.id) === search || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase())
+		},
 		async ensureConnectedAndFetch() {
 			if (this.$store.state.connected) return this.fetchRooms()
 			this._unwatchConnected = this.$store.watch(
@@ -74,13 +92,15 @@ export default {
 				console.error(e)
 			}
 		},
-		async onListSort() {
+		async onListSort(newList) {
+			if (this.search) return
+			const previousRooms = [...this.rooms]
 			try {
-				this.rooms = await api.call('room.config.reorder', this.rooms.map(room => room.id))
+				await api.call('room.config.reorder', newList.map(room => room.id))
 			} catch (e) {
+				this.rooms = previousRooms
 				console.error(e)
 			}
-			// TODO error handling
 		}
 	}
 }
@@ -123,4 +143,14 @@ export default {
 		.name
 			flex: auto
 			ellipsis()
+
+.sorting-helper
+	height: 48px
+	line-height: 48px
+	background-color: $clr-white
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+	cursor: grabbing
+	z-index: 9999
+	> *
+		padding: 0 24px
 </style>

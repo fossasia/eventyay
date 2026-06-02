@@ -492,6 +492,7 @@ class OrderDetail(OrderView):
             .prefetch_related(
                 'product__questions',
                 'issued_gift_cards',
+                'addons',
                 Prefetch(
                     'answers',
                     queryset=QuestionAnswer.objects.prefetch_related('options').select_related('question'),
@@ -1102,6 +1103,8 @@ class OrderRefundView(OrderView):
             full_refund = self.order.payment_refund_sum
         else:
             full_refund = self.start_form.cleaned_data.get('partial_amount')
+        full_refund = round_decimal(full_refund, self.request.event.currency)
+
         if self.request.GET.get('giftcard', 'false') == 'true':
             proposals = {None: full_refund}
             giftcard_proposal = full_refund
@@ -1272,6 +1275,7 @@ class OrderRefundView(OrderView):
                         )
 
             any_success = False
+            refund_selected = round_decimal(refund_selected, self.request.event.currency)
             if refund_selected == full_refund and is_valid:
                 for r in refunds:
                     r.save()

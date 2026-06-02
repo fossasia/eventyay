@@ -202,6 +202,50 @@ select.required-status-dropdown[data-current="after_deadline"] {
     cursor: not-allowed;
 }
 
+.cfp-inline-help-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.cfp-inline-help-box {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 6px);
+    z-index: 20;
+    display: none;
+    width: 260px;
+    padding: 8px 10px;
+    color: #495057;
+    font-size: 0.8125rem;
+    font-weight: normal;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+    background: #fff;
+    border: 1px solid #b8daff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateX(-50%);
+}
+
+.cfp-inline-help-box::before {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    content: "";
+    background: #fff;
+    border-top: 1px solid #b8daff;
+    border-left: 1px solid #b8daff;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.cfp-inline-help-wrapper:hover .cfp-inline-help-box,
+.cfp-inline-help-wrapper:focus-within .cfp-inline-help-box {
+    display: block;
+}
+
 /* CFP Option Table Styles - Use more specific selectors to avoid unintended hiding */
 .cfp-option-table tbody select[name^="cfp_ask_"] {
     display: none;

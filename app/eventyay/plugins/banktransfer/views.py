@@ -766,9 +766,12 @@ class RefundExportListView(ListView):
 
             rows_data = json.dumps(transaction_rows, cls=CustomJSONEncoder)
             if hasattr(request, 'event'):
+                effective_testmode = (
+                    self.request.event.testmode or self.request.event.private_testmode_tickets_enabled
+                )
                 RefundExport.objects.create(
                     event=self.request.event,
-                    testmode=self.request.event.testmode,
+                    testmode=effective_testmode,
                     rows=rows_data,
                 )
             else:
@@ -800,7 +803,7 @@ class EventRefundExportListView(EventPermissionRequiredMixin, RefundExportListVi
             order__event=self.request.event,
             provider__in=['banktransfer', 'sepadebit'],
             state=OrderRefund.REFUND_STATE_CREATED,
-            order__testmode=self.request.event.testmode,
+            order__testmode=self.request.event.testmode or self.request.event.private_testmode_tickets_enabled,
         )
 
 

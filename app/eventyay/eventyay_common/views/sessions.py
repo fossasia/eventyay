@@ -1,20 +1,21 @@
 from logging import getLogger
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
 from django.shortcuts import redirect
 from django.views.generic.list import ListView
 
 from eventyay.base.models import Submission
+from eventyay.control.views import PaginationMixin
+
 from ..forms.filters import SessionsFilterForm
 
 
 logger = getLogger(__name__)
 
 
-class MySessionsView(LoginRequiredMixin, ListView):
+class MySessionsView(LoginRequiredMixin, PaginationMixin, ListView):
     template_name = 'eventyay_common/sessions/sessions.html'
-    paginate_by = 20
+    paginate_by = 25
 
     def get_queryset(self):
         from django_scopes import scopes_disabled
@@ -39,7 +40,6 @@ class MySessionsView(LoginRequiredMixin, ListView):
                 qs = qs.filter(title__icontains=search)
 
         return qs
-
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

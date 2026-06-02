@@ -1,9 +1,20 @@
 from django import forms
 from django.db.models import Count, Exists, OuterRef, Q
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField
 
+from eventyay.base.models import (
+    Answer,
+    Question,
+    Submission,
+    SubmissionStates,
+    Tag,
+    TalkQuestionTarget,
+    Track,
+)
+from eventyay.base.models.resource import get_slide_resources
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ConfiguredFieldOrderMixin, PublicContent, QuestionFieldsMixin, RequestRequire
@@ -14,29 +25,32 @@ from eventyay.common.forms.widgets import (
     SearchInput,
     SelectMultipleWithCount,
 )
-from eventyay.common.utils.language import localize_event_text
 from eventyay.common.text.phrases import phrases
+from eventyay.common.utils.language import localize_event_text
 from eventyay.common.views.mixins import Filterable
-from eventyay.base.models import (
-    Answer,
-    Question,
-    Submission,
-    SubmissionStates,
-    Tag,
-    TalkQuestionTarget,
-    Track,
+from eventyay.submission.constants import AUTO_DRAFT_TITLE
+from eventyay.submission.forms.resource import (
+    SlidesField,
+    SlidesData,
+    get_slides_max_count,
+    save_slides_resource,
 )
+
 
 class EventLocalizedSafeModelChoiceField(SafeModelChoiceField):
     def label_from_instance(self, obj):
         return localize_event_text(getattr(obj, 'name', obj))
 
 
-class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, RequestRequire, PublicContent, forms.ModelForm):
+class InfoForm(
+    CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, RequestRequire, PublicContent, forms.ModelForm
+):
     additional_speaker = forms.EmailField(
         label=_('Additional Speaker'),
         help_text=_(
-            'If you have a co-speaker, please add their email address here, and we will invite them to create an account. If you have more than one co-speaker, you can add more speakers after finishing the proposal process.'
+            'If you have a co-speaker, please add their email address here, and we will invite them '
+            'to create an account. If you have more than one co-speaker, you can add more speakers '
+            'after finishing the proposal process.'
         ),
         required=False,
     )
@@ -45,6 +59,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
         label=_('Session image'),
         help_text=_('Use this if you want an illustration to go with your proposal.'),
     )
+    slides = SlidesField(required=False, label=_('Slides'))
     content_locale = forms.ChoiceField(label=phrases.base.language)
 
     def __init__(self, event, remove_additional_speaker=False, **kwargs):
@@ -53,7 +68,10 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
         self.access_code = kwargs.pop('access_code', None)
         self.default_values = {}
         instance = kwargs.get('instance')
+        self.original_instance_title = getattr(instance, 'title', None)
         initial = kwargs.pop('initial', {}) or {}
+        if initial.get('title') == AUTO_DRAFT_TITLE or getattr(instance, 'title', None) == AUTO_DRAFT_TITLE:
+            initial['title'] = ''
         if not instance or not instance.submission_type:
             initial['submission_type'] = (
                 getattr(self.access_code, 'submission_type', None)
@@ -78,6 +96,11 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
         self._set_submission_types(instance=instance)
         self._set_locales()
         self._set_slot_count(instance=instance)
+        if 'slides' in self.fields:
+            slides_resources = list(get_slide_resources(instance)) if instance and instance.pk else []
+            self.initial['slides'] = slides_resources
+            self.fields['slides'].existing_resources = slides_resources
+            self.fields['slides'].set_max_items(get_slides_max_count(self.event))
 
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SUBMISSION,
@@ -175,13 +198,115 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
     def save(self, *args, **kwargs):
         for key, value in self.default_values.items():
             setattr(self.instance, key, value)
+        self.errors
+        self._preserve_auto_draft_title()
         result = super().save(*args, **kwargs)
         if 'image' in self.cleaned_data:
             self.instance.process_image('image')
+        if 'slides' in self.cleaned_data:
+            save_slides_resource(self.instance, self.cleaned_data['slides'])
         for key, value in self.cleaned_data.items():
             if key.startswith('question_'):
                 self.save_questions(key, value)
         return result
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not (self.draft_save or self.not_strict):
+            return cleaned_data
+
+        draft_field_names = [name for name in self.fields if self._is_draft_content_field_name(name)]
+        has_real_user_data = any(
+            self._counts_as_draft_content(key, value)
+            for key, value in cleaned_data.items()
+            if key in draft_field_names
+        )
+        if not has_real_user_data:
+            raise forms.ValidationError(self._get_empty_content_error_message())
+        return cleaned_data
+
+    def _get_empty_content_error_message(self):
+        return _('Please fill at least one field.')
+
+    def _preserve_auto_draft_title(self):
+        if not hasattr(self, 'cleaned_data'):
+            return
+        cleaned_title = (self.cleaned_data.get('title') or '').strip()
+        if self.draft_save and not cleaned_title:
+            self.cleaned_data['title'] = AUTO_DRAFT_TITLE
+            self.instance.title = AUTO_DRAFT_TITLE
+
+    @staticmethod
+    def _is_draft_content_field_name(name):
+        return name not in {'submission_type', 'content_locale'}
+
+    def _counts_as_draft_content(self, key, value):
+        if key.startswith('question_'):
+            field = self.fields.get(key)
+            if not self._question_field_has_user_content(field, value):
+                return False
+        return self._has_real_draft_value(key, value)
+
+    def _question_field_has_user_content(self, field, value):
+        if not self._has_real_draft_value(getattr(field, 'question', None), value):
+            return False
+        if getattr(field, 'answer', None):
+            return True
+        return self._normalize_draft_value(value) != self._normalize_draft_value(getattr(field, 'initial', None))
+
+    @staticmethod
+    def _has_real_draft_value(key, value):
+        if key == 'title' and value == AUTO_DRAFT_TITLE:
+            return False
+        if key == 'slot_count' and value == 1:
+            return False
+        if isinstance(value, str):
+            return bool(value.strip())
+        if isinstance(value, SlidesData):
+            return value.has_value
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (list, tuple, set, dict)):
+            return bool(value)
+        if hasattr(value, '__len__'):
+            return len(value) > 0
+        return value is not None
+
+    @classmethod
+    def _normalize_draft_value(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value.strip()
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, SlidesData):
+            return value.serialize()
+        if hasattr(value, 'pk'):
+            return value.pk
+        if hasattr(value, 'code'):
+            return value.code
+        if isinstance(value, dict):
+            return {key: cls._normalize_draft_value(val) for key, val in value.items()}
+        if hasattr(value, '__iter__') and not isinstance(value, (str, bytes)):
+            return [cls._normalize_draft_value(element) for element in value]
+        return value
+
+    @cached_property
+    def submission_fields(self):
+        return [
+            self[name]
+            for name, field in self.fields.items()
+            if getattr(field, 'question', None) and field.question.target == TalkQuestionTarget.SUBMISSION
+        ]
+
+    @cached_property
+    def speaker_fields(self):
+        return [
+            self[name]
+            for name, field in self.fields.items()
+            if getattr(field, 'question', None) and field.question.target == TalkQuestionTarget.SPEAKER
+        ]
 
     class Meta:
         model = Submission
@@ -196,6 +321,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
             'slot_count',
             'do_not_record',
             'image',
+            'slides',
             'duration',
         ]
         request_require = [
@@ -203,14 +329,16 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
             'abstract',
             'description',
             'notes',
+            'slot_count',
             'image',
+            'slides',
             'do_not_record',
             'track',
             'duration',
             'content_locale',
             'additional_speaker',
         ]
-        public_fields = ['title', 'abstract', 'description', 'image']
+        public_fields = ['title', 'abstract', 'description', 'image', 'slides']
         widgets = {
             'abstract': MarkdownWidget,
             'description': MarkdownWidget,

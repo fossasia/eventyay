@@ -422,7 +422,7 @@ export default {
 				}
 				if (filteredTrackIds && !filteredTrackIds.has(session.track)) continue
 				if (filteredRoomIds && !filteredRoomIds.has(session.room)) continue
-				if (filteredTypeValues && !filteredTypeValues.has(session.session_type)) continue
+				if (filteredTypeValues && !filteredTypeValues.has(getSessionTypeLabel(session.session_type))) continue
 				if (langExact) {
 					const fallbackLocale = this.schedule?.content_locales?.[0] || null
 					const sessionLocale = session.content_locale || fallbackLocale
@@ -829,10 +829,18 @@ export default {
 		changeDay (day) {
 			if (day.clone().startOf('day').format('YYYY-MM-DD') === this.currentDay) return
 			this.currentDay = day.clone().startOf('day').format('YYYY-MM-DD')
-			window.location.hash = day.format('YYYY-MM-DD')
+			try {
+				window.history.replaceState(null, null, '#' + day.format('YYYY-MM-DD'))
+			} catch (e) {
+				window.location.hash = day.format('YYYY-MM-DD')
+			}
 		},
 		selectDay (dayId) {
-			window.location.hash = dayId
+			try {
+				window.history.replaceState(null, null, '#' + dayId)
+			} catch (e) {
+				window.location.hash = dayId
+			}
 			if (dayId === this.currentDay) {
 				this.forceScrollDay++
 				return

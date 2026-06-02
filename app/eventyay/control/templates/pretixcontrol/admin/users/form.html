@@ -3,19 +3,20 @@
 {% load bootstrap3 %}
 {% block title %}{% trans "User" %}{% endblock %}
 {% block content %}
-    <h1>{% trans "User" %} {{ user.email }}</h1>
+    {% translate 'No email' as no_email_text %}
+    <h1>{% trans "User" %} {{ form.instance.email|default:no_email_text }}</h1>
     <p>
-        {% if user.auth_backend == "native" %}
-            <form action='{% url "eventyay_admin:admin.users.reset" id=user.pk %}' method="post" class="form-inline helper-display-inline">
+        {% if form.instance.auth_backend == "native" %}
+            <form action='{% url "eventyay_admin:admin.users.reset" id=form.instance.pk %}' method="post" class="form-inline helper-display-inline">
                 {% csrf_token %}
                 <button class="btn btn-default">{% trans "Send password reset email" %}</button>
             </form>
         {% endif %}
-        <form action='{% url "eventyay_admin:admin.users.impersonate" id=user.pk %}' method="post" class="form-inline helper-display-inline">
+        <form action='{% url "eventyay_admin:admin.users.impersonate" id=form.instance.pk %}' method="post" class="form-inline helper-display-inline">
             {% csrf_token %}
             <button class="btn btn-default">{% trans "Impersonate user" %}</button>
         </form>
-        <a href='{% url "eventyay_admin:admin.users.anonymize" id=user.pk %}' class="btn btn-default">{% trans "Anonymize" %}</a>
+        <a href='{% url "eventyay_admin:admin.users.anonymize" id=form.instance.pk %}' class="btn btn-default">{% trans "Anonymize" %}</a>
     </p>
     <div class="row">
         <div class="col-md-10 col-xs-12">
@@ -47,6 +48,49 @@
                     {% bootstrap_field form.require_2fa layout='control' %}
                 </fieldset>
                 <fieldset>
+                    <legend>{% trans "Connected accounts" %}</legend>
+                    {% if not sso_providers_active and not connected_accounts %}
+                        <p class="help-block">{% trans "No SSO providers are configured on this platform." %}</p>
+                    {% elif connected_accounts %}
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Provider" %}</th>
+                                    <th>{% trans "Identifier" %}</th>
+                                    <th>{% trans "Date connected" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in connected_accounts %}
+                                    <tr>
+                                        <td>{{ account.provider_label }}</td>
+                                        <td>
+                                            {% if account.username %}
+                                                {{ account.username }}
+                                            {% elif account.email %}
+                                                {{ account.email }}
+                                            {% else %}
+                                                {{ account.uid }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ account.date_joined|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                        <td>
+                                            {% if account.is_active_provider %}
+                                                <span class="label label-success">{% trans "Active" %}</span>
+                                            {% else %}
+                                                <span class="label label-warning">{% trans "Inactive provider" %}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="help-block">{% trans "No connected accounts." %}</p>
+                    {% endif %}
+                </fieldset>
+                <fieldset>
                     <legend>{% trans "Team memberships" %}</legend>
                     <ul>
                         {% for t in teams %}
@@ -74,10 +118,10 @@
                         {% trans "User history" %}
                     </h3>
                 </div>
-                {% include "pretixcontrol/includes/logs.html" with obj=user %}
+                {% include "pretixcontrol/includes/logs.html" with obj=form.instance %}
                 <li class="list-group-item logentry">
                     <p class="meta">
-                        <span class="fa fa-clock-o"></span> {{ user.date_joined|date:"SHORT_DATETIME_FORMAT" }}
+                        <span class="fa fa-clock-o"></span> {{ form.instance.date_joined|date:"SHORT_DATETIME_FORMAT" }}
                     </p>
                     <p>
                         {% trans "User created." %}

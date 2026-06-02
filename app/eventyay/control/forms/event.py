@@ -42,6 +42,7 @@ from eventyay.base.services.system_questions import (
     state_to_asked_required,
 )
 from eventyay.base.settings import (
+    EVENT_SERIES_CREATION_ENABLED,
     GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
     PERSON_NAME_TITLE_GROUPS,
@@ -164,12 +165,16 @@ class EventWizardFoundationForm(forms.Form):
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
 
-        if not content_locales:
-            return cleaned_data
-
-        if set(content_locales) - set(locales):
+        if content_locales and set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
+            })
+
+        gs = GlobalSettingsObject()
+        series_enabled = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+        if not series_enabled and cleaned_data.get('has_subevents'):
+            raise ValidationError({
+                'has_subevents': _('Event series creation is disabled by the administrator.')
             })
 
         return cleaned_data
@@ -198,13 +203,6 @@ class EventWizardBasicsForm(I18nModelForm):
         ),
         required=False,
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website '
-                    'that has your contact details and legal information.'),
-        required=False,
-    )
-
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
         help_text=_(
@@ -552,6 +550,10 @@ class EventUpdateForm(I18nModelForm):
         kwargs.setdefault('initial', {})
         self.instance = kwargs['instance']
         super().__init__(*args, **kwargs)
+        self.fields['location'].widget.attrs['rows'] = '3'
+        self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
+        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
+        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['sales_channels'] = forms.MultipleChoiceField(
             label=self.fields['sales_channels'].label,
             help_text=self.fields['sales_channels'].help_text,
@@ -574,6 +576,9 @@ class EventUpdateForm(I18nModelForm):
         localized_fields = '__all__'
         fields = [
             'currency',
+            'location',
+            'geo_lat',
+            'geo_lon',
             'presale_start',
             'presale_end',
             'sales_channels',
@@ -675,6 +680,8 @@ class EventSettingsForm(SettingsForm):
         'event_logo_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def clean(self):
@@ -1222,6 +1229,7 @@ class MailSettingsForm(SettingsForm):
     auto_fields = [
         'mail_prefix',
         'mail_from',
+        'mail_reply_to',
         'mail_from_name',
         'mail_attach_ical',
         'mail_attach_tickets',
@@ -1421,21 +1429,27 @@ class MailSettingsForm(SettingsForm):
         widget=I18nTextarea,
     )
     smtp_use_custom = forms.BooleanField(
-        label=_('Use Custom Email'),
+        label=_('Use custom email'),
         help_text=_('All mail related to your event will be sent over your specified email gateway.'),
         required=False,
     )
     send_grid_api_key = forms.CharField(
-        label=_('Sendgrid Token'),
+        label=_('Sendgrid token'),
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
+    )
+    test_email = forms.CharField(
+        label=_('Send test email to'),
+        help_text=_('Enter one or more email addresses separated by commas to send a test email.'),
+        validators=[multimail_validate],
+        required=False,
     )
 
     smtp_select = [('sendgrid', _('SendGrid')), ('smtp', _('SMTP'))]
 
     email_vendor = forms.ChoiceField(
         label=_('Email vendor'),
-        required=True,
+        required=False,
         widget=forms.RadioSelect,
         choices=smtp_select,
     )
@@ -1469,6 +1483,72 @@ class MailSettingsForm(SettingsForm):
         required=False,
     )
     smtp_use_ssl = forms.BooleanField(label=_('Use SSL'), help_text=_('Commonly enabled on port 465.'), required=False)
+    @property
+    def changed_data(self):
+        data = super().changed_data
+        if 'test_email' in data:
+            return [d for d in data if d != 'test_email']
+        return data
+
+    def save(self, *args, **kwargs):
+        # test_email should not be persisted as a setting.
+        # HierarkeyForm.save() iterates over self.fields and expects them in self.cleaned_data.
+        # We temporarily remove it from self.fields to ensure it's not saved.
+        f = self.fields.pop('test_email', None)
+        try:
+            return super().save(*args, **kwargs)
+        finally:
+            if f:
+                self.fields['test_email'] = f
+
+    def clean(self):
+        data = super().clean()
+        if not data.get('smtp_use_custom'):
+            gs = GlobalSettingsObject()
+            default_from = gs.settings.mail_from or settings.MAIL_FROM
+            submitted_mail_from = data.get('mail_from')
+            if submitted_mail_from and submitted_mail_from != default_from:
+                self.add_error('mail_from', _('Custom sender email can only be used when "Use custom email" is enabled.'))
+            data['mail_from'] = default_from
+
+        if not data.get('smtp_use_custom'):
+            # If custom email is disabled, we restore all previous custom settings to avoid wiping them
+            for field in ('email_vendor', 'send_grid_api_key', 'smtp_host', 'smtp_port',
+                          'smtp_username', 'smtp_password', 'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        elif data.get('email_vendor') == 'smtp':
+            # If SMTP is active, preserve SendGrid settings
+            if not data.get('send_grid_api_key') and self.initial.get('send_grid_api_key'):
+                data['send_grid_api_key'] = self.initial.get('send_grid_api_key')
+
+        elif data.get('email_vendor') == 'sendgrid':
+            # If SendGrid is active, preserve SMTP settings
+            for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
+                          'smtp_use_tls', 'smtp_use_ssl'):
+                if not data.get(field) and self.initial.get(field):
+                    data[field] = self.initial.get(field)
+
+        # Standard password restoration logic (even if username/password are currently active)
+        if not data.get('smtp_password') and data.get('smtp_username') and self.initial.get('smtp_password'):
+            data['smtp_password'] = self.initial.get('smtp_password')
+
+        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
+            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate email_vendor is selected when custom email is enabled
+        if data.get('smtp_use_custom') and not data.get('email_vendor'):
+            self.add_error('email_vendor', _('This field is required when "Use custom email" is enabled.'))
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                msg = _('This field is required when using SendGrid as email vendor.')
+                raise ValidationError({'send_grid_api_key': msg})
+
+        return data
+
     base_context = {
         'mail_text_order_placed': ['event', 'order', 'payment'],
         'mail_text_order_placed_attendee': ['event', 'order', 'position'],
@@ -1515,23 +1595,6 @@ class MailSettingsForm(SettingsForm):
                 # the user interface with it
                 del self.fields[k]
 
-    def clean(self):
-        data = self.cleaned_data
-        if not data.get('smtp_password') and data.get('smtp_username'):
-            # Leave password unchanged if the username is set and the password field is empty.
-            # This makes it impossible to set an empty password as long as a username is set, but
-            # Python's smtplib does not support password-less schemes anyway.
-            data['smtp_password'] = self.initial.get('smtp_password')
-        if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
-            raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
-
-        # Validate SendGrid token is provided when SendGrid is selected
-        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
-            if not data.get('send_grid_api_key'):
-                msg = _('This field is required when using SendGrid as email vendor.')
-                raise ValidationError({'send_grid_api_key': msg})
-
-        return data
 
 
 class TicketSettingsForm(SettingsForm):

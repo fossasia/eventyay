@@ -90,7 +90,10 @@ error_messages = {
         'The presale period for one of the events in your cart has ended. The affected '
         'positions have been removed from your cart.'
     ),
-    'price_too_high': _('The entered price is to high.'),
+    'price_too_high': _('The entered price exceeds the permitted maximum.'),
+    'price_too_low': _('The entered price is below the permitted minimum. The price range is %s to %s %s.'),
+    'price_too_low_min_only': _('The entered price is below the permitted minimum. The minimum price is %s.'),
+    'price_too_high_max': _('The entered price exceeds the permitted maximum. The price range is %s to %s %s.'),
     'voucher_invalid': _('This voucher code is not known in our database.'),
     'voucher_redeemed': _('This voucher code has already been used the maximum number of times allowed.'),
     'voucher_redeemed_cart': _(
@@ -444,10 +447,18 @@ class CartManager:
         except TaxRule.SaleNotAllowed:
             raise CartError(error_messages['country_blocked'])
         except ValueError as e:
-            if str(e) == 'price_too_high':
+            code = e.args[0] if e.args else None
+            if code == 'price_too_high':
                 raise CartError(error_messages['price_too_high'])
+            elif code == 'price_too_low' and len(e.args) >= 2:
+                if len(e.args) >= 4:
+                    raise CartError(error_messages['price_too_low'], (e.args[1], e.args[2], e.args[3]))
+                min_val = f'{e.args[1]} {e.args[2]}' if len(e.args) >= 3 else e.args[1]
+                raise CartError(error_messages['price_too_low_min_only'], min_val)
+            elif code == 'price_too_high_max' and len(e.args) >= 4:
+                raise CartError(error_messages['price_too_high_max'], (e.args[1], e.args[2], e.args[3]))
             else:
-                raise e
+                raise
 
     def extend_expired_positions(self):
         requires_seat = Exists(
@@ -1443,11 +1454,12 @@ def get_fees(event, request, total, invoice_address, provider, positions):
     total = total + sum(f.value for f in fees)
 
     cs = cart_session(request)
+    effective_testmode = event.testmode or event.private_testmode_tickets_enabled
     if cs.get('gift_cards'):
         gcs = cs['gift_cards']
         gc_qs = event.organizer.accepted_gift_cards.filter(pk__in=cs.get('gift_cards'), currency=event.currency)
         for gc in gc_qs:
-            if gc.testmode != event.testmode:
+            if gc.testmode != effective_testmode:
                 gcs.remove(gc.pk)
                 continue
             fval = Decimal(gc.value)  # TODO: don't require an extra query
