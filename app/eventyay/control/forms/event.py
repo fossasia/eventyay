@@ -42,6 +42,7 @@ from eventyay.base.services.system_questions import (
     state_to_asked_required,
 )
 from eventyay.base.settings import (
+    EVENT_SERIES_CREATION_ENABLED,
     GlobalSettingsObject,
     PERSON_NAME_SCHEMES,
     PERSON_NAME_TITLE_GROUPS,
@@ -164,12 +165,16 @@ class EventWizardFoundationForm(forms.Form):
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
 
-        if not content_locales:
-            return cleaned_data
-
-        if set(content_locales) - set(locales):
+        if content_locales and set(content_locales) - set(locales):
             raise ValidationError({
                 'content_locales': _('Content languages must be a subset of the active languages.')
+            })
+
+        gs = GlobalSettingsObject()
+        series_enabled = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+        if not series_enabled and cleaned_data.get('has_subevents'):
+            raise ValidationError({
+                'has_subevents': _('Event series creation is disabled by the administrator.')
             })
 
         return cleaned_data
@@ -198,13 +203,6 @@ class EventWizardBasicsForm(I18nModelForm):
         ),
         required=False,
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_('This should point e.g. to a part of your website '
-                    'that has your contact details and legal information.'),
-        required=False,
-    )
-
     team = forms.ModelChoiceField(
         label=_('Grant access to team'),
         help_text=_(
@@ -682,6 +680,8 @@ class EventSettingsForm(SettingsForm):
         'event_logo_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def clean(self):
