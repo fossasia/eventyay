@@ -151,10 +151,7 @@ class QuestionFieldsMixin:
     def _resolve_single_choice_initial(initial_object, choices, default_answer):
         """Return a valid AnswerOption initial, ignoring removed options."""
         if initial_object:
-            initial_value = initial_object.options.first()
-            if initial_value and not choices.filter(pk=initial_value.pk).exists():
-                return None
-            return initial_value
+            return initial_object.options.filter(pk__in=choices.values('pk')).first()
         if default_answer:
             return choices.filter(answer=default_answer).first()
         return None
@@ -163,8 +160,9 @@ class QuestionFieldsMixin:
     def _resolve_multiple_choice_initial(initial_object, choices, default_answer):
         """Return initial values for checkboxes, ignoring removed options.
 
-        Returns a list of AnswerOption instances when loading a saved answer,
-        or ``default_answer`` unchanged when no saved answer exists.
+        Returns a list of valid AnswerOption instances for saved answers.
+        For unsaved answers, ``default_answer`` is passed through unchanged, since
+        it is configured by question settings and consumed directly by form fields.
         """
         if initial_object:
             return list(initial_object.options.filter(pk__in=choices.values_list('pk', flat=True)))
@@ -427,7 +425,6 @@ class QuestionFieldsMixin:
                 widget=forms.RadioSelect,
             )
             field.original_help_text = original_help_text
-            field.widget.attrs['placeholder'] = ''  # XSS
             return field
         if question.variant == TalkQuestionVariant.SELECT:
             choices = question.options.all()
