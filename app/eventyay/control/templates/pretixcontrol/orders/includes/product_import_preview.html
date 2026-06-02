@@ -1,4 +1,5 @@
 {% load i18n %}
+<div id="product-import-preview-body">
 {% if product_preview.unmapped %}
     <p class="alert alert-warning">
         {% blocktrans trimmed %}
@@ -13,7 +14,6 @@
             product mapping or the “Automatically create missing products” option.
         {% endblocktrans %}
     </p>
-    <div id="product-import-preview-body">
         {% if product_preview.matched %}
             <h4 class="text-success">{% trans "Existing products (will be matched)" %}</h4>
             <table class="table table-condensed table-striped">
@@ -101,5 +101,5 @@
         {% if not product_preview.matched and not product_preview.to_create and not product_preview.missing and not product_preview.ambiguous %}
             <p class="text-muted">{% trans "No product values found in the selected column." %}</p>
         {% endif %}
-    </div>
 {% endif %}
+</div>

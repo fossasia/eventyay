@@ -143,11 +143,9 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
 
     @cached_property
     def parsed_records(self):
-        self.file.file.seek(0)
-        reader = parse_csv(self.file.file)
-        if not reader:
+        if not self.parsed:
             return []
-        return list(reader)
+        return list(self.parsed)
 
     def get(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:

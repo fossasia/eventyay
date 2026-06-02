@@ -7,9 +7,10 @@ function renderProductPreview(previewData, productMapping, createMissing, labels
     return;
   }
 
-  const items = previewData[productMapping];
+  const items = previewData[productMapping] || [];
+  container.replaceChildren();
   if (!items) {
-    container.innerHTML = '';
+    appendMessage(container, labels.empty_values, 'text-muted');
     return;
   }
 
@@ -17,64 +18,90 @@ function renderProductPreview(previewData, productMapping, createMissing, labels
   const ambiguous = items.filter((item) => item.status === 'ambiguous');
   const unmatched = items.filter((item) => item.status === 'create' || item.status === 'missing');
 
-  let html = '';
-
   if (matched.length) {
-    html += '<h4 class="text-success">' + escapeHtml(labels.matched_heading) + '</h4>';
-    html += '<table class="table table-condensed table-striped"><thead><tr>';
-    html += '<th>' + escapeHtml(labels.col_csv_value) + '</th>';
-    html += '<th>' + escapeHtml(labels.col_matched_product) + '</th>';
-    html += '<th class="text-right">' + escapeHtml(labels.col_rows) + '</th></tr></thead><tbody>';
-    matched.forEach((item) => {
-      html += '<tr><td>' + escapeHtml(item.csv_value) + '</td>';
-      html += '<td>' + escapeHtml(item.product_label) + '</td>';
-      html += '<td class="text-right">' + item.rows + '</td></tr>';
-    });
-    html += '</tbody></table>';
+    appendTableSection(
+      container,
+      labels.matched_heading,
+      'text-success',
+      [labels.col_csv_value, labels.col_matched_product, labels.col_rows],
+      matched.map((item) => [item.csv_value, item.product_label, item.rows]),
+    );
   }
 
   if (unmatched.length) {
     const heading = createMissing ? labels.create_heading : labels.missing_heading;
-    const headingClass = createMissing ? 'text-info' : 'text-danger';
-    html += '<h4 class="' + headingClass + '">' + escapeHtml(heading) + '</h4>';
-    html += '<table class="table table-condensed table-striped"><thead><tr>';
-    html += '<th>' + escapeHtml(labels.col_csv_value) + '</th>';
-    html += '<th>' + escapeHtml(labels.col_result) + '</th>';
-    html += '<th class="text-right">' + escapeHtml(labels.col_rows) + '</th></tr></thead><tbody>';
-    unmatched.forEach((item) => {
-      const result = createMissing ? labels.result_will_create : labels.result_no_match;
-      html += '<tr><td>' + escapeHtml(item.csv_value) + '</td>';
-      html += '<td>' + escapeHtml(result) + '</td>';
-      html += '<td class="text-right">' + item.rows + '</td></tr>';
-    });
-    html += '</tbody></table>';
+    appendTableSection(
+      container,
+      heading,
+      createMissing ? 'text-info' : 'text-danger',
+      [labels.col_csv_value, labels.col_result, labels.col_rows],
+      unmatched.map((item) => [
+        item.csv_value,
+        createMissing ? labels.result_will_create : labels.result_no_match,
+        item.rows,
+      ]),
+    );
   }
 
   if (ambiguous.length) {
-    html += '<h4 class="text-warning">' + escapeHtml(labels.ambiguous_heading) + '</h4>';
-    html += '<table class="table table-condensed table-striped"><thead><tr>';
-    html += '<th>' + escapeHtml(labels.col_csv_value) + '</th>';
-    html += '<th>' + escapeHtml(labels.col_matching_products) + '</th>';
-    html += '<th class="text-right">' + escapeHtml(labels.col_rows) + '</th></tr></thead><tbody>';
-    ambiguous.forEach((item) => {
-      html += '<tr><td>' + escapeHtml(item.csv_value) + '</td>';
-      html += '<td>' + escapeHtml(item.product_label) + '</td>';
-      html += '<td class="text-right">' + item.rows + '</td></tr>';
-    });
-    html += '</tbody></table>';
+    appendTableSection(
+      container,
+      labels.ambiguous_heading,
+      'text-warning',
+      [labels.col_csv_value, labels.col_matching_products, labels.col_rows],
+      ambiguous.map((item) => [item.csv_value, item.product_label, item.rows]),
+    );
   }
 
   if (!matched.length && !unmatched.length && !ambiguous.length) {
-    html = '<p class="text-muted">' + escapeHtml(labels.empty_values) + '</p>';
+    appendMessage(container, labels.empty_values, 'text-muted');
   }
-
-  container.innerHTML = html;
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+function appendMessage(container, text, className) {
+  const message = document.createElement('p');
+  message.className = className;
+  message.textContent = text;
+  container.appendChild(message);
+}
+
+function appendTableSection(container, headingText, headingClass, headers, rows) {
+  const heading = document.createElement('h4');
+  heading.className = headingClass;
+  heading.textContent = headingText;
+  container.appendChild(heading);
+
+  const table = document.createElement('table');
+  table.className = 'table table-condensed table-striped';
+
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  headers.forEach((headerText, index) => {
+    const th = document.createElement('th');
+    if (index === headers.length - 1) {
+      th.className = 'text-right';
+    }
+    th.textContent = headerText;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  rows.forEach((row) => {
+    const tr = document.createElement('tr');
+    row.forEach((cellValue, index) => {
+      const td = document.createElement('td');
+      if (index === row.length - 1) {
+        td.className = 'text-right';
+      }
+      td.textContent = String(cellValue ?? '');
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  container.appendChild(table);
 }
 
 function initProductImportPreview() {

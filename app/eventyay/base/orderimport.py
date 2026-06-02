@@ -284,6 +284,11 @@ def build_product_preview_by_mapping(event, records, fieldnames, create_missing=
 def get_product_import_preview(event, records, settings, fieldnames=None):
     product_setting = settings.get('product')
     create_missing = setting_is_truthy(settings.get('create_missing_products'))
+    by_mapping = (
+        build_product_preview_by_mapping(event, records, fieldnames or [], create_missing=create_missing)
+        if fieldnames
+        else {}
+    )
 
     if not product_setting or product_setting in (None, 'empty'):
         return {
@@ -294,6 +299,7 @@ def get_product_import_preview(event, records, settings, fieldnames=None):
             'missing': [],
             'ambiguous': [],
             'items': [],
+            'by_mapping': by_mapping,
         }
 
     products = list(event.products.filter(active=True))
@@ -313,11 +319,7 @@ def get_product_import_preview(event, records, settings, fieldnames=None):
         'missing': [i for i in items if i['status'] == 'missing'],
         'ambiguous': [i for i in items if i['status'] == 'ambiguous'],
         'items': items,
-        'by_mapping': build_product_preview_by_mapping(
-            event, records, fieldnames or [], create_missing=create_missing
-        )
-        if fieldnames
-        else {},
+        'by_mapping': by_mapping,
     }
 
 

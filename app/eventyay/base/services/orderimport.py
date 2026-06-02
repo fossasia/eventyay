@@ -101,12 +101,12 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
         # quota check?
         with event.lock():
             with transaction.atomic():
-                if len(product_columns) == 1:
-                    product_map = product_columns[0].materialize_pending_products()
+                for column in product_columns:
+                    product_map = column.materialize_pending_products()
                     for record in data:
-                        product = record.get('product')
+                        product = record.get(column.identifier)
                         if isinstance(product, NewImportProduct):
-                            record['product'] = product_map[product.name]
+                            record[column.identifier] = product_map[product.name]
 
                 # Prepare model objects. Yes, this might consume lots of RAM, but allows us to make the actual SQL
                 # transaction shorter. We'll see what works better in reality…
