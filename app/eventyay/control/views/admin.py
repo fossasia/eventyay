@@ -163,9 +163,16 @@ class AttendeeListView(ListView):
         return AttendeeFilterForm(data=self.request.GET)
 
     def get_queryset(self):
+        from django.db.models import Prefetch
+
         qs = (
             OrderPosition.objects.select_related('order', 'product', 'order__event', 'order__event__organizer')
-            .prefetch_related('checkins')
+            .prefetch_related(
+                Prefetch(
+                    'checkins',
+                    queryset=Checkin.objects.order_by('-datetime'),
+                )
+            )
             .filter(order__status='p')
         )
 
@@ -177,92 +184,69 @@ class AttendeeListView(ListView):
             qs = self.filter_form.filter_qs(qs)
 
         ordering = self.request.GET.get('ordering')
+        ordering_map = {
+            'name': 'attendee_name_cached',
+            '-name': '-attendee_name_cached',
+            'email': 'attendee_email',
+            '-email': '-attendee_email',
+            'event': 'order__event__name',
+            '-event': '-order__event__name',
+            'order_code': 'order__code',
+            '-order_code': '-order__code',
+            'product': 'product__name',
+            '-product': '-product__name',
+        }
 
-        if not ordering:
-            qs = qs.order_by('-order__event__date_from', 'order__event__name')
+        if ordering in ordering_map:
+            qs = qs.order_by(ordering_map[ordering])
         else:
-            ordering_map = {
-                'name': 'attendee_name_cached',
-                '-name': '-attendee_name_cached',
-                'email': 'attendee_email',
-                '-email': '-attendee_email',
-                'event': 'order__event__name',
-                '-event': '-order__event__name',
-                'order_code': 'order__code',
-                '-order_code': '-order__code',
-                'product': 'product__name',
-                '-product': '-product__name',
-            }
-            if ordering in ordering_map:
-                qs = qs.order_by(ordering_map[ordering])
+            qs = qs.order_by('-order__event__date_from', 'order__event__name')
 
-        attendees = []
+        return qs
 
-        for pos in qs:
-            name = pos.attendee_name_cached or ''
-            email = pos.attendee_email or pos.order.email
-            event = pos.order.event.name
-            order_code = pos.order.code
-            product = str(pos.product.name)
+    @staticmethod
+    def _checkin_status(pos):
+        def parse_dt(dt):
+            if not dt:
+                return None
+            if isinstance(dt, str):
+                return make_aware(dateutil.parser.parse(dt), UTC)
+            return dt if is_aware(dt) else make_aware(dt, UTC)
 
-            event_slug = pos.order.event.slug
-            organizer_slug = pos.order.event.organizer.slug
+        checkins = pos.checkins.all()
+        entry_time = parse_dt(next((c.datetime for c in checkins if c.type == Checkin.TYPE_ENTRY), None))
+        exit_time = parse_dt(next((c.datetime for c in checkins if c.type == Checkin.TYPE_EXIT), None))
 
-            testmode = pos.order.testmode
-
-            checkins = pos.checkins.all()
-            entry_checkin = checkins.filter(type=Checkin.TYPE_ENTRY).order_by('-datetime').first()
-            exit_checkin = checkins.filter(type=Checkin.TYPE_EXIT).order_by('-datetime').first()
-
-            def parse_datetime(dt):
-                if not dt:
-                    return None
-                if isinstance(dt, str):
-                    return make_aware(dateutil.parser.parse(dt), UTC)
-                elif not is_aware(dt):
-                    return make_aware(dt, UTC)
-                else:
-                    return dt
-
-            entry_time = parse_datetime(entry_checkin.datetime if entry_checkin else None)
-            exit_time = parse_datetime(exit_checkin.datetime if exit_checkin else None)
-
-            if not entry_time and not exit_time:
-                check_in_status = 'Not checked in'
-            elif entry_time and not exit_time:
-                check_in_status = 'Checked in'
-            elif not entry_time and exit_time:
-                check_in_status = 'Checked out (no entry record)'
-            elif exit_time < entry_time:
-                check_in_status = 'Invalid check-in data (exit before entry)'
-            elif exit_time == entry_time:
-                check_in_status = 'Checked in and out at same time'
-            else:
-                check_in_status = 'Checked in but left'
-
-            attendees.append(
-                {
-                    'name': name,
-                    'email': email,
-                    'event': event,
-                    'event_slug': event_slug,
-                    'organizer_slug': organizer_slug,
-                    'order_code': order_code,
-                    'product': product,
-                    'check_in_status': check_in_status,
-                    'testmode': testmode,
-                }
-            )
-
-        if ordering in ('check_in_status', '-check_in_status'):
-            reverse_sort = ordering.startswith('-')
-            attendees.sort(key=lambda x: x['check_in_status'], reverse=reverse_sort)
-
-        return attendees
+        if not entry_time and not exit_time:
+            return 'Not checked in'
+        if entry_time and not exit_time:
+            return 'Checked in'
+        if not entry_time and exit_time:
+            return 'Checked out (no entry record)'
+        if exit_time < entry_time:
+            return 'Invalid check-in data (exit before entry)'
+        if exit_time == entry_time:
+            return 'Checked in and out at same time'
+        return 'Checked in but left'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+
+        ctx['attendees'] = [
+            {
+                'name': pos.attendee_name_cached or '',
+                'email': pos.attendee_email or pos.order.email,
+                'event': pos.order.event.name,
+                'event_slug': pos.order.event.slug,
+                'organizer_slug': pos.order.event.organizer.slug,
+                'order_code': pos.order.code,
+                'product': str(pos.product.name),
+                'check_in_status': self._checkin_status(pos),
+                'testmode': pos.order.testmode,
+            }
+            for pos in ctx['attendees']
+        ]
         return ctx
 
 
@@ -275,65 +259,66 @@ class SubmissionListView(ListView):
     def filter_form(self):
         return SubmissionFilterForm(data=self.request.GET)
 
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         from django_scopes import scopes_disabled
         with scopes_disabled():
-            qs = (
-                Submission.objects.select_related('event', 'submission_type')
-                .prefetch_related('speakers')
+            return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = (
+            Submission.objects.select_related(
+                'event', 'event__organizer', 'submission_type', 'track'
             )
+            .prefetch_related('speakers', 'tags')
+        )
 
-            # Restrict for non-staff users
-            if not self.request.user.has_active_staff_session(self.request.session.session_key):
-                allowed_organizers = self.request.user.teams.values_list('organizer', flat=True)
-                qs = qs.filter(event__organizer_id__in=allowed_organizers)
+        if not self.request.user.has_active_staff_session(self.request.session.session_key):
+            allowed_organizers = self.request.user.teams.values_list('organizer', flat=True)
+            qs = qs.filter(event__organizer_id__in=allowed_organizers)
 
-            # Apply filters
-            if self.filter_form.is_valid():
-                qs = self.filter_form.filter_qs(qs)
+        if self.filter_form.is_valid():
+            qs = self.filter_form.filter_qs(qs)
 
-            # Ordering logic
-            ordering = self.request.GET.get('ordering')
-            ordering_map = {
-                'title': 'title',
-                '-title': '-title',
-                'event': 'event__name',
-                '-event': '-event__name',
-                'speakers': 'speakers__fullname',
-                '-speakers': '-speakers__fullname',
-                'state': 'state',
-                '-state': '-state',
-                'session_type': 'submission_type__name',
-                '-session_type': '-submission_type__name',
-            }
+        ordering = self.request.GET.get('ordering')
+        ordering_map = {
+            'title': 'title',
+            '-title': '-title',
+            'event': 'event__name',
+            '-event': '-event__name',
+            'speakers': 'speakers__fullname',
+            '-speakers': '-speakers__fullname',
+            'state': 'state',
+            '-state': '-state',
+            'session_type': 'submission_type__name',
+            '-session_type': '-submission_type__name',
+        }
 
-            if ordering in ordering_map:
-                qs = qs.order_by(ordering_map[ordering])
-            else:
-                qs = qs.order_by('-event__date_from', 'title')
+        if ordering in ordering_map:
+            qs = qs.order_by(ordering_map[ordering])
+        else:
+            qs = qs.order_by('-event__date_from', 'title')
 
-            # Build display list
-            submissions = []
-            for s in qs:
-                speakers = ', '.join(sp.get_display_name() for sp in s.speakers.all())
-                submissions.append({
-                    'title': s.title,
-                    'speakers': speakers,
-                    'event': s.event.name,
-                    'session_type': s.submission_type.name if s.submission_type else '',
-                    'proposal_state': s.state,
-                    'event_slug': s.event.slug,
-                    'organizer_slug': s.event.organizer.slug,
-                    'code': s.code,
-                    'track': s.track.name if s.track else '',
-                    'tags': ', '.join(t.tag for t in s.tags.all()) if s.tags else '',
-                })
+        return qs
 
-        return submissions
-    
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+
+        ctx['submissions'] = [
+            {
+                'title': s.title,
+                'speakers': ', '.join(sp.get_display_name() for sp in s.speakers.all()),
+                'event': s.event.name,
+                'session_type': s.submission_type.name if s.submission_type else '',
+                'proposal_state': s.state,
+                'event_slug': s.event.slug,
+                'organizer_slug': s.event.organizer.slug,
+                'code': s.code,
+                'track': s.track.name if s.track else '',
+                'tags': ', '.join(t.tag for t in s.tags.all()),
+            }
+            for s in ctx['submissions']
+        ]
         return ctx
 
 
