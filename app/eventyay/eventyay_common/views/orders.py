@@ -5,15 +5,16 @@ from django.shortcuts import redirect
 from django.views.generic.list import ListView
 
 from eventyay.base.models import Order
+from eventyay.control.views import PaginationMixin
 
 from ..forms.filters import UserOrderFilterForm
 
 logger = getLogger(__name__)
 
 
-class MyOrdersView(ListView):
+class MyOrdersView(PaginationMixin, ListView):
     template_name = 'eventyay_common/orders/orders.html'
-    paginate_by = 20
+    paginate_by = 25
 
     def get_queryset(self):
         user = self.request.user

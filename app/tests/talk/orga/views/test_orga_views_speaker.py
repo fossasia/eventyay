@@ -104,6 +104,29 @@ def test_orga_can_edit_speaker(orga_client, speaker, event, submission):
 
 
 @pytest.mark.django_db
+def test_speaker_profile_form_not_strict_allows_missing_required_fields(speaker, event):
+    event.cfp.fields["avatar"]["visibility"] = "required"
+    event.cfp.save()
+
+    with scope(event=event):
+        form = SpeakerProfileForm(
+            data={
+                "fullname": "",
+                "email": "",
+                "biography": "Draft bio",
+            },
+            event=event,
+            user=speaker,
+            not_strict=True,
+        )
+
+        assert form.is_valid()
+        assert "fullname" not in form.errors
+        assert "email" not in form.errors
+        assert "avatar" not in form.errors
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("field_name", ("avatar_source", "avatar_license"))
 def test_speaker_profile_rejects_long_avatar_license_text(field_name, speaker, event):
     with scope(event=event):

@@ -1,3 +1,5 @@
+from functools import partial
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -9,6 +11,7 @@ from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceFie
 from i18nfield.forms import I18nModelForm
 
 from eventyay.base.models import Event, SpeakerProfile, TalkQuestion, TalkQuestionTarget, User
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
@@ -130,9 +133,46 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                self.fields[field_name].required = True
+                self.fields[field_name].required = not self.not_strict
                 if hasattr(self.fields[field_name].widget, 'is_required'):
-                    self.fields[field_name].widget.is_required = True
+                    self.fields[field_name].widget.is_required = not self.not_strict
+
+        cfp_defaults = default_fields()
+        count_length_in = self.event.cfp.settings.get('count_length_in', 'chars')
+        count_chars = count_length_in == 'chars'
+        for key in ('avatar_source', 'avatar_license'):
+            if key not in self.fields:
+                continue
+            default_config = cfp_defaults.get(key, {})
+            config = self.event.cfp.fields.get(key, default_config)
+            visibility = config.get('visibility', default_config.get('visibility', 'optional'))
+            if visibility == 'do_not_ask':
+                self.fields.pop(key, None)
+                continue
+            field = self.fields[key]
+            field.required = visibility == 'required'
+            if hasattr(field.widget, 'is_required'):
+                field.widget.is_required = field.required
+            min_value = config.get('min_length')
+            max_value = config.get('max_length')
+            if min_value or max_value:
+                if min_value and count_chars:
+                    field.widget.attrs['minlength'] = min_value
+                if max_value and count_chars:
+                    field.widget.attrs['maxlength'] = max_value
+                field.validators.append(
+                    partial(
+                        self.validate_field_length,
+                        min_length=min_value,
+                        max_length=max_value,
+                        count_in=count_length_in,
+                    )
+                )
+                field.original_help_text = getattr(field, 'original_help_text', field.help_text)
+                field.added_help_text = self.get_help_text('', min_value, max_value, count_length_in)
+                field.help_text = ' '.join(
+                    part for part in (field.original_help_text, field.added_help_text) if part
+                )
 
         if not self.event.cfp.request_avatar:
             self.fields.pop('avatar', None)
@@ -190,12 +230,13 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
-        if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
+        if not getattr(self, 'not_strict', False) and self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
             if self.event.cfp.enable_gravatar:
                 msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
             else:
                 msg = _('Please provide a profile picture!')
             self.add_error('avatar', forms.ValidationError(msg))
+
         fullname = self.cleaned_data.get('fullname')
         if (
             self.enforce_account_name_match

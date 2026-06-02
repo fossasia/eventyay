@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import TypedDict
 from urllib.parse import urlparse
 
+import requests
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.core.validators import validate_email
 from django.utils.dateparse import parse_datetime
 from django.db import DataError, IntegrityError, OperationalError, models, transaction
@@ -61,6 +63,21 @@ USER_CODE_MAX_LENGTH = User._meta.get_field('code').max_length or 16
 USER_FULLNAME_MAX_LENGTH = User._meta.get_field('fullname').max_length or 255
 SUBMISSION_CODE_MAX_LENGTH = Submission._meta.get_field('code').max_length or 16
 ROOM_NAME_MAX_LENGTH = Room._meta.get_field('name').max_length or 100
+TRACK_NAME_MAX_LENGTH = Track._meta.get_field('name').max_length or 200
+
+# A rotating palette of distinct colours used when auto-creating tracks during import.
+_TRACK_AUTO_COLORS = [
+    '#3498db',
+    '#2ecc71',
+    '#e67e22',
+    '#9b59b6',
+    '#e74c3c',
+    '#1abc9c',
+    '#f39c12',
+    '#2980b9',
+    '#27ae60',
+    '#8e44ad',
+]
 NORMALIZED_SPEAKER_SETTINGS = {
     key: f'csv:{key}'
     for key in (
@@ -691,16 +708,66 @@ def _set_external_avatar_url(user: User, avatar_url: str) -> list[str]:
     if not avatar_url:
         return []
 
-    profile = dict(user.profile or {})
-    avatar = profile.get('avatar')
-    avatar = dict(avatar) if isinstance(avatar, dict) else {}
-    if avatar.get('url') == avatar_url:
+    # Skip if user already has a locally stored avatar
+    if user.avatar:
         return []
 
-    avatar['url'] = avatar_url
-    profile['avatar'] = avatar
-    user.profile = profile
-    return ['profile']
+    # Determine file extension from URL
+    url_path = urlparse(avatar_url).path
+    ext = Path(url_path).suffix.lower()
+    if ext not in {'.jpg', '.jpeg', '.png', '.gif', '.webp'}:
+        ext = '.jpg'
+
+    try:
+        # Disable redirects so we can validate the final destination URL before
+        # following it; this prevents open-redirect-assisted SSRF.
+        response = requests.get(
+            avatar_url,
+            timeout=(5, 10),  # (connect, read) seconds
+            allow_redirects=False,
+            stream=True,
+        )
+        # Follow at most one redirect, but re-validate the Location header.
+        if response.is_redirect:
+            location = response.headers.get('Location', '')
+            location = _normalize_avatar_url(location)
+            if not location:
+                raise ValueError(f'Redirect to disallowed URL: {response.headers.get("Location")}')
+            response = requests.get(location, timeout=(5, 10), allow_redirects=False, stream=True)
+
+        response.raise_for_status()
+
+        # Guard against huge files (10 MB cap)
+        max_bytes = 10 * 1024 * 1024
+        chunks = []
+        total = 0
+        for chunk in response.iter_content(chunk_size=65536):
+            total += len(chunk)
+            if total > max_bytes:
+                raise ValueError('Avatar image exceeds 10 MB limit')
+            chunks.append(chunk)
+        content = b''.join(chunks)
+        if not content:
+            raise ValueError('Empty response body')
+    except (requests.exceptions.RequestException, ValueError):
+        logger.warning('Could not download avatar for user %s from %s', user.pk, avatar_url)
+        # Fall back: store the external URL in profile so it can still be displayed
+        profile = dict(user.profile or {})
+        avatar = profile.get('avatar')
+        avatar = dict(avatar) if isinstance(avatar, dict) else {}
+        if avatar.get('url') == avatar_url:
+            return []
+        avatar['url'] = avatar_url
+        profile['avatar'] = avatar
+        user.profile = profile
+        return ['profile']
+
+    filename = f'avatar_{user.code or user.pk}{ext}'
+    # save=False: we return ['avatar'] so the caller includes it in user.save(update_fields=...)
+    # process_image must be called by the caller AFTER user.save() to avoid a race condition
+    user.avatar.save(filename, ContentFile(content), save=False)
+    return ['avatar']
+
 
 
 def _parse_featured_position(value: str) -> int | None:
@@ -890,6 +957,8 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
                 user.email = normalized_email
                 update_fields.append('email')
             user.save(update_fields=update_fields)
+            if 'avatar' in update_fields:
+                user.process_image('avatar', generate_thumbnail=True)
         else:
             user = User.objects.create_user(
                 password=get_random_string(32),
@@ -902,6 +971,8 @@ def _import_speaker_row(event, settings, record, acting_user, caches=None):
             extra = _apply_user_optional_fields(user, **optional_kwargs)
             if extra:
                 user.save(update_fields=extra)
+            if 'avatar' in extra:
+                user.process_image('avatar', generate_thumbnail=True)
 
         profile, profile_created = SpeakerProfile.objects.get_or_create(
             user=user,
@@ -1119,8 +1190,8 @@ def _import_submission_row(event, settings, record, acting_user, speaker_cache=N
     if not sub_type:
         raise ImportExecutionError(_('No session type found for this event.'))
 
-    # Resolve track (use pre-fetched cache)
-    track = _resolve_track(track_val, caches) if track_val and caches else None
+    # Resolve track (auto-create if not found)
+    track = _resolve_or_create_track(track_val, event, caches) if track_val else None
 
     # Resolve state (use pre-fetched valid_states set)
     valid_states = caches['valid_states'] if caches else {choice[0] for choice in SubmissionStates.get_choices()}
@@ -1330,6 +1401,33 @@ def _resolve_track(track_val: str, caches: dict) -> 'Track | None':
     except (ValueError, TypeError):
         pass
     return None
+
+
+def _resolve_or_create_track(
+    track_val: str,
+    event: Event,
+    caches: dict | None,
+) -> 'Track | None':
+    """Find an existing Track by name or pk, or create one when not found."""
+    normalized_name = track_val.strip() if track_val else ''
+    if not normalized_name:
+        return None
+    normalized_name = str(normalized_name)[:TRACK_NAME_MAX_LENGTH]
+
+    track = _resolve_track(normalized_name, caches) if caches else None
+    if not track:
+        track = Track.objects.filter(event=event, name__iexact=normalized_name).first()
+
+    if track:
+        return track
+
+    # Auto-create the track with a colour from the rotating palette.
+    existing_count = len(caches['tracks']) if caches else Track.objects.filter(event=event).count()
+    color = _TRACK_AUTO_COLORS[existing_count % len(_TRACK_AUTO_COLORS)]
+    track = Track.objects.create(event=event, name=normalized_name, color=color)
+    if caches is not None:
+        caches['tracks'].append(track)
+    return track
 
 
 def _resolve_room(room_val: str, caches: dict) -> 'Room | None':

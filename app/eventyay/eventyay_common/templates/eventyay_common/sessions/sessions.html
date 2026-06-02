@@ -86,9 +86,5 @@
         </table>
     </div>
 
-    {% if is_paginated %}
-        <div class="pagination text-center">
-            {% bootstrap_pagination page_obj %}
-        </div>
-    {% endif %}
+    {% include 'pretixcontrol/pagination.html' %}
 {% endblock %}
