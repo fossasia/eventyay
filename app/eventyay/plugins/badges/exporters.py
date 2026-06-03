@@ -1,11 +1,9 @@
 import copy
 import json
 from collections import OrderedDict
-from datetime import datetime, time, timedelta
 from io import BytesIO
 from typing import Tuple
 
-import dateutil.parser
 from django import forms
 from django.conf import settings
 from django.contrib.staticfiles import finders
@@ -13,7 +11,6 @@ from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
-from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from pypdf import Transformation
@@ -22,6 +19,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
 from eventyay.base.exporter import BaseExporter
+from eventyay.base.exporters.date import build_date_filter, parse_date_input
 from eventyay.base.i18n import language
 from eventyay.base.models import Order, OrderPosition
 from eventyay.base.pdf import Renderer
@@ -374,24 +372,12 @@ class BadgeExporter(BaseExporter):
             qs = qs.filter(order__status__in=[Order.STATUS_PAID])
 
         if form_data.get('date_from'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_from']).date(),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__gte=dt) | Q(subevent__isnull=True, order__event__date_from__gte=dt))
+            date_from = parse_date_input(form_data['date_from'])
+            qs = qs.filter(build_date_filter(date_from, None, self.event.tz))
 
         if form_data.get('date_to'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_to']).date() + timedelta(days=1),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__lt=dt) | Q(subevent__isnull=True, order__event__date_from__lt=dt))
+            date_to = parse_date_input(form_data['date_to'])
+            qs = qs.filter(build_date_filter(None, date_to, self.event.tz))
 
         if form_data.get('order_by') == 'name':
             qs = qs.order_by('attendee_name_cached', 'order__code')
