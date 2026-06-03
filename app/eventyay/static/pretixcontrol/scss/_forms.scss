@@ -135,6 +135,9 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
 
   > .control-label {
     padding-top: 0;
+    margin-bottom: 0;
+    font-size: $font-size-base;
+    line-height: $line-height-base;
   }
 }
 
@@ -790,5 +793,11 @@ table td > .checkbox input[type="checkbox"] {
   .filter-form .filter-actions {
     flex-direction: column;
     gap: 10px;
+  }
+}
+
+@media (min-width: $screen-sm-min) {
+  .form-horizontal .control-label {
+    padding-top: 0;
   }
 }
