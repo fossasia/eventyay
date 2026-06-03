@@ -151,7 +151,7 @@ class QuestionFieldsMixin:
     def _resolve_single_choice_initial(initial_object, choices, default_answer):
         """Return a valid AnswerOption initial, ignoring removed options."""
         if initial_object:
-            return initial_object.options.filter(pk__in=choices.values('pk')).first()
+            return initial_object.options.filter(pk__in=choices.values_list('pk', flat=True)).first()
         if default_answer:
             return choices.filter(answer=default_answer).first()
         return None
