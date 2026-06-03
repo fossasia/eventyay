@@ -107,6 +107,39 @@ class ProductList(PaginationMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        products = list(ctx['products'])
+        category_ids = {product.category_id for product in products}
+        category_filter = Q()
+        non_empty_category_ids = {category_id for category_id in category_ids if category_id is not None}
+        if non_empty_category_ids:
+            category_filter |= Q(category_id__in=non_empty_category_ids)
+        if None in category_ids:
+            category_filter |= Q(category__isnull=True)
+
+        products_by_category = {}
+        if category_filter:
+            for product_id, category_id in (
+                self.request.event.products.filter(category_filter)
+                .order_by('category_id', 'position')
+                .values_list('id', 'category_id')
+            ):
+                products_by_category.setdefault(category_id, []).append(product_id)
+
+        move_states = {}
+        for category_products in products_by_category.values():
+            last_index = len(category_products) - 1
+            for index, product_id in enumerate(category_products):
+                move_states[product_id] = {
+                    'can_move_up': index > 0,
+                    'can_move_down': index < last_index,
+                }
+
+        for product in products:
+            state = move_states.get(product.pk, {})
+            product.can_move_up = state.get('can_move_up', False)
+            product.can_move_down = state.get('can_move_down', False)
+
+        ctx['products'] = products
         ctx['sales_channels'] = get_all_sales_channels()
         return ctx
 
