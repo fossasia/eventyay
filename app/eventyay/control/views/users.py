@@ -179,6 +179,12 @@ class UserAnonymizeView(
         ctx['edit_user'] = get_object_or_404(User, pk=self.kwargs.get('id'))
         return ctx
 
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.users')
+
+    def get_error_url(self):
+        return reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs)
+
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
         try:
@@ -201,10 +207,10 @@ class UserAnonymizeView(
         except DatabaseError:
             logger.exception('Failed to anonymize user %s from admin user page.', self.object.pk)
             messages.error(request, _('The user could not be anonymized. Please try again later.'))
-            return redirect(reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs))
+            return redirect(self.get_error_url())
         else:
             messages.success(request, _('User has been anonymized successfully.'))
-            return redirect(reverse('eventyay_admin:admin.users'))
+            return redirect(self.get_success_url())
 
 
 class UserImpersonateView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, View):
