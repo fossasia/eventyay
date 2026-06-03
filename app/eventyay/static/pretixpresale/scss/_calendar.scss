@@ -95,6 +95,11 @@
     display: none;
   }
 }
+
+body.organizer-presale-page .week-calendar .weekday.no-events {
+  display: block !important;
+}
+
 @media (min-width: $screen-md-min) {
   .week-calendar {
     display: flex;

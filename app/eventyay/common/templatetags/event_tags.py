@@ -214,6 +214,19 @@ def private_testmode_talks_enabled(context, event=None):
 
 
 @register.simple_tag(takes_context=True)
+def has_organizer_access(context, organizer=None):
+    """Return True if the user may access organizer management for this organizer."""
+    request = context.get('request')
+    organizer = organizer or getattr(request, 'organizer', None)
+    user = getattr(request, 'user', None)
+    if not organizer or not user or not user.is_authenticated:
+        return False
+    if user.is_administrator:
+        return True
+    return user.has_organizer_permission(organizer, request=request)
+
+
+@register.simple_tag(takes_context=True)
 def is_event_team_member(context, event=None):
     request = context.get('request')
     event = event or getattr(request, 'event', None)

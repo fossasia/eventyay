@@ -1,17 +1,18 @@
 import calendar
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
-from urllib.parse import quote
+from urllib.parse import quote, urlencode, urlparse, urlunparse
 
 import isoweek
 import pytz
 from django.conf import settings
 from django.db.models import Exists, Max, Min, OuterRef, Q
 from django.db.models.functions import Coalesce, Greatest
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.formats import date_format, get_format
 from django.utils.timezone import get_current_timezone, now
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
@@ -31,6 +32,7 @@ from eventyay.helpers.daterange import daterange
 from eventyay.helpers.formats.de.formats import WEEK_FORMAT
 from eventyay.multidomain.urlreverse import eventreverse
 from eventyay.presale.ical import get_ical
+from eventyay.presale.organizer_exports import get_organizer_export_events, render_organizer_export
 from eventyay.presale.views import OrganizerViewMixin
 
 
@@ -315,15 +317,10 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
     def get(self, request, *args, **kwargs):
         style = request.GET.get('style', request.organizer.settings.event_list_type)
         if style == 'calendar':
-            cv = CalendarView()
-            cv.request = request
-            return cv.get(request, *args, **kwargs)
-        elif style == 'week':
-            cv = WeekCalendarView()
-            cv.request = request
-            return cv.get(request, *args, **kwargs)
-        else:
-            return super().get(request, *args, **kwargs)
+            return CalendarView.as_view()(request, *args, **kwargs)
+        if style == 'week':
+            return WeekCalendarView.as_view()(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return self._get_event_queryset()
@@ -547,7 +544,9 @@ def weeks_for_template(ebd, year, month):
                 'day': day,
                 'date': date(year, month, day),
                 'events': (
-                    sorted(ebd.get(date(year, month, day)), key=sort_ev) if date(year, month, day) in ebd else None
+                    sorted(ebd.get(date(year, month, day)), key=sort_ev)
+                    if date(year, month, day) in ebd
+                    else []
                 ),
             }
             if day > 0
@@ -737,37 +736,121 @@ class WeekCalendarView(OrganizerViewMixin, EventListMixin, TemplateView):
         return ebd
 
 
+def _organizer_ical_url(request):
+    ical_path = eventreverse(request.organizer, 'presale:organizer.ical')
+    if request.GET:
+        ical_path = f'{ical_path}?{request.GET.urlencode()}'
+    return request.build_absolute_uri(ical_path)
+
+
+def build_organizer_calendar_exporters(request):
+    """Export links for organizer list/week/month views (aligned with agenda schedule)."""
+    organizer = request.organizer
+    query_string = request.GET.urlencode()
+    query_suffix = f'?{query_string}' if query_string else ''
+
+    locale_params = request.GET.copy()
+    locale_params['locale'] = request.LANGUAGE_CODE
+    locale_params.pop('page', None)
+    ical_path = eventreverse(organizer, 'presale:organizer.ical')
+    if locale_params:
+        ical_path = f'{ical_path}?{locale_params.urlencode()}'
+
+    def export_url(name):
+        return (
+            eventreverse(organizer, 'presale:organizer.events.export', kwargs={'name': name})
+            + query_suffix
+        )
+
+    return [
+        {
+            'icon': 'fa-google',
+            'label': _('Subscribe to Google Calendar'),
+            'url': eventreverse(
+                organizer,
+                'presale:organizer.export',
+                kwargs={'export_target': 'google-calendar'},
+            )
+            + query_suffix,
+        },
+        {
+            'icon': 'fa-calendar-plus-o',
+            'label': _('Subscribe to Other Calendar'),
+            'url': eventreverse(
+                organizer,
+                'presale:organizer.export',
+                kwargs={'export_target': 'webcal'},
+            )
+            + query_suffix,
+        },
+        {
+            'icon': 'fa-calendar',
+            'label': _('iCal (full event)'),
+            'url': ical_path,
+        },
+        {
+            'icon': 'fa-code',
+            'label': _('JSON (frab compatible)'),
+            'url': export_url('schedule.json'),
+        },
+        {
+            'icon': 'fa-code',
+            'label': _('XML (frab compatible)'),
+            'url': export_url('schedule.xml'),
+        },
+        {
+            'icon': 'fa-calendar',
+            'label': _('XCal (frab compatible)'),
+            'url': export_url('schedule.xcal'),
+        },
+    ]
+
+
+class OrganizerCalendarExportRedirectView(OrganizerViewMixin, View):
+    def get(self, request, export_target, *args, **kwargs):
+        ics_url = _organizer_ical_url(request)
+        if export_target == 'google-calendar':
+            return HttpResponseRedirect(
+                f'https://calendar.google.com/calendar/r?{urlencode({"cid": ics_url})}'
+            )
+        if export_target == 'webcal':
+            parsed = urlparse(ics_url)
+            webcal_url = urlunparse(('webcal',) + parsed[1:])
+            response = HttpResponse(status=302)
+            response['Location'] = webcal_url
+            return response
+        raise Http404()
+
+
+@method_decorator(cache_page(300), name='dispatch')
+class OrganizerExportDownload(OrganizerViewMixin, View):
+    def get(self, request, name, *args, **kwargs):
+        base_url = request.build_absolute_uri(
+            eventreverse(request.organizer, 'presale:organizer.index')
+        )
+        events = get_organizer_export_events(request)
+
+        def render():
+            return render_organizer_export(request.organizer, events, name, base_url)
+
+        if 'locale' in request.GET and request.GET.get('locale') in dict(settings.LANGUAGES):
+            with language(request.GET.get('locale'), request.organizer.settings.region):
+                result = render()
+        else:
+            result = render()
+
+        if not result:
+            raise Http404()
+        filename, content_type, content = result
+        resp = HttpResponse(content, content_type=content_type)
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return resp
+
+
 @method_decorator(cache_page(300), name='dispatch')
 class OrganizerIcalDownload(OrganizerViewMixin, View):
     def get(self, request, *args, **kwargs):
-        events = list(
-            filter_qs_by_attr(
-                self.request.organizer.events.filter(
-                    is_public=True,
-                    live=True,
-                    has_subevents=False,
-                    sales_channels__contains=self.request.sales_channel.identifier,
-                ),
-                request,
-            )
-            .order_by('date_from')
-            .prefetch_related('_settings_objects', 'organizer___settings_objects')
-        )
-        events += list(
-            filter_qs_by_attr(
-                SubEvent.objects.filter(
-                    event__organizer=self.request.organizer,
-                    event__is_public=True,
-                    event__live=True,
-                    is_public=True,
-                    active=True,
-                    event__sales_channels__contains=self.request.sales_channel.identifier,
-                ),
-                request,
-            )
-            .prefetch_related('event___settings_objects', 'event__organizer___settings_objects')
-            .order_by('date_from')
-        )
+        events = get_organizer_export_events(request)
 
         if 'locale' in request.GET and request.GET.get('locale') in dict(settings.LANGUAGES):
             with language(request.GET.get('locale'), self.request.organizer.settings.region):

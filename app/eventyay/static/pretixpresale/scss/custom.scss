@@ -139,7 +139,6 @@
     gap: 16px;
 }
 
-
 .presale-sticky-tabs .header-row-right details.dropdown,
 .presale-sticky-tabs .header-row-right>a {
     display: inline-flex;
@@ -246,6 +245,22 @@
         flex-shrink: 0;
         font-size: 0.8rem;
         gap: 0;
+    }
+
+    /* Organizer list/week/month: readable sizes (Bootstrap html is 10px) */
+    body.organizer-presale-page {
+        .presale-sticky-tabs a.header-tab {
+            font-size: 1rem;
+            padding: 8px 10px 4px;
+        }
+
+        .presale-sticky-tabs .header-row-right,
+        .presale-sticky-tabs .header-row-right .login-link,
+        .presale-sticky-tabs .header-row-right .locale-link,
+        .presale-sticky-tabs .header-row-right details.dropdown summary {
+            font-size: 16px;
+            gap: 8px;
+        }
     }
 
     .presale-sticky-tabs .header-row-right details.dropdown {

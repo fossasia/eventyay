@@ -268,6 +268,18 @@ header {
   padding-left: 1.75rem;
 }
 
+.event-brand--logo-large {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.event-brand--logo-large .organizer-logo {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
 @media (min-width: 769px) {
   /* Presale info / tickets: align logo block with tab content (tighter than agenda & CFP) */
   #main-container.presale-container .event-brand--has-logo {
@@ -629,6 +641,19 @@ footer {
     gap: 0;
   }
 
+  body.organizer-presale-page .presale-sticky-tabs a.header-tab {
+    font-size: 16px !important;
+    padding: 8px 10px 6px !important;
+  }
+
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right,
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right .login-link,
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right .locale-link,
+  body.organizer-presale-page .presale-sticky-tabs .header-row-right details.dropdown summary {
+    font-size: 16px !important;
+    gap: 8px !important;
+  }
+
   .presale-sticky-tabs .header-row-right details.dropdown {
     position: relative;
   }
@@ -910,6 +935,285 @@ footer {
   visibility: hidden;
   pointer-events: none;
   transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease, margin-bottom 0.3s ease, visibility 0s linear 0.3s;
+}
+
+/* Organizer presale pages: layout via page-agenda + main-schedule */
+body.organizer-presale-page .presale-sticky-tabs-inner {
+  max-width: 100% !important;
+}
+
+body.organizer-presale-page .presale-tabs-scroll {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+body.organizer-presale-page {
+  font-size: 16px !important;
+}
+
+body.organizer-presale-page .organizer-page-content {
+  font-size: 16px !important;
+  line-height: 1.55;
+  color: var(--color-text);
+}
+
+body.organizer-presale-page h2.content-header {
+  font-size: 28px !important;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0;
+  color: var(--color-text);
+}
+
+body.organizer-presale-page .presale-sticky-tabs a.header-tab {
+  font-size: 17px !important;
+  padding: 10px 14px 6px;
+}
+
+body.organizer-presale-page .presale-sticky-tabs .header-row-right,
+body.organizer-presale-page .presale-sticky-tabs .header-row-right .login-link,
+body.organizer-presale-page .presale-sticky-tabs .header-row-right .locale-link {
+  font-size: 16px !important;
+}
+
+.organizer-list-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem 1.5rem;
+  margin: 0 0 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-grey-light);
+}
+
+.organizer-event-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+}
+
+.organizer-view-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.organizer-view-switch > a.btn,
+.organizer-export-dropdown > summary.btn,
+.organizer-toggle-past.btn.link {
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  padding: 0.5rem 1rem;
+}
+
+.organizer-view-switch > a.btn {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.organizer-view-switch > a.btn .fa {
+  margin-right: 0.35rem;
+}
+
+.organizer-view-switch > a.btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.organizer-view-switch > a.btn.active:hover {
+  background: var(--color-primary-hover, var(--color-primary));
+  color: #fff;
+}
+
+.organizer-export-dropdown {
+  position: relative;
+}
+
+.organizer-export-dropdown > summary.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.organizer-export-dropdown .dropdown-content {
+  min-width: 280px;
+  z-index: 1200;
+}
+
+.organizer-export-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.organizer-toggle-past.btn.link {
+  white-space: nowrap;
+}
+
+.organizer-calendar-nav {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 0;
+}
+
+.organizer-calendar-nav .form-control {
+  display: inline-block;
+  width: auto;
+  min-width: 8rem;
+  margin: 0.25rem;
+  vertical-align: middle;
+}
+
+.organizer-calendar-nav .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.organizer-calendar-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+body.organizer-presale-page #main-card .event-list {
+  margin-top: 0;
+  border-top: 1px solid var(--color-grey-light);
+}
+
+body.organizer-presale-page #main-card .event-list > .row {
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--color-grey-light);
+  border-left: 1px solid var(--color-grey-light);
+  border-right: 1px solid var(--color-grey-light);
+  align-items: center;
+}
+
+body.organizer-presale-page #main-card .event-list > .row > div {
+  padding: 0.35rem 0.75rem;
+}
+
+body.organizer-presale-page #main-card .event-list > .row:first-of-type {
+  background: var(--color-grey-ultralight, var(--color-offwhite));
+  font-size: 1.0625rem;
+  font-weight: 600;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
+body.organizer-presale-page #main-card .event-list .row strong {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+body.organizer-presale-page #main-card .event-list .row a.btn {
+  font-size: 1.0625rem;
+  padding: 0.5rem 0.75rem;
+}
+
+body.organizer-presale-page #main-card .table-calendar {
+  margin-top: 0.5rem;
+}
+
+body.organizer-presale-page #main-card .table-calendar th,
+body.organizer-presale-page #main-card .table-calendar td {
+  vertical-align: top;
+  padding: 0.5rem;
+}
+
+body.organizer-presale-page #main-card .table-calendar td.day h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+body.organizer-presale-page #main-card .week-calendar {
+  margin-top: 0.5rem;
+}
+
+body.organizer-presale-page #main-card .table-calendar a.event,
+body.organizer-presale-page #main-card .week-calendar a.event {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--size-border-radius, 4px);
+  padding: 0.25rem 0.4rem;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+body.organizer-presale-page #main-card .table-calendar a.event:hover,
+body.organizer-presale-page #main-card .week-calendar a.event:hover {
+  background: var(--color-primary-text-dark, var(--color-primary));
+  color: #fff;
+  text-decoration: none;
+}
+
+body.organizer-presale-page #main-card .table-calendar a.event.continued,
+body.organizer-presale-page #main-card .table-calendar a.event.over,
+body.organizer-presale-page #main-card .week-calendar a.event.continued,
+body.organizer-presale-page #main-card .week-calendar a.event.over {
+  background: #888;
+}
+
+body.organizer-presale-page #main-card .table-calendar a.event.available,
+body.organizer-presale-page #main-card .week-calendar a.event.available {
+  background: var(--color-success, #5cb85c);
+}
+
+body.organizer-presale-page #main-card .table-calendar a.event.reserved,
+body.organizer-presale-page #main-card .table-calendar a.event.soldout,
+body.organizer-presale-page #main-card .week-calendar a.event.reserved,
+body.organizer-presale-page #main-card .week-calendar a.event.soldout {
+  background: var(--color-danger, #d9534f);
+}
+
+@media (min-width: 769px) {
+  body.organizer-presale-page h2.content-header {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .organizer-list-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .organizer-event-toolbar {
+    justify-content: flex-start;
+  }
+
+  body.organizer-presale-page .table-calendar .day .events {
+    display: none;
+  }
+
+  body.organizer-presale-page .table-calendar td.day.has-events {
+    background: var(--color-primary);
+    cursor: pointer;
+    color: #fff;
+  }
+
+  body.organizer-presale-page .table-calendar td.day.has-events:hover {
+    background: var(--color-primary-text-dark, var(--color-primary));
+  }
 }
 
 .form-group:has([data-question-dependency]):not(.dependency-hidden) {

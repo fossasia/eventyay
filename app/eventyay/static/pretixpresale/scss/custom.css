@@ -278,6 +278,19 @@ header .header-row-right {
         gap: 0;
     }
 
+    body.organizer-presale-page .presale-sticky-tabs a.header-tab {
+        font-size: 1rem;
+        padding: 8px 10px 4px;
+    }
+
+    body.organizer-presale-page .presale-sticky-tabs .header-row-right,
+    body.organizer-presale-page .presale-sticky-tabs .header-row-right .login-link,
+    body.organizer-presale-page .presale-sticky-tabs .header-row-right .locale-link,
+    body.organizer-presale-page .presale-sticky-tabs .header-row-right details.dropdown summary {
+        font-size: 16px;
+        gap: 8px;
+    }
+
     .presale-sticky-tabs .header-row-right details.dropdown {
         position: relative;
     }

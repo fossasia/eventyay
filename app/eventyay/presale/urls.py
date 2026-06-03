@@ -245,6 +245,16 @@ organizer_patterns = [
         name='organizer.ical',
     ),
     path(
+        'events/export/<str:export_target>/',
+        eventyay.presale.views.organizer.OrganizerCalendarExportRedirectView.as_view(),
+        name='organizer.export',
+    ),
+    path(
+        'events/export/<str:name>',
+        eventyay.presale.views.organizer.OrganizerExportDownload.as_view(),
+        name='organizer.events.export',
+    ),
+    path(
         'widget/product_list',
         eventyay.presale.views.widget.WidgetAPIProductList.as_view(),
         name='organizer.widget.productlist',

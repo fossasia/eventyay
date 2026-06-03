@@ -412,6 +412,15 @@ class OrganizerViewMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['organizer'] = self.request.organizer
+        style = self.request.GET.get('style')
+        if not style:
+            style = self.request.organizer.settings.event_list_type or 'list'
+        if style not in ('list', 'week', 'calendar'):
+            style = 'list'
+        context['organizer_view_style'] = style
+        from eventyay.presale.views.organizer import build_organizer_calendar_exporters
+
+        context['organizer_calendar_exporters'] = build_organizer_calendar_exporters(self.request)
         return context
 
 
