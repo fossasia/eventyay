@@ -165,7 +165,7 @@
     }
 }
 
-/* Ticket “Permission Required” dialog (native <dialog>); mirrored in dashboard.css for dev without compress. */
+/* Ticket “Permission Required” dialog (native <dialog>). */
 .modal-card-stacked-permission {
     margin: 50px auto 0;
     width: 90%;
@@ -217,6 +217,7 @@ dialog.permission-required-dialog {
         left: 50%;
         transform: translate(-50%, -50%);
         margin: 0;
+        animation: permission-dialog-fade-in 0.3s ease-out;
     }
 
     &::backdrop {
@@ -230,6 +231,16 @@ dialog.permission-required-dialog {
         max-width: 380px;
         box-shadow: none;
         border-radius: 0;
+    }
+}
+
+@keyframes permission-dialog-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
     }
 }
 

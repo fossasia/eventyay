@@ -16,6 +16,7 @@ from eventyay.eventyay_common.views.dashboards import (
     EVENT_SETTINGS_PERMISSION_DIALOG_ID,
     TICKET_PERMISSION_DIALOG_ID,
     EventWidgetGenerator,
+    filter_common_event_dashboard_widgets,
 )
 
 
@@ -54,6 +55,28 @@ def test_user_has_dashboard_access_denied_for_anonymous_user(organizer, event):
     assert user_has_ticket_dashboard_access(anonymous, organizer, event) is False
     assert user_has_talk_dashboard_access(anonymous, organizer, event) is False
     assert user_has_video_dashboard_access(anonymous, organizer, event) is False
+
+
+@pytest.mark.django_db
+def test_filter_common_event_dashboard_widgets_uses_ticket_dashboard_access():
+    widgets = [
+        {'key': 'shop_state', 'content': 'live'},
+        {'content': '<div class="numwidget">orders</div>'},
+    ]
+    filtered = filter_common_event_dashboard_widgets(
+        widgets,
+        has_ticket_dashboard_access=True,
+        can_change_event_settings=False,
+    )
+    assert len(filtered) == 2
+
+    filtered_talk_only = filter_common_event_dashboard_widgets(
+        widgets,
+        has_ticket_dashboard_access=False,
+        can_change_event_settings=False,
+    )
+    assert len(filtered_talk_only) == 1
+    assert filtered_talk_only[0]['key'] == 'shop_state'
 
 
 @pytest.mark.django_db

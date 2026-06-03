@@ -26,6 +26,45 @@ TALK_DASHBOARD_PERMISSIONS = (
 
 VIDEO_DASHBOARD_PERMISSIONS = tuple(VIDEO_PERMISSION_DEFINITIONS.keys())
 
+_EVENT_DASHBOARD_ACCESS_CACHE_ATTR = '_eventyay_event_dashboard_access'
+
+
+def get_cached_event_dashboard_access(
+    request: HttpRequest,
+    user: User,
+    organizer: Organizer,
+    event: Event,
+) -> dict[str, bool]:
+    """Return per-request cached dashboard access flags for an event."""
+    cache = getattr(request, _EVENT_DASHBOARD_ACCESS_CACHE_ATTR, None)
+    if cache is None:
+        cache = {}
+        setattr(request, _EVENT_DASHBOARD_ACCESS_CACHE_ATTR, cache)
+
+    cache_key = (organizer.pk, event.pk)
+    if cache_key not in cache:
+        cache[cache_key] = {
+            'has_ticket_access': user_has_ticket_dashboard_access(
+                user, organizer, event, request=request
+            ),
+            'has_talk_access': user_has_talk_dashboard_access(
+                user, organizer, event, request=request
+            ),
+            'has_video_access': user_has_video_dashboard_access(
+                user, organizer, event, request=request
+            ),
+            'can_view_orders': user.has_event_permission(
+                organizer, event, 'can_view_orders', request=request
+            ),
+            'can_change_event_settings': user.has_event_permission(
+                organizer,
+                event,
+                'can_change_event_settings',
+                request=request,
+            ),
+        }
+    return cache[cache_key]
+
 
 def user_has_ticket_dashboard_access(
     user: User,

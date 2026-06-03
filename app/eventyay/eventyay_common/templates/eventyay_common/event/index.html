@@ -67,14 +67,14 @@
         {% for w in widgets %}
             <div class="widget-container widget-{{ w.display_size|default:"small" }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">
                 {% if w.permission_dialog_id %}
-                    <div role="button" tabindex="0" aria-haspopup="dialog" aria-controls="{{ w.permission_dialog_id }}" aria-label="{% trans "Open permission details" %}" data-dialog-target="#{{ w.permission_dialog_id }}" data-toggle="dialog" class="widget">
+                    <button type="button" aria-haspopup="dialog" aria-controls="{{ w.permission_dialog_id }}" aria-label="{% trans "Open permission details" %}" data-dialog-target="#{{ w.permission_dialog_id }}" data-toggle="dialog" class="widget">
                         {% if w.lazy %}
                             <span class="fa fa-cog fa-4x"></span>
                             <span class="sr-only">{% trans "Open permission details" %}</span>
                         {% else %}
                             {{ w.content|safe }}
                         {% endif %}
-                    </div>
+                    </button>
                 {% elif w.url %}{# backwards compatibility #}
                     <a href="{{ w.url }}" class="widget">
                         {% if w.lazy %}

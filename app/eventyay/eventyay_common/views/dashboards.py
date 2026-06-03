@@ -53,7 +53,11 @@ from eventyay.helpers.daterange import daterange
 from eventyay.helpers.plugin_enable import is_video_enabled
 
 from ...base.models.orders import CancellationRequest
-from ..permissions import filter_timeline_entry_for_ticket_access, user_has_ticket_dashboard_access
+from ..permissions import (
+    filter_timeline_entry_for_ticket_access,
+    get_cached_event_dashboard_access,
+    user_has_ticket_dashboard_access,
+)
 from ..utils import EventCreatedFor, get_subevent
 
 logger = logging.getLogger(__name__)
@@ -78,16 +82,12 @@ def _sanitize_widget_content_for_permission_dialog(content: str) -> str:
 
 
 def get_event_dashboard_widget_permissions(request: HttpRequest) -> dict[str, bool]:
+    access = get_cached_event_dashboard_access(
+        request, request.user, request.organizer, request.event
+    )
     return {
-        'can_view_orders': request.user.has_event_permission(
-            request.organizer, request.event, 'can_view_orders', request=request
-        ),
-        'can_change_event_settings': request.user.has_event_permission(
-            request.organizer,
-            request.event,
-            'can_change_event_settings',
-            request=request,
-        ),
+        'has_ticket_dashboard_access': access['has_ticket_access'],
+        'can_change_event_settings': access['can_change_event_settings'],
     }
 
 
@@ -100,7 +100,7 @@ def filter_event_dashboard_widgets_for_request(
         permissions = get_event_dashboard_widget_permissions(request)
     return filter_common_event_dashboard_widgets(
         widgets,
-        can_view_orders=permissions['can_view_orders'],
+        has_ticket_dashboard_access=permissions['has_ticket_dashboard_access'],
         can_change_event_settings=permissions['can_change_event_settings'],
     )
 
@@ -108,14 +108,14 @@ def filter_event_dashboard_widgets_for_request(
 def filter_common_event_dashboard_widgets(
     widgets: List[Dict[str, Any]] | None,
     *,
-    can_view_orders: bool,
+    has_ticket_dashboard_access: bool,
     can_change_event_settings: bool,
 ) -> List[Dict[str, Any]]:
     """Limit dashboard widgets on the common event home for talk-only users.
 
-    Users without ``can_view_orders`` only see widgets whose ``key`` is
+    Users without ticket dashboard access only see widgets whose ``key`` is
     ``shop_state`` (ticket shop live status). Other widgets are omitted unless
-    they declare that key or the user gains ticket permissions.
+    they declare that key or the user gains ticket dashboard access.
     """
     if widgets is None:
         widgets = []
@@ -131,7 +131,7 @@ def filter_common_event_dashboard_widgets(
     for widget in widgets:
         if not isinstance(widget, dict):
             continue
-        if not can_view_orders and widget.get('key') != SHOP_STATE_WIDGET_KEY:
+        if not has_ticket_dashboard_access and widget.get('key') != SHOP_STATE_WIDGET_KEY:
             continue
         if widget.get('key') == SHOP_STATE_WIDGET_KEY and not can_change_event_settings:
             widget = dict(widget)
@@ -211,15 +211,14 @@ class EventIndexView(TemplateView):
             ),
         }
 
-    def _collect_dashboard_widgets(
-        self, subevent: Optional[SubEvent], permissions: Dict[str, bool]
-    ) -> List[Dict[str, Any]]:
+    def _collect_dashboard_widgets(self, subevent: Optional[SubEvent]) -> List[Dict[str, Any]]:
         """
         Collect and filter dashboard widgets based on permissions.
 
         Talk-only users see the event live-status widget but not ticket metrics.
         """
         request = self.request
+        widget_permissions = get_event_dashboard_widget_permissions(request)
         widgets: List[Dict[str, Any]] = []
         for caller, result in event_dashboard_widgets.send(
             sender=request.event,
@@ -227,7 +226,9 @@ class EventIndexView(TemplateView):
             lazy=True,
             request=request,
         ):
-            widgets.extend(filter_event_dashboard_widgets_for_request(request, result, permissions))
+            widgets.extend(
+                filter_event_dashboard_widgets_for_request(request, result, widget_permissions)
+            )
         return self.rearrange(widgets)
 
     def _filter_log_entries(self, qs: QuerySet, permissions: Dict[str, bool]) -> QuerySet:
@@ -308,7 +309,7 @@ class EventIndexView(TemplateView):
         permissions = self._get_user_permissions()
 
         # Collect widgets
-        widgets = self._collect_dashboard_widgets(subevent, permissions)
+        widgets = self._collect_dashboard_widgets(subevent)
 
         # Filter log entries
         qs = (
@@ -342,13 +343,13 @@ class EventIndexView(TemplateView):
             action.display = action.display(request)
 
         # Add timeline information
-        has_ticket_access = user_has_ticket_dashboard_access(
-            request.user, request.organizer, request.event, request=request
+        access = get_cached_event_dashboard_access(
+            request, request.user, request.organizer, request.event
         )
         context['timeline'] = [
             {
                 'date': t.datetime.astimezone(ZoneInfo(request.event.timezone)).date(),
-                'entry': filter_timeline_entry_for_ticket_access(t, has_ticket_access),
+                'entry': filter_timeline_entry_for_ticket_access(t, access['has_ticket_access']),
                 'time': t.datetime.astimezone(ZoneInfo(request.event.timezone)),
             }
             for t in timeline_for_event(request.event, subevent)
