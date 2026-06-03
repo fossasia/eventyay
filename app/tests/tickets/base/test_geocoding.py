@@ -73,7 +73,7 @@ class TestGeocodeAddress:
             with patch.object(geocoding, 'GlobalSettingsObject') as gs_mock:
                 gs_mock.return_value.settings.opencagedata_apikey = ''
                 gs_mock.return_value.settings.mapquest_apikey = ''
-                gs_mock.return_value.settings.nominatim_geocoding_enabled = False
+                gs_mock.return_value.settings.nominatim_geocoding_enabled = True
                 with patch.object(geocoding.cache, 'get', return_value=None):
                     results = geocoding.geocode_address(BANGKOK_FULL_ADDRESS)
 
@@ -94,9 +94,35 @@ class TestGeocodeAddress:
         assert results == nominatim_result
         nominatim_mock.assert_called()
 
-    def test_uses_nominatim_when_no_api_keys_configured(self):
+    def test_uses_nominatim_when_enabled_and_no_api_keys_configured(self):
         nominatim_result = [{'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS}]
         with patch.object(geocoding, '_geocode_with_nominatim', return_value=nominatim_result) as nominatim_mock:
+            with patch.object(geocoding, 'GlobalSettingsObject') as gs_mock:
+                gs_mock.return_value.settings.opencagedata_apikey = ''
+                gs_mock.return_value.settings.mapquest_apikey = ''
+                gs_mock.return_value.settings.nominatim_geocoding_enabled = True
+                with patch.object(geocoding.cache, 'get', return_value=None):
+                    results = geocoding.geocode_address(BANGKOK_ADDRESS)
+
+        assert results == nominatim_result
+        nominatim_mock.assert_called_once()
+
+    def test_uses_nominatim_in_development_when_disabled_and_no_api_keys(self):
+        nominatim_result = [{'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS}]
+        with patch.object(geocoding, '_geocode_with_nominatim', return_value=nominatim_result) as nominatim_mock:
+            with patch.object(geocoding, 'GlobalSettingsObject') as gs_mock:
+                gs_mock.return_value.settings.opencagedata_apikey = ''
+                gs_mock.return_value.settings.mapquest_apikey = ''
+                gs_mock.return_value.settings.nominatim_geocoding_enabled = False
+                with patch.object(geocoding.django_settings, 'IS_DEVELOPMENT', True):
+                    with patch.object(geocoding.cache, 'get', return_value=None):
+                        results = geocoding.geocode_address(BANGKOK_ADDRESS)
+
+        assert results == nominatim_result
+        nominatim_mock.assert_called_once()
+
+    def test_skips_nominatim_when_disabled_and_no_api_keys_configured(self):
+        with patch.object(geocoding, '_geocode_with_nominatim') as nominatim_mock:
             with patch.object(geocoding, 'GlobalSettingsObject') as gs_mock:
                 gs_mock.return_value.settings.opencagedata_apikey = ''
                 gs_mock.return_value.settings.mapquest_apikey = ''
@@ -104,8 +130,21 @@ class TestGeocodeAddress:
                 with patch.object(geocoding.cache, 'get', return_value=None):
                     results = geocoding.geocode_address(BANGKOK_ADDRESS)
 
-        assert results == nominatim_result
-        nominatim_mock.assert_called_once()
+        assert results == []
+        nominatim_mock.assert_not_called()
+
+    def test_does_not_use_nominatim_fallback_when_opencage_configured_but_disabled(self):
+        with patch.object(geocoding, '_geocode_with_opencage', return_value=[]):
+            with patch.object(geocoding, '_geocode_with_nominatim') as nominatim_mock:
+                with patch.object(geocoding, 'GlobalSettingsObject') as gs_mock:
+                    gs_mock.return_value.settings.opencagedata_apikey = 'test-key'
+                    gs_mock.return_value.settings.mapquest_apikey = ''
+                    gs_mock.return_value.settings.nominatim_geocoding_enabled = False
+                    with patch.object(geocoding.cache, 'get', return_value=None):
+                        results = geocoding.geocode_address(BANGKOK_ADDRESS)
+
+        assert results == []
+        nominatim_mock.assert_not_called()
 
     def test_does_not_cache_empty_results(self):
         with patch.object(geocoding, '_geocode_with_configured_providers', return_value=[]):
@@ -191,3 +230,37 @@ class TestResolveVenueMapCoordinates:
         resolved = geocoding.resolve_venue_map_coordinates(geocoding_event)
 
         assert resolved is None
+
+    @pytest.mark.django_db
+    def test_presale_mode_uses_cache_only(self, geocoding_event):
+        geocoding_event.geo_lat = None
+        geocoding_event.geo_lon = None
+        geocoding_event.location = BANGKOK_ADDRESS
+        cached = [{'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS}]
+
+        with patch.object(geocoding, 'geocode_address') as geocode_mock:
+            with patch.object(geocoding, 'geocode_address_from_cache', return_value=cached) as cache_mock:
+                resolved = geocoding.resolve_venue_map_coordinates(
+                    geocoding_event,
+                    allow_remote_geocoding=False,
+                )
+
+        assert resolved == BANGKOK_COORDS
+        cache_mock.assert_called_once_with(BANGKOK_ADDRESS)
+        geocode_mock.assert_not_called()
+
+    @pytest.mark.django_db
+    def test_presale_mode_returns_none_without_cached_geocode(self, geocoding_event):
+        geocoding_event.geo_lat = None
+        geocoding_event.geo_lon = None
+        geocoding_event.location = BANGKOK_ADDRESS
+
+        with patch.object(geocoding, 'geocode_address') as geocode_mock:
+            with patch.object(geocoding, 'geocode_address_from_cache', return_value=[]):
+                resolved = geocoding.resolve_venue_map_coordinates(
+                    geocoding_event,
+                    allow_remote_geocoding=False,
+                )
+
+        assert resolved is None
+        geocode_mock.assert_not_called()

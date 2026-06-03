@@ -4,7 +4,7 @@ import math
 from urllib.parse import quote_plus
 
 import requests
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.core.cache import cache
 
 from eventyay.base.settings import GlobalSettingsObject
@@ -63,9 +63,16 @@ def get_localized_location(location) -> str | None:
 
 
 def _can_use_nominatim(gs: GlobalSettingsObject) -> bool:
-    if not gs.settings.opencagedata_apikey and not gs.settings.mapquest_apikey:
+    if gs.settings.nominatim_geocoding_enabled:
         return True
-    return gs.settings.nominatim_geocoding_enabled
+    # Local development: use Nominatim when no paid provider is configured.
+    if (
+        getattr(django_settings, 'IS_DEVELOPMENT', False)
+        and not gs.settings.opencagedata_apikey
+        and not gs.settings.mapquest_apikey
+    ):
+        return True
+    return False
 
 
 def geocoding_is_available() -> bool:
@@ -103,13 +110,29 @@ def geocode_query_candidates(query: str) -> list[str]:
     return unique_candidates
 
 
+def _geocode_cache_key(query: str) -> str | None:
+    cleaned_query = clean_address_query(query)
+    if not cleaned_query:
+        return None
+    query_hash = hashlib.sha256(cleaned_query.encode('utf-8')).hexdigest()
+    return f'geocode:v2:{query_hash}'
+
+
+def geocode_address_from_cache(query: str) -> list[dict]:
+    """Return cached geocoding results only (no outbound requests)."""
+    cache_key = _geocode_cache_key(query)
+    if cache_key is None:
+        return []
+    cached = cache.get(cache_key)
+    return cached if cached is not None else []
+
+
 def geocode_address(query: str) -> list[dict]:
     cleaned_query = clean_address_query(query)
     if not cleaned_query:
         return []
 
-    query_hash = hashlib.sha256(cleaned_query.encode('utf-8')).hexdigest()
-    cache_key = f'geocode:v2:{query_hash}'
+    cache_key = _geocode_cache_key(cleaned_query)
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -147,8 +170,6 @@ def _geocode_with_configured_providers(query: str, gs: GlobalSettingsObject) -> 
         providers.append(mapquest_provider)
     if _can_use_nominatim(gs):
         providers.append(_geocode_with_nominatim)
-    elif providers:
-        providers.append(_geocode_with_nominatim)
 
     for candidate_query in geocode_query_candidates(query):
         for provider in providers:
@@ -158,11 +179,13 @@ def _geocode_with_configured_providers(query: str, gs: GlobalSettingsObject) -> 
     return []
 
 
-def resolve_venue_map_coordinates(venue) -> dict[str, float] | None:
+def resolve_venue_map_coordinates(venue, *, allow_remote_geocoding: bool = True) -> dict[str, float] | None:
     """Resolve map coordinates for an Event or SubEvent.
 
     Stored coordinates are preferred when valid. Otherwise the localized venue
-    address is geocoded. Returns None when no usable coordinates can be found.
+    address is geocoded. Set *allow_remote_geocoding* to False on high-traffic
+    request paths (e.g. presale) to only use cached geocoding results.
+    Returns None when no usable coordinates can be found.
     """
     if is_valid_geo_coordinates(venue.geo_lat, venue.geo_lon):
         lat, lon = clip_geo_coordinates(
@@ -175,7 +198,10 @@ def resolve_venue_map_coordinates(venue) -> dict[str, float] | None:
     if not address:
         return None
 
-    results = geocode_address(address)
+    if allow_remote_geocoding:
+        results = geocode_address(address)
+    else:
+        results = geocode_address_from_cache(address)
     if not results:
         return None
 
@@ -239,7 +265,7 @@ def _geocode_with_nominatim(query: str) -> list[dict]:
             'limit': 5,
         },
         headers={
-            'User-Agent': f'{settings.INSTANCE_NAME}/1.0 ({settings.SITE_URL})',
+            'User-Agent': f'{django_settings.INSTANCE_NAME}/1.0 ({django_settings.SITE_URL})',
         },
         timeout=10,
     )
