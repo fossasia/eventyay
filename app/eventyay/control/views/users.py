@@ -64,7 +64,11 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        qs = User.objects.all()
+        qs = User.objects.all().annotate(
+            is_email_verified=Exists(
+                EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True)
+            )
+        )
         if self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
         return qs
@@ -313,19 +317,34 @@ class UserCreateView(AdministratorPermissionRequiredMixin, RecentAuthenticationR
 class UserToggleVerifiedView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
-        target_user.is_verified = not target_user.is_verified
-        target_user.save(update_fields=['is_verified'])
+
+        primary_email = EmailAddress.objects.filter(user=target_user, primary=True).first()
+        if not primary_email and target_user.email:
+            primary_email = EmailAddress.objects.create(
+                user=target_user,
+                email=target_user.email,
+                primary=True,
+                verified=False
+            )
+
+        if primary_email:
+            primary_email.verified = not primary_email.verified
+            primary_email.save(update_fields=['verified'])
+            new_verified_status = primary_email.verified
+        else:
+            new_verified_status = False
+
         target_user.log_action(
             'eventyay.user.settings.changed',
             user=request.user,
-            data={'is_verified': target_user.is_verified},
+            data={'email_verified': new_verified_status},
         )
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({
                 'status': 'ok',
-                'is_verified': target_user.is_verified,
+                'is_verified': new_verified_status,
             })
-        action_label = _('verified') if target_user.is_verified else _('unverified')
+        action_label = _('verified') if new_verified_status else _('unverified')
         messages.success(
             request,
             _('User %(email)s has been marked as %(action)s.') % {
@@ -370,7 +389,7 @@ class UserToggleAdminView(AdministratorPermissionRequiredMixin, View):
 class UserToggleSpamView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
-        if target_user.is_staff:
+        if target_user.is_staff or target_user.is_superuser:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse(
                     {'status': 'error', 'message': str(_('Administrators cannot be marked as spam.'))},
@@ -420,7 +439,7 @@ class UserResendVerificationView(AdministratorPermissionRequiredMixin, View):
                     'verified': False
                 }
             )
-            if target_user.is_verified:
+            if email_address.verified:
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                     return JsonResponse(
                         {'status': 'error', 'message': str(_('This user is already verified.'))},

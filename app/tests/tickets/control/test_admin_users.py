@@ -5,9 +5,10 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.urls import reverse
 
+from allauth.account.models import EmailAddress
 from eventyay.base.models import User
-from eventyay.control.forms.filter import UserFilterForm
 from eventyay.base.services.mail import SendMailException
+from eventyay.control.forms.filter import UserFilterForm
 
 
 def _make_admin(email='admin@example.com', password='admin_pw_123!'):
@@ -29,20 +30,9 @@ def _make_user(email='user@example.com', password='user_pw_123!', **kwargs):
 
 class UserModelFieldsTest(TestCase):
 
-    def test_is_verified_defaults_false(self):
-        user = _make_user('v@example.com')
-        self.assertFalse(user.is_verified)
-
     def test_is_spam_defaults_false(self):
         user = _make_user('s@example.com')
         self.assertFalse(user.is_spam)
-
-    def test_can_set_is_verified(self):
-        user = _make_user('v2@example.com')
-        user.is_verified = True
-        user.save(update_fields=['is_verified'])
-        user.refresh_from_db()
-        self.assertTrue(user.is_verified)
 
     def test_can_set_is_spam(self):
         user = _make_user('s2@example.com')
@@ -50,6 +40,19 @@ class UserModelFieldsTest(TestCase):
         user.save(update_fields=['is_spam'])
         user.refresh_from_db()
         self.assertTrue(user.is_spam)
+
+    def test_email_address_verified_defaults_false(self):
+        user = _make_user('v@example.com')
+        email_address = EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
+        self.assertFalse(email_address.verified)
+
+    def test_can_set_email_address_verified(self):
+        user = _make_user('v2@example.com')
+        email_address = EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
+        email_address.verified = True
+        email_address.save(update_fields=['verified'])
+        email_address.refresh_from_db()
+        self.assertTrue(email_address.verified)
 
 
 class SpamLoginBlockingTest(TestCase):
@@ -88,8 +91,12 @@ class SpamLoginBlockingTest(TestCase):
 class UserFilterFormTest(TestCase):
 
     def setUp(self):
-        self.verified_user = _make_user('v@ex.com', is_verified=True)
-        self.unverified_user = _make_user('u@ex.com', is_verified=False)
+        self.verified_user = _make_user('v@ex.com')
+        EmailAddress.objects.create(user=self.verified_user, email=self.verified_user.email, primary=True, verified=True)
+
+        self.unverified_user = _make_user('u@ex.com')
+        EmailAddress.objects.create(user=self.unverified_user, email=self.unverified_user.email, primary=True, verified=False)
+
         self.spam_user = _make_user('sp@ex.com', is_spam=True)
         self.clean_user = _make_user('cl@ex.com', is_spam=False)
 
@@ -131,7 +138,7 @@ class AdminUserListViewTest(TestCase):
 
     def setUp(self):
         self.admin = _make_admin()
-        self.target_user = _make_user('target@example.com', is_spam=False, is_verified=False)
+        self.target_user = _make_user('target@example.com', is_spam=False)
 
     def _login_as_admin(self):
         self.client.force_login(self.admin)
@@ -155,7 +162,7 @@ class AdminUserListViewTest(TestCase):
         self.assertIn('Member Since', content)
         self.assertIn('Last Accessed', content)
         self.assertIn('Verified', content)
-        self.assertIn('Spam', content)
+        self.assertIn('Mark as Spam', content)
         self.assertIn(reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk}), content)
         self.assertIn(reverse('eventyay_admin:admin.users.toggle_spam', kwargs={'id': self.target_user.pk}), content)
 
@@ -165,6 +172,7 @@ class UserToggleViewsTest(TestCase):
     def setUp(self):
         self.admin = _make_admin()
         self.target_user = _make_user('toggle@example.com')
+        self.email_address = EmailAddress.objects.create(user=self.target_user, email=self.target_user.email, primary=True, verified=False)
 
     def _post_as_admin(self, url):
         self.client.force_login(self.admin)
@@ -176,15 +184,15 @@ class UserToggleViewsTest(TestCase):
             return self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
     def test_toggle_verified_flips_field(self):
-        self.assertFalse(self.target_user.is_verified)
+        self.assertFalse(self.email_address.verified)
         response = self._post_as_admin(
             reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk})
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['status'], 'ok')
-        self.target_user.refresh_from_db()
-        self.assertTrue(self.target_user.is_verified)
+        self.email_address.refresh_from_db()
+        self.assertTrue(self.email_address.verified)
 
     def test_toggle_spam_flips_field(self):
         self.assertFalse(self.target_user.is_spam)
@@ -254,6 +262,7 @@ class UserEmailActionsTest(TestCase):
     def setUp(self):
         self.admin = _make_admin()
         self.target_user = _make_user('emailtarget@example.com')
+        self.email_address = EmailAddress.objects.create(user=self.target_user, email=self.target_user.email, primary=True, verified=False)
 
     def _post_as_admin(self, url):
         self.client.force_login(self.admin)
@@ -298,8 +307,8 @@ class UserEmailActionsTest(TestCase):
         self.assertIn('error sending the verification email', data['message'])
 
     def test_resend_verification_already_verified_guard(self):
-        self.target_user.is_verified = True
-        self.target_user.save()
+        self.email_address.verified = True
+        self.email_address.save(update_fields=['verified'])
         response = self._post_as_admin(
             reverse('eventyay_admin:admin.users.resend_verification', kwargs={'id': self.target_user.pk})
         )
@@ -311,7 +320,7 @@ class UserEmailActionsTest(TestCase):
     @patch('eventyay.base.models.User.send_password_reset')
     def test_reset_password_success(self, mock_send):
         response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.reset_password_list', kwargs={'id': self.target_user.pk})
+            reverse('eventyay_admin:admin.users.reset_password', kwargs={'id': self.target_user.pk})
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -323,7 +332,7 @@ class UserEmailActionsTest(TestCase):
         no_email_user.email = ''
         no_email_user.save()
         response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.reset_password_list', kwargs={'id': no_email_user.pk})
+            reverse('eventyay_admin:admin.users.reset_password', kwargs={'id': no_email_user.pk})
         )
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
@@ -333,7 +342,7 @@ class UserEmailActionsTest(TestCase):
     @patch('eventyay.base.models.User.send_password_reset', side_effect=SendMailException())
     def test_reset_password_mail_error(self, mock_send):
         response = self._post_as_admin(
-            reverse('eventyay_admin:admin.users.reset_password_list', kwargs={'id': self.target_user.pk})
+            reverse('eventyay_admin:admin.users.reset_password', kwargs={'id': self.target_user.pk})
         )
         self.assertEqual(response.status_code, 500)
         data = json.loads(response.content)

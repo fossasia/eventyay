@@ -1497,9 +1497,9 @@ class UserFilterForm(FilterForm):
             qs = qs.filter(is_staff=False)
 
         if fdata.get('verified') == 'yes':
-            qs = qs.filter(is_verified=True)
+            qs = qs.filter(emailaddress__primary=True, emailaddress__verified=True)
         elif fdata.get('verified') == 'no':
-            qs = qs.filter(is_verified=False)
+            qs = qs.exclude(emailaddress__primary=True, emailaddress__verified=True)
 
         if fdata.get('spam') == 'yes':
             qs = qs.filter(is_spam=True)

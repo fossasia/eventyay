@@ -3,6 +3,8 @@ function getCsrfToken() {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
+let pendingAdminAction = null;
+
 function showAlert(message, type = 'success') {
     const existingAlert = document.querySelector('.admin-users-alert');
     if (existingAlert) {
@@ -37,12 +39,24 @@ async function handleToggleChange(event) {
     if (toggleType === 'admin' && isChecked) {
         const confirmMessage = form.dataset.confirmMessage
             || 'Please confirm that this account should be a site admin.';
-        if (!window.confirm(confirmMessage)) {
-            checkbox.checked = !isChecked;
-            return;
+        const dialog = document.getElementById('admin-confirm-dialog');
+        if (dialog) {
+            document.getElementById('admin-confirm-message').textContent = confirmMessage;
+            pendingAdminAction = { form, checkbox, isChecked };
+            dialog.showModal();
+        } else {
+            if (!window.confirm(confirmMessage)) {
+                checkbox.checked = !isChecked;
+            }
         }
+        return;
     }
 
+    await submitToggle(form, checkbox, isChecked);
+}
+
+async function submitToggle(form, checkbox, isChecked) {
+    const toggleType = form.dataset.toggleType;
     const label = checkbox.closest('.toggle-switch');
     if (label) {
         label.classList.add('loading');
@@ -73,7 +87,7 @@ async function handleToggleChange(event) {
             let newValue;
             if (toggleType === 'verified') {
                 newValue = data.is_verified;
-            } else if (toggleType === 'admin') {
+            } else if (toggleType === 'admin' || toggleType === 'admin_confirmed') {
                 newValue = data.is_staff;
             } else if (toggleType === 'spam') {
                 newValue = data.is_spam;
@@ -81,7 +95,7 @@ async function handleToggleChange(event) {
 
             checkbox.checked = newValue;
 
-            if (toggleType === 'admin' && data.is_spam === false) {
+            if ((toggleType === 'admin' || toggleType === 'admin_confirmed') && data.is_spam === false) {
                 const row = checkbox.closest('tr') || checkbox.closest(`[data-user-id]`);
                 if (row) {
                     const spamForm = row.querySelector('.user-toggle-form[data-toggle-type="spam"]');
@@ -94,7 +108,7 @@ async function handleToggleChange(event) {
                 }
             }
 
-            showAlert(getSuccessMessage(toggleType, newValue), 'success');
+            showAlert(getSuccessMessage(toggleType.replace('_confirmed', ''), newValue), 'success');
         } else {
             checkbox.checked = !isChecked;
             showAlert(data.message || 'An error occurred. Please try again.', 'danger');
@@ -108,6 +122,33 @@ async function handleToggleChange(event) {
         }
         checkbox.disabled = false;
     }
+}
+
+const adminDialog = document.getElementById('admin-confirm-dialog');
+
+if (adminDialog) {
+    adminDialog.addEventListener('close', () => {
+        if (adminDialog.returnValue !== 'confirm' && pendingAdminAction) {
+            pendingAdminAction.checkbox.checked = !pendingAdminAction.isChecked;
+        }
+        pendingAdminAction = null;
+        adminDialog.returnValue = '';
+    });
+
+    document.getElementById('admin-confirm-btn')?.addEventListener('click', () => {
+        adminDialog.returnValue = 'confirm';
+        adminDialog.close();
+        if (pendingAdminAction) {
+            pendingAdminAction.form.dataset.toggleType = 'admin_confirmed';
+            submitToggle(pendingAdminAction.form, pendingAdminAction.checkbox, pendingAdminAction.isChecked);
+            pendingAdminAction.form.dataset.toggleType = 'admin';
+            pendingAdminAction = null;
+        }
+    });
+
+    document.getElementById('admin-cancel-btn')?.addEventListener('click', () => {
+        adminDialog.close();
+    });
 }
 
 function getSuccessMessage(toggleType, newValue) {

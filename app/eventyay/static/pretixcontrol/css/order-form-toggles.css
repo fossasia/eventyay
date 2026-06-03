@@ -391,3 +391,45 @@ select.required-status-dropdown[data-current="optional"] {
         width: 100%;
     }
 }
+
+.dropdown-menu li .user-action-form button.btn-dropdown-link {
+    text-decoration: none;
+    text-align: left;
+}
+
+.dropdown-menu li .user-action-form button.btn-dropdown-link:hover,
+.dropdown-menu li .user-action-form button.btn-dropdown-link:focus {
+    text-decoration: none;
+}
+
+.admin-confirm-dialog {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 400px;
+    max-width: 90vw;
+    background: #fff;
+    overflow: hidden;
+}
+
+.admin-confirm-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+}
+
+.admin-confirm-dialog .modal-title {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+.admin-confirm-dialog p {
+    margin-top: 0;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #555;
+}
