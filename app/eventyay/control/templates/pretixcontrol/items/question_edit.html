@@ -51,7 +51,7 @@
             </div>
             <div id="answer-options" class="clearfix">
                 <div class="form-group answer-options-group">
-                    <div id="answer-options-heading" class="col-md-3 control-label">{% trans "Answer options" %}</div>
+                    <h3 id="answer-options-heading" class="col-md-3 control-label">{% trans "Answer options" %}</h3>
                     <div class="col-md-9 answer-options-content" role="group" aria-labelledby="answer-options-heading">
                         <noscript>
                             <p class="help-block">{% trans "Only applicable if you choose 'Choose one/multiple from a list' above." %}</p>
@@ -135,9 +135,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="form-group answer-options-after-gap">
-                    <div class="col-md-offset-3 col-md-9"></div>
                 </div>
             </div>
             {% bootstrap_field form.help_text layout="control" %}
