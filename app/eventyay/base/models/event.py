@@ -1049,13 +1049,13 @@ class Event(
 
         return ObjectRelatedCache(self)
 
-    def lock(self):
+    def lock(self, blocking=False, blocking_timeout=None):
         """
         Returns a contextmanager that can be used to lock an event for bookings.
         """
         from eventyay.base.services import locking
 
-        return locking.LockManager(self)
+        return locking.LockManager(self, blocking=blocking, blocking_timeout=blocking_timeout)
 
     def __getstate__(self):
         """

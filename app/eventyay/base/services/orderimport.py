@@ -19,6 +19,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.orderimport import NewImportProduct, ProductColumn, get_all_columns
 from eventyay.base.services.invoices import generate_invoice, invoice_qualified
+from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.base.signals import order_paid, order_placed
 from eventyay.celery_app import app
@@ -66,8 +67,18 @@ def setif(record, obj, attr, setting):
         setattr(obj, attr, record[setting[4:]] or '')
 
 
-@app.task(base=ProfiledEventTask, throws=(DataImportError,))
-def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) -> None:
+IMPORT_LOCK_TIMEOUT = 600
+
+
+@app.task(
+    base=ProfiledEventTask,
+    bind=True,
+    autoretry_for=(LockTimeoutException,),
+    retry_backoff=True,
+    retry_kwargs={'max_retries': 5},
+    throws=(DataImportError,),
+)
+def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, user) -> None:
     # TODO: quotacheck?
     cf = CachedFile.objects.get(id=fileid)
     user = User.objects.get(pk=user)
@@ -97,9 +108,10 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
             data.append(values)
 
         product_columns = [c for c in cols if isinstance(c, ProductColumn)]
+        orders = []
 
         # quota check?
-        with event.lock():
+        with event.lock(blocking=True, blocking_timeout=IMPORT_LOCK_TIMEOUT):
             with transaction.atomic():
                 for column in product_columns:
                     product_map = column.materialize_pending_products()
@@ -108,9 +120,9 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
                         if isinstance(product, NewImportProduct):
                             record[column.identifier] = product_map[product.name]
 
-                # Prepare model objects. Yes, this might consume lots of RAM, but allows us to make the actual SQL
-                # transaction shorter. We'll see what works better in reality…
-                orders = []
+                # Build and persist orders in the same transaction as product materialization so
+                # newly created products are rolled back if the import fails.
+                orders.clear()
                 order = None
                 for i, record in enumerate(data):
                     try:
@@ -179,20 +191,20 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
                         data={'source': 'import'},
                     )
 
-            for o in orders:
-                with language(o.locale, event.settings.region):
-                    order_placed.send(event, order=o)
-                    if o.status == Order.STATUS_PAID:
-                        order_paid.send(event, order=o)
+        for o in orders:
+            with language(o.locale, event.settings.region):
+                order_placed.send(event, order=o)
+                if o.status == Order.STATUS_PAID:
+                    order_paid.send(event, order=o)
 
-                    gen_invoice = (
-                        invoice_qualified(o)
-                        and (
-                            (event.settings.get('invoice_generate') == 'True')
-                            or (event.settings.get('invoice_generate') == 'paid' and o.status == Order.STATUS_PAID)
-                        )
-                        and not o.invoices.last()
+                gen_invoice = (
+                    invoice_qualified(o)
+                    and (
+                        (event.settings.get('invoice_generate') == 'True')
+                        or (event.settings.get('invoice_generate') == 'paid' and o.status == Order.STATUS_PAID)
                     )
-                    if gen_invoice:
-                        generate_invoice(o, trigger_pdf=True)
+                    and not o.invoices.last()
+                )
+                if gen_invoice:
+                    generate_invoice(o, trigger_pdf=True)
     cf.delete()

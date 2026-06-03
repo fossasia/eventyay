@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from types import SimpleNamespace
 
 from django.conf import settings
 from django.contrib import messages
@@ -13,6 +14,7 @@ from django.views.generic import FormView, TemplateView
 from eventyay.base.models import CachedFile
 from eventyay.base.import_utils import setting_is_truthy
 from eventyay.base.orderimport import get_product_import_preview
+from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.orderimport import import_orders, parse_csv
 from eventyay.base.views.tasks import AsyncAction
 from eventyay.consts import SizeKey
@@ -109,7 +111,17 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
     template_name = 'pretixcontrol/orders/import_process.html'
     form_class = ProcessForm
     task = import_orders
-    known_errortypes = ['DataImportError']
+    known_errortypes = ['DataImportError', 'LockTimeoutException']
+
+    def get_error_message(self, exception):
+        if isinstance(exception, LockTimeoutException) or (
+            isinstance(exception, dict) and exception.get('exc_type') == 'LockTimeoutException'
+        ):
+            return _(
+                'We were not able to complete the import because the event is busy. '
+                'Please try again in a moment.'
+            )
+        return super().get_error_message(exception)
 
     def get_form_kwargs(self):
         k = super().get_form_kwargs()
@@ -117,7 +129,7 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
             {
                 'event': self.request.event,
                 'initial': self.request.event.settings.order_import_settings,
-                'headers': self.parsed.fieldnames,
+                'headers': self.parsed.fieldnames if self.parsed else [],
             }
         )
         return k
@@ -138,15 +150,26 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
         return get_object_or_404(CachedFile, pk=self.kwargs.get('file'), filename='import.csv')
 
     @cached_property
+    def _parsed_csv(self):
+        upload = self.file.file
+        upload.open('rb')
+        upload.seek(0)
+        reader = parse_csv(upload, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+        if not reader:
+            return None, []
+        return reader.fieldnames, list(reader)
+
+    @property
     def parsed(self):
-        return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+        fieldnames, _records = self._parsed_csv
+        if fieldnames is None:
+            return None
+        return SimpleNamespace(fieldnames=fieldnames)
 
     @cached_property
     def parsed_records(self):
-        parsed = self.parsed
-        if not parsed:
-            return []
-        return list(parsed)
+        _fieldnames, records = self._parsed_csv
+        return records
 
     def get(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -214,7 +237,10 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
         ctx['parsed'] = parsed
         ctx['sample_rows'] = parsed_records[:3]
         ctx['product_preview'] = product_preview
+        active_products = self.request.event.products.filter(active=True)
         ctx['product_preview_labels'] = {
+            'record_count': len(parsed_records),
+            'static_products': {str(p.pk): str(p) for p in active_products},
             'matched_heading': str(_('Existing products (will be matched)')),
             'create_heading': str(_('New products (will be created)')),
             'missing_heading': str(_('Unknown products (import will fail)')),
