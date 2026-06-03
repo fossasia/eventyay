@@ -1,7 +1,6 @@
 import hashlib
 import logging
 import math
-from urllib.parse import quote_plus
 
 import requests
 from django.conf import settings as django_settings
@@ -141,11 +140,7 @@ def geocode_address(query: str) -> list[dict]:
         return []
 
     gs = GlobalSettingsObject()
-    try:
-        results = _geocode_with_configured_providers(cleaned_query, gs)
-    except (requests.RequestException, ValueError):
-        logger.exception('Geocoding failed for query %r', cleaned_query)
-        results = []
+    results = _geocode_with_configured_providers(cleaned_query, gs)
 
     if results:
         cache.set(cache_key, results, timeout=3600 * 6)
@@ -199,7 +194,11 @@ def resolve_venue_map_coordinates(venue, *, allow_remote_geocoding: bool = True)
         return None
 
     if allow_remote_geocoding:
-        results = geocode_address(address)
+        try:
+            results = geocode_address(address)
+        except requests.RequestException:
+            logger.exception('Geocoding failed for venue address %r', address)
+            return None
     else:
         results = geocode_address_from_cache(address)
     if not results:
@@ -218,7 +217,8 @@ def resolve_venue_map_coordinates(venue, *, allow_remote_geocoding: bool = True)
 
 def _geocode_with_opencage(query: str, api_key: str) -> list[dict]:
     response = requests.get(
-        f'https://api.opencagedata.com/geocode/v1/json?q={quote_plus(query)}&key={api_key}',
+        'https://api.opencagedata.com/geocode/v1/json',
+        params={'q': query, 'key': api_key},
         timeout=10,
     )
     response.raise_for_status()
@@ -238,7 +238,8 @@ def _geocode_with_opencage(query: str, api_key: str) -> list[dict]:
 
 def _geocode_with_mapquest(query: str, api_key: str) -> list[dict]:
     response = requests.get(
-        f'https://www.mapquestapi.com/geocoding/v1/address?location={quote_plus(query)}&key={api_key}',
+        'https://www.mapquestapi.com/geocoding/v1/address',
+        params={'location': query, 'key': api_key},
         timeout=10,
     )
     response.raise_for_status()

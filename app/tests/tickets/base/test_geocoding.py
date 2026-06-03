@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
+import requests
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
@@ -107,16 +108,16 @@ class TestGeocodeAddress:
         assert results == nominatim_result
         nominatim_mock.assert_called_once()
 
-    def test_uses_nominatim_in_development_when_disabled_and_no_api_keys(self):
+    def test_uses_nominatim_in_development_when_disabled_and_no_api_keys(self, settings):
+        settings.IS_DEVELOPMENT = True
         nominatim_result = [{'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS}]
         with patch.object(geocoding, '_geocode_with_nominatim', return_value=nominatim_result) as nominatim_mock:
             with patch.object(geocoding, 'GlobalSettingsObject') as gs_mock:
                 gs_mock.return_value.settings.opencagedata_apikey = ''
                 gs_mock.return_value.settings.mapquest_apikey = ''
                 gs_mock.return_value.settings.nominatim_geocoding_enabled = False
-                with patch.object(geocoding.django_settings, 'IS_DEVELOPMENT', True):
-                    with patch.object(geocoding.cache, 'get', return_value=None):
-                        results = geocoding.geocode_address(BANGKOK_ADDRESS)
+                with patch.object(geocoding.cache, 'get', return_value=None):
+                    results = geocoding.geocode_address(BANGKOK_ADDRESS)
 
         assert results == nominatim_result
         nominatim_mock.assert_called_once()
@@ -164,6 +165,16 @@ class TestGeocodeAddress:
 
         assert results == cached
         provider_mock.assert_not_called()
+
+    def test_propagates_request_failures(self):
+        with patch.object(
+            geocoding,
+            '_geocode_with_configured_providers',
+            side_effect=requests.RequestException('upstream failure'),
+        ):
+            with patch.object(geocoding.cache, 'get', return_value=None):
+                with pytest.raises(requests.RequestException):
+                    geocoding.geocode_address(BANGKOK_ADDRESS)
 
 
 class TestResolveVenueMapCoordinates:
@@ -217,6 +228,21 @@ class TestResolveVenueMapCoordinates:
         geocoding_event.location = BANGKOK_ADDRESS
 
         with patch.object(geocoding, 'geocode_address', return_value=[]):
+            resolved = geocoding.resolve_venue_map_coordinates(geocoding_event)
+
+        assert resolved is None
+
+    @pytest.mark.django_db
+    def test_returns_none_when_geocoding_request_fails(self, geocoding_event):
+        geocoding_event.geo_lat = None
+        geocoding_event.geo_lon = None
+        geocoding_event.location = BANGKOK_ADDRESS
+
+        with patch.object(
+            geocoding,
+            'geocode_address',
+            side_effect=requests.RequestException('upstream failure'),
+        ):
             resolved = geocoding.resolve_venue_map_coordinates(geocoding_event)
 
         assert resolved is None

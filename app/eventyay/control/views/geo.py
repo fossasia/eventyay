@@ -1,3 +1,4 @@
+import requests
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.views.generic.base import View
@@ -15,7 +16,14 @@ class GeoCodeView(LoginRequiredMixin, View):
         if not cleaned_query:
             return JsonResponse({'success': False, 'results': []}, status=400)
 
-        results = geocode_address(cleaned_query)
+        try:
+            results = geocode_address(cleaned_query)
+        except requests.RequestException:
+            return JsonResponse(
+                {'success': False, 'results': [], 'error': 'failed'},
+                status=200,
+            )
+
         if not results:
             if not geocoding_is_available():
                 return JsonResponse(
