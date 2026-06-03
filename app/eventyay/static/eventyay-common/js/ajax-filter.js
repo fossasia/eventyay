@@ -150,6 +150,7 @@ const fetchAndReplace = async function(url, replaceUrlParams, form) {
         updateNextInputs(url, tabContext.tabId);
     } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
+            resultsContainer.style.opacity = '1';
             return;
         }
 
