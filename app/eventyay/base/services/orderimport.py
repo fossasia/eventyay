@@ -67,7 +67,7 @@ def setif(record, obj, attr, setting):
         setattr(obj, attr, record[setting[4:]] or '')
 
 
-IMPORT_LOCK_TIMEOUT = 600
+IMPORT_LOCK_TIMEOUT = 30
 
 
 @app.task(

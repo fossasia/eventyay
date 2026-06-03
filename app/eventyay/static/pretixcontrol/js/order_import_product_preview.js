@@ -1,8 +1,15 @@
 /**
  * Updates the product import preview when mapping or create-missing toggle changes.
  */
+function isUnmappedProductMapping(productMapping) {
+  return !productMapping || productMapping === 'empty';
+}
+
 function previewItemsForMapping(previewData, productMapping, labels) {
-  if (productMapping && productMapping.startsWith('static:')) {
+  if (isUnmappedProductMapping(productMapping)) {
+    return [];
+  }
+  if (productMapping.startsWith('static:')) {
     const pk = productMapping.slice(7);
     const productLabel = labels.static_products?.[pk];
     if (!productLabel) {
@@ -20,9 +27,29 @@ function previewItemsForMapping(previewData, productMapping, labels) {
   return previewData[productMapping] || [];
 }
 
+function renderPreviewMessages(messagesContainer, productMapping, labels) {
+  if (!messagesContainer) {
+    return;
+  }
+  messagesContainer.replaceChildren();
+  if (isUnmappedProductMapping(productMapping)) {
+    appendMessage(messagesContainer, labels.unmapped_warning, 'alert alert-warning');
+  } else {
+    appendMessage(messagesContainer, labels.summary_text, 'text-muted');
+  }
+}
+
 function renderProductPreview(previewData, productMapping, createMissing, labels) {
+  const messagesContainer = document.getElementById('product-import-preview-messages');
   const tablesContainer = document.getElementById('product-import-preview-tables');
   if (!tablesContainer) {
+    return;
+  }
+
+  renderPreviewMessages(messagesContainer, productMapping, labels);
+
+  if (isUnmappedProductMapping(productMapping)) {
+    tablesContainer.replaceChildren();
     return;
   }
 

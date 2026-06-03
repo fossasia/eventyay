@@ -229,6 +229,24 @@ def _count_raw_product_values(column, settings, records):
     return counter
 
 
+def collect_product_value_counts_by_header(column, fieldnames, records):
+    """Count raw product values per CSV header in a single pass over *records*."""
+    counters = {f'csv:{header}': defaultdict(int) for header in fieldnames}
+    for record in records:
+        for header in fieldnames:
+            val = column.resolve({'product': f'csv:{header}'}, record)
+            if val:
+                counters[f'csv:{header}'][str(val)] += 1
+    return counters
+
+
+def _preview_items_from_counter(counter, products, create_missing):
+    return [
+        _preview_entry_for_value(value, count, products, create_missing)
+        for value, count in sorted(counter.items())
+    ]
+
+
 def _preview_entry_for_value(value, row_count, products, create_missing):
     matches = find_matching_products(value, products)
     if len(matches) == 1:
@@ -260,27 +278,47 @@ def _preview_entry_for_value(value, row_count, products, create_missing):
     }
 
 
-def build_product_preview_by_mapping(event, records, fieldnames, create_missing=False):
+def build_product_preview_by_mapping(
+    event,
+    fieldnames,
+    create_missing=False,
+    records=None,
+    csv_value_counts=None,
+):
     products = list(event.products.filter(active=True))
-    column = ProductColumn(event)
+    if csv_value_counts is None:
+        column = ProductColumn(event)
+        csv_value_counts = collect_product_value_counts_by_header(column, fieldnames, records or [])
+
     by_mapping = {}
-
     for header in fieldnames:
-        settings = {'product': f'csv:{header}'}
-        values = _count_raw_product_values(column, settings, records)
-        by_mapping[f'csv:{header}'] = [
-            _preview_entry_for_value(value, count, products, create_missing)
-            for value, count in sorted(values.items())
-        ]
-
+        key = f'csv:{header}'
+        by_mapping[key] = _preview_items_from_counter(
+            csv_value_counts.get(key, {}),
+            products,
+            create_missing,
+        )
     return by_mapping
 
 
-def get_product_import_preview(event, records, settings, fieldnames=None):
+def get_product_import_preview(
+    event,
+    settings,
+    fieldnames=None,
+    records=None,
+    csv_value_counts=None,
+):
     product_setting = settings.get('product')
     create_missing = setting_is_truthy(settings.get('create_missing_products'))
+    fieldnames = fieldnames or []
     by_mapping = (
-        build_product_preview_by_mapping(event, records, fieldnames or [], create_missing=create_missing)
+        build_product_preview_by_mapping(
+            event,
+            fieldnames,
+            create_missing=create_missing,
+            records=records,
+            csv_value_counts=csv_value_counts,
+        )
         if fieldnames
         else {}
     )
@@ -298,12 +336,13 @@ def get_product_import_preview(event, records, settings, fieldnames=None):
         }
 
     products = list(event.products.filter(active=True))
-    column = ProductColumn(event)
-    values = _count_raw_product_values(column, settings, records)
-    items = [
-        _preview_entry_for_value(value, count, products, create_missing)
-        for value, count in sorted(values.items())
-    ]
+    if product_setting.startswith('csv:') and csv_value_counts is not None:
+        values = csv_value_counts.get(product_setting, {})
+        items = _preview_items_from_counter(values, products, create_missing)
+    else:
+        column = ProductColumn(event)
+        values = _count_raw_product_values(column, {'product': product_setting}, records or [])
+        items = _preview_items_from_counter(values, products, create_missing)
 
     return {
         'unmapped': False,
@@ -348,9 +387,12 @@ class ProductColumn(ImportColumn):
         return matches[0]
 
     def materialize_pending_products(self) -> dict[str, Product]:
+        if 'products' in self.__dict__:
+            del self.__dict__['products']
         created: dict[str, Product] = {}
+        products = list(self.event.products.filter(active=True))
         for name in sorted(self._pending_product_names):
-            matches = find_matching_products(name, self.products)
+            matches = find_matching_products(name, products)
             if len(matches) == 1:
                 created[name] = matches[0]
                 continue
@@ -362,7 +404,7 @@ class ProductColumn(ImportColumn):
                     active=True,
                     admission=True,
                 )
-            self.products.append(product)
+            products.append(product)
             created[name] = product
         self._pending_product_names.clear()
         return created

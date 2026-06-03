@@ -17,7 +17,7 @@ from eventyay.base.models import (
     Product,
     User,
 )
-from eventyay.base.orderimport import get_product_import_preview
+from eventyay.base.orderimport import ProductColumn, get_product_import_preview
 from eventyay.base.services.orderimport import DataImportError, import_orders
 
 
@@ -159,7 +159,9 @@ def test_product_import_preview_matched_and_create(event):
     ]
     settings = make_import_settings(create_missing_products=True, product='csv:Product')
 
-    preview = get_product_import_preview(event, records, settings, fieldnames=['Email', 'Product', 'Price'])
+    preview = get_product_import_preview(
+        event, settings, fieldnames=['Email', 'Product', 'Price'], records=records
+    )
 
     assert preview['unmapped'] is False
     assert len(preview['matched']) == 1
@@ -174,7 +176,9 @@ def test_product_import_preview_missing_without_create(event):
     records = [{'Email': 'a@example.com', 'Product': 'New Ticket', 'Price': '0.00'}]
     settings = make_import_settings(create_missing_products=False, product='csv:Product')
 
-    preview = get_product_import_preview(event, records, settings, fieldnames=['Email', 'Product', 'Price'])
+    preview = get_product_import_preview(
+        event, settings, fieldnames=['Email', 'Product', 'Price'], records=records
+    )
 
     assert len(preview['missing']) == 1
     assert preview['missing'][0]['csv_value'] == 'New Ticket'
@@ -195,11 +199,31 @@ def test_product_import_preview_by_mapping_is_json_serializable(event):
     ]
     settings = make_import_settings(create_missing_products=True, product='csv:Product')
 
-    preview = get_product_import_preview(event, records, settings, fieldnames=['Email', 'Product', 'Price'])
+    preview = get_product_import_preview(
+        event, settings, fieldnames=['Email', 'Product', 'Price'], records=records
+    )
 
     json.dumps(preview['by_mapping'])
     assert 'csv:Product' in preview['by_mapping']
     assert f'static:{event.products.get().pk}' not in preview['by_mapping']
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_materialize_pending_products_uses_current_db_state(event):
+    column = ProductColumn(event, create_missing=True)
+    column._pending_product_names.add('VIP')
+    Product.objects.create(
+        event=event,
+        name=LazyI18nString('VIP'),
+        default_price=Decimal('0.00'),
+        admission=True,
+    )
+
+    created = column.materialize_pending_products()
+
+    assert event.products.count() == 1
+    assert created['VIP'].pk == event.products.get().pk
 
 
 @pytest.mark.django_db

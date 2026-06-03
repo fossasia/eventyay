@@ -13,7 +13,9 @@ from django.views.generic import FormView, TemplateView
 
 from eventyay.base.models import CachedFile
 from eventyay.base.import_utils import setting_is_truthy
-from eventyay.base.orderimport import get_product_import_preview
+from collections import defaultdict
+
+from eventyay.base.orderimport import ProductColumn, get_product_import_preview
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.orderimport import import_orders, parse_csv
 from eventyay.base.views.tasks import AsyncAction
@@ -27,18 +29,21 @@ logger = logging.getLogger(__name__)
 def import_settings_from_form(form):
     import_settings = {}
     for name in form.fields:
-        if form.is_bound:
+        if form.is_bound and getattr(form, 'cleaned_data', None) and name in form.cleaned_data:
+            import_settings[name] = form.cleaned_data[name]
+        elif form.is_bound:
             import_settings[name] = form.data.get(name)
         else:
             import_settings[name] = form[name].value()
-    if form.is_bound and 'create_missing_products' in form.cleaned_data:
-        import_settings['create_missing_products'] = form.cleaned_data['create_missing_products']
-    elif form.is_bound:
-        import_settings['create_missing_products'] = setting_is_truthy(form.data.get('create_missing_products'))
-    else:
-        import_settings['create_missing_products'] = setting_is_truthy(
-            form.initial.get('create_missing_products')
-        )
+    if 'create_missing_products' not in import_settings or import_settings['create_missing_products'] is None:
+        if form.is_bound and getattr(form, 'cleaned_data', None) and 'create_missing_products' in form.cleaned_data:
+            import_settings['create_missing_products'] = form.cleaned_data['create_missing_products']
+        elif form.is_bound:
+            import_settings['create_missing_products'] = setting_is_truthy(form.data.get('create_missing_products'))
+        else:
+            import_settings['create_missing_products'] = setting_is_truthy(
+                form.initial.get('create_missing_products')
+            )
     return import_settings
 
 
@@ -156,20 +161,43 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
         upload.seek(0)
         reader = parse_csv(upload, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
         if not reader:
-            return None, []
-        return reader.fieldnames, list(reader)
+            return None, [], 0, {}
+        fieldnames = reader.fieldnames
+        sample_rows = []
+        record_count = 0
+        column = ProductColumn(self.request.event)
+        csv_value_counts = {f'csv:{header}': defaultdict(int) for header in fieldnames}
+        for row in reader:
+            record_count += 1
+            if len(sample_rows) < 3:
+                sample_rows.append(row)
+            for header in fieldnames:
+                val = column.resolve({'product': f'csv:{header}'}, row)
+                if val:
+                    csv_value_counts[f'csv:{header}'][str(val)] += 1
+        return fieldnames, sample_rows, record_count, csv_value_counts
 
     @property
     def parsed(self):
-        fieldnames, _records = self._parsed_csv
+        fieldnames, _sample, _count, _counts = self._parsed_csv
         if fieldnames is None:
             return None
         return SimpleNamespace(fieldnames=fieldnames)
 
     @cached_property
     def parsed_records(self):
-        _fieldnames, records = self._parsed_csv
-        return records
+        _fieldnames, sample_rows, _count, _counts = self._parsed_csv
+        return sample_rows
+
+    @cached_property
+    def csv_record_count(self):
+        _fieldnames, _sample, record_count, _counts = self._parsed_csv
+        return record_count
+
+    @cached_property
+    def csv_product_value_counts(self):
+        _fieldnames, _sample, _count, csv_value_counts = self._parsed_csv
+        return csv_value_counts
 
     def get(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:
@@ -229,17 +257,29 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
         import_settings = import_settings_from_form(form)
         product_preview = get_product_import_preview(
             self.request.event,
-            parsed_records,
             import_settings,
             fieldnames=parsed.fieldnames if parsed else [],
+            csv_value_counts=self.csv_product_value_counts if parsed else None,
         )
         ctx['file'] = self.file
         ctx['parsed'] = parsed
-        ctx['sample_rows'] = parsed_records[:3]
+        ctx['sample_rows'] = parsed_records
         ctx['product_preview'] = product_preview
         active_products = self.request.event.products.filter(active=True)
         ctx['product_preview_labels'] = {
-            'record_count': len(parsed_records),
+            'record_count': self.csv_record_count if parsed else 0,
+            'unmapped_warning': str(
+                _(
+                    'Select a CSV column or existing product for the Product field in the column mapping '
+                    'section below to preview which products will be matched or created.'
+                )
+            ),
+            'summary_text': str(
+                _(
+                    'This summary is based on all rows in your CSV file. It updates when you change the '
+                    'product mapping or the “Automatically create missing products” option.'
+                )
+            ),
             'static_products': {str(p.pk): str(p) for p in active_products},
             'matched_heading': str(_('Existing products (will be matched)')),
             'create_heading': str(_('New products (will be created)')),
