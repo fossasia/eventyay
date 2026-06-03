@@ -2296,7 +2296,7 @@ class Event(
     @cached_property
     def is_multilingual(self) -> bool:
         """Is ``True`` if the event supports more than one locale."""
-        return len(self.content_locales) > 1
+        return len(self.locales) > 1
 
     @cached_property
     def named_locales(self) -> list:

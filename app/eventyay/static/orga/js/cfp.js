@@ -36,9 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         };
 
-        const openDialog = () => {
+        const openDialog = (triggeredByToggle = false) => {
             resetSearch();
-            initialToggleState = isToggleChecked();
+            initialToggleState = triggeredByToggle ? false : isToggleChecked();
             initialCheckedStates = Array.from(dialog.querySelectorAll(".content-locale-checkbox")).map(checkbox => ({
                 checkbox: checkbox,
                 checked: checkbox.checked
@@ -65,7 +65,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 item.checkbox.checked = item.checked;
             });
             contentLocaleToggles.forEach(toggle => {
-                toggle.checked = initialToggleState;
+                if (toggle.checked !== initialToggleState) {
+                    toggle.checked = initialToggleState;
+                    toggle.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             });
             if (initialToggleState) {
                 settingsBtns.forEach(btn => btn.classList.remove("hidden"));
@@ -81,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     t.checked = ev.target.checked;
                 });
                 if (ev.target.checked) {
-                    openDialog();
+                    openDialog(true);
                     settingsBtns.forEach(btn => btn.classList.remove("hidden"));
                 } else {
                     settingsBtns.forEach(btn => btn.classList.add("hidden"));
@@ -90,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         settingsBtns.forEach(btn => {
-            btn.addEventListener("click", openDialog);
+            btn.addEventListener("click", () => openDialog(false));
         });
 
         if (cancelBtn) {
@@ -115,6 +118,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
         }
+
+        dialog.addEventListener("cancel", (event) => {
+            event.preventDefault();
+            cancelDialog();
+        });
 
         dialog.addEventListener("click", (event) => {
             if (event.target === dialog) {

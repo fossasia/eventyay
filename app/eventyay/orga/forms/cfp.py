@@ -236,19 +236,24 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 ],
             )
 
-        available_codes = [code for code, _ in obj.available_content_locales]
-        choices = get_language_choices_native_with_ui_name(codes=available_codes)
-        existing_codes = {c[0] for c in choices}
-        for code, name in obj.available_content_locales:
-            if code not in existing_codes:
-                choices.append((code, name))
+        if not obj.is_multilingual:
+            self.fields.pop('cfp_ask_content_locale', None)
+            self.fields.pop('cfp_public_content_locale', None)
+            self.fields.pop('content_locales', None)
+        else:
+            available_codes = [code for code, _ in obj.available_content_locales]
+            choices = get_language_choices_native_with_ui_name(codes=available_codes)
+            existing_codes = {c[0] for c in choices}
+            for code, name in obj.available_content_locales:
+                if code not in existing_codes:
+                    choices.append((code, name))
 
-        self.fields['content_locales'] = forms.MultipleChoiceField(
-            choices=choices,
-            widget=MultipleLanguagesWidget(),
-            required=False,
-            initial=obj.settings.get('content_locales') or [],
-        )
+            self.fields['content_locales'] = forms.MultipleChoiceField(
+                choices=choices,
+                widget=MultipleLanguagesWidget(),
+                required=False,
+                initial=obj.settings.get('content_locales') or [],
+            )
 
     def clean(self):
         cleaned_data = super().clean()
