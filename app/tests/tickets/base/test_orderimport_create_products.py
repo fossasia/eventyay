@@ -1,4 +1,5 @@
 import csv
+import json
 from decimal import Decimal
 from io import StringIO
 
@@ -178,6 +179,27 @@ def test_product_import_preview_missing_without_create(event):
     assert len(preview['missing']) == 1
     assert preview['missing'][0]['csv_value'] == 'New Ticket'
     assert preview['to_create'] == []
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_product_import_preview_by_mapping_is_json_serializable(event):
+    Product.objects.create(
+        event=event,
+        name=LazyI18nString('VIP'),
+        default_price=Decimal('10.00'),
+    )
+    records = [
+        {'Email': 'a@example.com', 'Product': 'VIP', 'Price': '0.00'},
+        {'Email': 'b@example.com', 'Product': 'Workshop', 'Price': '0.00'},
+    ]
+    settings = make_import_settings(create_missing_products=True, product='csv:Product')
+
+    preview = get_product_import_preview(event, records, settings, fieldnames=['Email', 'Product', 'Price'])
+
+    json.dumps(preview['by_mapping'])
+    assert 'csv:Product' in preview['by_mapping']
+    assert f'static:{event.products.get().pk}' not in preview['by_mapping']
 
 
 @pytest.mark.django_db

@@ -1,14 +1,33 @@
 /**
  * Updates the product import preview when mapping or create-missing toggle changes.
  */
+function previewItemsForMapping(previewData, productMapping, labels) {
+  if (productMapping && productMapping.startsWith('static:')) {
+    const pk = productMapping.slice(7);
+    const productLabel = labels.static_products?.[pk];
+    if (!productLabel) {
+      return [];
+    }
+    return [
+      {
+        csv_value: pk,
+        rows: labels.record_count ?? 0,
+        status: 'matched',
+        product_label: productLabel,
+      },
+    ];
+  }
+  return previewData[productMapping] || [];
+}
+
 function renderProductPreview(previewData, productMapping, createMissing, labels) {
-  const container = document.getElementById('product-import-preview-body');
-  if (!container) {
+  const tablesContainer = document.getElementById('product-import-preview-tables');
+  if (!tablesContainer) {
     return;
   }
 
-  const items = previewData[productMapping] || [];
-  container.replaceChildren();
+  const items = previewItemsForMapping(previewData, productMapping, labels);
+  tablesContainer.replaceChildren();
 
   const matched = items.filter((item) => item.status === 'matched');
   const ambiguous = items.filter((item) => item.status === 'ambiguous');
@@ -16,7 +35,7 @@ function renderProductPreview(previewData, productMapping, createMissing, labels
 
   if (matched.length) {
     appendTableSection(
-      container,
+      tablesContainer,
       labels.matched_heading,
       'text-success',
       [labels.col_csv_value, labels.col_matched_product, labels.col_rows],
@@ -27,7 +46,7 @@ function renderProductPreview(previewData, productMapping, createMissing, labels
   if (unmatched.length) {
     const heading = createMissing ? labels.create_heading : labels.missing_heading;
     appendTableSection(
-      container,
+      tablesContainer,
       heading,
       createMissing ? 'text-info' : 'text-danger',
       [labels.col_csv_value, labels.col_result, labels.col_rows],
@@ -41,7 +60,7 @@ function renderProductPreview(previewData, productMapping, createMissing, labels
 
   if (ambiguous.length) {
     appendTableSection(
-      container,
+      tablesContainer,
       labels.ambiguous_heading,
       'text-warning',
       [labels.col_csv_value, labels.col_matching_products, labels.col_rows],
@@ -50,7 +69,7 @@ function renderProductPreview(previewData, productMapping, createMissing, labels
   }
 
   if (!matched.length && !unmatched.length && !ambiguous.length) {
-    appendMessage(container, labels.empty_values, 'text-muted');
+    appendMessage(tablesContainer, labels.empty_values, 'text-muted');
   }
 }
 

@@ -219,12 +219,13 @@ def find_matching_products(value, products):
     ]
 
 
-def _product_values_from_records(column, settings, records):
+def _count_raw_product_values(column, settings, records):
+    """Count distinct raw CSV/static mapping values (strings), not cleaned Product objects."""
     counter = defaultdict(int)
     for record in records:
         val = column.resolve(settings, record)
         if val:
-            counter[val] += 1
+            counter[str(val)] += 1
     return counter
 
 
@@ -261,21 +262,15 @@ def _preview_entry_for_value(value, row_count, products, create_missing):
 
 def build_product_preview_by_mapping(event, records, fieldnames, create_missing=False):
     products = list(event.products.filter(active=True))
-    column = ProductColumn(event, create_missing=create_missing)
+    column = ProductColumn(event)
     by_mapping = {}
 
     for header in fieldnames:
         settings = {'product': f'csv:{header}'}
-        values = _product_values_from_records(column, settings, records)
+        values = _count_raw_product_values(column, settings, records)
         by_mapping[f'csv:{header}'] = [
             _preview_entry_for_value(value, count, products, create_missing)
             for value, count in sorted(values.items())
-        ]
-
-    for product in products:
-        settings = {'product': f'static:{product.pk}'}
-        by_mapping[f'static:{product.pk}'] = [
-            _preview_entry_for_value(str(product.pk), len(records), products, create_missing)
         ]
 
     return by_mapping
@@ -303,8 +298,8 @@ def get_product_import_preview(event, records, settings, fieldnames=None):
         }
 
     products = list(event.products.filter(active=True))
-    column = ProductColumn(event, create_missing=create_missing)
-    values = _product_values_from_records(column, settings, records)
+    column = ProductColumn(event)
+    values = _count_raw_product_values(column, settings, records)
     items = [
         _preview_entry_for_value(value, count, products, create_missing)
         for value, count in sorted(values.items())
