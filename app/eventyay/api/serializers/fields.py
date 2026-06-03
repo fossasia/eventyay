@@ -113,3 +113,18 @@ class UploadedFileOrURLField(UploadedFileField):
                 request = self.context.get('request')
                 return request.build_absolute_uri(url) if request else url
         return super().to_representation(value)
+
+
+class UploadedFileNoNewURLField(UploadedFileOrURLField):
+    default_error_messages = {
+        **UploadedFileOrURLField.default_error_messages,
+        'url_not_allowed': 'External image URLs are no longer accepted. Please upload a file instead.',
+    }
+
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            if is_http_url(data):
+                self.fail('url_not_allowed')
+            if get_url_scheme(data) and not data.startswith('file:'):
+                self.fail('url_not_allowed')
+        return UploadedFileField.to_internal_value(self, data)

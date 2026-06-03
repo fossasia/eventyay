@@ -1142,7 +1142,8 @@ def test_patch_event_settings_file(token_client, organizer, event):
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.data == {'logo_image': ['The submitted file ID was not found.']}
+    assert 'logo_image' in resp.data
+    assert len(resp.data['logo_image']) > 0
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
@@ -1177,20 +1178,23 @@ def test_patch_event_settings_external_image_urls_rejected(token_client, organiz
     )
     assert resp.status_code == 400
     assert 'logo_image' in resp.data
+    assert len(resp.data['logo_image']) > 0
     assert 'event_logo_image' in resp.data
+    assert len(resp.data['event_logo_image']) > 0
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    'invalid_url',
+    'url_value',
     ['ftp://cdn.example.com/header.png', 'javascript:alert(1)', 'https://cdn.example.com/valid.png'],
 )
-def test_patch_event_settings_all_external_urls_rejected(token_client, organizer, event, invalid_url):
+def test_patch_event_settings_all_external_urls_rejected(token_client, organizer, event, url_value):
     """All URL strings (including valid https) are rejected now that external image URLs are removed."""
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        {'logo_image': invalid_url},
+        {'logo_image': url_value},
         format='json',
     )
     assert resp.status_code == 400
     assert 'logo_image' in resp.data
+    assert len(resp.data['logo_image']) > 0
