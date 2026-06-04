@@ -18,7 +18,7 @@ def test_queuedmail_send_raises_for_future_scheduled_at():
 @pytest.mark.django_db
 def test_queuedmail_send_raises_when_already_sent():
     """QueuedMail.send() must raise Exception when mail is already sent."""
-    qm = QueuedMail(sent=True)
+    qm = QueuedMail(sent=now())
     with pytest.raises(Exception) as exc_info:
         qm.send()
     assert 'already' in str(exc_info.value).lower()

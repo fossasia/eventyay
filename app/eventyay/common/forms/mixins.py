@@ -786,6 +786,6 @@ class ScheduledAtValidationMixin:
             buffer = timedelta(minutes=1)
             if scheduled_at < timezone.now() - buffer:
                 raise forms.ValidationError(
-                    _('Scheduled time must be in the future.')
+                    _('Scheduled time must not be in the past.')
                 )
         return scheduled_at

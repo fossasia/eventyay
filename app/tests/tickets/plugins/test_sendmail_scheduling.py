@@ -106,6 +106,7 @@ def test_scheduled_email_not_sent_immediately(
     data['scheduled_at_1'] = future.strftime('%H:%M:%S')
 
     initial_count = EmailQueue.objects.count()
+    initial_scheduled_count = EmailQueue.objects.filter(scheduled_at__isnull=False).count()
 
     with patch('eventyay.plugins.sendmail.views.send_queued_mail') as mock_task:
         mock_task.apply_async = lambda *a, **kw: None
@@ -115,10 +116,10 @@ def test_scheduled_email_not_sent_immediately(
     assert response.status_code == 200, response.content[:500]
 
     with scopes_disabled():
-        new_queues = EmailQueue.objects.filter(scheduled_at__isnull=False)
-        assert new_queues.count() > initial_count, "Expected a new EmailQueue row"
+        new_scheduled_count = EmailQueue.objects.filter(scheduled_at__isnull=False).count()
+        assert new_scheduled_count > initial_scheduled_count, "Expected a new scheduled EmailQueue row"
 
-        qm = new_queues.order_by('-created_at').first()
+        qm = EmailQueue.objects.order_by('-created_at').first()
         assert qm.sent_at is None, "Scheduled email must not be sent immediately (sent_at should be NULL)"
         assert qm.scheduled_at is not None
 
