@@ -297,13 +297,22 @@
 
       fetch(searchUrl + '?format=json&q=' + encodeURIComponent(needle), { signal: currentController.signal })
         .then(function (response) {
+          if (!response.ok) {
+            clearResults();
+            resultsContainer.classList.remove('is-open');
+            return null;
+          }
           return response.json();
         })
         .then(function (data) {
-          renderResults(data.results || [], needle);
+          if (data) {
+            renderResults(data.results || [], needle);
+          }
         })
         .catch(function (error) {
           if (error.name !== 'AbortError') {
+            clearResults();
+            resultsContainer.classList.remove('is-open');
             // eslint-disable-next-line no-console
             console.error('Search request failed:', error);
           }

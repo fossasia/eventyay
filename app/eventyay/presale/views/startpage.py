@@ -14,23 +14,28 @@ from eventyay.common.permissions import is_admin_mode_active
 from eventyay.eventyay_common.navigation import get_global_navigation
 from eventyay.multidomain.urlreverse import eventreverse
 
+_SEARCH_PAGE_LIMIT = 200
+
+
+def _event_search_qs(query):
+    return (
+        Event.objects.select_related('organizer')
+        .prefetch_related('_settings_objects')
+        .filter(live=True, is_public=True)
+        .filter(
+            Q(name__icontains=query)
+            | Q(slug__icontains=query)
+            | Q(organizer__name__icontains=query)
+            | Q(location__icontains=query)
+        )
+        .order_by('date_from')
+    )
+
 
 def _search_events(query, limit=10):
     with scopes_disabled():
-        qs = (
-            Event.objects.select_related('organizer')
-            .prefetch_related('_settings_objects')
-            .filter(live=True, is_public=True)
-            .filter(
-                Q(name__icontains=query)
-                | Q(slug__icontains=query)
-                | Q(organizer__name__icontains=query)
-                | Q(location__icontains=query)
-            )
-            .order_by('date_from')[:limit]
-        )
         results = []
-        for event in qs:
+        for event in _event_search_qs(query)[:limit]:
             if event.has_component_testmode:
                 continue
             url = eventreverse(event, 'presale:event.index')
@@ -87,18 +92,7 @@ class StartPageView(TemplateView):
         ctx['search_query'] = search_query
         with scopes_disabled():
             if search_query:
-                qs = (
-                    Event.objects.select_related('organizer')
-                    .prefetch_related('_settings_objects')
-                    .filter(live=True, is_public=True)
-                    .filter(
-                        Q(name__icontains=search_query)
-                        | Q(slug__icontains=search_query)
-                        | Q(organizer__name__icontains=search_query)
-                        | Q(location__icontains=search_query)
-                    )
-                    .order_by('date_from')
-                )
+                qs = _event_search_qs(search_query)[:_SEARCH_PAGE_LIMIT]
                 ctx['events'] = [e for e in qs if not e.has_component_testmode]
                 return ctx
 
