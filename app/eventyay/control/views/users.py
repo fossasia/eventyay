@@ -317,6 +317,14 @@ class UserCreateView(AdministratorPermissionRequiredMixin, RecentAuthenticationR
 class UserToggleVerifiedView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        if not target_user.email:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('This user has no email address.'))},
+                    status=400,
+                )
+            messages.error(request, _('This user has no email address.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
 
         primary_email = EmailAddress.objects.filter(user=target_user, primary=True).first()
         if not primary_email and target_user.email:
@@ -332,12 +340,18 @@ class UserToggleVerifiedView(AdministratorPermissionRequiredMixin, View):
                     verified=False
                 )
 
-        if primary_email:
-            primary_email.verified = not primary_email.verified
-            primary_email.save(update_fields=['verified'])
-            new_verified_status = primary_email.verified
-        else:
-            new_verified_status = False
+        if not primary_email:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('This user has no primary email address.'))},
+                    status=400,
+                )
+            messages.error(request, _('This user has no primary email address.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
+        primary_email.verified = not primary_email.verified
+        primary_email.save(update_fields=['verified'])
+        new_verified_status = primary_email.verified
 
         target_user.log_action(
             'eventyay.user.settings.changed',

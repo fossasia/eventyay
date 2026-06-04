@@ -194,6 +194,30 @@ class UserToggleViewsTest(TestCase):
         self.email_address.refresh_from_db()
         self.assertTrue(self.email_address.verified)
 
+    def test_toggle_verified_missing_email(self):
+        no_email_user = _make_user('noemail_toggle@example.com')
+        no_email_user.email = ''
+        no_email_user.save()
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': no_email_user.pk})
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertIn('has no email address', data['message'])
+
+    @patch('allauth.account.models.EmailAddress.objects.create')
+    def test_toggle_verified_missing_primary_email(self, mock_create):
+        mock_create.return_value = None
+        EmailAddress.objects.filter(user=self.target_user).delete()
+        response = self._post_as_admin(
+            reverse('eventyay_admin:admin.users.toggle_verified', kwargs={'id': self.target_user.pk})
+        )
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertEqual(data['status'], 'error')
+        self.assertIn('has no primary email address', data['message'])
+
     def test_toggle_spam_flips_field(self):
         self.assertFalse(self.target_user.is_spam)
         response = self._post_as_admin(
@@ -284,8 +308,7 @@ class UserEmailActionsTest(TestCase):
         mock_send.assert_called_once()
 
     def test_resend_verification_missing_email(self):
-        no_email_user = _make_user('')
-        # Temporarily clear the email
+        no_email_user = _make_user('noemail_resend@example.com')
         no_email_user.email = ''
         no_email_user.save()
         response = self._post_as_admin(
@@ -328,7 +351,7 @@ class UserEmailActionsTest(TestCase):
         mock_send.assert_called_once()
 
     def test_reset_password_missing_email(self):
-        no_email_user = _make_user('')
+        no_email_user = _make_user('noemail_reset@example.com')
         no_email_user.email = ''
         no_email_user.save()
         response = self._post_as_admin(

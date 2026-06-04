@@ -1,3 +1,21 @@
+function getClosest(element, selector) {
+    let current = element;
+    while (current && current !== document) {
+        if (current.matches && current.matches(selector)) {
+            return current;
+        }
+        current = current.parentElement;
+    }
+    return null;
+}
+
+function gettext(msgid) {
+    if (typeof django !== 'undefined' && typeof django.gettext === 'function') {
+        return django.gettext(msgid);
+    }
+    return msgid;
+}
+
 function getCsrfToken() {
     const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : '';
@@ -30,7 +48,7 @@ function showAlert(message, type = 'success') {
 
 async function handleToggleChange(event) {
     const checkbox = event.currentTarget;
-    const form = checkbox.parentElement.parentElement;
+    const form = getClosest(checkbox, 'form');
     if (!form) return;
 
     const toggleType = form.dataset.toggleType;
@@ -38,14 +56,16 @@ async function handleToggleChange(event) {
 
     if (toggleType === 'admin' && isChecked) {
         const confirmMessage = form.dataset.confirmMessage
-            || 'Please confirm that this account should be a site admin.';
+            || gettext('Please confirm that this account should be a site admin.');
         const dialog = document.getElementById('admin-confirm-dialog');
-        if (dialog) {
+        if (dialog && typeof dialog.showModal === 'function') {
             document.getElementById('admin-confirm-message').textContent = confirmMessage;
             pendingAdminAction = { form, checkbox, isChecked };
             dialog.showModal();
         } else {
-            if (!window.confirm(confirmMessage)) {
+            if (window.confirm(confirmMessage)) {
+                await submitToggle(form, checkbox, isChecked);
+            } else {
                 checkbox.checked = !isChecked;
             }
         }
@@ -79,7 +99,7 @@ async function submitToggle(form, checkbox, isChecked) {
             data = await response.json();
         } else {
             checkbox.checked = !isChecked;
-            showAlert('Session expired or access denied. Please refresh the page.', 'danger');
+            showAlert(gettext('Session expired or access denied. Please refresh the page.'), 'danger');
             return;
         }
 
@@ -87,16 +107,25 @@ async function submitToggle(form, checkbox, isChecked) {
             let newValue;
             if (toggleType === 'verified') {
                 newValue = data.is_verified;
+                if (label) {
+                    label.title = newValue ? gettext('Unverify') : gettext('Verify');
+                }
             } else if (toggleType === 'admin' || toggleType === 'admin_confirmed') {
                 newValue = data.is_staff;
+                if (label) {
+                    label.title = newValue ? gettext('Remove admin') : gettext('Make admin');
+                }
             } else if (toggleType === 'spam') {
                 newValue = data.is_spam;
+                if (label) {
+                    label.title = newValue ? gettext('Unmark spam') : gettext('Mark as spam');
+                }
             }
 
             checkbox.checked = newValue;
 
             if (toggleType === 'admin' || toggleType === 'admin_confirmed') {
-                const row = checkbox.parentElement?.parentElement?.parentElement?.parentElement;
+                const row = getClosest(checkbox, 'tr');
                 if (row) {
                     const spamForm = row.querySelector('.user-toggle-form[data-toggle-type="spam"]');
                     if (spamForm) {
@@ -107,11 +136,11 @@ async function submitToggle(form, checkbox, isChecked) {
                                 spamCheckbox.checked = false;
                                 spamCheckbox.disabled = true;
                                 spamLabel.classList.add('always-on');
-                                spamLabel.title = 'Administrators cannot be marked as spam.';
+                                spamLabel.title = gettext('Administrators cannot be marked as spam.');
                             } else {
                                 spamCheckbox.disabled = false;
                                 spamLabel.classList.remove('always-on');
-                                spamLabel.title = 'Mark as spam';
+                                spamLabel.title = gettext('Mark as spam');
                             }
                         }
                     }
@@ -121,11 +150,11 @@ async function submitToggle(form, checkbox, isChecked) {
             showAlert(getSuccessMessage(toggleType.replace('_confirmed', ''), newValue), 'success');
         } else {
             checkbox.checked = !isChecked;
-            showAlert(data.message || 'An error occurred. Please try again.', 'danger');
+            showAlert(data.message || gettext('An error occurred. Please try again.'), 'danger');
         }
     } catch (err) {
         checkbox.checked = !isChecked;
-        showAlert('Network error. Please try again.', 'danger');
+        showAlert(gettext('Network error. Please try again.'), 'danger');
     } finally {
         if (label) {
             label.classList.remove('loading');
@@ -163,17 +192,17 @@ if (adminDialog) {
 
 function getSuccessMessage(toggleType, newValue) {
     const messages = {
-        verified: newValue ? 'User marked as verified.' : 'User marked as unverified.',
-        admin: newValue ? 'Admin role granted.' : 'Admin role removed.',
-        spam: newValue ? 'User marked as spam.' : 'User unmarked as spam.',
+        verified: newValue ? gettext('User marked as verified.') : gettext('User marked as unverified.'),
+        admin: newValue ? gettext('Admin role granted.') : gettext('Admin role removed.'),
+        spam: newValue ? gettext('User marked as spam.') : gettext('User unmarked as spam.'),
     };
-    return messages[toggleType] || 'Action completed successfully.';
+    return messages[toggleType] || gettext('Action completed successfully.');
 }
 
 async function handleActionClick(event) {
     event.preventDefault();
     const button = event.currentTarget;
-    const form = button.parentElement;
+    const form = getClosest(button, 'form');
     if (!form) return;
 
     const icon = button.querySelector('.fa');
@@ -199,17 +228,17 @@ async function handleActionClick(event) {
         if (contentType && contentType.indexOf('application/json') !== -1) {
             data = await response.json();
         } else {
-            showAlert('Session expired or access denied. Please refresh the page.', 'danger');
+            showAlert(gettext('Session expired or access denied. Please refresh the page.'), 'danger');
             return;
         }
 
         if (response.ok && data.status === 'ok') {
-            showAlert('Email sent successfully.', 'success');
+            showAlert(gettext('Email sent successfully.'), 'success');
         } else {
-            showAlert(data.message || 'An error occurred. Please try again.', 'danger');
+            showAlert(data.message || gettext('An error occurred. Please try again.'), 'danger');
         }
     } catch (err) {
-        showAlert('Network error. Please try again.', 'danger');
+        showAlert(gettext('Network error. Please try again.'), 'danger');
     } finally {
         if (icon) {
             icon.className = originalClasses;
