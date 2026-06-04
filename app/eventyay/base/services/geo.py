@@ -109,21 +109,63 @@ def geocode_query_candidates(query: str) -> list[str]:
     return unique_candidates
 
 
-def _geocode_cache_key(query: str) -> str | None:
-    cleaned_query = clean_address_query(query)
+def _geocode_cache_key(cleaned_query: str) -> str | None:
+    """Build a cache key for an address query already normalized by :func:`clean_address_query`."""
     if not cleaned_query:
         return None
     query_hash = hashlib.sha256(cleaned_query.encode('utf-8')).hexdigest()
     return f'geocode:v2:{query_hash}'
 
 
+def _sanitize_geocode_result(result: dict) -> dict | None:
+    lat = result.get('lat')
+    lon = result.get('lon')
+    if not is_valid_geo_coordinates(lat, lon):
+        return None
+    clipped_lat, clipped_lon = clip_geo_coordinates(
+        normalize_coordinate(lat),
+        normalize_coordinate(lon),
+    )
+    return {
+        'formatted': result.get('formatted', ''),
+        'lat': clipped_lat,
+        'lon': clipped_lon,
+    }
+
+
+def _sanitize_geocode_results(results: list[dict]) -> list[dict]:
+    sanitized = []
+    for result in results:
+        entry = _sanitize_geocode_result(result)
+        if entry is not None:
+            sanitized.append(entry)
+    return sanitized
+
+
+def _coordinates_from_geocode_results(results: list[dict]) -> dict[str, float] | None:
+    for result in results:
+        lat = result.get('lat')
+        lon = result.get('lon')
+        if not is_valid_geo_coordinates(lat, lon):
+            continue
+        clipped_lat, clipped_lon = clip_geo_coordinates(
+            normalize_coordinate(lat),
+            normalize_coordinate(lon),
+        )
+        return {'lat': clipped_lat, 'lon': clipped_lon}
+    return None
+
+
 def geocode_address_from_cache(query: str) -> list[dict]:
     """Return cached geocoding results only (no outbound requests)."""
-    cache_key = _geocode_cache_key(query)
+    cleaned_query = clean_address_query(query)
+    cache_key = _geocode_cache_key(cleaned_query)
     if cache_key is None:
         return []
     cached = cache.get(cache_key)
-    return cached if cached is not None else []
+    if cached is None:
+        return []
+    return _sanitize_geocode_results(cached)
 
 
 def geocode_address(query: str) -> list[dict]:
@@ -134,13 +176,13 @@ def geocode_address(query: str) -> list[dict]:
     cache_key = _geocode_cache_key(cleaned_query)
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached
+        return _sanitize_geocode_results(cached)
 
     if not geocoding_is_available():
         return []
 
     gs = GlobalSettingsObject()
-    results = _geocode_with_configured_providers(cleaned_query, gs)
+    results = _sanitize_geocode_results(_geocode_with_configured_providers(cleaned_query, gs))
 
     if results:
         cache.set(cache_key, results, timeout=3600 * 6)
@@ -204,15 +246,7 @@ def resolve_venue_map_coordinates(venue, *, allow_remote_geocoding: bool = True)
     if not results:
         return None
 
-    first = results[0]
-    if not is_valid_geo_coordinates(first.get('lat'), first.get('lon')):
-        return None
-
-    lat, lon = clip_geo_coordinates(
-        normalize_coordinate(first['lat']),
-        normalize_coordinate(first['lon']),
-    )
-    return {'lat': lat, 'lon': lon}
+    return _coordinates_from_geocode_results(results)
 
 
 def _geocode_with_opencage(query: str, api_key: str) -> list[dict]:

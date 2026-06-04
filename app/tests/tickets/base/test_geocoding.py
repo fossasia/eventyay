@@ -176,6 +176,31 @@ class TestGeocodeAddress:
                 with pytest.raises(requests.RequestException):
                     geocoding.geocode_address(BANGKOK_ADDRESS)
 
+    def test_filters_invalid_provider_results_before_caching(self):
+        provider_results = [
+            {'formatted': 'Null Island', 'lat': 0, 'lon': 0},
+            {'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS},
+        ]
+        with patch.object(geocoding, 'geocoding_is_available', return_value=True):
+            with patch.object(geocoding, '_geocode_with_configured_providers', return_value=provider_results):
+                with patch.object(geocoding.cache, 'get', return_value=None):
+                    with patch.object(geocoding.cache, 'set') as cache_set_mock:
+                        results = geocoding.geocode_address(BANGKOK_ADDRESS)
+
+        assert results == [{'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS}]
+        cache_set_mock.assert_called_once()
+        assert cache_set_mock.call_args[0][1] == results
+
+    def test_sanitizes_invalid_entries_from_cached_results(self):
+        cached = [
+            {'formatted': 'Null Island', 'lat': 0, 'lon': 0},
+            {'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS},
+        ]
+        with patch.object(geocoding.cache, 'get', return_value=cached):
+            results = geocoding.geocode_address(BANGKOK_ADDRESS)
+
+        assert results == [{'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS}]
+
 
 class TestResolveVenueMapCoordinates:
     @pytest.mark.django_db
@@ -274,6 +299,24 @@ class TestResolveVenueMapCoordinates:
         assert resolved == BANGKOK_COORDS
         cache_mock.assert_called_once_with(BANGKOK_ADDRESS)
         geocode_mock.assert_not_called()
+
+    @pytest.mark.django_db
+    def test_uses_first_valid_geocode_result_when_leading_entry_invalid(self, geocoding_event):
+        geocoding_event.geo_lat = None
+        geocoding_event.geo_lon = None
+        geocoding_event.location = BANGKOK_ADDRESS
+
+        with patch.object(
+            geocoding,
+            'geocode_address',
+            return_value=[
+                {'formatted': 'Null Island', 'lat': 0, 'lon': 0},
+                {'formatted': BANGKOK_ADDRESS, **BANGKOK_COORDS},
+            ],
+        ):
+            resolved = geocoding.resolve_venue_map_coordinates(geocoding_event)
+
+        assert resolved == BANGKOK_COORDS
 
     @pytest.mark.django_db
     def test_presale_mode_returns_none_without_cached_geocode(self, geocoding_event):
