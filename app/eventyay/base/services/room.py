@@ -15,6 +15,7 @@ from eventyay.base.models.room import (
     RoomConfigSerializer,
     RoomView,
     get_room_with_linked_sessions,
+    partial_validated_update,
 )
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
@@ -82,15 +83,7 @@ def validate_room_config_patch(room, body):
         data=body,
         partial=True,
     )
-    if not serializer.is_valid():
-        return None, None
-    update_fields = {field for field in serializer.fields if field in body}
-    validated_data = {
-        field: serializer.validated_data[field]
-        for field in update_fields
-        if field in serializer.validated_data
-    }
-    return validated_data, update_fields
+    return partial_validated_update(serializer, body)
 
 
 @database_sync_to_async

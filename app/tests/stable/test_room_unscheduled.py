@@ -91,3 +91,41 @@ def test_room_orga_serializer_rejects_unscheduled_with_linked_sessions(event):
         with pytest.raises(serializers.ValidationError) as excinfo:
             serializer.is_valid(raise_exception=True)
         assert 'is_unscheduled' in excinfo.value.detail
+
+
+@pytest.mark.django_db
+def test_talk_slot_cannot_use_unscheduled_room(event):
+    from eventyay.base.models import Submission
+    from eventyay.base.models.room import validate_talk_slot_room
+
+    with scope(event=event):
+        room = Room.objects.create(event=event, name='Unscheduled', is_unscheduled=True)
+        submission = Submission.objects.create(
+            event=event,
+            title='Talk',
+            submission_type=event.submission_types.first(),
+        )
+        with pytest.raises(ValidationError) as excinfo:
+            validate_talk_slot_room(room)
+        assert 'room' in excinfo.value.message_dict
+        slot = TalkSlot(
+            room=room,
+            schedule=event.wip_schedule,
+            submission=submission,
+        )
+        with pytest.raises(ValidationError):
+            slot.save()
+
+
+@pytest.mark.django_db
+def test_validate_room_config_patch_ignores_read_only_body_fields(event):
+    from eventyay.base.services.room import validate_room_config_patch
+
+    with scope(event=event):
+        room = Room.objects.create(event=event, name='Stage')
+        validated_data, update_fields = validate_room_config_patch(
+            room,
+            {'id': 99999, 'has_linked_sessions': True, 'name': 'Updated'},
+        )
+    assert validated_data == {'name': 'Updated'}
+    assert update_fields == {'name'}

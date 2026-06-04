@@ -40,27 +40,52 @@ def default_grants():
 UNSCHEDULED_LINKED_SUBMISSIONS_MESSAGE = _(
     'A room with linked submissions cannot be marked as unscheduled.'
 )
+UNSCHEDULED_ROOM_SCHEDULING_MESSAGE = _(
+    'Unscheduled rooms cannot be linked to talk sessions.'
+)
+_LINKED_SUBMISSION_TALK_FILTER = {'submission__isnull': False}
+
+
+def _linked_submission_talkslots(**filters):
+    from eventyay.base.models.slot import TalkSlot
+
+    return TalkSlot.objects.filter(**_LINKED_SUBMISSION_TALK_FILTER, **filters)
 
 
 def room_has_linked_submissions(room) -> bool:
     """Return whether the room has scheduled talks linked to submissions."""
     from django_scopes import scope
 
-    from eventyay.base.models.slot import TalkSlot
-
     if 'has_linked_sessions' in room.__dict__:
         return bool(room.has_linked_sessions)
     with scope(event=room.event):
-        return TalkSlot.objects.filter(
-            room=room,
-            submission__isnull=False,
-        ).exists()
+        return _linked_submission_talkslots(room=room).exists()
 
 
 def validate_is_unscheduled_change(room) -> None:
     """Raise ValidationError if the room cannot be marked as unscheduled."""
     if room.pk and room_has_linked_submissions(room):
         raise ValidationError({'is_unscheduled': UNSCHEDULED_LINKED_SUBMISSIONS_MESSAGE})
+
+
+def validate_talk_slot_room(room) -> None:
+    """Raise ValidationError when a submission cannot be scheduled in this room."""
+    if room is not None and room.is_unscheduled:
+        raise ValidationError({'room': UNSCHEDULED_ROOM_SCHEDULING_MESSAGE})
+
+
+def validate_talk_slot_room_from_attrs(attrs, instance) -> None:
+    """Validate an incoming talk-slot room assignment (serializer layer)."""
+    room = attrs.get('room', getattr(instance, 'room', None) if instance else None)
+    if room and instance and instance.submission_id:
+        validate_talk_slot_room(room)
+
+
+def rooms_for_talk_assignment(event, *, has_submission: bool):
+    """Rooms allowed when scheduling a talk slot (submissions vs breaks)."""
+    if has_submission:
+        return event.rooms.schedulable()
+    return event.rooms.filter(deleted=False)
 
 
 def validate_is_unscheduled_attrs(attrs, instance):
@@ -74,20 +99,37 @@ def validate_is_unscheduled_attrs(attrs, instance):
     return {}
 
 
+def partial_validated_update(serializer, body):
+    """
+    Run partial serializer validation and return only writable fields from body.
+
+    Returns (validated_data, update_fields) or (None, None) when invalid.
+    """
+    if not serializer.is_valid():
+        return None, None
+    validated_data = {
+        field: value
+        for field, value in serializer.validated_data.items()
+        if field in body
+    }
+    return validated_data, set(validated_data.keys())
+
+
 class RoomQuerySet(models.QuerySet):
     def with_has_linked_sessions(self):
         from django_scopes import scopes_disabled
 
-        from eventyay.base.models.slot import TalkSlot
-
         # TalkSlot uses ScopedManager; the parent queryset is already event-scoped.
         with scopes_disabled():
-            linked_talks = TalkSlot.objects.filter(
+            linked_talks = _linked_submission_talkslots(
                 room_id=OuterRef('pk'),
                 schedule__event_id=OuterRef('event_id'),
-                submission__isnull=False,
             )
         return self.annotate(has_linked_sessions=Exists(linked_talks))
+
+    def schedulable(self):
+        """Rooms that may receive talk slots in the schedule."""
+        return self.filter(deleted=False, is_unscheduled=False)
 
     def with_permission(
         self, *, user=None, traits=None, event, permission=Permission.ROOM_VIEW
@@ -403,8 +445,10 @@ def get_room_with_linked_sessions(room):
     return annotated or room
 
 
-class RoomLinkedSessionsSerializerMixin:
-    has_linked_sessions = serializers.SerializerMethodField()
+class RoomLinkedSessionsSerializerMixin(serializers.Serializer):
+    """DRF mixin; must subclass Serializer so SerializerMethodField is registered."""
+
+    has_linked_sessions = serializers.SerializerMethodField(read_only=True)
 
     def validate(self, attrs):
         attrs = super().validate(attrs)

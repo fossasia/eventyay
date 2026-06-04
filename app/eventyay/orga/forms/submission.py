@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
 from eventyay.base.models import Submission, SubmissionStates, TalkSlot
+from eventyay.base.models.room import rooms_for_talk_assignment
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
@@ -85,7 +86,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         if not self.instance.pk or self.instance.state in SubmissionStates.accepted_states:
             self.fields['room'] = forms.ModelChoiceField(
                 required=False,
-                queryset=event.rooms.filter(deleted=False),
+                queryset=rooms_for_talk_assignment(event, has_submission=True),
                 label=TalkSlot._meta.get_field('room').verbose_name,
                 initial=initial_slot.get('room'),
                 widget=EnhancedSelect,

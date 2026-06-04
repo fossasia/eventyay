@@ -5,7 +5,7 @@
 			span.bar
 			span.bar
 			span.bar
-		a.logo(:href="logoHref", :class="{anonymous: isAnonymous}")
+		router-link.logo(:to="{name: 'about'}", :class="{anonymous: isAnonymous}")
 			img(:src="brandLogoUrl", :alt="world.title")
 	.nav-actions
 		router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
@@ -136,18 +136,10 @@ const showAdminModeEnd = computed(() => isAdminMode.value)
 
 const isAnonymous = computed(() => Object.keys(user.value.profile || {}).length === 0)
 
-function siteRootHref() {
-	const { protocol, host } = window.location
-	const origin = typeof window.location.origin === 'string' ? window.location.origin : `${protocol}//${host}`
-	return `${origin}/`
-}
-
 function buildMenuExternalHref(item) {
 	const base = buildBaseSansVideo()
 	return base + item.externalPath
 }
-
-const logoHref = computed(() => siteRootHref())
 
 const defaultBrandLogoUrl = computed(() => {
 	const basePath = config?.basePath ?? ''
