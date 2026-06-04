@@ -10,8 +10,9 @@ from django.http.request import QueryDict
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
+from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 from pretalx.submission.forms import InfoForm
-from pretalx.submission.models import Submission, SubmissionType
+from pretalx.submission.models import Submission, SubmissionStates, SubmissionType
 
 
 class TestWizard:
@@ -691,6 +692,76 @@ class TestWizard:
         with scope(event=event):
             assert event.submissions.count() == 2
             assert speaker_question.answers.count() == 1
+
+    @pytest.mark.django_db
+    def test_wizard_can_save_partial_draft(self, event, client, user, submission_type):
+        client.force_login(user)
+
+        response, current_url = self.perform_init_wizard(client, event=event)
+        response = client.post(
+            current_url,
+            data={
+                "title": "",
+                "submission_type": "",
+                "content_locale": "en",
+                "description": "Draft description",
+                "action": "draft",
+            },
+            follow=True,
+        )
+
+        assert response.status_code == 200
+        assert "/me/submissions" in response.request["PATH_INFO"]
+        with scope(event=event):
+            draft = Submission.all_objects.get(event=event, state=SubmissionStates.DRAFT)
+            assert draft.title == AUTO_DRAFT_TITLE
+            assert draft.description == "Draft description"
+            assert draft.submission_type is not None
+            assert draft.speakers.filter(pk=user.pk).exists()
+
+            form = InfoForm(event, instance=draft, remove_additional_speaker=True)
+            assert form["title"].value() == ""
+
+    @pytest.mark.django_db
+    def test_wizard_rejects_completely_blank_draft(self, event, client, user, submission_type):
+        client.force_login(user)
+
+        response, current_url = self.perform_init_wizard(client, event=event)
+        response = client.post(
+            current_url,
+            data={
+                "title": "",
+                "submission_type": "",
+                "content_locale": "en",
+                "slot_count": 1,
+                "action": "draft",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.text.count("Please fill at least one field.") == 1
+        with scope(event=event):
+            assert not Submission.all_objects.filter(event=event, state=SubmissionStates.DRAFT).exists()
+
+    @pytest.mark.django_db
+    def test_wizard_rejects_completely_blank_continue(self, event, client, user, submission_type):
+        client.force_login(user)
+
+        response, current_url = self.perform_init_wizard(client, event=event)
+        response = client.post(
+            current_url,
+            data={
+                "title": "",
+                "submission_type": "",
+                "content_locale": "en",
+                "slot_count": 1,
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.text.count("Please fill at least one field.") == 1
+        with scope(event=event):
+            assert Submission.all_objects.filter(event=event).count() == 0
 
 
 @pytest.mark.django_db
