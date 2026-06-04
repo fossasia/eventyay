@@ -220,6 +220,14 @@ def find_matching_products(value, products):
     ]
 
 
+def products_for_import_matching(event, *, create_missing: bool = False) -> list[Product]:
+    """Products considered when resolving CSV product names during import."""
+    qs = event.products.all()
+    if not create_missing:
+        qs = qs.filter(active=True)
+    return list(qs)
+
+
 def _count_raw_product_values(column, settings, records):
     """Count distinct raw CSV/static mapping values (strings), not cleaned Product objects."""
     counter = defaultdict(int)
@@ -286,7 +294,7 @@ def build_product_preview_by_mapping(
     records=None,
     csv_value_counts=None,
 ):
-    products = list(event.products.filter(active=True))
+    products = products_for_import_matching(event, create_missing=create_missing)
     if csv_value_counts is None:
         csv_value_counts = collect_product_value_counts_by_header(fieldnames, records or [])
 
@@ -336,7 +344,7 @@ def get_product_import_preview(
             'by_mapping': by_mapping,
         }
 
-    products = list(event.products.filter(active=True))
+    products = products_for_import_matching(event, create_missing=create_missing)
     if product_setting.startswith('static:'):
         static_value = product_setting[7:]
         rows = record_count if record_count is not None else len(records or [])
@@ -375,7 +383,7 @@ class ProductColumn(ImportColumn):
 
     @cached_property
     def products(self) -> list[Product]:
-        return list(self.event.products.filter(active=True))
+        return products_for_import_matching(self.event, create_missing=self.create_missing)
 
     def static_choices(self):
         return [(str(p.pk), str(p)) for p in self.products]
@@ -395,7 +403,7 @@ class ProductColumn(ImportColumn):
         if 'products' in self.__dict__:
             del self.__dict__['products']
         created: dict[str, Product] = {}
-        products = list(self.event.products.filter(active=True))
+        products = products_for_import_matching(self.event, create_missing=True)
         for name in sorted(self._pending_product_names):
             matches = find_matching_products(name, products)
             if len(matches) == 1:
@@ -408,8 +416,9 @@ class ProductColumn(ImportColumn):
                     event=self.event,
                     name=LazyI18nString(name),
                     default_price=Decimal('0.00'),
-                    active=True,
+                    active=False,
                     admission=True,
+                    sales_channels=[],
                 )
                 quota = Quota.objects.create(
                     event=self.event,

@@ -18,6 +18,7 @@ from eventyay.base.models import (
     Product,
     User,
 )
+from eventyay.base.models.product import filter_available
 from eventyay.base.orderimport import ProductColumn, get_product_import_preview
 from eventyay.base.services.orderimport import DataImportError, import_orders
 
@@ -100,6 +101,9 @@ def test_import_creates_missing_products_when_enabled(event, user):
     assert len(products) == 2
     assert all(p.default_price == Decimal('0.00') for p in products)
     assert all(p.admission is True for p in products)
+    assert all(p.active is False for p in products)
+    assert all(p.sales_channels == [] for p in products)
+    assert filter_available(event.products, channel='web').count() == 0
     product_names = {str(p) for p in products}
     assert product_names == {'VIP', 'Standard'}
     for product in products:
@@ -122,6 +126,22 @@ def test_import_unknown_product_fails_without_create_missing(event, user):
     assert 'No matching product was found.' in str(excinfo.value)
     assert event.products.count() == 0
     assert event.orders.count() == 0
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_import_reuses_inactive_auto_created_product(event, user):
+    cached = make_csv_file([{'Email': 'a@example.com', 'Product': 'VIP', 'Price': '10.00'}])
+    settings = make_import_settings(create_missing_products=True)
+
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
+    product = event.products.get()
+    assert product.active is False
+
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
+
+    assert event.products.count() == 1
+    assert event.orders.count() == 2
 
 
 @pytest.mark.django_db
@@ -150,6 +170,8 @@ def test_import_reuses_existing_product_and_creates_only_missing(event, user):
     assert OrderPosition.objects.filter(product=new_product).count() == 1
     new_quota = new_product.quotas.get()
     assert new_quota.size is None
+    assert new_product.active is False
+    assert new_product.sales_channels == []
 
 
 @pytest.mark.django_db
@@ -275,6 +297,8 @@ def test_materialize_pending_products_uses_current_db_state(event):
     quota = product.quotas.get()
     assert quota.size is None
     assert quota.name == 'VIP'
+    assert product.active is False
+    assert product.sales_channels == []
 
 
 @pytest.mark.django_db

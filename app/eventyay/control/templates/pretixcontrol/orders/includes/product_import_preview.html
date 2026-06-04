@@ -54,7 +54,7 @@
                 {% for item in product_preview.to_create %}
                     <tr>
                         <td>{{ item.csv_value }}</td>
-                        <td>{% trans "Will be created" %}</td>
+                        <td>{% trans "Will be created (inactive, not in shop)" %}</td>
                         <td class="text-right">{{ item.rows }}</td>
                     </tr>
                 {% endfor %}

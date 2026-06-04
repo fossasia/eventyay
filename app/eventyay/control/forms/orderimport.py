@@ -24,8 +24,9 @@ class ProcessForm(forms.Form):
     create_missing_products = forms.BooleanField(
         label=_('Automatically create missing products'),
         help_text=_(
-            'If a product referenced in the CSV does not exist, it will be created automatically. '
-            'Existing products are matched by product name, internal name, or ID.'
+            'If a product referenced in the CSV does not exist, it will be created automatically '
+            'as an inactive product that is not listed in the ticket shop. Review and activate it '
+            'before selling. Existing products are matched by product name, internal name, or ID.'
         ),
         required=False,
     )
