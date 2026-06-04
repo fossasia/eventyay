@@ -102,6 +102,10 @@ def test_import_creates_missing_products_when_enabled(event, user):
     assert all(p.admission is True for p in products)
     product_names = {str(p) for p in products}
     assert product_names == {'VIP', 'Standard'}
+    for product in products:
+        quotas = list(product.quotas.all())
+        assert len(quotas) == 1
+        assert quotas[0].size is None
     assert event.orders.count() == 3
     assert OrderPosition.objects.count() == 3
 
@@ -144,6 +148,8 @@ def test_import_reuses_existing_product_and_creates_only_missing(event, user):
     new_product = event.products.exclude(pk=existing.pk).get()
     assert str(new_product) == 'Standard'
     assert OrderPosition.objects.filter(product=new_product).count() == 1
+    new_quota = new_product.quotas.get()
+    assert new_quota.size is None
 
 
 @pytest.mark.django_db
@@ -264,7 +270,11 @@ def test_materialize_pending_products_uses_current_db_state(event):
     created = column.materialize_pending_products()
 
     assert event.products.count() == 1
-    assert created['VIP'].pk == event.products.get().pk
+    product = event.products.get()
+    assert created['VIP'].pk == product.pk
+    quota = product.quotas.get()
+    assert quota.size is None
+    assert quota.name == 'VIP'
 
 
 @pytest.mark.django_db

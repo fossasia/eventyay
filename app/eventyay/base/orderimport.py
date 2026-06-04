@@ -27,6 +27,7 @@ from eventyay.base.models import (
     OrderPosition,
     Product,
     ProductVariation,
+    Quota,
     Question,
     QuestionAnswer,
     QuestionOption,
@@ -410,6 +411,12 @@ class ProductColumn(ImportColumn):
                     active=True,
                     admission=True,
                 )
+                quota = Quota.objects.create(
+                    event=self.event,
+                    name=name[:200],
+                    size=None,
+                )
+                quota.products.add(product)
             products.append(product)
             created[name] = product
         self._pending_product_names.clear()
