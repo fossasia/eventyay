@@ -16,80 +16,52 @@
     <meta property="og:url" content="{% abseventurl organizer "presale:organizer.index" %}"/>
 {% endblock %}
 {% block content %}
-    <div>
-        {% if organizer_homepage_text %}
+    {% if organizer_homepage_text %}
+        <div class="organizer-homepage-text">
             {{ organizer_homepage_text | rich_text }}
+        </div>
+    {% endif %}
+    <div class="organizer-section-header">
+        {% if "old" in request.GET %}
+            <h3>{% trans "Past events" %}</h3>
+        {% else %}
+            <h3>{% trans "Upcoming events" %}</h3>
         {% endif %}
-    </div>
-    {% if follow_enabled %}
         <div class="organizer-community-bar">
-            {% if show_follower_count %}
+            {% if follow_enabled and show_follower_count %}
                 <span class="organizer-follower-count" id="organizer-follower-count">
                     <span class="fa fa-users" aria-hidden="true"></span>
                     <strong>{{ follower_count }}</strong>
                     {% blocktrans count count=follower_count %}follower{% plural %}followers{% endblocktrans %}
                 </span>
             {% endif %}
-            {% if request.user.is_authenticated %}
-                {% if is_following %}
-                    <form method="post" action="{% eventurl request.organizer "presale:organizer.unfollow" %}">
-                        {% csrf_token %}
-                        <button id="organizer-unfollow-btn" type="submit" class="btn btn-default">
-                            <span class="fa fa-heart" aria-hidden="true"></span>
-                            {% trans "Unfollow" %}
-                        </button>
-                    </form>
+            {% if follow_enabled %}
+                {% if request.user.is_authenticated %}
+                    {% if is_following %}
+                        <form method="post" action="{% eventurl request.organizer "presale:organizer.unfollow" %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button id="organizer-unfollow-btn" type="submit" class="btn btn-danger">
+                                <span class="fa fa-heart" aria-hidden="true"></span>
+                                {% trans "Unfollow" %}
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% eventurl request.organizer "presale:organizer.follow" %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button id="organizer-follow-btn" type="submit" class="btn btn-primary">
+                                <span class="fa fa-heart-o" aria-hidden="true"></span>
+                                {% trans "Follow" %}
+                            </button>
+                        </form>
+                    {% endif %}
                 {% else %}
-                    <form method="post" action="{% eventurl request.organizer "presale:organizer.follow" %}">
-                        {% csrf_token %}
-                        <button id="organizer-follow-btn" type="submit" class="btn btn-primary">
-                            <span class="fa fa-heart-o" aria-hidden="true"></span>
-                            {% trans "Follow" %}
-                        </button>
-                    </form>
+                    <a id="organizer-follow-login-link" href="{% url "eventyay_common:auth.login" %}?next={{ request.path }}" class="btn btn-primary">
+                        <span class="fa fa-heart-o" aria-hidden="true"></span>
+                        {% trans "Follow" %}
+                    </a>
                 {% endif %}
-            {% else %}
-                <a id="organizer-follow-login-link" href="{% url "eventyay_common:auth.login" %}?next={{ request.path }}" class="btn btn-primary">
-                    <span class="fa fa-heart-o" aria-hidden="true"></span>
-                    {% trans "Follow" %}
-                </a>
             {% endif %}
         </div>
-    {% endif %}
-
-    {% if "old" in request.GET %}
-        <h3>{% trans "Past events" %}</h3>
-    {% else %}
-        <h3>{% trans "Upcoming events" %}</h3>
-    {% endif %}
-    <div>
-        <div class="btn-group" role="group">
-            <a href="?{% url_replace request "style" "list" "week" "" "year" "" "month" "" %}" type="button"
-                    class="btn btn-default active">
-                <span class="fa fa-list" aria-hidden="true"></span>
-                {% trans "List" %}
-            </a>
-            <a href="?{% url_replace request "style" "week" "month" "" "old" "" "page" "" %}" type="button"
-                    class="btn btn-default">
-                <span class="fa fa-calendar" aria-hidden="true"></span>
-                {% trans "Week" %}
-            </a>
-            <a href="?{% url_replace request "style" "calendar" "week" "" "old" "" "page" "" %}" type="button"
-                    class="btn btn-default">
-                <span class="fa fa-calendar" aria-hidden="true"></span>
-                {% trans "Month" %}
-            </a>
-        </div>
-        <a href="{% eventurl request.organizer "presale:organizer.ical" %}?{% url_replace request "locale" request.LANGUAGE_CODE "page" "" "old" "" "week" "" "style" "" "month" "" "year" "" %}"
-                class="btn btn-default">
-            <span class="fa fa-calendar-plus-o" aria-hidden="true"></span>
-            {% trans "iCal" %}
-        </a>
-        {% if "old" in request.GET %}
-            <a href="?{% url_replace request "old" "" %}" class="btn btn-link">{% trans "Show upcoming" %}</a>
-        {% else %}
-            <a href="?{% url_replace request "old" "1" %}" class="btn btn-link">{% trans "Show past events" %}</a>
-        {% endif %}
     </div>
     <div class="event-list">
         <div class="row hidden-xs hidden-sm">

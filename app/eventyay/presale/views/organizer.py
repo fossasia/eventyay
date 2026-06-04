@@ -319,15 +319,10 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
     def get(self, request, *args, **kwargs):
         style = request.GET.get('style', request.organizer.settings.event_list_type)
         if style == 'calendar':
-            cv = CalendarView()
-            cv.request = request
-            return cv.get(request, *args, **kwargs)
-        elif style == 'week':
-            cv = WeekCalendarView()
-            cv.request = request
-            return cv.get(request, *args, **kwargs)
-        else:
-            return super().get(request, *args, **kwargs)
+            return CalendarView.as_view()(request, *args, **kwargs)
+        if style == 'week':
+            return WeekCalendarView.as_view()(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         return self._get_event_queryset()
@@ -819,4 +814,3 @@ class OrganizerUnfollow(OrganizerViewMixin, View):
         OrganizerFollower.objects.filter(user=request.user, organizer=organizer).delete()
         messages.success(request, 'You have unfollowed {}.'.format(organizer.name))
         return redirect(eventreverse(organizer, 'presale:organizer.index'))
-

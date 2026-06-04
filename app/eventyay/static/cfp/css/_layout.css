@@ -268,6 +268,18 @@ header {
   padding-left: 1.75rem;
 }
 
+.event-brand--logo-large {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.event-brand--logo-large .organizer-logo {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
 @media (min-width: 769px) {
   /* Presale info / tickets: align logo block with tab content (tighter than agenda & CFP) */
   #main-container.presale-container .event-brand--has-logo {
