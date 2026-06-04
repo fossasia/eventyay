@@ -323,6 +323,10 @@
       var value = event.target.value;
       clearTimeout(debounceTimer);
       if (!value.trim()) {
+        if (currentController) {
+          currentController.abort();
+          currentController = null;
+        }
         clearResults();
         resultsContainer.classList.remove('is-open');
         return;
