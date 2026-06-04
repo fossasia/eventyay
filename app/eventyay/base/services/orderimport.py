@@ -114,7 +114,12 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
         with event.lock(blocking=True, blocking_timeout=IMPORT_LOCK_TIMEOUT):
             with transaction.atomic():
                 for column in product_columns:
-                    product_map = column.materialize_pending_products()
+                    try:
+                        product_map = column.materialize_pending_products()
+                    except ValidationError as e:
+                        raise DataImportError(
+                            _('Error while creating products: {message}').format(message=e.message)
+                        )
                     for record in data:
                         product = record.get(column.identifier)
                         if isinstance(product, NewImportProduct):

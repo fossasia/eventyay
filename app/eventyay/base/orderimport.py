@@ -229,12 +229,12 @@ def _count_raw_product_values(column, settings, records):
     return counter
 
 
-def collect_product_value_counts_by_header(column, fieldnames, records):
+def collect_product_value_counts_by_header(fieldnames, records):
     """Count raw product values per CSV header in a single pass over *records*."""
     counters = {f'csv:{header}': defaultdict(int) for header in fieldnames}
     for record in records:
         for header in fieldnames:
-            val = column.resolve({'product': f'csv:{header}'}, record)
+            val = record.get(header)
             if val:
                 counters[f'csv:{header}'][str(val)] += 1
     return counters
@@ -287,8 +287,7 @@ def build_product_preview_by_mapping(
 ):
     products = list(event.products.filter(active=True))
     if csv_value_counts is None:
-        column = ProductColumn(event)
-        csv_value_counts = collect_product_value_counts_by_header(column, fieldnames, records or [])
+        csv_value_counts = collect_product_value_counts_by_header(fieldnames, records or [])
 
     by_mapping = {}
     for header in fieldnames:
@@ -307,6 +306,7 @@ def get_product_import_preview(
     fieldnames=None,
     records=None,
     csv_value_counts=None,
+    record_count=None,
 ):
     product_setting = settings.get('product')
     create_missing = setting_is_truthy(settings.get('create_missing_products'))
@@ -336,7 +336,11 @@ def get_product_import_preview(
         }
 
     products = list(event.products.filter(active=True))
-    if product_setting.startswith('csv:') and csv_value_counts is not None:
+    if product_setting.startswith('static:'):
+        static_value = product_setting[7:]
+        rows = record_count if record_count is not None else len(records or [])
+        items = [_preview_entry_for_value(static_value, rows, products, create_missing)]
+    elif product_setting.startswith('csv:') and csv_value_counts is not None:
         values = csv_value_counts.get(product_setting, {})
         items = _preview_items_from_counter(values, products, create_missing)
     else:
@@ -396,6 +400,8 @@ class ProductColumn(ImportColumn):
             if len(matches) == 1:
                 created[name] = matches[0]
                 continue
+            if len(matches) > 1:
+                raise ValidationError(_('Multiple matching products were found.'))
             with scope(event=self.event):
                 product = Product.objects.create(
                     event=self.event,

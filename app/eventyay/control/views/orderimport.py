@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from datetime import timedelta
 from types import SimpleNamespace
 
@@ -11,11 +12,9 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView
 
-from eventyay.base.models import CachedFile
 from eventyay.base.import_utils import setting_is_truthy
-from collections import defaultdict
-
-from eventyay.base.orderimport import ProductColumn, get_product_import_preview
+from eventyay.base.models import CachedFile
+from eventyay.base.orderimport import get_product_import_preview
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.orderimport import import_orders, parse_csv
 from eventyay.base.views.tasks import AsyncAction
@@ -158,24 +157,26 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
     def _parsed_csv(self):
         upload = self.file.file
         upload.open('rb')
-        upload.seek(0)
-        reader = parse_csv(upload, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
-        if not reader:
-            return None, [], 0, {}
-        fieldnames = reader.fieldnames
-        sample_rows = []
-        record_count = 0
-        column = ProductColumn(self.request.event)
-        csv_value_counts = {f'csv:{header}': defaultdict(int) for header in fieldnames}
-        for row in reader:
-            record_count += 1
-            if len(sample_rows) < 3:
-                sample_rows.append(row)
-            for header in fieldnames:
-                val = column.resolve({'product': f'csv:{header}'}, row)
-                if val:
-                    csv_value_counts[f'csv:{header}'][str(val)] += 1
-        return fieldnames, sample_rows, record_count, csv_value_counts
+        try:
+            upload.seek(0)
+            reader = parse_csv(upload, settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_CSV])
+            if not reader:
+                return None, [], 0, {}
+            fieldnames = reader.fieldnames
+            sample_rows = []
+            record_count = 0
+            csv_value_counts = {f'csv:{header}': defaultdict(int) for header in fieldnames}
+            for row in reader:
+                record_count += 1
+                if len(sample_rows) < 3:
+                    sample_rows.append(row)
+                for header in fieldnames:
+                    val = row.get(header)
+                    if val:
+                        csv_value_counts[f'csv:{header}'][str(val)] += 1
+            return fieldnames, sample_rows, record_count, csv_value_counts
+        finally:
+            upload.close()
 
     @property
     def parsed(self):
@@ -260,6 +261,7 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
             import_settings,
             fieldnames=parsed.fieldnames if parsed else [],
             csv_value_counts=self.csv_product_value_counts if parsed else None,
+            record_count=self.csv_record_count if parsed else None,
         )
         ctx['file'] = self.file
         ctx['parsed'] = parsed

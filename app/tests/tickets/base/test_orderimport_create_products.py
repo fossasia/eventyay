@@ -4,6 +4,7 @@ from decimal import Decimal
 from io import StringIO
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -206,6 +207,46 @@ def test_product_import_preview_by_mapping_is_json_serializable(event):
     json.dumps(preview['by_mapping'])
     assert 'csv:Product' in preview['by_mapping']
     assert f'static:{event.products.get().pk}' not in preview['by_mapping']
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_product_import_preview_static_mapping(event):
+    product = Product.objects.create(
+        event=event,
+        name=LazyI18nString('VIP'),
+        default_price=Decimal('10.00'),
+    )
+    settings = make_import_settings(product=f'static:{product.pk}')
+
+    preview = get_product_import_preview(event, settings, record_count=5)
+
+    assert preview['unmapped'] is False
+    assert len(preview['matched']) == 1
+    assert preview['matched'][0]['rows'] == 5
+    assert preview['matched'][0]['product_id'] == product.pk
+
+
+@pytest.mark.django_db
+@scopes_disabled()
+def test_materialize_pending_products_raises_on_ambiguous(event):
+    column = ProductColumn(event, create_missing=True)
+    column._pending_product_names.add('VIP')
+    Product.objects.create(
+        event=event,
+        name=LazyI18nString('VIP'),
+        default_price=Decimal('0.00'),
+        admission=True,
+    )
+    Product.objects.create(
+        event=event,
+        name=LazyI18nString('VIP'),
+        default_price=Decimal('0.00'),
+        admission=True,
+    )
+
+    with pytest.raises(ValidationError, match='Multiple matching products'):
+        column.materialize_pending_products()
 
 
 @pytest.mark.django_db
