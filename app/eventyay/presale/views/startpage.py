@@ -21,7 +21,7 @@ def _event_search_qs(query):
     return (
         Event.objects.select_related('organizer')
         .prefetch_related('_settings_objects')
-        .filter(live=True, is_public=True)
+        .filter(live=True, is_public=True, testmode=False)
         .filter(
             Q(name__icontains=query)
             | Q(slug__icontains=query)
