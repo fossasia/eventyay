@@ -1,5 +1,7 @@
 const pollInterval = 5000
+const slowPollInterval = 30000
 const outboxSelector = '[data-outbox-refresh], #sendmail-outbox-content'
+let currentInterval = null
 
 function getReplacementSelector(container) {
   if (container.id) {
@@ -44,9 +46,21 @@ async function refreshOutbox() {
         container.replaceWith(replacement)
       }
     })
+
+    const updatedContainer = document.querySelector('[data-pending-mail-count]')
+    const pendingCount = updatedContainer ? parseInt(updatedContainer.dataset.pendingMailCount, 10) : 0
+    adjustPolling(pendingCount)
   } catch (error) {
     console.error('Could not refresh sendmail outbox.', error)
   }
 }
 
-window.setInterval(refreshOutbox, pollInterval)
+function adjustPolling(pendingCount) {
+  const interval = pendingCount > 0 ? pollInterval : slowPollInterval
+  if (currentInterval && currentInterval.expected !== interval) {
+    clearInterval(currentInterval.id)
+    currentInterval = { id: window.setInterval(refreshOutbox, interval), expected: interval }
+  }
+}
+
+currentInterval = { id: window.setInterval(refreshOutbox, pollInterval), expected: pollInterval }
