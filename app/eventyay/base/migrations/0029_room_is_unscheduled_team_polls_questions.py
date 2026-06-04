@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0027_talkquestion_dependency_question_and_more'),
+        ('base', '0028_product_free_price_max_product_free_price_min'),
     ]
 
     operations = [

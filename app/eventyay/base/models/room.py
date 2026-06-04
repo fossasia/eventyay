@@ -1,6 +1,7 @@
 import uuid
 from functools import cached_property
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Exists, JSONField, OuterRef, Q
 from django.db.models.expressions import RawSQL, Value
@@ -36,7 +37,58 @@ def default_grants():
     }
 
 
+UNSCHEDULED_LINKED_SUBMISSIONS_MESSAGE = _(
+    'A room with linked submissions cannot be marked as unscheduled.'
+)
+
+
+def room_has_linked_submissions(room) -> bool:
+    """Return whether the room has scheduled talks linked to submissions."""
+    from django_scopes import scope
+
+    from eventyay.base.models.slot import TalkSlot
+
+    if 'has_linked_sessions' in room.__dict__:
+        return bool(room.has_linked_sessions)
+    with scope(event=room.event):
+        return TalkSlot.objects.filter(
+            room=room,
+            submission__isnull=False,
+        ).exists()
+
+
+def validate_is_unscheduled_change(room) -> None:
+    """Raise ValidationError if the room cannot be marked as unscheduled."""
+    if room.pk and room_has_linked_submissions(room):
+        raise ValidationError({'is_unscheduled': UNSCHEDULED_LINKED_SUBMISSIONS_MESSAGE})
+
+
+def validate_is_unscheduled_attrs(attrs, instance):
+    """Return serializer field errors for an invalid is_unscheduled update."""
+    if not attrs.get('is_unscheduled') or instance is None:
+        return {}
+    try:
+        validate_is_unscheduled_change(instance)
+    except ValidationError as exc:
+        return exc.message_dict
+    return {}
+
+
 class RoomQuerySet(models.QuerySet):
+    def with_has_linked_sessions(self):
+        from django_scopes import scopes_disabled
+
+        from eventyay.base.models.slot import TalkSlot
+
+        # TalkSlot uses ScopedManager; the parent queryset is already event-scoped.
+        with scopes_disabled():
+            linked_talks = TalkSlot.objects.filter(
+                room_id=OuterRef('pk'),
+                schedule__event_id=OuterRef('event_id'),
+                submission__isnull=False,
+            )
+        return self.annotate(has_linked_sessions=Exists(linked_talks))
+
     def with_permission(
         self, *, user=None, traits=None, event, permission=Permission.ROOM_VIEW
     ):
@@ -252,6 +304,11 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     def __str__(self) -> str:
         return str(self.name)
 
+    def clean(self):
+        super().clean()
+        if self.is_unscheduled:
+            validate_is_unscheduled_change(self)
+
     @property
     def log_parent(self):
         return self.event
@@ -335,9 +392,32 @@ class RoomView(models.Model):
         ]
 
 
-class RoomConfigSerializer(I18nAwareModelSerializer):
+def get_room_with_linked_sessions(room):
+    """Return the room annotated with has_linked_sessions when possible."""
+    from django_scopes import scope
+
+    with scope(event=room.event):
+        annotated = (
+            room.event.rooms.filter(pk=room.pk).with_has_linked_sessions().first()
+        )
+    return annotated or room
+
+
+class RoomLinkedSessionsSerializerMixin:
     has_linked_sessions = serializers.SerializerMethodField()
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        errors = validate_is_unscheduled_attrs(attrs, self.instance)
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
+    def get_has_linked_sessions(self, obj):
+        return room_has_linked_submissions(obj)
+
+
+class RoomConfigSerializer(RoomLinkedSessionsSerializerMixin, I18nAwareModelSerializer):
     class Meta:
         model = Room
         fields = (
@@ -354,11 +434,6 @@ class RoomConfigSerializer(I18nAwareModelSerializer):
             "is_unscheduled",
             "has_linked_sessions",
         )
-
-    def get_has_linked_sessions(self, obj):
-        from django_scopes import scope
-        with scope(event=obj.event):
-            return obj.talks.filter(submission__isnull=False).exists()
 
 
 def approximate_view_number(actual_number):

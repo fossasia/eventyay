@@ -7,16 +7,17 @@ from eventyay.api.serializers.availability import (
     AvailabilitySerializer,
 )
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
-from eventyay.base.models.room import Room
+from eventyay.base.models.room import Room, RoomLinkedSessionsSerializerMixin
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
-class RoomSerializer(AvailabilitiesMixin, PretalxSerializer):
+class RoomSerializer(
+    RoomLinkedSessionsSerializerMixin, AvailabilitiesMixin, PretalxSerializer
+):
     uuid = UUIDField(
         help_text="The uuid field is equal the the guid field if a guid has been set. Otherwise, it will contain a computed (stable) UUID.",
         read_only=True,
     )
-    has_linked_sessions = serializers.SerializerMethodField()
 
     class Meta:
         model = Room
@@ -31,11 +32,6 @@ class RoomSerializer(AvailabilitiesMixin, PretalxSerializer):
             "is_unscheduled",
             "has_linked_sessions",
         )
-
-    def get_has_linked_sessions(self, obj):
-        from django_scopes import scope
-        with scope(event=obj.event):
-            return obj.talks.filter(submission__isnull=False).exists()
 
 
 @register_serializer(versions=CURRENT_VERSIONS)

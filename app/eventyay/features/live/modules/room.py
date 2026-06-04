@@ -34,6 +34,7 @@ from eventyay.base.services.room import (
     reorder_rooms,
     save_room,
     start_view,
+    validate_room_config_patch,
 )
 from eventyay.core.permissions import Permission
 from eventyay.core.utils.redis import aredis
@@ -494,13 +495,12 @@ class RoomModule(BaseModule):
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
         old = await database_sync_to_async(serialize_room_config)(self.room)
-        s = RoomConfigSerializer(self.room, data=body, partial=True)
-        if s.is_valid():
-            update_fields = set()
-            for f in s.fields.keys():
-                if f in body:
-                    setattr(self.room, f, s.validated_data[f])
-                    update_fields.add(f)
+        validated_data, update_fields = await database_sync_to_async(
+            validate_room_config_patch
+        )(self.room, body)
+        if validated_data is not None:
+            for field in update_fields:
+                setattr(self.room, field, validated_data[field])
 
             # Validate webhook URL via challenge verification when module_config changes
             if "module_config" in update_fields:

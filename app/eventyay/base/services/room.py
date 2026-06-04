@@ -10,7 +10,12 @@ from django_scopes import scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
 from eventyay.base.models.event import Event
-from eventyay.base.models.room import Room, RoomConfigSerializer, RoomView
+from eventyay.base.models.room import (
+    Room,
+    RoomConfigSerializer,
+    RoomView,
+    get_room_with_linked_sessions,
+)
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
@@ -64,6 +69,28 @@ async def get_viewers(event: Event, room: Room):
         require_show_publicly=True,
     )
     return users
+
+
+def validate_room_config_patch(room, body):
+    """
+    Validate a partial room config update in a sync DB context.
+
+    Returns (validated_data, update_fields) on success, or (None, None) if invalid.
+    """
+    serializer = RoomConfigSerializer(
+        get_room_with_linked_sessions(room),
+        data=body,
+        partial=True,
+    )
+    if not serializer.is_valid():
+        return None, None
+    update_fields = {field for field in serializer.fields if field in body}
+    validated_data = {
+        field: serializer.validated_data[field]
+        for field in update_fields
+        if field in serializer.validated_data
+    }
+    return validated_data, update_fields
 
 
 @database_sync_to_async

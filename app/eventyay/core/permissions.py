@@ -101,8 +101,11 @@ SYSTEM_ROLES = {
         Permission.ROOM_DELETE.value,
     ],
     "video_poll_question_manager": [
+        Permission.ROOM_QUESTION_READ.value,
         Permission.ROOM_QUESTION_MODERATE.value,
+        Permission.ROOM_POLL_READ.value,
         Permission.ROOM_POLL_MANAGE.value,
+        Permission.ROOM_POLL_EARLY_RESULTS.value,
     ],
     "video_kiosk_manager": [
         Permission.EVENT_KIOSKS_MANAGE.value,
