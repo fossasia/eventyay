@@ -19,11 +19,7 @@
     {{ block.super }}
     <meta property="og:title" content="{{ ev.name|event_localize }}" />
     <meta property="og:description" content="{{ ev.get_date_range_display }}" />
-    {% if subevent %}
-        <meta property="og:url" content="{% abseventurl request.event "presale:event.index" subevent=subevent.pk %}" />
-    {% else %}
-        <meta property="og:url" content="{% abseventurl request.event "presale:event.index" %}" />
-    {% endif %}
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
@@ -215,27 +211,6 @@
     {% endif %}
 
     {% if subevent or not event.has_subevents %}
-        {% if not ev.presale_is_running %}
-            <div class="alert alert-info">
-                {% if ev.presale_has_ended %}
-                    {% if event.settings.presale_has_ended_text %}
-                        {{ event.settings.presale_has_ended_text|event_localize|rich_text }}
-                    {% else %}
-                        {% blocktrans trimmed %}
-                            The presale period for this event is over.
-                        {% endblocktrans %}
-                    {% endif %}
-                {% elif event.settings.presale_start_show_date %}
-                    {% blocktrans trimmed with date=ev.effective_presale_start|date:"SHORT_DATE_FORMAT" time=ev.effective_presale_start|time:"TIME_FORMAT" %}
-                        The presale for this event will start on {{ date }} at {{ time }}.
-                    {% endblocktrans %}
-                {% else %}
-                    {% blocktrans trimmed %}
-                        The presale for this event has not yet started.
-                    {% endblocktrans %}
-                {% endif %}
-            </div>
-        {% endif %}
         {% if not cart_namespace or subevent %}
             <div>
                 {% if ev.location %}
@@ -304,6 +279,27 @@
     {% if subevent or not event.has_subevents %}
         {% include "pretixpresale/event/fragment_testmode_alert.html" %}
         <div id="tickets"></div>
+        {% if not ev.presale_is_running %}
+            <div class="alert alert-info">
+                {% if ev.presale_has_ended %}
+                    {% if event.settings.presale_has_ended_text %}
+                        {{ event.settings.presale_has_ended_text|event_localize|rich_text }}
+                    {% else %}
+                        {% blocktrans trimmed %}
+                            The presale period for this event is over.
+                        {% endblocktrans %}
+                    {% endif %}
+                {% elif event.settings.presale_start_show_date %}
+                    {% blocktrans trimmed with date=ev.effective_presale_start|date:"SHORT_DATE_FORMAT" time=ev.effective_presale_start|time:"TIME_FORMAT" %}
+                        The presale for this event will start on {{ date }} at {{ time }}.
+                    {% endblocktrans %}
+                {% else %}
+                    {% blocktrans trimmed %}
+                        The presale for this event has not yet started.
+                    {% endblocktrans %}
+                {% endif %}
+            </div>
+        {% endif %}
         {% if can_view_tickets %}
             {% if request.event.live or is_organiser %}
                 {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}

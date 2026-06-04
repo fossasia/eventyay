@@ -1,5 +1,6 @@
 import copy
 import datetime as dt
+import hashlib
 import logging
 import os
 import string
@@ -15,7 +16,7 @@ import icalendar
 import jwt
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.exceptions import MultipleObjectsReturned, SuspiciousFileOperation, ValidationError
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.mail import get_connection
@@ -66,7 +67,7 @@ from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.http import smtp_reachable
 from eventyay.helpers.json import safe_string
-from eventyay.helpers.thumb import get_thumbnail
+from eventyay.helpers.thumb import ThumbnailError, get_thumbnail
 from eventyay.talk_rules.event import (
     can_change_event_settings,
     can_create_events,
@@ -939,18 +940,35 @@ class Event(
             return value
 
         img = None
-        logo_file = get_image_value('logo_image')
         og_file = get_image_value('og_image')
         if og_file:
             if is_http_url(og_file):
                 return og_file
-            img = get_thumbnail(og_file, '1200').thumb.url
-        elif logo_file:
-            if is_http_url(logo_file):
-                return logo_file
-            img = get_thumbnail(logo_file, '5000x120').thumb.url
+            try:
+                img = get_thumbnail(og_file, '1200').thumb.url
+            except (OSError, SuspiciousFileOperation, ThumbnailError) as exc:
+                logger.warning('Failed to load og_image thumbnail for %s: %s', og_file, exc)
+
+        if not img:
+            if self.visible_logo_url:
+                img = self.visible_logo_url
+            elif self.visible_header_image_url:
+                img = self.visible_header_image_url
+
         if img:
+            if is_http_url(img):
+                return img
+            if urlparse(img).scheme:
+                return None
             return urljoin(build_absolute_uri(self, 'presale:event.index'), img)
+
+    @property
+    def social_image_signature(self):
+        og_image = self.settings.get('og_image', as_type=str, default='') or ''
+        image_source = og_image or self.visible_logo_url or self.visible_header_image_url or ''
+        if not image_source:
+            return ''
+        return hashlib.sha1(image_source.encode('utf-8')).hexdigest()[:12]
 
     def _seats(self, ignore_voucher=None):
         from .seating import Seat
