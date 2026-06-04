@@ -363,6 +363,15 @@ class UserToggleVerifiedView(AdministratorPermissionRequiredMixin, View):
 class UserToggleAdminView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        if target_user == request.user:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('You cannot change your own admin status.'))},
+                    status=400,
+                )
+            messages.error(request, _('You cannot change your own admin status.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
         target_user.is_staff = not target_user.is_staff
         update_fields = ['is_staff']
         if target_user.is_staff and target_user.is_spam:
@@ -394,6 +403,15 @@ class UserToggleAdminView(AdministratorPermissionRequiredMixin, View):
 class UserToggleSpamView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
+        if target_user == request.user:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'status': 'error', 'message': str(_('You cannot mark yourself as spam.'))},
+                    status=400,
+                )
+            messages.error(request, _('You cannot mark yourself as spam.'))
+            return redirect(reverse('eventyay_admin:admin.users'))
+
         if target_user.is_staff or target_user.is_superuser:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse(

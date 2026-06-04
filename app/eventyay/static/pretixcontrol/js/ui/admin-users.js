@@ -95,14 +95,24 @@ async function submitToggle(form, checkbox, isChecked) {
 
             checkbox.checked = newValue;
 
-            if ((toggleType === 'admin' || toggleType === 'admin_confirmed') && data.is_spam === false) {
+            if (toggleType === 'admin' || toggleType === 'admin_confirmed') {
                 const row = checkbox.parentElement?.parentElement?.parentElement?.parentElement;
                 if (row) {
                     const spamForm = row.querySelector('.user-toggle-form[data-toggle-type="spam"]');
                     if (spamForm) {
                         const spamCheckbox = spamForm.querySelector('.js-user-toggle');
-                        if (spamCheckbox) {
-                            spamCheckbox.checked = false;
+                        const spamLabel = spamCheckbox?.parentElement;
+                        if (spamCheckbox && spamLabel) {
+                            if (newValue) {
+                                spamCheckbox.checked = false;
+                                spamCheckbox.disabled = true;
+                                spamLabel.classList.add('always-on');
+                                spamLabel.title = 'Administrators cannot be marked as spam.';
+                            } else {
+                                spamCheckbox.disabled = false;
+                                spamLabel.classList.remove('always-on');
+                                spamLabel.title = 'Mark as spam';
+                            }
                         }
                     }
                 }
