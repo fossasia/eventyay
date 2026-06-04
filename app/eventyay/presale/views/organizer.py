@@ -6,9 +6,12 @@ from urllib.parse import quote
 import isoweek
 import pytz
 from django.conf import settings
-from django.db.models import Exists, Max, Min, OuterRef, Q
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q
 from django.db.models.functions import Coalesce, Greatest
 from django.http import Http404, HttpResponse
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.formats import date_format, get_format
 from django.utils.timezone import get_current_timezone, now
@@ -21,6 +24,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import (
     Event,
     EventMetaValue,
+    OrganizerFollower,
     Quota,
     SubEvent,
     SubEventMetaValue,
@@ -337,6 +341,18 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
                     event.min_from.astimezone(event.tzname),
                     (event.max_fromto or event.max_to or event.max_from).astimezone(event.tzname),
                 )
+        organizer = self.request.organizer
+        follow_enabled = organizer.settings.get('community_follow_enabled', as_type=bool, default=True)
+        ctx['follow_enabled'] = follow_enabled
+        ctx['show_follower_count'] = organizer.settings.get('community_show_follower_count', as_type=bool, default=True)
+        if follow_enabled:
+            ctx['follower_count'] = OrganizerFollower.objects.filter(organizer=organizer).count()
+            if self.request.user.is_authenticated:
+                ctx['is_following'] = OrganizerFollower.objects.filter(
+                    organizer=organizer, user=self.request.user
+                ).exists()
+            else:
+                ctx['is_following'] = False
         return ctx
 
 
@@ -778,3 +794,29 @@ class OrganizerIcalDownload(OrganizerViewMixin, View):
         resp = HttpResponse(cal.serialize(), content_type='text/calendar')
         resp['Content-Disposition'] = 'attachment; filename="{}.ics"'.format(request.organizer.slug)
         return resp
+
+
+@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+class OrganizerFollow(OrganizerViewMixin, View):
+    def post(self, request, *args, **kwargs):
+        organizer = request.organizer
+        if not request.user.is_active:
+            messages.error(request, 'Your account is not active.')
+            return redirect(eventreverse(organizer, 'presale:organizer.index'))
+        if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
+            messages.error(request, 'Following is not enabled for this organizer.')
+            return redirect(eventreverse(organizer, 'presale:organizer.index'))
+
+        OrganizerFollower.objects.get_or_create(user=request.user, organizer=organizer)
+        messages.success(request, 'You are now following {}.'.format(organizer.name))
+        return redirect(eventreverse(organizer, 'presale:organizer.index'))
+
+
+@method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
+class OrganizerUnfollow(OrganizerViewMixin, View):
+    def post(self, request, *args, **kwargs):
+        organizer = request.organizer
+        OrganizerFollower.objects.filter(user=request.user, organizer=organizer).delete()
+        messages.success(request, 'You have unfollowed {}.'.format(organizer.name))
+        return redirect(eventreverse(organizer, 'presale:organizer.index'))
+

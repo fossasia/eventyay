@@ -569,3 +569,15 @@ header .header-row-right {
 .product-row.simple.is-exclusive-disabled {
     opacity: 0.55;
 }
+
+.organizer-community-bar {
+    margin-bottom: 1em;
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    flex-wrap: wrap;
+}
+
+.organizer-community-bar form {
+    display: inline;
+}

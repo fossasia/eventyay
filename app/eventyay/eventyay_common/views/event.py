@@ -31,6 +31,7 @@ from django.apps import apps
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.services.notifications import notify_organizer_followers
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject
@@ -644,7 +645,9 @@ class EventLive(TemplateView):
                 event.live = True
                 event.save()
                 self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
+                transaction.on_commit(lambda: notify_organizer_followers.apply_async(args=(event.pk,)))
             messages.success(self.request, _('Your event is now online.'))
+
         elif request.POST.get('live') == 'false':
             with transaction.atomic():
                 event.live = False

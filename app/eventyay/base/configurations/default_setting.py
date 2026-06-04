@@ -2489,6 +2489,30 @@ Your {event} team"""
             help_text=_('This will be displayed on the organizer homepage.'),
         ),
     },
+    'community_follow_enabled': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Allow users to follow this organizer'),
+            help_text=_(
+                'When enabled, logged-in users can follow your organizer profile and receive '
+                'notifications when you publish new public events.'
+            ),
+        ),
+    },
+    'community_show_follower_count': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Show follower count publicly'),
+            help_text=_('Display the number of followers on the public organizer profile page.'),
+        ),
+    },
+
     'name_scheme': {'default': 'full', 'type': str},
     'giftcard_length': {
         'default': settings.ENTROPY['giftcard_secret'],

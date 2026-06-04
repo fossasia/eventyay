@@ -113,6 +113,45 @@
         </div>
     {% endif %}
 
+    {% if followed_organizers %}
+        <h2 id="followed-organizers-heading">{% trans "Followed Organizers" %}</h2>
+        <div class="list-group" id="followed-organizers-list">
+            {% for item in followed_organizers %}
+                <div class="list-group-item followed-organizer-item">
+                    <div class="followed-organizer-info">
+                        <span class="fa fa-users" aria-hidden="true"></span>
+                        <a href="{{ item.organizer_url }}">
+                            <strong>{{ item.organizer.name }}</strong>
+                        </a>
+                        <small class="text-muted">
+                            {% trans "Following since" %} {{ item.follow.created|date:"DATE_FORMAT" }}
+                        </small>
+                    </div>
+                    <form method="post" action="{{ item.organizer_url }}unfollow">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-xs btn-default">
+                            <span class="fa fa-heart" aria-hidden="true"></span> {% trans "Unfollow" %}
+                        </button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if followed_upcoming_events %}
+        <h2>{% trans "Upcoming Events from Followed Organizers" %}</h2>
+        <div class="list-group" id="followed-upcoming-events-list">
+            {% for event in followed_upcoming_events %}
+                <div class="list-group-item followed-event-item">
+                    <strong>{{ event.name }}</strong>
+                    <small class="text-muted">{{ event.organizer.name }}</small>
+                    <small>{{ event.date_from|date:"DATE_FORMAT" }}</small>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
     <div class="modal popup-modal" id="alert-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

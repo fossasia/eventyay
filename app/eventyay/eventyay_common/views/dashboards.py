@@ -30,6 +30,7 @@ from zoneinfo import ZoneInfo
 
 from eventyay.base.models import (
     Event,
+    OrganizerFollower,
     Product,
     ProductCategory,
     Order,
@@ -48,6 +49,7 @@ from eventyay.control.signals import (
 )
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.plugin_enable import is_video_enabled
+from eventyay.multidomain.urlreverse import eventreverse
 
 from ...base.models.orders import CancellationRequest
 from ..utils import EventCreatedFor, get_subevent
@@ -537,6 +539,44 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
             lazy=True,
         ),
     }
+
+    followed_organizers_data = []
+    if request.user.is_authenticated:
+        follows = (
+            OrganizerFollower.objects.filter(user=request.user)
+            .select_related('organizer')
+            .order_by('organizer__name')
+        )
+        for follow in follows:
+            organizer = follow.organizer
+            try:
+                organizer_url = eventreverse(organizer, 'presale:organizer.index')
+            except Exception:
+                organizer_url = '#'
+            followed_organizers_data.append({
+                'follow': follow,
+                'organizer': organizer,
+                'organizer_url': organizer_url,
+            })
+    ctx['followed_organizers'] = followed_organizers_data
+
+    followed_upcoming_events = []
+    if request.user.is_authenticated:
+        followed_org_ids = OrganizerFollower.objects.filter(
+            user=request.user
+        ).values_list('organizer_id', flat=True)
+        followed_upcoming_events = (
+            Event.objects.filter(
+                organizer_id__in=followed_org_ids,
+                live=True,
+                is_public=True,
+                has_subevents=False,
+                date_from__gte=now(),
+            )
+            .select_related('organizer')
+            .order_by('date_from')[:10]
+        )
+    ctx['followed_upcoming_events'] = followed_upcoming_events
 
     return render(request, 'eventyay_common/dashboard/dashboard.html', ctx)
 

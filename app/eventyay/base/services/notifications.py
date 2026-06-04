@@ -5,12 +5,13 @@ from django.utils.timezone import override
 from django_scopes import scope, scopes_disabled
 
 from eventyay.base.i18n import language
-from eventyay.base.models import LogEntry, NotificationSetting, User
+from eventyay.base.models import Event, LogEntry, NotificationSetting, OrganizerFollower, User
 from eventyay.base.notifications import Notification, get_all_notification_types
 from eventyay.base.services.mail import mail_send_task
 from eventyay.base.services.tasks import ProfiledTask, TransactionAwareTask
 from eventyay.celery_app import app
 from eventyay.helpers.urls import build_absolute_uri
+from eventyay.multidomain.urlreverse import build_absolute_uri as multidomain_build_absolute_uri
 
 
 @app.task(base=TransactionAwareTask, acks_late=True, max_retries=9, default_retry_delay=900)
@@ -133,3 +134,92 @@ def send_notification_mail(notification: Notification, user: User):
             'user': user.pk,
         }
     )
+
+
+@app.task(base=ProfiledTask, acks_late=True, max_retries=5, default_retry_delay=300)
+@scopes_disabled()
+def notify_organizer_followers(event_id: int):
+    """
+    Send an email notification to all followers of an organizer when a new event is published.
+
+    This task is dispatched after an event transitions to ``live=True``.
+    It respects the organizer's ``community_follow_enabled`` setting and each
+    follower's locale / timezone.
+    """
+    try:
+        event = Event.objects.select_related('organizer').get(pk=event_id)
+    except Event.DoesNotExist:
+        return
+
+    if not event.live or not event.is_public or event.testmode:
+        return
+
+    organizer = event.organizer
+
+    if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
+        return
+
+    if LogEntry.objects.filter(event=event, action_type='eventyay.organizer.follower_notification.sent').exists():
+        return
+
+    try:
+        organizer_url = multidomain_build_absolute_uri(
+            organizer,
+            'presale:organizer.index',
+        )
+        event_url = multidomain_build_absolute_uri(
+            event,
+            'presale:event.index',
+        )
+    except Exception:
+        organizer_url = settings.SITE_URL
+        event_url = settings.SITE_URL
+
+    followers = (
+        OrganizerFollower.objects.filter(organizer=organizer)
+        .select_related('user')
+        .iterator()
+    )
+
+    event.log_action('eventyay.organizer.follower_notification.sent')
+
+    tpl_html = get_template('pretixbase/email/organizer_follower_new_event.html')
+    tpl_plain = get_template('pretixbase/email/organizer_follower_new_event.txt')
+
+    for follower in followers:
+        user = follower.user
+        if not user.is_active or not user.email:
+            continue
+        if not user.notifications_send:
+            continue
+
+        with language(user.locale or settings.LANGUAGE_CODE):
+            ctx = {
+                'site': settings.INSTANCE_NAME,
+                'site_url': settings.SITE_URL,
+                'organizer_name': organizer.name,
+                'event_name': str(event.name),
+                'event_url': event_url,
+                'organizer_url': organizer_url,
+            }
+            body_plain = tpl_plain.render(ctx)
+            body_html = inline_css(tpl_html.render(ctx))
+
+            subject = '[{}] {}: {}'.format(
+                settings.INSTANCE_NAME,
+                organizer.name,
+                str(event.name),
+            )
+
+            mail_send_task.apply_async(
+                kwargs={
+                    'to': [user.email],
+                    'subject': subject,
+                    'body': body_plain,
+                    'html': body_html,
+                    'sender': settings.MAIL_FROM,
+                    'headers': {},
+                    'user': user.pk,
+                }
+            )
+

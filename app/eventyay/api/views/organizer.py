@@ -38,6 +38,7 @@ from eventyay.base.models import (
     GiftCard,
     GiftCardTransaction,
     Organizer,
+    OrganizerFollower,
     SeatingPlan,
     Team,
     TeamAPIToken,
@@ -73,6 +74,38 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
             return Organizer.objects.filter(pk=self.request.auth.organizer_id)
         else:
             return Organizer.objects.filter(pk=self.request.auth.team.organizer_id)
+
+    @action(detail=True, methods=['post'], url_path='follow')
+    def follow(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
+        if not request.user.is_active:
+            return Response({'detail': 'Your account is not active.'}, status=status.HTTP_403_FORBIDDEN)
+        organizer = self.get_object()
+        if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
+            return Response({'detail': 'Following is not enabled for this organizer.'}, status=status.HTTP_403_FORBIDDEN)
+        _, created = OrganizerFollower.objects.get_or_create(user=request.user, organizer=organizer)
+        return Response({'following': True, 'created': created}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='unfollow')
+    def unfollow(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
+        organizer = self.get_object()
+        deleted, _ = OrganizerFollower.objects.filter(user=request.user, organizer=organizer).delete()
+        return Response({'following': False, 'deleted': deleted > 0}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='followers')
+    def followers(self, request, *args, **kwargs):
+        organizer = self.get_object()
+        count = OrganizerFollower.objects.filter(organizer=organizer).count()
+        is_following = False
+        if request.user.is_authenticated:
+            is_following = OrganizerFollower.objects.filter(organizer=organizer, user=request.user).exists()
+        return Response({
+            'follower_count': count,
+            'is_following': is_following,
+        })
 
 
 class SeatingPlanViewSet(viewsets.ModelViewSet):
