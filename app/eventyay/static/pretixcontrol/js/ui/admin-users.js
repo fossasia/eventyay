@@ -30,7 +30,7 @@ function showAlert(message, type = 'success') {
 
 async function handleToggleChange(event) {
     const checkbox = event.currentTarget;
-    const form = checkbox.closest('.user-toggle-form');
+    const form = checkbox.parentElement.parentElement;
     if (!form) return;
 
     const toggleType = form.dataset.toggleType;
@@ -57,7 +57,7 @@ async function handleToggleChange(event) {
 
 async function submitToggle(form, checkbox, isChecked) {
     const toggleType = form.dataset.toggleType;
-    const label = checkbox.closest('.toggle-switch');
+    const label = checkbox.parentElement;
     if (label) {
         label.classList.add('loading');
     }
@@ -96,7 +96,7 @@ async function submitToggle(form, checkbox, isChecked) {
             checkbox.checked = newValue;
 
             if ((toggleType === 'admin' || toggleType === 'admin_confirmed') && data.is_spam === false) {
-                const row = checkbox.closest('tr') || checkbox.closest(`[data-user-id]`);
+                const row = checkbox.parentElement?.parentElement?.parentElement?.parentElement;
                 if (row) {
                     const spamForm = row.querySelector('.user-toggle-form[data-toggle-type="spam"]');
                     if (spamForm) {
@@ -160,13 +160,18 @@ function getSuccessMessage(toggleType, newValue) {
     return messages[toggleType] || 'Action completed successfully.';
 }
 
-async function handleActionSubmit(event) {
+async function handleActionClick(event) {
     event.preventDefault();
-    const form = event.currentTarget;
-    const button = form.querySelector('button[type="submit"]');
+    const button = event.currentTarget;
+    const form = button.parentElement;
+    if (!form) return;
 
-    if (button) {
-        button.disabled = true;
+    const icon = button.querySelector('.fa');
+    const originalClasses = icon ? icon.className : '';
+
+    button.disabled = true;
+    if (icon) {
+        icon.className = 'fa fa-spinner fa-spin';
     }
 
     try {
@@ -196,9 +201,10 @@ async function handleActionSubmit(event) {
     } catch (err) {
         showAlert('Network error. Please try again.', 'danger');
     } finally {
-        if (button) {
-            button.disabled = false;
+        if (icon) {
+            icon.className = originalClasses;
         }
+        button.disabled = false;
     }
 }
 
@@ -211,8 +217,8 @@ function init() {
         }
     });
 
-    document.querySelectorAll('.user-action-form').forEach((form) => {
-        form.addEventListener('submit', handleActionSubmit);
+    document.querySelectorAll('.user-action-form button').forEach((button) => {
+        button.addEventListener('click', handleActionClick);
     });
 }
 

@@ -15,6 +15,7 @@ from django.db.models import (
     QuerySet,
 )
 from django.db.models.functions import Coalesce, ExtractWeekDay
+from allauth.account.models import EmailAddress
 from django.urls import reverse, reverse_lazy
 from django.utils.formats import date_format, localize
 from django.utils.functional import cached_property
@@ -1497,9 +1498,13 @@ class UserFilterForm(FilterForm):
             qs = qs.filter(is_staff=False)
 
         if fdata.get('verified') == 'yes':
-            qs = qs.filter(emailaddress__primary=True, emailaddress__verified=True)
+            qs = qs.filter(
+                Exists(EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True))
+            )
         elif fdata.get('verified') == 'no':
-            qs = qs.exclude(emailaddress__primary=True, emailaddress__verified=True)
+            qs = qs.filter(
+                ~Exists(EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True))
+            )
 
         if fdata.get('spam') == 'yes':
             qs = qs.filter(is_spam=True)

@@ -320,12 +320,17 @@ class UserToggleVerifiedView(AdministratorPermissionRequiredMixin, View):
 
         primary_email = EmailAddress.objects.filter(user=target_user, primary=True).first()
         if not primary_email and target_user.email:
-            primary_email = EmailAddress.objects.create(
-                user=target_user,
-                email=target_user.email,
-                primary=True,
-                verified=False
-            )
+            primary_email = EmailAddress.objects.filter(user=target_user, email__iexact=target_user.email).first()
+            if primary_email:
+                primary_email.primary = True
+                primary_email.save(update_fields=['primary'])
+            else:
+                primary_email = EmailAddress.objects.create(
+                    user=target_user,
+                    email=target_user.email,
+                    primary=True,
+                    verified=False
+                )
 
         if primary_email:
             primary_email.verified = not primary_email.verified
@@ -472,7 +477,7 @@ class UserResendVerificationView(AdministratorPermissionRequiredMixin, View):
         return redirect(reverse('eventyay_admin:admin.users'))
 
 
-class UserResetPasswordListView(AdministratorPermissionRequiredMixin, View):
+class UserResetPasswordView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         target_user = get_object_or_404(User, pk=self.kwargs.get('id'))
         if not target_user.email:
