@@ -256,7 +256,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
         super().__init__(*args, **kwargs)
         self.fields['signature'].help_text = format_lazy(
             '{} <span class="markdown-hint">{}</span>',
-            _('The signature will be added to outgoing mails, preceded by “-- ”.'),
+            _('The signature will be added to outgoing mails, preceded by “-- ”. '),
             _('You can use Markdown in this field.'),
         )
         if self.fields['smtp_password'].initial:
