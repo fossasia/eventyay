@@ -1974,15 +1974,15 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        return self.urls.schedule.full
+        return self.urls.schedule
 
     @property
     def talk_session_url(self):
-        return self.urls.talks.full
+        return self.urls.talks
 
     @property
     def talk_speaker_url(self):
-        return self.urls.speakers.full
+        return self.urls.speakers
 
     @property
     def talk_dashboard_url(self):
