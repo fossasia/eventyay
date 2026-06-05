@@ -1,9 +1,9 @@
 Eventyay
 ========
 
-Eventyay is an open source event management platform by `FOSSASIA <https://fossasia.org>`_. It provides a unified system for event ticketing, registration, call for participation, speaker and session management, scheduling, online event video, web check in, organizer administration, APIs, and plugin based extensions.
+Eventyay is an open source event management platform by `FOSSASIA <https://fossasia.org>`_. It provides a unified system for event ticketing, registration, call for participation, speaker and session management, scheduling, online event video, web check in, organiser administration, APIs, and plugin based extensions.
 
-Eventyay has been in development since 2014. Parts of the system historically originated from separate components for tickets, talks, and video. The current repository contains the unified Eventyay codebase.
+Eventyay has been in development since 2014. Parts of the system historically originated from separate components for tickets, talks, and video. The current repository contains ENext, the new unified Eventyay codebase.
 
 Project status and release cycle
 --------------------------------
@@ -12,66 +12,66 @@ Eventyay is actively developed.
 
 The repository uses the following branch model:
 
-- ``main`` is the production ready branch.
-- ``dev`` is the testing and active development branch.
+* ``main`` is the production ready branch.
+* ``dev`` is the testing and active development branch.
 
-Pull requests should normally target ``dev``. Changes are tested and stabilized there before they are moved to ``main`` for production ready releases.
+Pull requests should normally target ``dev``. Changes are tested and stabilised there before they are moved to ``main`` for production ready releases.
 
 The repository is intended for:
 
-- Contributors working on the Eventyay platform
-- Developers building Eventyay plugins and integrations
-- Operators evaluating or deploying self hosted Eventyay instances
-- Event organizers and partners who need an extensible open source event platform
+* Contributors working on the Eventyay platform
+* Developers building Eventyay plugins and integrations
+* Operators evaluating or deploying self hosted Eventyay instances
+* Event organisers and partners who need an extensible open source event platform
 
 Main features
 -------------
 
 Eventyay includes:
 
-- Event ticketing and registration
-- Event related item sales, such as shirts or add ons
-- Organizer and event administration
-- Call for Participation workflows
-- Speaker, submission, review, and schedule management
-- Public event pages
-- Schedule display and schedule editor frontends
-- Online event and video related workflows
-- Web based check in
-- Separate check in station support through the Eventyay Checkin component
-- PDF ticket and badge related workflows
-- REST API endpoints
-- OAuth and social authentication support
-- Multi domain and multi event handling
-- Plugin discovery and plugin URL registration
-- Standard plugins and external plugin extensions for payments, CRM, exhibitions, social media, team shifts, interpretation, and spatial event integrations
-- Email, notifications, scheduled tasks, reports, statistics, and check in lists
-- Health check and metrics endpoints
-- Internationalization and translation infrastructure
+* Event ticketing and registration
+* Event related item sales, such as shirts or add ons
+* Organiser and event administration
+* Call for Participation workflows
+* Speaker, submission, review, and schedule management
+* Public event pages
+* Schedule display and schedule editor frontends
+* Online event and video related workflows
+* Web based check in
+* Separate check in station support through the Eventyay Checkin component
+* PDF ticket and badge related workflows
+* REST API endpoints
+* OAuth and social authentication support
+* Multi domain and multi event handling
+* Plugin discovery and plugin URL registration
+* Standard plugins and external plugin extensions for payments, CRM, exhibitions, social media, team shifts, interpretation, and spatial event integrations
+* Email, notifications, scheduled tasks, reports, statistics, and check in lists
+* Health check and metrics endpoints
+* Internationalisation and translation infrastructure
 
 Technology stack
 ----------------
 
 Backend:
 
-- Python 3.12
-- Django 5.2
-- Django REST Framework
-- PostgreSQL
-- Redis
-- Celery
-- Django Channels
-- Daphne / ASGI
-- Pydantic settings
-- uv for Python dependency management
+* Python 3.12
+* Django 5.2
+* Django REST Framework
+* PostgreSQL
+* Redis
+* Celery
+* Django Channels
+* Daphne / ASGI
+* Pydantic settings
+* uv for Python dependency management
 
 Frontend:
 
-- Vue 3
-- Vite
-- JavaScript and TypeScript depending on the frontend module
-- SCSS / Stylus
-- Django Compressor for selected legacy and Django integrated assets
+* Vue 3
+* Vite
+* JavaScript and TypeScript depending on the frontend module
+* SCSS / Stylus
+* Django Compressor for selected legacy and Django integrated assets
 
 Quick start with Docker
 -----------------------
@@ -80,9 +80,9 @@ Docker is the recommended way to start quickly.
 
 Requirements:
 
-- Docker
-- Docker Compose plugin
-- Git
+* Docker
+* Docker Compose plugin
+* Git
 
 Steps:
 
@@ -129,12 +129,12 @@ Use this setup when you want to run services directly on your machine.
 
 Requirements:
 
-- Python 3.12
-- `uv <https://docs.astral.sh/uv/getting-started/installation/>`_
-- PostgreSQL
-- Redis
-- Node.js and npm
-- Debian or Ubuntu packages listed in ``deb-packages.txt`` or equivalent packages for your distribution
+* Python 3.12
+* `uv <https://docs.astral.sh/uv/getting-started/installation/>`_
+* PostgreSQL
+* Redis
+* Node.js and npm
+* Debian or Ubuntu packages listed in ``deb-packages.txt`` or equivalent packages for your distribution
 
 Clone the repository:
 
@@ -254,6 +254,7 @@ Run Celery locally when working on background tasks:
 Mobile testing note
 ~~~~~~~~~~~~~~~~~~~
 
+
 If you want to test the site from an Android emulator, use:
 
 .. code-block:: text
@@ -316,6 +317,95 @@ Before submitting frontend changes, always verify that the production asset buil
    docker exec -ti eventyay-next-web make npminstall
    docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
 
+Configuration
+-------------
+
+The Eventyay configuration is based on TOML files, environment variables, dotenv files, and secret files. To see possible configuration keys and default values, check the ``BaseSettings`` class in ``app/eventyay/config/settings.py``.
+
+The configuration is divided into three running environments:
+
+- ``development``: Uses default values from ``eventyay.development.toml``.
+- ``production``: Uses default values from ``eventyay.production.toml``.
+- ``testing``: Uses default values from ``eventyay.testing.toml``.
+
+The values in these files override values defined in ``BaseSettings``.
+
+The running environment is selected via the ``EVY_RUNNING_ENVIRONMENT`` environment variable. It is pre-set in ``manage.py``, ``wsgi.py``, and ``asgi.py``.
+
+For example, to run a command in the production environment:
+
+.. code-block:: bash
+
+   EVY_RUNNING_ENVIRONMENT=production ./manage.py command
+
+Configuration sources are loaded with the following precedence:
+
+1. Secret files in ``.secrets/``
+2. Environment variables with the ``EVY_`` prefix
+3. ``.env`` in the current working directory
+4. ``eventyay.local.toml``
+5. Environment specific TOML files such as ``eventyay.development.toml``, ``eventyay.production.toml``, or ``eventyay.testing.toml``
+
+How to override configuration values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a file named ``eventyay.local.toml`` in the same folder as the ``manage.py`` file.
+
+Add only the values you want to override. For example, to override the ``debug`` value, add:
+
+.. code-block:: toml
+
+   debug = true
+
+For database connection values, a local override can look like this:
+
+.. code-block:: toml
+
+   postgres_user = "your_db_user"
+   postgres_password = "your_db_password"
+   postgres_host = "localhost"
+   postgres_port = 5432
+
+For complex values such as lists, prefer TOML files over environment variables.
+
+You can also override values via environment variables. Environment variable names are the uppercase versions of the setting keys, prefixed by ``EVY_``.
+
+For example, to override the ``debug`` value:
+
+.. code-block:: bash
+
+   export EVY_DEBUG=true
+
+A dotenv file, ``.env``, is also supported. Values from ``.env`` are overridden by environment variables.
+
+Sensitive data such as passwords and API keys should be provided via files in the ``.secrets`` directory, one file per key. The file name follows the same pattern as environment variable names with the ``EVY_`` prefix. The file content is the value.
+
+For example, to provide a value for the ``secret_key`` setting, create this file:
+
+.. code-block:: text
+
+   .secrets/EVY_SECRET_KEY
+
+If you deploy the app via Docker containers, you can provide secret data through `Docker secrets <https://docs.docker.com/engine/swarm/secrets/>`_.
+
+Email configuration for testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+By default, emails are printed to the terminal logs through the console backend.
+
+To test email related features with real delivery, configure a mail server such as SendGrid, Gmail SMTP, or another SMTP provider.
+
+For Gmail SMTP, use:
+
+.. code-block:: text
+
+   Host: smtp.gmail.com
+   Port: 587
+   TLS: enabled
+
+If 2FA is enabled on the Google account, you may need to use an App Password.
+
 Plugins and extensions
 ----------------------
 
@@ -357,8 +447,8 @@ To create a new Eventyay plugin, use the `eventyay plugin cookiecutter template 
 
 Eventyay discovers compatible plugins through installed Django apps and Python entry points. The platform can register plugin URL patterns automatically when plugin metadata and URL modules are available.
 
-Docker plugin development
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Developing plugins locally
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you are developing plugins, create a directory named ``plugins`` in the root of this repository. This directory is gitignored and can contain local plugin checkouts.
 
@@ -372,7 +462,7 @@ Example:
            ├── eventyay-exhibitor/
            └── eventyay-loungemesh/
 
-On container startup, the startup script scans ``./plugins/`` and installs detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
+When using the Docker development setup, the startup script scans ``./plugins/`` and installs detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
 
 Separate Eventyay components
 ----------------------------
@@ -382,90 +472,7 @@ Eventyay also provides separate components that can be used together with the ma
 Eventyay Checkin
 ~~~~~~~~~~~~~~~~
 
-`Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check in component for kiosk stations. It enables organizers to check in attendees at dedicated check in stations during an event.
-
-Configuration
--------------
-
-Eventyay uses Pydantic based settings and TOML configuration files.
-
-The active runtime environment is selected with:
-
-.. code-block:: bash
-
-   EVY_RUNNING_ENVIRONMENT=development
-
-Supported environment names are:
-
-- ``development``
-- ``production``
-- ``testing``
-
-The relevant settings class is in:
-
-.. code-block:: text
-
-   app/eventyay/config/settings.py
-
-Configuration sources are loaded with the following precedence:
-
-1. Secret files in ``.secrets/``
-2. Environment variables with the ``EVY_`` prefix
-3. ``.env`` in the current working directory
-4. ``eventyay.local.toml``
-5. Environment specific TOML files such as ``eventyay.development.toml``, ``eventyay.production.toml``, or ``eventyay.testing.toml``
-
-For local overrides, create ``eventyay.local.toml`` next to ``manage.py`` and add only the values you want to change.
-
-Example:
-
-.. code-block:: toml
-
-   debug = true
-   postgres_db = "eventyay-db"
-   redis_url = "redis://localhost/0"
-   site_url = "http://localhost:8000"
-
-For complex values such as lists, prefer TOML files over environment variables.
-
-You can also override values via environment variables. Environment variable names are the uppercase versions of the setting keys prefixed by ``EVY_``.
-
-Example:
-
-.. code-block:: bash
-
-   export EVY_DEBUG=true
-
-A ``.env`` file is also supported, but values from ``.env`` are overridden by environment variables.
-
-Sensitive data, such as passwords and API keys, should be provided through files in ``.secrets/``. Each secret file uses the environment variable style name.
-
-Example:
-
-.. code-block:: text
-
-   .secrets/EVY_SECRET_KEY
-
-The file content is used as the value.
-
-If you deploy through Docker containers, you can provide secret data through `Docker secrets <https://docs.docker.com/engine/swarm/secrets/>`_.
-
-Email configuration for testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default, emails are printed to the terminal logs through the console backend.
-
-To test email related features with real delivery, configure a mail server such as SendGrid, Gmail SMTP, or another SMTP provider.
-
-For Gmail SMTP, use:
-
-.. code-block:: text
-
-   Host: smtp.gmail.com
-   Port: 587
-   TLS: enabled
-
-If 2FA is enabled on the Google account, you may need to use an App Password.
+`Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check in component for kiosk stations. It enables organisers to check in attendees at dedicated check in stations during an event.
 
 Common development commands
 ---------------------------
@@ -633,7 +640,7 @@ Basic workflow:
 1. Fork the repository.
 2. Create a feature branch.
 3. Make focused changes.
-4. Add or update tests when behavior changes.
+4. Add or update tests when behaviour changes.
 5. Run tests and relevant build commands locally.
 6. Open a pull request against the ``dev`` branch.
 
@@ -692,35 +699,49 @@ Then hard refresh the browser with ``Ctrl + Shift + R``.
 Database issues in Docker
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The database in the development Docker setup is stored in a Docker volume. If you see login errors or strange database related behavior, you can reset the database.
 
-This deletes all local users, organizers, events, tickets, and configuration.
+The database in the development Docker setup is stored in the ``eventyay-next_postgres_data_dev`` Docker volume. If you see errors concerning login or other database related behaviour, you can completely reset the database.
+
+You will lose all local configuration, organisers, events, users, tickets, and related database content.
+
+You must stop the stack first so no container is using the volume. Otherwise, ``docker volume rm`` will fail. ``docker compose down`` stops and removes the containers but keeps named volumes by default.
 
 .. code-block:: bash
 
    docker compose down
    docker volume rm eventyay-next_postgres_data_dev
-   docker compose up -d --build
 
 Redis issues in Docker
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Redis data in the development Docker setup is stored in the ``eventyay-next_rd`` volume. If you see connection, cache, broker, or background task related errors, reset Redis:
+Redis data in the development Docker setup is stored in the ``eventyay-next_rd`` volume. This corresponds to the ``rd`` volume in ``docker-compose.yml``.
+
+If you see connection, cache, broker, or background task related errors, you can reset Redis the same way: stop the stack, then remove the volume.
+
+You will lose data held in Redis, such as cache or broker state.
 
 .. code-block:: bash
 
    docker compose down
    docker volume rm eventyay-next_rd
-   docker compose up -d --build
 
 Reset PostgreSQL and Redis together
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To wipe both PostgreSQL and Redis data in one go:
+To wipe both PostgreSQL and Redis data in one go, you can run ``docker compose down -v`` instead of removing volumes individually. This removes all named volumes declared for this Compose project, including ``eventyay-next_postgres_data_dev`` and ``eventyay-next_rd``.
 
 .. code-block:: bash
 
    docker compose down -v
+
+After resetting PostgreSQL and/or Redis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Bring the development stack back up in detached mode with a rebuild:
+
+.. code-block:: bash
+
    docker compose up -d --build
 
 Deployment
@@ -731,6 +752,31 @@ See `DEPLOYMENT.md <DEPLOYMENT.md>`_.
 The documented deployment path assumes an Ubuntu based server, Docker, Docker Compose, nginx, certbot, PostgreSQL data storage, static file handling, and a deployment specific ``.env`` file.
 
 The deployment documentation is a starting point and should be reviewed before production use. Operators should adapt the setup to their infrastructure, backup, monitoring, TLS, mail delivery, and security requirements.
+
+Future improvements
+-------------------
+
+Backend
+~~~~~~~
+
+Potential backend improvements include:
+
+- Apply more Python type annotations.
+- Add MyPy, ty, or another type checker.
+- Improve IDE autocomplete and early bug detection through typing.
+- Continue moving selected templating workflows toward Jinja where useful.
+- Use djlint or another formatter to clean up template code.
+
+Frontend
+~~~~~~~~
+
+Potential frontend improvements include:
+
+- Remove remaining jQuery code.
+- Convert older frontend behaviour to Vue or AlpineJS.
+- Continue evaluating Single Page Application architecture where it makes sense.
+- Use TypeScript more consistently where it improves maintainability.
+- Consider HTMX and AlpineJS where Django rendered HTML remains the preferred approach.
 
 Support
 -------
@@ -746,7 +792,7 @@ Legal and licensing
 
 Eventyay is published under the Apache License 2.0. See `LICENSE <LICENSE>`_ for the complete license text.
 
-See ``NOTICE`` for attribution and upstream project notices.
+See `NOTICE <NOTICE>`_ for attribution and upstream project notices.
 
 Contributions are accepted under the Apache License 2.0. See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
