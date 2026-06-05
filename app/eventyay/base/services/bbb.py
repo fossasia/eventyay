@@ -303,8 +303,7 @@ class BBBService:
                 "userdata-bbb_skip_video_preview": (
                     "true" if config.get("auto_camera", False) else "false"
                 ),
-                # For some reason, bbb_auto_swap_layout does what you expect from bbb_hide_presentation
-                "userdata-bbb_auto_swap_layout": (
+                "userdata-bbb_hide_presentation_on_join": (
                     "true" if config.get("hide_presentation", False) else "false"
                 ),
             },
