@@ -188,6 +188,11 @@ header .header-row-right {
     align-items: center;
 }
 
+#main-container :focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
 .presale-sticky-tabs .header-row-right .header-nav,
 .presale-sticky-tabs .header-row-right .locale-switch-toggle,
 .presale-sticky-tabs .header-row-right a {
@@ -209,6 +214,10 @@ header .header-row-right {
 
 #main-card {
     scroll-margin-top: 72px;
+}
+
+#main-card > main .alert {
+    margin-inline: 0;
 }
 
 .nav-icon-mobile {

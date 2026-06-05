@@ -1,14 +1,12 @@
 from collections import OrderedDict
-from datetime import datetime, time, timedelta
+import logging
 from io import BytesIO
 
-import dateutil.parser
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.db.models.functions import Coalesce
-from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from pypdf import PdfWriter
@@ -17,11 +15,13 @@ from eventyay.base.exporter import BaseExporter
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, Order, OrderPosition
 from eventyay.base.settings import PERSON_NAME_SCHEMES
+from eventyay.base.exporters.date import build_multi_event_date_filter, parse_date_input
 
 from ...helpers.templatetags.jsonfield import JSONExtract
 from .ticketoutput import PdfTicketOutput
 
 
+logger = logging.getLogger(__name__)
 class AllTicketsPDF(BaseExporter):
     name = 'alltickets'
     verbose_name = gettext_lazy('All PDF tickets in one file')
@@ -29,7 +29,17 @@ class AllTicketsPDF(BaseExporter):
 
     @property
     def export_form_fields(self):
-        name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme] if not self.is_multievent else None
+        # For multi-event exports, self.event is None, so name_scheme should be None
+        # Only access self.event when self.is_multievent is False
+        if self.is_multievent or self.event is None:
+            name_scheme = None
+        else:
+            try:
+                name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme]
+            except KeyError:
+                logger.warning('Unknown name_scheme: %s', getattr(self.event.settings, 'name_scheme', None))
+                name_scheme = None
+
         d = OrderedDict(
             [
                 (
@@ -79,7 +89,7 @@ class AllTicketsPDF(BaseExporter):
             ]
         )
 
-        if not self.is_multievent and not self.event.has_subevents:
+        if not self.is_multievent and self.event and not self.event.has_subevents:
             del d['date_from']
             del d['date_to']
 
@@ -98,25 +108,18 @@ class AllTicketsPDF(BaseExporter):
         else:
             qs = qs.filter(order__status__in=[Order.STATUS_PAID])
 
-        if form_data.get('date_from'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_from']).date(),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__gte=dt) | Q(subevent__isnull=True, order__event__date_from__gte=dt))
+        date_from = form_data.get('date_from')
+        date_to = form_data.get('date_to')
+        if date_from or date_to:
+            date_from = parse_date_input(date_from)
+            date_to = parse_date_input(date_to)
 
-        if form_data.get('date_to'):
-            dt = make_aware(
-                datetime.combine(
-                    dateutil.parser.parse(form_data['date_to']).date() + timedelta(days=1),
-                    time(hour=0, minute=0, second=0),
-                ),
-                self.event.timezone,
-            )
-            qs = qs.filter(Q(subevent__date_from__lt=dt) | Q(subevent__isnull=True, order__event__date_from__lt=dt))
+            if date_from or date_to:
+                events = [event for event in (self.events if self.is_multievent else (self.event,)) if event is not None]
+                if events:
+                    date_filters = build_multi_event_date_filter(events, date_from, date_to)
+                    if date_filters is not None:
+                        qs = qs.filter(date_filters)
 
         if form_data.get('order_by') == 'name':
             qs = qs.order_by('attendee_name_cached', 'order__code')

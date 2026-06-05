@@ -130,8 +130,74 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   margin-bottom: 0;
 }
 
-.question-option-row {
-  padding: 5px 0;
+#answer-options .answer-options-group {
+  margin-bottom: 0;
+
+  > .control-label {
+    padding-top: 0;
+    margin-bottom: 0;
+    font-size: $font-size-base;
+    line-height: $line-height-base;
+  }
+}
+
+#answer-options .question-option-item {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+#answer-options .question-option-label {
+  font-size: $font-size-small;
+  color: $text-muted;
+  margin-bottom: 4px;
+}
+
+#answer-options .question-option-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#answer-options .question-option-field {
+  flex: 1 1 0;
+  min-width: 0;
+
+  .form-group {
+    margin-bottom: 0;
+    width: 100%;
+  }
+
+  .i18n-form-group {
+    width: 100%;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+#answer-options .question-option-actions {
+  flex: 0 0 auto;
+  padding: 0;
+  white-space: nowrap;
+
+  .btn + .btn {
+    margin-left: 4px;
+  }
+}
+
+#answer-options .question-option-add {
+  margin-top: 10px;
+}
+
+#answer-options .answer-options-after-gap {
+  min-height: 10px;
 }
 
 .i18n-form-group input,
@@ -292,7 +358,8 @@ input[type=number].short {
 [data-notify=error] [data-notification=error],
 [data-notify=loading] [data-notification=loading],
 [data-notify=updated] [data-notification=updated],
-[data-notify=confirm] [data-notification=confirm] {
+[data-notify=confirm] [data-notification=confirm],
+[data-notify=confirm-pin] [data-notification=confirm-pin] {
   display: block;
 }
 
@@ -726,5 +793,11 @@ table td > .checkbox input[type="checkbox"] {
   .filter-form .filter-actions {
     flex-direction: column;
     gap: 10px;
+  }
+}
+
+@media (min-width: $screen-sm-min) {
+  .form-horizontal .control-label {
+    padding-top: 0;
   }
 }

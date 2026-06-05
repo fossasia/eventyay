@@ -17,4 +17,4 @@ def get_dashboard_url(context):
         )
     elif getattr(request, 'organizer', None):
         return request.organizer.orga_urls.base
-    return reverse('orga:event.list')
+    return reverse('eventyay_common:dashboard')
