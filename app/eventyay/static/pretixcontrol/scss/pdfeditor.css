@@ -73,3 +73,15 @@ body {
 #editor-toolbox-area .colorpicker.colorpicker-2x {
     min-width: 244px;
 }
+
+#toolbox input[type="number"] {
+    -moz-appearance: number-input !important;
+    -webkit-appearance: number-input !important;
+    appearance: number-input !important;
+}
+#toolbox input[type="number"]::-webkit-outer-spin-button,
+#toolbox input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: inner-spin-button !important;
+    display: block !important;
+}
+

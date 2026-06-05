@@ -9,18 +9,6 @@
         <link type="text/css" rel="stylesheet" href="{% static "pretixcontrol/scss/pdfeditor.css" %}">
     {% endcompress %}
     <link type="text/css" rel="stylesheet" href="{% url "control:pdf.css" %}">
-    <style>
-        #toolbox input[type="number"] {
-            -moz-appearance: number-input !important;
-            -webkit-appearance: number-input !important;
-            appearance: number-input !important;
-        }
-        #toolbox input[type="number"]::-webkit-outer-spin-button,
-        #toolbox input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: inner-spin-button !important;
-            display: block !important;
-        }
-    </style>
 {% endblock %}
 {% block content %}
     <h1>
