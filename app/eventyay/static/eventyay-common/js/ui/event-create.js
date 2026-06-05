@@ -16,9 +16,25 @@
     }
 
     function selectedActiveLanguages() {
-        return Array.from(document.querySelectorAll('input[name="foundation-locales"]:checked')).map(function (input) {
-            return input.value;
-        });
+        var hiddenSelect = document.querySelector('select[name="foundation-locales"]');
+        if (hiddenSelect) {
+            return Array.from(hiddenSelect.selectedOptions).map(function (option) {
+                return option.value;
+            });
+        }
+        return Array.from(document.querySelectorAll('input[name="foundation-locales"]:checked')).map(
+            function (input) {
+                return input.value;
+            }
+        );
+    }
+
+    function isActiveLanguageControl(target) {
+        if (target.matches('input[name="foundation-locales"], select[name="foundation-locales"]')) {
+            return true;
+        }
+        var wrapper = target.closest(".multi-language-select-wrapper");
+        return Boolean(wrapper && wrapper.querySelector('select[name="foundation-locales"]'));
     }
 
     function updateDefaultLanguageChoices() {
@@ -43,6 +59,82 @@
         if (!activeSet.has(defaultLanguage.value)) {
             defaultLanguage.value = firstAvailableValue || "";
         }
+    }
+
+    var eventI18nValues = {};
+    var eventI18nRequest = null;
+
+    function rememberEventI18nValues() {
+        document.querySelectorAll(
+            '#event-name-field input[name^="basics-name_"], #event-location-field textarea[name^="basics-location_"]'
+        ).forEach(function (input) {
+            eventI18nValues[input.name] = input.value;
+        });
+    }
+
+    function updateEventI18nFields() {
+        var form = document.querySelector("form");
+        var eventNameField = document.getElementById("event-name-field");
+        var eventLocationField = document.getElementById("event-location-field");
+        var activeLanguages = selectedActiveLanguages();
+        if (!form || !eventNameField || !eventLocationField || activeLanguages.length === 0) {
+            return;
+        }
+
+        rememberEventI18nValues();
+        var formData = new FormData(form);
+        formData.delete("foundation-locales");
+        activeLanguages.forEach(function (locale) {
+            formData.append("foundation-locales", locale);
+        });
+        Object.keys(eventI18nValues).forEach(function (name) {
+            if (!formData.has(name)) {
+                formData.append(name, eventI18nValues[name]);
+            }
+        });
+        formData.set("ajax", "event-i18n-fields");
+
+        if (eventI18nRequest) {
+            eventI18nRequest.abort();
+        }
+        var requestController = new AbortController();
+        eventI18nRequest = requestController;
+        eventNameField.setAttribute("aria-busy", "true");
+        eventLocationField.setAttribute("aria-busy", "true");
+
+        fetch(window.location.href, {
+            method: "POST",
+            body: formData,
+            signal: requestController.signal,
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    return response.json().then(function (data) {
+                        throw new Error(data.error || "Event multilingual fields request failed.");
+                    });
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                if (eventI18nRequest !== requestController) {
+                    return;
+                }
+                var fields = document.createElement("div");
+                fields.innerHTML = data.fields;
+                eventNameField.innerHTML = fields.querySelector("#event-name-field-template").innerHTML;
+                eventLocationField.innerHTML = fields.querySelector("#event-location-field-template").innerHTML;
+                eventNameField.removeAttribute("aria-busy");
+                eventLocationField.removeAttribute("aria-busy");
+                eventI18nRequest = null;
+            })
+            .catch(function (error) {
+                if (error.name !== "AbortError" && eventI18nRequest === requestController) {
+                    console.error("Failed to update the event multilingual fields.", error);
+                    eventNameField.removeAttribute("aria-busy");
+                    eventLocationField.removeAttribute("aria-busy");
+                    eventI18nRequest = null;
+                }
+            });
     }
 
     function updateRandomSlug(randomSlugButton) {
@@ -90,8 +182,18 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         var options = organizerSlugOptions();
-        document.querySelectorAll('input[name="foundation-locales"]').forEach(function (input) {
-            input.addEventListener("change", updateDefaultLanguageChoices);
+        document.addEventListener("change", function (event) {
+            if (isActiveLanguageControl(event.target)) {
+                updateDefaultLanguageChoices();
+                updateEventI18nFields();
+            }
+        });
+        document.addEventListener("click", function (event) {
+            var removeButton = event.target.closest('[data-role="remove-language"]');
+            if (removeButton && isActiveLanguageControl(removeButton)) {
+                updateDefaultLanguageChoices();
+                updateEventI18nFields();
+            }
         });
         var organizer = document.querySelector("#id_foundation-organizer, [name='foundation-organizer']");
         if (organizer) {

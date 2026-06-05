@@ -129,7 +129,9 @@
 
             <fieldset>
                 <legend>{% trans "General information" %}</legend>
-                {% bootstrap_field basics_form.name layout="control" %}
+                <div id="event-name-field">
+                    {% bootstrap_field basics_form.name layout="control" %}
+                </div>
                 <div class="form-group">
                     <label class="col-md-3 control-label" for="{{ basics_form.slug.id_for_label }}">{{ basics_form.slug.label }}</label>
                     <div class="col-md-9 form-inline">
@@ -167,7 +169,36 @@
             <fieldset>
                 <legend>{% trans "Location" %}</legend>
                 {% with form=basics_form %}
-                    {% include "pretixcontrol/event/fragment_geodata.html" %}
+                    <div class="geodata-section">
+                        <div id="event-location-field">
+                            {% bootstrap_field form.location layout="control" %}
+                        </div>
+                        {% include "pretixcontrol/event/fragment_geodata_autoupdate.html" %}
+                        <div class="form-group geodata-group"
+                             data-tiles="{{ global_settings.leaflet_tiles }}"
+                             data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+                             data-icon="{% static 'leaflet/images/marker-icon.png' %}"
+                             data-shadow="{% static 'leaflet/images/marker-shadow.png' %}">
+                            <label class="col-md-3 control-label">
+                                {% trans "Geo coordinates" %}<br>
+                                <span class="optional">{% trans "Optional" %}</span>
+                            </label>
+                            <div class="col-md-4">
+                                {% bootstrap_field form.geo_lat layout="inline" %}
+                                {% if global_settings.opencagedata_apikey %}
+                                    <p class="attrib">
+                                        <a href="https://openstreetmap.org/" target="_blank">
+                                            {% trans "Geocoding data © OpenStreetMap" %}
+                                        </a>
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                {% bootstrap_field form.geo_lon layout="inline" %}
+                            </div>
+                            <div class="col-md-1"></div>
+                        </div>
+                    </div>
                 {% endwith %}
             </fieldset>
 

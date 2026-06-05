@@ -16,6 +16,7 @@ from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerF
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import iri_to_uri
 from django.utils.functional import cached_property
@@ -266,12 +267,12 @@ class EventCreateView(TemplateView):
             session=self.request.session,
         )
 
-    def get_basics_form(self, foundation_data=None):
+    def get_basics_form(self, foundation_data=None, bind=True):
         if foundation_data is None:
             foundation_data = self.get_foundation_initial()
         organizer = foundation_data.get('organizer') or self.get_fallback_organizer()
         return EventWizardBasicsForm(
-            data=self.request.POST if self.request.method == 'POST' else None,
+            data=self.request.POST if bind and self.request.method == 'POST' else None,
             initial=self.get_basics_initial(foundation_data),
             prefix='basics',
             user=self.request.user,
@@ -314,6 +315,9 @@ class EventCreateView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
+        if request.POST.get('ajax') == 'event-i18n-fields':
+            return self.render_event_i18n_fields()
+
         if 'event_wizard-current_step' in request.POST:
             return self.post_legacy_wizard(request)
 
@@ -329,6 +333,33 @@ class EventCreateView(TemplateView):
         return self.render_to_response(
             self.get_context_data(foundation_form=foundation_form, basics_form=basics_form)
         )
+
+    def render_event_i18n_fields(self):
+        if not self.get_create_organizer_queryset().exists():
+            return JsonResponse({'error': _('You cannot create events for any organizer.')}, status=403)
+
+        valid_locale_codes = {code for code, _name in settings.LANGUAGES}
+        locales = [
+            locale for locale in self.request.POST.getlist('foundation-locales') if locale in valid_locale_codes
+        ]
+        if not locales:
+            return JsonResponse({'error': _('Select at least one active language.')}, status=400)
+
+        basics_form = self.get_basics_form({'locales': locales}, bind=False)
+        for field_name in ('name', 'location'):
+            values = {
+                locale: self.request.POST.get(f'basics-{field_name}_{index}', '')
+                for index, (locale, _name) in enumerate(settings.LANGUAGES)
+                if f'basics-{field_name}_{index}' in self.request.POST
+            }
+            if values:
+                basics_form.initial[field_name] = values
+        fields = render_to_string(
+            'eventyay_common/events/fragment_event_i18n_fields.html',
+            {'basics_form': basics_form},
+            request=self.request,
+        )
+        return JsonResponse({'fields': fields})
 
     def post_legacy_wizard(self, request):
         step = request.POST.get('event_wizard-current_step')
