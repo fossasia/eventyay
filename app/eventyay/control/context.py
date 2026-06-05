@@ -44,8 +44,10 @@ def _default_context(request):
     except Resolver404:
         return {}
 
-    if not (request.path.startswith(get_script_prefix() + 'control') or 
-            request.path.startswith(get_script_prefix() + 'admin')) or not hasattr(request, 'user'):
+    if not (request.path.startswith(get_script_prefix() + 'control') or
+            request.path.startswith(get_script_prefix() + 'admin') or
+            request.path.startswith(get_script_prefix() + 'teamshifts/event')
+            ) or not hasattr(request, 'user'):
         return {}
     ctx = {
         'url_name': url.url_name,
@@ -66,6 +68,8 @@ def _default_context(request):
             or request.event.settings.talk_schedule_public is not None
         ):
             ctx['is_talk_event_created'] = True
+    if getattr(request, 'event', None):
+        ctx['is_teamshifts_enabled'] = 'teamshifts' in request.event.get_plugins()
     ctx['html_head'] = ''.join(_html_head)
 
     _js_payment_weekdays_disabled = '[]'

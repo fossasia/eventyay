@@ -72,6 +72,26 @@
             </p>
         </div>
     </div>
+    {% if is_teamshifts_enabled %}
+    <div class="panel panel-default widget-container widget-small no-padding last-column">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans "TeamShifts" %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <p>
+                {% trans "Manage event teams, define team roles, review team member applications, and build a shift schedule for your event staff." %}
+            </p>
+            <p>
+                {% url 'plugins:teamshifts:dashboard' organizer=request.organizer.slug event=request.event.slug as teamshifts_url %}
+                {% if teamshifts_url %}
+                    {% trans "Go to" %} <a href="{{ teamshifts_url }}">{% trans "TeamShifts Dashboard" %}</a>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="modal popup-modal" id="alert-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
