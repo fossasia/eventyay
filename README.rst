@@ -197,6 +197,69 @@ We assume your current working directory is the checkout of this repo.
 
 The directory `app/eventyay` is mounted into the docker, thus live editing is supported.
 
+7. **Developing Plugins**
+
+   If you are developing plugins (such as ``eventyay-exhibitor``), create a directory named ``plugins`` in the root of this repository (i.e. ``./plugins/``). Place your plugin folders in it:
+
+   .. code-block:: text
+
+      .
+      └── eventyay/                 # This repository root
+          └── plugins/              # Local plugins directory (gitignored)
+              └── eventyay-exhibitor/
+              └── eventyay-flowspace/
+
+   On container startup, the startup script will automatically scan the ``./plugins/`` directory and install all detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
+
+
+8. **Live Frontend Development (Vite HMR)**
+
+   Set ``EVY_NPM_DEV=1`` in ``.env.dev`` to enable hot module replacement for all
+   frontend webapps (video, webcheckin, schedule, schedule-editor). Vite dev servers
+   start automatically inside the container on these ports 
+   (you are not required to visit these exposed ports they will work alongside localhost:8000 with hot module replacement):
+
+   ================= ======
+   Webapp            Port
+   ================= ======
+   schedule-editor   8080
+   video             8880
+   webcheckin        8081
+   schedule          8082
+   ================= ======
+
+   .. code-block:: bash
+
+      # Enable live dev mode
+      EVY_NPM_DEV=1
+
+   When enabled, changes to Vue/JS/CSS source files are reflected instantly without
+   rebuilding. The container must be recreated (not just restarted) for the env
+   change to take effect:
+
+   .. code-block:: bash
+
+      docker compose up -d web
+
+   **Default is ``EVY_NPM_DEV=0``** — Django serves pre-built static files.
+   Always verify your production build works with the default value before
+   submitting changes:
+
+   .. code-block:: bash
+
+      docker exec -ti eventyay-next-web make npminstall
+      docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
+
+
+9. **Email Configuration for Testing**
+
+   By default, emails are printed to the terminal logs (console backend). To properly
+   test email-related features, configure a real mail server such as SendGrid, Gmail SMTP,
+   or another SMTP provider by setting the appropriate environment.
+
+   For Gmail SMTP, use ``smtp.gmail.com`` as the host and ``587`` as the port with TLS enabled.
+   You may need to use an App Password if 2FA is enabled on your Google account.
+
 
 Troubleshooting
 ~~~~~~~~~~~~~~~

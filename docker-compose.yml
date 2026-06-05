@@ -8,6 +8,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
+      - ./plugins:/usr/src/plugins
       - /usr/src/app/eventyay/static.dist
       - /usr/src/app/eventyay/static/video
       - /usr/src/app/eventyay/static/schedule-editor
@@ -17,6 +18,10 @@ services:
       - /usr/src/app/eventyay/webapp/webcheckin/node_modules
     ports:
       - 8000:8000
+      - 8080:8080
+      - 8081:8081
+      - 8082:8082
+      - 8880:8880
     env_file:
       - ./.env.dev
     depends_on:
@@ -30,6 +35,7 @@ services:
     entrypoint: celery -A eventyay worker -l info
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
+      - ./plugins:/usr/src/plugins
       - /usr/src/app/eventyay/static.dist
       - /usr/src/app/eventyay/static/video
       - /usr/src/app/eventyay/static/schedule-editor
@@ -59,6 +65,7 @@ services:
     image: postgres:15
     platform: linux/amd64
     container_name: eventyay-next-db
+    command: postgres -c max_connections=500
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data/
     env_file:
