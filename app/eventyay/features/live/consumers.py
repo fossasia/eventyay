@@ -162,6 +162,10 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
             self.last_conn_ping = await ping_connection(self.last_conn_ping, self.user)
             return
 
+        if not self.event:
+            await self.send_error("event.unknown_event", close=True)
+            return
+
         if not self.user:
             if content[0] == "authenticate":
                 await self._maybe_refresh(self.event, allowed_age=30)
