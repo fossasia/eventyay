@@ -43,13 +43,4 @@ class OrganizerSettingsForm(SettingsForm):
             'as it will be resized on smaller screens.'
         ),
     )
-    favicon = ExtFileField(
-        label=_('Favicon'),
-        ext_whitelist=('.ico', '.png', '.jpg', '.gif', '.jpeg'),
-        required=False,
-        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_FAVICON],
-        help_text=_(
-            'If you provide a favicon, we will show it instead of the default pretix icon. '
-            'We recommend a size of at least 200x200px to accommodate most devices.'
-        ),
-    )
+
