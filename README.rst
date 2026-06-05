@@ -3,7 +3,7 @@ Eventyay
 
 Eventyay is an open source event management platform by `FOSSASIA <https://fossasia.org>`_. It provides a unified system for event ticketing, registration, call for participation, speaker and session management, scheduling, online event video, web check in, organiser administration, APIs, and plugin based extensions.
 
-Eventyay has been in development since 2014. Parts of the system historically originated from separate components for tickets, talks, and video. The current repository contains ENext, the new unified Eventyay codebase.
+Eventyay has been in development since 2014. Parts of the system historically originated from separate components for tickets, talks, and video. The current repository contains the unified Eventyay codebase.
 
 Project status and release cycle
 --------------------------------
