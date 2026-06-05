@@ -22,34 +22,35 @@
 
         <div class="panel-body">
             <form method="get" class="row filter-form">
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.event_query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.submission_type layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.track layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.tags layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.proposal_state layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-4 col-sm-6 col-xs-12 form-group">
                     {% include "eventyay_common/filter_actions.html" %}
                 </div>
             </form>
         </div>
     </div>
 
-    {% if submissions %}
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover">
+    <div data-ajax-results-region>
+        {% if submissions %}
+            <div class="table-responsive">
+                <table class="table table-condensed table-hover">
                 <thead>
                     <tr>
                         <th>
@@ -146,16 +147,17 @@
                     {% endfor %}
                 </tbody>
             {% endwith %}
-            </table>
-        </div>
+                </table>
+            </div>
 
-        {% include "pretixcontrol/pagination.html" %}
+            {% include "pretixcontrol/pagination.html" %}
 
-    {% else %}
-        <div class="empty-collection">
-            <p>
-                {% translate "There are no submissions to show." %}
-            </p>
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="empty-collection">
+                <p>
+                    {% translate "There are no submissions to show." %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
