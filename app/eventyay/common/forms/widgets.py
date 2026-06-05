@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 from pathlib import Path
 
 from django.core.files import File
@@ -106,6 +107,54 @@ class MarkdownWidget(Textarea):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-markdown-field', 'true')
         super().__init__(attrs=attrs)
+
+
+class RichTextWidget(Textarea):
+    """Tiptap-enhanced textarea for simple rich text editing.
+
+    Renders a plain ``<textarea>`` wrapped in a ``[data-tiptap-wrapper]``
+    container.  The ``tiptapLoader.js`` loader on the page detects the
+    ``data-tiptap-profile`` attribute and progressively enhances the field
+    with a Tiptap editor (bold, italic, underline, lists, link).
+
+    Falls back gracefully to a plain textarea when JavaScript is disabled
+    or the bundle has not loaded yet.
+    """
+
+    template_name = 'common/widgets/richtext.html'
+
+    def __init__(self, attrs=None):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-tiptap-profile', 'richtext')
+        super().__init__(attrs=attrs)
+
+
+class EmailEditorWidget(Textarea):
+    """Tiptap-enhanced textarea for email body editing.
+
+    Extends the richtext profile with a placeholder variable insertion
+    menu and an optional preview button.  Available placeholder variable
+    names are passed via ``data-tiptap-placeholders`` as a JSON array so
+    the JS bundle can render the insertion dropdown without a server round-trip.
+
+    Args:
+        placeholders: Sequence of placeholder variable names to expose in
+            the insertion menu, e.g. ``['attendee_name', 'event_name']``.
+        preview_url: Optional URL for the email preview AJAX endpoint.
+    """
+
+    template_name = 'common/widgets/email_editor.html'
+
+    def __init__(self, attrs=None, placeholders=None, preview_url=''):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-tiptap-profile', 'email')
+        if placeholders:
+            attrs['data-tiptap-placeholders'] = json.dumps(list(placeholders))
+        if preview_url:
+            attrs['data-tiptap-preview-url'] = preview_url
+        super().__init__(attrs=attrs)
+        self.placeholders = list(placeholders) if placeholders else []
+        self.preview_url = preview_url
 
 
 class EnhancedSelectMixin(Select):

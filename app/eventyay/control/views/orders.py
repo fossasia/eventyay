@@ -2394,7 +2394,11 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': markdown_compile_email(email_content),
+                # EmailBodyField submits sanitized HTML; skip markdown_compile_email in that
+                # case because running Markdown on already-HTML content double-processes it.
+                # Plain-text / Markdown submissions (e.g. from fallback textarea) still go
+                # through markdown_compile_email so the rendering is unchanged.
+                'html': email_content if email_content.strip().startswith('<') else markdown_compile_email(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:
@@ -2465,7 +2469,7 @@ class OrderPositionSendMail(OrderSendMail):
         if self.request.POST.get('action') == 'preview':
             self.preview_output = {
                 'subject': _('Subject: {subject}').format(subject=email_subject),
-                'html': markdown_compile_email(email_content),
+                'html': email_content if email_content.strip().startswith('<') else markdown_compile_email(email_content),
             }
             return self.get(self.request, *self.args, **self.kwargs)
         else:

@@ -37,6 +37,7 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
+from eventyay.common.sanitizers import sanitize_email_html
 from eventyay.base.models import (
     Event,
     LogEntry,
@@ -966,6 +967,34 @@ class MailSettingsRendererPreview(MailSettingsPreview):
                 return r
         else:
             raise Http404(_('Unknown e-mail renderer.'))
+
+
+class EditorEmailPreview(EventPermissionRequiredMixin, View):
+    """AJAX endpoint for previewing email body HTML from the Tiptap email editor.
+
+    Accepts a JSON POST body ``{ "html": "<p>...</p>" }``, sanitizes it with
+    ``sanitize_email_html``, and returns ``{ "html": "<p>...</p>" }``.
+
+    The editor's Preview button calls this URL so users can see what the
+    sanitized output looks like before sending.  No event-specific placeholder
+    expansion is performed; the raw editor output is returned as-is after
+    sanitization.
+    """
+
+    permission = 'can_change_orders'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            payload = json.loads(request.body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return HttpResponseBadRequest('Invalid JSON body')
+
+        raw_html = payload.get('html', '')
+        if not isinstance(raw_html, str):
+            return HttpResponseBadRequest('html must be a string')
+
+        safe_html = sanitize_email_html(raw_html)
+        return JsonResponse({'html': safe_html})
 
 
 class TicketSettingsPreview(EventPermissionRequiredMixin, View):
