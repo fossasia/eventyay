@@ -237,8 +237,10 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             )
 
         if not obj.is_multilingual:
-            self.fields.pop('cfp_ask_content_locale', None)
-            self.fields.pop('cfp_public_content_locale', None)
+            self.fields['cfp_ask_content_locale'].initial = 'do_not_ask'
+            self.fields['cfp_ask_content_locale'].disabled = True
+            self.fields['cfp_public_content_locale'].initial = False
+            self.fields['cfp_public_content_locale'].disabled = True
             self.fields.pop('content_locales', None)
         else:
             available_codes = [code for code, _ in obj.available_content_locales]
