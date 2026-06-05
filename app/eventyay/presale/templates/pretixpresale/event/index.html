@@ -10,6 +10,7 @@
 {% load rich_text %}
 {% load compress %}
 {% load static %}
+{% load vite %}
 {% load presale_locale %}
 {% load event_tags %}
 {% load staff_session %}
@@ -379,7 +380,7 @@
         {% if featured_speakers %}
             <section class="front-page" id="featured-speakers" aria-label="{% trans 'Featured Speakers' %}">
                 <script id="pretalx-schedule-data" type="application/json">{{ featured_speakers_widget_schedule_json|safe }}</script>
-                <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
+                {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
                 <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="featured-speakers" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
             </section>
         {% endif %}
