@@ -195,7 +195,6 @@ class BaseSettings(_BaseSettings):
     upload_size_image: int = 10
     upload_size_pdf: int = 10
     upload_size_xlsx: int = 2
-    upload_size_favicon: int = 1
     upload_size_attachment: int = 10
     upload_size_mail: int = 4
     upload_size_question: int = 20
