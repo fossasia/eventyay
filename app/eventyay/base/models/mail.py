@@ -196,7 +196,17 @@ class MailTemplate(PretalxModel):
         else:
             raise TypeError('First argument to to_mail must be a string or a User, not ' + str(type(user)))
         if users and not commit:
-            address = ','.join(user.email for user in users)
+            addresses = [
+                email for user in users if (email := (user.email or '').strip())
+            ]
+            if not addresses:
+                if skip_queue:
+                    raise SendMailException(
+                        'Cannot create mail without at least one valid recipient email address.'
+                    )
+                address = None
+            else:
+                address = ','.join(addresses)
             users = None
         event = event or self.event
 

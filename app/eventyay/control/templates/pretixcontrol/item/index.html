@@ -89,6 +89,10 @@
                         {% bootstrap_field form.default_price addon_after=request.event.currency layout="control" %}
                         {% bootstrap_field form.tax_rule layout="control" %}
                         {% bootstrap_field form.free_price layout="control" %}
+                        <div id="free-price-bounds" data-display-dependency="#id_free_price">
+                            {% bootstrap_field form.free_price_min addon_after=request.event.currency layout="control" %}
+                            {% bootstrap_field form.free_price_max addon_after=request.event.currency layout="control" %}
+                        </div>
                         {% bootstrap_field form.original_price addon_after=request.event.currency layout="control" %}
                     </fieldset>
                     <fieldset>
