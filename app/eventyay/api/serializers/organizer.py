@@ -46,11 +46,15 @@ class OrganizerSerializer(I18nAwareModelSerializer):
         fields = ('name', 'slug', 'follower_count', 'is_following')
 
     def get_follower_count(self, obj):
+        if not obj.settings.get('community_follow_enabled', as_type=bool, default=True):
+            return None
         if not obj.settings.get('community_show_follower_count', as_type=bool, default=True):
             return None
         return OrganizerFollower.objects.filter(organizer=obj).count()
 
     def get_is_following(self, obj):
+        if not obj.settings.get('community_follow_enabled', as_type=bool, default=True):
+            return False
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
             return OrganizerFollower.objects.filter(organizer=obj, user=request.user).exists()

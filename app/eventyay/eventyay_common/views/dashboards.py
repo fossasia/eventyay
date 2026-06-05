@@ -19,7 +19,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils.formats import date_format
 from django.utils.html import escape
 from django.utils.timezone import now
@@ -551,7 +551,7 @@ def eventyay_common_dashboard(request: HttpRequest) -> HttpResponse:
             organizer = follow.organizer
             try:
                 organizer_url = eventreverse(organizer, 'presale:organizer.index')
-            except Exception:
+            except NoReverseMatch:
                 organizer_url = '#'
             followed_organizers_data.append({
                 'follow': follow,

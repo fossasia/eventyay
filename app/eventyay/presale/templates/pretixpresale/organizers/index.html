@@ -55,7 +55,7 @@
                         </form>
                     {% endif %}
                 {% else %}
-                    <a id="organizer-follow-login-link" href="{% url "eventyay_common:auth.login" %}?next={{ request.path }}" class="btn btn-primary">
+                    <a id="organizer-follow-login-link" href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}" class="btn btn-primary">
                         <span class="fa fa-heart-o" aria-hidden="true"></span>
                         {% trans "Follow" %}
                     </a>

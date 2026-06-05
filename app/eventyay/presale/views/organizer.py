@@ -15,6 +15,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.formats import date_format, get_format
 from django.utils.timezone import get_current_timezone, now
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
@@ -796,14 +797,14 @@ class OrganizerFollow(OrganizerViewMixin, View):
     def post(self, request, *args, **kwargs):
         organizer = request.organizer
         if not request.user.is_active:
-            messages.error(request, 'Your account is not active.')
+            messages.error(request, _('Your account is not active.'))
             return redirect(eventreverse(organizer, 'presale:organizer.index'))
         if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
-            messages.error(request, 'Following is not enabled for this organizer.')
+            messages.error(request, _('Following is not enabled for this organizer.'))
             return redirect(eventreverse(organizer, 'presale:organizer.index'))
 
         OrganizerFollower.objects.get_or_create(user=request.user, organizer=organizer)
-        messages.success(request, 'You are now following {}.'.format(organizer.name))
+        messages.success(request, _('You are now following {organizer}.').format(organizer=organizer.name))
         return redirect(eventreverse(organizer, 'presale:organizer.index'))
 
 
@@ -812,5 +813,5 @@ class OrganizerUnfollow(OrganizerViewMixin, View):
     def post(self, request, *args, **kwargs):
         organizer = request.organizer
         OrganizerFollower.objects.filter(user=request.user, organizer=organizer).delete()
-        messages.success(request, 'You have unfollowed {}.'.format(organizer.name))
+        messages.success(request, _('You have unfollowed {organizer}.').format(organizer=organizer.name))
         return redirect(eventreverse(organizer, 'presale:organizer.index'))

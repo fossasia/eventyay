@@ -32,7 +32,9 @@
 
 {% block public_stylesheets %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/css/organizer-presale.css" %}?v=9" />
+    {% compress css %}
+        <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/css/organizer-presale.css" %}" />
+    {% endcompress %}
 {% endblock %}
 
 {% block custom_header %}

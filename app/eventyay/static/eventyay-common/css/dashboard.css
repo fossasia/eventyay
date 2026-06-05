@@ -28,23 +28,3 @@
         transform: scale(1.05);
     }
 }
-
-.followed-organizer-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5em;
-}
-
-.followed-organizer-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75em;
-}
-
-.followed-event-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25em;
-}
