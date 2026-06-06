@@ -10,7 +10,7 @@
 {% endcompress %}
 
 <h2>
-    {{ quotation_open }}{{ submission.title|event_localize }}{{ quotation_close }}
+    {{ quotation_open }}{{ submission.display_title }}{{ quotation_close }}
     {% if submission.state == "draft" %}
         <span class="badge color-secondary">{% translate "Draft" %}</span>
     {% endif %}

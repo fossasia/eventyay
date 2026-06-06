@@ -258,13 +258,15 @@
                         </div>
                     </div>
                     <div class="row control-group text">
-                        <div class="col-sm-6">
+                        <div class="col-sm-12">
                             <label>{% trans "Font size (pt)" %}</label><br>
                             <input type="number" value="13" class="input-block-level form-control" step="0.1"
                                     id="toolbox-fontsize">
                         </div>
-                        <div class="col-sm-6">
-                            <label>&nbsp;</label><br>
+                    </div>
+                    <div class="row control-group text">
+                        <div class="col-sm-12">
+                            <label>{% trans "Font style" %}</label><br>
                             <div class="btn-group btn-group-justified" role="group">
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-default toggling" data-action="bold">
@@ -285,14 +287,16 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row control-group text">
-                        <div class="col-sm-6">
+                    <div class="row control-group text form-group">
+                        <div class="col-xs-12">
                             <label>{% trans "Text color" %}</label><br>
                             <input type="text" value="#000000" class="input-block-level form-control colorpickerfield"
                                     id="toolbox-col">
                         </div>
-                        <div class="col-sm-6">
-                            <label>&nbsp;</label><br>
+                    </div>
+                    <div class="row control-group text">
+                        <div class="col-sm-12">
+                            <label>{% trans "Alignment" %}</label><br>
                             <div class="btn-group btn-group-justified" id="toolbox-align">
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-default option toggling" data-action="left">

@@ -1,8 +1,11 @@
 import datetime as dt
 
 import pytest
+from django import forms
+from django.utils.translation import gettext, override
 from django_scopes import scope, scopes_disabled
 
+from eventyay.base.models import Answer, Submission
 from eventyay.base.models.event import Organizer, Event
 from eventyay.base.models.question import (
     TalkQuestion,
@@ -127,3 +130,188 @@ def test_choices_parent_dependency_by_option_pk(event):
     form = _form(event, {f"question_{parent.pk}": str(opt.pk), f"question_{child.pk}": ""})
     assert not form.is_valid()
     assert f"question_{child.pk}" in form.errors
+
+
+@pytest.mark.django_db
+def test_choices_field_always_uses_radio_select(event):
+    """Radio fields must not switch to a dropdown when there are four or more options."""
+    with scopes_disabled():
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick one?',
+            variant=TalkQuestionVariant.CHOICES,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            active=True,
+            position=1,
+        )
+        for index in range(5):
+            AnswerOption.objects.create(question=question, answer=f'Option {index}')
+
+    with scope(event=event):
+        form = TalkQuestionsForm(event=event)
+        field = form.fields[f'question_{question.pk}']
+        assert isinstance(field.widget, forms.RadioSelect)
+
+
+@pytest.mark.django_db
+def test_choices_required_field_has_no_empty_label(event):
+    with scopes_disabled():
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick one?',
+            variant=TalkQuestionVariant.CHOICES,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.REQUIRED,
+            active=True,
+            position=1,
+        )
+        AnswerOption.objects.create(question=question, answer='Only option')
+
+    with scope(event=event):
+        form = TalkQuestionsForm(event=event)
+        field = form.fields[f'question_{question.pk}']
+        assert field.empty_label is None
+
+
+@pytest.mark.django_db
+def test_choices_optional_field_has_no_initial_without_answer(event):
+    with scopes_disabled():
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick one?',
+            variant=TalkQuestionVariant.CHOICES,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            active=True,
+            position=1,
+        )
+        AnswerOption.objects.create(question=question, answer='Only option')
+
+    with scope(event=event), override('en'):
+        form = TalkQuestionsForm(event=event)
+        field = form.fields[f'question_{question.pk}']
+        assert field.initial is None
+        assert str(field.empty_label) == gettext('— No selection —')
+
+
+@pytest.mark.django_db
+def test_choices_ignores_removed_option_on_initial(event):
+    with scopes_disabled():
+        submission = Submission.objects.create(
+            title='Test proposal',
+            event=event,
+            submission_type=event.cfp.default_type,
+            content_locale='en',
+        )
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick one?',
+            variant=TalkQuestionVariant.CHOICES,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            active=True,
+            position=1,
+        )
+        removed_option = AnswerOption.objects.create(question=question, answer='Removed')
+        AnswerOption.objects.create(question=question, answer='Still there')
+        answer = Answer.objects.create(question=question, submission=submission, answer='Removed')
+        answer.options.add(removed_option)
+        removed_option.delete()
+
+    with scope(event=event):
+        form = TalkQuestionsForm(event=event, submission=submission)
+        assert form.fields[f'question_{question.pk}'].initial is None
+
+
+@pytest.mark.django_db
+def test_choices_save_empty_clears_stale_answer(event):
+    with scopes_disabled():
+        submission = Submission.objects.create(
+            title='Test proposal',
+            event=event,
+            submission_type=event.cfp.default_type,
+            content_locale='en',
+        )
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick one?',
+            variant=TalkQuestionVariant.CHOICES,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            active=True,
+            position=1,
+        )
+        option = AnswerOption.objects.create(question=question, answer='Gone')
+        answer = Answer.objects.create(question=question, submission=submission, answer='Gone')
+        answer.options.add(option)
+        option.delete()
+
+    with scope(event=event):
+        form = TalkQuestionsForm(
+            event=event,
+            submission=submission,
+            data={f'question_{question.pk}': ''},
+        )
+        assert form.is_valid(), form.errors
+        form.save()
+        assert not submission.answers.filter(question=question).exists()
+
+
+@pytest.mark.django_db
+def test_select_ignores_removed_option_on_initial(event):
+    with scopes_disabled():
+        submission = Submission.objects.create(
+            title='Test proposal',
+            event=event,
+            submission_type=event.cfp.default_type,
+            content_locale='en',
+        )
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick from dropdown?',
+            variant=TalkQuestionVariant.SELECT,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            active=True,
+            position=1,
+        )
+        removed_option = AnswerOption.objects.create(question=question, answer='Removed')
+        AnswerOption.objects.create(question=question, answer='Still there')
+        answer = Answer.objects.create(question=question, submission=submission, answer='Removed')
+        answer.options.add(removed_option)
+        removed_option.delete()
+
+    with scope(event=event):
+        form = TalkQuestionsForm(event=event, submission=submission)
+        assert form.fields[f'question_{question.pk}'].initial is None
+
+
+@pytest.mark.django_db
+def test_multiple_initial_keeps_only_existing_options(event):
+    with scopes_disabled():
+        submission = Submission.objects.create(
+            title='Test proposal',
+            event=event,
+            submission_type=event.cfp.default_type,
+            content_locale='en',
+        )
+        question = TalkQuestion.all_objects.create(
+            event=event,
+            question='Pick many?',
+            variant=TalkQuestionVariant.MULTIPLE,
+            target=TalkQuestionTarget.SUBMISSION,
+            question_required=TalkQuestionRequired.OPTIONAL,
+            active=True,
+            position=1,
+        )
+        removed_option = AnswerOption.objects.create(question=question, answer='Removed')
+        kept_option = AnswerOption.objects.create(question=question, answer='Kept')
+        answer = Answer.objects.create(question=question, submission=submission, answer='Removed, Kept')
+        answer.options.add(removed_option, kept_option)
+        removed_option.delete()
+
+    with scope(event=event):
+        form = TalkQuestionsForm(event=event, submission=submission)
+        initial = form.fields[f'question_{question.pk}'].initial
+        assert [option.pk for option in initial] == [kept_option.pk]

@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django_scopes import scope
 
+from eventyay.submission.forms.submission import AUTO_DRAFT_TITLE
 from pretalx.submission.models import SubmissionStates
 
 
@@ -122,6 +123,75 @@ def test_can_discard_draft_proposal(speaker_client, submission):
     assert response.status_code == 200
     with scope(event=submission.event):
         assert not submission.event.submissions.filter(pk=submission.pk).exists()
+
+
+@pytest.mark.django_db
+def test_cannot_save_completely_blank_draft_submission(speaker_client, submission):
+    with scope(event=submission.event):
+        submission.state = SubmissionStates.DRAFT
+        submission.title = AUTO_DRAFT_TITLE
+        submission.abstract = ""
+        submission.description = ""
+        submission.notes = ""
+        submission.save()
+        original_title = submission.title
+        original_description = submission.description
+        data = {
+            "title": "",
+            "submission_type": submission.submission_type.pk,
+            "content_locale": submission.content_locale,
+            "description": "",
+            "abstract": "",
+            "notes": "",
+            "resource-TOTAL_FORMS": 0,
+            "resource-INITIAL_FORMS": 0,
+            "resource-MIN_NUM_FORMS": 0,
+            "resource-MAX_NUM_FORMS": 1000,
+            "action": "draft",
+        }
+
+    response = speaker_client.post(submission.urls.user_base, follow=True, data=data)
+    assert response.status_code == 200
+    assert response.text.count("Please fill at least one field.") == 1
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.title == original_title
+        assert submission.description == original_description
+        assert submission.state == SubmissionStates.DRAFT
+
+
+@pytest.mark.django_db
+def test_can_save_partial_draft_submission_without_required_fields(speaker_client, submission):
+    with scope(event=submission.event):
+        submission.state = SubmissionStates.DRAFT
+        submission.title = AUTO_DRAFT_TITLE
+        submission.abstract = ""
+        submission.description = ""
+        submission.notes = ""
+        submission.save()
+        data = {
+            "title": "",
+            "submission_type": submission.submission_type.pk,
+            "content_locale": submission.content_locale,
+            "description": "Updated draft description",
+            "abstract": "",
+            "notes": "",
+            "resource-TOTAL_FORMS": 0,
+            "resource-INITIAL_FORMS": 0,
+            "resource-MIN_NUM_FORMS": 0,
+            "resource-MAX_NUM_FORMS": 1000,
+            "action": "draft",
+        }
+
+    response = speaker_client.post(submission.urls.user_base, follow=True, data=data)
+    assert response.status_code == 200
+
+    with scope(event=submission.event):
+        submission.refresh_from_db()
+        assert submission.title == AUTO_DRAFT_TITLE
+        assert submission.description == "Updated draft description"
+        assert submission.state == SubmissionStates.DRAFT
 
 
 @pytest.mark.django_db
