@@ -25,7 +25,7 @@
             </div>
             {% endif %}
             <div class="contact-form-group">
-                <textarea name="message" id="contact-message" rows="4" maxlength="5000"
+                <textarea name="message" id="contact-message" rows="4" minlength="10" maxlength="5000"
                           placeholder="{% translate 'What\'s your question for the organizer?' %}"
                           aria-label="{% translate 'Your message' %}"
                           required class="contact-form-textarea"></textarea>
@@ -43,7 +43,7 @@
                 {% translate "Send Message" %}
             </button>
         </form>
-        <div id="contact-success-message" class="contact-success" style="display: none;">
+        <div id="contact-success-message" class="contact-success" role="status" aria-live="polite" style="display: none;">
             <i class="fa fa-check-circle"></i>
             <p>{% translate "Your message has been sent successfully!" %}</p>
         </div>

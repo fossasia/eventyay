@@ -11,13 +11,12 @@ from django.utils.translation import gettext as _
 from django.views import View
 
 from eventyay.helpers.http import get_client_ip
-
 from . import EventViewMixin
+
+logger = logging.getLogger(__name__)
 
 _RATE_LIMIT_MAX = 5
 _RATE_LIMIT_WINDOW = 600  # 10 minutes
-
-logger = logging.getLogger(__name__)
 
 
 class ContactOrganizerView(EventViewMixin, View):
@@ -35,8 +34,8 @@ class ContactOrganizerView(EventViewMixin, View):
         count = rc.get(key)
         if count and int(count) >= _RATE_LIMIT_MAX:
             return True
-        rc.incr(key)
-        rc.expire(key, _RATE_LIMIT_WINDOW)
+        if rc.incr(key) == 1:
+            rc.expire(key, _RATE_LIMIT_WINDOW)
         return False
 
     def post(self, request, *args, **kwargs):
