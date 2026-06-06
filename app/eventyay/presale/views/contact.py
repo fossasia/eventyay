@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import smtplib
 
@@ -9,13 +10,34 @@ from django.http import JsonResponse
 from django.utils.translation import gettext as _
 from django.views import View
 
+from eventyay.helpers.http import get_client_ip
+
 from . import EventViewMixin
+
+_RATE_LIMIT_MAX = 5
+_RATE_LIMIT_WINDOW = 600  # 10 minutes
 
 logger = logging.getLogger(__name__)
 
 
 class ContactOrganizerView(EventViewMixin, View):
     """Accept a contact-organizer message and forward it via email."""
+
+    def _is_rate_limited(self, request):
+        if not settings.HAS_REDIS:
+            return False
+        client_ip = get_client_ip(request)
+        if not client_ip:
+            return False
+        from django_redis import get_redis_connection
+        rc = get_redis_connection('redis')
+        key = 'contact_ratelimit_{}'.format(hashlib.sha1(client_ip.encode()).hexdigest())
+        count = rc.get(key)
+        if count and int(count) >= _RATE_LIMIT_MAX:
+            return True
+        rc.incr(key)
+        rc.expire(key, _RATE_LIMIT_WINDOW)
+        return False
 
     def post(self, request, *args, **kwargs):
         message = request.POST.get('message', '').strip()
@@ -27,6 +49,12 @@ class ContactOrganizerView(EventViewMixin, View):
         if not message:
             return JsonResponse(
                 {'success': False, 'error': _('Please enter a message.')},
+                status=400,
+            )
+
+        if len(message) < 10:
+            return JsonResponse(
+                {'success': False, 'error': _('Your message is too short (minimum 10 characters).')},
                 status=400,
             )
 
@@ -48,6 +76,12 @@ class ContactOrganizerView(EventViewMixin, View):
             return JsonResponse(
                 {'success': False, 'error': _('Please enter a valid email address.')},
                 status=400,
+            )
+
+        if self._is_rate_limited(request):
+            return JsonResponse(
+                {'success': False, 'error': _('Too many messages sent. Please wait a few minutes before trying again.')},
+                status=429,
             )
 
         contact_email = (
