@@ -89,6 +89,11 @@ def mail_send_task(
             reply_to = [formataddr((str(event.name), reply_to))]
         reply_to = reply_to or []
 
+        effective_bcc = [addr for addr in (bcc or []) if addr and addr.strip()]
+        if not effective_bcc and event.settings.mail_bcc:
+            effective_bcc = [addr.strip() for addr in event.settings.mail_bcc.split(',') if addr.strip()]
+        bcc = effective_bcc or None
+
         sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
 
     else:
@@ -147,7 +152,7 @@ def get_reply_to_address(
     Resolve Reply-To with unified precedence:
     override
     → template.reply_to
-    → settings.mail_reply_to  (canonical common setting for both Tickets and Talks)
+    → event.settings.mail_reply_to  (canonical common setting for both Tickets and Talks)
     → event.email             (organizer email set on the event)
     → organizer.settings.contact_mail  (fallback to organizer-level contact address)
     → mail_settings['reply_to']        (legacy Talks field, kept for backwards compat)

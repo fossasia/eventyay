@@ -2,8 +2,9 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import gettext_lazy as _
+from i18nfield.forms import I18nFormField, I18nTextarea
 
-from eventyay.base.forms import SettingsForm
+from eventyay.base.forms import SecretKeySettingsField, SettingsForm
 
 
 def multimail_validate(val):
@@ -13,8 +14,6 @@ def multimail_validate(val):
         addr = addr.strip()
         if addr:
             validate_email(addr)
-
-ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
 
 SMTP_VENDOR_CHOICES = (
     ('smtp', _('SMTP server')),
@@ -40,19 +39,20 @@ class CentralMailSettingsForm(SettingsForm):
 
     mail_bcc = forms.CharField(
         label=_('Bcc address'),
-        help_text=_('All emails will be sent to this address as a Bcc copy.'),
+        help_text=_('All outgoing Ticket emails will be sent to this address as a Bcc copy.'),
         validators=[multimail_validate],
         required=False,
         max_length=255,
     )
-    mail_text_signature = forms.CharField(
+    mail_text_signature = I18nFormField(
         label=_('Email signature'),
         help_text=_(
             'This text will be appended to every outgoing email (both Tickets and Talks). '
             'You can use Markdown.'
         ),
         required=False,
-        widget=forms.Textarea(attrs={'rows': '4'}),
+        widget=I18nTextarea,
+        widget_kwargs={'attrs': {'rows': '4'}},
     )
     mail_html_renderer = forms.ChoiceField(
         label=_('HTML mail renderer'),
@@ -75,13 +75,9 @@ class CentralMailSettingsForm(SettingsForm):
         required=False,
         initial='smtp',
     )
-    send_grid_api_key = forms.CharField(
+    send_grid_api_key = SecretKeySettingsField(
         label=_('SendGrid API key'),
         required=False,
-        widget=forms.PasswordInput(
-            attrs={'placeholder': 'SG.xxxxxxxx', 'autocomplete': 'new-password'},
-            render_value=True,
-        ),
     )
     smtp_host = forms.CharField(
         label=_('SMTP hostname'),
@@ -98,13 +94,9 @@ class CentralMailSettingsForm(SettingsForm):
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'myuser@example.org'}),
     )
-    smtp_password = forms.CharField(
+    smtp_password = SecretKeySettingsField(
         label=_('SMTP password'),
         required=False,
-        widget=forms.PasswordInput(
-            attrs={'autocomplete': 'new-password'},
-            render_value=True,
-        ),
     )
     smtp_use_tls = forms.BooleanField(
         label=_('Use STARTTLS'),
@@ -131,18 +123,23 @@ class CentralMailSettingsForm(SettingsForm):
                 (r.identifier, r.verbose_name)
                 for r in self.obj.get_html_mail_renderers().values()
             ]
-        if self.fields['smtp_password'].initial:
-            self.fields['smtp_password'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
-        if self.fields['send_grid_api_key'].initial:
-            self.fields['send_grid_api_key'].initial = ENCRYPTED_PASSWORD_PLACEHOLDER
+            if isinstance(self.fields.get('mail_text_signature'), I18nFormField):
+                self.fields['mail_text_signature'].widget.enabled_locales = self.locales
 
     def save(self, *args, **kwargs):
         f = self.fields.pop('test_email', None)
         try:
-            return super().save(*args, **kwargs)
+            result = super().save(*args, **kwargs)
         finally:
             if f:
                 self.fields['test_email'] = f
+        if 'mail_reply_to' in self.changed_data and not self.cleaned_data.get('mail_reply_to'):
+            ms = self.obj.mail_settings
+            if ms.get('reply_to'):
+                ms['reply_to'] = ''
+                self.obj.mail_settings = ms
+                self.obj.save(update_fields=['mail_settings'])
+        return result
 
     @property
     def changed_data(self):
@@ -178,9 +175,6 @@ class CentralMailSettingsForm(SettingsForm):
                 stored = self.initial.get(field)
                 if stored is not None:
                     data[field] = stored
-            api_key = data.get('send_grid_api_key')
-            if api_key == ENCRYPTED_PASSWORD_PLACEHOLDER:
-                data['send_grid_api_key'] = self.initial.get('send_grid_api_key', '')
             if not data.get('send_grid_api_key'):
                 self.add_error(
                     'send_grid_api_key',
@@ -190,16 +184,8 @@ class CentralMailSettingsForm(SettingsForm):
             stored_api_key = self.initial.get('send_grid_api_key')
             if stored_api_key is not None:
                 data['send_grid_api_key'] = stored_api_key
-            password = data.get('smtp_password')
             username = data.get('smtp_username')
-            if password == ENCRYPTED_PASSWORD_PLACEHOLDER:
-                data['smtp_password'] = self.initial.get('smtp_password', '')
-            elif not password:
-                if username:
-                    data['smtp_password'] = self.initial.get('smtp_password', '')
-                else:
-                    data['smtp_password'] = ''
-            elif not username:
+            if not username:
                 data['smtp_password'] = ''
             if not data.get('smtp_host'):
                 self.add_error(
