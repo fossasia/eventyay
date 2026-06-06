@@ -13,7 +13,7 @@
     {% if messages %}
         {{ messages|join:" " }} ::
     {% endif %}
-    {% block pagetitle %}{% endblock %}{% if request.resolver_match.url_name != "organizer.index" %} :: {{ organizer.name }}{% endif %}
+    {% block pagetitle %}{% endblock %}{% if request.resolver_match.url_name != "organizer.index" %} :: {% endif %}{{ organizer.name }}
 {% endblock %}
 
 {% block meta_description %}

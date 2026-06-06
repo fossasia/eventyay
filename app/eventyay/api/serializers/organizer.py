@@ -50,11 +50,15 @@ class OrganizerSerializer(I18nAwareModelSerializer):
             return None
         if not obj.settings.get('community_show_follower_count', as_type=bool, default=True):
             return None
+        if hasattr(obj, '_follower_count'):
+            return obj._follower_count
         return OrganizerFollower.objects.filter(organizer=obj).count()
 
     def get_is_following(self, obj):
         if not obj.settings.get('community_follow_enabled', as_type=bool, default=True):
             return False
+        if hasattr(obj, '_is_following'):
+            return obj._is_following
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
             return OrganizerFollower.objects.filter(organizer=obj, user=request.user).exists()

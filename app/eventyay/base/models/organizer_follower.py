@@ -27,7 +27,9 @@ class OrganizerFollower(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'organizer')
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'organizer'], name='unique_organizer_follower'),
+        ]
         verbose_name = _('Organizer follower')
         verbose_name_plural = _('Organizer followers')
         ordering = ('-created',)

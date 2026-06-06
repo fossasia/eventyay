@@ -792,6 +792,14 @@ class OrganizerIcalDownload(OrganizerViewMixin, View):
         return resp
 
 
+def _safe_redirect_back(request, organizer):
+    referer = request.META.get('HTTP_REFERER', '')
+    host = request.get_host()
+    if referer and host and referer.startswith(f'{request.scheme}://{host}'):
+        return redirect(referer)
+    return redirect(eventreverse(organizer, 'presale:organizer.index'))
+
+
 @method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
 class OrganizerFollow(OrganizerViewMixin, View):
     def post(self, request, *args, **kwargs):
@@ -805,7 +813,7 @@ class OrganizerFollow(OrganizerViewMixin, View):
 
         OrganizerFollower.objects.get_or_create(user=request.user, organizer=organizer)
         messages.success(request, _('You are now following {organizer}.').format(organizer=organizer.name))
-        return redirect(eventreverse(organizer, 'presale:organizer.index'))
+        return _safe_redirect_back(request, organizer)
 
 
 @method_decorator(login_required(login_url='eventyay_common:auth.login'), name='dispatch')
@@ -814,4 +822,4 @@ class OrganizerUnfollow(OrganizerViewMixin, View):
         organizer = request.organizer
         OrganizerFollower.objects.filter(user=request.user, organizer=organizer).delete()
         messages.success(request, _('You have unfollowed {organizer}.').format(organizer=organizer.name))
-        return redirect(eventreverse(organizer, 'presale:organizer.index'))
+        return _safe_redirect_back(request, organizer)

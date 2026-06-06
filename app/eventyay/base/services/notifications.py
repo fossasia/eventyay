@@ -147,81 +147,78 @@ def notify_organizer_followers(event_id: int):
     It respects the organizer's ``community_follow_enabled`` setting and each
     follower's locale / timezone.
     """
+    with transaction.atomic():
+        event = Event.objects.select_for_update().select_related('organizer').get(pk=event_id)
+
+        if not event.live or not event.is_public or event.testmode:
+            return
+
+        organizer = event.organizer
+
+        if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
+            return
+
+        if LogEntry.objects.filter(event=event, action_type='eventyay.organizer.follower_notification.sent').exists():
+            return
+
+        event.log_action('eventyay.organizer.follower_notification.sent')
+
     try:
-        with transaction.atomic():
-            event = Event.objects.select_for_update().select_related('organizer').get(pk=event_id)
+        organizer_url = multidomain_build_absolute_uri(
+            organizer,
+            'presale:organizer.index',
+        )
+        event_url = multidomain_build_absolute_uri(
+            event,
+            'presale:event.index',
+        )
+    except Exception:
+        organizer_url = settings.SITE_URL
+        event_url = settings.SITE_URL
 
-            if not event.live or not event.is_public or event.testmode:
-                return
+    followers = (
+        OrganizerFollower.objects.filter(organizer=organizer)
+        .select_related('user')
+        .iterator()
+    )
 
-            organizer = event.organizer
+    tpl_html = get_template('pretixbase/email/organizer_follower_new_event.html')
+    tpl_plain = get_template('pretixbase/email/organizer_follower_new_event.txt')
 
-            if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
-                return
+    for follower in followers:
+        user = follower.user
+        if not user.is_active or not user.email:
+            continue
+        if not user.notifications_send:
+            continue
 
-            if LogEntry.objects.filter(event=event, action_type='eventyay.organizer.follower_notification.sent').exists():
-                return
+        with language(user.locale or settings.LANGUAGE_CODE):
+            ctx = {
+                'site': settings.INSTANCE_NAME,
+                'site_url': settings.SITE_URL,
+                'organizer_name': organizer.name,
+                'event_name': str(event.name),
+                'event_url': event_url,
+                'organizer_url': organizer_url,
+            }
+            body_plain = tpl_plain.render(ctx)
+            body_html = inline_css(tpl_html.render(ctx))
 
-            try:
-                organizer_url = multidomain_build_absolute_uri(
-                    organizer,
-                    'presale:organizer.index',
-                )
-                event_url = multidomain_build_absolute_uri(
-                    event,
-                    'presale:event.index',
-                )
-            except Exception:
-                organizer_url = settings.SITE_URL
-                event_url = settings.SITE_URL
-
-            followers = (
-                OrganizerFollower.objects.filter(organizer=organizer)
-                .select_related('user')
-                .iterator()
+            subject = '[{}] {}: {}'.format(
+                settings.INSTANCE_NAME,
+                organizer.name,
+                str(event.name),
             )
 
-            tpl_html = get_template('pretixbase/email/organizer_follower_new_event.html')
-            tpl_plain = get_template('pretixbase/email/organizer_follower_new_event.txt')
-
-            for follower in followers:
-                user = follower.user
-                if not user.is_active or not user.email:
-                    continue
-                if not user.notifications_send:
-                    continue
-
-                with language(user.locale or settings.LANGUAGE_CODE):
-                    ctx = {
-                        'site': settings.INSTANCE_NAME,
-                        'site_url': settings.SITE_URL,
-                        'organizer_name': organizer.name,
-                        'event_name': str(event.name),
-                        'event_url': event_url,
-                        'organizer_url': organizer_url,
-                    }
-                    body_plain = tpl_plain.render(ctx)
-                    body_html = inline_css(tpl_html.render(ctx))
-
-                    subject = '[{}] {}: {}'.format(
-                        settings.INSTANCE_NAME,
-                        organizer.name,
-                        str(event.name),
-                    )
-
-                    mail_send_task.apply_async(
-                        kwargs={
-                            'to': [user.email],
-                            'subject': subject,
-                            'body': body_plain,
-                            'html': body_html,
-                            'sender': settings.MAIL_FROM,
-                            'headers': {},
-                            'user': user.pk,
-                        }
-                    )
-
-            event.log_action('eventyay.organizer.follower_notification.sent')
-    except Exception:
-        raise
+            mail_send_task.apply_async(
+                kwargs={
+                    'to': [user.email],
+                    'subject': subject,
+                    'body': body_plain,
+                    'html': body_html,
+                    'sender': settings.MAIL_FROM,
+                    'headers': {},
+                    'user': user.pk,
+                }
+            )
 

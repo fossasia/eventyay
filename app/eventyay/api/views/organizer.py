@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import django_filters
 from django.db import transaction
+from django.db.models import Count, Exists, OuterRef
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
@@ -61,19 +62,28 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('name', 'slug')
 
     def get_queryset(self):
+        follower_subquery = Exists(
+            OrganizerFollower.objects.filter(organizer=OuterRef('pk'), user=self.request.user)
+        ) if self.request.user.is_authenticated else None
+
         if self.request.user.is_authenticated:
             if self.request.user.has_active_staff_session(self.request.session.session_key):
-                return Organizer.objects.all()
+                qs = Organizer.objects.all()
             elif isinstance(self.request.auth, OAuthAccessToken):
-                return Organizer.objects.filter(
+                qs = Organizer.objects.filter(
                     pk__in=self.request.user.teams.values_list('organizer', flat=True)
                 ).filter(pk__in=self.request.auth.organizers.values_list('pk', flat=True))
             else:
-                return Organizer.objects.filter(pk__in=self.request.user.teams.values_list('organizer', flat=True))
+                qs = Organizer.objects.filter(pk__in=self.request.user.teams.values_list('organizer', flat=True))
         elif hasattr(self.request.auth, 'organizer_id'):
-            return Organizer.objects.filter(pk=self.request.auth.organizer_id)
+            qs = Organizer.objects.filter(pk=self.request.auth.organizer_id)
         else:
-            return Organizer.objects.filter(pk=self.request.auth.team.organizer_id)
+            qs = Organizer.objects.filter(pk=self.request.auth.team.organizer_id)
+
+        qs = qs.annotate(_follower_count=Count('followers'))
+        if follower_subquery is not None:
+            qs = qs.annotate(_is_following=follower_subquery)
+        return qs
 
     @action(detail=True, methods=['post'], url_path='follow')
     def follow(self, request, *args, **kwargs):
