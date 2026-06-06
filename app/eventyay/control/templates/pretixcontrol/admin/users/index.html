@@ -262,13 +262,13 @@
     </div>
 
     {# Admin Confirmation Dialog #}
-    <dialog id="admin-confirm-dialog" class="admin-confirm-dialog">
+    <dialog id="admin-confirm-dialog" class="admin-confirm-dialog" aria-labelledby="admin-confirm-title" aria-describedby="admin-confirm-message">
         <div class="modal-card-content">
-            <h4 class="modal-title">{% trans "Confirm Admin Status" %}</h4>
+            <h4 class="modal-title" id="admin-confirm-title">{% trans "Confirm Admin Status" %}</h4>
             <p id="admin-confirm-message"></p>
             <div class="text-right">
                 <button type="button" class="btn btn-default" id="admin-cancel-btn">{% trans "Cancel" %}</button>
-                <button type="button" class="btn btn-primary" id="admin-confirm-btn">{% trans "Confirm" %}</button>
+                <button type="button" class="btn btn-primary" id="admin-confirm-btn" autofocus>{% trans "Confirm" %}</button>
             </div>
         </div>
     </dialog>

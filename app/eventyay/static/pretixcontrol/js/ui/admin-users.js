@@ -167,22 +167,28 @@ const adminDialog = document.getElementById('admin-confirm-dialog');
 
 if (adminDialog) {
     adminDialog.addEventListener('close', () => {
-        if (adminDialog.returnValue !== 'confirm' && pendingAdminAction) {
-            pendingAdminAction.checkbox.checked = !pendingAdminAction.isChecked;
+        if (!pendingAdminAction) {
+            adminDialog.returnValue = '';
+            return;
         }
-        pendingAdminAction = null;
-        adminDialog.returnValue = '';
+
+        if (adminDialog.returnValue === 'confirm') {
+            const { form, checkbox, isChecked } = pendingAdminAction;
+            pendingAdminAction = null;
+            adminDialog.returnValue = '';
+            form.dataset.toggleType = 'admin_confirmed';
+            submitToggle(form, checkbox, isChecked).finally(() => {
+                form.dataset.toggleType = 'admin';
+            });
+        } else {
+            pendingAdminAction.checkbox.checked = !pendingAdminAction.isChecked;
+            pendingAdminAction = null;
+            adminDialog.returnValue = '';
+        }
     });
 
     document.getElementById('admin-confirm-btn')?.addEventListener('click', () => {
-        adminDialog.returnValue = 'confirm';
-        adminDialog.close();
-        if (pendingAdminAction) {
-            pendingAdminAction.form.dataset.toggleType = 'admin_confirmed';
-            submitToggle(pendingAdminAction.form, pendingAdminAction.checkbox, pendingAdminAction.isChecked);
-            pendingAdminAction.form.dataset.toggleType = 'admin';
-            pendingAdminAction = null;
-        }
+        adminDialog.close('confirm');
     });
 
     document.getElementById('admin-cancel-btn')?.addEventListener('click', () => {
