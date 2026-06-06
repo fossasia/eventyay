@@ -33,8 +33,9 @@
             </form>
         </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-condensed table-hover table-quotas">
+    <div data-ajax-results-region>
+        <div class="table-responsive">
+            <table class="table table-condensed table-hover table-quotas">
             <thead>
             <tr>
                 <th>{% trans "Id" %}</th>
@@ -79,7 +80,8 @@
                </tr>
            {% endif %}
             </tbody>
-        </table>
+            </table>
+        </div>
+        {% include "pretixcontrol/pagination.html" %}
     </div>
-    {% include "pretixcontrol/pagination.html" %}
 {% endblock %}
