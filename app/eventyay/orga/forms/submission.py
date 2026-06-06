@@ -116,8 +116,8 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()
         if 'content_locale' in self.fields:
-            if not self.event.is_multilingual:
-                default_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locales[0]
+            if len(self.event.content_locales) <= 1:
+                default_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
                 self.default_values['content_locale'] = default_locale
                 self.fields.pop('content_locale')
             else:

@@ -169,7 +169,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['event_languages'] = event_languages
         selected_content_locales = self.request.event.settings.content_locales
         context['selected_content_locales'] = selected_content_locales
-        context['effective_content_locales'] = selected_content_locales or event_languages
+        context['effective_content_locales'] = selected_content_locales if selected_content_locales is not None else event_languages
 
         # Pass saved field order to template for JavaScript reordering.
         # normalize_field_order ensures every built-in field is present at

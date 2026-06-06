@@ -237,25 +237,29 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             )
 
         if not obj.is_multilingual:
-            self.fields['cfp_ask_content_locale'].initial = 'do_not_ask'
-            self.fields['cfp_ask_content_locale'].disabled = True
-            self.fields['cfp_public_content_locale'].initial = False
-            self.fields['cfp_public_content_locale'].disabled = True
-            self.fields.pop('content_locales', None)
-        else:
-            available_codes = [code for code, _ in obj.available_content_locales]
-            choices = get_language_choices_native_with_ui_name(codes=available_codes)
-            existing_codes = {c[0] for c in choices}
-            for code, name in obj.available_content_locales:
-                if code not in existing_codes:
-                    choices.append((code, name))
-
-            self.fields['content_locales'] = forms.MultipleChoiceField(
-                choices=choices,
-                widget=MultipleLanguagesWidget(),
-                required=False,
-                initial=obj.settings.get('content_locales') or [],
+            saved_visibility = obj.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            settings_content_locales = obj.settings.get('content_locales') or []
+            is_default_config = (
+                saved_visibility == 'required'
+                and (not settings_content_locales or set(settings_content_locales) == set(obj.locales))
             )
+            if is_default_config:
+                self.fields['cfp_ask_content_locale'].initial = 'do_not_ask'
+                self.fields['cfp_public_content_locale'].initial = False
+
+        available_codes = [code for code, _ in obj.available_content_locales]
+        choices = get_language_choices_native_with_ui_name(codes=available_codes)
+        existing_codes = {c[0] for c in choices}
+        for code, name in obj.available_content_locales:
+            if code not in existing_codes:
+                choices.append((code, name))
+
+        self.fields['content_locales'] = forms.MultipleChoiceField(
+            choices=choices,
+            widget=MultipleLanguagesWidget(),
+            required=False,
+            initial=obj.settings.get('content_locales') or [],
+        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -282,7 +286,8 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             self.instance.cfp.settings['fields_config'] = fields_config
 
         if 'content_locales' in self.cleaned_data:
-            self.instance.settings.set('content_locales', self.cleaned_data['content_locales'])
+            if self.cleaned_data.get('cfp_ask_content_locale') != 'do_not_ask':
+                self.instance.settings.set('content_locales', self.cleaned_data['content_locales'])
 
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:

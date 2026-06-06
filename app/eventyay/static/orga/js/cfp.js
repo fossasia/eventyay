@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dialog) {
         let initialCheckedStates = [];
         let initialToggleState = false;
+        let isRestoring = false;
 
         const isToggleChecked = () => {
             const firstToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch[data-field-id] input[type='checkbox']");
@@ -64,12 +65,14 @@ document.addEventListener("DOMContentLoaded", () => {
             initialCheckedStates.forEach(item => {
                 item.checkbox.checked = item.checked;
             });
+            isRestoring = true;
             contentLocaleToggles.forEach(toggle => {
                 if (toggle.checked !== initialToggleState) {
                     toggle.checked = initialToggleState;
                     toggle.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             });
+            isRestoring = false;
             if (initialToggleState) {
                 settingsBtns.forEach(btn => btn.classList.remove("hidden"));
             } else {
@@ -80,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         contentLocaleToggles.forEach(toggle => {
             toggle.addEventListener("change", (ev) => {
+                if (isRestoring) return;
                 contentLocaleToggles.forEach(t => {
                     t.checked = ev.target.checked;
                 });
