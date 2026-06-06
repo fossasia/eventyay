@@ -688,7 +688,8 @@ This usually means a static asset was requested but an HTML response, such as a 
 Rebuild static assets:
 
 .. code-block:: bash
-
+   docker compose exec redis redis-cli FLUSHALL
+   docker compose exec web rm -rf /usr/src/app/eventyay/static.dist/CACHE/css/*
    docker exec -ti eventyay-next-web make npminstall
    docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
    docker exec -ti eventyay-next-web python manage.py compress --force
