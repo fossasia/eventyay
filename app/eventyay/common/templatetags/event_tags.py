@@ -148,6 +148,11 @@ def tickets_tab_visible(context, event=None):
         return False
     if request and not event.user_can_view_tickets(getattr(request, 'user', None), request=request):
         return False
+
+    target_event = context.get('ev') or context.get('subevent') or event
+    if target_event and not target_event.presale_is_running and not event.settings.show_products_outside_presale_period:
+        return False
+
     productnum = context.get('productnum')
     if productnum is not None:
         try:
