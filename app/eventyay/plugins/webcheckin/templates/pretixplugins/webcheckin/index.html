@@ -1,5 +1,6 @@
 {% load compress %}
 {% load static %}
+{% load vite %}
 {% load i18n %}
 {% load statici18n %}
 {% load eventurl %}
@@ -34,7 +35,7 @@
     <script type="text/javascript" src="{% static "moment/moment-timezone-with-data-1970-2030.js" %}"></script>
 {% endcompress %}
 
-<script type="module" src="{% static 'webcheckin/webcheckin.js' %}"></script>
+{% vite_app_scripts 'webcheckin' 'src/webcheckin.js' fallback='webcheckin/webcheckin.js' %}
 <script type="application/json" id="countries">{{ countries|escapejson_dumps }}</script>
 {% csrf_token %}
 </body>

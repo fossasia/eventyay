@@ -1,6 +1,7 @@
 {% extends "agenda/base.html" %}
 
 {% load event_tags %}
+{% load vite %}
 {% load html_signal %}
 {% load static %}
 
@@ -28,7 +29,7 @@
 {% html_signal "eventyay.agenda.signals.html_above_session_pages" sender=request.event request=request submission=submission %}
 <div>
     <script id="pretalx-schedule-data" type="application/json">{{ schedule_json|safe }}</script>
-    <script type="module" src="{% static 'schedule/pretalx-schedule.js' %}"></script>
+    {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback='schedule/pretalx-schedule.js' %}
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="talk" talk-code="{{ submission.code }}" {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}
