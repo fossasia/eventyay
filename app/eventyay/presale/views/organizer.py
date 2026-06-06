@@ -8,10 +8,11 @@ import pytz
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Exists, Max, Min, OuterRef, Q
+from django.db.models import Count, Exists, Max, Min, OuterRef, Q, Value
 from django.db.models.functions import Coalesce, Greatest
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.decorators import method_decorator
 from django.utils.formats import date_format, get_format
 from django.utils.timezone import get_current_timezone, now
@@ -25,6 +26,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import (
     Event,
     EventMetaValue,
+    Organizer,
     OrganizerFollower,
     Quota,
     SubEvent,
@@ -342,13 +344,19 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
         ctx['follow_enabled'] = follow_enabled
         ctx['show_follower_count'] = organizer.settings.get('community_show_follower_count', as_type=bool, default=True)
         if follow_enabled:
-            ctx['follower_count'] = OrganizerFollower.objects.filter(organizer=organizer).count()
+            qs = Organizer.objects.filter(pk=organizer.pk).annotate(
+                follower_count=Count('followers')
+            )
             if self.request.user.is_authenticated:
-                ctx['is_following'] = OrganizerFollower.objects.filter(
-                    organizer=organizer, user=self.request.user
-                ).exists()
+                qs = qs.annotate(
+                    is_following=Exists(OrganizerFollower.objects.filter(organizer=OuterRef('pk'), user=self.request.user))
+                )
             else:
-                ctx['is_following'] = False
+                qs = qs.annotate(is_following=Value(False))
+
+            org_data = qs.values('follower_count', 'is_following').first()
+            ctx['follower_count'] = org_data['follower_count'] if org_data else 0
+            ctx['is_following'] = org_data['is_following'] if org_data else False
         return ctx
 
 
@@ -794,8 +802,7 @@ class OrganizerIcalDownload(OrganizerViewMixin, View):
 
 def _safe_redirect_back(request, organizer):
     referer = request.META.get('HTTP_REFERER', '')
-    host = request.get_host()
-    if referer and host and referer.startswith(f'{request.scheme}://{host}'):
+    if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts=[request.get_host()]):
         return redirect(referer)
     return redirect(eventreverse(organizer, 'presale:organizer.index'))
 
