@@ -1,284 +1,691 @@
-eventyay-tickets (ENext)
-========================
+Eventyay
+========
 
-Project status & release cycle
+Eventyay is an open source event management platform by `FOSSASIA <https://fossasia.org>`_. It provides a unified system for event ticketing, registration, call for participation, speaker and session management, scheduling, online event video, web check in, organiser administration, APIs, and plugin based extensions.
+
+Eventyay has been in development since 2014. Parts of the system historically originated from separate components for tickets, talks, and video. The current repository contains the unified Eventyay codebase.
+
+Project status and release cycle
+--------------------------------
+
+Eventyay is actively developed.
+
+The repository uses the following branch model:
+
+* ``main`` is the production ready branch.
+* ``dev`` is the testing and active development branch.
+
+Pull requests should normally target ``dev``. Changes are tested and stabilised there before they are moved to ``main`` for production ready releases.
+
+The repository is intended for:
+
+* Contributors working on the Eventyay platform
+* Developers building Eventyay plugins and integrations
+* Operators evaluating or deploying self hosted Eventyay instances
+* Event organisers and partners who need an extensible open source event platform
+
+Main features
+-------------
+
+Eventyay includes:
+
+* Event ticketing and registration
+* Event related item sales, such as shirts or add ons
+* Organiser and event administration
+* Call for Participation workflows
+* Speaker, submission, review, and schedule management
+* Public event pages
+* Schedule display and schedule editor frontends
+* Online event and video related workflows
+* Web based check in
+* Separate check in station support through the Eventyay Checkin component
+* PDF ticket and badge related workflows
+* REST API endpoints
+* OAuth and social authentication support
+* Multi domain and multi event handling
+* Plugin discovery and plugin URL registration
+* Standard plugins and external plugin extensions for payments, CRM, exhibitions, social media, team shifts, interpretation, and spatial event integrations
+* Email, notifications, scheduled tasks, reports, statistics, and check in lists
+* Health check and metrics endpoints
+* Internationalisation and translation infrastructure
+
+Technology stack
+----------------
+
+Backend:
+
+* Python 3.12
+* Django 5.2
+* Django REST Framework
+* PostgreSQL
+* Redis
+* Celery
+* Django Channels
+* Daphne / ASGI
+* Pydantic settings
+* uv for Python dependency management
+
+Frontend:
+
+* Vue 3
+* Vite
+* JavaScript and TypeScript depending on the frontend module
+* SCSS / Stylus
+* Django Compressor for selected legacy and Django integrated assets
+
+Quick start with Docker
+-----------------------
+
+Docker is the recommended way to start quickly.
+
+Requirements:
+
+* Docker
+* Docker Compose plugin
+* Git
+
+Steps:
+
+.. code-block:: bash
+
+   git clone https://github.com/fossasia/eventyay.git
+   cd eventyay
+   git switch dev
+
+   cp deployment/env.dev.sample .env.dev
+
+   docker compose up -d --build
+
+Create an admin user:
+
+.. code-block:: bash
+
+   docker exec -ti eventyay-next-web python manage.py create_admin_user
+
+Open the local site:
+
+.. code-block:: text
+
+   http://localhost:8000
+
+View logs:
+
+.. code-block:: bash
+
+   docker compose logs -f
+
+Stop the development stack:
+
+.. code-block:: bash
+
+   docker compose down
+
+The directory ``app/eventyay`` is mounted into the Docker container, so live editing of backend code is supported.
+
+Python based local development
 ------------------------------
 
-Welcome to the **Eventyay** project! The ticketing component of the system provides options for **ticket sales and event-related items** such as T-shirts. Eventyay has been in development since **2014**. Its ticketing component is based on a fork of **Pretix**.
+Use this setup when you want to run services directly on your machine.
 
-ENext is the new and updated version of Eventyay with a unified codebase for the Tickets, Talk, and Videos components.
+Requirements:
 
-Getting Started
----------------
+* Python 3.12
+* `uv <https://docs.astral.sh/uv/getting-started/installation/>`_
+* PostgreSQL
+* Redis
+* Node.js and npm
+* Debian or Ubuntu packages listed in ``deb-packages.txt`` or equivalent packages for your distribution
 
-Python-based development
-------------------------------------------------------------
-
-0. **Clone the repository**:
-
-.. code-block:: bash
-
-  git clone https://github.com/fossasia/eventyay.git
-
-1. **Install external dependencies**:
-
-The *deb-packages.txt* file lists Debian packages we need to install.
-If you are using Debian / Ubuntu, you can install them quickly with this command:
-
-For traditional shell:
+Clone the repository:
 
 .. code-block:: bash
 
-  $ xargs -a deb-packages.txt sudo apt install
+   git clone https://github.com/fossasia/eventyay.git
+   cd eventyay
+   git switch dev
+
+Install external dependencies on Debian or Ubuntu:
+
+.. code-block:: bash
+
+   xargs -a deb-packages.txt sudo apt install
 
 For Nushell:
 
 .. code-block:: nu
 
-  > open deb-packages.txt | lines | sudo apt install ...$in
+   open deb-packages.txt | lines | sudo apt install ...$in
 
+If you are using another Linux distribution, install the corresponding packages from ``deb-packages.txt``.
 
-If you are using other Linux distros, please guess the corresponding package names for that list.
+Install `uv <https://docs.astral.sh/uv/getting-started/installation/>`_.
 
-Other than that, please install `uv`_, the Python package manager.
+Install and run Redis according to your distribution.
 
-2. **Install and run Redis**
+Create a PostgreSQL database. The default local database name is:
 
-Depending on your distribution.
+.. code-block:: text
 
-3. **Create a PostgreSQL database**
+   eventyay-db
 
-The default database name that the project needs is ``eventyay-db``. If you are using Linux, the simplest way
-to work with database is to use its "peer" mode (no need to remember password).
+On Linux, the simplest local development setup is PostgreSQL peer mode. Create a PostgreSQL user with the same name as your Linux user:
 
-Create a Postgres user with the same name as your Linux user:
+.. code-block:: bash
 
-.. code-block:: sh
+   sudo -u postgres createuser -s "$USER"
 
-  sudo -u postgres createuser -s $USER
+Then create a database owned by your user:
 
-(``-s`` means *superuser*)
+.. code-block:: bash
 
-Then just create a database owned by your user:
+   createdb eventyay-db
 
-.. code-block:: sh
+You can then access the database without specifying a password, host, or port:
 
-  createdb eventyay-db
+.. code-block:: bash
 
-From now on, you can do everything with the database without specifying password, host and port.
+   psql eventyay-db
 
-.. code-block:: sh
-
-  psql eventyay-db
-
-In case you cannot take advantage of PostgreSQL *peer* mode, you need to create a *eventyay.local.toml* file with these values:
+If you cannot use PostgreSQL peer mode, create ``app/eventyay.local.toml`` with database connection values:
 
 .. code-block:: toml
 
-  postgres_user = 'your_db_user'
-  postgres_password = 'your_db_password'
-  postgres_host = 'localhost'
-  postgres_port = 5432
+   postgres_user = "your_db_user"
+   postgres_password = "your_db_password"
+   postgres_host = "localhost"
+   postgres_port = 5432
 
-
-4. **Enter the project directory and app directory**:
-
-.. code-block:: bash
-
-  cd eventyay/app
-
-5. **Switch to the `dev` branch**:
+Enter the app directory:
 
 .. code-block:: bash
 
-  git switch dev
+   cd app
 
-6. **Install Python packages**
-
-Use ``uv`` to create virtual environment and install Python packages at the same time.
-**Make sure you are in app directory**
-
-.. code-block:: sh
-
-  uv sync --all-extras --all-groups
-
-7. **Activate virtual environment**
-
-After running ``uv sync``, activate a virtual environment
-
-.. code-block:: sh
-
-  . .venv/bin/activate
-
-8. **Initialize the database**:
+Install Python dependencies:
 
 .. code-block:: bash
 
-  python manage.py migrate
+   uv sync --all-extras --all-groups
 
-9. **Create an admin user account** (for accessing the admin panel):
-
-.. code-block:: bash
-
-  python manage.py create_admin_user
-
-10. **Build Frontend Assets**:
+Activate the virtual environment:
 
 .. code-block:: bash
 
-  make npminstall
-  python manage.py collectstatic --noinput
-  python manage.py compress --force
+   . .venv/bin/activate
 
-11. **Run the development server**:
+Run migrations:
 
 .. code-block:: bash
 
-  python manage.py runserver
+   python manage.py migrate
 
-Mobile testing note: If you want to test the site from an **Android emulator**, use
-``http://10.0.2.2:8000/`` (Android's alias for the host machine's localhost).
+Create an admin user:
 
+.. code-block:: bash
 
-Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
-all below it are own by you.
+   python manage.py create_admin_user
 
-Docker based development
-------------------------
+Build frontend and static assets:
 
-We assume your current working directory is the checkout of this repo.
+.. code-block:: bash
 
-1. **Create .env.dev**
+   make npminstall
+   python manage.py collectstatic --noinput
+   python manage.py compress --force
 
-   .. code-block:: bash
+Run the development server:
 
-      cp deployment/env.dev.sample .env.dev
+.. code-block:: bash
 
-2. **Build and run the images**
+   python manage.py runserver
 
-   .. code-block:: bash
+Open:
 
-      docker compose up -d --build
+.. code-block:: text
 
-3. **Create an admin account** (for accessing the admin panel):
+   http://localhost:8000
 
-   This asks for an email and a password, and this information will be
-   used to log into the system the first time.
+Run Celery locally when working on background tasks:
 
-   This should be necessary only once, since the database is persisted
-   as docker volume. If you see strange behaviour, see Troubleshooting below
-   on how to reset.
+.. code-block:: bash
 
-   .. code-block:: bash
+   celery -A eventyay worker -l info
 
-      docker exec -ti eventyay-next-web python manage.py create_admin_user
-
-4. **Visit the site**
-
-   Open `http://localhost:8000` in a browser.
-
-   If there are issues, see Troubleshooting below.
+Mobile testing note
+~~~~~~~~~~~~~~~~~~~
 
 
-5. **Checking the logs**
+If you want to test the site from an Android emulator, use:
 
-   .. code-block:: bash
+.. code-block:: text
 
-      docker compose logs -f
+   http://10.0.2.2:8000/
 
+This is Android's alias for the host machine's localhost.
 
-6. **Shut down**
-
-   To shut down the development docker deployment, run
-
-   .. code-block:: bash
-
-      docker compose down
-
-The directory `app/eventyay` is mounted into the docker, thus live editing is supported.
-
-7. **Developing Plugins**
-
-   If you are developing plugins (such as ``eventyay-exhibitor``), create a directory named ``plugins`` in the root of this repository (i.e. ``./plugins/``). Place your plugin folders in it:
-
-   .. code-block:: text
-
-      .
-      └── eventyay/                 # This repository root
-          └── plugins/              # Local plugins directory (gitignored)
-              └── eventyay-exhibitor/
-              └── eventyay-flowspace/
-
-   On container startup, the startup script will automatically scan the ``./plugins/`` directory and install all detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
-
-
-8. **Live Frontend Development (Vite HMR)**
-
-   Set ``EVY_NPM_DEV=1`` in ``.env.dev`` to enable hot module replacement for all
-   frontend webapps (video, webcheckin, schedule, schedule-editor). Vite dev servers
-   start automatically inside the container on these ports 
-   (you are not required to visit these exposed ports they will work alongside localhost:8000 with hot module replacement):
-
-   ================= ======
-   Webapp            Port
-   ================= ======
-   schedule-editor   8080
-   video             8880
-   webcheckin        8081
-   schedule          8082
-   ================= ======
-
-   .. code-block:: bash
-
-      # Enable live dev mode
-      EVY_NPM_DEV=1
-
-   When enabled, changes to Vue/JS/CSS source files are reflected instantly without
-   rebuilding. The container must be recreated (not just restarted) for the env
-   change to take effect:
-
-   .. code-block:: bash
-
-      docker compose up -d web
-
-   **Default is ``EVY_NPM_DEV=0``** — Django serves pre-built static files.
-   Always verify your production build works with the default value before
-   submitting changes:
-
-   .. code-block:: bash
-
-      docker exec -ti eventyay-next-web make npminstall
-      docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
-
-
-9. **Email Configuration for Testing**
-
-   By default, emails are printed to the terminal logs (console backend). To properly
-   test email-related features, configure a real mail server such as SendGrid, Gmail SMTP,
-   or another SMTP provider by setting the appropriate environment.
-
-   For Gmail SMTP, use ``smtp.gmail.com`` as the host and ``587`` as the port with TLS enabled.
-   You may need to use an App Password if 2FA is enabled on your Google account.
-
-
-Troubleshooting
+Permission note
 ~~~~~~~~~~~~~~~
 
-**CSS not loading / MIME type errors**
+If you get permission errors for ``eventyay/static/CACHE``, make sure that the directory and all files below it are owned by your user.
 
-In some environments (e.g. Docker with WSL), you may encounter cases where
-pages load without CSS or only some pages load correctly.
+Frontend development
+--------------------
+
+The repository contains several frontend applications under ``app/eventyay/webapp/``:
+
+.. code-block:: text
+
+   app/eventyay/webapp/
+   ├── schedule/              Schedule display web component
+   ├── schedule-editor/       Schedule editor frontend
+   ├── video/                 Online event video frontend
+   └── webcheckin/            Web check in frontend
+
+The root app ``Makefile`` installs and builds these frontend applications through npm and places compiled assets into the Django app data directory.
+
+By default, Docker serves prebuilt frontend assets. To enable hot module replacement for frontend development, set this in ``.env.dev``:
+
+.. code-block:: bash
+
+   EVY_NPM_DEV=1
+
+When enabled, Vite dev servers start automatically inside the container for the frontend webapps.
+
+- ``schedule-editor`` runs on port ``8080``.
+- ``video`` runs on port ``8880``.
+- ``webcheckin`` runs on port ``8081``.
+- ``schedule`` runs on port ``8082``.
+
+You do not normally need to visit these ports directly. The frontend works alongside ``http://localhost:8000`` with hot module replacement.
+
+The container must be recreated, not only restarted, for the environment change to take effect:
+
+.. code-block:: bash
+
+   docker compose up -d web
+
+The default is:
+
+.. code-block:: bash
+
+   EVY_NPM_DEV=0
+
+Before submitting frontend changes, always verify that the production asset build still works with the default value:
+
+.. code-block:: bash
+
+   docker exec -ti eventyay-next-web make npminstall
+   docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
+
+Configuration
+-------------
+
+The Eventyay configuration is based on TOML files, environment variables, dotenv files, and secret files. To see possible configuration keys and default values, check the ``BaseSettings`` class in ``app/eventyay/config/settings.py``.
+
+The configuration is divided into three running environments:
+
+- ``development``: Uses default values from ``eventyay.development.toml``.
+- ``production``: Uses default values from ``eventyay.production.toml``.
+- ``testing``: Uses default values from ``eventyay.testing.toml``.
+
+The values in these files override values defined in ``BaseSettings``.
+
+The running environment is selected via the ``EVY_RUNNING_ENVIRONMENT`` environment variable. It is pre-set in ``manage.py``, ``wsgi.py``, and ``asgi.py``.
+
+For example, to run a command in the production environment:
+
+.. code-block:: bash
+
+   EVY_RUNNING_ENVIRONMENT=production ./manage.py command
+
+Configuration sources are loaded with the following precedence:
+
+1. Secret files in ``.secrets/``
+2. Environment variables with the ``EVY_`` prefix
+3. ``.env`` in the current working directory
+4. ``eventyay.local.toml``
+5. Environment specific TOML files such as ``eventyay.development.toml``, ``eventyay.production.toml``, or ``eventyay.testing.toml``
+
+How to override configuration values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a file named ``eventyay.local.toml`` in the same folder as the ``manage.py`` file.
+
+Add only the values you want to override. For example, to override the ``debug`` value, add:
+
+.. code-block:: toml
+
+   debug = true
+
+For database connection values, a local override can look like this:
+
+.. code-block:: toml
+
+   postgres_user = "your_db_user"
+   postgres_password = "your_db_password"
+   postgres_host = "localhost"
+   postgres_port = 5432
+
+For complex values such as lists, prefer TOML files over environment variables.
+
+You can also override values via environment variables. Environment variable names are the uppercase versions of the setting keys, prefixed by ``EVY_``.
+
+For example, to override the ``debug`` value:
+
+.. code-block:: bash
+
+   export EVY_DEBUG=true
+
+A dotenv file, ``.env``, is also supported. Values from ``.env`` are overridden by environment variables.
+
+Sensitive data such as passwords and API keys should be provided via files in the ``.secrets`` directory, one file per key. The file name follows the same pattern as environment variable names with the ``EVY_`` prefix. The file content is the value.
+
+For example, to provide a value for the ``secret_key`` setting, create this file:
+
+.. code-block:: text
+
+   .secrets/EVY_SECRET_KEY
+
+If you deploy the app via Docker containers, you can provide secret data through `Docker secrets <https://docs.docker.com/engine/swarm/secrets/>`_.
+
+Email configuration for testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+By default, emails are printed to the terminal logs through the console backend.
+
+To test email related features with real delivery, configure a mail server such as SendGrid, Gmail SMTP, or another SMTP provider.
+
+For Gmail SMTP, use:
+
+.. code-block:: text
+
+   Host: smtp.gmail.com
+   Port: 587
+   TLS: enabled
+
+If 2FA is enabled on the Google account, you may need to use an App Password.
+
+Plugins and extensions
+----------------------
+
+Eventyay comes with several plugins that are part of the standard setup. These built in plugins provide common functionality for authentication, reports, badges, check in workflows, scheduled tasks, statistics, and ticket outputs.
+
+Built in and standard plugin areas include:
+
+- Authentication and social auth
+- Bank transfer
+- Badges
+- Sendmail
+- Statistics
+- Reports
+- Check in lists
+- Manual payment
+- Return URLs
+- Scheduled tasks
+- PDF ticket output
+- Web check in
+
+Eventyay also supports external plugin extensions. These plugins can be installed to add integrations or event specific functionality.
+
+Available plugin extensions include:
+
+- `eventyay-exhibition <https://github.com/fossasia/eventyay-exhibition>`_: Exhibition component
+- `eventyay-interpretation <https://github.com/fossasia/eventyay-interpretation>`_: Integration with interpretation services such as Voxbento
+- `eventyay-hubspot <https://github.com/fossasia/eventyay-hubspot>`_: HubSpot integration
+- `eventyay-loungemesh <https://github.com/fossasia/eventyay-loungemesh>`_: Loungemesh integration
+- `eventyay-socialmedia <https://github.com/fossasia/eventyay-socialmedia>`_: Social media sharing and publishing integration
+- `eventyay-teamshifts <https://github.com/fossasia/eventyay-teamshifts>`_: Team shifts and volunteer shift management plugin
+
+Available payment plugins are:
+
+- `eventyay-bitpay <https://github.com/fossasia/eventyay-bitpay>`_: BitPay crypto payment integration
+- `eventyay-paypal <https://github.com/fossasia/eventyay-paypal>`_: PayPal payment integration
+- `eventyay-stripe <https://github.com/fossasia/eventyay-stripe>`_: Stripe payment integration
+
+To create a new Eventyay plugin, use the `eventyay plugin cookiecutter template <https://github.com/fossasia/eventyay-plugin-cookiecutter>`_.
+
+Eventyay discovers compatible plugins through installed Django apps and Python entry points. The platform can register plugin URL patterns automatically when plugin metadata and URL modules are available.
+
+Developing plugins locally
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are developing plugins, create a directory named ``plugins`` in the root of this repository. This directory is gitignored and can contain local plugin checkouts.
+
+Example:
+
+.. code-block:: text
+
+   .
+   └── eventyay/
+       └── plugins/
+           ├── eventyay-exhibitor/
+           └── eventyay-loungemesh/
+
+When using the Docker development setup, the startup script scans ``./plugins/`` and installs detected plugins in editable mode. Installation status is cached in ``/tmp/eventyay-plugin-stamps/`` to speed up container boot times.
+
+Separate Eventyay components
+----------------------------
+
+Eventyay also provides separate components that can be used together with the main platform.
+
+Eventyay Checkin
+~~~~~~~~~~~~~~~~
+
+`Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check in component for kiosk stations. It enables organisers to check in attendees at dedicated check in stations during an event.
+
+Common development commands
+---------------------------
+
+Run from ``app/`` unless stated otherwise.
+
+Install dependencies:
+
+.. code-block:: bash
+
+   uv sync --all-extras --all-groups
+
+Activate virtual environment:
+
+.. code-block:: bash
+
+   . .venv/bin/activate
+
+Apply database migrations:
+
+.. code-block:: bash
+
+   python manage.py migrate
+
+Run development server:
+
+.. code-block:: bash
+
+   python manage.py runserver
+
+Run Celery worker:
+
+.. code-block:: bash
+
+   celery -A eventyay worker -l info
+
+Build development static files:
+
+.. code-block:: bash
+
+   make staticfiles
+
+Build production assets:
+
+.. code-block:: bash
+
+   make production
+
+Run tests:
+
+.. code-block:: bash
+
+   pytest tests/
+
+Compile translations:
+
+.. code-block:: bash
+
+   make localecompile
+
+Regenerate translation files:
+
+.. code-block:: bash
+
+   make localegen
+
+Build JavaScript translation catalogues and static files:
+
+.. code-block:: bash
+
+   make staticfiles
+
+API and service endpoints
+-------------------------
+
+Important local endpoints include:
+
+.. code-block:: text
+
+   /                         Public start page
+   /orga/                    Organiser area for talks and speakers configuration and setup
+   /control/                 Ticketing control and organiser management area
+   /admin/                   Platform admin interface
+   /api/v1/                  REST API
+   /healthcheck/             Health check
+   /metrics/                 Metrics endpoint
+   /accounts/                Account and authentication routes
+   /<organizer>/             Organizer public routes
+   /<organizer>/<event>/     Event public routes
+   /<organizer>/<event>/cfp/ Call for Participation routes
+   /<organizer>/<event>/video/ Online event video frontend
+
+Repository layout
+-----------------
+
+Important paths:
+
+.. code-block:: text
+
+   .
+   ├── app/
+   │   ├── eventyay/          Main Eventyay application code
+   │   ├── tests/             Backend and integration tests
+   │   ├── tools/             App related helper tools
+   │   ├── manage.py          Django management entry point
+   │   ├── pyproject.toml     Python project metadata and dependencies
+   │   └── Makefile           Asset, translation, and test helper commands
+   ├── deployment/            Docker, deployment, environment, and nginx related files
+   ├── doc/                   Project documentation sources
+   ├── tools/                 Repository level tools
+   ├── docker-compose.yml     Local Docker development stack
+   ├── CONTRIBUTING.md        Contribution workflow
+   ├── DEPLOYMENT.md          Deployment notes
+   ├── CLA.md                 Contributor License Agreement information
+   ├── LICENSE                Apache License 2.0
+   └── NOTICE                 Attribution and upstream notices
+
+Main backend modules are under ``app/eventyay/``. Important areas include:
+
+.. code-block:: text
+
+   app/eventyay/
+   ├── agenda/                Public schedule and agenda functionality
+   ├── api/                   API endpoints and OAuth models
+   ├── base/                  Core user, auth, middleware, and shared base code
+   ├── cfp/                   Call for Participation functionality
+   ├── common/                Shared platform utilities
+   ├── config/                Django settings, ASGI, WSGI, and URL configuration
+   ├── control/               Ticketing control and organiser management area
+   ├── event/                 Event domain logic
+   ├── features/              Feature modules such as analytics, live, importers, social, integrations
+   ├── mail/                  Email handling
+   ├── multidomain/           Multi domain routing and middleware
+   ├── orga/                  Talks and speakers organiser area
+   ├── person/                User and person related functionality
+   ├── plugins/               Built in plugins
+   ├── presale/               Ticketing and public event registration
+   ├── schedule/              Schedule related functionality
+   ├── storage/               File and media storage handling
+   ├── submission/            Submission handling
+   └── webapp/                Vue/Vite frontend applications
+
+Architecture rules for contributors
+-----------------------------------
+
+Important rules for changes:
+
+- Product code belongs under ``app/eventyay/``.
+- Tests belong under ``app/tests/``.
+- Documentation belongs under ``doc/``.
+- Event owned ORM queries must be scoped correctly with ``django_scopes.scope(event=event)``.
+- Keep imports at the top of files unless a local import is required to avoid a circular import.
+- Preserve specific exception types instead of replacing them with generic ``Exception``.
+- Do not introduce new jQuery usage or inline scripts.
+- Prefer external ES modules for JavaScript.
+- Use ``select_related`` and ``prefetch_related`` where appropriate to avoid N+1 queries.
+
+Contributing
+------------
+
+We welcome contributions.
+
+Basic workflow:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make focused changes.
+4. Add or update tests when behaviour changes.
+5. Run tests and relevant build commands locally.
+6. Open a pull request against the ``dev`` branch.
+
+Pull request expectations:
+
+- Link the PR to a GitHub issue.
+- Use closing keywords such as ``Fixes #123`` in the PR description.
+- Keep PRs small enough to review in less than a day where possible.
+- Add screenshots or short videos for UI changes.
+- Open draft PRs early for large or long running work.
+- Respond to review comments and keep the branch up to date.
+- Do not repeatedly tag reviewers.
+
+See `CONTRIBUTING.md <CONTRIBUTING.md>`_ for the full contribution guidelines.
+
+AI assisted development
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This repository includes structured guidance for AI assisted development.
+
+AI tools should consult:
+
+- ``agents.md``
+- ``.github/instructions/``
+- ``.agents/skills/``
+
+These files define repository specific coding, architecture, documentation, and pull request expectations.
+
+Troubleshooting
+---------------
+
+CSS not loading or MIME type errors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In some environments, for example Docker with WSL, pages may load without CSS or only some pages may load correctly.
 
 Browser console errors may look like:
 
-::
+.. code-block:: text
 
-     Refused to apply style because its MIME type is 'text/html'
+   Refused to apply style because its MIME type is 'text/html'
 
-This usually means a static asset was requested but an HTML response
-(e.g. a 404 page) was returned instead.
+This usually means a static asset was requested but an HTML response, such as a 404 page, was returned instead.
 
-To rebuild static assets, run:
+Rebuild static assets:
 
 .. code-block:: bash
 
@@ -287,44 +694,49 @@ To rebuild static assets, run:
    docker exec -ti eventyay-next-web python manage.py compress --force
    docker restart eventyay-next-web
 
-After this, hard-refresh the browser (Ctrl + Shift + R).
+Then hard refresh the browser with ``Ctrl + Shift + R``.
+
+Database issues in Docker
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-**Database issues**
+The database in the development Docker setup is stored in the ``eventyay-next_postgres_data_dev`` Docker volume. If you see errors concerning login or other database related behaviour, you can completely reset the database.
 
-The database in the dev docker setup is created in a docker volume. If you see
-errors concerning login etc, you can completely reset the database (you will
-lose all configuration/organizers/events!). You must stop the stack first so
-no container is using the volume; otherwise ``docker volume rm`` will fail.
-``docker compose down`` stops and removes the containers but keeps named volumes
-by default:
+You will lose all local configuration, organisers, events, users, tickets, and related database content.
+
+You must stop the stack first so no container is using the volume. Otherwise, ``docker volume rm`` will fail. ``docker compose down`` stops and removes the containers but keeps named volumes by default.
 
 .. code-block:: bash
 
    docker compose down
    docker volume rm eventyay-next_postgres_data_dev
 
+Redis issues in Docker
+~~~~~~~~~~~~~~~~~~~~~~
 
-**Redis issues**
+Redis data in the development Docker setup is stored in the ``eventyay-next_rd`` volume. This corresponds to the ``rd`` volume in ``docker-compose.yml``.
 
-Redis data in the dev docker setup is stored in the ``eventyay-next_rd`` volume
-(``rd`` in *docker-compose.yml*). If you see connection or cache-related errors,
-you can reset Redis the same way: stop the stack, then remove the volume (you
-will lose data held in Redis, such as cache or broker state):
+If you see connection, cache, broker, or background task related errors, you can reset Redis the same way: stop the stack, then remove the volume.
+
+You will lose data held in Redis, such as cache or broker state.
 
 .. code-block:: bash
 
    docker compose down
    docker volume rm eventyay-next_rd
 
+Reset PostgreSQL and Redis together
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To wipe **both** Postgres and Redis data in one go, you can run
-``docker compose down -v`` instead of removing volumes individually; that removes
-all named volumes declared for this Compose project (including
-``eventyay-next_postgres_data_dev`` and ``eventyay-next_rd``).
+To wipe both PostgreSQL and Redis data in one go, you can run ``docker compose down -v`` instead of removing volumes individually. This removes all named volumes declared for this Compose project, including ``eventyay-next_postgres_data_dev`` and ``eventyay-next_rd``.
 
+.. code-block:: bash
 
-**After resetting PostgreSQL and/or Redis**
+   docker compose down -v
+
+After resetting PostgreSQL and/or Redis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 Bring the development stack back up in detached mode with a rebuild:
 
@@ -332,121 +744,56 @@ Bring the development stack back up in detached mode with a rebuild:
 
    docker compose up -d --build
 
-
-
-Configuration
--------------
-
-Our configuration are based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/next_settings.py* for possible keys and original values.
-Other than that, the configuration is divided to three running environments:
-
-* ``development``: With default values in *eventyay.development.toml*.
-* ``production``: With default values in *eventyay.production.toml*.
-* ``testing``: With default values in *eventyay.testing.toml*.
-
-The values in these files will override ones in ``BaseSettings``.
-
-Running environment is selected via the ``EVY_RUNNING_ENVIRONMENT`` environment variable. It is pre-set in *manage.py*, *wsgi.py* and *asgi.py*.
-For example, if you want to run a command in production environment, you can do:
-
-.. code-block:: bash
-
-  EVY_RUNNING_ENVIRONMENT=production ./manage.py command
-
-How to override the configuration values
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- Create a file named *eventyay.local.toml* in the same folder as *manage.py* file.
-- Add only the values you want to override in this file. For example, to override the ``debug`` value in production environment, you only need to add one line:
-
-  .. code-block:: toml
-
-    debug = true
-
-- You can also override values via environment variables. The environment variable names are the upper case versions of the setting keys, prefixed by ``EVY_``.
-  For example, to override the ``debug`` value in production environment, you can set the environment variable ``EVY_DEBUG`` to ``true``.
-
-  .. code-block:: bash
-
-    export EVY_DEBUG=true
-
-- Dotenv (*.env*) file is also supported, but please be aware that the values from *.env* file will be overridden by environment variables.
-
-- Sensitive data like passwords, API keys should be provided via files in *.secrets* directory, each file for a key.
-  The file name follows the pattern of environment variable names above (with prefix), the file content is the value.
-  For example, to provide a value for the ``secret_key`` setting, you should create a file named ``EVY_SECRET_KEY`` and put the value inside.
-
-- If you deployed the app via Docker containers, you can provide the secret data via `Docker secrets`_.
-
-Why TOML?
-~~~~~~~~~
-
-TOML has rich data types. In comparison with *ini* format that this project used before, *ini* doesn't have "list" type, we had to define a convention to encode lists in strings.
-This method is not portable, not understood by other tools and libraries, and error-prone.
-TOML has dedicated syntax for lists, making it easier to read and write such configurations, and developers can use different tools and libraries without worrying about incompatibility.
-
-Due to this reason, overriding configuration via environment variables are not encouraged. The environment variables only have one data type: string!
-
-
 Deployment
 ----------
 
-See DEPLOYMENT.md
+See `DEPLOYMENT.md <DEPLOYMENT.md>`_.
 
+The documented deployment path assumes an Ubuntu based server, Docker, Docker Compose, nginx, certbot, PostgreSQL data storage, static file handling, and a deployment specific ``.env`` file.
 
-Future improvement
-------------------
+The deployment documentation is a starting point and should be reviewed before production use. Operators should adapt the setup to their infrastructure, backup, monitoring, TLS, mail delivery, and security requirements.
+
+Future improvements
+-------------------
 
 Backend
 ~~~~~~~
 
-- Apply type annotation for Python and MyPy (or ty) checking. Benefit: It improves IDE autocomplete and detect some bugs early.
-- Use Jinja for templating (replacing Django template).
-  Benefit: We can embed Python function to template and call. With Django template, we have to define filter, custom tags.
-- Use djlint (or a better tool) to clean template code.
+Potential backend improvements include:
+
+- Apply more Python type annotations.
+- Add MyPy, ty, or another type checker.
+- Improve IDE autocomplete and early bug detection through typing.
+- Continue moving selected templating workflows toward Jinja where useful.
+- Use djlint or another formatter to clean up template code.
 
 Frontend
 ~~~~~~~~
 
-- Get rid of jQuery code, convert them to Vue or AlpineJS.
-- Consider two options:
-  +  Migrating to a Single Page Application, where we can use the full power of Vue and can apply TypeScript to improve IDE autocomplete and detect bugs early.
-  +  HTMX + AlpineJS if we still want Django to produce HTML.
+Potential frontend improvements include:
 
+- Remove remaining jQuery code.
+- Convert older frontend behaviour to Vue or AlpineJS.
+- Continue evaluating Single Page Application architecture where it makes sense.
+- Use TypeScript more consistently where it improves maintainability.
+- Consider HTMX and AlpineJS where Django rendered HTML remains the preferred approach.
 
 Support
 -------
 
-This project is **free and open-source software**. Professional support is available to customers of the **hosted Eventyay service** or **Eventyay enterprise offerings**. If you are interested in commercial support, hosting services, or supporting this project financially, please go to `eventyay.com`.
+Eventyay is free and open source software.
 
-Legal & Licensing
------------------
+Professional support is available to customers of the hosted Eventyay service or Eventyay enterprise offerings.
 
-**License**: This project is published under the **Apache License 2.0**.
-See the `LICENSE <LICENSE>`_ file for complete license text.
+For commercial support, hosting services, custom development, deployment support, integrations, or financial support of the project, visit `eventyay.com <https://eventyay.com>`_.
 
-**Attribution**: See the `NOTICE <NOTICE>`_ file for information about upstream
-projects and attribution.
+Legal and licensing
+-------------------
 
-**Contributing**: Contributions are accepted under the Apache License 2.0.
-See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
+Eventyay is published under the Apache License 2.0. See `LICENSE <LICENSE>`_ for the complete license text.
 
-This project is maintained by **FOSSASIA**.
+See `NOTICE <NOTICE>`_ for attribution and upstream project notices.
 
-AI Development
---------------
+Contributions are accepted under the Apache License 2.0. See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
-This repository includes structured AI development guidance.
-
-AI tools should consult:
-
-- ``.github/instructions/`` — file-scoped coding standards for Python, JavaScript, Django templates, TOML, and Git commits
-- ``.agents/skills/`` — reusable operational knowledge about repository structure, backend conventions, deployment, and workflows
-
-See `agents.md <agents.md>`_ for the recommended reading order for AI agents.
-
-.. _uv: https://docs.astral.sh/uv/getting-started/installation/
-.. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/
-.. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
-.. _eventyay.com: https://eventyay.com
-.. _blog: https://blog.eventyay.com
+This project is maintained by `FOSSASIA <https://fossasia.org>`_.
