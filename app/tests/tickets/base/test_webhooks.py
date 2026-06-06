@@ -8,7 +8,8 @@ from django.db import transaction
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretix.base.models import Event, Item, Order, OrderPosition, Organizer
+from eventyay.api.webhooks import notify_webhooks
+from pretix.base.models import Event, Item, LogEntry, Order, OrderPosition, Organizer
 
 
 @pytest.fixture
@@ -207,3 +208,35 @@ def test_webhook_disable_gone(event, order, webhook, monkeypatch_on_commit):
     assert len(responses.calls) == 1
     webhook.refresh_from_db()
     assert not webhook.enabled
+
+
+@pytest.mark.django_db
+@responses.activate
+def test_webhook_trigger_batch_with_invalid_entries(event, order, webhook, monkeypatch_on_commit):
+    responses.add(responses.POST, 'https://google.com', status=200)
+
+    # 1. No organizer (event=None, content_object=None)
+    le_no_org = LogEntry.objects.create(
+        action_type='pretix.event.order.paid',
+        content_object=None,
+        event=None,
+    )
+
+    # 2. No webhook type
+    le_no_type = LogEntry.objects.create(
+        action_type='pretix.event.order.invalid.type',
+        content_object=order,
+        event=event,
+    )
+
+    # 3. Valid
+    le_valid = LogEntry.objects.create(
+        action_type='pretix.event.order.paid',
+        content_object=order,
+        event=event,
+    )
+
+    notify_webhooks([le_no_org.id, le_no_type.id, le_valid.id])
+
+    assert len(responses.calls) == 1
+    assert json.loads(force_str(responses.calls[0].request.body))['notification_id'] == le_valid.id
