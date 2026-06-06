@@ -9,6 +9,13 @@ function initSmtpToggle() {
     return;
   }
 
+  function setDisabled(container, disabled) {
+    if (!container) return;
+    container.querySelectorAll('input, select, textarea').forEach(el => {
+      el.disabled = disabled;
+    });
+  }
+
   function toggleVendor() {
     if (!smtpFields || !sendgridFields) {
       return;
@@ -17,11 +24,16 @@ function initSmtpToggle() {
     const isSendgrid = selected && selected.value === 'sendgrid';
     smtpFields.style.display = isSendgrid ? 'none' : '';
     sendgridFields.style.display = isSendgrid ? '' : 'none';
+    setDisabled(smtpFields, isSendgrid);
+    setDisabled(sendgridFields, !isSendgrid);
   }
 
   function toggleCustom() {
     customFields.style.display = useCustom.checked ? '' : 'none';
-    toggleVendor();
+    setDisabled(customFields, !useCustom.checked);
+    if (useCustom.checked) {
+      toggleVendor();
+    }
   }
 
   useCustom.addEventListener('change', toggleCustom);

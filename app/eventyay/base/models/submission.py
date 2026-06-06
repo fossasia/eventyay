@@ -607,12 +607,13 @@ class Submission(GenerateCode, PretalxModel):
             template.save()
         if self.event.mail_settings['mail_on_new_submission']:
             admin_emails = list(
-                self.event.teams.filter(can_change_event_settings=True)
-                .values_list('members__email', flat=True)
-                .distinct()
-                .exclude(members__email__isnull=True)
-                .exclude(members__email='')
+                filter(None, (
+                    self.event.teams.filter(can_change_event_settings=True)
+                    .values_list('members__email', flat=True)
+                    .distinct()
+                ))
             )
+            admin_emails = [e for e in admin_emails if e and e.strip()]
             if not admin_emails:
                 fallback = (
                     self.event.email
