@@ -3,14 +3,14 @@ import datetime as dt
 import json
 import logging
 
+from asgiref.sync import async_to_sync
 import dateutil.parser
 from celery.exceptions import TaskError
-from csp.decorators import csp_update
 from django.conf import settings
 from django.contrib import messages
-from django.http import FileResponse, JsonResponse
+from django.db import transaction
+from django.http import FileResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
-from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
@@ -34,21 +34,11 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms.schedule import ScheduleExportForm, ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
-
-
-SCRIPT_SRC = "'self' 'unsafe-eval'"
-DEFAULT_SRC = "'self'"
-
-
-if settings.VITE_DEV_MODE:
-    SCRIPT_SRC = (f'{SCRIPT_SRC} {settings.VITE_DEV_SERVER}',)
-    DEFAULT_SRC = (f'{DEFAULT_SRC} {settings.VITE_DEV_SERVER} {settings.VITE_DEV_SERVER.replace("http", "ws")}',)
-
+from eventyay.base.services.event import notify_event_change
 
 logger = logging.getLogger(__name__)
 
 
-@method_decorator(csp_update({'SCRIPT_SRC': SCRIPT_SRC, 'DEFAULT_SRC': DEFAULT_SRC}), name='dispatch')
 class ScheduleView(EventPermissionRequired, TemplateView):
     template_name = 'orga/schedule/index.html'
     permission_required = 'base.orga_view_schedule'
@@ -121,6 +111,9 @@ class ScheduleExportTriggerView(EventPermissionRequired, View):
                 ),
             )
 
+        referer = request.META.get('HTTP_REFERER')
+        if referer and 'import-export' in referer:
+            return redirect(f'{self.request.event.orga_urls.import_export_settings}?export_target=session#tab-export')
         return redirect(self.request.event.orga_urls.schedule_export)
 
 
@@ -136,6 +129,9 @@ class ScheduleExportDownloadView(EventPermissionRequired, View):
                 request,
                 _('Could not find the current export, please try to regenerate it. ({error})').format(error=str(e)),
             )
+            referer = request.META.get('HTTP_REFERER')
+            if referer and 'import-export' in referer:
+                return redirect(f'{self.request.event.orga_urls.import_export_settings}?export_target=session#tab-export')
             return redirect(self.request.event.orga_urls.schedule_export)
         response['Content-Disposition'] = 'attachment; filename=' + safe_filename(zip_path.name)
         return response
@@ -515,6 +511,34 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         if self.action == 'create':
             return _('New room')
         return _('Rooms')
+
+    def order_handler(self, request, *args, **kwargs):
+        order = request.POST.get('order')
+        if order:
+            pks = [pk.strip() for pk in order.split(',') if pk.strip()]
+            try:
+                pk_values = [int(pk) for pk in pks]
+            except ValueError:
+                return HttpResponseBadRequest('Invalid room IDs in order')
+            if len(pk_values) != len(set(pk_values)):
+                return HttpResponseBadRequest('Duplicate room IDs in order')
+            queryset = self.get_queryset()
+            rooms_by_pk = {str(r.pk): r for r in queryset.filter(pk__in=pk_values)}
+            to_update = []
+            for index, pk in enumerate(pks):
+                room = rooms_by_pk.get(pk)
+                if room is None:
+                    raise Http404
+                room.position = index
+                room.sorting_priority = index + 1
+                to_update.append(room)
+            with transaction.atomic():
+                Room.objects.bulk_update(to_update, fields=['position', 'sorting_priority'])
+                event_id = request.event.id
+                transaction.on_commit(
+                    lambda: async_to_sync(notify_event_change)(event_id)
+                )
+        return self.list(request, *args, **kwargs)
 
     def delete_handler(self, request, *args, **kwargs):
         # Use soft delete to sync with video component

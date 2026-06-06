@@ -40,6 +40,41 @@ from eventyay.helpers.models import modelcopy
 from eventyay.helpers.money import change_decimal_field
 
 
+def effective_free_price_min(default_price, free_price_min):
+    """Match checkout pricing: minimum is the higher of default and configured minimum."""
+    if default_price is None and free_price_min is None:
+        return None
+    if free_price_min is None:
+        return default_price
+    if default_price is None:
+        return free_price_min
+    return max(default_price, free_price_min)
+
+
+def clean_free_price_bounds(cleaned_data, form=None):
+    """Clear or validate free-price min/max; effective minimum matches checkout pricing."""
+    free_price = cleaned_data.get('free_price')
+    if not free_price:
+        cleaned_data['free_price_min'] = None
+        cleaned_data['free_price_max'] = None
+        return
+
+    effective_min = effective_free_price_min(
+        cleaned_data.get('default_price'),
+        cleaned_data.get('free_price_min'),
+    )
+    free_price_max = cleaned_data.get('free_price_max')
+    if effective_min is not None and free_price_max is not None and effective_min > free_price_max:
+        msg = _(
+            'Maximum price must be greater than or equal to the effective minimum '
+            '(the higher of the default price and the minimum price, if set).'
+        )
+        if form is not None:
+            form.add_error('free_price_max', msg)
+        else:
+            raise forms.ValidationError({'free_price_max': [msg]})
+
+
 class CategoryForm(I18nModelForm):
     class Meta:
         model = ProductCategory
@@ -308,6 +343,8 @@ class ProductCreateForm(I18nModelForm):
 
         self.fields['tax_rule'].queryset = self.instance.event.tax_rules.all()
         change_decimal_field(self.fields['default_price'], self.instance.event.currency)
+        change_decimal_field(self.fields['free_price_min'], self.instance.event.currency)
+        change_decimal_field(self.fields['free_price_max'], self.instance.event.currency)
         self.fields['tax_rule'].empty_label = _('No taxation')
         self.fields['copy_from'] = forms.ModelChoiceField(
             label=_('Copy product information'),
@@ -373,6 +410,8 @@ class ProductCreateForm(I18nModelForm):
                 'generate_tickets',
                 'checkin_attention',
                 'free_price',
+                'free_price_min',
+                'free_price_max',
                 'original_price',
                 'sales_channels',
                 'issue_giftcard',
@@ -474,6 +513,8 @@ class ProductCreateForm(I18nModelForm):
                 if not self.cleaned_data.get('quota_add_existing'):
                     raise forms.ValidationError({'quota_add_existing': [_('Please select a quota.')]})
 
+        clean_free_price_bounds(cleaned_data)
+
         return cleaned_data
 
     class Meta:
@@ -485,6 +526,9 @@ class ProductCreateForm(I18nModelForm):
             'category',
             'admission',
             'default_price',
+            'free_price',
+            'free_price_min',
+            'free_price_max',
             'tax_rule',
         ]
 
@@ -541,6 +585,8 @@ class ProductUpdateForm(I18nModelForm):
             widget=forms.CheckboxSelectMultiple,
         )
         change_decimal_field(self.fields['default_price'], self.event.currency)
+        change_decimal_field(self.fields['free_price_min'], self.event.currency)
+        change_decimal_field(self.fields['free_price_max'], self.event.currency)
         self.fields['hidden_if_available'].queryset = self.event.quotas.all()
         self.fields['hidden_if_available'].widget = Select2(
             attrs={
@@ -591,6 +637,8 @@ class ProductUpdateForm(I18nModelForm):
                     'admission',
                     _('Gift card products should not be admission products at the same time.'),
                 )
+        clean_free_price_bounds(d, form=self)
+
         return d
 
     def save(self, *args, **kwargs):
@@ -618,6 +666,8 @@ class ProductUpdateForm(I18nModelForm):
             'picture',
             'default_price',
             'free_price',
+            'free_price_min',
+            'free_price_max',
             'tax_rule',
             'available_from',
             'available_until',

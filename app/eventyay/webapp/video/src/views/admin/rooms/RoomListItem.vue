@@ -1,5 +1,5 @@
 <template lang="pug">
-router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", :class="{'mystery': !inferredType}")
+router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}", :class="{'mystery': !inferredType}", draggable="false")
 	.handle.mdi.mdi-drag-vertical(:class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
 	.name(v-html="$emojify($localize(room.name))")
 	.badge-cell

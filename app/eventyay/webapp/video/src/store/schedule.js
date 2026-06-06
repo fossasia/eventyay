@@ -114,7 +114,7 @@ export default {
 					url: session.url,
 					start: moment.tz(session.start, rootState.userTimezone),
 					end: moment.tz(session.end, rootState.userTimezone),
-					speakers: session.speakers?.map(s => getters.speakersLookup[s]),
+					speakers: (session.speakers || []).map(s => getters.speakersLookup[s] || { code: s }).filter(Boolean),
 					track: getters.tracksLookup[session.track],
 					room: getters.roomsLookup[session.room],
 					fav_count: session.fav_count,
@@ -141,6 +141,18 @@ export default {
 		sessionsLookup (state, getters) {
 			if (!state.schedule) return {}
 			return getters.sessions.reduce((acc, s) => { acc[s.id] = s; return acc }, {})
+		},
+		sessionsBySpeaker (state, getters) {
+			if (!getters.sessions) return {}
+			return getters.sessions.reduce((acc, session) => {
+				(session.speakers || []).forEach((speaker) => {
+					const code = typeof speaker === 'string' ? speaker : speaker?.code
+					if (!code) return
+					if (!acc[code]) acc[code] = []
+					acc[code].push(session)
+				})
+				return acc
+			}, {})
 		},
 		days (state, getters) {
 			if (!getters.sessions) return

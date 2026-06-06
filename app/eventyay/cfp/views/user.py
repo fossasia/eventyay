@@ -148,7 +148,7 @@ class SubmissionsListView(LoggedInEventPageMixin, ListView):
             event=self.request.event,
             speakers__in=[self.request.user],
             state=SubmissionStates.DRAFT,
-        )
+        ).order_by('-updated')
 
     def get_queryset(self):
         return self.request.event.submissions.filter(speakers__in=[self.request.user])
@@ -330,7 +330,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         extra_forms = [
             form
             for form in self.formset.extra_forms
-            if form.has_changed and not self.formset._should_delete_form(form) and form.is_valid()
+            if form.has_changed() and not self.formset._should_delete_form(form)
         ]
         for form in extra_forms:
             form.instance.submission = obj
@@ -343,6 +343,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
             )
 
         return True
+
 
     @cached_property
     def object(self):
@@ -359,6 +360,13 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def can_edit(self):
         return self.object.editable
 
+    def is_draft_action(self):
+        return (
+            self.object.state == SubmissionStates.DRAFT
+            and self.request.method == 'POST'
+            and self.request.POST.get('action', 'submit') != 'dedraft'
+        )
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['event'] = self.request.event
@@ -366,16 +374,20 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
             self.request.event.cfp_flow.config.get('steps', {}).get('info', {}).get('fields')
         )
         kwargs['readonly'] = not self.can_edit
+        kwargs['not_strict'] = self.is_draft_action()
+        kwargs['draft_save'] = self.is_draft_action()
         # At this stage, new speakers can be added via the dedicated form
         kwargs['remove_additional_speaker'] = True
         return kwargs
 
     def form_valid(self, form):
         if self.can_edit:
-            form.save()
+            # Validate formset before saving form to prevent partial persistence
             result = self.save_formset(form.instance)
             if not result:
                 return self.get(self.request, *self.args, **self.kwargs)
+            # Save form only after formset validation succeeds
+            form.save()
             if form.has_changed():
                 if form.instance.pk and 'duration' in form.changed_data:
                     form.instance.update_duration()

@@ -1,4 +1,4 @@
-{% if errors %}
+{% if errors and not form.hide_top_errors %}
   <div class="alert alert-danger" role="alert">
     <div>
       {% if errors|length > 1 %}

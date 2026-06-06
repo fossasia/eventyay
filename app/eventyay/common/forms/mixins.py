@@ -1,8 +1,10 @@
+import json
 import logging
 from functools import partial
 
 import dateutil.parser
 from django import forms
+
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
@@ -13,8 +15,6 @@ from django_countries.fields import Country, CountryField
 from hierarkey.forms import HierarkeyForm
 from i18nfield.forms import I18nFormField
 
-from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
-from eventyay.base.models.cfp import default_fields
 from eventyay.common.forms.fields import ExtensionFileField
 from eventyay.common.forms.validators import (
     MaxDateTimeValidator,
@@ -26,9 +26,9 @@ from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
 from eventyay.helpers.countries import CachedCountries
-from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
+from eventyay.helpers.escapejson import escapejson_attr
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
-from django.db.models import Q
+from eventyay.base.models.cfp import BUILTIN_FIELD_KEYS, normalize_field_order, default_fields
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +147,29 @@ class RequestRequire:
 
 
 class QuestionFieldsMixin:
+    @staticmethod
+    def _resolve_single_choice_initial(initial_object, choices, default_answer):
+        """Return a valid AnswerOption initial, ignoring removed options."""
+        if initial_object:
+            return initial_object.options.filter(pk__in=choices.values_list('pk', flat=True)).first()
+        if default_answer:
+            return choices.filter(answer=default_answer).first()
+        return None
+
+    @staticmethod
+    def _resolve_multiple_choice_initial(initial_object, choices, default_answer):
+        """Return initial values for checkboxes, ignoring removed options.
+
+        Returns a list of valid AnswerOption instances for saved answers.
+        For unsaved answers, ``default_answer`` is passed through unchanged, since
+        it is configured by question settings and consumed directly by form fields.
+        """
+        if initial_object:
+            return list(initial_object.options.filter(pk__in=choices.values_list('pk', flat=True)))
+        if default_answer:
+            return default_answer
+        return []
+
     def get_question_queryset(self, target, event):
         qs = TalkQuestion.all_objects.filter(
             event=event,
@@ -218,7 +241,18 @@ class QuestionFieldsMixin:
             )
             field.question = question
             field.answer = initial_object
-            self.fields[f'question_{question.pk}'] = field
+
+            if question.dependency_question_id:
+                field.widget.attrs['data-question-dependency'] = question.dependency_question_id
+                field.widget.attrs['data-question-dependency-values'] = escapejson_attr(json.dumps(question.dependency_values))
+                if question.variant != TalkQuestionVariant.MULTIPLE:
+                    field.widget.attrs['required'] = question.required
+                    field._required = question.required
+                field.required = False
+
+            field_name = f'question_{question.pk}'
+            if field_name not in self.fields:
+                self.fields[field_name] = field
 
     def get_field(self, *, question, initial, initial_object, readonly):
         from eventyay.base.models import TalkQuestionVariant
@@ -377,35 +411,26 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.CHOICES:
             choices = question.options.all()
-            if initial_object:
-                initial_value = initial_object.options.first()
-            elif question.default_answer:
-                # default_answer is free text; resolve it to an AnswerOption instance
-                initial_value = choices.filter(answer=question.default_answer).first()
-            else:
-                initial_value = None
+            initial_value = self._resolve_single_choice_initial(
+                initial_object, choices, question.default_answer
+            )
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
                 required=question.required,
-                empty_label=None,
+                empty_label=None if question.required else _('— No selection —'),
                 initial=initial_value,
                 disabled=read_only,
                 help_text=help_text,
-                widget=(forms.RadioSelect if len(choices) < 4 else forms.Select(attrs={'class': 'enhanced'})),
+                widget=forms.RadioSelect,
             )
             field.original_help_text = original_help_text
-            field.widget.attrs['placeholder'] = ''  # XSS
             return field
         if question.variant == TalkQuestionVariant.SELECT:
             choices = question.options.all()
-            if initial_object:
-                initial_value = initial_object.options.first()
-            elif question.default_answer:
-                # default_answer is free text; resolve it to an AnswerOption instance
-                initial_value = choices.filter(answer=question.default_answer).first()
-            else:
-                initial_value = None
+            initial_value = self._resolve_single_choice_initial(
+                initial_object, choices, question.default_answer
+            )
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
@@ -434,7 +459,9 @@ class QuestionFieldsMixin:
                     if len(choices) < 8
                     else forms.SelectMultiple(attrs={'class': 'enhanced'})
                 ),
-                initial=(initial_object.options.all() if initial_object else question.default_answer),
+                initial=self._resolve_multiple_choice_initial(
+                    initial_object, choices, question.default_answer
+                ),
                 disabled=read_only,
                 help_text=help_text,
             )
@@ -547,6 +574,56 @@ class QuestionFieldsMixin:
         else:
             answer.answer = value
         answer.save()
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        question_cache = {
+            field.question.pk: field.question
+            for field_name, field in self.fields.items()
+            if field_name.startswith('question_') and hasattr(field, 'question')
+        }
+
+        def question_is_visible(parent_id, dep_values):
+            if parent_id not in question_cache:
+                return False
+            parent_question = question_cache[parent_id]
+            if parent_question.dependency_question_id and not question_is_visible(
+                parent_question.dependency_question_id, parent_question.dependency_values
+            ):
+                return False
+            parent_field_name = f'question_{parent_id}'
+            if parent_field_name not in cleaned_data:
+                return False
+            parent_value = cleaned_data[parent_field_name]
+            if parent_value is None or parent_value == '':
+                return False
+            if isinstance(parent_value, bool):
+                return ('True' in dep_values and parent_value) or ('False' in dep_values and not parent_value)
+            if isinstance(parent_value, str):
+                return parent_value in dep_values
+            if hasattr(parent_value, '__iter__'):
+                return any(
+                    (str(v.pk) if hasattr(v, 'pk') else str(v)) in dep_values
+                    for v in parent_value
+                )
+            if hasattr(parent_value, 'pk'):
+                return str(parent_value.pk) in dep_values
+            return str(parent_value) in dep_values
+
+        for field_name, field in self.fields.items():
+            if not field_name.startswith('question_') or not hasattr(field, 'question'):
+                continue
+            question = field.question
+            if not question.dependency_question_id or not question.required:
+                continue
+            if not question_is_visible(question.dependency_question_id, question.dependency_values):
+                continue
+            value = cleaned_data.get(field_name)
+            if value is None or value == '' or (hasattr(value, '__len__') and len(value) == 0):
+                self.add_error(field_name, forms.ValidationError(_('This field is required.')))
+
+        return cleaned_data
 
 
 class I18nHelpText:

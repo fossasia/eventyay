@@ -156,6 +156,8 @@ class BaseSettings(_BaseSettings):
     admin_audit_comments_asked: bool = False
     # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
     call_for_speaker_login_button_label: str = 'default'
+    # Set to 1 to enable Vite dev servers with HMR for live frontend development.
+    npm_dev: bool = False
 
     @classmethod
     def settings_customise_sources(
@@ -1477,10 +1479,13 @@ LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
 
 FRONTEND_DIR = BASE_DIR / 'webapp'
-VITE_DEV_SERVER_PORT = 8080
-VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
-VITE_DEV_MODE = False  # Set to False to use static files instead of dev server
-VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
+VITE_DEV_MODE = conf.npm_dev
+VITE_DEV_SERVER_PORTS = {
+    'schedule-editor': 'http://localhost:8080',
+    'video': 'http://localhost:8880',
+    'webcheckin': 'http://localhost:8081',
+    'schedule': 'http://localhost:8082',
+}
 
 # Not sure if they need to be configurable.
 ENTROPY = {

@@ -87,6 +87,12 @@ SPEAKER_IMPORT_FIELDS: list[ImportField] = [
         suggestions=['biography', 'bio'],
     ),
     ImportField(
+        identifier='avatar_url',
+        label=_('Profile picture URL'),
+        help_text=_('A URL pointing to the speaker\'s profile picture. The image will be downloaded and saved.'),
+        suggestions=['picture', 'avatar', 'profile picture', 'profile picture url', 'avatar url', 'image', 'image url', 'photo', 'photo url'],
+    ),
+    ImportField(
         identifier='avatar_source',
         label=_('Profile picture source'),
         help_text=_('Name the author or source of the image and include a link if available.'),
@@ -216,7 +222,7 @@ SESSION_IMPORT_FIELDS: list[ImportField] = [
     ImportField(
         identifier='track',
         label=_('Track'),
-        help_text=_('Must match an existing track name or ID.'),
+        help_text=_('Must match an existing track name or ID. A new track will be created automatically if no match is found.'),
         suggestions=['track', 'category'],
     ),
     ImportField(
