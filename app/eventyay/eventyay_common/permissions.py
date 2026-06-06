@@ -53,10 +53,12 @@ def get_cached_event_dashboard_access(
             'has_video_access': user_has_video_dashboard_access(
                 user, organizer, event, request=request
             ),
-            'can_view_orders': user.has_event_permission(
+            'can_view_orders': user.is_authenticated
+            and user.has_event_permission(
                 organizer, event, 'can_view_orders', request=request
             ),
-            'can_change_event_settings': user.has_event_permission(
+            'can_change_event_settings': user.is_authenticated
+            and user.has_event_permission(
                 organizer,
                 event,
                 'can_change_event_settings',

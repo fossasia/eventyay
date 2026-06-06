@@ -8,6 +8,7 @@ from eventyay.base.models import Team
 from eventyay.base.timeline import TimelineEvent
 from eventyay.eventyay_common.permissions import (
     filter_timeline_entry_for_ticket_access,
+    get_cached_event_dashboard_access,
     user_has_talk_dashboard_access,
     user_has_ticket_dashboard_access,
     user_has_video_dashboard_access,
@@ -55,6 +56,18 @@ def test_user_has_dashboard_access_denied_for_anonymous_user(organizer, event):
     assert user_has_ticket_dashboard_access(anonymous, organizer, event) is False
     assert user_has_talk_dashboard_access(anonymous, organizer, event) is False
     assert user_has_video_dashboard_access(anonymous, organizer, event) is False
+
+
+@pytest.mark.django_db
+def test_get_cached_event_dashboard_access_for_anonymous_user(rf, organizer, event):
+    request = rf.get('/')
+    request.user = AnonymousUser()
+    access = get_cached_event_dashboard_access(request, request.user, organizer, event)
+    assert access['has_ticket_access'] is False
+    assert access['has_talk_access'] is False
+    assert access['has_video_access'] is False
+    assert access['can_view_orders'] is False
+    assert access['can_change_event_settings'] is False
 
 
 @pytest.mark.django_db

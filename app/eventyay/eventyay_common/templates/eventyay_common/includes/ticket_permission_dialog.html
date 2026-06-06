@@ -1,3 +1,3 @@
 {% load i18n %}
 {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." as default_message %}
-{% include "eventyay_common/includes/permission_required_dialog.html" with dialog_id=dialog_id|default:"ticket-permission-dialog" dialog_title_id=dialog_title_id|default:"ticket-permission-dialog-title" dialog_message_id=dialog_message_id|default:"ticket-permission-dialog-message" dialog_message=dialog_message|default:default_message %}
+{% include 'eventyay_common/includes/permission_required_dialog.html' with dialog_id=dialog_id|default:'ticket-permission-dialog' dialog_title_id=dialog_title_id|default:'ticket-permission-dialog-title' dialog_message_id=dialog_message_id|default:'ticket-permission-dialog-message' dialog_message=dialog_message|default:default_message %}
