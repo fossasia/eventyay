@@ -1,7 +1,7 @@
 Eventyay
 ========
 
-Eventyay is an open source event management platform by `FOSSASIA <https://fossasia.org>`_. It provides a unified system for event ticketing, registration, call for participation, speaker and session management, scheduling, online event video, web check in, organiser administration, APIs, and plugin based extensions.
+Eventyay is an open source event management platform by `FOSSASIA <https://fossasia.org>`_. It provides event ticketing, registration, call for participation, speaker and session management, scheduling, online event video, attendee check-in, badge printing, organiser administration, APIs, and plugin based extensions.
 
 Eventyay has been in development since 2014. Parts of the system historically originated from separate components for tickets, talks, and video. The current repository contains the unified Eventyay codebase.
 
@@ -17,13 +17,6 @@ The repository uses the following branch model:
 
 Pull requests should normally target ``dev``. Changes are tested and stabilised there before they are moved to ``main`` for production ready releases.
 
-The repository is intended for:
-
-* Contributors working on the Eventyay platform
-* Developers building Eventyay plugins and integrations
-* Operators evaluating or deploying self hosted Eventyay instances
-* Event organisers and partners who need an extensible open source event platform
-
 Main features
 -------------
 
@@ -37,7 +30,6 @@ Eventyay includes:
 * Public event pages
 * Schedule display and schedule editor frontends
 * Online event and video related workflows
-* Web based check in
 * Separate check in station support through the Eventyay Checkin component
 * PDF ticket and badge related workflows
 * REST API endpoints
@@ -47,7 +39,7 @@ Eventyay includes:
 * Standard plugins and external plugin extensions for payments, CRM, exhibitions, social media, team shifts, interpretation, and spatial event integrations
 * Email, notifications, scheduled tasks, reports, statistics, and check in lists
 * Health check and metrics endpoints
-* Internationalisation and translation infrastructure
+* Internationalisation and translation infrastructure with Hosted Weblate based browser translation workflow
 
 Technology stack
 ----------------
@@ -391,7 +383,6 @@ If you deploy the app via Docker containers, you can provide secret data through
 Email configuration for testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 By default, emails are printed to the terminal logs through the console backend.
 
 To test email related features with real delivery, configure a mail server such as SendGrid, Gmail SMTP, or another SMTP provider.
@@ -424,7 +415,6 @@ Built in and standard plugin areas include:
 - Return URLs
 - Scheduled tasks
 - PDF ticket output
-- Web check in
 
 Eventyay also supports external plugin extensions. These plugins can be installed to add integrations or event specific functionality.
 
@@ -473,6 +463,15 @@ Eventyay Checkin
 ~~~~~~~~~~~~~~~~
 
 `Eventyay Checkin <https://github.com/fossasia/eventyay-checkin>`_ is a separate check in component for kiosk stations. It enables organisers to check in attendees at dedicated check in stations during an event.
+
+Translation workflow
+--------------------
+
+The Eventyay platform can be translated through `Hosted Weblate <https://hosted.weblate.org/projects/eventyay/eventyay/>`_.
+
+Contributors can use the Weblate workflow to add or improve translations directly in the browser. This means translation contributors do not need to check out the repository, edit translation files manually, or work inside the codebase.
+
+Developers who maintain translation files in the repository can still use the local translation commands listed below.
 
 Common development commands
 ---------------------------
@@ -700,7 +699,6 @@ Then hard refresh the browser with ``Ctrl + Shift + R``.
 Database issues in Docker
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 The database in the development Docker setup is stored in the ``eventyay-next_postgres_data_dev`` Docker volume. If you see errors concerning login or other database related behaviour, you can completely reset the database.
 
 You will lose all local configuration, organisers, events, users, tickets, and related database content.
@@ -737,7 +735,6 @@ To wipe both PostgreSQL and Redis data in one go, you can run ``docker compose d
 
 After resetting PostgreSQL and/or Redis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 Bring the development stack back up in detached mode with a rebuild:
 
