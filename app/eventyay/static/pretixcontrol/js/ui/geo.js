@@ -8,23 +8,64 @@ $(function () {
     function cleanup(l) {
         return $.trim(l.replace(/\n/g, ", "));
     }
+
+    function findLocationInputs($section) {
+        var $named = $("textarea[name*='location'], input[name*='location']", $section);
+        if ($named.length) {
+            return $named;
+        }
+        var $localized = $("textarea[lang], input[lang][type=text]", $section).filter(function () {
+            var $el = $(this);
+            return !$el.is("[name$=geo_lat], [name$=geo_lon]") && !$el.closest(".geodata-group").length;
+        });
+        if ($localized.length) {
+            return $localized;
+        }
+        var $en = $("textarea[lang=en], input[lang=en]", $section);
+        if ($en.length) {
+            return $en;
+        }
+        return $("textarea, input[type=text]", $section)
+            .not("[name$=geo_lat], [name$=geo_lon]")
+            .filter(function () {
+                return $(this).closest(".geodata-group").length === 0;
+            })
+            .first();
+    }
+
+    function getLocationQuery($section) {
+        var query = "";
+        findLocationInputs($section).each(function () {
+            var value = cleanup($(this).val());
+            if (!value) {
+                return;
+            }
+            if (!query || $(this).attr("lang") === "en") {
+                query = value;
+            }
+        });
+        return query;
+    }
+
     $(".geodata-section").each(function () {
+        var $section = $(this);
         // Geocoding
-        var $geoLabel = $(".geodata-group label.control-label", this).first();
-        var $fallbackLabel = $geoLabel.length ? $geoLabel : $("label", this).first();
-        var $notifications = $(".geodata-autoupdate", this).detach();
-        var $lat = $("input[name$=geo_lat]", this).first();
-        var $lon = $("input[name$=geo_lon]", this).first();
+        var $geoLabel = $(".geodata-group label.control-label", $section).first();
+        var $fallbackLabel = $geoLabel.length ? $geoLabel : $("label", $section).first();
+        var $notifications = $(".geodata-autoupdate", $section).detach();
+        var $lat = $("input[name$=geo_lat]", $section).first();
+        var $lon = $("input[name$=geo_lon]", $section).first();
+        var $grp = $(".geodata-group", $section);
+        var geocodeUrl = $grp.attr("data-geocode-url") || "/control/geocode/";
         var lat;
         var lon;
         var $updateButton = $notifications.find("[data-action=update]");
         var $savePinButton = $notifications.find("[data-action=save-pin]");
         var $resetPinButton = $notifications.find("[data-action=reset-pin]");
         var $form = $($lat.prop("form"));
-        var $location = $("textarea[lang=en], input[lang=en]", this).first();
-        if (!$location.length) $location = $("textarea, input[type=text]", this).first();
+        var $locationInputs = findLocationInputs($section);
 
-        if (!$lat.length || !$lon.length || !$location.length) {
+        if (!$lat.length || !$lon.length) {
             return;
         }
 
@@ -63,13 +104,17 @@ $(function () {
                 xhr = null;
             }
 
-            var q = cleanup($location.val());
+            var q = getLocationQuery($section);
             if (q === "" || (!force && q === lastLocation)) return;
 
             lastLocation = q;
             $notifications.attr("data-notify", "loading");
 
-            xhr = $.getJSON('/control/geocode/?q=' + encodeURIComponent(q), function (res) {
+            xhr = $.getJSON(geocodeUrl + '?q=' + encodeURIComponent(q), function (res) {
+                if (res.error === "no_provider") {
+                    $notifications.attr("data-notify", "no-provider");
+                    return;
+                }
                 if (!res.results || !res.results.length) {
                     $notifications.attr("data-notify", "error");
                     return;
@@ -107,18 +152,20 @@ $(function () {
             debounceLatLonChange = window.setTimeout(center, 300);
         });
 
-        $location.change(function () {
-            load(false);
-        });
-        $location.keyup(function () {
-            window.clearTimeout(debounceLoad);
-            debounceLoad = window.setTimeout(function () {
+        if ($locationInputs.length) {
+            $locationInputs.on("change", function () {
                 load(false);
-            }, 1000);
-            if (($notifications.attr("data-notify") === "confirm" || $notifications.attr("data-notify") === "confirm-pin") && lastLocation !== cleanup(this.value)) {
-                $notifications.attr("data-notify", "");
-            }
-        });
+            });
+            $locationInputs.on("keyup", function () {
+                window.clearTimeout(debounceLoad);
+                debounceLoad = window.setTimeout(function () {
+                    load(false);
+                }, 1000);
+                if (($notifications.attr("data-notify") === "confirm" || $notifications.attr("data-notify") === "confirm-pin") && lastLocation !== getLocationQuery($section)) {
+                    $notifications.attr("data-notify", "");
+                }
+            });
+        }
 
         $updateButton.click(function() {
             $lat.val(lat);
@@ -159,7 +206,6 @@ $(function () {
         }
 
         // Map
-        var $grp = $(".geodata-group", this);
         var tiles = $grp.attr("data-tiles") || DEFAULT_TILES;
         var attrib = $grp.attr("data-attrib") || DEFAULT_ATTRIB;
 
@@ -236,7 +282,7 @@ $(function () {
             center = function(zoom) {};
         }
 
-        if (!getPoint() && cleanup($location.val()) !== "") {
+        if (!getPoint() && getLocationQuery($section) !== "") {
             load(true);
         }
 
