@@ -66,6 +66,10 @@ const initTimezoneUtilities = () => {
     convertDateTimes();
 };
 
+if (typeof window !== 'undefined') {
+    window.eventyayInitTimezoneUtilities = initTimezoneUtilities;
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTimezoneUtilities);
 } else {
