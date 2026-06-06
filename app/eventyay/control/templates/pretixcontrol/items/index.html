@@ -113,8 +113,8 @@
                             </td>
                             <td>{% if i.category %}{{ i.category.name }}{% endif %}</td>
                             <td>
-                                <a href="{% url "control:event.products.up" organizer=request.event.organizer.slug event=request.event.slug product=i.id %}" class="btn btn-default btn-sm {% if forloop.counter0 == 0 and is_paginated and not page_obj.has_previous %}disabled{% endif %}"><i class="fa fa-arrow-up"></i></a>
-                                <a href="{% url "control:event.products.down" organizer=request.event.organizer.slug event=request.event.slug product=i.id %}" class="btn btn-default btn-sm {% if forloop.revcounter0 == 0 and is_paginated and not page_obj.has_next %}disabled{% endif %}"><i class="fa fa-arrow-down"></i></a>
+                                <a href="{% url 'control:event.products.up' organizer=request.event.organizer.slug event=request.event.slug product=i.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-default btn-sm {% if not i.can_move_up %}disabled{% endif %}"><i class="fa fa-arrow-up"></i></a>
+                                <a href="{% url 'control:event.products.down' organizer=request.event.organizer.slug event=request.event.slug product=i.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-default btn-sm {% if not i.can_move_down %}disabled{% endif %}"><i class="fa fa-arrow-down"></i></a>
                             </td>
                             <td class="text-right flip">
                                 <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=i.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
@@ -127,6 +127,6 @@
                 </tbody>
             </table>
         </div>
-        {% include "pretixcontrol/pagination.html" %}
     {% endif %}
+    {% include "pretixcontrol/pagination.html" %}
 {% endblock %}
