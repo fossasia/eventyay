@@ -140,6 +140,7 @@ footer .contact-organizer-btn:hover {
 }
 
 .contact-success {
+    display: none;
     text-align: center;
     padding: 20px 0;
 }

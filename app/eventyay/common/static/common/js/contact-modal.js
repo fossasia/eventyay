@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(function (result) {
                 if (result.ok && result.data.success) {
                     form.style.display = 'none';
-                    successMsg.style.display = '';
+                    successMsg.style.display = 'block';
                 } else {
                     var msg = result.data.error || 'Something went wrong.';
                     var el = document.createElement('p');
