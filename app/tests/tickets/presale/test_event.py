@@ -2,6 +2,7 @@ import datetime
 import re
 from decimal import Decimal
 from json import loads
+from unittest.mock import patch
 
 from django.conf import settings
 from django.core import mail
@@ -26,6 +27,7 @@ from eventyay.base.models import (
 from eventyay.base.models.product import SubEventProduct as SubEventItem, SubEventProductVariation as SubEventItemVariation
 from tests.tickets.base import SoupTest
 from tests.tickets.testdummy.signals import FoobarSalesChannel
+from eventyay.presale.views.contact import ContactOrganizerView
 
 
 class EventTestMixin:
@@ -1639,12 +1641,23 @@ class ContactOrganizerTest(EventTestMixin, TestCase):
         self.assertEqual(mail.outbox[0].reply_to, ['fallback@example.com'])
 
     def test_invalid_email_rejected(self):
-        resp = self.client.post(self.url, {'email': 'not-an-email', 'message': 'Test'})
+        resp = self.client.post(self.url, {'email': 'not-an-email', 'message': 'Hello organizer!'})
         self.assertEqual(resp.status_code, 400)
         self.assertFalse(resp.json()['success'])
 
     def test_message_too_long(self):
         resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'x' * 5001})
         self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+
+    def test_message_too_short(self):
+        resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'Hi'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json()['success'])
+
+    def test_rate_limit_returns_429(self):
+        with patch.object(ContactOrganizerView, '_is_rate_limited', return_value=True):
+            resp = self.client.post(self.url, {'email': 'visitor@example.com', 'message': 'Hello organizer!'})
+        self.assertEqual(resp.status_code, 429)
         self.assertFalse(resp.json()['success'])
 
