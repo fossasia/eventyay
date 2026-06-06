@@ -108,6 +108,7 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
         response = JsonResponse({})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
     if not request.user.has_perm('base.view_widget_schedule', event):
         raise Http404()
@@ -157,6 +158,7 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
         response = JsonResponse({})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
     if not request.user.has_perm('base.view_widget_schedule', event):
         raise Http404()
