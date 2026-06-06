@@ -2154,12 +2154,12 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Header image'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'This image appears at the top of all event pages, replacing the default color or pattern. '
-                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
-                'We recommend an image at least 1170 px wide and 120 px in height for best results.'
+                'Upload a banner image shown at the top of all event pages. Accepted formats: PNG, JPEG, WebP. Max file size: 10 MB. '
+                'The banner is always cropped to a 320 px tall strip. Keep important content (title, logo, key visual) in the center of the image — the sides are cropped on narrow screens. '
+                'Recommended size: 1920 × 640 px (the center 1920 × 320 px will always be visible). Images will be automatically optimized to max 3000 px wide on save.'
             ),
         ),
         'serializer_class': UploadedFileOrURLField,
@@ -2174,12 +2174,12 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Logo'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'When you upload a logo, the event name and date will not appear in the header. '
-                'The logo scales to 140 px in height while maintaining aspect ratio. '
-                'We recommend not using small details as it will be resized on smaller screens.'
+                'Upload your event logo. Accepted formats: PNG, JPEG, GIF, SVG, WebP. Max file size: 10 MB. '
+                'The logo is displayed at up to 160 px tall (max-height), width proportional. We recommend a minimum of 320 px in height for crisp display on retina screens. '
+                'The logo will be automatically optimized on save (max 1000 px wide).'
             ),
         ),
         'serializer_class': UploadedFileOrURLField,
@@ -2195,7 +2195,7 @@ Your {event} team"""
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
             label=_('Use header image in its full size'),
-            help_text=_('We recommend to upload a picture at least 1170 pixels wide.'),
+            help_text=_('Display the header image at its full height instead of cropping to the fixed strip. Use this only for short, wide banners (e.g. 1920 × 200 px). Does not affect the email header.'),
         ),
     },
     'logo_show_title': {
