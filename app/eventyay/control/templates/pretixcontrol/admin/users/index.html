@@ -25,9 +25,10 @@
             {% trans "Create a new user" %}
         </a>
     </p>
-    <table class="table table-condensed table-hover">
-        <thead>
-        <tr>
+    <div data-ajax-results-region>
+        <table class="table table-condensed table-hover">
+            <thead>
+            <tr>
             <th>
                 {% trans "E-mail address" %}
                 <a href="?{% url_replace request 'ordering' '-email' %}"><i class="fa fa-caret-down"></i></a>
@@ -41,12 +42,12 @@
             <th>{% trans "Active" %}</th>
             <th>{% trans "Administrator" %}</th>
             <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        {% trans 'No email' as no_email %}
-        {% for u in users %}
-            <tr>
+            </tr>
+            </thead>
+            <tbody>
+            {% trans 'No email' as no_email %}
+            {% for u in users %}
+                <tr>
                 <td><strong>
                     <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.email|default:no_email }}</a>
                 </strong></td>
@@ -56,9 +57,10 @@
                 <td class="text-right flip">
                     <a href='{% url "eventyay_admin:admin.users.edit" id=u.id %}' class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
                 </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% include "pretixcontrol/pagination.html" %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% include "pretixcontrol/pagination.html" %}
+    </div>
 {% endblock %}

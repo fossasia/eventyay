@@ -946,11 +946,17 @@ def test_event_create_with_seating_maps(token_client, organizer, event, meta_pro
 @pytest.mark.django_db
 def test_get_event_settings(token_client, organizer, event):
     event.settings.imprint_url = 'https://example.org'
+    event.settings.header_background_color = '#ffee00'
+    event.settings.header_text_color = '#111111'
+    event.settings.navigation_text_color = '#222222'
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
     )
     assert resp.status_code == 200
     assert resp.data['imprint_url'] == 'https://example.org'
+    assert resp.data['header_background_color'] == '#ffee00'
+    assert resp.data['header_text_color'] == '#111111'
+    assert resp.data['navigation_text_color'] == '#222222'
 
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/settings/?explain=true'.format(organizer.slug, event.slug),
@@ -986,6 +992,25 @@ def test_patch_event_settings(token_client, organizer, event):
             format='json',
         )
         assert resp.status_code == 200
+        mocked.assert_any_call(args=(event.pk,))
+
+        resp = token_client.patch(
+            '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+            {
+                'header_background_color': '#ffee00',
+                'header_text_color': '#111111',
+                'navigation_text_color': '#222222',
+            },
+            format='json',
+        )
+        assert resp.status_code == 200
+        assert resp.data['header_background_color'] == '#ffee00'
+        assert resp.data['header_text_color'] == '#111111'
+        assert resp.data['navigation_text_color'] == '#222222'
+        event.settings.flush()
+        assert event.settings.header_background_color == '#ffee00'
+        assert event.settings.header_text_color == '#111111'
+        assert event.settings.navigation_text_color == '#222222'
         mocked.assert_any_call(args=(event.pk,))
 
         resp = token_client.patch(

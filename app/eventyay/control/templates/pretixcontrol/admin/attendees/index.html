@@ -22,28 +22,29 @@
 
         <div class="panel-body">
             <form method="get" class="row filter-form">
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-3 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.event_query layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-2 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.event_status layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-2 col-sm-6 col-xs-12 form-group">
                     {% bootstrap_field filter_form.checkin_status layout='inline' %}
                 </div>
-                <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="col-md-2 col-sm-6 col-xs-12 form-group">
                     {% include "eventyay_common/filter_actions.html" %}
                 </div>
             </form>
         </div>
     </div>
 
-    {% if attendees %}
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover">
+    <div data-ajax-results-region>
+        {% if attendees %}
+            <div class="table-responsive">
+                <table class="table table-condensed table-hover">
                 <thead>
                     <tr>
                         <th>
@@ -150,16 +151,17 @@
                         </tr>
                     {% endfor %}
                 </tbody>
-            </table>
-        </div>
+                </table>
+            </div>
 
-        {% include "pretixcontrol/pagination.html" %}
+            {% include "pretixcontrol/pagination.html" %}
         
-    {% else %}
-        <div class="empty-collection">
-            <p>
-                {% translate "There are no attendees to show." %}
-            </p>
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="empty-collection">
+                <p>
+                    {% translate "There are no attendees to show." %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

@@ -140,8 +140,8 @@ class WaitingListView(EventPermissionRequiredMixin, PaginationMixin, ListView):
         s = self.request.GET.get('status', '')
         if s == 's':
             qs = qs.filter(voucher__isnull=False)
-        elif s == 'a':
-            pass
+        elif s == 'w':
+            qs = qs.filter(voucher__isnull=True)
         elif s == 'r':
             qs = qs.filter(
                 voucher__isnull=False,
@@ -159,8 +159,10 @@ class WaitingListView(EventPermissionRequiredMixin, PaginationMixin, ListView):
                 voucher__valid_until__isnull=False,
                 voucher__valid_until__lte=now(),
             )
+        elif s == 'a':
+            pass
         else:
-            qs = qs.filter(voucher__isnull=True)
+            pass
 
         if self.request.GET.get('product', '') != '':
             i = self.request.GET.get('product', '')

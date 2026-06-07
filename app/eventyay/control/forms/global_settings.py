@@ -123,9 +123,11 @@ class GlobalSettingsForm(SettingsForm):
                     'nominatim_geocoding_enabled',
                     forms.BooleanField(
                         required=False,
-                        label=_('Use public Nominatim for geocoding when no API key is configured'),
+                        label=_('Enable public Nominatim geocoding'),
                         help_text=_(
-                            'Only enable this if your deployment can comply with the public Nominatim usage policy.'
+                            'Can be used alongside OpenCage or MapQuest as a fallback. In development, Nominatim '
+                            'is used automatically when no API key is configured. Only enable in production if your '
+                            'deployment can comply with the public Nominatim usage policy.'
                         ),
                     ),
                 ),

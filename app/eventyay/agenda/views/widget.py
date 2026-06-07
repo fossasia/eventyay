@@ -27,7 +27,16 @@ WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
 def color_etag(request, organizer=None, event=None, **kwargs):
-    return request.event.visible_primary_color or 'none'
+    header_background_color = request.event.settings.get('header_background_color')
+    header_text_color = request.event.settings.get('header_text_color')
+    navigation_text_color = request.event.settings.get('navigation_text_color')
+    parts = [
+        request.event.visible_primary_color or '',
+        header_background_color or '',
+        header_text_color or '',
+        navigation_text_color or '',
+    ]
+    return '|'.join(parts) if any(parts) else 'none'
 
 
 def widget_js_etag(request, organizer=None, event=None, **kwargs):
@@ -108,6 +117,7 @@ def widget_data(request, organizer=None, event=None, version=None, **kwargs):
         response = JsonResponse({})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
     if not request.user.has_perm('base.view_widget_schedule', event):
         raise Http404()
@@ -157,6 +167,7 @@ def widget_qrcodes(request, organizer=None, event=None, version=None, kind=None,
         response = JsonResponse({})
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Headers'] = 'authorization,content-type'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
     if not request.user.has_perm('base.view_widget_schedule', event):
         raise Http404()
@@ -264,14 +275,24 @@ def widget_script(request, organizer=None, event=None, **kwargs):
 def event_css(request, organizer=None, event=None, **kwargs):
     # If this event has custom colours, we send back a simple CSS file that sets the
     # root colours for the event.
-    result = ''
+    variables = []
+    header_background_color = request.event.settings.get('header_background_color')
+    header_text_color = request.event.settings.get('header_text_color')
+    navigation_text_color = request.event.settings.get('navigation_text_color')
     if request.event.visible_primary_color:
         if request.GET.get('target') == 'orga':
             # The organizer area sometimes needs the event’s colour, but shouldn’t use
             # it as primary colour automatically.
-            result = ':root {' + f'--color-primary-event: {request.event.visible_primary_color};' + '}'
+            variables.append(f'--color-primary-event: {request.event.visible_primary_color};')
         else:
-            result = ':root {' + f'--color-primary: {request.event.visible_primary_color};' + '}'
+            variables.append(f'--color-primary: {request.event.visible_primary_color};')
+    if header_background_color:
+        variables.append(f'--color-header-background: {header_background_color};')
+    if header_text_color:
+        variables.append(f'--color-header-text: {header_text_color};')
+    if navigation_text_color:
+        variables.append(f'--color-header-navigation: {navigation_text_color};')
+    result = f':root {{{" ".join(variables)}}}' if variables else ''
     response = HttpResponse(result, content_type='text/css')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response['Pragma'] = 'no-cache'
