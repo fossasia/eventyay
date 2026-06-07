@@ -176,6 +176,7 @@ def get_create_params_for_room(
         "attendeePW": call.attendee_pw,
         "moderatorPW": call.moderator_pw,
         "record": "true" if record else "false",
+        "allowRequestsWithoutSession": "true",
         "meta_Source": "eventyay",
         "meta_Event": room.event_id,
         "meta_Room": str(room.id),
