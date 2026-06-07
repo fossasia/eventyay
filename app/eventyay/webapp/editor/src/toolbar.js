@@ -19,7 +19,8 @@ export function buildToolbar(editor, { profile, placeholders = [], previewUrl = 
     btn.className = 'tiptap-btn'
     btn.title = title
     btn.setAttribute('aria-label', title)
-    btn.innerHTML = label
+    const doc = new DOMParser().parseFromString(label, 'text/html')
+    btn.append(...doc.body.childNodes)
     btn.addEventListener('click', (e) => {
       e.preventDefault()
       action()
@@ -111,11 +112,19 @@ function buildPlaceholderMenu(editor, placeholders) {
     const li = document.createElement('li')
     li.className = 'tiptap-placeholder-item'
     li.setAttribute('role', 'option')
+    li.tabIndex = 0
     li.textContent = `{${variable}}`
-    li.addEventListener('click', () => {
+    const insert = () => {
       editor.chain().focus().insertPlaceholder(variable).run()
       dropdown.hidden = true
       toggle.setAttribute('aria-expanded', 'false')
+    }
+    li.addEventListener('click', insert)
+    li.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        insert()
+      }
     })
     dropdown.appendChild(li)
   })
@@ -183,6 +192,8 @@ function showPreviewModal(html) {
     modal.querySelector('.tiptap-preview-close').addEventListener('click', () => modal.close())
     document.body.appendChild(modal)
   }
-  modal.querySelector('.tiptap-preview-body').innerHTML = html
+  const body = modal.querySelector('.tiptap-preview-body')
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  body.replaceChildren(...doc.body.childNodes)
   modal.showModal()
 }

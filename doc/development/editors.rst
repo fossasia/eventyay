@@ -57,7 +57,7 @@ goes to ``eventyay/data/compiled-frontend/editor/`` (``editor.js`` +
          richtext.js                 # Simple rich text (Bold, Italic, Underline, Lists, Link)
          email.js                    # Email profile (extends richtext + placeholder chips)
        extensions/
-         placeholder-variable.js    # Custom non-editable inline node for {{ var }} chips
+         placeholder-variable.js    # Custom non-editable inline node for {var} chips
        toolbar.js                    # Toolbar DOM builder
        styles.css                    # Editor and toolbar styles
 
@@ -181,9 +181,9 @@ URL name: ``control:event.editor.email.preview``
 Placeholder Variables
 ---------------------
 
-The email profile supports ``{{ variable_name }}`` placeholder chips.  Each
+The email profile supports ``{variable_name}`` placeholder chips.  Each
 chip is a non-editable inline Tiptap node that serialises as literal
-``{{ variable_name }}`` text in the stored HTML.
+``{variable_name}`` text in the stored HTML.
 
 Placeholders for an email form should be derived from the same source used by
 the existing email system (``get_available_placeholders`` from

@@ -523,6 +523,7 @@ class OrderMailForm(forms.Form):
             self.fields[fn].help_text += ' ' + str(ht)
         else:
             self.fields[fn].help_text = ht
+        self.fields[fn].validators.append(PlaceholderValidator(phs_display))
 
     def __init__(self, *args, **kwargs):
         order = self.order = kwargs.pop('order')

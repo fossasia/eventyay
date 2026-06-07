@@ -100,9 +100,9 @@ class TestSanitizeEmailHtml:
 
     def test_span_with_data_variable_attribute_stripped(self):
         """data-variable is not in the allowed attribute set; nh3 strips it."""
-        result = sanitize_email_html('<span data-variable="name">{{ name }}</span>')
+        result = sanitize_email_html('<span data-variable="name">{name}</span>')
         assert 'data-variable' not in result
-        assert '{{ name }}' in result
+        assert '{name}' in result
 
     def test_javascript_protocol_stripped(self):
         result = sanitize_email_html('<a href="javascript:alert(1)">xss</a>')
