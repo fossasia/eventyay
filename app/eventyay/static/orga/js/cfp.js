@@ -11,7 +11,7 @@ document
     });
 
 document.addEventListener("DOMContentLoaded", () => {
-    const contentLocaleToggles = document.querySelectorAll("tr[dragsort-id='content_locale'] .toggle-switch[data-field-id] input[type='checkbox']");
+    const contentLocaleToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch[data-field-id] input[type='checkbox']");
     const settingsBtns = document.querySelectorAll(".content-locale-settings-btn");
     const dialog = document.getElementById("content-locale-dialog");
     const cancelBtn = document.getElementById("content-locale-dialog-cancel");
@@ -23,8 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let isRestoring = false;
 
         const isToggleChecked = () => {
-            const firstToggle = document.querySelector("tr[dragsort-id='content_locale'] .toggle-switch[data-field-id] input[type='checkbox']");
-            return firstToggle ? firstToggle.checked : false;
+            return contentLocaleToggle ? contentLocaleToggle.checked : false;
         };
 
         const resetSearch = () => {
@@ -66,12 +65,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 item.checkbox.checked = item.checked;
             });
             isRestoring = true;
-            contentLocaleToggles.forEach(toggle => {
-                if (toggle.checked !== initialToggleState) {
-                    toggle.checked = initialToggleState;
-                    toggle.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            });
+            if (contentLocaleToggle && contentLocaleToggle.checked !== initialToggleState) {
+                contentLocaleToggle.checked = initialToggleState;
+                contentLocaleToggle.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             isRestoring = false;
             if (initialToggleState) {
                 settingsBtns.forEach(btn => btn.classList.remove("hidden"));
@@ -81,12 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
             closeDialog();
         };
 
-        contentLocaleToggles.forEach(toggle => {
-            toggle.addEventListener("change", (ev) => {
+        if (contentLocaleToggle) {
+            contentLocaleToggle.addEventListener("change", (ev) => {
                 if (isRestoring) return;
-                contentLocaleToggles.forEach(t => {
-                    t.checked = ev.target.checked;
-                });
                 if (ev.target.checked) {
                     openDialog(true);
                     settingsBtns.forEach(btn => btn.classList.remove("hidden"));
@@ -94,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     settingsBtns.forEach(btn => btn.classList.add("hidden"));
                 }
             });
-        });
+        }
 
         settingsBtns.forEach(btn => {
             btn.addEventListener("click", () => openDialog(false));

@@ -30,6 +30,18 @@
     flex-direction: column;
 }
 
+@media (max-width: 768px) {
+    #content-locale-dialog {
+        min-width: auto;
+        width: 95%;
+        max-width: 95vw;
+    }
+    .content-locale-checkbox-list {
+        max-height: 40vh;
+        height: auto;
+    }
+}
+
 .content-locale-checkbox-list .checkbox {
     display: block;
     width: 100%;
