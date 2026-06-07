@@ -406,7 +406,8 @@ CORS_URLS_REGEX = (
     r"^(?:"
     r".*/widget[s]?/.*|"
     r".*/schedule/widget/.*|"
-    r".*/static/event\.css"
+    r".*/static/event\.css|"
+    r".*/static/schedule/.*\.js"
     r")$"
 )
 
