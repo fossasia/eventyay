@@ -36,3 +36,12 @@ def attach_timezone_to_naive_clock_time(dt_value: datetime, tz: ZoneInfo) -> dat
     dt_naive = dt_value.replace(tzinfo=None)
     return dt_naive.replace(tzinfo=tz)
 
+
+def format_scheduled_datetime(event, scheduled_at):
+    """Format a scheduled_at datetime for display in the event's timezone.
+
+    Used by both the Tickets (sendmail plugin) and Talk/Orga mail views to
+    produce a consistent, human-readable representation of the scheduled time.
+    """
+    from django.utils.formats import date_format
+    return date_format(scheduled_at.astimezone(event.tz), 'SHORT_DATETIME_FORMAT')

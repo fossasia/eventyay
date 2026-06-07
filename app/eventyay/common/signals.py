@@ -297,11 +297,11 @@ def process_scheduled_emails(sender, **kwargs):
                     logger.info("[ScheduledMail] EmailQueue ID %s sent successfully.", mail.pk)
                 else:
                     logger.warning(
-                        "[ScheduledMail] EmailQueue ID %s: send() returned False (no recipients or already sent). Marking as sent to prevent reprocessing.",
+                        "[ScheduledMail] EmailQueue ID %s: send() returned False (no recipients). Clearing scheduled_at to prevent reprocessing.",
                         mail.pk,
                     )
-                    mail.sent_at = now()
-                    mail.save(update_fields=['sent_at'])
+                    mail.scheduled_at = None
+                    mail.save(update_fields=['scheduled_at'])
             except SendMailException:
                 logger.exception("[ScheduledMail] Failed to send EmailQueue ID %s", mail.pk)
             except Exception:
