@@ -401,7 +401,14 @@ CORE_MODULES = (
 # CORS_URLS_REGEX restricts which URL paths receive the header — only widget and
 # event-CSS endpoints.
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_URLS_REGEX = r'^(?:.*/widget[s]?/.*|.*/static/event\.css|.*/schedule/widget/.*)$'
+
+CORS_URLS_REGEX = (
+    r"^(?:"
+    r".*/widget[s]?/.*|"
+    r".*/schedule/widget/.*|"
+    r".*/static/event\.css"
+    r")$"
+)
 
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
