@@ -34,7 +34,7 @@
                     </a>
                     {% if event_series_creation_enabled %}
                     <a class="dashboard-block symbol" href="{% url 'eventyay_common:events.add' %}?series=1">
-                        <i class="fa fa-calendar" aria-hidden="true"></i>
+                        <span class="icon-calendar-series" aria-hidden="true"><i class="fa fa-calendar icon-calendar-series__base"></i><i class="fa fa-plus-circle icon-calendar-series__badge"></i></span>
                         <div class="dashboard-description">{% translate 'Create Event Series' %}</div>
                     </a>
                     {% endif %}

@@ -150,6 +150,57 @@
     font-size: 60px;
     padding-bottom: 15px;
   }
+
+  .icon-calendar-series {
+    display: block;
+    position: relative;
+    line-height: 1;
+    padding-bottom: 15px;
+
+    .icon-calendar-series__base {
+      font-size: 60px;
+    }
+
+    .icon-calendar-series__badge {
+      position: absolute;
+      bottom: 13px;
+      right: calc(50% - 42px);
+      font-size: 24px;
+      line-height: 1;
+      background: $body-bg;
+      border-radius: 50%;
+      width: 0.9em;
+      height: 0.9em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+.icon-calendar-series {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+
+  .icon-calendar-series__base {
+    vertical-align: middle;
+  }
+
+  i.icon-calendar-series__badge {
+    position: absolute;
+    bottom: -1px;
+    right: -2px;
+    font-size: 0.6em;
+    line-height: 1;
+    background: $body-bg;
+    border-radius: 50%;
+    width: 0.85em;
+    height: 0.85em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .dashboard .welcome-wizard {
