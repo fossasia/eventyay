@@ -327,7 +327,7 @@ if DEBUG and importlib.util.find_spec('django_extensions'):
 if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
 
-if DEBUG:
+if DEBUG and importlib.util.find_spec('django_pdb'):
     _LIBRARY_APPS += ('django_pdb',)
 
 _OURS_APPS = (
