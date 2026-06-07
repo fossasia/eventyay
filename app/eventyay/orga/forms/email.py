@@ -38,8 +38,8 @@ class CentralMailSettingsForm(SettingsForm):
     ]
 
     mail_bcc = forms.CharField(
-        label=_('Bcc address'),
-        help_text=_('All outgoing Ticket emails will be sent to this address as a Bcc copy.'),
+        label=_('BCC address'),
+        help_text=_('All outgoing event emails (Tickets and Talks) will be sent to this address as a blind copy.'),
         validators=[multimail_validate],
         required=False,
         max_length=255,
@@ -167,7 +167,7 @@ class CentralMailSettingsForm(SettingsForm):
                 ValidationError(_('A sender email address is required when using a custom email gateway.')),
             )
 
-        vendor = data.get('email_vendor', 'smtp')
+        vendor = data.get('email_vendor') or 'smtp'
 
         if vendor == 'sendgrid':
             for field in ('smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',

@@ -9,7 +9,7 @@ def remove_placeholder_emails(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0028_product_free_price_max_product_free_price_min_and_more'),
+        ('base', '0029_organizerfollower'),
     ]
 
     operations = [
