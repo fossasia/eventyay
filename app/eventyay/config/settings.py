@@ -305,7 +305,6 @@ _LIBRARY_APPS = (
     'django_celery_beat',
     'django.forms',
     'djangoformsetjs',
-    'django_pdb',
     'jquery',
     'rest_framework.authtoken',
     'rules.apps.AutodiscoverRulesConfig',
@@ -327,6 +326,9 @@ if DEBUG and importlib.util.find_spec('django_extensions'):
 
 if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
+
+if DEBUG:
+    _LIBRARY_APPS += ('django_pdb',)
 
 _OURS_APPS = (
     'eventyay.agenda',
