@@ -121,6 +121,11 @@ class EventCommonSettingsForm(SettingsForm):
             current_file = get_file_url_path(current_value)
             if type(new_value) is str and current_file and current_value != new_value:
                 default_storage.delete(current_file)
+                
+                base_path, _ = os.path.splitext(current_file)
+                orig_ext = self.event.settings.get(f'{image_field}_original_ext', as_type=str)
+                if orig_ext:
+                    default_storage.delete(f'{base_path}_original.{orig_ext}')
             self.cleaned_data[url_field] = None
 
             if isinstance(new_value, UploadedFile):
@@ -161,11 +166,10 @@ class EventCommonSettingsForm(SettingsForm):
         try:
             original_path = default_storage.save(original_name, result.original)
             logger.info('Stored original image at %s', original_path)
+            # Store the original extension so PR2 can easily find it later
+            self.event.settings.set(f'{setting_key}_original_ext', result.original_ext)
         except OSError:
             logger.exception('Could not store original image for %s', setting_key)
-
-        # Store the original extension so PR2 can easily find it later
-        self.event.settings.set(f'{setting_key}_original_ext', result.original_ext)
 
         # Return a string so Hierarkey stores this path directly instead of wrapping it again
         return f"file://{optimized_path}"

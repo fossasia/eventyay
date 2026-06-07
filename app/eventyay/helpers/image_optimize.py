@@ -10,11 +10,11 @@ Usage::
 
     from eventyay.helpers.image_optimize import optimize_uploaded_image
 
-    optimized, original = optimize_uploaded_image(
+    result = optimize_uploaded_image(
         uploaded_file,
         setting_key='logo_image',   # 'logo_image' or 'event_logo_image'
     )
-    # Save `optimized` to storage; `original` is stored at a sibling path.
+    # Save `result.optimized` to storage; `result.original` can be stored at a sibling path.
 """
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ def optimize_uploaded_image(
     raw = uploaded.read()
     uploaded.seek(0)
 
-    original_name, original_ext = os.path.splitext(uploaded.name or 'upload')
+    _, original_ext = os.path.splitext(uploaded.name or 'upload')
     original_ext = (original_ext.lstrip('.') or 'jpg').lower()
 
     image = Image.open(BytesIO(raw))

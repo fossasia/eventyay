@@ -92,15 +92,15 @@ def test_optimize_uploaded_image_preserves_animated_gif():
     buf = BytesIO()
     img1.save(buf, format='GIF', save_all=True, append_images=[img2], duration=100, loop=0)
     buf.seek(0)
-    
+
     upload = SimpleUploadedFile(
         name='test.gif',
         content=buf.read(),
         content_type='image/gif',
     )
-    
+
     result = optimize_uploaded_image(upload, 'logo_image')
-    
+
     # Assert that the image was not resized, even though it's 4000x4000
     # and the max width for logo_image is 3000
     opt_img = Image.open(result.optimized)

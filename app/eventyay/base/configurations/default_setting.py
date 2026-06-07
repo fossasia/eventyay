@@ -2084,14 +2084,14 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'Upload a banner image shown at the top of all event pages. Accepted formats: PNG, JPEG, WebP. Max file size: 10 MB. '
-                'The banner is always cropped to a 320 px tall strip. Keep important content (title, logo, key visual) in the center of the image — the sides are cropped on narrow screens. '
+                'Upload a banner image shown at the top of all event pages. Accepted formats: PNG, JPEG, WebP. '
+                'The banner is cropped to a 320 px tall strip by default. Keep important content (title, logo, key visual) in the center of the image — the sides are cropped on narrow screens. '
                 'Recommended size: 1920 × 640 px (the center 1920 × 320 px will always be visible). Images will be automatically optimized to max 3000 px wide on save.'
             ),
         ),
         'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
@@ -2104,14 +2104,14 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg', '.webp'),
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
             help_text=_(
-                'Upload your event logo. Accepted formats: PNG, JPEG, GIF, SVG, WebP. Max file size: 10 MB. '
+                'Upload your event logo. Accepted formats: PNG, JPEG, GIF, SVG, WebP. '
                 'The logo is displayed at up to 160 px tall (max-height), width proportional. We recommend a minimum of 320 px in height for crisp display on retina screens. '
-                'The logo will be automatically optimized on save (max 1000 px wide).'
+                'The logo will be automatically optimized on save (max 1000 px wide), except for SVG and animated images which remain unmodified.'
             ),
         ),
         'serializer_class': UploadedFileOrURLField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'],
             max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
         ),
     },
@@ -2122,7 +2122,7 @@ Your {event} team"""
         'serializer_class': serializers.BooleanField,
         'form_kwargs': dict(
             label=_('Use header image in its full size'),
-            help_text=_('Display the header image at its full height instead of cropping to the fixed strip. Use this only for short, wide banners (e.g. 1920 × 200 px). Does not affect the email header.'),
+            help_text=_('We recommend to upload a picture at least 1170 pixels wide.'),
         ),
     },
     'logo_show_title': {

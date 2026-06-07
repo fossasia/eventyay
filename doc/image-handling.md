@@ -10,7 +10,7 @@ To optimize page loads and save storage bandwidth, uploaded event logos and head
 3. **Format**: Re-encoded as Progressive JPEG (85% quality) if no alpha channel, or optimized PNG if an alpha channel is present.
 4. **Preservation**: The original raw upload is always preserved alongside the optimized variant (e.g. `logo_original.jpg`), allowing future re-processing or cropping without generation loss.
 
-When `settings.logo_image` or `settings.event_logo_image` is requested, the system automatically resolves and serves the `_optimized` variant if it exists, otherwise falling back to the original file.
+Because the optimized image is stored as the primary value for `settings.logo_image` and `settings.event_logo_image`, all templates and serializers automatically serve the smaller, optimized variant natively.
 
 ## Usage Matrix
 
@@ -22,7 +22,6 @@ When `settings.logo_image` or `settings.event_logo_image` is requested, the syst
   * **Public Event Page Header:** Displayed in the center of the header if uploaded. Replaces the event name text.
   * **Event Cards / Start Page:** Used as the thumbnail for the event on the organizer's public profile and the main instance index page.
   * **Order Invoices (PDF):** Rendered at the top right of the invoice document.
-  * **Email Templates:** Embedded as a thumbnail (`|thumb:'5000x120'`) above the email body.
   * **OpenGraph (og:image) Fallback:** Used for social sharing previews if a dedicated `og_image` is not uploaded.
 
 ### Header / Banner Image (`logo_image`)
@@ -33,6 +32,7 @@ When `settings.logo_image` or `settings.event_logo_image` is requested, the syst
   * **Public Event Page Header:** Acts as the full-width background behind the event title or logo.
   * **Ticket PDF Background:** Can optionally be used as a background on ticket designs depending on the layout.
   * **Widget UI:** Displayed at the top of the embeddable ticket widget.
+  * **Email Templates:** Embedded as a thumbnail (`|thumb:'5000x120'`) above the email body.
 
 ### OpenGraph Image (`og_image`)
 * **Aspect Ratio:** Fixed at 1.91:1 (e.g., 1200 x 630px)
