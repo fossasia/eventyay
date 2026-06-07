@@ -14,6 +14,7 @@ from eventyay.base.models import (
     TalkQuestionTarget,
     Track,
 )
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
@@ -180,7 +181,8 @@ class InfoForm(
 
     def _set_locales(self):
         if 'content_locale' in self.fields:
-            if len(self.event.content_locales) <= 1:
+            saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            if not self.event.is_multilingual and saved_visibility in ('required', 'do_not_ask'):
                 default_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
                 self.default_values['content_locale'] = default_locale
                 self.fields.pop('content_locale')

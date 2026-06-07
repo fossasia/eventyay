@@ -2290,8 +2290,10 @@ class Event(
             self.content_locale_array = ','.join(content_locales_list)
         if default_locale:
             self.locale = default_locale
-        if content_locales is None and content_locales_list:
-            self.settings.set('content_locales', content_locales_list)
+        if content_locales is None and locales_list:
+            existing_content_locales = self.settings.get('content_locales') or []
+            merged = list(dict.fromkeys(existing_content_locales + locales_list))
+            self.settings.set('content_locales', merged)
         if locales_list or content_locales_list or default_locale:
             self._clear_language_caches()
 

@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
 from eventyay.base.models import Submission, SubmissionStates, TalkSlot
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
@@ -116,7 +117,8 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()
         if 'content_locale' in self.fields:
-            if len(self.event.content_locales) <= 1:
+            saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            if not self.event.is_multilingual and saved_visibility in ('required', 'do_not_ask'):
                 default_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
                 self.default_values['content_locale'] = default_locale
                 self.fields.pop('content_locale')

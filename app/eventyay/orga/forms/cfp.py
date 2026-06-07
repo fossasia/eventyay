@@ -238,14 +238,12 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
         if not obj.is_multilingual:
             saved_visibility = obj.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
-            settings_content_locales = obj.settings.get('content_locales') or []
-            is_default_config = (
-                saved_visibility == 'required'
-                and (not settings_content_locales or set(settings_content_locales) == set(obj.locales))
-            )
-            if is_default_config:
+            if saved_visibility == 'required':
                 self.fields['cfp_ask_content_locale'].initial = 'do_not_ask'
                 self.fields['cfp_public_content_locale'].initial = False
+        else:
+            self.fields['cfp_ask_content_locale'].initial = 'required'
+            self.fields['cfp_public_content_locale'].initial = True
 
         available_codes = [code for code, _ in obj.available_content_locales]
         choices = get_language_choices_native_with_ui_name(codes=available_codes)
