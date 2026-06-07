@@ -17,6 +17,7 @@
         <script defer src="{% static "orga/js/speakers.js" %}"></script>
         <script defer src="{% static "orga/js/submission_form.js" %}"></script>
         <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
+        <script defer src="{% static "orga/js/etherpad.js" %}"></script>
     {% endcompress %}
 {% endblock scripts %}
 
@@ -87,6 +88,12 @@
             {% if form.slot_count %}{{ form.slot_count.as_field_group }}{% endif %}
             {% if form.image %}{{ form.image.as_field_group }}{% endif %}
             {% if form.slides %}{{ form.slides.as_field_group }}{% endif %}
+            {% if form.etherpad_url %}
+                {{ form.etherpad_url.as_field_group }}
+                {% if not form.etherpad_url.value %}
+                    <p class="help-block">{% translate "No Etherpad is configured for this session yet." %}</p>
+                {% endif %}
+            {% endif %}
             {% if action != "create" %}
                 {% include "cfp/includes/submission_resources_form.html" %}
             {% endif %}
@@ -107,6 +114,18 @@
                 </div>
             {% endif %}
         </fieldset></form>
+
+    {% if action != "create" and form.etherpad_url and request.event.feature_flags.etherpad_auto_generate %}
+        <form method="post" action="{{ submission.orga_urls.etherpad_generate }}" class="mt-2"
+              {% if submission.etherpad_url %}data-confirm="{% translate "This session already has an Etherpad link. Replace it with a newly generated pad? The existing notes will no longer be linked." %}"{% endif %}>
+            {% csrf_token %}
+            {% if submission.etherpad_url %}<input type="hidden" name="force" value="true">{% endif %}
+            <button type="submit" class="btn btn-outline-info">
+                <i class="fa fa-file-text-o"></i>
+                {% if submission.etherpad_url %}{% translate "Regenerate Etherpad link" %}{% else %}{% translate "Auto-generate Etherpad link" %}{% endif %}
+            </button>
+        </form>
+    {% endif %}
 
     <span id="vars" remoteUrl="{{ request.event.organiser.orga_urls.user_search }}"></span>
 {% endblock submission_content %}

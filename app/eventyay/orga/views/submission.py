@@ -35,6 +35,11 @@ from eventyay.base.models import (
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.mail import MailTemplateRoles
 from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.services.etherpad import (
+    EtherpadConfigurationError,
+    EtherpadError,
+    generate_pad_for_submission,
+)
 from eventyay.base.services.orderimport import parse_csv
 from eventyay.base.services.talkimport import import_submissions
 from eventyay.base.views.tasks import AsyncAction
@@ -239,6 +244,36 @@ class SubmissionSpeakersDelete(SubmissionViewMixin, View):
         else:
             messages.warning(request, _('The speaker was not part of this proposal.'))
         return redirect(submission.orga_urls.speakers)
+
+
+class SubmissionEtherpadGenerate(SubmissionViewMixin, View):
+    permission_required = 'base.update_submission'
+
+    def post(self, request, *args, **kwargs):
+        submission = self.object
+        if not request.event.get_feature_flag('etherpad_enabled'):
+            messages.error(request, _('Etherpad is not enabled for this event.'))
+            return redirect(submission.orga_urls.edit)
+
+        force = request.POST.get('force') == 'true'
+        try:
+            url = generate_pad_for_submission(request.event, submission, force=force)
+        except EtherpadConfigurationError as exc:
+            messages.error(request, str(exc))
+            return redirect(submission.orga_urls.edit)
+        except EtherpadError as exc:
+            messages.error(request, str(exc))
+            return redirect(submission.orga_urls.edit)
+
+        submission.etherpad_url = url
+        submission.save(update_fields=['etherpad_url'])
+        submission.log_action(
+            'eventyay.submission.etherpad.generate',
+            person=request.user,
+            orga=True,
+        )
+        messages.success(request, _('An Etherpad link has been generated for this session.'))
+        return redirect(submission.orga_urls.edit)
 
 
 class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView):
