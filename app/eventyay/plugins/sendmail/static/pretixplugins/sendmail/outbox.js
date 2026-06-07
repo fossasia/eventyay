@@ -63,4 +63,7 @@ function adjustPolling(pendingCount) {
   }
 }
 
-currentInterval = { id: window.setInterval(refreshOutbox, pollInterval), expected: pollInterval }
+const initialContainer = document.querySelector('[data-pending-mail-count]')
+const initialPendingCount = initialContainer ? parseInt(initialContainer.dataset.pendingMailCount, 10) : 0
+const initialInterval = initialPendingCount > 0 ? pollInterval : slowPollInterval
+currentInterval = { id: window.setInterval(refreshOutbox, initialInterval), expected: initialInterval }

@@ -105,7 +105,6 @@ def test_scheduled_email_not_sent_immediately(
     data['scheduled_at_0'] = future.strftime('%Y-%m-%d')
     data['scheduled_at_1'] = future.strftime('%H:%M:%S')
 
-    initial_count = EmailQueue.objects.count()
     initial_scheduled_count = EmailQueue.objects.filter(scheduled_at__isnull=False).count()
 
     with patch('eventyay.plugins.sendmail.views.send_queued_mail') as mock_task:

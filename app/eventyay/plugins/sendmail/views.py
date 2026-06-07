@@ -7,7 +7,6 @@ from django.db.models import Exists, OuterRef, Q, Subquery
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -23,7 +22,7 @@ from eventyay.base.services.mail import TolerantDict
 from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
-from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone
+from eventyay.helpers.timezone import attach_timezone_to_naive_clock_time, get_browser_timezone, format_scheduled_datetime
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import CopyDraftMixin, QueryFilterOrderingMixin
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser
@@ -34,10 +33,6 @@ from .forms import MailContentSettingsForm, TeamMailForm
 
 
 logger = logging.getLogger(__name__)
-
-
-def format_scheduled_mail_datetime(event, scheduled_at):
-    return date_format(scheduled_at.astimezone(event.tz), 'SHORT_DATETIME_FORMAT')
 
 
 class ComposeMailChoice(EventPermissionRequiredMixin, TemplateView):
@@ -184,7 +179,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             messages.success(
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
-                    datetime=format_scheduled_mail_datetime(self.request.event, scheduled_at),
+                    datetime=format_scheduled_datetime(self.request.event, scheduled_at),
                     timezone=self.request.event.timezone,
                 )
             )
@@ -663,7 +658,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             messages.success(
                 self.request,
                 _('Your email has been scheduled for {datetime} ({timezone}).').format(
-                    datetime=format_scheduled_mail_datetime(self.request.event, scheduled_at),
+                    datetime=format_scheduled_datetime(self.request.event, scheduled_at),
                     timezone=self.request.event.timezone,
                 )
             )

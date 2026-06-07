@@ -2,7 +2,6 @@ import nh3
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
@@ -26,6 +25,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     Sortable,
 )
+from eventyay.helpers.timezone import format_scheduled_datetime
 from eventyay.mail.signals import request_pre_send
 from eventyay.orga.forms.mails import (
     DraftRemindersForm,
@@ -47,10 +47,6 @@ def get_send_mail_exceptions(request):
         errors = [str(e) for e in exceptions]
         errors = errors or [_('You cannot send emails at this time.')]
         return errors
-
-
-def format_scheduled_mail_datetime(event, scheduled_at):
-    return date_format(scheduled_at.astimezone(event.tz), 'SHORT_DATETIME_FORMAT')
 
 
 class OutboxList(EventPermissionRequired, Sortable, Filterable, PaginationMixin, ListView):
@@ -450,7 +446,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                 self.request,
                 _('{count} emails have been scheduled for {datetime} ({timezone}).').format(
                     count=len(result),
-                    datetime=format_scheduled_mail_datetime(self.request.event, scheduled_at),
+                    datetime=format_scheduled_datetime(self.request.event, scheduled_at),
                     timezone=self.request.event.timezone,
                 ),
             )
