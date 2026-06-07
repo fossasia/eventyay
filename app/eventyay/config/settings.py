@@ -399,6 +399,20 @@ CORE_MODULES = (
     )
 )
 
+# Widgets are public embeds served to any origin, so all origins must be allowed.
+# CORS_URLS_REGEX restricts which URL paths receive the header — only widget and
+# event-CSS endpoints.
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_URLS_REGEX = (
+    r"^(?:"
+    r".*/widget[s]?/.*|"
+    r".*/schedule/widget/.*|"
+    r".*/static/event\.css|"
+    r".*/static/schedule/.*\.js"
+    r")$"
+)
+
 # TODO: This list is only for display. It should not be here.
 PLUGINS = []
 for entry_point in entry_points(group='pretalx.plugin'):
