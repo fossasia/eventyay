@@ -425,6 +425,52 @@ class GlobalSettingsForm(SettingsForm):
                         required=False,
                     ),
                 ),
+                # Etherpad collaborative notes
+                (
+                    'etherpad_enabled',
+                    forms.BooleanField(
+                        label=_('Enable Etherpad integration'),
+                        help_text=_('Allow events to attach collaborative Etherpad notes to their sessions.'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'etherpad_base_url',
+                    forms.URLField(
+                        label=_('Default Etherpad instance URL'),
+                        help_text=_('Base URL of the Etherpad instance, e.g. {sample}').format(sample='https://pad.example.org'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'etherpad_api_key',
+                    SecretKeySettingsField(
+                        label=_('Etherpad API key'),
+                        help_text=_(
+                            'API key of the Etherpad instance (found in APIKEY.txt). Required only for automatic pad '
+                            'creation; without it, pad links are generated as plain URLs that Etherpad creates on first visit.'
+                        ),
+                        required=False,
+                    ),
+                ),
+                (
+                    'etherpad_allow_org_override',
+                    forms.BooleanField(
+                        label=_('Allow organiser-level Etherpad overrides'),
+                        help_text=_('If enabled, organisers may configure their own Etherpad instance instead of the platform default.'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'etherpad_pad_name_pattern',
+                    forms.CharField(
+                        label=_('Pad name pattern'),
+                        help_text=_(
+                            'Pattern used to generate pad names. Available placeholders: {placeholders}.'
+                        ).format(placeholders='{event}, {submission}, {token}'),
+                        required=False,
+                    ),
+                ),
             ]
         )
 
@@ -478,6 +524,13 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('event_creation', _('Event Creation'), [
                 EVENT_SERIES_CREATION_ENABLED,
+            ]),
+            ('etherpad', _('Etherpad'), [
+                'etherpad_enabled',
+                'etherpad_base_url',
+                'etherpad_api_key',
+                'etherpad_allow_org_override',
+                'etherpad_pad_name_pattern',
             ]),
         ]
 
