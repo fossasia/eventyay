@@ -93,7 +93,7 @@
                         <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
                     </span></div>
                 </dialog>
-                <dialog class="info-dialog" id="content-locale-dialog" aria-labelledby="content-locale-dialog-title">
+                <dialog class="info-dialog" id="content-locale-dialog" aria-label="{% translate 'Content Locale Languages' %}">
                     <div class="dialog-content">
                         {% if sform.content_locales.errors %}
                             <div class="alert alert-danger mb-3">
