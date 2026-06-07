@@ -83,3 +83,27 @@ def test_optimize_uploaded_image_invalid_image():
     )
     with pytest.raises(OSError):
         optimize_uploaded_image(upload, 'logo_image')
+
+
+def test_optimize_uploaded_image_preserves_animated_gif():
+    # Create an animated GIF with width > MAX_WIDTH
+    img1 = Image.new('RGB', (4000, 4000), 'red')
+    img2 = Image.new('RGB', (4000, 4000), 'blue')
+    buf = BytesIO()
+    img1.save(buf, format='GIF', save_all=True, append_images=[img2], duration=100, loop=0)
+    buf.seek(0)
+    
+    upload = SimpleUploadedFile(
+        name='test.gif',
+        content=buf.read(),
+        content_type='image/gif',
+    )
+    
+    result = optimize_uploaded_image(upload, 'logo_image')
+    
+    # Assert that the image was not resized, even though it's 4000x4000
+    # and the max width for logo_image is 3000
+    opt_img = Image.open(result.optimized)
+    assert opt_img.size == (4000, 4000)
+    assert getattr(opt_img, 'is_animated', False)
+    assert result.optimized_ext == 'gif'

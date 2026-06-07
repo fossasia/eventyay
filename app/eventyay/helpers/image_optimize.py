@@ -115,6 +115,17 @@ def optimize_uploaded_image(
         logger.exception('Could not load uploaded image for optimization')
         raise
 
+    is_animated = getattr(image, 'is_animated', False)
+    if is_animated:
+        ext = image.format.lower() if image.format else original_ext
+        logger.info('Bypassing optimization for animated %s image', ext)
+        return OptimizedImages(
+            optimized=ContentFile(raw),
+            original=ContentFile(raw),
+            optimized_ext=ext,
+            original_ext=original_ext,
+        )
+
     image = ImageOps.exif_transpose(image)
 
     orig_w, orig_h = image.size
