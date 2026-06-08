@@ -150,7 +150,7 @@ class EventWizardFoundationForm(forms.Form):
                     'data-placeholder': _('Organizer'),
                 }
             ),
-            empty_label=None,
+            empty_label=_('Organizer') if is_required else None,
             required=is_required,
         )
         self.fields['organizer'].widget.choices = self.fields['organizer'].choices
@@ -250,17 +250,22 @@ class EventWizardBasicsForm(I18nModelForm):
         self.has_subevents = kwargs.pop('has_subevents')
         self.is_video_creation = kwargs.pop('is_video_creation')
         self.user = kwargs.pop('user')
+        self.restrict_locale_choices = kwargs.pop('restrict_locale_choices', True)
         kwargs.pop('session')
         kwargs.pop('content_locales', None)
         super().__init__(*args, **kwargs)
         if 'timezone' not in self.initial:
             self.initial['timezone'] = get_current_timezone_name()
-        self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
+        if self.restrict_locale_choices:
+            self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
+        else:
+            self.fields['locale'].choices = settings.LANGUAGES
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
+        self.fields['slug'].widget.attrs.setdefault('class', 'form-control')
         self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
         self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
