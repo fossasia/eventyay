@@ -81,7 +81,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     )
     if not has_settings_perm:
         return []
-    return [
+    nav = [
         {
             'label': _('Settings'),
             'url': reverse(
@@ -107,6 +107,20 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
             'icon': 'plug',
         },
     ]
+    if 'socialmedia' in event.plugin_list:
+        nav.append({
+            'label': _('Social Media'),
+            'url': reverse(
+                'plugins:socialmedia:index',
+                kwargs={
+                    'event': event.slug,
+                    'organizer': event.organizer.slug,
+                },
+            ),
+            'active': (url.namespace == 'plugins:socialmedia' and url.url_name == 'index'),
+            'icon': 'share-alt',
+        })
+    return nav
 
 
 def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:

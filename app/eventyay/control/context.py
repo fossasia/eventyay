@@ -45,7 +45,8 @@ def _default_context(request):
         return {}
 
     if not (request.path.startswith(get_script_prefix() + 'control') or 
-            request.path.startswith(get_script_prefix() + 'admin')) or not hasattr(request, 'user'):
+            request.path.startswith(get_script_prefix() + 'admin') or
+            request.path.startswith(get_script_prefix() + 'social')) or not hasattr(request, 'user'):
         return {}
     ctx = {
         'url_name': url.url_name,
@@ -66,6 +67,7 @@ def _default_context(request):
             or request.event.settings.talk_schedule_public is not None
         ):
             ctx['is_talk_event_created'] = True
+        ctx['is_socialmedia_enabled'] = 'socialmedia' in request.event.get_plugins()
     ctx['html_head'] = ''.join(_html_head)
 
     _js_payment_weekdays_disabled = '[]'

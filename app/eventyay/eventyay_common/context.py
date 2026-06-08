@@ -74,6 +74,7 @@ def _default_context(request: HttpRequest):
     ctx['is_talk_event_created'] = False
     if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:
         ctx['is_talk_event_created'] = True
+    ctx['is_socialmedia_enabled'] = 'socialmedia' in event.get_plugins()
 
     # Verify if the request includes an organizer
     organizer = getattr(request, 'organizer', None)
