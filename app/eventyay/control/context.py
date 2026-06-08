@@ -15,6 +15,7 @@ from eventyay.control.navigation import (
     get_event_navigation,
     get_global_navigation,
 )
+from eventyay.control.middleware import is_control_path
 
 from ..eventyay_common.utils import EventCreatedFor
 from ..helpers.i18n import (
@@ -44,9 +45,7 @@ def _default_context(request):
     except Resolver404:
         return {}
 
-    if not (request.path.startswith(get_script_prefix() + 'control') or 
-            request.path.startswith(get_script_prefix() + 'admin') or
-            request.path.startswith(get_script_prefix() + 'social')) or not hasattr(request, 'user'):
+    if not is_control_path(request.path) or not hasattr(request, 'user'):
         return {}
     ctx = {
         'url_name': url.url_name,
@@ -67,7 +66,7 @@ def _default_context(request):
             or request.event.settings.talk_schedule_public is not None
         ):
             ctx['is_talk_event_created'] = True
-        ctx['is_socialmedia_enabled'] = 'socialmedia' in request.event.get_plugins()
+        ctx['is_socialmedia_enabled'] = request.event.is_socialmedia_enabled
     ctx['html_head'] = ''.join(_html_head)
 
     _js_payment_weekdays_disabled = '[]'

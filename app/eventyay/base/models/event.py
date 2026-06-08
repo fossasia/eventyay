@@ -2347,6 +2347,10 @@ class Event(
             return []
         return self.plugins.split(',')
 
+    @property
+    def is_socialmedia_enabled(self) -> bool:
+        return 'socialmedia' in self.get_plugins()
+
     @cached_property
     def available_plugins(self):
         return {

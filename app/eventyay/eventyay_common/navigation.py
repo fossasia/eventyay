@@ -107,7 +107,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
             'icon': 'plug',
         },
     ]
-    if 'socialmedia' in event.plugin_list:
+    if event.is_socialmedia_enabled:
         nav.append({
             'label': _('Social Media'),
             'url': reverse(
