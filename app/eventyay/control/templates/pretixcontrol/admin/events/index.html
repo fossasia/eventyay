@@ -49,9 +49,10 @@
                 </form>
             </div>
         </div>
-        <table class="table table-condensed table-hover"
-               data-startpage-toggle-url="{% url 'eventyay_admin:admin.events.startpage.toggle' %}"
-               data-startpage-csrf="{{ csrf_token }}">
+        <div data-ajax-results-region>
+            <table class="table table-condensed table-hover"
+                   data-startpage-toggle-url="{% url 'eventyay_admin:admin.events.startpage.toggle' %}"
+                   data-startpage-csrf="{{ csrf_token }}">
             <thead>
             <tr>
                 <th>
@@ -190,7 +191,8 @@
                 </tr>
             {% endfor %}
             </tbody>
-        </table>
-        {% include "pretixcontrol/pagination.html" %}
+            </table>
+            {% include "pretixcontrol/pagination.html" %}
+        </div>
     {% endif %}
 {% endblock %}

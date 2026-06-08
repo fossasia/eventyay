@@ -80,6 +80,9 @@ COPY --from=builder /usr/src/app /usr/src/app
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 
+# Copy uv package manager to final stage for runtime plugin installation
+COPY --from=builder /bin/uv /bin/uv
+
 # Expose virtual env
 ENV VIRTUAL_ENV=/usr/src/app/.venv
 ENV PATH="/usr/src/app/.venv/bin:$PATH"

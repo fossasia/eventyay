@@ -1,6 +1,7 @@
 import re
 import uuid
 from contextlib import asynccontextmanager
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from aiohttp.http_exceptions import HttpProcessingError
@@ -188,6 +189,9 @@ async def test_bbb_xml_error(bbb_room):
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_successful_url(bbb_room):
+    bbb_room.module_config[0]["config"]["hide_presentation"] = True
+    await database_sync_to_async(bbb_room.save)(update_fields=["module_config"])
+
     with aioresponses() as m:
         async with world_communicator(named=True) as c:
             await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.pk)}])
@@ -218,6 +222,9 @@ This conference was already in existence and may currently be in progress.
             response = await c.receive_json_from()
             assert response[0] == "success"
             assert "/join?" in response[2]["url"]
+            query = parse_qs(urlparse(response[2]["url"]).query)
+            assert query["userdata-bbb_hide_presentation_on_join"] == ["true"]
+            assert "userdata-bbb_auto_swap_layout" not in query
 
             @database_sync_to_async
             def get_call():
