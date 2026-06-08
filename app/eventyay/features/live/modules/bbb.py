@@ -1,5 +1,5 @@
 from eventyay.core.permissions import Permission
-from eventyay.base.services.bbb import BBBService
+from eventyay.base.services.bbb import BBBServerUnavailable, BBBService
 from eventyay.features.live.decorators import command, room_action
 from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
@@ -20,15 +20,18 @@ class BBBModule(BaseModule):
         service = BBBService(self.consumer.event)
         if not self.consumer.user.profile.get("display_name"):
             raise ConsumerException("bbb.join.missing_profile")
-        url = await service.get_join_url_for_room(
-            self.room,
-            self.consumer.user,
-            moderator=await self.consumer.event.has_permission_async(
-                user=self.consumer.user,
-                permission=Permission.ROOM_BBB_MODERATE,
-                room=self.room,
-            ),
-        )
+        try:
+            url = await service.get_join_url_for_room(
+                self.room,
+                self.consumer.user,
+                moderator=await self.consumer.event.has_permission_async(
+                    user=self.consumer.user,
+                    permission=Permission.ROOM_BBB_MODERATE,
+                    room=self.room,
+                ),
+            )
+        except BBBServerUnavailable:
+            raise ConsumerException("bbb.failed")
 
         if not url:
             raise ConsumerException("bbb.failed")
@@ -39,10 +42,13 @@ class BBBModule(BaseModule):
         service = BBBService(self.consumer.event)
         if not self.consumer.user.profile.get("display_name"):
             raise ConsumerException("bbb.join.missing_profile")
-        url = await service.get_join_url_for_call_id(
-            body.get("call"),
-            self.consumer.user,
-        )
+        try:
+            url = await service.get_join_url_for_call_id(
+                body.get("call"),
+                self.consumer.user,
+            )
+        except BBBServerUnavailable:
+            raise ConsumerException("bbb.failed")
 
         if not url:
             raise ConsumerException("bbb.failed")
