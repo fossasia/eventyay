@@ -1,10 +1,11 @@
 {% load i18n %}
-<div class="etherpad-session-block mt-3">
-    <a href="{{ etherpad_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">
+<div class="etherpad-session-block">
+    <div class="etherpad-heading">{% translate "Collaborative notes" %}</div>
+    <a href="{{ etherpad_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
         <i class="fa fa-file-text-o"></i>
         {% translate "Open collaborative notes" %}
     </a>
-    <p class="help-block mt-1">
-        {% translate "Collaborative notes for this session are hosted on an external Etherpad instance and open in a new tab." %}
+    <p class="etherpad-note">
+        {% translate "Notes are hosted on an external Etherpad instance and open in a new tab." %}
     </p>
 </div>
