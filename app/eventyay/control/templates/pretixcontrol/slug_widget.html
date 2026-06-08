@@ -1,5 +1,5 @@
 <div class="form-inline helper-display-inline slug-widget">
-    {{ pre }}
+    <span class="slug-widget-prefix">{{ pre }}</span>
     <input type="{{ widget.type }}" name="{{ widget.name }}"
             {% if widget.value != None %}value="{{ widget.value }}"{% endif %}
             {% include "django/forms/widgets/attrs.html" %}

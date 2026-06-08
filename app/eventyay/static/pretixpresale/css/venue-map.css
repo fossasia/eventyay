@@ -33,7 +33,17 @@
     font-weight: bold;
 }
 
-.venue-map-main #venue {
+.venue-map-details-only {
+    flex: 1 1 100%;
+    padding-top: 0;
+}
+
+.venue-map-unavailable {
+    margin-top: 12px;
+    color: #666;
+}
+
+.venue-map #venue {
     margin-top: 0;
     padding-bottom: 10px;
 }
@@ -63,7 +73,7 @@
 }
 
 @media (min-width: 769px) {
-    .venue-map-details {
-        padding-top: 60px;
+    .venue-map-layout .venue-map-details {
+        padding-top: 0;
     }
 }
