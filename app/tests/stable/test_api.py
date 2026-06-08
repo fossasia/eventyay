@@ -32,6 +32,30 @@ class TestAPIEndpoints:
         # Should return list (might be empty) or forbidden based on permissions
         assert response.status_code in [200, 403]
 
+    def test_api_permission_dummy_auth(self):
+        """Test ApiPermission does not crash on auth objects lacking has_endpoint_permission."""
+        from unittest.mock import Mock
+        from django.test import RequestFactory
+        from eventyay.api.permissions import ApiPermission
+
+        permission = ApiPermission()
+        request = RequestFactory().get('/api/v1/organizers/')
+        
+        class DummyAuth:
+            pass
+            
+        request.auth = DummyAuth()
+        request.organizer = Mock()
+        request.user = Mock()
+        request.user.has_perm.return_value = True
+        
+        view = Mock()
+        view.detail = False
+        view.action = 'list'
+        view.queryset.model.get_perm.return_value = 'view_model'
+        
+        assert permission.has_permission(request, view) is True
+
 
 @pytest.mark.django_db
 class TestWebhooksAPI:

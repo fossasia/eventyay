@@ -46,8 +46,9 @@ class ApiPermission(BasePermission):
                     ):
                         return False
             endpoint = getattr(view, "endpoint", None)
-            if not request.auth.has_endpoint_permission(endpoint, view.action):
-                return False
+            if hasattr(request.auth, "has_endpoint_permission"):
+                if not request.auth.has_endpoint_permission(endpoint, view.action):
+                    return False
 
         if view.detail and not obj:
             # Early out as DRF will check permissions on detail endpoints twice,
