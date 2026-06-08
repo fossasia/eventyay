@@ -215,11 +215,11 @@ def test_webhook_disable_gone(event, order, webhook, monkeypatch_on_commit):
 def test_webhook_trigger_batch_with_invalid_entries(event, order, webhook, monkeypatch_on_commit):
     responses.add(responses.POST, 'https://google.com', status=200)
 
-    # 1. No organizer (event=None, content_object=None)
-    le_no_org = LogEntry.objects.create(
+    # 1. Valid (created first -> oldest -> processed last in descending ordering)
+    le_valid = LogEntry.objects.create(
         action_type='pretix.event.order.paid',
-        content_object=None,
-        event=None,
+        content_object=order,
+        event=event,
     )
 
     # 2. No webhook type
@@ -229,11 +229,13 @@ def test_webhook_trigger_batch_with_invalid_entries(event, order, webhook, monke
         event=event,
     )
 
-    # 3. Valid
-    le_valid = LogEntry.objects.create(
+    # 3. No organizer (event=None, dangling reference -> created last -> newest -> processed first in descending ordering)
+    from django.contrib.contenttypes.models import ContentType
+    le_no_org = LogEntry.objects.create(
         action_type='pretix.event.order.paid',
-        content_object=order,
-        event=event,
+        content_type=ContentType.objects.get_for_model(Order),
+        object_id=99999,
+        event=None,
     )
 
     notify_webhooks([le_no_org.id, le_no_type.id, le_valid.id])
