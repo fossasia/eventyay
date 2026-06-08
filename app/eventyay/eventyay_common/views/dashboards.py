@@ -1,9 +1,9 @@
 import logging
-import re
 from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import pytz
+from bs4 import BeautifulSoup
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -70,15 +70,15 @@ SHOP_STATE_WIDGET_KEY = 'shop_state'
 EVENT_SETTINGS_PERMISSION_DIALOG_ID = 'event-settings-permission-dialog'
 TICKET_PERMISSION_DIALOG_ID = 'ticket-permission-dialog'
 
-_ANCHOR_TAG_RE = re.compile(r'<a\b[^>]*>|</a>', re.IGNORECASE)
-
 
 def _sanitize_widget_content_for_permission_dialog(content: str) -> str:
     """Return widget HTML safe to show inside a permission-dialog trigger."""
     if not content:
         return content
-    content = _ANCHOR_TAG_RE.sub('', content)
-    return content.replace(gettext('Click here to change'), '')
+    soup = BeautifulSoup(content, 'html.parser')
+    for a in soup.find_all('a'):
+        a.unwrap()
+    return str(soup).replace(gettext('Click here to change'), '')
 
 
 def get_event_dashboard_widget_permissions(request: HttpRequest) -> dict[str, bool]:
@@ -131,10 +131,10 @@ def filter_common_event_dashboard_widgets(
     for widget in widgets:
         if not isinstance(widget, dict):
             continue
+        widget = dict(widget)
         if not has_ticket_dashboard_access and widget.get('key') != SHOP_STATE_WIDGET_KEY:
             continue
         if widget.get('key') == SHOP_STATE_WIDGET_KEY and not can_change_event_settings:
-            widget = dict(widget)
             widget.pop('url', None)
             widget.pop('link', None)
             widget['content'] = _sanitize_widget_content_for_permission_dialog(widget.get('content', ''))

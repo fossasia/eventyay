@@ -1,7 +1,8 @@
 import pytest
+from unittest.mock import MagicMock
 from django.contrib.auth.models import AnonymousUser
 from django.test import override_settings
-from django.urls import reverse
+from django.urls import clear_url_caches, get_script_prefix, reverse, set_script_prefix
 from django.utils.timezone import now
 
 from eventyay.base.models import Team
@@ -98,6 +99,7 @@ def test_generate_ticket_button_shows_permission_dialog_for_talk_only(
 ):
     request = rf.get('/')
     request.user = user
+    request.session = MagicMock()
     html = EventWidgetGenerator.generate_ticket_button(event, request)
     assert '<button type="button"' in html
     assert f'data-dialog-target="#{TICKET_PERMISSION_DIALOG_ID}"' in html
@@ -112,6 +114,7 @@ def test_generate_ticket_button_shows_permission_dialog_for_talk_only(
 def test_generate_ticket_button_links_to_control_for_ticket_team(user, organizer, event, team, rf):
     request = rf.get('/')
     request.user = user
+    request.session = MagicMock()
     html = EventWidgetGenerator.generate_ticket_button(event, request)
     control_url = reverse(
         'control:event.index',
@@ -123,21 +126,28 @@ def test_generate_ticket_button_links_to_control_for_ticket_team(user, organizer
 
 @pytest.mark.django_db
 def test_filter_timeline_entry_strips_control_edit_urls_with_base_path(event):
-    with override_settings(FORCE_SCRIPT_NAME='/tickets', BASE_PATH='/tickets'):
-        edit_url = reverse(
-            'control:event.settings.tickets',
-            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
-        )
-        entry = TimelineEvent(
-            event=event,
-            subevent=None,
-            datetime=now(),
-            description='Ticket sales',
-            edit_url=edit_url,
-        )
-        filtered = filter_timeline_entry_for_ticket_access(entry, has_ticket_access=False)
-        assert filtered.edit_url is None
-        assert edit_url.startswith('/tickets/control/')
+    old_prefix = get_script_prefix()
+    try:
+        set_script_prefix('/tickets/')
+        clear_url_caches()
+        with override_settings(FORCE_SCRIPT_NAME='/tickets', BASE_PATH='/tickets'):
+            edit_url = reverse(
+                'control:event.settings.tickets',
+                kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+            )
+            entry = TimelineEvent(
+                event=event,
+                subevent=None,
+                datetime=now(),
+                description='Ticket sales',
+                edit_url=edit_url,
+            )
+            filtered = filter_timeline_entry_for_ticket_access(entry, has_ticket_access=False)
+            assert filtered.edit_url is None
+            assert edit_url.startswith('/tickets/control/')
+    finally:
+        set_script_prefix(old_prefix)
+        clear_url_caches()
 
 
 @pytest.mark.django_db
@@ -212,6 +222,7 @@ def test_common_dashboard_includes_ticket_permission_dialog_for_talk_only(
 
 
 @pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_event_dashboard_hides_ticket_nav_for_talk_only(talk_only_client, organizer, event):
     url = reverse(
         'eventyay_common:event.index',
@@ -231,6 +242,7 @@ def test_event_dashboard_hides_ticket_nav_for_talk_only(talk_only_client, organi
 
 
 @pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_event_index_widgets_json_includes_live_status_for_talk_only(talk_only_client, organizer, event):
     url = reverse(
         'eventyay_common:event.index.widgets',
@@ -247,6 +259,7 @@ def test_event_index_widgets_json_includes_live_status_for_talk_only(talk_only_c
 
 
 @pytest.mark.django_db
+@override_settings(SITE_URL='https://testserver')
 def test_event_dashboard_shows_ticket_links_for_ticket_team(organizer_client, organizer, event):
     url = reverse(
         'eventyay_common:event.index',
