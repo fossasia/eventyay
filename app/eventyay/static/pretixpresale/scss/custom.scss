@@ -179,6 +179,10 @@
     scroll-margin-top: 72px;
 }
 
+#main-card > main .alert {
+    margin-inline: 0;
+}
+
 /* Desktop: hide icons that are mobile-only (globe + user in nav dropdowns) */
 .nav-icon-mobile {
     display: none;
