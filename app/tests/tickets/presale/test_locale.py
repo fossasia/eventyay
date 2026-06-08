@@ -63,7 +63,8 @@ class EventLanguageEnforceDefaultTest(TestCase):
 
     def test_enforce_on_global_language_takes_precedence_when_not_in_event_locales(self):
         # Global dropdown language takes precedence; event content falls back to event locale.
-        c = Client(HTTP_ACCEPT_LANGUAGE='fi')
+        c = Client()
+        c.cookies[settings.LANGUAGE_COOKIE_NAME] = 'fi'
         response = self._get_event_page(c)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.wsgi_request.event_language_enforce_ui)
@@ -71,8 +72,6 @@ class EventLanguageEnforceDefaultTest(TestCase):
         self.assertEqual(response.wsgi_request.event_language, 'de')
         # UI stays in the user's chosen language, not overridden by event locale
         self.assertEqual(response['Content-Language'], 'fi')
-
-
 
     def test_explicit_enforce_off_is_respected(self):
         """When the enforce cookie is explicitly '0', languages are NOT linked and

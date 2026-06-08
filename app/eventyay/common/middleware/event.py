@@ -201,6 +201,7 @@ class EventPermissionMiddleware:
         ui_language_in_event_locales = (
             hasattr(request, 'event')
             and request.event
+            and ui_language
             and strict_match_language(ui_language, request.event.locales) is not None
         )
         if (
