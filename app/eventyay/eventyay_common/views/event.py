@@ -189,7 +189,6 @@ class EventCreateView(TemplateView):
 
         initial_form['is_video_creation'] = True
         initial_form['locales'] = ['en']
-        initial_form['content_locales'] = ['en']
         initial_form['create_for'] = EventCreatedFor.BOTH.value
         queryset = self.get_create_organizer_queryset()
         if 'organizer' in request_get:

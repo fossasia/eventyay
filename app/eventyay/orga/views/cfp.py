@@ -169,8 +169,9 @@ class CfPForms(EventPermissionRequired, TemplateView):
         selected_content_locales = self.request.event.settings.content_locales
         context['selected_content_locales'] = selected_content_locales
         sform = self.sform
-        if sform.is_bound and 'content_locales' in sform.data:
-            effective_content_locales = sform.data.getlist('content_locales')
+        content_locales_key = sform.add_prefix('content_locales')
+        if sform.is_bound and content_locales_key in sform.data:
+            effective_content_locales = sform.data.getlist(content_locales_key)
         else:
             effective_content_locales = selected_content_locales if selected_content_locales is not None else event_languages
         effective_set = set(effective_content_locales)

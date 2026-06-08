@@ -108,13 +108,6 @@ class EventWizardFoundationForm(forms.Form):
             "event's default language instead."
         ),
     )
-    content_locales = forms.MultipleChoiceField(
-        choices=settings.LANGUAGES,
-        label=_('Content languages'),
-        widget=MultipleLanguagesWidget,
-        required=False,
-        help_text=_('Users will be able to submit proposals in these languages.'),
-    )
     has_subevents = forms.BooleanField(
         label=_('This is an event series'),
         required=False,
