@@ -481,13 +481,15 @@ class EventCreateView(TemplateView):
             # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
-            event.settings.set('locale', basics_data['locale'])
-            event.settings.set('locales', foundation_data['locales'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
-            event.settings.set('content_locales', content_locales)
+            event.update_language_configuration(
+                locales=foundation_data['locales'],
+                content_locales=content_locales,
+                default_locale=basics_data['locale']
+            )
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
-            event.save(update_fields=['timezone'])
+            event.save(update_fields=['timezone', 'locale_array', 'content_locale_array'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = EventCreatedFor.BOTH.value

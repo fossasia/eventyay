@@ -236,15 +236,6 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 ],
             )
 
-        if not obj.is_multilingual:
-            saved_visibility = obj.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
-            if saved_visibility == 'required':
-                self.fields['cfp_ask_content_locale'].initial = 'do_not_ask'
-                self.fields['cfp_public_content_locale'].initial = False
-        else:
-            self.fields['cfp_ask_content_locale'].initial = 'required'
-            self.fields['cfp_public_content_locale'].initial = True
-
         available_codes = [code for code, _ in obj.available_content_locales]
         choices = get_language_choices_native_with_ui_name(codes=available_codes)
         existing_codes = {c[0] for c in choices}
@@ -284,7 +275,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             self.instance.cfp.settings['fields_config'] = fields_config
 
         if 'content_locales' in self.cleaned_data:
-            if self.cleaned_data.get('cfp_ask_content_locale') != 'do_not_ask':
+            if 'cfp_ask_content_locale' in self.cleaned_data and self.cleaned_data.get('cfp_ask_content_locale') != 'do_not_ask':
                 self.instance.settings.set('content_locales', self.cleaned_data['content_locales'])
 
         for key in self.request_require_fields:
