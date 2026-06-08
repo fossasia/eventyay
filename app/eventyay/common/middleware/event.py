@@ -197,12 +197,18 @@ class EventPermissionMiddleware:
         if not event_language:
             event_language = ui_language
 
-        # Bidirectional sync: when enforce is ON, keep UI and event language aligned.
+        # Sync event → UI only when the user's global language is also an event locale.
+        ui_language_in_event_locales = (
+            hasattr(request, 'event')
+            and request.event
+            and strict_match_language(ui_language, request.event.locales) is not None
+        )
         if (
             request.event_language_enforce_ui
             and event_language
             and event_language != ui_language
             and event_language in ui_supported
+            and ui_language_in_event_locales
         ):
             translation.activate(event_language)
             request.LANGUAGE_CODE = translation.get_language()

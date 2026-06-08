@@ -61,20 +61,17 @@ class EventLanguageEnforceDefaultTest(TestCase):
         self.assertEqual(response.wsgi_request.event_language, 'en')
         self.assertEqual(response['Content-Language'], 'en')
 
-    def test_enforce_on_syncs_event_language_to_ui_language(self):
-        """When enforce is ON and the UI language is NOT an event locale, the UI
-        language should follow the event language (Event→UI sync direction).
-
-        Scenario from the screenshot: browser/UI lang is Finnish (not a supported
-        event locale), event default is 'de'. With enforce ON the page should render
-        in German so both columns in the language dropdown show the same language.
-        """
+    def test_enforce_on_global_language_takes_precedence_when_not_in_event_locales(self):
+        # Global dropdown language takes precedence; event content falls back to event locale.
         c = Client(HTTP_ACCEPT_LANGUAGE='fi')
         response = self._get_event_page(c)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.wsgi_request.event_language_enforce_ui)
+        # Event content falls back to the event's locale ('de')
         self.assertEqual(response.wsgi_request.event_language, 'de')
-        self.assertEqual(response['Content-Language'], 'de')
+        # UI stays in the user's chosen language, not overridden by event locale
+        self.assertEqual(response['Content-Language'], 'fi')
+
 
 
     def test_explicit_enforce_off_is_respected(self):
