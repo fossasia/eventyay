@@ -531,14 +531,14 @@ wheels = [
 
 [[package]]
 name = "cron-descriptor"
-version = "2.0.8"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/ce/cd3cc454ea73e8a38be79723b925611d2556037f938372ad594373f187b4/cron_descriptor-2.0.8.tar.gz", hash = "sha256:7e487efe14a99a3c1c23bb5302bb75c8bf5d54bca82931bf71f5ae2855939772", size = 49971, upload-time = "2026-03-23T13:19:17.963Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/75/b44b05ae7d1e49b59a27a917c44e04ce9aa4cebdd05dac42ba7df06a91b4/cron_descriptor-2.1.0.tar.gz", hash = "sha256:ecddb8b2f6c5286398949aaefe185364666af74f33b01877c61378e1fd4e38e6", size = 50221, upload-time = "2026-06-02T16:26:28.223Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/8c/ae74b17ea1672844a14c176a88f6d2718fa2c10948dc8401824d62265e9e/cron_descriptor-2.0.8-py3-none-any.whl", hash = "sha256:21fae0e6e0e28b19fd6a08e032c700077fe759e9bc1deb1ebe32f277fbc8ba6c", size = 74703, upload-time = "2026-03-23T13:19:16.486Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/41/c476c41cb88dbbba83e0685dd331b9d32599f1e4a94ca223b02437a3d83b/cron_descriptor-2.1.0-py3-none-any.whl", hash = "sha256:e280efae0e375e2cbc62846f833888f12c7921d2d11ab0dca598f94c51af8639", size = 74734, upload-time = "2026-06-02T16:26:26.919Z" },
 ]
 
 [[package]]
@@ -1457,7 +1457,7 @@ requires-dist = [
     { name = "click-repl", specifier = ">=0.3.0" },
     { name = "constantly", specifier = ">=23.10.4" },
     { name = "contourpy", specifier = ">=1.3.2" },
-    { name = "cron-descriptor", specifier = ">=2.0.8" },
+    { name = "cron-descriptor", specifier = ">=2.1.0" },
     { name = "cryptography", specifier = ">=48.0.0" },
     { name = "css-inline", specifier = ">=0.20.2" },
     { name = "csscompressor", specifier = ">=0.9.5" },
