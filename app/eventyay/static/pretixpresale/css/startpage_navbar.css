@@ -1,0 +1,146 @@
+/* Start Page Navbar Mobile */
+
+@media (max-width: 767px) {
+  body.startpage-body nav.navbar.navbar-inverse {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 50px;
+    min-height: 50px;
+    padding: 0 10px;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse .navbar-header {
+    margin: 0;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse .navbar-brand {
+    padding: 0;
+    margin: 0;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse .navbar-brand img {
+    height: 30px;
+    margin: 0;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse #sidebar-toggle {
+    margin: 0 10px 0 0;
+    padding: 5px;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse .navbar-top-links {
+    display: flex;
+    align-items: center;
+    margin: 0 0 0 auto;
+    padding: 0;
+    gap: 4px;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse .navbar-top-links li {
+    margin: 0;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse .language-form {
+    margin: 0;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse #button-sudo {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    padding: 0 6px;
+    margin: 0;
+  }
+
+  body.startpage-body nav.navbar.navbar-inverse .navbar-top-links li a:not(.dropdown-item):not(.startpage-search-item),
+  body.startpage-body .navbar-top-links #profile-dropdown>summary,
+  body.startpage-body .navbar-top-links #language-dropdown>summary {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    min-height: 50px;
+    font-size: 13px;
+    padding: 0 8px;
+    font-weight: normal;
+    margin: 0;
+  }
+
+  body.startpage-body .startpage-search-form {
+    display: flex;
+    align-items: center;
+  }
+
+  body.startpage-body .startpage-search {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    position: relative;
+  }
+
+  body.startpage-body .startpage-search input {
+    width: 40px;
+    height: 36px;
+    padding: 0 8px 0 32px;
+    border-radius: 8px;
+    transition: width 0.2s ease-in-out;
+    box-sizing: border-box;
+  }
+
+  body.startpage-body .startpage-search-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px;
+    pointer-events: none;
+  }
+
+  body.startpage-body .startpage-search:focus-within input {
+    width: 130px;
+    padding: 0 12px 0 32px;
+  }
+
+  body.startpage-body .startpage-sidebar {
+    top: 50px;
+  }
+
+  body.startpage-body .startpage-sidebar-backdrop {
+    top: 50px;
+  }
+
+  body.startpage-body .startpage-search-results {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    top: 50px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+body.startpage-body nav.navbar.navbar-inverse .navbar-top-links li.startpage-search-nav .startpage-search-results a.startpage-search-item {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0.75rem;
+  align-items: center;
+  height: auto;
+  min-height: 0;
+  padding: 0.75rem 1rem;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: normal;
+  white-space: normal;
+  text-decoration: none;
+  background: var(--color-white, #fff);
+}
+
+body.startpage-body nav.navbar.navbar-inverse .navbar-top-links li.startpage-search-nav .startpage-search-results a.startpage-search-item:hover,
+body.startpage-body nav.navbar.navbar-inverse .navbar-top-links li.startpage-search-nav .startpage-search-results a.startpage-search-item:focus {
+  background: var(--color-background-hover, #f5f5f5);
+  outline: none;
+}

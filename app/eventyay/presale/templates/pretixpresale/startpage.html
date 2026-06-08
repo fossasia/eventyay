@@ -41,6 +41,7 @@
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/startpage.scss" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/css/startpage_navbar.css" %}" />
         {% endcompress %}
         {% if css_file %}
             <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
@@ -73,7 +74,7 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="{% url "presale:index" %}">
                     <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
-                    {{ site_name }}
+                    <span class="hidden-xs">{{ site_name }}</span>
                 </a>
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
@@ -117,14 +118,16 @@
                         <form action="{% url 'control:user.sudo' %}?next={{ request.get_full_path|urlencode }}" method="post">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-link" id="button-sudo">
-                                <i class="fa fa-id-card"></i> {% trans "Admin mode" %}
+                                <i class="fa fa-id-card" aria-hidden="true"></i>
+                                <span class="hidden-xs">{% trans "Admin mode" %}</span>
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and staff_session %}
                     <li>
                         <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                            <i class="fa fa-id-card"></i> {% trans "End admin session" %}
+                            <i class="fa fa-id-card" aria-hidden="true"></i>
+                            <span class="hidden-xs">{% trans "End admin session" %}</span>
                         </a>
                     </li>
                 {% endif %}
