@@ -1,9 +1,9 @@
-// Confirmation guard for Etherpad pad (re)generation. Any form carrying a
-// data-confirm attribute asks the user before submitting, so that an existing
-// Etherpad link is never replaced without explicit confirmation.
-document.querySelectorAll("form[data-confirm]").forEach((form) => {
-    form.addEventListener("submit", (event) => {
-        const message = form.getAttribute("data-confirm")
+// Confirmation guard for Etherpad pad (re)generation. Any element carrying a
+// data-confirm attribute asks the user before its action proceeds, so that an
+// existing Etherpad link is never replaced without explicit confirmation.
+document.querySelectorAll("[data-confirm]").forEach((el) => {
+    el.addEventListener("click", (event) => {
+        const message = el.getAttribute("data-confirm")
         if (message && !window.confirm(message)) {
             event.preventDefault()
         }
