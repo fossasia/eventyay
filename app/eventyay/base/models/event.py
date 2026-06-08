@@ -328,6 +328,8 @@ class EventMixin:
         setting. Times are not shown.
         """
         tz = tz or ZoneInfo(key=self.settings.timezone)
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         if (not self.settings.show_date_to and not force_show_end) or not self.date_to:
             return _date(self.date_from.astimezone(tz), 'DATE_FORMAT')
         return daterange(self.date_from.astimezone(tz), self.date_to.astimezone(tz))
@@ -1974,15 +1976,15 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        return self.urls.schedule.full
+        return self.urls.schedule
 
     @property
     def talk_session_url(self):
-        return self.urls.talks.full
+        return self.urls.talks
 
     @property
     def talk_speaker_url(self):
-        return self.urls.speakers.full
+        return self.urls.speakers
 
     @property
     def talk_dashboard_url(self):
