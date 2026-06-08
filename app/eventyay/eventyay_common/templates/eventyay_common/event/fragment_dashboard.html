@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n eventsignal %}
 <div class="dashboard custom">
     <div class="panel panel-default items widget-container widget-full no-padding">
         <div class="panel-heading">
@@ -8,7 +8,7 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "The event dashboard provides an overview of the three core components: Tickets, Talks and Speakers, and Video, enabling end to end event management. Ticketing and registration are handled through the Tickets module, session content and schedules are organized via Talks and Speakers, and the Video component supports engaging and interactive virtual events with integrated live interpretation." %}
+                {% trans "The event dashboard provides an overview of the core components: Tickets, Talks and Speakers, and Video, enabling end to end event management. Ticketing and registration are handled through the Tickets module, session content and schedules are organized via Talks and Speakers, and the Video component supports engaging and interactive virtual events with integrated live interpretation." %}
             </p>
         </div>
     </div>
@@ -72,26 +72,7 @@
             </p>
         </div>
     </div>
-    {% if is_teamshifts_enabled %}
-    <div class="panel panel-default widget-container widget-small no-padding last-column">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                {% trans "TeamShifts" %}
-            </h3>
-        </div>
-        <div class="panel-body">
-            <p>
-                {% trans "Manage event teams, define team roles, review team member applications, and build a shift schedule for your event staff." %}
-            </p>
-            <p>
-                {% url 'plugins:teamshifts:dashboard' organizer=request.organizer.slug event=request.event.slug as teamshifts_url %}
-                {% if teamshifts_url %}
-                    {% trans "Go to" %} <a href="{{ teamshifts_url }}">{% trans "TeamShifts Dashboard" %}</a>
-                {% endif %}
-            </p>
-        </div>
-    </div>
-    {% endif %}
+    {% eventsignal request.event "eventyay.control.signals.event_dashboard_components" request=request %}
 
     <div class="modal popup-modal" id="alert-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">

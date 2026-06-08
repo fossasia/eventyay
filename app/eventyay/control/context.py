@@ -68,8 +68,6 @@ def _default_context(request):
             or request.event.settings.talk_schedule_public is not None
         ):
             ctx['is_talk_event_created'] = True
-    if getattr(request, 'event', None):
-        ctx['is_teamshifts_enabled'] = 'teamshifts' in request.event.get_plugins()
     ctx['html_head'] = ''.join(_html_head)
 
     _js_payment_weekdays_disabled = '[]'
