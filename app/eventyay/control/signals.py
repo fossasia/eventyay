@@ -99,6 +99,10 @@ Receivers should return an HTML string for the panel. The returned HTML will be 
 directly inside the component row, so receivers should return a full ``<div class="panel ...">``
 block.
 
+**Security:** Receivers are responsible for escaping all user-controlled content.
+Use ``django.utils.html.format_html`` or ``django.utils.html.escape`` for any
+dynamic values. Never interpolate raw user input into the returned HTML string.
+
 As with all plugin signals, the ``sender`` keyword argument will contain the event.
 Only plugins that are enabled for the event will receive this signal.
 """
