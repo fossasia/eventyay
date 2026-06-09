@@ -18,7 +18,7 @@
         {% if request.GET.answer %} <input type="hidden" name="answer" value="{{ request.GET.answer }}"> {% endif %}
         {% if request.GET.unanswered %} <input type="hidden" name="unanswered" value="{{ request.GET.unanswered }}"> {% endif %}
 
-        <button class="btn btn-success" type="submit">{% translate "Search" %}</button>
+        {% include "eventyay_common/filter_actions.html" %}
     </form>
     {% if filter_form.is_valid and filter_form.cleaned_data.question %}
         <p class="text-muted ml-2">
