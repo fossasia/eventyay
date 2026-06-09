@@ -392,13 +392,27 @@ select.required-status-dropdown[data-current="optional"] {
     }
 }
 
+.admin-users-table .dropdown-menu {
+    padding: 0;
+}
+
 .dropdown-menu li .user-action-form button.btn-dropdown-link {
+    --dropdown-item-accent: var(--color-primary, #2185d0);
+    --dropdown-item-accent-contrast: #fff;
+    color: var(--dropdown-item-accent);
     text-decoration: none;
     text-align: left;
+    transition:
+        color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
 }
 
 .dropdown-menu li .user-action-form button.btn-dropdown-link:hover,
-.dropdown-menu li .user-action-form button.btn-dropdown-link:focus {
+.dropdown-menu li .user-action-form button.btn-dropdown-link:focus-visible {
+    background-color: var(--dropdown-item-accent);
+    color: var(--dropdown-item-accent-contrast);
     text-decoration: none;
 }
 
