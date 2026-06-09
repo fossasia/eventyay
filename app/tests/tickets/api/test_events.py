@@ -1142,8 +1142,7 @@ def test_patch_event_settings_file(token_client, organizer, event):
         format='json',
     )
     assert resp.status_code == 400
-    assert 'logo_image' in resp.data
-    assert len(resp.data['logo_image']) > 0
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
@@ -1177,10 +1176,10 @@ def test_patch_event_settings_external_image_urls_rejected(token_client, organiz
         format='json',
     )
     assert resp.status_code == 400
-    assert 'logo_image' in resp.data
-    assert len(resp.data['logo_image']) > 0
-    assert 'event_logo_image' in resp.data
-    assert len(resp.data['event_logo_image']) > 0
+    assert resp.data == {
+        'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+        'event_logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+    }
 
 
 @pytest.mark.django_db
@@ -1196,5 +1195,29 @@ def test_patch_event_settings_all_external_urls_rejected(token_client, organizer
         format='json',
     )
     assert resp.status_code == 400
-    assert 'logo_image' in resp.data
-    assert len(resp.data['logo_image']) > 0
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
+
+
+@pytest.mark.django_db
+def test_patch_event_settings_file_upload_reference_accepted(token_client, organizer, event):
+    """file:<uuid> upload references produced by /api/v1/upload are still accepted (not treated as URLs)."""
+    r = token_client.post(
+        '/api/v1/upload',
+        data={
+            'media_type': 'image/png',
+            'file': ContentFile('file.png', 'invalid png content'),
+        },
+        format='upload',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
+    )
+    assert r.status_code == 201
+    file_id_png = r.data['id']
+    assert file_id_png.startswith('file:')
+
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {'logo_image': file_id_png},
+        format='json',
+    )
+    assert resp.status_code == 200
+    assert resp.data['logo_image'].startswith('http')
