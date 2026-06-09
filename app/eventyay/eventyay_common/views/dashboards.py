@@ -456,16 +456,28 @@ class EventWidgetGenerator:
         return formatted_times
 
     @staticmethod
-    def generate_video_button(event: Event) -> str:
+    def generate_video_button(event: Event, request: HttpRequest) -> str:
         """
-        Generate a video button that always links to the video access view.
+        Generate a video button based on the user's ticket permissions.
         The access view will ensure configuration and plugin setup as needed.
         """
-        url = reverse(
-            'eventyay_common:event.create_access_to_video',
-            kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+        has_ticket_access = user_has_ticket_dashboard_access(
+            request.user, event.organizer, event, request=request
         )
-        return f'<a href="{url}" class="component">{_("Video")}</a>'
+        if has_ticket_access:
+            url = reverse(
+                'eventyay_common:event.create_access_to_video',
+                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+            )
+            return f'<a href="{url}" class="component">{_("Video")}</a>'
+
+        return format_html(
+            '<button type="button" class="component" aria-haspopup="dialog" '
+            'aria-controls="{}" data-dialog-target="#{}" data-toggle="dialog">{}</button>',
+            TICKET_PERMISSION_DIALOG_ID,
+            TICKET_PERMISSION_DIALOG_ID,
+            _('Video'),
+        )
 
     @staticmethod
     def generate_talk_button(event: Event) -> str:
@@ -544,7 +556,7 @@ class EventWidgetGenerator:
                     },
                 ),
                 ticket_button=cls.generate_ticket_button(event, request),
-                video_button=cls.generate_video_button(event),
+                video_button=cls.generate_video_button(event, request),
                 talk_button=cls.generate_talk_button(event),
             )
 
