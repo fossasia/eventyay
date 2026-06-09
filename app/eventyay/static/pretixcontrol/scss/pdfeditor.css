@@ -74,14 +74,14 @@ body {
     min-width: 244px;
 }
 
-#toolbox input[type="number"] {
-    -moz-appearance: number-input !important;
-    -webkit-appearance: number-input !important;
-    appearance: number-input !important;
+#toolbox input.show-spinner {
+    -moz-appearance: number-input;
+    -webkit-appearance: number-input;
+    appearance: number-input;
 }
-#toolbox input[type="number"]::-webkit-outer-spin-button,
-#toolbox input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: inner-spin-button !important;
-    display: block !important;
+#toolbox input.show-spinner::-webkit-outer-spin-button,
+#toolbox input.show-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: inner-spin-button;
+    display: block;
 }
 
