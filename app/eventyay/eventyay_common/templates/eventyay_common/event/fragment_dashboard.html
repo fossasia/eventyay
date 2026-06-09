@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n eventsignal %}
 <div class="dashboard custom">
     <div class="panel panel-default items widget-container widget-full no-padding">
         <div class="panel-heading">
@@ -72,6 +72,7 @@
             </p>
         </div>
     </div>
+    {% eventsignal request.event "eventyay.control.signals.event_dashboard_components" request=request %}
 
     <div class="modal popup-modal" id="alert-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
