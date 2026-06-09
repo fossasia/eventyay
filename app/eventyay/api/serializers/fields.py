@@ -125,6 +125,7 @@ class UploadedFileNoNewURLField(UploadedFileOrURLField):
         if isinstance(data, str):
             if is_http_url(data):
                 self.fail('url_not_allowed')
-            if get_url_scheme(data) and not data.startswith('file:'):
+            scheme = (get_url_scheme(data) or '').lower()
+            if scheme and scheme != 'file':
                 self.fail('url_not_allowed')
         return UploadedFileField.to_internal_value(self, data)

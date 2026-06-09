@@ -67,7 +67,7 @@ class EventCommonSettingsForm(SettingsForm):
             if is_http_url(current_value) and (isinstance(new_value, UploadedFile) or not new_value):
                 del self.event.settings[image_field]
             current_file = get_file_url_path(current_value)
-            if type(new_value) is str and current_file and current_value != new_value:
+            if isinstance(new_value, str) and current_file and current_value != new_value:
                 default_storage.delete(current_file)
 
                 base_path, _ = os.path.splitext(current_file)
