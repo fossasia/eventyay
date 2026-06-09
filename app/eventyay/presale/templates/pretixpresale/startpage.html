@@ -41,7 +41,6 @@
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_navbar.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/startpage.scss" %}" />
-            <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/css/startpage_navbar.css" %}" />
         {% endcompress %}
         {% if css_file %}
             <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
@@ -117,17 +116,17 @@
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.get_full_path|urlencode }}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link" id="button-sudo">
+                            <button type="submit" class="btn btn-link" id="button-sudo" aria-label="{% trans 'Admin mode' %}">
                                 <i class="fa fa-id-card" aria-hidden="true"></i>
-                                <span class="hidden-xs">{% trans "Admin mode" %}</span>
+                                <span class="hidden-xs">{% trans 'Admin mode' %}</span>
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and staff_session %}
                     <li>
-                        <a href="{% url 'control:user.sudo.stop' %}" class="danger">
+                        <a href="{% url 'control:user.sudo.stop' %}" class="danger" aria-label="{% trans 'End admin session' %}">
                             <i class="fa fa-id-card" aria-hidden="true"></i>
-                            <span class="hidden-xs">{% trans "End admin session" %}</span>
+                            <span class="hidden-xs">{% trans 'End admin session' %}</span>
                         </a>
                     </li>
                 {% endif %}
