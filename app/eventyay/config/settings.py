@@ -305,7 +305,6 @@ _LIBRARY_APPS = (
     'django_celery_beat',
     'django.forms',
     'djangoformsetjs',
-    'django_pdb',
     'jquery',
     'rest_framework.authtoken',
     'rules.apps.AutodiscoverRulesConfig',
@@ -327,6 +326,9 @@ if DEBUG and importlib.util.find_spec('django_extensions'):
 
 if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
+
+if DEBUG and importlib.util.find_spec('django_pdb'):
+    _LIBRARY_APPS += ('django_pdb',)
 
 _OURS_APPS = (
     'eventyay.agenda',
@@ -395,6 +397,20 @@ CORE_MODULES = (
         'eventyay.plugins.checkinlists',
         'eventyay.plugins.reports',
     )
+)
+
+# Widgets are public embeds served to any origin, so all origins must be allowed.
+# CORS_URLS_REGEX restricts which URL paths receive the header — only widget and
+# event-CSS endpoints.
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_URLS_REGEX = (
+    r"^(?:"
+    r".*/widget[s]?/.*|"
+    r".*/schedule/widget/.*|"
+    r".*/static/event\.css|"
+    r".*/static/schedule/.*\.js"
+    r")$"
 )
 
 # TODO: This list is only for display. It should not be here.
