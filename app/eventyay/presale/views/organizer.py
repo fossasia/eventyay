@@ -801,9 +801,9 @@ class OrganizerIcalDownload(OrganizerViewMixin, View):
 
 
 def _safe_redirect_back(request, organizer):
-    referer = request.META.get('HTTP_REFERER', '')
-    if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts=[request.get_host()]):
-        return redirect(referer)
+    url = request.POST.get('next') or request.GET.get('next') or request.META.get('HTTP_REFERER', '')
+    if url and url_has_allowed_host_and_scheme(url, allowed_hosts=[request.get_host()]):
+        return redirect(url)
     return redirect(eventreverse(organizer, 'presale:organizer.index'))
 
 
