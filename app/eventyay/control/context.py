@@ -46,7 +46,8 @@ def _default_context(request):
 
     if not (request.path.startswith(get_script_prefix() + 'control') or
             request.path.startswith(get_script_prefix() + 'admin') or
-            request.path.startswith(get_script_prefix() + 'teamshifts')
+            request.path.startswith(get_script_prefix() + 'teamshifts') or
+            request.path.startswith(get_script_prefix() + 'exhibitors')
             ) or not hasattr(request, 'user'):
         return {}
     ctx = {
