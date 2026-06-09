@@ -196,8 +196,7 @@ aside.sidebar {
   box-shadow: var(--shadow-lighter);
   width: 45px;
   align-self: stretch;
-  min-height: calc(100vh - var(--navbar-height));
-  height: auto;
+  height: calc(100vh - var(--navbar-height));
   display: flex;
   font-size: 14px;
   flex-grow: 0;
