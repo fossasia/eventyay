@@ -1686,7 +1686,7 @@ h2 .user-name-display img {
 
 @media (max-width: 768px) {
   aside.sidebar {
-    position: absolute;
+    position: fixed;
     top: var(--navbar-height);
     margin-top: 0;
     height: calc(100vh - var(--navbar-height));
