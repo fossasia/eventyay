@@ -93,6 +93,7 @@
     </div>
 </div>
 
+{% if is_socialmedia_enabled %}
 <div class="dashboard custom dashboard-margin-top">
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
@@ -104,16 +105,11 @@
             <p>
                 {% trans "Automate and schedule social media announcements for your event. Customize templates, set trigger offsets, and export announcements to CSV." %}
             </p>
-            {% if is_socialmedia_enabled %}
-                <p>
-                    {% trans "Go to" %} <a href="{% url 'plugins:socialmedia:index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Social Media Dashboard" %}</a>
-                </p>
-            {% else %}
-                <p>
-                    {% trans "Go to" %} <a href="{% url 'control:event.settings.plugins' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Enable Plugin in settings" %}</a>
-                </p>
-            {% endif %}
+            <p>
+                {% trans "Go to" %} <a href="{% url 'plugins:socialmedia:index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Social Media Dashboard" %}</a>
+            </p>
         </div>
     </div>
 </div>
+{% endif %}
 
