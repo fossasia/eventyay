@@ -16,7 +16,8 @@ from django.utils.html import escape
 from lxml import etree
 from yarl import URL
 
-from eventyay.base.models import BBBServer, BBBCall
+from eventyay.base.models import BBBCall, BBBServer
+
 
 logger = logging.getLogger(__name__)
 
@@ -94,14 +95,13 @@ def choose_server(event, room=None, prefer_server=None):
         return server
 
 
-def choose_server_or_raise(event, room=None, prefer_server=None):
+def choose_server_or_raise(event, room=None, prefer_server=None, call_id=None):
     server = choose_server(event=event, room=room, prefer_server=prefer_server)
     if server is None:
-        logger.warning(
-            "No active BBB server available for event %s.",
-            event.pk,
-        )
-        raise BBBServerUnavailable
+        context = f"room={room.pk}" if room else f"call={call_id}"
+        message = f"No active BBB server available for event {event.pk} ({context})."
+        logger.warning(message)
+        raise BBBServerUnavailable(message)
     return server
 
 
@@ -111,7 +111,7 @@ def get_create_params_for_call_id(call_id, record, user):
     try:
         call = BBBCall.objects.get(id=call_id, invited_members__in=[user])
         if not call.server.active:
-            call.server = choose_server_or_raise(event=call.event)
+            call.server = choose_server_or_raise(event=call.event, call_id=call.id)
             call.save(update_fields=["server"])
     except BBBCall.DoesNotExist:
         return None, None
