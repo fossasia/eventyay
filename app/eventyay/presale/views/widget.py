@@ -4,6 +4,7 @@ import json
 import logging
 from collections import defaultdict
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from urllib.parse import urljoin
 
 import isoweek
@@ -209,8 +210,9 @@ def get_picture(event, picture):
 class WidgetAPIProductList(EventListMixin, View):
     def _get_products(self):
         qs = self.request.event.products
-        if 'products' in self.request.GET:
-            qs = qs.filter(pk__in=self.request.GET.get('products').split(','))
+        item_filter = self.request.GET.get('items') or self.request.GET.get('products')
+        if item_filter:
+            qs = qs.filter(pk__in=item_filter.split(','))
         if 'categories' in self.request.GET:
             qs = qs.filter(category__pk__in=self.request.GET.get('categories').split(','))
 
@@ -231,7 +233,7 @@ class WidgetAPIProductList(EventListMixin, View):
                     'description': str(rich_text(cat.description, safelinks=False))
                     if cat and cat.description
                     else None,
-                    'products': [
+                    'items': [
                         {
                             'id': product.pk,
                             'name': str(product.name),
@@ -399,6 +401,8 @@ class WidgetAPIProductList(EventListMixin, View):
 
     def _get_date_range(self, ev, event, tz=None):
         tz = tz or event.timezone
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         dr = ev.get_date_range_display(tz)
         if event.settings.show_times:
             dr += ' ' + date_format(ev.date_from.astimezone(tz), 'TIME_FORMAT')
@@ -465,7 +469,7 @@ class WidgetAPIProductList(EventListMixin, View):
 
         if hasattr(self.request, 'event'):
             data['name'] = str(request.event.name)
-            data['frontpage_text'] = str(rich_text(request.event.settings.frontpage_text, safelinks=False))
+            data['frontpage_text'] = str(rich_text(request.event.settings.frontpage_text))
 
         cache_key = ':'.join(
             [
@@ -722,9 +726,9 @@ class WidgetAPIProductList(EventListMixin, View):
         ev = self.subevent or request.event
         data['name'] = str(ev.name)
         if self.subevent:
-            data['frontpage_text'] = str(rich_text(self.subevent.frontpage_text, safelinks=False))
+            data['frontpage_text'] = str(rich_text(self.subevent.frontpage_text))
         else:
-            data['frontpage_text'] = str(rich_text(request.event.settings.frontpage_text, safelinks=False))
+            data['frontpage_text'] = str(rich_text(request.event.settings.frontpage_text))
         data['date_range'] = self._get_date_range(ev, request.event)
         fail = False
 
@@ -780,12 +784,12 @@ class WidgetAPIProductList(EventListMixin, View):
                 fail = True
 
         if not fail and (ev.presale_is_running or request.event.settings.show_products_outside_presale_period):
-            data['products_by_category'], data['display_add_to_cart'], data['productnum'] = self._get_products()
+            data['items_by_category'], data['display_add_to_cart'], data['itemnum'] = self._get_products()
             data['display_add_to_cart'] = data['display_add_to_cart'] and ev.presale_is_running
         else:
-            data['products_by_category'] = []
+            data['items_by_category'] = []
             data['display_add_to_cart'] = False
-            data['productnum'] = 0
+            data['itemnum'] = 0
 
         data['has_seating_plan'] = ev.seating_plan is not None
 
