@@ -35,6 +35,24 @@ def escape_name(name):
     return name.replace(":", "")
 
 
+def get_absolute_presentation_url(presentation):
+    """Return a BBB-downloadable absolute URL for an initial presentation."""
+    presentation = presentation.strip()
+    if not presentation:
+        return ""
+    return urljoin(settings.SITE_URL, presentation)
+
+
+def get_presentation_xml(presentation):
+    """Build BBB's initial-presentation XML with an absolute document URL."""
+    presentation = get_absolute_presentation_url(presentation)
+    return (
+        '<modules><module name="presentation"><document url="{}" /></module></modules>'.format(
+            escape(presentation)
+        )
+    )
+
+
 def choose_server(event, room=None, prefer_server=None):
     servers = BBBServer.objects.filter(active=True)
 
@@ -249,12 +267,8 @@ class BBBService:
         create_url = get_url("create", create_params, server.url, server.secret)
 
         presentation = config.get("presentation", None)
-        if presentation:
-            xml = "<modules>"
-            xml += '<module name="presentation"><document url="{}" /></module>'.format(
-                escape(presentation)
-            )
-            xml += "</modules>"
+        if presentation and presentation.strip():
+            xml = get_presentation_xml(presentation)
             req = await self._post(create_url, xml)
         else:
             req = await self._get(create_url)
