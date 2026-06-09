@@ -58,6 +58,24 @@ def resolve_import_product(product):
     return product
 
 
+class NewImportVariation:
+    """Placeholder returned during validation when a variation will be created on import."""
+
+    __slots__ = ('value', 'product_name', 'product_id')
+
+    def __init__(self, value: str, product_name: str = None, product_id: str = None):
+        self.value = value
+        self.product_name = product_name
+        self.product_id = product_id
+
+
+def resolve_import_variation(variation):
+    """Return a persisted ProductVariation or None when *variation* is a pending import placeholder."""
+    if isinstance(variation, NewImportVariation):
+        return None
+    return variation
+
+
 class ImportColumn:
     # Subclasses may override this with a list of CSV header name suggestions
     # used for automatic column matching when the import mapping form is first shown.
@@ -440,30 +458,42 @@ class Variation(ImportColumn):
     verbose_name = gettext_lazy('Product variation')
     suggestions = ['variation', 'product variation', 'ticket variation', 'variant']
 
+    def __init__(self, event, create_missing: bool = False):
+        self.create_missing = create_missing
+        self._pending_variations: set[tuple[str, str, str]] = set()
+        super().__init__(event)
+
     @cached_property
     def products(self):
-        return list(
-            ProductVariation.objects.filter(
-                active=True, product__active=True, product__event=self.event
-            ).select_related('product')
-        )
+        qs = ProductVariation.objects.filter(product__event=self.event).select_related('product')
+        if not self.create_missing:
+            qs = qs.filter(active=True, product__active=True)
+        return list(qs)
 
     def static_choices(self):
         return [(str(p.pk), f'{p.product} – {p.value}') for p in self.products]
 
     def clean(self, value, previous_values):
-        product = resolve_import_product(previous_values.get('product'))
+        raw_product = previous_values.get('product')
+        product = resolve_import_product(raw_product)
         if value:
             if product is None:
+                if self.create_missing and isinstance(raw_product, NewImportProduct):
+                    self._pending_variations.add((value, raw_product.name, None))
+                    return NewImportVariation(value, product_name=raw_product.name)
                 raise ValidationError(_('No matching variation was found.'))
+
             matches = [
                 p
                 for p in self.products
-                if str(p.pk) == value
-                or any((v and v == value) for v in i18n_flat(p.value))
+                if (str(p.pk) == value
+                or any((v and v == value) for v in i18n_flat(p.value)))
                 and p.product_id == product.pk
             ]
             if len(matches) == 0:
+                if self.create_missing:
+                    self._pending_variations.add((value, None, str(product.pk)))
+                    return NewImportVariation(value, product_id=str(product.pk))
                 raise ValidationError(_('No matching variation was found.'))
             if len(matches) > 1:
                 raise ValidationError(_('Multiple matching variations were found.'))
@@ -471,6 +501,46 @@ class Variation(ImportColumn):
         elif product is not None and product.variations.exists():
             raise ValidationError(_('You need to select a variation for this product.'))
         return value
+
+    def materialize_pending_variations(self, product_map: dict[str, Product]) -> dict[tuple[str, str, str], ProductVariation]:
+        if 'products' in self.__dict__:
+            del self.__dict__['products']
+        created: dict[tuple[str, str, str], ProductVariation] = {}
+        for pending_var in sorted(self._pending_variations):
+            val, p_name, p_id = pending_var
+            
+            if p_id is not None:
+                product = Product.objects.get(pk=p_id, event=self.event)
+            else:
+                product = product_map.get(p_name)
+                if not product:
+                    raise ValidationError(_('Product for variation not found.'))
+
+            matches = [
+                p
+                for p in self.products
+                if (str(p.pk) == val
+                or any((v and v == val) for v in i18n_flat(p.value)))
+                and p.product_id == product.pk
+            ]
+            if len(matches) == 1:
+                created[pending_var] = matches[0]
+                continue
+            if len(matches) > 1:
+                raise ValidationError(_('Multiple matching variations were found.'))
+
+            with scope(event=self.event):
+                variation = ProductVariation.objects.create(
+                    product=product,
+                    value=LazyI18nString(val),
+                    active=False,
+                    default_price=None,
+                )
+            self.products.append(variation)
+            created[pending_var] = variation
+
+        self._pending_variations.clear()
+        return created
 
     def assign(self, value, order, position, invoice_address, **kwargs):
         position.variation = value
@@ -1023,7 +1093,7 @@ def get_all_columns(event, settings: dict | None = None):
     default += [
         EmailColumn(event),
         ProductColumn(event, create_missing=create_missing),
-        Variation(event),
+        Variation(event, create_missing=create_missing),
         InvoiceAddressCompany(event),
     ]
     scheme = PERSON_NAME_SCHEMES.get(event.settings.name_scheme)

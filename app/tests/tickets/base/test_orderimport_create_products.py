@@ -116,6 +116,50 @@ def test_import_creates_missing_products_when_enabled(event, user):
 
 @pytest.mark.django_db
 @scopes_disabled()
+def test_import_creates_missing_products_and_variations_when_enabled(event, user):
+    assert event.products.count() == 0
+
+    def make_csv_with_variations(rows):
+        buffer = StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=['Email', 'Product', 'Variation', 'Price'], dialect=csv.excel)
+        writer.writeheader()
+        writer.writerows(rows)
+        buffer.seek(0)
+        cached = CachedFile.objects.create(type='text/csv', filename='input.csv')
+        cached.file.save('input.csv', ContentFile(buffer.read()))
+        return cached
+
+    cached = make_csv_with_variations(
+        [
+            {'Email': 'a@example.com', 'Product': 'Shirt', 'Variation': 'Size M', 'Price': '0.00'},
+            {'Email': 'b@example.com', 'Product': 'Shirt', 'Variation': 'Size L', 'Price': '0.00'},
+            {'Email': 'c@example.com', 'Product': 'Mug', 'Variation': '', 'Price': '0.00'},
+        ]
+    )
+    settings = make_import_settings(create_missing_products=True, variation='csv:Variation')
+
+    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
+
+    products = list(event.products.all())
+    assert len(products) == 2
+    
+    shirt = event.products.get(name__icontains='Shirt')
+    variations = list(shirt.variations.all())
+    assert len(variations) == 2
+    var_names = {str(v.value) for v in variations}
+    assert var_names == {'Size M', 'Size L'}
+    assert all(v.active is False for v in variations)
+
+    assert event.orders.count() == 3
+    positions = list(OrderPosition.objects.all())
+    assert len(positions) == 3
+    assert any(p.product == shirt and str(p.variation.value) == 'Size M' for p in positions)
+    assert any(p.product == shirt and str(p.variation.value) == 'Size L' for p in positions)
+    assert any(p.product.name.data == 'Mug' and p.variation is None for p in positions)
+
+
+@pytest.mark.django_db
+@scopes_disabled()
 def test_import_unknown_product_fails_without_create_missing(event, user):
     cached = make_csv_file([{'Email': 'a@example.com', 'Product': 'VIP', 'Price': '0.00'}])
     settings = make_import_settings(create_missing_products=False)
@@ -138,7 +182,9 @@ def test_import_reuses_inactive_auto_created_product(event, user):
     product = event.products.get()
     assert product.active is False
 
-    import_orders.apply(args=(event.pk, cached.id, settings, 'en', user.pk)).get()
+    # recreate file since it's deleted by import_orders
+    cached2 = make_csv_file([{'Email': 'b@example.com', 'Product': 'VIP', 'Price': '10.00'}])
+    import_orders.apply(args=(event.pk, cached2.id, settings, 'en', user.pk)).get()
 
     assert event.products.count() == 1
     assert event.orders.count() == 2
@@ -282,12 +328,16 @@ def test_materialize_pending_products_raises_on_ambiguous(event):
 def test_materialize_pending_products_uses_current_db_state(event):
     column = ProductColumn(event, create_missing=True)
     column._pending_product_names.add('VIP')
-    Product.objects.create(
+    product = Product.objects.create(
         event=event,
         name=LazyI18nString('VIP'),
         default_price=Decimal('0.00'),
+        active=False,
         admission=True,
+        sales_channels=[],
     )
+    from eventyay.base.models import Quota
+    Quota.objects.create(event=event, name='VIP', size=None).products.add(product)
 
     created = column.materialize_pending_products()
 

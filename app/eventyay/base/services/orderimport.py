@@ -17,7 +17,7 @@ from eventyay.base.models import (
     OrderPosition,
     User,
 )
-from eventyay.base.orderimport import NewImportProduct, ProductColumn, get_all_columns
+from eventyay.base.orderimport import NewImportProduct, NewImportVariation, ProductColumn, Variation, get_all_columns
 from eventyay.base.services.invoices import generate_invoice, invoice_qualified
 from eventyay.base.services.locking import LockTimeoutException
 from eventyay.base.services.tasks import ProfiledEventTask
@@ -108,6 +108,7 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
             data.append(values)
 
         product_columns = [c for c in cols if isinstance(c, ProductColumn)]
+        variation_columns = [c for c in cols if isinstance(c, Variation)]
         orders = []
 
         # quota check?
@@ -124,6 +125,19 @@ def import_orders(self, event: Event, fileid: str, settings: dict, locale: str, 
                         product = record.get(column.identifier)
                         if isinstance(product, NewImportProduct):
                             record[column.identifier] = product_map[product.name]
+                            
+                for column in variation_columns:
+                    try:
+                        variation_map = column.materialize_pending_variations(product_map)
+                    except ValidationError as e:
+                        raise DataImportError(
+                            _('Error while creating product variations: {message}').format(message=e.message)
+                        )
+                    for record in data:
+                        variation = record.get(column.identifier)
+                        if isinstance(variation, NewImportVariation):
+                            key = (variation.value, variation.product_name, variation.product_id)
+                            record[column.identifier] = variation_map[key]
 
                 # Build and persist orders in the same transaction as product materialization so
                 # newly created products are rolled back if the import fails.
