@@ -2243,7 +2243,7 @@ class OrderChangeManager:
                         'product': op.position.product.pk,
                         'variation': op.position.variation.pk if op.position.variation else None,
                         'price': op.position.price,
-                        'addon_to': None,
+                        'addon_to': op.position.addon_to_id,
                     },
                 )
                 op.position.canceled = False
