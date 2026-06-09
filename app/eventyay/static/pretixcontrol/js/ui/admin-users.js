@@ -239,7 +239,7 @@ async function handleActionClick(event) {
         }
 
         if (response.ok && data.status === 'ok') {
-            showAlert(gettext('Email sent successfully.'), 'success');
+            showAlert(data.message || gettext('Email sent successfully.'), 'success');
         } else {
             showAlert(data.message || gettext('An error occurred. Please try again.'), 'danger');
         }

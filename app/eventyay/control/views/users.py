@@ -501,7 +501,10 @@ class UserResendVerificationView(AdministratorPermissionRequiredMixin, View):
             data={'target_user': target_user.pk},
         )
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'ok'})
+            return JsonResponse({
+                'status': 'ok',
+                'message': str(_('Verification email sent successfully.'))
+            })
         messages.success(
             request,
             _('Verification email sent to %(email)s.') % {'email': target_user.email},
@@ -534,7 +537,10 @@ class UserResetPasswordView(AdministratorPermissionRequiredMixin, View):
 
         target_user.log_action('eventyay.control.auth.user.forgot_password.mail_sent', user=request.user)
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'ok'})
+            return JsonResponse({
+                'status': 'ok',
+                'message': str(_('Password reset email sent successfully.'))
+            })
         messages.success(
             request,
             _('Password reset email sent to %(email)s.') % {'email': target_user.email},
