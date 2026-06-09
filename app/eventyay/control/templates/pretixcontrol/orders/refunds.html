@@ -27,17 +27,18 @@
             </div>
         </form>
     </div>
-    {% if not filter_form.filtered and refunds|length == 0 %}
-        <div class="empty-collection">
-            <p>
-                {% blocktrans trimmed %}
-                    No refunds are currently open.
-                {% endblocktrans %}
-            </p>
-        </div>
-    {% else %}
-        <div class="table-responsive">
-            <table class="table table-condensed table-hover">
+    <div data-ajax-results-region>
+        {% if not filter_form.filtered and refunds|length == 0 %}
+            <div class="empty-collection">
+                <p>
+                    {% blocktrans trimmed %}
+                        No refunds are currently open.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table table-condensed table-hover">
                 <thead>
                 <tr>
                     <th>
@@ -126,8 +127,9 @@
                     </tr>
                 {% endfor %}
                 </tbody>
-            </table>
-        </div>
-        {% include "pretixcontrol/pagination.html" %}
-    {% endif %}
+                </table>
+            </div>
+            {% include "pretixcontrol/pagination.html" %}
+        {% endif %}
+    </div>
 {% endblock %}

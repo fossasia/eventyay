@@ -4,6 +4,7 @@
 {% load event_tags %}
 {% load i18n %}
 {% load static %}
+{% load vite %}
 
 {% block extra_title %}{% translate "Widget generation" %} :: {% endblock extra_title %}
 
@@ -101,7 +102,7 @@
             </p>
             <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.event.locale }}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color|default:'#2185d0' }}"></pretalx-schedule>
       </div>
-   <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
+   {% vite_app_scripts 'schedule' 'src/main-wc.js' fallback=request.event.urls.schedule_widget_script %}
         <noscript>
            <div class="pretalx-widget">
                 <div class="pretalx-widget-info-message">

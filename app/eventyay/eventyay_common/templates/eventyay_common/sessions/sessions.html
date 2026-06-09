@@ -24,8 +24,9 @@
     </div>
 
     <!-- Sessions Table -->
-    <div class="table-responsive mt-3">
-        <table class="table table-condensed table-hover">
+    <div data-ajax-results-region>
+        <div class="table-responsive mt-3">
+            <table class="table table-condensed table-hover">
             <thead>
                 <tr>
                     <th>{% translate "Title" %}</th>
@@ -83,8 +84,8 @@
                 </tr>
                 {% endfor %}
             </tbody>
-        </table>
+            </table>
+        </div>
+        {% include 'pretixcontrol/pagination.html' %}
     </div>
-
-    {% include 'pretixcontrol/pagination.html' %}
 {% endblock %}
