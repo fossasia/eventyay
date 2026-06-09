@@ -101,9 +101,15 @@ class UserFilterFormTest(TestCase):
         self.clean_user = _make_user('cl@ex.com', is_spam=False)
 
     def _filter(self, data):
+        from django.db.models import Exists, OuterRef
+        qs = User.objects.all().annotate(
+            is_email_verified=Exists(
+                EmailAddress.objects.filter(user=OuterRef('pk'), primary=True, verified=True)
+            )
+        )
         form = UserFilterForm(data=data)
         self.assertTrue(form.is_valid(), form.errors)
-        return form.filter_qs(User.objects.all())
+        return form.filter_qs(qs)
 
     def test_filter_verified_yes(self):
         qs = self._filter({'verified': 'yes'})
