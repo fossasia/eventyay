@@ -533,14 +533,14 @@ wheels = [
 
 [[package]]
 name = "cron-descriptor"
-version = "2.0.8"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/ce/cd3cc454ea73e8a38be79723b925611d2556037f938372ad594373f187b4/cron_descriptor-2.0.8.tar.gz", hash = "sha256:7e487efe14a99a3c1c23bb5302bb75c8bf5d54bca82931bf71f5ae2855939772", size = 49971, upload-time = "2026-03-23T13:19:17.963Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/75/b44b05ae7d1e49b59a27a917c44e04ce9aa4cebdd05dac42ba7df06a91b4/cron_descriptor-2.1.0.tar.gz", hash = "sha256:ecddb8b2f6c5286398949aaefe185364666af74f33b01877c61378e1fd4e38e6", size = 50221, upload-time = "2026-06-02T16:26:28.223Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/8c/ae74b17ea1672844a14c176a88f6d2718fa2c10948dc8401824d62265e9e/cron_descriptor-2.0.8-py3-none-any.whl", hash = "sha256:21fae0e6e0e28b19fd6a08e032c700077fe759e9bc1deb1ebe32f277fbc8ba6c", size = 74703, upload-time = "2026-03-23T13:19:16.486Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/41/c476c41cb88dbbba83e0685dd331b9d32599f1e4a94ca223b02437a3d83b/cron_descriptor-2.1.0-py3-none-any.whl", hash = "sha256:e280efae0e375e2cbc62846f833888f12c7921d2d11ab0dca598f94c51af8639", size = 74734, upload-time = "2026-06-02T16:26:26.919Z" },
 ]
 
 [[package]]
@@ -1459,7 +1459,7 @@ requires-dist = [
     { name = "click-repl", specifier = ">=0.3.0" },
     { name = "constantly", specifier = ">=23.10.4" },
     { name = "contourpy", specifier = ">=1.3.2" },
-    { name = "cron-descriptor", specifier = ">=2.0.8" },
+    { name = "cron-descriptor", specifier = ">=2.1.0" },
     { name = "cryptography", specifier = ">=48.0.0" },
     { name = "css-inline", specifier = ">=0.20.2" },
     { name = "csscompressor", specifier = ">=0.9.5" },
@@ -1517,7 +1517,7 @@ requires-dist = [
     { name = "geoip2", specifier = ">=4.8.1" },
     { name = "gunicorn", specifier = ">=26.0.0" },
     { name = "hyperlink", specifier = ">=21.0.0" },
-    { name = "icalendar", specifier = ">=7.1.0" },
+    { name = "icalendar", specifier = ">=7.1.2" },
     { name = "idna", specifier = ">=3.18" },
     { name = "importlib-metadata", specifier = ">=8.7.1" },
     { name = "incremental", specifier = ">=24.11.0" },
@@ -1566,7 +1566,7 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "pyopenssl", specifier = ">=26.2.0" },
     { name = "pyotp", specifier = ">=2.9.0" },
-    { name = "pypdf", specifier = ">=6.11.0" },
+    { name = "pypdf", specifier = ">=6.13.1" },
     { name = "pypng", specifier = ">=0.20220715.0" },
     { name = "python-bidi", specifier = ">=0.6.10" },
     { name = "python-creole", specifier = ">=1.4.10" },
@@ -1594,7 +1594,7 @@ requires-dist = [
     { name = "sepaxml", specifier = ">=2.7.0" },
     { name = "service-identity", specifier = ">=26.1.0" },
     { name = "sortedcontainers", specifier = ">=2.4.0" },
-    { name = "soupsieve", specifier = ">=2.8.1" },
+    { name = "soupsieve", specifier = ">=2.8.4" },
     { name = "sqlparse", specifier = ">=0.5.5" },
     { name = "starkbank-ecdsa", specifier = ">=2.3.1" },
     { name = "stripe", specifier = ">=11.3.0" },
@@ -1819,16 +1819,16 @@ wheels = [
 
 [[package]]
 name = "icalendar"
-version = "7.1.0"
+version = "7.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
     { name = "typing-extensions" },
     { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/99/4c/ea2ca8ea012a2bf486657ebc5704d97bd9628e1cb85130b3f5298ac08f60/icalendar-7.1.0.tar.gz", hash = "sha256:10cd223c792fcc43bee4c3ebe3149d4cf32406c85cfef146624df5a0d414260f", size = 467258, upload-time = "2026-04-30T23:25:20.282Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ac/e2/13c732a8da65961a249f9d745d2da5e06fc34a6c2ff24b13138bdedbf5f9/icalendar-7.1.2.tar.gz", hash = "sha256:ebc43ebeb357be98984b573d975118008dee3410d8df28b054ef2943cf3e367e", size = 471132, upload-time = "2026-05-22T10:42:29.729Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/df/68d5aa80188ad0880f12e2fc60d5df10fc831fdb11ef1d91e417e24ef4ee/icalendar-7.1.0-py3-none-any.whl", hash = "sha256:6de875370d22fc4aff172ad7c439b39fb109dc2eab9ce358fcb95e8689ad7b56", size = 471220, upload-time = "2026-04-30T23:25:18.584Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/a0/2929543a1dfe2667e1ce08f2d6af59480d1467c0ee38acb94637965b3de3/icalendar-7.1.2-py3-none-any.whl", hash = "sha256:01c76243c76c549f58bb51510a8f0a4edb7c539726adda1356dfd0dc04fb7a53", size = 474031, upload-time = "2026-05-22T10:42:28.308Z" },
 ]
 
 [[package]]
@@ -2747,11 +2747,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "6.11.0"
+version = "6.13.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bf/58/6dd97d78a4b17a7a6b9d1c6ad23895abc41f0fdc49c553cc05bdfdcc36d0/pypdf-6.11.0.tar.gz", hash = "sha256:062b51c81b0910e6d2755e99e1c5547a0a23b7d0a32322af66240d8edcfabe87", size = 6453975, upload-time = "2026-05-09T13:26:48.955Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/d9/9d12fa0d9660d03320725ff686c961b645a4218940a82296e1272d9e1ff0/pypdf-6.13.1.tar.gz", hash = "sha256:4841d8a4c1589e5833915dc0c7ddfacff80a2e0bcbeb5d1e681fecaa1674b03a", size = 6477811, upload-time = "2026-06-08T11:01:49.344Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/b1/68feb7eb3b99f0c020b414234825f4a5d70e0126c18d933770e8c93a35fc/pypdf-6.11.0-py3-none-any.whl", hash = "sha256:769394d5756d5b304c9b6bef88b54b1816b328e7e6fc9254e625529a15ed4ab8", size = 338819, upload-time = "2026-05-09T13:26:46.904Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/dd/8f03e0a5788a5d1feb4550617c3e6db5e9099eaee248a3e482ddaeacbbb0/pypdf-6.13.1-py3-none-any.whl", hash = "sha256:e555e4ce3f561ef069307622f1374136ba964ca6ca24f24158701decaf83ed9b", size = 346259, upload-time = "2026-06-08T11:01:47.741Z" },
 ]
 
 [[package]]
@@ -3350,11 +3350,11 @@ wheels = [
 
 [[package]]
 name = "soupsieve"
-version = "2.8.3"
+version = "2.8.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7b/ae/2d9c981590ed9999a0d91755b47fc74f74de286b0f5cee14c9269041e6c4/soupsieve-2.8.3.tar.gz", hash = "sha256:3267f1eeea4251fb42728b6dfb746edc9acaffc4a45b27e19450b676586e8349", size = 118627, upload-time = "2026-01-20T04:27:02.457Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/2c/0a5f6f8ee0d5589e48c7640213ed5175d52cf540a06725b628cc1a45d6ce/soupsieve-2.8.4.tar.gz", hash = "sha256:e121fd02e975c695e4e9e8774a5ee35d74714b59307868dcc5319ad2d9e3328e", size = 121110, upload-time = "2026-05-24T13:55:57.154Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/2c/1462b1d0a634697ae9e55b3cecdcb64788e8b7d63f54d923fcd0bb140aed/soupsieve-2.8.3-py3-none-any.whl", hash = "sha256:ed64f2ba4eebeab06cc4962affce381647455978ffc1e36bb79a545b91f45a95", size = 37016, upload-time = "2026-01-20T04:27:01.012Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/f5/0c41cb68dcae6b7de4fac4188a3a9589e21fb31df21ea3a2e888db95e6c9/soupsieve-2.8.4-py3-none-any.whl", hash = "sha256:e7e6b0769c8f51ed59acab6e994b00621096cfb1c640a7509295987388fbaf65", size = 37304, upload-time = "2026-05-24T13:55:55.406Z" },
 ]
 
 [[package]]
