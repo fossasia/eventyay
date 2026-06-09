@@ -119,10 +119,14 @@
                 if (eventI18nRequest !== requestController) {
                     return;
                 }
-                var fields = document.createElement("div");
-                fields.innerHTML = data.fields;
-                eventNameField.innerHTML = fields.querySelector("#event-name-field-template").innerHTML;
-                eventLocationField.innerHTML = fields.querySelector("#event-location-field-template").innerHTML;
+                var fields = new DOMParser().parseFromString(data.fields, "text/html");
+                var eventNameTemplate = fields.querySelector("#event-name-field-template");
+                var eventLocationTemplate = fields.querySelector("#event-location-field-template");
+                if (!eventNameTemplate || !eventLocationTemplate) {
+                    throw new Error("Event multilingual fields response is incomplete.");
+                }
+                eventNameField.replaceChildren(eventNameTemplate.content.cloneNode(true));
+                eventLocationField.replaceChildren(eventLocationTemplate.content.cloneNode(true));
                 eventNameField.removeAttribute("aria-busy");
                 eventLocationField.removeAttribute("aria-busy");
                 eventI18nRequest = null;
