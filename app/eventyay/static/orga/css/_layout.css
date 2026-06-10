@@ -627,7 +627,7 @@ footer {
     }
 
     label {
-      display: inline !important;
+      display: inline;
       color: var(--color-text, #333);
       font-weight: normal;
       cursor: pointer;
@@ -649,7 +649,7 @@ footer {
   border-radius: var(--size-border-radius);
 }
 
-.state-count-badge {
+.filter-count-badge {
   display: inline-flex;
   align-items: center;
   padding: 1px 8px;

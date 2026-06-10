@@ -6,6 +6,7 @@ onReady(() => {
         const pendingDiv = document.getElementById('pending')
 
         if (pendingDiv && dropdown) {
+            pendingDiv.classList.remove('d-none')
             pendingDiv.classList.add('choices-exclude-pending')
             dropdown.prepend(pendingDiv)
 
@@ -34,7 +35,7 @@ onReady(() => {
         if (!inner) return
 
         const badge = document.createElement('span')
-        badge.className = 'state-count-badge'
+        badge.className = 'filter-count-badge'
         badge.hidden = true
         inner.prepend(badge)
 
