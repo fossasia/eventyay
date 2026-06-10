@@ -13,7 +13,7 @@
             </a>
             {% if event_series_creation_enabled %}
             <a href="{% url "eventyay_common:events.add" %}?organizer={{ request.organizer.slug }}&amp;series=1" class="btn btn-default">
-                <span class="icon-calendar-series" aria-hidden="true"><i class="fa fa-calendar icon-calendar-series__base"></i><i class="fa fa-plus-circle icon-calendar-series__badge"></i></span>
+                {% include "eventyay_common/includes/icon_calendar_series.html" %}
                 {% trans "Create Event Series" %}
             </a>
             {% endif %}

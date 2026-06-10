@@ -84,27 +84,10 @@
       i {
         font-size: 56px;
       }
-      .icon-calendar-series {
-        position: relative;
-        display: inline-block;
-        line-height: 1;
-        .icon-calendar-series__base {
-          font-size: 56px;
-        }
-        .icon-calendar-series__badge {
-          position: absolute;
-          bottom: -1px;
-          right: -2px;
-          font-size: 22px;
-          line-height: 1;
-          background: var(--color-offwhite, #fff);
-          border-radius: 50%;
-          width: 0.85em;
-          height: 0.85em;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+      .icon-calendar-series-svg {
+        width: 56px;
+        height: 56px;
+        color: inherit;
       }
     }
 

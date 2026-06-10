@@ -23,7 +23,7 @@
           {% if event_series_creation_enabled %}
           <div class="widget-small widget-container">
               <a href="{% url 'eventyay_common:events.add' %}?series=1" class="widget">
-                  <div class="newevent"><span class="icon-calendar-series" aria-hidden="true"><i class="fa fa-calendar icon-calendar-series__base" aria-hidden="true"></i><i class="fa fa-plus-circle icon-calendar-series__badge" aria-hidden="true"></i></span>{% trans "Create Event Series" %}</div>
+                  <div class="newevent">{% include "eventyay_common/includes/icon_calendar_series.html" %}{% trans "Create Event Series" %}</div>
               </a>
           </div>
           {% endif %}

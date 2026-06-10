@@ -261,9 +261,8 @@ class EventCreateView(TemplateView):
         return None
 
     def dispatch(self, request, *args, **kwargs):
-        foundation_prefix = self.get_form_prefix('foundation')
         is_series = request.GET.get('series') == '1' or bool(
-            request.POST.get(f'{foundation_prefix}-has_subevents')
+            request.POST.get('has_subevents')
         )
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
@@ -320,6 +319,7 @@ class EventCreateView(TemplateView):
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
         context['clone_from'] = self.clone_from
         context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        context['type_preselected'] = 'series' in self.request.GET
         return context
 
     def post(self, request, *args, **kwargs):
