@@ -26,6 +26,7 @@ from eventyay.base.models import Event  # Added for /video event context
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.agenda.views.utils import build_public_schedule_exporters
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
+from eventyay.consts import SizeKey
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
 logger = logging.getLogger(__name__)
@@ -112,6 +113,7 @@ class VideoSPAView(View):
                         event.pk,
                     ),
                     'upload': safe_reverse('storage:upload', event_id=event.pk) or '',
+                    'uploadMaxSize': settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER],
                     'scheduleImport': safe_reverse('storage:schedule_import', event_id=event.pk) or '',
                     'systemlog': safe_reverse('live:systemlog') or '',
                 },
