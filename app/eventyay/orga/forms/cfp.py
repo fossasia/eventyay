@@ -30,7 +30,9 @@ from eventyay.common.forms.widgets import (
     HtmlDateTimeInput,
     TextInputWithAddon,
 )
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
+from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 
@@ -240,8 +242,33 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
                 ],
             )
 
-        if not obj.is_multilingual:
-            self.fields.pop('cfp_ask_content_locale', None)
+        available_codes = [code for code, _ in obj.available_content_locales]
+        choices = get_language_choices_native_with_ui_name(codes=available_codes)
+        existing_codes = {c[0] for c in choices}
+        for code, name in obj.available_content_locales:
+            if code not in existing_codes:
+                choices.append((code, name))
+
+        self.fields['content_locales'] = forms.MultipleChoiceField(
+            choices=choices,
+            widget=MultipleLanguagesWidget(),
+            required=False,
+            initial=obj.settings.get('content_locales') or [],
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        ask_content_locale = cleaned_data.get('cfp_ask_content_locale')
+        content_locales = cleaned_data.get('content_locales')
+
+        if ask_content_locale and ask_content_locale != 'do_not_ask' and not content_locales:
+            self.add_error(
+                'content_locales',
+                forms.ValidationError(
+                    _('You must select at least one content language if the Content Locale field is active.')
+                )
+            )
+        return cleaned_data
 
     def save(self, *args, **kwargs):
         # Preserve fields_config (drag-drop order) before modifying settings
@@ -253,6 +280,11 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         # Restore fields_config after setting other values (also when it is an empty dict)
         if fields_config is not None:
             self.instance.cfp.settings['fields_config'] = fields_config
+
+        if 'content_locales' in self.cleaned_data:
+            if 'cfp_ask_content_locale' in self.cleaned_data and self.cleaned_data.get('cfp_ask_content_locale') != 'do_not_ask':
+                self.instance.settings.set('content_locales', self.cleaned_data['content_locales'])
+
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
