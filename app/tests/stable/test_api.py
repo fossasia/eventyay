@@ -55,6 +55,10 @@ class TestAPIEndpoints:
         view.queryset.model.get_perm.return_value = 'view_model'
         
         assert permission.has_permission(request, view) is True
+        
+        # Test with non-callable attribute
+        request.auth.has_endpoint_permission = False
+        assert permission.has_permission(request, view) is True
 
 
 @pytest.mark.django_db

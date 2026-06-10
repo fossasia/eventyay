@@ -46,8 +46,11 @@ class ApiPermission(BasePermission):
                     ):
                         return False
             endpoint = getattr(view, "endpoint", None)
-            if hasattr(request.auth, "has_endpoint_permission"):
-                if not request.auth.has_endpoint_permission(endpoint, view.action):
+            has_endpoint_perm = getattr(
+                request.auth, "has_endpoint_permission", None
+            )
+            if callable(has_endpoint_perm):
+                if not has_endpoint_perm(endpoint, view.action):
                     return False
 
         if view.detail and not obj:
