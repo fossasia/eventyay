@@ -1,8 +1,10 @@
 {% load i18n %}
 
 <span class="geodata-autoupdate">
-    <span class="optional" data-notification="error" title="{% trans "Failed to retrieve geo coordinates" %}"><i class="fa fa-warning"></i></span>
+    <span class="optional" data-notification="error" title="{% trans "Failed to retrieve geo coordinates" %}"><i class="fa fa-warning"></i> {% trans "Failed to retrieve geo coordinates" %}</span>
+    <span class="optional" data-notification="no-provider">{% trans "Geocoding is not configured on this server. Add an OpenCage or MapQuest API key in global settings, or enable public Nominatim geocoding." %}</span>
     <span class="optional" data-notification="loading" title="{% trans "Retrieving geo coordinates …" %}"><i class="fa fa-cog fa-spin"></i></span>
     <span class="optional" data-notification="updated"><i class="fa fa-check"></i> {% trans "Geo coordinates updated" %}</span>
     <span class="optional" data-notification="confirm">New geo coordinates. <button type="button" data-action="update" class="btn btn-link text-nowrap">{% trans "Update map?" %}</button></span>
+    <span class="optional" data-notification="confirm-pin">{% trans "Pin moved to a new position." %} <button type="button" data-action="save-pin" class="btn btn-link text-nowrap">{% trans "Save coordinates" %}</button> <button type="button" data-action="reset-pin" class="btn btn-link text-nowrap">{% trans "Reset pin" %}</button></span>
 </span>

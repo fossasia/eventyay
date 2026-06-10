@@ -24,7 +24,8 @@ def get_user_agent_hash(request: HttpRequest) -> str:
 # - SessionReauthRequired: when the session is still valid but the user should be asked to re-authenticate.
 def assert_session_valid(request: HttpRequest) -> bool:
     now = time.time()
-    if not settings.EVENTYAY_LONG_SESSIONS or not request.session.get(KEY_LONG_SESSION, False):
+
+    if not (settings.EVENTYAY_LONG_SESSIONS and request.session.get(KEY_LONG_SESSION, False)):
         last_login_check = request.session.get(KEY_LAST_LOGIN_CHECK, now)
         if (
             now - request.session.get(KEY_LAST_FORCE_LOGIN, now)
@@ -38,7 +39,11 @@ def assert_session_valid(request: HttpRequest) -> bool:
     if 'User-Agent' in request.headers:
         if KEY_PINNED_USER_AGENT in request.session:
             if request.session.get(KEY_PINNED_USER_AGENT) != get_user_agent_hash(request):
-                raise SessionInvalid()
+                if settings.EVENTYAY_LONG_SESSIONS and request.session.get(KEY_LONG_SESSION, False):
+                    # Long session: re-pin UA instead of invalidating (UA can change with device/viewport).
+                    request.session[KEY_PINNED_USER_AGENT] = get_user_agent_hash(request)
+                else:
+                    raise SessionInvalid()
         else:
             request.session[KEY_PINNED_USER_AGENT] = get_user_agent_hash(request)
 

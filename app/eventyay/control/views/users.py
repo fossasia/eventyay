@@ -1,4 +1,5 @@
 import json
+import logging
 from contextlib import contextmanager
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.contrib.auth import (
     login,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import DatabaseError, transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -21,14 +23,20 @@ from django.views.generic import ListView, TemplateView
 from hijack import signals
 from oauth2_provider.decorators import protected_resource
 
+from allauth.socialaccount import providers
+from allauth.socialaccount.models import SocialAccount
+
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models import User
 from eventyay.base.services.mail import SendMailException
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.filter import UserFilterForm
 from eventyay.control.forms.users import UserEditForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.control.views import CreateView, UpdateView
 from eventyay.control.views.user import RecentAuthenticationRequiredMixin
+
+logger = logging.getLogger(__name__)
 
 
 def get_used_backend(request):
@@ -71,7 +79,7 @@ class UserListView(AdministratorPermissionRequiredMixin, ListView):
 
 class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, UpdateView):
     template_name = 'pretixcontrol/admin/users/form.html'
-    context_object_name = 'user'
+    context_object_name = 'edit_user'
     form_class = UserEditForm
 
     def get_object(self, queryset=None):
@@ -84,6 +92,31 @@ class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationReq
         ctx['backend'] = (
             b[self.object.auth_backend].verbose_name if self.object.auth_backend in b else self.object.auth_backend
         )
+
+        gs = GlobalSettingsObject()
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+        active_providers = {
+            key for key, cfg in login_providers.items()
+            if isinstance(cfg, dict) and cfg.get('state') and cfg.get('client_id') and cfg.get('secret')
+        }
+        ctx['sso_providers_active'] = bool(active_providers)
+
+        provider_labels = dict(providers.registry.as_choices())
+        social_accounts = SocialAccount.objects.filter(user=self.object).order_by('provider')
+        connected_accounts = []
+        for sa in social_accounts:
+            extra = sa.extra_data or {}
+            connected_accounts.append({
+                'provider': sa.provider,
+                'provider_label': provider_labels.get(sa.provider, sa.provider),
+                'uid': sa.uid,
+                'username': extra.get('username', ''),
+                'email': extra.get('email', ''),
+                'date_joined': sa.date_joined,
+                'is_active_provider': sa.provider in active_providers,
+            })
+        ctx['connected_accounts'] = connected_accounts
+
         return ctx
 
     def get_success_url(self):
@@ -143,28 +176,41 @@ class UserAnonymizeView(
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['user'] = get_object_or_404(User, pk=self.kwargs.get('id'))
+        ctx['edit_user'] = get_object_or_404(User, pk=self.kwargs.get('id'))
         return ctx
+
+    def get_success_url(self):
+        return reverse('eventyay_admin:admin.users')
+
+    def get_error_url(self):
+        return reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs)
 
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
-        self.object.log_action('eventyay.user.anonymized', user=request.user)
-        self.object.email = '{}@disabled.eventyay.com'.format(self.object.pk)
-        self.object.fullname = ''
-        self.object.is_active = False
-        self.object.notifications_send = False
-        self.object.save()
-        for le in self.object.all_logentries.filter(action_type='eventyay.user.settings.changed'):
-            d = le.parsed_data
-            if 'email' in d:
-                d['email'] = '█'
-            if 'fullname' in d:
-                d['fullname'] = '█'
-            le.data = json.dumps(d)
-            le.shredded = True
-            le.save(update_fields=['data', 'shredded'])
-
-        return redirect(reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs))
+        try:
+            with transaction.atomic():
+                self.object.log_action('eventyay.user.anonymized', user=request.user)
+                self.object.email = '{}@disabled.eventyay.com'.format(self.object.pk)
+                self.object.fullname = ''
+                self.object.is_active = False
+                self.object.notifications_send = False
+                self.object.save()
+                for le in self.object.all_logentries.filter(action_type='eventyay.user.settings.changed'):
+                    d = le.parsed_data
+                    if 'email' in d:
+                        d['email'] = '█'
+                    if 'fullname' in d:
+                        d['fullname'] = '█'
+                    le.data = json.dumps(d)
+                    le.shredded = True
+                    le.save(update_fields=['data', 'shredded'])
+        except DatabaseError:
+            logger.exception('Failed to anonymize user %s from admin user page.', self.object.pk)
+            messages.error(request, _('The user could not be anonymized. Please try again later.'))
+            return redirect(self.get_error_url())
+        else:
+            messages.success(request, _('User has been anonymized successfully.'))
+            return redirect(self.get_success_url())
 
 
 class UserImpersonateView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, View):

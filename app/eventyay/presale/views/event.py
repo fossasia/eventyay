@@ -60,6 +60,7 @@ from eventyay.base.models.product import (
     SubEventProduct,
     SubEventProductVariation,
 )
+from eventyay.base.services.geo import resolve_venue_map_coordinates
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.helpers.compat import date_fromisocalendar
 from eventyay.helpers.formats.en.formats import WEEK_FORMAT
@@ -561,6 +562,10 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             context['display_add_to_cart'] = display_add_to_cart
 
         context['ev'] = self.subevent or self.request.event
+        context['venue_map_location'] = resolve_venue_map_coordinates(
+            context['ev'],
+            allow_remote_geocoding=False,
+        )
         context['subevent'] = self.subevent
         context['cart'] = self.get_cart()
         context['has_addon_choices'] = any(cp.has_addon_choices for cp in get_cart(self.request))

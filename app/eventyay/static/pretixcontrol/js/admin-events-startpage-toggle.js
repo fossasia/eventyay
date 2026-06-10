@@ -108,10 +108,18 @@
 
     var toggles = table.querySelectorAll('.js-startpage-toggle');
     toggles.forEach(function (toggle) {
+      if (toggle.dataset.startpageBound === 'true') {
+        return;
+      }
+      toggle.dataset.startpageBound = 'true';
       toggle.addEventListener('change', function () {
         handleToggleChange(toggle, table);
       });
     });
+  }
+
+  if (typeof window !== 'undefined') {
+    window.eventyayInitStartpageToggles = init;
   }
 
   if (document.readyState === 'loading') {

@@ -133,6 +133,28 @@
                                 {% endif %}
                             {% endfor %}
                         </fieldset>
+                    {% elif group_key == "event_creation" %}
+                        <fieldset>
+                            <legend>{{ group_label }}</legend>
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">
+                                    <strong>{{ form.event_series_creation_enabled.label }}</strong>
+                                </label>
+                                <div class="col-md-9">
+                                    <div class="checkbox">
+                                        <label>
+                                            {{ form.event_series_creation_enabled }} {% trans "Enable" %}
+                                        </label>
+                                    </div>
+                                    {% if form.event_series_creation_enabled.help_text %}
+                                        <span class="help-block">{{ form.event_series_creation_enabled.help_text }}</span>
+                                    {% endif %}
+                                    {% if form.event_series_creation_enabled.errors %}
+                                        <div class="help-block">{{ form.event_series_creation_enabled.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </fieldset>
                     {% elif group_key == "billing_validation" %}
                         <fieldset>
                             <legend>{{ group_label }}</legend>
@@ -155,6 +177,42 @@
                                 </div>
                             </div>
                         </fieldset>
+                    {% elif group_key == "email" %}
+                        {% for field_name in field_names %}
+                            {% with form|getitem:field_name as field %}
+                                {% bootstrap_field field layout='control' %}
+                            {% endwith %}
+                        {% endfor %}
+                        <hr>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label" for="admin-test-email-input">
+                                <strong>{% trans "Test email connection" %}</strong>
+                            </label>
+                            <div class="col-md-9">
+                                <div class="input-group" style="max-width: 480px;">
+                                    <input type="email"
+                                           name="test_email"
+                                           id="admin-test-email-input"
+                                           class="form-control"
+                                           placeholder="{% trans 'Recipient email address(es)' %}"
+                                           form="admin-test-email-form"
+                                           multiple
+                                           required>
+                                    <span class="input-group-btn">
+                                        <button type="submit"
+                                                class="btn btn-default"
+                                                id="admin-test-email-btn"
+                                                form="admin-test-email-form">
+                                            <i class="fa fa-envelope-o"></i>
+                                            {% trans "Send test email" %}
+                                        </button>
+                                    </span>
+                                </div>
+                                <span class="help-block">
+                                    {% trans "Sends a test email to the entered recipient address or comma-separated recipient addresses to verify the email settings are working." %}
+                                </span>
+                            </div>
+                        </div>
                     {% else %}
                         {% for field_name in field_names %}
                             {% with form|getitem:field_name as field %}
@@ -171,5 +229,13 @@
                 {% translate "Save" %}
             </button>
         </div>
+    </form>
+
+    {# Test email form lives OUTSIDE the main settings form to prevent invalid HTML nesting.   #}
+    {# The input and button above reference this form via the HTML5 form= attribute.           #}
+    <form id="admin-test-email-form"
+          action="{% url 'eventyay_admin:admin.global.settings.test_email' %}"
+          method="post">
+        {% csrf_token %}
     </form>
 {% endblock %}

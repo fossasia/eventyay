@@ -1,5 +1,7 @@
 import logging
+from urllib.parse import quote, urlsplit
 
+from django.conf import settings
 from django import template
 from django.http import QueryDict
 from django.urls import reverse
@@ -7,6 +9,7 @@ from django.urls import reverse
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Order, OrderPosition
+from eventyay.common.urls import is_http_url
 from eventyay.common.permissions import user_has_cfp_submissions
 from eventyay.talk_rules.submission import are_featured_submissions_visible
 
@@ -117,6 +120,27 @@ def startswith(value, arg):
 
 
 @register.simple_tag(takes_context=True)
+def append_si(context, url: str | None, signature: str | None) -> str:
+    if not url:
+        return ''
+    if not signature:
+        return url
+
+    if is_http_url(url):
+        url_netloc = urlsplit(url).netloc.lower()
+        site_netloc = urlsplit(settings.SITE_URL).netloc.lower()
+        request = context.get('request')
+        request_netloc = request.get_host().lower() if request else ''
+        if url_netloc and url_netloc not in {site_netloc, request_netloc}:
+            return url
+    elif urlsplit(url).scheme:
+        return url
+
+    separator = '&' if '?' in url else '?'
+    return f"{url}{separator}si={quote(str(signature))}"
+
+
+@register.simple_tag(takes_context=True)
 def tickets_tab_visible(context, event=None):
     request = context.get('request')
     event = event or getattr(request, 'event', None)
@@ -124,6 +148,11 @@ def tickets_tab_visible(context, event=None):
         return False
     if request and not event.user_can_view_tickets(getattr(request, 'user', None), request=request):
         return False
+
+    target_event = context.get('ev') or context.get('subevent') or event
+    if target_event and not target_event.presale_is_running and not event.settings.show_products_outside_presale_period:
+        return False
+
     productnum = context.get('productnum')
     if productnum is not None:
         try:

@@ -57,7 +57,20 @@ server {
 		proxy_read_timeout 86400;
 	}
 
-    # Regular HTTP requests - route to gunicorn
+	location ~ ^/e/(.*)$ {
+		return 301 /ev/$1;
+	}
+
+	# Widget embedded API requests - route to gunicorn without stripping CORS
+	location ~ /widgets?/ {
+		proxy_pass http://127.0.0.1:8000;
+		proxy_set_header Host $http_host;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_redirect off;
+	}
+
+	# Regular HTTP requests - route to gunicorn
 	location / {
 		add_header Referrer-Policy same-origin always;
 
@@ -100,12 +113,14 @@ server {
 		root <PATH_TO>/data;
 		access_log off;
 		add_header Cache-Control "public, max-age=31536000, immutable" always;
+		add_header Access-Control-Allow-Origin "*" always;
 	}
 
 	location /static/ {
 		alias <PATH_TO>/data/static/;
 		access_log off;
 		add_header Cache-Control "public, max-age=3600" always;
+		add_header Access-Control-Allow-Origin "*" always;
 	}
 
 	location /media/ {

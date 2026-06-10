@@ -1,5 +1,6 @@
 import copy
 import datetime as dt
+import hashlib
 import logging
 import os
 import string
@@ -15,7 +16,7 @@ import icalendar
 import jwt
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.exceptions import MultipleObjectsReturned, SuspiciousFileOperation, ValidationError
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.mail import get_connection
@@ -66,7 +67,7 @@ from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.http import smtp_reachable
 from eventyay.helpers.json import safe_string
-from eventyay.helpers.thumb import get_thumbnail
+from eventyay.helpers.thumb import ThumbnailError, get_thumbnail
 from eventyay.talk_rules.event import (
     can_change_event_settings,
     can_create_events,
@@ -327,6 +328,8 @@ class EventMixin:
         setting. Times are not shown.
         """
         tz = tz or ZoneInfo(key=self.settings.timezone)
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         if (not self.settings.show_date_to and not force_show_end) or not self.date_to:
             return _date(self.date_from.astimezone(tz), 'DATE_FORMAT')
         return daterange(self.date_from.astimezone(tz), self.date_to.astimezone(tz))
@@ -840,6 +843,7 @@ class Event(
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
         widget_settings = '{settings}widget'
+        import_export_settings = '{settings}import-export/'
         team_settings = '{settings}team/'
         new_team = '{settings}team/new'
         room_settings = '{schedule}rooms/'
@@ -938,18 +942,35 @@ class Event(
             return value
 
         img = None
-        logo_file = get_image_value('logo_image')
         og_file = get_image_value('og_image')
         if og_file:
             if is_http_url(og_file):
                 return og_file
-            img = get_thumbnail(og_file, '1200').thumb.url
-        elif logo_file:
-            if is_http_url(logo_file):
-                return logo_file
-            img = get_thumbnail(logo_file, '5000x120').thumb.url
+            try:
+                img = get_thumbnail(og_file, '1200').thumb.url
+            except (OSError, SuspiciousFileOperation, ThumbnailError) as exc:
+                logger.warning('Failed to load og_image thumbnail for %s: %s', og_file, exc)
+
+        if not img:
+            if self.visible_logo_url:
+                img = self.visible_logo_url
+            elif self.visible_header_image_url:
+                img = self.visible_header_image_url
+
         if img:
+            if is_http_url(img):
+                return img
+            if urlparse(img).scheme:
+                return None
             return urljoin(build_absolute_uri(self, 'presale:event.index'), img)
+
+    @property
+    def social_image_signature(self):
+        og_image = self.settings.get('og_image', as_type=str, default='') or ''
+        image_source = og_image or self.visible_logo_url or self.visible_header_image_url or ''
+        if not image_source:
+            return ''
+        return hashlib.sha1(image_source.encode('utf-8')).hexdigest()[:12]
 
     def _seats(self, ignore_voucher=None):
         from .seating import Seat
@@ -1067,7 +1088,7 @@ class Event(
         if self.settings.smtp_use_custom or force_custom:
             if self.settings.email_vendor == 'sendgrid':
                 return SendGridEmail(api_key=self.settings.send_grid_api_key)
-            if not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
+            if not force_custom and not smtp_reachable(self.settings.smtp_host, self.settings.smtp_port, timeout=timeout):
                 logger.warning(
                     'Event SMTP %s:%s is not reachable, falling back to system email backend',
                     self.settings.smtp_host,
@@ -1955,15 +1976,15 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        return self.urls.schedule.full
+        return self.urls.schedule
 
     @property
     def talk_session_url(self):
-        return self.urls.talks.full
+        return self.urls.talks
 
     @property
     def talk_speaker_url(self):
-        return self.urls.speakers.full
+        return self.urls.speakers
 
     @property
     def talk_dashboard_url(self):
@@ -2258,24 +2279,27 @@ class Event(
         content_locales: list[str] | None = None,
         default_locale: str | None = None,
     ) -> None:
+
         locales_list = list(locales or [])
-        if content_locales is None:
-            content_locales_list = locales_list
-        else:
-            content_locales_list = list(content_locales)
+
         if locales_list:
             self.locale_array = ','.join(locales_list)
-        if content_locales_list:
-            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('locales', locales_list)
         if default_locale:
             self.locale = default_locale
-        if locales_list or content_locales_list or default_locale:
+            self.settings.set('locale', default_locale)
+
+        if content_locales is not None:
+            content_locales_list = list(content_locales)
+            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('content_locales', content_locales_list)
+        if locales_list or content_locales is not None or default_locale:
             self._clear_language_caches()
 
     @cached_property
     def is_multilingual(self) -> bool:
         """Is ``True`` if the event supports more than one locale."""
-        return len(self.content_locales) > 1
+        return len(self.locales) > 1
 
     @cached_property
     def named_locales(self) -> list:
