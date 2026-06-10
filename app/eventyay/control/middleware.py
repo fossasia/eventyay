@@ -28,12 +28,6 @@ from eventyay.helpers.security import (
 logger = logging.getLogger(__name__)
 
 
-def is_control_path(path: str) -> bool:
-    """Check if the path should be processed by the control middlewares and context processors."""
-    prefix = get_script_prefix()
-    return any(path.startswith(prefix + p) for p in ('control', 'common', 'admin', 'social', 'teamshifts', 'exhibitors'))
-
-
 class PermissionMiddleware:
     """
     This middleware enforces all requests to the control app to require login.
@@ -93,7 +87,15 @@ class PermissionMiddleware:
         url = resolve(request.path_info)
         url_name = url.url_name
 
-        if not is_control_path(request.path):
+        if not request.path.startswith(get_script_prefix() + 'control') and not request.path.startswith(
+            get_script_prefix() + 'common'
+        ) and not request.path.startswith(get_script_prefix() + 'admin') and not request.path.startswith(
+            get_script_prefix() + 'teamshifts'
+        ) and not request.path.startswith(
+            get_script_prefix() + 'exhibitors'
+        ) and not request.path.startswith(
+            get_script_prefix() + 'social'
+        ):
             return self.get_response(request)
 
         if hasattr(request, 'organizer'):

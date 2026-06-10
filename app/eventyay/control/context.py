@@ -15,7 +15,6 @@ from eventyay.control.navigation import (
     get_event_navigation,
     get_global_navigation,
 )
-from eventyay.control.middleware import is_control_path
 
 from ..eventyay_common.utils import EventCreatedFor
 from ..helpers.i18n import (
@@ -45,7 +44,12 @@ def _default_context(request):
     except Resolver404:
         return {}
 
-    if not is_control_path(request.path) or not hasattr(request, 'user'):
+    if not (request.path.startswith(get_script_prefix() + 'control') or
+            request.path.startswith(get_script_prefix() + 'admin') or
+            request.path.startswith(get_script_prefix() + 'teamshifts') or
+            request.path.startswith(get_script_prefix() + 'exhibitors') or
+            request.path.startswith(get_script_prefix() + 'social')
+            ) or not hasattr(request, 'user'):
         return {}
     ctx = {
         'url_name': url.url_name,
