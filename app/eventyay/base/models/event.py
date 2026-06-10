@@ -42,7 +42,6 @@ from i18nfield.fields import I18nCharField, I18nTextField
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 
 from eventyay.base.models.base import LoggedModel
-from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.fields import MultiStringField
 from eventyay.base.models.mixins import FileCleanupMixin, TimestampedModel
 from eventyay.base.plugins import get_all_plugins
@@ -2280,9 +2279,8 @@ class Event(
         content_locales: list[str] | None = None,
         default_locale: str | None = None,
     ) -> None:
+
         locales_list = list(locales or [])
-        current_locales = [code for code in self.locale_array.split(',') if code]
-        locales_changed = set(locales_list) != set(current_locales)
 
         if locales_list:
             self.locale_array = ','.join(locales_list)
@@ -2295,27 +2293,6 @@ class Event(
             content_locales_list = list(content_locales)
             self.content_locale_array = ','.join(content_locales_list)
             self.settings.set('content_locales', content_locales_list)
-        elif locales_list and locales_changed:
-            existing_content_locales = self.settings.get('content_locales') or []
-            merged = list(dict.fromkeys(existing_content_locales + locales_list))
-            self.settings.set('content_locales', merged)
-            self.content_locale_array = ','.join(merged)
-
-        if locales_list and (locales_changed or content_locales is not None):
-            try:
-                cfp = self.cfp
-            except Exception:
-                cfp = None
-            if cfp:
-                if 'content_locale' not in cfp.fields:
-                    cfp.fields['content_locale'] = default_fields()['content_locale'].copy()
-                if len(locales_list) > 1:
-                    cfp.fields['content_locale']['visibility'] = 'required'
-                    cfp.fields['content_locale']['public'] = True
-                else:
-                    cfp.fields['content_locale']['visibility'] = 'do_not_ask'
-                    cfp.fields['content_locale']['public'] = False
-                cfp.save(update_fields=['fields'])
         if locales_list or content_locales is not None or default_locale:
             self._clear_language_caches()
 

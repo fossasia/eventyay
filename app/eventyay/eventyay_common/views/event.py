@@ -31,6 +31,7 @@ from django.apps import apps
 
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject
@@ -486,6 +487,17 @@ class EventCreateView(TemplateView):
                 content_locales=content_locales,
                 default_locale=basics_data['locale']
             )
+            event.refresh_from_db()
+            cfp = event.cfp
+            if 'content_locale' not in cfp.fields:
+                cfp.fields['content_locale'] = default_fields()['content_locale'].copy()
+            if len(foundation_data['locales']) > 1:
+                cfp.fields['content_locale']['visibility'] = 'required'
+                cfp.fields['content_locale']['public'] = True
+            else:
+                cfp.fields['content_locale']['visibility'] = 'do_not_ask'
+                cfp.fields['content_locale']['public'] = False
+            cfp.save(update_fields=['fields'])
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone', 'locale_array', 'content_locale_array'])
@@ -599,7 +611,6 @@ class EventUpdate(
             self.object.save(update_fields=['timezone'])
         form.instance.update_language_configuration(
             locales=self.sform.cleaned_data.get('locales'),
-            content_locales=self.sform.cleaned_data.get('content_locales'),
             default_locale=self.sform.cleaned_data.get('locale'),
         )
 
