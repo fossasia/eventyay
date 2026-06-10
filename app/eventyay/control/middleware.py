@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def is_control_path(path: str) -> bool:
     """Check if the path should be processed by the control middlewares and context processors."""
     prefix = get_script_prefix()
-    return any(path.startswith(prefix + p) for p in ('control', 'common', 'admin', 'social'))
+    return any(path.startswith(prefix + p) for p in ('control', 'common', 'admin', 'social', 'teamshifts', 'exhibitors'))
 
 
 class PermissionMiddleware:
