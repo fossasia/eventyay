@@ -96,6 +96,8 @@ class PermissionMiddleware:
         ) and not request.path.startswith(
             get_script_prefix() + 'social'
         ):
+            # This middleware should only touch the /control, /common,
+            # /admin, /teamshifts, /exhibitors, and /social subpaths
             return self.get_response(request)
 
         if hasattr(request, 'organizer'):

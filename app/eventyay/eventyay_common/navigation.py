@@ -10,6 +10,7 @@ from eventyay.base.models import Event
 from eventyay.control.navigation import merge_in
 from eventyay.control.signals import nav_global, nav_organizer
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -107,7 +108,8 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
             'icon': 'plug',
         },
     ]
-    if event.is_socialmedia_enabled:
+
+    if 'socialmedia' in event.get_plugins():
         nav.append({
             'label': _('Social Media'),
             'url': reverse(
@@ -120,8 +122,8 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
             'active': (url.namespace == 'plugins:socialmedia' and url.url_name == 'index'),
             'icon': 'share-alt',
         })
-    return nav
 
+    return nav
 
 def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
     url = request.resolver_match
