@@ -99,6 +99,17 @@ class GlobalSettingsObject(GlobalSettingsBase):
 EVENT_SERIES_CREATION_ENABLED = 'event_series_creation_enabled'
 
 
+def is_event_series_creation_enabled(request=None) -> bool:
+    _cache_attr = '_event_series_creation_enabled'
+    if request is not None and hasattr(request, _cache_attr):
+        return getattr(request, _cache_attr)
+    gs = GlobalSettingsObject()
+    result = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
+    if request is not None:
+        setattr(request, _cache_attr, result)
+    return result
+
+
 class SettingsSandbox:
     """
     Transparently proxied access to event settings, handling your prefixes for you.
