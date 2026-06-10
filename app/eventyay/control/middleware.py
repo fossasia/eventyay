@@ -115,7 +115,7 @@ class PermissionMiddleware:
 
         # Add this condition to bypass middleware for 'oauth/' and its sub-URLs
         # TODO: Instead of hardcoding URL, we should check the `request.resolver_match`.
-        if request.path.startswith(get_script_prefix() + 'common/oauth2/'):
+        if url.namespace == 'oauth2_provider':
             return self.get_response(request)
 
         if url_name in self.EXCEPTIONS:
