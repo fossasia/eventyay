@@ -14,6 +14,7 @@ from eventyay.base.models import (
     TalkQuestionTarget,
     Track,
 )
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
@@ -180,11 +181,18 @@ class InfoForm(
 
     def _set_locales(self):
         if 'content_locale' in self.fields:
-            if len(self.event.content_locales) == 1:
-                self.default_values['content_locale'] = self.event.content_locales[0]
+            saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            if len(self.event.content_locales) <= 1 or saved_visibility == 'do_not_ask':
+                default_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
+                self.default_values['content_locale'] = default_locale
                 self.fields.pop('content_locale')
             else:
-                self.fields['content_locale'].choices = self.event.named_content_locales
+                choices = list(self.event.named_content_locales)
+                if self.instance and self.instance.pk and self.instance.content_locale:
+                    choice_codes = {c[0] for c in choices}
+                    if self.instance.content_locale not in choice_codes:
+                        choices.append((self.instance.content_locale, self.instance.get_content_locale_display()))
+                self.fields['content_locale'].choices = choices
 
     def _set_slot_count(self, instance=None):
         if not self.event.get_feature_flag('present_multiple_times'):

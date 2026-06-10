@@ -31,7 +31,6 @@ class EventCommonSettingsForm(SettingsForm):
 
     auto_fields = [
         'locales',
-        'content_locales',
         'locale',
         'region',
         'imprint_url',

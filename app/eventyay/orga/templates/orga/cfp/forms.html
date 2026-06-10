@@ -10,6 +10,7 @@
     {% compress css %}
         <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
         <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+        <link rel="stylesheet" href="{% static 'orga/css/cfp.css' %}">
     {% endcompress %}
 {% endblock stylesheets %}
 
@@ -92,6 +93,38 @@
                         <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
                     </span></div>
                 </dialog>
+                <dialog class="info-dialog" id="content-locale-dialog" aria-label="{% translate 'Content Locale Languages' %}">
+                    <div class="dialog-content">
+                        {% if sform.content_locales.errors %}
+                            <div class="alert alert-danger mb-3">
+                                {% for error in sform.content_locales.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="alert alert-info"><span>
+                            {% translate "Activating Content Locale will allow proposal submissions in different languages. The languages that are available as Event Languages are preselected below. If you would like to allow proposal submissions in other languages, please select them from the list below. You can change your selection later in the Settings area of Content Locale." %}
+                        </span></div>
+                        <div class="form-group">
+                            <input type="text" id="content-locale-search" class="form-control" placeholder="{% translate 'Search languages...' %}" aria-label="{% translate 'Search languages' %}">
+                        </div>
+                        <div class="form-group content-locale-checkbox-list">
+                            {% for code, name in all_languages %}
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" class="content-locale-checkbox" name="{{ sform.content_locales.html_name }}" value="{{ code }}"
+                                               {% if code in effective_content_locales %}checked{% endif %}>
+                                        {{ name }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="content-locale-dialog-footer">
+                            <button type="button" class="btn btn-default" id="content-locale-dialog-cancel">{% translate "Cancel" %}</button>
+                            <button type="button" class="btn btn-primary" id="content-locale-dialog-save">{% translate "Save & Close" %}</button>
+                        </div>
+                    </div>
+                </dialog>
                 <div class="table-responsive table-responsive-always mw-100">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
@@ -103,7 +136,7 @@
                             <th>{% translate "Maximum length" %}</th>
                             <th class="text-center">{% translate "Public" %}</th>
                             <th class="text-center">{% translate "Answers" %}</th>
-                            <th></th>
+                            <th class="text-right">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
@@ -436,6 +469,9 @@
                             </td>
                             <td class="text-center">{{ field_counts.content_locale }}</td>
                             <td class="text-right">
+                                <button type="button" class="btn btn-sm btn-default content-locale-settings-btn {% if field.value == 'do_not_ask' %}hidden{% endif %}" title="{% translate 'Settings' %}" aria-label="{% translate 'Content Locale settings' %}">
+                                    <i class="fa fa-cog"></i>
+                                </button>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -661,7 +697,7 @@
                             <th>{% translate "Maximum length" %}</th>
                             <th class="text-center">{% translate "Public" %}</th>
                             <th class="text-center">{% translate "Answers" %}</th>
-                            <th></th>
+                            <th class="text-right">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
@@ -1021,7 +1057,7 @@
                             <th>{% translate "Maximum length" %}</th>
                             <th class="text-center">{% translate "Public" %}</th>
                             <th class="text-center">{% translate "Answers" %}</th>
-                            <th></th>
+                            <th class="text-right">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
