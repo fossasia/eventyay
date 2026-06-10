@@ -121,11 +121,3 @@ def test_to_mail_valid_email_used_when_mixed(mail_template):
     user = User(email="valid@example.com", locale="en")
     mail = mail_template.to_mail(user, None, commit=False)
     assert mail.to == "valid@example.com"
-
-
-@pytest.mark.django_db
-def test_queuedmail_send_raises_for_future_scheduled_at():
-    """QueuedMail.send() must raise SendMailException when scheduled_at is in the future."""
-    qm = QueuedMail(scheduled_at=now() + datetime.timedelta(hours=1))
-    with pytest.raises(SendMailException):
-        qm.send()

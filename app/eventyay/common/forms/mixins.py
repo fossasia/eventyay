@@ -783,6 +783,8 @@ class ScheduledAtValidationMixin:
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
+            if timezone.is_naive(scheduled_at):
+                scheduled_at = timezone.make_aware(scheduled_at, timezone.get_current_timezone())
             buffer = timedelta(minutes=1)
             if scheduled_at < timezone.now() - buffer:
                 raise forms.ValidationError(
