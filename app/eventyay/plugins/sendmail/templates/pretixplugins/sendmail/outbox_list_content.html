@@ -108,7 +108,7 @@
           <td>
             {% if mail.scheduled_at %}
               <span class='label label-info'>
-                {% translate 'Scheduled for' %} {{ mail.scheduled_at|timezone:request.timezone|date:"Y-m-d H:i" }}
+                {% translate 'Scheduled for' %} {{ mail.scheduled_at|timezone:request.event.timezone|date:"Y-m-d H:i" }}
               </span>
             {% else %}
               <span class='label label-default'>{% translate 'Immediate' %}</span>

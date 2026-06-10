@@ -105,7 +105,7 @@ class MailForm(ScheduledAtValidationMixin, forms.Form):
         label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
         required=False,
     )
-    scheduled_at = forms.SplitDateTimeField(
+    scheduled_at = SplitDateTimeField(
         widget=SplitDateTimePickerWidget(),
         label=_('Send later'),
         required=False,
@@ -617,7 +617,7 @@ class TeamMailForm(ScheduledAtValidationMixin, forms.Form):
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             label=_("Send to members of these teams")
         )
-        self.fields['scheduled_at'] = forms.SplitDateTimeField(
+        self.fields['scheduled_at'] = SplitDateTimeField(
             widget=SplitDateTimePickerWidget(),
             label=_('Send later'),
             required=False,
