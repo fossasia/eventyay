@@ -574,14 +574,18 @@ footer {
 
 .search-form {
   display: flex;
-  flex-wrap: wrap;
-  align-content: center;
+  flex-wrap: nowrap;
+  align-items: center;
   width: 100%;
+  gap: 8px;
 
   &>.form-group {
-    width: 300px;
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
     display: flex;
-    margin-right: 16px;
+    margin-right: 0;
+    margin-bottom: 0;
 
     [type="text"] {
       height: 2.5rem;
@@ -599,40 +603,62 @@ footer {
   button,
   [role="button"],
   details {
-    align-self: flex-start;
-    margin-top: auto;
-    margin-bottom: 16px;
+    align-self: center;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   button,
   [role="button"] {
-    margin-right: 16px;
-    margin-left: auto;
+    margin-right: 0;
+    margin-left: 0;
   }
 
-  #pending .form-group {
-    margin-bottom: 0;
-  }
+  .choices-exclude-pending {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border, #ddd);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
 
-  #pending label {
-    display: inline-block;
-    color: #6c757d;
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: inline !important;
+      color: var(--color-text, #333);
+      font-weight: normal;
+      cursor: pointer;
+    }
   }
 }
 
 .search-form .filter-actions {
   display: flex;
-  gap: 12px;
-  align-self: flex-start;
-  margin-bottom: 16px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 .search-form .filter-actions .btn {
   margin: 0;
+  flex-shrink: 0;
+  border-radius: var(--size-border-radius);
 }
 
-.search-form .filter-actions .btn-default {
-  --highlight-color: var(--color-secondary);
+.state-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  background: var(--color-grey-lighter, #e9ecef);
+  color: var(--color-text-input, #333);
+  border-radius: var(--size-border-radius);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  margin: 2px;
 }
 
 .filter-form {
@@ -655,7 +681,7 @@ footer {
 
 .submit-group.search-submit-group {
   form>.form-group {
-    padding-bottom: 8px;
+    padding-bottom: 0;
   }
 }
 
