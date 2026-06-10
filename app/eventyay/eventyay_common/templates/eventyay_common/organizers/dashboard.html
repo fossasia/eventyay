@@ -39,11 +39,29 @@
           <div class="panel-body">
             <p>{% trans "Set up a new event under this organizer." %}</p>
             <a href="{% url 'eventyay_common:events.add' %}?organizer={{ request.organizer.slug }}" class="btn btn-primary">
-              {% trans "Create a new event" %}
+              {% trans "Create Event" %}
             </a>
           </div>
         </div>
       </div>
+      {% if event_series_creation_enabled %}
+      <div class="col-md-4 col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              {% include "eventyay_common/includes/icon_calendar_series.html" %}
+              {% trans "Create Event Series" %}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <p>{% trans "Set up a new event series under this organizer." %}</p>
+            <a href="{% url 'eventyay_common:events.add' %}?organizer={{ request.organizer.slug }}&amp;series=1" class="btn btn-default">
+              {% trans "Create Event Series" %}
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     {% endif %}
     {% if "can_change_organizer_settings" in request.orgapermset %}
       <div class="col-md-4 col-sm-6">
