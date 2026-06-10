@@ -94,23 +94,4 @@
     </div>
 </div>
 
-{% if is_socialmedia_enabled %}
-<div class="dashboard custom dashboard-margin-top">
-    <div class="panel panel-default widget-container widget-small no-padding column">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                {% trans "Social Media" %}
-            </h3>
-        </div>
-        <div class="panel-body">
-            <p>
-                {% trans "Automate and schedule social media announcements for your event. Customize templates, set trigger offsets, and export announcements to CSV." %}
-            </p>
-            <p>
-                {% trans "Go to" %} <a href="{% url 'plugins:socialmedia:index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Social Media Dashboard" %}</a>
-            </p>
-        </div>
-    </div>
-</div>
-{% endif %}
 

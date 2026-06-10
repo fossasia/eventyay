@@ -66,7 +66,6 @@ def _default_context(request):
             or request.event.settings.talk_schedule_public is not None
         ):
             ctx['is_talk_event_created'] = True
-        ctx['is_socialmedia_enabled'] = request.event.is_socialmedia_enabled
     ctx['html_head'] = ''.join(_html_head)
 
     _js_payment_weekdays_disabled = '[]'
