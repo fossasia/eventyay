@@ -132,7 +132,15 @@ class EventAuth(View):
 
     @staticmethod
     def post(request, *args, **kwargs):
-        store = SessionStore(request.POST.get('session'))
+        from django.core.signing import BadSignature, TimestampSigner
+        signer = TimestampSigner(salt='event_access')
+
+        try:
+            session_key = signer.unsign(request.POST.get('session', ''), max_age=3600 * 24)
+        except BadSignature:
+            raise PermissionDenied(phrases.base.back_try_again)
+
+        store = SessionStore(session_key)
 
         try:
             data = store.load()

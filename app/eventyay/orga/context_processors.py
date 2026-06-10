@@ -72,17 +72,20 @@ def orga_events(request):
         and request.event.custom_domain
         and request.user.has_perm('base.view_event', request.event)
     ):
+        from django.core.signing import TimestampSigner
+        signer = TimestampSigner(salt='event_access')
+
         child_session_key = f'child_session_{request.event.pk}'
         child_session = request.session.get(child_session_key)
         store = SessionStore()
         if not child_session or not store.exists(child_session):
             store[f'eventyay_event_access_{request.event.pk}'] = request.session.session_key
             store.create()
-            context['new_session'] = store.session_key
+            context['new_session'] = signer.sign(store.session_key)
             request.session[child_session_key] = store.session_key
             request.session['event_access'] = True
         else:
-            context['new_session'] = child_session
+            context['new_session'] = signer.sign(child_session)
             request.session['event_access'] = True
 
     return context

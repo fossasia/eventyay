@@ -95,13 +95,17 @@ def _default_context(request: HttpRequest):
         ctx['complain_testmode_orders'] = False
 
     if not event.live and ctx['has_domain']:
+        from django.core.signing import TimestampSigner
+        signer = TimestampSigner(salt='event_access')
+
         child_sess_key = f'child_session_{event.pk}'
         child_sess = request.session.get(child_sess_key)
 
         if not child_sess:
             request.session[child_sess_key] = request.session.session_key
+            ctx['new_session'] = signer.sign(request.session.session_key)
         else:
-            ctx['new_session'] = child_sess
+            ctx['new_session'] = signer.sign(child_sess)
         request.session['event_access'] = True
 
     if request.GET.get('subevent', ''):

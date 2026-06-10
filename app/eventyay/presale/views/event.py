@@ -960,14 +960,24 @@ class EventAuth(View):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        s = SessionStore(request.POST.get('session'))
+        from django.core.signing import BadSignature, TimestampSigner
+        signer = TimestampSigner(salt='event_access')
+
+        try:
+            session_key = signer.unsign(request.POST.get('session', ''), max_age=3600 * 24)
+        except BadSignature:
+            raise PermissionDenied(_('Please go back and try again.'))
+
+        s = SessionStore(session_key)
 
         try:
             data = s.load()
         except:
             raise PermissionDenied(_('Please go back and try again.'))
 
-        parent = data.get('pretix_event_access_{}'.format(request.event.pk))
+        parent = data.get('eventyay_event_access_{}'.format(request.event.pk))
+        if not parent:
+            parent = data.get('pretix_event_access_{}'.format(request.event.pk))
 
         sparent = SessionStore(parent)
         try:
@@ -979,6 +989,7 @@ class EventAuth(View):
                 raise PermissionDenied(_('Please go back and try again.'))
 
         request.session['pretix_event_access_{}'.format(request.event.pk)] = parent
+        request.session['eventyay_event_access_{}'.format(request.event.pk)] = parent
         redirect_url = eventreverse(request.event, 'presale:event.index')
         logger.info('Redirecting to %s...', redirect_url)
         return redirect(redirect_url)
