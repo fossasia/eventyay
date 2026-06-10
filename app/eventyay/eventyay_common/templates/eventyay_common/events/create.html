@@ -75,47 +75,21 @@
                 <div class="form-group">
                     <label class="col-md-3 control-label">{% trans "Event type" %}</label>
                     <div class="col-md-9">
-                        <div class="big-radio radio">
-                            <label>
-                                <input type="radio" value="" name="{{ foundation_form.has_subevents.html_name }}" {% if not foundation_form.has_subevents.value %}checked{% endif %}>
-                                <span class="fa fa-calendar-o"></span>
-                                <strong>{% trans "Singular event or non-event shop" %}</strong><br>
-                                <div class="help-block">
-                                    {% blocktrans trimmed %}
-                                        An event with individual configuration. If you create more events later, you can copy
-                                        the event to save yourself some work.
-                                    {% endblocktrans %}
-                                </div>
-                                <div class="help-block">
-                                    {% blocktrans trimmed %}
-                                        Examples: Conferences, workshops, trade fairs, one-off concerts, sale of digital content,
-                                        multi-day events with combination tickets.
-                                    {% endblocktrans %}
-                                </div>
-                            </label>
-                        </div>
-                        {% if event_series_creation_enabled %}
-                            <div class="big-radio radio">
-                                <label>
-                                    <input type="radio" value="on" name="{{ foundation_form.has_subevents.html_name }}" {% if foundation_form.has_subevents.value %}checked{% endif %}>
-                                    <span class="fa fa-calendar"></span>
-                                    <strong>{% trans "Event series or time slot booking" %}</strong>
-                                    <div class="help-block">
-                                        {% blocktrans trimmed %}
-                                            A series of events that share the same configuration. They can still be different in
-                                            their dates, locations, prices, and capacities.
-                                        {% endblocktrans %}
-                                    </div>
-                                    <div class="help-block">
-                                        {% blocktrans trimmed %}
-                                            Examples: Multiple presentations of the same show, same concert in multiple locations,
-                                            museums, libraries, or swimming pools,
-                                            events that need to be booked together in one cart.
-                                        {% endblocktrans %}
-                                    </div>
-                                </label>
-                            </div>
-                        {% endif %}
+                        <p class="form-control-static">
+                            {% if foundation_form.has_subevents.value %}
+                                {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                                <strong>{% trans "Event series or time slot booking" %}</strong>
+                            {% else %}
+                                <span class="fa fa-calendar-o" aria-hidden="true"></span>
+                                <strong>{% trans "Singular event or non-event shop" %}</strong>
+                            {% endif %}
+                        </p>
+                        <p class="help-block">
+                            {% blocktrans trimmed %}
+                                The event type is set from the entry point. To choose a different type, go back and use the appropriate button.
+                            {% endblocktrans %}
+                        </p>
+                        <input type="hidden" name="{{ foundation_form.has_subevents.html_name }}" value="{{ foundation_form.has_subevents.value|yesno:'on,' }}">
                     </div>
                 </div>
             </fieldset>

@@ -30,8 +30,14 @@
                 {% if can_create_event %}
                     <a class="dashboard-block symbol" href="{% url 'eventyay_common:events.add' %}">
                         <i class="fa fa-plus-circle" aria-hidden="true"></i>
-                        <div class="dashboard-description">{% translate 'Create a new event' %}</div>
+                        <div class="dashboard-description">{% translate 'Create Event' %}</div>
                     </a>
+                    {% if event_series_creation_enabled %}
+                    <a class="dashboard-block symbol" href="{% url 'eventyay_common:events.add' %}?series=1">
+                        {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                        <div class="dashboard-description">{% translate 'Create Event Series' %}</div>
+                    </a>
+                    {% endif %}
                 {% endif %}
             </div>
         {% endif %}
