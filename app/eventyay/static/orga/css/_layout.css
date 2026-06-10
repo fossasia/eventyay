@@ -202,25 +202,19 @@ aside.sidebar {
   background-color: var(--color-grey-ultralight);
   box-shadow: var(--shadow-lighter);
   width: var(--sidebar-width);
-  align-self: stretch;
   position: fixed;
   height: calc(100vh - var(--navbar-height));
   display: flex;
   font-size: 14px;
-  flex-grow: 0;
-  flex-shrink: 0;
   flex-wrap: nowrap;
   z-index: 150;
   padding-left: 0;
   margin-bottom: 0;
-  scroll-behavior: smooth;
   overflow-x: hidden;
   overflow-y: auto;
-  contain: strict;
   
   &.sidebar-uncollapsed,
   &:hover {
-    --sidebar-width: 250px;
     width: 250px;
 
     a.nav-link i+span {
