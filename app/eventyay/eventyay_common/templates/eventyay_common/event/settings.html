@@ -4,6 +4,7 @@
 {% load static %}
 {% load hierarkey_form %}
 {% load formset_tags %}
+{% load presale_locale %}
 {% block title %}{% trans "General settings" %}{% endblock %}
 {% block custom_header %}
 {{ block.super }}
@@ -15,7 +16,7 @@
 <nav id="event-nav" class="header-nav">
     <div class="navigation">
         <div class="navigation-title">
-            <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
+            <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
         </div>
         <div class="navigation-button">
             <a href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">

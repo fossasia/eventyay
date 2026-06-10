@@ -2,9 +2,13 @@ from django.conf import settings
 from django.urls import reverse
 from django.test import Client, TestCase
 from django.utils.timezone import now
+from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event, Organizer
-from eventyay.common.utils.language import get_event_enforce_ui_language_cookie_name
+from eventyay.common.utils.language import (
+    get_event_enforce_ui_language_cookie_name,
+    get_event_language_cookie_name,
+)
 
 
 class LocaleTest(TestCase):
@@ -72,6 +76,34 @@ class EventLanguageEnforceDefaultTest(TestCase):
         self.assertEqual(response.wsgi_request.event_language, 'de')
         # UI stays in the user's chosen language, not overridden by event locale
         self.assertEqual(response['Content-Language'], 'fi')
+
+    def test_enforce_on_default_locale_used_when_ui_outside_event_locales_despite_stale_cookie(self):
+        """UI outside event locales should show event content in the default locale, not a stale cookie."""
+        self.event.name = LazyI18nString(
+            {
+                'en': 'English Event Name',
+                'gu': 'Gujarati Event Name',
+                'de': 'German Event Name',
+            }
+        )
+        self.event.locale = 'gu'
+        self.event.locale_array = 'en,gu,de'
+        self.event.save()
+        self.event.settings.set('locales', ['en', 'gu', 'de'])
+        self.event.settings.set('locale', 'gu')
+
+        event_cookie = get_event_language_cookie_name(self.event.slug, self.organizer.slug)
+        c = Client()
+        c.cookies[settings.LANGUAGE_COOKIE_NAME] = 'da'
+        c.cookies[event_cookie] = 'en'
+
+        response = self._get_event_page(c)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.wsgi_request.event_language_enforce_ui)
+        self.assertEqual(response.wsgi_request.event_language, 'gu')
+        self.assertEqual(response['Content-Language'], 'da')
+        self.assertContains(response, 'class="content-header">')
+        self.assertContains(response, 'Gujarati Event Name</a>')
 
     def test_explicit_enforce_off_is_respected(self):
         """When the enforce cookie is explicitly '0', languages are NOT linked and

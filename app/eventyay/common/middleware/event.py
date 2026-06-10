@@ -181,6 +181,10 @@ class EventPermissionMiddleware:
                 request.event.organizer.slug,
             )
 
+            ui_language_in_event_locales = bool(
+                ui_language and strict_match_language(ui_language, event_supported)
+            )
+
             if request.event_language_enforce_ui:
                 strict_ui_language = strict_match_language(ui_language, event_supported)
                 if strict_ui_language:
@@ -188,22 +192,21 @@ class EventPermissionMiddleware:
 
             cookie_name = get_event_language_cookie_name(request.event.slug, request.event.organizer.slug)
             if not event_language:
-                event_language = self._language_from_cookie(request, event_supported, cookie_name)
-            if not event_language:
-                event_language = self._language_from_event(request, event_supported)
-            if not event_language and event_supported:
-                event_language = event_supported[0]
+                # When the UI language is outside event locales, prefer the event's
+                # default locale over a stale per-event language cookie.
+                if ui_language_in_event_locales:
+                    event_language = self._language_from_cookie(request, event_supported, cookie_name)
+                if not event_language:
+                    event_language = self._language_from_event(request, event_supported)
+                if not event_language and event_supported:
+                    event_language = event_supported[0]
+        else:
+            ui_language_in_event_locales = False
 
         if not event_language:
             event_language = ui_language
 
         # Sync event → UI only when the user's global language is also an event locale.
-        ui_language_in_event_locales = (
-            hasattr(request, 'event')
-            and request.event
-            and ui_language
-            and strict_match_language(ui_language, request.event.locales) is not None
-        )
         if (
             request.event_language_enforce_ui
             and event_language
