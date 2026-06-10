@@ -261,9 +261,7 @@ class EventCreateView(TemplateView):
         return None
 
     def dispatch(self, request, *args, **kwargs):
-        is_series = request.GET.get('series') == '1' or bool(
-            request.POST.get('has_subevents')
-        )
+        is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
         if is_series and not is_event_series_creation_enabled(request):
             raise PermissionDenied(_('Event series creation is currently disabled.'))
         return super().dispatch(request, *args, **kwargs)

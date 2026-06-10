@@ -85,8 +85,10 @@
         font-size: 56px;
       }
       .icon-calendar-series-svg {
+        display: block;
         width: 56px;
         height: 56px;
+        margin: 0 auto;
         color: inherit;
       }
     }
