@@ -52,6 +52,11 @@ export default {
 			if (!file) return
 
 			this.uploadError = ''
+			if (this.maxFileSize && file.size > this.maxFileSize && !file.type.startsWith('image/')) {
+				this.uploadError = `The file is too large. Maximum upload size is ${formatFileSize(this.maxFileSize)}.`
+				if (this.$refs.fileInput) this.$refs.fileInput.value = ''
+				return
+			}
 
 			this.uploading = true
 			try {
