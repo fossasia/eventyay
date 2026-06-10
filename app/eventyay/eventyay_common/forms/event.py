@@ -18,7 +18,7 @@ from eventyay.common.urls import get_file_url_path, is_http_url, normalize_url_s
 from eventyay.control.forms import SlugWidget, SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.helpers.image_optimize import optimize_uploaded_image
 from eventyay.multidomain.models import KnownDomain
-from eventyay.orga.forms.widgets import MultipleLanguagesWidget
+from eventyay.control.forms import MultipleLanguagesWidget
 
 logger = logging.getLogger(__name__)
 

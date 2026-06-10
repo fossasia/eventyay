@@ -32,7 +32,6 @@ from eventyay.common.forms.widgets import (
 )
 from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.common.text.phrases import phrases
-from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.orga.utils.colors import generate_random_high_contrast_color
 
 
@@ -251,7 +250,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
 
         self.fields['content_locales'] = forms.MultipleChoiceField(
             choices=choices,
-            widget=MultipleLanguagesWidget(),
+            widget=forms.CheckboxSelectMultiple(),
             required=False,
             initial=obj.settings.get('content_locales') or [],
         )
