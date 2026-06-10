@@ -1,8 +1,10 @@
 import base64
+import binascii
 import inspect
+import logging
 import struct
 
-from cryptography.hazmat.backends.openssl.backend import Backend
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
@@ -16,10 +18,13 @@ from django.conf import settings
 from django.dispatch import receiver
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+from google.protobuf.message import DecodeError
 
 from eventyay.base.models import Product, ProductVariation, SubEvent
 from eventyay.base.secretgenerators import pretix_sig1_pb2
 from eventyay.base.signals import register_ticket_secret_generators
+
+logger = logging.getLogger(__name__)
 
 
 class BaseTicketSecretGenerator:
@@ -153,7 +158,6 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
         privkey = load_pem_private_key(
             base64.b64decode(self.event.settings.ticket_secrets_pretix_sig1_privkey),
             None,
-            Backend(),
         )
         signature = privkey.sign(payload)
         return bytes([0x01]) + struct.pack('>H', len(payload)) + struct.pack('>H', len(signature)) + payload + signature
@@ -161,6 +165,8 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
     def _parse(self, secret):
         try:
             rawbytes = base64.b64decode(secret[::-1])
+            if len(rawbytes) < 5:
+                return None
             if rawbytes[0] != 1:
                 raise ValueError('Invalid version')
 
@@ -170,13 +176,13 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
             signature = rawbytes[5 + payload_len : 5 + payload_len + sig_len]
             pubkey = load_pem_public_key(
                 base64.b64decode(self.event.settings.ticket_secrets_pretix_sig1_pubkey),
-                Backend(),
             )
             pubkey.verify(signature, payload)
             t = pretix_sig1_pb2.Ticket()
             t.ParseFromString(payload)
             return t
-        except:
+        except (binascii.Error, struct.error, ValueError, TypeError, InvalidSignature, DecodeError) as e:
+            logger.debug('Failed to parse ticket secret: %s', e)
             return None
 
     def generate_secret(
