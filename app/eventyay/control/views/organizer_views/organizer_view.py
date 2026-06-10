@@ -23,7 +23,7 @@ from rest_framework.response import Response
 
 from eventyay.base.models.event import Event, EventMetaValue
 from eventyay.base.models.organizer import Organizer, OrganizerBillingModel, Team
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
 from eventyay.control.forms.filter import EventFilterForm, OrganizerFilterForm
 from eventyay.control.forms.organizer_forms import (
     OrganizerDeleteForm,
@@ -310,6 +310,11 @@ class OrganizerDashboard(OrganizerDetailViewMixin, OrganizerPermissionRequiredMi
     def organizer(self):
         return self.request.organizer
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        return ctx
+
 
 class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
     model = Event
@@ -361,6 +366,7 @@ class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
         ctx['meta_fields'] = [self.filter_form['meta_{}'.format(p.name)] for p in self.organizer.meta_properties.all()]
+        ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return ctx
 
 

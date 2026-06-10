@@ -2,19 +2,39 @@ const DEFAULT_TILES = "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const DEFAULT_ATTRIB =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const DEFAULT_ZOOM = 15;
+const NULL_ISLAND_EPSILON = 1e-6;
 
 const maps = [];
 
+function parseCoordinate(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+  const coordinate = Number.parseFloat(String(value).replace(",", "."));
+  if (!Number.isFinite(coordinate)) {
+    return null;
+  }
+  return coordinate;
+}
+
+function isValidCoordinatePair(lat, lon) {
+  if (lat === null || lon === null) {
+    return false;
+  }
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    return false;
+  }
+  if (Math.abs(lat) < NULL_ISLAND_EPSILON && Math.abs(lon) < NULL_ISLAND_EPSILON) {
+    return false;
+  }
+  return true;
+}
+
 function initMap(grp) {
-  const latStr = grp.dataset.lat;
-  const lonStr = grp.dataset.lon;
+  const lat = parseCoordinate(grp.dataset.lat);
+  const lon = parseCoordinate(grp.dataset.lon);
 
-  if (!latStr || !lonStr) return;
-
-  const lat = parseFloat(latStr.replace(",", "."));
-  const lon = parseFloat(lonStr.replace(",", "."));
-
-  if (isNaN(lat) || isNaN(lon)) return;
+  if (!isValidCoordinatePair(lat, lon)) return;
 
   const rawTiles = grp.dataset.tiles ?? "";
   const tiles = rawTiles.includes("{z}") ? rawTiles : DEFAULT_TILES;
