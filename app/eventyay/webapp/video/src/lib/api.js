@@ -96,12 +96,12 @@ export function initApi({ store, token, clientId, inviteToken }) {
 					const data = await response.json().catch(() => ({}))
 					error = data.error || error
 				}
-				throw new ApiError({ error, status: response.status })
+				throw new ApiError({ error, status: response.status, message: error })
 			}
 			if (ct.includes('application/json')) {
 				return response.json()
 			} else {
-				throw new ApiError({ error: 'upload.invalid_response', status: response.status })
+				throw new ApiError({ error: 'upload.invalid_response', status: response.status, message: 'upload.invalid_response' })
 			}
 		})
 	}

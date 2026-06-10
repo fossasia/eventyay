@@ -157,11 +157,11 @@ class AppView(View):
                                 request.get_host(),
                                 event.pk,
                             ),
-                            "upload": reverse("storage:upload"),
+                            "upload": reverse("storage:upload", kwargs={"event_id": event.pk}),
                             "uploadMaxSize": settings.MAX_SIZE_CONFIG[
                                 SizeKey.UPLOAD_SIZE_OTHER
                             ],
-                            "scheduleImport": reverse("storage:schedule_import"),
+                            "scheduleImport": reverse("storage:schedule_import", kwargs={"event_id": event.pk}),
                             "systemlog": reverse("live:systemlog"),
                         },
                         "features": event.feature_flags,
