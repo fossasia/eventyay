@@ -89,8 +89,12 @@ class PermissionMiddleware:
 
         if not request.path.startswith(get_script_prefix() + 'control') and not request.path.startswith(
             get_script_prefix() + 'common'
-        ) and not request.path.startswith(get_script_prefix() + 'admin'):
-            # This middleware should only touch the /control, /common, and /admin subpaths
+        ) and not request.path.startswith(get_script_prefix() + 'admin') and not request.path.startswith(
+            get_script_prefix() + 'teamshifts'
+        ) and not request.path.startswith(
+            get_script_prefix() + 'exhibitors'
+        ):
+            # This middleware should only touch the /control, /common, /admin, /teamshifts, and /exhibitors subpaths
             return self.get_response(request)
 
         if hasattr(request, 'organizer'):
