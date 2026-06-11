@@ -2279,24 +2279,27 @@ class Event(
         content_locales: list[str] | None = None,
         default_locale: str | None = None,
     ) -> None:
+
         locales_list = list(locales or [])
-        if content_locales is None:
-            content_locales_list = locales_list
-        else:
-            content_locales_list = list(content_locales)
+
         if locales_list:
             self.locale_array = ','.join(locales_list)
-        if content_locales_list:
-            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('locales', locales_list)
         if default_locale:
             self.locale = default_locale
-        if locales_list or content_locales_list or default_locale:
+            self.settings.set('locale', default_locale)
+
+        if content_locales is not None:
+            content_locales_list = list(content_locales)
+            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('content_locales', content_locales_list)
+        if locales_list or content_locales is not None or default_locale:
             self._clear_language_caches()
 
     @cached_property
     def is_multilingual(self) -> bool:
         """Is ``True`` if the event supports more than one locale."""
-        return len(self.content_locales) > 1
+        return len(self.locales) > 1
 
     @cached_property
     def named_locales(self) -> list:

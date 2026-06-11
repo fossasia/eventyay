@@ -9,8 +9,14 @@
         <p>
             <a href="{% url "eventyay_common:events.add" %}?organizer={{ request.organizer.slug }}" class="btn btn-primary">
                 <span class="fa fa-plus"></span>
-                {% trans "Create a new event" %}
+                {% trans "Create Event" %}
             </a>
+            {% if event_series_creation_enabled %}
+            <a href="{% url "eventyay_common:events.add" %}?organizer={{ request.organizer.slug }}&amp;series=1" class="btn btn-default">
+                {% include "eventyay_common/includes/icon_calendar_series.html" %}
+                {% trans "Create Event Series" %}
+            </a>
+            {% endif %}
         </p>
     {% endif %}
     {% if events|length == 0 and not filter_form.filtered %}
