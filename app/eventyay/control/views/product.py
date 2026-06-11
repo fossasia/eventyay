@@ -92,12 +92,9 @@ from . import ChartContainingView, CreateView, PaginationMixin, UpdateView
 logger = logging.getLogger(__name__)
 
 
-class ProductList(ListView):
+class ProductList(PaginationMixin, ListView):
     model = Product
     context_object_name = 'products'
-    # paginate_by = 30
-    # Pagination is disabled as it is very unlikely to be necessary
-    # here and could cause problems with the "reorder-within-category" feature
     template_name = 'pretixcontrol/items/index.html'
 
     def get_queryset(self):
@@ -110,6 +107,39 @@ class ProductList(ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        products = list(ctx['products'])
+        category_ids = {product.category_id for product in products}
+        category_filter = Q()
+        non_empty_category_ids = {category_id for category_id in category_ids if category_id is not None}
+        if non_empty_category_ids:
+            category_filter |= Q(category_id__in=non_empty_category_ids)
+        if None in category_ids:
+            category_filter |= Q(category__isnull=True)
+
+        products_by_category = {}
+        if category_filter:
+            for product_id, category_id in (
+                self.request.event.products.filter(category_filter)
+                .order_by('category_id', 'position')
+                .values_list('id', 'category_id')
+            ):
+                products_by_category.setdefault(category_id, []).append(product_id)
+
+        move_states = {}
+        for category_products in products_by_category.values():
+            last_index = len(category_products) - 1
+            for index, product_id in enumerate(category_products):
+                move_states[product_id] = {
+                    'can_move_up': index > 0,
+                    'can_move_down': index < last_index,
+                }
+
+        for product in products:
+            state = move_states.get(product.pk, {})
+            product.can_move_up = state.get('can_move_up', False)
+            product.can_move_down = state.get('can_move_down', False)
+
+        ctx['products'] = products
         ctx['sales_channels'] = get_all_sales_channels()
         return ctx
 
@@ -139,24 +169,30 @@ def product_move(request, product, up=True):
     messages.success(request, _('The order of products has been updated.'))
 
 
+def product_list_redirect(request):
+    url = reverse(
+        'control:event.products',
+        kwargs={
+            'organizer': request.event.organizer.slug,
+            'event': request.event.slug,
+        },
+    )
+    query = request.GET.urlencode()
+    if query:
+        url = f'{url}?{query}'
+    return HttpResponseRedirect(url)
+
+
 @event_permission_required('can_change_items')
 def product_move_up(request, organizer, event, product):
     product_move(request, product, up=True)
-    return redirect(
-        'control:event.products',
-        organizer=request.event.organizer.slug,
-        event=request.event.slug,
-    )
+    return product_list_redirect(request)
 
 
 @event_permission_required('can_change_items')
 def product_move_down(request, organizer, event, product):
     product_move(request, product, up=False)
-    return redirect(
-        'control:event.products',
-        organizer=request.event.organizer.slug,
-        event=request.event.slug,
-    )
+    return product_list_redirect(request)
 
 
 class CategoryDelete(EventPermissionRequiredMixin, DeleteView):
