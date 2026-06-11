@@ -4,6 +4,7 @@ import pytest
 import requests
 from django.core.management import call_command
 
+from eventyay.base.management.commands.bbb_update_cost import REQUEST_TIMEOUT
 from eventyay.base.models import BBBServer
 
 
@@ -53,7 +54,7 @@ def test_bbb_update_cost_resets_idle_server_cost(mocker):
         "eventyay.base.management.commands.bbb_update_cost.pool.ThreadPool",
         InlinePool,
     )
-    mocker.patch(
+    request = mocker.patch(
         "eventyay.base.management.commands.bbb_update_cost.requests.get",
         return_value=response_with(SUCCESS_NO_MEETINGS),
     )
@@ -62,6 +63,8 @@ def test_bbb_update_cost_resets_idle_server_cost(mocker):
 
     server.refresh_from_db()
     assert server.cost == 0
+    request.assert_called_once()
+    assert request.call_args.kwargs["timeout"] == REQUEST_TIMEOUT
 
 
 @pytest.mark.django_db
@@ -104,7 +107,8 @@ def test_bbb_update_cost_ignores_inactive_and_continues_after_failure(mocker):
         cost=12,
     )
 
-    def get(url):
+    def get(url, timeout):
+        assert timeout == REQUEST_TIMEOUT
         if "failed.example.com" in url:
             raise requests.ConnectionError
         return response_with(SUCCESS_NO_MEETINGS)

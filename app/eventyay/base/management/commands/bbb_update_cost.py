@@ -10,6 +10,7 @@ from eventyay.base.services.bbb import get_url
 
 
 logger = logging.getLogger(__name__)
+REQUEST_TIMEOUT = (5, 30)
 
 
 class Command(BaseCommand):
@@ -18,7 +19,7 @@ class Command(BaseCommand):
     def _update_cost(self, server: BBBServer):
         try:
             meetings_url = get_url("getMeetings", {}, server.url, server.secret)
-            r = requests.get(meetings_url)
+            r = requests.get(meetings_url, timeout=REQUEST_TIMEOUT)
             r.raise_for_status()
             cost = 0
 
