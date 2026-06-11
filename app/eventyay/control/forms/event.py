@@ -100,20 +100,13 @@ def clean_organizer_email(email):
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
         choices=settings.LANGUAGES,
-        label=_('Active languages'),
+        label=_('Event languages'),
         widget=MultipleLanguagesWidget,
         help_text=_(
             "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
             "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
             "event's default language instead."
         ),
-    )
-    content_locales = forms.MultipleChoiceField(
-        choices=settings.LANGUAGES,
-        label=_('Content languages'),
-        widget=MultipleLanguagesWidget,
-        required=False,
-        help_text=_('Users will be able to submit proposals in these languages.'),
     )
     has_subevents = forms.BooleanField(
         label=_('This is an event series'),
@@ -132,7 +125,6 @@ class EventWizardFoundationForm(forms.Form):
         super().__init__(*args, **kwargs)
         localized_language_choices = get_language_choices_native_with_ui_name()
         self.fields['locales'].choices = localized_language_choices
-        self.fields['content_locales'].choices = localized_language_choices
         qs = Organizer.objects.all()
         if not self.user.has_active_staff_session(self.session.session_key):
             qs = qs.filter(id__in=self.user.teams.filter(can_create_events=True).values_list('organizer', flat=True))
@@ -163,12 +155,6 @@ class EventWizardFoundationForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         locales = cleaned_data.get('locales', [])
-        content_locales = cleaned_data.get('content_locales')
-
-        if content_locales and set(content_locales) - set(locales):
-            raise ValidationError({
-                'content_locales': _('Content languages must be a subset of the active languages.')
-            })
 
         gs = GlobalSettingsObject()
         series_enabled = gs.settings.get(EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True)
