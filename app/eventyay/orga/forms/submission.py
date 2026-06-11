@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 
 from eventyay.base.models import Submission, SubmissionStates, TalkSlot
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import ReadOnlyFlag, RequestRequire
@@ -116,10 +117,16 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         elif 'track' in self.fields:
             self.fields['track'].queryset = event.tracks.all()
         if 'content_locale' in self.fields:
-            if len(event.content_locales) == 1:
+            saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            if len(self.event.content_locales) <= 1 or saved_visibility == 'do_not_ask':
                 self.fields.pop('content_locale')
             else:
-                self.fields['content_locale'].choices = self.event.named_content_locales
+                choices = list(self.event.named_content_locales)
+                if self.instance and self.instance.pk and self.instance.content_locale:
+                    choice_codes = {c[0] for c in choices}
+                    if self.instance.content_locale not in choice_codes:
+                        choices.append((self.instance.content_locale, self.instance.get_content_locale_display()))
+                self.fields['content_locale'].choices = choices
         # If duration is not required, point out that the default is the session type's duration,
         # but only if there is more than one session type, because otherwise users will be
         # confused what that is.
@@ -148,7 +155,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
 
     def save(self, *args, **kwargs):
         if 'content_locale' not in self.fields:
-            self.instance.content_locale = self.event.locale
+            self.instance.content_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
         instance = super().save(*args, **kwargs)
         if self.is_creating:
             instance._set_state(self.cleaned_data['state'], force=True)

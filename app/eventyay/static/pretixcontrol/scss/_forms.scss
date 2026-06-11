@@ -200,6 +200,14 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   min-height: 10px;
 }
 
+.alert-required-boolean,
+#valid-number,
+#valid-date,
+#valid-datetime,
+#answer-options {
+  display: none;
+}
+
 .i18n-form-group input,
 .i18n-form-group textarea {
   @include border-top-radius(0px);
@@ -356,6 +364,7 @@ input[type=number].short {
   display: none;
 }
 [data-notify=error] [data-notification=error],
+[data-notify=no-provider] [data-notification=no-provider],
 [data-notify=loading] [data-notification=loading],
 [data-notify=updated] [data-notification=updated],
 [data-notify=confirm] [data-notification=confirm],

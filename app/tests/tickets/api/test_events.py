@@ -946,11 +946,17 @@ def test_event_create_with_seating_maps(token_client, organizer, event, meta_pro
 @pytest.mark.django_db
 def test_get_event_settings(token_client, organizer, event):
     event.settings.imprint_url = 'https://example.org'
+    event.settings.header_background_color = '#ffee00'
+    event.settings.header_text_color = '#111111'
+    event.settings.navigation_text_color = '#222222'
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
     )
     assert resp.status_code == 200
     assert resp.data['imprint_url'] == 'https://example.org'
+    assert resp.data['header_background_color'] == '#ffee00'
+    assert resp.data['header_text_color'] == '#111111'
+    assert resp.data['navigation_text_color'] == '#222222'
 
     resp = token_client.get(
         '/api/v1/organizers/{}/events/{}/settings/?explain=true'.format(organizer.slug, event.slug),
@@ -986,6 +992,25 @@ def test_patch_event_settings(token_client, organizer, event):
             format='json',
         )
         assert resp.status_code == 200
+        mocked.assert_any_call(args=(event.pk,))
+
+        resp = token_client.patch(
+            '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+            {
+                'header_background_color': '#ffee00',
+                'header_text_color': '#111111',
+                'navigation_text_color': '#222222',
+            },
+            format='json',
+        )
+        assert resp.status_code == 200
+        assert resp.data['header_background_color'] == '#ffee00'
+        assert resp.data['header_text_color'] == '#111111'
+        assert resp.data['navigation_text_color'] == '#222222'
+        event.settings.flush()
+        assert event.settings.header_background_color == '#ffee00'
+        assert event.settings.header_text_color == '#111111'
+        assert event.settings.navigation_text_color == '#222222'
         mocked.assert_any_call(args=(event.pk,))
 
         resp = token_client.patch(
@@ -1116,8 +1141,8 @@ def test_patch_event_settings_file(token_client, organizer, event):
         {'logo_image': 'https://cdn.example.com/header.png'},
         format='json',
     )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == 'https://cdn.example.com/header.png'
+    assert resp.status_code == 400
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
 
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
@@ -1137,9 +1162,9 @@ def test_patch_event_settings_file(token_client, organizer, event):
 
 
 @pytest.mark.django_db
-def test_patch_event_settings_external_image_urls(token_client, organizer, event):
+def test_patch_event_settings_external_image_urls_rejected(token_client, organizer, event):
+    """External image URLs are no longer accepted for logo_image and event_logo_image."""
     header_url = 'HTTPS://cdn.example.com/header.png'
-    normalized_header_url = 'https://cdn.example.com/header.png'
     logo_url = 'https://cdn.example.com/logo.svg'
 
     resp = token_client.patch(
@@ -1150,56 +1175,49 @@ def test_patch_event_settings_external_image_urls(token_client, organizer, event
         },
         format='json',
     )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == normalized_header_url
-    assert resp.data['event_logo_image'] == logo_url
-
-    resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] == normalized_header_url
-    assert resp.data['event_logo_image'] == logo_url
-
-    event = Event.objects.get(pk=event.pk)
-    assert event.visible_header_image_url == normalized_header_url
-    assert event.visible_logo_url == logo_url
-    assert event.social_image == normalized_header_url
-
-    resp = token_client.patch(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        {
-            'logo_image': None,
-            'event_logo_image': None,
-        },
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] is None
-    assert resp.data['event_logo_image'] is None
-
-    resp = token_client.get(
-        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        format='json',
-    )
-    assert resp.status_code == 200
-    assert resp.data['logo_image'] is None
-    assert resp.data['event_logo_image'] is None
-
-    event = Event.objects.get(pk=event.pk)
-    assert event.visible_header_image_url is None
-    assert event.visible_logo_url is None
-    assert event.social_image is None
+    assert resp.status_code == 400
+    assert resp.data == {
+        'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+        'event_logo_image': ['External image URLs are no longer accepted. Please upload a file instead.'],
+    }
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('invalid_url', ['ftp://cdn.example.com/header.png', 'javascript:alert(1)'])
-def test_patch_event_settings_external_image_urls_reject_invalid_urls(token_client, organizer, event, invalid_url):
+@pytest.mark.parametrize(
+    'url_value',
+    ['ftp://cdn.example.com/header.png', 'javascript:alert(1)', 'https://cdn.example.com/valid.png'],
+)
+def test_patch_event_settings_all_external_urls_rejected(token_client, organizer, event, url_value):
+    """All URL strings (including valid https) are rejected now that external image URLs are removed."""
     resp = token_client.patch(
         '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
-        {'logo_image': invalid_url},
+        {'logo_image': url_value},
         format='json',
     )
     assert resp.status_code == 400
-    assert resp.data == {'logo_image': ['Enter a valid URL.']}
+    assert resp.data == {'logo_image': ['External image URLs are no longer accepted. Please upload a file instead.']}
+
+
+@pytest.mark.django_db
+def test_patch_event_settings_file_upload_reference_accepted(token_client, organizer, event):
+    """file:<uuid> upload references produced by /api/v1/upload are still accepted (not treated as URLs)."""
+    r = token_client.post(
+        '/api/v1/upload',
+        data={
+            'media_type': 'image/png',
+            'file': ContentFile('file.png', 'invalid png content'),
+        },
+        format='upload',
+        HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',
+    )
+    assert r.status_code == 201
+    file_id_png = r.data['id']
+    assert file_id_png.startswith('file:')
+
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/events/{}/settings/'.format(organizer.slug, event.slug),
+        {'logo_image': file_id_png},
+        format='json',
+    )
+    assert resp.status_code == 200
+    assert resp.data['logo_image'].startswith('http')
