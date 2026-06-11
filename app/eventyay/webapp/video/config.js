@@ -1,7 +1,7 @@
 /* global ENV_DEVELOPMENT */
 import cloneDeep from 'lodash/cloneDeep'
 let config
-if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
+if (!window.venueless && !window.eventyay) {
 	const { protocol, hostname, port, pathname } = window.location
 	const wsProtocol = protocol === 'https:' ? 'wss' : 'ws'
 	const segments = pathname.split('/').filter(Boolean)
@@ -30,6 +30,7 @@ if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 			base: `${protocol}//${hostPort}/api/v1/events/${eventSlug}/`,
 			socket: `${wsProtocol}://${hostPort}/ws/event/${eventSlug}/`,
 			upload: `${protocol}//${hostPort}/storage/${eventSlug}/upload/`,
+			uploadMaxSize: 10 * 1024 * 1024,
 			scheduleImport: `${protocol}//${hostPort}/storage/${eventSlug}/schedule_import/`,
 			feedback: `${protocol}//${hostPort}/_feedback/`,
 		},

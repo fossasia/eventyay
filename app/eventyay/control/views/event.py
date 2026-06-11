@@ -197,7 +197,6 @@ class EventUpdate(
         self.sform.save()
         form.instance.update_language_configuration(
             locales=self.sform.cleaned_data.get('locales'),
-            content_locales=self.sform.cleaned_data.get('content_locales'),
             default_locale=self.sform.cleaned_data.get('locale'),
         )
         self.save_meta()

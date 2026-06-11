@@ -48,7 +48,6 @@ class PretalxFavButton extends HTMLElement {
     this.replaceChildren(this._button)
 
     this._button.addEventListener('click', () => this._toggle())
-
     this._loadState()
   }
 

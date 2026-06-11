@@ -328,6 +328,8 @@ class EventMixin:
         setting. Times are not shown.
         """
         tz = tz or ZoneInfo(key=self.settings.timezone)
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         if (not self.settings.show_date_to and not force_show_end) or not self.date_to:
             return _date(self.date_from.astimezone(tz), 'DATE_FORMAT')
         return daterange(self.date_from.astimezone(tz), self.date_to.astimezone(tz))
@@ -1974,15 +1976,15 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        return self.urls.schedule.full
+        return self.urls.schedule
 
     @property
     def talk_session_url(self):
-        return self.urls.talks.full
+        return self.urls.talks
 
     @property
     def talk_speaker_url(self):
-        return self.urls.speakers.full
+        return self.urls.speakers
 
     @property
     def talk_dashboard_url(self):
@@ -2277,24 +2279,27 @@ class Event(
         content_locales: list[str] | None = None,
         default_locale: str | None = None,
     ) -> None:
+
         locales_list = list(locales or [])
-        if content_locales is None:
-            content_locales_list = locales_list
-        else:
-            content_locales_list = list(content_locales)
+
         if locales_list:
             self.locale_array = ','.join(locales_list)
-        if content_locales_list:
-            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('locales', locales_list)
         if default_locale:
             self.locale = default_locale
-        if locales_list or content_locales_list or default_locale:
+            self.settings.set('locale', default_locale)
+
+        if content_locales is not None:
+            content_locales_list = list(content_locales)
+            self.content_locale_array = ','.join(content_locales_list)
+            self.settings.set('content_locales', content_locales_list)
+        if locales_list or content_locales is not None or default_locale:
             self._clear_language_caches()
 
     @cached_property
     def is_multilingual(self) -> bool:
         """Is ``True`` if the event supports more than one locale."""
-        return len(self.content_locales) > 1
+        return len(self.locales) > 1
 
     @cached_property
     def named_locales(self) -> list:

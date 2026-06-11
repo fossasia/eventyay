@@ -561,7 +561,7 @@ var form_handlers = function (el) {
             },
         }).on("select2:select", function () {
             // Allow continuing to select
-            if ($s.hasAttribute("multiple")) {
+            if ($s.prop("multiple")) {
                 window.setTimeout(function () {
                     $s.parent().find('.select2-search__field').focus();
                 }, 50);
@@ -695,7 +695,7 @@ $(function () {
         });
     }
 
-    $("#sumtoggle").find("button").click(function () {
+    $(document).on("click", "#sumtoggle button", function () {
         $(".table-product-overview .sum-gross").toggle($(this).attr("data-target") === ".sum-gross");
         $(".table-product-overview .sum-net").toggle($(this).attr("data-target") === ".sum-net");
         $(".table-product-overview .count").toggle($(this).attr("data-target") === ".count");
