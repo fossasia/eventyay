@@ -1,5 +1,6 @@
 /* global ENV_DEVELOPMENT */
 import config from 'config'
+import ApiError from './ApiError'
 import WebSocketClient from './WebSocketClient'
 
 let api = null
@@ -90,14 +91,17 @@ export function initApi({ store, token, clientId, inviteToken }) {
 		}).then(async response => {
 			const ct = response.headers.get('content-type') || ''
 			if (!response.ok) {
-				const text = await response.text().catch(() => '')
-				throw new Error(`Upload failed (${response.status}): ${text.slice(0, 200)}`)
+				let error = 'upload.failed'
+				if (ct.includes('application/json')) {
+					const data = await response.json().catch(() => ({}))
+					error = data.error || error
+				}
+				throw new ApiError({ error, status: response.status, message: error })
 			}
 			if (ct.includes('application/json')) {
 				return response.json()
 			} else {
-				const text = await response.text().catch(() => '')
-				throw new Error(`Unexpected response content-type: ${ct || 'unknown'}; body: ${text.slice(0, 200)}`)
+				throw new ApiError({ error: 'upload.invalid_response', status: response.status, message: 'upload.invalid_response' })
 			}
 		})
 	}
