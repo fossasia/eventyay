@@ -23,6 +23,7 @@ from eventyay.base.models import SystemLog, Event
 from eventyay.base.services.video_theme import build_video_theme_for_event
 from eventyay.base.models.auth import ShortToken
 from eventyay.common.templatetags.vite import fetch_vite_html, VIDEO_DIST_DIR, VIDEO_DEV_SERVER
+from eventyay.consts import SizeKey
 from eventyay.base.models.room import AnonymousInvite
 
 
@@ -156,8 +157,11 @@ class AppView(View):
                                 request.get_host(),
                                 event.pk,
                             ),
-                            "upload": reverse("storage:upload"),
-                            "scheduleImport": reverse("storage:schedule_import"),
+                            "upload": reverse("storage:upload", kwargs={"event_id": event.pk}),
+                            "uploadMaxSize": settings.MAX_SIZE_CONFIG[
+                                SizeKey.UPLOAD_SIZE_OTHER
+                            ],
+                            "scheduleImport": reverse("storage:schedule_import", kwargs={"event_id": event.pk}),
                             "systemlog": reverse("live:systemlog"),
                         },
                         "features": event.feature_flags,

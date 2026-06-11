@@ -30,6 +30,7 @@ if (!window.venueless && !window.eventyay) {
 			base: `${protocol}//${hostPort}/api/v1/events/${eventSlug}/`,
 			socket: `${wsProtocol}://${hostPort}/ws/event/${eventSlug}/`,
 			upload: `${protocol}//${hostPort}/storage/${eventSlug}/upload/`,
+			uploadMaxSize: 10 * 1024 * 1024,
 			scheduleImport: `${protocol}//${hostPort}/storage/${eventSlug}/schedule_import/`,
 			feedback: `${protocol}//${hostPort}/_feedback/`,
 		},
