@@ -3,28 +3,29 @@
 	template(v-if="schedule")
 		#main-wrapper
 			#unassigned.no-print(v-scrollbar.y="", @pointerenter="isUnassigning = true", @pointerleave="onUnassignedLeave")
-				.density-controls
-					button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
-						i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
-						span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
-					.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
-						span.time-density-display {{ timeDensityMinutes }} min
-						i.fa.fa-chevron-down(aria-hidden="true")
-						.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
-							.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
-								span {{ mins }} min
-								i.fa.fa-check(v-if="timeDensityMinutes === mins")
-				.title
-					bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
-					#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
-						i.fa.fa-sort
-					#unassigned-sort-menu(v-if="showUnassignedSortMenu")
-						.sort-method(v-for="method of unassignedSortMethods", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
-							span {{ method.label }}
-							i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
-							i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
-				session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
-				.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
+				.unassigned-header
+					.density-controls
+						button.density-btn(:class="{active: condensedView}", @click="toggleCondensedView", :title="condensedView ? $t('Normal view') : $t('Condensed view')", :aria-pressed="condensedView.toString()")
+							i.fa(:class="condensedView ? 'fa-expand' : 'fa-compress'", aria-hidden="true")
+							span.density-btn-text {{ condensedView ? $t('Normal view') : $t('Condensed view') }}
+						.select-wrapper.custom-dropdown(ref="customDropdownRef", @click="showTimeDensityMenu = !showTimeDensityMenu", :class="{'active': showTimeDensityMenu}")
+							span.time-density-display {{ timeDensityMinutes }} min
+							i.fa.fa-chevron-down(aria-hidden="true")
+							.time-density-menu.vue-dropdown(v-if="showTimeDensityMenu")
+								.density-option(v-for="mins in [5, 15, 30, 60]", @click.stop="timeDensityMinutes = mins; onTimeDensityChange(); showTimeDensityMenu = false", :class="{active: timeDensityMinutes === mins}")
+									span {{ mins }} min
+									i.fa.fa-check(v-if="timeDensityMinutes === mins")
+					.title
+						bunt-input#filter-input(v-model="unassignedFilterString", :placeholder="translations.filterSessions", icon="search", name="filter-input")
+						#unassigned-sort(@click="showUnassignedSortMenu = !showUnassignedSortMenu", :class="{'active': showUnassignedSortMenu}")
+							i.fa.fa-sort
+						#unassigned-sort-menu(v-if="showUnassignedSortMenu")
+							.sort-method(v-for="method of unassignedSortMethods", @click="unassignedSort === method.name ? unassignedSortDirection = unassignedSortDirection * -1 : unassignedSort = method.name; showUnassignedSortMenu = false")
+								span {{ method.label }}
+								i.fa.fa-sort-amount-asc(v-if="unassignedSort === method.name && unassignedSortDirection === 1")
+								i.fa.fa-sort-amount-desc(v-if="unassignedSort === method.name && unassignedSortDirection === -1")
+					session.new-break(:session="{title: '+ ' + translations.newBreak}", :isDragged="false", tabindex="0", @startDragging="startNewBreak", @click.stop="showNewBreakHint", @focus="showNewBreakHint", @blur="removeNewBreakHint", @keydown="onNewBreakKeydown", @pointerleave="removeNewBreakHint", :aria-describedby="newBreakTooltip ? 'new-break-hint' : undefined")
+					.new-break-hint(v-if="newBreakTooltip", id="new-break-hint", role="tooltip") {{ newBreakTooltip }}
 				session(v-for="un in unscheduled", :key="un.id", :session="un", @startDragging="startDragging", :isDragged="draggedSession && un.id === draggedSession.id")
 				.deleted-room-sessions(v-if="deletedRoomSessions.length")
 					h3 {{ $t('Deleted Room Sessions') }}
@@ -772,7 +773,15 @@ onUnmounted(() => {
 			margin-right: 12px
 		> .bunt-scrollbar-rail-y
 			margin: 0
-		> .density-controls
+		.unassigned-header
+			position: sticky
+			top: 0
+			z-index: 10
+			background-color: $clr-white
+			padding-bottom: 8px
+			display: flex
+			flex-direction: column
+		.unassigned-header > .density-controls
 			display: flex
 			align-items: center
 			justify-content: flex-start
@@ -860,7 +869,8 @@ onUnmounted(() => {
 					margin-left: 6px
 					font-weight: 500
 					white-space: nowrap
-		> .title
+		.unassigned-header > .title
+			position: relative
 			padding 4px 0
 			font-size: 18px
 			text-align: center
