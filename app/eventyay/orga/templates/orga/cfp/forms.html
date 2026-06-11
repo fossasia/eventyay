@@ -730,6 +730,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>
+
                             <td class="text-center">{{ field_counts.name }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -773,6 +774,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>
+
                             <td class="text-center">{{ field_counts.biography }}</td>
                             <td class="text-right">
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
@@ -816,8 +818,12 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>
+
                             <td class="text-center">{{ field_counts.avatar }}</td>
                             <td class="text-right">
+                                <button type="button" class="btn btn-sm btn-default profile-picture-settings-button" title="{% translate 'Profile picture settings' %}" aria-label="{% translate 'Profile picture settings' %}" aria-controls="profile-picture-settings-popover" aria-expanded="false">
+                                    <i class="fa fa-cog"></i>
+                                </button>
                                 <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
                                     <i class="fa fa-arrows"></i>
                                 </button>
@@ -1131,6 +1137,18 @@
                     </div>
                 </div>
             </fieldset>
+        <div class="profile-picture-settings-popover d-none" id="profile-picture-settings-popover" role="dialog" aria-label="{% translate 'Enable Gravatar' %}">
+            <div class="profile-picture-settings-option">
+                <label class="profile-picture-settings-title mb-0 mr-3" for="{{ sform.cfp_enable_gravatar.auto_id }}">
+                    {% translate "Enable Gravatar" %}
+                </label>
+                <label class="toggle-switch flex-shrink-0" data-field-id="{{ sform.cfp_enable_gravatar.auto_id }}" aria-label="{% translate 'Enable Gravatar' %}">
+                    {{ sform.cfp_enable_gravatar }}
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <small class="profile-picture-settings-help text-muted">{{ sform.cfp_enable_gravatar.help_text }}</small>
+        </div>
         {% include "orga/includes/submit_row.html" %}
     </form>
     </div>

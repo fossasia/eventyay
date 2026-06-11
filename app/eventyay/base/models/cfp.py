@@ -18,6 +18,7 @@ def default_settings():
         'count_length_in': 'chars',
         'show_deadline': True,
         'hide_after_deadline': False,
+        'cfp_enable_gravatar': True,
     }
 
 
@@ -258,3 +259,8 @@ class CfP(PretalxModel):
         if self.deadline:
             deadlines.append(self.deadline)
         return max(deadlines) if deadlines else None
+
+    @property
+    def enable_gravatar(self) -> bool:
+        """Check if Gravatar is enabled for this event's CfP."""
+        return self.settings.get('cfp_enable_gravatar', True)
