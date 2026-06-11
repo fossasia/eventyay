@@ -14,6 +14,7 @@ from eventyay.base.models import (
     TalkQuestionTarget,
     Track,
 )
+from eventyay.base.models.cfp import default_fields
 from eventyay.base.models.resource import get_slide_resources
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
@@ -180,11 +181,18 @@ class InfoForm(
 
     def _set_locales(self):
         if 'content_locale' in self.fields:
-            if len(self.event.content_locales) == 1:
-                self.default_values['content_locale'] = self.event.content_locales[0]
+            saved_visibility = self.event.cfp.fields.get('content_locale', default_fields()['content_locale']).get('visibility')
+            if len(self.event.content_locales) <= 1 or saved_visibility == 'do_not_ask':
+                default_locale = self.event.content_locales[0] if self.event.content_locales else self.event.locale
+                self.default_values['content_locale'] = default_locale
                 self.fields.pop('content_locale')
             else:
-                self.fields['content_locale'].choices = self.event.named_content_locales
+                choices = list(self.event.named_content_locales)
+                if self.instance and self.instance.pk and self.instance.content_locale:
+                    choice_codes = {c[0] for c in choices}
+                    if self.instance.content_locale not in choice_codes:
+                        choices.append((self.instance.content_locale, self.instance.get_content_locale_display()))
+                self.fields['content_locale'].choices = choices
 
     def _set_slot_count(self, instance=None):
         if not self.event.get_feature_flag('present_multiple_times'):
@@ -212,6 +220,11 @@ class InfoForm(
 
     def clean(self):
         cleaned_data = super().clean()
+
+        if self.not_strict and not self.draft_save:
+            self._validate_required_step_fields(cleaned_data)
+            return cleaned_data
+
         if not (self.draft_save or self.not_strict):
             return cleaned_data
 
@@ -224,6 +237,66 @@ class InfoForm(
         if not has_real_user_data:
             raise forms.ValidationError(self._get_empty_content_error_message())
         return cleaned_data
+
+    def _validate_required_step_fields(self, cleaned_data):
+        for key in self.Meta.request_require:
+            visibility = self.event.cfp.fields.get(key, default_fields()[key])['visibility']
+            if visibility != 'required':
+                continue
+            if key in self.default_values or key not in self.fields:
+                continue
+            value = cleaned_data.get(key)
+            if not self._has_real_draft_value(key, value):
+                self.add_error(key, forms.ValidationError(_('This field is required.'), code='required_step_field'))
+
+        question_cache = {
+            field.question.pk: field.question
+            for field_name, field in self.fields.items()
+            if field_name.startswith('question_') and hasattr(field, 'question')
+        }
+
+        def question_is_visible(parent_id, dep_values):
+            if parent_id not in question_cache:
+                return False
+            parent_question = question_cache[parent_id]
+            if parent_question.dependency_question_id and not question_is_visible(
+                parent_question.dependency_question_id,
+                parent_question.dependency_values,
+            ):
+                return False
+            parent_field_name = f'question_{parent_id}'
+            if parent_field_name not in cleaned_data:
+                return False
+            parent_value = cleaned_data[parent_field_name]
+            if parent_value is None or parent_value == '':
+                return False
+            if isinstance(parent_value, bool):
+                return ('True' in dep_values and parent_value) or ('False' in dep_values and not parent_value)
+            if isinstance(parent_value, str):
+                return parent_value in dep_values
+            if hasattr(parent_value, '__iter__'):
+                return any(
+                    (str(v.pk) if hasattr(v, 'pk') else str(v)) in dep_values
+                    for v in parent_value
+                )
+            if hasattr(parent_value, 'pk'):
+                return str(parent_value.pk) in dep_values
+            return str(parent_value) in dep_values
+
+        for field_name, field in self.fields.items():
+            if not field_name.startswith('question_') or not hasattr(field, 'question'):
+                continue
+            question = field.question
+            if not question.required:
+                continue
+            if question.dependency_question_id and not question_is_visible(
+                question.dependency_question_id,
+                question.dependency_values,
+            ):
+                continue
+            value = cleaned_data.get(field_name)
+            if not self._has_real_draft_value(field_name, value):
+                self.add_error(field_name, forms.ValidationError(_('This field is required.'), code='required_step_field'))
 
     def _get_empty_content_error_message(self):
         return _('Please fill at least one field.')
