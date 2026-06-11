@@ -31,9 +31,10 @@ from django.apps import apps
 
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models.cfp import default_fields
 from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import EVENT_SERIES_CREATION_ENABLED, SETTINGS_AFFECTING_CSS, GlobalSettingsObject
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS, is_event_series_creation_enabled
 from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardCopyForm, EventWizardFoundationForm
@@ -149,6 +150,7 @@ class EventList(PaginationMixin, ListView):
                     100,
                     (round(q.cached_availability_paid_orders / q.size * 100) if q.size > 0 else 100),
                 )
+        ctx['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
         return ctx
 
     @cached_property
@@ -189,8 +191,8 @@ class EventCreateView(TemplateView):
 
         initial_form['is_video_creation'] = True
         initial_form['locales'] = ['en']
-        initial_form['content_locales'] = ['en']
         initial_form['create_for'] = EventCreatedFor.BOTH.value
+        initial_form['has_subevents'] = request_get.get('series') == '1'
         queryset = self.get_create_organizer_queryset()
         if 'organizer' in request_get:
             try:
@@ -258,6 +260,12 @@ class EventCreateView(TemplateView):
                 pass
         return None
 
+    def dispatch(self, request, *args, **kwargs):
+        is_series = request.GET.get('series') == '1' or request.POST.get('has_subevents') == 'on'
+        if is_series and not is_event_series_creation_enabled(request):
+            raise PermissionDenied(_('Event series creation is currently disabled.'))
+        return super().dispatch(request, *args, **kwargs)
+
     def get_foundation_form(self):
         return EventWizardFoundationForm(
             data=self.request.POST if self.request.method == 'POST' else None,
@@ -308,10 +316,8 @@ class EventCreateView(TemplateView):
         )
         context['event_creation_for_choice'] = {e.name: e.value for e in EventCreatedFor}
         context['clone_from'] = self.clone_from
-        gs = GlobalSettingsObject()
-        context['event_series_creation_enabled'] = gs.settings.get(
-            EVENT_SERIES_CREATION_ENABLED, as_type=bool, default=True
-        )
+        context['event_series_creation_enabled'] = is_event_series_creation_enabled(self.request)
+        context['type_preselected'] = 'series' in self.request.GET
         return context
 
     def post(self, request, *args, **kwargs):
@@ -481,13 +487,26 @@ class EventCreateView(TemplateView):
             # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
-            event.settings.set('locale', basics_data['locale'])
-            event.settings.set('locales', foundation_data['locales'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
-            event.settings.set('content_locales', content_locales)
+            event.update_language_configuration(
+                locales=foundation_data['locales'],
+                content_locales=content_locales,
+                default_locale=basics_data['locale']
+            )
+            event.refresh_from_db()
+            cfp = event.cfp
+            if 'content_locale' not in cfp.fields:
+                cfp.fields['content_locale'] = default_fields()['content_locale'].copy()
+            if len(foundation_data['locales']) > 1:
+                cfp.fields['content_locale']['visibility'] = 'required'
+                cfp.fields['content_locale']['public'] = True
+            else:
+                cfp.fields['content_locale']['visibility'] = 'do_not_ask'
+                cfp.fields['content_locale']['public'] = False
+            cfp.save(update_fields=['fields'])
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
-            event.save(update_fields=['timezone'])
+            event.save(update_fields=['timezone', 'locale_array', 'content_locale_array'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = EventCreatedFor.BOTH.value
@@ -598,7 +617,6 @@ class EventUpdate(
             self.object.save(update_fields=['timezone'])
         form.instance.update_language_configuration(
             locales=self.sform.cleaned_data.get('locales'),
-            content_locales=self.sform.cleaned_data.get('content_locales'),
             default_locale=self.sform.cleaned_data.get('locale'),
         )
 
