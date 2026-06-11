@@ -7,9 +7,13 @@ from django.core.files.uploadedfile import UploadedFile
 from django.forms import CharField, FileField, RegexField, ValidationError
 from django.utils.translation import gettext_lazy as _
 
+from i18nfield.forms import I18nFormField
+from i18nfield.strings import LazyI18nString
+
 from eventyay.common.forms.widgets import (
     ClearableBasenameFileInput,
     EmailEditorWidget,
+    I18nEmailEditorWidget,
     ImageInput,
     PasswordConfirmationInput,
     PasswordStrengthInput,
@@ -165,6 +169,23 @@ class EmailBodyField(CharField):
     def clean(self, value: str) -> str:
         value = super().clean(value)
         return sanitize_email_html(value) if value else value
+
+
+class I18nEmailBodyFormField(I18nFormField):
+    """I18n form field for Message center email bodies using the Tiptap email editor.
+
+    Sanitizes each locale value with ``sanitize_email_html`` after validation.
+    """
+
+    widget = I18nEmailEditorWidget
+
+    def clean(self, value):
+        result = super().clean(value)
+        if isinstance(result, LazyI18nString) and isinstance(result.data, dict):
+            return LazyI18nString(
+                {locale: sanitize_email_html(text) if text else text for locale, text in result.data.items()}
+            )
+        return result
 
 
 class ColorField(RegexField):

@@ -9,7 +9,9 @@ from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
-from eventyay.base.forms import I18nMarkdownTextarea, PlaceholderValidator, SettingsForm
+from eventyay.base.forms import PlaceholderValidator, SettingsForm
+from eventyay.common.forms.fields import I18nEmailBodyFormField
+from eventyay.common.forms.widgets import I18nEmailEditorWidget
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
@@ -160,14 +162,21 @@ class MailForm(forms.Form):
             required=True,
             locales=event.settings.get('locales'),
         )
-        self.fields['message'] = I18nFormField(
+        message_placeholders = ['event', 'order', 'position_or_address']
+        placeholder_names = sorted(get_available_placeholders(self.event, message_placeholders).keys())
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': event.organizer.slug, 'event': event.slug},
+        )
+        self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
-            widget=I18nMarkdownTextarea,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
             required=True,
             locales=event.settings.get('locales'),
         )
-        self._set_field_placeholders('subject', ['event', 'order', 'position_or_address'])
-        self._set_field_placeholders('message', ['event', 'order', 'position_or_address'])
+        self._set_field_placeholders('subject', message_placeholders)
+        self._set_field_placeholders('message', message_placeholders)
         choices = [(e, l) for e, l in Order.STATUS_CHOICE if e != 'n']
         choices.insert(0, ('na', _('payment pending (except unapproved)')))
         choices.insert(0, ('pa', _('approval pending')))
@@ -491,12 +500,18 @@ class EmailQueueEditForm(forms.ModelForm):
             locales=list(allowed_locales),
             initial=self.instance.subject
         )
-        self.fields['message'] = I18nFormField(
+        placeholder_names = sorted(get_available_placeholders(self.event, base_placeholders).keys())
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
+        )
+        self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
-            widget=I18nMarkdownTextarea,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
             required=False,
             locales=list(allowed_locales),
-            initial=self.instance.message
+            initial=self.instance.message,
         )
 
         if not self.read_only:
@@ -580,8 +595,13 @@ class TeamMailForm(forms.Form):
         if isinstance(locales, str):
             locales = [locales]
 
-        placeholder_keys = get_available_placeholders(self.event, ['event', 'team']).keys()
-        placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in sorted(placeholder_keys))
+        team_placeholders = ['event', 'team']
+        placeholder_names = sorted(get_available_placeholders(self.event, team_placeholders).keys())
+        placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in placeholder_names)
+        preview_url = reverse(
+            'control:event.editor.email.preview',
+            kwargs={'organizer': self.event.organizer.slug, 'event': self.event.slug},
+        )
 
         self.fields['subject'] = I18nFormField(
             label=_('Subject'),
@@ -590,12 +610,13 @@ class TeamMailForm(forms.Form):
             locales=locales,
             help_text=placeholder_text
         )
-        self.fields['message'] = I18nFormField(
+        self.fields['message'] = I18nEmailBodyFormField(
             label=_('Message'),
-            widget=I18nMarkdownTextarea,
+            widget=I18nEmailEditorWidget,
+            widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
             required=True,
             locales=locales,
-            help_text=placeholder_text
+            help_text=placeholder_text,
         )
         self.fields['teams'] = forms.ModelMultipleChoiceField(
             queryset=Team.objects.filter(organizer=self.event.organizer),

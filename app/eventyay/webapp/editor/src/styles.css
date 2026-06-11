@@ -80,6 +80,13 @@
   color: #212529;
 }
 
+/* Match i18n textarea flag spacing (see pretixcontrol/scss/_flags.scss). */
+.tiptap-prosemirror[lang] {
+  background-repeat: no-repeat;
+  background-position: 10px 10px;
+  padding-left: 34px;
+}
+
 .tiptap-prosemirror p {
   margin: 0 0 0.5em;
 }

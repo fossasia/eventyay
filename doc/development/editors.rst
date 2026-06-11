@@ -26,9 +26,12 @@ eventyay uses three editor implementations:
    * - Ticket forms / general rich text
      - **Tiptap** (``RichTextField``)
      - New. Use for new plain-HTML rich text fields.
-   * - Email body editing
+   * - Ticket Message center (compose / outbox / team mail)
+     - **Tiptap** (``I18nEmailBodyFormField``)
+     - Primary integration. Gmail-like editor with placeholder insertion.
+   * - Order personal email (order detail → Send email)
      - **Tiptap** (``EmailBodyField``)
-     - New. Gmail-like editor with placeholder insertion.
+     - Secondary. Same email profile for one-off messages.
 
 
 Tiptap Editor Layer
@@ -133,7 +136,31 @@ Both fields are in ``eventyay.common.forms.fields``.
   ``sanitize_email_html()`` inside ``clean()``.  Constructor accepts
   ``placeholders`` and ``preview_url``.
 
-Example usage::
+``I18nEmailEditorWidget`` / ``I18nEmailBodyFormField``
+  For multi-locale email bodies (Message center).  Extends django-i18nfield's
+  ``I18nTextarea`` / ``I18nFormField``.  Each locale tab gets its own Tiptap
+  email editor instance.  Sanitizes every locale value in ``clean()``.
+
+Message Center (primary wiring)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The **Message center** plugin (``eventyay.plugins.sendmail``) is the main
+production use case for the Tiptap email editor in Tickets:
+
+* **Compose** — mass mail to orders/attendees (``MailForm``)
+* **Outbox** — edit queued messages before sending (``EmailQueueEditForm``)
+* **Compose to teams** — internal team notifications (``TeamMailForm``)
+
+All three forms use ``I18nEmailBodyFormField`` for the **Message** field.  The
+editor toolbar provides formatting, placeholder insertion, and an AJAX preview
+via ``control:event.editor.email.preview``.
+
+Plain-text and Markdown bodies stored before this change continue to work:
+``compile_email_body()`` in ``eventyay.base.templatetags.rich_text`` detects
+whether content is already HTML and only runs ``markdown_compile_email()`` for
+legacy plain-text bodies.
+
+Example usage (single-locale form)::
 
    from eventyay.common.forms.fields import RichTextField, EmailBodyField
 
@@ -144,6 +171,18 @@ Example usage::
            placeholders=['attendee_name', 'event_name', 'order_code'],
            preview_url='/control/.../editor/email-preview',
        )
+
+Example usage (Message center, multi-locale)::
+
+   from eventyay.common.forms.fields import I18nEmailBodyFormField
+   from eventyay.common.forms.widgets import I18nEmailEditorWidget
+
+   self.fields['message'] = I18nEmailBodyFormField(
+       label='Message',
+       widget=I18nEmailEditorWidget,
+       widget_kwargs={'placeholders': placeholder_names, 'preview_url': preview_url},
+       locales=event.settings.get('locales'),
+   )
 
 Server-side Sanitization
 ~~~~~~~~~~~~~~~~~~~~~~~~

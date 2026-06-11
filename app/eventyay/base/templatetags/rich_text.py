@@ -6,6 +6,7 @@ from functools import partial
 # TODO: Remove bleach import
 import bleach
 import markdown
+import nh3
 # TODO: Remove bleach import
 from bleach import DEFAULT_CALLBACKS
 # TODO: Remove bleach import
@@ -145,6 +146,20 @@ NO_LINKS_CLEANER = bleach.Cleaner(
 )
 
 STRIKETHROUGH_RE = '(~{2})(.+?)(~{2})'
+
+def compile_email_body(source: str) -> str:
+    """Render an email body fragment as HTML.
+
+    Plain-text and legacy Markdown bodies are compiled with
+    ``markdown_compile_email``.  Content that is already HTML (for example from
+    the Tiptap email editor) is returned unchanged.
+    """
+    if not source:
+        return source
+    if nh3.is_html(source):
+        return source
+    return markdown_compile_email(source)
+
 
 # TODO: Implement nh3 equivalent
 def markdown_compile_email(source):

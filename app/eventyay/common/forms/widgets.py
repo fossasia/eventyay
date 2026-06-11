@@ -15,6 +15,7 @@ from django.forms import (
     TimeInput,
     Widget,
 )
+from i18nfield.forms import I18nTextarea
 from django.utils.datastructures import MultiValueDict
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -127,6 +128,30 @@ class RichTextWidget(Textarea):
         attrs = attrs.copy() if attrs is not None else {}
         attrs.setdefault('data-tiptap-profile', 'richtext')
         super().__init__(attrs=attrs)
+
+
+class I18nEmailEditorWidget(I18nTextarea):
+    """Tiptap email editor for i18n message fields in the Message center.
+
+    Wraps each locale textarea in a ``[data-tiptap-wrapper]`` container so the
+    shared editor bundle can mount one editor per language tab.
+    """
+
+    def __init__(self, locales, field, attrs=None, placeholders=None, preview_url='', **kwargs):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-tiptap-profile', 'email')
+        if placeholders:
+            attrs['data-tiptap-placeholders'] = json.dumps(list(placeholders))
+        if preview_url:
+            attrs['data-tiptap-preview-url'] = preview_url
+        super().__init__(locales=locales, field=field, attrs=attrs)
+
+    def format_output(self, rendered_widgets, id_):
+        wrapped = [
+            f'<div class="tiptap-wrapper" data-tiptap-wrapper="true" data-email-editor="true">{widget}</div>'
+            for widget in rendered_widgets
+        ]
+        return super().format_output(wrapped, id_)
 
 
 class EmailEditorWidget(Textarea):

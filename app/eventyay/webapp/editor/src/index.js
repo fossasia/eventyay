@@ -18,20 +18,31 @@ function mountEditor(textarea) {
   const wrapper = textarea.closest('[data-tiptap-wrapper]')
   if (!wrapper) return null
 
+  const fieldLang = textarea.getAttribute('lang')
+  const fieldDir = textarea.getAttribute('dir')
+
   const editorEl = document.createElement('div')
   editorEl.className = 'tiptap-editor-content'
+
+  const prosemirrorAttrs = {
+    class: 'tiptap-prosemirror',
+    role: 'textbox',
+    'aria-multiline': 'true',
+    'aria-label': textarea.getAttribute('aria-label') || textarea.name || 'Rich text editor',
+  }
+  if (fieldLang) {
+    prosemirrorAttrs.lang = fieldLang
+  }
+  if (fieldDir) {
+    prosemirrorAttrs.dir = fieldDir
+  }
 
   const editor = new Editor({
     element: editorEl,
     extensions,
     content: textarea.value || '',
     editorProps: {
-      attributes: {
-        class: 'tiptap-prosemirror',
-        role: 'textbox',
-        'aria-multiline': 'true',
-        'aria-label': textarea.getAttribute('aria-label') || textarea.name || 'Rich text editor',
-      },
+      attributes: prosemirrorAttrs,
     },
   })
 
