@@ -248,7 +248,9 @@ const timeslices = computed<Timeslice[]>(() => {
     const endingMins = end.minute() % minimumSliceMins
 
     for (let i = 1; i <= mins / minimumSliceMins; i++) {
-      halfHourSlices.push(start.clone().add(startingMins + minimumSliceMins * i, 'minutes'))
+      const sliceDate = start.clone().add(startingMins + minimumSliceMins * i, 'minutes')
+      if (sliceDate.isAfter(end)) break
+      halfHourSlices.push(sliceDate)
     }
 
     if (endingMins) {
@@ -695,7 +697,7 @@ onMounted(async () => {
   })
 
   timesliceRefs.value.forEach(el => {
-    if (!el.dataset?.slice || !el.dataset.slice.endsWith('00-00')) return
+    if (!el.dataset?.slice || !el.classList.contains('datebreak')) return
     observer?.observe(el)
   })
 })

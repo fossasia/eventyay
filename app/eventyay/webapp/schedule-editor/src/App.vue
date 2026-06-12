@@ -45,7 +45,7 @@
 					:end="days.at(-1).clone().endOf('day')",
 					:currentDay="currentDay",
 					:draggedSession="draggedSession",
-					@changeDay="currentDay = $event",
+					@changeDay="changeDay",
 					@startDragging="startDragging",
 					@rescheduleSession="rescheduleSession",
 					@createSession="createSession",
