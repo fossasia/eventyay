@@ -2,6 +2,7 @@
 {% load context_icons %}
 {% load context_urls %}
 {% load event_tags %}
+{% load presale_locale %}
 {% load staff_session %}
 {% load i18n %}
 {% load rules %}
@@ -12,19 +13,19 @@
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
         <meta charset="utf-8">
-        <title>{% block title %}{% block extra_title %}{% endblock %}{% if request.event %}{{ request.event.name }} :: {% endif %}{% endblock %} {{ site_name }}</title>
-        <meta name="title" content="{% block meta_title %}{% endblock %} {% if request.event %} - {{ request.event.name }} {% endif %} {{ site_name }}">
-        <meta name="description" content="{% block meta_description %}{% if request.event %}Schedule, talks and talk submissions for {{ request.event.name }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
+        <title>{% block title %}{% block extra_title %}{% endblock %}{% if request.event %}{{ request.event.name|event_localize }} :: {% endif %}{% endblock %} {{ site_name }}</title>
+        <meta name="title" content="{% block meta_title %}{% endblock %} {% if request.event %} - {{ request.event.name|event_localize }} {% endif %} {{ site_name }}">
+        <meta name="description" content="{% block meta_description %}{% if request.event %}Schedule, talks and talk submissions for {{ request.event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
         <meta name="application-name" content={{ site_name }}>
         <meta name="generator" content={{ site_name }}>
-        <meta name="keywords" content="{% if request.event %}{{ request.event.name }}, {{ request.event.slug }}, {% if request.event.date_from %}{{ request.event.date_from.year }}, {% endif %}{% endif %}schedule, talks, cfp, call for papers, conference, submissions, organizer">
+        <meta name="keywords" content="{% if request.event %}{{ request.event.name|event_localize }}, {{ request.event.slug }}, {% if request.event.date_from %}{{ request.event.date_from.year }}, {% endif %}{% endif %}schedule, talks, cfp, call for papers, conference, submissions, organizer">
         <meta name="robots" content="nofollow">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#2185d0">
         <meta name="HandheldFriendly" content="True"/>
         {% if request.event and request.event.visible_logo_url %}<meta property="thumbnail" content="{{ request.event.visible_logo_url }}">{% endif %}
         {% block alternate_link %}
-            <link rel="alternate" type="application/json" title="{{ request.event.name }} API" href="{{ request.event.api_urls.base.full }}" />
+            <link rel="alternate" type="application/json" title="{{ request.event.name|event_localize }} API" href="{{ request.event.api_urls.base.full }}" />
         {% endblock alternate_link %}
 
         {% include "common/includes/favicon.html" %}
@@ -210,7 +211,7 @@
                                     </span>
                                     <div id="search-context-text">
                                         {% if request.event %}
-                                            <span class="context-name font-weight-bold">{{ request.event.name }}</span>
+                                            <span class="context-name font-weight-bold">{{ request.event.name|event_localize }}</span>
                                             <span class="context-meta">{{ request.event.get_date_range_display }}</span>
                                         {% elif request.organizer %}
                                             <span class="context-name font-weight-bold">{{ request.organizer.name }}</span>
