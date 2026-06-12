@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import random
@@ -394,19 +395,30 @@ class BBBService:
 
     async def get_recordings_for_room(self, room):
         recordings = []
-        for server in await self._get_possible_servers():
-            try:
-                call = await get_call_for_room(room)
-                recordings_url = get_url(
-                    "getRecordings",
-                    {"meetingID": call.meeting_id, "state": "any"},
-                    server.url,
-                    server.secret,
-                )
-                root = await self._get(recordings_url, timeout=10)
-                if root is False:
-                    return []
+        call = await get_call_for_room(room)
+        if not call:
+            return recordings
 
+        successful_request = False
+        servers = await self._get_possible_servers()
+        recording_urls = [
+            get_url(
+                "getRecordings",
+                {"meetingID": call.meeting_id, "state": "any"},
+                server.url,
+                server.secret,
+            )
+            for server in servers
+        ]
+        responses = await asyncio.gather(
+            *(self._get(url, timeout=10) for url in recording_urls)
+        )
+        for server, recordings_url, root in zip(servers, recording_urls, responses):
+            try:
+                if root is False:
+                    continue
+
+                successful_request = True
                 tz = pytz.timezone(self.event.timezone)
                 for rec in root.xpath("recordings/recording"):
                     url_presentation = url_screenshare = url_video = url_notes = None
@@ -463,5 +475,5 @@ class BBBService:
                         }
                     )
             except Exception:
-                logger.exception(f"Could not fetch recordings from server {server}")
-        return recordings
+                logger.exception("Could not fetch recordings from server %s", server)
+        return recordings if successful_request else None
