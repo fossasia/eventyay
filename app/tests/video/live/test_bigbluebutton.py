@@ -349,6 +349,32 @@ async def test_recordings_bbb_error_response(bbb_room):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
+async def test_recordings_malformed_success_response(bbb_room):
+    server = await database_sync_to_async(BBBServer.objects.get)()
+    await database_sync_to_async(BBBCall.objects.create)(
+        room=bbb_room,
+        event=bbb_room.event,
+        server=server,
+    )
+
+    with aioresponses() as m:
+        m.get(
+            re.compile(r"^https://video1.pretix.eu/bigbluebutton.*$"),
+            body="""<response>
+<returncode>SUCCESS</returncode>
+<recordings><recording /></recordings>
+</response>""",
+        )
+
+        async with world_communicator(named=True) as c:
+            await c.send_json_to(["bbb.recordings", 123, {"room": str(bbb_room.pk)}])
+
+            response = await c.receive_json_from()
+            assert response == ["error", 123, {"code": "bbb.failed"}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
 async def test_recordings_partial_server_failure(bbb_room):
     first_server = await database_sync_to_async(BBBServer.objects.get)()
     await database_sync_to_async(BBBCall.objects.create)(

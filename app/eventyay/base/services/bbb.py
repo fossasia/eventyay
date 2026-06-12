@@ -418,7 +418,7 @@ class BBBService:
                 if root is False:
                     continue
 
-                successful_request = True
+                server_recordings = []
                 tz = pytz.timezone(self.event.timezone)
                 for rec in root.xpath("recordings/recording"):
                     url_presentation = url_screenshare = url_video = url_notes = None
@@ -446,7 +446,7 @@ class BBBService:
                             and not url_notes
                         ):
                             continue
-                    recordings.append(
+                    server_recordings.append(
                         {
                             "start": (
                                 # BBB outputs timestamps in server time, not UTC :( Let's assume the BBB server time
@@ -474,6 +474,8 @@ class BBBService:
                             "url_notes": url_notes,
                         }
                     )
+                recordings.extend(server_recordings)
+                successful_request = True
             except Exception:
                 logger.exception("Could not fetch recordings from server %s", server)
         return recordings if successful_request else None
