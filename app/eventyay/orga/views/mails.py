@@ -492,7 +492,11 @@ class MailTemplateView(OrgaCRUDView):
     }
 
     def get_queryset(self):
-        return self.request.event.mail_templates.all().order_by('role')
+        qs = self.request.event.mail_templates.all().order_by('role')
+        for template in qs:
+            if template.role:
+                self.request.event._ensure_mail_template_locales(template, template.role)
+        return qs
 
     def get_generic_title(self, instance=None):
         if instance:

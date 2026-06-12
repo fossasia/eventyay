@@ -419,7 +419,7 @@ input[type="search"] {
   margin: auto;
 }
 
-input[type="number"] {
+input[type="number"]:not(.show-spinner) {
   -moz-appearance: textfield !important;
   appearance: textfield !important;
 
