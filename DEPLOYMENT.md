@@ -93,6 +93,8 @@ since files below it will need to be readable for the web server.
 
 ```root@server
 adduser $USER
+# add to docker group
+adduser $USER docker
 # the following is necessary that the nginx server has access to
 # the data files it should server
 chmod 0755 /home/$USER
@@ -117,6 +119,7 @@ mkdir $FULL_DATA_DIR/data
 mkdir $FULL_DATA_DIR/postgres
 mkdir $FULL_DATA_DIR/static
 chown -R $USER:$USER $FULL_DATA_DIR
+chown -R $USER:$USER /home/$USER/$DEPLOYMENT_NAME
 chown 100:101 $FULL_DATA_DIR/data
 chmod ugo+rwx $FULL_DATA_DIR/static
 ```
@@ -131,13 +134,15 @@ apt install nginx ssl-cert certbot python3-certbot-nginx
 
 Note, this should run as user $USER
 
+You probably need to again set DEPLOYMENT_NAME and USER !!!
+
 ```$USER@server
 cd /home/$USER/$DEPLOYMENT_NAME
 git clone https://github.com/fossasia/eventyay.git
 cd eventyay
 git checkout main
 cd ..
-ln -s eventyay/deployment/docker-compose.yaml .
+ln -s eventyay/deployment/docker-compose.yml .
 if [ ! -r .env ] ; then
   cp eventyay/deployment/env.sample .env
 fi
@@ -160,6 +165,9 @@ cp /home/$USER/$DEPLOYMENT_NAME/eventyay/deployment/nginx/enext-direct /etc/ngin
 
 
 ### ssl update
+
+Make sure to run this only AFTER you have pointed the DNS for the domain
+to the correct IP !
 
 ```
 certbot -m $MANAGEMENT_EMAIL --agree-tos --nginx
@@ -193,11 +201,11 @@ account = <ACCOUNT_ID>
 key = <ACCOUNT_KEY>
 ```
 
-## Create /var/log/eventyay
+## Create /var/log/fossasia
 
 ```root@server
-mkdir -p /var/log/eventyay
-chown $USER:$USER /var/log/eventyay
+mkdir -p /var/log/fossasia
+chown $USER:$USER /var/log/fossasia
 ```
 
 ## Create crontab for $USER
@@ -207,4 +215,24 @@ chown $USER:$USER /var/log/eventyay
 crontab of user `$USER`.
 
 
+## Move of database
 
+Only if that is necessary
+
+On old server
+- `docker compose down`
+- `docker compose up -d db`
+- `docker exec eventyay-next-db pg_dump -F tar  -U eventyay-prod-user eventyay_prod > eventyay_prod-$(date +%Y%m%d).tar`
+- `cd /home/fossasia/DEPLOYMENT/data ; tar -cvzf ../data.tar.gz data`
+
+Move the .tar and data.tar.gz to the new server
+
+On new server
+- `docker compose up -d db`
+- `docker exec -i eventyay-next-db pg_restore --clean --verbose -U eventyay-prod-user -d eventyay_prod <eventyay_prod-$(date +%Y%m%d).tar`
+- `cd /home/fossasia/DEPLOYMENT/data ; tar -cvzf ~/data.tar.gz`
+
+
+## Start up
+
+`docker compose up -d`
