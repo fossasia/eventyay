@@ -10,11 +10,14 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 
 from eventyay.agenda.signals import html_below_session_pages
+from eventyay.base.settings import GlobalSettingsObject
 
 
 def is_etherpad_publicly_visible(event, submission):
     """Whether the pad link may be shown to anonymous public visitors."""
     if not submission or not submission.etherpad_url:
+        return False
+    if not GlobalSettingsObject().settings.etherpad_enabled:
         return False
     if not event.get_feature_flag('etherpad_enabled'):
         return False

@@ -9,6 +9,7 @@ import pytest
 from django_scopes import scope
 
 from eventyay.agenda.etherpad import is_etherpad_publicly_visible
+from eventyay.base.settings import GlobalSettingsObject
 
 OPEN_NOTES_LABEL = 'Open collaborative notes'
 
@@ -27,7 +28,13 @@ class _FakeSubmission:
         self.etherpad_url = url
 
 
+def _set_platform_enabled(value):
+    GlobalSettingsObject().settings.etherpad_enabled = value
+
+
+@pytest.mark.django_db
 def test_visibility_requires_all_conditions():
+    _set_platform_enabled(True)
     url = 'https://pad.example.org/p/x'
     assert is_etherpad_publicly_visible(_FakeEvent(True, True), _FakeSubmission(url)) is True
     # No URL configured
@@ -36,10 +43,14 @@ def test_visibility_requires_all_conditions():
     assert is_etherpad_publicly_visible(_FakeEvent(False, True), _FakeSubmission(url)) is False
     # Organiser did not opt into public display
     assert is_etherpad_publicly_visible(_FakeEvent(True, False), _FakeSubmission(url)) is False
+    # Platform integration disabled globally -> never public, even with event flags on
+    _set_platform_enabled(False)
+    assert is_etherpad_publicly_visible(_FakeEvent(True, True), _FakeSubmission(url)) is False
 
 
 @pytest.mark.django_db
 def test_public_talk_page_shows_link_when_enabled(client, event, slot):
+    _set_platform_enabled(True)
     with scope(event=event):
         submission = slot.submission
         submission.etherpad_url = 'https://pad.example.org/p/my-pad'
@@ -56,6 +67,7 @@ def test_public_talk_page_shows_link_when_enabled(client, event, slot):
 
 @pytest.mark.django_db
 def test_public_talk_page_hides_link_when_not_public(client, event, slot):
+    _set_platform_enabled(True)
     with scope(event=event):
         submission = slot.submission
         submission.etherpad_url = 'https://pad.example.org/p/secret-pad'
