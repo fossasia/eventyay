@@ -101,7 +101,9 @@ class CfPFormMixin:
         return ValidationError(scrubbed_list) if scrubbed_list else None
 
     def _is_non_strict_error(self, error):
-        if error.code in self.NON_STRICT_ERROR_CODES:
+        if getattr(error, 'code', None) == 'required_step_field':
+            return False
+        if getattr(error, 'code', None) in self.NON_STRICT_ERROR_CODES:
             return True
         message = str(getattr(error, 'message', ''))
         return any(message == str(candidate) for candidate in self.NON_STRICT_ERROR_MESSAGES)

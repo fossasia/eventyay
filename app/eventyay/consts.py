@@ -28,7 +28,6 @@ class SizeKey(StrEnum):
     UPLOAD_SIZE_IMAGE = "upload_size_image"
     UPLOAD_SIZE_PDF = "upload_size_pdf"
     UPLOAD_SIZE_XLSX = "upload_size_xlsx"
-    UPLOAD_SIZE_FAVICON = "upload_size_favicon"
     UPLOAD_SIZE_ATTACHMENT = "upload_size_attachment"
     UPLOAD_SIZE_MAIL = "upload_size_mail"
     UPLOAD_SIZE_QUESTION = "upload_size_question"
