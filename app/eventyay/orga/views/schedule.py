@@ -290,6 +290,7 @@ def serialize_slot(slot, warnings=None):
             'submission_type': str(slot.submission.submission_type.name),
             'track': (
                 {
+                    'id': slot.submission.track.pk,
                     'name': str(slot.submission.track.name),
                     'color': slot.submission.track.color,
                 }
