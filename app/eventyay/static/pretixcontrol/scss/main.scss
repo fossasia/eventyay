@@ -1094,14 +1094,6 @@ h1 .label {
 }
 
 @media (max-width: $screen-sm-max) {
-    nav.navbar {
-        position: static;
-    }
-
-    #wrapper {
-        padding-top: 0;
-    }
-
     #page-wrapper {
         height: auto;
         overflow-y: visible;

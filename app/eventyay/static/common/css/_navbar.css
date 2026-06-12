@@ -524,7 +524,4 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     padding: 0 8px;
   }
 
-  #main-title {
-    margin-top: calc(var(--navbar-height) + 10px);
-  }
 }
