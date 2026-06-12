@@ -155,9 +155,6 @@ def notify_organizer_followers(event_id: int):
 
         organizer = event.organizer
 
-        if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
-            return
-
         if LogEntry.objects.filter(event=event, action_type='eventyay.organizer.follower_notification.sent').exists():
             return
 

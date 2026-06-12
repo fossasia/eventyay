@@ -343,20 +343,20 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
         follow_enabled = organizer.settings.get('community_follow_enabled', as_type=bool, default=True)
         ctx['follow_enabled'] = follow_enabled
         ctx['show_follower_count'] = organizer.settings.get('community_show_follower_count', as_type=bool, default=True)
-        if follow_enabled:
-            qs = Organizer.objects.filter(pk=organizer.pk).annotate(
-                follower_count=Count('followers')
-            )
-            if self.request.user.is_authenticated:
-                qs = qs.annotate(
-                    is_following=Exists(OrganizerFollower.objects.filter(organizer=OuterRef('pk'), user=self.request.user))
-                )
-            else:
-                qs = qs.annotate(is_following=Value(False))
 
-            org_data = qs.values('follower_count', 'is_following').first()
-            ctx['follower_count'] = org_data['follower_count'] if org_data else 0
-            ctx['is_following'] = org_data['is_following'] if org_data else False
+        qs = Organizer.objects.filter(pk=organizer.pk).annotate(
+            follower_count=Count('followers')
+        )
+        if self.request.user.is_authenticated:
+            qs = qs.annotate(
+                is_following=Exists(OrganizerFollower.objects.filter(organizer=OuterRef('pk'), user=self.request.user))
+            )
+        else:
+            qs = qs.annotate(is_following=Value(False))
+
+        org_data = qs.values('follower_count', 'is_following').first()
+        ctx['follower_count'] = org_data['follower_count'] if org_data else 0
+        ctx['is_following'] = org_data['is_following'] if org_data else False
         return ctx
 
 

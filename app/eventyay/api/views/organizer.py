@@ -109,8 +109,6 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['get'], url_path='followers')
     def followers(self, request, *args, **kwargs):
         organizer = self.get_object()
-        if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
-            return Response({'detail': _('Following is not enabled for this organizer.')}, status=status.HTTP_403_FORBIDDEN)
         show_count = organizer.settings.get('community_show_follower_count', as_type=bool, default=True)
         count = OrganizerFollower.objects.filter(organizer=organizer).count() if show_count else None
         is_following = False

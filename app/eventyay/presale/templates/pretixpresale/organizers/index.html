@@ -28,7 +28,7 @@
             <h3>{% trans "Upcoming events" %}</h3>
         {% endif %}
         <div class="organizer-community-bar">
-            {% if follow_enabled and show_follower_count %}
+            {% if show_follower_count %}
                 <span class="organizer-follower-count" id="organizer-follower-count">
                     <span class="fa fa-users" aria-hidden="true"></span>
                     <strong>{{ follower_count }}</strong>
