@@ -161,6 +161,8 @@ def notify_organizer_followers(event_id: int):
         if LogEntry.objects.filter(event=event, action_type='eventyay.organizer.follower_notification.sent').exists():
             return
 
+        event.log_action('eventyay.organizer.follower_notification.sent')
+
     try:
         organizer_url = multidomain_build_absolute_uri(
             organizer,
@@ -219,9 +221,4 @@ def notify_organizer_followers(event_id: int):
                     'user': user.pk,
                 }
             )
-
-    with transaction.atomic():
-        event = Event.objects.select_for_update().get(pk=event_id)
-        if not LogEntry.objects.filter(event=event, action_type='eventyay.organizer.follower_notification.sent').exists():
-            event.log_action('eventyay.organizer.follower_notification.sent')
 

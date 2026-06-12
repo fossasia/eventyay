@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Count, Exists, OuterRef
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from django_scopes import scopes_disabled
 from rest_framework import (
@@ -80,7 +81,7 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             qs = Organizer.objects.filter(pk=self.request.auth.team.organizer_id)
 
-        qs = qs.annotate(_follower_count=Count('followers'))
+        qs = qs.annotate(_follower_count=Count('followers', distinct=True))
         if follower_subquery is not None:
             qs = qs.annotate(_is_following=follower_subquery)
         return qs
@@ -109,7 +110,7 @@ class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     def followers(self, request, *args, **kwargs):
         organizer = self.get_object()
         if not organizer.settings.get('community_follow_enabled', as_type=bool, default=True):
-            return Response({'detail': 'Following is not enabled for this organizer.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'detail': _('Following is not enabled for this organizer.')}, status=status.HTTP_403_FORBIDDEN)
         show_count = organizer.settings.get('community_show_follower_count', as_type=bool, default=True)
         count = OrganizerFollower.objects.filter(organizer=organizer).count() if show_count else None
         is_following = False
