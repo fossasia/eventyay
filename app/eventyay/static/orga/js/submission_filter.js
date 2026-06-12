@@ -16,15 +16,15 @@ onReady(() => {
         }
     }
 
-    const multiSelects = [
-        { selector: '#id_state',           singular: '1 state',    plural: (n) => `${n} states` },
-        { selector: '#id_content_locale',  singular: '1 language', plural: (n) => `${n} languages` },
-        { selector: '#id_tags',            singular: '1 tag',      plural: (n) => `${n} tags` },
-        { selector: '#id_track',           singular: '1 track',    plural: (n) => `${n} tracks` },
-        { selector: '#id_submission_type', singular: '1 type',     plural: (n) => `${n} types` },
+    const multiSelectIds = [
+        '#id_state',
+        '#id_content_locale',
+        '#id_tags',
+        '#id_track',
+        '#id_submission_type',
     ]
 
-    multiSelects.forEach(({ selector, singular, plural }) => {
+    multiSelectIds.forEach((selector) => {
         const select = document.querySelector(selector)
         if (!select) return
 
@@ -44,7 +44,7 @@ onReady(() => {
             const chips = inner.querySelectorAll('.choices__item.choices__item--selectable')
 
             if (count > 0) {
-                badge.textContent = count === 1 ? singular : plural(count)
+                badge.textContent = count.toString()
                 badge.hidden = false
                 chips.forEach(chip => { chip.hidden = true })
             } else {
