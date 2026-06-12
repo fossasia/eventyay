@@ -78,7 +78,7 @@ export const TalkSchema = z.object({
   track: z.union([
     z.number(),
     z.string().transform(val => parseInt(val, 10) || 0),
-    z.object({ id: z.any() }).passthrough().transform(val => Number(val.id))
+    z.object({ id: z.coerce.number() }).passthrough().transform(val => val.id)
   ]).nullable().optional(),
   start: z.string().nullable().optional(),
   end: z.string().nullable().optional(),
