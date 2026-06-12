@@ -73,15 +73,18 @@ def build_pad_name(event, submission, *, pattern, token=None):
     safe, and not guessable from the title alone.
     """
     token = token or generate_pad_token()
-    raw = (pattern or '{event}-{submission}-{token}').format(
-        event=event.slug,
-        submission=submission.code,
-        token=token,
-    )
+    safe_default = f'{event.slug}-{submission.code}-{token}'
+    try:
+        raw = (pattern or '{event}-{submission}-{token}').format(
+            event=event.slug,
+            submission=submission.code,
+            token=token,
+        )
+    except (KeyError, IndexError, ValueError):
+        raw = safe_default
     name = sanitize_pad_segment(raw)
     if not name:
-        # Fall back to a guaranteed-safe name if the pattern produced nothing.
-        name = sanitize_pad_segment(f'{event.slug}-{submission.code}-{token}')
+        name = sanitize_pad_segment(safe_default)
     return name[:MAX_PAD_NAME_LENGTH].strip('-')
 
 
