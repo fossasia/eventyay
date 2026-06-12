@@ -248,7 +248,9 @@ const timeslices = computed<Timeslice[]>(() => {
     const endingMins = end.minute() % minimumSliceMins
 
     for (let i = 1; i <= mins / minimumSliceMins; i++) {
-      halfHourSlices.push(start.clone().add(startingMins + minimumSliceMins * i, 'minutes'))
+      const sliceDate = start.clone().add(startingMins + minimumSliceMins * i, 'minutes')
+      if (sliceDate.isAfter(end)) break
+      halfHourSlices.push(sliceDate)
     }
 
     if (endingMins) {
@@ -583,7 +585,6 @@ const getSessionStyle = (session: SessionDatum | Availability): Record<string, s
   }
 }
 
-const getOffsetTop = (): number => staticOffsetTop.value + window.scrollY
 
 const getSliceClasses = (slice: Timeslice): Record<string, boolean> => ({
   datebreak: slice.datebreak || false,
@@ -617,7 +618,10 @@ const changeDay = (day: Moment | null) => {
 
   const el = timesliceRefs.value.find(el => el.dataset?.slice === day.format())
   if (!el) return
-  const offset = el.offsetTop + getOffsetTop()
+  const roomEl = rootEl.value?.querySelector('.room')
+  const controlsEl = rootEl.value?.parentElement?.querySelector('.schedule-controls')
+  const headerHeight = (roomEl?.getBoundingClientRect().height || 52) + (controlsEl?.getBoundingClientRect().height || 48)
+  const offset = Math.max(0, el.offsetTop - headerHeight)
   scrollTo(offset)
   scrolledDay.value = day
   emit('changeDay', day)
@@ -695,7 +699,7 @@ onMounted(async () => {
   })
 
   timesliceRefs.value.forEach(el => {
-    if (!el.dataset?.slice || !el.dataset.slice.endsWith('00-00')) return
+    if (!el.dataset?.slice || !el.classList.contains('datebreak')) return
     observer?.observe(el)
   })
 })
