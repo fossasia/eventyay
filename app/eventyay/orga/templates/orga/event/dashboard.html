@@ -2,6 +2,7 @@
 
 {% load compress %}
 {% load i18n %}
+{% load presale_locale %}
 {% load staff_session %}
 {% load rules %}
 {% load static %}
@@ -28,7 +29,7 @@
     <div id="main-title" class="d-md-flex justify-content-between">
         <div class="navigation-title">
             <h2>
-                {{ request.event.name }}
+                {{ request.event.name|event_localize }}
                 <small class="event-date text-muted">
                     {{ request.event.get_date_range_display }}
                 </small>
