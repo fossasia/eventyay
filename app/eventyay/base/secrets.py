@@ -5,7 +5,6 @@ import logging
 import struct
 
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.backends.openssl.backend import Backend
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
@@ -159,7 +158,6 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
         privkey = load_pem_private_key(
             base64.b64decode(self.event.settings.ticket_secrets_pretix_sig1_privkey),
             None,
-            Backend(),
         )
         signature = privkey.sign(payload)
         return bytes([0x01]) + struct.pack('>H', len(payload)) + struct.pack('>H', len(signature)) + payload + signature
@@ -178,7 +176,6 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
             signature = rawbytes[5 + payload_len : 5 + payload_len + sig_len]
             pubkey = load_pem_public_key(
                 base64.b64decode(self.event.settings.ticket_secrets_pretix_sig1_pubkey),
-                Backend(),
             )
             pubkey.verify(signature, payload)
             t = pretix_sig1_pb2.Ticket()
