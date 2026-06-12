@@ -420,7 +420,14 @@ class BBBService:
 
                 server_recordings = []
                 tz = pytz.timezone(self.event.timezone)
-                for rec in root.xpath("recordings/recording"):
+                recordings_nodes = root.xpath("recordings")
+                if not recordings_nodes:
+                    logger.error(
+                        "BBB recordings response from server %s has no recordings container",
+                        server,
+                    )
+                    continue
+                for rec in recordings_nodes[0].xpath("recording"):
                     url_presentation = url_screenshare = url_video = url_notes = None
                     for f in rec.xpath("playback/format"):
                         if f.xpath("type")[0].text == "presentation":
