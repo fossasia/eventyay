@@ -109,7 +109,7 @@ class RandomTicketSecretGenerator(BaseTicketSecretGenerator):
         attendee_name: str = None,
         current_secret: str = None,
         force_invalidate=False,
-    ):
+    ) -> str:
         if current_secret and not force_invalidate:
             return current_secret
         return get_random_string(
@@ -190,9 +190,10 @@ class Sig1TicketSecretGenerator(BaseTicketSecretGenerator):
         product: Product,
         variation: ProductVariation = None,
         subevent: SubEvent = None,
+        attendee_name: str = None,
         current_secret: str = None,
         force_invalidate=False,
-    ):
+    ) -> str:
         if current_secret and not force_invalidate:
             ticket = self._parse(current_secret)
             if ticket:
