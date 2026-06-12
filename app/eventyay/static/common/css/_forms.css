@@ -701,10 +701,6 @@ input.password_strength {
 
 
 /* choices.js / enhanced selects */
-select.enhanced {
-  display: none;
-}
-
 .choices {
   width: 100%;
   margin-bottom: 0;

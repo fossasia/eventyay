@@ -661,6 +661,31 @@ footer {
   margin: 2px;
 }
 
+/* Hide the native multi-select until Choices.js enhances it, avoiding a flash
+   of the raw <select> before the JS runs. Scoped to the filter bar only. */
+.search-form select.enhanced {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .search-form {
+    flex-wrap: wrap;
+  }
+
+  .search-form > .form-group {
+    flex-basis: 100%;
+  }
+
+  .search-form .filter-actions {
+    width: 100%;
+  }
+
+  .search-form .filter-actions .btn {
+    width: auto;
+    flex: 1 1 0;
+  }
+}
+
 .filter-form {
   display: flex;
   flex-wrap: wrap;
