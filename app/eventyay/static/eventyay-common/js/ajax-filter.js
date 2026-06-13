@@ -237,6 +237,25 @@ const handlePaginationClick = function(event) {
     fetchAndReplace(url, true, formInTab || defaultForm);
 };
 
+const handleSortClick = function(event) {
+    const sortLink = event.target.closest('thead a[href]');
+    if (!sortLink) {
+        return;
+    }
+
+    const url = sortLink.getAttribute('href');
+    if (!url || !url.startsWith('?')) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const tabPane = sortLink.closest('.tab-pane');
+    const formInTab = tabPane ? tabPane.querySelector('form') : null;
+    const defaultForm = getFilterForms()[0] || null;
+    fetchAndReplace(url, true, formInTab || defaultForm);
+};
+
 const handlePopState = function() {
     const url = new URL(window.location.href, window.location.origin);
     const tabParam = url.searchParams.get('tab');
@@ -255,6 +274,7 @@ const initAjaxFilter = function() {
     document.addEventListener('submit', handleSubmit);
     document.addEventListener('click', handleClearFilter);
     document.addEventListener('click', handlePaginationClick);
+    document.addEventListener('click', handleSortClick);
     window.addEventListener('popstate', handlePopState);
 };
 
