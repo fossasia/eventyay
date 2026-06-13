@@ -87,6 +87,23 @@
                     <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
                     {{ site_name }}
                 </a>
+                {% if request.event %}
+                    {% if request.event.custom_domain and not request.event.is_public %}
+                        <form action="{{ request.event.urls.auth.full }}" method="post"
+                              target="_blank" class="mobile-navbar-view-form visible-xs-block">
+                            {% csrf_token %}
+                            <input type="hidden" value="{{ new_session }}" name="session">
+                            <button type="submit" class="btn btn-link navbar-toggle">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{{ request.event.urls.base }}" title="{% translate "View event" %}"
+                           target="_blank" class="navbar-toggle mobile-navbar-view-link">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    {% endif %}
+                {% endif %}
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
                 {% if request.event %}
@@ -127,15 +144,15 @@
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link" id="button-sudo">
-                                <i class="fa fa-id-card"></i> {% translate "Admin mode" %}
+                            <button type="submit" class="btn btn-link" id="button-sudo" aria-label="{% translate 'Admin mode' %}">
+                                <i class="fa fa-id-card" aria-hidden="true"></i> <span class="hidden-xs">{% translate "Admin mode" %}</span>
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and request.user|has_active_staff_session:request.session.session_key %}
                     <li>
-                        <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                            <i class="fa fa-id-card"></i> {% translate "End admin session" %}
+                        <a href="{% url 'control:user.sudo.stop' %}" class="danger" aria-label="{% translate 'End admin session' %}">
+                            <i class="fa fa-id-card" aria-hidden="true"></i> <span class="hidden-xs">{% translate "End admin session" %}</span>
                         </a>
                     </li>
                 {% endif %}
