@@ -418,6 +418,13 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   border-color: transparent;
 }
 
+@media (min-width: 768px) {
+  .navbar-header .mobile-navbar-view-link,
+  .navbar-header .mobile-navbar-view-form {
+    display: none;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
