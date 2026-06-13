@@ -211,10 +211,10 @@ for (const [key, data] of Object.entries(submissionChartData)) {
 }
 
 const toggleButton = document.querySelector("#toggle-button")
-toggleButton.addEventListener("click", (event) => {
+toggleButton.addEventListener("change", (event) => {
     charts.forEach((chart) => chart.destroy())
     charts = []
-    if (event.target.getAttribute("aria-pressed") === "true") {
+    if (!event.target.checked) {
         /* switch to submissions */
         for (const [key, data] of Object.entries(submissionChartData)) {
             document
