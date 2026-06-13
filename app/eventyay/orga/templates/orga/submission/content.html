@@ -186,7 +186,7 @@
                             <strong>{{ field.label }}</strong>
                             <div class="mt-1">
                                 {% if field.field.answer %}
-                                    {% if field.field.widget.input_type == 'checkbox' %}
+                                    {% if field.field.question.variant == 'boolean' %}
                                         {% if field.field.answer.boolean_answer %}
                                             <i class="fa fa-check text-success"></i> {% translate "Yes" %}
                                         {% else %}
