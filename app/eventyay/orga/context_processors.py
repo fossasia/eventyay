@@ -47,6 +47,7 @@ def orga_events(request):
     if not request.path_info.startswith('/orga/'):
         return {
             'login_button_label': button_label,
+            'site_name': settings.INSTANCE_NAME,
         }
 
     if not getattr(request, 'user', None) or not request.user.is_authenticated:
