@@ -16,6 +16,7 @@ from eventyay.base.models.submission import Submission
 from eventyay.base.models.tag import Tag
 from eventyay.base.models.track import Track
 from eventyay.base.models.type import SubmissionType
+from eventyay.talk_rules.orga import can_view_speaker_names
 
 
 @register_serializer()
@@ -176,6 +177,14 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     @extend_schema_field(list[str])
     def get_speakers(self, obj):
         if not self.event:
+            return []
+        request = self.context.get('request')
+        if (
+            request
+            and request.user.has_perm('base.orga_list_submission', self.event)
+            and not request.user.has_perm('base.orga_update_submission', self.event)
+            and not can_view_speaker_names(request.user, self.event)
+        ):
             return []
         profiles = SpeakerProfile.objects.filter(event=self.event, user__in=obj.speakers.all()).distinct()
         if serializer := self.get_extra_flex_field('speakers', profiles):

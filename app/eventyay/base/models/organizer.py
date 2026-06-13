@@ -436,7 +436,16 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         rules_permissions = TEAM_PERMISSIONS
 
     # From Talk
-    limit_tracks = models.ManyToManyField(to='Track', verbose_name=_('Limit to tracks'), blank=True)
+    limit_tracks = models.ManyToManyField(
+        to='Track',
+        verbose_name=_('Limit to tracks'),
+        blank=True,
+        help_text=_(
+            'Restrict this team’s access to proposals, sessions, reviews, speakers, and schedule '
+            'data for the selected tracks only. Leave empty for access to all tracks in the '
+            'team’s events.'
+        ),
+    )
     can_change_submissions = models.BooleanField(
         default=False,
         verbose_name=_('Reviewer Manager — can edit and manage submissions'),

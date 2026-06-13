@@ -35,6 +35,7 @@ from eventyay.common.views.mixins import (
 from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
 from eventyay.base.services.event import notify_event_change
+from eventyay.talk_rules.tracks import filter_schedule_talk_data, get_allowed_tracks
 
 logger = logging.getLogger(__name__)
 
@@ -301,6 +302,11 @@ class TalkList(EventPermissionRequired, View):
             }
         result['now'] = now().strftime('%Y-%m-%d %H:%M:%S%z')
         result['locales'] = request.event.locales
+        allowed = get_allowed_tracks(request.event, request.user)
+        if allowed is not None:
+            allowed_ids = {track.pk for track in allowed}
+            result['talks'] = filter_schedule_talk_data(result['talks'], allowed_ids)
+            result['tracks'] = [track for track in result.get('tracks', []) if track['id'] in allowed_ids]
         return JsonResponse(result, encoder=I18nJSONEncoder)
 
     @csrf_exempt
