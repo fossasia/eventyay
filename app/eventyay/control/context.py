@@ -44,12 +44,12 @@ def _default_context(request):
     except Resolver404:
         return {}
 
-    if not (request.path.startswith(get_script_prefix() + 'control') or
-            request.path.startswith(get_script_prefix() + 'admin') or
-            request.path.startswith(get_script_prefix() + 'teamshifts') or
-            request.path.startswith(get_script_prefix() + 'exhibitors') or
-            request.path.startswith(get_script_prefix() + 'social')
-            ) or not hasattr(request, 'user'):
+    if not (
+        request.path.startswith(get_script_prefix() + 'control')
+        or request.path.startswith(get_script_prefix() + 'admin')
+        or request.path.startswith(get_script_prefix() + 'teamshifts')
+        or request.path.startswith(get_script_prefix() + 'exhibitors')
+    ) or not hasattr(request, 'user'):
         return {}
     ctx = {
         'url_name': url.url_name,
@@ -62,6 +62,7 @@ def _default_context(request):
         for receiver, response in html_head.send(request.event, request=request):
             _html_head.append(response)
         from django.urls import reverse
+
         ctx['talk_edit_url'] = reverse('orga:event.dashboard', kwargs={'event': request.event.slug})
         ctx['is_video_enabled'] = is_video_enabled(request.event)
         ctx['is_talk_event_created'] = False

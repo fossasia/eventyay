@@ -9,11 +9,7 @@ from django_scopes import scope
 
 from eventyay.base.models.auth import StaffSession
 from eventyay.base.settings import GlobalSettingsObject
-from eventyay.eventyay_common.navigation import (
-    get_event_navigation,
-    get_global_navigation,
-    get_organizer_navigation
-)
+from eventyay.eventyay_common.navigation import get_event_navigation, get_global_navigation, get_organizer_navigation
 
 from ..helpers.plugin_enable import is_video_enabled
 from ..multidomain.urlreverse import get_event_domain
@@ -34,7 +30,10 @@ def _default_context(request: HttpRequest):
     except Resolver404:
         return {}
 
-    if not request.path.startswith(f'{get_script_prefix()}common'):
+    if not (
+        request.path.startswith(f'{get_script_prefix()}common')
+        or request.path.startswith(f'{get_script_prefix()}social')
+    ):
         return {}
     ctx = {
         'url_name': url.url_name,
@@ -69,6 +68,7 @@ def _default_context(request: HttpRequest):
         return ctx
 
     from django.urls import reverse
+
     ctx['talk_edit_url'] = reverse('orga:event.dashboard', kwargs={'event': event.slug})
     ctx['is_video_enabled'] = is_video_enabled(event)
     ctx['is_talk_event_created'] = False
