@@ -1206,7 +1206,7 @@ def test_patch_event_settings_file_upload_reference_accepted(token_client, organ
         '/api/v1/upload',
         data={
             'media_type': 'image/png',
-            'file': ContentFile('file.png', 'invalid png content'),
+            'file': ContentFile(b'invalid png content', name='file.png'),
         },
         format='upload',
         HTTP_CONTENT_DISPOSITION='attachment; filename="file.png"',

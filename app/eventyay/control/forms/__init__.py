@@ -80,7 +80,7 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
         @property
         def name(self):
             if isinstance(self.file, str):
-                return self.file.split('/')[-1]
+                return self.file.split('?')[0].split('/')[-1]
             if hasattr(self.file, 'display_name'):
                 return self.file.display_name
             return self.file.name
@@ -93,11 +93,8 @@ class ClearableBasenameFileInput(forms.ClearableFileInput):
             return any(name.lower().endswith(e) for e in ('.jpg', '.jpeg', '.png', '.gif'))
 
         def __str__(self):
-            if isinstance(self.file, str):
-                return self.file.split('/')[-1]
-            if hasattr(self.file, 'display_name'):
-                return self.file.display_name
-            return os.path.basename(self.file.name).split('.', 1)[-1]
+            name = self.name
+            return name.split('?')[0] if isinstance(self.file, str) else name
 
         @property
         def url(self):

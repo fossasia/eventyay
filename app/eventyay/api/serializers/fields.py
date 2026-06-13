@@ -3,6 +3,7 @@ from collections import OrderedDict
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
+from django.utils.translation import gettext_lazy as _
 from hierarkey.proxy import HierarkeyProxy
 from rest_framework import serializers
 
@@ -118,7 +119,7 @@ class UploadedFileOrURLField(UploadedFileField):
 class UploadedFileNoNewURLField(UploadedFileOrURLField):
     default_error_messages = {
         **UploadedFileOrURLField.default_error_messages,
-        'url_not_allowed': 'External image URLs are no longer accepted. Please upload a file instead.',
+        'url_not_allowed': _('External image URLs are no longer accepted. Please upload a file instead.'),
     }
 
     def to_internal_value(self, data):
@@ -126,6 +127,11 @@ class UploadedFileNoNewURLField(UploadedFileOrURLField):
             if is_http_url(data):
                 self.fail('url_not_allowed')
             scheme = (get_url_scheme(data) or '').lower()
+            # Allow file: strings — they are internal upload references (file:<uuid>)
+            # produced by the /api/v1/upload endpoint and must reach UploadedFileField.
+            # All other URL schemes (ftp, javascript, data, etc.) are rejected.
+            # We call UploadedFileField.to_internal_value directly (skipping
+            # UploadedFileOrURLField) because that parent would re-accept HTTP URLs.
             if scheme and scheme != 'file':
                 self.fail('url_not_allowed')
         return UploadedFileField.to_internal_value(self, data)
