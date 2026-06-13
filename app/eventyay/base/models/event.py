@@ -837,21 +837,21 @@ class Event(
         feedback = '{submissions}feedback/'
         apply_pending = '{submissions}apply-pending/'
         speakers = '{base}speakers/'
-        speakers_import = '{speakers}import/'
-        submissions_import = '{submissions}import/'
         settings = edit_settings = '{base}settings/'
         review_settings = '{settings}review/'
         mail_settings = edit_mail_settings = '{settings}mail'
         widget_settings = '{settings}widget'
         import_export_settings = '{settings}import-export/'
+        import_export_schedule_export_trigger = '{import_export_settings}schedule/export/trigger'
+        import_export_schedule_export_download = '{import_export_settings}schedule/export/download'
         team_settings = '{settings}team/'
         new_team = '{settings}team/new'
         room_settings = '{schedule}rooms/'
         new_room = '{room_settings}new/'
         schedule = '{base}schedule/'
-        schedule_export = '{schedule}export/'
-        schedule_export_trigger = '{schedule_export}trigger'
-        schedule_export_download = '{schedule_export}download'
+        schedule_export = '{import_export_settings}?export_target=session#tab-export'
+        schedule_export_trigger = '{import_export_schedule_export_trigger}'
+        schedule_export_download = '{import_export_schedule_export_download}'
         release_schedule = '{schedule}release'
         reset_schedule = '{schedule}reset'
         toggle_schedule = '{schedule}toggle'
@@ -1083,13 +1083,13 @@ class Event(
 
         return ObjectRelatedCache(self)
 
-    def lock(self):
+    def lock(self, blocking=False, blocking_timeout=None):
         """
         Returns a contextmanager that can be used to lock an event for bookings.
         """
         from eventyay.base.services import locking
 
-        return locking.LockManager(self)
+        return locking.LockManager(self, blocking=blocking, blocking_timeout=blocking_timeout)
 
     def __getstate__(self):
         """

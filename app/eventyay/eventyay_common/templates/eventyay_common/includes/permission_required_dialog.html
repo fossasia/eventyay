@@ -1,0 +1,13 @@
+{% load i18n %}
+<dialog id="{{ dialog_id }}" class="permission-required-dialog" aria-labelledby="{{ dialog_title_id }}" aria-describedby="{{ dialog_message_id }}">
+  <form method="dialog" class="modal-card-stacked-permission">
+    <p class="modal-card-stacked-permission__icon">
+      <i class="fa fa-lock" aria-hidden="true"></i>
+    </p>
+    <h3 id="{{ dialog_title_id }}">{% trans "Permission Required" %}</h3>
+    <p id="{{ dialog_message_id }}" class="modal-card-stacked-permission__message">
+      {{ dialog_message }}
+    </p>
+    <button type="submit" class="btn btn-primary">{% trans "Ok" %}</button>
+  </form>
+</dialog>
