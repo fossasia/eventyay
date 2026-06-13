@@ -1,8 +1,8 @@
 {% load i18n %}
 
-<details class="dropdown submission-state-dropdown submission-state-{{ submission.state }}{% if submission.pending_state %} submission-state-pending-{{ submission.pending_state }}{% endif %}" aria-haspopup="menu" role="menu">
-    <summary class="btn">
-        <h4>
+<details class="dropdown submission-state-dropdown ml-3 submission-state-{{ submission.state }}{% if submission.pending_state %} submission-state-pending-{{ submission.pending_state }}{% endif %}" aria-haspopup="menu" role="menu">
+    <summary class="btn btn-sm">
+        <span>
 
             {% include "cfp/event/fragment_state.html" with state=submission.state %}
 
@@ -11,7 +11,7 @@
                     (<i class="fa fa-arrow-right"></i> {% include "cfp/event/fragment_state.html" with state=submission.pending_state %})
                 </span>
             {% endif %}
-        </h4>
+        </span>
         <i class="fa fa-caret-down"></i>
     </summary>
     <div class="dropdown-content dropdown-content-s submission-dropdown-menu">

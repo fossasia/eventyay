@@ -157,8 +157,7 @@ Pydantic models have the benefit of providing type information (enabling IDE aut
 
 - Our Python version policy follows Ubuntu Server LTS. Currently, this is Python 3.12 (which comes with Ubuntu 24.04). Do not attempt to maintain compatibility with older Python versions.
 
-- Before June 2026, do not assume that we have a production system running. New code does not need to be backward compatible with anything.
-
+ We have a production system running. New code must be backward compatible with anything.
 
 ## Comments
 

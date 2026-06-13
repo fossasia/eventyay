@@ -194,7 +194,6 @@ button:focus:not(:focus-visible),
 summary:focus:not(:focus-visible),
 [role="button"]:focus:not(:focus-visible) {
     outline: none;
-    box-shadow: none;
 }
 
 @include table-row-variant('success', lighten($brand-success, 40%));
