@@ -21,7 +21,6 @@ from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
-from eventyay.agenda.views.utils import get_schedule_exporters
 from eventyay.base.models import Availability, Room, TalkSlot
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
@@ -32,7 +31,7 @@ from eventyay.common.views.mixins import (
     OrderActionMixin,
     PermissionRequired,
 )
-from eventyay.orga.forms.schedule import ScheduleExportForm, ScheduleReleaseForm
+from eventyay.orga.forms.schedule import ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
 from eventyay.base.services.event import notify_event_change
 
@@ -61,36 +60,6 @@ class ScheduleView(EventPermissionRequired, TemplateView):
         return result
 
 
-class ScheduleExportView(EventPermissionRequired, FormView):
-    template_name = 'orga/schedule/export.html'
-    permission_required = 'base.update_event'
-    form_class = ScheduleExportForm
-
-    def get_form_kwargs(self):
-        result = super().get_form_kwargs()
-        result['event'] = self.request.event
-        return result
-
-    @context
-    def exporters(self):
-        return [exporter for exporter in get_schedule_exporters(self.request) if exporter.group != 'speaker']
-
-    @context
-    def tablist(self):
-        return {
-            'custom': _('CSV/JSON exports'),
-            'general': _('More exports'),
-            'api': _('API'),
-        }
-
-    def form_valid(self, form):
-        result = form.export_data()
-        if not result:
-            messages.success(self.request, _('No data to be exported'))
-            return redirect(self.request.path)
-        return result
-
-
 class ScheduleExportTriggerView(EventPermissionRequired, View):
     permission_required = 'base.update_event'
 
@@ -111,9 +80,6 @@ class ScheduleExportTriggerView(EventPermissionRequired, View):
                 ),
             )
 
-        referer = request.META.get('HTTP_REFERER')
-        if referer and 'import-export' in referer:
-            return redirect(f'{self.request.event.orga_urls.import_export_settings}?export_target=session#tab-export')
         return redirect(self.request.event.orga_urls.schedule_export)
 
 
@@ -129,9 +95,6 @@ class ScheduleExportDownloadView(EventPermissionRequired, View):
                 request,
                 _('Could not find the current export, please try to regenerate it. ({error})').format(error=str(e)),
             )
-            referer = request.META.get('HTTP_REFERER')
-            if referer and 'import-export' in referer:
-                return redirect(f'{self.request.event.orga_urls.import_export_settings}?export_target=session#tab-export')
             return redirect(self.request.event.orga_urls.schedule_export)
         response['Content-Disposition'] = 'attachment; filename=' + safe_filename(zip_path.name)
         return response

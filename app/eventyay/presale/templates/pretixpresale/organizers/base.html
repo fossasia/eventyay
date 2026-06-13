@@ -3,62 +3,102 @@
 {% load static %}
 {% load thumb %}
 {% load eventurl %}
+{% load urlreplace %}
 {% load safelink %}
 {% load compress %}
-{% block thetitle %}
-    {% block title %}{% endblock %}{% if url_name != "organizer.index" %} :: {% endif %}{{ organizer.name }}
+
+{% block container_width %} main-schedule{% endblock %}
+
+{% block title %}
+    {% if messages %}
+        {{ messages|join:" " }} ::
+    {% endif %}
+    {% block pagetitle %}{% endblock %}{% if request.resolver_match.url_name != "organizer.index" %} :: {% endif %}{{ organizer.name }}
 {% endblock %}
-{% block above %}
-    {% compress js %}
-        <script type="text/javascript" src="{% static "pretixpresale/js/ui/popover.js" %}"></script>
+
+{% block meta_description %}
+    {% blocktrans trimmed with name=organizer.name %}
+        Events by {{ name }}
+    {% endblocktrans %}
+{% endblock %}
+
+{% block social_title %}{{ organizer.name }}{% endblock %}
+
+{% block social_description %}
+    {% blocktrans trimmed with name=organizer.name %}
+        Events by {{ name }}
+    {% endblocktrans %}
+{% endblock %}
+
+{% block public_stylesheets %}
+    {{ block.super }}
+    {% compress css %}
+        <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/css/organizer-presale.css" %}" />
     {% endcompress %}
-    {{ request.organizer.slug|json_script:"organizer_name" }}
-    {% if organizer.settings.locales|length > 1 %}
-        {% if organizer.settings.theme_color_background|upper != "#FFFFFF" or organizer.settings.organizer_logo_image_large %}
-            <div class="container page-header-links">
-                <div class="pull-right header-part flip header-content">
-                    <div class="locales">
-                        {% for l in languages %}
-                            <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}" class="{% if l.code == request.LANGUAGE_CODE %}active{% endif %}" rel="nofollow">
-                                {{ l.name_local }}</a>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+    <meta property="og:title" content="{{ organizer.name }}"/>
+    {% if organizer_logo %}
+        <meta property="og:image" content="{{ organizer_logo|thumb:'5000x120' }}"/>
+    {% endif %}
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="{% abseventurl organizer "presale:organizer.index" %}"/>
+{% endblock %}
+
+{% block presale_back_navigation %}{% endblock %}
+
+{% block nav_link %}{% eventurl organizer "presale:organizer.index" %}{% endblock %}
+
+{% block event_logo %}
+    {% if organizer_logo %}
+        {% if organizer.settings.organizer_logo_image_large %}
+            <img loading="lazy" src="{{ organizer_logo|thumb:'1170x5000' }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
+        {% else %}
+            <img loading="lazy" src="{{ organizer_logo|thumb:'5000x120' }}" id="event-logo" alt="{{ organizer.name }}" class="organizer-logo">
         {% endif %}
     {% endif %}
 {% endblock %}
-{% block page %}
-    <div class="page-header {% if organizer_logo and organizer.settings.organizer_logo_image_large %}logo-large{% endif %}">
-        <div class="{% if not organizer_logo or not organizer.settings.organizer_logo_image_large %}pull-left flip{% endif %}">
-            {% if organizer_logo and organizer.settings.organizer_logo_image_large %}
-                <a href="{% eventurl organizer "presale:organizer.index" %}" title="{{ organizer.name }}">
-                    <img src="{{ organizer_logo|thumb:'1170x5000' }}" alt="{{ organizer.name }}"
-                         class="organizer-logo" />
-                </a>
-            {% elif organizer_logo %}
-                <a href="{% eventurl organizer "presale:organizer.index" %}" title="{{ organizer.name }}">
-                    <img src="{{ organizer_logo|thumb:'5000x120' }}" alt="{{ organizer.name }}"
-                            class="organizer-logo" />
-                </a>
-            {% else %}
-                <h1><a href="{% eventurl organizer "presale:organizer.index" %}">{{ organizer.name }}</a></h1>
-            {% endif %}
-        </div>
-        {% if organizer.settings.locales|length > 1 %}
-            {% if organizer.settings.theme_color_background|upper == "#FFFFFF" and not organizer.settings.organizer_logo_image_large %}
-                <div class="{% if not organizer_logo or not organizer.settings.organizer_logo_image_large %}pull-right flip{% endif %} loginbox">
-                    <div class="locales">
-                        {% for l in languages %}
-                            <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}" class="{% if l.code == request.LANGUAGE_CODE %}active{% endif %}" rel="nofollow">
-                                {{ l.name_local }}</a>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-        {% endif %}
-        <div class="clearfix"></div>
+
+{% block hero_text %}
+    <div class="event-hero-text">
+        <a class="event-title event-public-text-link" href="{% eventurl organizer "presale:organizer.index" %}">{{ organizer.name }}</a>
     </div>
+{% endblock %}
+
+{% block header_tabs %}
+    <a href="?{% url_replace request "style" "list" "week" "" "year" "" "month" "" "page" "" %}"
+       class="header-tab{% if organizer_view_style == "list" %} underline{% endif %}">
+        <span class="fa fa-list" aria-hidden="true"></span>
+        {% trans "List" %}
+    </a>
+    <a href="?{% url_replace request "style" "week" "month" "" "year" "" "page" "" %}"
+       class="header-tab{% if organizer_view_style == "week" %} underline{% endif %}">
+        <span class="fa fa-calendar" aria-hidden="true"></span>
+        {% trans "Week" %}
+    </a>
+    <a href="?{% url_replace request "style" "calendar" "week" "" "page" "" %}"
+       class="header-tab{% if organizer_view_style == "calendar" %} underline{% endif %}">
+        <span class="fa fa-calendar" aria-hidden="true"></span>
+        {% trans "Month" %}
+    </a>
+{% endblock %}
+
+{% block header_right %}
+    {% if languages|length > 1 %}
+        <span class="locales locales-inline">
+            {% for l in languages %}
+                <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}"
+                   class="locale-link{% if l.code == request.LANGUAGE_CODE %} active{% endif %}"
+                   rel="nofollow">{{ l.name_local }}</a>
+            {% endfor %}
+        </span>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
+
+{% block alerts %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert {{ message.tags }}">
@@ -66,15 +106,20 @@
             </div>
         {% endfor %}
     {% endif %}
-    {% block content %}
-    {% endblock %}
 {% endblock %}
-{% block footernav %}
-    {% if not request.event and request.organizer.settings.contact_mail %}
-        <a href="mailto:{{ request.organizer.settings.contact_mail }}">{% trans "Contact event organizer" %}</a> &middot;
-    {% endif %}
-    {% if not request.event and request.organizer.settings.imprint_url %}
-        <a href="{% safelink request.organizer.settings.imprint_url %}" target="_blank" rel="noopener">{% trans "Imprint" %}</a>
-        &middot;
-    {% endif %}
+
+{% block body_attrs %}
+    class="nojs page-agenda organizer-presale-page"
+    data-locale="{{ request.LANGUAGE_CODE }}"
+    data-now="{% now "U.u" %}"
+    data-datetimeformat="{{ js_datetime_format }}"
+    data-timeformat="{{ js_time_format }}"
+    data-dateformat="{{ js_date_format }}"
+    data-datetimelocale="{{ js_locale }}"
+{% endblock %}
+
+{% block content %}
+    <div class="organizer-page-content">
+        {% block page_content %}{% endblock %}
+    </div>
 {% endblock %}

@@ -628,6 +628,17 @@ class ImportExportSettings(EventSettingsPermission, TemplateView):
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
+
+        # Support for legacy schedule export payloads without prefix
+        if not action and 'export_format' in request.POST:
+            mutable_post = request.POST.copy()
+            mutable_post['action'] = 'export'
+            mutable_post['export_target'] = TargetChoice.SCHEDULE.value
+            for key, value in request.POST.lists():
+                mutable_post.setlist(f'session-{key}', value)
+            request.POST = mutable_post
+            action = 'export'
+
         if action == 'import':
             return self.handle_import()
         if action == 'export':

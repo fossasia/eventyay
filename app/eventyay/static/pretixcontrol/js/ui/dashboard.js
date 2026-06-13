@@ -9,5 +9,8 @@ $(function () {
             $("[data-lazy-id=" + v.lazy + "]").removeClass("widget-lazy-loading");
             $("[data-lazy-id=" + v.lazy + "] .widget").html(v.content);
         });
+        if (typeof window.setupModals === "function") {
+            window.setupModals();
+        }
     });
 });

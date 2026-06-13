@@ -779,6 +779,7 @@ const initFormChanges = (form) => {
 
 const initFormButton = (form) => {
     form.querySelectorAll("button[type=submit]").forEach(submitButton => {
+        if (submitButton.hasAttribute('data-no-loading') || submitButton.id === 'button-sudo' || submitButton.id === 'button-shop') return;
         const submitButtonText = submitButton.textContent
         let lastSubmit = 0
         form.addEventListener("submit", () => {

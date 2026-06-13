@@ -112,6 +112,10 @@
                     <i class="fa fa-bars fa-lg"></i>
                 </button>
                 <div class="navbar-header">
+					<a class="navbar-brand" href="{% url 'presale:index' %}">
+                        <img src="{% static "pretixbase/img/eventyay-icon.svg" %}" />
+                        {{ django_settings.INSTANCE_NAME }}
+                    </a>
                     {% if request.event %}
                         {% if has_domain and not request.event.live %}
                             <form action="{% eventurl request.event "presale:event.auth" %}" method="post"
@@ -134,10 +138,6 @@
                             <i class="fa fa-eye"></i>
                         </a>
                     {% endif %}
-					<a class="navbar-brand" href="{% url 'presale:index' %}">
-                        <img src="{% static "pretixbase/img/eventyay-icon.svg" %}" />
-                        {{ django_settings.INSTANCE_NAME }}
-                    </a>
                 </div>
                 <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
                     {% if request.event %}
@@ -211,15 +211,15 @@
                         <li>
 							<form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-link" id="button-sudo">
-                                    <i class="fa fa-id-card"></i> {% trans "Admin mode" %}
+                                <button type="submit" class="btn btn-link" id="button-sudo" aria-label="{% trans 'Admin mode' %}">
+                                    <i class="fa fa-id-card" aria-hidden="true"></i> <span class="hidden-xs">{% trans "Admin mode" %}</span>
                                 </button>
                             </form>
                         </li>
                     {% elif request.user.is_staff and staff_session %}
                         <li>
-                            <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                                <i class="fa fa-id-card"></i> {% trans "End admin session" %}
+                            <a href="{% url 'control:user.sudo.stop' %}" class="danger" aria-label="{% trans 'End admin session' %}">
+                                <i class="fa fa-id-card" aria-hidden="true"></i> <span class="hidden-xs">{% trans "End admin session" %}</span>
                             </a>
                         </li>
                     {% endif %}
