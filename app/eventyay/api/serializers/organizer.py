@@ -17,6 +17,7 @@ from eventyay.base.models import (
     GiftCard,
     GiftCardTransaction,
     Organizer,
+    OrganizerFollower,
     SeatingPlan,
     Team,
     TeamAPIToken,
@@ -33,9 +34,31 @@ logger = logging.getLogger(__name__)
 
 
 class OrganizerSerializer(I18nAwareModelSerializer):
+    follower_count = serializers.SerializerMethodField(
+        help_text='Number of users following this organizer. Requires community_follow_enabled=True.',
+    )
+    is_following = serializers.SerializerMethodField(
+        help_text='Whether the currently authenticated user is following this organizer.',
+    )
+
     class Meta:
         model = Organizer
-        fields = ('name', 'slug')
+        fields = ('name', 'slug', 'follower_count', 'is_following')
+
+    def get_follower_count(self, obj):
+        if not obj.settings.get('community_show_follower_count', as_type=bool, default=True):
+            return None
+        if hasattr(obj, '_follower_count'):
+            return obj._follower_count
+        return OrganizerFollower.objects.filter(organizer=obj).count()
+
+    def get_is_following(self, obj):
+        if hasattr(obj, '_is_following'):
+            return obj._is_following
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            return OrganizerFollower.objects.filter(organizer=obj, user=request.user).exists()
+        return False
 
 
 class SeatingPlanSerializer(I18nAwareModelSerializer):
@@ -277,6 +300,8 @@ class OrganizerSettingsSerializer(SettingsSerializer):
         'organizer_homepage_text',
         'organizer_link_back',
         'organizer_logo_image_large',
+        'community_follow_enabled',
+        'community_show_follower_count',
         'giftcard_length',
         'giftcard_expiry_years',
         'locales',
