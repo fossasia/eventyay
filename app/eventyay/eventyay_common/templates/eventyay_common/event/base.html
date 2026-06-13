@@ -1,4 +1,5 @@
 {% extends "eventyay_common/base.html" %}
 {% load i18n %}
 {% load static %}
-{% block title %}{{ request.event.name }}{% endblock %}
+{% load presale_locale %}
+{% block title %}{{ request.event.name|event_localize }}{% endblock %}

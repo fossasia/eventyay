@@ -17,9 +17,16 @@
       {% if can_create_event %}
           <div class="widget-small widget-container">
               <a href="{% url 'eventyay_common:events.add' %}" class="widget">
-                  <div class="newevent"><span class="fa fa-plus-circle"></span>{% trans "Create a new event" %}</div>
+                  <div class="newevent"><span class="fa fa-plus-circle"></span>{% trans "Create Event" %}</div>
               </a>
           </div>
+          {% if event_series_creation_enabled %}
+          <div class="widget-small widget-container">
+              <a href="{% url 'eventyay_common:events.add' %}?series=1" class="widget">
+                  <div class="newevent">{% include "eventyay_common/includes/icon_calendar_series.html" %}{% trans "Create Event Series" %}</div>
+              </a>
+          </div>
+          {% endif %}
       {% endif %}
       {% for w in upcoming %}
           <div class="widget-{{ w.display_size|default:'small' }} {{ w.container_class|default:'widget-container' }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">
@@ -131,4 +138,5 @@
             </div>
         </div>
     </div>
+    {% include "eventyay_common/includes/ticket_permission_dialog.html" %}
 {% endblock %}
