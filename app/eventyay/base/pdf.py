@@ -749,12 +749,12 @@ class Renderer:
             content = 'dark'
         img = finders.find('pretixpresale/pdf/powered_by_eventyay_{}.png'.format(content))
 
-        ir = ThumbnailingImageReader(img)
         try:
+            ir = ThumbnailingImageReader(img)
             width, height = ir.resize(None, float(o['size']) * mm, 300)
         except Exception:
             logger.exception('Can not resize image')
-            pass
+            return
         canvas.drawImage(
             ir,
             float(o['left']) * mm,
