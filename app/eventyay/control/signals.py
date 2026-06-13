@@ -90,6 +90,23 @@ This is no ``EventPluginSignal``, so you do not get the event in the ``sender`` 
 and you may get the signal regardless of whether your plugin is active.
 """
 
+event_dashboard_components = EventPluginSignal()
+"""
+Arguments: 'request'
+
+This signal is sent out to include additional component panels in the event dashboard.
+Receivers should return an HTML string for the panel. The returned HTML will be rendered
+directly inside the component row, so receivers should return a full ``<div class="panel ...">``
+block.
+
+**Security:** Receivers are responsible for escaping all user-controlled content.
+Use ``django.utils.html.format_html`` or ``django.utils.html.escape`` for any
+dynamic values. Never interpolate raw user input into the returned HTML string.
+
+As with all plugin signals, the ``sender`` keyword argument will contain the event.
+Only plugins that are enabled for the event will receive this signal.
+"""
+
 event_dashboard_top = EventPluginSignal()
 """
 Arguments: 'request'

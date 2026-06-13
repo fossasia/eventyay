@@ -525,6 +525,19 @@ body.loading #wrapper {
     font-weight: normal;
 }
 
+.navbar-inverse .navbar-toggle.mobile-navbar-view-link,
+.navbar-inverse .mobile-navbar-view-form button.navbar-toggle {
+    border-color: transparent;
+    background-color: transparent;
+
+    &:hover,
+    &:focus,
+    &:active {
+        background-color: transparent;
+        border-color: transparent;
+    }
+}
+
 @media (min-width: $screen-md-min) {
     .row-plugins {
         display: flex;
@@ -1081,14 +1094,6 @@ h1 .label {
 }
 
 @media (max-width: $screen-sm-max) {
-    nav.navbar {
-        position: static;
-    }
-
-    #wrapper {
-        padding-top: 0;
-    }
-
     #page-wrapper {
         height: auto;
         overflow-y: visible;
@@ -1195,5 +1200,90 @@ h1 .label {
 
     .leaflet-default-icon-path {
         background-image: url(static('leaflet/images/marker-icon.png'));
+    }
+}
+
+@media (max-width: $screen-xs-max) {
+    nav.navbar.navbar-inverse {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 50px;
+        min-height: 50px;
+        padding: 0 10px;
+
+        .navbar-header {
+            display: flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            padding: 0;
+            margin: 0;
+
+            img {
+                height: 30px;
+                margin: 0 5px 0 0;
+            }
+        }
+
+        #sidebar-toggle {
+            margin: 4px 10px 3px 0;
+            padding: 5px;
+            height: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-top-links {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            margin: 0 0 0 auto;
+            padding: 0;
+            gap: 4px;
+
+            li {
+                margin: 0;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                min-height: 50px;
+
+                a,
+                form button.btn-link,
+                #profile-dropdown > summary,
+                #language-dropdown > summary {
+                    display: flex;
+                    align-items: center;
+                    height: 50px;
+                    min-height: 50px;
+                    font-size: 13px;
+                    padding: 0 8px;
+                    font-weight: normal;
+                    margin: 0;
+                    border: none;
+                    background: transparent;
+                }
+            }
+        }
+
+        .language-form {
+            margin: 0;
+        }
+
+        #button-sudo,
+        #button-shop {
+            font-size: 13px;
+            padding: 0 8px;
+        }
+    }
+
+    nav.navbar {
+        padding-bottom: 0;
     }
 }

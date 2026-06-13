@@ -42,7 +42,8 @@ def validate_image(f):
 
     try:
         try:
-            image = Image.open(file, formats=settings.PILLOW_FORMATS_QUESTIONS_IMAGE)
+            formats = getattr(settings, 'PILLOW_FORMATS_QUESTIONS_IMAGE', None)
+            image = Image.open(file, formats=formats)
             # verify() must be called immediately after the constructor.
             image.verify()
         except DecompressionBombError:

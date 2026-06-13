@@ -4,6 +4,7 @@
 {% load static %}
 {% load hierarkey_form %}
 {% load formset_tags %}
+{% load presale_locale %}
 {% block title %}{% trans "General settings" %}{% endblock %}
 {% block custom_header %}
 {{ block.super }}
@@ -15,7 +16,7 @@
 <nav id="event-nav" class="header-nav">
     <div class="navigation">
         <div class="navigation-title">
-            <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
+            <h1>{{ request.event.name|event_localize }} {% trans "- Settings" %}</h1>
         </div>
         <div class="navigation-button">
             <a href="{% url 'eventyay_common:event.index' organizer=request.organizer.slug event=request.event.slug %}" class="header-nav btn btn-outline-success active">
@@ -159,7 +160,6 @@
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
             {% bootstrap_field sform.locales layout="control" %}
-            {% if sform.content_locales %}{% bootstrap_field sform.content_locales layout="control" %}{% endif %}
             {% bootstrap_field sform.locale layout="control" %}
             {% bootstrap_field sform.timezone layout="control" %}
             {% bootstrap_field sform.region layout="control" %}
@@ -212,8 +212,11 @@
             {% bootstrap_field sform.logo_image_large layout="control" %}
             {% bootstrap_field sform.og_image layout="control" %}
             {% url "eventyay_common:organizer.edit" organizer=request.organizer.slug as org_url %}
-            {% propagated request.event org_url "primary_color" "primary_font" "theme_color_success" "theme_color_danger" %}
+            {% propagated request.event org_url "primary_color" "header_background_color" "header_text_color" "navigation_text_color" "primary_font" "theme_color_success" "theme_color_danger" %}
             {% bootstrap_field sform.primary_color layout="control" %}
+            {% bootstrap_field sform.header_background_color layout="control" %}
+            {% bootstrap_field sform.header_text_color layout="control" %}
+            {% bootstrap_field sform.navigation_text_color layout="control" %}
             {% bootstrap_field sform.theme_color_success layout="control" %}
             {% bootstrap_field sform.theme_color_danger layout="control" %}
             {% bootstrap_field sform.theme_color_background layout="control" %}

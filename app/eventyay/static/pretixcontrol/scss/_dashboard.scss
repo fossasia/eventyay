@@ -27,6 +27,14 @@
   width: 25%;
 }
 
+// When only one metric widget is shown (e.g. talk-only "Event is live"), span the
+// full row like the Talks and Speakers panel above on the common event home.
+.dashboard .widget-container.widget-small:only-child,
+.dashboard .widget-container.widget-big:only-child {
+  width: 100%;
+  flex-grow: 1;
+}
+
 .dashboard .widget-container.widget-lazy-loading {
   text-align: center;
   .fa-cog {
@@ -47,6 +55,33 @@
 
 .dashboard .widget:hover, .dashboard .widget:focus, .dashboard a:hover {
   text-decoration: none;
+}
+
+.dashboard .widget-container:not(.widget-container-event) {
+  display: flex;
+  flex-direction: column;
+
+  > a.widget,
+  > button.widget,
+  > div.widget {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100%;
+  }
+}
+
+.dashboard button.widget,
+.dashboard .widget[role="button"] {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: inherit;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
 .dashboard .numwidget {
@@ -104,13 +139,19 @@
     display: flex;
     flex-direction: row;
 
-    a {
+    a,
+    button.component {
       flex-grow: 1;
       flex-basis: 50%;
       font-size: 14px;
       padding: 10px;
       text-align: center;
       color: white;
+    }
+    button.component {
+      background: $brand-primary;
+      border: none;
+      cursor: pointer;
     }
     a.orders {
       background: $navbar-inverse-bg;
@@ -127,7 +168,8 @@
     a.status-danger {
       background: $brand-danger;
     }
-    a.component {
+    a.component,
+    button.component {
       background: $brand-primary;
     }
     a.middle-component {
@@ -150,6 +192,22 @@
     font-size: 60px;
     padding-bottom: 15px;
   }
+
+  .icon-calendar-series-svg {
+    display: block;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 15px;
+    color: inherit;
+  }
+}
+
+.icon-calendar-series-svg {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.2em;
+  margin-right: 0.2em;
+  color: inherit;
 }
 
 .dashboard .welcome-wizard {
