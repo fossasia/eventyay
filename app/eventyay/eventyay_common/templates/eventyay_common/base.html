@@ -135,6 +135,11 @@
                                 <i class="fa fa-eye"></i>
                             </a>
                         {% endif %}
+                    {% elif request.organizer %}
+                        <a href="{% eventurl request.organizer 'presale:organizer.index' %}" title="{% translate 'Public profile' %}" target="_blank"
+                                class="navbar-toggle mobile-navbar-view-link">
+                            <i class="fa fa-eye"></i>
+                        </a>
                     {% endif %}
                 </div>
                 <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
@@ -153,6 +158,12 @@
                                     <i class="fa fa-eye"></i> {% translate 'View event' %}
                                 </a>
                             {% endif %}
+                        </li>
+                    {% elif request.organizer %}
+                        <li>
+                            <a href="{% eventurl request.organizer 'presale:organizer.index' %}" title="{% translate 'Public profile' %}" target="_blank">
+                                <i class="fa fa-eye"></i> {% translate 'Public profile' %}
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
