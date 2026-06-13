@@ -1,0 +1,44 @@
+{% extends "pretixbase/email/base.html" %}
+{% load i18n %}
+{% block header %}
+    <h1>{% blocktrans trimmed with organizer=organizer_name %}New event from {{ organizer }}{% endblocktrans %}</h1>
+{% endblock %}
+{% block content %}
+    <tr>
+        <td class="containertd">
+            <!--[if gte mso 9]>
+                    <table cellpadding="20"><tr><td>
+            <![endif]-->
+            <div class="content">
+                <p>
+                    {% blocktrans trimmed with organizer=organizer_name event=event_name %}
+                        {{ organizer }} has just published a new event: <strong>{{ event }}</strong>
+                    {% endblocktrans %}
+                </p>
+                <p style="text-align: center">
+                    <a href="{{ event_url }}" class="button">{% trans "View event" %}</a>
+                </p>
+            </div>
+            <!--[if gte mso 9]>
+                    </td></tr></table>
+            <![endif]-->
+        </td>
+    </tr>
+    {% include "pretixbase/email/separator.html" %}
+    <tr>
+        <td class="containertd">
+            <!--[if gte mso 9]>
+                    <table cellpadding="20"><tr><td>
+            <![endif]-->
+            <div class="content">
+                {% blocktrans trimmed with organizer=organizer_name %}
+                    You are receiving this email because you follow {{ organizer }} on {{ site }}.
+                {% endblocktrans %}<br>
+                <a href="{{ organizer_url }}">{% trans "Visit organizer page" %}</a>
+            </div>
+            <!--[if gte mso 9]>
+                    </td></tr></table>
+            <![endif]-->
+        </td>
+    </tr>
+{% endblock %}
