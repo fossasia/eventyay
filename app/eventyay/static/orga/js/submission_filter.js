@@ -1,66 +1,37 @@
 onReady(() => {
-    const stateSelect = document.querySelector('#id_state')
-    if (stateSelect) {
-        const choicesEl = stateSelect.closest('.choices')
-        const dropdown = choicesEl?.querySelector('.choices__list--dropdown')
-        const pendingDiv = document.getElementById('pending')
+    const pendingDiv = document.getElementById('pending')
+    const stateInput = document.querySelector('.filter-select input[name="state"]')
+    const stateDropdown = stateInput ? stateInput.closest('details.filter-select') : null
 
-        if (pendingDiv && dropdown) {
-            pendingDiv.classList.remove('d-none')
-            pendingDiv.classList.add('choices-exclude-pending')
-            dropdown.prepend(pendingDiv)
-
-            new MutationObserver(() => {
-                if (!dropdown.contains(pendingDiv)) dropdown.prepend(pendingDiv)
-            }).observe(dropdown, { childList: true })
-        }
+    if (pendingDiv && stateDropdown) {
+        const menu = stateDropdown.querySelector('.filter-select__menu')
+        const separator = document.createElement('div')
+        separator.className = 'filter-select__separator'
+        pendingDiv.classList.remove('d-none')
+        pendingDiv.classList.add('filter-select__pending')
+        menu.prepend(separator)
+        menu.prepend(pendingDiv)
     }
 
-    const multiSelectIds = [
-        '#id_state',
-        '#id_content_locale',
-        '#id_tags',
-        '#id_track',
-        '#id_submission_type',
-    ]
-
-    multiSelectIds.forEach((selector) => {
-        const select = document.querySelector(selector)
-        if (!select) return
-
-        const choicesEl = select.closest('.choices')
-        if (!choicesEl) return
-
-        const inner = choicesEl.querySelector('.choices__inner')
-        if (!inner) return
-
-        const badge = document.createElement('span')
-        badge.className = 'filter-count-badge'
-        badge.hidden = true
-        inner.prepend(badge)
+    document.querySelectorAll('details.filter-select').forEach((details) => {
+        const label = details.querySelector('.filter-select__label')
+        if (!label) return
+        const baseLabel = label.textContent
 
         const update = () => {
-            const count = Array.from(select.selectedOptions).length
-            const chips = inner.querySelectorAll('.choices__item.choices__item--selectable')
-
-            if (count > 0) {
-                badge.textContent = count.toString()
-                badge.hidden = false
-                chips.forEach(chip => { chip.hidden = true })
-            } else {
-                badge.hidden = true
-                chips.forEach(chip => { chip.hidden = false })
-            }
+            const optionBoxes = details.querySelectorAll('.filter-select__option input[type="checkbox"]')
+            const count = Array.from(optionBoxes).filter((b) => b.checked).length
+            label.textContent = count > 0 ? `${baseLabel} (${count})` : baseLabel
         }
 
-        select.addEventListener('change', update)
-
-        new MutationObserver((mutations) => {
-            for (const m of mutations) {
-                if (m.addedNodes.length) { update(); break }
-            }
-        }).observe(inner, { childList: true })
-
+        details.querySelectorAll('.filter-select__menu input[type="checkbox"]')
+            .forEach((box) => box.addEventListener('change', update))
         update()
+    })
+
+    document.addEventListener('click', (event) => {
+        document.querySelectorAll('details.filter-select[open]').forEach((details) => {
+            if (!details.contains(event.target)) details.removeAttribute('open')
+        })
     })
 })
