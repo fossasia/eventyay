@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.core.files import File
 from django.forms import (
+    CheckboxSelectMultiple,
     ClearableFileInput,
     DateInput,
     DateTimeInput,
@@ -156,13 +157,7 @@ def get_count(value, label):
 
 
 class SelectMultipleWithCount(EnhancedSelectMultiple):
-    """A widget for multi-selects that correspond to countable values.
-
-    This widget doesn't support some of the options of the default
-    SelectMultiple, most notably it doesn't support optgroups. In
-    return, it takes a third value per choice, makes zero-values
-    disabled and sorts options by numerical value.
-    """
+    """A widget for multi-selects that correspond to countable values."""
 
     def optgroups(self, name, value, attrs=None):
         choices = sorted(self.choices, key=lambda choice: get_count(*choice), reverse=True)
@@ -187,6 +182,13 @@ class SelectMultipleWithCount(EnhancedSelectMultiple):
     def create_option(self, name, value, label, *args, count=0, **kwargs):
         label = f'{label} ({count})'
         return super().create_option(name, value, label, *args, **kwargs)
+
+
+class FilterCheckboxDropdown(CheckboxSelectMultiple):
+    """A multi-select rendered as a native <details> dropdown of checkboxes."""
+
+    template_name = 'orga/widgets/filter_checkbox_dropdown.html'
+    option_template_name = 'django/forms/widgets/checkbox_option.html'
 
 
 class SearchInput(TextInput):

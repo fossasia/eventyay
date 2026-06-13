@@ -22,9 +22,9 @@ from eventyay.common.forms.mixins import ConfiguredFieldOrderMixin, PublicConten
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
+    FilterCheckboxDropdown,
     MarkdownWidget,
     SearchInput,
-    SelectMultipleWithCount,
 )
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
@@ -441,14 +441,11 @@ class SubmissionFilterForm(forms.Form):
             for (state, name) in SubmissionStates.get_choices()
             if state not in (SubmissionStates.DELETED, SubmissionStates.DRAFT)
         ],
-        widget=SelectMultipleWithCount(
-            attrs={'title': _('Proposal states')},
-            color_field=SubmissionStates.get_color,
-        ),
+        widget=FilterCheckboxDropdown(attrs={'title': _('Proposal states')}),
     )
     submission_type = forms.MultipleChoiceField(
         required=False,
-        widget=SelectMultipleWithCount(attrs={'title': _('Session types')}),
+        widget=FilterCheckboxDropdown(attrs={'title': _('Session types')}),
     )
     pending_state__isnull = forms.BooleanField(
         required=False,
@@ -456,17 +453,17 @@ class SubmissionFilterForm(forms.Form):
     )
     content_locale = forms.MultipleChoiceField(
         required=False,
-        widget=SelectMultipleWithCount(attrs={'title': phrases.base.language}),
+        widget=FilterCheckboxDropdown(attrs={'title': phrases.base.language}),
     )
     track = forms.ModelMultipleChoiceField(
         required=False,
         queryset=Track.objects.none(),
-        widget=SelectMultipleWithCount(attrs={'title': _('Tracks')}, color_field='color'),
+        widget=FilterCheckboxDropdown(attrs={'title': _('Tracks')}),
     )
     tags = forms.ModelMultipleChoiceField(
         queryset=Tag.objects.none(),
         required=False,
-        widget=SelectMultipleWithCount(attrs={'title': _('Tags')}, color_field='color'),
+        widget=FilterCheckboxDropdown(attrs={'title': _('Tags')}),
     )
     question = SafeModelChoiceField(queryset=Question.objects.none(), required=False)
     unanswered = forms.BooleanField(required=False)

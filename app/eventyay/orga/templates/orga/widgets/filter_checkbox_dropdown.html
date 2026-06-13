@@ -1,0 +1,16 @@
+{% load i18n %}
+<details class="filter-select" data-filter-select>
+  <summary class="filter-select__summary" data-summary>
+    <span class="filter-select__label">{{ widget.attrs.title }}</span>
+  </summary>
+  <div class="filter-select__menu">
+    {% for group, options, index in widget.optgroups %}
+      {% for option in options %}
+        <label class="filter-select__option">
+          <input type="checkbox" name="{{ widget.name }}" value="{{ option.value|stringformat:'s' }}"{% if option.selected %} checked{% endif %}>
+          <span>{{ option.label }}</span>
+        </label>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</details>
