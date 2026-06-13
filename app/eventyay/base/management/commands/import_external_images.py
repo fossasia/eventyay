@@ -1,15 +1,20 @@
 import ipaddress
 import logging
+import os
 import socket
 import urllib.parse
+import uuid
 
 import requests
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from eventyay.base.models import Event, User
+from eventyay.base.models import Event, User, Event_SettingsStore
 from eventyay.common.image import validate_image
+from eventyay.helpers.image_optimize import optimize_uploaded_image
 
 logger = logging.getLogger(__name__)
 
@@ -85,19 +90,80 @@ class Command(BaseCommand):
         success_count = 0
         failure_count = 0
 
+        # 1. Process Event settings
+        keys_to_migrate = ['event_logo_image', 'logo_image']
+        settings_qs = Event_SettingsStore.objects.filter(key__in=keys_to_migrate, value__startswith="http")
+        if dry_run:
+            self.stdout.write(self.style.SUCCESS(f"\n[DRY-RUN] Found {settings_qs.count()} external images in Event Settings."))
+            for store in settings_qs:
+                self.stdout.write(self.style.SUCCESS(f"[DRY-RUN] Would download and import {store.value} for Event {store.object.slug} ({store.key})"))
+        else:
+            self.stdout.write(self.style.MIGRATE_HEADING("Processing Event Settings Images"))
+            for store in settings_qs:
+                url = store.value
+                event = store.object
+                self.stdout.write(f"Found external URL in Event {event.slug} setting '{store.key}': {url}")
+                
+                content = self.download_image(url)
+                if not content:
+                    failure_count += 1
+                    continue
+                    
+                content_file = ContentFile(content)
+                try:
+                    validate_image(content_file)
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Invalid image content from {url}: {e}"))
+                    failure_count += 1
+                    continue
+                    
+                try:
+                    filename = urllib.parse.urlparse(url).path.split('/')[-1]
+                    if not filename:
+                        filename = "image.jpg"
+                        
+                    uploaded = SimpleUploadedFile(filename, content)
+                    
+                    with transaction.atomic():
+                        result = optimize_uploaded_image(uploaded, store.key)
+                        
+                        uid = uuid.uuid4().hex[:8]
+                        base_name = filename.rsplit('.', 1)[0]
+                        base_dir = f"pub/{event.organizer.slug}/{event.slug}/img"
+                        base_path = f"{base_dir}/{base_name}_{uid}"
+                        
+                        optimized_name = f"{base_path}.{result.optimized_ext}"
+                        optimized_path = default_storage.save(optimized_name, result.optimized)
+                        
+                        original_name = f"{base_path}_original.{result.original_ext}"
+                        default_storage.save(original_name, result.original)
+                        
+                        event.settings.set(store.key, f"file://{optimized_path}")
+                        event.settings.set(f"{store.key}_original_ext", result.original_ext)
+                    
+                    self.stdout.write(self.style.SUCCESS(f"Successfully imported {url} to {optimized_path}"))
+                    success_count += 1
+                except Exception as e:
+                    self.stderr.write(self.style.ERROR(f"Error saving image from {url}: {e}"))
+                    failure_count += 1
+
+        # 2. Process models
         for model_cls, field_name in models_to_check:
-            self.stdout.write(self.style.MIGRATE_HEADING(f"Processing {model_cls.__name__}.{field_name}"))
-            
             qs = model_cls.objects.filter(**{f"{field_name}__startswith": "http"})
+            
+            if dry_run:
+                self.stdout.write(self.style.SUCCESS(f"\n[DRY-RUN] Found {qs.count()} external images for {model_cls.__name__}.{field_name}."))
+                for instance in qs:
+                    url = getattr(instance, field_name).name
+                    self.stdout.write(self.style.SUCCESS(f"[DRY-RUN] Would download and import {url} on {model_cls.__name__} {instance.pk}"))
+                continue
+
+            self.stdout.write(self.style.MIGRATE_HEADING(f"Processing {model_cls.__name__}.{field_name}"))
             
             for instance in qs:
                 url = getattr(instance, field_name).name
                 self.stdout.write(f"Found external URL on {model_cls.__name__} {instance.pk}: {url}")
                 
-                if dry_run:
-                    self.stdout.write(self.style.SUCCESS(f"[DRY-RUN] Would download and import {url}"))
-                    continue
-
                 content = self.download_image(url)
                 if not content:
                     failure_count += 1
@@ -105,7 +171,6 @@ class Command(BaseCommand):
 
                 content_file = ContentFile(content)
                 
-                # Validate the image
                 try:
                     validate_image(content_file)
                 except Exception as e:
@@ -118,19 +183,14 @@ class Command(BaseCommand):
                     if not filename:
                         filename = "image.jpg"
                         
-                    # Save the image content
                     with transaction.atomic():
                         field = getattr(instance, field_name)
-                        # Clear existing URL to ensure save uses the storage backend
                         setattr(instance, field_name, '')
-                        # Save assigns new file and saves model automatically depending on Field logic,
-                        # but we can do save=False and then save the model.
                         field.save(filename, content_file, save=False)
                         instance.save(update_fields=[field_name])
                     
                     self.stdout.write(self.style.SUCCESS(f"Successfully imported {url} to {field.name}"))
                     
-                    # Process image (thumbnails etc) if applicable
                     if hasattr(instance, 'process_image'):
                         instance.process_image(field_name, generate_thumbnail=(field_name == 'avatar'))
                         
@@ -139,7 +199,5 @@ class Command(BaseCommand):
                     self.stderr.write(self.style.ERROR(f"Error saving image from {url}: {e}"))
                     failure_count += 1
 
-        if dry_run:
-            self.stdout.write(self.style.SUCCESS(f"\n[DRY-RUN] Found {qs.count()} external images to process."))
-        else:
+        if not dry_run:
             self.stdout.write(self.style.SUCCESS(f"\nImport finished: {success_count} succeeded, {failure_count} failed."))
