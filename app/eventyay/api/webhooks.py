@@ -299,9 +299,12 @@ def _read_bounded_response(resp, max_bytes: int) -> str:
     The final chunk is trimmed to the remaining byte budget before being
     appended, so the raw byte total never exceeds *max_bytes* regardless of
     chunk size.  Decoding is performed on the already-bounded bytes, so
-    multi-byte UTF-8 sequences cannot cause the result to exceed the budget
-    when re-encoded.  The response is always closed in a finally block so the
-    underlying connection is returned to the pool even when the loop exits early.
+    multi-byte sequences cannot cause the result to exceed the budget when
+    re-encoded.  The charset from the response's Content-Type header is used
+    for decoding (falling back to UTF-8 when absent), matching the behaviour
+    of ``requests.Response.text``.  The response is always closed in a finally
+    block so the underlying connection is returned to the pool even when the
+    loop exits early.
     """
     chunks: list[bytes] = []
     bytes_read = 0
@@ -316,7 +319,8 @@ def _read_bounded_response(resp, max_bytes: int) -> str:
                 break
     finally:
         resp.close()
-    return b"".join(chunks).decode("utf-8", errors="replace")
+    encoding = resp.encoding or "utf-8"
+    return b"".join(chunks).decode(encoding, errors="replace")
 
 
 @app.task(base=ProfiledTask, bind=True, max_retries=9, acks_late=True)
