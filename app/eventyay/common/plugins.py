@@ -22,8 +22,8 @@ def get_all_plugins(event=None):
     plugins available for that event are returned."""
     plugins = []
     for app in apps.get_app_configs():
-        if getattr(app, 'PretalxPluginMeta', None):
-            meta = app.PretalxPluginMeta
+        meta = getattr(app, 'EventyayPluginMeta', getattr(app, 'PretalxPluginMeta', None))
+        if meta:
             meta.module = app.name
             meta.app = app
 

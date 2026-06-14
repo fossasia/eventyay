@@ -35,8 +35,8 @@ def get_all_plugins(event=None) -> List[type]:
     """
     plugins = []
     for app in apps.get_app_configs():
-        if hasattr(app, 'EventyayPluginMeta'):
-            meta = app.EventyayPluginMeta
+        meta = getattr(app, 'EventyayPluginMeta', getattr(app, 'PretalxPluginMeta', None))
+        if meta:
             meta.module = app.name
             meta.app = app
             if app.name in settings.EVENTYAY_PLUGINS_EXCLUDE:

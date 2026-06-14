@@ -82,7 +82,7 @@ class EventPermissionMiddleware:
     def __call__(self, request):
         url = resolve(request.path_info)
 
-        organizer_slug = url.kwargs.get('organizer')
+        organizer_slug = url.kwargs.get('organizer') or url.kwargs.get('organiser')
         if organizer_slug:
             request.organizer = get_object_or_404(Organizer, slug__iexact=organizer_slug)
 

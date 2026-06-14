@@ -1,8 +1,10 @@
+import os
 from django.apps import AppConfig
 
 
 class PluginApp(AppConfig):
     name = "tests"
+    path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     verbose_name = "test app for pretalx"
 
     def ready(self):

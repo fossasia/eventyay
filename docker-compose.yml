@@ -8,6 +8,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
+      - ./app/tests:/usr/src/app/tests
       - ./plugins:/usr/src/plugins
       - /usr/src/app/eventyay/static.dist
       - /usr/src/app/eventyay/static/video
@@ -35,6 +36,7 @@ services:
     entrypoint: celery -A eventyay worker -l info
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
+      - ./app/tests:/usr/src/app/tests
       - ./plugins:/usr/src/plugins
       - /usr/src/app/eventyay/static.dist
       - /usr/src/app/eventyay/static/video
@@ -58,8 +60,10 @@ services:
     restart: unless-stopped
     volumes:
       - rd:/data
+    ports:
+      - 6379:6379
     healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      test: [ "CMD", "redis-cli", "--raw", "ping" ]
 
   db:
     image: postgres:15
@@ -68,6 +72,8 @@ services:
     command: postgres -c max_connections=500
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
     env_file:
       - ./.env.dev
 

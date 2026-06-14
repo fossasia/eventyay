@@ -154,6 +154,22 @@ class TeamInviteForm(ReadOnlyFlag, forms.ModelForm):
 class OrganizerForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, **kwargs):
         kwargs["locales"] = "en"
+        if "data" in kwargs and kwargs["data"]:
+            data = kwargs["data"].copy()
+            if "name" not in data or not data["name"]:
+                for key in ("name_0", "name_1", "name_en"):
+                    if data.get(key):
+                        data["name"] = data.get(key)
+                        break
+            kwargs["data"] = data
+        elif len(args) > 0 and args[0]:
+            data = args[0].copy()
+            if "name" not in data or not data["name"]:
+                for key in ("name_0", "name_1", "name_en"):
+                    if data.get(key):
+                        data["name"] = data.get(key)
+                        break
+            args = (data,) + args[1:]
         super().__init__(*args, **kwargs)
         self.fields["name"].required = True
         if kwargs.get("instance"):

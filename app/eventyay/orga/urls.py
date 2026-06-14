@@ -10,6 +10,7 @@ from eventyay.orga.views import (
     mails,
     organizer,
     person,
+    plugins,
     review,
     schedule,
     speaker,
@@ -62,7 +63,90 @@ urlpatterns = [
                     organizer.OrganizerSpeakerList.as_view(),
                     name="organizer.speakers",
                 ),
-
+                *organizer.TeamView.get_urls(
+                    url_base="teams",
+                    url_name="organizer.teams",
+                    namespace="orga",
+                ),
+                path(
+                    "teams/<int:team_pk>/members/<int:user_pk>/delete/",
+                    organizer.TeamMemberDelete.as_view(),
+                    name="organizer.teams.members.delete",
+                ),
+                path(
+                    "teams/<int:team_pk>/members/<int:user_pk>/reset/",
+                    organizer.TeamResetPassword.as_view(),
+                    name="organizer.teams.members.reset",
+                ),
+                path(
+                    "teams/<int:pk>/invites/<int:invite_pk>/uninvite/",
+                    organizer.TeamUninvite.as_view(),
+                    name="organizer.teams.invites.uninvite",
+                ),
+                path(
+                    "teams/<int:pk>/invites/<int:invite_pk>/resend/",
+                    organizer.TeamResend.as_view(),
+                    name="organizer.teams.invites.resend",
+                ),
+            ]
+        ),
+    ),
+    path(
+        "organiser/",
+        dashboard.DashboardOrganizerListView.as_view(),
+        name="organiser.list",
+    ),
+    path("organiser/new", organizer.OrganizerDetail.as_view(), name="organiser.create"),
+    path(
+        "organiser/<slug:organiser>/",
+        include(
+            [
+                path(
+                    "",
+                    dashboard.DashboardOrganizerEventListView.as_view(),
+                    name="organiser.dashboard",
+                ),
+                path(
+                    "settings/",
+                    organizer.OrganizerDetail.as_view(),
+                    name="organiser.settings",
+                ),
+                path(
+                    "settings/delete/",
+                    organizer.OrganizerDelete.as_view(),
+                    name="organiser.delete",
+                ),
+                path("api/users", organizer.speaker_search, name="organiser.user_list"),
+                path(
+                    "speakers/",
+                    organizer.OrganizerSpeakerList.as_view(),
+                    name="organiser.speakers",
+                ),
+                *organizer.TeamView.get_urls(
+                    url_base="teams",
+                    url_name="organiser.teams",
+                    namespace="orga",
+                ),
+                path(
+                    "teams/<int:team_pk>/members/<int:user_pk>/delete/",
+                    organizer.TeamMemberDelete.as_view(),
+                    name="organiser.teams.members.delete",
+                ),
+                path(
+                    "teams/<int:team_pk>/members/<int:user_pk>/reset/",
+                    organizer.TeamResetPassword.as_view(),
+                    name="organiser.teams.members.reset",
+                ),
+                path(
+                    "teams/<int:pk>/invites/<int:invite_pk>/uninvite/",
+                    organizer.TeamUninvite.as_view(),
+                    name="organiser.teams.invites.uninvite",
+                ),
+                path(
+                    "teams/<int:pk>/invites/<int:invite_pk>/resend/",
+                    organizer.TeamResend.as_view(),
+                    name="organiser.teams.invites.resend",
+                ),
             ]
         ),
     ),
@@ -112,6 +196,11 @@ urlpatterns = [
                     'settings/widget',
                     event.WidgetSettings.as_view(),
                     name='settings.widget',
+                ),
+                path(
+                    'settings/plugins',
+                    plugins.EventPluginsView.as_view(),
+                    name='settings.plugins.select',
                 ),
                 path(
                     'settings/import-export/',

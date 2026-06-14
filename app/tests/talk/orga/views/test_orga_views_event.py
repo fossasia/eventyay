@@ -852,7 +852,7 @@ def test_organiser_can_see_event_suggestions(orga_client, event):
     content = json.loads(response.text)["results"]
     assert len(content) == 3
     assert content[0]["type"] == "user"
-    assert content[1]["type"] == "organiser"
+    assert content[1]["type"] == "organizer"
     assert content[1]["name"] == str(event.organiser)
     assert content[2]["type"] == "event"
     assert content[2]["name"] == str(event.name)

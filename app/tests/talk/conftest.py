@@ -34,7 +34,8 @@ from pretalx.submission.models.question import QuestionRequired
 
 @pytest.fixture(scope="session", autouse=True)
 def collect_static(request):
-    management.call_command("collectstatic", "--noinput", "--clear")
+    import os
+    management.call_command("collectstatic", "--noinput", "--clear", stdout=open(os.devnull, 'w'))
 
 
 @pytest.fixture

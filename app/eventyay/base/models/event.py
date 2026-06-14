@@ -929,7 +929,7 @@ class Event(
         self.settings.name_scheme = 'given_family'
         self.settings.ticket_download = True
         self.settings.private_testmode_tickets = True
-        self.settings.private_testmode_talks = True
+        self.settings.private_testmode_talks = False
 
     @property
     def social_image(self):
@@ -1054,9 +1054,9 @@ class Event(
         """
         Returns the names of the plugins activated for this event as a list.
         """
-        if self.plugins is None:
+        if not self.plugins:
             return []
-        return self.plugins.split(',')
+        return [p for p in self.plugins.split(',') if p]
 
     def get_cache(self):
         """
@@ -2206,6 +2206,31 @@ class Event(
             cfp.delete()
         self.submitter_access_codes.all().delete()
         self.submission_types.all().delete()
+
+    @transaction.atomic
+    @scopes_disabled()
+    def shred(self, person=None):
+        """Irrevocably deletes an event and all related data."""
+        import json
+        from eventyay.base.models.log import ActivityLog
+
+        ActivityLog.objects.create(
+            person=person,
+            action_type='eventyay.event.delete',
+            content_object=self.organizer,
+            is_orga_action=True,
+            data=json.dumps(
+                {
+                    'slug': self.slug,
+                    'name': str(self.name),
+                    'organizer': str(self.organizer.name),
+                }
+            ),
+        )
+        self.delete_sub_objects()
+        self.delete()
+
+    shred.alters_data = True
 
     def set_active_plugins(self, modules, allow_restricted=False):
         from eventyay.base.plugins import get_all_plugins

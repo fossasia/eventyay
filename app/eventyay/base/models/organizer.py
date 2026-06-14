@@ -154,9 +154,9 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         base_path = settings.BASE_PATH
         base = '{base_path}/orga/organizer/{self.slug}/'
         settings = '{base_path}/orga/organizer/{self.slug}/settings/'
-        delete = '{settings}delete'
+        delete = '{settings}delete/'
         teams = '{base}teams/'
-        new_team = '{teams}new'
+        new_team = '{teams}new/'
         user_search = '{base}api/users'
 
     @transaction.atomic
@@ -426,6 +426,9 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         else:
             return self.limit_events.filter(pk=event.pk).exists()
 
+    def remove_member(self, member):
+        self.members.remove(member)
+
     @property
     def active_tokens(self):
         return self.tokens.filter(active=True)
@@ -531,8 +534,8 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this team."""
 
-        base = '{self.organizer.orga_urls.teams}?team={self.pk}&section=permissions'
-        delete = '{self.organizer.orga_urls.base}team/{self.pk}/delete/'
+        base = '{self.organizer.orga_urls.teams}{self.pk}/'
+        delete = '{self.organizer.orga_urls.teams}{self.pk}/delete/'
 
 
 class TeamInvite(models.Model):

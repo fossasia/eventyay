@@ -381,6 +381,102 @@ SAFE_TICKET_PLUGINS = tuple(m for m in ticket_plugins if m not in {'pretix_pages
 
 INSTALLED_APPS = _LIBRARY_APPS + SAFE_TICKET_PLUGINS + _OURS_APPS
 
+if os.environ.get('EVY_RUNNING_ENVIRONMENT') == 'testing':
+    import sys
+    import importlib
+    import types
+    from importlib.machinery import ModuleSpec
+
+    class AliasFinder:
+        MAPPINGS = {
+            'eventyay.common.models.settings': 'eventyay.base.models.settings',
+            'eventyay.common.models.log': 'eventyay.base.models.log',
+            'eventyay.common.models': 'eventyay.base.models',
+            'eventyay.event.models': 'eventyay.base.models',
+            'eventyay.mail.models': 'eventyay.base.models',
+            'eventyay.person.models': 'eventyay.base.models',
+            'eventyay.person.models.auth_token': 'eventyay.base.models.auth_token',
+            'eventyay.schedule.models': 'eventyay.base.models',
+            'eventyay.submission.models': 'eventyay.base.models',
+            'eventyay.submission.models.question': 'eventyay.base.models.question',
+        }
+
+        @classmethod
+        def find_spec(cls, fullname, path=None, target=None):
+            for old_prefix, new_prefix in [('pretix', 'eventyay'), ('pretalx', 'eventyay'), ('venueless', 'eventyay')]:
+                if fullname == old_prefix or fullname.startswith(old_prefix + '.'):
+                    new_name = fullname.replace(old_prefix, new_prefix, 1)
+                    for key, val in cls.MAPPINGS.items():
+                        if new_name == key:
+                            new_name = val
+                            break
+                        elif new_name.startswith(key + '.'):
+                            new_name = new_name.replace(key, val, 1)
+                            break
+                    try:
+                        mod = importlib.import_module(new_name)
+                        
+                        class AliasLoader:
+                            def create_module(self, spec):
+                                alias_mod = types.ModuleType(spec.name)
+                                alias_mod.__dict__.update(mod.__dict__)
+                                alias_mod.__name__ = spec.name
+                                if 'Organizer' in alias_mod.__dict__:
+                                    alias_mod.__dict__['Organiser'] = alias_mod.__dict__['Organizer']
+                                if spec.name.endswith('.models'):
+                                    import pkgutil
+                                    import eventyay.base.models as base_models
+                                    for _, module_name, _ in pkgutil.iter_modules(base_models.__path__):
+                                        try:
+                                            sub_mod = importlib.import_module(f"eventyay.base.models.{module_name}")
+                                            for k, v in sub_mod.__dict__.items():
+                                                if not k.startswith('_') and k not in alias_mod.__dict__:
+                                                    alias_mod.__dict__[k] = v
+                                        except Exception:
+                                            pass
+                                    for k, v in list(alias_mod.__dict__.items()):
+                                        if isinstance(v, type) and hasattr(v, '_meta'):
+                                            field_names = [f.name for f in v._meta.fields]
+                                            if 'organizer' in field_names and not hasattr(v, 'organiser'):
+                                                v.organiser = property(
+                                                    lambda self: self.organizer,
+                                                    lambda self, value: setattr(self, 'organizer', value)
+                                                )
+                                            if 'can_change_organizer_settings' in field_names and not hasattr(v, 'can_change_organiser_settings'):
+                                                v.can_change_organiser_settings = property(
+                                                    lambda self: self.can_change_organizer_settings,
+                                                    lambda self, value: setattr(self, 'can_change_organizer_settings', value)
+                                                )
+                                            if 'fullname' in field_names and not hasattr(v, 'name'):
+                                                v.name = property(
+                                                    lambda self: self.fullname,
+                                                    lambda self, value: setattr(self, 'fullname', value)
+                                                )
+                                if 'TalkQuestion' in alias_mod.__dict__:
+                                    alias_mod.__dict__['Question'] = alias_mod.__dict__['TalkQuestion']
+                                if 'TalkQuestionVariant' in alias_mod.__dict__:
+                                    alias_mod.__dict__['QuestionVariant'] = alias_mod.__dict__['TalkQuestionVariant']
+                                if 'TalkQuestionRequired' in alias_mod.__dict__:
+                                    alias_mod.__dict__['QuestionRequired'] = alias_mod.__dict__['TalkQuestionRequired']
+                                return alias_mod
+                            def exec_module(self, module):
+                                pass
+                                
+                        return ModuleSpec(
+                            fullname, 
+                            AliasLoader(), 
+                            is_package=getattr(mod, '__path__', None) is not None
+                        )
+                    except ImportError:
+                        pass
+            return None
+
+    if not any(getattr(x, '__name__', None) == 'AliasFinder' for x in sys.meta_path):
+        sys.meta_path.insert(0, AliasFinder)
+
+    INSTALLED_APPS += ('tests.talk.dummy_app.PluginApp', 'tests.tickets.testdummy')
+
+
 # TODO: What is it for?
 ALL_PLUGINS = sorted(ticket_plugins + talk_plugins)
 

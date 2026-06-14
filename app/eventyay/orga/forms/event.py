@@ -1,8 +1,11 @@
 import datetime as dt
 from decimal import Decimal
+import socket
+from urllib.parse import urlparse
 
 from django import forms
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
@@ -24,6 +27,8 @@ from eventyay.common.forms.widgets import (
     EnhancedSelect,
     EnhancedSelectMultiple,
     HtmlDateTimeInput,
+    HtmlDateInput,
+    TextInputWithAddon,
 )
 from eventyay.common.text.css import validate_css
 from eventyay.common.text.phrases import phrases
@@ -129,12 +134,37 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             + ' '
             + str(_('You can find the page <a {href}>here</a>.')).format(href=f'href="{self.instance.urls.featured}"')
         )
+        if 'slug' in self.fields and self.instance.custom_domain:
+            self.fields['slug'].widget.addon_before = f'{self.instance.custom_domain}/'
+        if not self.is_administrator and 'slug' in self.fields:
+            self.fields['slug'].disabled = True
 
     def clean_show_featured(self):
         value = self.cleaned_data.get('show_featured', '')
         if value == 'pre_schedule':
             return 'after_schedule'
         return value
+
+    def clean_custom_domain(self):
+        data = self.cleaned_data.get('custom_domain')
+        if not data:
+            return data
+        data = data.lower()
+        if data in (urlparse(settings.SITE_URL).hostname, settings.SITE_URL):
+            raise ValidationError(_('Please do not choose the default domain as custom event domain.'))
+        if not data.startswith('https://'):
+            data = data[len('http://') :] if data.startswith('http://') else data
+            data = 'https://' + data
+        data = data.rstrip('/')
+        try:
+            socket.gethostbyname(data[len('https://') :])
+        except OSError:
+            raise ValidationError(
+                _(
+                    'The domain “{domain}” does not have a name server entry at this time. Please make sure the domain is working before configuring it here.'
+                ).format(domain=data)
+            )
+        return data
 
     def clean_custom_css(self):
         if self.cleaned_data.get('custom_css') or self.files.get('custom_css'):
@@ -161,22 +191,111 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
 
     def clean(self):
         data = super().clean()
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
+        if date_from and date_to and date_from > date_to:
+            error = ValidationError(phrases.orga.event_date_start_invalid)
+            self.add_error('date_from', error)
         return data
 
     def save(self, *args, **kwargs):
+        if any(key in self.changed_data for key in ('date_from', 'date_to')):
+            self.change_dates()
+        if 'timezone' in self.changed_data:
+            self.change_timezone()
         result = super().save(*args, **kwargs)
         css_text = self.cleaned_data.get('custom_css_text', '')
         if css_text and 'custom_css_text' in self.changed_data:
             self.instance.custom_css.save(self.instance.slug + '.css', ContentFile(css_text))
         return result
 
+    def change_dates(self):
+        """Changes dates of current WIP slots, or deschedules them."""
+        from django.utils.timezone import make_naive
+        from django.db.models import F, Q
+        from eventyay.base.models import Availability, TalkSlot
+
+        old_instance = Event.objects.get(pk=self.instance.pk)
+        if not self.instance.wip_schedule.talks.filter(start__isnull=False).exists():
+            return
+        new_date_from = self.cleaned_data['date_from']
+        new_date_to = self.cleaned_data['date_to']
+        start_delta = new_date_from - old_instance.date_from
+        end_delta = new_date_to - old_instance.date_to
+        shortened = (new_date_to - new_date_from) < (old_instance.date_to - old_instance.date_from)
+
+        if start_delta and end_delta:
+            # The event was moved, and we will move all talks with it.
+            self._move_by(start_delta)
+
+        if shortened:
+            # The event was shortened, de-schedule all talks outside the range
+            self.instance.wip_schedule.talks.filter(
+                Q(start__date__gt=new_date_to) | Q(start__date__lt=new_date_from),
+            ).update(start=None, end=None, room=None)
+            Availability.objects.filter(
+                Q(end__date__gt=new_date_to) | Q(start__date__lt=new_date_from),
+                event=self.instance,
+            ).delete()
+
+    def change_timezone(self):
+        """Changes times of all current wip slots, on the assumption that a
+        change in timezone is usually not intentional, and people would like to
+        keep the apparent time rather the absolute one."""
+        from django.utils.timezone import make_naive
+        from eventyay.base.models import TalkSlot
+        from zoneinfo import ZoneInfo
+
+        old_instance = Event.objects.get(pk=self.instance.pk)
+        first_slot = self.instance.wip_schedule.talks.filter(start__isnull=False).first()
+        if not first_slot:
+            return
+
+        old_tz = ZoneInfo(old_instance.timezone)
+        new_tz = ZoneInfo(self.instance.timezone)
+
+        old_start = make_naive(first_slot.start, old_tz)
+        new_start = make_naive(first_slot.start, new_tz)
+
+        delta = old_start - new_start
+        if delta:
+            self._move_by(delta, past=True)
+
+    def _move_by(self, delta, past=False):
+        from django.db.models import F
+        from eventyay.base.models import Availability, TalkSlot
+
+        if past:
+            talk_queryset = TalkSlot.objects.filter(schedule__event=self.instance)
+        else:
+            talk_queryset = self.instance.wip_schedule.talks
+        for key in ('start', 'end'):
+            filt = {f'{key}__isnull': False}
+            update = {key: F(key) + delta}
+            talk_queryset.filter(**filt).update(**update)
+            Availability.objects.filter(event=self.instance).filter(**filt).update(**update)
+
 
     class Meta:
         model = Event
         fields = [
+            'name',
+            'slug',
+            'date_from',
+            'date_to',
+            'timezone',
+            'locale',
+            'custom_domain',
             'email',
             'custom_css',
         ]
+        widgets = {
+            'date_from': HtmlDateInput(attrs={'data-date-before': '#id_date_to'}),
+            'date_to': HtmlDateInput(attrs={'data-date-after': '#id_date_from'}),
+            'locale': EnhancedSelect,
+            'timezone': EnhancedSelect,
+            'slug': TextInputWithAddon(addon_before=settings.SITE_URL + '/'),
+        }
         json_fields = {
             'imprint_url': 'display_settings',
             'show_schedule': 'feature_flags',
