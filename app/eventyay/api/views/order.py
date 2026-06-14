@@ -1155,6 +1155,10 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         order_modified.send(sender=serializer.instance.order.event, order=serializer.instance.order)
 
 
+def get_order_for_nested_route(request, order):
+    return get_object_or_404(Order, pk=order, event=request.event)
+
+
 class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = OrderPaymentSerializer
     queryset = OrderPayment.objects.none()
@@ -1164,12 +1168,12 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        ctx['order'] = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        ctx['order'] = get_order_for_nested_route(self.request, self.kwargs['order'])
         ctx['event'] = self.request.event
         return ctx
 
     def get_queryset(self):
-        order = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        order = get_order_for_nested_route(self.request, self.kwargs['order'])
         return order.payments.all()
 
     def create(self, request, *args, **kwargs):
@@ -1192,8 +1196,8 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                         force=request.data.get('force', False),
                         send_mail=send_mail,
                     )
-                except Quota.QuotaExceededException:
-                    pass
+                except Quota.QuotaExceededException as e:
+                    raise ValidationError(str(e))
                 except SendMailException:
                     pass
 
@@ -1373,7 +1377,7 @@ class RefundViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     lookup_field = 'local_id'
 
     def get_queryset(self):
-        order = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        order = get_order_for_nested_route(self.request, self.kwargs['order'])
         return order.refunds.all()
 
     @action(detail=True, methods=['POST'])
@@ -1460,7 +1464,7 @@ class RefundViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        ctx['order'] = get_object_or_404(Order, code=self.kwargs['order'], event=self.request.event)
+        ctx['order'] = get_order_for_nested_route(self.request, self.kwargs['order'])
         return ctx
 
     def create(self, request, *args, **kwargs):
